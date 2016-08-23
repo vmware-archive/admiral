@@ -19,6 +19,7 @@ import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.UriUtils;
 
 public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
@@ -111,7 +112,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
         getContainerHost(
                 context.request,
                 context.operation,
-                context.networkState.originatingHostReference,
+                UriUtils.buildUri(getHost(), context.networkState.originatingHostLink),
                 (computeState, commandInput) -> {
                     context.commandInput = commandInput;
                     context.executor = getCommandExecutor(computeState);

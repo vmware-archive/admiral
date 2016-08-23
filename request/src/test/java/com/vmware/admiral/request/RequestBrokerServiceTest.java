@@ -19,6 +19,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,6 +38,11 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.ServiceNetwork;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
@@ -225,6 +231,117 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         rs = getDocument(RequestStatus.class, request.requestTrackerLink);
         assertNotNull(rs);
         assertEquals(Integer.valueOf(100), rs.progress);
+    }
+
+    @Test
+    public void testCompositeComponentWithContainerNetworkRequestLifeCycle() throws Throwable {
+        host.log(
+                "########  Start of testCompositeComponentWithContainerNetworkRequestLifeCycle ######## ");
+
+        // setup Docker Host:
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+
+        delete(computeHost.documentSelfLink);
+        computeHost = null;
+
+        ComputeState dockerHost1 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost1);
+
+        ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost2);
+
+        // setup Composite description with 2 containers and 1 network
+
+        String networkName = "mynet";
+
+        ContainerNetworkDescription networkDesc = TestRequestStateFactory
+                .createContainerNetworkDescription(networkName);
+        networkDesc.documentSelfLink = UUID.randomUUID().toString();
+        networkDesc = doPost(networkDesc, ContainerNetworkDescriptionService.FACTORY_LINK);
+        assertNotNull(networkDesc);
+
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
+        container1Desc.documentSelfLink = UUID.randomUUID().toString();
+        container1Desc.name = "container1";
+        container1Desc.networks = new HashMap<>();
+        container1Desc.networks.put(networkName, new ServiceNetwork());
+        container1Desc = doPost(container1Desc, ContainerDescriptionService.FACTORY_LINK);
+        assertNotNull(container1Desc);
+
+        ContainerDescription container2Desc =
+                TestRequestStateFactory.createContainerDescription();
+        container2Desc.documentSelfLink = UUID.randomUUID().toString();
+        container2Desc.name = "container2";
+        container2Desc.affinity = new String[] { "!container1:hard" };
+        container2Desc.networks = new HashMap<>();
+        container2Desc.networks.put(networkName, new ServiceNetwork());
+        container2Desc = doPost(container2Desc, ContainerDescriptionService.FACTORY_LINK);
+        assertNotNull(container2Desc);
+
+        CompositeDescription compositeDesc = createCompositeDesc(networkDesc, container1Desc,
+                container2Desc);
+        assertNotNull(compositeDesc);
+
+        // setup Group Policy:
+        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+
+        // 1. Request a composite container:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        request.resourceDescriptionLink = compositeDesc.documentSelfLink;
+        request.tenantLinks = groupPolicyState.tenantLinks;
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+
+        // Verify request status
+        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+
+        // TODO: check why progress is < 100 even after completion
+        // The RequestStatusService.handleUpdateComponents is merging all components progresses
+        // regardless of their different phases
+        // assertEquals(Integer.valueOf(100), rs.progress);
+        assertEquals(3, request.resourceLinks.size());
+
+        String networkLink = null;
+        String containerLink1 = null;
+        String containerLink2 = null;
+
+        Iterator<String> iterator = request.resourceLinks.iterator();
+        while (iterator.hasNext()) {
+            String link = iterator.next();
+            if (link.startsWith(ContainerNetworkService.FACTORY_LINK)) {
+                networkLink = link;
+            } else if (containerLink1 == null) {
+                containerLink1 = link;
+            } else {
+                containerLink2 = link;
+            }
+        }
+
+        ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
+        ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
+
+        boolean containerIsProvisionedOnAnyHosts = cont1.parentLink
+                .equals(dockerHost1.documentSelfLink)
+                || cont1.parentLink.equals(dockerHost2.documentSelfLink);
+        assertTrue(containerIsProvisionedOnAnyHosts);
+
+        containerIsProvisionedOnAnyHosts = cont2.parentLink.equals(dockerHost1.documentSelfLink)
+                || cont2.parentLink.equals(dockerHost2.documentSelfLink);
+        assertTrue(containerIsProvisionedOnAnyHosts);
+
+        // provisioned on different hosts
+        assertFalse(cont1.parentLink.equals(cont2.parentLink));
+
+        ContainerNetworkState network = getDocument(ContainerNetworkState.class, networkLink);
+        boolean networkIsProvisionedOnAnyHosts = network.originatingHostLink
+                .equals(dockerHost1.documentSelfLink)
+                || network.originatingHostLink.equals(dockerHost2.documentSelfLink);
+        assertTrue(networkIsProvisionedOnAnyHosts);
     }
 
     @Test

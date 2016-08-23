@@ -61,8 +61,8 @@ public class ContainerNetworkService extends StatefulService {
 
         /** Reference to the host that this network was created on. */
         @Documentation(description = "Reference to the host that this network was created on.")
-        @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public URI originatingHostReference;
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK })
+        public String originatingHostLink;
 
         @Documentation(description = "Link to CompositeComponent when a network is part of App/Composition request.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK })

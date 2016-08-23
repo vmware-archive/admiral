@@ -91,6 +91,8 @@ public class ContainerHostService extends StatelessService {
     public static final String DOCKER_HOST_CPU_USAGE_PCT_PROP_NAME = "__CpuUsage";
     public static final String DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME = "__MemAvailable";
 
+    public static final String DOCKER_HOST_CLUSTER_STORE_PROP_NAME = "__ClusterStore";
+
     public enum DockerAdapterType {
         SSH,
         API

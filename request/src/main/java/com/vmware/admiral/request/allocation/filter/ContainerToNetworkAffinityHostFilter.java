@@ -34,11 +34,11 @@ import com.vmware.xenon.services.common.QueryTask;
  * A filter implementing {@link HostSelectionFilter} in order to provide affinity and network name
  * resolution in case the {@link ContainerDescription} specifies <code>networks</code> property.
  */
-public class NetworkAffinityHostFilter implements HostSelectionFilter {
+public class ContainerToNetworkAffinityHostFilter implements HostSelectionFilter {
     private final Map<String, ServiceNetwork> networks;
     private final ServiceHost host;
 
-    public NetworkAffinityHostFilter(ServiceHost host, ContainerDescription desc) {
+    public ContainerToNetworkAffinityHostFilter(ServiceHost host, ContainerDescription desc) {
         this.host = host;
         this.networks = desc.networks;
     }
@@ -83,13 +83,14 @@ public class NetworkAffinityHostFilter implements HostSelectionFilter {
                         if (descLinksWithNames.isEmpty()) {
                             callback.complete(hostSelectionMap, null);
                         } else {
-                            findNetworks(state, hostSelectionMap, descLinksWithNames, callback);
+                            findContainerNetworks(state, hostSelectionMap, descLinksWithNames,
+                                    callback);
                         }
                     }
                 });
     }
 
-    protected void findNetworks(final PlacementHostSelectionTaskState state,
+    protected void findContainerNetworks(final PlacementHostSelectionTaskState state,
             final Map<String, HostSelection> hostSelectionMap,
             Map<String, DescName> descLinksWithNames,
             final HostSelectionFilterCompletion callback) {
@@ -113,8 +114,10 @@ public class NetworkAffinityHostFilter implements HostSelectionFilter {
                                         state.contextId, r.getException().getMessage());
                                 callback.complete(null, r.getException());
                             } else if (r.hasResult()) {
-                                final DescName descName = descLinksWithNames.get(r.getResult().descriptionLink);
-                                descName.addContainerNames(Collections.singletonList(r.getResult().name));
+                                final DescName descName = descLinksWithNames
+                                        .get(r.getResult().descriptionLink);
+                                descName.addContainerNames(
+                                        Collections.singletonList(r.getResult().name));
 
                                 for (HostSelection hs : hostSelectionMap.values()) {
                                     hs.addDesc(descName);
@@ -139,9 +142,8 @@ public class NetworkAffinityHostFilter implements HostSelectionFilter {
 
     @Override
     public Map<String, AffinityConstraint> getAffinityConstraints() {
-        return isActive() ?
-                networks.entrySet().stream()
-                        .collect(Collectors.toMap(p -> p.getKey(), p -> new AffinityConstraint())) :
-                Collections.emptyMap();
+        return isActive() ? networks.entrySet().stream().collect(
+                Collectors.toMap(p -> p.getKey(), p -> new AffinityConstraint(p.getKey())))
+                : Collections.emptyMap();
     }
 }

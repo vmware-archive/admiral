@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
+import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
@@ -39,6 +40,8 @@ import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
 import com.vmware.admiral.request.ContainerClusteringTaskService.ContainerClusteringTaskState;
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState;
+import com.vmware.admiral.request.ContainerNetworkAllocationTaskService.ContainerNetworkAllocationTaskState;
+import com.vmware.admiral.request.ContainerNetworkProvisionTaskService.ContainerNetworkProvisionTaskState;
 import com.vmware.admiral.request.ContainerOperationTaskService.ContainerOperationTaskState;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState.SubStage;
@@ -81,14 +84,14 @@ import com.vmware.xenon.services.common.QueryTask;
  * Request Broker service implementing the task of provision resource work flow. Utilizes sub tasks
  * and services provided in the resource description to perform various sub stages
  */
-public class RequestBrokerService
-        extends
+public class RequestBrokerService extends
         AbstractTaskStatefulService<RequestBrokerService.RequestBrokerState, RequestBrokerService.RequestBrokerState.SubStage> {
 
     public static final String DISPLAY_NAME = "Request";
 
     public static class RequestBrokerState
-            extends com.vmware.admiral.service.common.TaskServiceDocument<RequestBrokerState.SubStage> {
+            extends
+            com.vmware.admiral.service.common.TaskServiceDocument<RequestBrokerState.SubStage> {
         public static final String PROVISION_RESOURCE_OPERATION = "PROVISION_RESOURCE";
         public static final String REMOVE_RESOURCE_OPERATION = "REMOVE_RESOURCE";
         public static final String CLUSTER_RESOURCE_OPERATION = "CLUSTER_RESOURCE";
@@ -159,10 +162,10 @@ public class RequestBrokerService
             assertNotEmpty(state.resourceLinks, "resourceLinks");
         }
 
-        if (!(isDockerContainerType(state) || isContainerHostType(state)
+        if (!(isContainerType(state) || isContainerHostType(state) || isContainerNetworkType(state)
                 || isComputeType(state) || isCompositeComponentType(state))) {
             throw new IllegalArgumentException(
-                    "Only 'DOCKER_CONTAINER', 'CONTAINER_HOST' and 'COMPOSITE_COMPONENT' resource types are supported.");
+                    "Only 'DOCKER_CONTAINER', 'CONTAINER_HOST', 'CONTAINER_NETWORK', 'COMPUTE' and 'COMPOSITE_COMPONENT' resource types are supported.");
         }
 
         if (state.resourceCount <= 0) {
@@ -356,7 +359,7 @@ public class RequestBrokerService
     }
 
     private void createResourceOperation(RequestBrokerState state) {
-        if (isDockerContainerType(state)) {
+        if (isContainerType(state)) {
             if (isRemoveOperation(state)) {
                 createContainerRemovalAllocationTasks(state, false);
             } else if (isContainerClusteringOperation(state)) {
@@ -381,6 +384,16 @@ public class RequestBrokerService
             } else {
                 createComputeOperationTasks(state);
             }
+        } else if (isContainerNetworkType(state)) {
+            if (isRemoveOperation(state)) {
+                // TODO - handle the removal
+                // createContainerNetworkRemovalTask(state);
+                failTask(null, new IllegalArgumentException("Not supported operation YET: "
+                        + state.operation));
+            } else {
+                failTask(null, new IllegalArgumentException("Not supported operation: "
+                        + state.operation));
+            }
         } else {
             failTask(null, new IllegalArgumentException("Not supported resourceType: "
                     + state.resourceType));
@@ -391,8 +404,7 @@ public class RequestBrokerService
         if (isRemoveOperation(state)) {
             createCompositeComponentRemovalTask(state);
         } else {
-            QueryTask compositeQueryTask =
-                    QueryUtil.buildQuery(CompositeComponent.class, true);
+            QueryTask compositeQueryTask = QueryUtil.buildQuery(CompositeComponent.class, true);
 
             QueryUtil.addExpandOption(compositeQueryTask);
             QueryUtil.addListValueClause(compositeQueryTask,
@@ -403,12 +415,14 @@ public class RequestBrokerService
             new ServiceDocumentQuery<CompositeComponent>(getHost(), CompositeComponent.class)
                     .query(compositeQueryTask, (r) -> {
                         if (r.hasException()) {
-                            logSevere("Failed to create operation task for %s - %s", r.getDocumentSelfLink(), r.getException());
+                            logSevere("Failed to create operation task for %s - %s",
+                                    r.getDocumentSelfLink(), r.getException());
                         } else if (r.hasResult()) {
                             componentLinks.addAll(r.getResult().componentLinks);
                         } else {
                             if (componentLinks.isEmpty()) {
-                                logSevere("Failed to create operation task - composite component's container links are empty");
+                                logSevere(
+                                        "Failed to create operation task - composite component's container links are empty");
                             }
                             state.resourceLinks = componentLinks;
                             // TODO: Handle other types
@@ -610,6 +624,9 @@ public class RequestBrokerService
     private void createReservationTasks(RequestBrokerState state) {
         if (isComputeType(state)) {
             getComputeDescription(state, (cd) -> createComputeReservationTasks(state, cd));
+        } else if (isContainerNetworkType(state)) {
+            // No reservation needed here, moving on...
+            sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESERVED));
         } else {
             getContainerDescription(state, (cd) -> createReservationTasks(state, cd));
         }
@@ -703,7 +720,7 @@ public class RequestBrokerService
     }
 
     private void createAllocationTasks(RequestBrokerState state) {
-        if (isDockerContainerType(state)) {
+        if (isContainerType(state)) {
 
             getContainerDescription(state, (containerDesc) -> {
                 ContainerAllocationTaskState allocationTask = new ContainerAllocationTaskState();
@@ -743,6 +760,59 @@ public class RequestBrokerService
                         }));
             });
 
+        } else if (isContainerNetworkType(state)) {
+            if (!isPostAllocationOperation(state)) {
+                // 1. allocate the network
+                ContainerNetworkAllocationTaskState allocationTask = new ContainerNetworkAllocationTaskState();
+                allocationTask.documentSelfLink = Service.getId(state.documentSelfLink);
+                allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
+                        state.documentSelfLink, TaskStage.STARTED, SubStage.ALLOCATED,
+                        TaskStage.STARTED, SubStage.ERROR);
+                allocationTask.customProperties = state.customProperties;
+                allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
+
+                allocationTask.tenantLinks = state.tenantLinks;
+                allocationTask.requestTrackerLink = state.requestTrackerLink;
+                allocationTask.resourceLinks = state.resourceLinks;
+                allocationTask.resourceCount = state.resourceCount;
+
+                sendRequest(Operation
+                        .createPost(this, ContainerNetworkAllocationTaskService.FACTORY_LINK)
+                        .setBody(allocationTask)
+                        .setContextId(getSelfId())
+                        .setCompletion((o, e) -> {
+                            if (e != null) {
+                                failTask("Failure creating resource allocation task", e);
+                                return;
+                            }
+                            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                        }));
+            } else {
+                // 2. provision the network
+                ContainerNetworkProvisionTaskState provisionTask = new ContainerNetworkProvisionTaskState();
+                provisionTask.documentSelfLink = Service.getId(state.documentSelfLink);
+                provisionTask.serviceTaskCallback = ServiceTaskCallback.create(
+                        state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
+                        TaskStage.STARTED, SubStage.REQUEST_FAILED);
+                provisionTask.customProperties = state.customProperties;
+
+                provisionTask.tenantLinks = state.tenantLinks;
+                provisionTask.requestTrackerLink = state.requestTrackerLink;
+                provisionTask.resourceLinks = state.resourceLinks;
+                provisionTask.resourceCount = state.resourceCount;
+                provisionTask.resourceDescriptionLink = state.resourceDescriptionLink;
+
+                sendRequest(Operation
+                        .createPost(this, ContainerNetworkProvisionTaskService.FACTORY_LINK)
+                        .setBody(provisionTask)
+                        .setContextId(getSelfId())
+                        .setCompletion((o, e) -> {
+                            if (e != null) {
+                                failTask("Failure creating resource provision task", e);
+                                return;
+                            }
+                        }));
+            }
         } else if (isComputeType(state)) {
             ComputeAllocationTaskState allocationTask = new ComputeAllocationTaskState();
             allocationTask.documentSelfLink = Service.getId(state.documentSelfLink);
@@ -779,7 +849,7 @@ public class RequestBrokerService
     }
 
     private void createCompositionTask(RequestBrokerState state) {
-        if (isDockerContainerType(state) || isComputeType(state)) {
+        if (isContainerType(state) || isComputeType(state)) {
             CompositionTaskState compositionTask = new CompositionTaskState();
             compositionTask.documentSelfLink = Service.getId(state.documentSelfLink);
             compositionTask.serviceTaskCallback = ServiceTaskCallback.create(
@@ -878,13 +948,14 @@ public class RequestBrokerService
     }
 
     private boolean isPostAllocationOperation(RequestBrokerState state) {
-        return (isDockerContainerType(state) || isComputeType(state))
+        return (isContainerType(state) || isContainerNetworkType(state) || isComputeType(state))
                 && (ContainerOperationType.CREATE.id.equals(state.operation)
-                || ComputeOperationType.CREATE.id.equals(state.operation));
+                        || NetworkOperationType.CREATE.id.equals(state.operation)
+                        || ComputeOperationType.CREATE.id.equals(state.operation));
     }
 
     private boolean isCompositionProvisioning(RequestBrokerState state) {
-        return (isDockerContainerType(state) || isComputeType(state))
+        return (isContainerType(state) || isComputeType(state))
                 && state.resourceDescriptionLink != null
                 && state.resourceDescriptionLink.startsWith(ManagementUriParts.COMPOSITE_DESC);
     }
@@ -894,15 +965,19 @@ public class RequestBrokerService
             return true;
         }
 
-        if (isDockerContainerType(state) || isCompositeComponentType(state)) {
+        if (isContainerType(state) || isCompositeComponentType(state)) {
             return ContainerOperationType.DELETE.id.equals(state.operation);
         }
 
         return false;
     }
 
-    private boolean isDockerContainerType(RequestBrokerState state) {
+    private boolean isContainerType(RequestBrokerState state) {
         return ResourceType.CONTAINER_TYPE.getName().equals(state.resourceType);
+    }
+
+    private boolean isContainerNetworkType(RequestBrokerState state) {
+        return ResourceType.NETWORK_TYPE.getName().equals(state.resourceType);
     }
 
     private boolean isCompositeComponentType(RequestBrokerState state) {

@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute.container.network;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
+import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -90,6 +92,12 @@ public class ContainerNetworkDescriptionService extends StatefulService {
         @JsonProperty("external_name")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public String externalName;
+
+        /** Instance Adapter reference for provisioning of containers */
+        @Documentation(description = "Instance Adapter reference for provisioning of containers.")
+        @JsonIgnore
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public URI instanceAdapterReference;
 
         /** Custom properties. */
         @JsonIgnore
@@ -181,6 +189,11 @@ public class ContainerNetworkDescriptionService extends StatefulService {
             Utils.validateState(getStateDescription(), state);
         }
 
+        if (state.instanceAdapterReference == null) {
+            state.instanceAdapterReference = UriUtilsExtended.buildUri(getHost(),
+                    ManagementUriParts.ADAPTER_DOCKER);
+        }
+
         NetworkUtils.validateNetworkName(state.name);
 
         if (state.ipam != null) {
@@ -201,7 +214,8 @@ public class ContainerNetworkDescriptionService extends StatefulService {
 
     @Override
     public ServiceDocument getDocumentTemplate() {
-        ContainerNetworkDescription template = (ContainerNetworkDescription) super.getDocumentTemplate();
+        ContainerNetworkDescription template = (ContainerNetworkDescription) super
+                .getDocumentTemplate();
 
         template.name = "name (string)";
 

@@ -59,14 +59,14 @@ public final class AffinityFilters {
 
     private void initialize(ServiceHost host, ContainerNetworkDescription desc) {
 
+        filters.add(new ContainerNetworkAffinityHostFilter(host, desc));
     }
 
     private void initialize(ServiceHost host, ComputeDescription desc) {
 
     }
 
-    private void initialize(ServiceHost host,
-            ContainerDescription desc) {
+    private void initialize(ServiceHost host, ContainerDescription desc) {
 
         filters.add(new ExposedPortsHostFilter(host, desc));
 
@@ -83,7 +83,7 @@ public final class AffinityFilters {
         // non host related dependency only
         filters.add(new ServiceLinkAffinityFilter(desc));
         filters.add(new DependsOnAffinityHostFilter(desc));
-        filters.add(new NetworkAffinityHostFilter(host, desc));
+        filters.add(new ContainerToNetworkAffinityHostFilter(host, desc));
 
     }
 

@@ -15,30 +15,38 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
+import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
+import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService.ContainerNetworkProvisionTaskState.SubStage;
-import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.services.common.QueryTask;
 
 /**
  * Task implementing the provisioning of a container network.
@@ -47,10 +55,12 @@ public class ContainerNetworkProvisionTaskService
         extends
         AbstractTaskStatefulService<ContainerNetworkProvisionTaskService.ContainerNetworkProvisionTaskState, ContainerNetworkProvisionTaskService.ContainerNetworkProvisionTaskState.SubStage> {
 
-    // TODO add logic to start the service
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_PROVISION_CONTAINER_NETWORK_TASKS;
 
     public static final String DISPLAY_NAME = "Container Network Provision";
+
+    // cached network description
+    private volatile ContainerNetworkDescription networkDescription;
 
     public static class ContainerNetworkProvisionTaskState
             extends
@@ -65,6 +75,12 @@ public class ContainerNetworkProvisionTaskService
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(PROVISIONING));
         }
+
+        /**  (Required) The description that defines the requested resource. */
+        @Documentation(description = "Type of resource to create.")
+        @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
+                PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT })
+        public String resourceDescriptionLink;
 
         /** (Required) Type of resource to create. */
         @Documentation(description = "Type of resource to create.")
@@ -84,27 +100,13 @@ public class ContainerNetworkProvisionTaskService
                 PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT })
         public List<String> resourceLinks;
 
-        /** (Required) List of ComputeStates on which the networks will be created on. */
-        @Documentation(description = "List of ComputeStates on which the networks will be created on.")
-        @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
-                PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT })
-        public List<HostSelection> hostSelections;
-
-        /** (Required) Reference to the adapter that will fulfill the provision request. */
-        @Documentation(description = "Reference to the adapter that will fulfill the provision request.")
-        @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
-                PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT })
-        public URI instanceAdapterReference;
-
         // Service use fields:
 
-        /**
-         * (Internal) Maps network links to selected hosts on which the networks will be created.
-         */
-        @Documentation(description = "Maps network links to selected hosts on which the networks will be created.")
+        /** (Internal) Reference to the adapter that will fulfill the provision request. */
+        @Documentation(description = "Reference to the adapter that will fulfill the provision request.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.SERVICE_USE, PropertyUsageOption.SINGLE_ASSIGNMENT })
-        public Map<String, HostSelection> resourceLinkToHostSelection;
+        public URI instanceAdapterReference;
 
     }
 
@@ -120,9 +122,8 @@ public class ContainerNetworkProvisionTaskService
     @Override
     protected void validateStateOnStart(ContainerNetworkProvisionTaskState state) {
         assertNotEmpty(state.resourceType, "resourceType");
-        assertNotNull(state.instanceAdapterReference, "instanceAdapterReference");
+        assertNotNull(state.resourceDescriptionLink, "resourceDescriptionLink");
         assertNotNull(state.resourceLinks, "resourceLinks");
-        assertNotNull(state.hostSelections, "hostSelections");
 
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
@@ -132,23 +133,12 @@ public class ContainerNetworkProvisionTaskService
             throw new IllegalArgumentException(
                     "size of 'resourceLinks' must be equal to 'resourcesCount'");
         }
-
-        if (state.hostSelections.size() != state.resourceLinks.size()) {
-            throw new IllegalArgumentException(
-                    "size of 'hostSelections' must be equal to size of 'resourceLinks'");
-        }
     }
 
     @Override
     protected boolean validateStageTransition(Operation patch,
             ContainerNetworkProvisionTaskState patchBody,
             ContainerNetworkProvisionTaskState currentState) {
-
-        currentState.hostSelections = mergeProperty(
-                currentState.hostSelections, patchBody.hostSelections);
-
-        currentState.resourceLinkToHostSelection = mergeProperty(
-                currentState.resourceLinkToHostSelection, patchBody.resourceLinkToHostSelection);
 
         currentState.instanceAdapterReference = mergeProperty(
                 currentState.instanceAdapterReference, patchBody.instanceAdapterReference);
@@ -166,8 +156,7 @@ public class ContainerNetworkProvisionTaskService
     protected void handleStartedStagePatch(ContainerNetworkProvisionTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            state = prepareResourceLinksToHostSelectionMap(state);
-            provisionNetworks(state, null);
+            provisionNetworks(state);
             break;
         case PROVISIONING:
             break;
@@ -182,71 +171,48 @@ public class ContainerNetworkProvisionTaskService
         }
     }
 
-    private ContainerNetworkProvisionTaskState prepareResourceLinksToHostSelectionMap(
-            ContainerNetworkProvisionTaskState state) {
-        assertNotNull(state.hostSelections, "hostSelections");
-
-        final Map<String, HostSelection> resourceNameToHostSelection = selectHostPerResourceLink(
-                state.resourceLinks, state.hostSelections);
-        state.resourceLinkToHostSelection = resourceNameToHostSelection;
-        return state;
-    }
-
-    private Map<String, HostSelection> selectHostPerResourceLink(Collection<String> resourceLinks,
-            Collection<HostSelection> hostSelections) {
-        AssertUtil.assertTrue(resourceLinks.size() <= hostSelections.size(),
-                "There should be a selected host for each resource");
-
-        Map<String, HostSelection> resourceLinkToHostSelection = new HashMap<String, HostSelection>();
-        Iterator<String> rlIterator = resourceLinks.iterator();
-        Iterator<HostSelection> hsIterator = hostSelections.iterator();
-        while (rlIterator.hasNext() && hsIterator.hasNext()) {
-            resourceLinkToHostSelection.put(rlIterator.next(), hsIterator.next());
-        }
-
-        return resourceLinkToHostSelection;
-    }
-
-    private void provisionNetworks(ContainerNetworkProvisionTaskState state,
-            ServiceTaskCallback taskCallback) {
-
-        if (taskCallback == null) {
-            // create a counter subtask link first
-            createCounterSubTaskCallback(state, state.resourceCount, false,
-                    SubStage.COMPLETED,
-                    (serviceTask) -> provisionNetworks(state, serviceTask));
-            return;
-        }
+    private void provisionNetworks(ContainerNetworkProvisionTaskState state) {
 
         logInfo("Provision request for %s networks", state.resourceCount);
 
-        for (String networkLink : state.resourceLinks) {
-            URI hostReference = getContainerHostReferenceForNetwork(state, networkLink);
-            updateContainerNetworkStateWithContainerHostLink(networkLink, hostReference,
-                    taskCallback,
-                    () -> createAndSendContainerNetworkRequest(state, taskCallback, networkLink));
-        }
+        createTaskCallbackAndGetNetworkDescription(state, (taskCallback, networkDescription) -> {
+            state.instanceAdapterReference = networkDescription.instanceAdapterReference;
+            selectHostLink(state, networkDescription, (hostLink) -> {
+                for (String networkLink : state.resourceLinks) {
+                    provisionNetwork(state, networkLink, hostLink, taskCallback);
+                }
+            });
+        });
 
         sendSelfPatch(createUpdateSubStageTask(state, SubStage.PROVISIONING));
     }
 
+    private void provisionNetwork(ContainerNetworkProvisionTaskState state,
+            String networkLink, String hostLink, ServiceTaskCallback taskCallback) {
+        updateContainerNetworkStateWithContainerHostLink(networkLink, hostLink,
+                () -> createAndSendContainerNetworkRequest(state, taskCallback, networkLink));
+    }
+
     private void updateContainerNetworkStateWithContainerHostLink(String networkSelfLink,
-            URI originatingHostReference, ServiceTaskCallback taskCallback,
-            Runnable callbackFunction) {
+            String originatingHostLink, Runnable callbackFunction) {
 
         ContainerNetworkState patch = new ContainerNetworkState();
-        patch.originatingHostReference = originatingHostReference;
+        patch.originatingHostLink = originatingHostLink;
 
-        sendRequest(Operation.createPatch(this, networkSelfLink)
+        sendRequest(Operation
+                .createPatch(this, networkSelfLink)
                 .setBody(patch)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logWarning("Error while updating network: %s", networkSelfLink);
-                        completeSubTasksCounter(taskCallback, e);
-                    } else {
-                        callbackFunction.run();
-                    }
-                }));
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                String errMsg = String.format("Error while updating network: %s",
+                                        networkSelfLink);
+                                logWarning(errMsg);
+                                failTask(errMsg, e);
+                            } else {
+                                callbackFunction.run();
+                            }
+                        }));
     }
 
     private void createAndSendContainerNetworkRequest(ContainerNetworkProvisionTaskState state,
@@ -270,10 +236,156 @@ public class ContainerNetworkProvisionTaskService
                 }));
     }
 
-    private URI getContainerHostReferenceForNetwork(ContainerNetworkProvisionTaskState state,
-            String networkSelfLink) {
-        String hostLink = state.resourceLinkToHostSelection.get(networkSelfLink).hostLink;
-        return UriUtils.buildUri(getHost(), hostLink);
+    private void createTaskCallbackAndGetNetworkDescription(
+            ContainerNetworkProvisionTaskState state,
+            BiConsumer<ServiceTaskCallback, ContainerNetworkDescription> callbackFunction) {
+        AtomicReference<ServiceTaskCallback> taskCallback = new AtomicReference<>();
+        AtomicReference<ContainerNetworkDescription> networkDescription = new AtomicReference<>();
+
+        createCounterSubTaskCallback(
+                state,
+                state.resourceCount,
+                false,
+                SubStage.COMPLETED,
+                (callback) -> {
+                    taskCallback.set(callback);
+                    ContainerNetworkDescription nd = networkDescription.get();
+                    if (nd != null) {
+                        callbackFunction.accept(callback, nd);
+                    }
+                });
+
+        getContainerNetworkDescription(state, (nd) -> {
+            networkDescription.set(nd);
+            ServiceTaskCallback callback = taskCallback.get();
+            if (callback != null) {
+                callbackFunction.accept(callback, nd);
+            }
+        });
+    }
+
+    private void getContainerNetworkDescription(ContainerNetworkProvisionTaskState state,
+            Consumer<ContainerNetworkDescription> callbackFunction) {
+        if (networkDescription != null) {
+            callbackFunction.accept(networkDescription);
+            return;
+        }
+
+        sendRequest(Operation.createGet(this, state.resourceDescriptionLink)
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                failTask("Failure retrieving container network description state",
+                                        e);
+                                return;
+                            }
+
+                            ContainerNetworkDescription desc = o
+                                    .getBody(ContainerNetworkDescription.class);
+                            this.networkDescription = desc;
+                            callbackFunction.accept(desc);
+                        }));
+    }
+
+    private void getContextContainerStates(ContainerNetworkProvisionTaskState state,
+            Consumer<Map<String, List<ContainerState>>> callback) {
+        String contextId = getContextId(state);
+
+        QueryTask q = QueryUtil.buildPropertyQuery(ContainerState.class,
+                ContainerState.FIELD_NAME_COMPOSITE_COMPONENT_LINK, UriUtils.buildUriPath(
+                        CompositeComponentFactoryService.SELF_LINK, contextId));
+        q.taskInfo.isDirect = false;
+        QueryUtil.addExpandOption(q);
+
+        Map<String, List<ContainerState>> containersByDescriptionLink = new HashMap<>();
+
+        new ServiceDocumentQuery<ContainerState>(getHost(), ContainerState.class)
+                .query(q,
+                        (r) -> {
+                            if (r.hasException()) {
+                                failTask(
+                                        "Exception while selecting containers with contextId ["
+                                                + contextId + "]", r.getException());
+                            } else if (r.hasResult()) {
+                                ContainerState result = r.getResult();
+
+                                List<ContainerState> containers = containersByDescriptionLink
+                                        .get(result.descriptionLink);
+                                if (containers == null) {
+                                    containers = new ArrayList<>();
+                                    containersByDescriptionLink.put(result.descriptionLink,
+                                            containers);
+                                }
+
+                                containers.add(result);
+                            } else {
+                                callback.accept(containersByDescriptionLink);
+                            }
+                        });
+
+    }
+
+    private void getContextContainerDescriptions(
+            Map<String, List<ContainerState>> containersByDescriptionLink,
+            Consumer<List<ContainerDescription>> callback) {
+        QueryTask q = QueryUtil.buildQuery(ContainerDescription.class, true);
+
+        QueryUtil.addExpandOption(q);
+        QueryUtil.addListValueClause(q, ContainerDescription.FIELD_NAME_SELF_LINK,
+                containersByDescriptionLink.keySet());
+
+        q.taskInfo.isDirect = false;
+
+        List<ContainerDescription> result = new ArrayList<>();
+
+        new ServiceDocumentQuery<ContainerDescription>(getHost(), ContainerDescription.class)
+                .query(q, (r) -> {
+                    if (r.hasException()) {
+                        failTask("Exception while selecting container descriptions",
+                                r.getException());
+                    } else if (r.hasResult()) {
+                        result.add(r.getResult());
+                    } else {
+                        callback.accept(result);
+                    }
+                });
+
+    }
+
+    private List<ContainerState> getDependantContainerStates(
+            List<ContainerDescription> containerDescriptions,
+            Map<String, List<ContainerState>> containersByDescriptionLink,
+            ContainerNetworkDescription networkDescription) {
+        List<ContainerState> result = new ArrayList<>();
+        for (ContainerDescription cd : containerDescriptions) {
+            if (cd.networks != null && cd.networks.get(networkDescription.name) != null) {
+                result.addAll(containersByDescriptionLink.get(cd.documentSelfLink));
+            }
+        }
+        return result;
+    }
+
+    private void selectHostLink(ContainerNetworkProvisionTaskState state,
+            ContainerNetworkDescription networkDescription, Consumer<String> callback) {
+        getContextContainerStates(
+                state,
+                (states) -> {
+                    getContextContainerDescriptions(
+                            states,
+                            (descriptions) -> {
+                                List<ContainerState> containerStatesForNetwork = getDependantContainerStates(
+                                        descriptions, states, networkDescription);
+                                if (containerStatesForNetwork.isEmpty()) {
+                                    String err = String
+                                            .format("No container states depending on network description [%s] found.",
+                                                    networkDescription.name);
+                                    failTask(err, null);
+                                } else {
+                                    String hostLink = containerStatesForNetwork.get(0).parentLink;
+                                    callback.accept(hostLink);
+                                }
+                            });
+                });
     }
 
 }

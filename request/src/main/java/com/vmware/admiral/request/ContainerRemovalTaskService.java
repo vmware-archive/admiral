@@ -403,13 +403,19 @@ public class ContainerRemovalTaskService
                         AtomicLong skipOperationException = new AtomicLong();
 
                         Operation delContainerOpr = deleteContainer(cs);
-                        Operation delNetworkConfig = deleteNetworkConfig(cs, skipOperationException);
+                        Operation delNetworkConfig = null;
+                        if (cs.parentLink != null) {
+                            delNetworkConfig = deleteNetworkConfig(cs, skipOperationException);
+                        }
+
                         Operation policyOpr = releaseResourcePolicy(state, cs, subTaskLink);
 
                         // list of operations to execute to release container resources
                         List<Operation> operations = new ArrayList<>();
                         operations.add(delContainerOpr);
-                        operations.add(delNetworkConfig);
+                        if (delNetworkConfig != null) {
+                            operations.add(delNetworkConfig);
+                        }
                         // add policyOpr only when needed
                         if (policyOpr != null) {
                             operations.add(policyOpr);

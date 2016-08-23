@@ -47,7 +47,7 @@ public class ContainerToNetworkAffinityHostFilterTest extends BaseAffinityHostFi
         createContainer(desc, initialHostLinks.get(0));
         createContainer(desc, initialHostLinks.get(1));
 
-        filter = new NetworkAffinityHostFilter(host, desc);
+        filter = new ContainerToNetworkAffinityHostFilter(host, desc);
         Throwable e = filter(initialHostLinks);
         if (e != null) {
             fail("Unexpected exception: " + e);
@@ -60,14 +60,15 @@ public class ContainerToNetworkAffinityHostFilterTest extends BaseAffinityHostFi
         String randomName = networkDescription1.name + "-name35";
         ContainerNetworkState networkState1 = createNetwork(networkDescription1, randomName);
 
-        ContainerNetworkDescription networkDescription2 = createNetworkDescription("my-other-test-net");
+        ContainerNetworkDescription networkDescription2 = createNetworkDescription(
+                "my-other-test-net");
         randomName = networkDescription2.name + "-name270";
         ContainerNetworkState networkState2 = createNetwork(networkDescription2, randomName);
 
         ContainerDescription desc = createDescription(new String[] { networkDescription1.name,
                 networkDescription2.name });
 
-        filter = new NetworkAffinityHostFilter(host, desc);
+        filter = new ContainerToNetworkAffinityHostFilter(host, desc);
         Map<String, HostSelection> filterToHostSelectionMap = filterToHostSelectionMap();
 
         for (HostSelection hs : filterToHostSelectionMap.values()) {
@@ -82,14 +83,14 @@ public class ContainerToNetworkAffinityHostFilterTest extends BaseAffinityHostFi
     @Test
     public void testInactiveWithoutNetworks() throws Throwable {
         ContainerDescription desc = createDescription(new String[] {});
-        filter = new NetworkAffinityHostFilter(host, desc);
+        filter = new ContainerToNetworkAffinityHostFilter(host, desc);
         assertFalse(filter.isActive());
     }
 
     @Test
     public void testAffinityConstraintsToNetworks() throws Throwable {
         ContainerDescription desc = createDescription(new String[] { "net1", "net2", "net3" });
-        filter = new NetworkAffinityHostFilter(host, desc);
+        filter = new ContainerToNetworkAffinityHostFilter(host, desc);
         assertTrue(filter.isActive());
 
         Set<String> affinityConstraintsKeys = filter.getAffinityConstraints().keySet();

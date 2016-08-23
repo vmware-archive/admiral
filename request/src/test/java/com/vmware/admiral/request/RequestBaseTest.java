@@ -41,6 +41,8 @@ import com.vmware.admiral.compute.container.GroupResourcePolicyService;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.endpoint.EndpointService;
 import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
 import com.vmware.admiral.host.HostInitAdapterServiceConfig;
@@ -78,6 +80,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected ComputeDescription vmGuestComputeDescription;
     protected ComputeState vmGuestComputeState;
     protected ContainerDescription containerDesc;
+    protected ContainerNetworkDescription containerNetworkDesc;
     protected GroupResourcePolicyState groupPolicyState;
     protected GroupResourcePolicyState computeGroupPolicyState;
     private final List<ServiceDocument> documentsForDeletion = new ArrayList<>();
@@ -113,6 +116,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
         services.addAll(Arrays.asList(
                 RequestBrokerFactoryService.SELF_LINK,
                 ContainerAllocationTaskFactoryService.SELF_LINK,
+                ContainerNetworkAllocationTaskService.FACTORY_LINK,
+                ContainerNetworkProvisionTaskService.FACTORY_LINK,
                 ReservationTaskFactoryService.SELF_LINK,
                 ReservationRemovalTaskFactoryService.SELF_LINK,
                 ContainerRemovalTaskFactoryService.SELF_LINK,
@@ -231,6 +236,21 @@ public abstract class RequestBaseTest extends BaseTestCase {
         }
     }
 
+    protected ContainerNetworkDescription createContainerNetworkDescription(String name)
+            throws Throwable {
+        synchronized (initializationLock) {
+            if (containerNetworkDesc == null) {
+                ContainerNetworkDescription desc = TestRequestStateFactory
+                        .createContainerNetworkDescription(name);
+                desc.documentSelfLink = UUID.randomUUID().toString();
+                containerNetworkDesc = doPost(desc,
+                        ContainerNetworkDescriptionService.FACTORY_LINK);
+                assertNotNull(containerNetworkDesc);
+            }
+            return containerNetworkDesc;
+        }
+    }
+
     protected ComputeDescription createDockerHostDescription() throws Throwable {
         synchronized (initializationLock) {
             if (hostDesc == null) {
@@ -248,7 +268,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected ComputeDescription createVmGuestComputeDescription() throws Throwable {
         synchronized (initializationLock) {
             if (vmGuestComputeDescription == null) {
-                vmGuestComputeDescription = TestRequestStateFactory.createVmGuestComputeDescription();
+                vmGuestComputeDescription = TestRequestStateFactory
+                        .createVmGuestComputeDescription();
                 vmGuestComputeDescription.authCredentialsLink = endpoint.authCredentialsLink;
                 vmGuestComputeDescription = getOrCreateDocument(vmGuestComputeDescription,
                         ComputeDescriptionService.FACTORY_LINK);
@@ -343,7 +364,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected synchronized ResourcePoolState createComputeResourcePool() throws Throwable {
         synchronized (initializationLock) {
             if (computeResourcePool == null) {
-                computeResourcePool = getOrCreateDocument(TestRequestStateFactory.createResourcePool(),
+                computeResourcePool = getOrCreateDocument(
+                        TestRequestStateFactory.createResourcePool(),
                         ResourcePoolService.FACTORY_LINK);
                 assertNotNull(computeResourcePool);
             }
@@ -396,6 +418,10 @@ public abstract class RequestBaseTest extends BaseTestCase {
         return waitForTaskError(requestState.documentSelfLink, RequestBrokerState.class);
     }
 
+    /**
+     * Use {@link #createCompositeDesc(boolean, ServiceDocument...)} instead!
+     */
+    @Deprecated
     protected CompositeDescriptionService.CompositeDescription createCompositeDesc(
             boolean isCloned, ResourceType type, ServiceDocument... descs)
             throws Throwable {
@@ -421,11 +447,49 @@ public abstract class RequestBaseTest extends BaseTestCase {
         return compositeDesc;
     }
 
+    /**
+     * Use {@link #createCompositeDesc(ServiceDocument...)} instead!
+     */
+    @Deprecated
     protected CompositeDescriptionService.CompositeDescription createCompositeDesc(
             ResourceType type,
             ServiceDocument... descs) throws Throwable {
 
         return createCompositeDesc(false, type, descs);
+    }
+
+    protected CompositeDescriptionService.CompositeDescription createCompositeDesc(
+            boolean isCloned, ServiceDocument... descs) throws Throwable {
+        CompositeDescriptionService.CompositeDescription compositeDesc = TestRequestStateFactory
+                .createCompositeDescription(isCloned);
+
+        for (ServiceDocument desc : descs) {
+            desc.documentSelfLink = UUID.randomUUID().toString();
+            if (desc instanceof ContainerDescriptionService.ContainerDescription) {
+                desc = doPost(desc, ContainerDescriptionService.FACTORY_LINK);
+            } else if (desc instanceof ContainerNetworkDescriptionService.ContainerNetworkDescription) {
+                desc = doPost(desc, ContainerNetworkDescriptionService.FACTORY_LINK);
+            } else if (desc instanceof ComputeDescriptionService.ComputeDescription) {
+                desc = doPost(desc, ComputeDescriptionService.FACTORY_LINK);
+            } else {
+                throw new IllegalArgumentException(
+                        "Unknown description type: " + desc.getClass().getSimpleName());
+            }
+
+            addForDeletion(desc);
+            compositeDesc.descriptionLinks.add(desc.documentSelfLink);
+        }
+
+        compositeDesc = doPost(compositeDesc, CompositeDescriptionFactoryService.SELF_LINK);
+        addForDeletion(compositeDesc);
+
+        return compositeDesc;
+    }
+
+    protected CompositeDescriptionService.CompositeDescription createCompositeDesc(
+            ServiceDocument... descs) throws Throwable {
+
+        return createCompositeDesc(false, descs);
     }
 
 }

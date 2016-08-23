@@ -259,6 +259,8 @@ public class PlacementHostSelectionTaskService
                     computeState.customProperties,
                     ContainerHostService.DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME)
                     .orElse(Long.MAX_VALUE);
+            hostSelection.clusterStore = computeState.customProperties
+                    .get(ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME);
             initHostSelectionMap.put(hostSelection.hostLink, hostSelection);
         }
         return initHostSelectionMap;

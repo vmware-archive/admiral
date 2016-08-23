@@ -21,6 +21,7 @@ import com.vmware.admiral.adapter.docker.service.DockerOperationTypesService;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
+import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
@@ -37,6 +38,9 @@ public class HostInitAdapterServiceConfig {
 
             host.startService(Operation.createPost(UriUtils.buildUri(host,
                     MockDockerHostAdapterService.class)), new MockDockerHostAdapterService());
+
+            host.startService(Operation.createPost(UriUtils.buildUri(host,
+                    MockDockerNetworkAdapterService.class)), new MockDockerNetworkAdapterService());
         } else {
             URI instanceReference = null;
             String remoteAdapterReference = System

@@ -28,6 +28,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.ContainerAllocationTaskFactoryService;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
+import com.vmware.admiral.request.ContainerNetworkProvisionTaskService;
+import com.vmware.admiral.request.ContainerNetworkProvisionTaskService.ContainerNetworkProvisionTaskState;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService.CompositionSubTaskState.SubStage;
@@ -345,9 +347,10 @@ public class CompositionSubTaskService extends
 
     private void executeTask(CompositionSubTaskState state) {
         if (ResourceType.CONTAINER_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
-            createContainerAllocationTask(state);
-        } else if (ResourceType.COMPUTE_TYPE.getName()
-                .equalsIgnoreCase(state.resourceType)) {
+            createContainerAllocationTaskState(state);
+        } else if (ResourceType.NETWORK_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
+            createContainerNetworkProvisionTaskState(state);
+        } else if (ResourceType.COMPUTE_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createComputeAllocationTaskState(state);
         } else {
             throw new IllegalArgumentException(String.format("Unsupported type. Must be: %s or %s",
@@ -355,7 +358,7 @@ public class CompositionSubTaskService extends
         }
     }
 
-    private void createContainerAllocationTask(CompositionSubTaskState state) {
+    private void createContainerAllocationTaskState(CompositionSubTaskState state) {
         ContainerAllocationTaskState allocationTask = new ContainerAllocationTaskState();
         allocationTask.documentSelfLink = getSelfId();
         allocationTask.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
@@ -375,6 +378,32 @@ public class CompositionSubTaskService extends
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         failTask("Failure creating container allocation task", e);
+                        return;
+                    }
+                }));
+
+        sendSelfPatch(createUpdateSubStageTask(state, SubStage.EXECUTING));
+    }
+
+    private void createContainerNetworkProvisionTaskState(CompositionSubTaskState state) {
+        ContainerNetworkProvisionTaskState task = new ContainerNetworkProvisionTaskState();
+        task.documentSelfLink = getSelfId();
+        task.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+                TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
+        task.customProperties = state.customProperties;
+        task.resourceCount = Long.valueOf(state.resourceLinks.size());
+        task.resourceType = state.resourceType;
+        task.tenantLinks = state.tenantLinks;
+        task.requestTrackerLink = state.requestTrackerLink;
+        task.resourceLinks = state.resourceLinks;
+        task.resourceDescriptionLink = state.resourceDescriptionLink;
+
+        sendRequest(Operation.createPost(this, ContainerNetworkProvisionTaskService.FACTORY_LINK)
+                .setBody(task)
+                .setContextId(state.requestId)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating container network provision task", e);
                         return;
                     }
                 }));

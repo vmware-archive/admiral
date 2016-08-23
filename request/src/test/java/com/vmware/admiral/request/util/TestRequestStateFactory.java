@@ -30,6 +30,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
 import com.vmware.admiral.compute.container.PortBinding;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.endpoint.EndpointService;
 import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -136,6 +137,15 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
 
     public static ContainerDescription createContainerDescription(String name) {
         return createContainerDescription(name, false);
+    }
+
+    public static ContainerNetworkDescription createContainerNetworkDescription(String name) {
+        ContainerNetworkDescription desc = new ContainerNetworkDescription();
+        desc.documentSelfLink = "test-network-" + name;
+        desc.name = name;
+        desc.tenantLinks = Collections.singletonList("test-group");
+        // TODO - TBD
+        return desc;
     }
 
     public static ResourcePoolState createResourcePool() {

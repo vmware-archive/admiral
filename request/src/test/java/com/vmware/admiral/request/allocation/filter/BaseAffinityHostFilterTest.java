@@ -22,9 +22,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Before;
 
+import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
@@ -33,6 +35,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState.Powe
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 
@@ -92,8 +95,8 @@ public class BaseAffinityHostFilterTest extends RequestBaseTest {
         ContainerState container = new ContainerState();
         container.descriptionLink = desc.documentSelfLink;
         container.id = UUID.randomUUID().toString();
-        container.ports = desc.portBindings != null ?
-                new ArrayList<>(Arrays.asList(desc.portBindings)) : null;
+        container.ports = desc.portBindings != null
+                ? new ArrayList<>(Arrays.asList(desc.portBindings)) : null;
         List<String> hosts = new ArrayList<>(initialHostLinks);
         Collections.shuffle(hosts);
         container.parentLink = hostLink;
@@ -108,12 +111,8 @@ public class BaseAffinityHostFilterTest extends RequestBaseTest {
 
     protected Throwable filter(Collection<String> expectedLinks) throws Throwable {
         Throwable[] error = new Throwable[] { null };
-        final Map<String, HostSelection> hostSelectionMap = new HashMap<>();
-        for (String hostLink : initialHostLinks) {
-            HostSelection hostSelection = new HostSelection();
-            hostSelection.hostLink = hostLink;
-            hostSelectionMap.put(hostLink, hostSelection);
-        }
+        final Map<String, HostSelection> hostSelectionMap = prepareHostSelectionMap();
+
         host.testStart(1);
         filter
                 .filter(
@@ -131,7 +130,6 @@ public class BaseAffinityHostFilterTest extends RequestBaseTest {
                                             + " - Expected hostlinks: "
                                             + expectedLinks.toString());
                                 }
-                                ;
                             } else {
                                 error[0] = new IllegalStateException("Filtered hostLinks size is: "
                                         + filteredHostSelectionMap.size() + " - Expected size is: "
@@ -145,6 +143,56 @@ public class BaseAffinityHostFilterTest extends RequestBaseTest {
             throw error[0];
         }
         return error[0];
+    }
+
+    protected Map<String, HostSelection> filter(int expectedSize) throws Throwable {
+        final AtomicReference<Throwable> error = new AtomicReference<>();
+        final Map<String, HostSelection> hostSelectionMap = prepareHostSelectionMap();
+        final Map<String, HostSelection> hostSelectedMap = new HashMap<>();
+
+        host.testStart(1);
+        filter
+                .filter(
+                        state,
+                        hostSelectionMap,
+                        (filteredHostSelectionMap, e) -> {
+                            if (e != null) {
+                                error.set(e);
+                            } else if (expectedSize != filteredHostSelectionMap.size()) {
+                                error.set(new IllegalStateException("Filtered hostLinks size is: "
+                                        + filteredHostSelectionMap.size() + " - Expected size is: "
+                                        + expectedSize));
+                            } else {
+                                hostSelectedMap.putAll(filteredHostSelectionMap);
+                            }
+                            host.completeIteration();
+                        });
+
+        host.testWait();
+
+        if (error.get() != null) {
+            throw error.get();
+        }
+
+        return hostSelectedMap;
+    }
+
+    protected Map<String, HostSelection> prepareHostSelectionMap() throws Throwable {
+        Map<String, HostSelection> hostSelectionMap = new HashMap<>();
+        for (String hostLink : initialHostLinks) {
+            HostSelection hostSelection = new HostSelection();
+            hostSelection.hostLink = hostLink;
+
+            ComputeState host = getDocument(ComputeState.class, hostLink);
+            if (host.customProperties
+                    .containsKey(ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME)) {
+                hostSelection.clusterStore = host.customProperties
+                        .get(ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME);
+            }
+
+            hostSelectionMap.put(hostLink, hostSelection);
+        }
+        return hostSelectionMap;
     }
 
 }

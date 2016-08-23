@@ -49,7 +49,6 @@ public class ContainerNetworkAllocationTaskService
         extends
         AbstractTaskStatefulService<ContainerNetworkAllocationTaskService.ContainerNetworkAllocationTaskState, ContainerNetworkAllocationTaskService.ContainerNetworkAllocationTaskState.SubStage> {
 
-    // TODO add logic to start the service
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_CONTAINER_NETWORK_ALLOCATION_TASKS;
 
     public static final String DISPLAY_NAME = "Container Network Allocation";
@@ -152,10 +151,10 @@ public class ContainerNetworkAllocationTaskService
             prepareContextAndCreateResourcePrefixNameSelectionTask(state, null);
             break;
         case RESOURCES_NAMED:
-            state.resourceLinks = buildResourceLinks(state);
             createContainerNetworkStates(state, null, null);
             break;
         case COMPLETED:
+            state.resourceLinks = buildResourceLinks(state);
             complete(state, SubStage.COMPLETED);
             break;
         case ERROR:

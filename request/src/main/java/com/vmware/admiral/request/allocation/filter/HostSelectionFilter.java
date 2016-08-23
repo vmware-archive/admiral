@@ -54,6 +54,9 @@ public interface HostSelectionFilter extends AffinityFilter {
         public Long availableMemory;
         public String deploymentPolicyLink;
 
+        /** Configured location of the key-value store for the overlay networks. */
+        public String clusterStore;
+
         public void addDesc(DescName descName) {
             if (descName == null) {
                 return;
