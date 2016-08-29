@@ -18,6 +18,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
+import static com.vmware.admiral.compute.content.CompositeDescriptionContentServiceTest.MEDIA_TYPE_APPLICATION_YAML_WITH_CHARSET;
 
 import java.net.URI;
 import java.util.Date;
@@ -53,36 +54,38 @@ public class CompositeDescriptionContentServiceWithDockerComposeTest extends Com
     @Test
     public void testImportAsDockerComposeAndExportAsCompositeTemplate() throws Throwable {
         this.host.testStart(1);
-        this.host.send(validateImportExportOperation(compose, false));
+        this.host.send(validateImportExportOperation(compose, true, false));
         this.host.testWait();
     }
 
     @Test
     public void testImportAsDockerComposeAndExportAsDockerCompose() throws Throwable {
         this.host.testStart(1);
-        this.host.send(validateImportExportOperation(compose, true));
+        this.host.send(validateImportExportOperation(compose, false, true));
         this.host.testWait();
     }
 
     @Test
     public void testImportAsCompositeTemplateAndExportAsCompositeTemplate() throws Throwable {
         this.host.testStart(1);
-        this.host.send(validateImportExportOperation(template, false));
+        this.host.send(validateImportExportOperation(template, true, false));
         this.host.testWait();
     }
 
     @Test
     public void testImportAsCompositeTemplateAndExportAsDockerCompose() throws Throwable {
         this.host.testStart(1);
-        this.host.send(validateImportExportOperation(template, true));
+        this.host.send(validateImportExportOperation(template, false, true));
         this.host.testWait();
     }
 
-    private Operation validateImportExportOperation(String yaml, boolean exportAsDocker) {
+    private Operation validateImportExportOperation(String yaml, boolean addCharset,
+            boolean exportAsDocker) {
         // import YAML to Container Description
         return Operation.createPost(UriUtils.buildUri(host,
                 CompositeDescriptionContentService.SELF_LINK))
-                .setContentType(MEDIA_TYPE_APPLICATION_YAML)
+                .setContentType(addCharset ? MEDIA_TYPE_APPLICATION_YAML_WITH_CHARSET
+                        : MEDIA_TYPE_APPLICATION_YAML)
                 .setBody(yaml)
                 .setCompletion((o, e) -> {
                     if (e != null) {

@@ -39,6 +39,8 @@ import com.vmware.xenon.common.UriUtils;
 public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
     private String template;
 
+    public static final String MEDIA_TYPE_APPLICATION_YAML_WITH_CHARSET = "application/yaml; charset=utf-8";
+
     @Before
     public void setUp() throws Throwable {
         this.template = CommonTestStateFactory.getFileContent("WordPress_with_MySQL.yaml");
@@ -50,6 +52,25 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
         Operation createOp = Operation.createPost(UriUtils.buildUri(host,
                 CompositeDescriptionContentService.SELF_LINK))
                 .setContentType(MEDIA_TYPE_APPLICATION_YAML)
+                .forceRemote()
+                .setBody(template);
+
+        AtomicReference<String> location = new AtomicReference<>();
+        verifyOperation(createOp, (o) -> {
+            assertEquals("status code", Operation.STATUS_CODE_OK, o.getStatusCode());
+
+            location.set(o.getResponseHeader(Operation.LOCATION_HEADER));
+            assertNotNull("location header", location);
+        });
+
+        verifyCompositeDescription(location.get());
+    }
+
+    @Test
+    public void testCompositeDescriptionContentServicesWithCharset() throws Throwable {
+        Operation createOp = Operation.createPost(UriUtils.buildUri(host,
+                CompositeDescriptionContentService.SELF_LINK))
+                .setContentType(MEDIA_TYPE_APPLICATION_YAML_WITH_CHARSET)
                 .forceRemote()
                 .setBody(template);
 

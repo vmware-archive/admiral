@@ -163,7 +163,7 @@ public class CompositeDescriptionContentService extends StatelessService {
 
         CompositeTemplate template;
         try {
-            if (MEDIA_TYPE_APPLICATION_YAML.equals(op.getContentType())) {
+            if (isApplicationYamlContent(op.getContentType())) {
                 String content = op.getBody(String.class);
                 YamlType yamlType = getYamlType(content);
                 switch (yamlType) {
@@ -246,5 +246,10 @@ public class CompositeDescriptionContentService extends StatelessService {
                         .setBody(component.data));
 
         return Stream.concat(networks, containers).toArray(Operation[]::new);
+    }
+
+    private boolean isApplicationYamlContent(String contentType) {
+        return (contentType != null)
+                && MEDIA_TYPE_APPLICATION_YAML.equals(contentType.split(";")[0]);
     }
 }
