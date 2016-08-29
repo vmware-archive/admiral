@@ -25,14 +25,14 @@ Admiral is a service written in Java and based on VMware's [Xenon framework](htt
 
 There are three ways you can start Admiral:
 
-1. Run container image
+#### 1. Run container image
 
 ```shell
 docker run -d -p 8282:8282 --name admiral vmware/admiral
 ```
 Open `http://<docker-host-IP>:8282/uic` in browser
 
-2. Download the published build archive, you can find it [here](https://bintray.com/vmware/admiral-repo/build/view/).
+#### 2. Download the published build archive, you can find it [here](https://bintray.com/vmware/admiral-repo/build/view/).
 See detailed [instructions](https://github.com/vmware/admiral/wiki/Running-Guide) how to run it.
 
 ```shell
@@ -41,7 +41,7 @@ java -cp ./lib/* -jar admiral-host-0.5.0-SNAPSHOT-jar-with-dependencies-and-agen
 ```
 Open `http://127.0.0.1:8282/uic` in browser
 
-3. Clone the repo and build locally. Detailed instructions about building locally can be found in the [Admiral developer guide](https://github.com/vmware/admiral/wiki/Developer-Guide):
+#### 3. Clone the repo and build locally. Detailed instructions about building locally can be found in the [Admiral developer guide](https://github.com/vmware/admiral/wiki/Developer-Guide):
 
 * Building the Admiral agent first
 ```shell
@@ -75,13 +75,8 @@ Before you start to code, we recommend discussing your plans through a  [GitHub 
 
 Admiral is available under the [Apache 2 license](LICENSE).
 
-This project uses open source components which have additional licensing terms.  The source files and licensing terms for these open source components can be found at the following locations:
+This project uses open source components which have additional licensing terms.  The source files / docker images and licensing terms for these open source components can be found at the following locations:
 
-Photon OS
-- https://hub.docker.com/_/photon/
-- https://github.com/vmware/photon/blob/master/COPYING
-
-Shell in a box
-- https://github.com/shellinabox/
-- https://github.com/shellinabox/shellinabox/blob/master/GPL-2
+- Photon OS [docker image](https://hub.docker.com/_/photon/), [license](https://github.com/vmware/photon/blob/master/COPYING)
+- Shell in a box [sources](https://github.com/shellinabox), [license](https://github.com/shellinabox/shellinabox/blob/master/GPL-2)
 
