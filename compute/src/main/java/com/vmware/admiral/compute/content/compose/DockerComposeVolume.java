@@ -11,14 +11,19 @@
 
 package com.vmware.admiral.compute.content.compose;
 
-import java.util.LinkedHashMap;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
- * Docker Compose description
+ * Docker Compose volume description
  */
-public class DockerCompose {
-    public String version;
-    public LinkedHashMap<String, DockerComposeService> services;
-    public LinkedHashMap<String, DockerComposeNetwork> networks;
-    public LinkedHashMap<String, DockerComposeVolume> volumes;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class DockerComposeVolume {
+
+    public String driver;
+
+    public Map<String, String> driver_opts;
+
+    public VolumeExternal external;
 }

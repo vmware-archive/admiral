@@ -307,7 +307,7 @@ public class CompositeTemplateUtilTest {
         assertEquals(YamlType.COMPOSITE_TEMPLATE,
                 getYamlType(getContent("composite.wordpress.yaml")));
 
-        assertEquals(YamlType.UNKONWN, getYamlType(getContent("docker.redis.v1.yaml")));
+        assertEquals(YamlType.UNKNOWN, getYamlType(getContent("docker.redis.v1.yaml")));
 
         try {
             getYamlType(getContent("../docker-host-private-key.PEM"));

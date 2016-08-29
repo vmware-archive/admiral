@@ -62,7 +62,7 @@ public class CompositeTemplateUtil {
             .ofPattern("yyyy-MM-dd HH.mm.ss.SSS O");
 
     public enum YamlType {
-        DOCKER_COMPOSE, COMPOSITE_TEMPLATE, UNKONWN
+        DOCKER_COMPOSE, COMPOSITE_TEMPLATE, UNKNOWN
     }
 
     /**
@@ -89,7 +89,7 @@ public class CompositeTemplateUtil {
         } else if (!isNullOrEmpty(template.components)) {
             return YamlType.COMPOSITE_TEMPLATE;
         } else {
-            return YamlType.UNKONWN;
+            return YamlType.UNKNOWN;
         }
     }
 
