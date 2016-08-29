@@ -33,7 +33,6 @@ docker run -d -p 8282:8282 --name admiral vmware/admiral
 Open `http://<docker-host-IP>:8282/uic` in browser
 
 #### 2. Download the published build archive, you can find it in 'Downloads' section [here](https://bintray.com/vmware/admiral/admiral).
-See detailed [instructions](https://github.com/vmware/admiral/wiki/Running-Guide) how to run it.
 
 ```shell
 java -jar admiral-host-*-uber-jar-with-agent.jar --bindAddress=0.0.0.0 --port=8282
