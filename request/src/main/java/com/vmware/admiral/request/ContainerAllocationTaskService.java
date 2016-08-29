@@ -357,8 +357,10 @@ public class ContainerAllocationTaskService
         if (state.hostSelections != null) {
             try {
                 ContainerHostDataCollectionState body = new ContainerHostDataCollectionState();
-                body.computeContainerHostLinks = new HashSet<>(state.hostSelections.stream()
-                        .map((r) -> r.hostLink).collect(Collectors.toList()));
+                body.computeContainerHostLinks = new HashSet<String>(
+                        state.resourceNameToHostSelection.values()
+                                .stream().map((r) -> r.hostLink)
+                                .collect(Collectors.toList()));
                 logInfo("Container Host collection started for: [%s]",
                         body.computeContainerHostLinks);
                 sendRequest(Operation.createPatch(this,
