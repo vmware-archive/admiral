@@ -49,7 +49,9 @@
     </header>
     <section class='hero'>
       <div class='container'>
-
+        <div class="hero-image">
+          <img src="assets/img/admiral.png" />
+        </div>
         <h2 id="vmware-admiral">VMware Admiral™</h2>
 
         <p>Highly Scalable Container Management Platform</p>
@@ -58,6 +60,7 @@
         <i class='ion-ios-arrow-right'></i>
         </a>
       </div>
+      <a href="https://github.com/vmware/admiral"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/e7bbb0521b397edbd5fe43e7f760759336b5e05f/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png" /></a>
     </section>
     <section class='about'>
       <div class='container'>
@@ -86,6 +89,11 @@
             <p>Open source license information may be found in Admiral™ <a href="https://github.com/vmware/admiral/LICENSE" target="_blank">Open Source License</a> file.</p>
             <p>Admiral™ source code is available on the VMware <a href="https://github.com/vmware/admiral">Admiral™ GitHub source repository</a>. You can build your own Admiral™ jar by cloning the repo and following the instructions in <a href="https://github.com/vmware/admiral/blob/master/README.md" target="_blank">README.md</a>.</p>
 
+            <p>Admiral container image is available on <a href="https://hub.docker.com/r/vmware/admiral/">Docker Hub</a>. Run:
+                <blockquote><b>docker run -d -p 8282:8282 --name admiral vmware/admiral</b></blockquote>
+                Access at: <a>http://&lt;docker_host_ip&gt;:8282/uic</a>
+            </p>
+
           </div>
         </div>
       </div>
@@ -101,6 +109,10 @@
             <p><strong>Developer guide for Admiral™</strong></p>
             <div><a href="https://github.com/vmware/admiral/wiki/Developer-Guide" target="_blank" class="button">Developer Guide</a></div>
           </div>
+          <div>
+            <p><strong>User guide for Admiral™</strong></p>
+            <div><a href="https://github.com/vmware/admiral/wiki/User-Guide" target="_blank" class="button">User Guide</a></div>
+          </div>
         </div>
       </div>
     </section>
@@ -109,10 +121,8 @@
         <div class='row'>
           <div class='content'>
             <h2 id="support">Support</h2>
-            <p>You are invited to contribute new features, fixes, or updates, large or small; we are always thrilled to receive pull requests, and do our best to process them as fast as we can. If you wish to contribute code and you have not signed our contributor license agreement (CLA), our bot will update the issue when you open a <a href="https://help.github.com/articles/creating-a-pull-request">Pull Request</a>. For any questions about the CLA process, please refer to our <a href="https://cla.vmware.com/faq">FAQ</a>.</p>
-
-            <p>Before you start to code, we recommend discussing your plans through a  <a href="https://github.com/vmware/admiral/issues">GitHub issue</a> or discuss it first with the official project maintainers via the <a href="https://gitter.im/project-admiral/Lobby">gitter.im chat</a>, especially for more ambitious contributions. This gives other contributors a chance to point you in the right direction, give you feedback on your design, and help you find out if someone else is working on the same thing.</p>
-            <p>You can also join our Google groups at <a href="https://groups.google.com/forum/#%21forum/project-admiral" target="_blank">project-admiral</a></p>
+            <p>Admiral™ is released as open source software and, presently, provides community support through our GitHub project page. If you encounter an issue or have a question, feel free to reach out via<a href="https://github.com/vmware/admiral/issues"> GitHub issues for Admiral™</a>.
+            </p>
           </div>
         </div>
       </div>
@@ -173,7 +183,11 @@
         <div class='row'>
           <div class='content'>
             <h2 id="contributing">Contributing</h2>
-            <p>The Admiral project team welcomes contributions from the community. If you wish to contribute code, we require that you first sign our <a href="/photon/assets/files/vmware_cla.pdf">Contributor License Agreement</a> and return a copy to <a href="&#109;&#097;&#105;&#108;&#116;&#111;:&#111;&#115;&#115;&#099;&#111;&#110;&#116;&#114;&#105;&#098;&#117;&#116;&#105;&#111;&#110;&#115;&#064;&#118;&#109;&#119;&#097;&#114;&#101;&#046;&#099;&#111;&#109;">&#111;&#115;&#115;&#099;&#111;&#110;&#116;&#114;&#105;&#098;&#117;&#116;&#105;&#111;&#110;&#115;&#064;&#118;&#109;&#119;&#097;&#114;&#101;&#046;&#099;&#111;&#109;</a> before we can merge your contribution.</p>
+
+            <p>You are invited to contribute new features, fixes, or updates, large or small; we are always thrilled to receive <a href="https://help.github.com/articles/creating-a-pull-request">pull requests</a>, and do our best to process them as fast as we can. If you wish to contribute code, you should sign <a href="/admiral/assets/files/vmware_cla.pdf">Contributor License Agreement</a> and return a copy to <a href="&#109;&#097;&#105;&#108;&#116;&#111;:&#111;&#115;&#115;&#099;&#111;&#110;&#116;&#114;&#105;&#098;&#117;&#116;&#105;&#111;&#110;&#115;&#064;&#118;&#109;&#119;&#097;&#114;&#101;&#046;&#099;&#111;&#109;">&#111;&#115;&#115;&#099;&#111;&#110;&#116;&#114;&#105;&#098;&#117;&#116;&#105;&#111;&#110;&#115;&#064;&#118;&#109;&#119;&#097;&#114;&#101;&#046;&#099;&#111;&#109;</a> before we can merge your contribution. For any questions about the CLA process, please refer to our <a href="https://cla.vmware.com/faq">FAQ</a>.</p>
+
+            <p>Before you start to code, we recommend discussing your plans through a  <a href="https://github.com/vmware/admiral/issues">GitHub issue</a> or discuss it first with the official project maintainers via the <a href="https://gitter.im/project-admiral/Lobby">gitter.im chat</a>, especially for more ambitious contributions. This gives other contributors a chance to point you in the right direction, give you feedback on your design, and help you find out if someone else is working on the same thing.</p>
+            <p>You can also join our Google groups at <a href="https://groups.google.com/forum/#%21forum/project-admiral" target="_blank">project-admiral</a></p>
           </div>
         </div>
       </div>
