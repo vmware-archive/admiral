@@ -1,0 +1,117 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="container-template-item">
+
+  <div v-if="model._cluster > 1" class="container-template-item-stack">
+    <template v-for="n in Math.min(model._cluster, 10)">
+      <div></div>
+    </template>
+  </div>
+
+  <div class="container-header">
+    <img v-bind:src="model.icon"/>
+    <div class="title-holder">
+      <div class="title truncateText" title="{{model.name}}">{{model.name}}</div>
+      <div class="image-tag truncateText">{{model.image}}</div>
+    </div>
+  </div>
+
+  <hr/>
+
+  <div class="container-content">
+    <div class="container-ports-holder">
+      <span class="container-label">{{i18n("app.container.list.portsLabel")}}</span>
+      <span>{{model.portBindings | portsToString}}</span>
+    </div>
+    <div class="container-holder">
+      <span class="container-label">{{i18n("app.container.list.commandLabel")}}</span>
+      <span>{{model.command}}</span>
+    </div>
+
+    <div class="container-links-holder">
+      <span class="container-label">{{i18n("app.template.list.linksLabel")}}</span>
+      <div class="container-secondary-actions">
+        <action-button name="new-item-link" icon-name="plus"
+                       v-on:click="addNewLink($event)"></action-button>
+      </div>
+      <div class="container-links">
+        <div class="input-group input-group-sm links-form">
+          <div class="add-link-title">{{i18n("app.template.list.addLinkLabel")}}</div>
+
+          <select class="form-control container-label">
+            <option selected="true" disabled="disabled">{{i18n("app.template.list.containers")}}</option>
+            <option v-for="container in model.otherContainers" track-by="id"
+                    value="{{container.name}}">{{container.name}}</option>
+          </select>
+          <input type="text" class="form-control container-label"
+                 placeholder='{{i18n("app.template.list.alias")}}'></input>
+
+          <div class="link-actions">
+            <action-button name="saveContainerLink" icon-name="check"
+                           v-on:click="saveContainerLink($event)"></action-button>
+            <action-button name="cancelSaveContainerLink" icon-name="times"
+                           v-on:click="cancelSaveContainerLink($event)"></action-button>
+          </div>
+        </div>
+        <div v-if="model.links && model.links.length > 0" class="template-links">
+          <div v-for="link in model.links" class="row">
+            <div class="col-sm-6 link-service">{{link | get-service}}</div>
+            <div class="col-sm-6 link-alias">{{link | get-alias}}</div>
+
+            <div class="link-item-actions">
+              <action-button name="editContainerLink" icon-name="pencil"
+                             v-on:click="editContainerLink($event)"></action-button>
+              <action-button name="deleteContainerLink" icon-name="times"
+                             v-on:click="deleteContainerLink($event)"></action-button>
+            </div>
+          </div>
+        </div>
+        <div v-else class="no-links">--</div>
+      </div>
+    </div>
+
+    <div class="container-cluster-holder">
+    <template v-if="model._cluster > 1">
+      <span class="container-label">{{i18n("app.container.list.cluster.sizeLabel")}}</span> <span>{{model._cluster}}</span>
+    </template>
+    <template v-else>
+      <span class="container-label">{{i18n("app.container.list.cluster.scaleLabel")}}</span>
+    </template>
+
+      <div class="container-secondary-actions">
+        <action-button v-if="model._cluster > 1" name="decrementClusterSize" icon-name="minus"
+                       v-on:click="modifyClusterSize($event, -1)"></action-button>
+        <action-button name="incrementClusterSize" icon-name="plus"
+                       v-on:click="modifyClusterSize($event, 1)"></action-button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-actions" v-bind:class="{'hide': showDeleteConfirmation}">
+    <action-button name="container-definition-edit" icon-name="pencil"
+                   v-bind:label="i18n('edit')"
+                   v-on:click="editContainerDefinition($event)"></action-button>
+
+    <action-button name="container-definition-remove" icon-name="times"
+                   v-bind:label="i18n('remove')"
+                   v-on:click="askConfirmation($event)"></action-button>
+  </div>
+  <delete-confirmation v-bind:class="{'hide': !showDeleteConfirmation}"
+                       v-bind:show="showDeleteConfirmation"
+                       v-on:confirm-delete="deleteContainerDefinition($event)"
+                       v-on:cancel-delete="cancelRemoval($event)"></delete-confirmation>
+
+  <div class="container-networks">
+    <div class="container-network-anchor" v-for="n in Math.min(numberOfNetworks, 3)">
+    </div>
+  </div>
+</div>

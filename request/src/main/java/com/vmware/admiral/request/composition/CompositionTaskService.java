@@ -1,0 +1,668 @@
+/*
+ * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
+package com.vmware.admiral.request.composition;
+
+import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
+import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
+import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
+import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import com.vmware.admiral.compute.BindingEvaluator;
+import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
+import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
+import com.vmware.admiral.request.RequestBrokerFactoryService;
+import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
+import com.vmware.admiral.request.RequestStatusService.RequestStatus;
+import com.vmware.admiral.request.composition.CompositionGraph.ResourceNode;
+import com.vmware.admiral.request.composition.CompositionSubTaskService.CompositionSubTaskState;
+import com.vmware.admiral.request.composition.CompositionTaskService.CompositionTaskState.SubStage;
+import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Operation.CompletionHandler;
+import com.vmware.xenon.common.OperationJoin;
+import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
+import com.vmware.xenon.common.TaskState;
+import com.vmware.xenon.common.TaskState.TaskStage;
+import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
+
+/**
+ * Task implementing the provision multi-container request life-cycle.
+ */
+public class CompositionTaskService extends
+        AbstractTaskStatefulService<CompositionTaskService.CompositionTaskState, CompositionTaskService.CompositionTaskState.SubStage> {
+
+    public static final String DISPLAY_NAME = "Composition";
+
+    public static class CompositionTaskState extends
+            com.vmware.admiral.service.common.TaskServiceDocument<CompositionTaskState.SubStage> {
+
+        private static final String FIELD_NAME_RESOURCE_DESCRIPTION_LINK = "resourceDescriptionLink";
+        private static final String FIELD_NAME_RESOURCE_NODES = "resourceNodes";
+        private static final String FIELD_NAME_RESOURCE_LINKS = "resourceLinks";
+        private static final String FIELD_NAME_COMPOSITE_COMPONENT_LINK = "compositeComponentLink";
+
+        public static enum SubStage {
+            CREATED,
+            CONTEXT_PREPARED,
+            DEPENDENCY_GRAPH,
+            DISTRIBUTING,
+            ALLOCATING,
+            ERROR_ALLOCATING,
+            ALLOCATED,
+            DISTRIBUTE_TASKS,
+            PROVISIONING,
+            ERROR_PROVISIONING,
+            COMPLETED,
+            ERROR,
+            FAILED;
+
+            static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
+                    Arrays.asList(DISTRIBUTING, DISTRIBUTE_TASKS));
+        }
+
+        /** The description that defines the requested resource. */
+        public String resourceDescriptionLink;
+
+        /** (Required) Type of resource to create. */
+        public String resourceType;
+
+        /** Set by a Task with the links of the provisioned resources. */
+        public List<String> resourceLinks;
+
+        // Service use fields:
+        /** ResourceNodes by CompositionSubTask links */
+        public Map<String, ResourceNode> resourceNodes;
+
+        /** Set by Task. Link to the CompositeComponent */
+        public String compositeComponentLink;
+
+        /** Set by Task. The count of the current allocations completed. */
+        public Long remainingCount;
+
+        /** Set by Task. Error count of the current allocations. */
+        public long errorCount;
+
+        /** (Internal) Set by task with ContainerDescription name. */
+        public String descName;
+
+    }
+
+    public CompositionTaskService() {
+        super(CompositionTaskState.class, SubStage.class, DISPLAY_NAME);
+        super.toggleOption(ServiceOption.PERSISTENCE, true);
+        super.toggleOption(ServiceOption.REPLICATION, true);
+        super.toggleOption(ServiceOption.OWNER_SELECTION, true);
+        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
+        super.transientSubStages = SubStage.TRANSIENT_SUB_STAGES;
+    }
+
+    @Override
+    protected void handleStartedStagePatch(CompositionTaskState state) {
+        switch (state.taskSubStage) {
+        case CREATED:
+            prepareContext(state, null);
+            break;
+        case CONTEXT_PREPARED:
+            calculateResourceDependencyGraph(state, null);
+            break;
+        case DEPENDENCY_GRAPH:
+            distributeTasks(state);
+            break;
+        case DISTRIBUTING:
+            break;
+        case ALLOCATING:
+            counting(state, true);
+            break;
+        case ERROR_ALLOCATING:
+            transitionToErrorIfNoRemaining(state);
+            break;
+        case ALLOCATED:
+            patchSubTask(state);
+            break;
+        case DISTRIBUTE_TASKS:
+            break;
+        case PROVISIONING:
+            counting(state, false);
+            break;
+        case ERROR_PROVISIONING:
+            transitionToErrorIfNoRemaining(state);
+            break;
+        case COMPLETED:
+            complete(state, SubStage.COMPLETED);
+            break;
+        case ERROR:
+            cleanResource(state);
+            break;
+        default:
+            break;
+        }
+    }
+
+    @Override
+    protected boolean validateStageTransition(Operation patch,
+            CompositionTaskState patchBody, CompositionTaskState currentState) {
+        currentState.compositeComponentLink = mergeProperty(currentState.compositeComponentLink,
+                patchBody.compositeComponentLink);
+        currentState.resourceLinks = mergeLists(currentState.resourceLinks,
+                patchBody.resourceLinks);
+        currentState.remainingCount = mergeProperty(currentState.remainingCount,
+                patchBody.remainingCount);
+        currentState.resourceNodes = mergeProperty(currentState.resourceNodes,
+                patchBody.resourceNodes);
+        currentState.descName = mergeProperty(currentState.descName, patchBody.descName);
+
+        if (currentState.taskInfo != null
+                && TaskStage.STARTED == currentState.taskInfo.stage
+                && (SubStage.ALLOCATING == patchBody.taskSubStage
+                        || SubStage.ERROR_ALLOCATING == patchBody.taskSubStage
+                        || SubStage.PROVISIONING == patchBody.taskSubStage
+                        || SubStage.ERROR_PROVISIONING == patchBody.taskSubStage)
+                && currentState.remainingCount != null
+                && currentState.remainingCount > 0
+                && patch.getReferer() != null
+                && patch.getReferer().getPath() != null) {
+            String patchSelfLink = patch.getReferer().getPath();
+            // count down how many of the subTask have callback by referrer link:
+            final ResourceNode resourceNode = currentState.resourceNodes.get(patchSelfLink);
+            if (resourceNode != null) {
+                currentState.remainingCount--;
+                logInfo("Remaining count: [%s]. Stage: [%s]. Completion of resource name: [%s] composition sub-task [%s] patched.",
+                        currentState.remainingCount, patchBody.taskSubStage, resourceNode.name,
+                        patchSelfLink);
+            } else {
+                logWarning(
+                        "Remaining count: [%s]. Completion of composition sub-task [%s] patched but not found in the list.",
+                        currentState.remainingCount, patchSelfLink);
+            }
+        } else if (SubStage.ERROR_ALLOCATING == patchBody.taskSubStage) {
+            logWarning("No remaining count: %s", currentState.remainingCount);
+        }
+
+        if (TaskStage.STARTED == patchBody.taskInfo.stage) {
+            if (SubStage.ERROR_ALLOCATING == patchBody.taskSubStage) {
+                if (currentState.remainingCount != null && currentState.remainingCount > 0) {
+                    currentState.taskSubStage = SubStage.ALLOCATING;
+                    currentState.errorCount = currentState.errorCount + 1;
+                }
+            } else if (SubStage.ERROR_PROVISIONING == patchBody.taskSubStage) {
+                if (currentState.remainingCount != null && currentState.remainingCount > 0) {
+                    currentState.taskSubStage = SubStage.PROVISIONING;
+                    currentState.errorCount = currentState.errorCount + 1;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    protected void validateStateOnStart(CompositionTaskState state) {
+        assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
+        assertNotEmpty(state.resourceType, "resourceType");
+    }
+
+    @Override
+    protected ServiceTaskCallbackResponse getFinishedCallbackResponse(
+            CompositionTaskState state) {
+        CallbackCompleteResponse finishedResponse = new CallbackCompleteResponse();
+        finishedResponse.copy(state.serviceTaskCallback.getFinishedResponse());
+        finishedResponse.resourceLinks = state.resourceLinks;
+        if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
+            logWarning("No resourceLinks found for allocated resources.");
+        }
+        return finishedResponse;
+    }
+
+    protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
+        List<String> resourceLinks;
+    }
+
+    @Override
+    protected TaskStatusState fromTask(TaskServiceDocument<SubStage> state) {
+        final TaskStatusState statusTask = super.fromTask(state);
+        if (SubStage.CONTEXT_PREPARED == state.taskSubStage) {
+            CompositionTaskState currentState = (CompositionTaskState) state;
+            statusTask.name = currentState.descName;
+            statusTask.resourceLinks = new ArrayList<>();
+            statusTask.resourceLinks.add(currentState.compositeComponentLink);
+        }
+
+        return statusTask;
+    }
+
+    private void calculateResourceDependencyGraph(final CompositionTaskState state,
+            final CompositeDescriptionExpanded compositeDesc) {
+
+        if (compositeDesc == null) {
+            getCompositeDescription(state, true,
+                    (compDesc) -> this.calculateResourceDependencyGraph(state, compDesc));
+            return;
+        }
+
+        CompositionGraph compositionGraph = new CompositionGraph();
+
+        try {
+            state.resourceNodes = compositionGraph
+                    .calculateGraph(compositeDesc)
+                    .stream().collect(Collectors.toMap(
+                            (r) -> buildCompositionSubTaskLink(r.name), Function.identity()));
+
+            CompositionTaskState body = createUpdateSubStageTask(state, SubStage.DEPENDENCY_GRAPH);
+            body.resourceNodes = state.resourceNodes;
+            body.remainingCount = (long) state.resourceNodes.size();
+
+            sendSelfPatch(body);
+
+        } catch (Exception e) {
+            state.taskInfo.failure = Utils.toServiceErrorResponse(e);
+            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
+        }
+    }
+
+    private void updateComponentsInRequestTracker(CompositionTaskState state) {
+        try {
+            // update resource tracker with number of components
+            RequestStatus requestStatus = new RequestStatus();
+            requestStatus.componentNames = state.resourceNodes.values().stream()
+                    .map((rn) -> rn.name)
+                    .collect(Collectors.toList());
+
+            sendRequest(Operation
+                    .createPatch(this, state.requestTrackerLink)
+                    .setBody(requestStatus)
+                    .setCompletion(
+                            (o, ex) -> {
+                                if (ex != null) {
+                                    logSevere(
+                                            "Failed to update components in request tracker [%s], progress will be innacurate: %s",
+                                            state.requestTrackerLink, Utils.toString(ex));
+                                }
+                            }));
+
+        } catch (Throwable x) {
+            logSevere(
+                    "Failed to update components in request tracker [%s], progress will be innacurate: %s",
+                    state.requestTrackerLink, Utils.toString(x));
+        }
+    }
+
+    private void distributeTasks(final CompositionTaskState state) {
+        if (state.requestTrackerLink != null) {
+            updateComponentsInRequestTracker(state);
+        }
+
+        final AtomicBoolean error = new AtomicBoolean();
+        for (final Map.Entry<String, ResourceNode> entry : state.resourceNodes.entrySet()) {
+            final ResourceNode resourceNode = entry.getValue();
+            final String subTaskSelfLink = entry.getKey();
+            createCompositionSubTask(state, resourceNode, subTaskSelfLink, (o, e) -> {
+                if (e != null) {
+                    if (error.compareAndSet(false, true)) {
+                        failTask("Failure creating composition subTask: " + subTaskSelfLink, e);
+                    } else {
+                        logWarning(// task already failed
+                                "Failure creating composition subTask: [%s]. Error: %s",
+                                subTaskSelfLink, Utils.toString(e));
+                    }
+                    return;
+                }
+                logFine("Composition subTask created: " + subTaskSelfLink);
+                if (!error.get()) {
+                    logFine("Composition subTask creation completed successfully.");
+                }
+            });
+        }
+
+        sendSelfPatch(createUpdateSubStageTask(state, SubStage.DISTRIBUTING));
+    }
+
+    private void createCompositionSubTask(final CompositionTaskState state,
+            final ResourceNode resourceNode, String subTaskSelfLink,
+            final CompletionHandler completionHandler) {
+        final CompositionSubTaskState compositionSubTask = new CompositionSubTaskState();
+        compositionSubTask.documentSelfLink = subTaskSelfLink;
+        compositionSubTask.requestId = getSelfId();
+        compositionSubTask.name = resourceNode.name;
+        compositionSubTask.resourceType = resourceNode.resourceType;
+        compositionSubTask.tenantLinks = state.tenantLinks;
+        compositionSubTask.resourceDescriptionLink = resourceNode.resourceDescLink;
+        compositionSubTask.requestTrackerLink = state.requestTrackerLink;
+        compositionSubTask.customProperties = state.customProperties;
+        compositionSubTask.allocationRequest = true;
+
+        if (resourceNode.dependsOn != null && !resourceNode.dependsOn.isEmpty()) {
+            compositionSubTask.dependsOnLinks = resourceNode.dependsOn
+                    .stream().map((r) -> buildCompositionSubTaskLink(r))
+                    .collect(Collectors.toSet());
+        }
+
+        if (resourceNode.dependents != null && !resourceNode.dependents.isEmpty()) {
+            compositionSubTask.dependentLinks = resourceNode.dependents
+                    .stream().map((r) -> buildCompositionSubTaskLink(r))
+                    .collect(Collectors.toSet());
+        }
+
+        compositionSubTask.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+                TaskStage.STARTED, SubStage.ALLOCATING,
+                TaskStage.STARTED, SubStage.ERROR_ALLOCATING);
+
+        sendRequest(Operation.createPost(this, CompositionSubTaskFactoryService.SELF_LINK)
+                .setBody(compositionSubTask)
+                .setContextId(compositionSubTask.requestId)
+                .setCompletion(completionHandler));
+    }
+
+    private void patchSubTask(CompositionTaskState state) {
+        final AtomicBoolean error = new AtomicBoolean();
+        final AtomicInteger countDown = new AtomicInteger(state.resourceNodes.size());
+        for (final Map.Entry<String, ResourceNode> entry : state.resourceNodes.entrySet()) {
+            final ResourceNode resourceNode = entry.getValue();
+            final String subTaskSelfLink = entry.getKey();
+            // patch each subtask to PREPARE_EXECUTE, and set new callback and dependsOn
+            patchCompositionSubTask(state, resourceNode, subTaskSelfLink, (o, e) -> {
+                if (e != null) {
+                    if (error.compareAndSet(false, true)) {
+                        failTask("Failure patching composition subTask: " + subTaskSelfLink, e);
+                    } else {
+                        logWarning(// task already failed
+                                "Failure patching composition subTask: [%s]. Error: %s",
+                                subTaskSelfLink, Utils.toString(e));
+                    }
+                    return;
+                }
+                logFine("Composition subTask patched: " + subTaskSelfLink);
+                if (!error.get()) {
+                    logFine("Composition subTask patch completed successfully.");
+                }
+                // patch all subtasks to execute when all of them are prepared
+                if (countDown.decrementAndGet() == 0 && !error.get()) {
+                    patchSubTaskToExecute(state);
+                }
+            });
+        }
+    }
+
+    private void patchCompositionSubTask(final CompositionTaskState state,
+            final ResourceNode resourceNode, String subTaskSelfLink,
+            final CompletionHandler completionHandler) {
+        final CompositionSubTaskState compositionSubTask = new CompositionSubTaskState();
+        compositionSubTask.documentSelfLink = subTaskSelfLink;
+        if (resourceNode.dependsOn != null && !resourceNode.dependsOn.isEmpty()) {
+            compositionSubTask.dependsOnLinks = resourceNode.dependsOn
+                    .stream().map((r) -> buildCompositionSubTaskLink(r))
+                    .collect(Collectors.toSet());
+        }
+        compositionSubTask.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+                TaskStage.STARTED, SubStage.PROVISIONING,
+                TaskStage.STARTED, SubStage.ERROR_PROVISIONING);
+        compositionSubTask.taskInfo = new TaskState();
+        compositionSubTask.taskInfo.stage = TaskStage.STARTED;
+        compositionSubTask.taskSubStage = CompositionSubTaskState.SubStage.PREPARE_EXECUTE;
+
+        sendRequest(Operation.createPatch(this, subTaskSelfLink)
+                .setBody(compositionSubTask)
+                .setContextId(compositionSubTask.requestId)
+                .setCompletion(completionHandler));
+    }
+
+    private void patchSubTaskToExecute(CompositionTaskState state) {
+        final AtomicBoolean error = new AtomicBoolean();
+        // patch each subtask to EXECUTE
+        for (final String subTaskSelfLink : state.resourceNodes.keySet()) {
+            patchCompositionSubTaskToExecute(subTaskSelfLink, (o, e) -> {
+                if (e != null) {
+                    if (error.compareAndSet(false, true)) {
+                        failTask("Failure patching composition subTask: " + subTaskSelfLink, e);
+                    } else {
+                        logWarning(// task already failed
+                                "Failure patching composition subTask: [%s]. Error: %s",
+                                subTaskSelfLink, Utils.toString(e));
+                    }
+                    return;
+                }
+                logFine("Composition subTask patched: " + subTaskSelfLink);
+                if (!error.get()) {
+                    logFine("Composition subTask patch completed successfully.");
+                }
+            });
+        }
+
+        sendSelfPatch(createUpdateSubStageTask(state, SubStage.DISTRIBUTE_TASKS));
+    }
+
+    private void patchCompositionSubTaskToExecute(
+            String subTaskSelfLink,
+            CompletionHandler completionHandler) {
+        final CompositionSubTaskState compositionSubTask = new CompositionSubTaskState();
+        compositionSubTask.documentSelfLink = subTaskSelfLink;
+        compositionSubTask.taskInfo = new TaskState();
+        compositionSubTask.taskInfo.stage = TaskStage.STARTED;
+        compositionSubTask.taskSubStage = CompositionSubTaskState.SubStage.EXECUTE;
+
+        sendRequest(Operation.createPatch(this, subTaskSelfLink)
+                .setBody(compositionSubTask)
+                .setContextId(compositionSubTask.requestId)
+                .setCompletion(completionHandler));
+    }
+
+    private String buildCompositionSubTaskLink(String name) {
+        final String compositionSubTaskId = getSelfId() + "-" + name;
+        return UriUtils.buildUriPath(CompositionSubTaskFactoryService.SELF_LINK,
+                compositionSubTaskId);
+    }
+
+    private void counting(CompositionTaskState state, boolean allocate) {
+        if (state.remainingCount == 0) {
+            if (state.errorCount > 0) {
+                sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
+            } else {
+                CompositionTaskState body = createUpdateSubStageTask(state, SubStage.ALLOCATED);
+                if (allocate) {
+                    body.remainingCount = (long) state.resourceNodes.size();
+                } else {
+                    body.taskSubStage = SubStage.COMPLETED;
+                }
+                sendSelfPatch(body);
+            }
+        } else {
+            logFine("CompositeTask patched - remaining subTasks in progress : %s",
+                    state.remainingCount);
+        }
+    }
+
+    private void transitionToErrorIfNoRemaining(CompositionTaskState state) {
+        if (state.remainingCount == null || state.remainingCount == 0) {
+            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
+        }
+    }
+
+    private void prepareContext(final CompositionTaskState state,
+            final CompositeDescription compositeDesc) {
+        if (compositeDesc == null) {
+            getCompositeDescription(state, false, (compDesc) -> prepareContext(state, compDesc));
+            return;
+        }
+
+        state.customProperties = mergeProperty(compositeDesc.customProperties,
+                state.customProperties);
+        if (state.customProperties == null) {
+            state.customProperties = new HashMap<>();
+        }
+
+        // add contextId if not added
+        String contextId;
+        if ((contextId = state.customProperties.get(FIELD_NAME_CONTEXT_ID_KEY)) == null) {
+            contextId = getSelfId();
+            state.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        }
+
+        final CompositeComponent component = new CompositeComponent();
+        component.documentSelfLink = contextId;
+        component.name = compositeDesc.name;
+        component.compositeDescriptionLink = compositeDesc.documentSelfLink;
+        component.tenantLinks = compositeDesc.tenantLinks;
+
+        sendRequest(Operation
+                .createPost(this, CompositeComponentFactoryService.SELF_LINK)
+                .setBody(component)
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                failTask("Failure creating CompositeComponent: "
+                                        + component.documentSelfLink, e);
+                                return;
+                            }
+
+                            CompositeComponent compComponent = o.getBody(CompositeComponent.class);
+                            logInfo("CompositeComponent created [%s]",
+                                    compComponent.documentSelfLink);
+
+                            final CompositionTaskState body = createUpdateSubStageTask(state,
+                                    SubStage.CONTEXT_PREPARED);
+                            body.customProperties = state.customProperties;
+                            body.compositeComponentLink = compComponent.documentSelfLink;
+                            body.descName = compositeDesc.name;
+                            sendSelfPatch(body);
+                        }));
+    }
+
+    private void getCompositeDescription(CompositionTaskState state, boolean expanded,
+            Consumer<CompositeDescriptionExpanded> callbackFunction) {
+        URI uri = UriUtils.buildUri(this.getHost(), state.resourceDescriptionLink);
+        if (expanded) {
+            uri = UriUtils.extendUriWithQuery(uri, UriUtils.URI_PARAM_ODATA_EXPAND,
+                    Boolean.TRUE.toString());
+        }
+        sendRequest(Operation.createGet(uri)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure retrieving composite description state", e);
+                        return;
+                    }
+
+                    CompositeDescriptionExpanded desc = o
+                            .getBody(CompositeDescriptionExpanded.class);
+
+                    if (desc.bindings != null && expanded) {
+                        BindingEvaluator.evaluateBindings(desc);
+                        List<Operation> update = desc.componentDescriptions.stream()
+                                .map(cd -> Operation.createPut(this, cd.component.documentSelfLink)
+                                        .setBody(cd.component))
+                                .collect(Collectors.toList());
+                        // The component descriptions may have changed. We need to persist them, so
+                        // that the other services can pick up the evaluated descriptions too
+                        OperationJoin.create(update).setCompletion((ops, failures) -> {
+                            if (failures != null) {
+                                failTask("Unable to update evaluated descriptions",
+                                        failures.values().iterator().next());
+                                return;
+                            }
+                            callbackFunction.accept(desc);
+                        }).sendWith(this);
+                    } else {
+                        callbackFunction.accept(desc);
+                    }
+                }));
+    }
+
+    private void cleanResource(CompositionTaskState state) {
+        boolean cleanUpContainers = state.resourceLinks != null && !state.resourceLinks.isEmpty();
+        boolean cleanUpComposite = state.compositeComponentLink != null;
+
+        if (!cleanUpContainers && !cleanUpComposite) {
+            logInfo("Error count: [%s]. No resources to clean.", state.errorCount);
+            completeWithError(state, SubStage.FAILED);
+            return;
+        }
+
+        if (!cleanUpContainers) {
+            state.resourceLinks = Collections.singletonList(state.compositeComponentLink);
+        }
+
+        logInfo("Error count: [%s]. Cleaning [%s] resources: %s",
+                state.errorCount, state.resourceLinks.size(), state.resourceLinks);
+
+        RequestBrokerState requestBrokerState = new RequestBrokerState();
+        requestBrokerState.documentSelfLink = getSelfId() + "-cleanup";
+        requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+                TaskStage.FAILED, SubStage.FAILED, TaskStage.FAILED, SubStage.FAILED);
+        requestBrokerState.customProperties = state.customProperties;
+        requestBrokerState.resourceType = cleanUpContainers ? state.resourceType
+                : ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
+        requestBrokerState.resourceLinks = state.resourceLinks;
+        requestBrokerState.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
+        requestBrokerState.tenantLinks = state.tenantLinks;
+        requestBrokerState.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation
+                .createPost(this, RequestBrokerFactoryService.SELF_LINK)
+                .setBody(requestBrokerState)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Failure creating request broker task. Error: [%s]",
+                                Utils.toString(e));
+                        completeWithError(state, SubStage.FAILED);
+                    }
+                }));
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+
+        setDocumentTemplateIndexingOptions(template, EnumSet.of(PropertyIndexingOption.STORE_ONLY),
+                CompositionTaskState.FIELD_NAME_RESOURCE_DESCRIPTION_LINK,
+                CompositionTaskState.FIELD_NAME_TENANT_LINKS,
+                CompositionTaskState.FIELD_NAME_RESOURCE_LINKS,
+                CompositionTaskState.FIELD_NAME_RESOURCE_NODES,
+                CompositionTaskState.FIELD_NAME_COMPOSITE_COMPONENT_LINK);
+
+        setDocumentTemplateUsageOptions(template,
+                EnumSet.of(PropertyUsageOption.SINGLE_ASSIGNMENT),
+                CompositionTaskState.FIELD_NAME_RESOURCE_DESCRIPTION_LINK,
+                CompositionTaskState.FIELD_NAME_TENANT_LINKS,
+                CompositionTaskState.FIELD_NAME_COMPOSITE_COMPONENT_LINK);
+
+        setDocumentTemplateUsageOptions(template, EnumSet.of(PropertyUsageOption.SERVICE_USE),
+                CompositionTaskState.FIELD_NAME_RESOURCE_NODES,
+                CompositionTaskState.FIELD_NAME_COMPOSITE_COMPONENT_LINK);
+
+        return template;
+    }
+
+}

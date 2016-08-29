@@ -1,0 +1,14 @@
+---
+name: "Azure environment"
+endpointType: "azure"
+properties:
+  instanceType:
+    mappings:
+      small: "Basic_A0"
+  imageType:
+    mappings:
+      linux: "Canonical:UbuntuServer:14.04.3-LTS:latest"
+  bootDiskProperties:
+    mappings:
+      azureStorageAccountType: "Standard_RAGRS"
+      azureOsDiskCaching: "None"

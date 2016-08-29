@@ -1,0 +1,27 @@
+[
+  {
+    "name": "library/photon",
+    "description": "Photon OS is a technology preview of a minimal Linux container host.",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/alpine",
+    "description": "A minimal Docker image based on Alpine Linux with a complete package index and only 5 MB in size!",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/nginx",
+    "description": "Official build of Nginx.",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "kitematic/hello-world-nginx",
+    "description": "A light-weight nginx container that demonstrates the features of Kitematic",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/jenkins",
+    "description": "Official Jenkins Docker image",
+    "registry": "https://registry.hub.docker.com"
+  }
+]

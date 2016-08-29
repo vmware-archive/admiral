@@ -1,0 +1,39 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<tr class="item">
+  <td class="truncateText primary-cell" title="{{name}}">{{name}}</td>
+  <td data-sort="{{cpuPercentage}}">
+    <div class="stats-holder">
+      <div class="help-text">{{cpuPercentage}}%</div>
+      <div class="progress">
+        <div class="progress-bar progress-bar-{{resourcePoolPercentageLevel cpuPercentage}}" role="progressbar" style="width:{{cpuPercentage}}%"></div>
+      </div>
+    </div>
+  </td>
+  <td data-sort="{{memoryPercentage}}">
+    <div class="stats-holder">
+      <div class="help-text">{{memoryPercentage}}%</div>
+      <div class="progress">
+        <div class="progress-bar progress-bar-{{resourcePoolPercentageLevel memoryPercentage}}" role="progressbar" style="width:{{memoryPercentage}}%"></div>
+      </div>
+    </div>
+  </td>
+  <!-- Number of Hosts column -->
+  <td data-sort="{{hostsCount}}"><div class="resourcePool-host-count"><a href="#/{{hostsPath}}?resourcePool={{id}}" class="link">{{hostsCount}}</a></div></td>
+  <!-- Actions column -->
+  <td class="table-actions">
+    <div>
+      <a class="btn item-edit"><i class="btn fa fa-pencil"></i></a>
+      <a class="btn item-delete"><i class="fa fa-times"></i></a>
+    </div>
+  </td>
+</tr>

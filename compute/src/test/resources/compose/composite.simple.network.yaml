@@ -1,0 +1,38 @@
+---
+name: "hello"
+components:
+  proxy:
+    type: "Container.Docker"
+    data:
+      name: "proxy"
+      image: "haproxy"
+      networks:
+        front: {}
+  app:
+    type: "Container.Docker"
+    data:
+      name: "app"
+      image: "wordpress"
+      networks:
+        front: {}
+        back: {}
+  db:
+    type: "Container.Docker"
+    data:
+      name: "db"
+      image: "postgres"
+      networks:
+        back: {}
+  front:
+    type: "Network.Docker"
+    data:
+      name: "front"
+      driver: "custom-driver-1"
+  back:
+    type: "Network.Docker"
+    data:
+      name: "back"
+      driver: "custom-driver-2"
+      options:
+        foo: "1"
+        bar: "2"

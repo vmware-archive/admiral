@@ -1,0 +1,24 @@
+---
+version: "2"
+services:
+  proxy:
+    image: "haproxy"
+    networks:
+    - "front"
+  app:
+    image: "wordpress"
+    networks:
+    - "front"
+    - "back"
+  db:
+    image: "postgres"
+    networks:
+    - "back"
+networks:
+  front:
+    driver: "custom-driver-1"
+  back:
+    driver: "custom-driver-2"
+    driver_opts:
+      foo: "1"
+      bar: "2"

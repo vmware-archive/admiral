@@ -1,0 +1,282 @@
+@import "components/inline-delete-confirmation";
+
+.right-context-panel .inline-editable-list, .right-context-panel .requests-list, .right-context-panel .eventlog-list {
+  /*position: relative;*/
+  margin: 30px 20px 20px;
+}
+
+.inline-editable-list > .title, .requests-list > .title, .eventlog-list > .title {
+  display: inline;
+  font-size: 22px;
+  font-weight: 300;
+  letter-spacing: 0.03em;
+}
+.requests-list ul.nav-justified, .eventlog-list ul.nav-justified {
+  margin-top: 25px;
+}
+.inline-editable-list > .title > .total-items {
+  font-size: 16px;
+  margin-left: 4px;
+}
+
+.inline-editable-list .progress {
+  height: 9px;
+  margin-bottom: 16px;
+}
+
+.inline-editable-list .toolbar {
+  display: inline;
+  float: right;
+}
+
+.inline-editable-list > .table,
+.inline-editable-list > div > .table {
+  table-layout: fixed;
+  margin-top: 25px;
+  border-spacing: 0;
+  font-size: 13px;
+  > thead {
+    background-color: $tab-color;
+    border-bottom: 1px solid #ccc;
+    th {
+      padding-top: 14px;
+      padding-bottom: 14px;
+    }
+  }
+  .inline-editable-list > .table {
+    margin: 0 0 10px;
+    > thead th,
+    > tbody td {
+      padding: 8px;
+    },
+    > tbody > tr {
+      height: 48px;
+    }
+  }
+}
+
+.inline-editable-list .table-striped > tbody > tr:nth-of-type(even) .table-actions .delete-inline-item-confirmation {
+  background-color: $table-bg-accent-even;
+}
+
+.inline-editable-list .table-striped > tbody > tr:nth-of-type(odd) .table-actions .delete-inline-item-confirmation {
+  background-color: $table-bg-accent;
+}
+
+.inline-editable-list .table-striped > tbody > tr:hover, .inline-editable-list .table-striped > tbody > tr:hover .table-actions .delete-inline-item-confirmation {
+}
+
+.inline-editable-list .table .item.active .item-expand,
+.inline-editable-list .table .item .item-collapse {
+  display: none;
+}
+
+.inline-editable-list .table .item .item-expand,
+.inline-editable-list .table .item.active .item-collapse {
+  display: inline-block;
+}
+
+.inline-editable-list .table .item.active .simple-cell,
+.inline-editable-list .table .item .details-cell {
+  display: none;
+}
+
+.inline-editable-list .table .item .simple-cell,
+.inline-editable-list .table .item.active .details-cell {
+  display: table-cell;
+  background-color: inherit;
+  padding-left: 12px;
+
+}
+.inline-editable-list .table .item.active .details-cell {
+  padding-top: 12px;
+}
+.inline-editable-list .table .item .details-cell .header {
+  position: relative;
+}
+
+.inline-editable-list .table .item .details-cell .header .title {
+  color: $main_color;
+  font-size: 16px;
+  padding: 0 0 12px 0;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
+.inline-editable-list .table .item .details-cell .header .table-actions {
+  z-index: 10;
+  position: absolute;
+  // align with table cell paddings
+  right: -2px;
+  top: 0;
+}
+
+.inline-editable-list .table .item .details-cell .content{
+  overflow-x: auto;
+}
+
+.inline-editable-list .table .item .details-cell .form-horizontal label {
+  color: $secondary_hint_title_color;
+  text-align: right;
+  padding: 0 15px 0 0;
+  width: 120px;
+  font-weight: 500;
+}
+.details-cell .form-horizontal .form-group .col-sm-8 {
+  width: 100%;
+  padding-left: 140px;
+  margin-top: -23px;
+}
+.inline-editable-list .table .highlight-item {
+  @include box-shadow(0px 0px 15px 5px rgba(102,153,0,0.35));
+  position: relative;
+  padding: 0;
+}
+
+.inline-editable-list .table .highlight-item .help-text {
+  font-size: 13px;
+  color: #fff;
+  margin: 0 0 -15px 0;
+  background-color: $brand-success;
+  padding: 0 10px;
+  line-height: 20px;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  border-radius: 0 0 2px 2px;
+}
+.inline-editable-list .table .highlight-item .help-text .fa-check {
+  font-size: 16px;
+}
+.inline-editable-list .table .item .primary-cell {
+}
+
+.inline-editable-list .table .highlight-item .primary-cell {
+  /*color: $brand-success;*/
+}
+
+// Clears inner table styles, so that the highlight row looks like a normal row
+.inline-editable-list .table .highlight-item .table {
+  table-layout: fixed;
+  border: none;
+  background: none;
+  margin: 0;
+}
+
+.inline-editable-list .table .highlight-item .table th {
+  border: none;
+  padding: 0;
+}
+
+.inline-editable-list .table .highlight-item .table td {
+  border: none;
+}
+
+.inline-editable-list .table .highlight-item .table .help-text, .inline-editable-list .table .highlight-item .table .table-actions > div {
+  display: none;
+}
+.inline-editable-list .table .highlight-item-fail {
+  @include box-shadow(0px 0px 15px 5px rgba(204,0,0,0.35));
+}
+
+.inline-editable-list .table .highlight-item-fail .help-text {
+  background-color: rgba(204, 0, 0, 1);
+}
+
+.inline-editable-list .table td {
+  vertical-align: middle;
+}
+
+.inline-editable-list .table .stats-holder .help-text {
+  text-align: center;
+  font-size: $stats_holder_font_size;
+  visibility: hidden;
+  height: 15px;
+}
+
+.inline-editable-list .table .highlight-item .stats-holder {
+  margin-top: $stats_holder_font_size;
+}
+
+.inline-editable-list .table tr:hover .stats-holder .help-text {
+  visibility: visible;
+}
+
+.inline-editable-list .table .stats-holder.policyInstances {
+  cursor: pointer;
+}
+
+.inline-editable-list .table .table-actions {
+  padding: 0;
+}
+
+.inline-editable-list .table .table-actions > div {
+  float: right;
+  margin-right: 6px;
+  // Keep all button actions on the same line
+  white-space: nowrap;
+}
+
+.inline-editable-list .table .table-actions > .delete-inline-item-confirmation-holder {
+  margin-right: 0;
+}
+
+.inline-editable-list .table tr.item .table-actions > div > a {
+  display: none;
+}
+
+.inline-editable-list .table {
+  tr.item:hover .table-actions > div > a,
+  tr.item .table-actions > div > a.loading {
+    display: inline-block;
+  }
+  .inline-editable-list .table {
+    tr.item .table-actions > div > a {
+      display: none;
+    }
+    tr.item:hover .table-actions > div > a,
+    tr.item .table-actions > div > a.loading {
+      display: inline-block;
+    }
+  }
+}
+
+.inline-editable-list .table .table-actions .btn{
+  padding: 0 1px;
+  border: none;
+  color: $secondary_hint_title_color;
+  font-size: 20px;
+}
+
+.inline-editable-list .table .table-actions .admiral-btn-circle {
+  font-size: 10px;
+  width: 16px;
+  line-height: 16px;
+  border-radius: 10px;
+  text-align: center;
+  padding: 0;
+  color: #FFFFFF;
+  background-color: $secondary_hint_title_color;
+}
+
+.inline-editable-list .table .table-actions .btn:hover{
+  color: $main_color;
+}
+
+.inline-editable-list .table .table-actions .admiral-btn-circle:hover{
+  color: #FFFFFF;
+  background-color: $main_color;
+}
+
+.inline-editable-list .table > tbody > tr {
+  height: 65px;
+  overflow: auto;
+}
+.inline-editable-list .table > thead > tr  {
+  overflow: auto;
+}
+.inline-editable-list .table > tbody > tr > td {
+  border-top: none;
+}
+.inline-editable-list .table > thead > tr > th:first-child, .table > thead > tr > td:first-child, .table > tbody > tr > th:first-child, .table > tbody > tr > td:first-child, .table > tfoot > tr > th:first-child, .table > tfoot > tr > td:first-child {
+  padding-left: 12px;
+}

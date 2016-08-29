@@ -1,0 +1,63 @@
+---
+version: "2"
+services:
+  h1:
+    image: "registry.hub.docker.com/kitematic/hello-world-nginx"
+    command:
+    - "/startup.sh -a"
+    mem_limit: 1
+    memswap_limit: 1
+    cpu_shares: 1
+    environment:
+    - "TEST_H1=test-value-1"
+    volumes:
+    - "/test:/test"
+    ports:
+    - "9080:80"
+    logging:
+      driver: "json-file"
+    restart: "always"
+    network_mode: "bridge"
+  h2:
+    image: "registry.hub.docker.com/kitematic/hello-world-nginx"
+    command:
+    - "/startup.sh -a"
+    - "/startup.sh -b"
+    logging:
+      driver: "splunk"
+      options:
+        max-size: "10m"
+        min-size: "1m"
+    links:
+    - "h1"
+    restart: "always"
+    network_mode: "host"
+  h3:
+    image: "registry.hub.docker.com/kitematic/hello-world-nginx"
+    mem_limit: 5
+    memswap_limit: 5
+    cpu_shares: 5
+    environment:
+    - "TEST_ENV_3_1=value31"
+    - "TEST_ENV_3_2=value32"
+    working_dir: "/working-dir"
+    hostname: "h3.hostname"
+    ports:
+    - "9090:90"
+    - "9091:91"
+    links:
+    - "h1"
+    - "h2"
+    volumes_from:
+    - "datacontainer1"
+    - "datacontainer2"
+    restart: "no"
+    network_mode: "bridge"
+  h4:
+    image: "registry.hub.docker.com/kitematic/hello-world-nginx"
+    links:
+    - "h1:alias-h1"
+    - "h2:alias-h2"
+    - "h3:alias-h3"
+    restart: "always"
+    network_mode: "bridge"

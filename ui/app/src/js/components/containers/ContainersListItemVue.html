@@ -1,0 +1,67 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="container-item">
+  <div class="status {{model.powerState}}"><span class="status-state">{{containerStatusDisplay(model.powerState, model.started)}}</span></div>
+  <div class="container-header">
+    <img v-bind:src="model.icon"/>
+    <div class="title-holder">
+      <div class="title truncateText" title="{{arrayToString names}}">{{model.names}}</div>
+      <div class="image-tag truncateText">{{model.image}}</div>
+    </div>
+  </div>
+  <hr/>
+  <div class="container-content">
+    <div class="container-host-holder">
+      <span class="container-label">{{i18n("app.container.list.hostLabel")}}</span>
+      <a href="#/hosts/{{model.hostDocumentId}}" v-on:click="showHost($event)">{{model.hostName}}</a>
+    </div>
+    <div class="container-created-holder">
+      <span class="container-label">{{i18n("app.container.list.createdDateLabel")}}</span>
+      <span>{{model.created | timestampToDate}}</span>
+    </div>
+    <div class="container-ports-holder">
+      <span class="container-label">{{i18n("app.container.list.portsLabel")}}</span>
+      <span><template v-for="portText in portsDisplayTexts">
+        <span>{{portText}}</span><br/>
+      </template></span>
+    </div>
+    <div class="container-command-holder">
+      <span class="container-label">{{i18n("app.container.list.commandLabel")}}</span>
+      <span>{{model.command}}</span>
+    </div>
+  </div>
+  <div class="container-actions" v-bind:class="{'hide': showDeleteConfirmation}">
+    <action-button name="details" icon-name="eye"
+                   v-bind:label="i18n('app.container.actions.details')"
+                   v-on:click="openContainer($event)"></action-button>
+    <action-button name="stop" icon-name="stop"
+                   v-bind:label="i18n('app.container.actions.stop')"
+                   v-bind:supported="operationSupported('STOP')"
+                   v-on:click="stopContainer($event)"></action-button>
+    <action-button name="start" icon-name="play"
+                   v-bind:label="i18n('app.container.actions.start')"
+                   v-bind:supported="operationSupported('START')"
+                   v-on:click="startContainer($event)"></action-button>
+    <action-button name="remove" icon-name="times"
+                   v-bind:label="i18n('app.container.actions.remove')"
+                   v-bind:supported="operationSupported('REMOVE')"
+                   v-on:click="askConfirmation($event)"></action-button>
+    <action-button name="scale" icon-name="plus"
+                   v-bind:label="i18n('app.container.list.cluster.scaleLabel')"
+                   v-bind:supported="operationSupported('CLUSTERING')"
+                   v-on:click="scaleContainer($event)"></action-button>
+  </div>
+  <delete-confirmation v-bind:class="{'hide': !showDeleteConfirmation}"
+                       v-bind:show="showDeleteConfirmation"
+                       v-on:confirm-delete="removeContainer($event)"
+                       v-on:cancel-delete="cancelRemoval($event)"></delete-confirmation>
+</div>

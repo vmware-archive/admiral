@@ -1,0 +1,73 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div>
+  <div v-if="currentUserShown" class="user-dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-user"></i>{{model.currentUser.email}}<span class="caret"></span></a>
+    <ul class="dropdown-menu dropdown-menu-right">
+      <li v-if="model.isContextAwareHelpAvailable"><a href="#" v-on:click="openHelp($event)">{{i18n("app.help.link")}}</a></li>
+      <li><a href="#" v-on:click="logout($event)">{{i18n("loginPanel.logout")}}</a></li>
+    </ul>
+  </div>
+
+  <div class="app-view" v-bind:class="[sideClass]" v-if="model.centerView">
+    <div class="side-view">
+      <div v-if="model.sideView" class="nav-bar">
+        <a v-bind:class="{'active': model.sideView.currentView === constants.VIEWS.HOSTS.name}"
+           class="nav-item hosts" href="#/hosts">
+          <img class="nav-item-image" src="image-assets/hosts.png">
+          <span>{{i18n("app.navbar.hosts")}}</span>
+        </a>
+        <a v-bind:class="{'active': model.sideView.currentView === constants.VIEWS.POLICIES.name}"
+           class="nav-item policies" href="#/policies">
+          <img class="nav-item-image" src="image-assets/policies.png">
+          <span>{{i18n("app.navbar.policies")}}</span>
+        </a>
+        <a v-bind:class="{'active': model.sideView.currentView === constants.VIEWS.TEMPLATES.name}"
+           class="nav-item templates" href="#/templates">
+          <img class="nav-item-image" src="image-assets/templates.png">
+          <span>{{i18n("app.navbar.templates")}}</span>
+        </a>
+        <a v-bind:class="{'active': model.sideView.currentView === constants.VIEWS.CONTAINERS.name}"
+           class="nav-item containers" href="#/containers">
+          <img class="nav-item-image" src="image-assets/containers.png">
+          <span>{{i18n("app.navbar.containers")}}</span>
+        </a>
+      </div>
+    </div>
+    <div v-if="model.centerView.name === constants.VIEWS.HOME.name"
+         class="center-view" transition="fade">
+      <home-view v-bind:model="model.centerView.data"></home-view>
+    </div>
+    <div v-else class="center-view" transition="fade">
+      <hosts-view v-if="model.centerView.name === constants.VIEWS.HOSTS.name"
+                  v-bind:model="model.centerView.data"
+                  v-ref:center-view >
+      </hosts-view>
+      <policies-view v-if="model.centerView.name === constants.VIEWS.POLICIES.name"
+                   v-bind:model="model.centerView.data"
+                   v-ref:center-view >
+      </policies-view>
+      <templates-view v-if="model.centerView.name === constants.VIEWS.TEMPLATES.name"
+                      v-bind:model="model.centerView.data"
+                      v-ref:center-view >
+      </templates-view>
+      <containers-view v-if="model.centerView.name === constants.VIEWS.CONTAINERS.name"
+                       v-bind:model="model.centerView.data"
+                       v-ref:center-view >
+      </containers-view>
+      <div class = "core-build-number"
+           v-if="buildNumberSupported()">
+        Build number: {{buildNumber}}
+      </div>
+    </div>
+  </div>
+</div>

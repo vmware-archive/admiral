@@ -1,0 +1,60 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="policies-view" v-bind:class="{'right-context-expanded':  contextExpanded}">
+  <div class="main-panel">
+    <list-title
+      v-bind:has-search-query="false"
+      v-bind:title="i18n('app.policy.list.title')"
+      v-bind:title-search="i18n('app.policy.list.title')"
+      v-bind:count="itemsCount" v-on:refresh-list="refresh()"></list-title>
+    <alert alert-type="danger" v-bind:show-alert="hasError"
+      v-bind:alert-message="errorMessage"></alert>
+    <div class="list-holder"></div>
+    <div class="mask"></div>
+  </div>
+  <context-sidepanel class="right-context-panel"
+    v-bind:class="{'right-context-expanded': innerContextExpanded}">
+
+    <div slot="toolbar" class="toolbar">
+      <context-sidepanel-toolbar-item
+        v-bind:active="activeContextItem === 'resourcePools'"
+        v-bind:icon-class="'fa fa-cubes'"
+        v-bind:label="i18n('app.resourcePool.contextPanelTooltip')"
+        v-on:open="openToolbarResourcePools()" v-on:close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+
+      <context-sidepanel-toolbar-item v-if="isStandaloneMode()"
+        v-bind:active="activeContextItem === 'resourceGroups'"
+        v-bind:icon-class="'fa fa-users'"
+        v-bind:label="i18n('app.group.contextPanelTooltip')"
+        v-on:open="openToolbarResourceGroups()" v-on:close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+
+      <context-sidepanel-toolbar-item
+        v-bind:active="activeContextItem === 'deploymentPolicies'"
+        v-bind:icon-class="'fa fa-file-text'"
+        v-bind:label="i18n('app.deploymentPolicy.contextPanelTooltip')"
+        v-on:open="openToolbarDeploymentPolicies()" v-on:close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+    </div>
+
+    <div slot="content" class="content">
+      <resource-pools-list v-if="activeContextItem === 'resourcePools'"
+        v-bind:model="model.contextView.activeItem.data"></resource-pools-list>
+      <resource-groups-list v-if="isStandaloneMode() && activeContextItem === 'resourceGroups'"
+        v-bind:model="model.contextView.activeItem.data"></resource-groups-list>
+      <deployment-policies-list v-if="activeContextItem === 'deploymentPolicies'"
+        v-bind:model="model.contextView.activeItem.data"></deployment-policies-list>
+    </div>
+
+  </context-sidepanel>
+</div>

@@ -1,0 +1,68 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="endpointEdit">
+  <div>
+    <div class="endpointEdit-toolbar pull-right">
+      <a href="#" class="btn admiral-btn admiral-btn-circle" v-bind:class="{'loading': model.saving}" v-on:click="save($event)" v-bind:disabled="saveDisabled">
+        <i class="fa fa-check"></i>
+        <i class="fa fa-spinner fa-spin loader"></i>
+      </a>
+      <a href="#" class="btn admiral-btn admiral-btn-circle" v-on:click="cancel($event)">
+        <i class="fa fa-times"></i>
+      </a>
+    </div>
+    <div class="title"></div>
+    <div class="endpointEdit-inputs form-horizontal">
+      <div class="form-group col-md-12">
+        <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.nameLabel')}}</label>
+        <div class="nameInput col-md-8">
+          <input v-bind:value="model.item.name" class="form-control"
+                 v-on:change="onInputChange()" v-on:input="onInputChange()"/>
+        </div>
+      </div>
+      <div class="form-group col-md-12">
+        <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.typeLabel')}}</label>
+        <div class="typeInput col-md-8">
+          <div class="form-control dropdown-holder"></div>
+        </div>
+      </div>
+      <div class="form-group col-md-12">
+        <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.accessKeyIdLabel')}}</label>
+        <div class="accessKeyId col-md-8">
+          <input v-bind:value="model.item.privateKeyId" class="form-control"
+                 v-on:change="onInputChange()" v-on:input="onInputChange()"/>
+        </div>
+      </div>
+      <div class="form-group col-md-12">
+        <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.secretAccessKeyLabel')}}</label>
+        <div class="secretAccessKey col-md-8">
+          <input v-bind:value="model.item.privateKey" class="form-control"
+                 v-on:change="onInputChange()" v-on:input="onInputChange()"/>
+        </div>
+      </div>
+      <div class="form-group col-md-12">
+        <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.regionIdLabel')}}</label>
+        <div class="regionIdInput col-md-8">
+          <input v-bind:value="model.item.regionId" class="form-control"
+                 v-on:change="onInputChange()" v-on:input="onInputChange()" />
+        </div>
+      </div>
+      <div class="form-group col-md-12">
+        <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.endpointHostLabel')}}</label>
+        <div class="endpointHostInput col-md-8">
+          <input v-bind:value="model.item.endpointHost" class="form-control"
+                 v-on:change="onInputChange()" v-on:input="onInputChange()" />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

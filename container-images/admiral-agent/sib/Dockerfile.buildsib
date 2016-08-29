@@ -1,0 +1,23 @@
+# This docker image uses a custom .patch in order to compile shellinabox under # alpine linux. The original implementation can be seen here:
+# https://github.com/gerco/shellinabox-alpine/blob/master/Dockerfile.build
+FROM vmware/photon:1.0
+
+RUN tyum install git linux-dev-4.4.8-6.ph1 gcc glibc-devel openssl-devel zlib-devel autoconf automake make libtool tar sed binutils gawk diffutils -y && tyum clean all
+
+RUN ln -s /usr/src/linux-headers-4.4.8-6.ph1/arch/x86/include/uapi/asm /usr/include/asm
+RUN ln -s /usr/src/linux-headers-4.4.8-6.ph1/include/uapi/asm-generic /usr/include/asm-generic
+RUN ln -s /usr/src/linux-headers-4.4.8-6.ph1/include/uapi/linux /usr/include/linux
+
+ RUN git clone https://github.com/shellinabox/shellinabox.git \
+     && cd shellinabox \
+     && git checkout e6c25e84bc662797c7382500f136bb74874c2500
+
+RUN cd shellinabox && \
+    autoreconf -i && \
+    ./configure && \
+    make
+
+RUN mkdir /shellinabox-bin && \
+    mv /shellinabox/shellinaboxd /shellinabox-bin/
+
+ENTRYPOINT /bin/sh

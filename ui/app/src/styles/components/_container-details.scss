@@ -1,0 +1,337 @@
+$elements-margin: 20px;
+$elements-side-margin: $elements-margin / 2;
+
+.container-details {
+  @extend .position-expand;
+  background-color: $context-view-background-color;
+
+  > div {
+    margin-left: $elements-margin;
+    margin-right: $elements-margin;
+  }
+
+  > .container-details-header {
+    margin-top: $elements-margin;
+  }
+
+  > .content {
+    margin-bottom: $elements-margin;
+  }
+
+  > .alert {
+    margin-top: 0px;
+  }
+
+  > .container-details-header {
+    height: 50px;
+  }
+
+  > .container-details-header .title {
+    font-size: 24px;
+    line-height: 50px;
+    float: left;
+
+    .refresh-button .btn-circle {
+      margin-bottom: 5px;
+    }
+  }
+
+  $container-details-header-line-height: 56px;
+  > .container-details-header .status {
+    line-height: $container-details-header-line-height;
+    float: left;
+    margin-left: 30px;
+    font-weight: bold;
+  }
+
+  > .container-details-header .status.RUNNING {
+    color: $status_running_color;
+  }
+
+  > .container-details-header .status.REBOOTING {
+    color: $status_rebooting_color;
+  }
+
+  > .container-details-header .status.STOPPED {
+    color: $status_stopped_color;
+  }
+
+  > .container-details-header .status.RETIRED {
+    color: $secondary_inactive_button_color;
+  }
+  /* Container Actions */
+  > .container-details-header .toolbar-actions {
+    margin-top: 10px;
+    float: right;
+    .progress-holder {
+      margin-right: 20px;
+    }
+
+    .cancel-action {
+      font-size: 16px;
+      color: $main_color;
+    }
+
+    .fa-spin {
+      margin-left: 10px;
+    }
+  }
+
+  > .content {
+    @extend .position-expand;
+    top: 75px;
+  }
+
+  > .content > .container-details-properties {
+    top: 34%;
+    bottom: 0;
+    left: 0;
+    right: 50%;
+    margin-right: $elements-side-margin;
+    overflow: auto;
+    z-index: 1;
+  }
+
+  > .content > .container-details-properties > .content {
+    background-color: #FFFFFF;
+    overflow: auto;
+  }
+
+  > .content > .container-details-properties .container-properties-value-cell {
+    word-break: break-all;
+    word-wrap: break-word;
+  }
+
+  > .content > .container-details-usages {
+    top: 0;
+    bottom: 67%;
+    left: 0;
+    right: 50%;
+    margin-right: $elements-side-margin;
+    overflow: auto;
+    z-index: 1;
+  }
+
+  > .content > .container-details-usages > .content {
+    background-color: #FFFFFF;
+  }
+
+  > .content > .container-details-logs{
+    top: 0;
+    right: 0;
+    left: 50%;
+    margin-left: $elements-side-margin;
+    bottom: 0;
+    z-index: 1;
+  }
+
+  > .content > .container-details-logs > .content {
+    @extend .position-expand;
+    @extend .font-mono;
+    background-color: #353434;
+    color: #A6A6A6;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    bottom: 25px;
+  }
+
+  > .content > .container-details-logs .container-details-logs-settings {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+  }
+
+  > .content > .container-details-logs .container-details-logs-settings > select {
+    margin-left: 10px;
+  }
+
+  .maximizableControl {
+    position: absolute;
+    @include transition(all 0.4s);
+  }
+
+  > .content > .maximizableControl.maximized {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: $context-view-background-color;
+    z-index: 100;
+    margin: 0;
+  }
+
+  .maximizableControl .maximizableControlToggle {
+    display: none;
+  }
+
+  .maximizableControl .maximizableControlToggle {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+    color: $expand-toggle-color;
+    font-size: 20px;
+  }
+
+  .maximizableControl .maximizableControlToggle:hover {
+    color: $expand-toggle-hover-color
+  }
+
+  > .content > .maximizableControl > .title {
+    position: absolute;
+    top: 0;
+    height: 20px;
+    font-size: 16px;
+  }
+
+  > .content > .maximizableControl > .content {
+    @extend .position-expand;
+    top: 20px;
+    border: 1px solid #DFDFDF;
+  }
+
+  > .content > .maximizableControl .maximizableControlToggle {
+    top: 25px;
+  }
+
+  > .content > .container-details-properties.maximizableControl .maximizableControlToggle, > .content > .container-details-logs.maximizableControl .maximizableControlToggle {
+    // more space on the right due to vertical scrollbar
+    right: 25px;
+  }
+
+  .container-details-usages .container-stats {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+  }
+
+  .container-details-usages .container-stats > div {
+    @extend .position-expand;
+  }
+
+  .container-details-usages .container-stats > div.info .radial-progress-arc {
+    fill: $brand-info;
+  }
+
+  .container-details-usages .container-stats > div.warning .radial-progress-arc {
+    fill: $brand-warning;
+  }
+
+  .container-details-usages .container-stats > div.danger .radial-progress-arc {
+    fill: $brand-danger;
+  }
+
+  .container-details-usages .container-stats .cpu-stats {
+    left: 0;
+    right: 70%;
+  }
+
+  .container-details-usages .container-stats .memory-stats {
+    left: 70%;
+    right: 0;
+  }
+
+  .container-details-usages .container-stats .network-stats {
+    left: 35%;
+    right: 35%;
+  }
+  .container-stats .network-stats svg {
+    position: absolute;
+  }
+
+  .container-stats .network-stats .network-traffic-labels {
+    text-anchor: middle;
+  }
+
+  .container-stats .network-stats .network-traffic-labels .network-traffic-received-label tspan.arrow {
+    font-family: FontAwesome;
+    fill: $brand-info
+  }
+
+  .container-stats .network-stats .network-traffic-labels .network-traffic-sent-label tspan.arrow {
+    font-family: FontAwesome;
+    fill: $brand-danger;
+  }
+
+}
+
+.container-details:hover .maximizableControl .maximizableControlToggle {
+  display: block;
+}
+
+
+/* Container Details Content */
+.container-details.with-exposed-service {
+  > .exposed-service {
+    clear: both;
+    max-height: 40px;
+    overflow: auto;
+
+    a {
+      margin-right: 20px;
+    }
+    .exposed-service-hint {
+      color: $main-color;
+      margin-right: 5px;
+
+      .tooltip-inner {
+        max-width: 500px;
+
+        textarea {
+          resize: none;
+          overflow: auto;
+          height: 52px;
+        }
+      }
+    }
+  }
+  /* Container Details Content */
+  > .content {
+    @include transition(top 0.4s);
+    top: 120px;
+  }
+}
+
+.container-shell.modal {
+  .modal-dialog {
+    height: 80%;
+  }
+  .modal-content {
+    height: 100%;
+  }
+
+  .modal-header {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+
+    .open-new-tab {
+      float: right;
+      .fa {
+        margin-right: 10px;
+      }
+    }
+  }
+
+  .modal-header {
+  }
+
+  .modal-body {
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0;
+    margin: 15px;
+    iframe {
+      height: 100%;
+      width: 100%;
+      border: 0;
+    }
+  }
+}

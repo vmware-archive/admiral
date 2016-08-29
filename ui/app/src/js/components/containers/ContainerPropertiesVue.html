@@ -1,0 +1,76 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{{i18n("app.container.details.attributes.host")}}</td>
+      <td class="container-properties-value-cell"><a
+        href="#/hosts/{{model.hostDocumentId}}" v-on:click="showHost($event)">{{model.hostName}}</a></td>
+    </tr>
+    <tr>
+      <td>{{i18n("app.container.details.attributes.createdDateLabel")}}</td>
+      <td class="container-properties-value-cell">{{model.created | timestampToDate}}</td>
+    </tr>
+    <tr>
+      <td>{{i18n("app.container.details.attributes.image")}}</td>
+      <td class="container-properties-value-cell">{{model.image}}</td>
+    </tr>
+    <tr>
+      <td>{{i18n("app.container.details.attributes.ipaddress")}}</td>
+      <td class="container-properties-value-cell">{{model.address}}</td>
+    </tr>
+    <tr>
+      <td>{{i18n("app.container.details.attributes.ports")}}</td>
+      <td class="container-properties-value-cell">
+        <template v-for="portLink in portLinks">
+          <template v-if="portLink.link"><a
+            href="{{portLink.link}}" target="_blank">{{portLink.name}}</a></template>
+          <template v-else>{{portLink.name}}</template><br/>
+        </template>
+      </td>
+    </tr>
+    <tr>
+      <td>{{i18n("app.container.details.attributes.command")}}</td>
+      <td class="container-properties-value-cell">{{model.command}}</td>
+    </tr>
+    <tr>
+      <td>{{i18n("app.container.details.attributes.id")}}</td>
+      <td class="container-properties-value-cell">{{model.id}}</td>
+    </tr>
+    <tr>
+      <td>{{i18n("app.container.details.attributes.restartCount")}}</td>
+      <td class="container-properties-value-cell">{{model.attributes.RestartCount}}</td>
+    </tr>
+    <tr>
+      <td>{{i18n("app.container.details.attributes.memory")}}</td>
+      <td class="container-properties-value-cell">{{model.attributes.HostConfig.Memory}}</td>
+    </tr>
+    <tr>
+      <td>{{i18n("app.container.details.attributes.memorySwap")}}</td>
+      <td class="container-properties-value-cell">{{model.attributes.HostConfig.MemorySwap}}</td>
+    </tr>
+    <tr>
+      <td>{{i18n("app.container.details.attributes.cpuShares")}}</td>
+      <td class="container-properties-value-cell">{{model.attributes.HostConfig.CpuShares}}</td>
+    </tr>
+    <tr>
+      <td>{{i18n("app.container.details.attributes.cpusetCpus")}}</td>
+      <td class="container-properties-value-cell">{{model.attributes.HostConfig.CpusetCpus}}</td>
+    </tr>
+  </tbody>
+</table>

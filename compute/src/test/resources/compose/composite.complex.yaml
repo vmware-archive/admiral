@@ -1,0 +1,116 @@
+---
+name: "hello-cluster"
+components:
+  h1:
+    type: "Container.Docker"
+    data:
+      name: "h1"
+      image: "registry.hub.docker.com/kitematic/hello-world-nginx"
+      command:
+      - "/startup.sh -a"
+      affinity:
+      - "!h3:soft"
+      _cluster: 1
+      env:
+      - var: "TEST_H1"
+        value: "test-value-1"
+      volumes:
+      - "/test:/test"
+      memory_limit: 1
+      memory_swap_limit: 1
+      cpu_shares: 1
+      publish_all: false
+      ports:
+      - host_port: "9080"
+        container_port: "80"
+      log_config:
+        type: "json-file"
+      restart_policy: "always"
+      network_mode: "bridge"
+  h2:
+    type: "Container.Docker"
+    data:
+      name: "h2"
+      image: "registry.hub.docker.com/kitematic/hello-world-nginx"
+      command:
+      - "/startup.sh -a"
+      - "/startup.sh -b"
+      publish_all: false
+      log_config:
+        type: "splunk"
+        config:
+          max-size: "10m"
+          min-size: "1m"
+      links:
+      - service: "h1"
+      restart_policy: "always"
+      network_mode: "host"
+      expose_service:
+      - address: "wp.example.com"
+        port: "80"
+  h3:
+    type: "Container.Docker"
+    data:
+      name: "h3"
+      image: "registry.hub.docker.com/kitematic/hello-world-nginx"
+      affinity:
+      - "h2:hard"
+      - "h4:hard"
+      _cluster: 1
+      env:
+      - var: "TEST_ENV_3_1"
+        value: "value31"
+      - var: "TEST_ENV_3_2"
+        value: "value32"
+      hostname: "h3.hostname"
+      memory_limit: 5
+      memory_swap_limit: 5
+      cpu_shares: 5
+      working_dir: "/working-dir"
+      publish_all: true
+      ports:
+      - host_port: "9090"
+        container_port: "90"
+      - host_port: "9091"
+        container_port: "91"
+      links:
+      - service: "h1"
+        alias: "h1"
+      - service: "h2"
+      volumes_from:
+      - "datacontainer1"
+      - "datacontainer2"
+      restart_policy: "no"
+      network_mode: "bridge"
+      expose_service:
+      - address: "h3.example.com"
+        port: "80"
+      TEST_CUSTOM_3_1: "value31"
+      TEST_CUSTOM_3_2: "value32"
+  h4:
+    type: "Container.Docker"
+    data:
+      name: "h4"
+      image: "registry.hub.docker.com/kitematic/hello-world-nginx"
+      _cluster: 1
+      publish_all: false
+      links:
+      - service: "h1"
+        alias: "alias-h1"
+      - service: "h2"
+        alias: "alias-h2"
+      - service: "h3"
+        alias: "alias-h3"
+      restart_policy: "always"
+      network_mode: "bridge"
+  h5:
+    type: "Container.Docker"
+    data:
+      name: "h5-name"
+      image: "registry.hub.docker.com/kitematic/hello-world-nginx"
+      _cluster: 2
+      publish_all: false
+      links:
+      - service: "h4"
+      restart_policy: "always"
+      network_mode: "bridge"

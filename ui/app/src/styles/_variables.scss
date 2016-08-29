@@ -1,0 +1,129 @@
+$vmw_blue_top: #3888c5;
+$vmw_blue_bottom: #225277;
+$vmw_lightblue: #3888c5;
+
+$main_color: #3399cc;
+$link_color: #356f9b;
+
+$disabled_opacity: 0.5;
+
+$stats_holder_font_size: 10px;
+
+$secondary_hint_title_color: #cccccc;
+$secondary_inactive_button_color: #cccccc;
+
+$main-border-color: #dbdbdb;
+
+$tab-color: #e9e9e9;
+
+// Overriding bootstrap variables
+$table-bg-accent: #FFFFFF;
+$table-bg-accent-even: #f3f3f3;
+$tooltip-color: #333;
+$tooltip-bg: #fff;
+$tooltip-opacity: 1;
+$tooltip-arrow-width: 6px;
+$progress-bg: #ccc;
+// Custom tooltip property
+$tooltip-border-color: #ccc;
+$brand-success: #669900;
+$brand-warning: #FFCC00;
+$brand-danger: #FF0000;
+$brand-info: $main_color;
+
+$tooltip-arrow-color: $tooltip-border-color;
+
+$context-view-background-color: #f7f7f7;
+$modal-with-help-icon-left-padding: 40px;
+
+$status_running_color: #669900;
+$status_rebooting_color: #f8a407;
+$status_stopped_color: #cc0000;
+$status_suspended_color: #f8a407;
+
+$expand-toggle-color: #BABABA;
+$expand-toggle-hover-color: $secondary_hint_title_color;
+
+$inline-edit-top-padding: 10px;
+
+$right-context-panel-toolbar-item-width: 40px;
+
+$closable-view-zindex: 100;
+
+.position-expand {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.truncateText {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.truncateText2Lines {
+  position: relative;
+
+  line-height: 1.3em;
+  max-height: 2.6em;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.truncateText3Lines {
+  position: relative;
+
+  line-height: 1.3em;
+  max-height: 3.9em;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.gray-filter {
+  -webkit-filter: grayscale(100%);
+  -webkit-transform: translateZ(0); /* Safari blur fix and scroll optimization http://matthewhappen.com/fixing-css3-filter-blur-on-retina-displays/ */
+  -moz-filter: grayscale(100%);
+  -ms-filter: grayscale(100%);
+  -o-filter: grayscale(100%);
+  filter: url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\'><filter id=\'grayscale\'><feColorMatrix type=\'matrix\' values=\'0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0 0 0 1 0\'/></filter></svg>#grayscale"); /* Firefox 3.5+ */
+  filter: gray; /* IE 6-9 */
+}
+
+.item-hidden-for-collapse-animation {
+  max-height: 0;
+  height: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.item-shown-for-collapse-animation {
+  -webkit-transition: all 0.4s;
+  -moz-transition: all 0.4s;
+  -o-transition: all 0.4s;
+  transition: all 0.4s;
+  max-height: 50px;
+  -webkit-transition-delay: 0.1s;
+  transition-delay: 0.1s;
+}
+
+.hint {
+  color: $link_color;
+  font-size: 20px;
+}

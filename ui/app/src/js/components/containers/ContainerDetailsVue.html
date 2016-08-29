@@ -1,0 +1,97 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div>
+<alert alert-type="danger" v-bind:show-alert="hasGeneralError" v-bind:alert-message="generalError"></alert>
+<div class="container-details"
+     v-if="model.instance"
+     v-bind:class="{'with-exposed-service': model.exposedService}">
+  <alert alert-type="danger" v-bind:show-alert="hasOperationError"
+                             v-bind:alert-message="i18n('app.container.details.operation.failure')"></alert>
+  <div class="container-details-header">
+    <div class="title">{{model.instance.names}}<refresh-button v-on:click="refresh()"></refresh-button></div>
+    <div class="status {{model.instance.powerState}}">{{containerStatusDisplay(model.instance.powerState, model.instance.started)}}</div>
+    <div class="toolbar-actions">
+      <template v-if="hasOperationInProgress() || hasPendingOperationStart">
+        <div class="progress-holder">
+          <countdown-operation-start v-bind:show="hasPendingOperationStart"
+                                     v-on:countdown-operation-complete="removeContainer()"
+                                     v-on:countdown-operation-cancel="cancelRemoveContainer()"
+            ></countdown-operation-start>
+          <div class="loading" v-bind:class="{'hide': !hasOperationInProgress()}">
+            {{i18n('app.container.details.operation.pending')}}<i class="fa fa-spinner fa-2x fa-spin"></i></div>
+        </div>
+      </template>
+      <template v-else>
+        <toolbar-action-button id="stop" icon-name="stop" v-bind:label="i18n('app.container.actions.stop')"
+                               v-bind:supported="operationSupported('STOP')"
+                               v-on:click="stopContainer($event)"></toolbar-action-button>
+
+        <toolbar-action-button id="start" icon-name="play" v-bind:label="i18n('app.container.actions.start')"
+                               v-bind:supported="operationSupported('START')"
+                               v-on:click="startContainer($event)"></toolbar-action-button>
+
+        <toolbar-action-button id="remove" icon-name="close" v-bind:label="i18n('app.container.actions.remove')"
+                               v-bind:supported="operationSupported('REMOVE')"
+                               v-on:click="triggerRemoveContainer($event)"></toolbar-action-button>
+
+        <toolbar-action-button id="terminal" icon-name="terminal" v-bind:label="i18n('app.container.actions.terminal')"
+                               v-bind:supported="operationSupported('SHELL')"
+                               v-on:click="openShell($event)"></toolbar-action-button>
+      </template>
+    </div>
+  </div>
+  <div v-if="model.exposedService" class="exposed-service">
+    <span class="exposed-service-hint">
+      <i class="fa fa-external-link" data-toggle="tooltip" data-placement="bottom"
+         v-tooltip="exposedServicesDescription('app.container.details.exposedService.description')"></i>
+    </span>
+    <a v-for="addressConfig in model.exposedService.addressConfigs"
+       track-by="alias"
+       target="_blank"
+       href="{{addressConfig.address}}">{{addressConfig.address}}</a>
+  </div>
+  <div class="content">
+    <maximizable-behaviour class="container-details-properties">
+      <div class="title">{{i18n('app.container.details.properties')}}</div>
+      <div class="content">
+        <container-properties v-bind:model="model.instance"></container-properties>
+      </div>
+    </maximizable-behaviour>
+    <maximizable-behaviour class="container-details-usages">
+      <div class="title">{{i18n('app.container.details.usages')}}</div>
+      <div class="content">
+        <container-stats v-bind:model="model.stats"></container-stats>
+      </div>
+      <div class="loading loading-background" v-bind:class="{'hide': !model.statsLoading}">
+        <span class="vertical-helper"></span>
+        <img src="image-assets/loading-animation.gif">
+      </div>
+    </maximizable-behaviour>
+    <maximizable-behaviour class="container-details-logs">
+      <div class="title">{{i18n('app.container.details.logs')}}</div>
+      <div class="content">{{model.logs}}</div>
+      <div class="loading" v-bind:class="{'hide': !model.logsLoading}">
+        <span class="vertical-helper"></span>
+        <img src="image-assets/loading-animation.gif">
+      </div>
+      <div class="container-details-logs-settings">
+        <span>{{i18n('app.container.details.showingLogsSince')}}</span>
+        <select v-on:change="onLogsSinceChange($event)" v-if="model.logsSettings">
+          <option v-for="duration in logsSinceDurations"
+                  v-bind:value="duration"
+                  v-bind:selected="duration === model.logsSettings.sinceDuration">{{duration | momentHumanize}}</option>
+        </select>
+      </div>
+    </maximizable-behaviour>
+  </div>
+</div>
+</div>

@@ -1,0 +1,40 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="container-form">
+  <alert alert-type="danger"
+         v-bind:show-alert="$alert.show"
+         v-bind:alert-message="alert.message"></alert>
+  <div class="title">{{i18n('app.container.request.title')}}</div>
+  <div class="container-defintion-form">
+    <!-- Dynamic form content will be inserted here -->
+  </div>
+  <div class="pull-right control-btns">
+    <div v-if="showGroupForProvisioning" class="provisionGroup" style="display: inline; margin: 0px; margin-right: -15px;">
+      <select v-model="preferredGroupId">
+        <option v-for="option in groupOptions" track-by="id"
+                value="{{option.id}}">
+          {{option.name}}
+        </option>
+      </select>
+    </div>
+    <button class="btn admiral-btn"
+            v-bind:class="{'loading': creatingContainer}"
+            v-bind:disabled="buttonsDisabled"
+            v-on:click="createContainer()">{{i18n('app.container.request.provision')}}<i
+                class="fa fa-spinner fa-spin loader-inline"></i></button>
+    <button class="btn admiral-btn admiral-btn-secondary save-container-template"
+            v-bind:class="{'loading': savingTemplate}"
+            v-bind:disabled="buttonsDisabled"
+            v-on:click="saveTemplate()">{{i18n('app.container.request.saveTemplate')}}<i
+                class="fa fa-spinner fa-spin loader-inline"></i></button>
+  </div>
+</div>

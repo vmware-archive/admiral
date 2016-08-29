@@ -1,0 +1,64 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div>
+  <div v-if="model.currentUser" class="user-dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-user"></i>{{model.currentUser.email}}<span class="caret"></span></a>
+    <ul class="dropdown-menu dropdown-menu-right">
+      <li><a href="#" v-on:click="openHelp($event)">{{i18n("app.help.link")}}</a></li>
+      <li><a href="#" v-on:click="logout($event)">{{i18n("loginPanel.logout")}}</a></li>
+    </ul>
+  </div>
+
+  <div class="app-view" v-bind:class="[sideClass]">
+    <div class="side-view">
+      <div v-if="model.sideView" class="nav-bar">
+        <a v-bind:class="{'active': model.sideView.currentView === computeConstants.VIEWS.ENVIRONMENTS.name}"
+           class="nav-item templates" href="#/environments">
+          <span class="nav-item-image"><i class="fa fa-cloud"></i></span>
+          <span>{{i18n("app.navbar.environments")}}</span>
+        </a>
+        <a v-bind:class="{'active': model.sideView.currentView === computeConstants.VIEWS.POLICIES.name}"
+           class="nav-item policies" href="#/policies">
+          <img class="nav-item-image" src="image-assets/policies.png">
+          <span>{{i18n("app.navbar.policies")}}</span>
+        </a>
+        <a v-bind:class="{'active': model.sideView.currentView === computeConstants.VIEWS.MACHINES.name}"
+           class="nav-item containers" href="#/machines">
+          <span class="nav-item-image"><i class="fa fa-cube"></i></span>
+          <span>{{i18n("app.navbar.machines")}}</span>
+        </a>
+      </div>
+    </div>
+    <div v-if="model.centerView.name === computeConstants.VIEWS.HOME.name"
+         class="center-view" transition="fade">
+      <home-compute-view v-bind:model="model.centerView.data"></home-compute-view>
+    </div>
+    <div v-else class="center-view" transition="fade">
+      <environments-view v-if="model.centerView.name === computeConstants.VIEWS.ENVIRONMENTS.name"
+                   v-bind:model="model.centerView.data"
+                   v-ref:center-view >
+      </environments-view>
+      <policies-view v-if="model.centerView.name === computeConstants.VIEWS.POLICIES.name"
+                   v-bind:model="model.centerView.data"
+                   v-ref:center-view >
+      </policies-view>
+       <machines-view v-if="model.centerView.name === computeConstants.VIEWS.MACHINES.name"
+                   v-bind:model="model.centerView.data"
+                   v-ref:center-view >
+      </machines-view>
+      <div class = "core-build-number"
+           v-if="buildNumberSupported()">
+        Build number: {{buildNumber}}
+      </div>
+    </div>
+  </div>
+</div>

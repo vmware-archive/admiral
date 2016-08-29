@@ -1,0 +1,78 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="image-item" data-name="{{model.registry}}/{{model.name}}">
+  <span class="image-stamp"><i class="fa fa-picture-o"></i></span>
+  <div class="image-header">
+    <img v-bind:src="model.icon"/>
+    <div class="title-holder">
+      <div class="title truncateText" title="{{model.name}}">{{model.name}}</div>
+      <div class="truncateText" title="{{model.registry}}">{{model.registry}}</div>
+      <div class="image-tag">{{model.tag}}</div>
+    </div>
+  </div>
+  <hr/>
+  <div class="image-content">
+    <div v-if="model.is_official != null">
+      <span class="image-label">{{i18n("app.template.list.official")}}</span>
+      <span v-if="model.is_official">{{i18n("app.template.list.true")}}</span>
+      <span v-else>{{i18n("app.template.list.false")}}</span>
+    </div>
+    <div v-if="model.is_trusted != null">
+      <span class="image-label">{{i18n("app.template.list.trusted")}}</span>
+      <span v-if="model.is_trusted">{{i18n("app.template.list.true")}}</span>
+      <span v-else>{{i18n("app.template.list.false")}}</span>
+    </div>
+    <div v-if="model.star_count != null">
+      <span class="image-label">{{i18n("app.template.list.stars")}}</span>
+      <span>{{model.star_count}}</span>
+    </div>
+    <div class="image-description-text" title="{{model.description}}">{{model.description}}&nbsp;</div>
+  </div>
+  <div class="btn-group pull-right">
+    <template v-if="readOnly">
+      <button type="button" class="btn admiral-btn select-image-btn">Continue</button>
+    </template>
+    <template v-else>
+      <button v-if="model.provisioning" type="button" class="btn admiral-btn create-container-btn loading">{{i18n ("app.template.list.provision")}}<i class="fa fa-spinner fa-spin loader"></i></button>
+      <template v-else><div>
+        <template v-if="showGroupForProvisioning">
+          <div class="provisionGroup">
+            <select v-model="preferredGroupId">
+              <option v-for="option in groupOptions" track-by="id"
+                      value="{{option.id}}">
+                {{option.name}}
+              </option>
+            </select>
+            <button type="button" class="btn admiral-btn create-container-with-group-btn"
+                    v-on:click="provisionContainer($event)">{{i18n("app.template.list.provision")}}</button>
+          </div>
+        </template>
+        <template v-else>
+          <div class="btn-group pull-right">
+            <button type="button" class="btn admiral-btn create-container-btn"
+                    v-on:click="provisionContainer($event)">{{i18n("app.template.list.provision")}}</button>
+            <button type="button" class="btn admiral-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <span class="caret"></span>
+              <span class="sr-only">Toggle Dropdown</span>
+            </button>
+            <ul class="dropdown-menu">
+              <li><a href="#" class="create-container-additional-btn"
+                     v-on:click="provisionContainerAdditionalInfo($event)"
+                    >{{i18n("app.template.list.provisionAdditionalInfo")}}</a></li>
+            </ul>
+          </div>
+        </template>
+      </div></template>
+    </template>
+  </div>
+  <div style="clear: both;"></div>
+</div>

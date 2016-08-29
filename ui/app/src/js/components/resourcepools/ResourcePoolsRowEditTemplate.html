@@ -1,0 +1,46 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<tr>
+  <td colspan="5" class="resourcePoolEditHolder">
+    <div class="resourcePoolEdit">
+      <div class="resourcePoolEdit-properties">
+        <div class="title"></div>
+        <input class="name-input" placeholder="{{i18n 'app.resourcePool.edit.nameTitle'}}">
+
+        {{#if showEndpoint}}
+        <div class="form-group">
+          <div class="subtitle">{{i18n 'app.resourcePool.edit.endpointTitle'}}</div>
+          <div class="endpoint form-control dropdown-holder"></div>
+        </div>
+        {{/if}}
+
+        <div class="subtitle">{{i18n 'app.resourcePool.edit.customPropertiesTitle'}}</div>
+        <div class="custom-properties"></div>
+      </div>
+      <div class="resourcePoolEdit-toolbar">
+        <a href="#" class="resourcePoolEdit-save btn admiral-btn admiral-btn-circle">
+          <i class="fa fa-check"></i>
+          <i class="fa fa-spinner fa-spin loader"></i>
+        </a>
+        <a href="#" class="resourcePoolEdit-cancel btn admiral-btn admiral-btn-circle">
+          <i class="fa fa-times"></i>
+        </a>
+      </div>
+    </div>
+  </td>
+  <!-- Hidden cells but needed to follow the cells model of the default read-only row -->
+  <td class="hide"></td>
+  <td class="hide"></td>
+  <td class="hide"></td>
+  <td class="hide"></td>
+  <td class="hide"></td>
+</tr>

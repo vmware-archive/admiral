@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.vmware.admiral</groupId>
+    <artifactId>admiral</artifactId>
+    <version>0.5.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <url>https://github.com/vmware/admiral</url>
+
+    <licenses>
+        <license>
+            <name>License</name>
+            <url>https://github.com/vmware/admiral/blob/master/LICENSE</url>
+        </license>
+        <license>
+            <name>Notice</name>
+            <url>https://github.com/vmware/admiral/blob/master/NOTICE</url>
+        </license>
+    </licenses>
+
+    <modules>
+        <module>common-test</module>
+        <module>common</module>
+        <module>compute</module>
+        <module>request</module>
+        <module>continuous-delivery</module>
+        <module>ui</module>
+        <module>host</module>
+        <module>adapter</module>
+    </modules>
+
+    <properties>
+        <!-- Avoid platform dependent build warnings: set encoding to UTF8 -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Java -->
+        <java.source.version>1.8</java.source.version>
+        <java.target.version>1.8</java.target.version>
+
+        <!-- Maven -->
+        <maven.plugin.versions>1.3.1</maven.plugin.versions>
+        <maven.plugin.compiler>3.2</maven.plugin.compiler>
+        <maven.plugin.resources>2.7</maven.plugin.resources>
+        <maven.plugin.dependency>2.10</maven.plugin.dependency>
+        <maven.plugin.failsafe>2.18.1</maven.plugin.failsafe>
+        <maven.jar.plugin>2.6</maven.jar.plugin>
+        <maven.plugin.install>2.5.2</maven.plugin.install>
+        <maven.plugin.deploy>2.8.1</maven.plugin.deploy>
+        <maven.plugin.docker>0.14.2</maven.plugin.docker>
+        <maven.plugin.assembly>2.4.1</maven.plugin.assembly>
+        <maven.plugin.surefire>2.19.1</maven.plugin.surefire>
+
+        <!-- M2Eclipse -->
+        <m2e.lifecycle-mapping>1.0.0</m2e.lifecycle-mapping>
+
+        <!-- xenon -->
+        <xenon.version>0.9.3</xenon.version>
+        <xenon.common.version>${xenon.version}</xenon.common.version>
+        <xenon.ui.version>${xenon.version}</xenon.ui.version>
+        <xenon.group>com.vmware.xenon</xenon.group>
+
+        <!-- Photon Model -->
+        <photon.model.version>0.4.4-SNAPSHOT</photon.model.version>
+
+        <!-- other -->
+        <bouncycastle.version>1.54</bouncycastle.version>
+        <jsch.version>0.1.53</jsch.version>
+        <jackson.version>2.6.3</jackson.version>
+
+        <!-- JS -->
+        <maven.plugin.frontend.version>0.0.29</maven.plugin.frontend.version>
+        <nodejs.version>v5.10.1</nodejs.version>
+        <npm.version>3.8.3</npm.version>
+
+        <!-- internal container port to listen on -->
+        <admiral.container.port>8282</admiral.container.port>
+
+        <!-- TEST -->
+        <junit.version>4.12</junit.version>
+        <mockito.version>2.0.36-beta</mockito.version>
+
+        <!-- Jacoco -->
+        <jacocoSkipReport>false</jacocoSkipReport>
+
+        <skipITs>false</skipITs>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>maven-central</id>
+            <url>https://oss.sonatype.org/content/repositories/releases</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>maven-snapshots</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!--TEST -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>${xenon.group}</groupId>
+                <artifactId>xenon-common</artifactId>
+                <version>${xenon.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${xenon.group}</groupId>
+                <artifactId>xenon-ui</artifactId>
+                <version>${xenon.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${xenon.group}</groupId>
+                <artifactId>xenon-swagger</artifactId>
+                <version>${xenon.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.vmware.photon.controller</groupId>
+                <artifactId>photon-model</artifactId>
+                <version>${photon.model.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.vmware.photon.controller</groupId>
+                <artifactId>photon-aws-adapter</artifactId>
+                <version>${photon.model.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vmware.photon.controller</groupId>
+                <artifactId>photon-azure-adapter</artifactId>
+                <version>${photon.model.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vmware.photon.controller</groupId>
+                <artifactId>photon-vsphere-adapter</artifactId>
+                <version>${photon.model.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.jcraft</groupId>
+                <artifactId>jsch</artifactId>
+                <version>${jsch.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-yaml</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <!--TEST -->
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <scope>test</scope>
+                <version>${junit.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <scope>test</scope>
+                <version>${mockito.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <configuration>
+                    <threshold>Normal</threshold>
+                    <effort>Default</effort>
+                    <failOnError>true</failOnError>
+                    <xmlOutput>true</xmlOutput>
+                    <omitVisitors>UnreadFields,DefaultEncodingDetector</omitVisitors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.13</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>6.11.1</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <configLocation>tools/build/checkstyle.xml</configLocation>
+                    <encoding>UTF-8</encoding>
+                    <consoleOutput>true</consoleOutput>
+                    <failsOnError>true</failsOnError>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven.jar.plugin}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven.plugin.compiler}</version>
+                    <configuration>
+                        <source>${java.source.version}</source>
+                        <target>${java.target.version}</target>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>${maven.plugin.resources}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>versions-maven-plugin</artifactId>
+                    <version>${maven.plugin.versions}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>${maven.plugin.dependency}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>${maven.plugin.failsafe}</version>
+                    <executions>
+                        <execution>
+                            <id>integration-test</id>
+                            <goals>
+                                <goal>integration-test</goal>
+                            </goals>
+                            <configuration>
+                                <skipITs>${skipITs}</skipITs>
+                                <encoding>${project.build.sourceEncoding}</encoding>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>${maven.plugin.install}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>${maven.plugin.deploy}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>docker-maven-plugin</artifactId>
+                    <version>${maven.plugin.docker}</version>
+                </plugin>
+
+                <!-- Workaround for m2e related errors in Eclipse -->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.apache.maven.plugins</groupId>
+                                        <artifactId>maven-dependency-plugin</artifactId>
+                                        <versionRange>[2.10,)</versionRange>
+                                        <goals>
+                                            <goal>copy-dependencies</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore></ignore>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+    <profiles>
+        <profile>
+            <id>jacoco</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>0.7.5.201505241946</version>
+                        <executions>
+                            <execution>
+                                <id>prepare-agent</id>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>report</id>
+                                <configuration>
+                                    <skip>${jacocoSkipReport}</skip>
+                                </configuration>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

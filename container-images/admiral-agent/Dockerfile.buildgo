@@ -1,0 +1,29 @@
+FROM vmware/photon:1.0
+
+RUN tyum install git wget tar gzip -y
+RUN wget https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz
+RUN tar -C /usr/local -xzf go1.6.linux-amd64.tar.gz
+env PATH=$PATH:/usr/local/go/bin
+env GOPATH=/go
+
+COPY /go /go
+COPY /github-checkout.sh /
+
+RUN ./github-checkout.sh fsouza/go-dockerclient 4a2e5288244cd60febbfc7bdd07891eab9efa6c1 && \
+    ./github-checkout.sh fgrehm/go-dockerpty 9932a06dbe657616cf819adea2468666316a9e55 && \
+    ./github-checkout.sh docker/docker 90be7a591de1f30332827a003edc39065fb8e4a7 && \
+    ./github-checkout.sh hashicorp/go-cleanhttp ad28ea4487f05916463e2423a55166280e8254b5 && \
+    ./github-checkout.sh Sirupsen/logrus 08a8a7c27e3d058a8989316a850daad1c10bf4ab && \
+    ./github-checkout.sh docker/go-units eb879ae3e2b84e2a142af415b679ddeda47ec71c && \
+    ./github-checkout.sh docker/engine-api ebc51d1954fc8934307dd15841b8d64f7cd505df && \
+    ./github-checkout.sh opencontainers/runc faa3281ce8f09a1712898d6603e0746e63c6e2f0
+
+RUN go get golang.org/x/net/context
+
+COPY /haproxy/haproxy.cfg.template /haproxy/
+COPY /haproxy/containers.map /haproxy/
+
+RUN go test -v proxyreconfigure && go install proxyreconfigure
+RUN go install containerproxymapper
+RUN go install shellserver
+RUN go install dockershell

@@ -1,0 +1,35 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="login-panel">
+  <alert alert-type="danger"
+         v-bind:show-alert="loginError" v-bind:alert-message="i18n('loginPanel.failure')"></alert>
+  <alert alert-type="success"
+         v-bind:show-alert="loginSuccess" v-bind:alert-message="i18n('loginPanel.success')"></alert>
+  <div class="input-with-icon">
+    <span class="icon"><i class="fa fa-user"></i></span>
+    <input id="username" name="username" class="form-control" type="text" placeholder="{{i18n('loginPanel.username')}}"
+           v-on:change="changeUNPW()"
+           v-on:input="changeUNPW()"
+           v-on:keyup.enter="login()"/>
+  </div>
+  <div class="input-with-icon">
+    <span class="icon"><i class="fa fa-lock"></i></span>
+    <input id="password" class="form-control" type="password" placeholder="{{i18n('loginPanel.password')}}"
+           v-on:change="changeUNPW()"
+           v-on:input="changeUNPW()"
+           v-on:keyup.enter="login()"/>
+  </div>
+  <button class="btn admiral-btn"
+      v-bind:class="{'loading': loading}"
+      v-bind:disabled="loginDisabled"
+      v-on:click="login()">{{i18n('loginPanel.login')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+</div>

@@ -1,0 +1,51 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<tr>
+  <td colspan="4" class="registryEditHolder">
+    <div class="registryEdit">
+      <div class="col-sm-9">
+        <div class="title"></div>
+        <div class="registryRowEdit-inputs form-horizontal">
+          <div class="form-group col-sm-12">
+            <div id="hostname" class="col-sm-6">
+              <input type="text" placeholder="{{i18n 'app.registry.edit.hostnameTitle'}}">
+              <span class="help-block"></span>
+            </div>
+            <div id="name" class="col-sm-6">
+              <input type="text" placeholder="{{i18n 'app.registry.edit.nameTitle'}}">
+              <span class="help-block"></span>
+            </div>
+          </div>
+          <div id="credential" class="form-group col-sm-12">
+            <label class="col-sm-3 control-label">{{i18n "app.registry.edit.credentialTitle"}}</label>
+            <div class="col-sm-9">
+              <div class="form-control dropdown-holder"></div>
+              <span class="help-block"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-3">
+        <div class="registryRowEdit-toolbar pull-right">
+          <a href="#" class="btn registryRowEdit-verify">{{i18n "app.registry.edit.verifyButton"}}<i class="fa fa-spinner fa-spin loader-inline"></i></a>
+          <a href="#" class="registryRowEdit-save btn admiral-btn admiral-btn-circle">
+            <i class="fa fa-check"></i>
+            <i class="fa fa-spinner fa-spin loader"></i>
+          </a>
+          <a href="#" class="registryRowEdit-cancel btn admiral-btn admiral-btn-circle">
+            <i class="fa fa-times"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </td>
+</tr>

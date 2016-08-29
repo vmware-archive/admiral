@@ -1,0 +1,12 @@
+{
+  "users": [{
+    "email": "administrator@admiral.com",
+    "password": "Password1!"
+  }, {
+    "email": "fritz@admiral.com",
+    "password": "Password1!"
+  }, {
+    "email": "tony@admiral.com",
+    "password": "Password1!"
+  }]
+}

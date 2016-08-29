@@ -1,0 +1,136 @@
+/* Copyright 2015 VMware, Inc. All rights reserved. VMware Confidential */
+
+/*
+Rules based on SocialCast's .eslintrc https://gist.githubusercontent.com/MoonScript/16af25c42397f542c63c/raw/5a921b98ecbc97914ca8e38667837a137442c3d9/socialcast.eslintrc
+
+Additional changes to the original file:
+  - added ecmaFeatures.modules = true
+  - added env.es6 = true
+  - dot-notation.allowKeywords = true
+  - changed the max-len to be [2, 100, 2]
+*/
+
+{
+  "ecmaFeatures": {
+    "modules": true
+  },
+  "parser": "espree",
+  "env": {
+    "browser": true,
+    "es6": true,
+    "node": false,
+    "amd": false,
+    "mocha": false,
+    "jasmine": false
+  },
+  "plugins": [
+    "objects"
+  ],
+  "rules": {
+    "array-bracket-spacing": 2,
+    "brace-style": 2,
+    "comma-dangle": 2,
+    "comma-spacing": 2,
+    "comma-style": 2,
+    "computed-property-spacing": 2,
+    "curly": 2,
+    "dot-notation": [2, {
+      "allowKeywords": true
+    }],
+    "eol-last": 2,
+    "eqeqeq": [2, "allow-null"],
+    "guard-for-in": 2,
+    "key-spacing": 2,
+    "max-len": [2, 100, 2],
+    "new-cap": [2, {
+      "capIsNew": false,
+      "newIsCapExceptions": [
+        "configurator",
+        "baseClass"
+      ]
+    }],
+    "no-array-constructor": 2,
+    "no-caller": 2,
+    "no-catch-shadow": 2,
+    "no-cond-assign": 2,
+    "no-constant-condition": 2,
+    "no-control-regex": 2,
+    "no-debugger": 2,
+    "no-delete-var": 2,
+    "no-dupe-args": 2,
+    "no-dupe-keys": 2,
+    "no-duplicate-case": 2,
+    "no-empty": 2,
+    "no-empty-character-class": 2,
+    "no-eval": 2,
+    "no-extra-semi": 2,
+    "no-ex-assign": 2,
+    "no-extra-boolean-cast": 2,
+    "no-fallthrough": 2,
+    "no-func-assign": 2,
+    "no-inner-declarations": 2,
+    "no-invalid-regexp": 2,
+    "no-irregular-whitespace": 2,
+    "no-lone-blocks": 2,
+    "no-lonely-if": 2,
+    "no-mixed-spaces-and-tabs": 2,
+    "no-multi-spaces": 2,
+    "no-negated-in-lhs": 2,
+    "no-nested-ternary": 2,
+    "no-new": 2,
+    "no-new-wrappers": 2,
+    "no-obj-calls": 2,
+    "no-octal": 2,
+    "no-redeclare": 2,
+    "no-regex-spaces": 2,
+    "no-return-assign": 2,
+    "no-self-compare": 2,
+    "no-shadow-restricted-names": 2,
+    "no-spaced-func": 2,
+    "no-sparse-arrays": 2,
+    "no-trailing-spaces": 2,
+    "no-undef": 2,
+    "no-undef-init": 2,
+    "no-unneeded-ternary": 2,
+    "no-unreachable": 2,
+    "no-unused-expressions": 2,
+    "no-unused-vars": 2,
+    "no-with": 2,
+    "objects/no-object-property-split": 2,
+    "objects/no-object-properties-first-line": 2,
+    "objects/no-object-properties-last-line": 2,
+    "objects/no-object-properties-one-line": 2,
+    "operator-assignment": [2, "always"],
+    "quotes": [2, "single"],
+    "radix": 2,
+    "semi": 2,
+    "space-after-keywords": 2,
+    "space-before-blocks": 2,
+    "space-before-function-paren": [2, "never"],
+    "space-before-keywords": 2,
+    "space-in-parens": 2,
+    "space-infix-ops": 2,
+    "space-return-throw-case": 2,
+    "strict": 2,
+    "use-isnan": 2,
+    "valid-typeof": 2,
+    "wrap-iife": [2, "inside"],
+    "yoda": 2
+  },
+  "globals": {
+    "$": true,
+    "i18n"        : true,
+    "Vue"         : true,
+    "Handlebars"  : true,
+    "Reflux"      : true,
+    "Immutable"   : true,
+    "d3"          : true,
+    "Tablesort"   : true,
+    "hasher"      : true,
+    "crossroads"  : true,
+    "validator"   : true,
+    "requirejs"   : true,
+    "moment"      : true,
+    "jsPlumb"     : true
+  }
+}

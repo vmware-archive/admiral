@@ -1,0 +1,32 @@
+name: Wordpress with MySQL 2.5
+properties:
+  _leaseDays: 3
+components:
+  mysql:
+    type: Compute
+    data:
+      name: mysql
+      computeImage: linux
+      instanceType: small
+  wordpress:
+    type: Container.Docker
+    data:
+      name: wordpress
+      image: wordpress:4.3.1
+      _cluster: 2
+      env:
+         - var: WORDPRESS_DB_PASSWORD
+           value: pass@word01
+         - var: WORDPRESS_DB_NAME
+           value: wordpress
+         - var: WORDPRESS_DB_HOST
+           value: ${mysql~name}
+      ports:
+         - container_port: "80"
+      expose_service:
+         - address: wordpress.cmp
+           port: "80"
+    dependsOn: [mysql]
+layout:
+  mysql: 0,0
+  wordpress: 0,1

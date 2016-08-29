@@ -1,0 +1,77 @@
+[
+  {
+    "name": "library/photon",
+    "description": "Photon OS is a technology preview of a minimal Linux container host.",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/alpine",
+    "description": "A minimal Docker image based on Alpine Linux with a complete package index and only 5 MB in size!",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/nginx",
+    "description": "Official build of Nginx.",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "kitematic/hello-world-nginx",
+    "description": "A light-weight nginx container that demonstrates the features of Kitematic",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/jenkins",
+    "description": "Official Jenkins Docker image",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/redis",
+    "description": "Redis is an open source key-value store that functions as a data structure server.",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/postgres",
+    "description": "The PostgreSQL object-relational database system provides reliability and data integrity.",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/mysql",
+    "description": "MySQL is a widely used, open-source relational database management system (RDBMS).",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/mongo",
+    "description": "MongoDB document databases provide high availability and easy scalability.",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/mariadb",
+    "description": "MariaDB is a community-developed fork of MySQL intended to remain free under the GNU GPL.",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/percona",
+    "description": "Percona Server is a fork of the MySQL relational database management system created by Percona.",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/elasticsearch",
+    "description": "Elasticsearch is a powerful open source search and analytics engine that makes data easy to explore.",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/ubuntu",
+    "description": "Ubuntu is a Debian-based Linux operating system based on free software.",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/crate",
+    "description": "Crate is a shared nothing, fully searchable, document oriented cluster datastore",
+    "registry": "https://registry.hub.docker.com"
+  },
+  {
+    "name": "library/rethinkdb",
+    "description": "RethinkDB is an open-source, document database that makes it easy to build and scale realtime apps.",
+    "registry": "https://registry.hub.docker.com"
+  }
+]

@@ -1,0 +1,38 @@
+---
+id: wordPressWithMySql2
+name: wordPressWithMySql2
+status: PUBLISHED
+properties:
+  _leaseDays: 3
+components:
+  wordpress:
+    type: Container.Docker
+    data:
+      name: wordpress
+      image: wordpress:4.3.1
+      _cluster: 2
+      env:
+      - var: WORDPRESS_DB_PASSWORD
+        value: pass@word01
+      - var: WORDPRESS_DB_NAME
+        value: wordpress
+      - var: WORDPRESS_DB_HOST
+        value: mysql:3306
+      links:
+      - service: mysql
+        alias: mysql
+      ports:
+      - container_port: "80"
+      expose_service:
+      - address: wordpress.cmp
+        port: "80"
+  mysql:
+    type: Container.Docker
+    data:
+      name: mysql
+      image: mariadb:10.0.26
+      env:
+      - var: MYSQL_ROOT_PASSWORD
+        value: pass@word01
+      ports:
+      - container_port: "3306"

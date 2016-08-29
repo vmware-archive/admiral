@@ -1,0 +1,12 @@
+#Organize Import Order
+#Thu Jan 21 11:27:57 EET 2016
+9=com.vmware
+8=org
+7=com
+6=javax
+5=java
+4=\#com.vmware
+3=\#org
+2=\#com
+1=\#javax
+0=\#java

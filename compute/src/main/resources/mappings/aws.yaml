@@ -1,0 +1,16 @@
+---
+name: "AWS environment"
+endpointType: "aws"
+properties:
+  instanceType:
+    mappings:
+      small: "t2.micro"
+      medium: "t2.small"
+      large: "t2.large"
+      xlarge: "m4.xlarge"
+  imageType:
+    mappings:
+      linux: "ami-6869aa05"
+      coreos: "ami-0c082966"
+      windows: "ami-c8a9baa2"
+      ubuntu: "ami-787d6e12"

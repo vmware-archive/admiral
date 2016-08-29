@@ -1,0 +1,44 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="requests-list">
+	<div class="title">{{i18n('app.request.title')}} <refresh-button v-bind:icon-name="'times'" v-bind:tooltip="i18n('clear')" v-bind:time="0" v-on:click="clear()"></refresh-button> </div>
+  <ul class="nav nav-pills nav-justified" role="tablist">
+    <li role="presentation" class="active"><a href="#" aria-controls="all-requests" role="tab" v-on:click="selectTab($event, 'all')">{{i18n('app.request.tabs.all')}}</a></li>
+    <li role="presentation"><a href="#" aria-controls="running-requests" role="tab" v-on:click="selectTab($event, 'running')">{{i18n('app.request.tabs.running')}}</a></li>
+    <li role="presentation"><a href="#" aria-controls="failed-requests" role="tab" v-on:click="selectTab($event, 'failed')">{{i18n('app.request.tabs.failed')}}</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <div role="tabpanel" class="tab-pane active" id="all" v-infinite-scroll="loadMore('all')">
+      <request-item v-for="request in model.items | asMutable | orderBy 'documentUpdateTimeMicros' -1"
+                    track-by="documentSelfLink"
+                    v-bind:model="request">
+      </request-item>
+    </div>
+    <div role="tabpanel" class="tab-pane" id="running" v-infinite-scroll="loadMore('running')">
+      <request-item v-for="request in model.items | asMutable | filterBy requestRunningFilter | orderBy 'documentUpdateTimeMicros' -1"
+                    track-by="documentSelfLink"
+                    v-bind:model="request">
+      </request-item>
+    </div>
+    <div role="tabpanel" class="tab-pane" id="failed" v-infinite-scroll="loadMore('failed')">
+      <request-item v-for="request in model.items | asMutable | filterBy requestFailedFilter | orderBy 'documentUpdateTimeMicros' -1"
+                    track-by="documentSelfLink"
+                    v-bind:model="request">
+      </request-item>
+    </div>
+  </div>
+  <div v-if="model.itemsLoading" class="loading">
+    <span class="vertical-helper"></span>
+    <img src="image-assets/loading-animation.gif">
+  </div>
+</div>

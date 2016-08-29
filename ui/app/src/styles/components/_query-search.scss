@@ -1,0 +1,94 @@
+.query-search-input {
+  position: relative;
+  z-index: 50;
+}
+
+.query-search-input .query-search-input-wrapper {
+  display: table;
+  width: 100%;
+}
+
+.query-search-input .tokenfield {
+  position: relative;
+  height: auto;
+  padding: 7px 12px 7px 12px;
+  border-radius: 20px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  @include box-shadow(inset 0px 3px 10px 0px rgba(0,0,0,0.1));
+  display: table-cell;
+  vertical-align: top;
+  width: 100%;
+  // http://stackoverflow.com/questions/26292408/why-does-this-behave-the-way-it-does-with-max-width-0
+  max-width: 0;
+}
+
+.query-search-input .tokenfield .token {
+  margin: 0 4px 0 0;
+}
+
+.query-search-input .query-search-input-controls {
+  display: table-cell;
+  vertical-align: top;
+  height: 38px;
+  min-width: 38px;
+  width: auto;
+  padding: 1px 0px 1px 12px;
+  border-radius: 20px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 0;
+  @include box-shadow(inset 0px 3px 10px 0px rgba(0,0,0,0.1));
+}
+
+.query-search-input .query-search-input-controls {
+  padding: 0;
+}
+
+.query-search-input .query-search-input-controls .btn {
+  outline: none;
+  border-radius: 20px;
+  padding: 0;
+  border: none;
+  padding-right: 5px;
+}
+
+.query-search-input .query-search-input-controls .btn:focus {
+  outline:0;
+}
+
+.query-search-input .query-search-input-controls .btn .caret {
+  margin-left: 5px;
+}
+
+.query-search-input .query-search-input-controls .form-control-feedback {
+  display: inline-block;
+  font-size: 18px;
+  color: #999;
+  position: relative;
+  padding-left: 2px;
+  width: 36px;
+  height: 36px;
+  line-height: 36px;
+}
+
+.query-search-input .twitter-typeahead, .query-search-input .twitter-typeahead > input {
+  font-size: 17px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+}
+
+.query-search-input .twitter-typeahead input {
+  height: 22px;
+  background: none;
+}
+
+.query-search-input .tt-menu {
+  display: none;
+}
+
+.query-search-input .tt-menu.tt-open:not(.tt-empty) {
+  display: block
+}

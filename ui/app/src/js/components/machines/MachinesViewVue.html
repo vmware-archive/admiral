@@ -1,0 +1,72 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="machines-view">
+  <div class="machines-list-holder">
+    <div class="main-panel">
+      <div class="list-view machines-list scroll-view" v-bind:class="{'context-selected': model.selectedItem}">
+
+        <a class="close-button hide" v-on:click="goBack($event)"><i
+          class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
+
+        <div class="toolbar">
+          <search v-bind:suggestion-properties="['address']"
+                  v-bind:placeholder="i18n('app.machine.list.searchPlaceholder')"
+                  v-bind:query-options="model.listView.queryOptions"
+                  v-on:search-change="search">
+            </search>
+        </div>
+
+        <div class="selected-context-small-holder" v-if="model.selectedItem">
+          <div class="grid-item">
+            <machine-grid-item v-bind:model="model.selectedItem"></machine-grid-item>
+          </div>
+        </div>
+
+        <div class="grid-container">
+          <list-title v-on:refresh-list="refresh()"
+                      v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
+                      v-bind:title="i18n('app.machine.list.title')"
+                      v-bind:title-search="i18n('app.machine.list.titleSearch')"></list-title>
+          <div class="content">
+            <grid v-bind:context-selected="model.selectedItem"
+                  v-bind:preferred-width="preferredGridWidth"
+                  v-bind:count="itemsCount"
+                  v-infinite-scroll="loadMore()">
+                <grid-item v-for="item in model.listView.items"
+                           track-by="documentSelfLink"
+                           v-bind:class="{'context-selected': item.documentSelfLink == model.selectedItem.documentSelfLink}">
+                  <machine-grid-item v-bind:model="item"
+                                     v-on:click="openMachineDetails(item)">
+                  </machine-grid-item>
+              </grid-item>
+            </grid>
+          </div>
+          <div v-if="model.listView.itemsLoading" class="loading">
+            <span class="vertical-helper"></span>
+            <img src="image-assets/loading-animation.gif">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-if="model.selectedItemDetails"
+       transition="slide-and-fade"
+       class="selected-context-holder closable-view"
+       v-bind:class="{'expanded': model.selectedItemDetails.expanded}">
+
+    <alert alert-type="danger" v-bind:show-alert="hasContainerDetailsError"
+                               v-bind:alert-message="containerDetailsError"></alert>
+
+    <machine-details class="content" v-bind:model="model.selectedItemDetails">
+    </machine-details>
+  </div>
+</div>

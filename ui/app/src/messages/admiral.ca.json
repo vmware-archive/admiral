@@ -1,0 +1,18 @@
+{
+  "app": {
+    "homepage": {
+      "welcome": "Benvinguts!",
+      "description": "Aquest és el vostre lloc per <b>crear contenidors Docker</b> i <b>administrar / supervisar els vostres contenidors.</b>",
+      "start": "Comencem!",
+      "addHost": "Afegir un Host",
+      "enter": "Entrar",
+      "helpCenter": "Centre d'ajuda",
+      "steps": {
+        "description": "La creació d'un contenidor Docker és tan simple com 1-2-3",
+        "addHost": "Afegir un Host",
+        "findImage": "Tobar una imatge",
+        "createContainer": "Crear un Contenidor"
+      }
+    }
+  }
+}

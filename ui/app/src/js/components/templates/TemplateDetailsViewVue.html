@@ -1,0 +1,181 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="template-details">
+  <div class="details-contents">
+    <div class="list-view">
+      <div class="template-details-header">
+        <div class="title truncateText">{{i18n('app.template.details.edit')}}
+          <div class="template-name-content">
+          <template v-if="!editingTemplateName">
+            <span class="template-name" v-on:click="editTemplateName($event)">{{model.templateDetails.name}}</span>
+          </template>
+          <template v-else>
+            <input id="templateNameInput" class="form-control template-name-input"
+                   name="templateNameInput" type="text" value="{{model.templateDetails.name}}"
+                   v-on:keyup.enter="saveTemplateName($event)"
+                   v-on:keyup.esc="cancelEditTemplateName($event)"/>
+            <a href="#" class="btn admiral-btn admiral-btn-circle"
+               v-on:click="saveTemplateName($event)"><i class="fa fa-check"></i></a>
+            <a href="#" class="btn admiral-btn admiral-btn-circle"
+               v-on:click="cancelEditTemplateName($event)"><i class="fa fa-times"></i></a>
+          </template>
+          </div>
+        </div>
+        <div class="editBtnHolder" v-if="!editingTemplateName">
+          <a href="#" class="btn editBtn" v-on:click="editTemplateName($event)"><i class="fa fa-pencil"></i></a>
+        </div>
+        <div class="toolbar-actions">
+          <template v-if="hasPendingOperationStart">
+            <div class="progress-holder">
+              <countdown-operation-start v-bind:show="hasPendingOperationStart"
+                                         v-on:countdown-operation-complete="removeTemplate()"
+                                         v-on:countdown-operation-cancel="cancelRemoveTemplate()"
+                ></countdown-operation-start>
+            </div>
+          </template>
+          <template v-else>
+            <template v-if="showGroupForProvisioning">
+            <div class="provisionGroup">
+              <select v-model="preferredGroupId">
+                <option v-for="option in groupOptions" track-by="id"
+                        value="{{option.id}}">
+                  {{option.name}}
+                </option>
+              </select>
+              <div class="toolbar-action" v-on:click="provision($event)">
+                <a class="btn btn-circle" data-toggle="tooltip" data-placement="top"
+                   title="{{i18n('app.template.actions.provision')}}"
+                   data-name="provision">
+                  <i class="fa fa-send"></i></a>
+              </div>
+            </div>
+            </template>
+              <template v-else>
+                <toolbar-action-button id="provision" icon-name="send"
+                                     v-bind:label="i18n('app.template.actions.provision')"
+                                     v-bind:supported="operationSupported('PROVISION')"
+                                     v-on:click="provision($event)"></toolbar-action-button>
+                <toolbar-action-button id="publish" icon-name="book"
+                                     v-bind:label="i18n('app.template.actions.publish')"
+                                     v-bind:supported="operationSupported('PUBLISH')"
+                                     v-bind:tooltip="i18n('app.template.publish.tooltip')"
+                                     v-on:click="publishTemplate($event)"></toolbar-action-button>
+                <toolbar-action-button id="export" icon-name="download"
+                                     v-bind:label="i18n('app.template.actions.export')"
+                                     v-on:click="exportTemplate($event)"></toolbar-action-button>
+                <toolbar-action-button id="remove" icon-name="close"
+                                     v-bind:label="i18n('app.template.actions.remove')"
+                                     v-on:click="triggerRemoveTemplate($event)"></toolbar-action-button>
+              </template>
+          </template>
+        </div>
+      </div>
+      <div class="grid-container">
+        <grid sort-by-dom-index="true" v-bind:preferred-width="preferredGridWidth"
+              v-on:layout-complete="layoutComplete" v-ref:container-grid>
+          <grid-item v-for="item in model.templateDetails.listView.items" track-by="documentId">
+            <container-template-item v-bind:model="item"
+                                     v-bind:template-id="model.documentId"
+                                     v-on:attached="containerAttached"
+                                     v-bind:number-of-networks="networks.length">
+            </container-template-item>
+          </grid-item>
+          <grid-item class="new-item">
+            <div class="item-content new-definition" v-on:click="openAddNewContainerDefinition">
+              <i class='fa fa-plus'></i>
+              <span class='title'>{{i18n('app.template.details.newDefinition.title')}}</span>
+            </div>
+          </grid-item>
+        </grid>
+        <div v-if="model.templateDetails.listView.itemsLoading" class="loading">
+          <span class="vertical-helper"></span>
+          <img src="image-assets/loading-animation.gif">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="new-container-definition-view closable-view" v-if="!!model.newContainerDefinition" transition="slide-and-fade">
+    <div class="title">{{i18n('app.template.details.newDefinition.title')}}</div>
+    <div class="select-image-view" v-if="!model.newContainerDefinition.definitionInstance && model.newContainerDefinition">
+      <div class="sub-title">{{i18n('app.template.details.newDefinition.selectImage')}}</div>
+      <div class="list-view">
+        <div class="toolbar">
+          <search v-bind:suggestion-properties="['name', 'repository', 'size', 'description']"
+                  v-bind:placeholder="i18n('app.template.list.searchImagesPlaceholder')"
+                  v-bind:query-options="model.newContainerDefinition.listView.queryOptions"
+                  v-on:search-change="searchForImage"
+                  ></search>
+        </div>
+        <div class="grid-container">
+          <div class="title">{{i18n("app.template.details.newDefinition.imageListTitle")}}<span class="total-items"></span></div>
+          <div class="title-search hide">{{i18n("app.template.details.newDefinition.imageListTitleSearch")}}<span class="total-items"></span></div>
+          <grid>
+            <grid-item v-for="item in model.newContainerDefinition.listView.items"
+                 track-by="documentId">
+              <container-image-item v-bind:model="item">
+              </container-image-item>
+            </grid-item>
+          </grid>
+          <div v-if="model.newContainerDefinition.listView.itemsLoading" class="loading">
+            <span class="vertical-helper"></span>
+            <img src="image-assets/loading-animation.gif">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="edit-container-definition-view closable-view" v-if="!!model.newContainerDefinition.definitionInstance" transition="slide-and-fade">
+      <div class="sub-title">{{i18n('app.template.details.newDefinition.containerDefinitionInfo')}}</div>
+      <container-definition-form v-ref:new-form v-bind:model="model.newContainerDefinition.definitionInstance">
+      </container-definition-form>
+      <div class="pull-right control-btns">
+        <button class="btn admiral-btn add-container-definition"
+                v-bind:class="{'loading': addingContainer}"
+                v-bind:disabled="buttonsDisabled"
+                v-on:click="addContainerDefinition($event)">{{i18n('add')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+      </div>
+    </div>
+  </div>
+  <div class="edit-existing-container-definition-view closable-view" v-if="!!model.editContainerDefinition" transition="slide-and-fade">
+    <div class="title">{{i18n('app.template.details.editDefinition.title')}}</div>
+    <div class="sub-title">{{i18n('app.template.details.newDefinition.containerDefinitionInfo')}}</div>
+    <container-definition-form v-ref:edit-form v-bind:model="model.editContainerDefinition.definitionInstance">
+    </container-definition-form>
+    <div class="pull-right control-btns">
+      <button class="btn admiral-btn save-container-definition"
+              v-bind:class="{'loading': savingContainer}"
+              v-bind:disabled="buttonsDisabled"
+              v-on:click="saveContainerDefinition($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+    </div>
+  </div>
+  <div class="mask" v-if="!!model.addNetwork"></div>
+  <div class="add-network closable-view " v-if="!!model.addNetwork" transition="slide-and-fade">
+    <a class="close-button" v-on:click="handleBackButton($event)"><i
+      class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
+    <div class="content">
+      <div class="title">{{i18n('app.template.details.editNetwork.newTitle')}}</div>
+      <div class="form-horizontal">
+        <div class="form-group">
+          <label class="col-sm-3 control-label">{{i18n('app.template.details.editNetwork.name')}}</label>
+          <div class="col-sm-9">
+            <input class="form-control network-name" />
+          </div>
+        </div>
+        <div class="pull-right control-btns">
+          <button class="btn admiral-btn save-container-definition"
+                  v-bind:class="{'loading': addingNetwork}"
+                  v-bind:disabled="buttonsDisabled"
+                  v-on:click="addNetwork($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

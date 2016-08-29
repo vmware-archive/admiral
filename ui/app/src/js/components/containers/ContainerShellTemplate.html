@@ -1,0 +1,26 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="container-shell modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <a class="close-button"><i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n "close"}}</span></a>
+        {{#if newTabEnabled}}
+        <a href="#" class="btn admiral-btn-secondary open-new-tab"><i class="fa fa-external-link"></i>{{i18n "openInNewTab"}}</a>
+        {{/if}}
+      </div>
+      <div class="modal-body">
+        <iframe src="{{shellUrl}}"></iframe>
+      </div>
+    </div>
+  </div>
+</div>

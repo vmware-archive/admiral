@@ -1,0 +1,74 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="homepage-wrapper">
+  <div class="homepage" v-bind:class="{'blurred': model.loginView}">
+    <div class="top">
+      <div class="logo-holder col-sm-4">
+        <easter-egg></easter-egg>
+        <div class="logo">
+          <img src="image-assets/logo.png">
+        </div>
+      </div>
+      <div class="welcome-holder col-sm-8">
+        <div class="welcome">
+          <div class="welcome-title">{{i18n("app.homepage.welcome")}}</div>
+          <!-- Notice that the mustaches are triple in order to un-escape HTML bold tags -->
+          <div class="welcome-description">
+            <div>{{{i18n("app.homepage.description")}}}</div>
+            <div>{{{i18n("app.homepage.start")}}}</div>
+          </div>
+          <div class="buttonBar" v-bind:class="{'buttonBar-hidden': model.loginView}">
+            <button class="admiral-btn enter-btn" v-on:click="openHosts($event)">{{i18n("app.homepage.enter")}}</button>
+            <button class="admiral-btn-secondary addHost-btn" v-on:click="openAddHost($event)">{{i18n("app.homepage.addHost")}}</button>
+            <a v-if="model.isContextAwareHelpAvailable" href="#" class="helpcenter-link" @click="openHelp($event)">{{i18n("app.homepage.helpCenter")}}</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom">
+      <div class="steps-description">{{i18n("app.homepage.steps.description")}}</div>
+      <div class="steps-boxes">
+        <div class="col-sm-4">
+          <div class="step-box">
+            <div class="step-index">1</div>
+            <div class="step-title">{{i18n("app.homepage.steps.addHost")}}</div>
+            <img class="step-image" src="image-assets/hosts_large.png">
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="step-box">
+            <div class="step-index">2</div>
+            <div class="step-title">{{i18n("app.homepage.steps.findImage")}}</div>
+            <img class="step-image" src="image-assets/images_large.png">
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="step-box">
+            <div class="step-index">3</div>
+            <div class="step-title">{{i18n("app.homepage.steps.createContainer")}}</div>
+            <img class="step-image" src="image-assets/containers_large.png">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="model.hostAddView" transition="slide-and-fade" class="closable-view">
+      <a class="close-button" v-on:click="goBack($event)"
+         v-bind:class="{'hide': model.hostAddView.contextView.expanded}"><i
+        class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
+
+      <host-view v-bind:model="model.hostAddView" class="content"></host-view>
+    </div>
+  </div>
+
+  <login-panel v-if="model.loginView"></login-panel>
+</div>

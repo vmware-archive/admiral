@@ -1,0 +1,74 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<tr class="item">
+  <td class="simple-cell truncateText primary-cell" title="{{commonName}}">{{commonName}}</td>
+  <td class="simple-cell truncateText" title="{{serial}}">{{serial}}</td>
+  <td class="simple-cell truncateText" title="{{fingerprint}}">{{fingerprint}}</td>
+  <td class="simple-cell truncateText" title="{{validTo}}">{{validTo}}</td>
+  <!-- Actions column -->
+  <td class="simple-cell table-actions">
+    <div>
+      <a href="#" class="btn item-expand">
+        <i class="btn fa fa-eye"></i>
+      </a>
+      <a href="#" class="btn item-edit">
+        <i class="btn fa fa-pencil"></i>
+      </a>
+      <a href="#" class="btn item-delete">
+        <i class="fa fa-times"></i>
+      </a>
+    </div>
+  </td>
+  <!-- Details cell visible only when expanded/active -->
+  <td class="details-cell" colspan="5">
+    <div class="header">
+      <div class="title">{{i18n "app.certificate.list.details.title"}}</div>
+      <div class="table-actions">
+        <a href="#" class="btn item-collapse">
+          <i class="btn fa fa-eye-slash"></i>
+        </a>
+        <a href="#" class="btn item-edit">
+          <i class="btn fa fa-pencil"></i>
+        </a>
+        <a href="#" class="btn item-delete">
+          <i class="fa fa-times"></i>
+        </a>
+      </div>
+    </div>
+    <div class="content form-horizontal">
+      <div class="form-group">
+        <label class="col-sm-4">{{i18n "app.certificate.list.details.commonName"}}</label>
+        <div class="col-sm-8">{{commonName}}</div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-4">{{i18n "app.certificate.list.details.issuerName"}}</label>
+        <div class="col-sm-8">{{issuerName}}</div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-4">{{i18n "app.certificate.list.details.serial"}}</label>
+        <div class="col-sm-8">{{serial}}</div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-4">{{i18n "app.certificate.list.details.fingerprint"}}</label>
+        <div class="col-sm-8">{{fingerprint}}</div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-4">{{i18n "app.certificate.list.details.validSince"}}</label>
+        <div class="col-sm-8">{{timestampToDate validSince}}</div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-4">{{i18n "app.certificate.list.details.validTo"}}</label>
+        <div class="col-sm-8">{{timestampToDate validTo}}</div>
+      </div>
+    </div>
+  </td>
+</tr>

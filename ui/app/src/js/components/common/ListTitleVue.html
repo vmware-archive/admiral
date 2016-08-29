@@ -1,0 +1,11 @@
+<div class="title"><span>{{hasSearchQuery ? titleSearch : title}}</span><span
+      v-if="count > -1" class="total-items">({{count}})</span><span
+  v-if="!showConfirmation" transition="fade-in"><refresh-button
+      v-on:click="notifyRefresh()"></refresh-button><slot></slot></span>
+  <div v-else class="action-confirmation" transition="fade-in">
+    <a href="#" class="admiral-btn warn action-confirm"
+      v-on:click="confirmAction($event)"><span>{{actionTitle}}</span></a>
+    <a href="#" class="action-cancel"
+      v-on:click="cancelAction($event)"><span>{{i18n('cancel')}}</span></a>
+  </div>
+</div>

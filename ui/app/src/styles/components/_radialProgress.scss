@@ -1,0 +1,30 @@
+.radial-progress-background {
+    fill: #FFFFFF;
+    fill-opacity: 0.01;
+}
+
+.radial-progress-component {
+    fill: #e1e1e1;
+}
+
+.radial-progress-component .radial-progress-label {
+    text-anchor: middle;
+    fill: #000000;
+}
+
+.radial-progress-arc {
+    fill: #4e8fff;
+}
+
+.radial-progress-arc2 {
+    fill: #3660b0;
+}
+
+.radial-progress-label, .radial-progress-minor-label {
+    text-anchor: middle;
+}
+
+.radial-progress-radial-svg {
+    display: block;
+    margin: 0 auto;
+}

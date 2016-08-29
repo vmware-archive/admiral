@@ -1,0 +1,80 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="host-item">
+  <div class="status {{hostStateMessage(model.powerState)}}"><span class="status-state">{{hostStateMessage(model.powerState)}}</span></div>
+  <div title="{{id}}" class="title truncateText">{{hostName}}</div>
+  <div class="details form-horizontal">
+    <div class="form-group">
+      <label class="col-xs-5">{{i18n("app.host.details.hostAddress")}}</label>
+      <div class="col-xs-7 truncateText"
+           title="{{model.address}}">{{model.address}}</div>
+    </div>
+    <div class="form-group">
+      <label class="col-xs-5">{{i18n("app.host.details.resourcePool")}}</label>
+      <div class="col-xs-7 truncateText"
+           title="{{resourcePoolDocumentId}}">
+           <a href="#/hosts?resourcePool={{model.resourcePoolDocumentId}}"
+              class="navigation-link">{{model.resourcePoolName}}</a>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-xs-5">{{i18n("app.host.details.connectionTypeShort")}}</label>
+      <div class="col-xs-7">{{model.connectionType}}</div>
+    </div>
+    <div class="form-group">
+      <label class="col-xs-5">{{i18n("app.host.details.containers")}}</label>
+      <div class="col-xs-7"><a href="#/containers?parentId={{model.id}}" class="navigation-link">{{model.containers}}</a></div>
+    </div>
+    <div class="form-group">
+      <label class="col-xs-5">{{i18n("app.host.details.memory")}}</label>
+      <div class="col-xs-7">
+        <div class="stats-holder">
+          <div class="progress">
+            <div class="progress-bar progress-bar-{{hostPercentageLevel(model.memoryPercentage)}}"
+                 role="progressbar" v-bind:style="{ width: model.memoryPercentage + '%'}"></div>
+          </div>
+          <div class="help-text" v-if="model.memoryPercentage >= 0">{{model.memoryPercentage}}%</div>
+          <div class="help-text" v-else>{{i18n("unavailable")}}</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-xs-5">{{i18n("app.host.details.cpu")}}</label>
+      <div class="col-xs-7">
+        <div class="stats-holder">
+          <div class="progress">
+            <div class="progress-bar progress-bar-{{hostPercentageLevel(model.cpuPercentage)}}"
+                 role="progressbar" v-bind:style="{ width: model.cpuPercentage + '%'}"></div>
+          </div>
+          <div class="help-text" v-if="model.cpuPercentage >= 0">{{model.cpuPercentage}}%</div>
+          <div class="help-text" v-else>{{i18n("unavailable")}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="actions" v-bind:class="{'hide': showDeleteConfirmation}">
+    <action-button name="edit" v-bind:label="i18n('app.host.actions.edit')"
+                   icon-name="edit" v-on:click="editHost($event)"></action-button>
+    <action-button name="enable" v-bind:label="i18n('app.host.actions.enable')"
+                   v-bind:supported="operationSupported('ENABLE')"
+                   icon-name="play" v-on:click="enableHost($event)"></action-button>
+    <action-button name="disable" v-bind:label="i18n('app.host.actions.disable')"
+                   v-bind:supported="operationSupported('DISABLE')"
+                   icon-name="pause" v-on:click="disableHost($event)"></action-button>
+    <action-button name="remove" v-bind:label="i18n('app.host.actions.remove')"
+                   icon-name="times" v-on:click="askConfirmation($event)"></action-button>
+  </div>
+  <delete-confirmation v-bind:class="{'hide': !showDeleteConfirmation}"
+                       v-bind:show="showDeleteConfirmation"
+                       v-on:confirm-delete="removeHost($event)"
+                       v-on:cancel-delete="cancelRemoval($event)"></delete-confirmation>
+</div>

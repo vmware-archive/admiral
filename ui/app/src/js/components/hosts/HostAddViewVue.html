@@ -1,0 +1,83 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="host-form form-horizontal">
+  <div id="address" class="form-group" v-bind:class="{'has-error': validationErrors.address}">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.hostname")}}</label>
+    <div class="col-sm-9">
+      <input class="form-control" v-model="address">
+      <span class="help-block">{{i18n(validationErrors.address)}}</span>
+    </div>
+  </div>
+  <div v-if="model.isUpdate" id="hostAlias" class="form-group">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.hostAlias")}}</label>
+    <div class="col-sm-9">
+      <input class="form-control" v-model="hostAlias">
+      <span class="help-block">{{i18n(validationErrors.hostAlias)}}</span>
+    </div>
+  </div>
+  <div id="credential" class="form-group" v-bind:class="{'has-error': validationErrors.credential}">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.credential")}}</label>
+    <div class="col-sm-9">
+      <div class="form-control dropdown-holder"></div>
+      <span class="help-block">{{i18n(validationErrors.credential)}}</span>
+    </div>
+  </div>
+  <div id="resourcePool" class="form-group" v-bind:class="{'has-error': validationErrors.resourcePool}">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.resourcePool")}}</label>
+    <div class="col-sm-9">
+      <div class="form-control dropdown-holder"></div>
+      <span class="help-block">{{i18n(validationErrors.resourcePool)}}</span>
+    </div>
+  </div>
+  <div id="deploymentPolicy" class="form-group">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.deploymentPolicy")}}</label>
+    <div class="col-sm-9">
+      <div class="form-control dropdown-holder"></div>
+      <span class="help-block">{{i18n(validationErrors.deploymentPolicy)}}</span>
+    </div>
+  </div>
+  <!--
+        <div id="connectionType" class="form-group" v-bind:class="{'has-error': validationErrors.connectionType}">
+          <label class="col-sm-3 control-label">{{i18n("app.host.details.connectionType")}}</label>
+          <div class="col-sm-9 form-input-group">
+            <input type="radio" name="connectionType" v-model="connectionType" id="connectionTypeSSH" value="SSH" disabled>
+            <label class="radio-label" for="connectionTypeSSH">SSH</label>
+
+            <input type="radio" name="connectionType" v-model="connectionType" id="connectionTypeAPI" value="API" checked>
+            <label class="radio-label" for="connectionTypeAPI">API</label>
+            <span class="help-block">{{i18n(validationErrors.connectionType)}}</span>
+          </div>
+        </div>
+  -->
+  <div id="customProperties" class="form-group" v-bind:class="{'has-error': validationErrors.customProperties}">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.customProperties")}}</label>
+    <div class="col-sm-9">
+      <div class="custom-prop-fields"></div>
+      <span class="help-block">{{i18n(validationErrors.customProperties)}}</span>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-12">
+      <div class="pull-right control-btns">
+        <a href="#" class="btn verifyHost"
+           v-bind:class="{'disabled': buttonsDisabled, 'loading': model.isVerifyingHost}"
+           v-on:click="verifyHost">{{i18n("app.host.details.verify")}}<i class="fa fa-spinner fa-spin loader-inline"></i></a>
+        <button type="submit" class="btn admiral-btn saveHost"
+                v-bind:class="{'disabled': buttonsDisabled, 'loading': model.isSavingHost}"
+                v-on:click="saveHost">
+          <template v-if="model.isUpdate">{{i18n("app.host.details.update")}}</template>
+          <template v-else>{{i18n("app.host.details.add")}}</template><i class="fa fa-spinner fa-spin loader-inline"></i></button>
+        <span class="help-block"></span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,126 @@
+$scrollbarOffset: 15px;
+$rightMarginInputs: 55px;
+
+.multicolumn-inputs-list {
+  width: 100%;
+}
+
+.multicolumn-input {
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.multicolumn-input .multicolumn-input-controls {
+  margin-right: $rightMarginInputs;
+}
+
+.multicolumn-inputs-list-body-wrapper {
+  overflow-y: auto;
+  max-height: 180px;
+  padding-right: $scrollbarOffset;
+  visibility: hidden;
+}
+
+.multicolumn-inputs-list-body-wrapper:hover{
+  visibility: visible;
+}
+
+.multicolumn-inputs-list-body {
+ visibility: visible;
+}
+
+.multicolumn-inputs-list ul {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  list-style-type: none;
+  padding: 0;
+}
+
+.multicolumn-inputs-list li:first-child {
+  padding-left: 0;
+}
+
+.multicolumn-inputs-list li:last-child {
+  padding-right: 0;
+}
+
+.multicolumn-inputs-list li {
+  padding-left: 5px;
+  padding-right: 5px;
+  display: table-cell;
+}
+
+.multicolumn-inputs-list li input {
+  $border-size: 1px;
+  $height: 26px;
+  width: 100%;
+  padding: 0 5px;
+  line-height: $height - 2 * $border-size;
+  border: $border-size solid #ccc;
+  font-size: 13px;
+  height: $height;
+  border-radius: 2px;
+}
+
+.multicolumn-inputs-list li .inline-input-holder {
+  margin: 0;
+
+  .help-block {
+    margin-bottom: 0;
+  }
+
+  .help-block:empty {
+    margin-top: 0;
+  }
+}
+
+.multicolumn-inputs-list li input[type="checkbox"] {
+  width: auto;
+  height: auto;
+  margin-right: 5px;
+}
+
+.multicolumn-input .multicolumn-input-toolbar {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.multicolumn-input .multicolumn-input-add, .multicolumn-input .multicolumn-input-remove {
+  float: left;
+}
+
+.multicolumn-input .multicolumn-input-add {
+  visibility: hidden;
+  margin-left: 10px;
+}
+
+.multicolumn-input:last-child .multicolumn-input-add {
+  visibility: visible;
+}
+
+.multicolumn-input .admiral-btn-circle {
+  background-color: #cbcbcb;
+  font-size: 12px;
+  width: 16px;
+  line-height: 15px;
+  padding-top: 1px;
+  /*  background: none; */
+}
+
+.multicolumn-inputs-list-head {
+  text-align: left;
+  color: #cbcbcb;
+  margin-right: $rightMarginInputs + $scrollbarOffset;
+
+  li {
+    .multicolumn-header {
+      border-bottom: 1px solid #cbcbcb;
+
+      .multicolumn-header-label {
+        margin-bottom: 5px;
+      }
+    }
+  }
+}

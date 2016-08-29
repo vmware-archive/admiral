@@ -1,0 +1,43 @@
+#cloud-config
+
+ssh_authorized_keys:
+  - {{sshAuthorizedKey}}
+
+write_files:
+    - path: /etc/docker/ca.pem
+      permissions: 0644
+      content: |
+        {{caCertPem}}
+    - path: /etc/docker/server.pem
+      permissions: 0644
+      content: |
+        {{serverCertPem}}
+    - path: /etc/docker/server-key.pem
+      permissions: 0600
+      content: |
+        {{serverKeyPem}}
+
+coreos:
+  units:
+    - name: docker-tls-tcp.socket
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=Docker Secured Socket for the API
+
+        [Socket]
+        ListenStream=2376
+        BindIPv6Only=both
+        Service=docker.service
+
+        [Install]
+        WantedBy=sockets.target
+    - name: "docker.service"
+      enable: true
+      drop-ins:
+        - name: "10-tls-verify.conf"
+          content: |
+            [Service]
+            Environment='DOCKER_OPTS=--tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem'
+      command: reload-or-restart

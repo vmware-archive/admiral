@@ -1,0 +1,137 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="host-form form-horizontal">
+  <div id="providerType" class="form-group" v-bind:class="{'has-error': validationErrors.providerType}">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.providerType")}}</label>
+    <div class="providerTypeInput col-sm-9">
+      <select v-model="providerType" class="form-control">
+        <option value="AWS">Amazon</option>
+        <option value="MS" disabled>Azure</option>
+      </select>
+
+      <span class="help-block">{{i18n(validationErrors.providerType)}}</span>
+    </div>
+  </div>
+
+  <div id="zoneId" class="form-group" v-bind:class="{'has-error': validationErrors.zoneId}">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.awsZoneId")}}</label>
+    <div class="zoneIdInput col-sm-9">
+      <select v-model="zoneId" class="form-control">
+        <option value="us-east-1">US East (N. Virginia)</option>
+        <option value="us-west-2">US West (Oregon)</option>
+        <option value="us-west-1">US West (N. California)</option>
+        <option value="eu-west-1">EU (Ireland)</option>
+        <option value="eu-central-1">EU (Frankfurt)</option>
+        <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+        <option value="ap-northeast-1">Asia Pacific (Tokyo)</option>
+        <option value="ap-southeast-2">Asia Pacific (Sydney)</option>
+        <option value="ap-northeast-2">Asia Pacific (Seoul)</option>
+        <option value="sa-east-1">South America (Sao Paulo)</option>
+      </select>
+
+      <span class="help-block">{{i18n(validationErrors.zoneId)}}</span>
+    </div>
+  </div>
+
+  <div id="resourcePool" class="form-group" v-bind:class="{'has-error': validationErrors.resourcePool}">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.resourcePool")}}</label>
+    <div class="col-sm-9">
+      <div class="form-control dropdown-holder"></div>
+      <span class="help-block">{{i18n(validationErrors.resourcePool)}}</span>
+    </div>
+  </div>
+
+  <div id="credential" class="form-group" v-bind:class="{'has-error': validationErrors.credential}">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.credential")}}</label>
+    <div class="col-sm-9">
+      <div class="form-control dropdown-holder"></div>
+      <span class="help-block">{{i18n(validationErrors.credential)}}</span>
+    </div>
+  </div>
+
+  <div id="deploymentPolicy" class="form-group">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.deploymentPolicy")}}</label>
+    <div class="col-sm-9">
+      <div class="form-control dropdown-holder"></div>
+      <span class="help-block">{{i18n(validationErrors.deploymentPolicy)}}</span>
+    </div>
+  </div>
+
+  <div id="instanceType" class="form-group" v-bind:class="{'has-error': validationErrors.instanceType}">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.awsInstanceType")}}</label>
+    <div class="instanceTypeInput col-sm-9">
+      <select v-model="instanceType" class="form-control">
+        <option value="t2.nano">General Purpose T2 nano</option>
+        <option value="t2.micro">General Purpose T2 micro</option>
+        <option value="t2.small">General Purpose T2 small</option>
+        <option value="t2.medium">General Purpose T2 medium</option>
+        <option value="t2.large">General Purpose T2 large</option>
+        <option value="m4.large">General Purpose M4 large</option>
+        <option value="m4.xlarge">General Purpose M4 xlarge</option>
+        <option value="m4.2xlarge">General Purpose M4 2xlarge</option>
+        <option value="m4.4xlarge">General Purpose M4 4xlarge</option>
+        <option value="m4.10xlarge">General Purpose M4 10xlarge</option>
+        <option value="m3.medium">General Purpose M3 medium</option>
+        <option value="m3.large">General Purpose M3 large</option>
+        <option value="m3.xlarge">General Purpose M3 xlarge</option>
+        <option value="m3.2xlarge">General Purpose M3 2xlarge</option>
+        <option value="c4.large">Compute Optimized C4 large</option>
+        <option value="c4.xlarge">Compute Optimized C4 xlarge</option>
+        <option value="c4.2xlarge">Compute Optimized C4 2xlarge</option>
+        <option value="c4.4xlarge">Compute Optimized C4 4xlarge</option>
+        <option value="c4.8xlarge">Compute Optimized C4 8xlarge</option>
+        <option value="c3.large">Compute Optimized C3 large</option>
+        <option value="c3.xlarge">Compute Optimized C3 xlarge</option>
+        <option value="c3.2xlarge">Compute Optimized C3 2xlarge</option>
+        <option value="c3.4xlarge">Compute Optimized C3 4xlarge</option>
+        <option value="c3.8xlarge">Compute Optimized C3 8xlarge</option>
+        <option value="r3.large">Memory Optimized R3 large</option>
+        <option value="r3.xlarge">Memory Optimized R3 xlarge</option>
+        <option value="r3.2xlarge">Memory Optimized R3 2xlarge</option>
+        <option value="r3.4xlarge">Memory Optimized R3 4xlarge</option>
+        <option value="r3.8xlarge">Memory Optimized R3 8xlarge</option>
+        <option value="g2.2xlarge">GPU 2xlarge</option>
+        <option value="g2.8xlarge">GPU 8xlarge</option>
+        <option value="i2.xlarge">Storage Optimized I2 xlarge</option>
+        <option value="i2.2xlarge">Storage Optimized I2 2xlarge</option>
+        <option value="i2.4xlarge">Storage Optimized I2 4xlarge</option>
+        <option value="i2.8xlarge">Storage Optimized I2 8xlarge</option>
+        <option value="d2.xlarge">Dense-storage Instances D2 xlarge</option>
+        <option value="d2.2xlarge">Dense-storage Instances D2 2xlarge</option>
+        <option value="d2.4xlarge">Dense-storage Instances D2 4xlarge</option>
+        <option value="d2.8xlarge">Dense-storage Instances D2 8xlarge</option>
+      </select>
+
+      <span class="help-block">{{i18n(validationErrors.instanceType)}}</span>
+    </div>
+  </div>
+  <div id="clusterSize" class="form-group" v-bind:class="{'has-error': validationErrors.clusterSize}">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.clusterSize")}}</label>
+    <div class="clusterSizeInput col-sm-9"><span>{{clusterSize}}</span>&nbsp;
+      <action-button name="incrementClusterSize" icon-name="plus"
+                     v-on:click="modifyClusterSize($event, 1)"></action-button>
+      <action-button v-if="clusterSize > 1" name="decrementClusterSize" icon-name="minus"
+                   v-on:click="modifyClusterSize($event, -1)"></action-button>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <div class="col-sm-12">
+      <div class="pull-right control-btns">
+        <button type="submit" class="btn admiral-btn saveHost"
+                v-bind:class="{'disabled': buttonsDisabled, 'loading': model.isSavingHost}"
+                v-on:click="createHost">{{i18n("app.host.details.create")}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+        <span class="help-block"></span>
+      </div>
+    </div>
+  </div>
+</div>

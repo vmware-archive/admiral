@@ -1,0 +1,716 @@
+{
+  "app": {
+    "homepage": {
+      "welcome": "Welcome!",
+      "description": "This is the place for you to <b>create Docker containers</b> and <b>manage / monitor your containers.</b>",
+      "start": "Let's get started now!",
+      "addHost": "Add a Host",
+      "enter": "Enter",
+      "helpCenter": "Help",
+      "steps": {
+        "description": "Creating a Docker container is as simple as 1-2-3",
+        "addHost": "Add a Host",
+        "findImage": "Find an image",
+        "createContainer": "Create a Container"
+      }
+    },
+    "navbar": {
+      "hosts": "Hosts",
+      "policies": "Policies",
+      "templates": "Templates",
+      "containers": "Containers",
+      "eventlog": "Event Log",
+      "resourcePools": "Resource Pools",
+      "environments": "Environments",
+      "machines": "Machines"
+    },
+    "host": {
+      "details": {
+        "title": {
+          "add": "Add Host",
+          "create": "New Host",
+          "edit": "Edit Host"
+        },
+        "hostname": "IP / Host name",
+        "hostAlias": "Name",
+        "hostAddress": "Address",
+        "resourcePool": "Resource pool",
+        "credential": "Login credential",
+        "deploymentPolicy": "Deployment policy",
+        "reservationPolicy": "Reservation policy",
+        "connectionType": "Connection type",
+        "connectionTypeShort": "Connection",
+        "customProperties": "Custom properties",
+        "verify": "Verify",
+        "verified": "Verified successfully!",
+        "add": "Add",
+        "update": "Update",
+        "create": "Create",
+        "certificateWarning": "The certificate for __address__ is invalid. You may be connecting to a website that is pretending to be __address__, which could put your confidential information at risk. Would you like to connect to the website anyway?",
+        "showCertificate": "Show certificate",
+        "hideCertificate": "Hide certificate",
+        "manageCertificates": "Manage Certificates",
+        "containers": "Containers",
+        "cpu": "CPU",
+        "memory": "Memory",
+        "storage": "Storage",
+        "providerType": "Cloud type",
+        "awsZoneId": "Zone ID",
+        "awsInstanceType": "Instance type",
+        "clusterSize": "Cluster size"
+      },
+      "list": {
+        "title": "Hosts",
+        "titleSearch": "Found Hosts",
+        "searchPlaceholder": "Search for hosts",
+        "dataCollect": "Data collect",
+        "dataCollectStart": "Triggering data collection. It might take a few minutes to complete.",
+        "dataCollectEnd": "Data collection has finished."
+      },
+      "actions": {
+        "start": "Start",
+        "stop": "Stop",
+        "edit": "Edit",
+        "enable": "Enable",
+        "disable": "Disable",
+        "remove": "Remove"
+      }
+    },
+    "resourcePool": {
+      "createNew": "New Resource Pool",
+      "manage": "Manage Resource Pools",
+      "entity": "resource pool",
+      "list": {
+        "title": "Resource Pools",
+        "addButton": "Add",
+        "nameColumn": "Name",
+        "cpuColumn": "CPU",
+        "memoryColumn": "Memory",
+        "storageColumn": "Storage",
+        "hostsColumn": "Hosts"
+      },
+      "edit": {
+        "createNew": "New Resource Pool",
+        "update": "Edit Resource Pool",
+        "nameTitle": "Resource rool name",
+        "customPropertiesTitle": "Custom properties",
+        "endpointTitle": "Endpoint"
+      },
+      "contextPanelTooltip": "Resource Pools"
+    },
+    "businessGroup": {
+      "entity": "business group"
+    },
+    "group": {
+      "createNew": "New Group",
+      "manage": "Manage Groups",
+      "entity": "group",
+      "contextPanelTooltip": "Groups",
+      "list": {
+        "title": "Groups",
+        "addButton": "Add",
+        "nameColumn": "Name",
+        "descriptionColumn": "Description",
+        "details": {
+          "title": "Group details"
+        }
+      },
+      "edit": {
+        "createNew": "New Group",
+        "update": "Edit Group",
+        "nameTitle": "Group name",
+        "descriptionTitle": "Group description"
+      }
+    },
+    "credential": {
+      "createNew": "New Credential",
+      "manage": "Manage Credentials",
+      "entity": "credential",
+      "contextPanelTooltip": "Credentials",
+      "list": {
+        "title": "Credentials",
+        "addButton": "Add",
+        "nameColumn": "Name",
+        "typeColumn": "Type",
+        "credentialsColumn": "Credentials"
+      },
+      "edit": {
+        "createNew": "New Credential",
+        "update": "Edit Credential",
+        "nameTitle": "Name",
+        "usernamePasswordTitle": "Username",
+        "usernameTitle": "Username",
+        "passwordTitle": "Password",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
+        "usePrivateKey": "Use private key",
+        "usePassword": "Use password",
+        "certificateTitle": "Certificate",
+        "publicCertificateTitle": "Public certificate",
+        "privateCertificateTitle": "Private certificate"
+      }
+    },
+    "deploymentPolicy": {
+      "createNew": "New Deployment Policy",
+      "entity": "deployment policy",
+      "manage": "Manage Deployment Policies",
+      "contextPanelTooltip": "Depl. Policies",
+      "list": {
+        "title": "Deployment Policies",
+        "addButton": "Add",
+        "nameColumn": "Name",
+        "descriptionColumn": "Description",
+        "details": {
+          "title": "Deployment policy details"
+        }
+      },
+      "edit": {
+        "createNew": "New Deployment Policy",
+        "update": "Edit Deployment Policy",
+        "nameTitle": "Deployment policy name",
+        "descriptionTitle": "Deployment policy description"
+      }
+    },
+    "certificate": {
+      "createNew": "New Certificate",
+      "manage": "Manage Certificates",
+      "entity": "certificate",
+      "contextPanelTooltip": "Certificates",
+      "list": {
+        "title": "Certificates",
+        "addButton": "Add",
+        "nameColumn": "Name",
+        "serialColumn": "Serial",
+        "shaColumn": "SHA",
+        "expirationColumn": "Expiration",
+        "details": {
+          "title": "Certificate details",
+          "commonName": "Company name",
+          "issuerName": "Issuer name",
+          "serial": "Serial",
+          "fingerprint": "SHA fingerprint",
+          "validSince": "Valid since",
+          "validTo": "Valid to"
+        }
+      },
+      "edit": {
+        "createNew": "New Certificate",
+        "update": "Edit Certficate",
+        "urlTitle": "Enter URL",
+        "importOptionTitle": "Import from URL",
+        "importOptionHint": "Instead of entering the certificate manually, \"Import from URL\" will let you enter a URL. Our system will then import the certificate from the URL you enetered.",
+        "importButton": "Import",
+        "certificateTitle": "Enter certificate"
+      }
+    },
+    "template": {
+      "list": {
+        "title": "Popular Templates",
+        "titleSearch": "Found Templates",
+        "searchImagesTemplatesPlaceholder": "Search for images, templates",
+        "searchImagesPlaceholder": "Search for images",
+        "searchTemplatesPlaceholder": "Search for templates",
+        "manageRegistry": "Manage Registry",
+        "provision": "Provision",
+        "provisionAdditionalInfo": "Enter additional info",
+        "editTemplate": "Edit / View Details",
+        "official": "Official",
+        "trusted": "Trusted",
+        "stars": "Stars",
+        "linksLabel": "Links",
+        "addLinkLabel": "Add a link",
+        "containers": "Select a container to depend on",
+        "alias": "Enter Alias",
+        "true": "Yes",
+        "false": "No",
+        "searchCategoryFilterTitle": "View:",
+        "searchCategory": {
+          "all": "All",
+          "images": "Images",
+          "templates": "Templates"
+        }
+      },
+      "details": {
+        "edit": "Edit Template",
+        "newDefinition": {
+          "title": "Add Container",
+          "selectImage": "Select an Image",
+          "imageListTitle": "Popular Images",
+          "imageListTitleSearch": "Found Images",
+          "containerDefinitionInfo": "Container Definition Info"
+        },
+        "editDefinition": {
+          "title": "Edit Container Definition"
+        },
+        "editNetwork" :{
+          "newTitle": "Add Network",
+          "newDropdownTitle": "Add Network...",
+          "editTitle": "Edit Network",
+          "name": "Name"
+        },
+        "network": {
+          "drag": "Drag to attach container to this network",
+          "drop": "Drop to attach container to this network"
+        }
+      },
+      "actions": {
+        "edit": "Edit",
+        "provision": "Provision",
+        "publish": "Push",
+        "export": "Export",
+        "import": "Import",
+        "remove": "Remove"
+      },
+      "publish": {
+        "tooltip": "Push to Blueprint",
+        "success": "Pushed successfully",
+        "fail": "Error pushing template to Blueprint"
+      },
+      "import": {
+        "title": "Import Template",
+        "loadButton": "Load from File",
+        "importTemplateTooltip": "Import template or Docker Compose",
+        "importTemplateHint": "Import a template from a Docker Compose file or manually enter its content.",
+        "contentPlaceholder": "Enter template or Docker Compose...",
+        "importButton": "Import"
+      },
+      "export": {
+        "formatPromptMessage": "Select the format to which to export the template:",
+        "format": {
+          "compositeBlueprint": "YAML Blueprint",
+          "dockerCompose": "Docker Compose"
+        }
+      }
+    },
+    "policy": {
+      "list": {
+        "title": "Policies",
+        "addButton": "Add",
+        "nameColumn": "Name",
+        "groupColumn": "Group",
+        "businessGroupColumn": "Business Group",
+        "resourcePoolColumn": "Resource Pool",
+        "deploymentPolicyColumn": "Deployment Policy",
+        "priorityColumn": "Priority",
+        "instancesColumn": "Instances",
+        "cpuColumn": "CPU shares",
+        "memoryColumn": "Memory limit",
+        "storageColumn": "Storage limit",
+        "instancesPerPolicy": "Show instances per policy",
+        "unlimitedInstances": "Unlimited"
+      },
+      "edit": {
+        "createNew": "New Policy",
+        "update": "Edit Policy",
+        "nameLabel": "Name",
+        "groupLabel": "Group",
+        "selectGroup": "Select Group",
+        "businessGroupLabel": "Business Group",
+        "selectBusinessGroup": "Select Business Group",
+        "resourcePoolLabel": "Resource Pool",
+        "selectResourcePool": "Select Resource Pool",
+        "deploymentPolicyLabel": "Deployment Policy",
+        "selectDeploymentPolicy": "Select Deployment Policy",
+        "priorityLabel": "Priority",
+        "priorityPlaceholder": "Positive number (optional)",
+        "priorityHint": "Leave it blank to make it lowest priority",
+        "instancesLabel": "Instances",
+        "instancesPlaceholder": "Number of instances",
+        "instancesHint": "Positive integer to limit the maximum number of instances. Leave empty or 0 for unlimited number.",
+        "cpuSharesLabel": "CPU shares",
+        "memoryLimitLabel": "Memory limit",
+        "storageLimitLabel": "Storage limit"
+      }
+    },
+    "eventlog": {
+      "title": "Events",
+      "tabs": {
+        "all": "All",
+        "warnings": "Warnings",
+        "errors": "Errors"
+      },
+      "contextPanelTooltip": "Event Log"
+    },
+    "registry": {
+      "list": {
+        "title": "Existing Registries",
+        "addButton": "Add",
+        "hostnameColumn": "IP / Host name",
+        "nameColumn": "Name",
+        "statusColumn": "Status"
+      },
+      "edit": {
+        "createNew": "New Registry",
+        "update": "Edit Registry",
+        "hostnameTitle": "IP / Host name",
+        "insecureRegistryHint": "Plain http registry detected: make sure your hosts are properly configured and can connect to them.",
+        "nameTitle": "Name",
+        "credentialTitle": "Login credential",
+        "verifyButton": "Verify",
+        "verified": "Verified successfully!"
+      }
+    },
+    "environment": {
+      "list": {
+        "title": "Environments",
+        "addButton": "Add",
+        "addPropertyButton": "Add Property",
+        "nameColumn": "Name",
+        "endpointTypeColumn": "Endpoint Type",
+        "propertiesColumn": "Properties",
+        "mappingsColumn": "Mappings"
+      },
+      "edit": {
+        "createNew": "New Environment",
+        "update": "Edit Environment",
+        "nameLabel": "Name",
+        "endpointTypeLabel": "Endpoint Type",
+        "propertiesLabel": "Properties"
+      }
+    },
+    "endpoint": {
+      "list": {
+        "title": "Endpoints",
+        "addButton": "Add",
+        "nameColumn": "Name",
+        "typeColumn": "Type"
+      },
+      "edit": {
+        "addNew": "New Endpoint",
+        "update": "Edit Endpoint",
+        "nameLabel": "Name",
+        "typeLabel": "Type",
+        "accessKeyIdLabel": "Access key ID",
+        "secretAccessKeyLabel": "Secret access key",
+        "regionIdLabel": "Region ID",
+        "endpointHostLabel": "Host name or IP"
+      },
+      "entity": "endpoint",
+      "typeEntity": "type",
+      "createNew": "New Endpoint",
+      "manage": "Manage Endpoints",
+      "contextPanelTooltip": "Endpoints"
+    },
+    "machine": {
+      "list": {
+        "title": "Machines",
+        "titleSearch": "Found Machines",
+        "searchPlaceholder": "Search for machines"
+      }
+    },
+    "container": {
+      "list": {
+        "title": "Items",
+        "titleSearchContainers": "Found Containers",
+        "titleSearchApplications": "Found Applications",
+        "searchPlaceholder": "Search for containers",
+        "createContainer": "Create Container",
+        "hostLabel": "Host",
+        "createdDateLabel": "Created",
+        "portsLabel": "Ports",
+        "commandLabel": "Command",
+        "logLabel": "Log",
+        "cluster": {
+          "name": "Cluster",
+          "sizeLabel": "Cluster size",
+          "scaleLabel": "Scale"
+        },
+        "composite": {
+          "name": "Application",
+          "servicesCountLabel": "Services",
+          "containersCountLabel": "Total containers",
+          "childContainersLabel": "Child containers"
+        },
+        "searchCategoryFilterTitle": "View:",
+        "searchCategory": {
+          "all": "All",
+          "containers": "Containers",
+          "applications": "Applications"
+        }
+      },
+      "details": {
+        "usages": "Usages",
+        "properties": "Properties",
+        "webview": "Web View",
+        "logs": "Logs",
+        "cpu": "CPU",
+        "memory": "Memory",
+        "network": "Network",
+        "networkTrafficSent": "Sent",
+        "networkTrafficReceived": "Received",
+        "showingLogsSince": "Showing logs since",
+        "exposedService": {
+          "description": "This service can be accessed from your browser by clicking on a link. Make sure you have the following entry in your hosts file: <br />__hostMappings__"
+        },
+        "attributes": {
+          "host": "Host",
+          "createdDateLabel": "Created",
+          "ports": "Ports",
+          "command": "Command",
+          "ipaddress": "Address",
+          "image": "Image",
+          "id": "id",
+          "restartCount": "Restart Count",
+          "memory": "Memory",
+          "memorySwap": "Memory Swap",
+          "cpuShares": "Cpu Shares",
+          "cpusetCpus": "Cpu setCpus"
+        },
+        "operation": {
+          "pending": "Operation in progress",
+          "failure": "Operation failed"
+        }
+      },
+      "request": {
+        "title": "Provision a Container",
+        "provision": "Provision",
+        "saveTemplate": "Save as Template",
+        "tabs": {
+          "basic": "Basic",
+          "network": "Network",
+          "storage": "Storage",
+          "policy": "Policy",
+          "environment": "Environment",
+          "health": "Health Config",
+          "logconfig": "Log Config"
+        },
+        "inputs": {
+          "image": "Image",
+          "name": "Name",
+          "group": "Group",
+          "commands": "Command",
+          "commandsDescription": "Command array to execute on container start",
+          "commandsInputs": {
+            "command": "Command",
+            "commandHint": "Example: /startup.sh"
+          },
+          "deploymentPolicy": "Deployment Policy",
+          "links": "Links",
+          "linksDescription": "A list of services (in a template) the container depends on",
+          "linksInputs": {
+            "alias": "Alias",
+            "aliasHint": "Example: db",
+            "service": "Service"
+          },
+          "portBindings": "Port Bindings",
+          "portBindingsDescription": "A map of exposed container ports and the host port they should map to",
+          "portBindingsInputs": {
+            "hostPort": "Host Port",
+            "hostPortHint": "Example: 9080",
+            "containerPort": "Container Port",
+            "containerPortHint": "Example: 80"
+          },
+          "publishAll": "Publish All Ports",
+          "publishAllDescription": "Publish all ports exposed by the image.",
+          "hostname": "Hostname",
+          "hostnameDescription": "The hostname to use for the container",
+          "networkMode": "Network Mode",
+          "networkModeDescription": "Sets the networking mode for the container.",
+          "networkModeTypes": {
+            "none": "None",
+            "bridge": "Bridge",
+            "host": "Host",
+            "userDefined": "User Defined"
+          },
+          "exposeService": "Expose Service",
+          "exposeServiceDescription": "Exposes the service for usage outside of the host(s) it is deployed (HTTP/L7 mode). If service contains multiple nodes, a load balancer will be configured automatically. <br/><br />It can be accessed by the address provided, it will have a generated part for uniqueness. The address supports format character \"%s\" to specify where the unique generated name part is placed. If omitted it will be placed either as a prefix or suffix of the hostname, depending on system config.<br /><br />The host of the address will act as a virtual host. In order to access it, users should add a mapping in hosts file or have a DNS that maps the container address to the hostname.",
+          "exposeServiceInputs": {
+            "address": "Address",
+            "addressHint": "Example: http://wordpress-dev.vmware.com, https://wordpress-%s.vmware.com/path/, etc.",
+            "port": "Container Port",
+            "portHint": "Example: 80"
+          },
+          "volumes": "Volumes",
+          "volumesDescription": "Mount point paths inside the container",
+          "volumesInputs": {
+            "host": "Host",
+            "hostHint": "Example: /host/project/path",
+            "container": "Container",
+            "containerHint": "Example: /container/project/path",
+            "readOnly": "Read Only"
+          },
+          "volumesFrom": "Volumes From",
+          "volumesFromDescription": "A list of volumes to inherit from another container.",
+          "volumesFromInputs": {
+            "volume": "Volume",
+            "volumeHint": "Example: datacontainer"
+          },
+          "workingDirectory": "Working Directory",
+          "workingDirectoryDescription": "The working directory for commands to run in",
+          "clusterSize": "Cluster Size",
+          "clusterSizeDescription": "The number of nodes to be provisioned",
+          "restartPolicy": "Restart Policy",
+          "restartPolicyDescription": "The behavior to apply when the container exits. The value \"always\" to always restart or \"on-failure\" to restart only when the container exit code is non-zero. If on-failure is used, max restart count controls the number of times to retry before giving up. The default is not to restart",
+          "restartPolicyType": {
+            "always": "Always",
+            "onFailure": "On-failure",
+            "none": "None"
+          },
+          "maxRestarts": "Max Restarts",
+          "maxRestartsDescription": "Max restart count on container failures",
+          "cpuShares": "CPU shares",
+          "cpuSharesDescription": "An integer value containing the container CPU Shares (ie. the relative weight vs other containers)",
+          "memoryLimit": "Memory Limit",
+          "memoryLimitDescription": "Memory limit in bytes",
+          "memorySwapLimit": "Memory Swap Limit",
+          "memorySwapLimitDescription": "Total memory limit (memory + swap); set -1 to disable swap You must use this with memory and make the swap value larger than memory",
+          "affinityConstraints": "Affinity Constraints",
+          "affinityConstraintsDescription": "Affinity or anti-affinity conditions of containers deployed or not deployed on the same host. Format: [!]serviceName[:soft|hard].",
+          "affinityInputs": {
+            "antiaffinity": "Anti-affinity",
+            "servicename": "Service name",
+            "servicenameHint": "Example: webserver",
+            "constraint": "Constraint"
+          },
+          "environmentVariables": "Environment Variables",
+          "environmentVariablesDescription": "A list of environment variables",
+          "environmentVariablesInputs": {
+            "name": "Name",
+            "nameHint": "Example: PROJECT_HOME",
+            "value": "Value",
+            "valueHint": "Example: /var/lib/project"
+          },
+          "customProperties": "Custom Properties",
+          "customPropertiesDescription": "Custom Properties allow to add attributes to the containers that will be provisioned.",
+          "healthMode": "Mode",
+          "healthConfigNone": "None",
+          "healthConfigTCP": "TCP connection",
+          "healthConfigHTTP": "HTTP",
+          "healthConfigCommand": "Command",
+          "healthPath": "URL Path",
+          "healthPathDescription": "URL path to the API used for health check",
+          "healthPort": "Port",
+          "healthPortDescription": "Container port to be used",
+          "healthTimeout": "Timeout (ms)",
+          "healthTimeoutDescription": "Timeout in ms for the health check operation",
+          "healthyThreshold": "Healthy Threshold",
+          "healthyThresholdDescription": "Threshold of health check success operations needed for the container to be considered healthy",
+          "unhealthyThreshold": "Unhealthy Threshold",
+          "unhealthyThresholdDescription": "Threshold of health check failure operations needed for the container to be considered unhealthy",
+          "command": "Command",
+          "commandDescription": "Command to be executed on the container. Exit status is used to determine container health.",
+          "logConfigDriver": "Driver",
+          "logConfigDriverDescription": "Logging driver for the container",
+          "logConfigDriverTypes": {
+            "none": "None",
+            "bridge": "Bridge",
+            "host": "Host"
+          },
+          "logConfigOptions": "Options",
+          "logConfigOptionsDescription": "Supported options for each logging driver",
+          "logConfigOptionsInputs" : {
+            "name": "Name",
+            "nameHint": "Example: max-size",
+            "value": "Value",
+            "valueHint": "Example: 10m"
+           }
+        }
+      },
+      "state": {
+        "RUNNING": "RUNNING",
+        "STOPPED": "STOPPED",
+        "REBOOTING": "REBOOTING",
+        "PAUSED": "PAUSED",
+        "ERROR": "ERROR",
+        "UNKNOWN": "UNKNOWN",
+        "RETIRED": "RETIRED",
+        "PROVISIONING": "PROVISIONING",
+        "continuousStateSince": "__state__ for __duration__"
+      },
+      "actions": {
+        "start": "Start",
+        "reboot": "Reboot",
+        "stop": "Stop",
+        "remove": "Remove",
+        "clone": "Clone",
+        "details": "Details",
+        "terminal": "Terminal"
+      }
+    },
+    "request": {
+      "title": "Provision Requests",
+      "contextPanelTooltip": "Requests",
+      "tabs": {
+        "all": "All",
+        "running": "Running",
+        "failed": "Failed"
+      }
+    },
+    "help": {
+      "link": "Help",
+      "description": "Ensemble allows you to access relevant information for the context of the task that you are currently performing. It will refresh automatically with instructions as you continue your work. Use a second screen or split-screen to access the information in real time. You can use a mobile device, a TV, and any other screen whether it is connected to your computer or not. You can use Ensemble outside of the trusted network, while still receiving instantaneous updates.",
+      "descriptionOpen": "To open Ensemble, click <strong>Open in new tab</strong> or scan the QR code with your mobile device."
+    }
+  },
+  "loginPanel": {
+    "login": "Login",
+    "logout": "Logout",
+    "username": "Username",
+    "password": "Password",
+    "success": "Authentication successful",
+    "failure": "Authentication error"
+  },
+  "dropdownSearchMenu": {
+    "title": "Select from the __entity__ list",
+    "searchPlaceholder": "Search for __entity__",
+    "clear": "Clear Selection"
+  },
+  "customProperties": {
+    "name": "Name",
+    "nameHint": "Example: speedchecker",
+    "value": "Value",
+    "valueHint": "Example: slow"
+  },
+  "yes": "Yes",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "enable": "Enable",
+  "enabled": "Enabled",
+  "disable": "Disable",
+  "disabled": "Disabled",
+  "close": "Close",
+  "edit": "Edit",
+  "remove": "Remove",
+  "add": "Add",
+  "save": "Save",
+  "back": "Back",
+  "refresh": "Refresh",
+  "clear": "Clear",
+  "deleteAll": "Delete All",
+  "pendingOperationCancel": "operation in",
+  "openInNewTab": "Open in new tab",
+  "unavailable": "N/A",
+  "errors": {
+    "hostIp": "Value must be hostname or IP address.",
+    "urlPath": "URL path is invalid.",
+    "propertyNameRequired": "Property name is required.",
+    "propertyContainerNameInvalid": "Invalid container name, only [a-zA-Z0-9][a-zA-Z0-9_.-] are allowed.",
+    "propertyNamesNotUnique": "Property names must be unique.",
+    "nonNegativeNumber": "Value must be a non-negative integer less than 2147483648.",
+    "positiveNumber": "Value must be a positive integer less than 2147483648.",
+    "nonNegativeNumberAndMinusOne": "Value must be an integer between -1 and 2147483647.",
+    "portNumber": "Invalid port number. A valid port number ranges from 0 to 65535.",
+    "exposeServiceAddress": "Invalid service address. Address must be a URL without port and optional scheme and format character in the hostname \"%s\"",
+    "exposeServiceAddressPortDefined": "Port is not allowed in address. It will be selected based on system config for HTTP or HTTPS scheme.",
+    "containerMemory": "Memory must be 0 (no limit) or at least 4194304 bytes (4MB).",
+    "required": "Value is required.",
+    "requiredAll": "All fields are required.",
+    "serviceNameRequired": "Service name is required.",
+    "itemNotFound": "Item was not found."
+  },
+  "infoMessages": {
+    "created": "Created Successfully!",
+    "updated": "Updated Successfully!"
+  },
+  "occurrence": {
+    "all": "Match all",
+    "any": "Match any"
+  },
+  "state": {
+    "ON": "ON",
+    "OFF": "OFF",
+    "SUSPEND": "DISABLED",
+    "UNKNOWN": "UNKNOWN",
+    "stateSinceMessage": "since __date__"
+  }
+}

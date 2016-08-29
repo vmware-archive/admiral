@@ -1,0 +1,5 @@
+FROM golang:1.5.2-alpine
+
+COPY /go /go
+
+RUN go install identity

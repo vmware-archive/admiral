@@ -1,0 +1,41 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="registry-view" v-bind:class="{'right-context-expanded': contextExpanded}">
+  <div class="main-panel">
+    <div class="list-holder"></div>
+    <div class="mask hide"></div>
+  </div>
+  <context-sidepanel class="right-context-panel">
+    <div slot="toolbar" class="toolbar">
+      <context-sidepanel-toolbar-item
+        v-bind:active="activeContextItem === 'credentials'"
+        v-bind:icon-class="'fa fa-key'"
+        v-bind:label="i18n('app.credential.contextPanelTooltip')"
+        v-on:open="openToolbarCredentials()" v-on:close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+
+      <context-sidepanel-toolbar-item
+        v-bind:active="activeContextItem === 'certificates'"
+        v-bind:icon-class="'fa fa-certificate'"
+        v-bind:label="i18n('app.certificate.contextPanelTooltip')"
+        v-on:open="openToolbarCertificates()" v-on:close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+    </div>
+
+    <div slot="content" class="content">
+      <credentials-list v-if="activeContextItem === 'credentials'"
+        v-bind:model="model.activeItem.data"></credentials-list>
+      <certificates-list v-if="activeContextItem === 'certificates'"
+        v-bind:model="model.activeItem.data"></certificates-list>
+    </div>
+  </context-sidepanel>
+</div>

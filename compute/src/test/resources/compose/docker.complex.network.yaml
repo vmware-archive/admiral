@@ -1,0 +1,41 @@
+---
+version: "2"
+services:
+  proxy:
+    image: "haproxy"
+    networks:
+    - "front"
+  app:
+    image: "wordpress"
+    networks:
+      front:
+        aliases:
+        - "my-service"
+        - "my-application"
+      back:
+        aliases:
+        - "application-1"
+  db:
+    image: "postgres"
+    networks:
+      back:
+        ipv4_address: "172.16.238.10"
+        ipv6_address: "2001:3984:3989::10"
+networks:
+  front:
+    driver: "custom-driver-1"
+    external: false
+  back:
+    driver: "bridge"
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+    ipam:
+      driver: "default"
+      config:
+      - subnet: "172.16.238.0/24"
+        gateway: "172.16.238.1"
+      - subnet: "2001:3984:3989::/64"
+        gateway: "2001:3984:3989::1"
+  default:
+    external:
+      name: "my-pre-existing-network"

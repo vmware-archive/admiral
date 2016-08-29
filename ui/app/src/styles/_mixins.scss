@@ -1,0 +1,98 @@
+@mixin transition ($transition...) {
+  -webkit-transition: $transition;
+  -moz-transition:    $transition;
+  -ms-transition:     $transition;
+  -o-transition:      $transition;
+  transition:         $transition;
+}
+
+@mixin box-shadow ($boxShadow...) {
+  -webkit-box-shadow: $boxShadow;
+  -moz-box-shadow: $boxShadow;
+  box-shadow: $boxShadow;
+}
+
+$medium-screen-width: 768px;
+$wide-screen-width: 1024px;
+$xwide-screen-width: 1600px;
+
+@mixin small-screen {
+  @media (max-width: #{$medium-screen-width - 1px}) {
+    @content;
+  }
+}
+
+@mixin medium-screen {
+  @media (min-width: #{$medium-screen-width}) and (max-width: #{$wide-screen-width - 1px}) {
+    @content;
+  }
+}
+
+@mixin wide-screen {
+  @media (min-width: #{$wide-screen-width}) and (max-width: #{$xwide-screen-width - 1px}) {
+    @content;
+  }
+}
+
+@mixin xwide-screen {
+  @media (min-width: #{$xwide-screen-width}) {
+    @content;
+  }
+}
+
+@mixin container-image-header-icons($size) {
+  $fullIconSize: $size;
+
+  .container-header, .image-header {
+    > img, > .icons {
+      width: $fullIconSize;
+      height: $fullIconSize;
+      float: left;
+    }
+  }
+
+  $partialIconMargin: 2px;
+  $partialIconSize: ($fullIconSize / 2) - $partialIconMargin;
+
+  .container-header, .image-header{
+    > .icons.icons-1 {
+      img:nth-of-type(1) {
+        width: $fullIconSize;
+        height: $fullIconSize;
+      }
+    }
+  }
+
+  .container-header, .image-header {
+    > .icons:not(.icons-1) {
+      img {
+        width: $partialIconSize;
+        height: $partialIconSize;
+      }
+    }
+  }
+
+  .container-header, .image-header {
+    > .icons {
+      img:nth-of-type(1) {
+        margin-right: $partialIconMargin;
+        margin-bottom: $partialIconMargin;
+      }
+
+      img:nth-of-type(2) {
+        margin-left: $partialIconMargin;
+        margin-bottom: $partialIconMargin;
+      }
+
+      img:nth-of-type(3) {
+        margin-top: $partialIconMargin;
+        margin-right: $partialIconMargin;
+      }
+
+      img:nth-of-type(4) {
+        margin-top: $partialIconMargin;
+        margin-left: $partialIconMargin;
+      }
+    }
+  }
+}

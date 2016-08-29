@@ -1,0 +1,48 @@
+.delete-inline-item-confirmation-holder {
+  display: block;
+  width: 150px;
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+}
+
+.delete-inline-item-confirmation-holder .delete-inline-item-confirmation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.delete-inline-item-confirmation-holder .delete-inline-item-confirmation-option {
+  width: 50%;
+  height: 100%;
+  display: table;
+  text-align: center;
+  float: left;
+  color: #fff;
+  text-decoration: none;
+
+  :hover {
+    text-decoration: underline;
+  }
+}
+
+.delete-inline-item-confirmation-holder .delete-inline-item-confirmation-option > span {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.delete-inline-item-confirmation-holder .delete-inline-item-confirmation-cancel {
+  @extend .delete-inline-item-confirmation-option;
+  background-color: $secondary_inactive_button_color;
+}
+
+.delete-inline-item-confirmation-holder .delete-inline-item-confirmation-confirm {
+  @extend .delete-inline-item-confirmation-option;
+  background-color: $status_stopped_color;
+}
+
+.delete-inline-item-confirmation-confirm .fa-spinner {
+  margin-left: 5px;
+}

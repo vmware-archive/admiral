@@ -1,0 +1,130 @@
+$network-details-size: 150px;
+
+.network {
+  cursor:pointer;
+  position: relative;
+  margin-right: 40px;
+  margin-bottom: 10px;
+  z-index: 2;
+}
+
+.network-details {
+  padding: 5px;
+  width: $network-details-size;
+  position: relative;
+  border: 1px solid #dbdbdb;
+  border-radius: 5px;
+  background-color: $context-view-background-color;
+
+  .network-icon, .network-label {
+    display: inline-block;
+    margin-left: 5px;
+  }
+
+  .network-actions {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+
+  .network-actions .btn {
+    color: $secondary_hint_title_color;
+  }
+
+  .network-actions:hover .btn {
+    color: $main_color;
+  }
+}
+
+.network:hover .network-actions {
+  display: block;
+}
+
+.network-anchor {
+  opacity: 0;
+  position: absolute;
+  top: -10px;
+  height: 46px;
+  left: $network-details-size + 16px;
+  right: 0;
+
+  .network-label-drag, .network-label-drop {
+    display: none;
+  }
+}
+
+.network-anchor-line {
+  position: absolute;
+  border-bottom: 1px solid black;
+  left: $network-details-size;
+  right: 0;
+  top: 14px;
+  height: 2px;
+  @include transition(right 0.5s ease);
+}
+
+.network-anchor-line.shrink {
+  right: 100%;
+}
+
+.network-anchor:hover, .network-anchor.jsplumb-drag-hover {
+  opacity: 1;
+  border: 1px dashed gray;
+}
+
+.network .network-anchor:hover .network-label-drag {
+  display: block;
+}
+
+.network .network-anchor.jsplumb-drag-hover .network-label-drop {
+  display: block;
+}
+
+.network-delete-connection {
+  opacity: 0;
+  margin-left: 10px;
+  margin-top: -10px;
+  cursor: pointer;
+  z-index: 3;
+  color: $secondary_hint_title_color;
+}
+
+.network-delete-connection.jsplumb-hover {
+  opacity: 1;
+}
+
+.network-delete-connection:hover {
+  color: $main_color;
+}
+
+.jsplumb-connector {
+  z-index: 0;
+  opacity: 0.4;
+}
+
+.jsplumb-connector.jsplumb-hover, .jsplumb-connector.jsplumb-dragging {
+  z-index: 2;
+  opacity: 1;
+}
+
+.jsplumb-endpoint {
+  opacity: 0.6;
+  z-index: 3;
+  cursor: pointer;
+}
+.jsplumb-endpoint:hover, .jsplumb-endpoint.jsplumb-endpoint-connected,
+.jsplumb-endpoint.jsplumb-drag-hover, .jsplumb-endpoint.jsplumb-endpoint-drop-allowed {
+  opacity: 1;
+}
+
+.jsplumb-endpoint:hover, .jsplumb-endpoint.jsplumb-drag-hover,
+.jsplumb-endpoint.jsplumb-endpoint-drop-allowed {
+  transform: scale(1.1, 1.1);
+}
+
+.network-link.jsplumb-dragging {
+}
+
+.container-link.jsplumb-dragging {
+}

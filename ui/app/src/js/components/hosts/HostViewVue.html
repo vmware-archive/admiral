@@ -1,0 +1,88 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="host-view" v-bind:class="{'right-context-expanded': contextExpanded}">
+  <div class="main-panel">
+    <alert alert-type="danger"
+           v-bind:show-alert="validationErrors._generic && (validationErrors._generic != null)"
+           v-bind:alert-message="validationErrors._generic"></alert>
+    <alert alert-type="success"
+           v-bind:show-alert="validationErrors._valid && (validationErrors._valid != null)"
+           v-bind:alert-message="i18n('app.host.details.verified')"></alert>
+
+    <div class="view-title-container">
+      <div class="view-title">
+      <template v-if="!model.isUpdate && createHostEnabled">
+        <div class="title-tab selected left"
+             v-on:click="selectTab($event, 'leftTab')"><a>{{i18n('app.host.details.title.add')}}</a></div>
+        <div class="title-tab right"
+             v-on:click="selectTab($event, 'rightTab')"><a>{{i18n('app.host.details.title.create')}}</a></div>
+      </template>
+
+      <template v-if="!model.isUpdate && !createHostEnabled">
+        <div class="title">{{i18n('app.host.details.title.add')}}</div>
+      </template>
+      <template v-if="model.isUpdate">
+        <div class="title">{{i18n('app.host.details.title.edit')}}</div>
+      </template>
+      </div>
+    </div>
+
+    <host-add-view v-bind:model="model" v-if="showTabAddHost"></host-add-view>
+    <host-create-view v-bind:model="model" v-if="showTabCreateHost"></host-create-view>
+
+    <div class="mask" v-bind:class="{'hide': !contextExpanded}"></div>
+  </div>
+
+  <context-sidepanel class="right-context-panel">
+    <div slot="toolbar" class="toolbar">
+      <context-sidepanel-toolbar-item
+        v-bind:active="activeContextItem === 'resourcePools'"
+        v-bind:icon-class="'fa fa-cubes'"
+        v-bind:label="i18n('app.resourcePool.contextPanelTooltip')"
+        v-on:open="openToolbarResourcePools()" v-on:close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+
+      <context-sidepanel-toolbar-item
+        v-bind:active="activeContextItem === 'credentials'"
+        v-bind:icon-class="'fa fa-key'"
+        v-bind:label="i18n('app.credential.contextPanelTooltip')"
+        v-on:open="openToolbarCredentials()" v-on:close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+
+      <context-sidepanel-toolbar-item
+        v-bind:active="activeContextItem === 'certificates'"
+        v-bind:icon-class="'fa fa-certificate'"
+        v-bind:label="i18n('app.certificate.contextPanelTooltip')"
+        v-on:open="openToolbarCertificates()" v-on:close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+
+      <context-sidepanel-toolbar-item
+        v-bind:active="activeContextItem === 'deploymentPolicies'"
+        v-bind:icon-class="'fa fa-file-text'"
+        v-bind:label="i18n('app.deploymentPolicy.contextPanelTooltip')"
+        v-on:open="openToolbarDeploymentPolicies()" v-on:close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+    </div>
+
+    <div slot="content" class="content">
+      <resource-pools-list v-if="activeContextItem === 'resourcePools'"
+        v-bind:model="model.contextView.activeItem.data"></resource-pools-list>
+      <credentials-list v-if="activeContextItem === 'credentials'"
+        v-bind:model="model.contextView.activeItem.data"></credentials-list>
+      <certificates-list v-if="activeContextItem === 'certificates'"
+        v-bind:model="model.contextView.activeItem.data"></certificates-list>
+      <deployment-policies-list v-if="activeContextItem === 'deploymentPolicies'"
+        v-bind:model="model.contextView.activeItem.data"></deployment-policies-list>
+    </div>
+
+  </context-sidepanel>
+</div>

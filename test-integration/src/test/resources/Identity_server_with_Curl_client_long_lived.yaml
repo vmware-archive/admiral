@@ -1,0 +1,30 @@
+---
+id: IdentityServerWithCurlClientLongLived
+name: IdentityServerWithCurlClientLongLived
+status: PUBLISHED
+properties:
+  _leaseDays: 3
+components:
+  identity-server:
+    type: Container.Docker
+    data:
+      name: identity-server
+      image: cmp/cmp_test_identity:latest
+      _cluster: 1
+      ports:
+      - container_port: "80"
+      expose_service:
+      - address: identity.cmp
+        port: "80"
+  curl-client:
+    type: Container.Docker
+    data:
+      name: curl-client
+      image: cmp/cmp_test_curl:latest
+      _cluster: 1
+      links:
+      - service: identity-server
+        alias: identity
+      command:
+      - "/curlloop.sh"
+      - "100"

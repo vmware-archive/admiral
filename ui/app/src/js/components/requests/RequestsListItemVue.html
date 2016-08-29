@@ -1,0 +1,40 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="request-item-holder">
+  <a class="request-item" href="#" v-on:click="redirect($event)" v-bind:disabled="!isEnabled(model)">
+    <div class="title">
+      <div v-if="getResourceIds(model).length > 0" class="name truncateText" data-toggle="tooltip"
+           data-placement="top" title="{{getResourceIds(model)}}">{{getResourceIds(model)}}</div>
+      <div v-else class="name">{{model.name}}</div>
+      <div class="phase">{{model.phase}} -- {{model.name}}</div>
+    </div>
+    <div class="progress">
+      <div class="progress-bar" v-bind:class="getProgressClass(model)" role="progressbar"
+           aria-valuenow="{{model.progress}}" aria-valuemin="0" aria-valuemax="100"
+           v-bind:style="{ width: progress + '%'}">
+      </div>
+      <div class="progress-status" title="{{model.taskInfo.stage + ' (' + model.subStage + ')'}}">
+        <span class="stage">{{model.taskInfo.stage}}</span>
+        <span class="substage">({{model.subStage}})</span>
+      </div>
+    </div>
+    <div v-if="model.errorMessage && expanded" class="error-message"><i
+      class="fa fa-exclamation-circle"></i> <span>{{model.errorMessage}}</span></div>
+  </a>
+  <div class="request-status-actions">
+    <a v-if="model.errorMessage" href="#" v-bind:class="{hide: expanded}"
+       v-on:click="toggleErrorMessage($event)"><i class="fa fa-eye"></i></a>
+    <a v-if="model.errorMessage" href="#" v-bind:class="{hide: !expanded}"
+       v-on:click="toggleErrorMessage($event)"><i class="fa fa-eye-slash"></i></a>
+    <a  v-if="isDeleteEnabled(model)" href="#"
+       v-on:click="deleteRequest($event)"><i class="fa fa-close"></i></a></div>
+</div>

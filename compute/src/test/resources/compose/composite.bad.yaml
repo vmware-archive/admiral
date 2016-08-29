@@ -1,0 +1,25 @@
+---
+name: "Docker Compose 2016-06-06 09.20.46.085 GMT"
+components:
+  db:
+    type: "Container.Docker"
+    data:
+      name: "db"
+      image: "mysql:5.7"
+      env:
+      - var: "MYSQL_ROOT_PASSWORD"
+        value: "wordpress"
+      - var: "MYSQL_DATABASE"
+        value: "wordpress"
+      - var: "MYSQL_USER"
+        value: "wordpress"
+      - var: "MYSQL_PASSWORD"
+        value: "wordpress"
+      volumes:
+      - "./.data/db:/var/lib/mysql"
+      restartPolicy: "always"
+      logConfig:
+        type: "json-file"
+        config:
+          max-size: "10m"
+          max-file: "5"

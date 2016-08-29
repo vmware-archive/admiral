@@ -1,0 +1,70 @@
+#cloud-config
+
+ssh_authorized_keys:
+  - {{sshAuthorizedKey}}
+
+coreos:
+  units:
+    - name: systemd-networkd-wait-online.service
+      command: start
+      enable: true
+
+    - name: update-engine-stub.service
+      command: stop
+      mask: true
+
+    - name: update-engine-stub.timer
+      command: stop
+      mask: true
+
+    - name: update-engine.service
+      command: stop
+      mask: true
+
+    - name: 99-other.network
+      content: |
+        [Match]
+        Name=en*
+
+        [Network]
+        DHCP=yes
+
+    - name: docker.service
+      command: stop
+      mask: true
+
+    - name: user-docker.service
+      command: start
+      content: |
+        [Unit]
+        After=systemd-networkd-wait-online.service
+        After=network-online.target
+        Wants=network-online.target
+
+        [Service]
+        ExecStart=/usr/bin/docker -H unix:///var/run/docker.sock -d --insecure-registry=0.0.0.0/0
+        ExecReload=/bin/kill -HUP $MAINPID
+        RemainAfterExit=true
+        Restart=on-failure
+        RestartSec=10
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: system-docker.service
+      command: start
+      content: |
+        [Unit]
+        After=systemd-networkd-wait-online.service
+        After=network-online.target
+        Wants=network-online.target
+
+        [Service]
+        ExecStart=/usr/bin/docker -H unix:///var/run/docker-bootstrap.sock -d --insecure-registry=0.0.0.0/0 -p /var/run/docker-bootstrap.pid --iptables=false --ip-masq=false --bridge=none --graph=/var/lib/docker-bootstrap
+        ExecReload=/bin/kill -HUP $MAINPID
+        RemainAfterExit=true
+        Restart=on-failure
+        RestartSec=10
+
+        [Install]
+        WantedBy=multi-user.target

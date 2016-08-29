@@ -1,0 +1,58 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="eventlog-list">
+  <list-title v-on:refresh-list="refresh()" v-bind:title="i18n('app.eventlog.title')">
+    <title-action-button v-bind:name="'deleteAll'" v-bind:icon-name="'times'"
+                         v-bind:spinnable="false"
+                         v-bind:tooltip="i18n('deleteAll')"
+                         v-bind:confirmable="true"></title-action-button>
+  </list-title>
+
+  <ul class="nav nav-pills nav-justified" role="tablist">
+    <li role="presentation" class="active"><a
+      href="#" aria-controls="all-events" role="tab"
+      v-on:click="selectTab($event, 'all')">{{i18n('app.eventlog.tabs.all')}}</a></li>
+    <li role="presentation"><a
+      href="#" aria-controls="warning-events" role="tab"
+      v-on:click="selectTab($event, 'warning')">{{i18n('app.eventlog.tabs.warnings')}}</a></li>
+    <li role="presentation"><a
+      href="#" aria-controls="error-events" role="tab"
+      v-on:click="selectTab($event, 'error')">{{i18n('app.eventlog.tabs.errors')}}</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <div role="tabpanel" class="tab-pane active" id="all" v-infinite-scroll="loadMore('all')">
+      <eventlog-item v-for="event in model.items | asMutable | orderBy 'documentUpdateTimeMicros' -1"
+                    track-by="documentSelfLink"
+                    v-bind:model="event">
+      </eventlog-item>
+    </div>
+    <div role="tabpanel" class="tab-pane" id="warning" v-infinite-scroll="loadMore('warning')">
+      <eventlog-item
+        v-for="event in model.items | asMutable | filterBy warningEventLogTypeFilter | orderBy 'documentUpdateTimeMicros' -1"
+          track-by="documentSelfLink"
+          v-bind:model="event">
+      </eventlog-item>
+    </div>
+    <div role="tabpanel" class="tab-pane" id="error" v-infinite-scroll="loadMore('error')">
+      <eventlog-item
+        v-for="event in model.items | asMutable | filterBy errorEventLogTypeFilter | orderBy 'documentUpdateTimeMicros' -1"
+          track-by="documentSelfLink"
+          v-bind:model="event">
+      </eventlog-item>
+    </div>
+  </div>
+  <div v-if="model.itemsLoading" class="loading">
+    <span class="vertical-helper"></span>
+    <img src="image-assets/loading-animation.gif">
+  </div>
+</div>

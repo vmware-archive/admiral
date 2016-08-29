@@ -1,0 +1,70 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="cluster-item">
+  <div v-if="clusterSize && (clusterSize > 1)" class="container-template-item-stack">
+    <template v-for="n in Math.min(clusterSize, 10)">
+      <div></div>
+    </template>
+  </div>
+  <div class="container-header-holder">
+    <div class="status"><span class="status-state">{{i18n("app.container.list.cluster.name")}}</span></div>
+    <div class="container-header">
+      <img v-bind:src="model.icon"/>
+      <div class="title-holder">
+        <div class="title">Scaled Containers</div>
+        <div class="image-tag truncateText" title="{{model.name}}">{{model.name}}</div>
+      </div>
+    </div>
+  </div>
+  <hr/>
+  <div class="container-content">
+    <div class="container-containers-holder">
+      <span class="container-label">Containers:</span>
+      <span class="cluster-containers-names">{{containersNamesToString}}</span>
+    </div>
+    <div class="container-cluster-actions-holder" style="margin-top: 20px;">
+      <template v-if="clusterSize > 1">
+        <span class="container-label">{{i18n("app.container.list.cluster.sizeLabel")}}</span> <span>{{clusterSize}}</span>
+      </template>
+      <template v-else>
+        <span class="container-label">{{i18n("app.container.list.cluster.scaleLabel")}}</span>
+      </template>
+      <div class="container-secondary-actions">
+        <action-button name="incrementClusterSize" icon-name="plus"
+                       v-on:click="modifyClusterSize($event, 1)"></action-button>
+        <action-button v-if="clusterSize > 1" name="decrementClusterSize" icon-name="minus"
+                       v-on:click="modifyClusterSize($event, -1)"></action-button>
+      </div>
+    </div>
+  </div>
+  <div class="container-actions" v-bind:class="{'hide': showDeleteConfirmation}">
+    <action-button name="details" icon-name="eye"
+                   v-bind:label="i18n('app.container.actions.details')"
+                   v-on:click="openCluster($event)"></action-button>
+    <action-button name="stop" icon-name="stop"
+                   v-bind:label="i18n('app.container.actions.stop')"
+                   v-bind:supported="operationSupported('STOP')"
+                   v-on:click="stopCluster($event)"></action-button>
+    <action-button name="start" icon-name="play"
+                   v-bind:label="i18n('app.container.actions.start')"
+                   v-bind:supported="operationSupported('START')"
+                   v-on:click="startCluster($event)"></action-button>
+    <action-button name="remove" icon-name="times"
+                   v-bind:label="i18n('app.container.actions.remove')"
+                   v-bind:supported="operationSupported('REMOVE')"
+                   v-on:click="askConfirmation($event)"></action-button>
+  </div>
+  <delete-confirmation v-bind:class="{'hide': !showDeleteConfirmation}"
+                       v-bind:show="showDeleteConfirmation"
+                       v-on:confirm-delete="removeCluster($event)"
+                       v-on:cancel-delete="cancelRemoval($event)"></delete-confirmation>
+</div>

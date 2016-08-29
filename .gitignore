@@ -1,0 +1,26 @@
+target
+.idea
+.settings
+.project
+.classpath
+*.iml
+*~
+\#*#
+build
+!tools/build
+lib/extjs/extjs/
+.DS_Store
+host/images-bin/
+tools/jenkins
+host/jce/
+
+#Build-generated files
+**/bootstrap.json
+**/bootstrap.js
+**/bootstrap.css
+**/app-*.json
+**/sass/example/example.css
+**/container-images/**/bin
+scripts/admiral-host*.jar
+scripts/xenon*.jar
+**/node_modules

@@ -1,0 +1,91 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="composite-child-containers-view" v-bind:class="{'left-list-hover': listMouseover}">
+
+  <div class="list-view containers-list" v-bind:class="{'context-selected': model.selectedItem}"
+       v-on:mouseenter="onListMouseEnter()" v-on:mouseleave="onListMouseLeave()"
+       v-if="model.listView">
+
+    <a class="close-button" v-on:click="openCompositeContainerDetails()"><i
+      class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
+
+    <div class="selected-context-small-holder" v-if="model.selectedItem">
+      <div class="grid-item">
+        <cluster-grid-item v-if="model.selectedItem.type === constants.CONTAINERS.TYPES.CLUSTER"
+                           v-bind:model="model.selectedItem"
+                               ></cluster-grid-item>
+        <container-grid-item v-if="model.selectedItem.type === constants.CONTAINERS.TYPES.SINGLE"
+                             v-bind:model="model.selectedItem"></container-grid-item>
+      </div>
+    </div>
+
+    <div class="grid-container">
+
+      <div class="title">{{i18n("app.container.list.composite.childContainersLabel")}}<span
+        class="total-items">({{keys(model.listView.items).length || 0}})</span><refresh-button
+        v-on:click="refresh()"></refresh-button></div>
+
+      <div class="toolbar-actions" v-if="!model.selectedItem">
+        <toolbar-action-button id="stop" icon-name="stop" v-bind:label="i18n('app.container.actions.stop')"
+                               v-bind:supported="operationSupported('STOP')"
+                               v-on:click="stopApplication($event)"></toolbar-action-button>
+
+        <toolbar-action-button id="start" icon-name="play" v-bind:label="i18n('app.container.actions.start')"
+                               v-bind:supported="operationSupported('START')"
+                               v-on:click="startApplication($event)"></toolbar-action-button>
+
+        <toolbar-action-button id="remove" icon-name="close" v-bind:label="i18n('app.container.actions.remove')"
+                               v-bind:supported="operationSupported('REMOVE')"
+                               v-on:click="removeApplication($event)"></toolbar-action-button>
+      </div>
+
+      <grid v-bind:context-selected="model.selectedItem" v-bind:preferred-width="preferredGridWidth">
+
+        <grid-item v-for="item in model.listView.items" transition="grid-item-fade"
+                   v-bind:class="{'context-selected': item.documentId == model.selectedItem.documentId}"
+                   track-by="documentId">
+
+            <cluster-grid-item v-if="item.type === constants.CONTAINERS.TYPES.CLUSTER"
+                               v-bind:model="item"
+                               v-on:click="openCompositeContainerClusterDetails(item.documentId)"></cluster-grid-item>
+
+            <container-grid-item v-if="item.type === constants.CONTAINERS.TYPES.SINGLE"
+              v-bind:model="item"
+              v-on:click="openCompositeContainerChildDetails(item.documentId)"></container-grid-item>
+
+        </grid-item>
+
+      </grid>
+
+      <div v-if="model.listView.itemsLoading" class="loading">
+        <span class="vertical-helper"></span>
+        <img src="image-assets/loading-animation.gif">
+      </div>
+    </div>
+  </div>
+  <div v-if="model.selectedItemDetails"
+       transition="slide-and-fade"
+       class="selected-context-holder closable-view"
+       v-bind:class="{'expanded': model.selectedItemDetails.expanded}">
+    <container-details v-if="model.selectedItemDetails.type === constants.CONTAINERS.TYPES.SINGLE"
+                       class="content"
+                       v-bind:model="model.selectedItemDetails"
+                       transition="fade">
+    </container-details>
+    <cluster-container-details v-if="model.selectedItemDetails.type === constants.CONTAINERS.TYPES.CLUSTER"
+                               class="content"
+                               v-bind:model="model.selectedItemDetails"
+                               v-bind:parent-composite-component-id="model.documentId"
+                               transition="fade">
+    </cluster-container-details>
+  </div>
+</div>
