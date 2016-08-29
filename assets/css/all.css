@@ -3701,7 +3701,7 @@ strong {
     top: 0
 }
 .hero-image {
-    display: inline-block;
+    display: block;
     position: relative
 }
 section {
