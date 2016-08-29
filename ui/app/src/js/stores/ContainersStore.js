@@ -722,6 +722,8 @@ ContainersStore = Reflux.createStore({
             actions.NavigationActions.openCompositeContainerDetails(parentDetails.documentId);
           }
         }
+      } else {
+        return this.navigateToContainersListView(true);
       }
     } else {
 
