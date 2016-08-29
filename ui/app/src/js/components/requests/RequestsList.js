@@ -204,13 +204,22 @@ var RequestsListVueComponent = Vue.extend({
       RequestsActions.selectRequests(itemsType);
     },
 
-    clear: function() {
-      RequestsActions.clearRequests();
+    refresh: function() {
+      RequestsActions.refreshRequests();
     },
 
     loadMore: function(itemsType) {
       if (this.model.nextPageLink && itemsType === this.model.itemsType) {
         RequestsActions.openRequestsNext(this.model.nextPageLink);
+      }
+    }
+  },
+  events: {
+    'do-action': function(actionName) {
+
+      if (actionName === 'deleteAll') {
+        // Clear all requests
+        RequestsActions.clearRequests();
       }
     }
   }

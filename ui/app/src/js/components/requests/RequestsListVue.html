@@ -10,7 +10,13 @@
   -->
 
 <div class="requests-list">
-	<div class="title">{{i18n('app.request.title')}} <refresh-button v-bind:icon-name="'times'" v-bind:tooltip="i18n('clear')" v-bind:time="0" v-on:click="clear()"></refresh-button> </div>
+  <list-title v-on:refresh-list="refresh()" v-bind:title="i18n('app.request.title')">
+      <title-action-button v-bind:name="'deleteAll'"
+                           v-bind:icon-name="'times'"
+                           v-bind:spinnable="false"
+                           v-bind:tooltip="i18n('deleteAll')"
+                           v-bind:confirmable="true"></title-action-button>
+  </list-title>
   <ul class="nav nav-pills nav-justified" role="tablist">
     <li role="presentation" class="active"><a href="#" aria-controls="all-requests" role="tab" v-on:click="selectTab($event, 'all')">{{i18n('app.request.tabs.all')}}</a></li>
     <li role="presentation"><a href="#" aria-controls="running-requests" role="tab" v-on:click="selectTab($event, 'running')">{{i18n('app.request.tabs.running')}}</a></li>
