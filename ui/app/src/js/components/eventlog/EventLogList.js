@@ -142,7 +142,6 @@ var EventLogListVueComponent = Vue.extend({
     },
 
     refresh: function() {
-      console.log('REFRESH');
       actions.EventLogActions.openEventLog();
     },
 

@@ -21,6 +21,7 @@ import VueSearch from 'components/common/VueSearch';
 import VueRefreshButton from 'components/common/VueRefreshButton';
 import ListTitle from 'components/common/ListTitle';
 import VueTitleActionButton from 'components/common/VueTitleActionButton';
+import VueActionConfirmation from 'components/common/VueActionConfirmation';
 import VueMulticolumnInputs from 'components/common/VueMulticolumnInputs';
 import VueActionButton from 'components/common/VueActionButton';
 import VueTableHeaderSort from 'components/common/VueTableHeaderSort';

@@ -20,12 +20,11 @@
     <div class="title">{{model.instance.names}}<refresh-button v-on:click="refresh()"></refresh-button></div>
     <div class="status {{model.instance.powerState}}">{{containerStatusDisplay(model.instance.powerState, model.instance.started)}}</div>
     <div class="toolbar-actions">
-      <template v-if="hasOperationInProgress() || hasPendingOperationStart">
+      <template v-if="hasOperationInProgress() || confirmationOperation">
         <div class="progress-holder">
-          <countdown-operation-start v-bind:show="hasPendingOperationStart"
-                                     v-on:countdown-operation-complete="removeContainer()"
-                                     v-on:countdown-operation-cancel="cancelRemoveContainer()"
-            ></countdown-operation-start>
+          <action-confirmation v-bind:action-name="confirmationOperation"
+                               v-bind:action-title="i18n('app.container.actions.remove')"></action-confirmation>
+
           <div class="loading" v-bind:class="{'hide': !hasOperationInProgress()}">
             {{i18n('app.container.details.operation.pending')}}<i class="fa fa-spinner fa-2x fa-spin"></i></div>
         </div>
@@ -39,9 +38,10 @@
                                v-bind:supported="operationSupported('START')"
                                v-on:click="startContainer($event)"></toolbar-action-button>
 
-        <toolbar-action-button id="remove" icon-name="close" v-bind:label="i18n('app.container.actions.remove')"
+        <toolbar-action-button id="remove" icon-name="times" v-bind:label="i18n('app.container.actions.remove')"
                                v-bind:supported="operationSupported('REMOVE')"
-                               v-on:click="triggerRemoveContainer($event)"></toolbar-action-button>
+                               v-on:click="askConfirmation($event, 'removeContainer')"
+                                ></toolbar-action-button>
 
         <toolbar-action-button id="terminal" icon-name="terminal" v-bind:label="i18n('app.container.actions.terminal')"
                                v-bind:supported="operationSupported('SHELL')"

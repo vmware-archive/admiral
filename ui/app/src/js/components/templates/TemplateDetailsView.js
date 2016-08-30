@@ -17,9 +17,9 @@ import InlineDeleteConfirmationTemplate from 'InlineDeleteConfirmationTemplate';
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
 import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin'; // eslint-disable-line
 import GridHolderMixin from 'components/common/GridHolderMixin';
+import ActionConfirmationSupportMixin from 'components/common/ActionConfirmationSupportMixin'; //eslint-disable-line
 import NetworkConnectorMixin from 'components/templates/NetworkConnectorMixin';
 import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
-import VueCountdownOperationStart from 'components/common/VueCountdownOperationStart'; //eslint-disable-line
 import NetworkBox from 'components/networks/NetworkBox'; //eslint-disable-line
 import exportHelper from 'components/templates/TemplateExportHelper';
 import { TemplateActions } from 'actions/Actions';
@@ -40,7 +40,6 @@ var TemplateDetailsView = Vue.extend({
       addingContainer: false,
       addingNetwork: false,
       editingTemplateName: false,
-      hasPendingOperationStart: false,
       templateName: '',
       networkType: 'bridge'
     };
@@ -328,7 +327,8 @@ var TemplateDetailsView = Vue.extend({
       }
     }
   },
-  mixins: [GridHolderMixin, NetworkConnectorMixin, ResourceGroupsMixin],
+  mixins: [GridHolderMixin, NetworkConnectorMixin, ResourceGroupsMixin,
+            ActionConfirmationSupportMixin],
   attached: function() {
     var $detailsContent = $(this.$el);
 
@@ -486,19 +486,11 @@ var TemplateDetailsView = Vue.extend({
 
       this.handleGroup(TemplateActions.copyTemplate, [this.model.type, template]);
     },
-    triggerRemoveTemplate: function($event) {
-      $event.stopPropagation();
-      $event.preventDefault();
+    handleConfirmation: function(actionName) {
 
-      this.hasPendingOperationStart = true;
-    },
-    cancelRemoveTemplate: function() {
-      this.hasPendingOperationStart = false;
-    },
-    removeTemplate: function() {
-      this.hasPendingOperationStart = false;
-
-      TemplateActions.removeTemplate(this.model.documentId);
+      if (actionName === 'removeTemplate') {
+        TemplateActions.removeTemplate(this.model.documentId);
+      }
     },
     publishTemplate: function($event) {
       $event.stopPropagation();

@@ -61,15 +61,15 @@ $elements-side-margin: $elements-margin / 2;
   }
   /* Container Actions */
   > .container-details-header .toolbar-actions {
-    margin-top: 10px;
+    margin-top: 12px;
     float: right;
+
     .progress-holder {
       margin-right: 20px;
-    }
 
-    .cancel-action {
-      font-size: 16px;
-      color: $main_color;
+      .loading .fa {
+        margin-top: -4px;
+      }
     }
 
     .fa-spin {

@@ -13,9 +13,9 @@ import ContainerDetailsVue from 'ContainerDetailsVue';
 import Component from 'components/common/Component';
 import MaximizableBehaviour from 'components/common/MaximizableBehaviour'; //eslint-disable-line
 import VueToolbarActionButton from 'components/common/VueToolbarActionButton'; //eslint-disable-line
-import VueCountdownOperationStart from 'components/common/VueCountdownOperationStart'; //eslint-disable-line
 import ContainerProperties from 'components/containers/ContainerProperties'; //eslint-disable-line
 import ContainerStats from 'components/containers/ContainerStats'; //eslint-disable-line
+import ActionConfirmationSupportMixin from 'components/common/ActionConfirmationSupportMixin'; //eslint-disable-line
 import { ContainerActions } from 'actions/Actions';
 import constants from 'core/constants';
 import utils from 'core/utils';
@@ -30,8 +30,7 @@ var ContainerDetailsVueComponent = Vue.extend({
   template: ContainerDetailsVue,
   data: function() {
     return {
-      logsSinceDurations: constants.CONTAINERS.LOGS.SINCE_DURATIONS,
-      hasPendingOperationStart: false
+      logsSinceDurations: constants.CONTAINERS.LOGS.SINCE_DURATIONS
     };
   },
 
@@ -50,6 +49,8 @@ var ContainerDetailsVueComponent = Vue.extend({
       return this.hasGeneralError ? this.model.error._generic : '';
     }
   },
+
+  mixins: [ActionConfirmationSupportMixin],
 
   attached: function() {
     this.modelUnwatch = this.$watch('model', this.updateData, {immediate: true});
@@ -167,24 +168,12 @@ var ContainerDetailsVueComponent = Vue.extend({
 
       ContainerActions.stopContainerDetails(this.getContainerId());
     },
+    handleConfirmation: function(actionName) {
 
-    triggerRemoveContainer: function($event) {
-      $event.stopPropagation();
-      $event.preventDefault();
-
-      this.hasPendingOperationStart = true;
+      if (actionName === 'removeContainer') {
+        ContainerActions.removeContainerDetails(this.getContainerId());
+      }
     },
-
-    cancelRemoveContainer: function() {
-      this.hasPendingOperationStart = false;
-    },
-
-    removeContainer: function() {
-      this.hasPendingOperationStart = false;
-
-      ContainerActions.removeContainerDetails(this.getContainerId());
-    },
-
     openShell: function($event) {
       $event.stopPropagation();
       $event.preventDefault();

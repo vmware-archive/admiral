@@ -34,28 +34,24 @@
           <a href="#" class="btn editBtn" v-on:click="editTemplateName($event)"><i class="fa fa-pencil"></i></a>
         </div>
         <div class="toolbar-actions">
-          <template v-if="hasPendingOperationStart">
+          <template v-if="confirmationOperation">
             <div class="progress-holder">
-              <countdown-operation-start v-bind:show="hasPendingOperationStart"
-                                         v-on:countdown-operation-complete="removeTemplate()"
-                                         v-on:countdown-operation-cancel="cancelRemoveTemplate()"
-                ></countdown-operation-start>
+              <action-confirmation v-bind:action-name="confirmationOperation"
+                                   v-bind:action-title="i18n('app.template.actions.remove')"></action-confirmation>
             </div>
           </template>
           <template v-else>
             <template v-if="showGroupForProvisioning">
             <div class="provisionGroup">
               <select v-model="preferredGroupId">
-                <option v-for="option in groupOptions" track-by="id"
-                        value="{{option.id}}">
+                <option v-for="option in groupOptions" track-by="id" value="{{option.id}}">
                   {{option.name}}
                 </option>
               </select>
               <div class="toolbar-action" v-on:click="provision($event)">
                 <a class="btn btn-circle" data-toggle="tooltip" data-placement="top"
                    title="{{i18n('app.template.actions.provision')}}"
-                   data-name="provision">
-                  <i class="fa fa-send"></i></a>
+                   data-name="provision"><i class="fa fa-send"></i></a>
               </div>
             </div>
             </template>
@@ -74,7 +70,8 @@
                                      v-on:click="exportTemplate($event)"></toolbar-action-button>
                 <toolbar-action-button id="remove" icon-name="close"
                                      v-bind:label="i18n('app.template.actions.remove')"
-                                     v-on:click="triggerRemoveTemplate($event)"></toolbar-action-button>
+                                     v-on:click="askConfirmation($event, 'removeTemplate')"
+                                      ></toolbar-action-button>
               </template>
           </template>
         </div>

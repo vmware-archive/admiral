@@ -35,49 +35,34 @@ var ListTitleVueComponent = Vue.extend({
   },
   data: function() {
     return {
-      showConfirmation: false,
       actionName: null,
-      actionTitle: ''
+      actionTitle: null
     };
   },
   methods: {
     notifyRefresh: function() {
       this.$dispatch('refresh-list');
-    },
-
-    confirmAction: function($event) {
-      $event.stopPropagation();
-      $event.preventDefault();
-
-      this.$dispatch('do-action', this.actionName);
-
-      this.hideConfirmation();
-    },
-
-    cancelAction: function($event) {
-      $event.stopPropagation();
-      $event.preventDefault();
-
-      this.actionName = null;
-
-      this.hideConfirmation();
-    },
-
-    hideConfirmation: function() {
-      this.showConfirmation = false;
     }
   },
   events: {
     'title-action': function(actionName) {
-      this.actionName = actionName;
 
-      this.$dispatch('do-action', this.actionName);
+      this.$dispatch('do-action', actionName);
     },
     'title-action-confirm': function(actionData) {
       this.actionName = actionData.name;
       this.actionTitle = actionData.title;
+    },
+    'action-confirmed': function(actionName) {
 
-      this.showConfirmation = true;
+      this.$dispatch('do-action', actionName);
+
+      this.actionName = null;
+      this.actionTitle = null;
+    },
+    'action-cancelled': function() {
+      this.actionName = null;
+      this.actionTitle = null;
     }
   }
 });
