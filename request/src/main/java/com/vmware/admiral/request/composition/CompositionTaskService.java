@@ -297,9 +297,7 @@ public class CompositionTaskService extends
         try {
             // update resource tracker with number of components
             RequestStatus requestStatus = new RequestStatus();
-            requestStatus.componentNames = state.resourceNodes.values().stream()
-                    .map((rn) -> rn.name)
-                    .collect(Collectors.toList());
+            requestStatus.components = new ArrayList<>(state.resourceNodes.values());
 
             sendRequest(Operation
                     .createPatch(this, state.requestTrackerLink)

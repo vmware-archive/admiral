@@ -300,10 +300,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
         assertNotNull(rs);
 
-        // TODO: check why progress is < 100 even after completion
-        // The RequestStatusService.handleUpdateComponents is merging all components progresses
-        // regardless of their different phases
-        // assertEquals(Integer.valueOf(100), rs.progress);
+        assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(3, request.resourceLinks.size());
 
         String networkLink = null;

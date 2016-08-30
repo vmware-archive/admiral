@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -1002,16 +1003,36 @@ public class RequestBrokerService extends
                 .equals(state.operation);
     }
 
-    private static final List<String> TRACKED_EXEC_TASKS = new ArrayList<>(
-            Arrays.asList(ContainerAllocationTaskService.DISPLAY_NAME));
+    private static final Map<ResourceType, List<String>> SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE;
 
-    private static final List<String> TRACKED_ALLOCATION_TASKS = new ArrayList<>(
-            Arrays.asList(ContainerAllocationTaskService.DISPLAY_NAME,
-                    ReservationTaskService.DISPLAY_NAME,
-                    PlacementHostSelectionTaskService.DISPLAY_NAME,
-                    ResourceNamePrefixTaskService.DISPLAY_NAME));
-    private static final String[] TRACKED_TASKS_TASKS = TRACKED_ALLOCATION_TASKS
-            .toArray(new String[0]);
+    static {
+        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE = new HashMap<>();
+        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CONTAINER_TYPE, new ArrayList<>(
+                Arrays.asList(ContainerAllocationTaskService.DISPLAY_NAME)));
+        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_TYPE, new ArrayList<>(
+                Arrays.asList(ComputeAllocationTaskService.DISPLAY_NAME)));
+        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.NETWORK_TYPE, new ArrayList<>(
+                Arrays.asList(ContainerNetworkProvisionTaskService.DISPLAY_NAME)));
+    }
+
+    private static final Map<ResourceType, List<String>> SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE;
+
+    static {
+        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE = new HashMap<>();
+        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CONTAINER_TYPE, new ArrayList<>(
+                Arrays.asList(ContainerAllocationTaskService.DISPLAY_NAME,
+                        ReservationTaskService.DISPLAY_NAME,
+                        PlacementHostSelectionTaskService.DISPLAY_NAME,
+                        ResourceNamePrefixTaskService.DISPLAY_NAME)));
+        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_TYPE, new ArrayList<>(
+                Arrays.asList(ComputeAllocationTaskService.DISPLAY_NAME,
+                        ReservationTaskService.DISPLAY_NAME,
+                        PlacementHostSelectionTaskService.DISPLAY_NAME,
+                        ResourceNamePrefixTaskService.DISPLAY_NAME)));
+        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.NETWORK_TYPE, new ArrayList<>(
+                Arrays.asList(ContainerNetworkAllocationTaskService.DISPLAY_NAME,
+                        ResourceNamePrefixTaskService.DISPLAY_NAME)));
+    }
 
     private boolean createRequestTrackerIfNoneProvided(RequestBrokerState state, Operation op) {
         if (state.requestTrackerLink != null && !state.requestTrackerLink.isEmpty()) {
@@ -1023,9 +1044,28 @@ public class RequestBrokerService extends
 
         // add tracked leaf tasks depending on the request type
         if (isProvisionOperation(state)) {
-            requestStatus.trackedExecutionTasks = TRACKED_EXEC_TASKS;
-            requestStatus.trackedAllocationTasks = TRACKED_ALLOCATION_TASKS;
-            requestStatus.addTrackedTasks(TRACKED_TASKS_TASKS);
+
+            requestStatus.trackedExecutionTasksByResourceType = SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE;
+            requestStatus.trackedAllocationTasksByResourceType = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE;
+
+            List<String> trackedTasks;
+
+            if (isContainerType(state)) {
+                trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
+                        .get(ResourceType.CONTAINER_TYPE);
+            } else if (isComputeType(state)) {
+                trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
+                        .get(ResourceType.COMPUTE_TYPE);
+            } else if (isContainerNetworkType(state)) {
+                trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
+                        .get(ResourceType.NETWORK_TYPE);
+            } else {
+                trackedTasks = new ArrayList<>();
+                for (List<String> vals : SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.values()) {
+                    trackedTasks.addAll(vals);
+                }
+            }
+            requestStatus.addTrackedTasks(trackedTasks.toArray(new String[0]));
         } else if (isPostAllocationOperation(state)) {
             requestStatus.addTrackedTasks(ContainerAllocationTaskService.DISPLAY_NAME);
         } else {

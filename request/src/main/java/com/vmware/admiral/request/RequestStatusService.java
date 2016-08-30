@@ -11,15 +11,16 @@
 
 package com.vmware.admiral.request;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
+import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.request.composition.CompositionGraph.ResourceNode;
 import com.vmware.admiral.request.composition.CompositionSubTaskService;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.xenon.common.Operation;
@@ -48,7 +49,7 @@ public class RequestStatusService extends StatefulService {
 
         public static final String FIELD_NAME_REQUEST_PROGRESS_BY_COMPONENT =
                 "requestProgressByComponent";
-        public static final String FIELD_NAME_COMPONENT_NAMES = "componentNames";
+        public static final String FIELD_NAME_COMPONENTS = "components";
 
         /** Request progress (0-100%) */
         public Map<String, Map<String, Integer>> requestProgressByComponent;
@@ -56,11 +57,11 @@ public class RequestStatusService extends StatefulService {
         /** Current component in a composition, or null for a non-component phase */
         public String component;
 
-        /** list of expected component names in a composition request */
-        public List<String> componentNames;
+        /** collection of expected components in a composition request */
+        public List<ResourceNode> components;
 
-        public List<String> trackedExecutionTasks;
-        public List<String> trackedAllocationTasks;
+        public Map<ResourceType, List<String>> trackedExecutionTasksByResourceType;
+        public Map<ResourceType, List<String>> trackedAllocationTasksByResourceType;
 
         public void addTrackedTasks(String... taskNames) {
             if (requestProgressByComponent == null) {
@@ -92,7 +93,7 @@ public class RequestStatusService extends StatefulService {
         RequestStatus body = patch.getBody(RequestStatus.class);
         RequestStatus state = getState(patch);
 
-        if (body.componentNames != null) {
+        if (body.components != null) {
             handleUpdateComponents(state, body);
 
         } else {
@@ -180,49 +181,50 @@ public class RequestStatusService extends StatefulService {
 
     public void handleUpdateComponents(RequestStatus state, RequestStatus body) {
         logInfo("Updating request tracker [%s] components to: %s", state.documentSelfLink,
-                body.componentNames);
+                body.components);
 
         if (body.eventLogLink != null) {
             body.eventLogLink = state.eventLogLink;
         }
 
-        Map<String, Integer> allocationTemplate = body.componentNames.stream()
-                .collect(Collectors.toMap((s) -> s + CompositionSubTaskService.ALLOC_SUFFIX,
-                        (n) -> Integer.valueOf(0)));
+        for (ResourceNode rn : body.components) {
+            ResourceType type = ResourceType.fromName(rn.resourceType);
+            List<String> trackedExecutionTasks = state.trackedExecutionTasksByResourceType
+                    .get(type);
+            if (trackedExecutionTasks == null) {
+                trackedExecutionTasks = new ArrayList<>();
+            }
+            List<String> trackedAllocationTasks = state.trackedAllocationTasksByResourceType
+                    .get(type);
+            if (trackedAllocationTasks == null) {
+                trackedAllocationTasks = new ArrayList<>();
+            }
+            String allocName = rn.name + CompositionSubTaskService.ALLOC_SUFFIX;
+            String name = rn.name;
 
-        Map<String, Integer> executionTemplate = body.componentNames.stream()
-                .collect(Collectors.toMap(Function.identity(), (n) -> Integer.valueOf(0)));
+            for (String k : state.requestProgressByComponent.keySet()) {
 
-        Map<String, Integer> bothTemplate = new HashMap<>(allocationTemplate);
-        bothTemplate.putAll(executionTemplate);
-
-        for (String k : state.requestProgressByComponent.keySet()) {
-            Map<String, Integer> template;
-            if (state.trackedExecutionTasks.contains(k)) {
-                if (state.trackedAllocationTasks.contains(k)) {
-                    template = bothTemplate;
+                Map<String, Integer> existingProgress = state.requestProgressByComponent.get(k);
+                Map<String, Integer> template;
+                if (existingProgress == null) {
+                    template = new HashMap<>();
                 } else {
-                    template = executionTemplate;
+                    template = new HashMap<>(existingProgress);
                 }
 
-            } else if (state.trackedAllocationTasks.contains(k)) {
-                template = allocationTemplate;
-
-            } else {
-                // ignore untracked key
-                continue;
-            }
-
-            // progress may have already been recorded, so merge it into the new map
-            template = new HashMap<>(template);
-            Map<String, Integer> existingProgress = state.requestProgressByComponent.get(k);
-            for (String component : template.keySet()) {
-                Integer componentProgress = existingProgress.get(component);
-                if (componentProgress != null) {
-                    template.put(component, componentProgress);
+                if (trackedAllocationTasks.contains(k)) {
+                    template.putIfAbsent(allocName, Integer.valueOf(0));
                 }
+                if (trackedExecutionTasks.contains(k)) {
+                    template.putIfAbsent(name, Integer.valueOf(0));
+                }
+
+                state.requestProgressByComponent.put(k, template);
             }
-            state.requestProgressByComponent.put(k, template);
+        }
+
+        for (Map<String, Integer> progress : state.requestProgressByComponent.values()) {
+            progress.remove(DEFAULT_COMPONENT_NAME);
         }
     }
 
@@ -241,7 +243,7 @@ public class RequestStatusService extends StatefulService {
                 .of(PropertyIndexingOption.STORE_ONLY);
 
         template.documentDescription.propertyDescriptions.get(
-                RequestStatus.FIELD_NAME_COMPONENT_NAMES).indexingOptions = EnumSet
+                RequestStatus.FIELD_NAME_COMPONENTS).indexingOptions = EnumSet
                 .of(PropertyIndexingOption.STORE_ONLY);
 
         return template;
