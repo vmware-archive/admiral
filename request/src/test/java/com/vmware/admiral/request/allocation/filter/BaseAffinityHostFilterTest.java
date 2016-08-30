@@ -145,7 +145,7 @@ public class BaseAffinityHostFilterTest extends RequestBaseTest {
         return error[0];
     }
 
-    protected Map<String, HostSelection> filter(int expectedSize) throws Throwable {
+    protected Map<String, HostSelection> filter() throws Throwable {
         final AtomicReference<Throwable> error = new AtomicReference<>();
         final Map<String, HostSelection> hostSelectionMap = prepareHostSelectionMap();
         final Map<String, HostSelection> hostSelectedMap = new HashMap<>();
@@ -158,10 +158,6 @@ public class BaseAffinityHostFilterTest extends RequestBaseTest {
                         (filteredHostSelectionMap, e) -> {
                             if (e != null) {
                                 error.set(e);
-                            } else if (expectedSize != filteredHostSelectionMap.size()) {
-                                error.set(new IllegalStateException("Filtered hostLinks size is: "
-                                        + filteredHostSelectionMap.size() + " - Expected size is: "
-                                        + expectedSize));
                             } else {
                                 hostSelectedMap.putAll(filteredHostSelectionMap);
                             }

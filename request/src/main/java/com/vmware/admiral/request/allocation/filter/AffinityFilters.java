@@ -59,7 +59,6 @@ public final class AffinityFilters {
 
     private void initialize(ServiceHost host, ContainerNetworkDescription desc) {
 
-        filters.add(new ContainerNetworkAffinityHostFilter(host, desc));
     }
 
     private void initialize(ServiceHost host, ComputeDescription desc) {

@@ -15,16 +15,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 import org.junit.Test;
 
+import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -35,6 +37,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.UriUtils;
 
 public class ContainerToNetworkAffinityHostFilterTest extends BaseAffinityHostFilterTest {
@@ -48,10 +51,8 @@ public class ContainerToNetworkAffinityHostFilterTest extends BaseAffinityHostFi
         createContainer(desc, initialHostLinks.get(1));
 
         filter = new ContainerToNetworkAffinityHostFilter(host, desc);
-        Throwable e = filter(initialHostLinks);
-        if (e != null) {
-            fail("Unexpected exception: " + e);
-        }
+        Map<String, HostSelection> selected = filter();
+        assertEquals(3, selected.size());
     }
 
     @Test
@@ -69,14 +70,142 @@ public class ContainerToNetworkAffinityHostFilterTest extends BaseAffinityHostFi
                 networkDescription2.name });
 
         filter = new ContainerToNetworkAffinityHostFilter(host, desc);
-        Map<String, HostSelection> filterToHostSelectionMap = filterToHostSelectionMap();
+        Map<String, HostSelection> selected = filter();
+        assertEquals(1, selected.size());
 
-        for (HostSelection hs : filterToHostSelectionMap.values()) {
+        for (HostSelection hs : selected.values()) {
             String mappedName = hs.mapNames(new String[] { networkDescription1.name })[0];
             assertEquals(networkState1.name, mappedName);
 
             mappedName = hs.mapNames(new String[] { networkDescription2.name })[0];
             assertEquals(networkState2.name, mappedName);
+        }
+    }
+
+    @Test
+    public void testFilterHostsWhenNoClustersAvailable() throws Throwable {
+        ContainerDescription desc = createContainerWithNetworksDescription();
+        filter = new ContainerToNetworkAffinityHostFilter(host, desc);
+        assertTrue(filter.isActive());
+
+        // One host is selected randomly from the initialHostLinks
+        Map<String, HostSelection> selected = filter();
+        assertEquals(1, selected.size());
+    }
+
+    @Test
+    public void testFilterHostsWhenAlsoAClusterAvailable() throws Throwable {
+        ContainerDescription desc = createContainerWithNetworksDescription();
+        filter = new ContainerToNetworkAffinityHostFilter(host, desc);
+        assertTrue(filter.isActive());
+
+        // Add 3 hostLinks with hosts creating a KV store cluster
+        expectedLinks = new ArrayList<>();
+        expectedLinks.add(createDockerHostWithKVStore("kvstore1"));
+        expectedLinks.add(createDockerHostWithKVStore("kvstore1"));
+
+        initialHostLinks.addAll(expectedLinks);
+
+        // The cluster is selected from the initialHostLinks
+        Map<String, HostSelection> selected = filter();
+        assertEquals(2, selected.size());
+    }
+
+    @Test
+    public void testFilterHostsWhenAlsoMultipleClustersOfTheSameSizeAvailable() throws Throwable {
+        ContainerDescription desc = createContainerWithNetworksDescription();
+        filter = new ContainerToNetworkAffinityHostFilter(host, desc);
+        assertTrue(filter.isActive());
+
+        // Add 2 sets of 3 hostLinks with hosts creating 2 KV store clusters
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore1"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore1"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore1"));
+
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore2"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore2"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore2"));
+
+        // One cluster is selected randomly from the initialHostLinks
+        Map<String, HostSelection> selected = filter();
+        assertEquals(3, selected.size());
+
+        // And all the nodes from the cluster use the same KV store
+        Iterator<HostSelection> it = selected.values().iterator();
+        String cs = it.next().clusterStore;
+        while (it.hasNext()) {
+            assertTrue(it.next().clusterStore.equals(cs));
+        }
+    }
+
+    @Test
+    public void testFilterHostsWhenAlsoMultipleClustersOfDifferentSizesAvailable()
+            throws Throwable {
+        ContainerDescription desc = createContainerWithNetworksDescription();
+        filter = new ContainerToNetworkAffinityHostFilter(host, desc);
+        assertTrue(filter.isActive());
+
+        // Add 3 sets of 3, 4 and 5 hostLinks with hosts creating 3 KV store clusters
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore1"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore1"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore1"));
+
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore2"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore2"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore2"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore2"));
+
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore3"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore3"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore3"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore3"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore3"));
+
+        // One cluster is selected randomly from the initialHostLinks
+        Map<String, HostSelection> selected = filter();
+        assertTrue(3 <= selected.size() && selected.size() <= 5);
+
+        // And all the nodes from the cluster use the same KV store
+        Iterator<HostSelection> it = selected.values().iterator();
+        String cs = it.next().clusterStore;
+        while (it.hasNext()) {
+            assertTrue(it.next().clusterStore.equals(cs));
+        }
+    }
+
+    @Test
+    public void testSelectHostsWhenOnlyClustersAvailable() throws Throwable {
+        ContainerDescription desc = createContainerWithNetworksDescription();
+        filter = new ContainerToNetworkAffinityHostFilter(host, desc);
+        assertTrue(filter.isActive());
+
+        initialHostLinks = new ArrayList<>();
+
+        // Add 3 sets of 3, 4 and 5 hostLinks with hosts creating 3 KV store clusters
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore1"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore1"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore1"));
+
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore2"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore2"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore2"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore2"));
+
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore3"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore3"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore3"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore3"));
+        initialHostLinks.add(createDockerHostWithKVStore("kvstore3"));
+
+        // One cluster is selected randomly from the initialHostLinks
+        Map<String, HostSelection> selected = filter();
+        assertTrue(3 <= selected.size() && selected.size() <= 5);
+
+        // And all the nodes from the cluster use the same KV store
+        Iterator<HostSelection> it = selected.values().iterator();
+        String cs = it.next().clusterStore;
+        while (it.hasNext()) {
+            assertTrue(it.next().clusterStore.equals(cs));
         }
     }
 
@@ -148,34 +277,27 @@ public class ContainerToNetworkAffinityHostFilterTest extends BaseAffinityHostFi
         return containerNetwork;
     }
 
-    private Map<String, HostSelection> filterToHostSelectionMap() throws Throwable {
-        Throwable[] error = new Throwable[] { null };
-        final Map<String, HostSelection> hostSelectionMap = new HashMap<>();
-        for (String hostLink : initialHostLinks) {
-            HostSelection hostSelection = new HostSelection();
-            hostSelection.hostLink = hostLink;
-            hostSelectionMap.put(hostLink, hostSelection);
-        }
-        host.testStart(1);
-        filter
-                .filter(
-                        state,
-                        hostSelectionMap,
-                        (filteredHostSelectionMap, e) -> {
-                            if (e != null) {
-                                error[0] = e;
-                            } else {
-                                hostSelectionMap.clear();
-                                hostSelectionMap.putAll(filteredHostSelectionMap);
-                            }
-                            host.completeIteration();
-                        });
+    private String createDockerHostWithKVStore(String kvStore) throws Throwable {
+        String hostLink = createDockerHost(createDockerHostDescription(), createResourcePool(),
+                true).documentSelfLink;
 
-        host.testWait();
-        if (error[0] != null) {
-            throw error[0];
-        }
-        return hostSelectionMap;
+        ComputeState csPatch = new ComputeState();
+
+        csPatch.documentSelfLink = hostLink;
+        csPatch.customProperties = new HashMap<>();
+        csPatch.customProperties.put(ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME,
+                kvStore);
+
+        doPatch(csPatch, hostLink);
+
+        return hostLink;
     }
 
+    private ContainerDescription createContainerWithNetworksDescription() throws Throwable {
+        ContainerNetworkDescription netDesc1 = createNetworkDescription("my-net-1");
+        ContainerNetworkDescription netDesc2 = createNetworkDescription("my-net-2");
+        ContainerDescription desc = createDescription(
+                new String[] { netDesc1.name, netDesc2.name });
+        return desc;
+    }
 }

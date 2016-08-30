@@ -11,9 +11,13 @@
 
 package com.vmware.admiral.request.allocation.filter;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -37,6 +41,8 @@ import com.vmware.xenon.services.common.QueryTask;
 public class ContainerToNetworkAffinityHostFilter implements HostSelectionFilter {
     private final Map<String, ServiceNetwork> networks;
     private final ServiceHost host;
+
+    private static final String NO_KV_STORE = "NONE";
 
     public ContainerToNetworkAffinityHostFilter(ServiceHost host, ContainerDescription desc) {
         this.host = host;
@@ -98,7 +104,6 @@ public class ContainerToNetworkAffinityHostFilter implements HostSelectionFilter
                 ContainerNetworkState.FIELD_NAME_COMPOSITE_COMPONENT_LINK, UriUtils.buildUriPath(
                         CompositeComponentFactoryService.SELF_LINK, state.contextId));
         q.taskInfo.isDirect = false;
-        q.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
         QueryUtil.addExpandOption(q);
 
         QueryUtil.addListValueClause(q,
@@ -123,16 +128,109 @@ public class ContainerToNetworkAffinityHostFilter implements HostSelectionFilter
                                     hs.addDesc(descName);
                                 }
                             } else {
-                                try {
-                                    callback.complete(hostSelectionMap, null);
-                                } catch (Throwable e) {
-                                    host.log(Level.WARNING,
-                                            "Exception when completing callback. Error: [%s]",
-                                            e.getMessage());
-                                    callback.complete(null, e);
-                                }
+                                filterByClusterStoreAffinity(hostSelectionMap, callback);
                             }
                         });
+    }
+
+    /*
+     * This filter considers all the hosts equal, distinguishable only by whether they have a KV
+     * store configured or not. At some point we may want to distinguish also special hosts (e.g.
+     * Docker Swarm hosts, VIC hosts, etc.) which, as a single host, may be better alternative to
+     * clusters of regular hosts sharing the same KV store.
+     */
+    protected void filterByClusterStoreAffinity(
+            final Map<String, HostSelection> hostSelectionMap,
+            final HostSelectionFilterCompletion callback) {
+
+        /*
+         * No big choice here...
+         */
+        if ((hostSelectionMap == null) || (hostSelectionMap.size() < 2)) {
+            try {
+                callback.complete(hostSelectionMap, null);
+            } catch (Throwable e) {
+                host.log(Level.WARNING, "Exception when completing callback. Error: [%s]",
+                        e.getMessage());
+                callback.complete(null, e);
+            }
+            return;
+        }
+
+        /*
+         * Transform the hostSelectionMap into a map where the keys group sets of hosts that share
+         * the same KV store. This includes a special group with the key "NONE" for hosts without a
+         * KV store configured.
+         */
+
+        Map<String, List<Entry<String, HostSelection>>> hostSelectionByKVStoreMap = new HashMap<>();
+
+        for (Entry<String, HostSelection> entry : hostSelectionMap.entrySet()) {
+
+            // TODO - Some hosts should be discarded according to the type of network they support
+            // and the type of network required by the description (e.g. overlay, bridge and so on).
+
+            HostSelection hostSelection = entry.getValue();
+
+            String clusterStoreKey = hostSelection.clusterStore;
+            if (clusterStoreKey == null) {
+                clusterStoreKey = NO_KV_STORE;
+            }
+
+            List<Entry<String, HostSelection>> set = hostSelectionByKVStoreMap.get(clusterStoreKey);
+            if (set == null) {
+                set = new ArrayList<>();
+                hostSelectionByKVStoreMap.put(clusterStoreKey, set);
+            }
+
+            set.add(entry);
+        }
+
+        // Separate the hosts without a KV store configured.
+        List<Entry<String, HostSelection>> nones = hostSelectionByKVStoreMap.remove(NO_KV_STORE);
+
+        Map<String, HostSelection> hostSelectedMap = new HashMap<>();
+
+        if (hostSelectionByKVStoreMap.isEmpty()) {
+            /*
+             * No hosts with KV store configured were found -> Pick one single host from the list of
+             * hosts without a KV store configured.
+             */
+
+            // TODO - Picking one host randomly, it could pick the best single node available, e.g.
+            // more resources, less containers, etc.
+
+            if ((nones != null) && !nones.isEmpty()) {
+                int chosen = new Random().nextInt(nones.size());
+                Entry<String, HostSelection> entry = nones.get(chosen);
+                hostSelectedMap.put(entry.getKey(), entry.getValue());
+            }
+        } else {
+            /*
+             * One or more sets of hosts with the same KV store configured were selected -> Pick one
+             * of the clusters.
+             */
+
+            // TODO - Picking one cluster randomly, it could pick the best cluster available, e.g.
+            // more resources, more hosts, less containers, better containers/host ratio, etc.
+
+            int chosen = new Random().nextInt(hostSelectionByKVStoreMap.size());
+            List<Entry<String, HostSelection>> entries = hostSelectionByKVStoreMap
+                    .get(hostSelectionByKVStoreMap.keySet().toArray(new String[] {})[chosen]);
+            for (Entry<String, HostSelection> entry : entries) {
+                hostSelectedMap.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        // Complete the callback with the selected hosts...
+
+        try {
+            callback.complete(hostSelectedMap, null);
+        } catch (Throwable e) {
+            host.log(Level.WARNING, "Exception when completing callback. Error: [%s]",
+                    e.getMessage());
+            callback.complete(null, e);
+        }
     }
 
     @Override
