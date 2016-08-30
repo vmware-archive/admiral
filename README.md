@@ -10,7 +10,9 @@
 
 ## What is Admiral?
 
-This project provides an enterprise container management solution, which can help enterprises reduce complexity and achieve advantages including simplified and automated application delivery, optimized resource utilization along with business governance and applying business policies, release management and overall data center integration. 
+Admiral™ is a highly scalable and very lightweight Container Management platform for deploying and managing container based applications. It is designed to have a small footprint and boot extremely quickly. Admiral™ is intended to provide automated deployment and lifecycle management of containers.
+
+This container management solution can help reduce complexity and achieve advantages including simplified and automated application delivery, optimized resource utilization along with business governance and applying business policies and overall data center integration. 
 
 Admiral is a service written in Java and based on VMware's [Xenon framework](https://github.com/vmware/xenon/). This service enables the users to:
 - manage Docker hosts, where containers will be deployed
@@ -62,6 +64,8 @@ Open `http://127.0.0.1:8282/uic` in browser
 ```shell
 mvn clean install
 ```
+
+More info on [Admiral wiki](https://github.com/vmware/admiral/wiki)
 
 ## Contributing
 
