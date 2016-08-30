@@ -169,7 +169,8 @@ let toViewModel = function(dto) {
     connectionType: hasCustomProperties ? dto.customProperties.__adapterDockerType : null,
     memoryPercentage: memoryUsagePct,
     cpuPercentage: cpuUsagePct,
-    customProperties: customProperties
+    customProperties: customProperties,
+    selfLinkId: utils.getDocumentId(dto.documentSelfLink)
   };
 };
 
@@ -616,7 +617,8 @@ let HostsStore = Reflux.createStore({
             connectionType: hostModel.connectionType,
             customProperties: utils.getDisplayableCustomProperties(hostModel.customProperties),
             descriptionLink: hostModel.descriptionLink,
-            powerState: hostModel.powerState
+            powerState: hostModel.powerState,
+            selfLinkId: hostModel.selfLinkId
           };
 
           _this.setInData(['hostAddView'], $.extend({}, _this.data.hostAddView, hostAddView));
@@ -637,7 +639,7 @@ let HostsStore = Reflux.createStore({
     } else {
       this.setInData(['hostAddView', 'isSavingHost'], true);
 
-      var hostId = hostModel.id ? hostModel.id : hostModel.address;
+      var hostId = hostModel.selfLinkId ? hostModel.selfLinkId : hostModel.address;
       hostId = hostId.replace(/\//g, '');
 
       // the only thing currently editable are the custom properties

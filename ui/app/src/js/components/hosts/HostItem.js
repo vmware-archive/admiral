@@ -47,21 +47,21 @@ var HostItem = Vue.extend({
     editHost: function(event) {
       event.preventDefault();
 
-      NavigationActions.editHost(this.model.id);
+      NavigationActions.editHost(this.model.selfLinkId);
     },
     disableHost: function(event) {
       event.preventDefault();
 
-      HostActions.disableHost(this.model.id);
+      HostActions.disableHost(this.model.selfLinkId);
     },
     enableHost: function(event) {
       event.preventDefault();
 
-      HostActions.enableHost(this.model.id);
+      HostActions.enableHost(this.model.selfLinkId);
     },
 
     removeHost: function() {
-      this.confirmRemoval(HostActions.removeHost, [this.model.id]);
+      this.confirmRemoval(HostActions.removeHost, [this.model.selfLinkId]);
     },
 
     hostStateMessage: function(state) {

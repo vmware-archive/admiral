@@ -259,7 +259,8 @@ var HostView = Vue.extend({
             credential: this.credential,
             connectionType: this.connectionType,
             customProperties: this.customPropertiesEditor.getData(),
-            descriptionLink: this.model.descriptionLink
+            descriptionLink: this.model.descriptionLink,
+            selfLinkId: this.model.selfLinkId
           };
 
           if (this.deploymentPolicy) {
