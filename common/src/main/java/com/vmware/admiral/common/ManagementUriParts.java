@@ -121,12 +121,11 @@ public interface ManagementUriParts {
     String KV_STORE = "/kv-store";
 
     // UI Service:
-    String UI_SERVICE = "/uic";
+    String UI_SERVICE = "/";
     String CONTAINER_ICONS_RESOURCE_PATH = "/container-icons";
-    String UI_SERVICE_CONTAINER_ICONS_RESOURCE_PATH = UI_SERVICE + CONTAINER_ICONS_RESOURCE_PATH;
-    String UI_SERVICE_CONTAINER_IDENTICONS_RESOURCE_PATH = UI_SERVICE + "/container-identicons";
-    String REVERSE_PROXY = UI_SERVICE + "/rp";
-    String CONTAINER_IMAGE_ICONS = UI_SERVICE + "/container-image-icons";
+    String CONTAINER_IDENTICONS_RESOURCE_PATH = "/container-identicons";
+    String CONTAINER_IMAGE_ICONS = "/container-image-icons";
+    String REVERSE_PROXY = "/rp";
 
     String USER_SESSION_SERVICE = "/user-session";
 

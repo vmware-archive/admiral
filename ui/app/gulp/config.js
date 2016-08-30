@@ -99,9 +99,7 @@ var getTestDcpUrl = function() {
 
 var ADMIRAL_URL = getTestDcpUrl();
 
-var pathsToProxy = ["/config", "/core", "/images", "/popular-images", "/requests", "/delete-tasks", "/request-status", "/resources", "/templates", "/user-session", "/uic"];
-
-var uicPathsToProxy = ['/container-image-icons'];
+var pathsToProxy = ["/"];
 
 /* Utilities to proxy calls from "/path" to "ADMIRAL/path".
 The Karma proxies are needed for integration tests where tests are run on a built in karma server, but are making REST calls to "ADMIRAL".
@@ -113,14 +111,6 @@ var getDevServerProxies = function() {
     var path = pathsToProxy[i];
 
     var options = url.parse(ADMIRAL_URL + path);
-    options.route = path;
-    proxies.push(proxyMiddleware(options));
-  }
-
-  for (var i = 0; i < uicPathsToProxy.length; i++) {
-    var path = uicPathsToProxy[i];
-
-    var options = url.parse(ADMIRAL_URL + '/uic' + path);
     options.route = path;
     proxies.push(proxyMiddleware(options));
   }

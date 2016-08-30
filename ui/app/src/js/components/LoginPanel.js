@@ -47,7 +47,7 @@ var LoginPanel = Vue.extend({
         this.loading = false;
         this.loginSuccess = true;
         setTimeout(() => {
-          window.location.reload(true);
+          window.location.assign('/');
         }, SUCCESSFUL_REDIRECT_TIMEOUT);
       }, (e) => {
         this.loading = false;

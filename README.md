@@ -32,14 +32,14 @@ There are three ways you can start Admiral:
 ```shell
 docker run -d -p 8282:8282 --name admiral vmware/admiral
 ```
-Open `http://<docker-host-IP>:8282/uic` in browser
+Open `http://<docker-host-IP>:8282` in browser
 
 #### 2. Download the published build archive, you can find it in 'Downloads' section [here](https://bintray.com/vmware/admiral/admiral).
 
 ```shell
 java -jar admiral-host-*-uber-jar-with-agent.jar --bindAddress=0.0.0.0 --port=8282
 ```
-Open `http://127.0.0.1:8282/uic` in browser
+Open `http://127.0.0.1:8282` in browser
 
 #### 3. Clone the repo and build locally. Detailed instructions about building locally can be found in the [Admiral developer guide](https://github.com/vmware/admiral/wiki/Developer-Guide):
 
@@ -57,7 +57,7 @@ mvn clean install -DskipTests
 * Run the project
 java -jar host/target/admiral-host-*-jar-with-dependencies-and-agent.jar --bindAddress=0.0.0.0 --port=8282
 
-Open `http://127.0.0.1:8282/uic` in browser
+Open `http://127.0.0.1:8282` in browser
 
 ### Building the code
 

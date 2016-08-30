@@ -81,12 +81,12 @@ public class ContainerImageIconService extends StatelessService {
         String expectedImageName = String.format(CONTIANER_IMAGE_FORMAT,
                 containerImageIcon);
         String expectedImagePath = UriUtils.buildUriPath(
-                ManagementUriParts.UI_SERVICE_CONTAINER_ICONS_RESOURCE_PATH, expectedImageName);
+                ManagementUriParts.CONTAINER_ICONS_RESOURCE_PATH, expectedImageName);
 
         int identiconHash = Math.abs(containerImageIcon.hashCode() % IDENTICONS_COUNT);
         String expectedIdenticonName = String.format(IDENTICON_IMAGE_FORMAT, identiconHash);
         String expectedIdenticonPath = UriUtils.buildUriPath(
-                ManagementUriParts.UI_SERVICE_CONTAINER_IDENTICONS_RESOURCE_PATH,
+                ManagementUriParts.CONTAINER_IDENTICONS_RESOURCE_PATH,
                 expectedIdenticonName);
 
         getIcon(expectedImagePath, get, () -> {
@@ -96,11 +96,11 @@ public class ContainerImageIconService extends StatelessService {
 
     private void getIcon(String path, Operation get, Runnable notFoundHandler) {
         sendRequest(Operation.createGet(this, path).setCompletion((op, ex) -> {
-            if (ex != null) {
-                get.fail(ex);
-            } else if (op.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND
+            if (op.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND
                     && notFoundHandler != null) {
                 notFoundHandler.run();
+            } else if (ex != null) {
+                get.fail(ex);
             } else {
                 get.transferResponseHeadersFrom(op);
                 get.getResponseHeaders().put(Operation.CONTENT_TYPE_HEADER,
