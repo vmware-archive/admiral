@@ -1006,6 +1006,7 @@ public class ComputeAllocationTaskService extends
         ComputeService.ComputeState resource = new ComputeService.ComputeState();
         resource.id = computeResourceId;
         resource.parentLink = parentLink;
+        resource.name = computeName;
         resource.descriptionLink = state.resourceDescriptionLink;
         resource.resourcePoolLink = state.getCustomProperty(
                 ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK);

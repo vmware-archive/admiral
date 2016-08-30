@@ -296,11 +296,11 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         String id = name(endpointType, "test", UUID.randomUUID().toString());
         ComputeDescription computeDesc = new ComputeDescription();
         computeDesc.id = id;
-        computeDesc.name = "small";
+        computeDesc.name = "belvm" + String.valueOf(System.currentTimeMillis() / 1000);
+        computeDesc.instanceType = "small";
         computeDesc.tenantLinks = getTenantLinks();
         computeDesc.customProperties = new HashMap<>();
-        computeDesc.customProperties.put(ComputeProperties.CUSTOM_DISPLAY_NAME,
-                "belvm" + System.currentTimeMillis());
+        computeDesc.customProperties.put(ComputeProperties.CUSTOM_DISPLAY_NAME, computeDesc.name);
         computeDesc.customProperties
                 .put(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME, "linux");
 
