@@ -59,6 +59,9 @@ public interface ManagementUriParts {
     String CONTAINER_NETWORKS = RESOURCES + "/container-networks";
     String CONTAINER_NETWORK_DESC = RESOURCES + "/container-network" + DESCRIPTION_SUFFIX;
 
+    String CONTAINER_VOLUMES = RESOURCES + "/container-volumes";
+    String CONTAINER_VOLUMES_DESC = RESOURCES + "/container-volume" + DESCRIPTION_SUFFIX;
+
     // Request tasks:
     String REQUEST = "/request";
 

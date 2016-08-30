@@ -34,6 +34,7 @@ import com.vmware.admiral.compute.container.TemplateSearchService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkReconfigureService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.endpoint.EndpointService;
 import com.vmware.xenon.common.Operation;
@@ -67,6 +68,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 EnvironmentMappingService.class, DeploymentPolicyService.class,
                 EndpointService.class,
                 ContainerNetworkService.class,
+                ContainerVolumeService.class,
                 ContainerNetworkDescriptionService.class);
 
         // start initialization of system documents
