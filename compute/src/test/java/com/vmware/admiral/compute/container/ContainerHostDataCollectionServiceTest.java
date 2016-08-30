@@ -38,6 +38,7 @@ import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
@@ -130,14 +131,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
         documentsForDeletion.add(hostDescription);
 
-        ComputeState cs = new ComputeState();
-        cs.id = hostId;
-        cs.documentSelfLink = cs.id;
-        cs.address = "test-address";
-        cs.descriptionLink = hostDescription.documentSelfLink;
-        cs.resourcePoolLink = UriUtilsExtended.buildUriPath(
-                ResourcePoolService.FACTORY_LINK,
-                UUID.randomUUID().toString());
+        ComputeState cs = createComputeState(hostId, hostDescription);
+
         cs = doPost(cs, ComputeService.FACTORY_LINK);
         documentsForDeletion.add(cs);
 
@@ -183,14 +178,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         documentsForDeletion.add(hostDescription);
 
         String hostId = UUID.randomUUID().toString();
-        ComputeState cs = new ComputeState();
-        cs.id = hostId;
-        cs.documentSelfLink = cs.id;
-        cs.address = "test-address";
-        cs.descriptionLink = hostDescription.documentSelfLink;
-        cs.resourcePoolLink = UriUtilsExtended.buildUriPath(
-                ResourcePoolService.FACTORY_LINK,
-                UUID.randomUUID().toString());
+        ComputeState cs = createComputeState(hostId, hostDescription);
+
         cs = doPost(cs, ComputeService.FACTORY_LINK);
         documentsForDeletion.add(cs);
 
@@ -223,14 +212,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         documentsForDeletion.add(hostDescription);
 
         String hostId = UUID.randomUUID().toString();
-        ComputeState cs = new ComputeState();
-        cs.id = hostId;
-        cs.documentSelfLink = cs.id;
-        cs.address = "test-address";
-        cs.descriptionLink = hostDescription.documentSelfLink;
-        cs.resourcePoolLink = UriUtilsExtended.buildUriPath(
-                ResourcePoolService.FACTORY_LINK,
-                UUID.randomUUID().toString());
+        ComputeState cs = createComputeState(hostId, hostDescription);
+
         cs = doPost(cs, ComputeService.FACTORY_LINK);
         documentsForDeletion.add(cs);
 
@@ -279,14 +262,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
         documentsForDeletion.add(hostDescription);
 
-        ComputeState cs = new ComputeState();
-        cs.id = hostId;
-        cs.documentSelfLink = cs.id;
-        cs.address = "test-address";
-        cs.descriptionLink = hostDescription.documentSelfLink;
-        cs.resourcePoolLink = UriUtilsExtended.buildUriPath(
-                ResourcePoolService.FACTORY_LINK,
-                UUID.randomUUID().toString());
+        ComputeState cs = createComputeState(hostId, hostDescription);
+
         cs = doPost(cs, ComputeService.FACTORY_LINK);
         documentsForDeletion.add(cs);
 
@@ -346,14 +323,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
             hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
             documentsForDeletion.add(hostDescription);
 
-            ComputeState cs = new ComputeState();
-            cs.id = hostId;
-            cs.documentSelfLink = cs.id;
-            cs.address = "test-address";
-            cs.descriptionLink = hostDescription.documentSelfLink;
-            cs.resourcePoolLink = UriUtilsExtended.buildUriPath(
-                    ResourcePoolService.FACTORY_LINK,
-                    UUID.randomUUID().toString());
+            ComputeState cs = createComputeState(hostId, hostDescription);
+
             cs = doPost(cs, ComputeService.FACTORY_LINK);
             documentsForDeletion.add(cs);
 
@@ -424,14 +395,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         missingContainerState = doPost(missingContainerState, ContainerFactoryService.SELF_LINK);
         documentsForDeletion.add(missingContainerState);
 
-        ComputeState cs = new ComputeState();
-        cs.id = hostId;
-        cs.documentSelfLink = cs.id;
-        cs.address = "test-address";
-        cs.descriptionLink = hostDescription.documentSelfLink;
-        cs.resourcePoolLink = UriUtilsExtended.buildUriPath(
-                ResourcePoolService.FACTORY_LINK,
-                UUID.randomUUID().toString());
+        ComputeState cs = createComputeState(hostId, hostDescription);
+
         cs = doPost(cs, ComputeService.FACTORY_LINK);
         documentsForDeletion.add(cs);
 
@@ -517,6 +482,20 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         });
 
         host.log(">>>> DataCollection test end <<<<<<<");
+    }
+
+    private ComputeState createComputeState(String hostId, ComputeDescription hostDescription) {
+        ComputeState cs = new ComputeState();
+        cs.id = hostId;
+        cs.documentSelfLink = cs.id;
+        cs.address = "test-address";
+        cs.descriptionLink = hostDescription.documentSelfLink;
+        cs.resourcePoolLink = UriUtilsExtended.buildUriPath(
+                ResourcePoolService.FACTORY_LINK,
+                UUID.randomUUID().toString());
+        cs.customProperties = new HashMap<>();
+        cs.customProperties.put(ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
+        return cs;
     }
 
     @Test
@@ -774,14 +753,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
             hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
             documentsForDeletion.add(hostDescription);
 
-            ComputeState cs = new ComputeState();
-            cs.id = hostId;
-            cs.documentSelfLink = cs.id;
-            cs.address = "test-address";
-            cs.descriptionLink = hostDescription.documentSelfLink;
-            cs.resourcePoolLink = UriUtilsExtended.buildUriPath(
-                    ResourcePoolService.FACTORY_LINK,
-                    UUID.randomUUID().toString());
+            ComputeState cs = createComputeState(hostId, hostDescription);
+
             cs = doPost(cs, ComputeService.FACTORY_LINK);
             documentsForDeletion.add(cs);
 
@@ -923,6 +896,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         cs.customProperties
                 .put(ContainerHostService.DOCKER_HOST_NUM_CORES_PROP_NAME,
                         numCores == null ? null : numCores + "");
+        cs.customProperties.put(ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
+
         cs = doPost(cs, ComputeService.FACTORY_LINK);
 
         return cs;

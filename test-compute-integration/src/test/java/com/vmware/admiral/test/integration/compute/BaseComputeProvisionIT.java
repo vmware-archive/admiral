@@ -71,7 +71,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     private GroupResourcePolicyState groupResourcePolicyState;
     private EndpointType endpointType;
     protected final TestDocumentLifeCycle documentLifeCycle = TestDocumentLifeCycle.FOR_DELETE;
-    private ResourcePoolState vmsResourcePool;
+    protected ResourcePoolState vmsResourcePool;
     private List<String> tenantLinks;
 
     @Before
@@ -80,7 +80,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         endpointType = getEndpointType();
         EndpointState endpoint = createEndpoint(endpointType, documentLifeCycle);
         ResourcePoolState poolState = createResourcePool(endpointType, endpoint, documentLifeCycle);
-        groupResourcePolicyState = createResourcePolicy(endpointType, poolState, documentLifeCycle);
+        groupResourcePolicyState = createResourcePolicy("host-policy", endpointType, poolState,
+                documentLifeCycle);
         vmsResourcePool = createResourcePoolOfVMs(endpointType, documentLifeCycle);
         doSetUp();
     }
@@ -315,13 +316,13 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return computeDescription;
     }
 
-    private GroupResourcePolicyState createResourcePolicy(EndpointType endpointType,
+    protected GroupResourcePolicyState createResourcePolicy(String name, EndpointType endpointType,
             ResourcePoolState poolState, TestDocumentLifeCycle documentLifeCycle)
             throws Exception {
         GroupResourcePolicyState policyState = new GroupResourcePolicyState();
         policyState.maxNumberInstances = 30;
         policyState.resourcePoolLink = poolState.documentSelfLink;
-        policyState.name = name(endpointType, "policy", SUFFIX);
+        policyState.name = name(endpointType, name, SUFFIX);
         policyState.documentSelfLink = policyState.name;
         policyState.availableInstancesCount = 1000000;
         policyState.priority = 1;

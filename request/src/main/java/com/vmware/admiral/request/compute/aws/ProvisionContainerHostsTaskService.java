@@ -36,6 +36,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.KeyUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.SubscriptionUtils;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.request.compute.aws.ProvisionContainerHostsTaskService.ProvisionContainerHostsTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
@@ -70,8 +71,7 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 /** Task for provisioning a number of Docker Host VMs on AWS */
 public class ProvisionContainerHostsTaskService
         extends
-        AbstractTaskStatefulService<ProvisionContainerHostsTaskService.ProvisionContainerHostsTaskState,
-        ProvisionContainerHostsTaskService.ProvisionContainerHostsTaskState.SubStage> {
+        AbstractTaskStatefulService<ProvisionContainerHostsTaskService.ProvisionContainerHostsTaskState, ProvisionContainerHostsTaskService.ProvisionContainerHostsTaskState.SubStage> {
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_PROVISION_CONTAINER_HOSTS;
     public static final String DISPLAY_NAME = "AWS Container Hosts";
     public static final String PROVISION_CONTAINER_HOSTS_OPERATITON = "PROVISION_CONTAINER_HOSTS";
@@ -95,12 +95,12 @@ public class ProvisionContainerHostsTaskService
     private static final String SSH_KEY_PLACEHOLDER = "\\{\\{sshAuthorizedKey\\}\\}";
     private static final String SSH_AUTHORIZED_KEY_PROP = "sshAuthorizedKey";
 
-    //TODO: verify where and how to get this value?
+    // TODO: verify where and how to get this value?
     protected static final String AWS_COREOS_IMAGE_ID = "ami-c35354a9";
 
-    //TODO: This should be mapped to the availability zone (zoneId) of ComputeDesc.
-    //Probably, we should query for ComputeStates with such reference and create one per endpoint.
-    //Hardcoded for now.
+    // TODO: This should be mapped to the availability zone (zoneId) of ComputeDesc.
+    // Probably, we should query for ComputeStates with such reference and create one per endpoint.
+    // Hardcoded for now.
     protected static final String AWS_ENDPOINT_REFERENCE = "http://ec2.us-east-1.amazonaws.com";
     public static final String HOST_PROVISIONING_PROP_NAME = "host.provisioning";
 
@@ -128,20 +128,21 @@ public class ProvisionContainerHostsTaskService
 
         /** (Required) The AWS compute description link. */
         @Documentation(description = "The description that defines the requested resource.")
-        @PropertyOptions(usage = { PropertyUsageOption.LINK, PropertyUsageOption.SINGLE_ASSIGNMENT },
-                indexing = { PropertyIndexingOption.STORE_ONLY })
+        @PropertyOptions(usage = { PropertyUsageOption.LINK,
+                PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
+                        PropertyIndexingOption.STORE_ONLY })
         public String computeDescriptionLink;
 
         /** (Optional- default 1) Number of resources to provision. */
         @Documentation(description = "Number of resources to provision.")
-        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT },
-                indexing = { PropertyIndexingOption.STORE_ONLY })
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
+                PropertyIndexingOption.STORE_ONLY })
         public long resourceCount;
 
         /** (Set by a Task) The compute resource links of the provisioned Docker Host VMs */
         @Documentation(description = "The compute resource links of the provisioned Docker Host VMs.")
-        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT },
-                indexing = { PropertyIndexingOption.STORE_ONLY })
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
+                PropertyIndexingOption.STORE_ONLY })
         public List<String> resourceLinks;
     }
 
@@ -162,9 +163,11 @@ public class ProvisionContainerHostsTaskService
                     boolean isHostProvisioningEnabled = false;
                     if (ex != null) {
                         logWarning("Cannot get %s configuration property: %s",
-                                ProvisionContainerHostsTaskService.HOST_PROVISIONING_PROP_NAME, ex.getMessage());
+                                ProvisionContainerHostsTaskService.HOST_PROVISIONING_PROP_NAME,
+                                ex.getMessage());
                     } else {
-                        isHostProvisioningEnabled = Boolean.valueOf(res.getBody(ConfigurationState.class).value);
+                        isHostProvisioningEnabled = Boolean
+                                .valueOf(res.getBody(ConfigurationState.class).value);
                     }
 
                     if (!isHostProvisioningEnabled) {
@@ -302,6 +305,8 @@ public class ProvisionContainerHostsTaskService
         patchBody.customProperties.put(
                 ContainerHostService.DOCKER_HOST_PORT_PROP_NAME,
                 String.valueOf(UriUtils.HTTPS_DEFAULT_PORT));
+        patchBody.customProperties.put(ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
+        patchBody.customProperties.put(ComputeConstants.COMPUTE_HOST_PROP_NAME, "true");
 
         for (String link : state.resourceLinks) {
             Operation op = Operation.createPatch(this, link)
@@ -409,8 +414,8 @@ public class ProvisionContainerHostsTaskService
                                 return;
                             }
 
-                            AuthCredentialsServiceState credentialsState =
-                                    op.getBody(AuthCredentialsServiceState.class);
+                            AuthCredentialsServiceState credentialsState = op
+                                    .getBody(AuthCredentialsServiceState.class);
                             callback.accept(credentialsState.customProperties
                                     .get(SSH_AUTHORIZED_KEY_PROP));
                         }));
@@ -587,8 +592,7 @@ public class ProvisionContainerHostsTaskService
         credentialsState.publicKey = KeyUtil.toPEMFormat(keyPair.getPublic());
         credentialsState.privateKey = KeyUtil.toPEMFormat(keyPair.getPrivate());
 
-        String sshAuthorizedKey =
-                KeyUtil.toPublicOpenSSHFormat((RSAPublicKey) keyPair.getPublic());
+        String sshAuthorizedKey = KeyUtil.toPublicOpenSSHFormat((RSAPublicKey) keyPair.getPublic());
         credentialsState.customProperties = new HashMap<>();
         credentialsState.customProperties.put(SSH_AUTHORIZED_KEY_PROP, sshAuthorizedKey);
 

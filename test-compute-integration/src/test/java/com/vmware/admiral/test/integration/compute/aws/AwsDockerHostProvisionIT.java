@@ -53,7 +53,7 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
 @Ignore
 public class AwsDockerHostProvisionIT extends AwsComputeProvisionIT {
     public static final String CONTAINER_DCP_TEST_LATEST_ID = "dcp-test:latest-id";
-    public static final String CONTAINER_DCP_TEST_LATEST_IMAGE = "kitamtic/hello-world-nginx";
+    public static final String CONTAINER_DCP_TEST_LATEST_IMAGE = "kitematic/hello-world-nginx";
     public static final String CONTAINER_DCP_TEST_LATEST_NAME = "docker-dcp-test";
     private static final String[] TEST_COMMAND = { "/etc/hosts", "-" };
     private static final String TEST_PORT_BINDINGS = "127.0.0.1::8282/tcp";
@@ -62,8 +62,6 @@ public class AwsDockerHostProvisionIT extends AwsComputeProvisionIT {
     private static final String TEST_RESTART_POLICY_NAME = "on-failure";
     private static final int TEST_RESTART_POLICY_RETRIES = 3;
     private static final String TEST_USER = "root";
-    // private static final int TEST_MEMORY_LIMIT = 5_000_000;
-    // private static final int TEST_MEMORY_SWAP = -1;
     private static final int TEST_CPU_SHARES = 512;
     private static final String[] TEST_DNS = { "8.8.8.8", "9.9.9.9" };
     private static final String[] TEST_DNS_SEARCH = { "eng.vmware.com", "vmware.com" };
@@ -76,7 +74,6 @@ public class AwsDockerHostProvisionIT extends AwsComputeProvisionIT {
     private static final String[] TEST_DEVICES = { "/dev/null:/dev/null2:rwm" };
     private static final String TEST_HOSTNAME = "test-hostname";
     private static final String TEST_DOMAINNAME = "eng.vmware.com";
-    private static final String[] TEST_EXTRA_HOSTS = { "vmware-vra:10.148.85.240" };
     private static final String TEST_WORKING_DIR = "/tmp";
     private static final boolean TEST_PRIVILEGED = true;
 
@@ -105,6 +102,7 @@ public class AwsDockerHostProvisionIT extends AwsComputeProvisionIT {
         }
         super.baseTearDown();
     }
+
     @Override
     protected void doWithResources(List<String> resourceLinks) throws Throwable {
         validateHostState(resourceLinks);
@@ -122,7 +120,8 @@ public class AwsDockerHostProvisionIT extends AwsComputeProvisionIT {
         computeDescription.customProperties
                 .put(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
 
-        computeDescription.customProperties.put(ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME,
+        computeDescription.customProperties.put(
+                ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME,
                 "true");
         // Set DockerSpecific properties
         computeDescription.customProperties.put(
@@ -152,6 +151,8 @@ public class AwsDockerHostProvisionIT extends AwsComputeProvisionIT {
 
         dockerRemoteApiClientCredentials = postDocument(AuthCredentialsService.FACTORY_LINK, auth,
                 documentLifeCycle);
+
+        createResourcePolicy("vm-policy", getEndpointType(), vmsResourcePool, documentLifeCycle);
     }
 
     private String getConfigContent() {
@@ -261,10 +262,6 @@ public class AwsDockerHostProvisionIT extends AwsComputeProvisionIT {
         containerDesc.restartPolicy = TEST_RESTART_POLICY_NAME;
         containerDesc.maximumRetryCount = TEST_RESTART_POLICY_RETRIES;
         containerDesc.user = TEST_USER;
-        // TODO: Enable once the Reservations, ResourcePool properties and host stats
-        /// gathering are implemented fully
-        // containerDesc.memoryLimit = TEST_MEMORY_LIMIT;
-        // containerDesc.memorySwap = TEST_MEMORY_SWAP;
         containerDesc.cpuShares = TEST_CPU_SHARES;
         containerDesc.dns = TEST_DNS;
         containerDesc.dnsSearch = TEST_DNS_SEARCH;
@@ -275,7 +272,6 @@ public class AwsDockerHostProvisionIT extends AwsComputeProvisionIT {
         containerDesc.device = TEST_DEVICES;
         containerDesc.hostname = TEST_HOSTNAME;
         containerDesc.domainName = TEST_DOMAINNAME;
-        containerDesc.extraHosts = TEST_EXTRA_HOSTS;
         containerDesc.workingDir = TEST_WORKING_DIR;
         containerDesc.privileged = TEST_PRIVILEGED;
         containerDesc = postDocument(ContainerDescriptionService.FACTORY_LINK, containerDesc);

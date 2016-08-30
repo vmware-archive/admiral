@@ -38,6 +38,7 @@ import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
@@ -60,6 +61,7 @@ import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 public class ContainerHostDataCollectionService extends StatefulService {
@@ -105,9 +107,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
         public long lastRunTimeMicros;
 
-        @Documentation(description =
-                "Count of how many times the last run data-collection has been run"
-                        + " within very small time period.")
+        @Documentation(description = "Count of how many times the last run data-collection has been run"
+                + " within very small time period.")
         @PropertyOptions(indexing = {
                 PropertyIndexingOption.STORE_ONLY,
                 PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
@@ -163,13 +164,14 @@ public class ContainerHostDataCollectionService extends StatefulService {
             long now = Utils.getNowMicrosUtc();
             if (state.lastRunTimeMicros + FREQUENCY_OF_GENERAL_HOST_COLLECTION_MICROS > now) {
                 if (state.skipRunCount++ > 2) {
-                    // don't run general data collection on all hosts if the requests are  too frequent.
+                    // don't run general data collection on all hosts if the requests are too
+                    // frequent.
                     patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
                     patch.complete();
                     return;
                 }
             } else {
-                //reset the count if the frequency time has passed.
+                // reset the count if the frequency time has passed.
                 state.skipRunCount = 0;
             }
 
@@ -178,7 +180,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
         } else {
             for (String computeHostLink : body.computeContainerHostLinks) {
                 if (!body.remove) {
-                    //if we're adding a host we need to wait for the host info to be populated first
+                    // if we're adding a host we need to wait for the host info to be populated
+                    // first
                     updateContainerHostInfo(computeHostLink, (o, error) -> {
                         if (error) {
                             handleHostNotAvailable(computeHostLink);
@@ -212,7 +215,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
             if (PowerState.SUSPEND.equals(computeState.powerState) && count == 0) {
                 patchPowerState = PowerState.SUSPEND;
             } else if (!PowerState.OFF.equals(computeState.powerState)) {
-                /* when a host is disabled manually the state should not be  changed to ON */
+                /* when a host is disabled manually the state should not be changed to ON */
                 count = 0;
                 patchPowerState = PowerState.ON;
             }
@@ -328,11 +331,12 @@ public class ContainerHostDataCollectionService extends StatefulService {
                     resourcePoolState.maxMemoryBytes += totalMemory * coef;
                 }
 
-                Long resourcePoolAvailableMemory = resourcePoolState.customProperties != null ?
-                        PropertyUtils
+                Long resourcePoolAvailableMemory = resourcePoolState.customProperties != null
+                        ? PropertyUtils
                                 .getPropertyLong(resourcePoolState.customProperties,
-                                        RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP).orElse(null) :
-                        null;
+                                        RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP)
+                                .orElse(null)
+                        : null;
                 if (hostAvailableMemory != Long.MAX_VALUE
                         && resourcePoolAvailableMemory != null
                         && resourcePoolAvailableMemory != Long.MAX_VALUE) {
@@ -391,20 +395,21 @@ public class ContainerHostDataCollectionService extends StatefulService {
                     return;
                 }
 
-                //Sort the policies by their "normalized" priority (priority divided by the sum of all
-                //priorities in the group). We do that because the priorities are relative within
-                //the group. E.g. Group A has two policies with priorities 1 and 2; group B has two
-                //policies with priorities 100 and 200 thus the normalized priorities will be:
-                //0.33; 0.66 for A and 0.33 and 0.66 for B
+                // Sort the policies by their "normalized" priority (priority divided by the sum of
+                // all
+                // priorities in the group). We do that because the priorities are relative within
+                // the group. E.g. Group A has two policies with priorities 1 and 2; group B has two
+                // policies with priorities 100 and 200 thus the normalized priorities will be:
+                // 0.33; 0.66 for A and 0.33 and 0.66 for B
                 Map<String, Integer> sumOfPrioritiesByGroup = policies
                         .stream().collect(
                                 Collectors.groupingBy(
                                         (GroupResourcePolicyState policy) -> getGroup(policy),
-                                        Collectors.summingInt((GroupResourcePolicyState policy)
-                                                -> policy.priority)));
+                                        Collectors.summingInt((
+                                                GroupResourcePolicyState policy) -> policy.priority)));
 
-                Comparator<GroupResourcePolicyService.GroupResourcePolicyState> comparator = (q1, q2) ->
-                        Double.compare(
+                Comparator<GroupResourcePolicyService.GroupResourcePolicyState> comparator = (q1,
+                        q2) -> Double.compare(
                                 ((double) q2.priority) / sumOfPrioritiesByGroup.get(getGroup(q2)),
                                 ((double) q1.priority) / sumOfPrioritiesByGroup.get(getGroup(q1)));
 
@@ -434,7 +439,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         });
     }
 
-    //Assume for now there's only one
+    // Assume for now there's only one
     private static String getGroup(GroupResourcePolicyService.GroupResourcePolicyState policy) {
         if (policy.tenantLinks != null) {
             return policy.tenantLinks.get(0);
@@ -469,7 +474,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
             totalCpuUsage += numCores * hostCpuUsage;
             totalNumCores += numCores;
 
-            //get the available memory, if missing => use the total memory, if missing => 0
+            // get the available memory, if missing => use the total memory, if missing => 0
             Long availableMemory = PropertyUtils
                     .getPropertyLong(computeState.customProperties,
                             ContainerHostService.DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME)
@@ -481,8 +486,9 @@ public class ContainerHostDataCollectionService extends StatefulService {
             totalAvailableMemory += availableMemory;
         }
 
-        //the aggregateCpuUsage is calculated:
-        // (H1.cpuUsage * H1.numCores + ... + Hn.cpuUsage * Hn.numCores) / (H1.numCores + ... + Hn.numCores)
+        // the aggregateCpuUsage is calculated:
+        // (H1.cpuUsage * H1.numCores + ... + Hn.cpuUsage * Hn.numCores) / (H1.numCores + ... +
+        // Hn.numCores)
         double aggregateCpuUsage = totalNumCores == 0 ? 0 : totalCpuUsage / totalNumCores;
         long resourcePoolAvailableMemory = totalAvailableMemory;
 
@@ -607,7 +613,10 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 maintOp.fail(r.getException());
             } else if (r.hasResult()) {
                 updateContainerHostInfo(r.getDocumentSelfLink(), (o, error) -> {
-                    maintOp.complete(); /* we complete maintOp here, not waiting for container update */
+                    maintOp.complete(); /*
+                                         * we complete maintOp here, not waiting for container
+                                         * update
+                                         */
                     if (error) {
                         handleHostNotAvailable(r.getDocumentSelfLink());
                     } else {
@@ -646,9 +655,9 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 getHost(),
                 ResourcePoolService.ResourcePoolState.class);
 
-        //TODO countersubtask?
+        // TODO countersubtask?
         emptyResourcePoolQuery.query(emptyResourcePoolQueryTask, (r) -> {
-            maintOp.complete(); /*  complete here, in parallel with resource pool update */
+            maintOp.complete(); /* complete here, in parallel with resource pool update */
             if (r.hasException()) {
                 logWarning(
                         "Exception while retrieving empty resource pools. Error: %s",
@@ -660,8 +669,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
             }
         });
 
-        //do a PUT for each resource pool in parallel
-        //TODO use a counter sub-task?
+        // do a PUT for each resource pool in parallel
+        // TODO use a counter sub-task?
         resourcePoolToComputeStates.entrySet().forEach(entry -> {
             updateResourcePool(entry.getKey(), entry.getValue());
         });
@@ -685,6 +694,14 @@ public class ContainerHostDataCollectionService extends StatefulService {
 
         QueryUtil.addListValueClause(q, ComputeService.ComputeState.FIELD_NAME_DESCRIPTION_LINK,
                 computeDescriptionLinks);
+
+        QueryTask.Query containerHost = new QueryTask.Query().setTermPropertyName(QuerySpecification
+                .buildCompositeFieldName(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                        ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME))
+                .setTermMatchValue("true");
+        containerHost.occurance = Occurance.MUST_OCCUR;
+
+        q.querySpec.query.addBooleanClause(containerHost);
 
         return q;
     }

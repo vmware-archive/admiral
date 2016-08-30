@@ -46,6 +46,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -111,10 +112,10 @@ public class ComputeAllocationTaskService extends
     private static final String SERVER_CERT_PLACEHOLDER = "\\{\\{serverCertPem\\}\\}";
     private static final String SERVER_KEY_PLACEHOLDER = "\\{\\{serverKeyPem\\}\\}";
 
-    // private static final String COMPUTE_CONTAINER_HOST_PROP_NAME = "compute.container.host";
-
     public static class ComputeAllocationTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ComputeAllocationTaskState.SubStage> {
+
+        public static final String ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME = "compute.container.host";
 
         public static final String FIELD_NAME_CUSTOM_PROP_ENV = "__env";
         public static final String FIELD_NAME_CUSTOM_PROP_ZONE = "__zoneId";
@@ -591,19 +592,48 @@ public class ComputeAllocationTaskService extends
         URI specValidateUri = UriUtilsExtended.buildUri(getHost(), ContainerHostService.SELF_LINK,
                 ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
         URI specUri = UriUtilsExtended.buildUri(getHost(), ContainerHostService.SELF_LINK);
-        AtomicInteger count = new AtomicInteger(computes.size());
+        AtomicInteger remaining = new AtomicInteger(computes.size());
+        AtomicReference<Throwable> error = new AtomicReference<>();
         for (ComputeState computeState : computes) {
             ContainerHostSpec spec = new ContainerHostSpec();
             spec.hostState = computeState;
             spec.acceptCertificate = true;
-            waitUntilConnectionValid(specValidateUri, spec, 0, (r) -> {
-                spec.acceptHostAddress = true;
-                Operation.createPut(specUri).setBody(spec).sendWith(this);
-                if (count.decrementAndGet() == 0) {
-                    complete(state, SubStage.COMPLETED);
+            waitUntilConnectionValid(specValidateUri, spec, 0, (ex) -> {
+                if (error.get() != null) {
+                    return;
                 }
+
+                if (ex != null) {
+                    error.set(ex);
+                    logWarning("Failed to validate container host connection: %s",
+                            Utils.toString(ex));
+                    failTask("Failed registering container host", error.get());
+                    return;
+                }
+
+                spec.acceptHostAddress = true;
+                registerContainerHost(state, specUri, remaining, spec, error);
             });
         }
+    }
+
+    private void registerContainerHost(ComputeAllocationTaskState state, URI specUri,
+            AtomicInteger remaining, ContainerHostSpec spec, AtomicReference<Throwable> error) {
+
+        Operation.createPut(specUri).setBody(spec).setCompletion((op, er) -> {
+            if (error.get() != null) {
+                return;
+            }
+            if (er != null) {
+                error.set(er);
+                failTask("Failed registering container host", er);
+                return;
+            }
+            if (remaining.decrementAndGet() == 0) {
+                complete(state, SubStage.COMPLETED);
+            }
+        }).sendWith(this);
+
     }
 
     private void waitUntilConnectionValid(URI specValidateUri, ContainerHostSpec spec,
@@ -615,7 +645,7 @@ public class ComputeAllocationTaskService extends
                     callback.accept(er);
                 } else {
                     getHost().schedule(() -> waitUntilConnectionValid(specValidateUri, spec,
-                            retryCount + 1, callback), 5, TimeUnit.SECONDS);
+                            retryCount + 1, callback), 10, TimeUnit.SECONDS);
                 }
             } else {
                 callback.accept(null);
@@ -740,7 +770,8 @@ public class ComputeAllocationTaskService extends
     }
 
     private boolean enableContainerHost(Map<String, String> customProperties) {
-        return customProperties.containsKey(ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME);
+        return customProperties
+                .containsKey(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME);
     }
 
     private void storeKeys(ComputeAllocationTaskState state,
