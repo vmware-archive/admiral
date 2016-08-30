@@ -77,7 +77,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -129,7 +128,6 @@ import com.vmware.xenon.services.common.QueryTask;
  * Service for fulfilling ContainerInstanceRequest backed by a docker server
  */
 public class DockerAdapterService extends AbstractDockerAdapterService {
-    private static final String SYSTEM_IMAGE_SEPARATOR = "/?";
 
     /**
      * prefix used for temp files used to store downloaded images
@@ -140,9 +138,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
     public static final String PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME = "provision.container.retries.count";
 
-    private static CommandInput loadAgentImageCommand = new CommandInput();
-
-    private static AtomicInteger systemContainerImagesBeingLoaded = new AtomicInteger();
+    private SystemImageRetrievalManager imageRetrievalManager;
 
     /**
      * Properties in an inspect response that we want to filter out
@@ -182,6 +178,12 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         public String email;
         public String serveraddress;
         public String auth;
+    }
+
+    @Override
+    public void handleStart(Operation startPost) {
+        imageRetrievalManager = new SystemImageRetrievalManager(getHost());
+        super.handleStart(startPost);
     }
 
     @Override
@@ -482,18 +484,16 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         () -> processCreateContainer(context, 0)
                 );
             }
-
-            if (imageReference != null && SystemContainerDescriptions.AGENT_IMAGE_REFERENCE
-                    .equals(imageReference.getPath() + SYSTEM_IMAGE_SEPARATOR
-                            + imageReference.getQuery())) {
-                int count = systemContainerImagesBeingLoaded.decrementAndGet();
-                if (count == 0) {
-                    loadAgentImageCommand.getProperties().put(DOCKER_IMAGE_DATA_PROP_NAME, null);
-                }
-            }
         };
 
-        if (shouldTryCreateFromLocalImage(context.containerDescription)) {
+        if (SystemContainerDescriptions.getAgentImageNameAndVersion()
+                .equals(context.containerDescription.image)) {
+            String ref = SystemContainerDescriptions.AGENT_IMAGE_REFERENCE;
+
+            imageRetrievalManager.retrieveAgentImage(ref, context.request, (imageData) -> {
+                processLoadedImageData(context, imageData, ref, imageCompletionHandler);
+            });
+        } else if (shouldTryCreateFromLocalImage(context.containerDescription)) {
             // try to create the container from a local image first. Only if the image is not available it will be
             // fetched according to the settings.
             logInfo("Trying to create the container using local image first...");
@@ -522,32 +522,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 tempFile.deleteOnExit();
 
                 Operation fetchOp = Operation.createGet(imageReference);
-                if (SystemContainerDescriptions.AGENT_IMAGE_REFERENCE
-                        .equals(imageReference.getPath() + SYSTEM_IMAGE_SEPARATOR
-                                + imageReference.getQuery())) {
-                    // Instead of downloading(possibly) from another node use this one. Needed in
-                    // order to install system container in cluster
-                    fetchOp = Operation.createGet(this,
-                            imageReference.getPath() + SYSTEM_IMAGE_SEPARATOR
-                                    + imageReference.getQuery());
-                    // Not needed to create a file if we already have the data
-                    if (loadAgentImageCommand.getProperties()
-                            .get(DOCKER_IMAGE_DATA_PROP_NAME) != null) {
-                        processDownloadedImage(context, null, imageCompletionHandler);
-                        return;
-                    } else if (systemContainerImagesBeingLoaded.get() > 0) {
-                        // The file is already being loaded. Waiting
-                        getHost().schedule(() -> {
-                            getHost().log(Level.INFO,
-                                    "Waiting for system container image data to be initialized");
-                            processContainerDescription(context);
-                        }, 3, TimeUnit.SECONDS);
-                        return;
-                    }
-                }
 
                 fetchOp.setExpiration(ServiceUtils.getExpirationTimeFromNowInMicros(
-                                getHost().getOperationTimeoutMicros()))
+                        getHost().getOperationTimeoutMicros()))
                         .setReferer(UriUtils.buildUri(getHost(), SELF_LINK))
                         .setContextId(context.request.getRequestId())
                         .setCompletion((o, ex) -> {
@@ -612,43 +589,37 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                                 context.request.getRequestTrackingLog());
                     }
 
-                    if (imageData == null || imageData.length == 0) {
-                        String errMsg = String.format("No content downloaded for file: %s %s",
-                                context.containerDescription.imageReference,
-                                context.request.getRequestTrackingLog());
-                        this.logSevere(errMsg);
-                        imageCompletionHandler.handle(o, new IllegalStateException(errMsg));
-                        return;
-                    }
-
-                    CommandInput loadCommandInput = new CommandInput(context.commandInput)
-                            .withProperty(DOCKER_IMAGE_DATA_PROP_NAME, imageData);
-                    URI imageReference = context.containerDescription.imageReference;
-                    if ((imageReference.getPath() + SYSTEM_IMAGE_SEPARATOR
-                            + imageReference.getQuery())
-                            .equals(SystemContainerDescriptions.AGENT_IMAGE_REFERENCE)) {
-                        loadAgentImageCommand = loadCommandInput;
-                        systemContainerImagesBeingLoaded.incrementAndGet();
-                    }
-                    context.executor.loadImage(loadCommandInput,
+                    processLoadedImageData(context, imageData,
+                            context.containerDescription.imageReference.toString(),
                             imageCompletionHandler);
                 });
 
-        if (tempFile == null) {
-            loadAgentImageCommand.withDockerUri(context.commandInput.getDockerUri());
-            loadAgentImageCommand.withCredentials(context.commandInput.getCredentials());
-            loadAgentImageCommand.withProperties(context.commandInput.getProperties());
-            systemContainerImagesBeingLoaded.incrementAndGet();
+        try {
+            FileUtils.readFileAndComplete(fileReadOp, tempFile);
 
-            context.executor.loadImage(loadAgentImageCommand, imageCompletionHandler);
-        } else {
-            try {
-                FileUtils.readFileAndComplete(fileReadOp, tempFile);
-
-            } catch (IOException x) {
-                fail(context.request, x);
-            }
+        } catch (IOException x) {
+            fail(context.request, x);
         }
+    }
+
+    private void processLoadedImageData(RequestContext context, byte[] imageData,
+            String fileName,
+            CompletionHandler imageCompletionHandler) {
+        if (imageData == null || imageData.length == 0) {
+            String errMsg = String.format("No content loaded for file: %s %s",
+                    fileName,
+                    context.request.getRequestTrackingLog());
+            this.logSevere(errMsg);
+            imageCompletionHandler.handle(null, new IllegalStateException(errMsg));
+            return;
+        }
+
+        logInfo("Loaded content for file: %s %s. Now sending to host...", fileName,
+                context.request.getRequestTrackingLog());
+
+        CommandInput loadCommandInput = new CommandInput(context.commandInput)
+                .withProperty(DOCKER_IMAGE_DATA_PROP_NAME, imageData);
+        context.executor.loadImage(loadCommandInput, imageCompletionHandler);
     }
 
     private void processPullImageFromRegistry(RequestContext context,

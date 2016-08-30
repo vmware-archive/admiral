@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.compute.container;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +18,6 @@ import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.image.service.SystemImagesService;
 import com.vmware.xenon.common.UriUtils;
 
 public class SystemContainerDescriptions {
@@ -43,19 +41,14 @@ public class SystemContainerDescriptions {
     public static final String AGENT_IMAGE_VERSION = System.getProperty(
             "dcp.management.images.agent.version", "0.5.0");
     public static final String AGENT_IMAGE_REFERENCE = System.getProperty(
-            "dcp.management.images.agent.reference",
-            SystemImagesService.buildSystemImageUriPath(AGENT_IMAGE_TAR_FILENAME + ".tar"));
+            "dcp.management.images.agent.reference", AGENT_IMAGE_TAR_FILENAME + ".tar");
 
     /** Create a container description to be used for installing host agents containers. */
-    public static ContainerDescription buildCoreAgentContainerDescription(URI baseImageUri) {
+    public static ContainerDescription buildCoreAgentContainerDescription() {
         ContainerDescription cd = new ContainerDescription();
         cd.documentSelfLink = AGENT_CONTAINER_DESCRIPTION_LINK;
         cd.name = AGENT_CONTAINER_NAME;
-        cd.image = String.format("%s:%s", AGENT_IMAGE_NAME, AGENT_IMAGE_VERSION);
-        if (AGENT_IMAGE_REFERENCE != null && !AGENT_IMAGE_REFERENCE.isEmpty()) {
-            // download image from a reference URI if the image doesn't have registry host as a prefix
-            cd.imageReference = UriUtils.buildUri(baseImageUri, AGENT_IMAGE_REFERENCE);
-        }
+        cd.image = getAgentImageNameAndVersion();
 
         cd.volumes = new String[] { "/var/run/docker.sock:/var/run/docker.sock",
                 "/etc/docker:/etc/docker" };
@@ -84,5 +77,9 @@ public class SystemContainerDescriptions {
         List<String> result = new ArrayList<>();
         result.add(AGENT_CONTAINER_NAME);
         return result;
+    }
+
+    public static String getAgentImageNameAndVersion() {
+        return String.format("%s:%s", AGENT_IMAGE_NAME, AGENT_IMAGE_VERSION);
     }
 }

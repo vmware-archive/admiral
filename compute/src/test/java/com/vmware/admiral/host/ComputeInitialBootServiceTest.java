@@ -29,7 +29,6 @@ import com.vmware.admiral.compute.container.HostContainerListDataCollection.Host
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.TaskState.TaskStage;
-import com.vmware.xenon.common.UriUtils;
 
 public class ComputeInitialBootServiceTest extends ComputeBaseTest {
 
@@ -46,9 +45,6 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
                 SystemContainerDescriptions.AGENT_IMAGE_NAME,
                 SystemContainerDescriptions.AGENT_IMAGE_VERSION);
         assertEquals(expectedImageName, agentDesc.image);
-        assertEquals(
-                UriUtils.buildUri(host, SystemContainerDescriptions.AGENT_IMAGE_REFERENCE),
-                agentDesc.imageReference);
     }
 
     @Test

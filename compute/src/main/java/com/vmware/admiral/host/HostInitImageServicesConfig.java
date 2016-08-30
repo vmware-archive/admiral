@@ -13,13 +13,11 @@ package com.vmware.admiral.host;
 
 import com.vmware.admiral.image.service.ContainerImageService;
 import com.vmware.admiral.image.service.PopularImagesService;
-import com.vmware.admiral.image.service.SystemImagesService;
 import com.vmware.xenon.common.ServiceHost;
 
 public class HostInitImageServicesConfig extends HostInitServiceHelper {
 
     public static void startServices(ServiceHost host) {
-        startServices(host, ContainerImageService.class, PopularImagesService.class,
-                SystemImagesService.class);
+        startServices(host, ContainerImageService.class, PopularImagesService.class);
     }
 }

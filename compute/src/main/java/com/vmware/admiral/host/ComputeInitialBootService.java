@@ -32,8 +32,7 @@ public class ComputeInitialBootService extends AbstractInitialBootService {
     @Override
     public void handlePost(Operation post) {
         ArrayList<ServiceDocument> states = new ArrayList<>();
-        states.add(SystemContainerDescriptions
-                .buildCoreAgentContainerDescription(getHost().getPublicUri()));
+        states.add(SystemContainerDescriptions.buildCoreAgentContainerDescription());
         initInstances(post, false, states.toArray(new ServiceDocument[states.size()]));
 
         states = new ArrayList<>();

@@ -71,7 +71,8 @@ public interface ManagementUriParts {
     String REQUEST_REMOVAL_OPERATIONS = REQUEST + "/resource-removal-operations";
     String REQUEST_ALLOCATION_TASKS = REQUEST + "/allocation-tasks";
     String REQUEST_COMPUTE_ALLOCATION_TASKS = REQUEST + "/compute-allocation-tasks";
-    String REQUEST_CONTAINER_NETWORK_ALLOCATION_TASKS = REQUEST + "/container-network-allocation-tasks";
+    String REQUEST_CONTAINER_NETWORK_ALLOCATION_TASKS = REQUEST
+            + "/container-network-allocation-tasks";
     String REQUEST_RESERVATION_TASKS = REQUEST + "/reservation-tasks";
     String REQUEST_RESERVATION_ALLOCATION_TASKS = REQUEST + "/reservation-allocation-tasks";
     String REQUEST_COMPUTE_RESERVATION_TASKS = REQUEST + "/compute-reservation-tasks";
@@ -84,7 +85,8 @@ public interface ManagementUriParts {
     String REQUEST_COMPOSITION_SUB_TASK = REQUEST + "/composition-sub-tasks";
     String REQUEST_CONTAINER_CLUSTERING_TASK = REQUEST + "/clustering-task";
     String REQUEST_PROVISION_CONTAINER_HOSTS = REQUEST + "/provision-container-hosts-tasks";
-    String REQUEST_PROVISION_CONTAINER_NETWORK_TASKS = REQUEST + "/provision-container-network-tasks";
+    String REQUEST_PROVISION_CONTAINER_NETWORK_TASKS = REQUEST
+            + "/provision-container-network-tasks";
     String REQUEST_PROVISION_PLACEMENT_TASKS = REQUEST + "/placement-tasks";
     String REQUEST_PROVISION_COMPUTE_PLACEMENT_TASKS = REQUEST + "/compute-placement-tasks";
     String REQUEST_PROVISION_NAME_PREFIXES_TASKS = REQUEST + "/resource-prefix-tasks";
@@ -105,7 +107,6 @@ public interface ManagementUriParts {
     String TEMPLATES = "/templates";
     String LOGS = "/logs";
     String POPULAR_IMAGES = "/popular-images";
-    String SYSTEM_IMAGES = "/system-images";
 
     // Adapters:
     String ADAPTERS = "/adapters";
