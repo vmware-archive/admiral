@@ -7,7 +7,8 @@ properties:
       small: "Basic_A0"
   imageType:
     mappings:
-      linux: "Canonical:UbuntuServer:14.04.3-LTS:latest"
+      linux: "canonical:ubuntuserver:16.04.5-LTS:latest"
+      coreos: "CoreOS:coreos:Stable:1068.9.0"
   bootDiskProperties:
     mappings:
       azureStorageAccountType: "Standard_RAGRS"

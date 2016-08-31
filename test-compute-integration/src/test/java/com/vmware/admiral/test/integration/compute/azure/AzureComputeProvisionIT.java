@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.integration.compute;
+package com.vmware.admiral.test.integration.compute.azure;
 
 import static com.vmware.photon.controller.model.adapters.azure.constants.AzureConstants.AZURE_TENANT_ID;
 
@@ -19,6 +19,7 @@ import java.util.UUID;
 import org.junit.Ignore;
 
 import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
+import com.vmware.admiral.test.integration.compute.BaseComputeProvisionIT;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.services.common.AuthCredentialsService;

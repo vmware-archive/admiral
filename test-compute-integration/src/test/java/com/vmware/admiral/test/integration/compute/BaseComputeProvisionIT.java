@@ -11,11 +11,16 @@
 
 package com.vmware.admiral.test.integration.compute;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
+import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -26,11 +31,22 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
+import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.BaseTestCase.TestWaitForHandler;
+import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.ContainerDescriptionService;
+import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.LogConfig;
+import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.endpoint.EndpointService;
 import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
@@ -44,12 +60,15 @@ import com.vmware.admiral.test.integration.BaseIntegrationSupportIT;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.AuthCredentialsService;
+import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
@@ -58,6 +77,32 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     private static final String ENDPOINT_ID = "endpoint";
 
     private static final String TENANT_LINKS_KEY = "test.tenant.links";
+
+    public static final String CONTAINER_DCP_TEST_LATEST_ID = "dcp-test:latest-id";
+    public static final String CONTAINER_DCP_TEST_LATEST_IMAGE = "kitematic/hello-world-nginx";
+    public static final String CONTAINER_DCP_TEST_LATEST_NAME = "docker-dcp-test";
+
+    private static final String[] TEST_COMMAND = { "/etc/hosts", "-" };
+    private static final String TEST_PORT_BINDINGS = "127.0.0.1::8282/tcp";
+    private static final String TEST_ENV_PROP = "TEST_PROP WITH SPACE=testValue with space ' \" \\' attempt injection";
+    private static final String[] TEST_ENV = { TEST_ENV_PROP };
+    private static final String TEST_RESTART_POLICY_NAME = "on-failure";
+    private static final int TEST_RESTART_POLICY_RETRIES = 3;
+    private static final String TEST_USER = "root";
+    private static final int TEST_CPU_SHARES = 512;
+    private static final String[] TEST_DNS = { "8.8.8.8", "9.9.9.9" };
+    private static final String[] TEST_DNS_SEARCH = { "eng.vmware.com", "vmware.com" };
+    private static final String[] TEST_ENTRY_POINT = { "/bin/cat" }; // more than one elements is
+    // ignored in SSH adapter
+
+    private static final String[] TEST_VOLUMES = { "/tmp:/mnt/tmp:ro" };
+    private static final String[] TEST_CAP_ADD = { "NET_ADMIN" };
+    private static final String[] TEST_CAP_DROP = { "MKNOD" };
+    private static final String[] TEST_DEVICES = { "/dev/null:/dev/null2:rwm" };
+    private static final String TEST_HOSTNAME = "test-hostname";
+    private static final String TEST_DOMAINNAME = "eng.vmware.com";
+    private static final String TEST_WORKING_DIR = "/tmp";
+    private static final boolean TEST_PRIVILEGED = true;
 
     public static enum EndpointType {
         aws,
@@ -68,11 +113,14 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     private static final String SUFFIX = "bel10";
     private final Set<ComputeState> computesToDelete = new HashSet<>();
+    private final Set<String> containersToDelete = new HashSet<>();
     private GroupResourcePolicyState groupResourcePolicyState;
     private EndpointType endpointType;
     protected final TestDocumentLifeCycle documentLifeCycle = TestDocumentLifeCycle.FOR_DELETE;
     protected ResourcePoolState vmsResourcePool;
     private List<String> tenantLinks;
+
+    private AuthCredentialsServiceState dockerRemoteApiClientCredentials;
 
     @Before
     public void setUp() throws Exception {
@@ -91,6 +139,24 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     @Override
     public void baseTearDown() throws Exception {
+        Iterator<String> it = containersToDelete.iterator();
+        while (it.hasNext()) {
+            String containerLink = it.next();
+            ContainerState containerState = getDocument(containerLink, ContainerState.class);
+            if (containerState == null) {
+                logger.warning(String.format("Unable to find container %s", containerLink));
+                continue;
+            }
+
+            try {
+                logger.info("---------- Clean up: Request Delete the container instance. --------");
+                requestContainerDelete(Collections.singletonList(containerLink), false);
+            } catch (Throwable t) {
+                logger.warning(String.format("Unable to remove container %s: %s", containerLink,
+                        t.getMessage()));
+            }
+        }
+
         for (ComputeState compute : computesToDelete) {
             try {
                 logger.info("---------- Clean up: Request Delete the compute instance: %s --------",
@@ -168,6 +234,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         provisionRequest = getDocument(provisionRequest.documentSelfLink, RequestBrokerState.class);
         assertNotNull(provisionRequest);
         assertNotNull(provisionRequest.resourceLinks);
+
+        validateHostState(provisionRequest.resourceLinks);
         try {
             doWithResources(provisionRequest.resourceLinks);
         } finally {
@@ -302,7 +370,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         computeDesc.customProperties = new HashMap<>();
         computeDesc.customProperties.put(ComputeProperties.CUSTOM_DISPLAY_NAME, computeDesc.name);
         computeDesc.customProperties
-                .put(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME, "linux");
+                .put(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
 
         computeDesc.customProperties.put(
                 ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK,
@@ -340,6 +408,178 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         assertNotNull(resourcePolicyState);
 
         return resourcePolicyState;
+    }
+
+    protected void requestContainerAndDelete(String resourceDescLink) throws Exception {
+        logger.info("********************************************************************");
+        logger.info("---------- Create RequestBrokerState and start the request --------");
+        logger.info("********************************************************************");
+
+        logger.info("---------- 1. Request container instance. --------");
+        RequestBrokerState request = requestContainer(resourceDescLink);
+
+        logger.info(
+                "---------- 2. Verify the request is successful and container instance is created. --------");
+        validateAfterStart(resourceDescLink, request);
+
+        logger.info("---------- 3. Request Delete the container instance. --------");
+        requestContainerDelete(request.resourceLinks, true);
+    }
+
+    protected RequestBrokerState requestContainer(String resourceDescLink)
+            throws Exception {
+
+        RequestBrokerState request = new RequestBrokerState();
+        request.resourceType = ResourceType.CONTAINER_TYPE.getName();
+        request.resourceDescriptionLink = resourceDescLink;
+        request.tenantLinks = getTenantLinks();
+        request = postDocument(RequestBrokerFactoryService.SELF_LINK, request);
+
+        waitForTaskToComplete(request.documentSelfLink);
+
+        request = getDocument(request.documentSelfLink, RequestBrokerState.class);
+        for (String containerLink : request.resourceLinks) {
+            containersToDelete.add(containerLink);
+        }
+
+        return request;
+    }
+
+    protected void requestContainerDelete(List<String> resourceLinks, boolean verifyDelete)
+            throws Exception {
+
+        RequestBrokerState day2DeleteRequest = new RequestBrokerState();
+        day2DeleteRequest.resourceType = ResourceType.CONTAINER_TYPE.getName();
+        day2DeleteRequest.operation = ContainerOperationType.DELETE.id;
+        day2DeleteRequest.resourceLinks = resourceLinks;
+        day2DeleteRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2DeleteRequest);
+
+        waitForTaskToComplete(day2DeleteRequest.documentSelfLink);
+
+        if (!verifyDelete) {
+            return;
+        }
+
+        for (String containerLink : resourceLinks) {
+            ContainerState conState = getDocument(containerLink, ContainerState.class);
+            assertNull(conState);
+            String computeStateLink = UriUtils
+                    .buildUriPath(ComputeService.FACTORY_LINK, extractId(containerLink));
+            ComputeState computeState = getDocument(computeStateLink, ComputeState.class);
+            assertNull(computeState);
+            containersToDelete.remove(containerLink);
+        }
+    }
+
+    protected void validateHostState(List<String> resourceLinks)
+            throws Exception {
+        String computeStateLink = resourceLinks.get(0);
+        ComputeState computeState = getDocument(computeStateLink, ComputeState.class);
+
+        assertNotNull(computeState);
+        assertEquals(com.vmware.photon.controller.model.resources.ComputeService.PowerState.ON,
+                computeState.powerState);
+    }
+
+    protected void validateAfterStart(String resourceDescLink, RequestBrokerState request)
+            throws Exception {
+        String containerStateLink = request.resourceLinks.get(0);
+        ContainerState containerState = getDocument(containerStateLink, ContainerState.class);
+
+        assertNotNull(containerState);
+        assertEquals(PowerState.RUNNING, containerState.powerState);
+        assertEquals(resourceDescLink, containerState.descriptionLink);
+    }
+
+    protected ContainerDescription createContainerDescription() throws Exception {
+        ContainerDescription containerDesc = new ContainerDescription();
+        containerDesc.documentSelfLink = CONTAINER_DCP_TEST_LATEST_ID;
+
+        containerDesc.image = CONTAINER_DCP_TEST_LATEST_IMAGE;
+
+        containerDesc.customProperties = new HashMap<String, String>();
+
+        containerDesc.name = CONTAINER_DCP_TEST_LATEST_NAME;
+        containerDesc.command = TEST_COMMAND;
+        containerDesc.instanceAdapterReference = URI
+                .create(getBaseUrl() + buildServiceUri(ManagementUriParts.ADAPTER_DOCKER));
+
+        containerDesc.portBindings = new PortBinding[] { PortBinding
+                .fromDockerPortMapping(DockerPortMapping.fromString(TEST_PORT_BINDINGS)) };
+
+        containerDesc.logConfig = createLogConfig();
+        containerDesc.env = TEST_ENV;
+        containerDesc.restartPolicy = TEST_RESTART_POLICY_NAME;
+        containerDesc.maximumRetryCount = TEST_RESTART_POLICY_RETRIES;
+        containerDesc.user = TEST_USER;
+        containerDesc.cpuShares = TEST_CPU_SHARES;
+        containerDesc.dns = TEST_DNS;
+        containerDesc.dnsSearch = TEST_DNS_SEARCH;
+        containerDesc.entryPoint = TEST_ENTRY_POINT;
+        containerDesc.volumes = TEST_VOLUMES;
+        containerDesc.capAdd = TEST_CAP_ADD;
+        containerDesc.capDrop = TEST_CAP_DROP;
+        containerDesc.device = TEST_DEVICES;
+        containerDesc.hostname = TEST_HOSTNAME;
+        containerDesc.domainName = TEST_DOMAINNAME;
+        containerDesc.workingDir = TEST_WORKING_DIR;
+        containerDesc.privileged = TEST_PRIVILEGED;
+        containerDesc = postDocument(ContainerDescriptionService.FACTORY_LINK, containerDesc);
+
+        return containerDesc;
+    }
+
+    protected void enableContainerHost(ComputeDescription computeDescription) {
+        computeDescription.customProperties.put(ComputeConstants.HOST_AUTH_CREDNTIALS_PROP_NAME,
+                dockerRemoteApiClientCredentials.documentSelfLink);
+
+        computeDescription.customProperties
+                .put(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
+
+        computeDescription.customProperties.put(
+                ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME,
+                "true");
+        // Set DockerSpecific properties
+        computeDescription.customProperties.put(
+                ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
+                DockerAdapterType.API.name());
+        computeDescription.customProperties.put(ContainerHostService.DOCKER_HOST_PORT_PROP_NAME,
+                "2376");
+        computeDescription.customProperties.put(ContainerHostService.DOCKER_HOST_SCHEME_PROP_NAME,
+                "https");
+
+        String configContent = getConfigContent();
+        if (configContent != null) {
+            computeDescription.customProperties
+                    .put(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME, configContent);
+        }
+    }
+
+    protected void doSetupContainerHostPrereq() throws Exception {
+        AuthCredentialsServiceState auth = new AuthCredentialsServiceState();
+        auth.privateKey = CommonTestStateFactory
+                .getFileContent(getTestRequiredProp("docker.client.key.file"));
+        auth.publicKey = CommonTestStateFactory
+                .getFileContent(getTestRequiredProp("docker.client.cert.file"));
+        auth.documentSelfLink = UUID.randomUUID().toString();
+
+        dockerRemoteApiClientCredentials = postDocument(AuthCredentialsService.FACTORY_LINK, auth,
+                documentLifeCycle);
+
+        createResourcePolicy("vm-policy", getEndpointType(), vmsResourcePool, documentLifeCycle);
+    }
+
+    private String getConfigContent() {
+        return CommonTestStateFactory
+                .getFileContent(getTestRequiredProp("cloudinit.content.file"));
+    }
+
+    private LogConfig createLogConfig() {
+        LogConfig logConfig = new LogConfig();
+        logConfig.type = "json-file";
+        logConfig.config = new HashMap<>();
+        logConfig.config.put("max-size", "200k");
+        return logConfig;
     }
 
     protected static void waitFor(TestWaitForHandler handler) throws Throwable {

@@ -127,6 +127,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
         PropertyMapping imageRefs = new PropertyMapping();
         imageRefs.mappings = new HashMap<>();
         imageRefs.mappings.put("linux", getDiskUri());
+        imageRefs.mappings.put("coreos", getDiskUri());
         ems.properties.put("imageType", imageRefs);
 
         postDocument(EnvironmentMappingService.FACTORY_LINK,

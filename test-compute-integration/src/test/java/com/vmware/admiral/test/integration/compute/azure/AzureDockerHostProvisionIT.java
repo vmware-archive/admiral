@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.integration.compute.aws;
+package com.vmware.admiral.test.integration.compute.azure;
 
 import java.util.List;
 
@@ -18,8 +18,8 @@ import org.junit.Ignore;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 
-@Ignore
-public class AwsDockerHostProvisionIT extends AwsComputeProvisionIT {
+@Ignore("We have to modify first the CI jobs to pass the Azure accessKey,secret,subscriptionId and tenant")
+public class AzureDockerHostProvisionIT extends AzureComputeProvisionIT {
 
     @Override
     protected void doWithResources(List<String> resourceLinks) throws Throwable {

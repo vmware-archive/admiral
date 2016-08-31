@@ -33,6 +33,7 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -94,7 +95,7 @@ public abstract class BaseIntegrationSupportIT {
     }
 
     @Rule
-    public Timeout globalTimeout = Timeout.seconds(TimeUnit.MINUTES.toSeconds(5));
+    public Timeout globalTimeout = Timeout.seconds(TimeUnit.MINUTES.toSeconds(10));
 
     @BeforeClass
     public static void baseBeforeClass() {
@@ -230,7 +231,9 @@ public abstract class BaseIntegrationSupportIT {
     }
 
     public static enum TestDocumentLifeCycle {
-        FOR_DELETE, FOR_DELETE_AFTER_CLASS, NO_DELETE
+        FOR_DELETE,
+        FOR_DELETE_AFTER_CLASS,
+        NO_DELETE
     }
 
     protected static <T extends ServiceDocument> T postDocument(String fabricLink, T document)
@@ -318,7 +321,8 @@ public abstract class BaseIntegrationSupportIT {
                 assertNotNull("task self link is missing", taskSelfLink);
                 waitForTaskToComplete(taskSelfLink);
             } else {
-                logger.info("Docker host not found. Skipping removal");;
+                logger.info("Docker host not found. Skipping removal");
+                ;
             }
         }
     }
@@ -347,7 +351,8 @@ public abstract class BaseIntegrationSupportIT {
 
             RequestStatus requestStatus = getDocument(
                     UriUtils.buildUriPath(RequestStatusFactoryService.SELF_LINK,
-                            extractId(documentSelfLink)), RequestStatus.class);
+                            extractId(documentSelfLink)),
+                    RequestStatus.class);
             if (requestStatus != null) {
                 logger.info(
                         "~~~~~~~~~ Request %s status progress: %s. Progress by component: %s   ~~~~~~~",
