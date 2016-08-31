@@ -68,7 +68,8 @@ public class BaseMockDockerTestCase extends BaseTestCase {
                 dockerTrust = new SslTrustCertificateState();
                 dockerTrust.certificate = getProperty(DOCKER_SERVER_CERTIFICATE, testProperties);
             } else {
-                host.log(Level.WARNING, "Properties file %s not found", DOCKER_TEST_PROPERTIES_FILE);
+                host.log(Level.WARNING, "Properties file %s not found",
+                        DOCKER_TEST_PROPERTIES_FILE);
             }
         }
 
@@ -119,6 +120,15 @@ public class BaseMockDockerTestCase extends BaseTestCase {
         mockDockerHost.startService(Operation.createPost(UriUtils.buildUri(
                 mockDockerHost, MockDockerContainerListService.class)),
                 new MockDockerContainerListService());
+
+        mockDockerHost.startService(Operation.createPost(UriUtils.buildUri(
+                mockDockerHost, MockDockerCreateVolumeService.class)),
+                new MockDockerCreateVolumeService());
+
+        mockDockerHost.startService(Operation.createPost(UriUtils.buildUri(
+                mockDockerHost, MockDockerVolumeListService.class)),
+                new MockDockerVolumeListService());
+
     }
 
     public static URI getDockerUri() {

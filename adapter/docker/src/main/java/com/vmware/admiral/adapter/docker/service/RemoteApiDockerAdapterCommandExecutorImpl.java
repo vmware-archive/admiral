@@ -567,4 +567,51 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             op.setExpiration(ServiceUtils.getExpirationTimeFromNowInMicros(timeout));
         }
     }
+
+    /**
+     * https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/ Section 3.4 Volumes -
+     * Create a volume Mandatory properties for <code>input</code>:
+     * <li>{@link DockerAdapterCommandExecutor#DOCKER_VOLUME_NAME_PROP_NAME}
+     */
+    @Override
+    public void createVolume(CommandInput input, CompletionHandler completionHandler) {
+
+        createOrUpdateTargetSsl(input);
+
+        URI targetUri = UriUtils.extendUri(input.getDockerUri(), "/volumes/create");
+
+        sendPost(targetUri, input.getProperties(), false, completionHandler);
+
+    }
+
+    /**
+     * https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/ Section 3.4 Volumes -
+     * Remove a volume
+     */
+    @Override
+    public void removeVolume(CommandInput input, CompletionHandler completionHandler) {
+
+        createOrUpdateTargetSsl(input);
+
+        String path = String.format("/volumes/%s",
+                input.getProperties().get(DOCKER_VOLUME_NAME_PROP_NAME));
+
+        URI uri = UriUtils.extendUri(input.getDockerUri(), path);
+
+        sendDelete(uri, completionHandler);
+
+    }
+
+    /**
+     * https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/ Section 3.4 Volumes -
+     * List volumes
+     */
+    @Override
+    public void listVolumes(CommandInput input, CompletionHandler completionHandler) {
+        createOrUpdateTargetSsl(input);
+        URI uri = UriUtils.extendUri(input.getDockerUri(), "/volumes");
+
+        sendGet(uri, null, completionHandler);
+
+    }
 }

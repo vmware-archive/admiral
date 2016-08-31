@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.BINDS_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.CAP_ADD_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.CAP_DROP_PROP_NAME;
@@ -53,8 +56,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
+import org.apache.commons.lang3.NotImplementedException;
 
 import com.vmware.admiral.adapter.docker.util.DockerDevice;
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
@@ -110,7 +112,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
 
     @Override
     public void handleMaintenance(Operation post) {
-        //add periodic maintenance logic here
+        // add periodic maintenance logic here
     }
 
     /**
@@ -524,5 +526,34 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                 .withArguments(subCommand);
 
         return cb.toString();
+    }
+
+    @Override
+    public void createVolume(CommandInput input, CompletionHandler completionHandler) {
+        Map<String, Object> properties = input.getProperties();
+        CommandBuilder cb = new CommandBuilder().withCommand("volume create")
+                .withLongSwitchIfPresent(properties, PROP_NAME_TO_LONG_SWITCH,
+                        DOCKER_VOLUME_DRIVER_PROP_NAME)
+                .withArgumentIfPresent(properties, DOCKER_VOLUME_NAME_PROP_NAME);
+
+        execWithInput(input, docker(cb), null, completionHandler);
+
+    }
+
+    @Override
+    public void removeVolume(CommandInput input, CompletionHandler completionHandler) {
+
+        Map<String, Object> properties = input.getProperties();
+
+        CommandBuilder cb = new CommandBuilder().withCommand("volume rm").withArgumentIfPresent(
+                properties,
+                DOCKER_VOLUME_NAME_PROP_NAME);
+
+        execWithInput(input, docker(cb), null, completionHandler);
+    }
+
+    @Override
+    public void listVolumes(CommandInput input, CompletionHandler completionHandler) {
+        throw new NotImplementedException("List volumes is not implemented yet");
     }
 }

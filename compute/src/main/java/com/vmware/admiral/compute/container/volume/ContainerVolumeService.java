@@ -20,6 +20,7 @@ import org.apache.commons.io.FileUtils;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -203,7 +204,11 @@ public class ContainerVolumeService extends StatefulService {
             // Skip this step on updates (null = no update)
             Utils.validateState(getStateDescription(), state);
         }
-        // TODO Implement more validations.
+
+        if (state.adapterManagementReference == null) {
+            state.adapterManagementReference = UriUtilsExtended.buildUri(getHost(),
+                    ManagementUriParts.ADAPTER_DOCKER_VOLUME);
+        }
 
     }
 

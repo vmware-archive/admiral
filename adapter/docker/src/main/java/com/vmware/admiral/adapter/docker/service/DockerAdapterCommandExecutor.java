@@ -53,7 +53,8 @@ public interface DockerAdapterCommandExecutor {
     String DOCKER_CONTAINER_LOG_CONFIG_PROP_TYPE_NAME = "Type";
     String DOCKER_CONTAINER_LOG_CONFIG_PROP_CONFIG_NAME = "Config";
 
-    // Flag that forces container creation from a local image and only if the image is not available download it
+    // Flag that forces container creation from a local image and only if the image is not available
+    // download it
     // from a registry.
     String DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY = "UseLocalImageWithPriority";
 
@@ -128,6 +129,9 @@ public interface DockerAdapterCommandExecutor {
     String DOCKER_NETWORK_DRIVER_PROP_NAME = "Driver";
     String DOCKER_NETWORK_CHECK_DUPLICATE_PROP_NAME = "CheckDuplicate";
 
+    String DOCKER_VOLUME_NAME_PROP_NAME = "Name";
+    String DOCKER_VOLUME_DRIVER_PROP_NAME = "Driver";
+
     // Fetch logs query param
     String STD_ERR = "stderr";
     String STD_OUT = "stdout";
@@ -174,14 +178,21 @@ public interface DockerAdapterCommandExecutor {
 
     void removeNetwork(CommandInput input, CompletionHandler completionHandler);
 
-    //  TODO uncomment and implement
-    //    void connectNetwork(CommandInput input, CompletionHandler completionHandler);
+    // TODO uncomment and implement
+    // void connectNetwork(CommandInput input, CompletionHandler completionHandler);
     //
-    //    void disconnectNetwork(CommandInput input, CompletionHandler completionHandler);
+    // void disconnectNetwork(CommandInput input, CompletionHandler completionHandler);
     //
-    //    void inspectNetwork(CommandInput input, CompletionHandler completionHandler);
+    // void inspectNetwork(CommandInput input, CompletionHandler completionHandler);
     //
-    //    void listNetworks(CommandInput input, CompletionHandler completionHandler);
+    // void listNetworks(CommandInput input, CompletionHandler completionHandler);
+
+    // Volume operations
+    void createVolume(CommandInput input, CompletionHandler completionHandler);
+
+    void listVolumes(CommandInput input, CompletionHandler completionHandler);
+
+    void removeVolume(CommandInput input, CompletionHandler completionHandler);
 
     void handleMaintenance(Operation post);
 }

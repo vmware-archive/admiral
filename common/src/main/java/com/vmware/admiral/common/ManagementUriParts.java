@@ -115,7 +115,7 @@ public interface ManagementUriParts {
     String ADAPTER_DOCKER_HOST = ADAPTERS + "/host-docker-service";
     String ADAPTER_DOCKER_OPERATIONS = ADAPTER_DOCKER + "/operations";
     String ADAPTER_REGISTRY = ADAPTERS + "/registry-service";
-
+    String ADAPTER_DOCKER_VOLUME = ADAPTERS + "/volume-docker-service";
     String ADAPTER_DOCKER_NETWORK = ADAPTERS + "/network-docker-service";
 
     String ADAPTER_ETCD_KV = "/v2/keys";

@@ -70,6 +70,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 EndpointService.class,
                 ContainerNetworkService.class,
                 ContainerNetworkDescriptionService.class,
+                ContainerVolumeDescriptionService.class,
                 ContainerVolumeService.class,
                 ContainerVolumeDescriptionService.class);
 

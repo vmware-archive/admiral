@@ -30,6 +30,7 @@ public interface MockDockerPathConstants {
 
     public static final String CONTAINERS = "/containers";
     public static final String IMAGES = "/images";
+    public static final String VOLUMES = "/volumes";
 
     // host:
     public static final String INFO = "/info";
