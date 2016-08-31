@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute.content;
 
+import static java.util.stream.Stream.concat;
+
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
 import static com.vmware.admiral.common.util.ValidationUtils.handleValidationException;
@@ -39,6 +41,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
 import com.vmware.admiral.compute.content.CompositeTemplateUtil.YamlType;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
 import com.vmware.xenon.common.Operation;
@@ -75,6 +78,7 @@ public class CompositeDescriptionContentService extends StatelessService {
     // TODO: This type is temporary and must be updated to match the expected network component type
     // when available.
     public static final String TEMPLATE_CONTAINER_NETWORK_TYPE = "Network.Docker";
+    public static final String TEMPLATE_CONTAINER_VOLUME_TYPE = "Volume.Docker";
 
     public static final String FORMAT_DOCKER_COMPOSE_TYPE = "Docker";
 
@@ -239,13 +243,19 @@ public class CompositeDescriptionContentService extends StatelessService {
                         .createPost(this, ContainerNetworkDescriptionService.FACTORY_LINK)
                         .setBody(component.data));
 
+        Stream<Operation> volumes = components.values().stream()
+                .filter(template -> TEMPLATE_CONTAINER_VOLUME_TYPE.equals(template.type))
+                .map(component -> Operation
+                        .createPost(this, ContainerVolumeDescriptionService.FACTORY_LINK)
+                        .setBody(component.data));
+
         Stream<Operation> containers = components.values().stream()
                 .filter(template -> TEMPLATE_CONTAINER_TYPE.equals(template.type))
                 .map(component -> Operation
                         .createPost(this, ContainerDescriptionService.FACTORY_LINK)
                         .setBody(component.data));
 
-        return Stream.concat(networks, containers).toArray(Operation[]::new);
+        return concat(containers, concat(networks, volumes)).toArray(Operation[]::new);
     }
 
     private boolean isApplicationYamlContent(String contentType) {

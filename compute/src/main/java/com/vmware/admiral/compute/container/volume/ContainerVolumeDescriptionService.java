@@ -18,6 +18,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.apache.commons.io.FileUtils;
 
@@ -66,12 +67,49 @@ public class ContainerVolumeDescriptionService extends StatefulService {
         public String driver;
 
         /**
+         * A map of field-value pairs for a given volume. These are used to specify volume options
+         * that are to be used by the volume drivers.
+         */
+        @Documentation(description = "A map of field-value pairs for a given volume. These are used"
+                + "to specify volume options that are used by the volume drivers.")
+        @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
+                PropertyUsageOption.OPTIONAL, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public Map<String, String> options;
+
+        /**
+         * Composite Template use only. If set to true, specifies that this volume exists outside
+         * of the Composite Template.
+         */
+        @Documentation(description = "Composite Template use only. If set to true, specifies that "
+                + "this volume exists outside of the Composite Template.")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public Boolean external;
+
+        /**
+         * Composite Template use only. The name of the external volume. If set then the value of
+         * the attribute 'external' is considered 'true'.
+         */
+        @Documentation(description = "Composite Template use only. The name of the external volume."
+                + " If set then the value of the attribute 'external' is considered 'true'.")
+        @JsonProperty("external_name")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public String externalName;
+
+        /**
          * Mount path of the volume on the host.
          */
         @Documentation(description = "Mount path of the volume on the host.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.OPTIONAL })
         public File mountpoint;
+
+        /**
+         * Labels to set on the volume, specified as a map: {"key":"value","key2":"value2"}
+         */
+        @Documentation(description = "Labels to set on the volume, specified as a map: {\"key\":\"value\",\"key2\":\"value2\"}")
+        @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
+                PropertyUsageOption.OPTIONAL })
+        public Map<String, String> labels;
 
         /**
          * A map of field-value pairs for a given volume. These key/value pairs are custom tags,
@@ -84,14 +122,6 @@ public class ContainerVolumeDescriptionService extends StatefulService {
         @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
                 PropertyUsageOption.OPTIONAL })
         public Map<String, String> customProperties;
-
-        /**
-         * Labels to set on the volume, specified as a map: {"key":"value","key2":"value2"}
-         */
-        @Documentation(description = "Labels to set on the volume, specified as a map: {\"key\":\"value\",\"key2\":\"value2\"}")
-        @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
-                PropertyUsageOption.OPTIONAL })
-        public Map<String, String> labels;
 
         @JsonAnySetter
         private void putCustomProperty(String key, String value) {

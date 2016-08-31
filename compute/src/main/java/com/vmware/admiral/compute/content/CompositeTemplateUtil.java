@@ -16,6 +16,7 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.compute.container.PortBinding.fromDockerPortMapping;
 import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_NETWORK_TYPE;
 import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_TYPE;
+import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_VOLUME_TYPE;
 
 import java.io.IOException;
 import java.time.ZoneOffset;
@@ -40,13 +41,16 @@ import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.content.compose.CommonDescriptionEntity;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
 import com.vmware.admiral.compute.content.compose.DockerComposeNetwork;
 import com.vmware.admiral.compute.content.compose.DockerComposeService;
+import com.vmware.admiral.compute.content.compose.DockerComposeVolume;
 import com.vmware.admiral.compute.content.compose.Logging;
 import com.vmware.admiral.compute.content.compose.NetworkExternal;
 import com.vmware.admiral.compute.content.compose.ServiceNetworks;
+import com.vmware.admiral.compute.content.compose.VolumeExternal;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Utils;
 
@@ -247,6 +251,21 @@ public class CompositeTemplateUtil {
             }
         }
 
+        Map<String, DockerComposeVolume> volumes = compose.volumes;
+        if (!isNullOrEmpty(volumes)) {
+            if (template.components == null) {
+                template.components = new LinkedHashMap<>();
+            }
+            for (Entry<String, DockerComposeVolume> entry : volumes.entrySet()) {
+                ComponentTemplate<ContainerVolumeDescription> component = fromDockerVolumeToCompositeComponent(
+                        entry.getValue());
+                // set the service name as the component name since in the ComponentTemplate
+                // context the component name must match the container name
+                component.data.name = entry.getKey();
+                template.components.put(entry.getKey(), component);
+            }
+        }
+
         return template;
     }
 
@@ -275,7 +294,6 @@ public class CompositeTemplateUtil {
          * security_opt
          * stop_signal
          * ulimits
-         * volume_driver
          * cpu_quota
          * cpuset
          * ipc
@@ -284,10 +302,6 @@ public class CompositeTemplateUtil {
          * shm_size
          * stdin_open
          * tty
-         * -- Volume specific --
-         * driver
-         * driver_opts
-         * external
          */
 
         // properties from Container Description NOT AVAILABLE in Docker Compose
@@ -384,6 +398,26 @@ public class CompositeTemplateUtil {
         }
     }
 
+    private static ComponentTemplate<ContainerVolumeDescription> fromDockerVolumeToCompositeComponent(
+            DockerComposeVolume volume) {
+        assertNotNull(volume, "volume");
+
+        ContainerVolumeDescription description = new ContainerVolumeDescription();
+
+        description.driver = volume.driver;
+        description.options = volume.driver_opts;
+
+        if (volume.external != null) {
+            if (!isNullOrEmpty(volume.external.name)) {
+                description.externalName = volume.external.name;
+            } else if (volume.external.value != null) {
+                description.external = volume.external.value;
+            }
+        }
+
+        return fromContainerVolumeDescriptionToComponentTemplate(description);
+    }
+
     public static ComponentTemplate<ContainerDescription> fromContainerDescriptionToComponentTemplate(
             ContainerDescription description) {
         assertNotNull(description, "description");
@@ -401,6 +435,16 @@ public class CompositeTemplateUtil {
 
         ComponentTemplate<ContainerNetworkDescription> template = new ComponentTemplate<>();
         template.type = TEMPLATE_CONTAINER_NETWORK_TYPE;
+        template.data = description;
+        return template;
+    }
+
+    public static ComponentTemplate<ContainerVolumeDescription> fromContainerVolumeDescriptionToComponentTemplate(
+            ContainerVolumeDescription description) {
+        assertNotNull(description, "description");
+
+        ComponentTemplate<ContainerVolumeDescription> template = new ComponentTemplate<>();
+        template.type = TEMPLATE_CONTAINER_VOLUME_TYPE;
         template.data = description;
         return template;
     }
@@ -461,6 +505,15 @@ public class CompositeTemplateUtil {
                 }
                 compose.networks.put(entry.getKey(),
                         fromCompositeComponentToDockerNetwork(entry.getValue()));
+            }
+
+            for (Entry<String, ComponentTemplate<ContainerVolumeDescription>> entry : filterComponentTemplates(
+                    components, ContainerVolumeDescription.class).entrySet()) {
+                if (compose.volumes == null) {
+                    compose.volumes = new LinkedHashMap<>();
+                }
+                compose.volumes.put(entry.getKey(),
+                        fromCompositeComponentToDockerVolume(entry.getValue()));
             }
         }
 
@@ -557,6 +610,28 @@ public class CompositeTemplateUtil {
         return serviceNetworks;
     }
 
+    private static DockerComposeVolume fromCompositeComponentToDockerVolume(
+            ComponentTemplate<ContainerVolumeDescription> component) {
+        assertNotNull(component, "component");
+
+        ContainerVolumeDescription description = component.data;
+
+        DockerComposeVolume network = new DockerComposeVolume();
+
+        network.driver = description.driver;
+        network.driver_opts = description.options;
+
+        if (!isNullOrEmpty(description.externalName)) {
+            network.external = new VolumeExternal();
+            network.external.name = description.externalName;
+        } else if (description.external != null) {
+            network.external = new VolumeExternal();
+            network.external.value = description.external;
+        }
+
+        return network;
+    }
+
     private static String[] fromCompositeLinksToDockerLinks(String[] links) {
         if (isNullOrEmpty(links)) {
             return null;
@@ -624,7 +699,8 @@ public class CompositeTemplateUtil {
 
         components.forEach((componentName, component) -> {
             if (!TEMPLATE_CONTAINER_NETWORK_TYPE.equals(component.type)
-                    && !TEMPLATE_CONTAINER_TYPE.equals(component.type)) {
+                    && !TEMPLATE_CONTAINER_TYPE.equals(component.type)
+                    && !TEMPLATE_CONTAINER_NETWORK_TYPE.equals(component.type)) {
                 throw new IllegalArgumentException(String.format(
                         "Component '%s' has an unsupported type '%s'",
                         componentName, component.type));

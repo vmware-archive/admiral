@@ -20,6 +20,7 @@ import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_NETWORK_TYPE;
 import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_TYPE;
+import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_VOLUME_TYPE;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.assertContainersComponentsOnly;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deserializeCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deserializeDockerCompose;
@@ -65,6 +66,7 @@ public class CompositeTemplateUtilTest {
         assertContainersComponentsOnly(template1.components);
         assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 2, template1.components);
         assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 0, template1.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_VOLUME_TYPE, 0, template1.components);
 
         String template1Yaml = serializeCompositeTemplate(template1);
 
@@ -81,6 +83,7 @@ public class CompositeTemplateUtilTest {
         assertContainersComponentsOnly(template2.components);
         assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 2, template1.components);
         assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 0, template1.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_VOLUME_TYPE, 0, template1.components);
 
         String template2Yaml = serializeCompositeTemplate(template2);
 
@@ -106,6 +109,7 @@ public class CompositeTemplateUtilTest {
         assertContainersComponentsOnly(template1.components);
         assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 3, template1.components);
         assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 2, template1.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_VOLUME_TYPE, 0, template1.components);
 
         String template1Yaml = serializeCompositeTemplate(template1);
 
