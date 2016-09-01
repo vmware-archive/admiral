@@ -59,6 +59,9 @@ public class NetworkUtils {
     }
 
     public static void validateNetworkName(String name) {
+        if (name == null) {
+            throw new IllegalArgumentException("name is required.");
+        }
         // currently, it looks like there are no restrictions on the network name from docker side.
         // Numbers-only names and even space-delimited words are supported. We can add some
         // restrictions here.

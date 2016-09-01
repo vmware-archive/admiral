@@ -18,7 +18,7 @@ import java.util.Map;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
-import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
@@ -32,10 +32,8 @@ public class ContainerNetworkService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CONTAINER_NETWORKS;
 
-    public static class ContainerNetworkState extends MultiTenantDocument {
+    public static class ContainerNetworkState extends ResourceState {
 
-        public static final String FIELD_NAME_ID = "id";
-        public static final String FIELD_NAME_NAME = "name";
         public static final String FIELD_NAME_DESCRIPTION_LINK = "descriptionLink";
         public static final String FIELD_NAME_IPAM = "ipam";
         public static final String FIELD_NAME_DRIVER = "driver";
@@ -43,16 +41,6 @@ public class ContainerNetworkService extends StatefulService {
         public static final String FIELD_NAME_ORIGINATIONG_HOST_REFERENCE = "originatingHostReference";
         public static final String FIELD_NAME_ADAPTER_MANAGEMENT_REFERENCE = "adapterManagementReference";
         public static final String FIELD_NAME_COMPOSITE_COMPONENT_LINK = "compositeComponentLink";
-
-        /** Network id provided by the docker host. */
-        @Documentation(description = "Network id provider by the docker host.")
-        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.ID })
-        public String id;
-
-        /** The name of a given network. */
-        @Documentation(description = "The name of a given network.")
-        @UsageOption(option = PropertyUsageOption.REQUIRED)
-        public String name;
 
         /** Defines the description of the network */
         @Documentation(description = "Defines the description of the network.")
@@ -95,18 +83,6 @@ public class ContainerNetworkService extends StatefulService {
         @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
                 PropertyUsageOption.OPTIONAL, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Map<String, String> options;
-
-        /**
-         * A map of field-value pairs for a given network. These key/value pairs are custom tags,
-         * properties or attributes that could be used to add additional data or tag the network
-         * instance for query and policy purposes.
-         */
-        @Documentation(description = "A map of field-value pairs for a given network. These key/value pairs are custom tags,"
-                + " properties or attributes that could be used to add additional data or tag the network"
-                + " instance for query and policy purposes.")
-        @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
-                PropertyUsageOption.OPTIONAL })
-        public Map<String, String> customProperties;
 
     }
 
@@ -177,9 +153,8 @@ public class ContainerNetworkService extends StatefulService {
             // check that all required fields are not null.
             // Skip this step on updates (null = no update)
             Utils.validateState(getStateDescription(), state);
+            NetworkUtils.validateNetworkName(state.name);
         }
-
-        NetworkUtils.validateNetworkName(state.name);
 
         if (state.ipam != null) {
             for (IpamConfig ipamConfig : state.ipam.config) {

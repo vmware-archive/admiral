@@ -18,13 +18,14 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
-import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
@@ -37,19 +38,14 @@ public class ContainerNetworkDescriptionService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CONTAINER_NETWORK_DESC;
 
-    public static class ContainerNetworkDescription extends MultiTenantDocument {
+    @JsonIgnoreProperties({ "customProperties" })
+    public static class ContainerNetworkDescription extends ResourceState {
 
         public static String CONTAINER_NETWORK_TYPE = "CONTAINER_NETWORK";
 
-        public static final String FIELD_NAME_NAME = "name";
         public static final String FIELD_NAME_IPAM = "ipam";
         public static final String FIELD_NAME_DRIVER = "driver";
         public static final String FIELD_NAME_OPTIONS = "options";
-
-        /** The name of a given network. */
-        @Documentation(description = "The name of a given network.")
-        @UsageOption(option = PropertyUsageOption.REQUIRED)
-        public String name;
 
         /** An IPAM configuration for a given network. */
         @Documentation(description = "An IPAM configuration for a given network.")
@@ -99,14 +95,8 @@ public class ContainerNetworkDescriptionService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public URI instanceAdapterReference;
 
-        /** Custom properties. */
-        @JsonIgnore
-        @Documentation(description = "Custom properties.")
-        @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public Map<String, String> customProperties;
-
         @JsonAnySetter
-        private void putCustomProperty(String key, String value) {
+        private void putProperty(String key, String value) {
             if (customProperties == null) {
                 customProperties = new HashMap<>();
             }
@@ -114,7 +104,7 @@ public class ContainerNetworkDescriptionService extends StatefulService {
         }
 
         @JsonAnyGetter
-        private Map<String, String> getCustomProperties() {
+        private Map<String, String> getProperties() {
             return customProperties;
         }
 
@@ -189,6 +179,10 @@ public class ContainerNetworkDescriptionService extends StatefulService {
             Utils.validateState(getStateDescription(), state);
         }
 
+        if (state.name == null) {
+            throw new IllegalArgumentException("name is required.");
+        }
+
         if (state.instanceAdapterReference == null) {
             state.instanceAdapterReference = UriUtilsExtended.buildUri(getHost(),
                     ManagementUriParts.ADAPTER_DOCKER);
@@ -214,8 +208,7 @@ public class ContainerNetworkDescriptionService extends StatefulService {
 
     @Override
     public ServiceDocument getDocumentTemplate() {
-        ContainerNetworkDescription template = (ContainerNetworkDescription) super
-                .getDocumentTemplate();
+        ContainerNetworkDescription template = (ContainerNetworkDescription) super.getDocumentTemplate();
 
         template.name = "name (string)";
 

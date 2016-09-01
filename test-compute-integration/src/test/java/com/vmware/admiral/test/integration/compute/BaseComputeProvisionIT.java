@@ -235,7 +235,6 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         assertNotNull(provisionRequest);
         assertNotNull(provisionRequest.resourceLinks);
 
-        validateHostState(provisionRequest.resourceLinks);
         try {
             doWithResources(provisionRequest.resourceLinks);
         } finally {
@@ -252,6 +251,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     }
 
     protected void doWithResources(List<String> resourceLinks) throws Throwable {
+        validateHostState(resourceLinks);
     }
 
     private RequestBrokerState requestCompute(ComputeDescription computeDescription,

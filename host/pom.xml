@@ -178,6 +178,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.plugin.surefire}</version>
                 <configuration>
                     <excludes>
                         <exclude>**/ManagementHostClusterOf3NodesTest.java</exclude>

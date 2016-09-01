@@ -150,8 +150,7 @@ public class ContainerHostService extends StatelessService {
 
             QueryTask q = QueryUtil.buildPropertyQuery(ComputeState.class, String.format("%s.%s",
                     ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
-                    ComputeConstants.DOCKER_URI_PROP_NAME),
-                    ContainerDescription.getDockerHostUri(hostSpec.hostState).toString());
+                    ComputeConstants.DOCKER_URI_PROP_NAME), hostSpec.uri.toString());
 
             List<String> tenantLinks = hostSpec.hostState.tenantLinks;
             if (tenantLinks != null) {
@@ -223,8 +222,7 @@ public class ContainerHostService extends StatelessService {
         }
         cs.customProperties.put(ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
         cs.customProperties.put(ComputeConstants.COMPUTE_HOST_PROP_NAME, "true");
-        cs.customProperties.put(ComputeConstants.DOCKER_URI_PROP_NAME,
-                ContainerDescription.getDockerHostUri(hostSpec.hostState).toString());
+        cs.customProperties.put(ComputeConstants.DOCKER_URI_PROP_NAME, hostSpec.uri.toString());
 
         sendRequest(store
                 .setBody(cs)

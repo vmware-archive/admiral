@@ -322,7 +322,6 @@ public abstract class BaseIntegrationSupportIT {
                 waitForTaskToComplete(taskSelfLink);
             } else {
                 logger.info("Docker host not found. Skipping removal");
-                ;
             }
         }
     }

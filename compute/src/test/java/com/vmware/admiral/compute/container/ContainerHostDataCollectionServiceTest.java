@@ -418,7 +418,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         // since we don't know the documentSelfLink of the new container we have to query by the ID
         waitFor(() -> {
             QueryTask queryTask = QueryUtil.buildPropertyQuery(ContainerState.class,
-                    ContainerState.FIELD_NAME_ID_LINK, preexistingContainerId);
+                    ContainerState.FIELD_NAME_ID, preexistingContainerId);
 
             queryTask.setDirect(true);
 
@@ -787,7 +787,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
             // since we don't know the documentSelfLink of the new container we have to query by the ID
             waitFor(() -> {
                 QueryTask queryTask = QueryUtil.buildPropertyQuery(ContainerState.class,
-                        ContainerState.FIELD_NAME_ID_LINK, preexistingContainerId);
+                        ContainerState.FIELD_NAME_ID, preexistingContainerId);
 
                 queryTask.setDirect(true);
 

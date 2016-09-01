@@ -47,9 +47,8 @@ public class ContainerService extends StatefulService {
 
     private volatile ContainerMaintenance containerMaintenance;
 
-    public static class ContainerState extends
-            com.vmware.admiral.service.common.MultiTenantDocument {
-        public static final String FIELD_NAME_ID_LINK = "id";
+    public static class ContainerState
+            extends com.vmware.photon.controller.model.resources.ResourceState {
         public static final String FIELD_NAME_NAMES = "names";
         public static final String FIELD_NAME_COMMAND = "command";
         public static final String FIELD_NAME_PORTS = "ports";
@@ -86,11 +85,6 @@ public class ContainerService extends StatefulService {
                 return this == PROVISIONING || this == RETIRED;
             }
         }
-
-        /** External container instance id provider by the container host. */
-        @Documentation(description = "External container instance id provider by the container host.")
-        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.ID })
-        public String id;
 
         /** The list of names of a given container host. */
         @Documentation(description = "The list of names of a given container host.")
@@ -228,18 +222,6 @@ public class ContainerService extends StatefulService {
                 + "a given time.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public Integer cpuShares;
-
-        /**
-         * A map of field-value pairs for a given container. These key/value pairs are custom tags,
-         * properties or attributes that could be used to add additional data or tag the container
-         * instance for query and policy purposes.
-         */
-        @Documentation(description = "A map of field-value pairs for a given container. These key/value pairs are custom tags,"
-                + " properties or attributes that could be used to add additional data or tag the container"
-                + " instance for query and policy purposes.")
-        @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
-                PropertyUsageOption.OPTIONAL })
-        public Map<String, String> customProperties;
 
         /** Unmodeled container attributes */
         @Documentation(description = "Unmodeled container attributes")

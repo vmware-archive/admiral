@@ -34,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -58,8 +59,8 @@ import com.vmware.admiral.compute.content.EnvSerializer;
 import com.vmware.admiral.compute.content.ServiceLinkDeserializer;
 import com.vmware.admiral.compute.content.ServiceLinkSerializer;
 import com.vmware.admiral.compute.content.YamlMapper;
-import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
@@ -86,12 +87,12 @@ public class ContainerDescriptionService extends StatefulService {
     private static AtomicLong containerMinMemory = new AtomicLong(-1);
 
     @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
-    public static class ContainerDescription extends MultiTenantDocument {
+    @JsonIgnoreProperties({ "customProperties" })
+    public static class ContainerDescription extends ResourceState {
         /** Enatai adapter way to create valid URI from docker image reference */
         public static final String DOCKER_IMAGE_REPO_SCHEMA_PREFIX = "docker://";
 
         public static final String FIELD_NAME_POD = "pod";
-        public static final String FIELD_NAME_NAME = "name";
         public static final String FIELD_NAME_IMAGE = "image";
         public static final String FIELD_NAME_VOLUMES_FROM = "volumesFrom";
         public static final String FIELD_NAME_VOLUME_DRIVER = "volumeDriver";
@@ -99,10 +100,6 @@ public class ContainerDescriptionService extends StatefulService {
         public static final String FIELD_NAME_AFFINITY = "affinity";
         public static final String FIELD_NAME_DEPLOYMENT_POLICY_ID = "deploymentPolicyId";
         public static final String FIELD_NAME_PARENT_DESCRIPTION_LINK = "parentDescriptionLink";
-
-        /** (Optional) Name of the container. */
-        @Documentation(description = "Name of the container.")
-        public String name;
 
         /** (Required) The docker image */
         @Documentation(description = "The docker image.")
@@ -370,14 +367,8 @@ public class ContainerDescriptionService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public String deploymentPolicyId;
 
-        /** Custom properties. */
-        @JsonIgnore
-        @Documentation(description = "Custom properties.")
-        @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public Map<String, String> customProperties;
-
         @JsonAnySetter
-        private void putCustomProperty(String key, String value) {
+        private void putProperty(String key, String value) {
             if (customProperties == null) {
                 customProperties = new HashMap<>();
             }
@@ -385,7 +376,7 @@ public class ContainerDescriptionService extends StatefulService {
         }
 
         @JsonAnyGetter
-        private Map<String, String> getCustomProperties() {
+        private Map<String, String> getProperties() {
             return customProperties;
         }
 
