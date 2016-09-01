@@ -561,6 +561,14 @@ public class ContainerDescriptionService extends StatefulService {
         String currentSignature = Utils.computeSignature(currentState, docDesc);
 
         PropertyUtils.mergeServiceDocuments(currentState, patchBody);
+
+        if (patchBody.networkMode != null && patchBody.networkMode.trim().isEmpty()) {
+            currentState.networkMode = null;
+        }
+        if (patchBody.networks != null) {
+            currentState.networks = patchBody.networks;
+        }
+
         validateState(currentState);
 
         String newSignature = Utils.computeSignature(currentState, docDesc);

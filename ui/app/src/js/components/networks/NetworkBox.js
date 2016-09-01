@@ -21,6 +21,12 @@ const TEMPLATE = `<div class="network">
                       </div>
                     </div>
                     <div class="network-anchor-line" v-bind:class="{'shrink': !attached}"></div>
+                    <div class="network-anchor">
+                      <div class="network-label-drag">
+                        {{i18n('app.template.details.network.drag')}}</div>
+                      <div class="network-label-drop">
+                        {{i18n('app.template.details.network.drop')}}</div>
+                    </div>
                   </div>`;
 
 var NetworkBox = Vue.extend({

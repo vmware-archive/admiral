@@ -51,6 +51,9 @@ var utils = {
   existsConfigurationProperty: function(property) {
     return configurationProperties.hasOwnProperty(property);
   },
+  isNetworkingAvailable: function() {
+    return this.getConfigurationPropertyBoolean('allow.ft.network');
+  },
 
   validate: function(model, constraints) {
     var validationErrors = {};

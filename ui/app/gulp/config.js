@@ -22,6 +22,7 @@ var jsLibsToCopy = [
   './node_modules/bootstrap-tokenfield/dist/bootstrap-tokenfield.js',
   './node_modules/vue/dist/vue.js',
   './node_modules/vue-infinite-scroll/vue-infinite-scroll.js',
+  './node_modules/jsplumb/dist/js/jsPlumb-2.1.5.js',
   './node_modules/d3/d3.js',
   './node_modules/moment/min/moment-with-locales.js',
   './node_modules/requirejs/require.js',
@@ -47,6 +48,7 @@ var jsLibsToCopyMinified = [
   './node_modules/bootstrap-tokenfield/dist/bootstrap-tokenfield.min.js',
   './node_modules/vue/dist/vue.min.js',
   './node_modules/vue-infinite-scroll/vue-infinite-scroll.js',
+  './node_modules/jsplumb/dist/js/jsPlumb-2.1.5-min.js',
   './node_modules/d3/d3.min.js',
   './node_modules/moment/min/moment-with-locales.min.js',
   './node_modules/requirejs/require.js',
@@ -99,7 +101,7 @@ var getTestDcpUrl = function() {
 
 var ADMIRAL_URL = getTestDcpUrl();
 
-var pathsToProxy = ["/"];
+var pathsToProxy = ["/config", "/core", "/images", "/popular-images", "/requests", "/delete-tasks", "/request-status", "/resources", "/templates", "/user-session", "/container-image-icons", "/rp"];
 
 /* Utilities to proxy calls from "/path" to "ADMIRAL/path".
 The Karma proxies are needed for integration tests where tests are run on a built in karma server, but are making REST calls to "ADMIRAL".

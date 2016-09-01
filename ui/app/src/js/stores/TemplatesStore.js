@@ -305,7 +305,8 @@ let getNetworkNamesOfContainer = function(cd) {
         cdNetworks.push(key.toLowerCase());
       }
     }
-  } else if (cd.networkMode) {
+  }
+  if (cd.networkMode) {
     cdNetworks.push(cd.networkMode.toLowerCase());
   }
 
@@ -328,7 +329,8 @@ let updateContainersNetworks = function(attachContainersToNetworks, detachContai
   for (let i = 0; i < containers.length; i++) {
     var container = containers[i].asMutable({deep: true});
     containersObj[container.documentSelfLink] = {
-      networkMode: container.networkModel,
+      documentSelfLink: container.documentSelfLink,
+      networkMode: container.networkMode,
       networks: container.networks || {}
     };
   }
@@ -373,15 +375,20 @@ let updateContainersNetworks = function(attachContainersToNetworks, detachContai
     }
   }
 
-  Promise.all(promises).then((updatedDescriptions) => {
+  function updateDescriptions(patchDescriptions) {
     var containerDefs = utils.getIn(this.getData(),
                   ['selectedItemDetails', 'templateDetails', 'listView', 'items']);
     if (containerDefs) {
       containerDefs = containerDefs.map((cd) => {
-        for (var i = 0; i < updatedDescriptions.length; i++) {
-          var updatedDescription = updatedDescriptions[i];
-           if (cd.documentSelfLink === updatedDescription.documentSelfLink) {
-            cd = cd.merge(updatedDescription);
+        for (var key in patchDescriptions) {
+          if (!patchDescriptions.hasOwnProperty(key)) {
+            continue;
+          }
+          var patchDescription = patchDescriptions[key];
+          if (cd.documentSelfLink === patchDescription.documentSelfLink) {
+            cd = cd.asMutable();
+            cd.networks = patchDescription.networks;
+            cd.networkMode = patchDescription.networkMode;
           }
         }
 
@@ -395,6 +402,12 @@ let updateContainersNetworks = function(attachContainersToNetworks, detachContai
 
       this.emitChange();
     }
+  }
+
+  updateDescriptions.call(this, containerPatches);
+
+  Promise.all(promises).then((updatedDescriptions) => {
+    updateDescriptions.call(this, updatedDescriptions);
   }).catch(this.onGenericEditError);
 };
 

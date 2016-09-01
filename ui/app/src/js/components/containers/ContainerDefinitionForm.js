@@ -883,6 +883,17 @@ var updateForm = function(data, oldData) {
 
   var $networkMode = this.$el.find('.container-network-mode-input');
 
+  if (utils.isNetworkingAvailable() && data.availableNetworks !== oldData.availableNetworks) {
+    var $networks = this.$el.find('.container-networks-input');
+    if (data.availableNetworks) {
+      $networks.removeClass('hide');
+      $networkMode.addClass('hide');
+    } else {
+      $networkMode.removeClass('hide');
+      $networks.addClass('hide');
+    }
+  }
+
   if (data.networks !== oldData.networks) {
     var networks = [];
     if (data.networks) {

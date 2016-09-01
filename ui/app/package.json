@@ -20,6 +20,7 @@
     "hasher": "1.2.0",
     "i18next-client": "1.9.0",
     "jquery": "2.1.4",
+    "jsplumb": "2.1.5",
     "moment": "2.10.6",
     "reflux": "0.3.1",
     "requirejs": "2.1.22",

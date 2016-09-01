@@ -91,12 +91,21 @@
               <i class='fa fa-plus'></i>
               <span class='title'>{{i18n('app.template.details.newDefinition.title')}}</span>
             </div>
+            <div v-if="isNetworkingAvailable" class="item-content right" v-on:click="openAddNewNetwork">
+              <i class='fa fa-plus'></i>
+              <span class='title'>{{i18n('app.template.details.editNetwork.newTitle')}}</span>
+            </div>
           </grid-item>
         </grid>
         <div v-if="model.templateDetails.listView.itemsLoading" class="loading">
           <span class="vertical-helper"></span>
           <img src="image-assets/loading-animation.gif">
         </div>
+        <network-box v-if="isNetworkingAvailable" v-for="network in networks | networksOrderBy" track-by="name" v-bind:model="network"
+             v-on:attached="networkAttached"
+             v-on:detached="networkDetached"
+             v-on:remove="removeNetwork"></network-box>
+
       </div>
     </div>
   </div>
