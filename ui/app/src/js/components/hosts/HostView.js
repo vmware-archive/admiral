@@ -174,6 +174,8 @@ var HostView = Vue.extend({
         this.unwatchShouldAcceptCertificate = this.$watch('model.shouldAcceptCertificate', () => {
           this.updateCertificateModal(this.model.shouldAcceptCertificate);
         });
+
+        $(this.$el).find('.fa-question-circle').tooltip({html: true});
       },
 
       detached: function() {
@@ -192,6 +194,12 @@ var HostView = Vue.extend({
       },
 
       methods: {
+        onBlur: function(e) {
+          e.preventDefault();
+
+          var hostnameInput = $(e.currentTarget);
+          hostnameInput.val(utils.populateDefaultSchemeAndPort(hostnameInput.val()));
+        },
         updateCertificateModal: function(shouldAcceptCertificate) {
           if (shouldAcceptCertificate) {
 

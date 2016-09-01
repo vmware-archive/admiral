@@ -613,6 +613,50 @@ var utils = {
     };
   },
 
+  mergeURLParts: function(urlParts) {
+    var mergedUri = '';
+    if (urlParts.scheme) {
+      mergedUri += urlParts.scheme + '://';
+    }
+    mergedUri += urlParts.host;
+    if (urlParts.port) {
+      mergedUri += ':' + urlParts.port;
+    }
+    if (urlParts.path) {
+      mergedUri += urlParts.path;
+    }
+    if (urlParts.query) {
+      mergedUri += '?' + urlParts.query;
+    }
+    if (mergedUri.endsWith('/')) {
+      mergedUri = mergedUri.slice(0, -1);
+    }
+    return mergedUri;
+  },
+
+  populateDefaultSchemeAndPort: function(uri) {
+    var urlParts = this.getURLParts(uri);
+
+    if (!urlParts.host) {
+      return uri;
+    }
+
+    if (!urlParts.scheme) {
+      urlParts.scheme = 'https';
+    }
+
+    if (!urlParts.port) {
+      if (urlParts.scheme.toLowerCase() === 'https') {
+        urlParts.port = 443;
+      }
+      if (urlParts.scheme.toLowerCase() === 'http') {
+        urlParts.port = 80;
+      }
+    }
+
+    return utils.mergeURLParts(urlParts);
+  },
+
   getPortsDisplayTexts: function(hostAddress, ports) {
     let portsDisplayTexts = [];
 

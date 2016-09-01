@@ -140,4 +140,44 @@ describe("utils test", function() {
     });
   });
 
+  describe("mergeURLParts", function() {
+    it("should concatenate URL parts", function() {
+      var parts = utils.getURLParts("192.168.1.1");
+      var mergedParts = utils.mergeURLParts(parts);
+      expect(mergedParts).toEqual("192.168.1.1");
+
+      /* Do not concatenate '/' at the end */
+      var parts = utils.getURLParts("192.168.1.1:3000/");
+      var mergedParts = utils.mergeURLParts(parts);
+      expect(mergedParts).toEqual("192.168.1.1:3000");
+
+      var parts = utils.getURLParts("https://192.168.1.1:3000/path?query");
+      var mergedParts = utils.mergeURLParts(parts);
+      expect(mergedParts).toEqual("https://192.168.1.1:3000/path?query");
+    });
+  });
+
+  describe("populateDefaultSchemeAndPort", function() {
+    it("alter url with default scheme and port if missing", function() {
+      /* if no hostname, return the same string */
+      var uri = utils.populateDefaultSchemeAndPort("       ");
+      expect(uri).toEqual("       ");
+
+      var uri = utils.populateDefaultSchemeAndPort("192.168.1.1/api");
+      expect(uri).toEqual("https://192.168.1.1:443/api");
+
+      var uri = utils.populateDefaultSchemeAndPort("192.168.1.1:5000/api");
+      expect(uri).toEqual("https://192.168.1.1:5000/api");
+
+      var uri = utils.populateDefaultSchemeAndPort("https://192.168.1.1/api");
+      expect(uri).toEqual("https://192.168.1.1:443/api");
+
+      var uri = utils.populateDefaultSchemeAndPort("http://192.168.1.1/api");
+      expect(uri).toEqual("http://192.168.1.1:80/api");
+
+      var uri = utils.populateDefaultSchemeAndPort("https://192.168.1.1:2376/api");
+      expect(uri).toEqual("https://192.168.1.1:2376/api");
+    });
+  });
+
 });

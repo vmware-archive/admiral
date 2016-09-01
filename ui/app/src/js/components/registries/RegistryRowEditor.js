@@ -16,6 +16,7 @@ import Alert from 'components/common/Alert';
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
 import constants from 'core/constants';
 import modal from 'core/modal';
+import utils from 'core/utils';
 
 const credentialManageOptions = [
   {
@@ -52,6 +53,8 @@ function RegistryRowEditor() {
       RegistryContextToolbarActions.manageCredentials();
     }
   });
+
+  this.$el.find('.fa-question-circle').tooltip({html: true});
 
   this.credentialInput.setOptionSelectCallback(() => toggleButtonsState(this.$el));
 
@@ -109,6 +112,13 @@ var addEventListeners = function() {
 
     var toReturn = getRegistryModel.call(_this);
     RegistryActions.verifyRegistry(toReturn);
+  });
+
+  this.$el.find('.registryEditHolder #hostname input').focusout(function(e) {
+    e.preventDefault();
+
+    var hostnameInput = $(e.currentTarget);
+    hostnameInput.val(utils.populateDefaultSchemeAndPort(hostnameInput.val()));
   });
 
   this.$el.find('.registryEditHolder').on('click', '.registryRowEdit-save', function(e) {

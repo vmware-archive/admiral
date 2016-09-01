@@ -276,7 +276,7 @@ public class UriUtilsExtendedTest {
         assertNotNull(uri);
         assertEquals("https", uri.getScheme());
         assertEquals("a.b.c", uri.getHost());
-        assertEquals(2376, uri.getPort());
+        assertEquals(443, uri.getPort());
         assertEquals("/path/v1.19", uri.getPath());
 
         try {
@@ -297,13 +297,13 @@ public class UriUtilsExtendedTest {
     @Test
     public void testBuildDockerRegistryUri() throws Exception {
         URI uri = UriUtilsExtended.buildDockerRegistryUri("hostname.local");
-        assertEquals("https://hostname.local:5000", uri.toString());
+        assertEquals("https://hostname.local:443", uri.toString());
 
         uri = UriUtilsExtended.buildDockerRegistryUri("hostname.local:80");
         assertEquals("https://hostname.local:80", uri.toString());
 
         uri = UriUtilsExtended.buildDockerRegistryUri("http://hostname.local");
-        assertEquals("http://hostname.local:5000", uri.toString());
+        assertEquals("http://hostname.local:80", uri.toString());
 
         uri = UriUtilsExtended.buildDockerRegistryUri("https://hostname.local:443");
         assertEquals("https://hostname.local:443", uri.toString());

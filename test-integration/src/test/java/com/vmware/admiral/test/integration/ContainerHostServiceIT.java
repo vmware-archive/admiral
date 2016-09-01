@@ -41,7 +41,9 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Utils;
 
 public class ContainerHostServiceIT extends RequestBaseTest {
-    private static final String VALID_DOCKER_HOST_ADDRESS = getSystemOrTestProp("docker.host.address");
+    private static final String VALID_DOCKER_HOST_ADDRESS = String.format("%s:%s",
+            getSystemOrTestProp("docker.host.address"),
+            getSystemOrTestProp("docker.host.port.API"));
     private ComputeState computeState;
     private ContainerHostSpec containerHostSpec;
     private URI containerHostUri;

@@ -17,7 +17,11 @@
         <div class="registryRowEdit-inputs form-horizontal">
           <div class="form-group col-sm-12">
             <div id="hostname" class="col-sm-6">
-              <input type="text" placeholder="{{i18n 'app.registry.edit.hostnameTitle'}}">
+              <div class="hostname-holder">
+                <input type="text" placeholder="{{i18n 'app.registry.edit.hostnameTitle'}}">
+              </div>
+              <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="right"
+                 title="{{i18n 'app.registry.edit.hostnameHint'}}"></i>
               <span class="help-block"></span>
             </div>
             <div id="name" class="col-sm-6">

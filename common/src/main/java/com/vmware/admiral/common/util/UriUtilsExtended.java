@@ -26,10 +26,11 @@ import com.vmware.admiral.service.common.ReverseProxyService;
 public class UriUtilsExtended extends com.vmware.xenon.common.UriUtils {
     private static final String MINIMUM_DOCKER_API_VERSION = "1.19";
     private static final String DEFAULT_DOCKER_SCHEME = UriUtilsExtended.HTTPS_SCHEME;
-    private static final int DEFAULT_DOCKER_HTTP_PORT = 2375;
-    private static final int DEFAULT_DOCKER_HTTPS_PORT = 2376;
+    private static final int DEFAULT_DOCKER_HTTP_PORT = 80;
+    private static final int DEFAULT_DOCKER_HTTPS_PORT = 443;
     private static final String DEFAULT_DOCKER_REGISTRY_SCHEME = UriUtilsExtended.HTTPS_SCHEME;
-    private static final int DEFAULT_DOCKER_REGISTRY_HTTPS_PORT = 5000;
+    private static final int DEFAULT_DOCKER_REGISTRY_HTTP_PORT = 80;
+    private static final int DEFAULT_DOCKER_REGISTRY_HTTPS_PORT = 443;
     /* Host URL pattern */
     public static final Pattern PATTERN_HOST_URL = Pattern
             .compile("((?<scheme>\\w[\\w\\d+-\\.]*)(://))?"
@@ -56,6 +57,12 @@ public class UriUtilsExtended extends com.vmware.xenon.common.UriUtils {
         int port = DEFAULT_DOCKER_REGISTRY_HTTPS_PORT;
         if (servicePort != null && !servicePort.isEmpty()) {
             port = Integer.parseInt(servicePort);
+        } else {
+            if (UriUtilsExtended.HTTP_SCHEME.equals(scheme)) {
+                port = DEFAULT_DOCKER_REGISTRY_HTTP_PORT;
+            } else {
+                port = DEFAULT_DOCKER_REGISTRY_HTTPS_PORT;
+            }
         }
 
         String serviceHost = matcher.group("host");

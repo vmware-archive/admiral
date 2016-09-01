@@ -602,6 +602,21 @@ $main-list-view-right: 10px;
   width: 100%;
   padding-left: 200px;
   margin-top: -30px;
+
+  .fa-question-circle {
+    color: $link_color;
+    margin-top: 0;
+    font-size: 20px;
+    padding-top: 5px;
+    padding-right: 10px;
+    position: absolute;
+    top: 2px;
+    right: 5px;
+  }
+
+  .hostname-holder {
+    margin-right: 30px;
+  }
 }
 
 .host-view .main-panel .host-form .clusterSizeInput {
@@ -1162,6 +1177,26 @@ text-shadow: 0px 0px 20px black;
   margin-bottom: 5px;
   padding-top: 12px !important;
 }
+
+.registryEditHolder {
+  .fa-question-circle {
+    color: $link_color;
+    margin-top: 0;
+    font-size: 20px;
+    position: absolute;
+    top: 2px;
+    right: 5px;
+  }
+
+  .hostname-holder {
+    margin-right: 20px;
+  }
+
+  .tooltip-inner {
+    width: 200px;
+  }
+}
+
 .credentialsEditHolder .credentialsEdit-properties label {
     font-weight: normal;
 }

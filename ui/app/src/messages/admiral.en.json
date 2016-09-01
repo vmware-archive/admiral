@@ -32,6 +32,7 @@
           "edit": "Edit Host"
         },
         "hostname": "IP / Host name",
+        "hostnameHint": "Please specify the appropriate scheme and port, e.g. https://myhost.com:2376. Default scheme: 'https'. Default ports: https/443, http/80.",
         "hostAlias": "Name",
         "hostAddress": "Address",
         "resourcePool": "Resource pool",
@@ -343,6 +344,7 @@
         "createNew": "New Registry",
         "update": "Edit Registry",
         "hostnameTitle": "IP / Host name",
+        "hostnameHint": "Please specify the appropriate scheme and port, e.g. https://myregistry.com:5000. Default scheme: 'https'. Default ports: https/443, http/80.",
         "insecureRegistryHint": "Plain http registry detected: make sure your hosts are properly configured and can connect to them.",
         "nameTitle": "Name",
         "credentialTitle": "Login credential",
