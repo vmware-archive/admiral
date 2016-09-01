@@ -9,7 +9,11 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-requirejs.config({baseUrl: ''});
+requirejs.config(
+  {
+    baseUrl: '',
+    waitSeconds: 60
+  });
 
 var $loadingEl = $('body > .loading');
 

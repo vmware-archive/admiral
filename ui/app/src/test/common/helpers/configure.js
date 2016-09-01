@@ -80,6 +80,7 @@ requirejs.config({
   baseUrl: "/base/src",
   // ask Require.js to load these files (all our tests)
   deps: tests,
+  waitSeconds: 60,
 
   // start test run, once Require.js is done
   callback: function() {

@@ -14,7 +14,11 @@
   the SingleView.js
 */
 
-requirejs.config({baseUrl: ''});
+requirejs.config(
+  {
+    baseUrl: '',
+    waitSeconds: 60
+  });
 
 var $loadingEl = $('body > .loading');
 
