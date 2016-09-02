@@ -46,6 +46,10 @@ public enum NetworkOperationType {
         return operationsById.get(id);
     }
 
+    public static String extractDisplayName(String id) {
+        return id.substring(id.lastIndexOf(".") + 1);
+    }
+
     @Override
     public String toString() {
         return id;

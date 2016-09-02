@@ -45,8 +45,7 @@ import com.vmware.xenon.common.UriUtils;
 /**
  * Task implementing the allocation of a container network.
  */
-public class ContainerNetworkAllocationTaskService
-        extends
+public class ContainerNetworkAllocationTaskService extends
         AbstractTaskStatefulService<ContainerNetworkAllocationTaskService.ContainerNetworkAllocationTaskState, ContainerNetworkAllocationTaskService.ContainerNetworkAllocationTaskState.SubStage> {
 
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_CONTAINER_NETWORK_ALLOCATION_TASKS;
@@ -60,8 +59,7 @@ public class ContainerNetworkAllocationTaskService
         List<String> resourceLinks;
     }
 
-    public static class ContainerNetworkAllocationTaskState
-            extends
+    public static class ContainerNetworkAllocationTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ContainerNetworkAllocationTaskState.SubStage> {
 
         public static enum SubStage {

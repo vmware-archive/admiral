@@ -62,8 +62,7 @@ public class ContainerNetworkProvisionTaskService
     // cached network description
     private volatile ContainerNetworkDescription networkDescription;
 
-    public static class ContainerNetworkProvisionTaskState
-            extends
+    public static class ContainerNetworkProvisionTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ContainerNetworkProvisionTaskState.SubStage> {
 
         public static enum SubStage {

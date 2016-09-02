@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
@@ -35,6 +36,7 @@ import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
@@ -43,6 +45,7 @@ import com.vmware.admiral.request.ContainerClusteringTaskService.ContainerCluste
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState;
 import com.vmware.admiral.request.ContainerNetworkAllocationTaskService.ContainerNetworkAllocationTaskState;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService.ContainerNetworkProvisionTaskState;
+import com.vmware.admiral.request.ContainerNetworkRemovalTaskService.ContainerNetworkRemovalTaskState;
 import com.vmware.admiral.request.ContainerOperationTaskService.ContainerOperationTaskState;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState.SubStage;
@@ -213,7 +216,9 @@ public class RequestBrokerService extends
                 createReservationRemovalTask(state);
             } else if (isPostAllocationOperation(state)) {
                 if (isComputeType(state)) {
-                    createComputeRemovalTask(state, false);
+                    createComputeRemovalTask(state);
+                } else if (isContainerNetworkType(state)) {
+                    createContainerNetworkRemovalTask(state);
                 } else {
                     createContainerRemovalAllocationTasks(state, false);
                 }
@@ -230,7 +235,9 @@ public class RequestBrokerService extends
             break;
         case RESERVATION_CLEANED_UP:
             if (isComputeType(state)) {
-                createComputeRemovalTask(state, true);
+                createComputeRemovalTask(state);
+            } else if (isContainerNetworkType(state)) {
+                createContainerNetworkRemovalTask(state);
             } else {
                 createContainerRemovalAllocationTasks(state, true);
             }
@@ -383,16 +390,13 @@ public class RequestBrokerService extends
             }
         } else if (isComputeType(state)) {
             if (isRemoveOperation(state)) {
-                createComputeRemovalTask(state, false);
+                createComputeRemovalTask(state);
             } else {
                 createComputeOperationTasks(state);
             }
         } else if (isContainerNetworkType(state)) {
             if (isRemoveOperation(state)) {
-                // TODO - handle the removal
-                // createContainerNetworkRemovalTask(state);
-                failTask(null, new IllegalArgumentException("Not supported operation YET: "
-                        + state.operation));
+                createContainerNetworkRemovalTask(state);
             } else {
                 failTask(null, new IllegalArgumentException("Not supported operation: "
                         + state.operation));
@@ -428,7 +432,7 @@ public class RequestBrokerService extends
                                         "Failed to create operation task - composite component's container links are empty");
                             }
                             state.resourceLinks = componentLinks;
-                            // TODO: Handle other types
+
                             state.resourceType = ResourceType.CONTAINER_TYPE.getName();
                             createContainerOperationTasks(state);
                         }
@@ -512,11 +516,9 @@ public class RequestBrokerService extends
                     }
                     sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
                 }));
-
     }
 
-    private void createComputeRemovalTask(RequestBrokerState state,
-            boolean skipReleaseResourceQuota) {
+    private void createComputeRemovalTask(RequestBrokerState state) {
         boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED
                 || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
 
@@ -545,7 +547,34 @@ public class RequestBrokerService extends
                     }
                     sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
                 }));
+    }
 
+    private void createContainerNetworkRemovalTask(RequestBrokerState state) {
+        if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
+            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
+            return;
+        }
+        ContainerNetworkRemovalTaskState removalState = new ContainerNetworkRemovalTaskState();
+        removalState.resourceLinks = state.resourceLinks;
+        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED;
+        removalState.serviceTaskCallback = ServiceTaskCallback.create(
+                state.documentSelfLink,
+                TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
+                TaskStage.FAILED, SubStage.ERROR);
+        removalState.documentSelfLink = getSelfId();
+        removalState.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation.createPost(this,
+                ContainerNetworkRemovalTaskService.FACTORY_LINK)
+                .setBody(removalState)
+                .setContextId(getSelfId())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        failTask("Failed to create container network removal operation task", ex);
+                        return;
+                    }
+                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                }));
     }
 
     private void createContainerRemovalAllocationTasks(RequestBrokerState state,
@@ -561,7 +590,9 @@ public class RequestBrokerService extends
 
         ContainerRemovalTaskState removalState = new ContainerRemovalTaskState();
         removalState.skipReleaseResourcePolicy = skipReleaseResourcePolicy;
-        removalState.resourceLinks = state.resourceLinks;
+        removalState.resourceLinks = state.resourceLinks.stream()
+                .filter((l) -> l.startsWith(ContainerFactoryService.SELF_LINK))
+                .collect(Collectors.toList());
 
         removalState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
@@ -992,6 +1023,10 @@ public class RequestBrokerService extends
 
         if (isContainerType(state) || isCompositeComponentType(state)) {
             return ContainerOperationType.DELETE.id.equals(state.operation);
+        }
+
+        if (isContainerNetworkType(state)) {
+            return NetworkOperationType.DELETE.id.equals(state.operation);
         }
 
         return false;

@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -60,6 +61,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
@@ -257,26 +259,19 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ContainerNetworkDescription networkDesc = TestRequestStateFactory
                 .createContainerNetworkDescription(networkName);
         networkDesc.documentSelfLink = UUID.randomUUID().toString();
-        networkDesc = doPost(networkDesc, ContainerNetworkDescriptionService.FACTORY_LINK);
-        assertNotNull(networkDesc);
 
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
         container1Desc.name = "container1";
         container1Desc.networks = new HashMap<>();
         container1Desc.networks.put(networkName, new ServiceNetwork());
-        container1Desc = doPost(container1Desc, ContainerDescriptionService.FACTORY_LINK);
-        assertNotNull(container1Desc);
 
-        ContainerDescription container2Desc =
-                TestRequestStateFactory.createContainerDescription();
+        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
         container2Desc.name = "container2";
         container2Desc.affinity = new String[] { "!container1:hard" };
         container2Desc.networks = new HashMap<>();
         container2Desc.networks.put(networkName, new ServiceNetwork());
-        container2Desc = doPost(container2Desc, ContainerDescriptionService.FACTORY_LINK);
-        assertNotNull(container2Desc);
 
         CompositeDescription compositeDesc = createCompositeDesc(networkDesc, container1Desc,
                 container2Desc);
@@ -338,6 +333,102 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 .equals(dockerHost1.documentSelfLink)
                 || network.originatingHostLink.equals(dockerHost2.documentSelfLink);
         assertTrue(networkIsProvisionedOnAnyHosts);
+    }
+
+    @Test
+    @Ignore
+    public void testRequestLifeCycleWithContainerNetworkFailureShouldCleanNetworks()
+            throws Throwable {
+        host.log(
+                "########  Start of testRequestLifeCycleWithContainerNetworkFailureShouldCleanNetworks ######## ");
+
+        // setup Docker Host:
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+
+        delete(computeHost.documentSelfLink);
+        computeHost = null;
+
+        ComputeState dockerHost1 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost1);
+
+        ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost2);
+
+        // setup Composite description with 2 containers and 1 network
+
+        String networkName = "mynet";
+
+        ContainerNetworkDescription networkDesc = TestRequestStateFactory
+                .createContainerNetworkDescription(networkName);
+        networkDesc.documentSelfLink = UUID.randomUUID().toString();
+
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
+        container1Desc.documentSelfLink = UUID.randomUUID().toString();
+        container1Desc.name = "container1";
+        container1Desc.networks = new HashMap<>();
+        container1Desc.networks.put(networkName, new ServiceNetwork());
+
+        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
+        container2Desc.documentSelfLink = UUID.randomUUID().toString();
+        container2Desc.name = "container2";
+        container2Desc.affinity = new String[] { "!container1:hard" };
+        container2Desc.networks = new HashMap<>();
+        container2Desc.networks.put(networkName, new ServiceNetwork());
+        container2Desc.customProperties.put(MockDockerAdapterService.FAILURE_EXPECTED,
+                Boolean.TRUE.toString());
+
+        CompositeDescription compositeDesc = createCompositeDesc(networkDesc, container1Desc,
+                container2Desc);
+        assertNotNull(compositeDesc);
+
+        // setup Group Policy:
+        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+
+        // 1. Request a composite container with expected failure:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        request.resourceDescriptionLink = compositeDesc.documentSelfLink;
+        request.tenantLinks = groupPolicyState.tenantLinks;
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // 2. Wait for reservation removed substage
+        waitForRequestToFail(request);
+
+        // 3. Verify that the group policy has been released.
+        groupPolicyState = getDocument(GroupResourcePolicyState.class,
+                groupPolicyState.documentSelfLink);
+        assertEquals(groupPolicyState.allocatedInstancesCount, 0);
+
+        String networkLink = null;
+        String containerLink1 = null;
+        String containerLink2 = null;
+
+        Iterator<String> iterator = compositeDesc.descriptionLinks.iterator();
+        while (iterator.hasNext()) {
+            String link = iterator.next();
+            if (link.startsWith(ContainerNetworkDescriptionService.FACTORY_LINK)) {
+                networkLink = link;
+            } else if (containerLink1 == null) {
+                containerLink1 = link;
+            } else {
+                containerLink2 = link;
+            }
+        }
+
+        assertEquals(0,
+                groupPolicyState.resourceQuotaPerResourceDesc.get(containerLink1).intValue());
+        assertEquals(0,
+                groupPolicyState.resourceQuotaPerResourceDesc.get(containerLink2).intValue());
+
+        // Verify request status
+        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+
+        // and there must be no container network state left
+        ServiceDocumentQueryResult networkStates = getDocument(ServiceDocumentQueryResult.class,
+                ContainerNetworkService.FACTORY_LINK);
+        assertEquals(0L, networkStates.documentCount.longValue());
     }
 
     @Test

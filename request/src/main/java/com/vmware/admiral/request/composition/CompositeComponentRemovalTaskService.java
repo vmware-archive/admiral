@@ -162,7 +162,7 @@ public class CompositeComponentRemovalTaskService
         requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
                 TaskStage.STARTED, SubStage.COMPOSITE_REMOVING, TaskStage.FAILED, SubStage.ERROR);
         requestBrokerState.customProperties = state.customProperties;
-        // TODO: Handle other types
+
         requestBrokerState.resourceType = ResourceType.CONTAINER_TYPE.getName();
         requestBrokerState.resourceLinks = containerLinks;
         requestBrokerState.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
