@@ -192,6 +192,8 @@ public interface DockerAdapterCommandExecutor {
 
     void listVolumes(CommandInput input, CompletionHandler completionHandler);
 
+    void inspectVolume(CommandInput input, CompletionHandler completionHandler);
+
     void removeVolume(CommandInput input, CompletionHandler completionHandler);
 
     void handleMaintenance(Operation post);

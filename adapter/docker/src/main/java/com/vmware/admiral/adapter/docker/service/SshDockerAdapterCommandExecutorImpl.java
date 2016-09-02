@@ -56,7 +56,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.NotImplementedException;
 
 import com.vmware.admiral.adapter.docker.util.DockerDevice;
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
@@ -554,6 +553,11 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
 
     @Override
     public void listVolumes(CommandInput input, CompletionHandler completionHandler) {
-        throw new NotImplementedException("List volumes is not implemented yet");
+        throw new UnsupportedOperationException("List volumes is not implemented yet");
+    }
+
+    @Override
+    public void inspectVolume(CommandInput input, CompletionHandler completionHandler) {
+        throw new UnsupportedOperationException("Inspect volume is not implemented yet");
     }
 }

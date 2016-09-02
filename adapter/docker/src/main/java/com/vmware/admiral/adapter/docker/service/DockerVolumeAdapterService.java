@@ -13,8 +13,6 @@ package com.vmware.admiral.adapter.docker.service;
 
 import java.util.logging.Level;
 
-import org.apache.commons.lang3.NotImplementedException;
-
 import com.vmware.admiral.adapter.common.VolumeOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
@@ -30,7 +28,7 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
             VolumeOperationType.CREATE,
             VolumeOperationType.DELETE,
             VolumeOperationType.LIST_VOLUMES,
-            // TODO Implement Inspect operation.
+            VolumeOperationType.INSPECT,
 
     };
 
@@ -184,8 +182,20 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
     }
 
     private void processInspectVolume(RequestContext context) {
-        // TODO implement
-        throw new NotImplementedException("inspecting volumes is not implemented yet");
+        CommandInput inspectCommandInput = context.commandInput.withPropertyIfNotNull(
+                DockerAdapterCommandExecutor.DOCKER_VOLUME_NAME_PROP_NAME,
+                context.volumeState.name);
+
+        context.executor.inspectVolume(inspectCommandInput, (op, ex) -> {
+            if (ex != null) {
+                context.operation.fail(ex);
+            } else {
+                if (op.hasBody()) {
+                    context.operation.setBody(op.getBody(String.class));
+                }
+                context.operation.complete();
+            }
+        });
     }
 
     private void processListVolume(RequestContext context) {

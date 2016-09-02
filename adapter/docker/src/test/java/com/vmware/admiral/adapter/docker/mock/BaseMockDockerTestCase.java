@@ -129,6 +129,10 @@ public class BaseMockDockerTestCase extends BaseTestCase {
                 mockDockerHost, MockDockerVolumeListService.class)),
                 new MockDockerVolumeListService());
 
+        mockDockerHost.startService(Operation.createPost(UriUtils.buildUri(
+                mockDockerHost, MockDockerInspectVolumeService.class)),
+                new MockDockerInspectVolumeService());
+
     }
 
     public static URI getDockerUri() {

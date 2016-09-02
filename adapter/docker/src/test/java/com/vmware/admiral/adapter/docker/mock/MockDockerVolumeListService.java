@@ -26,8 +26,34 @@ public class MockDockerVolumeListService extends StatelessService {
 
     public static List<VolumeItem> volumesList = new ArrayList<>();
 
+    /**
+     * Basic POJO for mocked volumes. For example:
+     *
+     * [
+     *   {
+     *   "Name": "foo",
+     *   "Driver": "local",
+     *   "Mountpoint": "/mnt/sda1/var/lib/docker/volumes/foo/_data"
+     *   }
+     * ]
+     *
+     */
     public static class VolumeItem {
+
+        /**
+         * The name of the volume.
+         */
         public String Id;
+
+        /**
+         * Driver which volume uses.Default is 'local'.
+         */
+        public String Driver;
+
+        /**
+         * Volume directory.
+         */
+        public String Mountpoint;
     }
 
     @Override

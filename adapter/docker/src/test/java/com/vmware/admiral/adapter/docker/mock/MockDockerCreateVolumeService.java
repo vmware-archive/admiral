@@ -30,6 +30,8 @@ public class MockDockerCreateVolumeService extends StatelessService {
     public static final String SELF_LINK = BASE_VERSIONED_PATH + VOLUMES + CREATE;
 
     private static final String VOLUME_NAME_KEY = "Name";
+    private static final String VOLUME_DRIVER_KEY = "flocker";
+    private static final String VOLUME_DIRECTORY_KEY = "/tmp";
 
     private final AtomicInteger idSequence = new AtomicInteger();
 
@@ -59,6 +61,9 @@ public class MockDockerCreateVolumeService extends StatelessService {
 
             VolumeItem volumeItem = new VolumeItem();
             volumeItem.Id = request.get(VOLUME_NAME_KEY).toString();
+            volumeItem.Driver = VOLUME_DRIVER_KEY;
+            volumeItem.Mountpoint = VOLUME_DIRECTORY_KEY;
+
             MockDockerVolumeListService.volumesList.add(volumeItem);
 
             post.setBody(request);

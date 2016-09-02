@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -67,6 +68,13 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
     private static final String TEST_IMAGE_FILE = "/testimage.tar";
     private static final String TEST_GROUP = "test-group";
     private static final String TEST_VOLUME_NAME = "foo";
+    private static final String TEST_VOLUME_DRIVER = "flocker";
+    private static final String TEST_VOLUME_MOUNTPOINT = "/tmp";
+
+    private static final String TEST_VOLUME_NAME_KEY = "Name";
+    private static final String TEST_VOLUME_DRIVER_KEY = "Driver";
+    private static final String TEST_VOLUME_ID_KEY = "Id";
+    private static final String TEST_VOLUME_MOUNTPOINT_KEY = "Mountpoint";
 
     private String parentComputeStateLink;
     private String testDockerCredentialsLink;
@@ -117,6 +125,38 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
         verifyVolumeListContainsId(TEST_VOLUME_NAME);
     }
 
+    @Test
+    public void testVolumeInspect() throws Throwable {
+
+        CommandInput commandInput = new CommandInput().withDockerUri(getDockerVersionedUri())
+                .withCredentials(getDockerCredentials());
+        commandInput.getProperties().put(TEST_VOLUME_NAME_KEY, TEST_VOLUME_NAME);
+
+        host.testStart(1);
+        getTestCommandExecutor().inspectVolume(commandInput, (o, ex) -> {
+            if (ex != null) {
+                host.failIteration(ex);
+            } else {
+                @SuppressWarnings("unchecked")
+                Map<String, String> body = o.getBody(Map.class);
+
+                try {
+                    assertEquals(body.get(TEST_VOLUME_ID_KEY), TEST_VOLUME_NAME);
+                    assertEquals(body.get(TEST_VOLUME_DRIVER_KEY), TEST_VOLUME_DRIVER);
+                    assertEquals(body.get(TEST_VOLUME_MOUNTPOINT_KEY), TEST_VOLUME_MOUNTPOINT);
+
+                    host.completeIteration();
+                } catch (Throwable x) {
+                    host.failIteration(x);
+                }
+
+            }
+        });
+
+        host.testWait();
+
+    }
+
     protected void createTestDockerAuthCredentials() throws Throwable {
         testDockerCredentialsLink = doPost(getDockerCredentials(),
                 AuthCredentialsService.FACTORY_LINK).documentSelfLink;
@@ -161,7 +201,8 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
     protected ContainerVolumeDescription createVolumeDescription(String name) throws Throwable {
         ContainerVolumeDescription volumeDescription = new ContainerVolumeDescription();
         volumeDescription.name = name;
-        volumeDescription.mountpoint = new File("/tmp");
+        volumeDescription.mountpoint = new File(TEST_VOLUME_MOUNTPOINT);
+        volumeDescription.driver = TEST_VOLUME_DRIVER;
         volumeDescription.documentSelfLink = UUID.randomUUID().toString();
 
         return doPost(volumeDescription, ContainerVolumeDescriptionService.FACTORY_LINK);
@@ -170,21 +211,23 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
     protected void createVolumeState(ContainerVolumeDescription desc) throws Throwable {
         waitForServiceAvailability(ContainerVolumeService.FACTORY_LINK);
 
-        ContainerVolumeState containerState = new ContainerVolumeState();
+        ContainerVolumeState volumeState = new ContainerVolumeState();
         assertNotNull("parentLink", parentComputeStateLink);
-        containerState.originatingHostReference = UriUtils.buildUri(host, parentComputeStateLink);
-        containerState.descriptionLink = desc.documentSelfLink;
-        containerState.name = desc.name;
-        containerState.mountpoint = desc.mountpoint;
+        volumeState.originatingHostReference = UriUtils.buildUri(host, parentComputeStateLink);
+        volumeState.descriptionLink = desc.documentSelfLink;
+        volumeState.name = desc.name;
+        volumeState.mountpoint = desc.mountpoint;
+        volumeState.driver = desc.driver;
+
         List<String> tenantLinks = new ArrayList<String>();
         tenantLinks.add(TEST_GROUP);
-        containerState.tenantLinks = tenantLinks;
+        volumeState.tenantLinks = tenantLinks;
 
         // add a custom property
-        containerState.customProperties = new HashMap<>();
-        containerState.customProperties.put(TEST_CUSTOM_PROP_NAME, TEST_CUSTOM_PROP_VALUE);
+        volumeState.customProperties = new HashMap<>();
+        volumeState.customProperties.put(TEST_CUSTOM_PROP_NAME, TEST_CUSTOM_PROP_VALUE);
 
-        ContainerVolumeState volume = doPost(containerState, ContainerVolumeService.FACTORY_LINK);
+        ContainerVolumeState volume = doPost(volumeState, ContainerVolumeService.FACTORY_LINK);
         volumeStateReference = UriUtils.extendUri(host.getUri(), volume.documentSelfLink);
     }
 

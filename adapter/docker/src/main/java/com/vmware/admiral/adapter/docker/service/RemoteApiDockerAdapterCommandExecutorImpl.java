@@ -614,4 +614,20 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         sendGet(uri, null, completionHandler);
 
     }
+
+    /**
+     * https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/ Section 3.4 Volumes -
+     * Inspect a volume
+     */
+    @Override
+    public void inspectVolume(CommandInput input, CompletionHandler completionHandler) {
+        createOrUpdateTargetSsl(input);
+
+        String path = String.format("/volumes/%s", input
+                .getProperties().get(DOCKER_VOLUME_NAME_PROP_NAME));
+
+        sendGet(UriUtils.extendUri(input.getDockerUri(), path), input.getProperties(),
+                completionHandler);
+
+    }
 }
