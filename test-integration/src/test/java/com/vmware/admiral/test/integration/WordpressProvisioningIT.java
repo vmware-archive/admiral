@@ -21,6 +21,8 @@ import static com.vmware.admiral.test.integration.TestPropertiesUtil.getTestRequ
 
 import java.net.Socket;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
@@ -29,6 +31,9 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.common.util.UriUtilsExtended;
@@ -46,25 +51,37 @@ import com.vmware.xenon.common.Utils;
 /**
  * Test multi container provisioning of Wordpress and MySQL from a YAML template
  */
+@RunWith(Parameterized.class)
 public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
-    private static final String TEMPLATE_FILE = "WordPress_with_MySQL.yaml";
     private static final String WP_PATH = "wp-admin/install.php?step=1";
     private static final String WP_NAME = "wordpress";
     private static final String MYSQL_NAME = "mysql";
     private static final String PUBLIC_SERVICE_PORT = "80";
     // As defined in the YAML file
     private static final String PUBLIC_SERVICE_WP_ADDRESS = "http://wordpress.cmp";
-
     private static final String MYSQL_START_MESSAGE_BEGIN = "Ready for start up.";
+
     private static final String MYSQL_START_MESSAGE_END = "ready for connections";
     private static final int MYSQL_START_WAIT_RETRY_COUNT = 20;
     private static final int MYSQL_START_WAIT_PRERIOD_MILLIS = 5000;
-
     private static final int STATUS_CODE_WAIT_POLLING_RETRY_COUNT = 30;
 
     private static ServiceClient serviceClient;
 
     private String compositeDescriptionLink;
+
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays
+                .asList(new Object[] { "WordPress_with_MySQL_bindings.yaml" },
+                        new Object[] { "WordPress_with_MySQL.yaml" });
+    }
+
+    private String templateFile;
+
+    public WordpressProvisioningIT(String templateFile) {
+        this.templateFile = templateFile;
+    }
 
     @BeforeClass
     public static void beforeClass() {
@@ -78,7 +95,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
 
     @Before
     public void setUp() throws Exception {
-        compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE);
+        logger.info("Using " + templateFile + " blueprint");
+        compositeDescriptionLink = importTemplate(serviceClient, templateFile);
     }
 
     @Test

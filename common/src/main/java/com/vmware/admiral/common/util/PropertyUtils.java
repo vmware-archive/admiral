@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BinaryOperator;
 
+import com.vmware.xenon.common.ReflectionUtils;
 import com.vmware.xenon.common.ServiceDocument;
 
 public class PropertyUtils {
@@ -121,7 +122,7 @@ public class PropertyUtils {
             return Optional.empty();
         }
         if (properties.containsKey(key)) {
-            //Some values are written in scientific notation, so we parse them with Double
+            // Some values are written in scientific notation, so we parse them with Double
             return Optional.of(Double.valueOf(properties.get(key)).longValue());
         } else {
             return Optional.empty();
@@ -137,5 +138,37 @@ public class PropertyUtils {
         } else {
             return Optional.empty();
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T getValue(Object instance, String fieldName) {
+        try {
+            Field field = ReflectionUtils.getField(instance.getClass(), fieldName);
+            return (T) field.get(instance);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Attempt to find a {@link Field field} on the supplied {@link Class} with the supplied
+     * {@code name}. Searches all superclasses up to {@link Object}.
+     *
+     * @param clazz
+     *            the class to introspect
+     * @param name
+     *            the name of the field
+     * @return the corresponding Field object, or {@code null} if not found
+     */
+    public static Field findField(Class<?> clazz, String name) {
+        Class<?> searchType = clazz;
+        while (Object.class != searchType && searchType != null) {
+            Field field = ReflectionUtils.getField(searchType, name);
+            if (field != null) {
+                return field;
+            }
+            searchType = searchType.getSuperclass();
+        }
+        return null;
     }
 }

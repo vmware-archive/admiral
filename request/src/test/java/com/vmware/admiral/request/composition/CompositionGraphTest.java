@@ -21,6 +21,7 @@ import static com.vmware.admiral.request.util.TestRequestStateFactory.createCont
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,6 +33,8 @@ import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.content.Binding;
+import com.vmware.admiral.compute.content.Binding.ComponentBinding;
 import com.vmware.admiral.request.composition.CompositionGraph.ResourceNode;
 
 public class CompositionGraphTest {
@@ -45,7 +48,8 @@ public class CompositionGraphTest {
     @Test
     public void testWithOneNode() {
         ContainerDescription desc = createContainerDescription();
-        CompositeDescriptionExpanded compositeDesc = createCompositeDesc(Arrays.asList(desc));
+        CompositeDescriptionExpanded compositeDesc = createCompositeDesc(Arrays.asList(desc),
+                Collections.emptyList());
         Collection<ResourceNode> resourceNodes = graph.calculateGraph(compositeDesc);
         assertEquals(1, resourceNodes.size());
 
@@ -61,7 +65,8 @@ public class CompositionGraphTest {
         ContainerDescription desc = createContainerDescription();
         desc.volumesFrom = new String[] { "non_existing_container_name" };
 
-        CompositeDescriptionExpanded compositeDesc = createCompositeDesc(Arrays.asList(desc));
+        CompositeDescriptionExpanded compositeDesc = createCompositeDesc(Arrays.asList(desc),
+                Collections.emptyList());
         graph.calculateGraph(compositeDesc);
         // expect error for not finding dependencies.
     }
@@ -74,7 +79,7 @@ public class CompositionGraphTest {
         desc1.volumesFrom = new String[] { desc2.name };
 
         CompositeDescriptionExpanded compositeDesc = createCompositeDesc(
-                Arrays.asList(desc1, desc2));
+                Arrays.asList(desc1, desc2), Collections.emptyList());
         graph.calculateGraph(compositeDesc);
         // expect error for not two components with same name.
     }
@@ -89,7 +94,7 @@ public class CompositionGraphTest {
         desc2.dependsOn = new String[] { desc3.name };
 
         CompositeDescriptionExpanded compositeDesc = createCompositeDesc(
-                Arrays.asList(desc1, desc2, desc3));
+                Arrays.asList(desc1, desc2, desc3), Collections.emptyList());
         List<ResourceNode> nodes = graph.calculateGraph(compositeDesc);
 
         //the order should be name3 -> name2 -> name1
@@ -121,7 +126,7 @@ public class CompositionGraphTest {
         desc3.affinity = new String[] { desc1.name };
 
         CompositeDescriptionExpanded compositeDesc = createCompositeDesc(
-                Arrays.asList(desc1, desc2, desc3));
+                Arrays.asList(desc1, desc2, desc3), Collections.emptyList());
         graph.calculateGraph(compositeDesc);
         // expect error for cyclic dependencies
     }
@@ -138,7 +143,7 @@ public class CompositionGraphTest {
         desc4.affinity = new String[] { desc1.name };
 
         CompositeDescriptionExpanded compositeDesc = createCompositeDesc(
-                Arrays.asList(desc1, desc2, desc3, desc4));
+                Arrays.asList(desc1, desc2, desc3, desc4), Collections.emptyList());
         graph.calculateGraph(compositeDesc);
         graph.getNodesPerExecutionLevel(0);
         // expect error for cyclic dependencies
@@ -163,7 +168,7 @@ public class CompositionGraphTest {
         }
 
         CompositeDescriptionExpanded compositeDesc = createCompositeDesc(
-                Arrays.asList(desc1, desc2));
+                Arrays.asList(desc1, desc2), Collections.emptyList());
         graph.calculateGraph(compositeDesc);
         Map<String, ResourceNode> resourceNodesByName = graph.getResourceNodesByName();
         assertEquals(2, resourceNodesByName.size());
@@ -202,7 +207,7 @@ public class CompositionGraphTest {
         // .3.........d6..............d7.....
         // ........../..\............/..\....
         // .4......d8....d9........d10..d11..
-        // ......./.|.\.......................
+        // ......./.|.\......................
         // .5..d12.d13.d14...................
         // ..................................
 
@@ -243,7 +248,8 @@ public class CompositionGraphTest {
         descs[8].volumesFrom = new String[] { descs[12].name, descs[13].name };
         descs[8].affinity = new String[] { descs[14].name };
 
-        CompositeDescriptionExpanded compositeDesc = createCompositeDesc(Arrays.asList(descs));
+        CompositeDescriptionExpanded compositeDesc = createCompositeDesc(Arrays.asList(descs),
+                Collections.emptyList());
         Collection<ResourceNode> calculatedGraph = graph.calculateGraph(compositeDesc);
         assertEquals(descs.length, calculatedGraph.size());
 
@@ -382,14 +388,54 @@ public class CompositionGraphTest {
 
     }
 
+    @Test
+    public void testBindingDependencies() {
+        ContainerDescription desc1 = createContainerDescription("name1");
+        ContainerDescription desc2 = createContainerDescription("name2");
+        ContainerDescription desc3 = createContainerDescription("name3");
+
+        ComponentBinding cbDesc1 = new ComponentBinding(desc1.name, Arrays.asList(
+                new Binding(Collections.emptyList(), desc2.name + "~address", true),
+                new Binding(Collections.emptyList(), desc3.name + "~address", true)
+        ));
+
+        ComponentBinding cbDesc2 = new ComponentBinding(desc2.name, Arrays.asList(
+                new Binding(Collections.emptyList(), desc3.name + "~address", true)
+        ));
+
+        CompositeDescriptionExpanded compositeDesc = createCompositeDesc(
+                Arrays.asList(desc1, desc2, desc3), Arrays.asList(cbDesc1, cbDesc2));
+
+        List<ResourceNode> nodes = graph.calculateGraph(compositeDesc);
+        //the order should be name3 -> name2 -> name1
+        Object[] actualOrder = nodes.stream().map(node -> node.name).toArray();
+        assertArrayEquals(new String[] { desc3.name, desc2.name, desc1.name }, actualOrder);
+
+        assertTrue(nodes.get(0).dependents.contains(desc1.name));
+        assertTrue(nodes.get(0).dependents.contains(desc2.name));
+        assertTrue(nodes.get(0).dependsOn == null || nodes.get(0).dependsOn.isEmpty());
+
+        assertTrue(nodes.get(1).dependents.contains(desc1.name));
+        assertTrue(!nodes.get(1).dependents.contains(desc3.name));
+        assertTrue(nodes.get(1).dependsOn.contains(desc3.name));
+        assertTrue(!nodes.get(1).dependsOn.contains(desc1.name));
+
+        assertTrue(nodes.get(2).dependsOn.contains(desc2.name));
+        assertTrue(nodes.get(2).dependsOn.contains(desc3.name));
+        assertTrue(nodes.get(2).dependents == null || nodes.get(0).dependents.isEmpty());
+    }
+
     public static CompositeDescriptionExpanded createCompositeDesc(
-            List<ContainerDescription> containerDescriptions) {
+            List<ContainerDescription> containerDescriptions,
+            List<Binding.ComponentBinding> componentBindings) {
         CompositeDescriptionExpanded compositeDescription = new CompositeDescriptionExpanded();
         compositeDescription.componentDescriptions = containerDescriptions.stream()
                 .map(cd -> new ComponentDescription(cd,
-                        ResourceType.CONTAINER_TYPE.getName(), cd.name))
-                .collect(
-                        Collectors.toList());
+                        ResourceType.CONTAINER_TYPE.getName(), cd.name,
+                        componentBindings.stream().filter(cb -> cb.componentName.equals(cd.name))
+                                .flatMap(cb -> cb.bindings.stream())
+                                .collect(Collectors.toList()))).collect(Collectors.toList());
+        compositeDescription.bindings = componentBindings;
         return compositeDescription;
     }
 

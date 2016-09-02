@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +32,7 @@ public class BindingUtils {
     //CompositeTemplate field names
     public static final String COMPONENTS = "components";
     public static final String DATA = "data";
+    public static final String FIELD_SEPARATOR = "~";
 
     public static List<Binding.ComponentBinding> extractBindings(
             Map<String, Object> initialMap) {
@@ -65,11 +67,20 @@ public class BindingUtils {
                 //Remove the entry from the map as we may not be able to map this to the original class
                 iterator.remove();
 
-                String bindingExpression = (String) value;
+                //remove the ${ and }
+                String bindingExpression = ((String) value)
+                        .substring(2, ((String) value).length() - 1);
                 addBinding(bindingsPerComponent, currentFieldPath, bindingExpression);
 
             } else if (value instanceof List) {
-                //todo implement list the same way
+                List list = (List) value;
+                Map<String, Object> listMap = new LinkedHashMap<>();
+                for (int i = 0; i < list.size(); ++i) {
+                    listMap.put(String.valueOf(i), list.get(i));
+                }
+                extractBindings(currentFieldPath, listMap, bindingsPerComponent);
+                list = listMap.values().stream().collect(Collectors.toList());
+                entry.setValue(list);
             } else if (value instanceof Map) {
                 extractBindings(currentFieldPath, (Map) value, bindingsPerComponent);
             }
@@ -86,7 +97,7 @@ public class BindingUtils {
             bindingsPerComponent.put(targetComponentName, bindings);
         }
 
-        List<String> fullFieldPath = Arrays.asList(currentFieldPath.split("\\."));
+        List<String> fullFieldPath = Arrays.asList(currentFieldPath.split(FIELD_SEPARATOR));
         Binding binding = new Binding(
                 new ArrayList<>(fullFieldPath.subList(1, fullFieldPath.size())),
                 bindingExpression,
@@ -98,7 +109,7 @@ public class BindingUtils {
         if (COMPONENTS.equals(fieldName) || DATA.equals(fieldName)) {
             return fieldPath;
         }
-        return "".equals(fieldPath) ? fieldName : fieldPath + "." + fieldName;
+        return "".equals(fieldPath) ? fieldName : fieldPath + FIELD_SEPARATOR + fieldName;
     }
 
     private static boolean isProvisioningTimeBinding(String bindingExpression) {
@@ -106,16 +117,16 @@ public class BindingUtils {
     }
 
     private static boolean isBinding(String value) {
-        return value.contains("~");
+        return value.startsWith("${") && value.endsWith("}");
     }
 
     private static String extractTargetComponentName(String fieldPath) {
-        String[] split = fieldPath.split("\\.");
+        String[] split = fieldPath.split(FIELD_SEPARATOR);
         return split[0];
     }
 
     public static String extractComponentNameFromBindingExpression(String bindingExpression) {
-        String[] split = bindingExpression.split("~");
+        String[] split = bindingExpression.split(FIELD_SEPARATOR);
         if (isProvisioningTimeBinding(bindingExpression)) {
             return split[1];
         } else {
@@ -126,9 +137,9 @@ public class BindingUtils {
     public static List<String> convertToFieldPath(String bindingExpression) {
         String[] split = bindingExpression.split("~");
         if (isProvisioningTimeBinding(bindingExpression)) {
-            return new ArrayList<>(Arrays.asList(split[2].split("\\.")));
+            return new ArrayList<>(Arrays.asList(Arrays.copyOfRange(split, 2, split.length)));
         } else {
-            return new ArrayList<>(Arrays.asList(split[1].split("\\.")));
+            return new ArrayList<>(Arrays.asList(Arrays.copyOfRange(split, 1, split.length)));
         }
     }
 }

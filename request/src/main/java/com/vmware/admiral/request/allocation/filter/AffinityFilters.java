@@ -18,8 +18,10 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.compute.BindingUtils;
 import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
@@ -51,7 +53,7 @@ public final class AffinityFilters {
         } else if (ContainerNetworkDescription.class.isInstance(desc)) {
             initialize(host, (ContainerNetworkDescription) desc);
         } else if (ComponentDescription.class.isInstance(desc)) {
-            initialize(host, ((ComponentDescription) desc).component);
+            initialize(host, ((ComponentDescription) desc));
         } else {
             throw new IllegalArgumentException("Unsupported type:" + desc.getClass());
         }
@@ -65,7 +67,13 @@ public final class AffinityFilters {
 
     }
 
-    private void initialize(ServiceHost host, ContainerDescription desc) {
+    private void initialize(ServiceHost host, ComponentDescription desc) {
+        filters.add(new ComponentFilter(desc));
+        initialize(host, desc.component);
+    }
+
+    private void initialize(ServiceHost host,
+            ContainerDescription desc) {
 
         filters.add(new ExposedPortsHostFilter(host, desc));
 
@@ -117,6 +125,37 @@ public final class AffinityFilters {
                 // we need all unique constraints with hard constraints overriding the soft once
                 constraintsTo.put(constraintFrom.name, constraintFrom);
             }
+        }
+    }
+
+    private static class ComponentFilter implements AffinityFilter {
+
+        private final ComponentDescription componentDescription;
+
+        private ComponentFilter(ComponentDescription componentDescription) {
+            this.componentDescription = componentDescription;
+
+        }
+
+        @Override
+        public boolean isActive() {
+            return componentDescription.bindings != null && !componentDescription.bindings
+                    .isEmpty();
+        }
+
+        @Override
+        public Map<String, AffinityConstraint> getAffinityConstraints() {
+            return componentDescription.bindings.stream().filter(b -> b.isProvisioningTimeBinding)
+                    .map(b -> BindingUtils
+                            .extractComponentNameFromBindingExpression(b.bindingExpression))
+                    .distinct()
+                    .collect(Collectors.toMap(
+                            Function.identity(), AffinityConstraint::new));
+        }
+
+        @Override
+        public boolean hasEffectOnDependency() {
+            return this.componentDescription.component != null;
         }
     }
 }

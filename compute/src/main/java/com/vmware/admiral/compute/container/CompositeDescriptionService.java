@@ -17,24 +17,24 @@ import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
 import com.vmware.admiral.compute.ComponentDescription;
-import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription.Status;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
-import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
-import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.content.Binding;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -76,7 +76,9 @@ public class CompositeDescriptionService extends StatefulService {
 
         // mirror com.vmware.vcac.composition.domain.PublishStatus
         public static enum Status {
-            DRAFT, PUBLISHED, RETIRED
+            DRAFT,
+            PUBLISHED,
+            RETIRED
         }
     }
 
@@ -160,15 +162,44 @@ public class CompositeDescriptionService extends StatefulService {
             return;
         }
 
-        CompositeDescription putBody = put.getBody(CompositeDescription.class);
+        CompositeDescriptionExpanded body = put.getBody(CompositeDescriptionExpanded.class);
+        validateStateOnStart(body);
+        if (isExpanded(body)) {
+            List<Operation> update = body.componentDescriptions
+                    .stream()
+                    .map(cd -> Operation
+                            .createPut(this, cd.component.documentSelfLink)
+                            .setBody(cd.component))
+                    .collect(Collectors.toList());
+            // The component descriptions may have changed. We need to persist them, so that the
+            // other services can pick up the evaluated descriptions too
+            OperationJoin.create(update).setCompletion((ops, failures) -> {
+                if (failures != null) {
+                    put.fail(failures.values().iterator().next());
+                    return;
+                }
+                body.componentDescriptions = null;
+                performPut(put, body);
+            }).sendWith(this);
+        } else {
+            performPut(put, body);
+        }
+    }
 
+    private void performPut(Operation put, CompositeDescription putBody) {
         try {
-            validateStateOnStart(putBody);
             this.setState(put, putBody);
             put.setBody(putBody).complete();
         } catch (Throwable e) {
             put.fail(e);
         }
+    }
+
+    private boolean isExpanded(CompositeDescriptionExpanded body) {
+        boolean hasComponentDescriptionObjects = body.componentDescriptions != null
+                && !body.componentDescriptions.isEmpty();
+
+        return hasComponentDescriptionObjects;
     }
 
     @Override
@@ -294,33 +325,16 @@ public class CompositeDescriptionService extends StatefulService {
 
                         List<ComponentDescription> componentDescriptions = new ArrayList<>();
                         result.documents.forEach((link, document) -> {
-                            if (link.startsWith(ContainerDescriptionService.FACTORY_LINK)) {
-                                ContainerDescription containerDescription = Utils
-                                        .fromJson(document, ContainerDescription.class);
+                            ComponentMeta meta = CompositeComponentRegistry
+                                    .metaByDescriptionLink(link);
+                            ResourceState description = Utils.fromJson(document,
+                                    meta.descriptionClass);
+                            if (description != null) {
                                 ComponentDescription cd = new ComponentDescription(
-                                        containerDescription,
-                                        ResourceType.CONTAINER_TYPE.getName(),
-                                        containerDescription.name);
-                                componentDescriptions.add(cd);
-
-                            } else if (link.startsWith(
-                                    ComputeDescriptionService.FACTORY_LINK)) {
-
-                                ComputeDescription computeDescription = Utils
-                                        .fromJson(document, ComputeDescription.class);
-                                ComponentDescription cd = new ComponentDescription(
-                                        computeDescription,
-                                        ResourceType.COMPUTE_TYPE.getName(),
-                                        computeDescription.name);
-                                componentDescriptions.add(cd);
-                            } else if (link.startsWith(
-                                    ContainerNetworkDescriptionService.FACTORY_LINK)) {
-                                ContainerNetworkDescription containerNetworkDescription = Utils
-                                        .fromJson(document, ContainerNetworkDescription.class);
-                                ComponentDescription cd = new ComponentDescription(
-                                        containerNetworkDescription,
-                                        ResourceType.NETWORK_TYPE.getName(),
-                                        containerNetworkDescription.name);
+                                        description,
+                                        meta.resourceType,
+                                        description.name,
+                                        getBindingsForComponent(description.name, cdExpanded));
                                 componentDescriptions.add(cd);
                             } else {
                                 logWarning("Unexpected result type: %s", link);
@@ -331,5 +345,15 @@ public class CompositeDescriptionService extends StatefulService {
                         get.setBody(cdExpanded).complete();
                     }
                 }));
+    }
+
+    private List<Binding> getBindingsForComponent(String componentName,
+            CompositeDescriptionExpanded compositeDescriptionExpanded) {
+        if (compositeDescriptionExpanded.bindings == null) {
+            return Collections.emptyList();
+        }
+        return compositeDescriptionExpanded.bindings.stream()
+                .filter(cb -> cb.componentName.equals(componentName))
+                .flatMap(cb -> cb.bindings.stream()).collect(Collectors.toList());
     }
 }

@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.compute;
 
+import java.util.List;
+
+import com.vmware.admiral.compute.content.Binding;
 import com.vmware.xenon.common.ServiceDocument;
 
 public class ComponentDescription {
@@ -18,11 +21,14 @@ public class ComponentDescription {
     public String type;
 
     public String name;
+    public List<Binding> bindings;
 
-    public ComponentDescription(ServiceDocument component, String type, String name) {
+    public ComponentDescription(ServiceDocument component, String type, String name,
+            List<Binding> bindings) {
         this.component = component;
         this.type = type;
         this.name = name;
+        this.bindings = bindings;
     }
 
     public ComponentDescription() {

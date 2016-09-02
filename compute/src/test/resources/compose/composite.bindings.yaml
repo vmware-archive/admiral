@@ -29,7 +29,7 @@ components:
     data:
       name: "wordpress"
       image: "wordpress:latest"
-      _cluster: db~_cluster
+      _cluster: ${db~_cluster}
       env:
       - var: "WORDPRESS_DB_HOST"
         value: "db:3306"
@@ -45,7 +45,7 @@ components:
       links:
       - service: "db"
         alias: "db"
-      mysql_user: "_resource~env.MYSQL_USER"
+      mysql_user: "${_resource~db~env~MYSQL_USER}"
       other_custom_prop: "test"
     dependsOn:
     - "db"

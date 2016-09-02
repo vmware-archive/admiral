@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
@@ -30,6 +33,8 @@ import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.compute.container.network.ContainerNetworkReconfigureService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkReconfigureService.ContainerNetworkReconfigureState;
 import com.vmware.admiral.compute.container.util.ContainerUtil;
+import com.vmware.admiral.compute.content.EnvDeserializer;
+import com.vmware.admiral.compute.content.EnvSerializer;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
@@ -161,6 +166,8 @@ public class ContainerService extends StatefulService {
         public String volumeDriver;
 
         /** A list of environment variables in the form of VAR=value. */
+        @JsonSerialize(contentUsing = EnvSerializer.class)
+        @JsonDeserialize(contentUsing = EnvDeserializer.class)
         @Documentation(description = "A list of environment variables in the form of VAR=value.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public String[] env;

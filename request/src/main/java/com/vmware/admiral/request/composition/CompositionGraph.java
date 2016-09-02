@@ -54,7 +54,7 @@ public class CompositionGraph {
         AssertUtil.assertNotEmpty(compositeDescription.componentDescriptions, "serviceDocuments");
 
         populateResourceNodesByName(compositeDescription.componentDescriptions);
-        calculateResourceDependsOnNodes(compositeDescription.componentDescriptions);
+        calculateResourceDependsOnNodes(compositeDescription);
         calculateResourceNodeDependents();
 
         // Store dependOn ResourceNodes by ResourceNode name.
@@ -251,12 +251,12 @@ public class CompositionGraph {
      * that a current node is dependent. <code>resourceNode.dependsOn</code> will be calculated.
      */
     public void calculateResourceDependsOnNodes(
-            Collection<ComponentDescription> componentDescriptions) {
-        for (final ComponentDescription cd : componentDescriptions) {
+            CompositeDescriptionExpanded compositeDescription) {
+        for (final ComponentDescription cd : compositeDescription.componentDescriptions) {
             final AffinityFilters filters = AffinityFilters.build(null, cd);
             final ResourceNode resourceNode = resourceNodesByName.get(cd.name);
             final Set<String> dependencies = filters.getUniqueDependencies();
-            if (dependencies != null && !dependencies.isEmpty()) {
+            if (!dependencies.isEmpty()) {
                 resourceNode.dependsOn = new HashSet<>();
                 for (String name : dependencies) {
                     ResourceNode rn = resourceNodesByName.get(name);

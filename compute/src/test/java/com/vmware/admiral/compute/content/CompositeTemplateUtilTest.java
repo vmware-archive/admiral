@@ -689,7 +689,7 @@ public class CompositeTemplateUtilTest {
 
         binding = partitionedBindings.get(true).get(0);
         assertTrue(binding.isProvisioningTimeBinding);
-        assertEquals("_resource~env.MYSQL_USER", binding.bindingExpression);
+        assertEquals("_resource~db~env~MYSQL_USER", binding.bindingExpression);
     }
 
     public static String getContent(String filename) {

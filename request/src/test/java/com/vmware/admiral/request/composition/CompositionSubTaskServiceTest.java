@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
@@ -39,7 +42,12 @@ public class CompositionSubTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testTaskWithoutDependencies() throws Throwable {
-        CompositionSubTaskState subTask = createCompositionSubTask("test1");
+        CompositeDescription compositeDescription = createCompositeDescription(
+                "test1");
+
+        CompositionSubTaskState subTask = createCompositionSubTask("test1",
+                compositeDescription.documentSelfLink,
+                compositeDescription.descriptionLinks.get(0));
 
         subTask = doPost(subTask);
 
@@ -50,10 +58,23 @@ public class CompositionSubTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testTaskWithDependents() throws Throwable {
-        CompositionSubTaskState subTask1 = createCompositionSubTask("test1");
-        CompositionSubTaskState subTask2 = createCompositionSubTask("test2");
-        CompositionSubTaskState subTask3 = createCompositionSubTask("test3");
-        CompositionSubTaskState subTask4 = createCompositionSubTask("test4");
+
+        CompositeDescription compositeDescription = createCompositeDescription(
+                "test1", "test2",
+                "test3", "test4");
+
+        CompositionSubTaskState subTask1 = createCompositionSubTask("test1",
+                compositeDescription.documentSelfLink,
+                compositeDescription.descriptionLinks.get(0));
+        CompositionSubTaskState subTask2 = createCompositionSubTask("test2",
+                compositeDescription.documentSelfLink,
+                compositeDescription.descriptionLinks.get(1));
+        CompositionSubTaskState subTask3 = createCompositionSubTask("test3",
+                compositeDescription.documentSelfLink,
+                compositeDescription.descriptionLinks.get(2));
+        CompositionSubTaskState subTask4 = createCompositionSubTask("test4",
+                compositeDescription.documentSelfLink,
+                compositeDescription.descriptionLinks.get(3));
 
         subTask1.dependentLinks = new HashSet<>(
                 Arrays.asList(subTask2.documentSelfLink, subTask4.documentSelfLink));
@@ -82,8 +103,16 @@ public class CompositionSubTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testFailureInTaskShouldCompleteAllWithError() throws Throwable {
-        CompositionSubTaskState subTask1 = createCompositionSubTask("test1");
-        CompositionSubTaskState subTask2 = createCompositionSubTask("test2");
+
+        CompositeDescription compositeDescription = createCompositeDescription(
+                "test1", "test2");
+
+        CompositionSubTaskState subTask1 = createCompositionSubTask("test1",
+                compositeDescription.documentSelfLink,
+                compositeDescription.descriptionLinks.get(0));
+        CompositionSubTaskState subTask2 = createCompositionSubTask("test2",
+                compositeDescription.documentSelfLink,
+                compositeDescription.descriptionLinks.get(1));
 
         subTask1.dependentLinks = new HashSet<>(Arrays.asList(subTask2.documentSelfLink));
         subTask2.dependsOnLinks = new HashSet<>(Arrays.asList(subTask1.documentSelfLink));
@@ -103,19 +132,32 @@ public class CompositionSubTaskServiceTest extends RequestBaseTest {
         assertNull(subTask2.resourceLinks);
     }
 
-    private CompositionSubTaskState createCompositionSubTask(String name) throws Throwable {
-        ContainerDescription desc = createDescription(name);
+    private CompositeDescription createCompositeDescription(
+            String... names) throws Throwable {
+        CompositeDescription cd = new CompositeDescription();
+        cd.descriptionLinks = new ArrayList<>();
+        cd.name = names[0];
+        for (String name : names) {
+            ContainerDescription description = createDescription(name);
+            cd.descriptionLinks.add(description.documentSelfLink);
+        }
+        return doPost(cd, CompositeDescriptionFactoryService.SELF_LINK);
+    }
+
+    private CompositionSubTaskState createCompositionSubTask(String name,
+            String compositeDescriptionLink, String resourceDescriptionLink) throws Throwable {
         CompositionSubTaskState compositionSubTaskState = new CompositionSubTaskState();
         compositionSubTaskState.name = name;
         compositionSubTaskState.tenantLinks = TestRequestStateFactory.createTenantLinks(TestRequestStateFactory.TENANT_NAME);
         compositionSubTaskState.resourceType = ResourceType.CONTAINER_TYPE.getName();
         compositionSubTaskState.documentSelfLink = UriUtils.buildUriPath(
                 CompositionSubTaskFactoryService.SELF_LINK, UUID.randomUUID().toString());
-        compositionSubTaskState.resourceDescriptionLink = desc.documentSelfLink;
+        compositionSubTaskState.resourceDescriptionLink = resourceDescriptionLink;
         compositionSubTaskState.requestId = UUID.randomUUID().toString();
         compositionSubTaskState.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         compositionSubTaskState.documentExpirationTimeMicros = Utils.getNowMicrosUtc()
                 + TimeUnit.HOURS.toMicros(5);
+        compositionSubTaskState.compositeDescriptionLink = compositeDescriptionLink;
 
         return compositionSubTaskState;
     }

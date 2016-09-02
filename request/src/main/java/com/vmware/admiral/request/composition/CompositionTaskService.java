@@ -50,7 +50,6 @@ import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallback
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
-import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -361,6 +360,7 @@ public class CompositionTaskService extends
         compositionSubTask.requestTrackerLink = state.requestTrackerLink;
         compositionSubTask.customProperties = state.customProperties;
         compositionSubTask.allocationRequest = true;
+        compositionSubTask.compositeDescriptionLink = state.resourceDescriptionLink;
 
         if (resourceNode.dependsOn != null && !resourceNode.dependsOn.isEmpty()) {
             compositionSubTask.dependsOnLinks = resourceNode.dependsOn
@@ -571,28 +571,27 @@ public class CompositionTaskService extends
                         failTask("Failure retrieving composite description state", e);
                         return;
                     }
+                    try {
+                        CompositeDescriptionExpanded desc = o
+                                .getBody(CompositeDescriptionExpanded.class);
 
-                    CompositeDescriptionExpanded desc = o
-                            .getBody(CompositeDescriptionExpanded.class);
-
-                    if (desc.bindings != null && expanded) {
-                        BindingEvaluator.evaluateBindings(desc);
-                        List<Operation> update = desc.componentDescriptions.stream()
-                                .map(cd -> Operation.createPut(this, cd.component.documentSelfLink)
-                                        .setBody(cd.component))
-                                .collect(Collectors.toList());
-                        // The component descriptions may have changed. We need to persist them, so
-                        // that the other services can pick up the evaluated descriptions too
-                        OperationJoin.create(update).setCompletion((ops, failures) -> {
-                            if (failures != null) {
-                                failTask("Unable to update evaluated descriptions",
-                                        failures.values().iterator().next());
-                                return;
-                            }
+                        if (desc.bindings != null && expanded) {
+                            BindingEvaluator.evaluateBindings(desc);
+                            Operation.createPut(this, desc.documentSelfLink).setBody(desc)
+                                    .setCompletion((op, ex) -> {
+                                        if (ex != null) {
+                                            failTask(
+                                                    "Failure updating evaluated composite description",
+                                                    ex);
+                                            return;
+                                        }
+                                        callbackFunction.accept(desc);
+                                    }).sendWith(this);
+                        } else {
                             callbackFunction.accept(desc);
-                        }).sendWith(this);
-                    } else {
-                        callbackFunction.accept(desc);
+                        }
+                    } catch (Exception ex) {
+                        failTask("Failure updating evaluated composite description", ex);
                     }
                 }));
     }
