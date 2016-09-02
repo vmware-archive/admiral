@@ -58,6 +58,8 @@ import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAl
 import com.vmware.admiral.request.compute.ComputeOperationTaskService;
 import com.vmware.admiral.request.compute.ComputeOperationTaskService.ComputeOperationTaskState;
 import com.vmware.admiral.request.compute.ComputeOperationType;
+import com.vmware.admiral.request.compute.ComputeProvisionTaskService;
+import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService.ComputeRemovalTaskState;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService;
@@ -815,34 +817,56 @@ public class RequestBrokerService extends
                         }));
             }
         } else if (isComputeType(state)) {
-            ComputeAllocationTaskState allocationTask = new ComputeAllocationTaskState();
-            allocationTask.documentSelfLink = Service.getId(state.documentSelfLink);
-            allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
-                    state.documentSelfLink, TaskStage.STARTED, SubStage.ALLOCATED,
-                    TaskStage.STARTED, SubStage.REQUEST_FAILED);
-            allocationTask.customProperties = state.customProperties;
-            allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
+            if (!isPostAllocationOperation(state)) {
+                ComputeAllocationTaskState allocationTask = new ComputeAllocationTaskState();
+                allocationTask.documentSelfLink = Service.getId(state.documentSelfLink);
+                allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
+                        state.documentSelfLink, TaskStage.STARTED, SubStage.ALLOCATED,
+                        TaskStage.STARTED, SubStage.REQUEST_FAILED);
+                allocationTask.customProperties = state.customProperties;
+                allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
 
-            allocationTask.resourceCount = state.resourceCount;
+                allocationTask.resourceCount = state.resourceCount;
 
-            allocationTask.resourceType = state.resourceType;
-            allocationTask.tenantLinks = state.tenantLinks;
-            allocationTask.groupResourcePolicyLink = state.groupResourcePolicyLink;
-            allocationTask.requestTrackerLink = state.requestTrackerLink;
-            allocationTask.resourceLinks = state.resourceLinks;
-            allocationTask.postAllocation = isPostAllocationOperation(state);
+                allocationTask.resourceType = state.resourceType;
+                allocationTask.tenantLinks = state.tenantLinks;
+                allocationTask.groupResourcePolicyLink = state.groupResourcePolicyLink;
+                allocationTask.requestTrackerLink = state.requestTrackerLink;
+                allocationTask.resourceLinks = state.resourceLinks;
 
-            sendRequest(Operation
-                    .createPost(this, ComputeAllocationTaskService.FACTORY_LINK)
-                    .setBody(allocationTask)
-                    .setContextId(getSelfId())
-                    .setCompletion((o, e) -> {
-                        if (e != null) {
-                            failTask("Failure creating resource allocation task", e);
-                            return;
-                        }
-                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
-                    }));
+                sendRequest(Operation
+                        .createPost(this, ComputeAllocationTaskService.FACTORY_LINK)
+                        .setBody(allocationTask)
+                        .setContextId(getSelfId())
+                        .setCompletion((o, e) -> {
+                            if (e != null) {
+                                failTask("Failure creating resource allocation task", e);
+                                return;
+                            }
+                            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                        }));
+            } else {
+                // 2. provision the network
+                ComputeProvisionTaskState ps = new ComputeProvisionTaskState();
+                ps.documentSelfLink = Service.getId(state.documentSelfLink);
+                ps.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+                        TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
+                ps.customProperties = state.customProperties;
+                ps.tenantLinks = state.tenantLinks;
+                ps.requestTrackerLink = state.requestTrackerLink;
+                ps.resourceLinks = state.resourceLinks;
+
+                sendRequest(Operation
+                        .createPost(this, ComputeProvisionTaskService.FACTORY_LINK)
+                        .setBody(ps)
+                        .setContextId(getSelfId())
+                        .setCompletion((o, e) -> {
+                            if (e != null) {
+                                failTask("Failure creating resource provision task", e);
+                                return;
+                            }
+                        }));
+            }
         } else {
             failTask(null, new IllegalArgumentException("Not supported resourceType: "
                     + state.resourceType));
@@ -1019,11 +1043,12 @@ public class RequestBrokerService extends
 
     static {
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE = new HashMap<>();
-        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CONTAINER_TYPE, new ArrayList<>(
-                Arrays.asList(ContainerAllocationTaskService.DISPLAY_NAME,
-                        ReservationTaskService.DISPLAY_NAME,
-                        PlacementHostSelectionTaskService.DISPLAY_NAME,
-                        ResourceNamePrefixTaskService.DISPLAY_NAME)));
+        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CONTAINER_TYPE,
+                new ArrayList<>(
+                        Arrays.asList(ContainerAllocationTaskService.DISPLAY_NAME,
+                                ReservationTaskService.DISPLAY_NAME,
+                                PlacementHostSelectionTaskService.DISPLAY_NAME,
+                                ResourceNamePrefixTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_TYPE, new ArrayList<>(
                 Arrays.asList(ComputeAllocationTaskService.DISPLAY_NAME,
                         ReservationTaskService.DISPLAY_NAME,

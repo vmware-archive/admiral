@@ -87,6 +87,7 @@ public interface ManagementUriParts {
     String REQUEST_PROVISION_CONTAINER_HOSTS = REQUEST + "/provision-container-hosts-tasks";
     String REQUEST_PROVISION_CONTAINER_NETWORK_TASKS = REQUEST
             + "/provision-container-network-tasks";
+    String REQUEST_COMPUTE_PROVISION_TASKS = REQUEST + "/compute-provision-tasks";
     String REQUEST_PROVISION_PLACEMENT_TASKS = REQUEST + "/placement-tasks";
     String REQUEST_PROVISION_COMPUTE_PLACEMENT_TASKS = REQUEST + "/compute-placement-tasks";
     String REQUEST_PROVISION_NAME_PREFIXES_TASKS = REQUEST + "/resource-prefix-tasks";

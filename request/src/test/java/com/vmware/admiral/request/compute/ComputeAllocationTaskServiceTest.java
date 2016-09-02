@@ -17,6 +17,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -25,6 +26,7 @@ import org.junit.Test;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
+import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
@@ -93,16 +95,14 @@ public class ComputeAllocationTaskServiceTest extends RequestBaseTest {
         assertFalse("should not be provisioned container: " + computeState.documentSelfLink,
                 MockDockerAdapterService.isContainerProvisioned(computeState.documentSelfLink));
 
-        ComputeAllocationTaskState postAllocationTask = createComputeAllocationTask(
-                computeDescription.documentSelfLink, 1, false);
-        postAllocationTask.postAllocation = true;
-        postAllocationTask.resourceLinks = allocationTask.resourceLinks;
+        ComputeProvisionTaskState provisionTask = createComputeProvisionTask(
+                allocationTask.resourceLinks);
 
         // Request provisioning after allocation:
-        postAllocationTask = allocate(postAllocationTask);
+        provisionTask = provision(provisionTask);
 
         // verify container state is provisioned and patched:
-        computeState = getDocument(ComputeState.class, postAllocationTask.resourceLinks.get(0));
+        computeState = getDocument(ComputeState.class, provisionTask.resourceLinks.get(0));
         assertNotNull(computeState);
 
         assertNotNull(computeState.id);
@@ -137,6 +137,20 @@ public class ComputeAllocationTaskServiceTest extends RequestBaseTest {
         return allocationTask;
     }
 
+    private ComputeProvisionTaskState provision(ComputeProvisionTaskState provisionTask)
+            throws Throwable {
+        provisionTask = startProvisionTask(provisionTask);
+        host.log("Start allocation test: " + provisionTask.documentSelfLink);
+
+        provisionTask = waitForTaskSuccess(provisionTask.documentSelfLink,
+                ComputeProvisionTaskState.class);
+        assertNotNull("ResourceLinks null for allocation: " + provisionTask.documentSelfLink,
+                provisionTask.resourceLinks);
+
+        host.log("Finished allocation test: " + provisionTask.documentSelfLink);
+        return provisionTask;
+    }
+
     private ComputeAllocationTaskState createComputeAllocationTask(String containerDescLink,
             long resourceCount, boolean allocation) {
         ComputeAllocationTaskState allocationTask = new ComputeAllocationTaskState();
@@ -147,11 +161,18 @@ public class ComputeAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         allocationTask.customProperties = new HashMap<>();
         allocationTask.customProperties.put("compute.docker.host", "true");
-        if (allocation) {
-            allocationTask.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST,
-                    String.valueOf(allocation));
-        }
+        allocationTask.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST,
+                String.valueOf(allocation));
         return allocationTask;
+    }
+
+    private ComputeProvisionTaskState createComputeProvisionTask(List<String> resourceLinks) {
+        ComputeProvisionTaskState provisionTask = new ComputeProvisionTaskState();
+        provisionTask.resourceLinks = resourceLinks;
+        provisionTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        provisionTask.customProperties = new HashMap<>();
+        provisionTask.customProperties.put("compute.docker.host", "true");
+        return provisionTask;
     }
 
     private ComputeAllocationTaskState startAllocationTask(
@@ -160,6 +181,14 @@ public class ComputeAllocationTaskServiceTest extends RequestBaseTest {
                 allocationTask, ComputeAllocationTaskService.FACTORY_LINK);
         assertNotNull(outAllocationTask);
         return outAllocationTask;
+    }
+
+    private ComputeProvisionTaskState startProvisionTask(
+            ComputeProvisionTaskState provisionTask) throws Throwable {
+        ComputeProvisionTaskState outprovisionTask = doPost(
+                provisionTask, ComputeProvisionTaskService.FACTORY_LINK);
+        assertNotNull(outprovisionTask);
+        return outprovisionTask;
     }
 
 }

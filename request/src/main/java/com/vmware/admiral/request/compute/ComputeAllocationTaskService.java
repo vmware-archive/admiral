@@ -12,11 +12,9 @@
 package com.vmware.admiral.request.compute;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
-import static com.vmware.admiral.common.util.AssertUtil.assertTrue;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
-import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_ALLOCATION_REQUEST;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.photon.controller.model.ComputeProperties.CUSTOM_DISPLAY_NAME;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
@@ -44,22 +42,17 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.AuthCredentialsType;
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.KeyUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
-import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.EnvironmentMappingService.EnvironmentMappingState;
 import com.vmware.admiral.compute.PropertyMapping;
@@ -81,14 +74,11 @@ import com.vmware.photon.controller.model.resources.DiskService.DiskState;
 import com.vmware.photon.controller.model.resources.DiskService.DiskType;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
-import com.vmware.photon.controller.model.tasks.ComputeSubTaskService;
-import com.vmware.photon.controller.model.tasks.ProvisionComputeTaskService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.OperationSequence;
 import com.vmware.xenon.common.QueryTaskClientHelper;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -131,8 +121,7 @@ public class ComputeAllocationTaskService extends
             CONTEXT_PREPARED,
             COMPUTE_DESCRIPTION_RECONFIGURED,
             SELECT_PLACEMENT_COMPUTES,
-            START_COMPUTE_PROVISIONING,
-            COMPUTE_PROVISIONING_COMPLETED,
+            START_COMPUTE_ALLOCATION,
             COMPUTE_ALLOCATION_COMPLETED,
             COMPLETED,
             ERROR;
@@ -157,10 +146,6 @@ public class ComputeAllocationTaskService extends
         @Documentation(description = "Set by a Task with the links of the provisioned resources.")
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL, OPTIONAL }, indexing = STORE_ONLY)
         public List<String> resourceLinks;
-
-        @Documentation(description = "Indicating that it is in the second phase after allocation")
-        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
-        public boolean postAllocation;
 
         // Service use fields:
 
@@ -206,17 +191,14 @@ public class ComputeAllocationTaskService extends
         case SELECT_PLACEMENT_COMPUTES:
             selectPlacement(state, null);
             break;
-        case START_COMPUTE_PROVISIONING:
-            provisionOrAllocateComputes(state);
+        case START_COMPUTE_ALLOCATION:
+            allocateComputeState(state, null);
             break;
         case COMPUTE_ALLOCATION_COMPLETED:
             queryForAllocatedResources(state);
             break;
-        case COMPUTE_PROVISIONING_COMPLETED:
-            queryForProvisionedResources(state);
-            break;
         case COMPLETED:
-            completeAllocationTask(state);
+            complete(state, SubStage.COMPLETED);
             break;
         case ERROR:
             completeWithError(state, SubStage.ERROR);
@@ -261,14 +243,8 @@ public class ComputeAllocationTaskService extends
             throws IllegalArgumentException {
 
         assertNotEmpty(state.resourceType, "resourceType");
-        if (state.postAllocation) {
-            assertNotEmpty(state.resourceLinks, "resourceLinks");
-            assertTrue(state.resourceCount <= state.resourceLinks.size(),
-                    "Resource count must be equal to number of resources during post allocation.");
-        } else {
-            assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
-            assertNotEmpty(state.groupResourcePolicyLink, "groupResourcePolicyLink");
-        }
+        assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
+        assertNotEmpty(state.groupResourcePolicyLink, "groupResourcePolicyLink");
 
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
@@ -294,10 +270,6 @@ public class ComputeAllocationTaskService extends
     private void prepareContext(ComputeAllocationTaskState state,
             ComputeDescription computeDesc, ResourcePoolState resourcePool,
             EndpointState endpoint, EnvironmentMappingState environment) {
-        if (state.postAllocation) {
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.START_COMPUTE_PROVISIONING));
-            return;
-        }
 
         if (resourcePool == null) {
             getResourcePool(state,
@@ -553,106 +525,6 @@ public class ComputeAllocationTaskService extends
                 }).sendWith(getHost());
     }
 
-    private void queryForProvisionedResources(ComputeAllocationTaskState state) {
-        List<String> resourceLinks = state.resourceLinks;
-        if (resourceLinks == null || resourceLinks.isEmpty()) {
-            complete(state, SubStage.COMPLETED);
-            return;
-        }
-        ArrayList<Operation> operations = new ArrayList<>(resourceLinks.size());
-        for (String link : resourceLinks) {
-            operations.add(Operation.createGet(this, link));
-        }
-        OperationSequence.create(operations.toArray(new Operation[operations.size()]))
-                .setCompletion((ops, exs) -> {
-                    if (exs != null) {
-                        failTask("Failure retrieving GroupResourcePolicy: " + Utils.toString(exs),
-                                null);
-                        return;
-                    }
-                    List<ComputeState> computes = new ArrayList<>();
-                    ops.forEach((k, v) -> {
-                        ComputeState cs = v.getBody(ComputeState.class);
-                        if (enableContainerHost(cs.customProperties)) {
-                            computes.add(cs);
-                        }
-                    });
-                    if (computes.isEmpty()) {
-                        complete(state, SubStage.COMPLETED);
-                        return;
-                    } else {
-                        validateConnectionsAndRegisterContainerHost(state, computes);
-                    }
-                }).sendWith(this);
-
-    }
-
-    private void validateConnectionsAndRegisterContainerHost(ComputeAllocationTaskState state,
-            List<ComputeState> computes) {
-        URI specValidateUri = UriUtilsExtended.buildUri(getHost(), ContainerHostService.SELF_LINK,
-                ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
-        URI specUri = UriUtilsExtended.buildUri(getHost(), ContainerHostService.SELF_LINK);
-        AtomicInteger remaining = new AtomicInteger(computes.size());
-        AtomicReference<Throwable> error = new AtomicReference<>();
-        for (ComputeState computeState : computes) {
-            ContainerHostSpec spec = new ContainerHostSpec();
-            spec.hostState = computeState;
-            spec.acceptCertificate = true;
-            waitUntilConnectionValid(specValidateUri, spec, 0, (ex) -> {
-                if (error.get() != null) {
-                    return;
-                }
-
-                if (ex != null) {
-                    error.set(ex);
-                    logWarning("Failed to validate container host connection: %s",
-                            Utils.toString(ex));
-                    failTask("Failed registering container host", error.get());
-                    return;
-                }
-
-                spec.acceptHostAddress = true;
-                registerContainerHost(state, specUri, remaining, spec, error);
-            });
-        }
-    }
-
-    private void registerContainerHost(ComputeAllocationTaskState state, URI specUri,
-            AtomicInteger remaining, ContainerHostSpec spec, AtomicReference<Throwable> error) {
-
-        Operation.createPut(specUri).setBody(spec).setCompletion((op, er) -> {
-            if (error.get() != null) {
-                return;
-            }
-            if (er != null) {
-                error.set(er);
-                failTask("Failed registering container host", er);
-                return;
-            }
-            if (remaining.decrementAndGet() == 0) {
-                complete(state, SubStage.COMPLETED);
-            }
-        }).sendWith(this);
-
-    }
-
-    private void waitUntilConnectionValid(URI specValidateUri, ContainerHostSpec spec,
-            int retryCount, Consumer<Throwable> callback) {
-
-        Operation.createPut(specValidateUri).setBody(spec).setCompletion((op, er) -> {
-            if (er != null) {
-                if (retryCount > 10) {
-                    callback.accept(er);
-                } else {
-                    getHost().schedule(() -> waitUntilConnectionValid(specValidateUri, spec,
-                            retryCount + 1, callback), 10, TimeUnit.SECONDS);
-                }
-            } else {
-                callback.accept(null);
-            }
-        }).sendWith(this);
-    }
-
     private static String loadResource(String fileName) throws IOException {
         try (InputStream is = ComputeAllocationTaskState.class.getResourceAsStream(fileName)) {
             if (is != null) {
@@ -769,7 +641,7 @@ public class ComputeAllocationTaskService extends
         }
     }
 
-    private boolean enableContainerHost(Map<String, String> customProperties) {
+    static boolean enableContainerHost(Map<String, String> customProperties) {
         return customProperties
                 .containsKey(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME);
     }
@@ -819,7 +691,7 @@ public class ComputeAllocationTaskService extends
         computePlacementSelection.customProperties = state.customProperties;
         computePlacementSelection.serviceTaskCallback = ServiceTaskCallback.create(
                 state.documentSelfLink,
-                TaskStage.STARTED, SubStage.START_COMPUTE_PROVISIONING,
+                TaskStage.STARTED, SubStage.START_COMPUTE_ALLOCATION,
                 TaskStage.STARTED, SubStage.ERROR);
         computePlacementSelection.requestTrackerLink = state.requestTrackerLink;
 
@@ -833,100 +705,6 @@ public class ComputeAllocationTaskService extends
                 }));
     }
 
-    private void provisionOrAllocateComputes(ComputeAllocationTaskState state) {
-        final boolean allocationRequest = isAllocationRequest(state);
-
-        if (allocationRequest) {
-            logInfo("Allocation request for %s machines", state.resourceCount);
-        } else if (state.postAllocation) {
-            logInfo("Post-allocation request for %s machines", state.resourceCount);
-        } else {
-            logInfo("Provisioning request for %s machines", state.resourceCount);
-        }
-
-        if (state.postAllocation) {
-            provisionResources(state, null);
-        } else {
-            // // TODO: handle D2O
-            allocateComputeState(state, null);
-        }
-    }
-
-    private void provisionResources(ComputeAllocationTaskState state, String subTaskLink) {
-        try {
-            List<String> resourceLinks = state.resourceLinks;
-            if (resourceLinks == null || resourceLinks.isEmpty()) {
-                throw new IllegalStateException("No compute instances to provision");
-            }
-            if (subTaskLink == null) {
-                // recurse after creating a sub task
-                createSubTaskForProvisionCallbacks(state);
-                return;
-            }
-
-            for (String computeResourceLink : resourceLinks) {
-                ProvisionComputeTaskService.ProvisionComputeTaskState provisionTaskState = new ProvisionComputeTaskService.ProvisionComputeTaskState();
-                provisionTaskState.computeLink = computeResourceLink;
-
-                provisionTaskState.parentTaskLink = subTaskLink;
-                provisionTaskState.isMockRequest = DeploymentProfileConfig.getInstance().isTest();
-                provisionTaskState.taskSubStage = ProvisionComputeTaskService.ProvisionComputeTaskState.SubStage.CREATING_HOST;
-                provisionTaskState.tenantLinks = state.tenantLinks;
-
-                sendRequest(Operation
-                        .createPost(this, ProvisionComputeTaskService.FACTORY_LINK)
-                        .setBody(provisionTaskState)
-                        .setCompletion((o, e) -> {
-                            if (e == null) {
-                                // task will patch us when done
-                                return;
-                            }
-                            logSevere(
-                                    "Failure creating provisioning task: %s",
-                                    Utils.toString(e));
-                            // we fail on first task failure, we could
-                            // in theory keep going ...
-                            failTask("Failure creating provisioning task", e);
-                            return;
-                        }));
-            }
-        } catch (Throwable e) {
-            failTask("System failure creating ContainerStates", e);
-        }
-    }
-
-    private void createSubTaskForProvisionCallbacks(ComputeAllocationTaskState currentState) {
-        ComputeSubTaskService.ComputeSubTaskState subTaskInitState = new ComputeSubTaskService.ComputeSubTaskState();
-        ComputeAllocationTaskState subTaskPatchBody = new ComputeAllocationTaskState();
-        subTaskPatchBody.taskInfo = new TaskState();
-        subTaskPatchBody.taskSubStage = SubStage.COMPUTE_PROVISIONING_COMPLETED;
-        subTaskPatchBody.taskInfo.stage = TaskStage.STARTED;
-        // tell the sub task with what to patch us, on completion
-        subTaskInitState.parentPatchBody = Utils.toJson(subTaskPatchBody);
-        subTaskInitState.errorThreshold = 0;
-
-        subTaskInitState.parentTaskLink = getSelfLink();
-        subTaskInitState.completionsRemaining = currentState.resourceCount;
-        subTaskInitState.tenantLinks = currentState.tenantLinks;
-        Operation startPost = Operation
-                .createPost(this, UUID.randomUUID().toString())
-                .setBody(subTaskInitState)
-                .setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                logWarning("Failure creating sub task: %s",
-                                        Utils.toString(e));
-                                failTask("Failure creating sub task", e);
-                                return;
-                            }
-                            ComputeSubTaskService.ComputeSubTaskState body = o
-                                    .getBody(ComputeSubTaskService.ComputeSubTaskState.class);
-                            // continue, passing the sub task link
-                            provisionResources(currentState, body.documentSelfLink);
-                        });
-        getHost().startService(startPost, new ComputeSubTaskService());
-    }
-
     private void allocateComputeState(ComputeAllocationTaskState state,
             ServiceTaskCallback taskCallback) {
         if (taskCallback == null) {
@@ -936,6 +714,8 @@ public class ComputeAllocationTaskService extends
                     (serviceTask) -> allocateComputeState(state, serviceTask));
             return;
         }
+
+        logInfo("Allocation request for %s machines", state.resourceCount);
 
         if (state.selectedComputePlacementLinks.size() != state.resourceCount) {
             failTask(String.format(
@@ -1270,16 +1050,6 @@ public class ComputeAllocationTaskService extends
                 callbackFunction.accept(environments.get(0));
             }
         });
-    }
-
-    private void completeAllocationTask(ComputeAllocationTaskState state) {
-
-        complete(state, SubStage.COMPLETED);
-    }
-
-    private boolean isAllocationRequest(ComputeAllocationTaskState state) {
-        return !state.postAllocation && (state.customProperties != null
-                && Boolean.parseBoolean(state.customProperties.get(FIELD_NAME_ALLOCATION_REQUEST)));
     }
 
     private <T extends ServiceDocument> void getServiceState(String uriLink, Class<T> type,
