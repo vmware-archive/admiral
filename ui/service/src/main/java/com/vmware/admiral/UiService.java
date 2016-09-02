@@ -11,22 +11,34 @@
 
 package com.vmware.admiral;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.Claims;
+import com.vmware.xenon.common.FileUtils;
+import com.vmware.xenon.common.FileUtils.ResourceEntry;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
-import com.vmware.xenon.common.ServiceDocumentDescription;
-import com.vmware.xenon.common.ServiceErrorResponse;
-import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
+import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.FileContentService;
 import com.vmware.xenon.services.common.GuestUserService;
 import com.vmware.xenon.services.common.ServiceUriPaths;
-import com.vmware.xenon.services.common.UiContentService;
 
-public class UiService extends UiContentService {
+public class UiService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.UI_SERVICE;
     public static final String HTML_RESOURCE_EXTENSION = ".html";
     public static final String LOGIN_PATH = "login" + HTML_RESOURCE_EXTENSION;
@@ -82,32 +94,20 @@ public class UiService extends UiContentService {
     }
 
     @Override
+    public void handleStart(Operation startPost) {
+        try {
+            startUiFileContentServices();
+            super.handleStart(startPost);
+        } catch (Throwable e) {
+            startPost.fail(e);
+        }
+    }
+
+    @Override
     public void handleGet(Operation get) {
         URI uri = get.getUri();
         String selfLink = getSelfLink();
         String requestUri = uri.getPath();
-        String uiResourcePath;
-
-        ServiceDocumentDescription desc = getDocumentTemplate().documentDescription;
-        if (desc != null && desc.userInterfaceResourcePath != null) {
-            uiResourcePath = UriUtils.buildUriPath(ServiceUriPaths.UI_RESOURCES,
-                    desc.userInterfaceResourcePath);
-        } else {
-            uiResourcePath = Utils.buildUiResourceUriPrefixPath(this);
-        }
-
-        if (requestUri.startsWith(uiResourcePath)) {
-            Exception e = new ServiceNotFoundException(UriUtils.buildUri(uri.getScheme(), uri.getHost(),
-                    uri.getPort(), uri.getPath().substring(uiResourcePath.length()), uri.getQuery()).toString());
-            ServiceErrorResponse r = Utils.toServiceErrorResponse(e);
-            r.statusCode = Operation.STATUS_CODE_NOT_FOUND;
-            r.stackTrace = null;
-
-            get.setStatusCode(Operation.STATUS_CODE_NOT_FOUND)
-                    .setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON)
-                    .fail(e, r);
-            return;
-        }
 
         if (selfLink.equals(requestUri) && !UriUtils.URI_PATH_CHAR.equals(requestUri)) {
             // no trailing /, redirect to a location with trailing /
@@ -115,32 +115,108 @@ public class UiService extends UiContentService {
             get.addResponseHeader(Operation.LOCATION_HEADER, selfLink + UriUtils.URI_PATH_CHAR);
             get.complete();
             return;
-        } else {
-            String relativeToSelfUri = UriUtils.URI_PATH_CHAR.equals(selfLink) ?
-                    requestUri : requestUri.substring(selfLink.length());
-            if (relativeToSelfUri.equals(UriUtils.URI_PATH_CHAR)) {
-                // serve the index.html
-                uiResourcePath += UriUtils.URI_PATH_CHAR + ServiceUriPaths.UI_RESOURCE_DEFAULT_FILE;
-            } else {
-                // serve whatever resource
-                uiResourcePath += relativeToSelfUri;
-            }
+        } else if (requestUri.equals(UriUtils.URI_PATH_CHAR)) {
+            String uiResourcePath = ManagementUriParts.UI_SERVICE + UriUtils.URI_PATH_CHAR
+                    + ServiceUriPaths.UI_RESOURCE_DEFAULT_FILE;
+            Operation operation = get.clone();
+            operation.setUri(UriUtils.buildUri(getHost(), uiResourcePath, uri.getQuery()))
+                    .setCompletion((o, e) -> {
+                        get.setBody(o.getBodyRaw())
+                                .setStatusCode(o.getStatusCode())
+                                .setContentType(o.getContentType());
+                        if (e != null) {
+                            get.fail(e);
+                        } else {
+                            get.complete();
+                        }
+                    });
+
+            getHost().sendRequest(operation);
+        }
+    }
+
+    // As defined in ServiceHost
+    private void startUiFileContentServices() throws Throwable {
+        Map<Path, String> pathToURIPath = new HashMap<>();
+
+        Path baseResourcePath = Utils.getServiceUiResourcePath(this);
+        try {
+            pathToURIPath = discoverUiResources(baseResourcePath, this);
+        } catch (Throwable e) {
+            log(Level.WARNING, "Error enumerating UI resources for %s: %s", this.getSelfLink(),
+                    Utils.toString(e));
         }
 
-        // Forward request to the /user-interface service
-        Operation operation = get.clone();
-        operation.setUri(UriUtils.buildUri(getHost(), uiResourcePath, uri.getQuery()))
-                .setCompletion((o, e) -> {
-                    get.setBody(o.getBodyRaw())
-                            .setStatusCode(o.getStatusCode())
-                            .setContentType(o.getContentType());
-                    if (e != null) {
-                        get.fail(e);
-                    } else {
-                        get.complete();
-                    }
-                });
+        if (pathToURIPath.isEmpty()) {
+            log(Level.WARNING, "No custom UI resources found for %s", this.getClass().getName());
+            return;
+        }
 
-        getHost().sendRequest(operation);
+        for (Entry<Path, String> e : pathToURIPath.entrySet()) {
+            String value = e.getValue();
+            Operation post = Operation
+                    .createPost(UriUtils.buildUri(getHost(), value));
+            FileContentService fcs = new FileContentService(e.getKey().toFile());
+            getHost().startService(post, fcs);
+        }
+    }
+
+    // Find UI resources for this service (e.g. html, css, js)
+    private Map<Path, String> discoverUiResources(Path path, Service s)
+            throws Throwable {
+        Map<Path, String> pathToURIPath = new HashMap<>();
+        Path baseUriPath = Paths.get(ManagementUriParts.UI_SERVICE);
+
+        String prefix = path.toString().replace('\\', '/');
+
+        if (getHost().getState().resourceSandboxFileReference != null) {
+            discoverFileResources(s, pathToURIPath, baseUriPath, prefix);
+        }
+
+        if (pathToURIPath.isEmpty()) {
+            discoverJarResources(path, s, pathToURIPath, baseUriPath, prefix);
+        }
+        return pathToURIPath;
+    }
+
+    private void discoverJarResources(Path path, Service s, Map<Path, String> pathToURIPath,
+            Path baseUriPath, String prefix) throws URISyntaxException, IOException {
+        for (ResourceEntry entry : FileUtils.findResources(s.getClass(), prefix)) {
+            Path resourcePath = path.resolve(entry.suffix);
+            Path uriPath = baseUriPath.resolve(entry.suffix);
+            Path outputPath = getHost().copyResourceToSandbox(entry.url, resourcePath);
+            if (outputPath == null) {
+                // Failed to copy one resource, disable user interface for this service.
+                s.toggleOption(ServiceOption.HTML_USER_INTERFACE, false);
+            } else {
+                pathToURIPath.put(outputPath, uriPath.toString().replace('\\', '/'));
+            }
+        }
+    }
+
+    private void discoverFileResources(Service s, Map<Path, String> pathToURIPath,
+            Path baseUriPath,
+            String prefix) {
+        File rootDir = new File(new File(getHost().getState().resourceSandboxFileReference), prefix);
+        if (!rootDir.exists()) {
+            log(Level.INFO, "Resource directory not found: %s", rootDir.toString());
+            return;
+        }
+
+        String basePath = baseUriPath.toString();
+        String serviceName = s.getClass().getSimpleName();
+        List<File> resources = FileUtils.findFiles(rootDir.toPath(),
+                new HashSet<String>(), false);
+        for (File f : resources) {
+            String subPath = f.getAbsolutePath();
+            subPath = subPath.substring(subPath.indexOf(serviceName));
+            subPath = subPath.replace(serviceName, "");
+            Path uriPath = Paths.get(basePath, subPath);
+            pathToURIPath.put(f.toPath(), uriPath.toString().replace('\\', '/'));
+        }
+
+        if (pathToURIPath.isEmpty()) {
+            log(Level.INFO, "No resources found in directory: %s", rootDir.toString());
+        }
     }
 }

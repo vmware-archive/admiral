@@ -580,7 +580,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
 
         URI targetUri = UriUtils.extendUri(input.getDockerUri(), "/volumes/create");
 
-        sendPost(targetUri, input.getProperties(), false, completionHandler);
+        sendPost(targetUri, input.getProperties(), ClientMode.DEFAULT, completionHandler);
 
     }
 
