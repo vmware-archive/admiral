@@ -155,8 +155,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         createDockerHost(dockerHostDesc, resourcePool);
 
         // setup Composite description with 1 container
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.CONTAINER_TYPE,
-                containerDesc);
+        CompositeDescription compositeDesc = createCompositeDesc(containerDesc);
 
         // setup Group Policy:
         GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);

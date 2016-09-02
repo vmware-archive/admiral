@@ -30,7 +30,6 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.UriUtilsExtended;
-import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
@@ -505,8 +504,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         desc2.portBindings = null;
         desc2.affinity = new String[] { desc1.name };
 
-        CompositeDescriptionService.CompositeDescription compositeDesc = createCompositeDesc(
-                ResourceType.CONTAINER_TYPE, desc1,
+        CompositeDescriptionService.CompositeDescription compositeDesc = createCompositeDesc(desc1,
                 desc2);
 
         request.resourceDescriptionLink = compositeDesc.documentSelfLink;
@@ -601,8 +599,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         desc2.affinity = new String[] {
                 AffinityConstraint.AffinityConstraintType.ANTI_AFFINITY_PREFIX + desc1.name };
 
-        CompositeDescriptionService.CompositeDescription compositeDesc = createCompositeDesc(
-                ResourceType.CONTAINER_TYPE, desc1,
+        CompositeDescriptionService.CompositeDescription compositeDesc = createCompositeDesc(desc1,
                 desc2);
 
         request.resourceDescriptionLink = compositeDesc.documentSelfLink;
@@ -695,8 +692,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         desc2.volumesFrom = new String[] { desc1.name };
         desc2.portBindings = null;
 
-        CompositeDescriptionService.CompositeDescription compositeDesc = createCompositeDesc(
-                ResourceType.CONTAINER_TYPE, desc1,
+        CompositeDescriptionService.CompositeDescription compositeDesc = createCompositeDesc(desc1,
                 desc2);
 
         request.resourceDescriptionLink = compositeDesc.documentSelfLink;

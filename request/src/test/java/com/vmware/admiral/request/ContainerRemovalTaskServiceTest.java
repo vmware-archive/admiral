@@ -363,8 +363,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
         desc2.affinity = new String[] { desc1.name };
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.CONTAINER_TYPE, desc1,
-                desc2);
+        CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPolicyState.tenantLinks;
@@ -407,8 +406,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
         desc2.affinity = new String[] { desc1.name };
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.CONTAINER_TYPE, desc1,
-                desc2);
+        CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPolicyState.tenantLinks;
@@ -461,8 +459,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1", true);
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2", true);
         desc2.affinity = new String[] { desc1.name };
-        CompositeDescription compositeDesc = createCompositeDesc(true, ResourceType.CONTAINER_TYPE,
-                desc1, desc2);
+        CompositeDescription compositeDesc = createCompositeDesc(true, desc1, desc2);
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPolicyState.tenantLinks;
@@ -520,8 +517,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
     public void testScaleDownContainerShouldNotDeleteDescription() throws Throwable {
         ContainerDescription desc = TestRequestStateFactory.createContainerDescription("name", true);
         desc._cluster = 2;
-        CompositeDescription compositeDesc = createCompositeDesc(true, ResourceType.CONTAINER_TYPE,
-                desc);
+        CompositeDescription compositeDesc = createCompositeDesc(true, desc);
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPolicyState.tenantLinks;

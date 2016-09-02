@@ -29,7 +29,6 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.UriUtilsExtended;
-import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -60,7 +59,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testWithNoDescs() throws Throwable {
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.CONTAINER_TYPE);
+        CompositeDescription compositeDesc = createCompositeDesc();
 
         RequestBrokerState request = startRequest(compositeDesc);
         request = waitForTaskError(request.documentSelfLink, RequestBrokerState.class);
@@ -71,8 +70,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
     public void testWithSingleDesc() throws Throwable {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
 
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.CONTAINER_TYPE,
-                desc1);
+        CompositeDescription compositeDesc = createCompositeDesc(desc1);
 
         RequestBrokerState request = startRequest(compositeDesc);
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
@@ -85,8 +83,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         ComputeDescription compute = TestRequestStateFactory.createDockerHostDescription();
         compute.instanceAdapterReference = UriUtilsExtended.buildUri(host,
                 ManagementUriParts.ADAPTER_DOCKER);
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.COMPUTE_TYPE,
-                compute);
+        CompositeDescription compositeDesc = createCompositeDesc(compute);
         RequestBrokerState request = startComputeRequest(compositeDesc);
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
         ComputeState container = getDocument(ComputeState.class, request.resourceLinks.get(0));
@@ -106,9 +103,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         compute2.instanceAdapterReference = UriUtilsExtended.buildUri(host,
                 ManagementUriParts.ADAPTER_DOCKER);
 
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.COMPUTE_TYPE,
-                compute1,
-                compute2);
+        CompositeDescription compositeDesc = createCompositeDesc(compute1, compute2);
         RequestBrokerState request = startComputeRequest(compositeDesc);
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
 
@@ -126,8 +121,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
 
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
 
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.CONTAINER_TYPE,
-                desc1);
+        CompositeDescription compositeDesc = createCompositeDesc(desc1);
 
         // Call RequestBroker with resourceType="Compute" for Composition task with ContainerDesc
         // instead of ComputeDesc.
@@ -144,8 +138,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
         desc2.affinity = new String[] { desc1.name };
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.CONTAINER_TYPE, desc1,
-                desc2);
+        CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
 
         RequestBrokerState request = startRequest(compositeDesc);
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
@@ -218,8 +211,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         desc4.customProperties.put(MockDockerAdapterService.FAILURE_EXPECTED, "simulate failure");
         desc2.customProperties.put(MockDockerAdapterService.FAILURE_EXPECTED, "simulate failure");
 
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.CONTAINER_TYPE, desc1,
-                desc2, desc3, desc4, desc5);
+        CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2, desc3, desc4, desc5);
 
         verifyContainerStatesRemoved(compositeDesc, latch);
 
@@ -241,8 +233,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         removeAllPolicies();
 
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.CONTAINER_TYPE,
-                desc1);
+        CompositeDescription compositeDesc = createCompositeDesc(desc1);
 
         RequestBrokerState request = startRequest(compositeDesc);
         waitForTaskError(request.documentSelfLink, RequestBrokerState.class);
@@ -258,8 +249,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
                 .createContainerDescription(containerName);
         ContainerDescription desc2 = TestRequestStateFactory
                 .createContainerDescription(containerName);
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.CONTAINER_TYPE, desc1,
-                desc2);
+        CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
 
         RequestBrokerState request = startRequest(compositeDesc);
         waitForTaskError(request.documentSelfLink, RequestBrokerState.class);
@@ -320,7 +310,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         descs[8].volumesFrom = new String[] { descs[12].name, descs[13].name };
         descs[8].affinity = new String[] { descs[14].name };
 
-        return createCompositeDesc(ResourceType.CONTAINER_TYPE, descs);
+        return createCompositeDesc(descs);
     }
 
     private RequestBrokerState startRequest(CompositeDescription desc) throws Throwable {

@@ -31,7 +31,6 @@ import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.UriUtilsExtended;
-import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -127,8 +126,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
         desc2.affinity = new String[] { desc1.name };
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.CONTAINER_TYPE, desc1,
-                desc2);
+        CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
         RequestStatus requestStatus = verifyRequestStatus(compositeDesc.documentSelfLink);
         assertEquals(compositeDesc.name, requestStatus.name);
 
@@ -150,8 +148,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
         desc2.portBindings = null;
         desc2.affinity = new String[] { desc1.name };
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.CONTAINER_TYPE, desc1,
-                desc2);
+        CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
         RequestStatus requestStatus = verifyRequestStatus(compositeDesc.documentSelfLink);
         assertEquals(compositeDesc.name, requestStatus.name);
 
@@ -180,8 +177,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
         desc2.affinity = new String[] { desc1.name };
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.CONTAINER_TYPE, desc1,
-                desc2);
+        CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
 
         // Stop the docker adapter service in order to fail the request
         Service service = new MockDockerAdapterService();
@@ -238,8 +234,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
         desc2.customProperties.put(MockDockerAdapterService.FAILURE_EXPECTED, "simulate failure");
-        CompositeDescription compositeDesc = createCompositeDesc(ResourceType.CONTAINER_TYPE, desc1,
-                desc2);
+        CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
         request.resourceDescriptionLink = compositeDesc.documentSelfLink;
