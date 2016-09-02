@@ -20,10 +20,10 @@ VOLUME $ADMIRAL_STORAGE_PATH
 
 RUN mkdir $ADMIRAL_ROOT && mkdir -p $USER_RESOURCES
 
-COPY target/lib target/admiral-host-?.?.?-SNAPSHOT.jar $ADMIRAL_ROOT/
+COPY target/lib target/admiral-host-0.5.0.jar $ADMIRAL_ROOT/
 
 COPY images-bin/* $USER_RESOURCES
- 
+
 COPY entrypoint.sh /entrypoint.sh
 
 RUN chmod 700 /entrypoint.sh

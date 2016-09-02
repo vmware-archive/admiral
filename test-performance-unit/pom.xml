@@ -18,7 +18,7 @@
     <parent>
         <groupId>com.vmware.admiral</groupId>
         <artifactId>admiral</artifactId>
-        <version>0.5.0-SNAPSHOT</version>
+        <version>0.5.0</version>
     </parent>
 
     <artifactId>admiral-performance-unit-tests</artifactId>
