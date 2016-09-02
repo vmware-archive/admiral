@@ -13,32 +13,29 @@ package com.vmware.admiral.common.security;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import static javax.crypto.Cipher.DECRYPT_MODE;
-import static javax.crypto.Cipher.ENCRYPT_MODE;
-
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Base64;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
+import org.bouncycastle.crypto.BufferedBlockCipher;
+import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.modes.CBCBlockCipher;
+import org.bouncycastle.crypto.paddings.PKCS7Padding;
+import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
+import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.params.ParametersWithIV;
 
 /**
  * Simple encryption service that provides methods to encrypt and decrypt byte arrays and strings
  * based on the provided symmetric key. The key can be provided directly as a byte array or through
  * a file which contains it.
- *
- * The service's default settings require to have the "Java Cryptography Extension (JCE) Unlimited
- * Strength Jurisdiction Policy Files 8" installed in ${java.home}/jre/lib/security/
- * See http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html
  */
 public final class EncryptorService {
 
@@ -97,11 +94,15 @@ public final class EncryptorService {
         if (input == null || input.length == 0) {
             return input;
         }
+
         try {
-            Cipher cipher = getCipher(ENCRYPT_MODE);
-            byte[] output = cipher.doFinal(input);
-            byte[] output64 = Base64.getEncoder().encode(output);
-            return output64;
+            BufferedBlockCipher cipher = getCipher(true);
+            byte[] output = new byte[cipher.getOutputSize(input.length)];
+
+            int length = cipher.processBytes(input, 0, input.length, output, 0);
+            length += cipher.doFinal(output, length);
+
+            return Base64.getEncoder().encode(Arrays.copyOfRange(output, 0, length));
         } catch (Exception e) {
             throw new IllegalStateException("Encryption error!", e);
         }
@@ -135,11 +136,16 @@ public final class EncryptorService {
         if (input == null || input.length == 0) {
             return input;
         }
+
         try {
-            byte[] input64 = Base64.getDecoder().decode(input);
-            Cipher cipher = getCipher(DECRYPT_MODE);
-            byte[] output = cipher.doFinal(input64);
-            return output;
+            BufferedBlockCipher cipher = getCipher(false);
+            byte[] bytes = Base64.getDecoder().decode(input);
+            byte[] output = new byte[cipher.getOutputSize(bytes.length)];
+
+            int length = cipher.processBytes(bytes, 0, bytes.length, output, 0);
+            length += cipher.doFinal(output, length);
+
+            return Arrays.copyOfRange(output, 0, length);
         } catch (Exception e) {
             throw new IllegalStateException("Decryption error!", e);
         }
@@ -191,32 +197,15 @@ public final class EncryptorService {
         return key;
     }
 
-    private static byte[] getKeyData(byte[] key) {
-        byte[] data = new byte[KEY_LENGTH];
-        System.arraycopy(key, IV_LENGTH, data, 0, KEY_LENGTH);
-        return data;
-    }
-
-    private static byte[] getIvData(byte[] key) {
-        byte[] data = new byte[IV_LENGTH];
-        System.arraycopy(key, 0, data, 0, IV_LENGTH);
-        return data;
-    }
-
     /*
      * Cipher settings
      */
 
-    private static final String KEY_SPEC = "AES";
-    private static final String CIPHER_SPEC = "AES/CBC/PKCS5Padding";
-
-    private Cipher getCipher(int mode) throws Exception {
-        Key key = new SecretKeySpec(getKeyData(keyBytes), KEY_SPEC);
-        IvParameterSpec iv = new IvParameterSpec(getIvData(keyBytes));
-
-        Cipher cipher = Cipher.getInstance(CIPHER_SPEC);
-        cipher.init(mode, key, iv);
+    private BufferedBlockCipher getCipher(boolean forEncryption) {
+        BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(
+                new CBCBlockCipher(new AESEngine()), new PKCS7Padding());
+        cipher.init(forEncryption, new ParametersWithIV(new KeyParameter(keyBytes, IV_LENGTH,
+                keyBytes.length - IV_LENGTH), keyBytes, 0, IV_LENGTH));
         return cipher;
     }
-
 }
