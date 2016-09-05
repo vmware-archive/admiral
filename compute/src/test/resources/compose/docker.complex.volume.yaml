@@ -1,0 +1,29 @@
+---
+version: "2"
+services:
+  proxy:
+    image: "haproxy"
+    volumes:
+    - "hadata:/var/data"
+  app:
+    image: "wordpress"
+    volumes:
+    - "~/configs:/etc/configs/:ro"
+    - "./cache:/tmp/cache"
+    - "phpconf:/etc/php5/conf.d"
+    volume_driver: "mydriver"
+  db:
+    image: "postgres"
+    volumes:
+    - "pgvolume:/var/lib/postgresql/data"
+volumes:
+  pgvolume:
+    external: true
+  hadata:
+    driver: "custom-driver-2"
+    driver_opts:
+      foo: "bar"
+      baz: "1"
+  phpconf:
+    external:
+      name: "my-pre-existing-volume"

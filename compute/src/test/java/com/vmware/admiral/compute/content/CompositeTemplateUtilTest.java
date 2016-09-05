@@ -129,8 +129,56 @@ public class CompositeTemplateUtilTest {
         template2.name = expectedTemplate.name; // because of the timestamp
 
         assertContainersComponentsOnly(template2.components);
-        assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 3, template1.components);
-        assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 2, template1.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 3, template2.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 3, template2.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_VOLUME_TYPE, 0, template2.components);
+
+        String template2Yaml = serializeCompositeTemplate(template2);
+
+        assertEquals(expectedTemplateYaml, template2Yaml);
+    }
+
+    @Test
+    public void testConvertDockerComposeToCompositeTemplateWithVolume() throws IOException {
+        // Docker Compose with simple volume entities
+
+        CompositeTemplate expectedTemplate = deserializeCompositeTemplate(
+                getContent("composite.simple.volume.yaml"));
+
+        String expectedTemplateYaml = serializeCompositeTemplate(expectedTemplate);
+
+        DockerCompose compose1 = deserializeDockerCompose(
+                getContent("docker.simple.volume.yaml"));
+
+        CompositeTemplate template1 = fromDockerComposeToCompositeTemplate(compose1);
+        template1.name = expectedTemplate.name; // because of the timestamp
+
+        assertContainersComponentsOnly(template1.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 2, template1.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 0, template1.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_VOLUME_TYPE, 2, template1.components);
+
+        String template1Yaml = serializeCompositeTemplate(template1);
+
+        assertEquals(expectedTemplateYaml, template1Yaml);
+
+        // Docker Compose with complex volume entities
+
+        expectedTemplate = deserializeCompositeTemplate(
+                getContent("composite.complex.volume.yaml"));
+
+        expectedTemplateYaml = serializeCompositeTemplate(expectedTemplate);
+
+        DockerCompose compose2 = deserializeDockerCompose(
+                getContent("docker.complex.volume.yaml"));
+
+        CompositeTemplate template2 = fromDockerComposeToCompositeTemplate(compose2);
+        template2.name = expectedTemplate.name; // because of the timestamp
+
+        assertContainersComponentsOnly(template2.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 3, template2.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 0, template2.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_VOLUME_TYPE, 3, template2.components);
 
         String template2Yaml = serializeCompositeTemplate(template2);
 
@@ -183,6 +231,42 @@ public class CompositeTemplateUtilTest {
 
         CompositeTemplate template2 = deserializeCompositeTemplate(
                 getContent("composite.complex.network.yaml"));
+
+        DockerCompose compose2 = fromCompositeTemplateToDockerCompose(template2);
+
+        String compose2Yaml = serializeDockerCompose(compose2);
+
+        assertEquals(expectedComposeYaml, compose2Yaml);
+    }
+
+    @Test
+    public void testConvertCompositeTemplateToDockerComposeWithVolume() throws IOException {
+
+        // To Docker Compose with simple volume entities
+
+        DockerCompose expectedCompose = deserializeDockerCompose(
+                getContent("docker.simple.volume.yaml"));
+
+        String expectedComposeYaml = serializeDockerCompose(expectedCompose);
+
+        CompositeTemplate template = deserializeCompositeTemplate(
+                getContent("composite.simple.volume.yaml"));
+
+        DockerCompose compose = fromCompositeTemplateToDockerCompose(template);
+
+        String composeYaml = serializeDockerCompose(compose);
+
+        assertEquals(expectedComposeYaml, composeYaml);
+
+        // To Docker Compose with complex network entities
+
+        expectedCompose = deserializeDockerCompose(
+                getContent("docker.complex.volume.yaml"));
+
+        expectedComposeYaml = serializeDockerCompose(expectedCompose);
+
+        CompositeTemplate template2 = deserializeCompositeTemplate(
+                getContent("composite.complex.volume.yaml"));
 
         DockerCompose compose2 = fromCompositeTemplateToDockerCompose(template2);
 
@@ -333,6 +417,7 @@ public class CompositeTemplateUtilTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 5, template.components);
         assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 0, template.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_VOLUME_TYPE, 0, template.components);
 
         String content = serializeCompositeTemplate(template);
 
@@ -374,6 +459,31 @@ public class CompositeTemplateUtilTest {
     }
 
     @Test
+    public void testDeserializeSerializeComplexCompositeTemplateWithVolume() throws IOException {
+
+        String expectedContent = getContent("composite.complex.volume.yaml");
+
+        CompositeTemplate template = deserializeCompositeTemplate(expectedContent);
+
+        assertNull(template.id);
+        assertNull(template.status);
+        assertContainersComponentsOnly(template.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 3, template.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 0, template.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_VOLUME_TYPE, 3, template.components);
+
+        String content = serializeCompositeTemplate(template);
+
+        assertEquals(toUnixLineEnding(expectedContent), toUnixLineEnding(content));
+
+        DockerCompose compose = fromCompositeTemplateToDockerCompose(template);
+
+        String contentCompose = serializeDockerCompose(compose);
+
+        assertTrue((contentCompose != null) && (!contentCompose.isEmpty()));
+    }
+
+    @Test
     public void testDeserializeSerializeComplexDockerCompose() throws IOException {
 
         String expectedContent = getContent("docker.complex.yaml");
@@ -391,6 +501,7 @@ public class CompositeTemplateUtilTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 4, template.components);
         assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 0, template.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_VOLUME_TYPE, 0, template.components);
 
         String contentTemplate = serializeCompositeTemplate(template);
 
@@ -415,6 +526,32 @@ public class CompositeTemplateUtilTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 3, template.components);
         assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 2, template.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_VOLUME_TYPE, 0, template.components);
+
+        String contentTemplate = serializeCompositeTemplate(template);
+
+        assertTrue((contentTemplate != null) && (!contentTemplate.isEmpty()));
+    }
+
+    @Test
+    public void testDeserializeSerializeSimpleDockerComposeWithVolume() throws IOException {
+
+        String expectedContent = getContent("docker.simple.volume.yaml");
+
+        DockerCompose compose = deserializeDockerCompose(expectedContent);
+
+        String content = serializeDockerCompose(compose);
+
+        assertEquals(toUnixLineEnding(expectedContent), toUnixLineEnding(content));
+
+        CompositeTemplate template = fromDockerComposeToCompositeTemplate(compose);
+
+        assertNull(template.id);
+        assertNull(template.status);
+        assertContainersComponentsOnly(template.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 2, template.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 0, template.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_VOLUME_TYPE, 2, template.components);
 
         String contentTemplate = serializeCompositeTemplate(template);
 
@@ -439,6 +576,32 @@ public class CompositeTemplateUtilTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 3, template.components);
         assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 3, template.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_VOLUME_TYPE, 0, template.components);
+
+        String contentTemplate = serializeCompositeTemplate(template);
+
+        assertTrue((contentTemplate != null) && (!contentTemplate.isEmpty()));
+    }
+
+    @Test
+    public void testDeserializeSerializeComplexDockerComposeWithVolume() throws IOException {
+
+        String expectedContent = getContent("docker.complex.volume.yaml");
+
+        DockerCompose compose = deserializeDockerCompose(expectedContent);
+
+        String content = serializeDockerCompose(compose);
+
+        assertEquals(toUnixLineEnding(expectedContent), toUnixLineEnding(content));
+
+        CompositeTemplate template = fromDockerComposeToCompositeTemplate(compose);
+
+        assertNull(template.id);
+        assertNull(template.status);
+        assertContainersComponentsOnly(template.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 3, template.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 0, template.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_VOLUME_TYPE, 3, template.components);
 
         String contentTemplate = serializeCompositeTemplate(template);
 
@@ -457,6 +620,7 @@ public class CompositeTemplateUtilTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 1, template.components);
         assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 0, template.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_VOLUME_TYPE, 0, template.components);
 
         template.id = "new-id";
         template.status = Status.RETIRED;
@@ -487,6 +651,7 @@ public class CompositeTemplateUtilTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(TEMPLATE_CONTAINER_TYPE, 3, template.components);
         assertContainersComponents(TEMPLATE_CONTAINER_NETWORK_TYPE, 2, template.components);
+        assertContainersComponents(TEMPLATE_CONTAINER_VOLUME_TYPE, 0, template.components);
 
         ContainerDescription appData = (ContainerDescription) template.components.get("app").data;
 

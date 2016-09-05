@@ -1,0 +1,20 @@
+---
+version: "2"
+services:
+  db:
+    image: "postgres"
+    volumes:
+    - "database:/var/lib/postgres/data"
+  php:
+    image: "php-fpm:5.6"
+    volumes:
+    - "phpconf:/etc/php/conf.d"
+volumes:
+  database:
+    driver: "custom-driver-1"
+    driver_opts:
+      mountpoint: "/data/local/data"
+  phpconf:
+    driver: "custom-driver-2"
+    driver_opts:
+      mountpoint: "/etc/php5/conf.d"

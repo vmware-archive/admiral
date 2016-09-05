@@ -238,6 +238,10 @@ public class ContainerVolumeDescriptionService extends StatefulService {
         template.labels = new HashMap<>(1);
         template.labels.put("key (string)", "value (string)");
 
+        template.options = new HashMap<>(1);
+        template.options.put("mountpoint (string)",
+                "/var/lib/docker/volumes/ (string)");
+
         // Default location according to official documents:
         // https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/inspect-a-volume
         template.mountpoint = FileUtils.getFile("/var/lib/docker/volumes/");

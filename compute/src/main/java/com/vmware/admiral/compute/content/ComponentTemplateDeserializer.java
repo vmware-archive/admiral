@@ -14,6 +14,7 @@ package com.vmware.admiral.compute.content;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_NETWORK_TYPE;
 import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_TYPE;
+import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_VOLUME_TYPE;
 
 import java.io.IOException;
 import java.util.Map;
@@ -26,6 +27,7 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 
 public class ComponentTemplateDeserializer extends StdDeserializer<ComponentTemplate<?>> {
 
@@ -34,7 +36,9 @@ public class ComponentTemplateDeserializer extends StdDeserializer<ComponentTemp
     private static enum TypeClass {
         COMPONENT_CONTAINER(TEMPLATE_CONTAINER_TYPE, ContainerDescription.class), //
         COMPONENT_CONTAINER_NETWORK(TEMPLATE_CONTAINER_NETWORK_TYPE,
-                ContainerNetworkDescription.class); //
+                ContainerNetworkDescription.class),
+        COMPONENT_CONTAINER_VOLUME(TEMPLATE_CONTAINER_VOLUME_TYPE,
+                ContainerVolumeDescription.class); //
 
         TypeClass(String type, Class<?> clazz) {
             this.type = type;

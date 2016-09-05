@@ -700,7 +700,7 @@ public class CompositeTemplateUtil {
         components.forEach((componentName, component) -> {
             if (!TEMPLATE_CONTAINER_NETWORK_TYPE.equals(component.type)
                     && !TEMPLATE_CONTAINER_TYPE.equals(component.type)
-                    && !TEMPLATE_CONTAINER_NETWORK_TYPE.equals(component.type)) {
+                    && !TEMPLATE_CONTAINER_VOLUME_TYPE.equals(component.type)) {
                 throw new IllegalArgumentException(String.format(
                         "Component '%s' has an unsupported type '%s'",
                         componentName, component.type));

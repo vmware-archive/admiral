@@ -1,0 +1,45 @@
+---
+name: "hello-cluster"
+components:
+  proxy:
+    type: "Container.Docker"
+    data:
+      name: "proxy"
+      image: "haproxy"
+      volumes:
+      - "hadata:/var/data"
+  app:
+    type: "Container.Docker"
+    data:
+      name: "app"
+      image: "wordpress"
+      volumes:
+      - "~/configs:/etc/configs/:ro"
+      - "./cache:/tmp/cache"
+      - "phpconf:/etc/php5/conf.d"
+      volume_driver: "mydriver"
+  db:
+    type: "Container.Docker"
+    data:
+      name: "db"
+      image: "postgres"
+      volumes:
+      - "pgvolume:/var/lib/postgresql/data"
+  pgvolume:
+    type: "Volume.Docker"
+    data:
+      name: "pgvolume"
+      external: true
+  hadata:
+    type: "Volume.Docker"
+    data:
+      name: "hadata"
+      driver: "custom-driver-2"
+      options:
+        foo: "bar"
+        baz: "1"
+  phpconf:
+    type: "Volume.Docker"
+    data:
+      name: "phpconf"
+      external_name: "my-pre-existing-volume"

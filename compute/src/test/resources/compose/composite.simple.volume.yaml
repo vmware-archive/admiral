@@ -1,0 +1,31 @@
+---
+name: "hello"
+components:
+  db:
+    type: "Container.Docker"
+    data:
+      name: "db"
+      image: "postgres"
+      volumes:
+      - "database:/var/lib/postgres/data"
+  php:
+    type: "Container.Docker"
+    data:
+      name: "php"
+      image: "php-fpm:5.6"
+      volumes:
+      - "phpconf:/etc/php/conf.d"
+  database:
+    type: "Volume.Docker"
+    data:
+      name: "database"
+      driver: "custom-driver-1"
+      options:
+        mountpoint: "/data/local/data"
+  phpconf:
+    type: "Volume.Docker"
+    data:
+      name: "phpconf"
+      driver: "custom-driver-2"
+      options:
+        mountpoint: "/etc/php5/conf.d"
