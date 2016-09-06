@@ -20,7 +20,7 @@ VOLUME $ADMIRAL_STORAGE_PATH
 
 RUN mkdir $ADMIRAL_ROOT && mkdir -p $USER_RESOURCES
 
-COPY target/lib target/admiral-host-0.5.0.jar $ADMIRAL_ROOT/
+COPY target/lib target/admiral-host-0.5.1-SNAPSHOT.jar $ADMIRAL_ROOT/
 
 COPY images-bin/* $USER_RESOURCES
 
