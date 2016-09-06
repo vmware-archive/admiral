@@ -14,6 +14,8 @@ package com.vmware.admiral.compute.content;
 import java.io.Serializable;
 import java.util.List;
 
+import com.vmware.admiral.compute.BindingUtils;
+
 public class Binding implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -30,17 +32,38 @@ public class Binding implements Serializable {
         }
     }
 
+    public static class BindingPlaceholder implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        public String bindingExpression;// TODO could be a list of fields, but not sure about
+                                              // the syntax yet
+        public String defaultValue;
+
+        public BindingPlaceholder(String bindingExpression) {
+            this(bindingExpression, null);
+        }
+
+        public BindingPlaceholder(String bindingExpression, String defaultValue) {
+            this.bindingExpression = bindingExpression;
+            this.defaultValue = defaultValue;
+        }
+    }
+
     /**
      * Path of the field to be replaced e.g [healthConfig, urlPath]
      */
     public List<String> targetFieldPath;
-    public String bindingExpression; //TODO could be a list of fields, but not sure about the syntax yet
-    public boolean isProvisioningTimeBinding;
+    public String originalFieldExpression;
+    public BindingPlaceholder placeholder;
 
     public Binding(List<String> targetFieldPath,
-            String bindingExpression, boolean isProvisioningTimeBinding) {
+            String originalFieldExpression, BindingPlaceholder placeholder) {
         this.targetFieldPath = targetFieldPath;
-        this.bindingExpression = bindingExpression;
-        this.isProvisioningTimeBinding = isProvisioningTimeBinding;
+        this.originalFieldExpression = originalFieldExpression;
+        this.placeholder = placeholder;
+    }
+
+    public boolean isProvisioningTimeBinding() {
+        return BindingUtils.isProvisioningTimeBinding(this.placeholder.bindingExpression);
     }
 }

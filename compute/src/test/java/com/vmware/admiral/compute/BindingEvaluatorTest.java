@@ -13,6 +13,7 @@ package com.vmware.admiral.compute;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -27,6 +28,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.content.Binding;
+import com.vmware.admiral.compute.content.Binding.BindingPlaceholder;
 
 public class BindingEvaluatorTest {
 
@@ -40,7 +42,7 @@ public class BindingEvaluatorTest {
         secondDescription.name = "B";
 
         List<Binding> bindings = Arrays.asList(
-                new Binding(Arrays.asList("_cluster"), "A~_cluster", false));
+                binding(Arrays.asList("_cluster"), "A~_cluster"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
@@ -67,8 +69,8 @@ public class BindingEvaluatorTest {
         secondDescription.name = "B";
 
         List<Binding> bindings = Arrays.asList(
-                new Binding(Arrays.asList("_cluster"), "A~_cluster", false),
-                new Binding(Arrays.asList("memory_limit"), "A~memory_limit", false));
+                binding(Arrays.asList("_cluster"), "A~_cluster"),
+                binding(Arrays.asList("memory_limit"), "A~memory_limit"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
@@ -95,8 +97,8 @@ public class BindingEvaluatorTest {
         ContainerDescription secondDescription = new ContainerDescription();
         secondDescription.name = "B";
 
-        List<Binding> bindings = Arrays.asList(
-                new Binding(Arrays.asList("hostname"), "A~logConfig~type", false));
+        List<Binding> bindings = Arrays
+                .asList(binding(Arrays.asList("hostname"), "A~logConfig~type"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
@@ -123,7 +125,7 @@ public class BindingEvaluatorTest {
         secondDescription.name = "B";
 
         List<Binding> bindings = Arrays.asList(
-                new Binding(Arrays.asList("hostname"), "A~customProperties~key", false));
+                binding(Arrays.asList("hostname"), "A~customProperties~key"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
@@ -150,7 +152,7 @@ public class BindingEvaluatorTest {
         secondDescription.hostname = "hostname";
 
         List<Binding> bindings = Arrays.asList(
-                new Binding(Arrays.asList("log_config", "type"), "B~hostname", false));
+                binding(Arrays.asList("log_config", "type"), "B~hostname"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("A", bindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
@@ -179,7 +181,7 @@ public class BindingEvaluatorTest {
         secondDescription.name = "B";
 
         List<Binding> bindings = Arrays.asList(
-                new Binding(Arrays.asList("hostname"), "A~_cluster", false));
+                binding(Arrays.asList("hostname"), "A~_cluster"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
@@ -207,7 +209,7 @@ public class BindingEvaluatorTest {
         secondDescription.name = "B";
 
         List<Binding> bindings = Arrays.asList(
-                new Binding(Arrays.asList("_cluster"), "A~hostname", false));
+                binding(Arrays.asList("_cluster"), "A~hostname"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
@@ -233,11 +235,10 @@ public class BindingEvaluatorTest {
         secondDescription.name = "B";
 
         List<Binding> bBindings = Arrays.asList(
-                new Binding(Arrays.asList("_cluster"), "A~_cluster", false));
+                binding(Arrays.asList("_cluster"), "A~_cluster"));
         Binding.ComponentBinding bComponentBinding = new Binding.ComponentBinding("B", bBindings);
 
-        List<Binding> aBindings = Arrays.asList(
-                new Binding(Arrays.asList("_cluster"), "B~_cluster", false));
+        List<Binding> aBindings = Arrays.asList(binding(Arrays.asList("_cluster"), "B~_cluster"));
         Binding.ComponentBinding aComponentBinding = new Binding.ComponentBinding("A", aBindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
@@ -261,12 +262,11 @@ public class BindingEvaluatorTest {
         secondDescription.name = "B";
         secondDescription.memoryLimit = 5L;
 
-        List<Binding> bBindings = Arrays.asList(
-                new Binding(Arrays.asList("hostname"), "A~hostname", false));
+        List<Binding> bBindings = Arrays.asList(binding(Arrays.asList("hostname"), "A~hostname"));
         Binding.ComponentBinding bComponentBinding = new Binding.ComponentBinding("B", bBindings);
 
-        List<Binding> aBindings = Arrays.asList(
-                new Binding(Arrays.asList("memory_limit"), "B~memory_limit", false));
+        List<Binding> aBindings = Arrays
+                .asList(binding(Arrays.asList("memory_limit"), "B~memory_limit"));
         Binding.ComponentBinding aComponentBinding = new Binding.ComponentBinding("A", aBindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
@@ -285,6 +285,47 @@ public class BindingEvaluatorTest {
     }
 
     @Test
+    public void testEvaluateComplexBindingsRecursively() {
+        /**
+         * A has a binding to B and B has a binding to C
+         */
+
+        ContainerDescription firstDescription = new ContainerDescription();
+        firstDescription.name = "A";
+
+        ContainerDescription secondDescription = new ContainerDescription();
+        secondDescription.name = "B";
+
+        ContainerDescription thirdDescription = new ContainerDescription();
+        thirdDescription.name = "C";
+        thirdDescription.memoryLimit = 5L;
+
+        List<Binding> aBindings = Arrays
+                .asList(binding(Arrays.asList("memory_limit"), "B~memory_swap_limit"));
+        Binding.ComponentBinding aComponentBinding = new Binding.ComponentBinding("A", aBindings);
+
+        List<Binding> bBindings = Arrays
+                .asList(binding(Arrays.asList("memory_swap_limit"), "C~memory_limit"));
+        Binding.ComponentBinding bComponentBinding = new Binding.ComponentBinding("B", bBindings);
+
+        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+                .asList(firstDescription, secondDescription, thirdDescription),
+                Arrays.asList(bComponentBinding, aComponentBinding));
+
+        BindingEvaluator.evaluateBindings(compositeDescription);
+
+        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
+                .get(0).component;
+        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
+                .get(1).component;
+        thirdDescription = (ContainerDescription) compositeDescription.componentDescriptions
+                .get(2).component;
+
+        assertEquals(firstDescription.memoryLimit, thirdDescription.memoryLimit);
+        assertEquals(secondDescription.memorySwapLimit, thirdDescription.memoryLimit);
+    }
+
+    @Test
     public void testEvaluateBindingsRecursively() {
         /**
          * A has a binding to B and B has a binding to C
@@ -300,12 +341,12 @@ public class BindingEvaluatorTest {
         thirdDescription.name = "C";
         thirdDescription.memoryLimit = 5L;
 
-        List<Binding> aBindings = Arrays.asList(
-                new Binding(Arrays.asList("memory_limit"), "B~memory_limit", false));
+        List<Binding> aBindings = Arrays
+                .asList(binding(Arrays.asList("memory_limit"), "B~memory_limit"));
         Binding.ComponentBinding aComponentBinding = new Binding.ComponentBinding("A", aBindings);
 
-        List<Binding> bBindings = Arrays.asList(
-                new Binding(Arrays.asList("memory_limit"), "C~memory_limit", false));
+        List<Binding> bBindings = Arrays
+                .asList(binding(Arrays.asList("memory_limit"), "C~memory_limit"));
         Binding.ComponentBinding bComponentBinding = new Binding.ComponentBinding("B", bBindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
@@ -334,8 +375,8 @@ public class BindingEvaluatorTest {
         ContainerDescription secondDescription = new ContainerDescription();
         secondDescription.name = "B";
 
-        List<Binding> bindings = Arrays.asList(
-                new Binding(Arrays.asList("memory_limit"), "A~_cluster", false));
+        List<Binding> bindings = Arrays
+                .asList(binding(Arrays.asList("memory_limit"), "A~_cluster"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
@@ -356,9 +397,8 @@ public class BindingEvaluatorTest {
     @Test
     public void testEvaluateSimpleProvisioningBinding() {
 
-        List<Binding> bindings = Arrays.asList(
-                new Binding(Arrays.asList("parentLink"), "_resource~A~parentLink",
-                        true));
+        List<Binding> bindings = Arrays
+                .asList(binding(Arrays.asList("parentLink"), "_resource~A~parentLink"));
 
         Map<String, Object> containers = new HashMap<>();
         ContainerState containerState = new ContainerState();
@@ -397,8 +437,7 @@ public class BindingEvaluatorTest {
         ContainerDescription secondDescription = new ContainerDescription();
         secondDescription.name = "B";
 
-        List<Binding> bindings = Arrays.asList(
-                new Binding(Arrays.asList("_cluster"), "A~key", false));
+        List<Binding> bindings = Arrays.asList(binding(Arrays.asList("_cluster"), "A~key"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
@@ -412,5 +451,71 @@ public class BindingEvaluatorTest {
                 .get(1).component;
 
         assertEquals(new Integer(20), secondDescription._cluster);
+    }
+
+    @Test
+    public void testEvaluateSingleBindingWithDefaultValue() {
+        ContainerDescription firstDescription = new ContainerDescription();
+        firstDescription.name = "A";
+
+        ContainerDescription secondDescription = new ContainerDescription();
+        secondDescription.name = "B";
+
+        List<Binding> bindings = Arrays.asList(
+                binding(Arrays.asList("_cluster"), "A~_cluster", "5"));
+        Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
+
+        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+                .asList(firstDescription, secondDescription), Arrays.asList(componentBinding));
+
+        BindingEvaluator.evaluateBindings(compositeDescription);
+
+        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
+                .get(0).component;
+        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
+                .get(1).component;
+
+        assertNull(firstDescription._cluster);
+        assertEquals(new Integer(5), secondDescription._cluster);
+    }
+
+    @Test
+    public void testEvaluateSingleBindingWithAdditionalContent() {
+        ContainerDescription firstDescription = new ContainerDescription();
+        firstDescription.name = "A";
+        firstDescription.hostname = "10.0.0.1";
+
+        ContainerDescription secondDescription = new ContainerDescription();
+        secondDescription.name = "B";
+
+        Binding binding = new Binding(Arrays.asList("hostname"), "${A~hostname}:2376",
+                new BindingPlaceholder("A~hostname"));
+        List<Binding> bindings = Arrays.asList(binding);
+
+        Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
+
+        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+                .asList(firstDescription, secondDescription), Arrays.asList(componentBinding));
+
+        BindingEvaluator.evaluateBindings(compositeDescription);
+
+        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
+                .get(0).component;
+        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
+                .get(1).component;
+
+        assertNotNull(secondDescription.hostname);
+        assertEquals("10.0.0.1:2376", secondDescription.hostname);
+    }
+
+    private static Binding binding(List<String> targetFieldPath, String placeholder) {
+        return new Binding(targetFieldPath, String.format("${%s}", placeholder),
+                new BindingPlaceholder(placeholder));
+    }
+
+    private static Binding binding(List<String> targetFieldPath, String placeholder,
+            String defaultValue) {
+        return new Binding(targetFieldPath, String.format("${%s}", placeholder),
+                new BindingPlaceholder(placeholder, defaultValue));
     }
 }

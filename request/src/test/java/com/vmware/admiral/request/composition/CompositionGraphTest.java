@@ -17,6 +17,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import static com.vmware.admiral.compute.BindingUtils.FIELD_SEPARATOR;
+import static com.vmware.admiral.compute.BindingUtils.RESOURCE;
 import static com.vmware.admiral.request.util.TestRequestStateFactory.createContainerDescription;
 
 import java.util.Arrays;
@@ -34,6 +36,7 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.content.Binding;
+import com.vmware.admiral.compute.content.Binding.BindingPlaceholder;
 import com.vmware.admiral.compute.content.Binding.ComponentBinding;
 import com.vmware.admiral.request.composition.CompositionGraph.ResourceNode;
 
@@ -395,12 +398,15 @@ public class CompositionGraphTest {
         ContainerDescription desc3 = createContainerDescription("name3");
 
         ComponentBinding cbDesc1 = new ComponentBinding(desc1.name, Arrays.asList(
-                new Binding(Collections.emptyList(), desc2.name + "~address", true),
-                new Binding(Collections.emptyList(), desc3.name + "~address", true)
+                binding(Collections.emptyList(),
+                        RESOURCE + FIELD_SEPARATOR + desc2.name + "~address"),
+                binding(Collections.emptyList(),
+                        RESOURCE + FIELD_SEPARATOR + desc3.name + "~address")
         ));
 
         ComponentBinding cbDesc2 = new ComponentBinding(desc2.name, Arrays.asList(
-                new Binding(Collections.emptyList(), desc3.name + "~address", true)
+                binding(Collections.emptyList(),
+                        RESOURCE + FIELD_SEPARATOR + desc3.name + "~address")
         ));
 
         CompositeDescriptionExpanded compositeDesc = createCompositeDesc(
@@ -437,6 +443,11 @@ public class CompositionGraphTest {
                                 .collect(Collectors.toList()))).collect(Collectors.toList());
         compositeDescription.bindings = componentBindings;
         return compositeDescription;
+    }
+
+    private static Binding binding(List<String> targetFieldPath, String placeholder) {
+        return new Binding(targetFieldPath, String.format("${%s}", placeholder),
+                new BindingPlaceholder(placeholder));
     }
 
 }

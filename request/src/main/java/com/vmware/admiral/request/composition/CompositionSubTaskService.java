@@ -502,7 +502,7 @@ public class CompositionSubTaskService extends
                     .findFirst().get();
 
             List<Binding> provisioningTimeBindings = description.bindings.stream()
-                    .filter(b -> b.isProvisioningTimeBinding).collect(Collectors.toList());
+                    .filter(b -> b.isProvisioningTimeBinding()).collect(Collectors.toList());
 
             if (provisioningTimeBindings.isEmpty()) {
                 callback.run();
@@ -517,7 +517,8 @@ public class CompositionSubTaskService extends
 
             for (Binding binding : provisioningTimeBindings) {
                 String sourceComponentName = BindingUtils
-                        .extractComponentNameFromBindingExpression(binding.bindingExpression);
+                        .extractComponentNameFromBindingExpression(
+                                binding.placeholder.bindingExpression);
                 ComponentDescription sourceDescription = nameToComponent.get(sourceComponentName);
 
                 dependsOnDescriptionLinks.add(sourceDescription.component.documentSelfLink);

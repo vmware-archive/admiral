@@ -32,6 +32,7 @@ import com.vmware.admiral.compute.container.CompositeComponentRegistry.Component
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription.Status;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.content.Binding;
+import com.vmware.admiral.compute.content.Binding.BindingPlaceholder;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
@@ -250,7 +251,8 @@ public class CompositeDescriptionService extends StatefulService {
         template.customProperties.put("propKey string", "customPropertyValue string");
         template.bindings = new ArrayList<>();
         Binding.ComponentBinding cb = new Binding.ComponentBinding("component",
-                new ArrayList<>(Arrays.asList(new Binding(Arrays.asList("field"), "expr", true))));
+                new ArrayList<>(Arrays.asList(new Binding(Arrays.asList("field"), "${expr}",
+                        new BindingPlaceholder("expr", "1")))));
         template.bindings.add(cb);
         return template;
     }

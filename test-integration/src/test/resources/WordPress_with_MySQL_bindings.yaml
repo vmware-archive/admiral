@@ -13,7 +13,6 @@ components:
       restart_policy: ${mysql~restart_policy}
       name: wordpress
       image: wordpress:4.3.1
-      parentLink: ${_resource~mysql~parentLink}
       _cluster: 2
       env:
       - var: WORDPRESS_DB_PASSWORD
@@ -21,7 +20,7 @@ components:
       - var: WORDPRESS_DB_NAME
         value: wordpress
       - var: WORDPRESS_DB_HOST
-        value: ${_resource~mysql~address}
+        value: ${_resource~mysql~address}:3306
       ports:
       - container_port: "80"
       expose_service:

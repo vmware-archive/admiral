@@ -145,9 +145,10 @@ public final class AffinityFilters {
 
         @Override
         public Map<String, AffinityConstraint> getAffinityConstraints() {
-            return componentDescription.bindings.stream().filter(b -> b.isProvisioningTimeBinding)
+            return componentDescription.bindings.stream().filter(b -> b.isProvisioningTimeBinding())
                     .map(b -> BindingUtils
-                            .extractComponentNameFromBindingExpression(b.bindingExpression))
+                            .extractComponentNameFromBindingExpression(
+                                    b.placeholder.bindingExpression))
                     .distinct()
                     .collect(Collectors.toMap(
                             Function.identity(), AffinityConstraint::new));

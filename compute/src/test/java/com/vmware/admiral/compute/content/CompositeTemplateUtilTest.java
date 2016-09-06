@@ -676,20 +676,20 @@ public class CompositeTemplateUtilTest {
         assertEquals(2, bindings.size());
 
         Map<Boolean, List<Binding>> partitionedBindings = bindings.stream()
-                .collect(Collectors.partitioningBy(b -> b.isProvisioningTimeBinding));
+                .collect(Collectors.partitioningBy(b -> b.isProvisioningTimeBinding()));
 
         assertEquals(1, partitionedBindings.get(false).size());
 
         Binding binding = partitionedBindings.get(false).get(0);
-        assertFalse(binding.isProvisioningTimeBinding);
-        assertEquals("db~_cluster", binding.bindingExpression);
+        assertFalse(binding.isProvisioningTimeBinding());
+        assertEquals("db~_cluster", binding.placeholder.bindingExpression);
 
         // provisioning time bindings
         assertEquals(1, partitionedBindings.get(true).size());
 
         binding = partitionedBindings.get(true).get(0);
-        assertTrue(binding.isProvisioningTimeBinding);
-        assertEquals("_resource~db~env~MYSQL_USER", binding.bindingExpression);
+        assertTrue(binding.isProvisioningTimeBinding());
+        assertEquals("_resource~db~env~MYSQL_USER", binding.placeholder.bindingExpression);
     }
 
     public static String getContent(String filename) {

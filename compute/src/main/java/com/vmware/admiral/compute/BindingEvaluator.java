@@ -26,6 +26,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
@@ -34,6 +35,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.content.Binding;
+import com.vmware.admiral.compute.content.Binding.ComponentBinding;
 import com.vmware.admiral.compute.content.YamlMapper;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.ServiceDocument;
@@ -93,6 +95,16 @@ import com.vmware.xenon.common.ServiceDocument;
  */
 public class BindingEvaluator {
 
+    private static ObjectMapper objectMapper;
+    private static ObjectWriter objectAsStringWriter;
+
+    static {
+        objectMapper = new ObjectMapper(new YAMLFactory());
+        FilterProvider filters = new SimpleFilterProvider().addFilter(
+                YamlMapper.SERVICE_DOCUMENT_FILTER, SimpleBeanPropertyFilter.serializeAll());
+        objectAsStringWriter = objectMapper.writer(filters);
+    }
+
     /**
      * Take a composite description evaluate the bindings and set the results in the Descriptions.
      * Basically go through each binding and try to get the source value and set the target value.
@@ -107,18 +119,21 @@ public class BindingEvaluator {
         Map<String, ComponentDescription> componentNameToDescription = getComponentNameToDescription(
                 compositeDescription);
 
-        for (Binding.ComponentBinding componentBinding : compositeDescription.bindings) {
+        Map<String, ComponentBinding> bindingByComponentName = getBindingByComponentName(
+                compositeDescription.bindings);
+
+        for (Binding.ComponentBinding componentBinding : bindingByComponentName.values()) {
             ComponentDescription description = componentNameToDescription
                     .get(componentBinding.componentName);
 
             for (Binding binding : componentBinding.bindings) {
-                if (binding.isProvisioningTimeBinding) {
+                if (binding.isProvisioningTimeBinding()) {
                     continue;
                 }
 
                 try {
                     evaluateBinding(binding, description, componentNameToDescription,
-                            getBindingByComponentName(compositeDescription.bindings),
+                            bindingByComponentName,
                             new HashSet<>());
                 } catch (ReflectiveOperationException | IOException e) {
                     throw new RuntimeException(e);
@@ -138,7 +153,7 @@ public class BindingEvaluator {
 
         Object result = state;
         for (Binding binding : bindings) {
-            if (!binding.isProvisioningTimeBinding) {
+            if (!binding.isProvisioningTimeBinding()) {
                 continue;
             }
 
@@ -157,7 +172,7 @@ public class BindingEvaluator {
             throws ReflectiveOperationException, IOException {
 
         String componentName = BindingUtils
-                .extractComponentNameFromBindingExpression(binding.bindingExpression);
+                .extractComponentNameFromBindingExpression(binding.placeholder.bindingExpression);
 
         Object provisionedResource = provisionedResources.get(componentName);
 
@@ -166,8 +181,10 @@ public class BindingEvaluator {
         }
 
         Object value = getFieldValueByPath(
-                BindingUtils.convertToFieldPath(binding.bindingExpression),
+                BindingUtils.convertToFieldPath(binding.placeholder.bindingExpression),
                 provisionedResource);
+
+        value = BindingUtils.valueForBinding(binding, value);
 
         Map<String, Object> serializedDescription = serializeToMap(state);
         setValue(serializedDescription, binding.targetFieldPath, value);
@@ -181,6 +198,23 @@ public class BindingEvaluator {
             Map<String, Binding.ComponentBinding> allBindings,
             Set<String> visited) throws ReflectiveOperationException, IOException {
 
+        Object rootSourceValue = resolveValue(binding, targetDescription,
+                componentNameToDescription, allBindings, visited);
+
+        if (rootSourceValue != null) {
+            Map<String, Object> serializedDescription = serializeToMap(targetDescription.component);
+            setValue(serializedDescription, binding.targetFieldPath, rootSourceValue);
+            targetDescription.component = (ServiceDocument) deserializeFromMap(
+                    serializedDescription, targetDescription.component.getClass());
+        }
+
+    }
+
+    private static Object resolveValue(Binding binding, ComponentDescription targetDescription,
+            Map<String, ComponentDescription> componentNameToDescription,
+            Map<String, Binding.ComponentBinding> allBindings, Set<String> visited)
+            throws ReflectiveOperationException {
+
         // Assume the <<description>>.name is the same as the component name because of
         // CompositeTemplateUtil#sanitizeCompositeTemplate
         String componentName = targetDescription.name;
@@ -190,7 +224,7 @@ public class BindingEvaluator {
         }
         visited.add(componentName);
 
-        String bindingExpression = binding.bindingExpression;
+        String bindingExpression = binding.placeholder.bindingExpression;
         List<String> sourceFieldPath = BindingUtils.convertToFieldPath(bindingExpression);
         String sourceComponentName = BindingUtils
                 .extractComponentNameFromBindingExpression(bindingExpression);
@@ -199,37 +233,33 @@ public class BindingEvaluator {
                 .get(sourceComponentName);
 
         Object rootSourceValue = getFieldValueByPath(sourceFieldPath, sourceDescription.component);
-        Optional<Binding> isSourceValueABinding = findBinding(sourceFieldPath, sourceComponentName,
-                allBindings);
 
         // if the source value is null it may be bound to something else
         if (rootSourceValue == null) {
+            Optional<Binding> isSourceValueABinding = findBinding(sourceFieldPath,
+                    sourceComponentName,
+                    allBindings);
             if (isSourceValueABinding.isPresent()) {
                 Binding nestedBinding = isSourceValueABinding.get();
-                evaluateBinding(nestedBinding, targetDescription, componentNameToDescription,
+                rootSourceValue = resolveValue(nestedBinding, sourceDescription,
+                        componentNameToDescription,
                         allBindings, visited);
             }
-        } else {
-            Map<String, Object> serializedDescription = serializeToMap(targetDescription.component);
-            setValue(serializedDescription, binding.targetFieldPath, rootSourceValue);
-            targetDescription.component = (ServiceDocument) deserializeFromMap(
-                    serializedDescription, targetDescription.component.getClass());
         }
 
+        return BindingUtils.valueForBinding(binding, rootSourceValue);
     }
 
     @SuppressWarnings("unchecked")
     private static Map<String, Object> serializeToMap(Object object) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-        FilterProvider filters = new SimpleFilterProvider().addFilter(
-                YamlMapper.SERVICE_DOCUMENT_FILTER, SimpleBeanPropertyFilter.serializeAll());
-        String yaml = objectMapper.writer(filters).writeValueAsString(object);
+
+        String yaml = objectAsStringWriter.writeValueAsString(object);
         Map<String, Object> serializedObject = objectMapper.readValue(yaml, Map.class);
         return serializedObject;
     }
 
-    private static Object deserializeFromMap(Object object, Class<?> type) {
-        return new ObjectMapper().convertValue(object, type);
+    private static Object deserializeFromMap(Map<String, Object> map, Class<?> type) {
+        return objectMapper.convertValue(map, type);
     }
 
     private static Map<String, Binding.ComponentBinding> getBindingByComponentName(

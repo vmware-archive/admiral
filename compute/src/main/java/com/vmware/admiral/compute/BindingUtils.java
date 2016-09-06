@@ -13,116 +13,176 @@ package com.vmware.admiral.compute;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.compute.content.Binding;
+import com.vmware.admiral.compute.content.Binding.BindingPlaceholder;
+import com.vmware.admiral.compute.content.Binding.ComponentBinding;
 
 public class BindingUtils {
+    /** Prefix for placeholders: "${" */
+    public static final String PLACEHOLDER_PREFIX = "${";
 
-    //Provisioning time binding token
+    /** Suffix for placeholders: "}" */
+    public static final char PLACEHOLDER_SUFFIX = '}';
+
+    /** Value separator for placeholders: ":" */
+    public static final String VALUE_SEPARATOR = ":";
+
+    // Provisioning time binding token
     public static final String RESOURCE = "_resource";
 
-    //CompositeTemplate field names
+    // CompositeTemplate field names
     public static final String COMPONENTS = "components";
     public static final String DATA = "data";
     public static final String FIELD_SEPARATOR = "~";
 
+    @SuppressWarnings("unchecked")
     public static List<Binding.ComponentBinding> extractBindings(
             Map<String, Object> initialMap) {
+        List<Binding.ComponentBinding> bindingsPerComponent = new LinkedList<>();
+        for (Entry<String, Object> e : initialMap.entrySet()) {
+            if (e.getKey().equals(COMPONENTS)) {
+                Map<String, Object> components = (Map<String, Object>) e.getValue();
+                for (Entry<String, Object> ce : components.entrySet()) {
+                    List<Binding> bindings = extractBindings(ce.getKey(), ce.getValue());
+                    if (bindings != null && !bindings.isEmpty()) {
+                        bindingsPerComponent.add(new ComponentBinding(ce.getKey(), bindings));
+                    }
+                }
 
-        Map<String, Set<Binding>> bindingsMap = new HashMap<>();
-        extractBindings("", initialMap, bindingsMap);
+            }
+        }
 
-        List<Binding.ComponentBinding> componentBindings = bindingsMap.entrySet().stream()
-                .map(e -> new Binding.ComponentBinding(e.getKey(), new ArrayList<>(e.getValue())))
-                .collect(Collectors.toList());
-        return componentBindings;
+        return bindingsPerComponent;
+        // return initialMap.entrySet().stream()
+        // .filter(e -> e.getKey().equals(COMPONENTS))
+        // .flatMap(e -> ((Map<String, Object>) e.getValue()).entrySet().stream())
+        // .map(e -> new Binding.ComponentBinding(e.getKey(),
+        // extractBindings(e.getKey(), e.getValue())))
+        // .filter(b -> (b.bindings != null && !b.bindings.isEmpty()))
+        // .collect(Collectors.toList());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Binding> extractBindings(String currentComponent, Object value) {
+        LinkedList<String> targetPath = new LinkedList<>();
+        if (value instanceof Map) {
+            return extractBindings(targetPath, (Map<String, Object>) value);
+        }
+        return null;
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private static void extractBindings(String initialFieldPath, Map<String, Object> map,
-            Map<String, Set<Binding>> bindingsPerComponent) {
-        Iterator<Map.Entry<String, Object>> iterator = map.entrySet().iterator();
+    private static List<Binding> extractBindings(LinkedList<String> targetPath,
+            Map<String, Object> map) {
 
+        List<Binding> bindings = new LinkedList<>();
+
+        Iterator<Map.Entry<String, Object>> iterator = map.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, Object> entry = iterator.next();
             String fieldName = entry.getKey();
             Object value = entry.getValue();
 
-            String currentFieldPath = appendToFieldPath(initialFieldPath, fieldName);
+            Binding binding = toBinding(targetPath, fieldName, value);
 
-            if (value instanceof String) {
-
-                if (!isBinding((String) value)) {
-                    continue;
-                }
-
-                //Remove the entry from the map as we may not be able to map this to the original class
+            if (binding != null) {
                 iterator.remove();
+                bindings.add(binding);
+                continue;
+            }
 
-                //remove the ${ and }
-                String bindingExpression = ((String) value)
-                        .substring(2, ((String) value).length() - 1);
-                addBinding(bindingsPerComponent, currentFieldPath, bindingExpression);
-
-            } else if (value instanceof List) {
+            if (value instanceof List) {
                 List list = (List) value;
                 Map<String, Object> listMap = new LinkedHashMap<>();
                 for (int i = 0; i < list.size(); ++i) {
                     listMap.put(String.valueOf(i), list.get(i));
                 }
-                extractBindings(currentFieldPath, listMap, bindingsPerComponent);
+                bindings.addAll(extractBindings(targetPath, fieldName, listMap));
                 list = listMap.values().stream().collect(Collectors.toList());
                 entry.setValue(list);
             } else if (value instanceof Map) {
-                extractBindings(currentFieldPath, (Map) value, bindingsPerComponent);
+                bindings.addAll(
+                        extractBindings(targetPath, fieldName, (Map<String, Object>) value));
+            }
+
+        }
+        return bindings;
+    }
+
+    private static List<Binding> extractBindings(LinkedList<String> targetPath,
+            String fieldName, Map<String, Object> map) {
+        if (!DATA.equals(fieldName)) {
+            targetPath.add(fieldName);
+        }
+        List<Binding> bindings = extractBindings(targetPath, map);
+        if (!DATA.equals(fieldName)) {
+            targetPath.pollLast();
+        }
+        return bindings;
+    }
+
+    private static Binding toBinding(LinkedList<String> currentPath, String fieldName,
+            Object value) {
+        if (!(value instanceof String)) {
+            return null;
+        }
+
+        String strVal = (String) value;
+
+        Binding binding = null;
+
+        StringBuilder result = new StringBuilder(strVal);
+        int startIndex = strVal.indexOf(PLACEHOLDER_PREFIX);
+        if (startIndex != -1) {
+            int endIndex = findPlaceholderEndIndex(result, startIndex);
+            if (endIndex != -1) {
+                String placeholder = result.substring(startIndex + PLACEHOLDER_PREFIX.length(),
+                        endIndex);
+                String defaultValue = null;
+                int separatorIndex = placeholder.indexOf(VALUE_SEPARATOR);
+                if (separatorIndex != -1) {
+                    placeholder = placeholder.substring(0, separatorIndex);
+                    defaultValue = placeholder.substring(separatorIndex + VALUE_SEPARATOR.length());
+                }
+
+                String fieldExpression = result
+                        .replace(startIndex + PLACEHOLDER_PREFIX.length(), endIndex, placeholder)
+                        .toString();
+
+                LinkedList<String> currentFieldPath = new LinkedList<>(currentPath);
+                currentFieldPath.add(fieldName);
+                binding = new Binding(currentFieldPath,
+                        fieldExpression, new BindingPlaceholder(placeholder, defaultValue));
+            } else {
+                throw new IllegalArgumentException(
+                        "Incomplete binding expression, missing closing bracket: " + strVal);
             }
         }
+
+        return binding;
     }
 
-    private static void addBinding(Map<String, Set<Binding>> bindingsPerComponent,
-            String currentFieldPath, String bindingExpression) {
-        String targetComponentName = extractTargetComponentName(currentFieldPath);
-        Set<Binding> bindings = bindingsPerComponent.get(targetComponentName);
-
-        if (bindings == null) {
-            bindings = new HashSet<>();
-            bindingsPerComponent.put(targetComponentName, bindings);
+    private static int findPlaceholderEndIndex(CharSequence buf, int startIndex) {
+        int index = startIndex + PLACEHOLDER_PREFIX.length();
+        while (index < buf.length()) {
+            if (buf.charAt(index) == PLACEHOLDER_SUFFIX) {
+                return index;
+            }
+            index++;
         }
-
-        List<String> fullFieldPath = Arrays.asList(currentFieldPath.split(FIELD_SEPARATOR));
-        Binding binding = new Binding(
-                new ArrayList<>(fullFieldPath.subList(1, fullFieldPath.size())),
-                bindingExpression,
-                isProvisioningTimeBinding(bindingExpression));
-        bindings.add(binding);
+        return -1;
     }
 
-    private static String appendToFieldPath(String fieldPath, String fieldName) {
-        if (COMPONENTS.equals(fieldName) || DATA.equals(fieldName)) {
-            return fieldPath;
-        }
-        return "".equals(fieldPath) ? fieldName : fieldPath + FIELD_SEPARATOR + fieldName;
-    }
-
-    private static boolean isProvisioningTimeBinding(String bindingExpression) {
+    public static boolean isProvisioningTimeBinding(String bindingExpression) {
         return bindingExpression.startsWith(RESOURCE);
-    }
-
-    private static boolean isBinding(String value) {
-        return value.startsWith("${") && value.endsWith("}");
-    }
-
-    private static String extractTargetComponentName(String fieldPath) {
-        String[] split = fieldPath.split(FIELD_SEPARATOR);
-        return split[0];
     }
 
     public static String extractComponentNameFromBindingExpression(String bindingExpression) {
@@ -135,11 +195,25 @@ public class BindingUtils {
     }
 
     public static List<String> convertToFieldPath(String bindingExpression) {
-        String[] split = bindingExpression.split("~");
+        String[] split = bindingExpression.split(FIELD_SEPARATOR);
         if (isProvisioningTimeBinding(bindingExpression)) {
             return new ArrayList<>(Arrays.asList(Arrays.copyOfRange(split, 2, split.length)));
         } else {
             return new ArrayList<>(Arrays.asList(Arrays.copyOfRange(split, 1, split.length)));
         }
+    }
+
+    public static Object valueForBinding(Binding binding, Object value) {
+        if (value == null) {
+            value = binding.placeholder.defaultValue;
+        }
+
+        String placeholderExpr = String.format("${%s}", binding.placeholder.bindingExpression);
+        if (binding.originalFieldExpression.equals(placeholderExpr)) {
+            return value;
+        }
+
+        return binding.originalFieldExpression.replace(placeholderExpr,
+                value != null ? value.toString() : "");
     }
 }

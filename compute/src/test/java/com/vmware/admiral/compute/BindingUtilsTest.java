@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute;
 
 import static junit.framework.TestCase.assertEquals;
+
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -54,7 +55,7 @@ public class BindingUtilsTest {
 
         assertEquals(componentName, componentBindings.get(0).componentName);
         assertEquals("component1~field1",
-                componentBindings.get(0).bindings.get(0).bindingExpression);
+                componentBindings.get(0).bindings.get(0).placeholder.bindingExpression);
     }
 
     @Test
@@ -83,8 +84,8 @@ public class BindingUtilsTest {
 
         assertEquals(componentName, componentBindings.get(0).componentName);
         assertEquals("_resource~component1~field1",
-                componentBindings.get(0).bindings.get(0).bindingExpression);
-        assertTrue(componentBindings.get(0).bindings.get(0).isProvisioningTimeBinding);
+                componentBindings.get(0).bindings.get(0).placeholder.bindingExpression);
+        assertTrue(componentBindings.get(0).bindings.get(0).isProvisioningTimeBinding());
     }
 
     @Test
@@ -114,7 +115,7 @@ public class BindingUtilsTest {
 
         assertEquals(componentName, componentBindings.get(0).componentName);
         assertEquals("component1~field1",
-                componentBindings.get(0).bindings.get(0).bindingExpression);
+                componentBindings.get(0).bindings.get(0).placeholder.bindingExpression);
 
         assertEquals(Arrays.asList("field2", "field21"),
                 componentBindings.get(0).bindings.get(0).targetFieldPath);
@@ -149,7 +150,7 @@ public class BindingUtilsTest {
 
         assertEquals(componentName, componentBindings.get(0).componentName);
         assertEquals("component1~field1",
-                componentBindings.get(0).bindings.get(0).bindingExpression);
+                componentBindings.get(0).bindings.get(0).placeholder.bindingExpression);
 
         assertEquals(Arrays.asList("field2", "1"),
                 componentBindings.get(0).bindings.get(0).targetFieldPath);
