@@ -345,7 +345,7 @@
         "update": "Edit Registry",
         "hostnameTitle": "IP / Host name",
         "hostnameHint": "Please specify the appropriate scheme and port, e.g. https://myregistry.com:5000. Default scheme: 'https'. Default ports: https/443, http/80.",
-        "insecureRegistryHint": "Plain http registry detected: make sure your hosts are properly configured and can connect to them.",
+        "insecureRegistryHint": "Plain http registry detected: make sure your hosts are properly configured and can connect to them. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">More info</a>",
         "nameTitle": "Name",
         "credentialTitle": "Login credential",
         "verifyButton": "Verify",
