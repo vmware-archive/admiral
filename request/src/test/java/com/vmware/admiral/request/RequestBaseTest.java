@@ -43,6 +43,8 @@ import com.vmware.admiral.compute.container.HostContainerListDataCollection.Host
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.endpoint.EndpointService;
 import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
 import com.vmware.admiral.host.HostInitAdapterServiceConfig;
@@ -81,6 +83,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected ComputeState vmGuestComputeState;
     protected ContainerDescription containerDesc;
     protected ContainerNetworkDescription containerNetworkDesc;
+    protected ContainerVolumeDescription containerVolumeDesc;
     protected GroupResourcePolicyState groupPolicyState;
     protected GroupResourcePolicyState computeGroupPolicyState;
     private final List<ServiceDocument> documentsForDeletion = new ArrayList<>();
@@ -107,6 +110,9 @@ public abstract class RequestBaseTest extends BaseTestCase {
         // setup Container desc:
         createContainerDescription();
 
+        //setup Container Volume description.
+        createContainerVolumeDescription(UUID.randomUUID().toString());
+
     }
 
     protected List<String> getFactoryServiceList() {
@@ -117,6 +123,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 RequestBrokerFactoryService.SELF_LINK,
                 ContainerAllocationTaskFactoryService.SELF_LINK,
                 ContainerNetworkAllocationTaskService.FACTORY_LINK,
+                ContainerVolumeAllocationTaskService.FACTORY_LINK,
                 ContainerNetworkProvisionTaskService.FACTORY_LINK,
                 ReservationTaskFactoryService.SELF_LINK,
                 ReservationRemovalTaskFactoryService.SELF_LINK,
@@ -248,6 +255,21 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 assertNotNull(containerNetworkDesc);
             }
             return containerNetworkDesc;
+        }
+    }
+
+    protected ContainerVolumeDescription createContainerVolumeDescription(String name)
+            throws Throwable {
+        synchronized (initializationLock) {
+            if (containerVolumeDesc == null) {
+                ContainerVolumeDescription desc = TestRequestStateFactory
+                        .createContainerVolumeDescription(name);
+                desc.documentSelfLink = UUID.randomUUID().toString();
+                containerVolumeDesc = doPost(desc,
+                        ContainerVolumeDescriptionService.FACTORY_LINK);
+                assertNotNull(containerVolumeDesc);
+            }
+            return containerVolumeDesc;
         }
     }
 

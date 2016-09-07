@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
@@ -39,6 +40,8 @@ import com.vmware.xenon.common.Utils;
 public class ContainerVolumeDescriptionService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CONTAINER_VOLUMES_DESC;
+
+    private static final String DEFAULT_VOLUME_DRIVER = "local";
 
     public static class ContainerVolumeDescription extends MultiTenantDocument {
 
@@ -211,7 +214,10 @@ public class ContainerVolumeDescriptionService extends StatefulService {
             // Skip this step on updates (null = no update)
             Utils.validateState(getStateDescription(), state);
         }
-        // TODO Implement more validations.
+
+        if (StringUtils.isBlank(state.driver)) {
+            state.driver = DEFAULT_VOLUME_DRIVER;
+        }
 
     }
 
