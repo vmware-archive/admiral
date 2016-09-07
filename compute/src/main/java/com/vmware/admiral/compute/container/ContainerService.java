@@ -18,20 +18,19 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CancellationException;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
-import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.maintenance.ContainerHealthEvaluator;
 import com.vmware.admiral.compute.container.maintenance.ContainerMaintenance;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.compute.container.network.ContainerNetworkReconfigureService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkReconfigureService.ContainerNetworkReconfigureState;
+import com.vmware.admiral.compute.container.util.CompositeComponentNotifier;
 import com.vmware.admiral.compute.container.util.ContainerUtil;
 import com.vmware.admiral.compute.content.EnvDeserializer;
 import com.vmware.admiral.compute.content.EnvSerializer;
@@ -258,7 +257,7 @@ public class ContainerService extends StatefulService {
 
             // start the container stats service instance for this container
             startMonitoringContainerState(body);
-            notifyCompositionComponent(body.compositeComponentLink, startPost.getAction());
+            CompositeComponentNotifier.notifyCompositionComponent(this, body.compositeComponentLink, startPost.getAction());
         }
 
         startPost.complete();
@@ -280,7 +279,7 @@ public class ContainerService extends StatefulService {
         this.setState(put, putBody);
         put.setBody(putBody).complete();
 
-        notifyCompositionComponentOnChange(put, putBody, currentCompositeComponentLink);
+        CompositeComponentNotifier.notifyCompositionComponentOnChange(this, put.getAction(), putBody.compositeComponentLink, currentCompositeComponentLink);
 
         if (networkChanged) {
             reconfigureNetwork(currentState);
@@ -313,7 +312,7 @@ public class ContainerService extends StatefulService {
         if (currentSignature.equals(newSignature)) {
             patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
         } else {
-            notifyCompositionComponentOnChange(patch, currentState, currentCompositeComponentLink);
+            CompositeComponentNotifier.notifyCompositionComponentOnChange(this, patch.getAction(), currentState.compositeComponentLink, currentCompositeComponentLink);
         }
 
         if (ContainerUtil.isDiscoveredContainer(currentState)) {
@@ -346,10 +345,8 @@ public class ContainerService extends StatefulService {
 
     @Override
     public void handleDelete(Operation delete) {
-        // if this request is to delete the container state from the index, also remove the
-        // container stats from the index
         ContainerState currentState = getState(delete);
-        notifyCompositionComponent(currentState.compositeComponentLink, delete.getAction());
+        CompositeComponentNotifier.notifyCompositionComponent(this, currentState.compositeComponentLink, delete.getAction());
 
         super.handleDelete(delete);
     }
@@ -380,64 +377,6 @@ public class ContainerService extends StatefulService {
                     handleMaintenance(o);
                 }
             }, getSelfLink());
-        }
-    }
-
-    private void notifyCompositionComponent(String compositeComponentLink, Action action) {
-        if (compositeComponentLink == null || compositeComponentLink.isEmpty()) {
-            return;
-        }
-
-        sendRequest(Operation.createGet(this, compositeComponentLink)
-                .setCompletion((o, e) -> {
-                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                        logFine("CompositeComponent not found %s", compositeComponentLink);
-                        return;
-                    }
-                    if (e != null) {
-                        logWarning("Can't find composite component. Error: %s", Utils.toString(e));
-                        return;
-                    }
-
-                    notify(compositeComponentLink, action);
-                }));
-
-    }
-
-    private void notify(String compositeComponentLink, Action action) {
-        CompositeComponent body = new CompositeComponent();
-        body.documentSelfLink = compositeComponentLink;
-        body.componentLinks = new ArrayList<>(1);
-        body.componentLinks.add(getSelfLink());
-
-        URI uri = UriUtils.buildUri(getHost(), compositeComponentLink);
-        if (Action.DELETE == action) {
-            uri = UriUtils.extendUriWithQuery(uri,
-                    UriUtils.URI_PARAM_INCLUDE_DELETED,
-                    Boolean.TRUE.toString());
-        }
-
-        sendRequest(Operation.createPatch(uri)
-                .setBody(body)
-                .setCompletion((op, ex) -> {
-                    if (ex != null) {
-                        logWarning("Error notifying CompositeContainer: %s. Exception: %s",
-                                compositeComponentLink, ex instanceof CancellationException
-                                        ? "CancellationException" : Utils.toString(ex));
-                    }
-                }));
-    }
-
-    private void notifyCompositionComponentOnChange(Operation put, ContainerState currentState,
-            String currentCompositeComponentLink) {
-        if (currentCompositeComponentLink != null && currentState.compositeComponentLink == null) {
-            notifyCompositionComponent(currentCompositeComponentLink, Action.DELETE);
-        } else if ((currentCompositeComponentLink == null
-                && currentState.compositeComponentLink != null)
-                || (currentCompositeComponentLink != null
-                && !currentCompositeComponentLink
-                        .equals(currentState.compositeComponentLink))) {
-            notifyCompositionComponent(currentState.compositeComponentLink, put.getAction());
         }
     }
 

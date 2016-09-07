@@ -33,6 +33,7 @@ import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
+import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -333,6 +334,12 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 .equals(dockerHost1.documentSelfLink)
                 || network.originatingHostLink.equals(dockerHost2.documentSelfLink);
         assertTrue(networkIsProvisionedOnAnyHosts);
+
+        assertEquals(cont1.compositeComponentLink, cont2.compositeComponentLink);
+        assertEquals(cont1.compositeComponentLink, network.compositeComponentLink);
+
+        CompositeComponent cc = getDocument(CompositeComponent.class, cont1.compositeComponentLink);
+        assertTrue(cc.componentLinks.containsAll(request.resourceLinks));
     }
 
     @Test

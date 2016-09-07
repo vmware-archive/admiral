@@ -18,6 +18,7 @@ import java.util.Map;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
+import com.vmware.admiral.compute.container.util.CompositeComponentNotifier;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -107,6 +108,17 @@ public class ContainerNetworkService extends StatefulService {
     }
 
     @Override
+    public void handleCreate(Operation create) {
+        if (create.hasBody()) {
+            ContainerNetworkState body = create.getBody(ContainerNetworkState.class);
+            CompositeComponentNotifier.notifyCompositionComponent(this,
+                    body.compositeComponentLink, create.getAction());
+        }
+
+        create.complete();
+    }
+
+    @Override
     public void handlePut(Operation put) {
         try {
             ContainerNetworkState putState = getValidInputFrom(put, false);
@@ -125,6 +137,7 @@ public class ContainerNetworkService extends StatefulService {
 
         ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
         String currentSignature = Utils.computeSignature(currentState, docDesc);
+        String currentCompositeComponentLink = currentState.compositeComponentLink;
 
         PropertyUtils.mergeServiceDocuments(currentState, patchBody,
                 NetworkUtils.SHALLOW_MERGE_SKIP_MAPS_STRATEGY);
@@ -135,8 +148,20 @@ public class ContainerNetworkService extends StatefulService {
         boolean changed = !newSignature.equals(currentSignature);
         if (!changed) {
             patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
+        } else {
+            CompositeComponentNotifier.notifyCompositionComponentOnChange(this, patch.getAction(),
+                    currentState.compositeComponentLink, currentCompositeComponentLink);
         }
         patch.complete();
+    }
+
+    @Override
+    public void handleDelete(Operation delete) {
+        ContainerNetworkState currentState = getState(delete);
+        CompositeComponentNotifier.notifyCompositionComponent(this,
+                currentState.compositeComponentLink, delete.getAction());
+
+        super.handleDelete(delete);
     }
 
     /**
