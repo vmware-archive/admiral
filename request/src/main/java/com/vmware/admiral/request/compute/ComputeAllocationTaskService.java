@@ -494,6 +494,8 @@ public class ComputeAllocationTaskService extends
         // TODO pmitrov: try to remove this and retrieve the newly created ComputeState links
         // directly from the POST request response
 
+        String contextId = state.getCustomProperty(FIELD_NAME_CONTEXT_ID_KEY);
+
         Query.Builder queryBuilder = Query.Builder.create()
                 .addKindFieldClause(ComputeState.class)
                 .addFieldClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK,
@@ -501,7 +503,7 @@ public class ComputeAllocationTaskService extends
                 .addInClause(ComputeState.FIELD_NAME_PARENT_LINK,
                         state.selectedComputePlacementLinks)
                 .addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
-                        FIELD_NAME_CONTEXT_ID_KEY, getSelfId());
+                        FIELD_NAME_CONTEXT_ID_KEY, contextId);
 
         QueryTask q = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
 
@@ -727,7 +729,8 @@ public class ComputeAllocationTaskService extends
             state.customProperties = new HashMap<>();
         }
 
-        state.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, getSelfId());
+        String contextId = state.getCustomProperty(FIELD_NAME_CONTEXT_ID_KEY);
+        state.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
         state.customProperties.put(ComputeConstants.COMPUTE_HOST_PROP_NAME, "true");
 
         // for human debugging reasons only, prefix the compute host resource id

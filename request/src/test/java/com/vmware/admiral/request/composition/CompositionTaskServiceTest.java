@@ -29,6 +29,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -38,9 +39,11 @@ import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupReso
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.services.common.QueryTask;
 
@@ -86,10 +89,22 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         CompositeDescription compositeDesc = createCompositeDesc(compute);
         RequestBrokerState request = startComputeRequest(compositeDesc);
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
-        ComputeState container = getDocument(ComputeState.class, request.resourceLinks.get(0));
-        assertNotNull(container);
-        assertEquals(COMPUTE_STATE_PACKAGE, container.documentKind);
-        assertTrue(container.descriptionLink.contains(compute.documentSelfLink));
+        ComputeState computeState = getDocument(ComputeState.class, request.resourceLinks.get(0));
+        assertNotNull(computeState);
+        assertEquals(COMPUTE_STATE_PACKAGE, computeState.documentKind);
+        assertTrue(computeState.descriptionLink.contains(compute.documentSelfLink));
+
+        String compositeComponentId = computeState.customProperties
+                .get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY);
+        assertNotNull(compositeComponentId);
+
+        String compositeComponentLink = UriUtils.buildUriPath(
+                CompositeComponentFactoryService.SELF_LINK, compositeComponentId);
+
+        CompositeComponent cc = getDocument(CompositeComponent.class, compositeComponentLink);
+        assertNotNull(cc);
+        // TODO: fix for CompositeComponent.componentLinks
+        // assertEquals(Collections.singleton(computeState.documentSelfLink), cc.componentLinks);
     }
 
     @Test
@@ -107,12 +122,26 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         RequestBrokerState request = startComputeRequest(compositeDesc);
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
 
+        String compositeComponentId = null;
+
         for (String containerLink : request.resourceLinks) {
             ComputeState container = getDocument(ComputeState.class, containerLink);
             assertNotNull(container);
             assertEquals(COMPUTE_STATE_PACKAGE, container.documentKind);
             addForDeletion(container);
+
+            compositeComponentId = container.customProperties
+                    .get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY);
         }
+
+        assertNotNull(compositeComponentId);
+        String compositeComponentLink = UriUtils.buildUriPath(
+                CompositeComponentFactoryService.SELF_LINK, compositeComponentId);
+
+        CompositeComponent cc = getDocument(CompositeComponent.class, compositeComponentLink);
+        assertNotNull(cc);
+        // TODO: fix for CompositeComponent.componentLinks
+        // assertEquals(request.resourceLinks, cc.componentLinks);
     }
 
     @Test
