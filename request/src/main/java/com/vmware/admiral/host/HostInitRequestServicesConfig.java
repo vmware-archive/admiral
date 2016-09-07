@@ -17,6 +17,7 @@ import com.vmware.admiral.request.ContainerExposeServiceProcessingTaskService;
 import com.vmware.admiral.request.ContainerHostRemovalTaskFactoryService;
 import com.vmware.admiral.request.ContainerNetworkAllocationTaskService;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService;
+import com.vmware.admiral.request.ContainerNetworkRemovalTaskService;
 import com.vmware.admiral.request.ContainerOperationTaskFactoryService;
 import com.vmware.admiral.request.ContainerRemovalTaskFactoryService;
 import com.vmware.admiral.request.ContainerServiceLinkProcessingTaskService;
@@ -62,6 +63,7 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 ProvisionContainerHostsTaskService.class,
                 ContainerNetworkAllocationTaskService.class,
                 ContainerNetworkProvisionTaskService.class,
+                ContainerNetworkRemovalTaskService.class,
                 ComputeAllocationTaskService.class,
                 ComputeProvisionTaskService.class,
                 ComputeReservationTaskService.class,

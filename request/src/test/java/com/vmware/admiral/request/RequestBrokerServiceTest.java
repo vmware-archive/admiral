@@ -23,7 +23,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -343,7 +342,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
     }
 
     @Test
-    @Ignore
     public void testRequestLifeCycleWithContainerNetworkFailureShouldCleanNetworks()
             throws Throwable {
         host.log(

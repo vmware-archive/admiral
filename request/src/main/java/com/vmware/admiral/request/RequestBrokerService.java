@@ -913,7 +913,6 @@ public class RequestBrokerService extends
                     SubStage.ALLOCATED, TaskStage.STARTED, SubStage.ERROR);
             compositionTask.customProperties = state.customProperties;
             compositionTask.resourceDescriptionLink = state.resourceDescriptionLink;
-            compositionTask.resourceType = state.resourceType;
             compositionTask.tenantLinks = state.tenantLinks;
             compositionTask.requestTrackerLink = state.requestTrackerLink;
 

@@ -38,7 +38,6 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -283,7 +282,7 @@ public class ContainerNetworkRemovalTaskService extends
     private void removeResources(ContainerNetworkRemovalTaskState state, String subTaskLink) {
         if (subTaskLink == null) {
             // count 2 * resourceLinks (to keep track of each removal operation starting and ending)
-            createCounterSubTask(state, 2 * state.resourceLinks.size(),
+            createCounterSubTask(state, state.resourceLinks.size(),
                     (link) -> removeResources(state, link));
             return;
         }
@@ -316,12 +315,9 @@ public class ContainerNetworkRemovalTaskService extends
 
         QueryTask compositeQueryTask = QueryUtil.buildQuery(ContainerNetworkState.class, true);
 
-        String containerDescriptionLink = UriUtils.buildUriPath(
-                ManagementUriParts.CONTAINER_DESC,
-                Service.getId(cns.descriptionLink));
         QueryUtil.addListValueClause(compositeQueryTask,
                 ContainerNetworkState.FIELD_NAME_DESCRIPTION_LINK,
-                Arrays.asList(containerDescriptionLink));
+                Arrays.asList(cns.descriptionLink));
 
         final List<String> resourcesSharingDesc = new ArrayList<String>();
         new ServiceDocumentQuery<ContainerNetworkState>(getHost(), ContainerNetworkState.class)
@@ -422,17 +418,14 @@ public class ContainerNetworkRemovalTaskService extends
 
         setDocumentTemplateIndexingOptions(template, EnumSet.of(PropertyIndexingOption.STORE_ONLY),
                 ContainerNetworkRemovalTaskState.FIELD_NAME_RESOURCE_LINKS,
-                ContainerNetworkRemovalTaskState.FIELD_NAME_RESOURCE_QUERY_TASK_LINK,
                 ContainerNetworkRemovalTaskState.FIELD_NAME_REMOVE_ONLY);
 
         setDocumentTemplateUsageOptions(template,
                 EnumSet.of(PropertyUsageOption.SINGLE_ASSIGNMENT),
                 ContainerNetworkRemovalTaskState.FIELD_NAME_RESOURCE_LINKS,
-                ContainerNetworkRemovalTaskState.FIELD_NAME_RESOURCE_QUERY_TASK_LINK,
                 ContainerNetworkRemovalTaskState.FIELD_NAME_REMOVE_ONLY);
 
-        setDocumentTemplateUsageOptions(template, EnumSet.of(PropertyUsageOption.SERVICE_USE),
-                ContainerNetworkRemovalTaskState.FIELD_NAME_RESOURCE_QUERY_TASK_LINK);
+        setDocumentTemplateUsageOptions(template, EnumSet.of(PropertyUsageOption.SERVICE_USE));
 
         template.documentDescription.serializedStateSizeLimit = 128 * 1024; // 128 Kb
 

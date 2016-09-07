@@ -33,14 +33,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.compute.BindingEvaluator;
-import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
-import com.vmware.admiral.request.RequestBrokerFactoryService;
-import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.RequestStatusService.RequestStatus;
+import com.vmware.admiral.request.composition.CompositeComponentRemovalTaskService.CompositeComponentRemovalTaskState;
 import com.vmware.admiral.request.composition.CompositionGraph.ResourceNode;
 import com.vmware.admiral.request.composition.CompositionSubTaskService.CompositionSubTaskState;
 import com.vmware.admiral.request.composition.CompositionTaskService.CompositionTaskState.SubStage;
@@ -61,7 +59,8 @@ import com.vmware.xenon.common.Utils;
 /**
  * Task implementing the provision multi-container request life-cycle.
  */
-public class CompositionTaskService extends
+public class CompositionTaskService
+        extends
         AbstractTaskStatefulService<CompositionTaskService.CompositionTaskState, CompositionTaskService.CompositionTaskState.SubStage> {
 
     public static final String DISPLAY_NAME = "Composition";
@@ -96,10 +95,7 @@ public class CompositionTaskService extends
         /** The description that defines the requested resource. */
         public String resourceDescriptionLink;
 
-        /** (Required) Type of resource to create. */
-        public String resourceType;
-
-        /** Set by a Task with the links of the provisioned resources. */
+         /** Set by a Task with the links of the provisioned resources. */
         public List<String> resourceLinks;
 
         // Service use fields:
@@ -231,7 +227,6 @@ public class CompositionTaskService extends
     @Override
     protected void validateStateOnStart(CompositionTaskState state) {
         assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
-        assertNotEmpty(state.resourceType, "resourceType");
     }
 
     @Override
@@ -597,45 +592,36 @@ public class CompositionTaskService extends
     }
 
     private void cleanResource(CompositionTaskState state) {
-        boolean cleanUpContainers = state.resourceLinks != null && !state.resourceLinks.isEmpty();
         boolean cleanUpComposite = state.compositeComponentLink != null;
 
-        if (!cleanUpContainers && !cleanUpComposite) {
+        if (!cleanUpComposite) {
             logInfo("Error count: [%s]. No resources to clean.", state.errorCount);
             completeWithError(state, SubStage.FAILED);
             return;
         }
 
-        if (!cleanUpContainers) {
-            state.resourceLinks = Collections.singletonList(state.compositeComponentLink);
-        }
-
-        logInfo("Error count: [%s]. Cleaning [%s] resources: %s",
-                state.errorCount, state.resourceLinks.size(), state.resourceLinks);
-
-        RequestBrokerState requestBrokerState = new RequestBrokerState();
-        requestBrokerState.documentSelfLink = getSelfId() + "-cleanup";
-        requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        CompositeComponentRemovalTaskState removalTaskState = new CompositeComponentRemovalTaskState();
+        removalTaskState.documentSelfLink = getSelfId() + "-cleanup";
+        removalTaskState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
                 TaskStage.FAILED, SubStage.FAILED, TaskStage.FAILED, SubStage.FAILED);
-        requestBrokerState.customProperties = state.customProperties;
-        requestBrokerState.resourceType = cleanUpContainers ? state.resourceType
-                : ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
-        requestBrokerState.resourceLinks = state.resourceLinks;
-        requestBrokerState.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
-        requestBrokerState.tenantLinks = state.tenantLinks;
-        requestBrokerState.requestTrackerLink = state.requestTrackerLink;
+        removalTaskState.customProperties = state.customProperties;
+        removalTaskState.resourceLinks = Collections.singletonList(state.compositeComponentLink);
+        removalTaskState.tenantLinks = state.tenantLinks;
+        removalTaskState.requestTrackerLink = state.requestTrackerLink;
 
         sendRequest(Operation
-                .createPost(this, RequestBrokerFactoryService.SELF_LINK)
-                .setBody(requestBrokerState)
+                .createPost(this, CompositeComponentRemovalTaskService.FACTORY_LINK)
+                .setBody(removalTaskState)
                 .setContextId(getSelfId())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logWarning("Failure creating request broker task. Error: [%s]",
-                                Utils.toString(e));
-                        completeWithError(state, SubStage.FAILED);
-                    }
-                }));
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                logWarning(
+                                        "Failure creating composite component removal task. Error: [%s]",
+                                        Utils.toString(e));
+                                completeWithError(state, SubStage.FAILED);
+                            }
+                        }));
     }
 
     @Override

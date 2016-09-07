@@ -36,7 +36,7 @@ import com.vmware.xenon.common.Utils;
  * Mock Docker Adapter service to be used in unit and integration tests.
  */
 public class MockDockerNetworkAdapterService extends StatelessService {
-    public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
+    public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER_NETWORK;
 
     public static final String MOCK_CURRENT_EXECUTED_OPERATION_KEY = "MOCK_CURRENT_EXECUTED_OPERATION_KEY";
     public static final String FAILURE_EXPECTED = "FAILURE_EXPECTED";

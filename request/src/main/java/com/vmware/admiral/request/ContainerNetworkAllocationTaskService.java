@@ -327,6 +327,7 @@ public class ContainerNetworkAllocationTaskService extends
             networkState.options = networkDescription.options;
             networkState.documentExpirationTimeMicros = ServiceUtils
                     .getDefaultTaskExpirationTimeInMicros();
+            networkState.adapterManagementReference = networkDescription.instanceAdapterReference;
 
             String contextId;
             if (state.customProperties != null && (contextId = state.customProperties
