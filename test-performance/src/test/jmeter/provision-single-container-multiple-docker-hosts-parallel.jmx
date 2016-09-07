@@ -972,7 +972,7 @@ log.info(&quot;Event logs after removing: &quot; + eventLogs);</stringProp>
           <BeanShellAssertion guiclass="BeanShellAssertionGui" testclass="BeanShellAssertion" testname="Assert container state number" enabled="true">
             <stringProp name="BeanShellAssertion.query">String containers = vars.get(&quot;containersCount&quot;);
 // After removing the containers only the system container should be left
-boolean error = !(containers.equals(&quot;10&quot;));
+boolean error = !(containers.equals(&quot;15&quot;));
 if (error){
 	log.error(&quot;Containers are not removed properly from admiral! Found containers number: &quot; + containers);
 	Failure=true;
