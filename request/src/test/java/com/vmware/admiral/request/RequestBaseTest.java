@@ -16,8 +16,10 @@ import static org.junit.Assert.assertNotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -75,6 +77,7 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService.Resource
 import com.vmware.xenon.common.OperationProcessingChain;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.VerificationHost;
 import com.vmware.xenon.services.common.AuthCredentialsService;
@@ -330,12 +333,12 @@ public abstract class RequestBaseTest extends BaseTestCase {
             ResourcePoolState resourcePool, Long availableMemory, boolean generateId)
             throws Throwable {
         return createDockerHost(computeDesc, resourcePool, computeGroupPolicyState, availableMemory,
-                generateId);
+                null, generateId);
     }
 
     protected ComputeState createDockerHost(ComputeDescription computeDesc,
             ResourcePoolState resourcePool, GroupResourcePolicyState computePolicy,
-            Long availableMemory, boolean generateId)
+            Long availableMemory, Set<String> volumeDrivers, boolean generateId)
             throws Throwable {
         ComputeState containerHost = TestRequestStateFactory.createDockerComputeHost();
         if (generateId) {
@@ -357,6 +360,12 @@ public abstract class RequestBaseTest extends BaseTestCase {
             containerHost.customProperties.put(ComputeConstants.GROUP_RESOURCE_POLICY_LINK_NAME,
                     computePolicy.documentSelfLink);
         }
+
+        if (volumeDrivers == null) {
+            volumeDrivers = new HashSet<>();
+        }
+        containerHost.customProperties.put(ContainerHostService.DOCKER_HOST_PLUGINS_PROP_NAME,
+                createSupportedPluginsInfoString(volumeDrivers));
 
         containerHost = getOrCreateDocument(containerHost, ComputeService.FACTORY_LINK);
         assertNotNull(containerHost);
@@ -567,4 +576,14 @@ public abstract class RequestBaseTest extends BaseTestCase {
         return result;
     }
 
+    protected String createSupportedPluginsInfoString(Set<String> drivers) {
+        Map<String, String[]> pluginsInfo = new HashMap<>();
+        pluginsInfo.put(ContainerHostService.DOCKER_HOST_PLUGINS_NETWORK_PROP_NAME,
+                new String[] { "bridge", "null", "host" });
+        // make sure drivers contains 'local' driver
+        drivers.add("local");
+        pluginsInfo.put(ContainerHostService.DOCKER_HOST_PLUGINS_VOLUME_PROP_NAME,
+                drivers.toArray(new String[drivers.size()]));
+        return Utils.toJson(pluginsInfo);
+    }
 }

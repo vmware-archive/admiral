@@ -20,7 +20,6 @@ import java.util.UUID;
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.AssertUtil;
-
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
@@ -41,16 +40,14 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
     @Test
     public void testVolumeProvisioningTask() throws Throwable {
 
-        String volumeName = "postgres:/etc/pgdata/postgres";
-
         ContainerVolumeDescription volumeDesc = TestRequestStateFactory
-                .createContainerVolumeDescription(volumeName);
+                .createContainerVolumeDescription("postgres");
         volumeDesc.documentSelfLink = UUID.randomUUID().toString();
 
         // Create ContainerDescription with above volume.
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
         container1Desc.name = "container1";
-        container1Desc.volumes = new String[] { volumeName };
+        container1Desc.volumes = new String[] { "postgres:/etc/pgdata/postgres" };
 
         // Create another ContainerDescription without volume and placed it in different host.
         ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();

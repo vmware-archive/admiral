@@ -185,6 +185,11 @@ public class BaseAffinityHostFilterTest extends RequestBaseTest {
                 hostSelection.clusterStore = host.customProperties
                         .get(ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME);
             }
+            if (host.customProperties
+                    .containsKey(ContainerHostService.DOCKER_HOST_PLUGINS_PROP_NAME)) {
+                hostSelection.plugins = host.customProperties
+                        .get(ContainerHostService.DOCKER_HOST_PLUGINS_PROP_NAME);
+            }
 
             hostSelectionMap.put(hostLink, hostSelection);
         }

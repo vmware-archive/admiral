@@ -94,6 +94,7 @@ public final class AffinityFilters {
         filters.add(new ServiceLinkAffinityFilter(desc));
         filters.add(new DependsOnAffinityHostFilter(desc));
         filters.add(new ContainerToNetworkAffinityHostFilter(host, desc));
+        filters.add(new NamedVolumeAffinityHostFilter(host, desc));
 
     }
 
