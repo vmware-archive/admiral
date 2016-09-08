@@ -43,6 +43,9 @@ public class ContainerNetworkDescriptionService extends StatefulService {
 
         public static String CONTAINER_NETWORK_TYPE = "CONTAINER_NETWORK";
 
+        public static final String NETWORK_DRIVER_BRIDGE = "bridge";
+        public static final String NETWORK_DRIVER_OVERLAY = "overlay";
+
         public static final String FIELD_NAME_IPAM = "ipam";
         public static final String FIELD_NAME_DRIVER = "driver";
         public static final String FIELD_NAME_OPTIONS = "options";
@@ -94,6 +97,12 @@ public class ContainerNetworkDescriptionService extends StatefulService {
         @JsonIgnore
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public URI instanceAdapterReference;
+
+        /** Link to the parent network description */
+        @JsonProperty("parent_description_link")
+        @Documentation(description = "Link to the parent network description.")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public String parentDescriptionLink;
 
         @JsonAnySetter
         private void putProperty(String key, String value) {
