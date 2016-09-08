@@ -782,16 +782,20 @@ services.loadEndpoint = function(documentSelfLink) {
   return get(documentSelfLink);
 };
 
+services.verifyEndpoint = function(endpoint) {
+  return create(links.ENDPOINT_CU, endpoint);
+};
+
 services.createEndpoint = function(endpoint) {
-  return create(links.ENDPOINTS, endpoint);
+  return create(links.ENDPOINT_CU, endpoint);
 };
 
 services.updateEndpoint = function(endpoint) {
-  return put(endpoint.documentSelfLink, JSON.stringify(endpoint));
+  return create(links.ENDPOINT_CU, endpoint);
 };
 
 services.deleteEndpoint = function(endpoint) {
-  return deleteEntity(endpoint.documentSelfLink);
+  return create(links.ENDPOINT_DELETE, endpoint);
 };
 
 services.loadContainer = function(containerId) {
@@ -1215,12 +1219,14 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts) {
   ];
 
   //  Filter only actual compute hosts
-  qOps['customProperties/__computeHost'] = [
-    {
-      op: 'eq',
-      val: '*'
-    }
-  ];
+  if (!onlyContainerHosts) {
+    qOps['customProperties/computeType'] = [
+      {
+        op: 'eq',
+        val: 'VirtualMachine'
+      }
+    ];
+  }
 
   //Filter only actual compute hosts that are container hosts
   if (onlyContainerHosts) {

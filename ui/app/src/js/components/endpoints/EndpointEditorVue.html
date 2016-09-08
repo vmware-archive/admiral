@@ -35,31 +35,48 @@
           <div class="form-control dropdown-holder"></div>
         </div>
       </div>
-      <div class="form-group col-md-12">
-        <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.accessKeyIdLabel')}}</label>
-        <div class="accessKeyId col-md-8">
-          <input v-bind:value="model.item.privateKeyId" class="form-control"
-                 v-on:change="onInputChange()" v-on:input="onInputChange()"/>
-        </div>
-      </div>
-      <div class="form-group col-md-12">
-        <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.secretAccessKeyLabel')}}</label>
-        <div class="secretAccessKey col-md-8">
-          <input v-bind:value="model.item.privateKey" class="form-control"
-                 v-on:change="onInputChange()" v-on:input="onInputChange()"/>
-        </div>
-      </div>
-      <div class="form-group col-md-12">
-        <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.regionIdLabel')}}</label>
-        <div class="regionIdInput col-md-8">
-          <input v-bind:value="model.item.regionId" class="form-control"
+      <div class="form-group col-md-12" v-if="showInput('vsphere')">
+        <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.endpointHostLabel')}}</label>
+        <div class="endpointHostInput col-md-8">
+          <input v-bind:value="endpointProperties.hostName" class="form-control"
                  v-on:change="onInputChange()" v-on:input="onInputChange()" />
         </div>
       </div>
       <div class="form-group col-md-12">
-        <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.endpointHostLabel')}}</label>
-        <div class="endpointHostInput col-md-8">
-          <input v-bind:value="model.item.endpointHost" class="form-control"
+        <label class="col-md-4 control-label" v-if="showInput('vsphere')">{{i18n('app.endpoint.edit.usernameLabel')}}</label>
+        <label class="col-md-4 control-label" v-else>{{i18n('app.endpoint.edit.accessKeyIdLabel')}}</label>
+        <div class="accessKeyId col-md-8">
+          <input v-bind:value="endpointProperties.privateKeyId" class="form-control"
+                 v-on:change="onInputChange()" v-on:input="onInputChange()"/>
+        </div>
+      </div>
+      <div class="form-group col-md-12">
+        <label class="col-md-4 control-label" v-if="showInput('vsphere')">{{i18n('app.endpoint.edit.passwordLabel')}}</label>
+        <label class="col-md-4 control-label" v-else>{{i18n('app.endpoint.edit.secretAccessKeyLabel')}}</label>
+        <div class="secretAccessKey col-md-8">
+          <input v-bind:value="endpointProperties.privateKey" class="form-control"
+                 v-on:change="onInputChange()" v-on:input="onInputChange()"/>
+        </div>
+      </div>
+      <div class="form-group col-md-12">
+        <label class="col-md-4 control-label" v-if="showInput('vsphere')">{{i18n('app.endpoint.edit.datacenterIdLabel')}}</label>
+        <label class="col-md-4 control-label" v-else>{{i18n('app.endpoint.edit.regionIdLabel')}}</label>
+        <div class="regionIdInput col-md-8">
+          <input v-bind:value="endpointProperties.regionId" class="form-control"
+                 v-on:change="onInputChange()" v-on:input="onInputChange()" />
+        </div>
+      </div>
+      <div class="form-group col-md-12" v-if="showInput('azure')">
+        <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.subscriptionIdLabel')}}</label>
+        <div class="subscriptionIdInput col-md-8">
+          <input v-bind:value="endpointProperties.userLink" class="form-control"
+                 v-on:change="onInputChange()" v-on:input="onInputChange()" />
+        </div>
+      </div>
+      <div class="form-group col-md-12" v-if="showInput('azure')">
+        <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.tenantIdLabel')}}</label>
+        <div class="tenantIdInput col-md-8">
+          <input v-bind:value="endpointProperties.azureTenantId" class="form-control"
                  v-on:change="onInputChange()" v-on:input="onInputChange()" />
         </div>
       </div>

@@ -331,6 +331,10 @@ public class ComputeAllocationTaskService extends
                     computeDesc.regionId);
         }
 
+        if (body.getCustomProperty(CUSTOM_DISPLAY_NAME) == null) {
+            body.addCustomProperty(CUSTOM_DISPLAY_NAME, computeDesc.name);
+        }
+
         sendSelfPatch(body);
     }
 

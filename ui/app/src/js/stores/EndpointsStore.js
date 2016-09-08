@@ -55,8 +55,15 @@ let EndpointsStore = Reflux.createStore({
   },
 
   onCreateEndpoint: function(endpoint) {
-    services.createEndpoint(endpoint).then((createdEndpoint) => {
-      var immutableEndpoint = Immutable(createdEndpoint);
+    var createReq = {};
+    createReq.endpointState = endpoint;
+    createReq.enumerationRequest = {};
+    createReq.taskInfo = {};
+    createReq.taskInfo.isDirect = true;
+
+
+    services.createEndpoint(createReq).then((createdEndpoint) => {
+      var immutableEndpoint = Immutable(createdEndpoint.endpointState);
 
       var endpoints = this.data.items.asMutable();
       endpoints.push(immutableEndpoint);
@@ -74,9 +81,14 @@ let EndpointsStore = Reflux.createStore({
   },
 
   onUpdateEndpoint: function(endpoint) {
-    services.updateEndpoint(endpoint).then((updatedEndpoint) => {
+    var updReq = {};
+    updReq.endpointState = endpoint;
+    updReq.taskInfo = {};
+    updReq.taskInfo.isDirect = true;
+
+    services.updateEndpoint(updReq).then((updatedEndpoint) => {
       // If the backend did not make any changes, the response will be empty
-      updatedEndpoint = updatedEndpoint || endpoint;
+      updatedEndpoint = updatedEndpoint.endpointState || endpoint;
 
       var immutableEndpoint = Immutable(updatedEndpoint);
 
@@ -101,7 +113,12 @@ let EndpointsStore = Reflux.createStore({
   },
 
   onDeleteEndpoint: function(endpoint) {
-    services.deleteEndpoint(endpoint).then(() => {
+    var delReq = {};
+    delReq.endpointLink = endpoint.documentSelfLink;
+    delReq.taskInfo = {};
+    delReq.taskInfo.isDirect = true;
+
+    services.deleteEndpoint(delReq).then(() => {
       var endpoints = this.data.items.asMutable();
 
       for (var i = endpoints.length - 1; i >= 0; i--) {

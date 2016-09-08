@@ -383,9 +383,14 @@
         "nameLabel": "Name",
         "typeLabel": "Type",
         "accessKeyIdLabel": "Access key ID",
+        "usernameLabel": "Username",
+        "passwordLabel": "Password",
         "secretAccessKeyLabel": "Secret access key",
         "regionIdLabel": "Region ID",
-        "endpointHostLabel": "Host name or IP"
+        "endpointHostLabel": "Host name or IP",
+        "subscriptionIdLabel": "Subscription ID",
+        "tenantIdLabel": "Tenant ID",
+        "datacenterIdLabel": "Datacenter name"
       },
       "entity": "endpoint",
       "typeEntity": "type",

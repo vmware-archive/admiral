@@ -11,6 +11,7 @@
 
 const CONFIG = '/config';
 const RESOURCES = '/resources';
+const PROVISIONING = '/provisioning';
 
 var links = Immutable({
   CONFIG: '/config',
@@ -18,7 +19,10 @@ var links = Immutable({
   REGISTRIES: CONFIG + '/registries',
   REGISTRY_HOSTS: CONFIG + '/registry-spec',
   ENVIRONMENT_MAPPING: CONFIG + '/env-mapping',
-  ENDPOINTS: CONFIG + '/endpoints',
+  ENDPOINTS: RESOURCES + '/endpoints',
+
+  ENDPOINT_CU: PROVISIONING + '/endpoint-tasks',
+  ENDPOINT_DELETE: PROVISIONING + '/endpoint-removal-tasks',
 
   COMPUTE_DESCRIPTIONS: RESOURCES + '/compute-descriptions',
   COMPUTE_RESOURCES: RESOURCES + '/compute',

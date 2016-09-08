@@ -50,6 +50,7 @@ let toViewModel = function(dto) {
   return {
     documentSelfLink: dto.documentSelfLink,
     id: dto.id,
+    name: dto.name,
     address: dto.address,
     powerState: dto.powerState,
     resourcePoolDocumentId: dto.resourcePoolLink && utils.getDocumentId(dto.resourcePoolLink),
@@ -96,7 +97,7 @@ let MachinesStore = Reflux.createStore({
             if (documents.hasOwnProperty(key)) {
               var document = documents[key];
               if (document.customProperties &&
-                  document.customProperties.__computeHost) {
+                  document.customProperties.computeType) {
                 machines.push(toViewModel(document));
               }
             }

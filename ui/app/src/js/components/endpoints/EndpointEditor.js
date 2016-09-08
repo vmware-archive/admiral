@@ -44,12 +44,24 @@ var EndpointEditor = Vue.extend({
       type: Object
     }
   },
+  computed: {
+    isEditMode: function() {
+      return this.model.item.documentSelfLink;
+    },
+    endpointProperties: function() {
+      return this.model.item.endpointProperties || {};
+    }
+  },
   data: function() {
     return {
-      saveDisabled: true
+      saveDisabled: true,
+      currentEndpointType: null
     };
   },
   methods: {
+    showInput: function(etype) {
+      return this.currentEndpointType === etype;
+    },
     cancel: function($event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
@@ -70,8 +82,9 @@ var EndpointEditor = Vue.extend({
     },
     onInputChange: function() {
       var model = this.getModel();
-      this.saveDisabled = !model.name || !model.endpointType ||
-        !model.privateKey || !model.privateKeyId || !model.regionId;
+      this.saveDisabled = !model.name || !model.endpointType || !model.endpointProperties ||
+        !model.endpointProperties.privateKey || !model.endpointProperties.privateKeyId ||
+        (!model.endpointProperties.regionId && !(model.endpointType === 'vsphere'));
     },
     getModel: function() {
       var toSave = $.extend({}, this.model.item);
@@ -79,11 +92,15 @@ var EndpointEditor = Vue.extend({
       toSave.name = $(this.$el).find('.nameInput > input').val();
       var selectedType = this.typeInputDropdown.getSelectedOption();
       toSave.endpointType = selectedType && selectedType.id;
-      toSave.privateKey = $(this.$el).find('.secretAccessKey > input').val();
-      toSave.privateKeyId = $(this.$el).find('.accessKeyId > input').val();
-      toSave.regionId = $(this.$el).find('.regionIdInput > input').val();
-      toSave.endpointHost = $(this.$el).find('.endpointHost > input').val();
-
+      if (!toSave.endpointProperties) {
+        toSave.endpointProperties = {};
+      }
+      toSave.endpointProperties.privateKey = $(this.$el).find('.secretAccessKey > input').val();
+      toSave.endpointProperties.privateKeyId = $(this.$el).find('.accessKeyId > input').val();
+      toSave.endpointProperties.regionId = $(this.$el).find('.regionIdInput > input').val();
+      toSave.endpointProperties.hostName = $(this.$el).find('.endpointHostInput > input').val();
+      toSave.endpointProperties.userLink = $(this.$el).find('.subscriptionIdInput > input').val();
+      toSave.endpointProperties.azureTenantId = $(this.$el).find('.tenantIdInput > input').val();
       return toSave;
     }
   },
@@ -97,7 +114,11 @@ var EndpointEditor = Vue.extend({
     });
 
     this.typeInputDropdown.setOptions(TYPES);
-    this.typeInputDropdown.setOptionSelectCallback(this.onInputChange);
+    this.typeInputDropdown.setOptionSelectCallback(() => {
+      var selectedType = this.typeInputDropdown.getSelectedOption();
+      this.currentEndpointType = selectedType && selectedType.id;
+      this.onInputChange();
+    });
 
     this.unwatchType = this.$watch('model.item.endpointType', (type) => {
       var typeInstance = null;
@@ -108,13 +129,20 @@ var EndpointEditor = Vue.extend({
             break;
           }
         }
+
+        this.currentEndpointType = type;
       }
       this.typeInputDropdown.setSelectedOption(typeInstance);
+    }, {immediate: true});
+
+    this.unwatchIsEditMode = this.$watch('isEditMode', (isEditMode) => {
+      this.typeInputDropdown.setDisabled(isEditMode);
     }, {immediate: true});
   },
 
   detached: function() {
     this.unwatchType();
+    this.unwatchIsEditMode();
     this.typeInputDropdown = null;
   }
 });
