@@ -38,6 +38,7 @@ import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService;
+import com.vmware.admiral.request.compute.ElasticPlacementZoneAssignmentTaskService;
 import com.vmware.admiral.request.compute.aws.ProvisionContainerHostsTaskService;
 import com.vmware.admiral.request.notification.NotificationsService;
 import com.vmware.xenon.common.ServiceHost;
@@ -76,6 +77,7 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 ContainerServiceLinkProcessingTaskService.class,
                 ContainerExposeServiceProcessingTaskService.class,
                 CompositeComponentRemovalTaskService.class,
-                ServiceDocumentDeleteTaskService.class);
+                ServiceDocumentDeleteTaskService.class,
+                ElasticPlacementZoneAssignmentTaskService.class);
     }
 }

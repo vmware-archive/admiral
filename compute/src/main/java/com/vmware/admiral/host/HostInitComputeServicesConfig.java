@@ -12,6 +12,7 @@
 package com.vmware.admiral.host;
 
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ElasticPlacementZoneService;
 import com.vmware.admiral.compute.EnvironmentMappingService;
 import com.vmware.admiral.compute.HostConfigCertificateDistributionService;
 import com.vmware.admiral.compute.RegistryConfigCertificateDistributionService;
@@ -76,13 +77,15 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         startServiceFactories(host, ContainerDescriptionService.class,
                 GroupResourcePolicyService.class,
                 ContainerHostDataCollectionService.class,
-                EnvironmentMappingService.class, DeploymentPolicyService.class,
+                EnvironmentMappingService.class,
+                DeploymentPolicyService.class,
                 EndpointService.class,
                 ContainerNetworkService.class,
                 ContainerNetworkDescriptionService.class,
                 ContainerVolumeDescriptionService.class,
                 ContainerVolumeService.class,
-                ContainerVolumeDescriptionService.class);
+                ContainerVolumeDescriptionService.class,
+                ElasticPlacementZoneService.class);
 
         // register a well-know Components
         CompositeComponentRegistry.registerComponent(ResourceType.CONTAINER_TYPE.getName(),
