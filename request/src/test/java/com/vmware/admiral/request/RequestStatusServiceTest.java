@@ -31,6 +31,7 @@ import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -77,7 +78,8 @@ public class RequestStatusServiceTest extends RequestBaseTest {
     @Test
     public void testSingleRequestStatus() throws Throwable {
         ContainerDescription containerDesc = createContainerDescription();
-        RequestStatus requestStatus = verifyRequestStatus(containerDesc.documentSelfLink);
+        RequestStatus requestStatus = verifyRequestStatus(containerDesc.documentSelfLink,
+                ResourceType.CONTAINER_TYPE);
         assertEquals(containerDesc.name, requestStatus.name);
 
         // Verify Request resource links and desc name:
@@ -127,7 +129,8 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
         desc2.affinity = new String[] { desc1.name };
         CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
-        RequestStatus requestStatus = verifyRequestStatus(compositeDesc.documentSelfLink);
+        RequestStatus requestStatus = verifyRequestStatus(compositeDesc.documentSelfLink,
+                ResourceType.COMPOSITE_COMPONENT_TYPE);
         assertEquals(compositeDesc.name, requestStatus.name);
 
         String compositionTaskLink = UriUtils.buildUriPath(CompositionTaskFactoryService.SELF_LINK,
@@ -149,7 +152,8 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         desc2.portBindings = null;
         desc2.affinity = new String[] { desc1.name };
         CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
-        RequestStatus requestStatus = verifyRequestStatus(compositeDesc.documentSelfLink);
+        RequestStatus requestStatus = verifyRequestStatus(compositeDesc.documentSelfLink,
+                ResourceType.COMPOSITE_COMPONENT_TYPE);
         assertEquals(compositeDesc.name, requestStatus.name);
 
         String compositionTaskLink = UriUtils.buildUriPath(CompositionTaskFactoryService.SELF_LINK,
@@ -184,8 +188,8 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         service.setSelfLink(MockDockerAdapterService.SELF_LINK);
         stopService(service);
 
-        RequestBrokerState request = TestRequestStateFactory.createRequestState();
-        request.resourceDescriptionLink = compositeDesc.documentSelfLink;
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
         request.tenantLinks = groupPolicyState.tenantLinks;
         request = startRequest(request);
         waitForRequestToFail(request);
@@ -236,8 +240,8 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         desc2.customProperties.put(MockDockerAdapterService.FAILURE_EXPECTED, "simulate failure");
         CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
 
-        RequestBrokerState request = TestRequestStateFactory.createRequestState();
-        request.resourceDescriptionLink = compositeDesc.documentSelfLink;
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
         request.tenantLinks = groupPolicyState.tenantLinks;
         request = startRequest(request);
         waitForRequestToFail(request);
@@ -268,10 +272,11 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         }
     }
 
-    public RequestStatus verifyRequestStatus(String descriptionLink) throws Throwable {
+    public RequestStatus verifyRequestStatus(String descriptionLink, ResourceType type)
+            throws Throwable {
         // Request a container instance:
-        RequestBrokerState request = TestRequestStateFactory.createRequestState();
-        request.resourceDescriptionLink = descriptionLink;
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(type.getName(),
+                descriptionLink);
         request.tenantLinks = groupPolicyState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);

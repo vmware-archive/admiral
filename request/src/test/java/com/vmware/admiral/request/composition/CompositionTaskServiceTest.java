@@ -29,6 +29,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
@@ -89,7 +90,14 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         CompositeDescription compositeDesc = createCompositeDesc(compute);
         RequestBrokerState request = startComputeRequest(compositeDesc);
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
-        ComputeState computeState = getDocument(ComputeState.class, request.resourceLinks.get(0));
+
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        assertNotNull(cc);
+
+        List<ComputeState> computes = queryComputeByCompositeComponentLink(cc.documentSelfLink);
+        assertEquals(1, computes.size());
+
+        ComputeState computeState = computes.get(0);
         assertNotNull(computeState);
         assertEquals(COMPUTE_STATE_PACKAGE, computeState.documentKind);
         assertTrue(computeState.descriptionLink.contains(compute.documentSelfLink));
@@ -101,8 +109,8 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         String compositeComponentLink = UriUtils.buildUriPath(
                 CompositeComponentFactoryService.SELF_LINK, compositeComponentId);
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, compositeComponentLink);
-        assertNotNull(cc);
+        assertEquals(cc.documentSelfLink, compositeComponentLink);
+
         // TODO: fix for CompositeComponent.componentLinks
         // assertEquals(Collections.singleton(computeState.documentSelfLink), cc.componentLinks);
     }
@@ -122,24 +130,18 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         RequestBrokerState request = startComputeRequest(compositeDesc);
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
 
-        String compositeComponentId = null;
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        assertNotNull(cc);
 
-        for (String containerLink : request.resourceLinks) {
-            ComputeState container = getDocument(ComputeState.class, containerLink);
-            assertNotNull(container);
-            assertEquals(COMPUTE_STATE_PACKAGE, container.documentKind);
-            addForDeletion(container);
+        List<ComputeState> computes = queryComputeByCompositeComponentLink(cc.documentSelfLink);
+        assertEquals(2, computes.size());
 
-            compositeComponentId = container.customProperties
-                    .get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY);
+        for (ComputeState compute : computes) {
+            assertNotNull(compute);
+            assertEquals(COMPUTE_STATE_PACKAGE, compute.documentKind);
+            addForDeletion(compute);
         }
 
-        assertNotNull(compositeComponentId);
-        String compositeComponentLink = UriUtils.buildUriPath(
-                CompositeComponentFactoryService.SELF_LINK, compositeComponentId);
-
-        CompositeComponent cc = getDocument(CompositeComponent.class, compositeComponentLink);
-        assertNotNull(cc);
         // TODO: fix for CompositeComponent.componentLinks
         // assertEquals(request.resourceLinks, cc.componentLinks);
     }
@@ -197,8 +199,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
 
         // Make sure that policies are less than the requested containers in order to fail
         // allocation
-        assertTrue(
-                compositeDesc.descriptionLinks.size() > groupPolicyState.availableInstancesCount);
+        assertTrue(compositeDesc.descriptionLinks.size() > groupPolicyState.availableInstancesCount);
 
         // fail on host placement:
         RequestBrokerState request = startRequest(compositeDesc);
@@ -343,16 +344,17 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
     }
 
     private RequestBrokerState startRequest(CompositeDescription desc) throws Throwable {
-        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), desc.documentSelfLink);
         request.tenantLinks = groupPolicyState.tenantLinks;
-        request.resourceDescriptionLink = desc.documentSelfLink;
 
         request = super.startRequest(request);
         return request;
     }
 
     private RequestBrokerState startComputeRequest(CompositeDescription desc) throws Throwable {
-        RequestBrokerState request = TestRequestStateFactory.createComputeRequestState();
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), desc.documentSelfLink);
         request.tenantLinks = groupPolicyState.tenantLinks;
         request.resourceDescriptionLink = desc.documentSelfLink;
 
@@ -366,9 +368,15 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         assertNotNull("Resource links null for requestBroker: "
                 + requestBrokerState.documentSelfLink,
                 requestBrokerState.resourceLinks);
-        assertEquals(expectedCount, requestBrokerState.resourceLinks.size());
+        assertEquals(1, requestBrokerState.resourceLinks.size());
 
-        for (String containerLink : requestBrokerState.resourceLinks) {
+        CompositeComponent cc = getDocument(CompositeComponent.class,
+                requestBrokerState.resourceLinks.get(0));
+        assertNotNull(cc);
+
+        assertEquals(expectedCount, cc.componentLinks.size());
+
+        for (String containerLink : cc.componentLinks) {
             ContainerState container = getDocument(ContainerState.class, containerLink);
             assertNotNull(container);
             addForDeletion(container);

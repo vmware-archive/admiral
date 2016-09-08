@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
-import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ResourceType;
@@ -190,7 +189,7 @@ public class RequestBrokerService extends
         switch (state.taskSubStage) {
         case CREATED:
             if (isProvisionOperation(state)) {
-                if (isCompositionProvisioning(state)) {
+                if (isCompositeComponentType(state)) {
                     createCompositionTask(state);
                 } else {
                     createReservationTasks(state);
@@ -905,7 +904,7 @@ public class RequestBrokerService extends
     }
 
     private void createCompositionTask(RequestBrokerState state) {
-        if (isContainerType(state) || isComputeType(state)) {
+        if (isCompositeComponentType(state)) {
             CompositionTaskState compositionTask = new CompositionTaskState();
             compositionTask.documentSelfLink = Service.getId(state.documentSelfLink);
             compositionTask.serviceTaskCallback = ServiceTaskCallback.create(
@@ -1007,12 +1006,6 @@ public class RequestBrokerService extends
                 && (ContainerOperationType.CREATE.id.equals(state.operation)
                         || NetworkOperationType.CREATE.id.equals(state.operation)
                         || ComputeOperationType.CREATE.id.equals(state.operation));
-    }
-
-    private boolean isCompositionProvisioning(RequestBrokerState state) {
-        return (isContainerType(state) || isComputeType(state))
-                && state.resourceDescriptionLink != null
-                && state.resourceDescriptionLink.startsWith(ManagementUriParts.COMPOSITE_DESC);
     }
 
     private boolean isRemoveOperation(RequestBrokerState state) {

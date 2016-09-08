@@ -365,15 +365,18 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         desc2.affinity = new String[] { desc1.name };
         CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
 
-        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
         request.tenantLinks = groupPolicyState.tenantLinks;
-        request.resourceDescriptionLink = compositeDesc.documentSelfLink;
         request = startRequest(request);
         request = waitForRequestToComplete(request);
 
-        assertEquals(compositeDesc.descriptionLinks.size(), request.resourceLinks.size());
+        assertEquals(1, request.resourceLinks.size());
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
 
-        List<String> containerLinks = request.resourceLinks;
+        assertEquals(compositeDesc.descriptionLinks.size(), cc.componentLinks.size());
+
+        List<String> containerLinks = cc.componentLinks;
         ContainerState container1 = getDocument(ContainerState.class, containerLinks.get(0));
         CompositeComponent compositeComp = getDocument(CompositeComponent.class,
                 container1.compositeComponentLink);
@@ -408,15 +411,18 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         desc2.affinity = new String[] { desc1.name };
         CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
 
-        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
         request.tenantLinks = groupPolicyState.tenantLinks;
-        request.resourceDescriptionLink = compositeDesc.documentSelfLink;
         request = startRequest(request);
         request = waitForRequestToComplete(request);
 
-        assertEquals(compositeDesc.descriptionLinks.size(), request.resourceLinks.size());
+        assertEquals(1, request.resourceLinks.size());
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
 
-        List<String> containerLinks = request.resourceLinks;
+        assertEquals(compositeDesc.descriptionLinks.size(), cc.componentLinks.size());
+
+        List<String> containerLinks = cc.componentLinks;
         ContainerState container1 = getDocument(ContainerState.class, containerLinks.get(0));
         ContainerState container2 = getDocument(ContainerState.class, containerLinks.get(1));
         assertNotNull(container1);
@@ -435,10 +441,12 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(request);
 
-        ContainerDescription createdDesc1 = searchForDocument(ContainerDescription.class, container1.descriptionLink);
+        ContainerDescription createdDesc1 = searchForDocument(ContainerDescription.class,
+                container1.descriptionLink);
         assertNotNull(createdDesc1);
 
-        ContainerDescription createdDesc2 = searchForDocument(ContainerDescription.class, container2.descriptionLink);
+        ContainerDescription createdDesc2 = searchForDocument(ContainerDescription.class,
+                container2.descriptionLink);
         assertNotNull(createdDesc2);
 
         container1 = searchForDocument(ContainerState.class, containerLinks.get(0));
@@ -450,26 +458,32 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         compositeComp = searchForDocument(CompositeComponent.class, compositeComp.documentSelfLink);
         assertNull(compositeComp);
 
-        CompositeDescription createdCompDesc = searchForDocument(CompositeDescription.class, compositeDesc.documentSelfLink);
+        CompositeDescription createdCompDesc = searchForDocument(CompositeDescription.class,
+                compositeDesc.documentSelfLink);
         assertNotNull(createdCompDesc);
     }
 
     @Test
     public void testRemovingOfClonedContainerDescritionsAndContainerRemovals() throws Throwable {
-        ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1", true);
-        ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2", true);
+        ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1",
+                true);
+        ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2",
+                true);
         desc2.affinity = new String[] { desc1.name };
         CompositeDescription compositeDesc = createCompositeDesc(true, desc1, desc2);
 
-        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
         request.tenantLinks = groupPolicyState.tenantLinks;
-        request.resourceDescriptionLink = compositeDesc.documentSelfLink;
         request = startRequest(request);
         request = waitForRequestToComplete(request);
 
-        assertEquals(compositeDesc.descriptionLinks.size(), request.resourceLinks.size());
+        assertEquals(1, request.resourceLinks.size());
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
 
-        List<String> containerLinks = request.resourceLinks;
+        assertEquals(compositeDesc.descriptionLinks.size(), cc.componentLinks.size());
+
+        List<String> containerLinks = cc.componentLinks;
         ContainerState container1 = getDocument(ContainerState.class, containerLinks.get(0));
         ContainerState container2 = getDocument(ContainerState.class, containerLinks.get(1));
         assertNotNull(container1);
@@ -491,10 +505,12 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(request);
 
-        ContainerDescription createdDesc1 = searchForDocument(ContainerDescription.class, container1.descriptionLink);
+        ContainerDescription createdDesc1 = searchForDocument(ContainerDescription.class,
+                container1.descriptionLink);
         assertNull(createdDesc1);
 
-        ContainerDescription createdDesc2 = searchForDocument(ContainerDescription.class, container2.descriptionLink);
+        ContainerDescription createdDesc2 = searchForDocument(ContainerDescription.class,
+                container2.descriptionLink);
         assertNull(createdDesc2);
 
         container1 = searchForDocument(ContainerState.class, containerLinks.get(0));
@@ -503,7 +519,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         container2 = searchForDocument(ContainerState.class, containerLinks.get(1));
         assertNull(container2);
 
-        CompositeDescription createdCompDesc = searchForDocument(CompositeDescription.class, compositeDesc.documentSelfLink);
+        CompositeDescription createdCompDesc = searchForDocument(CompositeDescription.class,
+                compositeDesc.documentSelfLink);
         assertNull(createdCompDesc);
         compositeComp = searchForDocument(CompositeComponent.class, compositeComp.documentSelfLink);
         assertNull(compositeComp);
@@ -515,20 +532,22 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
      */
     @Test
     public void testScaleDownContainerShouldNotDeleteDescription() throws Throwable {
-        ContainerDescription desc = TestRequestStateFactory.createContainerDescription("name", true);
+        ContainerDescription desc = TestRequestStateFactory
+                .createContainerDescription("name", true);
         desc._cluster = 2;
         CompositeDescription compositeDesc = createCompositeDesc(true, desc);
 
-        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
         request.tenantLinks = groupPolicyState.tenantLinks;
-        request.resourceDescriptionLink = compositeDesc.documentSelfLink;
         request = startRequest(request);
         request = waitForRequestToComplete(request);
 
-        assertEquals(2, request.resourceLinks.size());
+        assertEquals(1, request.resourceLinks.size());
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
 
-        ContainerState container1 = getDocument(ContainerState.class, request.resourceLinks.get(0));
-        ContainerState container2 = getDocument(ContainerState.class, request.resourceLinks.get(1));
+        ContainerState container1 = getDocument(ContainerState.class, cc.componentLinks.get(0));
+        ContainerState container2 = getDocument(ContainerState.class, cc.componentLinks.get(1));
         // Assert that the description is a clone
         assertNotNull(container1);
         assertNotEquals(desc.documentSelfLink, container1.descriptionLink);
@@ -542,7 +561,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request = startRequest(request);
         waitForRequestToComplete(request);
 
-        ContainerDescription createdDesc = searchForDocument(ContainerDescription.class, container1.descriptionLink);
+        ContainerDescription createdDesc = searchForDocument(ContainerDescription.class,
+                container1.descriptionLink);
         assertNotNull(createdDesc);
 
         // Remove Containers
@@ -564,7 +584,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
      */
     @Test
     public void testRemoveContainerSharingContainerDescription() throws Throwable {
-        ContainerDescription desc = TestRequestStateFactory.createContainerDescription("name", false);
+        ContainerDescription desc = TestRequestStateFactory.createContainerDescription("name",
+                false);
         desc.portBindings = null;
         desc = doPost(desc, ContainerDescriptionService.FACTORY_LINK);
 
@@ -592,7 +613,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         waitForRequestToComplete(request);
 
-        ContainerDescription createdDesc = searchForDocument(ContainerDescription.class, desc.documentSelfLink);
+        ContainerDescription createdDesc = searchForDocument(ContainerDescription.class,
+                desc.documentSelfLink);
         assertNotNull(createdDesc);
 
         // Remove Containers

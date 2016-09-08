@@ -38,6 +38,7 @@ import org.junit.runners.Parameterized.Parameters;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
+import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerLogService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ExposedServiceDescriptionService.ExposedServiceDescriptionState;
@@ -115,9 +116,16 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
             throws Exception {
         String dockerHost = getTestRequiredProp("docker.host.address");
 
-        assertEquals("Unexpected number of resource links", 3, request.resourceLinks.size());
+        int expectedNumberOfResources = 3;
 
-        String mysqlContainerLink = getResourceContaining(request.resourceLinks, MYSQL_NAME);
+        assertEquals("Unexpected number of resource links", 1,
+                request.resourceLinks.size());
+
+        CompositeComponent cc = getDocument(request.resourceLinks.get(0), CompositeComponent.class);
+        assertEquals("Unexpected number of component links", expectedNumberOfResources,
+                cc.componentLinks.size());
+
+        String mysqlContainerLink = getResourceContaining(cc.componentLinks, MYSQL_NAME);
         assertNotNull(mysqlContainerLink);
 
         logger.info("------------- 1. Retrieving container state for %s. -------------",
@@ -152,7 +160,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         }
 
         // find the host port of the WP container
-        String wpContainerLink = getResourceContaining(request.resourceLinks, WP_NAME);
+        String wpContainerLink = getResourceContaining(cc.componentLinks, WP_NAME);
         assertNotNull(wpContainerLink);
 
         logger.info("------------- 4. Retrieving container state for %s. -------------",

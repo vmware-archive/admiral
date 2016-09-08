@@ -48,6 +48,10 @@ import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.RegistryHostConfigService;
 import com.vmware.admiral.compute.RegistryHostConfigService.RegistryHostSpec;
 import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
+import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
@@ -262,7 +266,13 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
             throws Exception {
 
         RequestBrokerState request = new RequestBrokerState();
-        request.resourceType = ResourceType.CONTAINER_TYPE.getName();
+        if (resourceDescLink.startsWith(CompositeDescriptionFactoryService.SELF_LINK)) {
+            request.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
+        } else {
+            ComponentMeta meta = CompositeComponentRegistry
+                    .metaByDescriptionLink(resourceDescLink);
+            request.resourceType = meta.resourceType;
+        }
         request.resourceDescriptionLink = resourceDescLink;
         request.tenantLinks = TENANT;
         request = postDocument(RequestBrokerFactoryService.SELF_LINK, request);
@@ -281,7 +291,14 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
             throws Exception {
 
         RequestBrokerState day2DeleteRequest = new RequestBrokerState();
-        day2DeleteRequest.resourceType = ResourceType.CONTAINER_TYPE.getName();
+        String resourceLink = resourceLinks.get(0);
+        if (resourceLink.startsWith(CompositeComponentFactoryService.SELF_LINK)) {
+            day2DeleteRequest.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
+        } else {
+            ComponentMeta metaByStateLink = CompositeComponentRegistry
+                    .metaByStateLink(resourceLink);
+            day2DeleteRequest.resourceType = metaByStateLink.resourceType;
+        }
         day2DeleteRequest.operation = ContainerOperationType.DELETE.id;
         day2DeleteRequest.resourceLinks = resourceLinks;
         day2DeleteRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2DeleteRequest);

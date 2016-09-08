@@ -163,8 +163,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
 
         // 1. Request a composite container:
-        RequestBrokerState request = TestRequestStateFactory.createRequestState();
-        request.resourceDescriptionLink = compositeDesc.documentSelfLink;
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
         request.tenantLinks = groupPolicyState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
@@ -281,8 +281,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
 
         // 1. Request a composite container:
-        RequestBrokerState request = TestRequestStateFactory.createRequestState();
-        request.resourceDescriptionLink = compositeDesc.documentSelfLink;
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
         request.tenantLinks = groupPolicyState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
@@ -295,13 +295,15 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertNotNull(rs);
 
         assertEquals(Integer.valueOf(100), rs.progress);
-        assertEquals(3, request.resourceLinks.size());
+        assertEquals(1, request.resourceLinks.size());
+
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
 
         String networkLink = null;
         String containerLink1 = null;
         String containerLink2 = null;
 
-        Iterator<String> iterator = request.resourceLinks.iterator();
+        Iterator<String> iterator = cc.componentLinks.iterator();
         while (iterator.hasNext()) {
             String link = iterator.next();
             if (link.startsWith(ContainerNetworkService.FACTORY_LINK)) {
@@ -334,11 +336,9 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 || network.originatingHostLink.equals(dockerHost2.documentSelfLink);
         assertTrue(networkIsProvisionedOnAnyHosts);
 
-        assertEquals(cont1.compositeComponentLink, cont2.compositeComponentLink);
-        assertEquals(cont1.compositeComponentLink, network.compositeComponentLink);
-
-        CompositeComponent cc = getDocument(CompositeComponent.class, cont1.compositeComponentLink);
-        assertTrue(cc.componentLinks.containsAll(request.resourceLinks));
+        assertEquals(cc.documentSelfLink, cont1.compositeComponentLink);
+        assertEquals(cc.documentSelfLink, cont2.compositeComponentLink);
+        assertEquals(cc.documentSelfLink, network.compositeComponentLink);
     }
 
     @Test
@@ -391,8 +391,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
 
         // 1. Request a composite container with expected failure:
-        RequestBrokerState request = TestRequestStateFactory.createRequestState();
-        request.resourceDescriptionLink = compositeDesc.documentSelfLink;
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
         request.tenantLinks = groupPolicyState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);

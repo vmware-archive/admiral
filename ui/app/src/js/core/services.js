@@ -966,14 +966,14 @@ services.removeContainerTemplate = function(templateId) {
 services.createMultiContainerFromTemplate = function(templateId, group) {
   return services.loadContainerTemplate(templateId).then((template) => {
     return services.createContainerFromDescriptionLink(template.documentSelfLink,
-                                                        template.tenantLinks, group);
+                                                        template.tenantLinks, group, true);
   });
 };
 
 services.createContainerFromDescriptionLink = function(resourceDescriptionLink,
-                                                        tenantLinks, group) {
+                                                        tenantLinks, group, composite) {
   var request = {};
-  request.resourceType = CONTAINER_TYPE_DOCKER;
+  request.resourceType = composite ? COMPOSITE_COMPONENT_TYPE : CONTAINER_TYPE_DOCKER;
   request.resourceDescriptionLink = resourceDescriptionLink;
 
   if (group) {

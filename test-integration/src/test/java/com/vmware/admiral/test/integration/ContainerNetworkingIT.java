@@ -37,6 +37,7 @@ import org.junit.Test;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
+import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerLogService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ExposedServiceDescriptionService.ExposedServiceDescriptionState;
@@ -111,10 +112,14 @@ public class ContainerNetworkingIT extends BaseProvisioningOnCoreOsIT {
     protected void validateAfterStart(String resourceDescLink, RequestBrokerState request)
             throws Exception {
 
-        assertEquals("Unexpected number of resource links", ALL_RESOURCER_SIZE,
+        assertEquals("Unexpected number of resource links", 1,
                 request.resourceLinks.size());
 
-        List<String> clientResourceLinks = request.resourceLinks.stream()
+        CompositeComponent cc = getDocument(request.resourceLinks.get(0), CompositeComponent.class);
+        assertEquals("Unexpected number of component links", ALL_RESOURCER_SIZE,
+                cc.componentLinks.size());
+
+        List<String> clientResourceLinks = cc.componentLinks.stream()
                 .filter((l) -> l.contains(CLIENT_NAME))
                 .collect(Collectors.toList());
 
@@ -128,7 +133,7 @@ public class ContainerNetworkingIT extends BaseProvisioningOnCoreOsIT {
             serverHostnames.addAll(getServiceHostNameFromLogs(clientResourceLink));
         }
 
-        List<String> serverResourceLinks = request.resourceLinks.stream()
+        List<String> serverResourceLinks = cc.componentLinks.stream()
                 .filter((l) -> l.contains(SERVER_NAME))
                 .collect(Collectors.toList());
 

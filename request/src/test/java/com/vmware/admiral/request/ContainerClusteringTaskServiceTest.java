@@ -30,6 +30,8 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
@@ -507,6 +509,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         CompositeDescriptionService.CompositeDescription compositeDesc = createCompositeDesc(desc1,
                 desc2);
 
+        request.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
         request.resourceDescriptionLink = compositeDesc.documentSelfLink;
         request.resourceCount = 1;
 
@@ -515,8 +518,10 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
         MockDockerAdapterService.getContainerIds();
 
-        String compositeComponentLink = getDocument(ContainerState.class,
-                initialRequest.resourceLinks.get(0)).compositeComponentLink;
+        String compositeComponentLink = initialRequest.resourceLinks.get(0);
+
+        CompositeComponent cc = getDocument(CompositeComponent.class, compositeComponentLink);
+        List<String> initialLinks = cc.componentLinks;
 
         compositeComponentLink = compositeComponentLink
                 .substring(compositeComponentLink.lastIndexOf("/"));
@@ -550,7 +555,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         assertEquals(clusteringRequest.resourceLinks, clusteringTask.resourceLinks);
 
         Set<String> allContainerLinks = new HashSet<>();
-        allContainerLinks.addAll(initialRequest.resourceLinks);
+        allContainerLinks.addAll(initialLinks);
         allContainerLinks.addAll(clusteringRequest.resourceLinks);
 
         Set<String> parentLinks = new HashSet<>();
@@ -602,6 +607,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         CompositeDescriptionService.CompositeDescription compositeDesc = createCompositeDesc(desc1,
                 desc2);
 
+        request.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
         request.resourceDescriptionLink = compositeDesc.documentSelfLink;
         request.resourceCount = 1;
 
@@ -610,8 +616,10 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
         MockDockerAdapterService.getContainerIds();
 
-        String compositeComponentLink = getDocument(ContainerState.class,
-                initialRequest.resourceLinks.get(0)).compositeComponentLink;
+        String compositeComponentLink = initialRequest.resourceLinks.get(0);
+
+        CompositeComponent cc = getDocument(CompositeComponent.class, compositeComponentLink);
+        List<String> initialLinks = cc.componentLinks;
 
         compositeComponentLink = compositeComponentLink
                 .substring(compositeComponentLink.lastIndexOf("/"));
@@ -645,7 +653,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         assertEquals(clusteringRequest.resourceLinks, clusteringTask.resourceLinks);
 
         Set<String> allContainerLinks = new HashSet<>();
-        allContainerLinks.addAll(initialRequest.resourceLinks);
+        allContainerLinks.addAll(initialLinks);
         allContainerLinks.addAll(clusteringRequest.resourceLinks);
 
         Set<ContainerState> containerStates = new HashSet<>();
@@ -695,6 +703,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         CompositeDescriptionService.CompositeDescription compositeDesc = createCompositeDesc(desc1,
                 desc2);
 
+        request.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
         request.resourceDescriptionLink = compositeDesc.documentSelfLink;
         request.resourceCount = 1;
 
@@ -703,8 +712,10 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
         MockDockerAdapterService.getContainerIds();
 
-        String compositeComponentLink = getDocument(ContainerState.class,
-                initialRequest.resourceLinks.get(0)).compositeComponentLink;
+        String compositeComponentLink = initialRequest.resourceLinks.get(0);
+
+        CompositeComponent cc = getDocument(CompositeComponent.class, compositeComponentLink);
+        List<String> initialLinks = cc.componentLinks;
 
         compositeComponentLink = compositeComponentLink
                 .substring(compositeComponentLink.lastIndexOf("/"));
@@ -738,7 +749,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         assertEquals(clusteringRequest.resourceLinks, clusteringTask.resourceLinks);
 
         Set<String> allContainerLinks = new HashSet<>();
-        allContainerLinks.addAll(initialRequest.resourceLinks);
+        allContainerLinks.addAll(initialLinks);
         allContainerLinks.addAll(clusteringRequest.resourceLinks);
 
         Set<String> parentLinks = new HashSet<>();

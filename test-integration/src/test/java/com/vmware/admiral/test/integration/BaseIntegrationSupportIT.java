@@ -31,6 +31,7 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -49,6 +50,16 @@ import org.junit.rules.Timeout;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
+import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry;
+import com.vmware.admiral.compute.container.ContainerDescriptionService;
+import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.ContainerFactoryService;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.request.ContainerHostRemovalTaskFactoryService;
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState;
 import com.vmware.admiral.request.RequestStatusFactoryService;
@@ -57,6 +68,8 @@ import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
@@ -96,6 +109,18 @@ public abstract class BaseIntegrationSupportIT {
         // Allow "Host" header to be passed
         // http://stackoverflow.com/questions/7648872/can-i-override-the-host-header-where-using-javas-httpurlconnection-class
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+
+        // register a well-know Components
+        CompositeComponentRegistry.registerComponent(ResourceType.CONTAINER_TYPE.getName(),
+                ContainerDescriptionService.FACTORY_LINK,
+                ContainerDescription.class, ContainerFactoryService.SELF_LINK,
+                ContainerState.class);
+        CompositeComponentRegistry.registerComponent(ResourceType.NETWORK_TYPE.getName(),
+                ContainerNetworkDescriptionService.FACTORY_LINK, ContainerNetworkDescription.class,
+                ContainerNetworkService.FACTORY_LINK, ContainerNetworkState.class);
+        CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_TYPE.getName(),
+                ComputeDescriptionService.FACTORY_LINK,
+                ComputeDescription.class, ComputeService.FACTORY_LINK, ComputeState.class);
     }
 
     @AfterClass
@@ -358,7 +383,7 @@ public abstract class BaseIntegrationSupportIT {
 
     protected static void waitForStatusCode(URI uri, Map<String, String> headers,
             int expectedStatusCode, int count)
-                    throws Exception {
+            throws Exception {
 
         for (int i = 0; i < count; i++) {
             Thread.sleep(STATE_CHANGE_WAIT_POLLING_PERIOD_MILLIS);

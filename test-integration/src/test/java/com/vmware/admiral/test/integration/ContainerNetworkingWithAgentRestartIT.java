@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
+import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerLogService;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -85,10 +86,14 @@ public class ContainerNetworkingWithAgentRestartIT extends BaseProvisioningOnCor
     protected void validateAfterStart(String resourceDescLink, RequestBrokerState request)
             throws Exception {
 
-        assertEquals("Unexpected number of resource links", ALL_RESOURCER_SIZE,
+        assertEquals("Unexpected number of resource links", 1,
                 request.resourceLinks.size());
 
-        List<String> clientResourceLinks = request.resourceLinks.stream()
+        CompositeComponent cc = getDocument(request.resourceLinks.get(0), CompositeComponent.class);
+        assertEquals("Unexpected number of component links", ALL_RESOURCER_SIZE,
+                cc.componentLinks.size());
+
+        List<String> clientResourceLinks = cc.componentLinks.stream()
                 .filter((l) -> l.contains(CLIENT_NAME))
                 .collect(Collectors.toList());
 

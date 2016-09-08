@@ -38,6 +38,8 @@ import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
@@ -82,8 +84,8 @@ public class ContainerExposeServiceProcessingTaskTest extends RequestBaseTest {
 
         // second request - using the same context id, with a service link to the container from the
         // first request
-        request = TestRequestStateFactory.createRequestState();
-        request.resourceDescriptionLink = composite.documentSelfLink;
+        request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), composite.documentSelfLink);
         request.customProperties = new HashMap<>();
 
         mockContainerHostNetworkConfigService = new MockContainerHostNetworkConfigService();
@@ -137,8 +139,10 @@ public class ContainerExposeServiceProcessingTaskTest extends RequestBaseTest {
         waitForRequestToComplete(request);
         request = getDocument(RequestBrokerState.class, request.documentSelfLink);
 
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+
         List<String> containerStateLinks = findResourceLinks(ContainerState.class,
-                request.resourceLinks);
+                cc.componentLinks);
 
         assertEquals(CLUSTER_SIZE, containerStateLinks.size());
         assertEquals(CLUSTER_SIZE,
@@ -272,8 +276,10 @@ public class ContainerExposeServiceProcessingTaskTest extends RequestBaseTest {
 
         request = getDocument(RequestBrokerState.class, request.documentSelfLink);
 
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+
         List<String> containerStateLinks = findResourceLinks(ContainerState.class,
-                request.resourceLinks);
+                cc.componentLinks);
         List<ContainerState> containerStates = getContainerStates(containerStateLinks);
 
         ContainerState containerStateToChange = containerStates.get(0);
@@ -344,16 +350,18 @@ public class ContainerExposeServiceProcessingTaskTest extends RequestBaseTest {
         request = startRequest(request);
         request = waitForRequestToComplete(request);
 
-        assertEquals(CLUSTER_SIZE, request.resourceLinks.size());
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+
+        assertEquals(CLUSTER_SIZE, cc.componentLinks.size());
 
         String contextId = request.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY);
 
         // Request provisioning after allocation:
         List<RequestBrokerState> provisioningRequests = new ArrayList<>();
 
-        for (String resourceLink : request.resourceLinks) {
+        for (String resourceLink : cc.componentLinks) {
             RequestBrokerState provisioningRequest = new RequestBrokerState();
-            provisioningRequest.resourceType = request.resourceType;
+            provisioningRequest.resourceType = ResourceType.CONTAINER_TYPE.getName();
             provisioningRequest.resourceLinks = Collections.singletonList(resourceLink);
             provisioningRequest.resourceDescriptionLink = containerDesc.documentSelfLink;
             provisioningRequest.operation = ContainerOperationType.CREATE.id;

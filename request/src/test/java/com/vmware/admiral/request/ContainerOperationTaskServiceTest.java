@@ -26,6 +26,7 @@ import org.junit.Test;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
@@ -110,7 +111,7 @@ public class ContainerOperationTaskServiceTest extends RequestBaseTest {
         composite = doPost(composite, CompositeDescriptionService.SELF_LINK);
 
         request = new RequestBrokerState();
-        request.resourceType = ResourceType.CONTAINER_TYPE.getName();
+        request.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
         request.resourceDescriptionLink = composite.documentSelfLink;
         request.tenantLinks = groupPolicyState.tenantLinks;
         request.customProperties = new HashMap<>();
@@ -126,14 +127,17 @@ public class ContainerOperationTaskServiceTest extends RequestBaseTest {
         // verify the resources are created as expected:
         assertNotNull("Request resourceLinks null for requestId:  " + request.documentSelfLink,
                 request.resourceLinks);
+
         assertEquals(request.resourceCount, request.resourceLinks.size());
+
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
 
         host.log("wait for containers to be in running state for request: "
                 + request.documentSelfLink);
-        waitForContainerPowerState(PowerState.RUNNING, request.resourceLinks);
+        waitForContainerPowerState(PowerState.RUNNING, cc.componentLinks);
 
         // Get composite component link
-        ContainerState container = getDocument(ContainerState.class, request.resourceLinks.get(0));
+        ContainerState container = getDocument(ContainerState.class, cc.componentLinks.get(0));
 
         RequestBrokerState day2Request = new RequestBrokerState();
         day2Request.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
@@ -151,7 +155,7 @@ public class ContainerOperationTaskServiceTest extends RequestBaseTest {
         waitForRequestToComplete(day2Request);
 
         // verify the resources have been stopped:
-        waitForContainerPowerState(PowerState.STOPPED, request.resourceLinks);
+        waitForContainerPowerState(PowerState.STOPPED, cc.componentLinks);
 
         day2Request = new RequestBrokerState();
         day2Request.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
@@ -169,7 +173,7 @@ public class ContainerOperationTaskServiceTest extends RequestBaseTest {
         waitForRequestToComplete(day2Request);
 
         // verify the resources have been started:
-        waitForContainerPowerState(PowerState.RUNNING, request.resourceLinks);
+        waitForContainerPowerState(PowerState.RUNNING, cc.componentLinks);
 
     }
 

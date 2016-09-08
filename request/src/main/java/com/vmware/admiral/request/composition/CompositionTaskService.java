@@ -12,7 +12,6 @@
 package com.vmware.admiral.request.composition;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
@@ -70,7 +69,6 @@ public class CompositionTaskService
 
         private static final String FIELD_NAME_RESOURCE_DESCRIPTION_LINK = "resourceDescriptionLink";
         private static final String FIELD_NAME_RESOURCE_NODES = "resourceNodes";
-        private static final String FIELD_NAME_RESOURCE_LINKS = "resourceLinks";
         private static final String FIELD_NAME_COMPOSITE_COMPONENT_LINK = "compositeComponentLink";
 
         public static enum SubStage {
@@ -94,9 +92,6 @@ public class CompositionTaskService
 
         /** The description that defines the requested resource. */
         public String resourceDescriptionLink;
-
-         /** Set by a Task with the links of the provisioned resources. */
-        public List<String> resourceLinks;
 
         // Service use fields:
         /** ResourceNodes by CompositionSubTask links */
@@ -172,8 +167,6 @@ public class CompositionTaskService
             CompositionTaskState patchBody, CompositionTaskState currentState) {
         currentState.compositeComponentLink = mergeProperty(currentState.compositeComponentLink,
                 patchBody.compositeComponentLink);
-        currentState.resourceLinks = mergeLists(currentState.resourceLinks,
-                patchBody.resourceLinks);
         currentState.remainingCount = mergeProperty(currentState.remainingCount,
                 patchBody.remainingCount);
         currentState.resourceNodes = mergeProperty(currentState.resourceNodes,
@@ -234,10 +227,7 @@ public class CompositionTaskService
             CompositionTaskState state) {
         CallbackCompleteResponse finishedResponse = new CallbackCompleteResponse();
         finishedResponse.copy(state.serviceTaskCallback.getFinishedResponse());
-        finishedResponse.resourceLinks = state.resourceLinks;
-        if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
-            logWarning("No resourceLinks found for allocated resources.");
-        }
+        finishedResponse.resourceLinks = Collections.singletonList(state.compositeComponentLink);
         return finishedResponse;
     }
 
@@ -631,7 +621,6 @@ public class CompositionTaskService
         setDocumentTemplateIndexingOptions(template, EnumSet.of(PropertyIndexingOption.STORE_ONLY),
                 CompositionTaskState.FIELD_NAME_RESOURCE_DESCRIPTION_LINK,
                 CompositionTaskState.FIELD_NAME_TENANT_LINKS,
-                CompositionTaskState.FIELD_NAME_RESOURCE_LINKS,
                 CompositionTaskState.FIELD_NAME_RESOURCE_NODES,
                 CompositionTaskState.FIELD_NAME_COMPOSITE_COMPONENT_LINK);
 

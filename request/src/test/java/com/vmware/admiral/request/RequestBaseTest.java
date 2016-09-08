@@ -25,10 +25,12 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
@@ -57,6 +59,7 @@ import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.composition.CompositionSubTaskFactoryService;
 import com.vmware.admiral.request.composition.CompositionTaskFactoryService;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.CounterSubTaskService;
 import com.vmware.admiral.service.common.RegistryService;
@@ -69,8 +72,12 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.VerificationHost;
 import com.vmware.xenon.services.common.AuthCredentialsService;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 public abstract class RequestBaseTest extends BaseTestCase {
 
@@ -512,6 +519,39 @@ public abstract class RequestBaseTest extends BaseTestCase {
             ServiceDocument... descs) throws Throwable {
 
         return createCompositeDesc(false, descs);
+    }
+
+    protected List<ComputeState> queryComputeByCompositeComponentLink(String compositeComponentLink) {
+        String contextId = compositeComponentLink.replaceAll(CompositeComponentFactoryService.SELF_LINK + "/", "");
+
+        QueryTask q = QueryUtil.buildQuery(ComputeState.class, false);
+        QueryTask.Query containerHost = new QueryTask.Query().setTermPropertyName(QuerySpecification
+                .buildCompositeFieldName(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                        RequestUtils.FIELD_NAME_CONTEXT_ID_KEY))
+                .setTermMatchValue(contextId);
+        containerHost.occurance = Occurance.MUST_OCCUR;
+
+        q.querySpec.query.addBooleanClause(containerHost);
+
+        QueryUtil.addExpandOption(q);
+        ServiceDocumentQuery<ComputeState> query = new ServiceDocumentQuery<>(host, ComputeState.class);
+
+        List<ComputeState> result = new ArrayList<>();
+        TestContext ctx = testCreate(1);
+
+        query.query(q, (r) -> {
+            if (r.hasException()) {
+                ctx.failIteration(r.getException());
+            } else if (r.hasResult()) {
+                result.add(r.getResult());
+            } else {
+                ctx.completeIteration();
+            }
+        });
+
+        ctx.await();
+
+        return result;
     }
 
 }
