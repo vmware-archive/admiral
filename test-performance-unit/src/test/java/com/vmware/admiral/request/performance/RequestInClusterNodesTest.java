@@ -193,11 +193,34 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
         List<RequestBrokerState> removeRequests = removeContainers(timeoutInMicros,
                 containerRequests);
 
+        testContainersShouldBeRemoved();
+
         assertTrue("Not all container requests completed: " + containerRequestsValues.size(),
                 containerRequestsValues.isEmpty());
         assertTrue("Not all remove requests completed: " + removeRequests.size(),
                 removeRequests.isEmpty());
 
+    }
+
+    private void testContainersShouldBeRemoved() {
+        TestContext ctx = testCreate(1);
+        QueryTask q = QueryUtil.buildQuery(ContainerState.class, false);
+        QueryUtil.addCountOption(q);
+
+        new ServiceDocumentQuery<ContainerState>(host, ContainerState.class)
+                .query(q,
+                        (r) -> {
+                            if (r.hasException()) {
+                                ctx.failIteration(r.getException());
+                            } else if (r.hasResult()) {
+                                ctx.failIteration(new IllegalStateException(
+                                        "Containers were not removed properly. Found containers: "
+                                                + r.getCount()));
+                            } else {
+                                ctx.completeIteration();
+                            }
+                        });
+        ctx.await();
     }
 
     private void testContainersShouldNotBeInUnknownStateAfterProvisioning() throws Throwable {

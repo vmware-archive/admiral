@@ -525,14 +525,13 @@ public class MockDockerAdapterService extends StatelessService {
     }
 
     private synchronized void removeContainerIdByReference(URI containerReference) {
-        String ref = containerReference.toString();
         Iterator<Map<String, String>> iteratorHost = CONTAINER_IDS.values().iterator();
         while (iteratorHost.hasNext()) {
             Map<String, String> containerIdsByHost = iteratorHost.next();
             Iterator<Entry<String, String>> iterator = containerIdsByHost.entrySet().iterator();
             while (iterator.hasNext()) {
                 Entry<String, String> entry = iterator.next();
-                if (ref.equals(entry.getValue())) {
+                if (entry.getValue().endsWith(containerReference.getPath())) {
                     Utils.log(MockDockerAdapterService.class,
                             MockDockerAdapterService.class.getSimpleName(),
                             Level.INFO, "Container with id: %s and container ref: %s removed.",
@@ -542,7 +541,8 @@ public class MockDockerAdapterService extends StatelessService {
                 }
             }
         }
-        Utils.logWarning("**************** No containerId found for reference: " + ref);
+        Utils.logWarning("**************** No containerId found for reference: "
+                + containerReference.getPath());
     }
 
     public static synchronized void addContainerId(String hostId, String containerId,
