@@ -201,10 +201,6 @@ public class ComputePlacementSelectionTaskService extends
     private void proceedComputeSelection(ComputePlacementSelectionTaskState state,
             ComputeDescription desc,
             Collection<String> computeDescriptionLinks, int maxRetries) {
-        // TODO pmitrov: looking for a powered-on VM_GUEST compute container is not going to work
-        // for AWS since there is a single endpoint-level ComputeState in this case
-        // with UNKNOWN power state; we may add support for this case too
-
         Query.Builder queryBuilder = Query.Builder.create()
                 .addKindFieldClause(ComputeState.class)
                 .addInClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK, computeDescriptionLinks)
