@@ -32,6 +32,8 @@ public class ComputeConstants {
 
     public static final String DOCKER_URI_PROP_NAME = "__dockerUri";
 
+    public static final String FIELD_NAME_COMPOSITE_COMPONENT_LINK_KEY = "__compositeComponentLink";
+
     public enum AdapterType {
         INSTANCE_ADAPTER("instance-adapter"),
         NETWORK_ADAPTER("network-adapter"),

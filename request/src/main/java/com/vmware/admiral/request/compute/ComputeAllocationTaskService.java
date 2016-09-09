@@ -56,6 +56,7 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.EnvironmentMappingService.EnvironmentMappingState;
 import com.vmware.admiral.compute.PropertyMapping;
+import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
 import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
 import com.vmware.admiral.host.DefaultCertCredentials;
@@ -735,6 +736,9 @@ public class ComputeAllocationTaskService extends
 
         String contextId = state.getCustomProperty(FIELD_NAME_CONTEXT_ID_KEY);
         state.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        state.customProperties.put(ComputeConstants.FIELD_NAME_COMPOSITE_COMPONENT_LINK_KEY,
+                UriUtils.buildUriPath(
+                        CompositeComponentFactoryService.SELF_LINK, contextId));
         state.customProperties.put(ComputeConstants.COMPUTE_HOST_PROP_NAME, "true");
 
         // for human debugging reasons only, prefix the compute host resource id

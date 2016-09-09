@@ -24,13 +24,13 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
+import com.vmware.admiral.compute.Composable;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.maintenance.ContainerHealthEvaluator;
 import com.vmware.admiral.compute.container.maintenance.ContainerMaintenance;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.compute.container.network.ContainerNetworkReconfigureService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkReconfigureService.ContainerNetworkReconfigureState;
-import com.vmware.admiral.compute.container.util.CompositeComponentNotifier;
 import com.vmware.admiral.compute.container.util.ContainerUtil;
 import com.vmware.admiral.compute.content.EnvDeserializer;
 import com.vmware.admiral.compute.content.EnvSerializer;
@@ -52,7 +52,8 @@ public class ContainerService extends StatefulService {
     private volatile ContainerMaintenance containerMaintenance;
 
     public static class ContainerState
-            extends com.vmware.photon.controller.model.resources.ResourceState {
+            extends com.vmware.photon.controller.model.resources.ResourceState
+            implements Composable {
         public static final String FIELD_NAME_NAMES = "names";
         public static final String FIELD_NAME_COMMAND = "command";
         public static final String FIELD_NAME_PORTS = "ports";
@@ -70,7 +71,13 @@ public class ContainerService extends StatefulService {
         public static final String FIELD_NAME_VOLUME_DRIVER = "volumeDriver";
 
         public static enum PowerState {
-            UNKNOWN, PROVISIONING, RUNNING, PAUSED, STOPPED, RETIRED, ERROR;
+            UNKNOWN,
+            PROVISIONING,
+            RUNNING,
+            PAUSED,
+            STOPPED,
+            RETIRED,
+            ERROR;
 
             public static PowerState transform(
                     com.vmware.photon.controller.model.resources.ComputeService.PowerState powerState) {
@@ -159,7 +166,7 @@ public class ContainerService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public String[] volumesFrom;
 
-        /** Specify volume driver name.*/
+        /** Specify volume driver name. */
         @Documentation(description = "Specify volume driver name (default \"local\")")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public String volumeDriver;
@@ -234,6 +241,11 @@ public class ContainerService extends StatefulService {
         @PropertyOptions(indexing = { PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE,
                 PropertyIndexingOption.STORE_ONLY }, usage = { PropertyUsageOption.OPTIONAL })
         public Map<String, String> attributes;
+
+        @Override
+        public String retrieveCompositeComponentLink() {
+            return compositeComponentLink;
+        }
     }
 
     public ContainerService() {
@@ -257,7 +269,6 @@ public class ContainerService extends StatefulService {
 
             // start the container stats service instance for this container
             startMonitoringContainerState(body);
-            CompositeComponentNotifier.notifyCompositionComponent(this, body.compositeComponentLink, startPost.getAction());
         }
 
         startPost.complete();
@@ -270,7 +281,6 @@ public class ContainerService extends StatefulService {
         }
 
         ContainerState currentState = getState(put);
-        String currentCompositeComponentLink = currentState.compositeComponentLink;
         ContainerState putBody = put.getBody(ContainerState.class);
 
         boolean networkChanged = notEqualsRegardingNull(currentState.address, putBody.address) ||
@@ -278,8 +288,6 @@ public class ContainerService extends StatefulService {
 
         this.setState(put, putBody);
         put.setBody(putBody).complete();
-
-        CompositeComponentNotifier.notifyCompositionComponentOnChange(this, put.getAction(), putBody.compositeComponentLink, currentCompositeComponentLink);
 
         if (networkChanged) {
             reconfigureNetwork(currentState);
@@ -302,7 +310,6 @@ public class ContainerService extends StatefulService {
 
         ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
         String currentSignature = Utils.computeSignature(currentState, docDesc);
-        String currentCompositeComponentLink = currentState.compositeComponentLink;
 
         PropertyUtils.mergeServiceDocuments(currentState, patchBody);
 
@@ -311,8 +318,6 @@ public class ContainerService extends StatefulService {
         // if the signature hasn't change we shouldn't modify the state
         if (currentSignature.equals(newSignature)) {
             patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
-        } else {
-            CompositeComponentNotifier.notifyCompositionComponentOnChange(this, patch.getAction(), currentState.compositeComponentLink, currentCompositeComponentLink);
         }
 
         if (ContainerUtil.isDiscoveredContainer(currentState)) {
@@ -345,9 +350,6 @@ public class ContainerService extends StatefulService {
 
     @Override
     public void handleDelete(Operation delete) {
-        ContainerState currentState = getState(delete);
-        CompositeComponentNotifier.notifyCompositionComponent(this, currentState.compositeComponentLink, delete.getAction());
-
         super.handleDelete(delete);
     }
 

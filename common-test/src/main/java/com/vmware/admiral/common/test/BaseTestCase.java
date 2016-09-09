@@ -20,6 +20,7 @@ import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,11 +47,13 @@ import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.OperationProcessingChain;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -72,6 +75,55 @@ public abstract class BaseTestCase {
 
     protected static final int MAINTENANCE_INTERVAL_MILLIS = 250;
     protected VerificationHost host;
+
+    private static class CustomizationVerificationHost extends VerificationHost {
+        private Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains = new HashMap<>();
+
+        public CustomizationVerificationHost(
+                Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
+            this.chains.putAll(chains);
+        }
+
+        @Override
+        public ServiceHost startService(Operation post, Service service) {
+            Class<? extends Service> serviceClass = service.getClass();
+            if (!applyOperationChainIfNeed(service, serviceClass, serviceClass, false)) {
+                if (service instanceof FactoryService) {
+                    try {
+                        Service actualInstance = ((FactoryService) service).createServiceInstance();
+                        Class<? extends Service> instanceClass = actualInstance.getClass();
+                        applyOperationChainIfNeed(service, instanceClass, FactoryService.class,
+                                false);
+                    } catch (Throwable e) {
+                        log(Level.SEVERE, "Failure: %s", Utils.toString(e));
+                    }
+                } else if (service instanceof StatefulService) {
+                    applyOperationChainIfNeed(service, serviceClass, StatefulService.class,
+                            true);
+                }
+            }
+            return super.startService(post, service);
+        }
+
+        private boolean applyOperationChainIfNeed(Service service,
+                Class<? extends Service> serviceClass, Class<? extends Service> parameterClass,
+                boolean logOnError) {
+            if (chains.containsKey(serviceClass)) {
+                try {
+                    service.setOperationProcessingChain(
+                            chains.get(serviceClass)
+                                    .getDeclaredConstructor(parameterClass)
+                                    .newInstance(service));
+                    return true;
+                } catch (Exception e) {
+                    if (logOnError) {
+                        log(Level.SEVERE, "Failure: %s", Utils.toString(e));
+                    }
+                }
+            }
+            return false;
+        }
+    }
 
     @Before
     public void before() throws Throwable {
@@ -105,12 +157,20 @@ public abstract class BaseTestCase {
         ServiceHost.Arguments args = new ServiceHost.Arguments();
         args.sandbox = null; // ask runtime to pick a random storage location
         args.port = 0; // ask runtime to pick a random port
-        VerificationHost h = VerificationHost.create(args);
+        Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains = new HashMap<>();
+        customizeChains(chains);
+
+        VerificationHost h = VerificationHost.initialize(new CustomizationVerificationHost(chains),
+                args);
         h.setMaintenanceIntervalMicros(TimeUnit.MILLISECONDS
                 .toMicros(MAINTENANCE_INTERVAL_MILLIS));
         h.start();
 
         return h;
+    }
+
+    protected void customizeChains(
+            Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
     }
 
     public static TestContext testCreate(int count) {

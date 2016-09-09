@@ -16,6 +16,7 @@ import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.After;
@@ -24,11 +25,14 @@ import org.junit.Before;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
+import com.vmware.admiral.host.CompositeComponentNotificationProcessingChain;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.OperationProcessingChain;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
@@ -51,6 +55,12 @@ public abstract class ComputeBaseTest extends BaseTestCase {
         }
 
         staticFieldValuesResetRunners.clear();
+    }
+
+    @Override
+    protected void customizeChains(
+            Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
+        CompositeComponentNotificationProcessingChain.registerOperationProcessingChains(chains);
     }
 
     private static void startServices(ServiceHost serviceHost) throws Throwable {

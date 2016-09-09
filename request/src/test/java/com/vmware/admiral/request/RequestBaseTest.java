@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -49,6 +50,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.endpoint.EndpointService;
 import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
+import com.vmware.admiral.host.CompositeComponentNotificationProcessingChain;
 import com.vmware.admiral.host.HostInitAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
@@ -71,6 +73,8 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.OperationProcessingChain;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.VerificationHost;
@@ -117,9 +121,15 @@ public abstract class RequestBaseTest extends BaseTestCase {
         // setup Container desc:
         createContainerDescription();
 
-        //setup Container Volume description.
+        // setup Container Volume description.
         createContainerVolumeDescription(UUID.randomUUID().toString());
 
+    }
+
+    @Override
+    protected void customizeChains(
+            Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
+        CompositeComponentNotificationProcessingChain.registerOperationProcessingChains(chains);
     }
 
     protected List<String> getFactoryServiceList() {
@@ -521,8 +531,10 @@ public abstract class RequestBaseTest extends BaseTestCase {
         return createCompositeDesc(false, descs);
     }
 
-    protected List<ComputeState> queryComputeByCompositeComponentLink(String compositeComponentLink) {
-        String contextId = compositeComponentLink.replaceAll(CompositeComponentFactoryService.SELF_LINK + "/", "");
+    protected List<ComputeState> queryComputeByCompositeComponentLink(
+            String compositeComponentLink) {
+        String contextId = compositeComponentLink
+                .replaceAll(CompositeComponentFactoryService.SELF_LINK + "/", "");
 
         QueryTask q = QueryUtil.buildQuery(ComputeState.class, false);
         QueryTask.Query containerHost = new QueryTask.Query().setTermPropertyName(QuerySpecification
@@ -534,7 +546,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
         q.querySpec.query.addBooleanClause(containerHost);
 
         QueryUtil.addExpandOption(q);
-        ServiceDocumentQuery<ComputeState> query = new ServiceDocumentQuery<>(host, ComputeState.class);
+        ServiceDocumentQuery<ComputeState> query = new ServiceDocumentQuery<>(host,
+                ComputeState.class);
 
         List<ComputeState> result = new ArrayList<>();
         TestContext ctx = testCreate(1);

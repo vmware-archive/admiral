@@ -21,6 +21,7 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
+import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LoaderFactoryService;
 import com.vmware.xenon.common.LoaderService;
 import com.vmware.xenon.common.Operation;
@@ -28,6 +29,7 @@ import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.OperationProcessingChain;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
@@ -63,6 +65,7 @@ public class ManagementHost extends ServiceHost {
     static {
         chains.put(AuthCredentialsService.class, AuthCredentialsOperationProcessingChain.class);
         chains.put(ResourcePoolService.class, ResourcePoolOperationProcessingChain.class);
+        CompositeComponentNotificationProcessingChain.registerOperationProcessingChains(chains);
     }
 
     public static void main(String[] args) throws Throwable {
@@ -188,9 +191,9 @@ public class ManagementHost extends ServiceHost {
     /**
      * Enable Xenon services to be dynamically loaded, by starting the LoaderService. TODO: This
      * code is not required for Admiral, but rather for other components that are implemented as
-     * Xenon services, so most of this host startup logic could be extracted out of "admiral" into
-     * a separate component that just starts Xenon, and then "admiral" and other components could
-     * just instruct Xenon to load their services.
+     * Xenon services, so most of this host startup logic could be extracted out of "admiral" into a
+     * separate component that just starts Xenon, and then "admiral" and other components could just
+     * instruct Xenon to load their services.
      */
     void enableDynamicServiceLoading() {
         // https://github.com/vmware/xenon/wiki/LoaderService#loader-service-host
@@ -214,16 +217,41 @@ public class ManagementHost extends ServiceHost {
     @Override
     public ServiceHost startService(Operation post, Service service) {
         Class<? extends Service> serviceClass = service.getClass();
-        if (chains.containsKey(serviceClass)) {
-            try {
-                service.setOperationProcessingChain(
-                        chains.get(serviceClass).getDeclaredConstructor(serviceClass)
-                                .newInstance(service));
-            } catch (Exception e) {
-                log(Level.SEVERE, "Failure: %s", Utils.toString(e));
+        if (!applyOperationChainIfNeed(service, serviceClass, serviceClass, false)) {
+            if (service instanceof FactoryService) {
+                try {
+                    Service actualInstance = ((FactoryService) service).createServiceInstance();
+                    Class<? extends Service> instanceClass = actualInstance.getClass();
+                    applyOperationChainIfNeed(service, instanceClass, FactoryService.class,
+                            false);
+                } catch (Throwable e) {
+                    log(Level.SEVERE, "Failure: %s", Utils.toString(e));
+                }
+            } else if (service instanceof StatefulService) {
+                applyOperationChainIfNeed(service, serviceClass, StatefulService.class,
+                        true);
             }
         }
         return super.startService(post, service);
+    }
+
+    private boolean applyOperationChainIfNeed(Service service,
+            Class<? extends Service> serviceClass, Class<? extends Service> parameterClass,
+            boolean logOnError) {
+        if (chains.containsKey(serviceClass)) {
+            try {
+                service.setOperationProcessingChain(
+                        chains.get(serviceClass)
+                                .getDeclaredConstructor(parameterClass)
+                                .newInstance(service));
+                return true;
+            } catch (Exception e) {
+                if (logOnError) {
+                    log(Level.SEVERE, "Failure: %s", Utils.toString(e));
+                }
+            }
+        }
+        return false;
     }
 
     @Override
