@@ -49,6 +49,7 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.compute.CloneableResource;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
@@ -62,6 +63,7 @@ import com.vmware.admiral.compute.content.YamlMapper;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -88,7 +90,7 @@ public class ContainerDescriptionService extends StatefulService {
 
     @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
     @JsonIgnoreProperties({ "customProperties" })
-    public static class ContainerDescription extends ResourceState {
+    public static class ContainerDescription extends ResourceState implements CloneableResource {
         /** Enatai adapter way to create valid URI from docker image reference */
         public static final String DOCKER_IMAGE_REPO_SCHEMA_PREFIX = "docker://";
 
@@ -419,6 +421,14 @@ public class ContainerDescriptionService extends StatefulService {
             hostComputeState.customProperties.put(
                     ContainerHostService.DOCKER_HOST_PORT_PROP_NAME, String.valueOf(uri.getPort()));
             return uri;
+        }
+
+        @Override
+        public Operation createCloneOperation(Service sender) {
+            this.parentDescriptionLink = this.documentSelfLink;
+            this.documentSelfLink = null;
+            return Operation.createPost(sender, FACTORY_LINK)
+                    .setBody(this);
         }
     }
 

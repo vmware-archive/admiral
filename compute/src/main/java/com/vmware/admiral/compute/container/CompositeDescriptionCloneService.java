@@ -14,16 +14,16 @@ package com.vmware.admiral.compute.container;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.CloneableResource;
 import com.vmware.admiral.compute.ComponentDescription;
-import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
-import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
-import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.OperationSequence;
@@ -74,13 +74,11 @@ public class CompositeDescriptionCloneService extends StatelessService {
         List<Operation> cloneOperations = new ArrayList<Operation>();
 
         for (ComponentDescription desc : cdExpanded.componentDescriptions) {
-            if (desc.type.equals(ResourceType.CONTAINER_TYPE.getName())) {
-                cloneOperations.add(prepareCloneOperation((ContainerDescription) desc.component));
-            } else if (desc.type.equals(ResourceType.NETWORK_TYPE.getName())) {
+            if (desc.component instanceof CloneableResource) {
                 cloneOperations
-                        .add(prepareCloneOperation((ContainerNetworkDescription) desc.component));
+                        .add(((CloneableResource) desc.component).createCloneOperation(this));
             } else {
-                throw new IllegalArgumentException("Cannot clone unsupported type " + desc.type);
+                cloneOperations.add(createCloneOperation(desc.type, desc.component));
             }
         }
 
@@ -95,7 +93,7 @@ public class CompositeDescriptionCloneService extends StatelessService {
 
         if (!cloneOperations.isEmpty()) {
             OperationJoin cloneComponents = OperationJoin
-                    .create(cloneOperations.toArray(new Operation[cloneOperations.size()]));
+                    .create(cloneOperations);
 
             cloneComponents.setCompletion((cloneOps, failures) -> {
                 for (Operation cloneOp : cloneOps.values()) {
@@ -149,6 +147,25 @@ public class CompositeDescriptionCloneService extends StatelessService {
 
     }
 
+    private Operation createCloneOperation(String resourceType, ServiceDocument component) {
+        if (component instanceof ResourceState) {
+            String factoryLink = CompositeComponentRegistry
+                    .factoryLinkByDescriptionLink(component.documentSelfLink);
+            if (factoryLink == null) {
+                throw new IllegalArgumentException("Cannot clone unsupported type " + resourceType);
+            }
+            ResourceState cloned = Utils.clone((ResourceState) component);
+            if (cloned.customProperties == null) {
+                cloned.customProperties = new HashMap<>();
+            }
+            cloned.customProperties.put(CloneableResource.PARENT_RESOURCE_LINK_PROPERTY_NAME,
+                    cloned.documentSelfLink);
+            cloned.documentSelfLink = null;
+            return Operation.createPost(this, factoryLink).setBody(cloned);
+        }
+        throw new IllegalArgumentException("Cannot clone unsupported type " + resourceType);
+    }
+
     private void getCompositeDesc(String compDescLink,
             Consumer<CompositeDescriptionExpanded> callback) {
         sendRequest(Operation
@@ -180,35 +197,5 @@ public class CompositeDescriptionCloneService extends StatelessService {
         cd.bindings = cdExpanded.bindings;
 
         return cd;
-    }
-
-    private void prepareDescriptionForClone(ContainerDescription containerDescription) {
-        containerDescription.parentDescriptionLink = containerDescription.documentSelfLink;
-        containerDescription.documentSelfLink = null;
-    }
-
-    private void prepareDescriptionForClone(ContainerNetworkDescription networkDescription) {
-        networkDescription.parentDescriptionLink = networkDescription.documentSelfLink;
-        networkDescription.documentSelfLink = null;
-    }
-
-    private Operation prepareCloneOperation(ContainerDescription cd) {
-        prepareDescriptionForClone(cd);
-
-        Operation op = Operation
-                .createPost(this, ManagementUriParts.CONTAINER_DESC)
-                .setBody(cd);
-
-        return op;
-    }
-
-    private Operation prepareCloneOperation(ContainerNetworkDescription networkDescription) {
-        prepareDescriptionForClone(networkDescription);
-
-        Operation op = Operation
-                .createPost(this, ManagementUriParts.CONTAINER_NETWORK_DESC)
-                .setBody(networkDescription);
-
-        return op;
     }
 }

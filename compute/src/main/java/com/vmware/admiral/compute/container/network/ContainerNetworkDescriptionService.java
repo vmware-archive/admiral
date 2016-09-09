@@ -25,8 +25,10 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.compute.CloneableResource;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
@@ -39,7 +41,8 @@ public class ContainerNetworkDescriptionService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.CONTAINER_NETWORK_DESC;
 
     @JsonIgnoreProperties({ "customProperties" })
-    public static class ContainerNetworkDescription extends ResourceState {
+    public static class ContainerNetworkDescription extends ResourceState
+            implements CloneableResource {
 
         public static String CONTAINER_NETWORK_TYPE = "CONTAINER_NETWORK";
 
@@ -117,6 +120,13 @@ public class ContainerNetworkDescriptionService extends StatefulService {
             return customProperties;
         }
 
+        @Override
+        public Operation createCloneOperation(Service sender) {
+            this.parentDescriptionLink = this.documentSelfLink;
+            this.documentSelfLink = null;
+            return Operation.createPost(sender, FACTORY_LINK)
+                    .setBody(this);
+        }
     }
 
     public ContainerNetworkDescriptionService() {

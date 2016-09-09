@@ -58,7 +58,23 @@ public class CompositeComponentRegistry {
     }
 
     /**
-     * Retrieve meta data for a Component by component's state(instance) Link.
+     * Retrieve factory link for a Component by component's description link.
+     */
+    public static String factoryLinkByDescriptionLink(String descriptionLink) {
+        if (null == descriptionLink) {
+            return null;
+        }
+        List<RegistryEntry> list = entries.stream()
+                .filter(m -> descriptionLink.startsWith(m.descriptionFactoryLink))
+                .collect(Collectors.toList());
+        if (list.isEmpty()) {
+            return null;
+        }
+        return list.get(0).descriptionFactoryLink;
+    }
+
+    /**
+     * Retrieve meta data for a Component description by component's state(instance) Link.
      */
     public static ComponentMeta metaByStateLink(String stateLink) {
         if (null == stateLink) {
@@ -71,6 +87,22 @@ public class CompositeComponentRegistry {
             return null;
         }
         return list.get(0).componentMeta;
+    }
+
+    /**
+     * Retrieve factory link for a Component state by component's state(instance) Link.
+     */
+    public static String factoryLinkByStateLink(String stateLink) {
+        if (null == stateLink) {
+            return null;
+        }
+        List<RegistryEntry> list = entries.stream()
+                .filter(m -> stateLink.startsWith(m.stateFactoryLink))
+                .collect(Collectors.toList());
+        if (list.isEmpty()) {
+            return null;
+        }
+        return list.get(0).stateFactoryLink;
     }
 
     public static class ComponentMeta {
