@@ -21,6 +21,8 @@ components:
       network_mode: bridge
       ports:
       - container_port: 80
+      depends_on:
+      - mysql
       networks:
         wpnet: {}
   mysql:

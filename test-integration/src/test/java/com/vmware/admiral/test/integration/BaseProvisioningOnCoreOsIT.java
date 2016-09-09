@@ -22,6 +22,7 @@ import static com.vmware.admiral.test.integration.data.IntegratonTestStateFactor
 
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -87,6 +88,8 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
     private static final long DEFAULT_OPERATION_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(30);
 
     protected ComputeState dockerHostCompute;
+    protected List<ComputeState> dockerHostsInCluster;
+
     private AuthCredentialsServiceState dockerHostAuthCredentials;
     private SslTrustCertificateState dockerHostSslTrust;
 
@@ -120,12 +123,25 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         }
 
         // remove the host
-        removeHost(dockerHostCompute);
+        if (dockerHostCompute != null) {
+            removeHost(dockerHostCompute);
+        }
+
+        if (dockerHostsInCluster != null) {
+            for (ComputeState dockerHost : dockerHostsInCluster) {
+                removeHost(dockerHost);
+            }
+        }
     }
 
     protected void doProvisionDockerContainerOnCoreOS(boolean downloadImage,
             DockerAdapterType adapterType) throws Exception {
-        setupCoreOsHost(adapterType);
+        doProvisionDockerContainerOnCoreOS(downloadImage, adapterType, false);
+    }
+
+    protected void doProvisionDockerContainerOnCoreOS(boolean downloadImage,
+            DockerAdapterType adapterType, boolean setupOnCluster) throws Exception {
+        setupCoreOsHost(adapterType, setupOnCluster);
 
         logger.info("---------- 5. Create test docker image container description. --------");
         requestContainerAndDelete(getResourceDescriptionLink(downloadImage,
@@ -140,7 +156,11 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         requestContainerAndDelete(getResourceDescriptionLink(downloadImage, registryType));
     }
 
-    protected void setupCoreOsHost(DockerAdapterType adapterType)
+    protected void setupCoreOsHost(DockerAdapterType adapterType) throws Exception {
+        setupCoreOsHost(adapterType, false);
+    }
+
+    protected void setupCoreOsHost(DockerAdapterType adapterType, boolean setupOnCluster)
             throws Exception {
         logger.info("********************************************************************");
         logger.info("----------  Setup: Add CoreOS VM as DockerHost ComputeState --------");
@@ -175,27 +195,36 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
 
         assertNotNull("Failed to create host credentials", dockerHostAuthCredentials);
 
-        logger.info("---------- 3. Create Docker Host ComputeState for CoreOS VM. --------");
-        dockerHostCompute = IntegratonTestStateFactory.createDockerComputeHost();
-        dockerHostCompute.address = getTestRequiredProp("docker.host.address");
-        dockerHostCompute.customProperties.put(ContainerHostService.DOCKER_HOST_PORT_PROP_NAME,
-                getTestRequiredProp("docker.host.port." + adapterType.name()));
+        String hostPort = getTestRequiredProp("docker.host.port." + adapterType.name());
+        String credLink = dockerHostAuthCredentials.documentSelfLink;
 
-        dockerHostCompute.customProperties.put(
-                ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
-                adapterType.name());
+        if (!setupOnCluster) {
+            logger.info("---------- 3. Create Docker Host ComputeState for CoreOS VM. --------");
+            dockerHostCompute = createDockerHost(getTestRequiredProp("docker.host.address"),
+                    hostPort, credLink, adapterType, null);
+        } else {
+            dockerHostsInCluster = new ArrayList<>();
+            logger.info(
+                    "---------- 3. Create Docker Hosts ComputeState Node 1 and Node 2 of cluster for CoreOS VM. --------");
+            String node1Address = getTestRequiredProp("docker.host.cluster.node1.address");
+            dockerHostsInCluster.add(createDockerHost(node1Address,
+                    hostPort, credLink, adapterType, UriUtilsExtended.extractHost(node1Address)));
 
-        // link credentials to host
-        dockerHostCompute.customProperties.put(ComputeConstants.HOST_AUTH_CREDNTIALS_PROP_NAME,
-                dockerHostAuthCredentials.documentSelfLink);
-        dockerHostCompute = addHost(dockerHostCompute);
+            String node2Address = getTestRequiredProp("docker.host.cluster.node2.address");
+            dockerHostsInCluster.add(createDockerHost(node2Address,
+                    hostPort, credLink, adapterType, UriUtilsExtended.extractHost(node2Address)));
+        }
 
         logger.info("---------- 4. Add the Docker Host SSL Trust Certificate. --------");
         dockerHostSslTrust = IntegratonTestStateFactory.createSslTrustCertificateState(
                 getTestRequiredProp("docker.host.ssl.trust.file"),
                 CommonTestStateFactory.REGISTRATION_DOCKER_ID);
 
-        dockerHostSslTrust.resourceLink = dockerHostCompute.documentSelfLink;
+        if (dockerHostCompute != null) {
+            dockerHostSslTrust.resourceLink = dockerHostCompute.documentSelfLink;
+        } else {
+            dockerHostSslTrust.resourceLink = dockerHostsInCluster.get(0).documentSelfLink;
+        }
         postDocument(SslTrustCertificateService.FACTORY_LINK, dockerHostSslTrust);
     }
 
@@ -534,5 +563,23 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
                 }));
 
         return c.get(timeoutMilis, TimeUnit.MILLISECONDS);
+    }
+
+    private static ComputeState createDockerHost(String address, String port, String credLink,
+            DockerAdapterType adapterType, String id) throws Exception {
+        ComputeState compute = IntegratonTestStateFactory.createDockerComputeHost();
+        if (id != null) {
+            compute.id = id;
+        }
+        compute.address = address;
+        compute.customProperties.put(ContainerHostService.DOCKER_HOST_PORT_PROP_NAME, port);
+
+        compute.customProperties.put(
+                ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
+                adapterType.name());
+
+        // link credentials to host
+        compute.customProperties.put(ComputeConstants.HOST_AUTH_CREDNTIALS_PROP_NAME, credLink);
+        return addHost(compute);
     }
 }

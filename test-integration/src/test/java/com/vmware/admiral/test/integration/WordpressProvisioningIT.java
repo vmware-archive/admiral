@@ -17,8 +17,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import static com.vmware.admiral.test.integration.TestPropertiesUtil.getTestRequiredProp;
-
 import java.net.Socket;
 import java.net.URI;
 import java.util.Arrays;
@@ -45,6 +43,7 @@ import com.vmware.admiral.compute.container.ExposedServiceDescriptionService.Exp
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.service.common.LogService;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.Utils;
@@ -73,7 +72,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
 
     private enum NetworkType {
         CUSTOM, // agent or bindings
-        BRIDGE, OVERLAY // not yet supported
+        BRIDGE, OVERLAY
     }
 
     @Parameters(name = "{index}: {0} {1}")
@@ -81,7 +80,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         return Arrays.asList(new Object[][] {
                 { "WordPress_with_MySQL_bindings.yaml", NetworkType.CUSTOM },
                 { "WordPress_with_MySQL.yaml", NetworkType.CUSTOM },
-                { "WordPress_with_MySQL_network.yaml", NetworkType.BRIDGE }
+                { "WordPress_with_MySQL_network.yaml", NetworkType.BRIDGE },
+                { "WordPress_with_MySQL_network.yaml", NetworkType.OVERLAY }
         });
 
     }
@@ -112,7 +112,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
 
     @Test
     public void testProvision() throws Exception {
-        doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
+        boolean setupOnCluster = NetworkType.OVERLAY.equals(networkType);
+        doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API, setupOnCluster);
     }
 
     @Override
@@ -124,8 +125,6 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
     @Override
     protected void validateAfterStart(String resourceDescLink, RequestBrokerState request)
             throws Exception {
-        String dockerHost = getTestRequiredProp("docker.host.address");
-
         int expectedNumberOfResources = 3;
 
         if (!networkType.equals(NetworkType.CUSTOM)) {
@@ -162,11 +161,12 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
             fail();
         }
 
+        String mysqlHost = getHostnameOfComputeHost(mysqlContainerState.parentLink);
         // connect to the mysql only by opening a socket to it through the docker exposed port
-        logger.info("------------- 3. connecting to mysql tcp://%s:%s. -------------", dockerHost,
+        logger.info("------------- 3. connecting to mysql tcp://%s:%s. -------------", mysqlHost,
                 mysqlHostPort);
         try {
-            verifyMysqlConnection(dockerHost, Integer.valueOf(mysqlHostPort),
+            verifyMysqlConnection(mysqlHost, Integer.valueOf(mysqlHostPort),
                     STATUS_CODE_WAIT_POLLING_RETRY_COUNT);
         } catch (Exception e) {
             logger.error("Failed to verify mysql connection: %s", e.getMessage());
@@ -174,52 +174,66 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
             fail();
         }
 
-        // find the host port of the WP container
-        String wpContainerLink = getResourceContaining(cc.componentLinks, WP_NAME);
-        assertNotNull(wpContainerLink);
+        int wpContainersCount = 0;
+        ContainerState wpContainerState = null;
+        String wpHost = null;
+        String wpContainerLink;
+        while ((wpContainerLink = getResourceContaining(cc.componentLinks, WP_NAME)) != null) {
+            cc.componentLinks.remove(wpContainerLink);
+            wpContainersCount++;
 
-        logger.info("------------- 4. Retrieving container state for %s. -------------",
-                wpContainerLink);
-        ContainerState wpContainerState = getDocument(wpContainerLink, ContainerState.class);
-        assertEquals("Unexpected number of ports", 1, wpContainerState.ports.size());
-        portBinding = wpContainerState.ports.get(0);
-        String wpHostPort = portBinding.hostPort;
-
-        assertNotNull("Failed to find WP host port", wpHostPort);
-
-        // connect to wordpress main page by accessing a specific container instance through the docker exposed port
-        URI uri = URI.create(String.format("http://%s:%s/%s", dockerHost, wpHostPort, WP_PATH));
-        logger.info("------------- 5. connecting to wordpress main page %s. -------------", uri);
-        try {
-            waitForStatusCode(uri, Operation.STATUS_CODE_OK, STATUS_CODE_WAIT_POLLING_RETRY_COUNT);
-        } catch (Exception e) {
-            logger.error("Failed to verify wordpress connection: %s", e.getMessage());
-            logger.info("wordpress logs: \n%s", getLogs(wpContainerLink));
-            logger.info("mysql logs: \n%s", getLogs(mysqlContainerLink));
-
-            logger.info("Trying again.");
-
-            logger.info("------------- 5.1. restarting wordpress container -------------");
-            restartContainerDay2(wpContainerLink);
-
+            logger.info("------------- 4.%s.1. Retrieving container state for %s. -------------",
+                    wpContainersCount, wpContainerLink);
             wpContainerState = getDocument(wpContainerLink, ContainerState.class);
-            wpHostPort = wpContainerState.ports.get(0).hostPort;
+            assertEquals("Unexpected number of ports", 1, wpContainerState.ports.size());
+            portBinding = wpContainerState.ports.get(0);
+            String wpHostPort = portBinding.hostPort;
 
+            assertNotNull("Failed to find WP host port", wpHostPort);
+
+            wpHost = getHostnameOfComputeHost(wpContainerState.parentLink);
             // connect to wordpress main page by accessing a specific container instance through the docker exposed port
-            uri = URI.create(String.format("http://%s:%s/%s", dockerHost, wpHostPort, WP_PATH));
-
-            logger.info("------------- 5.2. connecting to wordpress main page %s. -------------",
+            URI uri = URI.create(String.format("http://%s:%s/%s", wpHost, wpHostPort, WP_PATH));
+            logger.info("------------- 4.%s.2. connecting to wordpress main page %s. -------------",
+                    wpContainersCount,
                     uri);
             try {
                 waitForStatusCode(uri, Operation.STATUS_CODE_OK,
                         STATUS_CODE_WAIT_POLLING_RETRY_COUNT);
-            } catch (Exception eInner) {
-                logger.error("Failed to verify wordpress connection: %s", eInner.getMessage());
+            } catch (Exception e) {
+                logger.error("Failed to verify wordpress connection: %s", e.getMessage());
                 logger.info("wordpress logs: \n%s", getLogs(wpContainerLink));
                 logger.info("mysql logs: \n%s", getLogs(mysqlContainerLink));
-                fail();
+
+                logger.info("Trying again.");
+
+                logger.info("------------- 4.%s.2.1. restarting wordpress container -------------",
+                        wpContainersCount);
+                restartContainerDay2(wpContainerLink);
+
+                wpContainerState = getDocument(wpContainerLink, ContainerState.class);
+                wpHostPort = wpContainerState.ports.get(0).hostPort;
+
+                // connect to wordpress main page by accessing a specific container instance through the docker exposed port
+                uri = URI.create(String.format("http://%s:%s/%s", wpHost, wpHostPort, WP_PATH));
+
+                logger.info(
+                        "------------- 4.%s.2.2. connecting to wordpress main page %s. -------------",
+                        wpContainersCount,
+                        uri);
+                try {
+                    waitForStatusCode(uri, Operation.STATUS_CODE_OK,
+                            STATUS_CODE_WAIT_POLLING_RETRY_COUNT);
+                } catch (Exception eInner) {
+                    logger.error("Failed to verify wordpress connection: %s", eInner.getMessage());
+                    logger.info("wordpress logs: \n%s", getLogs(wpContainerLink));
+                    logger.info("mysql logs: \n%s", getLogs(mysqlContainerLink));
+                    fail();
+                }
             }
         }
+
+        assertEquals(2, wpContainersCount);
 
         // Functionality will be removed once native network is completed
         if (networkType.equals(NetworkType.CUSTOM)) {
@@ -236,12 +250,12 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
 
             String host = UriUtilsExtended.extractHost(calculatedPublicServiceAddress);
 
-            URI publicUri = URI.create(String.format("http://%s:%s/%s", dockerHost,
+            URI publicUri = URI.create(String.format("http://%s:%s/%s", wpHost,
                     PUBLIC_SERVICE_PORT, WP_PATH));
             Map<String, String> headers = new HashMap<String, String>();
             headers.put("Host", host);
             logger.info(
-                    "------------- 6. connecting to wordpress main page by acceessing publically exposed service address %s with Host header %s. -------------",
+                    "------------- 5. connecting to wordpress main page by acceessing publically exposed service address %s with Host header %s. -------------",
                     publicUri, calculatedPublicServiceAddress);
             waitForStatusCode(publicUri, headers,
                     Operation.STATUS_CODE_OK,
@@ -305,5 +319,10 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         }
 
         throw new IllegalStateException("Mysql failed to start");
+    }
+
+    private String getHostnameOfComputeHost(String hostLink) throws Exception {
+        String address = getDocument(hostLink, ComputeState.class).address;
+        return UriUtilsExtended.extractHost(address);
     }
 }

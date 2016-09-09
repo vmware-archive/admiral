@@ -385,8 +385,10 @@ public abstract class BaseIntegrationSupportIT {
             int expectedStatusCode, int count)
             throws Exception {
 
-        for (int i = 0; i < count; i++) {
-            Thread.sleep(STATE_CHANGE_WAIT_POLLING_PERIOD_MILLIS);
+        long toFinish = System.currentTimeMillis()
+                + STATE_CHANGE_WAIT_POLLING_PERIOD_MILLIS * count;
+
+        while (System.currentTimeMillis() <= toFinish) {
             try {
                 HttpResponse httpResponse = SimpleHttpsClient.execute(HttpMethod.GET,
                         uri.toString(), null, headers, getUnsecuredSSLSocketFactory());
@@ -396,6 +398,7 @@ public abstract class BaseIntegrationSupportIT {
             } catch (Exception x) {
                 // failed - keep waiting
             }
+            Thread.sleep(STATE_CHANGE_WAIT_POLLING_PERIOD_MILLIS);
         }
 
         throw new RuntimeException(String.format(
