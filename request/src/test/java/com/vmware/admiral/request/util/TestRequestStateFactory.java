@@ -31,6 +31,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.endpoint.EndpointService;
 import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
@@ -299,6 +300,19 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         cont.powerState = com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState.RUNNING;
 
         return cont;
+    }
+
+    public static ContainerNetworkState createNetwork(String name) {
+        ContainerNetworkState net = new ContainerNetworkState();
+        net.name = name;
+        net.originatingHostLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, DOCKER_COMPUTE_ID);
+
+        return net;
+    }
+
+    public static ComputeState createCompute() {
+        ComputeState compute = new ComputeState();
+        return compute;
     }
 
     public static EndpointState createEndpoint() {

@@ -13,12 +13,13 @@ package com.vmware.admiral.request.composition;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -30,14 +31,15 @@ import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.request.ContainerRemovalTaskService;
-import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.composition.CompositeComponentRemovalTaskService.CompositeComponentRemovalTaskState.SubStage;
+import com.vmware.admiral.request.composition.CompositionSubTaskService.CompositionSubTaskState;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.OperationJoin;
-import com.vmware.xenon.common.TaskState.TaskStage;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 
@@ -66,6 +68,11 @@ public class CompositeComponentRemovalTaskService
         @Documentation(description = "(Required) The composites on which the given operation will be applied.")
         public List<String> resourceLinks;
     }
+
+    // Order of batch remove of resources, grouped by resource type.
+    private static final List<ResourceType> PREFERED_ORDER_OF_REMOVAL_PER_TYPE = Arrays.asList(
+            ResourceType.CONTAINER_TYPE, ResourceType.COMPUTE_TYPE, ResourceType.NETWORK_TYPE
+            );
 
     public CompositeComponentRemovalTaskService() {
         super(CompositeComponentRemovalTaskState.class, SubStage.class, DISPLAY_NAME);
@@ -175,56 +182,118 @@ public class CompositeComponentRemovalTaskService
             list.add(link);
         }
 
-        performResourceRemovalOperations(state, resourceLinksByResourceType, resourceLinks.size(), null);
+        List<ResourceTypeRemovalNode> resourceLinksByNodeOrder = new ArrayList<>();
+
+        for (ResourceType rt : PREFERED_ORDER_OF_REMOVAL_PER_TYPE) {
+            List<String> links = resourceLinksByResourceType.remove(rt);
+            if (links == null) {
+                continue;
+            }
+
+            ResourceTypeRemovalNode currNode = new ResourceTypeRemovalNode();
+            currNode.name = rt.getName();
+            currNode.type = rt;
+            currNode.resourceLinks = links;
+
+            if (!resourceLinksByNodeOrder.isEmpty()) {
+                ResourceTypeRemovalNode lastNode = resourceLinksByNodeOrder
+                        .get(resourceLinksByNodeOrder.size() - 1);
+                currNode.prevNode = lastNode.name;
+                lastNode.nextNode = currNode.name;
+            }
+
+            resourceLinksByNodeOrder.add(currNode);
+        }
+
+        if (!resourceLinksByResourceType.isEmpty()) {
+            failTask(
+                    "Unknown order of removal for resource types: "
+                            + resourceLinksByResourceType.keySet(), null);
+        }
+
+        performResourceRemovalOperations(state, resourceLinksByNodeOrder, resourceLinks.size(),
+                null);
     }
 
     private void performResourceRemovalOperations(CompositeComponentRemovalTaskState state,
-            Map<ResourceType, List<String>> resourceLinksByResourceType, int resourceCount, ServiceTaskCallback taskCallback) {
+            List<ResourceTypeRemovalNode> resourceLinksByNodeOrder, int resourceCount,
+            ServiceTaskCallback taskCallback) {
         if (taskCallback == null) {
-            ServiceTaskCallback.create(state.documentSelfLink,
-                    TaskStage.STARTED, SubStage.COMPOSITE_REMOVING, TaskStage.FAILED, SubStage.ERROR);
-
-            createCounterSubTaskCallback(state, resourceLinksByResourceType.size(), false, true,
+            createCounterSubTaskCallback(
+                    state,
+                    resourceLinksByNodeOrder.size(),
+                    false,
+                    true,
                     SubStage.COMPOSITE_REMOVING,
-                    (serviceTask) -> performResourceRemovalOperations(state, resourceLinksByResourceType, resourceCount, serviceTask));
+                    (serviceTask) -> performResourceRemovalOperations(state,
+                            resourceLinksByNodeOrder, resourceCount, serviceTask));
             return;
         }
 
+        final AtomicBoolean error = new AtomicBoolean();
+
         try {
             logInfo("Starting removal of %d resources", resourceCount);
-            for (Entry<ResourceType, List<String>> e : resourceLinksByResourceType.entrySet()) {
-                sendResourceRemovalRequest(state, e.getKey(), e.getValue(), taskCallback);
+            for (ResourceTypeRemovalNode node : resourceLinksByNodeOrder) {
+                sendResourceRemovalRequest(state, node, taskCallback, (o, e) -> {
+                    if (e != null) {
+                        if (error.compareAndSet(false, true)) {
+                            failTask("Failure creating composition subTask", e);
+                        } else {
+                            logWarning("Failure creating composition subTask. Error: %s",
+                                    Utils.toString(e));
+                        }
+                    }
+                });
             }
         } catch (Throwable e) {
             failTask("Unexpected exception while requesting removal.", e);
         }
     }
 
-    private void sendResourceRemovalRequest(CompositeComponentRemovalTaskState state,
-            ResourceType resourceType, List<String> resourceLinks, ServiceTaskCallback taskCallback) {
-        RequestBrokerState requestBrokerState = new RequestBrokerState();
-        requestBrokerState.documentSelfLink = String.format("%s-%s-removal", getSelfId(), resourceType.getName());
-        requestBrokerState.serviceTaskCallback = taskCallback;
-        requestBrokerState.customProperties = state.customProperties;
+    private void sendResourceRemovalRequest(final CompositeComponentRemovalTaskState state,
+            ResourceTypeRemovalNode removalNode,
+            ServiceTaskCallback taskCallback,
+            final CompletionHandler completionHandler) {
+        final CompositionSubTaskState compositionSubTask = new CompositionSubTaskState();
+        compositionSubTask.documentSelfLink = buildCompositionSubTaskLink(removalNode.name);
+        compositionSubTask.requestId = getSelfId();
+        compositionSubTask.name = removalNode.name;
+        compositionSubTask.resourceType = removalNode.type.getName();
+        compositionSubTask.tenantLinks = state.tenantLinks;
+        compositionSubTask.resourceLinks = removalNode.resourceLinks;
+        compositionSubTask.requestTrackerLink = state.requestTrackerLink;
+        compositionSubTask.serviceTaskCallback = taskCallback;
+        compositionSubTask.customProperties = state.customProperties;
+        compositionSubTask.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
 
-        requestBrokerState.resourceType = resourceType.getName();
-        requestBrokerState.resourceLinks = resourceLinks;
-        requestBrokerState.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
-        requestBrokerState.tenantLinks = state.tenantLinks;
-        requestBrokerState.requestTrackerLink = state.requestTrackerLink;
+        if (removalNode.prevNode != null) {
+            compositionSubTask.dependsOnLinks = Collections
+                    .singleton(buildCompositionSubTaskLink(removalNode.prevNode));
+        }
 
-        sendRequest(Operation
-                .createPost(this, RequestBrokerFactoryService.SELF_LINK)
-                .setBody(requestBrokerState)
-                .setContextId(getSelfId())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logWarning("Failure creating request broker task. Error: [%s]",
-                                Utils.toString(e));
-                        completeSubTasksCounter(taskCallback, e);
-                    }
+        if (removalNode.nextNode != null) {
+            compositionSubTask.dependentLinks = Collections
+                    .singleton(buildCompositionSubTaskLink(removalNode.nextNode));
+        }
 
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.INSTANCES_REMOVING));
-                }));
+        sendRequest(Operation.createPost(this, CompositionSubTaskFactoryService.SELF_LINK)
+                .setBody(compositionSubTask)
+                .setContextId(compositionSubTask.requestId)
+                .setCompletion(completionHandler));
+    }
+
+    private String buildCompositionSubTaskLink(String name) {
+        final String compositionSubTaskId = getSelfId() + "-" + name;
+        return UriUtils.buildUriPath(CompositionSubTaskFactoryService.SELF_LINK,
+                compositionSubTaskId);
+    }
+
+    private static class ResourceTypeRemovalNode {
+        private String name;
+        private ResourceType type;
+        private String prevNode;
+        private String nextNode;
+        private List<String> resourceLinks;
     }
 }

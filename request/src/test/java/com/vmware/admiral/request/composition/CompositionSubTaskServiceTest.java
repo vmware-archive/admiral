@@ -31,6 +31,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.request.RequestBaseTest;
+import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService.CompositionSubTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -158,6 +159,7 @@ public class CompositionSubTaskServiceTest extends RequestBaseTest {
         compositionSubTaskState.documentExpirationTimeMicros = Utils.getNowMicrosUtc()
                 + TimeUnit.HOURS.toMicros(5);
         compositionSubTaskState.compositeDescriptionLink = compositeDescriptionLink;
+        compositionSubTaskState.operation = RequestBrokerState.PROVISION_RESOURCE_OPERATION;
 
         return compositionSubTaskState;
     }

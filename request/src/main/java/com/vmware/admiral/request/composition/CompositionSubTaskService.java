@@ -12,6 +12,7 @@
 package com.vmware.admiral.request.composition;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
+import static com.vmware.admiral.common.util.AssertUtil.assertTrue;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
@@ -68,7 +69,8 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
  * could be start executing immediately if they don't have dependency on other CompositionSubTask.
  * Otherwise, wait until all dependent on tasks completes.
  */
-public class CompositionSubTaskService extends
+public class CompositionSubTaskService
+        extends
         AbstractTaskStatefulService<CompositionSubTaskService.CompositionSubTaskState, CompositionSubTaskService.CompositionSubTaskState.SubStage> {
 
     public static final String DISPLAY_NAME = "Composition Component";
@@ -102,6 +104,9 @@ public class CompositionSubTaskService extends
         /** (Required) Type of resource to create. */
         public String resourceType;
 
+        /** (Required) The operation name/id to be performed */
+        public String operation;
+
         /** The unique name per context that defines the requested resource. */
         public String name;
 
@@ -128,8 +133,8 @@ public class CompositionSubTaskService extends
         /** The current composition request Id transferred as context through the tasks */
         public String requestId;
 
-        // Set by internally
-        /** Set by the Task with the links of the provisioned resources. */
+        /** Set by the Task with the links of the provisioned resources.
+         * If the task is not provisionining, the resource links needs to be set from outside. */
         public List<String> resourceLinks;
 
         /** Set by Task. Error count of the dependent tasks. */
@@ -256,7 +261,13 @@ public class CompositionSubTaskService extends
     protected void validateStateOnStart(CompositionSubTaskState state)
             throws IllegalArgumentException {
         assertNotEmpty(state.name, "name");
-        assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
+        boolean descAndResourcesEmpty = (state.resourceDescriptionLink == null || state.resourceDescriptionLink
+                .isEmpty())
+                &&
+                (state.resourceLinks == null || state.resourceLinks.isEmpty());
+
+        assertTrue(!descAndResourcesEmpty, "resourceDescriptionLink and resourceLinks are empty");
+        assertNotEmpty(state.operation, "operation");
         assertNotEmpty(state.resourceType, "resourceType");
     }
 
@@ -371,6 +382,15 @@ public class CompositionSubTaskService extends
     }
 
     private void executeTask(CompositionSubTaskState state) {
+        if (isProvisionOperation(state)) {
+            evaluateBindings(state.compositeDescriptionLink, state.resourceDescriptionLink,
+                    () -> executeProvisionTask(state));
+        } else {
+            createOperationTaskState(state);
+        }
+    }
+
+    private void executeProvisionTask(CompositionSubTaskState state) {
         if (ResourceType.CONTAINER_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createContainerAllocationTaskState(state);
         } else if (ResourceType.NETWORK_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
@@ -378,8 +398,7 @@ public class CompositionSubTaskService extends
         } else if (ResourceType.COMPUTE_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createComputeProvisionTaskState(state);
         } else {
-            throw new IllegalArgumentException(String.format("Unsupported type. Must be: %s or %s",
-                    ResourceType.CONTAINER_TYPE, ResourceType.COMPUTE_TYPE));
+            throw new IllegalArgumentException("Unsupported type.");
         }
     }
 
@@ -460,16 +479,41 @@ public class CompositionSubTaskService extends
         sendSelfPatch(createUpdateSubStageTask(state, SubStage.EXECUTING));
     }
 
+    private void createOperationTaskState(CompositionSubTaskState state) {
+        RequestBrokerState requestBrokerState = new RequestBrokerState();
+        requestBrokerState.documentSelfLink = getSelfId() + "-" + state.operation;
+        requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+                TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
+        requestBrokerState.resourceLinks = state.resourceLinks;
+        requestBrokerState.resourceType = state.resourceType;
+        requestBrokerState.operation = state.operation;
+        requestBrokerState.tenantLinks = state.tenantLinks;
+        requestBrokerState.requestTrackerLink = state.requestTrackerLink;
+        requestBrokerState.customProperties = state.customProperties;
+
+        sendRequest(Operation.createPost(this, RequestBrokerFactoryService.SELF_LINK)
+                .setBody(requestBrokerState)
+                .setContextId(state.requestId)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating request broker task", e);
+                        return;
+                    }
+                }));
+
+        sendSelfPatch(createUpdateSubStageTask(state, SubStage.EXECUTING));
+    }
+
     private void checkDependencies(CompositionSubTaskState state) {
         if (!hasDependencies(state)) {
             if (state.errorCount > 0) {
                 sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
             } else {
-                if (SubStage.ALLOCATING.ordinal() > state.taskSubStage.ordinal()) {
+                if (SubStage.ALLOCATING.ordinal() > state.taskSubStage.ordinal()
+                        && isProvisionOperation(state)) {
                     allocate(state);
                 } else {
-                    evaluateBindings(state.compositeDescriptionLink, state.resourceDescriptionLink,
-                            () -> executeTask(state));
+                    executeTask(state);
                 }
             }
 
@@ -621,5 +665,9 @@ public class CompositionSubTaskService extends
 
     private boolean hasDependencies(CompositionSubTaskState state) {
         return state.dependsOnLinks != null && !state.dependsOnLinks.isEmpty();
+    }
+
+    private boolean isProvisionOperation(CompositionSubTaskState state) {
+        return RequestBrokerState.PROVISION_RESOURCE_OPERATION.equals(state.operation);
     }
 }

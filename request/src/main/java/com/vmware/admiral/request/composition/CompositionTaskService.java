@@ -36,6 +36,7 @@ import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
+import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.request.composition.CompositeComponentRemovalTaskService.CompositeComponentRemovalTaskState;
 import com.vmware.admiral.request.composition.CompositionGraph.ResourceNode;
@@ -345,6 +346,7 @@ public class CompositionTaskService
         compositionSubTask.requestTrackerLink = state.requestTrackerLink;
         compositionSubTask.customProperties = state.customProperties;
         compositionSubTask.allocationRequest = true;
+        compositionSubTask.operation = RequestBrokerState.PROVISION_RESOURCE_OPERATION;
         compositionSubTask.compositeDescriptionLink = state.resourceDescriptionLink;
 
         if (resourceNode.dependsOn != null && !resourceNode.dependsOn.isEmpty()) {
