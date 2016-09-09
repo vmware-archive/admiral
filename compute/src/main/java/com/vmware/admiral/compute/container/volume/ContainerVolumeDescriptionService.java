@@ -25,8 +25,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
-import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.compute.CloneableResource;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
@@ -43,16 +46,11 @@ public class ContainerVolumeDescriptionService extends StatefulService {
 
     private static final String DEFAULT_VOLUME_DRIVER = "local";
 
-    public static class ContainerVolumeDescription extends MultiTenantDocument {
+    public static class ContainerVolumeDescription extends ResourceState implements CloneableResource {
 
         public static final String FIELD_NAME_NAME = "name";
         public static final String FIELD_NAME_DRIVER = "driver";
         public static final String COMPOSITE_DESCRIPTION_LINK = "compositeDescriptionLink";
-
-        /** The new volume’s name. If not specified, Docker generates a name. */
-        @Documentation(description = "The name of a given volume.")
-        @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public String name;
 
         @Documentation(description = "Link to CompositeComponent when a volume is part of App/Composition request.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK })
@@ -61,7 +59,7 @@ public class ContainerVolumeDescriptionService extends StatefulService {
         /** Defines which adapter will serve the provision request */
         @Documentation(description = "Defines which adapter will serve the provision request")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public URI adapterManagementReference;
+        public URI instanceAdapterReference;
 
         /** Name of the volume driver to use. Defaults to local for the name. */
         @Documentation(description = "Name of the volume driver to use. Defaults to local for the name.")
@@ -80,8 +78,8 @@ public class ContainerVolumeDescriptionService extends StatefulService {
         public Map<String, String> options;
 
         /**
-         * Composite Template use only. If set to true, specifies that this volume exists outside
-         * of the Composite Template.
+         * Composite Template use only. If set to true, specifies that this volume exists outside of
+         * the Composite Template.
          */
         @Documentation(description = "Composite Template use only. If set to true, specifies that "
                 + "this volume exists outside of the Composite Template.")
@@ -114,17 +112,11 @@ public class ContainerVolumeDescriptionService extends StatefulService {
                 PropertyUsageOption.OPTIONAL })
         public Map<String, String> labels;
 
-        /**
-         * A map of field-value pairs for a given volume. These key/value pairs are custom tags,
-         * properties or attributes that could be used to add additional data or tag the volume
-         * instance for query and policy purposes.
-         */
-        @Documentation(description = "A map of field-value pairs for a given volume. These key/value pairs are custom tags,"
-                + " properties or attributes that could be used to add additional data or tag the volume"
-                + " instance for query and policy purposes.")
-        @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
-                PropertyUsageOption.OPTIONAL })
-        public Map<String, String> customProperties;
+        /** Link to the parent volume description */
+        @JsonProperty("parent_description_link")
+        @Documentation(description = "Link to the parent network description.")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public String parentDescriptionLink;
 
         @JsonAnySetter
         private void putCustomProperty(String key, String value) {
@@ -137,6 +129,15 @@ public class ContainerVolumeDescriptionService extends StatefulService {
         @JsonAnyGetter
         private Map<String, String> getCustomProperties() {
             return customProperties;
+        }
+
+        @Override
+        public Operation createCloneOperation(Service sender) {
+            this.parentDescriptionLink = this.documentSelfLink;
+            this.documentSelfLink = null;
+            return Operation.createPost(sender, FACTORY_LINK)
+                    .setBody(this);
+
         }
 
     }
@@ -217,6 +218,11 @@ public class ContainerVolumeDescriptionService extends StatefulService {
 
         if (StringUtils.isBlank(state.driver)) {
             state.driver = DEFAULT_VOLUME_DRIVER;
+        }
+
+        if (state.instanceAdapterReference == null) {
+            state.instanceAdapterReference = UriUtilsExtended.buildUri(getHost(),
+                    ManagementUriParts.ADAPTER_DOCKER_VOLUME);
         }
 
     }

@@ -25,6 +25,7 @@ import com.vmware.admiral.compute.BindingUtils;
 import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.ServiceHost;
 
@@ -54,6 +55,8 @@ public final class AffinityFilters {
             initialize(host, (ContainerNetworkDescription) desc);
         } else if (ComponentDescription.class.isInstance(desc)) {
             initialize(host, ((ComponentDescription) desc));
+        } else if (ContainerVolumeDescription.class.isInstance(desc)) {
+            //TODO initialize(host, (ContainerVolumeDescription) desc)
         } else {
             throw new IllegalArgumentException("Unsupported type:" + desc.getClass());
         }

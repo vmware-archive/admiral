@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.compute;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 
 public enum ResourceType {
@@ -18,7 +21,8 @@ public enum ResourceType {
     COMPOSITE_COMPONENT_TYPE("COMPOSITE_COMPONENT"),
     COMPUTE_TYPE("COMPUTE"),
     CONTAINER_HOST_TYPE("CONTAINER_HOST"),
-    NETWORK_TYPE("NETWORK");
+    NETWORK_TYPE("NETWORK"),
+    VOLUME_TYPE("VOLUME");
 
     private final String name;
 
@@ -40,5 +44,10 @@ public enum ResourceType {
             }
         }
         throw new IllegalArgumentException("No matching type for:" + name);
+    }
+
+    public static String getAllTypesAsString() {
+        return Arrays.asList(ResourceType.values()).stream().map(Object::toString)
+                .collect(Collectors.joining(", "));
     }
 }

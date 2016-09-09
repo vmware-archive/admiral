@@ -43,7 +43,9 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkReconfigureS
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.endpoint.EndpointService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -100,6 +102,10 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_TYPE.getName(),
                 ComputeDescriptionService.FACTORY_LINK,
                 ComputeDescription.class, ComputeService.FACTORY_LINK, ComputeState.class);
+
+        CompositeComponentRegistry.registerComponent(ResourceType.VOLUME_TYPE.getName(),
+                ContainerVolumeDescriptionService.FACTORY_LINK, ContainerVolumeDescription.class,
+                ContainerVolumeService.FACTORY_LINK, ContainerVolumeState.class);
 
         // start initialization of system documents
         host.sendRequest(Operation.createPost(

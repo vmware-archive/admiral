@@ -911,6 +911,7 @@ public class ContainerAllocationTaskService
 
                                 if (allocationRequest) {
                                     updateNetworksHosts(body, taskCallback);
+                                    //TODO update volumes hosts.
                                 } else {
                                     createContainerInstanceRequests(state, taskCallback,
                                             body.documentSelfLink);

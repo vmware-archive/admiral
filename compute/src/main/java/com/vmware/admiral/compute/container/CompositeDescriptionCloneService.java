@@ -77,7 +77,7 @@ public class CompositeDescriptionCloneService extends StatelessService {
             if (desc.component instanceof CloneableResource) {
                 cloneOperations
                         .add(((CloneableResource) desc.component).createCloneOperation(this));
-            } else {
+            }  else {
                 cloneOperations.add(createCloneOperation(desc.type, desc.component));
             }
         }

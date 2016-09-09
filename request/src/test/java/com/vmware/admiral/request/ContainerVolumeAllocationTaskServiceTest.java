@@ -13,6 +13,7 @@ package com.vmware.admiral.request;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 
@@ -37,7 +38,7 @@ public class ContainerVolumeAllocationTaskServiceTest extends RequestBaseTest {
         assertNotNull(volumeState);
         assertEquals(containerVolumeDesc.documentSelfLink, volumeState.descriptionLink);
         assertEquals(containerVolumeDesc.driver, volumeState.driver);
-        assertEquals(containerVolumeDesc.name, volumeState.name);
+        assertTrue(volumeState.name.contains(containerVolumeDesc.name));
         assertEquals(allocationTask.resourceLinks.get(0), volumeState.documentSelfLink);
 
     }

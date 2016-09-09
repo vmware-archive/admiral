@@ -21,7 +21,8 @@ import org.apache.commons.io.FileUtils;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.UriUtilsExtended;
-import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.admiral.compute.container.util.CompositeComponentNotifier;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
@@ -38,7 +39,7 @@ public class ContainerVolumeService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CONTAINER_VOLUMES;
 
-    public static class ContainerVolumeState extends MultiTenantDocument {
+    public static class ContainerVolumeState extends ResourceState {
 
         public static final String FIELD_NAME_NAME = "name";
         public static final String FIELD_NAME_DESCRIPTION_LINK = "descriptionLink";
@@ -46,11 +47,6 @@ public class ContainerVolumeService extends StatefulService {
         public static final String FIELD_NAME_ORIGINATIONG_HOST_REFERENCE = "originatingHostReference";
         public static final String FIELD_NAME_ADAPTER_MANAGEMENT_REFERENCE = "adapterManagementReference";
         public static final String FIELD_NAME_COMPOSITE_COMPONENT_LINK = "compositeComponentLink";
-
-        /** The new volume’s name. If not specified, Docker generates a name. */
-        @Documentation(description = "The name of a given volume.")
-        @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public String name;
 
         /** Defines the description of the volume */
         @Documentation(description = "Defines the description of the volume.")
@@ -69,7 +65,7 @@ public class ContainerVolumeService extends StatefulService {
         /** Defines which adapter will serve the provision request */
         @Documentation(description = "Defines which adapter will serve the provision request")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public URI adapterManagementReference;
+        public URI instanceAdapterReference;
 
         /** Name of the volume driver to use. Defaults to local for the name. */
         @Documentation(description = "Name of the volume driver to use. Defaults to local for the name.")
@@ -93,18 +89,6 @@ public class ContainerVolumeService extends StatefulService {
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.OPTIONAL })
         public File mountpoint;
-
-        /**
-         * A map of field-value pairs for a given volume. These key/value pairs are custom tags,
-         * properties or attributes that could be used to add additional data or tag the volume
-         * instance for query and policy purposes.
-         */
-        @Documentation(description = "A map of field-value pairs for a given volume. These key/value pairs are custom tags,"
-                + " properties or attributes that could be used to add additional data or tag the volume"
-                + " instance for query and policy purposes.")
-        @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
-                PropertyUsageOption.OPTIONAL })
-        public Map<String, String> customProperties;
 
         /**
          * Labels to set on the volume, specified as a map: {"key":"value","key2":"value2"}
@@ -146,6 +130,17 @@ public class ContainerVolumeService extends StatefulService {
     }
 
     @Override
+    public void handleCreate(Operation create) {
+        if (create.hasBody()) {
+            ContainerVolumeState body = create.getBody(ContainerVolumeState.class);
+            CompositeComponentNotifier.notifyCompositionComponent(this,
+                    body.compositeComponentLink, create.getAction());
+        }
+
+        create.complete();
+    }
+
+    @Override
     public void handlePut(Operation put) {
         try {
             ContainerVolumeState putState = getValidInputFrom(put, false);
@@ -164,6 +159,7 @@ public class ContainerVolumeService extends StatefulService {
 
         ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
         String currentSignature = Utils.computeSignature(currentState, docDesc);
+        String currentCompositeComponentLink = currentState.compositeComponentLink;
 
         PropertyUtils.mergeServiceDocuments(currentState, patchBody);
 
@@ -173,9 +169,21 @@ public class ContainerVolumeService extends StatefulService {
 
         if (!changed) {
             patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
+        } else {
+            CompositeComponentNotifier.notifyCompositionComponentOnChange(this, patch.getAction(),
+                    currentState.compositeComponentLink, currentCompositeComponentLink);
         }
 
         patch.complete();
+    }
+
+    @Override
+    public void handleDelete(Operation delete) {
+        ContainerVolumeState currentState = getState(delete);
+        CompositeComponentNotifier.notifyCompositionComponent(this,
+                currentState.compositeComponentLink, delete.getAction());
+
+        super.handleDelete(delete);
     }
 
     /**
@@ -205,8 +213,8 @@ public class ContainerVolumeService extends StatefulService {
             Utils.validateState(getStateDescription(), state);
         }
 
-        if (state.adapterManagementReference == null) {
-            state.adapterManagementReference = UriUtilsExtended.buildUri(getHost(),
+        if (state.instanceAdapterReference == null) {
+            state.instanceAdapterReference = UriUtilsExtended.buildUri(getHost(),
                     ManagementUriParts.ADAPTER_DOCKER_VOLUME);
         }
 

@@ -44,6 +44,9 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
@@ -434,6 +437,117 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ServiceDocumentQueryResult networkStates = getDocument(ServiceDocumentQueryResult.class,
                 ContainerNetworkService.FACTORY_LINK);
         assertEquals(0L, networkStates.documentCount.longValue());
+    }
+
+    @Test
+    public void testCompositeComponentWithContainerVolumeRequestLifeCycle() throws Throwable {
+        host.log(
+                "########  Start of testCompositeComponentWithContainerVolumeRequestLifeCycle ######## ");
+
+        // setup Docker Host:
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+
+        delete(computeHost.documentSelfLink);
+        computeHost = null;
+
+        ComputeState dockerHost1 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost1);
+
+        ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost2);
+
+        // setup Composite description with 2 containers and 1 network
+
+        String volumeName = "/etc/pgdata/postgres:/postgres";
+
+        ContainerVolumeDescription volumeDesc = TestRequestStateFactory
+                .createContainerVolumeDescription(volumeName);
+        volumeDesc.documentSelfLink = UUID.randomUUID().toString();
+
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
+        container1Desc.documentSelfLink = UUID.randomUUID().toString();
+        container1Desc.name = "container1";
+        container1Desc.volumes = new String[] { volumeName };
+
+        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
+        container2Desc.documentSelfLink = UUID.randomUUID().toString();
+        container2Desc.name = "container2";
+        container2Desc.affinity = new String[] { "!container1:hard" };
+
+        CompositeDescription compositeDesc = createCompositeDesc(volumeDesc, container1Desc,
+                container2Desc);
+        assertNotNull(compositeDesc);
+
+        // setup Group Policy:
+        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+
+        // 1. Request a composite container:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+
+        request.tenantLinks = groupPolicyState.tenantLinks;
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+
+        // Verify request status
+        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+
+        // Removal task of volumes is not ready yet.
+        // assertEquals(Integer.valueOf(100), rs.progress);
+        assertEquals(1, request.resourceLinks.size());
+
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+
+        String volumeLink = null;
+        String containerLink1 = null;
+        String containerLink2 = null;
+
+        Iterator<String> iterator = cc.componentLinks.iterator();
+
+        while (iterator.hasNext()) {
+            String link = iterator.next();
+            if (link.startsWith(ContainerVolumeService.FACTORY_LINK)) {
+                volumeLink = link;
+            } else if (containerLink1 == null) {
+                containerLink1 = link;
+            } else {
+                containerLink2 = link;
+            }
+        }
+
+        ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
+        ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
+
+        boolean containerIsProvisionedOnAnyHosts = cont1.parentLink
+                .equals(dockerHost1.documentSelfLink)
+                || cont1.parentLink.equals(dockerHost2.documentSelfLink);
+        assertTrue(containerIsProvisionedOnAnyHosts);
+
+        containerIsProvisionedOnAnyHosts = cont2.parentLink.equals(dockerHost1.documentSelfLink)
+                || cont2.parentLink.equals(dockerHost2.documentSelfLink);
+        assertTrue(containerIsProvisionedOnAnyHosts);
+
+        // provisioned on different hosts
+        assertFalse(cont1.parentLink.equals(cont2.parentLink));
+
+        ContainerVolumeState volume = getDocument(ContainerVolumeState.class, volumeLink);
+        assertTrue(volume.name.contains(volumeName));
+
+        String volumeHostPath = volume.originatingHostReference.getPath();
+
+        boolean volumeIsProvisionedOnAnyHosts = volumeHostPath.equals(dockerHost1.documentSelfLink)
+                || volumeHostPath.equals(dockerHost2.documentSelfLink);
+
+        assertTrue(volumeIsProvisionedOnAnyHosts);
+
+        assertEquals(cc.documentSelfLink, cont1.compositeComponentLink);
+        assertEquals(cc.documentSelfLink, cont2.compositeComponentLink);
+        assertEquals(cc.documentSelfLink, volume.compositeComponentLink);
     }
 
     @Test

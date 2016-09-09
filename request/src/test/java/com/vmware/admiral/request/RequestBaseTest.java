@@ -510,6 +510,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 desc = doPost(desc, ContainerNetworkDescriptionService.FACTORY_LINK);
             } else if (desc instanceof ComputeDescriptionService.ComputeDescription) {
                 desc = doPost(desc, ComputeDescriptionService.FACTORY_LINK);
+            } else if (desc instanceof ContainerVolumeDescriptionService.ContainerVolumeDescription) {
+                desc = doPost(desc, ContainerVolumeDescriptionService.FACTORY_LINK);
             } else {
                 throw new IllegalArgumentException(
                         "Unknown description type: " + desc.getClass().getSimpleName());

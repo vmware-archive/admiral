@@ -45,6 +45,8 @@ import com.vmware.admiral.request.ContainerAllocationTaskFactoryService;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService.ContainerNetworkProvisionTaskState;
+import com.vmware.admiral.request.ContainerVolumeProvisionTaskService;
+import com.vmware.admiral.request.ContainerVolumeProvisionTaskService.ContainerVolumeProvisionTaskState;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService.CompositionSubTaskState.SubStage;
@@ -395,6 +397,8 @@ public class CompositionSubTaskService
             createContainerAllocationTaskState(state);
         } else if (ResourceType.NETWORK_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createContainerNetworkProvisionTaskState(state);
+        } else if (ResourceType.VOLUME_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
+            createContainerVolumeProvisionTaskState(state);
         } else if (ResourceType.COMPUTE_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createComputeProvisionTaskState(state);
         } else {
@@ -448,6 +452,32 @@ public class CompositionSubTaskService
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         failTask("Failure creating container network provision task", e);
+                        return;
+                    }
+                }));
+
+        sendSelfPatch(createUpdateSubStageTask(state, SubStage.EXECUTING));
+    }
+
+    private void createContainerVolumeProvisionTaskState(CompositionSubTaskState state) {
+        ContainerVolumeProvisionTaskState task = new ContainerVolumeProvisionTaskState();
+        task.documentSelfLink = getSelfId();
+        task.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+                TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
+        task.customProperties = state.customProperties;
+        task.resourceCount = Long.valueOf(state.resourceLinks.size());
+        task.resourceType = state.resourceType;
+        task.tenantLinks = state.tenantLinks;
+        task.requestTrackerLink = state.requestTrackerLink;
+        task.resourceLinks = state.resourceLinks;
+        task.resourceDescriptionLink = state.resourceDescriptionLink;
+
+        sendRequest(Operation.createPost(this, ContainerVolumeProvisionTaskService.FACTORY_LINK)
+                .setBody(task)
+                .setContextId(state.requestId)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating container volume provision task", e);
                         return;
                     }
                 }));

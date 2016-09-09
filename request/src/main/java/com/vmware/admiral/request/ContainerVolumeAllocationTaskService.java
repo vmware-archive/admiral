@@ -32,8 +32,10 @@ import com.vmware.admiral.request.ContainerVolumeAllocationTaskService.Container
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -161,6 +163,40 @@ public class ContainerVolumeAllocationTaskService extends
 
     }
 
+    @Override
+    protected ServiceTaskCallbackResponse getFinishedCallbackResponse(
+            ContainerVolumeAllocationTaskState state) {
+        CallbackCompleteResponse finishedResponse = new CallbackCompleteResponse();
+        finishedResponse.copy(state.serviceTaskCallback.getFinishedResponse());
+        finishedResponse.resourceLinks = state.resourceLinks;
+        if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
+            logWarning("No resourceLinks found for allocated resources.");
+        }
+        return finishedResponse;
+    }
+
+    @Override
+    protected ServiceTaskCallbackResponse getFailedCallbackResponse(
+            ContainerVolumeAllocationTaskState state) {
+        CallbackCompleteResponse failedResponse = new CallbackCompleteResponse();
+        failedResponse.copy(state.serviceTaskCallback.getFailedResponse(state.taskInfo.failure));
+        failedResponse.resourceLinks = state.resourceLinks;
+        if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
+            logWarning("No resourceLinks found for allocated resources.");
+        }
+        return failedResponse;
+    }
+
+    @Override
+    protected TaskStatusState fromTask(TaskServiceDocument<SubStage> state) {
+        final TaskStatusState statusTask = super.fromTask(state);
+        if (SubStage.RESOURCES_NAMED == state.taskSubStage) {
+            statusTask.name = ((ContainerVolumeAllocationTaskState) state).descName;
+        }
+
+        return statusTask;
+    }
+
     private void prepareContextAndCreateResourcePrefixNameSelectionTask(
             ContainerVolumeAllocationTaskState state,
             ContainerVolumeDescription volumeDescription) {
@@ -228,7 +264,8 @@ public class ContainerVolumeAllocationTaskService extends
         ResourceNamePrefixTaskState namePrefixTask = new ResourceNamePrefixTaskState();
         namePrefixTask.documentSelfLink = getSelfId();
         namePrefixTask.resourceCount = state.resourceCount;
-        namePrefixTask.baseResourceNameFormat = volumeDescription.name;
+        namePrefixTask.baseResourceNameFormat = ResourceNamePrefixService
+                .getDefaultResourceNameFormat(volumeDescription.name);
         namePrefixTask.tenantLinks = state.tenantLinks;
 
         namePrefixTask.customProperties = state.customProperties;

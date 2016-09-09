@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
+import com.vmware.admiral.adapter.common.VolumeOperationType;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ResourceType;
@@ -47,6 +48,8 @@ import com.vmware.admiral.request.ContainerNetworkProvisionTaskService.Container
 import com.vmware.admiral.request.ContainerNetworkRemovalTaskService.ContainerNetworkRemovalTaskState;
 import com.vmware.admiral.request.ContainerOperationTaskService.ContainerOperationTaskState;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState;
+import com.vmware.admiral.request.ContainerVolumeAllocationTaskService.ContainerVolumeAllocationTaskState;
+import com.vmware.admiral.request.ContainerVolumeProvisionTaskService.ContainerVolumeProvisionTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState.SubStage;
 import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.request.ReservationRemovalTaskService.ReservationRemovalTaskState;
@@ -168,9 +171,10 @@ public class RequestBrokerService extends
         }
 
         if (!(isContainerType(state) || isContainerHostType(state) || isContainerNetworkType(state)
+                || isContainerVolumeType(state)
                 || isComputeType(state) || isCompositeComponentType(state))) {
             throw new IllegalArgumentException(
-                    "Only 'DOCKER_CONTAINER', 'CONTAINER_HOST', 'CONTAINER_NETWORK', 'COMPUTE' and 'COMPOSITE_COMPONENT' resource types are supported.");
+                   String.format("Only [ %s ] resource types are supported.", ResourceType.getAllTypesAsString()));
         }
 
         if (state.resourceCount <= 0) {
@@ -396,6 +400,13 @@ public class RequestBrokerService extends
         } else if (isContainerNetworkType(state)) {
             if (isRemoveOperation(state)) {
                 createContainerNetworkRemovalTask(state);
+            } else {
+                failTask(null, new IllegalArgumentException("Not supported operation: "
+                        + state.operation));
+            }
+        } else if (isContainerVolumeType(state)) {
+            if (isRemoveOperation(state)) {
+                // TODO createContainerVolumeRemovalTask(state);
             } else {
                 failTask(null, new IllegalArgumentException("Not supported operation: "
                         + state.operation));
@@ -657,7 +668,7 @@ public class RequestBrokerService extends
     private void createReservationTasks(RequestBrokerState state) {
         if (isComputeType(state)) {
             getComputeDescription(state, (cd) -> createComputeReservationTasks(state, cd));
-        } else if (isContainerNetworkType(state)) {
+        } else if (isContainerNetworkType(state) || isContainerVolumeType(state)) {
             // No reservation needed here, moving on...
             sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESERVED));
         } else {
@@ -752,150 +763,232 @@ public class RequestBrokerService extends
                 }));
     }
 
+    private void createContainerAllocationTask(RequestBrokerState state) {
+        getContainerDescription(state, (containerDesc) -> {
+            ContainerAllocationTaskState allocationTask = new ContainerAllocationTaskState();
+            allocationTask.documentSelfLink = Service.getId(state.documentSelfLink);
+            allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
+                    state.documentSelfLink, TaskStage.STARTED, SubStage.ALLOCATED,
+                    TaskStage.STARTED, SubStage.REQUEST_FAILED);
+            allocationTask.customProperties = state.customProperties;
+            allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
+
+            if (containerDesc._cluster != null && containerDesc._cluster > 1
+                    && state.resourceCount <= 1
+                    && isProvisionOperation(state) && !isContainerClusteringOperation(state)) {
+                // deploy the default number of clustered container nodes
+                allocationTask.resourceCount = Long.valueOf(containerDesc._cluster);
+            } else {
+                allocationTask.resourceCount = state.resourceCount;
+            }
+
+            allocationTask.resourceType = state.resourceType;
+            allocationTask.tenantLinks = state.tenantLinks;
+            allocationTask.groupResourcePolicyLink = state.groupResourcePolicyLink;
+            allocationTask.requestTrackerLink = state.requestTrackerLink;
+            allocationTask.resourceLinks = state.resourceLinks;
+            allocationTask.postAllocation = isPostAllocationOperation(state);
+
+            sendRequest(Operation
+                    .createPost(this, ContainerAllocationTaskFactoryService.SELF_LINK)
+                    .setBody(allocationTask)
+                    .setContextId(getSelfId())
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            failTask("Failure creating resource allocation task", e);
+                            return;
+                        }
+                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                    }));
+        });
+    }
+
+    private void createNetworkAllocationTask(RequestBrokerState state) {
+        // 1. allocate the network
+        ContainerNetworkAllocationTaskState allocationTask = new ContainerNetworkAllocationTaskState();
+        allocationTask.documentSelfLink = Service.getId(state.documentSelfLink);
+        allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
+                state.documentSelfLink, TaskStage.STARTED, SubStage.ALLOCATED,
+                TaskStage.STARTED, SubStage.ERROR);
+        allocationTask.customProperties = state.customProperties;
+        allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
+
+        allocationTask.tenantLinks = state.tenantLinks;
+        allocationTask.requestTrackerLink = state.requestTrackerLink;
+        allocationTask.resourceLinks = state.resourceLinks;
+        allocationTask.resourceCount = state.resourceCount;
+
+        sendRequest(Operation
+                .createPost(this, ContainerNetworkAllocationTaskService.FACTORY_LINK)
+                .setBody(allocationTask)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating resource allocation task", e);
+                        return;
+                    }
+                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                }));
+    }
+
+    private void createNetworkProvisioningTask(RequestBrokerState state) {
+        // 2. provision the network
+        ContainerNetworkProvisionTaskState provisionTask = new ContainerNetworkProvisionTaskState();
+        provisionTask.documentSelfLink = Service.getId(state.documentSelfLink);
+        provisionTask.serviceTaskCallback = ServiceTaskCallback.create(
+                state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
+                TaskStage.STARTED, SubStage.REQUEST_FAILED);
+        provisionTask.customProperties = state.customProperties;
+
+        provisionTask.tenantLinks = state.tenantLinks;
+        provisionTask.requestTrackerLink = state.requestTrackerLink;
+        provisionTask.resourceLinks = state.resourceLinks;
+        provisionTask.resourceCount = state.resourceCount;
+        provisionTask.resourceDescriptionLink = state.resourceDescriptionLink;
+
+        sendRequest(Operation
+                .createPost(this, ContainerNetworkProvisionTaskService.FACTORY_LINK)
+                .setBody(provisionTask)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating resource provision task", e);
+                        return;
+                    }
+                }));
+
+    }
+
+    private void createComputeAllocationTask(RequestBrokerState state) {
+
+        ComputeAllocationTaskState allocationTask = new ComputeAllocationTaskState();
+        allocationTask.documentSelfLink = Service.getId(state.documentSelfLink);
+        allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
+                state.documentSelfLink, TaskStage.STARTED, SubStage.ALLOCATED,
+                TaskStage.STARTED, SubStage.REQUEST_FAILED);
+        allocationTask.customProperties = state.customProperties;
+        allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
+
+        allocationTask.resourceCount = state.resourceCount;
+
+        allocationTask.resourceType = state.resourceType;
+        allocationTask.tenantLinks = state.tenantLinks;
+        allocationTask.groupResourcePolicyLink = state.groupResourcePolicyLink;
+        allocationTask.requestTrackerLink = state.requestTrackerLink;
+        allocationTask.resourceLinks = state.resourceLinks;
+
+        sendRequest(Operation
+                .createPost(this, ComputeAllocationTaskService.FACTORY_LINK)
+                .setBody(allocationTask)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating resource allocation task", e);
+                        return;
+                    }
+                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                }));
+    }
+
+    private void createComputeProvisioningTask(RequestBrokerState state) {
+        // 2. provision the compute
+        ComputeProvisionTaskState ps = new ComputeProvisionTaskState();
+        ps.documentSelfLink = Service.getId(state.documentSelfLink);
+        ps.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+                TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
+        ps.customProperties = state.customProperties;
+        ps.tenantLinks = state.tenantLinks;
+        ps.requestTrackerLink = state.requestTrackerLink;
+        ps.resourceLinks = state.resourceLinks;
+
+        sendRequest(Operation
+                .createPost(this, ComputeProvisionTaskService.FACTORY_LINK)
+                .setBody(ps)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating resource provision task", e);
+                        return;
+                    }
+                }));
+    }
+
+    private void createVolumeAllocationTask(RequestBrokerState state) {
+
+        ContainerVolumeAllocationTaskState allocationTask = new ContainerVolumeAllocationTaskState();
+        allocationTask.documentSelfLink = Service.getId(state.documentSelfLink);
+        allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
+                state.documentSelfLink, TaskStage.STARTED, SubStage.ALLOCATED,
+                TaskStage.STARTED, SubStage.ERROR);
+        allocationTask.customProperties = state.customProperties;
+        allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
+
+        allocationTask.tenantLinks = state.tenantLinks;
+        allocationTask.requestTrackerLink = state.requestTrackerLink;
+        allocationTask.resourceLinks = state.resourceLinks;
+        allocationTask.resourceCount = state.resourceCount;
+
+        sendRequest(Operation
+                .createPost(this, ContainerVolumeAllocationTaskService.FACTORY_LINK)
+                .setBody(allocationTask)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating resource allocation task", e);
+                        return;
+                    }
+                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                }));
+    }
+
+    private void createVolumeProvisioningTask(RequestBrokerState state) {
+
+        ContainerVolumeProvisionTaskState provisionTask = new ContainerVolumeProvisionTaskState();
+        provisionTask.documentSelfLink = Service.getId(state.documentSelfLink);
+        provisionTask.serviceTaskCallback = ServiceTaskCallback.create(
+                state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
+                TaskStage.STARTED, SubStage.REQUEST_FAILED);
+        provisionTask.customProperties = state.customProperties;
+
+        provisionTask.tenantLinks = state.tenantLinks;
+        provisionTask.requestTrackerLink = state.requestTrackerLink;
+        provisionTask.resourceLinks = state.resourceLinks;
+        provisionTask.resourceCount = state.resourceCount;
+        provisionTask.resourceDescriptionLink = state.resourceDescriptionLink;
+
+        sendRequest(Operation
+                .createPost(this, ContainerVolumeProvisionTaskService.FACTORY_LINK)
+                .setBody(provisionTask)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating resource provision task", e);
+                        return;
+                    }
+                }));
+
+    }
+
     private void createAllocationTasks(RequestBrokerState state) {
         if (isContainerType(state)) {
-
-            getContainerDescription(state, (containerDesc) -> {
-                ContainerAllocationTaskState allocationTask = new ContainerAllocationTaskState();
-                allocationTask.documentSelfLink = Service.getId(state.documentSelfLink);
-                allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
-                        state.documentSelfLink, TaskStage.STARTED, SubStage.ALLOCATED,
-                        TaskStage.STARTED, SubStage.REQUEST_FAILED);
-                allocationTask.customProperties = state.customProperties;
-                allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
-
-                if (containerDesc._cluster != null && containerDesc._cluster > 1
-                        && state.resourceCount <= 1
-                        && isProvisionOperation(state) && !isContainerClusteringOperation(state)) {
-                    // deploy the default number of clustered container nodes
-                    allocationTask.resourceCount = Long.valueOf(containerDesc._cluster);
-                } else {
-                    allocationTask.resourceCount = state.resourceCount;
-                }
-
-                allocationTask.resourceType = state.resourceType;
-                allocationTask.tenantLinks = state.tenantLinks;
-                allocationTask.groupResourcePolicyLink = state.groupResourcePolicyLink;
-                allocationTask.requestTrackerLink = state.requestTrackerLink;
-                allocationTask.resourceLinks = state.resourceLinks;
-                allocationTask.postAllocation = isPostAllocationOperation(state);
-
-                sendRequest(Operation
-                        .createPost(this, ContainerAllocationTaskFactoryService.SELF_LINK)
-                        .setBody(allocationTask)
-                        .setContextId(getSelfId())
-                        .setCompletion((o, e) -> {
-                            if (e != null) {
-                                failTask("Failure creating resource allocation task", e);
-                                return;
-                            }
-                            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
-                        }));
-            });
-
+            createContainerAllocationTask(state);
         } else if (isContainerNetworkType(state)) {
             if (!isPostAllocationOperation(state)) {
-                // 1. allocate the network
-                ContainerNetworkAllocationTaskState allocationTask = new ContainerNetworkAllocationTaskState();
-                allocationTask.documentSelfLink = Service.getId(state.documentSelfLink);
-                allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
-                        state.documentSelfLink, TaskStage.STARTED, SubStage.ALLOCATED,
-                        TaskStage.STARTED, SubStage.ERROR);
-                allocationTask.customProperties = state.customProperties;
-                allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
-
-                allocationTask.tenantLinks = state.tenantLinks;
-                allocationTask.requestTrackerLink = state.requestTrackerLink;
-                allocationTask.resourceLinks = state.resourceLinks;
-                allocationTask.resourceCount = state.resourceCount;
-
-                sendRequest(Operation
-                        .createPost(this, ContainerNetworkAllocationTaskService.FACTORY_LINK)
-                        .setBody(allocationTask)
-                        .setContextId(getSelfId())
-                        .setCompletion((o, e) -> {
-                            if (e != null) {
-                                failTask("Failure creating resource allocation task", e);
-                                return;
-                            }
-                            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
-                        }));
+                createNetworkAllocationTask(state);
             } else {
-                // 2. provision the network
-                ContainerNetworkProvisionTaskState provisionTask = new ContainerNetworkProvisionTaskState();
-                provisionTask.documentSelfLink = Service.getId(state.documentSelfLink);
-                provisionTask.serviceTaskCallback = ServiceTaskCallback.create(
-                        state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
-                        TaskStage.STARTED, SubStage.REQUEST_FAILED);
-                provisionTask.customProperties = state.customProperties;
-
-                provisionTask.tenantLinks = state.tenantLinks;
-                provisionTask.requestTrackerLink = state.requestTrackerLink;
-                provisionTask.resourceLinks = state.resourceLinks;
-                provisionTask.resourceCount = state.resourceCount;
-                provisionTask.resourceDescriptionLink = state.resourceDescriptionLink;
-
-                sendRequest(Operation
-                        .createPost(this, ContainerNetworkProvisionTaskService.FACTORY_LINK)
-                        .setBody(provisionTask)
-                        .setContextId(getSelfId())
-                        .setCompletion((o, e) -> {
-                            if (e != null) {
-                                failTask("Failure creating resource provision task", e);
-                                return;
-                            }
-                        }));
+                createNetworkProvisioningTask(state);
             }
         } else if (isComputeType(state)) {
             if (!isPostAllocationOperation(state)) {
-                ComputeAllocationTaskState allocationTask = new ComputeAllocationTaskState();
-                allocationTask.documentSelfLink = Service.getId(state.documentSelfLink);
-                allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
-                        state.documentSelfLink, TaskStage.STARTED, SubStage.ALLOCATED,
-                        TaskStage.STARTED, SubStage.REQUEST_FAILED);
-                allocationTask.customProperties = state.customProperties;
-                allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
-
-                allocationTask.resourceCount = state.resourceCount;
-
-                allocationTask.resourceType = state.resourceType;
-                allocationTask.tenantLinks = state.tenantLinks;
-                allocationTask.groupResourcePolicyLink = state.groupResourcePolicyLink;
-                allocationTask.requestTrackerLink = state.requestTrackerLink;
-                allocationTask.resourceLinks = state.resourceLinks;
-
-                sendRequest(Operation
-                        .createPost(this, ComputeAllocationTaskService.FACTORY_LINK)
-                        .setBody(allocationTask)
-                        .setContextId(getSelfId())
-                        .setCompletion((o, e) -> {
-                            if (e != null) {
-                                failTask("Failure creating resource allocation task", e);
-                                return;
-                            }
-                            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
-                        }));
+                createComputeAllocationTask(state);
             } else {
-                // 2. provision the network
-                ComputeProvisionTaskState ps = new ComputeProvisionTaskState();
-                ps.documentSelfLink = Service.getId(state.documentSelfLink);
-                ps.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
-                        TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
-                ps.customProperties = state.customProperties;
-                ps.tenantLinks = state.tenantLinks;
-                ps.requestTrackerLink = state.requestTrackerLink;
-                ps.resourceLinks = state.resourceLinks;
-
-                sendRequest(Operation
-                        .createPost(this, ComputeProvisionTaskService.FACTORY_LINK)
-                        .setBody(ps)
-                        .setContextId(getSelfId())
-                        .setCompletion((o, e) -> {
-                            if (e != null) {
-                                failTask("Failure creating resource provision task", e);
-                                return;
-                            }
-                        }));
+                createComputeProvisioningTask(state);
+            }
+        } else if (isContainerVolumeType(state)) {
+            if (!isPostAllocationOperation(state)) {
+                createVolumeAllocationTask(state);
+            } else {
+                createVolumeProvisioningTask(state);
             }
         } else {
             failTask(null, new IllegalArgumentException("Not supported resourceType: "
@@ -1002,10 +1095,11 @@ public class RequestBrokerService extends
     }
 
     private boolean isPostAllocationOperation(RequestBrokerState state) {
-        return (isContainerType(state) || isContainerNetworkType(state) || isComputeType(state))
+        return (isContainerType(state) || isContainerNetworkType(state) || isComputeType(state) || isContainerVolumeType(state))
                 && (ContainerOperationType.CREATE.id.equals(state.operation)
                         || NetworkOperationType.CREATE.id.equals(state.operation)
-                        || ComputeOperationType.CREATE.id.equals(state.operation));
+                        || ComputeOperationType.CREATE.id.equals(state.operation)
+                        || VolumeOperationType.CREATE.id.equals(state.operation));
     }
 
     private boolean isRemoveOperation(RequestBrokerState state) {
@@ -1030,6 +1124,10 @@ public class RequestBrokerService extends
 
     private boolean isContainerNetworkType(RequestBrokerState state) {
         return ResourceType.NETWORK_TYPE.getName().equals(state.resourceType);
+    }
+
+    private boolean isContainerVolumeType(RequestBrokerState state) {
+        return ResourceType.VOLUME_TYPE.getName().equals(state.resourceType);
     }
 
     private boolean isCompositeComponentType(RequestBrokerState state) {
@@ -1064,6 +1162,8 @@ public class RequestBrokerService extends
                 Arrays.asList(ComputeAllocationTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.NETWORK_TYPE, new ArrayList<>(
                 Arrays.asList(ContainerNetworkProvisionTaskService.DISPLAY_NAME)));
+        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.VOLUME_TYPE, new ArrayList<>(
+                Arrays.asList(ContainerVolumeProvisionTaskService.DISPLAY_NAME)));
     }
 
     private static final Map<ResourceType, List<String>> SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE;
@@ -1083,6 +1183,9 @@ public class RequestBrokerService extends
                         ResourceNamePrefixTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.NETWORK_TYPE, new ArrayList<>(
                 Arrays.asList(ContainerNetworkAllocationTaskService.DISPLAY_NAME,
+                        ResourceNamePrefixTaskService.DISPLAY_NAME)));
+        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.VOLUME_TYPE, new ArrayList<>(
+                Arrays.asList(ContainerVolumeAllocationTaskService.DISPLAY_NAME,
                         ResourceNamePrefixTaskService.DISPLAY_NAME)));
     }
 
@@ -1111,6 +1214,9 @@ public class RequestBrokerService extends
             } else if (isContainerNetworkType(state)) {
                 trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
                         .get(ResourceType.NETWORK_TYPE);
+            } else if (isContainerVolumeType(state)) {
+                trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
+                        .get(ResourceType.VOLUME_TYPE);
             } else {
                 trackedTasks = new ArrayList<>();
                 for (List<String> vals : SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.values()) {
