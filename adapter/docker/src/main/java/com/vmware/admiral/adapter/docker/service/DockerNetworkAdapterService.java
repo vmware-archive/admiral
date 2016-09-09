@@ -17,20 +17,19 @@ import org.apache.commons.lang3.NotImplementedException;
 
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 
 public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER_NETWORK;
 
-    public static final String DOCKER_NETWORK_TYPE_DEFAULT = "overlay";
+    public static final String DOCKER_NETWORK_TYPE_DEFAULT = ContainerNetworkDescription.NETWORK_DRIVER_BRIDGE;
 
-    private static final NetworkOperationType[] DIRECT_OPERATIONS = {
-            NetworkOperationType.CREATE,
-            NetworkOperationType.DELETE // TODO other operations
-    };
+    private static final NetworkOperationType[] DIRECT_OPERATIONS = {};
 
     private static class RequestContext {
         public NetworkRequest request;
@@ -184,12 +183,9 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
         context.executor.createNetwork(createCommandInput, (op, ex) -> {
             if (ex != null) {
-                context.operation.fail(ex);
+                fail(context.request, ex);
             } else {
-                if (op.hasBody()) {
-                    context.operation.setBody(op.getBody(String.class));
-                }
-                context.operation.complete();
+                patchTaskStage(context.request, TaskStage.FINISHED, null);
             }
         });
     }
@@ -203,12 +199,9 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
         context.executor.removeNetwork(deleteCommandInput, (op, ex) -> {
             if (ex != null) {
-                context.operation.fail(ex);
+                fail(context.request, ex);
             } else {
-                if (op.hasBody()) {
-                    context.operation.setBody(op.getBody(String.class));
-                }
-                context.operation.complete();
+                patchTaskStage(context.request, TaskStage.FINISHED, null);
             }
         });
     }

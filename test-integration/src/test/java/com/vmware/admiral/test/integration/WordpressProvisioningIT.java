@@ -71,17 +71,27 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
 
     private String compositeDescriptionLink;
 
-    @Parameters
+    private enum NetworkType {
+        CUSTOM, // agent or bindings
+        BRIDGE, OVERLAY // not yet supported
+    }
+
+    @Parameters(name = "{index}: {0} {1}")
     public static Collection<Object[]> data() {
-        return Arrays
-                .asList(new Object[] { "WordPress_with_MySQL_bindings.yaml" },
-                        new Object[] { "WordPress_with_MySQL.yaml" });
+        return Arrays.asList(new Object[][] {
+                { "WordPress_with_MySQL_bindings.yaml", NetworkType.CUSTOM },
+                { "WordPress_with_MySQL.yaml", NetworkType.CUSTOM },
+                { "WordPress_with_MySQL_network.yaml", NetworkType.BRIDGE }
+        });
+
     }
 
     private String templateFile;
+    private NetworkType networkType;
 
-    public WordpressProvisioningIT(String templateFile) {
+    public WordpressProvisioningIT(String templateFile, NetworkType networkType) {
         this.templateFile = templateFile;
+        this.networkType = networkType;
     }
 
     @BeforeClass
@@ -117,6 +127,11 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         String dockerHost = getTestRequiredProp("docker.host.address");
 
         int expectedNumberOfResources = 3;
+
+        if (!networkType.equals(NetworkType.CUSTOM)) {
+            // +1 resource for the network itself
+            expectedNumberOfResources++;
+        }
 
         assertEquals("Unexpected number of resource links", 1,
                 request.resourceLinks.size());
@@ -206,29 +221,32 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
             }
         }
 
-        // connect to wordpress main page by accessing the publicly exposed service address, reaching all wordpress container nodes
-        assertNotNull(wpContainerState.exposedServiceLink);
-        ExposedServiceDescriptionState exposedServiceDescriptionState = getDocument(
-                wpContainerState.exposedServiceLink, ExposedServiceDescriptionState.class);
+        // Functionality will be removed once native network is completed
+        if (networkType.equals(NetworkType.CUSTOM)) {
+            // connect to wordpress main page by accessing the publicly exposed service address, reaching all wordpress container nodes
+            assertNotNull(wpContainerState.exposedServiceLink);
+            ExposedServiceDescriptionState exposedServiceDescriptionState = getDocument(
+                    wpContainerState.exposedServiceLink, ExposedServiceDescriptionState.class);
 
-        assertEquals(wpContainerState.parentLink, exposedServiceDescriptionState.hostLink);
+            assertEquals(wpContainerState.parentLink, exposedServiceDescriptionState.hostLink);
 
-        String calculatedPublicServiceAddress = exposedServiceDescriptionState.addressConfigs[0].address;
-        assertTrue(calculatedPublicServiceAddress.startsWith(PUBLIC_SERVICE_WP_ADDRESS));
-        assertNotEquals(calculatedPublicServiceAddress, PUBLIC_SERVICE_WP_ADDRESS);
+            String calculatedPublicServiceAddress = exposedServiceDescriptionState.addressConfigs[0].address;
+            assertTrue(calculatedPublicServiceAddress.startsWith(PUBLIC_SERVICE_WP_ADDRESS));
+            assertNotEquals(calculatedPublicServiceAddress, PUBLIC_SERVICE_WP_ADDRESS);
 
-        String host = UriUtilsExtended.extractHost(calculatedPublicServiceAddress);
+            String host = UriUtilsExtended.extractHost(calculatedPublicServiceAddress);
 
-        URI publicUri = URI.create(String.format("http://%s:%s/%s", dockerHost,
-                PUBLIC_SERVICE_PORT, WP_PATH));
-        Map<String, String> headers = new HashMap<String, String>();
-        headers.put("Host", host);
-        logger.info(
-                "------------- 6. connecting to wordpress main page by acceessing publically exposed service address %s with Host header %s. -------------",
-                publicUri, calculatedPublicServiceAddress);
-        waitForStatusCode(publicUri, headers,
-                Operation.STATUS_CODE_OK,
-                STATUS_CODE_WAIT_POLLING_RETRY_COUNT);
+            URI publicUri = URI.create(String.format("http://%s:%s/%s", dockerHost,
+                    PUBLIC_SERVICE_PORT, WP_PATH));
+            Map<String, String> headers = new HashMap<String, String>();
+            headers.put("Host", host);
+            logger.info(
+                    "------------- 6. connecting to wordpress main page by acceessing publically exposed service address %s with Host header %s. -------------",
+                    publicUri, calculatedPublicServiceAddress);
+            waitForStatusCode(publicUri, headers,
+                    Operation.STATUS_CODE_OK,
+                    STATUS_CODE_WAIT_POLLING_RETRY_COUNT);
+        }
     }
 
     private void verifyMysqlConnection(String dockerHost, int mysqlHostPort, int retryCount)

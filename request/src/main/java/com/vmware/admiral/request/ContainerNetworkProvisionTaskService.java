@@ -17,6 +17,7 @@ import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,11 +30,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
@@ -42,10 +45,13 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkService.Cont
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService.ContainerNetworkProvisionTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 
 /**
@@ -188,24 +194,57 @@ public class ContainerNetworkProvisionTaskService
 
     private void provisionNetwork(ContainerNetworkProvisionTaskState state,
             String networkLink, String hostLink, ServiceTaskCallback taskCallback) {
-        updateContainerNetworkStateWithContainerHostLink(networkLink, hostLink,
-                () -> createAndSendContainerNetworkRequest(state, taskCallback, networkLink));
+        getNetworkAndHost(networkLink, hostLink, (network, host) -> {
+            updateContainerNetworkStateWithContainerHostLink(network, host,
+                    () -> createAndSendContainerNetworkRequest(state, taskCallback, networkLink));
+        });
     }
 
-    private void updateContainerNetworkStateWithContainerHostLink(String networkSelfLink,
-            String originatingHostLink, Runnable callbackFunction) {
+    private void getNetworkAndHost(String networkLink, String hostLink,
+            BiConsumer<ContainerNetworkState, ComputeState> callback) {
+        List<Operation> operations = new ArrayList<>();
+        Operation getNetworkOp = Operation.createGet(this, networkLink);
+        Operation getHostOp = Operation.createGet(this, hostLink);
+        operations.add(getNetworkOp);
+        operations.add(getHostOp);
+
+        OperationJoin.create(operations).setCompletion((ops, exs) -> {
+            if (exs != null) {
+                failTask("Failed retrieving network and host: " + Utils.toString(exs), null);
+                return;
+            }
+
+            ContainerNetworkState network = ops.get(getNetworkOp.getId()).getBody(ContainerNetworkState.class);
+            ComputeState host = ops.get(getHostOp.getId()).getBody(ComputeState.class);
+
+            callback.accept(network, host);
+        }).sendWith(this);
+    }
+
+    private void updateContainerNetworkStateWithContainerHostLink(
+            ContainerNetworkState currentNetworkState,
+            ComputeState host, Runnable callbackFunction) {
 
         ContainerNetworkState patch = new ContainerNetworkState();
-        patch.originatingHostLink = originatingHostLink;
+        patch.originatingHostLink = host.documentSelfLink;
+
+        if (currentNetworkState.driver == null || currentNetworkState.driver.isEmpty()) {
+
+            String cluster = host.customProperties
+                    .get(ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME);
+            if (cluster != null && !cluster.isEmpty()) {
+                patch.driver = ContainerNetworkDescription.NETWORK_DRIVER_OVERLAY;
+            }
+        }
 
         sendRequest(Operation
-                .createPatch(this, networkSelfLink)
+                .createPatch(this, currentNetworkState.documentSelfLink)
                 .setBody(patch)
                 .setCompletion(
                         (o, e) -> {
                             if (e != null) {
                                 String errMsg = String.format("Error while updating network: %s",
-                                        networkSelfLink);
+                                        currentNetworkState.documentSelfLink);
                                 logWarning(errMsg);
                                 failTask(errMsg, e);
                             } else {
