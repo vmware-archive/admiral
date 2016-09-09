@@ -235,7 +235,7 @@ public class SystemImageRetrievalManagerTest extends BaseTestCase {
         public void handleGet(Operation get) {
             numberOfRequests++;
             try {
-                Thread.sleep(200);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
             }
             get.setBody(state).complete();
