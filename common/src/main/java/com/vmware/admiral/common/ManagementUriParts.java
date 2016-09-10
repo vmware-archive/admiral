@@ -25,7 +25,6 @@ public interface ManagementUriParts {
     String CERT_DISTRIBUTION_ADD_REGISTRY = CONFIG + "/cert-dist-add-reg";
     String CERT_DISTRIBUTION_ADD_HOST = CONFIG + "/certs-dist-add-host";
     String ENDPOINTS = CONFIG + "/endpoints";
-    String ELASTIC_PLACEMENT_ZONES = CONFIG + "/elastic-placement-zones";
 
     // Resources:
     String DESCRIPTION_SUFFIX = "-descriptions";
@@ -36,6 +35,8 @@ public interface ManagementUriParts {
     String RESOURCE_GROUP_POLICIES = RESOURCES + "/group-policies";
     String RESOURCE_NAME_PREFIXES = RESOURCES + "/name-prefixes";
     String DEPLOYMENT_POLICIES = RESOURCES + "/deployment-policies";
+    String ELASTIC_PLACEMENT_ZONES = RESOURCES + "/elastic-placement-zones";
+    String ELASTIC_PLACEMENT_ZONE_MONITOR = ELASTIC_PLACEMENT_ZONES + "/monitor";
 
     String CONTAINERS = RESOURCES + "/containers";
     String CONTAINER_LOGS = RESOURCES + "/container-logs";
@@ -97,7 +98,6 @@ public interface ManagementUriParts {
     String REQUEST_PROVISION_NAME_PREFIXES_TASKS = REQUEST + "/resource-prefix-tasks";
     String REQUEST_PROVISION_SERVICE_LINKS_TASKS = REQUEST + "/service-link-processing-tasks";
     String REQUEST_PROVISION_EXPOSE_SERVICE_TASKS = REQUEST + "/expose-service-processing-tasks";
-    String REQUEST_PROVISION_ELASTIC_PLACEMENT_TASKS = REQUEST + "/elastic-placement-tasks";
     String REQUEST_CALLBACK_HANDLER_TASKS = REQUEST + "/callback-handler/";
 
     String DELETE_SERVICE_DOCUMENTS = "/delete-tasks";

@@ -27,9 +27,11 @@ import com.vmware.xenon.common.Utils;
  * pool are identified by matching tags instead of explicitly attaching them to the pool.
  *
  * <p>It is based on photon-model's {@link ResourcePoolService} with added tags to match computes
- * against. A job running periodically searches for computes to include in the pool and
- * updates their {@link ComputeState#resourcePoolLink} link so that the elasticity concept is
- * transparent to resource pool clients.</p>
+ * against.</p>
+ *
+ * <p>{@link ElasticPlacementZoneMonitor} is started to periodically search for computes to
+ * include in the pool and update their {@link ComputeState#resourcePoolLink} link so that the
+ * elasticity concept is transparent to resource pool clients.</p>
  */
 public class ElasticPlacementZoneService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.ELASTIC_PLACEMENT_ZONES;
@@ -60,12 +62,17 @@ public class ElasticPlacementZoneService extends StatefulService {
     }
 
     @Override
-    public void handleCreate(Operation create) {
+    public void handleStart(Operation startPost) {
         try {
-            processInput(create);
-            create.complete();
+            processInput(startPost);
+            startPost.complete();
+
+            // make sure the elastic placement zone monitor is started
+            // (after the POST operation completes, otherwise the monitor will not see the
+            // newly created EPZ)
+            ElasticPlacementZoneMonitor.start(getHost(), getUri(), null);
         } catch (Throwable t) {
-            create.fail(t);
+            startPost.fail(t);
         }
     }
 

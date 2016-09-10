@@ -728,6 +728,7 @@ public class ComputeAllocationTaskService extends
             failTask(String.format(
                     "Provided placement links (%s) do not match the requested resource count (%s)",
                     state.selectedComputePlacementLinks.size(), state.resourceCount), null);
+            return;
         }
 
         if (state.customProperties == null) {

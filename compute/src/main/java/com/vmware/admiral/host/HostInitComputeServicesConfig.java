@@ -12,6 +12,7 @@
 package com.vmware.admiral.host;
 
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ElasticPlacementZoneMonitor;
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
 import com.vmware.admiral.compute.EnvironmentMappingService;
 import com.vmware.admiral.compute.HostConfigCertificateDistributionService;
@@ -72,7 +73,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ContainerShellService.class, ShellContainerExecutorService.class,
                 HostConfigCertificateDistributionService.class,
                 RegistryConfigCertificateDistributionService.class,
-                ComputeInitialBootService.class);
+                ComputeInitialBootService.class,
+                ElasticPlacementZoneMonitor.class);
 
         startServiceFactories(host, ContainerDescriptionService.class,
                 GroupResourcePolicyService.class,
