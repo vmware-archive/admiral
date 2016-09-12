@@ -96,10 +96,7 @@ let MachinesStore = Reflux.createStore({
           for (var key in documents) {
             if (documents.hasOwnProperty(key)) {
               var document = documents[key];
-              if (document.customProperties &&
-                  document.customProperties.computeType) {
-                machines.push(toViewModel(document));
-              }
+              machines.push(toViewModel(document));
             }
           }
 

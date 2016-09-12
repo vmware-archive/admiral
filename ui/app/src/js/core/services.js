@@ -1220,10 +1220,10 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts) {
 
   //  Filter only actual compute hosts
   if (!onlyContainerHosts) {
-    qOps['customProperties/computeType'] = [
+    qOps['customProperties/__endpointType'] = [
       {
-        op: 'eq',
-        val: 'VirtualMachine'
+        op: 'ne',
+        val: '*'
       }
     ];
   }
