@@ -171,12 +171,6 @@ public class ComputePlacementSelectionTaskService extends
                         ComputeDescription.FIELD_NAME_SUPPORTED_CHILDREN,
                         ComputeType.VM_GUEST.toString());
 
-        // TODO pmitrov: consider removing zoneId condition in favor of parent checks
-        // (to be done when this class is merged w/ PlacementHostSelectionTaskService)
-        if (desc.zoneId != null && !desc.zoneId.isEmpty()) {
-            queryBuilder.addFieldClause(ComputeDescription.FIELD_NAME_ZONE_ID, desc.zoneId);
-        }
-
         QueryTask queryTask = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
 
         final List<String> computeDescriptionLinks = new ArrayList<>();

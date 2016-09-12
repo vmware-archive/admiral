@@ -593,7 +593,9 @@ public class ComputeAllocationTaskService extends
         computeDesc.instanceAdapterReference = endpointComputeDescription.instanceAdapterReference;
         computeDesc.bootAdapterReference = endpointComputeDescription.bootAdapterReference;
         computeDesc.powerAdapterReference = endpointComputeDescription.powerAdapterReference;
-        computeDesc.zoneId = endpointComputeDescription.zoneId;
+        if (computeDesc.zoneId == null) {
+            computeDesc.zoneId = endpointComputeDescription.zoneId;
+        }
         computeDesc.regionId = endpointComputeDescription.regionId;
         computeDesc.environmentName = endpointComputeDescription.environmentName;
 

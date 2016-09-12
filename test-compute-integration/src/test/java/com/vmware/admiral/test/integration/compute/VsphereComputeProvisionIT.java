@@ -34,6 +34,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     public static final String VC_PASSWORD = "test.vsphere.password";
     public static final String VC_HOST = "test.vsphere.hostname";
     public static final String VC_RESOURCE_POOL_ID = "test.vsphere.resource.pool.path";
+    public static final String VC_DATACENTER_ID = "test.vsphere.datacenter";
     public static final String VC_DATASTORE_ID = "test.vsphere.datastore.path";
     public static final String VC_NETWORK_ID = "test.vsphere.network.id";
     public static final String VC_TARGET_FOLDER_PATH = "test.vsphere.vm.folder";
@@ -96,7 +97,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     protected void extendEndpoint(EndpointState endpoint) {
         endpoint.privateKeyId = getTestRequiredProp(VC_USERNAME);
         endpoint.privateKey = getTestRequiredProp(VC_PASSWORD);
-        endpoint.regionId = getTestRequiredProp(VC_RESOURCE_POOL_ID);
+        endpoint.regionId = getTestRequiredProp(VC_DATACENTER_ID);
         endpoint.endpointHost = getTestRequiredProp(VC_HOST);
     }
 
@@ -105,6 +106,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
             throws Exception {
         computeDescription.dataStoreId = getTestRequiredProp(VC_DATASTORE_ID);
         computeDescription.networkId = getTestRequiredProp(VC_NETWORK_ID);
+        computeDescription.zoneId = getTestRequiredProp(VC_RESOURCE_POOL_ID);
         String vmFolder = getTestProp(VC_TARGET_FOLDER_PATH);
         if (vmFolder != null) {
             computeDescription.customProperties.put(ComputeProperties.RESOURCE_GROUP_NAME,
