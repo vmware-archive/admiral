@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,8 +34,6 @@ import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
-import com.vmware.admiral.compute.container.ContainerHostNetworkConfigFactoryService;
-import com.vmware.admiral.compute.container.ContainerHostNetworkConfigService.ContainerHostNetworkConfigState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState.SubStage;
@@ -403,19 +400,11 @@ public class ContainerRemovalTaskService
                         AtomicLong skipOperationException = new AtomicLong();
 
                         Operation delContainerOpr = deleteContainer(cs);
-                        Operation delNetworkConfig = null;
-                        if (cs.parentLink != null) {
-                            delNetworkConfig = deleteNetworkConfig(cs, skipOperationException);
-                        }
-
                         Operation policyOpr = releaseResourcePolicy(state, cs, subTaskLink);
 
                         // list of operations to execute to release container resources
                         List<Operation> operations = new ArrayList<>();
                         operations.add(delContainerOpr);
-                        if (delNetworkConfig != null) {
-                            operations.add(delNetworkConfig);
-                        }
                         // add policyOpr only when needed
                         if (policyOpr != null) {
                             operations.add(policyOpr);
@@ -498,37 +487,6 @@ public class ContainerRemovalTaskService
                         });
 
         return deleteContanerDesc;
-    }
-
-    private Operation deleteNetworkConfig(ContainerState cs, AtomicLong skipOperationException) {
-        String hostId = Service.getId(cs.parentLink);
-
-        ContainerHostNetworkConfigState patchNetworkConfig = new ContainerHostNetworkConfigState();
-        patchNetworkConfig.remove = true;
-        patchNetworkConfig.containerNetworkConfigs = new HashMap<>();
-        patchNetworkConfig.containerNetworkConfigs.put(cs.documentSelfLink, null);
-
-        String hostNetworkConfigLink = UriUtils.buildUriPath(
-                ContainerHostNetworkConfigFactoryService.SELF_LINK, hostId);
-
-        return Operation
-                .createPatch(this, hostNetworkConfigLink)
-                .setBody(patchNetworkConfig)
-                .setCompletion((o, ex) -> {
-                    String configString =
-                            String.format("network config for host %s and container %s",
-                                    cs.parentLink, cs.documentSelfLink);
-                    if (ex != null) {
-                        if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                            logWarning(configString + " not found. Skip deletion...");
-                            skipOperationException.set(o.getId());
-                            return;
-                        }
-                        logWarning("Failed deleting " + configString, ex);
-                        return;
-                    }
-                    logInfo("Deleted " + configString);
-                });
     }
 
     private Operation releaseResourcePolicy(ContainerRemovalTaskState state, ContainerState cs,

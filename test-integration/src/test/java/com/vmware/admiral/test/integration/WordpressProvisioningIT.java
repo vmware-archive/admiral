@@ -12,17 +12,13 @@
 package com.vmware.admiral.test.integration;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.net.Socket;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.AfterClass;
@@ -39,7 +35,6 @@ import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerLogService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.compute.container.ExposedServiceDescriptionService.ExposedServiceDescriptionState;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.service.common.LogService;
@@ -56,11 +51,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
     private static final String WP_PATH = "wp-admin/install.php?step=1";
     private static final String WP_NAME = "wordpress";
     private static final String MYSQL_NAME = "mysql";
-    private static final String PUBLIC_SERVICE_PORT = "80";
-    // As defined in the YAML file
-    private static final String PUBLIC_SERVICE_WP_ADDRESS = "http://wordpress.cmp";
     private static final String MYSQL_START_MESSAGE_BEGIN = "Ready for start up.";
-
     private static final String MYSQL_START_MESSAGE_END = "ready for connections";
     private static final int MYSQL_START_WAIT_RETRY_COUNT = 20;
     private static final int MYSQL_START_WAIT_PRERIOD_MILLIS = 5000;
@@ -79,7 +70,6 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
                 { "WordPress_with_MySQL_bindings.yaml", NetworkType.CUSTOM },
-                { "WordPress_with_MySQL.yaml", NetworkType.CUSTOM },
                 { "WordPress_with_MySQL_network.yaml", NetworkType.BRIDGE },
                 { "WordPress_with_MySQL_network.yaml", NetworkType.OVERLAY }
         });
@@ -234,33 +224,6 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         }
 
         assertEquals(2, wpContainersCount);
-
-        // Functionality will be removed once native network is completed
-        if (networkType.equals(NetworkType.CUSTOM)) {
-            // connect to wordpress main page by accessing the publicly exposed service address, reaching all wordpress container nodes
-            assertNotNull(wpContainerState.exposedServiceLink);
-            ExposedServiceDescriptionState exposedServiceDescriptionState = getDocument(
-                    wpContainerState.exposedServiceLink, ExposedServiceDescriptionState.class);
-
-            assertEquals(wpContainerState.parentLink, exposedServiceDescriptionState.hostLink);
-
-            String calculatedPublicServiceAddress = exposedServiceDescriptionState.addressConfigs[0].address;
-            assertTrue(calculatedPublicServiceAddress.startsWith(PUBLIC_SERVICE_WP_ADDRESS));
-            assertNotEquals(calculatedPublicServiceAddress, PUBLIC_SERVICE_WP_ADDRESS);
-
-            String host = UriUtilsExtended.extractHost(calculatedPublicServiceAddress);
-
-            URI publicUri = URI.create(String.format("http://%s:%s/%s", wpHost,
-                    PUBLIC_SERVICE_PORT, WP_PATH));
-            Map<String, String> headers = new HashMap<String, String>();
-            headers.put("Host", host);
-            logger.info(
-                    "------------- 5. connecting to wordpress main page by acceessing publically exposed service address %s with Host header %s. -------------",
-                    publicUri, calculatedPublicServiceAddress);
-            waitForStatusCode(publicUri, headers,
-                    Operation.STATUS_CODE_OK,
-                    STATUS_CODE_WAIT_POLLING_RETRY_COUNT);
-        }
     }
 
     private void verifyMysqlConnection(String dockerHost, int mysqlHostPort, int retryCount)

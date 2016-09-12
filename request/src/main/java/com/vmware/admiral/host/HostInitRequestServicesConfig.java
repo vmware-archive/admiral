@@ -13,14 +13,12 @@ package com.vmware.admiral.host;
 
 import com.vmware.admiral.request.ContainerAllocationTaskFactoryService;
 import com.vmware.admiral.request.ContainerClusteringTaskFactoryService;
-import com.vmware.admiral.request.ContainerExposeServiceProcessingTaskService;
 import com.vmware.admiral.request.ContainerHostRemovalTaskFactoryService;
 import com.vmware.admiral.request.ContainerNetworkAllocationTaskService;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService;
 import com.vmware.admiral.request.ContainerNetworkRemovalTaskService;
 import com.vmware.admiral.request.ContainerOperationTaskFactoryService;
 import com.vmware.admiral.request.ContainerRemovalTaskFactoryService;
-import com.vmware.admiral.request.ContainerServiceLinkProcessingTaskService;
 import com.vmware.admiral.request.ContainerVolumeAllocationTaskService;
 import com.vmware.admiral.request.ContainerVolumeProvisionTaskService;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService;
@@ -77,8 +75,6 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 ComputePlacementSelectionTaskService.class,
                 ResourceNamePrefixTaskService.class,
                 ReservationAllocationTaskService.class,
-                ContainerServiceLinkProcessingTaskService.class,
-                ContainerExposeServiceProcessingTaskService.class,
                 CompositeComponentRemovalTaskService.class,
                 ServiceDocumentDeleteTaskService.class);
     }

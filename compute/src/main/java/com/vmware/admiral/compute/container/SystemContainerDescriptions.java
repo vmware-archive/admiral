@@ -39,7 +39,7 @@ public class SystemContainerDescriptions {
             "dcp.management.images.agent.name", "vmware/admiral_agent");
     public static final String AGENT_IMAGE_TAR_FILENAME = "admiral_agent";
     public static final String AGENT_IMAGE_VERSION = System.getProperty(
-            "dcp.management.images.agent.version", "0.5.0");
+            "dcp.management.images.agent.version", "0.5.1");
     public static final String AGENT_IMAGE_REFERENCE = System.getProperty(
             "dcp.management.images.agent.reference", AGENT_IMAGE_TAR_FILENAME + ".tar");
 
@@ -49,11 +49,11 @@ public class SystemContainerDescriptions {
         cd.documentSelfLink = AGENT_CONTAINER_DESCRIPTION_LINK;
         cd.name = AGENT_CONTAINER_NAME;
         cd.image = getAgentImageNameAndVersion();
+        cd.publishAll = true;
 
         cd.volumes = new String[] { "/var/run/docker.sock:/var/run/docker.sock",
                 "/etc/docker:/etc/docker" };
         cd.restartPolicy = "always";
-        cd.networkMode = "host";
 
         return cd;
     }
@@ -64,8 +64,8 @@ public class SystemContainerDescriptions {
         return (containerState.descriptionLink != null && containerState.descriptionLink
                 .startsWith(DISCOVERED_DESCRIPTION_LINK))
                 || (Boolean.TRUE.equals(containerState.system)
-                && (containerState.groupResourcePolicyLink == null
-                || containerState.groupResourcePolicyLink.isEmpty()));
+                        && (containerState.groupResourcePolicyLink == null
+                                || containerState.groupResourcePolicyLink.isEmpty()));
     }
 
     public static String getSystemContainerSelfLink(String systemContainerName, String hostId) {

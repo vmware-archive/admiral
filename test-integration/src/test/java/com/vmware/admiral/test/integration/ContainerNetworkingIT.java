@@ -12,18 +12,11 @@
 package com.vmware.admiral.test.integration;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import static com.vmware.admiral.test.integration.TestPropertiesUtil.getTestRequiredProp;
-
-import java.net.URI;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,15 +28,12 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.ServiceClientFactory;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerLogService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.compute.container.ExposedServiceDescriptionService.ExposedServiceDescriptionState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.service.common.LogService;
-import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.Utils;
 
@@ -66,8 +56,6 @@ import com.vmware.xenon.common.Utils;
 @Ignore("https://jira-hzn.eng.vmware.com/browse/VSYM-152")
 public class ContainerNetworkingIT extends BaseProvisioningOnCoreOsIT {
     private static final String TEMPLATE_FILE = "Identity_server_with_Curl_client.yaml";
-    private static final String PUBLIC_SERVICE_PORT = "80";
-    private static final String PUBLIC_SERVICE_ADDRESS = "http://identity.cmp";
     private static final String SERVER_NAME = "server";
     private static final String CLIENT_NAME = "client";
 
@@ -144,44 +132,12 @@ public class ContainerNetworkingIT extends BaseProvisioningOnCoreOsIT {
                 SERVER_CLUSTER_SIZE,
                 serverHostnames.size());
 
-        String exposedServiceLink = null;
         // verify that all servers from the cluster have been reached from the clients
         for (String serverResourceLink : serverResourceLinks) {
             ContainerState serverContainer = getDocument(serverResourceLink, ContainerState.class);
             String shortId = getDockerShortId(serverContainer.id);
             assertTrue(serverHostnames.contains(shortId));
-
-            if (exposedServiceLink == null) {
-                exposedServiceLink = serverContainer.exposedServiceLink;
-            } else {
-                assertEquals(exposedServiceLink, serverContainer.exposedServiceLink);
-            }
         }
-
-        assertNotNull(exposedServiceLink);
-        ExposedServiceDescriptionState exposedServiceDescriptionState = getDocument(
-                exposedServiceLink, ExposedServiceDescriptionState.class);
-
-        String calculatedPublicServiceAddress = exposedServiceDescriptionState.addressConfigs[0].address;
-        assertTrue(calculatedPublicServiceAddress.startsWith(PUBLIC_SERVICE_ADDRESS));
-        assertNotEquals(calculatedPublicServiceAddress, PUBLIC_SERVICE_ADDRESS);
-
-        String host = UriUtilsExtended.extractHost(calculatedPublicServiceAddress);
-
-        // connect to server cluster main page by accessing the publicly exposed service address
-        String dockerHost = getTestRequiredProp("docker.host.address");
-        URI publicUri = URI.create(String.format("http://%s:%s", dockerHost,
-                PUBLIC_SERVICE_PORT));
-        Map<String, String> headers = new HashMap<String, String>();
-        headers.put("Host", host);
-
-        logger.info(
-                "connecting to service by acceessing publically exposed service address %s with Host header %s.",
-                publicUri, calculatedPublicServiceAddress);
-
-        waitForStatusCode(publicUri, headers,
-                Operation.STATUS_CODE_OK,
-                BaseIntegrationSupportIT.STATE_CHANGE_WAIT_POLLING_RETRY_COUNT);
     }
 
     private Set<String> getServiceHostNameFromLogs(String clientResourceLink) throws Exception {

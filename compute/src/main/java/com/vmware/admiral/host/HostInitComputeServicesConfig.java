@@ -26,7 +26,6 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
-import com.vmware.admiral.compute.container.ContainerHostNetworkConfigFactoryService;
 import com.vmware.admiral.compute.container.ContainerLogService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerShellService;
@@ -38,7 +37,6 @@ import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.admiral.compute.container.TemplateSearchService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
-import com.vmware.admiral.compute.container.network.ContainerNetworkReconfigureService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
@@ -62,8 +60,6 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         startServices(host,
                 ContainerFactoryService.class,
                 ContainerHostService.class,
-                ContainerHostNetworkConfigFactoryService.class,
-                ContainerNetworkReconfigureService.class,
                 ExposedServiceDescriptionFactoryService.class,
                 HostContainerListDataCollectionFactoryService.class,
                 RegistryHostConfigService.class,

@@ -25,3 +25,4 @@ test-integration/src/test/resources/pkey
 scripts/admiral-host*.jar
 scripts/xenon*.jar
 **/node_modules
+container-images/admiral-agent/tocopy/agent

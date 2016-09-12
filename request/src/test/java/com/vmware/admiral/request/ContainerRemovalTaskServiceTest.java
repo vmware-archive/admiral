@@ -29,7 +29,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
@@ -38,12 +37,9 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
-import com.vmware.admiral.compute.container.ContainerHostNetworkConfigFactoryService;
-import com.vmware.admiral.compute.container.ContainerHostNetworkConfigService.ContainerNetworkConfigState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
-import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.ServiceAddressConfig;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -51,15 +47,12 @@ import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 
 public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
     private RequestBrokerState request;
-    private MockContainerHostNetworkConfigService mockContainerHostNetworkConfigService;
 
     @Before
     @Override
@@ -69,12 +62,6 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request.resourceDescriptionLink = containerDesc.documentSelfLink;
         request.tenantLinks = groupPolicyState.tenantLinks;
         request.resourceCount = 2;
-
-        mockContainerHostNetworkConfigService = new MockContainerHostNetworkConfigService();
-        String path = UriUtils.buildUriPath(ContainerHostNetworkConfigFactoryService.SELF_LINK,
-                Service.getId(computeHost.documentSelfLink));
-        host.startService(Operation.createPost(UriUtilsExtended.buildUri(host, path)),
-                mockContainerHostNetworkConfigService);
     }
 
     @Test
@@ -103,38 +90,6 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
                 request.groupResourcePolicyLink);
         assertNotNull(groupResourcePolicy);
         assertEquals(groupResourcePolicy.allocatedInstancesCount, request.resourceCount);
-
-        // verify the network configuration has been updated:
-        for (String containerLink : containerStateLinks) {
-            ContainerState cs = getDocument(ContainerState.class, containerLink);
-
-            PortBinding selectedPB = null;
-            for (PortBinding pb : cs.ports) {
-                if (pb.containerPort.equals(serviceAddressConfig.port)) {
-                    selectedPB = pb;
-                }
-            }
-
-            ContainerNetworkConfigState containerNetworkConfigState = mockContainerHostNetworkConfigService
-                    .getConfig(cs.documentSelfLink);
-            assertNotNull(containerNetworkConfigState);
-
-            String publicServiceNetworkLink = containerNetworkConfigState.publicServiceNetworkLinks
-                    .iterator().next();
-
-            String[] publicServiceNetworkLinkParts = publicServiceNetworkLink.split(":");
-
-            assertEquals(UriUtils.HTTP_SCHEME, publicServiceNetworkLinkParts[0]);
-
-            // Check that service alias is generated with unique suffix
-            assertTrue(publicServiceNetworkLinkParts[1]
-                    .startsWith(serviceAddressConfig.address));
-            assertNotEquals(serviceAddressConfig.address, publicServiceNetworkLinkParts[0]);
-
-            assertEquals(UriUtilsExtended.extractHost(computeHost.address),
-                    publicServiceNetworkLinkParts[2]);
-            assertEquals(selectedPB.hostPort, publicServiceNetworkLinkParts[3]);
-        }
 
         waitFor(() -> {
             ComputeState computeState = getDocument(ComputeState.class,
@@ -169,15 +124,6 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
                 request.groupResourcePolicyLink);
         assertNotNull(groupResourcePolicy);
         assertEquals(groupResourcePolicy.allocatedInstancesCount, 0);
-
-        // verify the network configuration has been removed:
-        for (String containerLink : containerStateLinks) {
-            ContainerState cs = getDocument(ContainerState.class, containerLink);
-
-            ContainerNetworkConfigState containerNetworkConfigState = mockContainerHostNetworkConfigService
-                    .getConfig(cs.documentSelfLink);
-            assertNull(containerNetworkConfigState);
-        }
 
         // verify that the containers where removed from the docker mock
         Map<String, String> containerRefsByIds = MockDockerAdapterService

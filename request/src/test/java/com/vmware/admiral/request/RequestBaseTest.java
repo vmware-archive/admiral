@@ -37,7 +37,6 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
-import com.vmware.admiral.compute.container.ContainerHostNetworkConfigFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService;
@@ -159,7 +158,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 RegistryService.FACTORY_LINK,
                 ConfigurationFactoryService.SELF_LINK,
                 ConfigurationFactoryService.SELF_LINK,
-                ContainerHostNetworkConfigFactoryService.SELF_LINK,
                 EventLogService.FACTORY_LINK,
                 CounterSubTaskService.FACTORY_LINK,
                 ReservationAllocationTaskService.FACTORY_LINK));

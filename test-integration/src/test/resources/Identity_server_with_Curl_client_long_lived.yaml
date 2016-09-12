@@ -11,20 +11,24 @@ components:
       name: identity-server
       image: cmp/cmp_test_identity:latest
       _cluster: 1
-      ports:
-      - container_port: "80"
-      expose_service:
-      - address: identity.cmp
-        port: "80"
+      networks:
+        clientservernet:
+          aliases:
+          - "identity"
   curl-client:
     type: Container.Docker
     data:
       name: curl-client
       image: cmp/cmp_test_curl:latest
       _cluster: 1
-      links:
-      - service: identity-server
-        alias: identity
+      depends_on:
+      - "identity-server"
+      networks:
+        clientservernet: {}
       command:
       - "/curlloop.sh"
       - "100"
+  clientservernet:
+    type: Network.Docker
+    data:
+      name: clientservernet

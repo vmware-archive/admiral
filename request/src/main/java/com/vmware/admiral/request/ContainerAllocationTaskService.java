@@ -39,8 +39,6 @@ import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.OperationUtil;
-import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -51,12 +49,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
 import com.vmware.admiral.compute.container.ServiceNetwork;
-import com.vmware.admiral.compute.container.network.ContainerNetworkService;
-import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage;
-import com.vmware.admiral.request.ContainerExposeServiceProcessingTaskService.ContainerExposeServiceProcessingTaskState;
-import com.vmware.admiral.request.ContainerServiceLinkProcessingTaskService.ContainerServiceLinkProcessingTaskState;
-import com.vmware.admiral.request.ContainerServiceLinkProcessingTaskService.ContainerServiceLinksConfig;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
@@ -66,14 +59,12 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.QueryTask;
 
 /**
  * Task implementing the provision container request resource work flow.
@@ -99,7 +90,6 @@ public class ContainerAllocationTaskService
         private static final String FIELD_NAME_RESOURCE_LINKS = "resourceLinks";
         private static final String FIELD_NAME_RESOURCE_NAMES = "resourceNames";
         private static final String FIELD_NAME_HOST_SELECTIONS = "hostSelections";
-        private static final String FIELD_NAME_CONTAINER_SERVICE_LINKS_CONFIGS = "containerServiceLinksConfigs";
         private static final String FIELD_NAME_INSTANCE_ADAPTER_REF = "instanceAdapterReference";
 
         /**
@@ -164,9 +154,6 @@ public class ContainerAllocationTaskService
 
         /** (Internal) Set by task with ContainerDescription name. */
         public String descName;
-
-        /** (Internal) Set by task, a map of container service links configurations */
-        public Map<String, ContainerServiceLinksConfig> containerServiceLinksConfigs;
     }
 
     public ContainerAllocationTaskService() {
@@ -213,19 +200,10 @@ public class ContainerAllocationTaskService
         case PLACEMENT_HOST_SELECTED:
             proceedAfterHostSelection(state);
             break;
-        case PROCESSING_SERVICE_LINKS:
-            createServiceLinkProcessingTask(state, null, null);
-            break;
         case START_PROVISIONING:
             provisionOrAllocateContainers(state, null, null);
             break;
         case PROVISIONING:
-            break;
-        case PROVISIONING_COMPLETED:
-            proceedAfterProvisioning(state, null);
-            break;
-        case PROCESSING_PUBLIC_SERVICE_ALIAS:
-            createPublicServiceAliasProcessingTask(state, null, null);
             break;
         case COMPLETED:
             completeAllocationTask(state);
@@ -261,9 +239,6 @@ public class ContainerAllocationTaskService
                 patchBody.resourceCount);
 
         currentState.descName = mergeProperty(currentState.descName, patchBody.descName);
-
-        currentState.containerServiceLinksConfigs = mergeProperty(
-                currentState.containerServiceLinksConfigs, patchBody.containerServiceLinksConfigs);
 
         return false;
     }
@@ -332,12 +307,11 @@ public class ContainerAllocationTaskService
 
             final Map<String, HostSelection> resourceNameToHostSelection = !state.postAllocation
                     ? selectHostPerResourceName(state.resourceNames, state.hostSelections) : null;
-            final SubStage subStage = isAllocationRequest(state) ? SubStage.START_PROVISIONING
-                    : SubStage.PROCESSING_SERVICE_LINKS;
             if (state.instanceAdapterReference == null) {
                 // reload container description if null
                 getContainerDescription(state, (contDesc) -> {
-                    ContainerAllocationTaskState body = createUpdateSubStageTask(state, subStage);
+                    ContainerAllocationTaskState body = createUpdateSubStageTask(state,
+                            SubStage.START_PROVISIONING);
                     body.instanceAdapterReference = contDesc.instanceAdapterReference;
                     body.resourceNameToHostSelection = resourceNameToHostSelection;
                     body.customProperties = mergeCustomProperties(state.customProperties,
@@ -346,7 +320,7 @@ public class ContainerAllocationTaskService
                 });
             } else {
                 ContainerAllocationTaskState body = createUpdateSubStageTask(state,
-                        SubStage.PROCESSING_SERVICE_LINKS);
+                        SubStage.START_PROVISIONING);
                 body.resourceNameToHostSelection = resourceNameToHostSelection;
                 sendSelfPatch(body);
             }
@@ -412,29 +386,6 @@ public class ContainerAllocationTaskService
                     this.containerDescription = desc;
                     callbackFunction.accept(desc);
                 }));
-    }
-
-    private void getContainerStates(List<String> resourceLinks,
-            Consumer<List<ContainerState>> callbackFunction) {
-
-        QueryTask contStateQuery = QueryUtil.buildPropertyQuery(ContainerState.class);
-        QueryUtil.addExpandOption(contStateQuery);
-        QueryUtil.addListValueClause(contStateQuery, ContainerState.FIELD_NAME_SELF_LINK,
-                resourceLinks);
-
-        List<ContainerState> conatinerStates = new ArrayList<>();
-
-        new ServiceDocumentQuery<ContainerState>(getHost(), ContainerState.class).query(
-                contStateQuery,
-                (r) -> {
-                    if (r.hasException()) {
-                        failTask("Failure retrieving container states", r.getException());
-                    } else if (r.hasResult()) {
-                        conatinerStates.add(r.getResult());
-                    } else {
-                        callbackFunction.accept(conatinerStates);
-                    }
-                });
     }
 
     private void prepareContext(ContainerAllocationTaskState state,
@@ -568,145 +519,6 @@ public class ContainerAllocationTaskService
                 }));
     }
 
-    private void createServiceLinkProcessingTask(ContainerAllocationTaskState state,
-            ContainerDescription containerDescription, List<ContainerState> containerStates) {
-
-        if (isAllocationRequest(state)) {
-            logInfo("Skipping service link processing for allocation request");
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.START_PROVISIONING));
-            return;
-        }
-
-        if (containerDescription == null) {
-            getContainerDescription(state, (contDesc) -> createServiceLinkProcessingTask(
-                    state, contDesc, containerStates));
-
-            return;
-        }
-
-        if (containerDescription.links == null || containerDescription.links.length == 0) {
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.START_PROVISIONING));
-            return;
-        }
-
-        List<ContainerState> preparedContainerStates = null;
-
-        if (containerStates != null) {
-            preparedContainerStates = containerStates;
-        } else {
-            if (state.postAllocation) {
-                getContainerStates(
-                        state.resourceLinks,
-                        (result) -> createServiceLinkProcessingTask(state, containerDescription,
-                                result));
-                return;
-            } else {
-                // Prepare container state model with only the properties needed by
-                // ContainerServiceLinkProcessingTaskState
-                // Actual container states don't exist at this moment.
-                preparedContainerStates = new ArrayList<>();
-
-                for (String resourceName : state.resourceNames) {
-                    ContainerState containerState = new ContainerState();
-                    containerState.descriptionLink = state.resourceDescriptionLink;
-                    containerState.documentSelfLink = buildResourceLink(resourceName);
-                    containerState.names = new ArrayList<>();
-                    containerState.names.add(resourceName);
-                    containerState.parentLink = state.resourceNameToHostSelection
-                            .get(resourceName).hostLink;
-                    preparedContainerStates.add(containerState);
-                }
-            }
-        }
-
-        try {
-            // create service link processing task
-            ContainerServiceLinkProcessingTaskState serviceLinkTask = new ContainerServiceLinkProcessingTaskState();
-            serviceLinkTask.documentSelfLink = getSelfId();
-            serviceLinkTask.containerDescription = containerDescription;
-            serviceLinkTask.containerStates = preparedContainerStates;
-            serviceLinkTask.contextId = getContextId(state);
-
-            serviceLinkTask.serviceTaskCallback = ServiceTaskCallback.create(
-                    state.documentSelfLink,
-                    TaskStage.STARTED, SubStage.START_PROVISIONING,
-                    TaskStage.STARTED, SubStage.ERROR);
-
-            serviceLinkTask.requestTrackerLink = state.requestTrackerLink;
-
-            sendRequest(Operation
-                    .createPost(this, ContainerServiceLinkProcessingTaskService.FACTORY_LINK)
-                    .setBody(serviceLinkTask)
-                    .setCompletion((o, e) -> {
-                        if (e != null) {
-                            failTask("Failure creating service link processing task", e);
-                            return;
-                        }
-                    }));
-        } catch (Throwable x) {
-            failTask("Failure creating service link processing task", x);
-        }
-    }
-
-    private void createPublicServiceAliasProcessingTask(ContainerAllocationTaskState state,
-            ContainerDescription containerDescription, List<ContainerState> containerStates) {
-
-        if (isAllocationRequest(state)) {
-            logInfo("Skipping public service address processing for allocation request");
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
-            return;
-        }
-
-        if (containerDescription == null) {
-            getContainerDescription(state, (contDesc) -> createPublicServiceAliasProcessingTask(
-                    state, contDesc, containerStates));
-
-            return;
-        }
-
-        if (containerDescription.exposeService == null
-                || containerDescription.exposeService.length == 0) {
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
-            return;
-        }
-
-        if (containerStates == null && state.resourceLinks != null) {
-            getContainerStates(state.resourceLinks,
-                    (contStates) -> createPublicServiceAliasProcessingTask(
-                            state, containerDescription, contStates));
-
-            return;
-        }
-
-        try {
-            // create expose service processing task
-            ContainerExposeServiceProcessingTaskState serviceLinkTask = new ContainerExposeServiceProcessingTaskState();
-            serviceLinkTask.documentSelfLink = getSelfId();
-            serviceLinkTask.containerDescription = containerDescription;
-            serviceLinkTask.containerStates = containerStates;
-            serviceLinkTask.contextId = getContextId(state);
-
-            serviceLinkTask.serviceTaskCallback = ServiceTaskCallback.create(
-                    state.documentSelfLink,
-                    TaskStage.STARTED, SubStage.COMPLETED,
-                    TaskStage.STARTED, SubStage.ERROR);
-
-            serviceLinkTask.requestTrackerLink = state.requestTrackerLink;
-
-            sendRequest(Operation
-                    .createPost(this, ContainerExposeServiceProcessingTaskService.FACTORY_LINK)
-                    .setBody(serviceLinkTask)
-                    .setCompletion((o, e) -> {
-                        if (e != null) {
-                            failTask("Failure creating expose service processing task", e);
-                            return;
-                        }
-                    }));
-        } catch (Throwable x) {
-            failTask("Failure creating expose service processing task", x);
-        }
-    }
-
     private void provisionOrAllocateContainers(ContainerAllocationTaskState state,
             ContainerDescription containerDesc, ServiceTaskCallback taskCallback) {
         final boolean allocationRequest = isAllocationRequest(state);
@@ -714,7 +526,7 @@ public class ContainerAllocationTaskService
         if (taskCallback == null) {
             // create a counter subtask link first
             createCounterSubTaskCallback(state, state.resourceCount, !allocationRequest,
-                    SubStage.PROVISIONING_COMPLETED,
+                    SubStage.COMPLETED,
                     (serviceTask) -> provisionOrAllocateContainers(state,
                             this.containerDescription, serviceTask));
             return;
@@ -740,8 +552,7 @@ public class ContainerAllocationTaskService
 
         if (state.postAllocation) {
             for (String resourceLink : state.resourceLinks) {
-                updateContainerState(state, taskCallback, resourceLink,
-                        () -> createContainerInstanceRequests(state, taskCallback, resourceLink));
+                createContainerInstanceRequests(state, taskCallback, resourceLink);
             }
         } else {
             for (String resourceName : state.resourceNames) {
@@ -752,33 +563,6 @@ public class ContainerAllocationTaskService
         }
 
         sendSelfPatch(createUpdateSubStageTask(state, SubStage.PROVISIONING));
-    }
-
-    private void proceedAfterProvisioning(ContainerAllocationTaskState state,
-            ContainerDescription containerDesc) {
-        if (isAllocationRequest(state)) {
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
-            return;
-        }
-
-        if (containerDesc == null) {
-            if (this.containerDescription == null) {
-                getContainerDescription(state, (contDesc) -> {
-                    proceedAfterProvisioning(state, contDesc);
-                });
-                return;
-            } else {
-                containerDesc = this.containerDescription;
-            }
-        }
-
-        if (containerDesc.exposeService == null
-                || containerDesc.exposeService.length == 0) {
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
-        } else {
-            sendSelfPatch(createUpdateSubStageTask(state,
-                    SubStage.PROCESSING_PUBLIC_SERVICE_ALIAS));
-        }
     }
 
     private boolean isAllocationRequest(ContainerAllocationTaskState state) {
@@ -803,33 +587,6 @@ public class ContainerAllocationTaskService
         }
 
         return resourceNameToHostSelection;
-    }
-
-    // this is called after only post allocation when the state is already being created
-    private void updateContainerState(ContainerAllocationTaskState state,
-            ServiceTaskCallback taskCallback, String resourceLink, Runnable callbackFunction) {
-
-        Map<String, ContainerServiceLinksConfig> containerServiceLinksConfigs = state.containerServiceLinksConfigs;
-        if (containerServiceLinksConfigs == null
-                || containerServiceLinksConfigs.get(resourceLink) == null) {
-            callbackFunction.run();
-            return;
-        }
-
-        ContainerState containerState = new ContainerState();
-        containerState.extraHosts = containerServiceLinksConfigs.get(resourceLink).extraHosts;
-
-        sendRequest(Operation.createPatch(this, resourceLink)
-                .setBody(containerState)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logWarning("Error while updating container: %s", resourceLink);
-                        completeSubTasksCounter(taskCallback, e);
-                        return;
-                    }
-                    callbackFunction.run();
-                }));
-
     }
 
     private void createContainerState(ContainerAllocationTaskState state,
@@ -878,16 +635,7 @@ public class ContainerAllocationTaskService
                     containerDesc.cpuShares);
             containerState.cpuShares = cpuShares != null ? cpuShares.intValue() : null;
 
-            String resourceLink = buildResourceLink(resourceName);
-
-            Map<String, ContainerServiceLinksConfig> containerServiceLinksConfigs = state.containerServiceLinksConfigs;
-            if (containerServiceLinksConfigs != null
-                    && containerServiceLinksConfigs.get(resourceLink) != null) {
-                containerState.extraHosts = containerServiceLinksConfigs
-                        .get(resourceLink).extraHosts;
-            } else {
-                containerState.extraHosts = containerDesc.extraHosts;
-            }
+            containerState.extraHosts = containerDesc.extraHosts;
             containerState.env = containerDesc.env;
 
             String contextId;
@@ -910,7 +658,7 @@ public class ContainerAllocationTaskService
                                 logInfo("Created ContainerState: %s ", body.documentSelfLink);
 
                                 if (allocationRequest) {
-                                    updateNetworksHosts(body, taskCallback);
+                                    completeSubTasksCounter(taskCallback, null);
                                     //TODO update volumes hosts.
                                 } else {
                                     createContainerInstanceRequests(state, taskCallback,
@@ -921,73 +669,6 @@ public class ContainerAllocationTaskService
         } catch (Throwable e) {
             failTask("System failure creating ContainerStates", e);
         }
-    }
-
-    /**
-     * Updates all the container networks states (if needed) to use the same container host for
-     * provisioning the networks. Alternatively, instead of doing it during the container end of the
-     * allocation phase, it could be done during the network beginning of the provisioning phase.
-     */
-    private void updateNetworksHosts(ContainerState containerState,
-            ServiceTaskCallback taskCallback) {
-
-        Map<String, ServiceNetwork> networks = containerState.networks;
-        if ((networks == null) || networks.isEmpty()) {
-            completeSubTasksCounter(taskCallback, null);
-            return;
-        }
-
-        OperationJoin
-                .create(networks.keySet().stream().map(
-                        (networkId) -> createUpdateNetworkHostLinkOperation(networkId,
-                                containerState.parentLink)))
-                .setCompletion((os, es) -> {
-                    if (es != null) {
-                        completeSubTasksCounter(null,
-                                new IllegalStateException(Utils.toString(es)));
-                        return;
-                    }
-                    completeSubTasksCounter(taskCallback, null);
-                })
-                .sendWith(this);
-    }
-
-    private Operation createUpdateNetworkHostLinkOperation(String networkId, String parentLink) {
-
-        String networkLink = UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK,
-                networkId);
-
-        return Operation.createGet(this, networkLink)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logWarning("Failure retrieving state for '%s': %s", networkLink,
-                                Utils.toString(e));
-                        return;
-                    }
-
-                    String hostLink = o.getBody(ContainerNetworkState.class).originatingHostLink;
-
-                    if ((hostLink != null) && !hostLink.isEmpty()) {
-                        logInfo("Container network host already set for '%s'.", networkLink);
-                        return;
-                    }
-
-                    ContainerNetworkState networkState = new ContainerNetworkState();
-                    networkState.documentSelfLink = networkLink;
-                    networkState.originatingHostLink = hostLink;
-
-                    sendRequest(Operation.createPatch(this, networkState.documentSelfLink)
-                            .setBody(networkState)
-                            .setContextId(getSelfId())
-                            .setCompletion((o2, e2) -> {
-                                if (e2 != null) {
-                                    logWarning("Failure updating host link for '%s': %s",
-                                            networkLink, Utils.toString(e2));
-                                    return;
-                                }
-                                logInfo("Container network host set for '%s'.", networkLink);
-                            }));
-                });
     }
 
     private void createContainerInstanceRequests(ContainerAllocationTaskState state,
@@ -1023,7 +704,6 @@ public class ContainerAllocationTaskService
                 ContainerAllocationTaskState.FIELD_NAME_RESOURCE_LINKS,
                 ContainerAllocationTaskState.FIELD_NAME_RESOURCE_NAMES,
                 ContainerAllocationTaskState.FIELD_NAME_HOST_SELECTIONS,
-                ContainerAllocationTaskState.FIELD_NAME_CONTAINER_SERVICE_LINKS_CONFIGS,
                 ContainerAllocationTaskState.FIELD_NAME_INSTANCE_ADAPTER_REF);
 
         setDocumentTemplateUsageOptions(template,
@@ -1035,7 +715,6 @@ public class ContainerAllocationTaskService
                 ContainerAllocationTaskState.FIELD_NAME_RESOURCE_COUNT,
                 ContainerAllocationTaskState.FIELD_NAME_RESOURCE_NAMES,
                 ContainerAllocationTaskState.FIELD_NAME_HOST_SELECTIONS,
-                ContainerAllocationTaskState.FIELD_NAME_CONTAINER_SERVICE_LINKS_CONFIGS,
                 ContainerAllocationTaskState.FIELD_NAME_INSTANCE_ADAPTER_REF);
 
         setDocumentTemplateUsageOptions(template, EnumSet.of(PropertyUsageOption.SERVICE_USE),

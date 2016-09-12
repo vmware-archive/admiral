@@ -34,8 +34,6 @@ import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
-import com.vmware.admiral.compute.container.ContainerHostNetworkConfigFactoryService;
-import com.vmware.admiral.compute.container.ContainerHostNetworkConfigService.ContainerHostNetworkConfigState;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
@@ -239,7 +237,6 @@ public class ContainerHostService extends StatelessService {
                     op.addResponseHeader(Operation.LOCATION_HEADER, documentSelfLink);
                     completeOperationSuccess(op);
                     updateContainerHostInfo(documentSelfLink);
-                    subscribeForAgentsStates(documentSelfLink);
                 }));
     }
 
@@ -361,26 +358,6 @@ public class ContainerHostService extends StatelessService {
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning("Failed to update host data collection: %s", ex.getMessage());
-                    }
-                }));
-    }
-
-    private void subscribeForAgentsStates(String documentSelfLink) {
-        String hostId = Service.getId(documentSelfLink);
-        createHostNetworkConfig(hostId);
-    }
-
-    private void createHostNetworkConfig(String hostId) {
-        ContainerHostNetworkConfigState state = new ContainerHostNetworkConfigState();
-        state.documentSelfLink = UriUtilsExtended.buildUriPath(
-                ContainerHostNetworkConfigFactoryService.SELF_LINK, hostId);
-        sendRequest(Operation
-                .createPost(this, ContainerHostNetworkConfigFactoryService.SELF_LINK)
-                .setBody(state)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        logWarning("Failed to create default host network config: %s",
-                                ex.getMessage());
                     }
                 }));
     }

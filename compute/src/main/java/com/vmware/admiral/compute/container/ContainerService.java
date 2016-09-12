@@ -29,8 +29,6 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState.Powe
 import com.vmware.admiral.compute.container.maintenance.ContainerHealthEvaluator;
 import com.vmware.admiral.compute.container.maintenance.ContainerMaintenance;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
-import com.vmware.admiral.compute.container.network.ContainerNetworkReconfigureService;
-import com.vmware.admiral.compute.container.network.ContainerNetworkReconfigureService.ContainerNetworkReconfigureState;
 import com.vmware.admiral.compute.container.util.ContainerUtil;
 import com.vmware.admiral.compute.content.EnvDeserializer;
 import com.vmware.admiral.compute.content.EnvSerializer;
@@ -280,18 +278,10 @@ public class ContainerService extends StatefulService {
             return;
         }
 
-        ContainerState currentState = getState(put);
         ContainerState putBody = put.getBody(ContainerState.class);
-
-        boolean networkChanged = notEqualsRegardingNull(currentState.address, putBody.address) ||
-                notEqualsRegardingNull(currentState.ports, putBody.ports);
 
         this.setState(put, putBody);
         put.setBody(putBody).complete();
-
-        if (networkChanged) {
-            reconfigureNetwork(currentState);
-        }
 
     }
 
@@ -304,9 +294,6 @@ public class ContainerService extends StatefulService {
             patchContainerStats(patch, currentState);
             return;
         }
-
-        boolean networkChanged = notEqualsRegardingNull(currentState.address, patchBody.address) ||
-                notEqualsRegardingNull(currentState.ports, patchBody.ports);
 
         ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
         String currentSignature = Utils.computeSignature(currentState, docDesc);
@@ -326,14 +313,6 @@ public class ContainerService extends StatefulService {
         }
 
         patch.complete();
-
-        if (networkChanged) {
-            reconfigureNetwork(currentState);
-        }
-    }
-
-    private static boolean notEqualsRegardingNull(Object obj1, Object obj2) {
-        return obj1 != null && obj2 != null && !obj1.equals(obj2);
     }
 
     private void patchContainerStats(Operation patch, ContainerState currentState) {
@@ -380,24 +359,6 @@ public class ContainerService extends StatefulService {
                 }
             }, getSelfLink());
         }
-    }
-
-    private void reconfigureNetwork(ContainerState currentState) {
-        ContainerNetworkReconfigureState body = new ContainerNetworkReconfigureState();
-        body.containerState = currentState;
-
-        sendRequest(Operation
-                .createPost(this, ContainerNetworkReconfigureService.SELF_LINK)
-                .setBody(body)
-                .setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                logWarning(
-                                        "Could not reconfigure network for container and it's dependencies %s. Error: %s",
-                                        currentState.documentSelfLink, Utils.toString(e));
-                                return;
-                            }
-                        }));
     }
 
     @Override
