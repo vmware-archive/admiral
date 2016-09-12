@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.content.YamlMapper;
-import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.FileUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription;
@@ -37,12 +37,8 @@ import com.vmware.xenon.common.Utils;
 public class EnvironmentMappingService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.ENVIRONMENT_MAPPING;
 
-    public static class EnvironmentMappingState extends MultiTenantDocument {
+    public static class EnvironmentMappingState extends ResourceState {
         public static final String FIELD_NAME_ENDPOINT_TYPE_NAME = "endpointType";
-
-        @Documentation(description = "The name of this environment configuration")
-        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = EXPAND)
-        public String name;
 
         @Documentation(description = "The endpoint type")
         @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = EXPAND)
@@ -95,7 +91,7 @@ public class EnvironmentMappingService extends StatefulService {
         EnvironmentMappingState currentState = getState(patch);
         EnvironmentMappingState patchBody = patch.getBody(EnvironmentMappingState.class);
 
-        ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
+        ServiceDocumentDescription docDesc = getStateDescription();
         String currentSignature = Utils.computeSignature(currentState, docDesc);
 
         PropertyUtils.mergeServiceDocuments(currentState, patchBody);
