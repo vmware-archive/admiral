@@ -148,7 +148,7 @@ public class SystemImageRetrievalManagerTest extends BaseTestCase {
 
         List<byte[]> retrievedImages = new ArrayList<>();
 
-        int numberOfRequests = 10;
+        int numberOfRequests = 4;
 
         TestContext ctx = testCreate(numberOfRequests);
 
