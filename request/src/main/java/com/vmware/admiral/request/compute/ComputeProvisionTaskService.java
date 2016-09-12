@@ -35,8 +35,8 @@ import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.photon.controller.model.tasks.ComputeSubTaskService;
 import com.vmware.photon.controller.model.tasks.ProvisionComputeTaskService;
+import com.vmware.photon.controller.model.tasks.SubTaskService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.OperationSequence;
@@ -177,7 +177,7 @@ public class ComputeProvisionTaskService extends
     }
 
     private void createSubTaskForProvisionCallbacks(ComputeProvisionTaskState currentState) {
-        ComputeSubTaskService.ComputeSubTaskState subTaskInitState = new ComputeSubTaskService.ComputeSubTaskState();
+        SubTaskService.SubTaskState subTaskInitState = new SubTaskService.SubTaskState();
         ComputeProvisionTaskState subTaskPatchBody = new ComputeProvisionTaskState();
         subTaskPatchBody.taskInfo = new TaskState();
         subTaskPatchBody.taskSubStage = SubStage.PROVISIONING_COMPUTE_COMPLETED;
@@ -200,12 +200,12 @@ public class ComputeProvisionTaskService extends
                                 failTask("Failure creating sub task", e);
                                 return;
                             }
-                            ComputeSubTaskService.ComputeSubTaskState body = o
-                                    .getBody(ComputeSubTaskService.ComputeSubTaskState.class);
+                            SubTaskService.SubTaskState body = o
+                                    .getBody(SubTaskService.SubTaskState.class);
                             // continue, passing the sub task link
                             provisionResources(currentState, body.documentSelfLink);
                         });
-        getHost().startService(startPost, new ComputeSubTaskService());
+        getHost().startService(startPost, new SubTaskService());
     }
 
     private void queryForProvisionedResources(ComputeProvisionTaskState state) {
