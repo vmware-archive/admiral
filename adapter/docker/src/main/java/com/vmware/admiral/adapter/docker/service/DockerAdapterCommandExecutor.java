@@ -42,6 +42,18 @@ public interface DockerAdapterCommandExecutor {
     String DOCKER_CONTAINER_STATE_STARTED_PROP_NAME = "StartedAt";
     String DOCKER_CONTAINER_STATE_PID_PROP_NAME = "Pid";
     String DOCKER_CONTAINER_CONFIG_PROP_NAME = "Config";
+
+    String DOCKER_CONTAINER_NETWORK_ID_PROP_NAME = "Id";
+    String DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME = "Name";
+    String DOCKER_CONTAINER_NETWORK_DRIVER_PROP_NAME = "Driver";
+    String DOCKER_CONTAINER_NETWORK_OPTIONS_PROP_NAME = "Options";
+    String DOCKER_CONTAINER_NETWORK_IPAM_PROP_NAME = "IPAM";
+    String DOCKER_CONTAINER_NETWORK_IPAM_DRIVER_PROP_NAME = "Driver";
+    String DOCKER_CONTAINER_NETWORK_IPAM_CONFIG_PROP_NAME = "Config";
+    String DOCKER_CONTAINER_NETWORK_IPAM_CONFIG_SUBNET_PROP_NAME = "Subnet";
+    String DOCKER_CONTAINER_NETWORK_IPAM_CONFIG_GATEWAY_PROP_NAME = "Gateway";
+    String DOCKER_CONTAINER_NETWORK_IPAM_CONFIG_IP_RANGE_PROP_NAME = "IPRange";
+    String DOCKER_CONTAINER_NETWORK_IPAM_CONFIG_AUX_ADDRESSES_PROP_NAME = "AuxiliaryAddresses";
     String DOCKER_CONTAINER_NETWORK_SETTINGS_PROP_NAME = "NetworkSettings";
     String DOCKER_CONTAINER_NETWORK_SETTINGS_PORTS_PROP_NAME = "Ports";
     String DOCKER_CONTAINER_NETWORK_SETTINGS_IP_ADDRESS_PROP_NAME = "IPAddress";
@@ -180,12 +192,12 @@ public interface DockerAdapterCommandExecutor {
 
     void removeNetwork(CommandInput input, CompletionHandler completionHandler);
 
+    void inspectNetwork(CommandInput input, CompletionHandler completionHandler);
+
     // TODO uncomment and implement
     // void connectNetwork(CommandInput input, CompletionHandler completionHandler);
     //
     // void disconnectNetwork(CommandInput input, CompletionHandler completionHandler);
-    //
-    // void inspectNetwork(CommandInput input, CompletionHandler completionHandler);
     //
     // void listNetworks(CommandInput input, CompletionHandler completionHandler);
 

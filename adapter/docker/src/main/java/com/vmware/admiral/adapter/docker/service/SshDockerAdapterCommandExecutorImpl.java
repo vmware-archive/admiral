@@ -753,6 +753,18 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
         execWithInput(input, docker(cb), completionHandler);
     }
 
+    @Override
+    public void inspectNetwork(CommandInput input, CompletionHandler completionHandler) {
+        Map<String, Object> properties = input.getProperties();
+
+        CommandBuilder cb = new CommandBuilder()
+                .withCommand("network inspect")
+                .withArgumentIfPresent(properties, DOCKER_CONTAINER_ID_PROP_NAME);
+
+        execWithInput(input, docker(cb), completionHandler,
+                EXTRACT_FIRST_JSON_ELEMENT);
+    }
+
     private String docker(CommandBuilder subCommandBuilder) {
         return docker(subCommandBuilder.toString());
     }

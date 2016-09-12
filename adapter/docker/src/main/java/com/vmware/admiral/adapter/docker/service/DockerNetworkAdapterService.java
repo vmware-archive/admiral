@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_ID_PROP_NAME;
+
+import java.util.Map;
 import java.util.logging.Level;
 
 import org.apache.commons.lang3.NotImplementedException;
@@ -140,7 +143,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
                 break;
 
             case INSPECT:
-                processInspectNetwork(context);
+                inspectAndUpdateNetwork(context);
                 break;
 
             case LIST_NETWORKS:
@@ -179,13 +182,20 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
                     DOCKER_NETWORK_TYPE_DEFAULT);
         }
 
-        // TODO do verification and stuff
+        // TODO other properties and verification if needed
 
         context.executor.createNetwork(createCommandInput, (op, ex) -> {
             if (ex != null) {
                 fail(context.request, ex);
             } else {
-                patchTaskStage(context.request, TaskStage.FINISHED, null);
+                @SuppressWarnings("unchecked")
+                Map<String, Object> body = op.getBody(Map.class);
+
+                context.networkState.id = (String) body
+                        .get(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME);
+                inspectAndUpdateNetwork(context);
+                // transition to TaskStage.FINISHED is done later, after the network state gets
+                // updated
             }
         });
     }
@@ -206,9 +216,62 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
         });
     }
 
-    private void processInspectNetwork(RequestContext context) {
-        // TODO implement
-        throw new NotImplementedException("inspecting networks is not implemented yet");
+    @SuppressWarnings("unchecked")
+    private void inspectAndUpdateNetwork(RequestContext context) {
+        CommandInput inspectCommandInput = new CommandInput(context.commandInput).withProperty(
+                DOCKER_CONTAINER_NETWORK_ID_PROP_NAME, context.networkState.id);
+
+        getHost().log(Level.FINE, "Executing inspect network: %s %s",
+                context.networkState.documentSelfLink, context.request.getRequestTrackingLog());
+
+        if (context.networkState.id == null) {
+            fail(context.request, new IllegalStateException("network id is required"
+                    + context.request.getRequestTrackingLog()));
+            return;
+        }
+
+        context.executor.inspectNetwork(
+                inspectCommandInput,
+                (o, ex) -> {
+                    if (ex != null) {
+                        fail(context.request, o, ex);
+                    } else {
+                        handleExceptions(
+                                context.request,
+                                context.operation,
+                                () -> {
+                                    Map<String, Object> properties = o.getBody(Map.class);
+
+                                    patchNetworkState(context.request, context.networkState,
+                                            properties, context);
+                                });
+                    }
+                });
+    }
+
+    private void patchNetworkState(NetworkRequest request,
+            ContainerNetworkState networkState, Map<String, Object> properties,
+            RequestContext context) {
+
+        ContainerNetworkState newNetworkState = new ContainerNetworkState();
+        newNetworkState.documentSelfLink = networkState.documentSelfLink;
+        newNetworkState.documentExpirationTimeMicros = -1; // make sure the expiration is reset.
+        newNetworkState.adapterManagementReference = networkState.adapterManagementReference;
+
+        ContainerNetworkStateMapper.propertiesToContainerNetworkState(newNetworkState, properties);
+
+        getHost().log(Level.FINE, "Patching ContainerNetworkState: %s %s",
+                networkState.documentSelfLink, request.getRequestTrackingLog());
+        sendRequest(Operation
+                .createPatch(request.getNetworkStateReference())
+                .setBody(newNetworkState)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        fail(context.request, o, ex);
+                    } else {
+                        patchTaskStage(request, TaskStage.FINISHED, ex);
+                    }
+                }));
     }
 
     private void processListNetworks(RequestContext context) {

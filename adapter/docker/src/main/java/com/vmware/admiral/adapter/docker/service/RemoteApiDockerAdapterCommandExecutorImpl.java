@@ -321,6 +321,17 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     }
 
     @Override
+    public void inspectNetwork(CommandInput input, CompletionHandler completionHandler) {
+        createOrUpdateTargetSsl(input);
+
+        String path = String.format("/networks/%s", input
+                .getProperties().get(DOCKER_NETWORK_ID_PROP_NAME));
+
+        sendGet(UriUtils.extendUri(input.getDockerUri(), path), input.getProperties(),
+                completionHandler);
+    }
+
+    @Override
     public void stop() {
         if (attachServiceClient != null) {
             attachServiceClient.stop();
