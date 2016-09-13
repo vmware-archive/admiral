@@ -61,6 +61,8 @@ public class ContainerHostService extends StatelessService {
     private static final boolean ENABLE_ADAPTER_DOCKER_TYPE_SSH = Boolean.getBoolean(
             "com.vmware.admiral.compute.ContainerHostService.enable.adapter.docker.type.ssh");
 
+    public static final String CONTAINER_HOST_ALREADY_EXISTS_MESSAGE = "Container host already exists";
+
     public static final String DOCKER_COMPUTE_DESC_ID = "docker-host-compute-desc-id";
     public static final String DOCKER_COMPUTE_DESC_LINK = UriUtilsExtended.buildUriPath(
             ComputeDescriptionService.FACTORY_LINK, DOCKER_COMPUTE_DESC_ID);
@@ -168,7 +170,7 @@ public class ContainerHostService extends StatelessService {
                                 } else if (r.hasResult()) {
                                     found.set(true);
                                     op.fail(new IllegalArgumentException(
-                                            "Container host already exists"));
+                                            CONTAINER_HOST_ALREADY_EXISTS_MESSAGE));
                                 } else if (!found.get()) {
                                     createHost(hostSpec, op);
                                 }

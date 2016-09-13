@@ -35,7 +35,9 @@ public class QueryUtil {
     public static final long QUERY_RETRY_INTERVAL_MILLIS = Long.getLong(
             "com.vmware.admiral.common.util.query.retry.interval.millis", 500);
 
+    public static final String TENANT_IDENTIFIER = "/tenants/";
     public static final String GROUP_IDENTIFIER = "/groups/";
+    public static final String USER_IDENTIFIER = "/users/";
 
     public static QueryTask buildQuery(Class<? extends ServiceDocument> stateClass,
             boolean direct, QueryTask.Query... clauses) {
@@ -100,16 +102,18 @@ public class QueryUtil {
             MatchType termMatchType) {
 
         QueryTask.Query inClause = new QueryTask.Query();
+
         for (String value : values) {
             QueryTask.Query clause = new QueryTask.Query()
                     .setTermPropertyName(propName)
                     .setTermMatchValue(value)
                     .setTermMatchType(termMatchType);
 
-            if (value.contains(GROUP_IDENTIFIER)) {
+            clause.occurance = Occurance.SHOULD_OCCUR;
+
+            if (value.contains(TENANT_IDENTIFIER) || value.contains(GROUP_IDENTIFIER)
+                    || value.contains(USER_IDENTIFIER)) {
                 clause.occurance = Occurance.MUST_OCCUR;
-            } else {
-                clause.occurance = Occurance.SHOULD_OCCUR;
             }
 
             inClause.addBooleanClause(clause);
