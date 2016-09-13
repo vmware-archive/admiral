@@ -465,9 +465,8 @@ public class ReservationTaskService
             return;
         }
 
-        final Set<String> resourcePools = state.hostSelections.stream()
-                .map((h) -> h.resourcePoolLink)
-                .collect(Collectors.toSet());
+        final Set<String> resourcePools = new HashSet<>();
+        state.hostSelections.forEach(hs -> resourcePools.addAll(hs.resourcePoolLinks));
 
         if (state.resourcePoolsPerGroupPolicyLinks != null) {
             state.resourcePoolsPerGroupPolicyLinks = state.resourcePoolsPerGroupPolicyLinks

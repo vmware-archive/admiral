@@ -24,15 +24,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.compute.ResourcePoolQueryHelper;
 import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.DefaultSubStage;
@@ -48,7 +46,6 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
-import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
 
 /**
  * Task implementing compute placement selection for provisioning a given number of instances of a
@@ -195,45 +192,27 @@ public class ComputePlacementSelectionTaskService extends
     private void proceedComputeSelection(ComputePlacementSelectionTaskState state,
             ComputeDescription desc,
             Collection<String> computeDescriptionLinks, int maxRetries) {
-        Query.Builder queryBuilder = Query.Builder.create()
-                .addKindFieldClause(ComputeState.class)
-                .addInClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK, computeDescriptionLinks)
-                .addFieldClause(ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, state.resourcePoolLink)
-                .addFieldClause(ComputeState.FIELD_NAME_POWER_STATE, PowerState.ON.toString());
-        QueryTask queryTask = QueryTask.Builder.create()
-                .setQuery(queryBuilder.build())
-                .addOption(QueryOption.EXPAND_CONTENT)
-                .build();
 
-        ServiceDocumentQuery<ComputeState> queryHelper = new ServiceDocumentQuery<ComputeState>(
-                getHost(), ComputeState.class);
-        List<ComputeState> computeStates = new ArrayList<>();
-        queryHelper.query(
-                queryTask,
-                (r) -> {
-                    if (r.hasException()) {
-                        failTask("Error querying for compute placements.", r.getException());
-                    } else if (r.hasResult()) {
-                        computeStates.add(r.getResult());
-                    } else {
-                        if (computeStates.isEmpty()) {
-                            if (maxRetries > 0) {
-                                getHost().log(Level.FINE,
-                                        "Compute placement query retries left " + (maxRetries - 1));
-                                getHost().schedule(
-                                        () -> selectPlacement(state, desc, maxRetries - 1),
-                                        QueryUtil.QUERY_RETRY_INTERVAL_MILLIS,
-                                        TimeUnit.MILLISECONDS);
-                            } else {
-                                selectByEndpointAsCompute(state, desc, computeDescriptionLinks,
-                                        null);
-                            }
-                            return;
-                        }
+        ResourcePoolQueryHelper helper = new ResourcePoolQueryHelper(getHost(),
+                state.resourcePoolLink);
+        helper.setAdditionalQueryClausesProvider(qb -> {
+            qb.addInClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK, computeDescriptionLinks)
+                    .addFieldClause(ComputeState.FIELD_NAME_POWER_STATE, PowerState.ON.toString());
+        });
 
-                        selection(state, computeStates);
-                    }
-                });
+        helper.query(qr -> {
+            if (qr.error != null) {
+                failTask("Error querying for compute placements.", qr.error);
+                return;
+            }
+
+            if (qr.computesByLink.isEmpty()) {
+                selectByEndpointAsCompute(state, desc, computeDescriptionLinks, null);
+                return;
+            }
+
+            selection(state, qr.computesByLink.values());
+        });
     }
 
     private void selectByEndpointAsCompute(ComputePlacementSelectionTaskState state,
@@ -255,7 +234,7 @@ public class ComputePlacementSelectionTaskService extends
     }
 
     private void selection(final ComputePlacementSelectionTaskState state,
-            final List<ComputeState> availableComputeStates) {
+            final Collection<ComputeState> availableComputeStates) {
         if (availableComputeStates.isEmpty()) {
             failTask("No compute placements found", null);
             return;

@@ -367,7 +367,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         HostSelection hostSelection = new HostSelection();
         hostSelection.containerCount = 1;
         hostSelection.hostLink = dockerHost.documentSelfLink;
-        hostSelection.resourcePoolLink = dockerHost.resourcePoolLink;
+        hostSelection.resourcePoolLinks = new ArrayList<>(Arrays.asList(dockerHost.resourcePoolLink));
         allocationTask.hostSelections = new ArrayList<>(Arrays.asList(hostSelection));
 
         allocationTask = allocate(allocationTask);

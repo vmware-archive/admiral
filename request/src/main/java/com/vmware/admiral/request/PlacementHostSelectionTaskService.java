@@ -22,15 +22,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ResourcePoolQueryHelper;
+import com.vmware.admiral.compute.ResourcePoolQueryHelper.QueryResult;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.request.allocation.filter.AffinityFilters;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
@@ -55,7 +55,6 @@ public class PlacementHostSelectionTaskService
         DefaultSubStage> {
 
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_PROVISION_PLACEMENT_TASKS;
-    private static final String POWER_STATE = "powerState";
     public static final String DISPLAY_NAME = "Host Selection";
     private static final int QUERY_COUNT_ERROR = Integer.getInteger(
             "com.vmware.admiral.service.placement.query.retries", 2);
@@ -195,64 +194,41 @@ public class PlacementHostSelectionTaskService
     private void proceedComputeSelection(PlacementHostSelectionTaskState state,
             ContainerDescription desc,
             Collection<String> computeDescriptionLinks, int errorCount) {
-        QueryTask q = QueryUtil.buildQuery(ComputeState.class, false);
 
-        QueryUtil.addListValueClause(q,
-                ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, state.resourcePoolLinks);
-        QueryUtil.addListValueClause(q,
-                ComputeState.FIELD_NAME_DESCRIPTION_LINK, computeDescriptionLinks);
+        ResourcePoolQueryHelper helper = new ResourcePoolQueryHelper(getHost(),
+                state.resourcePoolLinks);
+        helper.setAdditionalQueryClausesProvider(qb -> {
+            qb.addInClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK, computeDescriptionLinks)
+                    .addFieldClause(ComputeState.FIELD_NAME_POWER_STATE, PowerState.ON.toString());
+        });
 
-        // Get only powered on hosts
-        QueryTask.Query hostPowerStateClause = new QueryTask.Query()
-                .setTermPropertyName(POWER_STATE)
-                .setTermMatchValue(PowerState.ON.toString());
-        q.querySpec.query.addBooleanClause(hostPowerStateClause);
+        helper.query(qr -> {
+            if (qr.error != null) {
+                failTask("Error querying for placement compute hosts.", qr.error);
+                return;
+            }
 
-        QueryUtil.addExpandOption(q);
+            if (qr.computesByLink.isEmpty()) {
+                failTask(null,
+                        new IllegalStateException("Container host not found in resource pools: "
+                                + state.resourcePoolLinks));
+                return;
+            }
 
-        ServiceDocumentQuery<ComputeState> query = new ServiceDocumentQuery<ComputeState>(
-                getHost(), ComputeState.class);
-        List<ComputeState> computeStates = new ArrayList<>();
-        query.query(
-                q,
-                (r) -> {
-                    if (r.hasException()) {
-                        failTask("Error querying for placement compute hosts.", r.getException());
-                    } else if (r.hasResult()) {
-                        computeStates.add(r.getResult());
-                    } else {
-                        if (computeStates.isEmpty()) {
-                            if (errorCount > 0) {
-                                getHost().log(Level.FINE,
-                                        "Placement host query retries left " + (errorCount - 1));
-                                getHost().schedule(
-                                        () -> selectBasedOnDescAndResourcePool(state, desc,
-                                                errorCount - 1),
-                                        QueryUtil.QUERY_RETRY_INTERVAL_MILLIS,
-                                        TimeUnit.MILLISECONDS);
-                            } else {
-                                failTask(null, new IllegalStateException(
-                                        "Container host not found in resource pools: "
-                                                + state.resourcePoolLinks));
-                            }
-                            return;
-                        }
-
-                        Map<String, HostSelection> initHostSelectionMap = buildHostSelectionMap(
-                                computeStates);
-
-                        selection(state, initHostSelectionMap, desc);
-                    }
-                });
+            Map<String, HostSelection> initHostSelectionMap = buildHostSelectionMap(qr);
+            selection(state, initHostSelectionMap, desc);
+        });
     }
 
-    private Map<String, HostSelection> buildHostSelectionMap(List<ComputeState> computeStates) {
+    private Map<String, HostSelection> buildHostSelectionMap(QueryResult rpQueryResult) {
+        Collection<ComputeState> computes = rpQueryResult.computesByLink.values();
         final Map<String, HostSelection> initHostSelectionMap = new LinkedHashMap<>(
-                computeStates.size());
-        for (ComputeState computeState : computeStates) {
+                computes.size());
+        for (ComputeState computeState : computes) {
             final HostSelection hostSelection = new HostSelection();
             hostSelection.hostLink = computeState.documentSelfLink;
-            hostSelection.resourcePoolLink = computeState.resourcePoolLink;
+            hostSelection.resourcePoolLinks = rpQueryResult.rpLinksByComputeLink
+                    .get(computeState.documentSelfLink);
             hostSelection.deploymentPolicyLink = computeState.customProperties
                     .get(ContainerHostService.CUSTOM_PROPERTY_DEPLOYMENT_POLICY);
             hostSelection.availableMemory = getPropertyLong(

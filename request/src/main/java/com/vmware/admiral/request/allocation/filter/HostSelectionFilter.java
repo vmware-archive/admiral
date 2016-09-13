@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.request.allocation.filter;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,7 +50,7 @@ public interface HostSelectionFilter extends AffinityFilter {
         private static final String SPLIT_REGEX = ":";
         public String hostLink;
         public int containerCount;
-        public String resourcePoolLink;
+        public Collection<String> resourcePoolLinks;
         public Map<String, DescName> descNames;
         public Long availableMemory;
         public String deploymentPolicyLink;
