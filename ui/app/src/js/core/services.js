@@ -173,6 +173,14 @@ var makeDay2OperationRequestCluster = function(clusterContainers, op) {
   return request;
 };
 
+var makeDay2OperationRequestContainers = function(containerLinks, op) {
+  var request = {};
+  request.resourceType = CONTAINER_TYPE_DOCKER;
+  request.resourceLinks = containerLinks;
+  request.operation = op;
+
+  return request;
+};
 
 var makeDay2OperationRequestComposite = function(compositeId, op) {
   var request = {};
@@ -894,6 +902,25 @@ services.removeContainer = function(containerId) {
     });
 };
 
+services.removeContainers = function(queryOptions) {
+  let filter = buildContainersSearchQuery(queryOptions);
+  let params = {};
+  if (filter) {
+    params[ODATA_FILTER_PROP_NAME] = filter;
+  }
+  let url = mergeUrl(links.CONTAINERS, params);
+
+  return get(url).then(function(result) {
+    let containerLinks = result.documentLinks;
+
+    return day2operation(links.REQUESTS,
+      makeDay2OperationRequestContainers(containerLinks, 'Container.Delete'))
+         .then(function(deleteRequest) {
+            return deleteRequest;
+        });
+      });
+};
+
 services.startCompositeContainer = function(compositeId) {
   return day2operation(links.REQUESTS,
     makeDay2OperationRequestComposite(compositeId, 'Container.Start'))
@@ -1378,6 +1405,18 @@ var buildContainersSearchQuery = function(queryOptions) {
         // We construct the parentLink to match '/resources/compute/id*'.
         newQueryOptions.parentLink.push({
           val: links.COMPUTE_RESOURCES + '/' + parentIdArray[i],
+          op: 'eq'
+        });
+      }
+    }
+
+    var statusArray = toArrayIfDefined(queryOptions.status);
+    if (statusArray) {
+      // NOTE: the power state matching is case sensitive
+      newQueryOptions.powerState = [];
+      for (let i = 0; i < statusArray.length; i++) {
+        newQueryOptions.powerState.push({
+          val: '*' + statusArray[i].toUpperCase() + '*',
           op: 'eq'
         });
       }

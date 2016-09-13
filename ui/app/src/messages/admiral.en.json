@@ -684,6 +684,7 @@
   "refresh": "Refresh",
   "clear": "Clear",
   "deleteAll": "Delete All",
+  "deleteFound": "Delete Found",
   "pendingOperationCancel": "operation in",
   "openInNewTab": "Open in new tab",
   "unavailable": "N/A",

@@ -666,6 +666,14 @@ ContainersStore = Reflux.createStore({
       });
   },
 
+  onRemoveContainers: function(queryOptions) {
+    services.removeContainers(queryOptions).then((removalRequest) => {
+      this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
+
+      actions.RequestsActions.requestCreated(removalRequest);
+    });
+  },
+
   backFromContainerAction: function(operationType, resourceIds) {
     var cursor = getSelectedContainerDetailsCursor.call(this);
 

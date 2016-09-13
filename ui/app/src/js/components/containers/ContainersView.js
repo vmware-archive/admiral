@@ -209,6 +209,14 @@ var ContainersViewVueComponent = Vue.extend({
     openToolbarRequests: ContainersContextToolbarActions.openToolbarRequests,
     openToolbarEventLogs: ContainersContextToolbarActions.openToolbarEventLogs,
     closeToolbar: ContainersContextToolbarActions.closeToolbar
+  },
+  events: {
+    'do-action': function(actionName) {
+      if (actionName === 'deleteAll') {
+        // Delete all/ Delete by search criteria
+        ContainerActions.removeContainers(this.queryOptions);
+      }
+    }
   }
 });
 
