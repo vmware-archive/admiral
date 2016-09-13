@@ -1,9 +1,4 @@
-#The image name is referenced in
-#com.vmware.admiral.compute.container.ContainerDescriptionFactoryService.SHELL_AGENT_CONTAINER_DESCRIPTION_ID
-# TODO: update reference when updated in ContainerDescriptionFactoryService
-ADMIRAL_AGENT_IMAGE_NAME ?= vmware/admiral_agent
-ADMIRAL_AGENT_IMAGE_TAR_FILENAME ?= admiral_agent
-ADMIRAL_AGENT_IMAGE_VERSION ?= 0.5.0
+include agent.properties
 
 buildgo:
 	# Builds the GO application from sources inside a Linux container
