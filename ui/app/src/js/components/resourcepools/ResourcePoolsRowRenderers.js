@@ -18,7 +18,8 @@ from 'actions/Actions';
 import utils from 'core/utils';
 
 var renderers = {
-  render: function(resourcePool) {
+  render: function(config) {
+    var resourcePool = config.resourcePoolState;
     var model = {
       id: resourcePool.id,
       name: resourcePool.name

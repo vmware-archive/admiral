@@ -29,6 +29,8 @@ var links = Immutable({
   EVENT_LOGS: RESOURCES + '/event-logs',
   NOTIFICATIONS: RESOURCES + '/notifications',
   DEPLOYMENT_POLICIES: RESOURCES + '/deployment-policies',
+  TAGS: RESOURCES + '/tags',
+  EPZ_CONFIG: RESOURCES + '/elastic-placement-zones-config',
 
   CONTAINER_HOSTS: RESOURCES + '/hosts',
   CONTAINERS: RESOURCES + '/containers',

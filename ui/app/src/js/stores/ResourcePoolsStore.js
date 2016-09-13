@@ -59,48 +59,52 @@ let ResourcePoolsStore = Reflux.createStore({
 
       operation.forPromise(services.loadResourcePools()).then((result) => {
         // Transforming from associative array to array
-        var resourcePools = [];
-        for (var key in result) {
-          if (result.hasOwnProperty(key)) {
-            let resourcePool = result[key];
-            // We need these to show the graphs when displaying the list of RPs
-            resourcePool.__availableMemory = utils.getCustomPropertyValue(
-              resourcePool.customProperties, '__availableMemory');
-            resourcePool.__cpuUsage = utils.getCustomPropertyValue(
-              resourcePool.customProperties, '__cpuUsage');
-            resourcePool.__endpointLink = utils.getCustomPropertyValue(
-              resourcePool.customProperties, '__endpointLink');
+        var processedResult = Object.values(result).map((config) => {
+          // We need these to show the graphs when displaying the list of RPs
+          config.resourcePoolState.__availableMemory = utils.getCustomPropertyValue(
+            config.resourcePoolState.customProperties, '__availableMemory');
+          config.resourcePoolState.__cpuUsage = utils.getCustomPropertyValue(
+            config.resourcePoolState.customProperties, '__cpuUsage');
+          config.resourcePoolState.__endpointLink = utils.getCustomPropertyValue(
+            config.resourcePoolState.customProperties, '__endpointLink');
 
-            resourcePool.customProperties =
-                            utils.getDisplayableCustomProperties(resourcePool.customProperties);
-            resourcePools.push(resourcePool);
-          }
-        }
-
-        var countContainerHosts = !utils.isApplicationCompute();
-        // Retrieve hosts counts for the resource pools
-        var countedHostsResPoolsPromises = resourcePools.map(function(pool) {
-          return services.countHostsPerResourcePool(pool.documentSelfLink, countContainerHosts)
-              .then(function(hostsCount) {
-                pool.hostsCount = hostsCount;
-
-                return pool;
-              });
+          config.resourcePoolState.customProperties =
+            utils.getDisplayableCustomProperties(config.resourcePoolState.customProperties);
+          return config;
         });
 
-        var _this = this;
-        Promise.all(countedHostsResPoolsPromises)
-          .then(function(countedHostsResourcePools) {
-            // notify data retrieved for all resource pools
-            _this.setInData(['items'], countedHostsResourcePools);
-            _this.emitChange();
+        var tagPromises = Object.values(processedResult).map((config) => {
+          return config.epzState && config.epzState.tagLinksToMatch ?
+              services.loadTags(config.epzState.tagLinksToMatch).then((tags) => {
+                config.resourcePoolState.__tags = Object.values(tags);
+                return config;
+              }) : Promise.resolve(config);
+        });
+
+        Promise.all(tagPromises).then((configs) => {
+
+          var countContainerHosts = !utils.isApplicationCompute();
+          // Retrieve hosts counts for the resource pools
+          var countedHostsResPoolsPromises = Object.values(configs).map(function(config) {
+            return services.countHostsPerResourcePool(config.resourcePoolState.documentSelfLink,
+                countContainerHosts).then(function(hostsCount) {
+                  config.resourcePoolState.hostsCount = hostsCount;
+                  return config;
+                });
+          });
+
+          Promise.all(countedHostsResPoolsPromises).then((configs) => {
+              // notify data retrieved for all resource pools
+              this.setInData(['items'], configs);
+              this.emitChange();
+          });
         });
       });
     }
   },
 
-  onEditResourcePool: function(resourcePool) {
-    this.setInData(['editingItemData', 'item'], resourcePool);
+  onEditResourcePool: function(config) {
+    this.setInData(['editingItemData', 'item'], config);
     this.emitChange();
 
     actions.EndpointsActions.retrieveEndpoints();
@@ -111,15 +115,36 @@ let ResourcePoolsStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onCreateResourcePool: function(resourcePool) {
-    services.createResourcePool(resourcePool).then((createdResourcePool) => {
-      var immutableResourcePool = Immutable(createdResourcePool);
+  onCreateResourcePool: function(config, tags) {
+    Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
+      return Promise.all(tags.map((tag, i) =>
+        result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
+    }).then((createdTags) => {
+      if (tags.length !== 0) {
+        config.epzState = {
+          tagLinksToMatch: createdTags.map((tag) => tag.documentSelfLink)
+        };
+      }
+      return services.createResourcePool(config);
+    }).then((createdConfig) => {
 
-      var resourcePools = this.data.items.asMutable();
-      resourcePools.push(immutableResourcePool);
+      createdConfig.resourcePoolState.__availableMemory = utils.getCustomPropertyValue(
+          createdConfig.resourcePoolState.customProperties, '__availableMemory');
+      createdConfig.resourcePoolState.__cpuUsage = utils.getCustomPropertyValue(
+          createdConfig.resourcePoolState.customProperties, '__cpuUsage');
+      createdConfig.resourcePoolState.__endpointLink = utils.getCustomPropertyValue(
+          createdConfig.resourcePoolState.customProperties, '__endpointLink');
+      if (tags.length) {
+        createdConfig.resourcePoolState.__tags = tags;
+      }
 
-      this.setInData(['items'], resourcePools);
-      this.setInData(['newItem'], immutableResourcePool);
+      var immutableConfig = Immutable(createdConfig);
+
+      var configs = this.data.items.asMutable();
+      configs.push(immutableConfig);
+
+      this.setInData(['items'], configs);
+      this.setInData(['newItem'], immutableConfig);
       this.setInData(['editingItemData'], null);
       this.emitChange();
 
@@ -128,41 +153,62 @@ let ResourcePoolsStore = Reflux.createStore({
     }).catch(this.onGenericEditError);
   },
 
-  onUpdateResourcePool: function(resourcePool) {
-    services.updateResourcePool(resourcePool).then((updatedResourcePool) => {
+  onUpdateResourcePool: function(config, tags) {
+    Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
+      return Promise.all(tags.map((tag, i) =>
+        result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
+    }).then((updatedTags) => {
+      if (tags.length !== 0) {
+        config.epzState = {
+          resourcePoolLink: config.resourcePoolState.documentSelfLink,
+          tagLinksToMatch: updatedTags.map((tag) => tag.documentSelfLink)
+        };
+      } else if (config.epzState) {
+        config.epzState.tagLinksToMatch = [];
+      }
+      return services.updateResourcePool(config);
+    }).then((updatedConfig) => {
       // If the backend did not make any changes, the response will be empty
-      updatedResourcePool = updatedResourcePool || resourcePool;
+      updatedConfig = updatedConfig || config;
 
-      var immutableResourcePool = Immutable(updatedResourcePool);
+      var configs = this.data.items.asMutable();
 
-      var resourcePools = this.data.items.asMutable();
+      for (var i = 0; i < configs.length; i++) {
+        if (configs[i].documentSelfLink === updatedConfig.documentSelfLink) {
+          updatedConfig.resourcePoolState.__availableMemory = utils.getCustomPropertyValue(
+              updatedConfig.resourcePoolState.customProperties, '__availableMemory');
+          updatedConfig.resourcePoolState.__cpuUsage = utils.getCustomPropertyValue(
+              updatedConfig.resourcePoolState.customProperties, '__cpuUsage');
+          updatedConfig.resourcePoolState.__endpointLink = utils.getCustomPropertyValue(
+              updatedConfig.resourcePoolState.customProperties, '__endpointLink');
+          updatedConfig.resourcePoolState.__tags = tags;
+          updatedConfig.resourcePoolState.hostsCount = configs[i].resourcePoolState.hostsCount;
 
-      for (var i = 0; i < resourcePools.length; i++) {
-        if (resourcePools[i].documentSelfLink === updatedResourcePool.documentSelfLink) {
-          resourcePools[i] = immutableResourcePool;
+          configs[i] = Immutable(updatedConfig);
+
+          this.setInData(['items'], configs);
+          this.setInData(['updatedItem'], configs[i]);
+          this.setInData(['editingItemData'], null);
+          this.emitChange();
+          break;
         }
       }
-
-      this.setInData(['items'], resourcePools);
-      this.setInData(['updatedItem'], immutableResourcePool);
-      this.setInData(['editingItemData'], null);
-      this.emitChange();
 
       // After we notify listeners, the updated item is no logner actual
       this.setInData(['updatedItem'], null);
     }).catch(this.onGenericEditError);
   },
 
-  onDeleteResourcePool: function(resourcePool) {
-    services.deleteResourcePool(resourcePool).then(() => {
-      var resourcePools = this.data.items.filter(
-        (rp) => rp.documentSelfLink !== resourcePool.documentSelfLink);
+  onDeleteResourcePool: function(config) {
+    services.deleteResourcePool(config).then(() => {
+      var configs = this.data.items.filter(
+        (cfg) => cfg.documentSelfLink !== config.documentSelfLink);
 
-      this.setInData(['items'], resourcePools);
+      this.setInData(['items'], configs);
       this.emitChange();
     }).catch((e) => {
       var validationErrors = utils.getValidationErrors(e);
-      this.setInData(['updatedItem'], resourcePool);
+      this.setInData(['updatedItem'], config);
       this.setInData(['validationErrors'], validationErrors);
       this.emitChange();
 

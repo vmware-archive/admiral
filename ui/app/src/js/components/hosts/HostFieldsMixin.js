@@ -134,14 +134,15 @@ var HostFieldsMixin = {
           this.resourcePoolInput.setLoading(true);
         } else {
           this.resourcePoolInput.setLoading(false);
-          this.resourcePoolInput.setOptions(this.model.resourcePools);
+          this.resourcePoolInput.setOptions(
+              (this.model.resourcePools || []).map((config) => config.resourcePoolState));
         }
       }, {immediate: true});
 
       this.unwatchResourcePool = this.$watch('model.resourcePool',
                                              (resourcePool, oldResourcePool) => {
         if (this.model.resourcePool && resourcePool !== oldResourcePool) {
-          this.resourcePoolInput.setSelectedOption(this.model.resourcePool);
+          this.resourcePoolInput.setSelectedOption(this.model.resourcePool.resourcePoolState);
         }
       }, {immediate: true});
 

@@ -14,7 +14,7 @@ import InlineEditableListFactory from 'components/common/InlineEditableListFacto
 import CertificatesStore from 'stores/CertificatesStore';
 import { CertificatesActions } from 'actions/Actions';
 
-describe("Certificates management integration test", function() {
+describe('Certificates management integration test', function() {
   var $container;
 
   var unspubscribeDataListener;
@@ -23,9 +23,9 @@ describe("Certificates management integration test", function() {
 
   var createdCertificates = [];
 
-  var SELF_SIGNED_URI = window.globals["cert.selfsigned.url"];
-  var SELF_SIGNED_CN = window.globals["cert.selfsigned.cn"];
-  var SELF_SIGNED_ISSUER = window.globals["cert.selfsigned.issuer"];
+  var SELF_SIGNED_URI = window.globals['cert.selfsigned.url'];
+  var SELF_SIGNED_CN = window.globals['cert.selfsigned.cn'];
+  var SELF_SIGNED_ISSUER = window.globals['cert.selfsigned.issuer'];
 
   beforeEach(function() {
     $container = $('<div>');
@@ -35,7 +35,7 @@ describe("Certificates management integration test", function() {
     var realCreate = services.createCertificate;
     // intercepts the creation method
     spyOn(services, 'createCertificate').and.callFake(function(params) {
-      return new Promise(function(resolve, reject){
+      return new Promise(function(resolve, reject) {
         realCreate.call(null, params)
           .then(function(createdCertificate) {
             createdCertificates.push(createdCertificate);
@@ -66,37 +66,39 @@ describe("Certificates management integration test", function() {
     Promise.all(deletionPromises).then(done);
   });
 
-  it("it should create a certificate by providing the certificate in .PEM format", function(done) {
-    CertificatesActions.retrieveCertificates()
+  it('it should create a certificate by providing the certificate in .PEM format', function(done) {
+    CertificatesActions.retrieveCertificates();
 
     lastCertificatesData = null;
 
     testUtils.waitFor(function() {
-      return lastCertificatesData && lastCertificatesData.items && lastCertificatesData.items.length >= 0;
+      return lastCertificatesData && lastCertificatesData.items &&
+          lastCertificatesData.items.length >= 0;
     }).then(function() {
       $container.find('.new-item').trigger('click');
 
       lastCertificatesData = null;
       return testUtils.waitFor(function() {
         return lastCertificatesData && lastCertificatesData.editingItemData;
-      })
+      });
     }).then(function() {
-      var certifcateInput = $container.find('.certificatesEdit .certificatesEdit-properties .certificate-input');
-      console.log("Set the certificate. Inputs length: " + certifcateInput.length);
+      var certifcateInput =
+          $container.find('.certificatesEdit .certificatesEdit-properties .certificate-input');
+      console.log('Set the certificate. Inputs length: ' + certifcateInput.length);
       certifcateInput.val(certificates.defaultCertificate);
 
       // Trigger creation
       var certifcateSaveButton = $container.find('.certificatesEdit .certificatesEdit-save');
-      console.log("Click save on button. Buttons length: " + certifcateSaveButton.length);
+      console.log('Click save on button. Buttons length: ' + certifcateSaveButton.length);
       certifcateSaveButton.trigger('click');
 
       lastCertificatesData = null;
       return testUtils.waitFor(function() {
         return lastCertificatesData && lastCertificatesData.newItem;
-      })
+      });
     }).then(function() {
-      expect(lastCertificatesData.newItem.commonName).toEqual("client");
-      expect(lastCertificatesData.newItem.issuerName).toEqual("localhost");
+      expect(lastCertificatesData.newItem.commonName).toEqual('client');
+      expect(lastCertificatesData.newItem.issuerName).toEqual('localhost');
 
       expect(lastCertificatesData.items).toContain(lastCertificatesData.newItem);
 
@@ -105,19 +107,20 @@ describe("Certificates management integration test", function() {
   });
 
   // Note that this test may fail if the Admiral server has no access to SELF_SIGNED_URI
-  it("it should create a certificate by importing from URL", function(done) {
-    CertificatesActions.retrieveCertificates()
+  it('it should create a certificate by importing from URL', function(done) {
+    CertificatesActions.retrieveCertificates();
 
     lastCertificatesData = null;
     testUtils.waitFor(function() {
-      return lastCertificatesData && lastCertificatesData.items && lastCertificatesData.items.length >= 0;
+      return lastCertificatesData && lastCertificatesData.items &&
+          lastCertificatesData.items.length >= 0;
     }).then(function() {
       $container.find('.new-item').trigger('click');
 
       lastCertificatesData = null;
       return testUtils.waitFor(function() {
         return lastCertificatesData && lastCertificatesData.editingItemData;
-      })
+      });
     }).then(function() {
       $container.find('.certificatesEdit .certificate-import-option-toggle').trigger('click');
       $container.find('.uri-input').val(SELF_SIGNED_URI);
@@ -125,8 +128,10 @@ describe("Certificates management integration test", function() {
       $container.find('.certificatesEdit .certificate-import-button').trigger('click');
 
       return testUtils.waitFor(function() {
-        var currentCertificate = $container.find('.certificatesEdit .certificatesEdit-properties .certificate-input').val();
-        return currentCertificate && currentCertificate.indexOf("-----BEGIN CERTIFICATE-----") != -1;
+        var currentCertificate = $container.find(
+            '.certificatesEdit .certificatesEdit-properties .certificate-input').val();
+        return currentCertificate && currentCertificate.indexOf(
+            '-----BEGIN CERTIFICATE-----') !== -1;
       });
     }).then(function() {
       $container.find('.certificatesEdit .certificatesEdit-save').trigger('click');
@@ -145,22 +150,27 @@ describe("Certificates management integration test", function() {
     });
   });
 
-  // Disabled as update uses HTTP PATCH, which seems PhantomJS 1.x has issues with, does not send body.
-  xit("it should create a certificate by providing the certificate in .PEM format and update it by importing from URL", function(done) {
-    CertificatesActions.retrieveCertificates()
+  // Disabled as update uses HTTP PATCH, which seems PhantomJS 1.x has
+  // issues with, does not send body.
+  xit('it should create a certificate by providing the certificate in .PEM format and ' +
+      'update it by importing from URL', function(done) {
+    CertificatesActions.retrieveCertificates();
 
     lastCertificatesData = null;
     testUtils.waitFor(function() {
-      return lastCertificatesData && lastCertificatesData.items && lastCertificatesData.items.length >= 0;;
+      return lastCertificatesData && lastCertificatesData.items &&
+          lastCertificatesData.items.length >= 0;
     }).then(function() {
       $container.find('.new-item').trigger('click');
 
       lastCertificatesData = null;
       return testUtils.waitFor(function() {
         return lastCertificatesData && lastCertificatesData.editingItemData;
-      })
+      });
     }).then(function() {
-      $container.find('.certificatesEdit .certificatesEdit-properties .certificate-input').val(certificates.defaultCertificate);
+      $container.find(
+          '.certificatesEdit .certificatesEdit-properties .certificate-input').val(
+            certificates.defaultCertificate);
 
       $container.find('.certificatesEdit .certificatesEdit-save').trigger('click');
 
@@ -183,19 +193,22 @@ describe("Certificates management integration test", function() {
       lastCertificatesData = null;
       return testUtils.waitFor(function() {
         return lastCertificatesData && lastCertificatesData.editingItemData;
-      })
+      });
     }).then(function() {
 
       $container.find('.certificatesEdit .certificate-import-option-toggle').trigger('click');
       $container.find('.uri-input').val(SELF_SIGNED_URI);
 
-      var oldCertificate =  $container.find('.certificatesEdit .certificatesEdit-properties .certificate-input').val();
+      var oldCertificate = $container.find(
+          '.certificatesEdit .certificatesEdit-properties .certificate-input').val();
 
       $container.find('.certificatesEdit .certificate-import-button').trigger('click');
 
       return testUtils.waitFor(function() {
-        var currentCertificate = $container.find('.certificatesEdit .certificatesEdit-properties .certificate-input').val();
-        return oldCertificate != currentCertificate && currentCertificate && currentCertificate.indexOf("-----BEGIN CERTIFICATE-----") != -1;
+        var currentCertificate = $container.find(
+            '.certificatesEdit .certificatesEdit-properties .certificate-input').val();
+        return oldCertificate !== currentCertificate && currentCertificate &&
+            currentCertificate.indexOf('-----BEGIN CERTIFICATE-----') !== -1;
       });
     }).then(function() {
       // Trigger creation
@@ -215,7 +228,7 @@ describe("Certificates management integration test", function() {
     });
   });
 
-  it("it should delete a certificate", function(done) {
+  it('it should delete a certificate', function(done) {
     var testCertificate = {
       certificate: certificates.defaultCertificate
     };
@@ -230,7 +243,8 @@ describe("Certificates management integration test", function() {
 
       lastCertificatesData = null;
       return testUtils.waitFor(function() {
-        return lastCertificatesData && lastCertificatesData.items && lastCertificatesData.items.length >= 0;
+        return lastCertificatesData && lastCertificatesData.items &&
+            lastCertificatesData.items.length >= 0;
       });
     }).then(function() {
       var $itemsChild = $container.find('.item td[title="client"]');
@@ -239,13 +253,13 @@ describe("Certificates management integration test", function() {
       var $actualItem;
       for (var i = 0; i < $items.length; i++) {
         var $currentItem = $($items[i]);
-        if ($currentItem.data('entity').documentSelfLink === createdCertificate.documentSelfLink){
+        if ($currentItem.data('entity').documentSelfLink === createdCertificate.documentSelfLink) {
           $actualItem = $currentItem;
           break;
         }
       }
       if (!$actualItem) {
-        done.fail("Inable to find item with self link " + createdCertificate.documentSelfLink);
+        done.fail('Inable to find item with self link ' + createdCertificate.documentSelfLink);
         return;
       }
 
@@ -256,19 +270,22 @@ describe("Certificates management integration test", function() {
 
       lastCertificatesData = null;
       return testUtils.waitFor(function() {
-        return lastCertificatesData && lastCertificatesData.items && lastCertificatesData.items.length >= 0;
-      })
+        return lastCertificatesData && lastCertificatesData.items &&
+            lastCertificatesData.items.length >= 0;
+      });
     }).then(function() {
       for (var i = 0; i < lastCertificatesData.items.length; i++) {
-        if (lastCertificatesData.items[i].documentSelfLink === createdCertificate.documentSelfLink) {
-          done.fail("Certificate with self link " + createdCertificate.documentSelfLink + " was expected to be deleted");
+        if (lastCertificatesData.items[i].documentSelfLink ===
+            createdCertificate.documentSelfLink) {
+          done.fail('Certificate with self link ' + createdCertificate.documentSelfLink +
+              ' was expected to be deleted');
           return;
         }
       }
 
       services.loadCertificate(createdCertificate.documentSelfLink)
-        .then(function(){
-          done.fail("Load certificate was expected to fail with 404");
+        .then(function() {
+          done.fail('Load certificate was expected to fail with 404');
         }).catch(done);
     });
   });

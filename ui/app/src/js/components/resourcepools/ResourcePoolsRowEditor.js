@@ -10,12 +10,12 @@
  */
 
 import ResourcePoolsRowEditTemplate from 'ResourcePoolsRowEditTemplate';
-import MulticolumnInputs from 'components/common/MulticolumnInputs';
 import Alert from 'components/common/Alert';
 import { ResourcePoolsActions, ResourcePoolsContextToolbarActions } from 'actions/Actions';
 import constants from 'core/constants';
 import utils from 'core/utils';
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
+import Tags from 'components/common/Tags';
 
 const endpointManageOptions = [{
   id: 'endpoint-create',
@@ -33,19 +33,6 @@ function ResourcePoolRowEditor() {
   }));
 
   this.alert = new Alert(this.$el, this.$el.find('.resourcePoolEdit'));
-
-  this.customProperties = new MulticolumnInputs(this.$el.find('.custom-properties'), {
-    name: {
-      header: i18n.t('customProperties.name'),
-      placeholder: i18n.t('customProperties.nameHint')
-    },
-    value: {
-      header: i18n.t('customProperties.value'),
-      placeholder: i18n.t('customProperties.valueHint')
-    }
-  });
-  this.customProperties.setVisibilityFilter(utils.shouldHideCustomProperty);
-
   var endpointHolder = this.$el.find('.endpoint.dropdown-holder');
 
   if (utils.isApplicationCompute()) {
@@ -65,6 +52,8 @@ function ResourcePoolRowEditor() {
     });
   }
 
+  this.tags = new Tags(this.$el.find('.tags-input'));
+
   addEventListeners.call(this);
 }
 
@@ -73,24 +62,40 @@ ResourcePoolRowEditor.prototype.getEl = function() {
 };
 
 ResourcePoolRowEditor.prototype.setData = function(data) {
-  if (this.resourcePool !== data.item) {
-    this.resourcePool = data.item;
 
-    if (this.resourcePool) {
-      this.$el.find('.title').html(i18n.t('app.resourcePool.edit.update'));
-      this.$el.find('.name-input').val(this.resourcePool.name);
-      this.customProperties.setData(utils.objectToArray(this.resourcePool.customProperties));
+  let title = this.$el.find('.title');
+  let nameInput = this.$el.find('.name-input');
+  let dynamicInput = this.$el.find('.dynamic-input');
+  let tags = this.$el.find('.tags');
+
+  if (this.item !== data.item) {
+    this.item = data.item;
+
+    if (data.item && data.item.resourcePoolState) {
+      title.html(i18n.t('app.resourcePool.edit.update'));
+      nameInput.val(data.item.resourcePoolState.name);
+      if (data.item.resourcePoolState.__tags && data.item.resourcePoolState.__tags.length) {
+        dynamicInput.prop('checked', true);
+        tags.show();
+      } else {
+        dynamicInput.prop('checked', false);
+        tags.hide();
+      }
+      this.tags.setValue(data.item.resourcePoolState.__tags);
     } else {
-      this.$el.find('.title').html(i18n.t('app.resourcePool.edit.createNew'));
-      this.$el.find('.name-input').val('');
-      this.customProperties.setData(null);
+      title.html(i18n.t('app.resourcePool.edit.createNew'));
+      nameInput.val('');
+      dynamicInput.prop('checked', false);
+      tags.hide();
+      this.tags.setValue([]);
     }
   }
-  this.$el.find('.name-input').first().focus();
+  nameInput.first().focus();
 
   this.$el.find('.resourcePoolEdit-save').removeAttr('disabled').removeClass('loading');
 
-  var currentEndpointDocumentSelfLink = this.resourcePool && this.resourcePool.__endpointLink;
+  var currentEndpointDocumentSelfLink = this.item && this.item.resourcePoolState
+      && this.item.resourcePoolState.__endpointLink;
 
   var selectedEndpoint = data.selectedEndpoint;
 
@@ -137,44 +142,52 @@ ResourcePoolRowEditor.prototype.setData = function(data) {
 };
 
 var addEventListeners = function() {
-  var _this = this;
 
-  this.$el.find('.resourcePoolEdit').on('click', '.resourcePoolEdit-save', function(e) {
+  this.$el.on('change', '.dynamic-input', (e) => {
+    let tags = this.$el.find('.tags');
+    if (e.target.checked) {
+      tags.show();
+    } else {
+      tags.hide();
+    }
+  });
+
+  this.$el.find('.resourcePoolEdit').on('click', '.resourcePoolEdit-save', (e) => {
     e.preventDefault();
 
     $(e.currentTarget).addClass('loading');
 
-    var rp = {};
+    let item = {
+      resourcePoolState: {}
+    };
+    if (this.item) {
+      item = $.extend(item, this.item.asMutable({ deep: true }));
+    }
+    item.resourcePoolState.name = this.$el.find('.name-input').val();
+    item.resourcePoolState.customProperties = {};
 
-    if (_this.resourcePool) {
-      $.extend(rp, _this.resourcePool);
+    if (this.endpointInput) {
+      let selectedEndpoint = this.endpointInput.getSelectedOption();
+      item.resourcePoolState.customProperties.__endpointLink =
+          selectedEndpoint && selectedEndpoint.id;
     }
 
-    rp.name = _this.$el.find('.name-input').val();
-    rp.customProperties = utils.arrayToObject(_this.customProperties.getData());
+    let tags = this.tags.getValue();
 
-    if (_this.endpointInput) {
-      rp.customProperties = rp.customProperties || {};
-      var selectedEndpoint = _this.endpointInput.getSelectedOption();
-      rp.customProperties.__endpointLink = selectedEndpoint && selectedEndpoint.id;
-    }
-
-    if (_this.resourcePool) {
-      ResourcePoolsActions.updateResourcePool(rp);
+    if (this.item) {
+      ResourcePoolsActions.updateResourcePool(item, tags);
     } else {
-      ResourcePoolsActions.createResourcePool(rp);
+      ResourcePoolsActions.createResourcePool(item, tags);
     }
   });
 
-  this.$el.find('.resourcePoolEdit').on('click', '.resourcePoolEdit-cancel', function(e) {
+  this.$el.find('.resourcePoolEdit').on('click', '.resourcePoolEdit-cancel', (e) => {
     e.preventDefault();
-    _this.resourcePool = null;
+    this.item = null;
     ResourcePoolsActions.cancelEditResourcePool();
   });
 
-  this.$el.find('.name-input').on('input change', function() {
-    toggleButtonsState(_this.$el);
-  });
+  this.$el.find('.name-input').on('input change', () => toggleButtonsState(this.$el));
 };
 
 var applyValidationErrors = function($el, errors) {

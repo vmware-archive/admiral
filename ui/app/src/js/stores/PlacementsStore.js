@@ -30,7 +30,7 @@ let _enhancePlacement = function(placement) {
                           || this.selectFromData(['placements', 'resourcePools']).get();
   for (let i = 0; i < resourcePools.length; i++) {
     if (resourcePools[i].documentSelfLink === placement.resourcePoolLink) {
-      placement.resourcePoolName = resourcePools[i].name;
+      placement.resourcePoolName = resourcePools[i].resourcePoolState.name;
       break;
     }
   }
@@ -333,7 +333,7 @@ let PlacementsStore = Reflux.createStore({
       for (let i = 0; i < resourcePools.length; i++) {
         var resourcePool = resourcePools[i];
         if (resourcePool.documentSelfLink === placement.resourcePoolLink) {
-          placementModel.resourcePool = resourcePool;
+          placementModel.resourcePool = resourcePool.resourcePoolState;
           break;
         }
       }

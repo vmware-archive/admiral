@@ -279,6 +279,7 @@ var TemplateDetailsView = Vue.extend({
     },
     'container-image-item': {
       template: ListItemImageVue,
+      mixins: [ResourceGroupsMixin],
       props: {
         model: {required: true}
       },

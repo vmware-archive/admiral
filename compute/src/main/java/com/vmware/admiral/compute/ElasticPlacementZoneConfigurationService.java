@@ -128,7 +128,8 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
         // get all RPs and EPZs in parallel
         List<Operation> operationsToJoin = new ArrayList<>();
 
-        URI rpFactoryUri = UriUtils.buildUri(getHost(), ResourcePoolService.FACTORY_LINK);
+        URI rpFactoryUri = UriUtils.buildUri(getHost(), ResourcePoolService.FACTORY_LINK,
+                originalOp.getUri().getQuery());
         operationsToJoin.add(Operation
                 .createGet(expand ? UriUtils.buildExpandLinksQueryUri(rpFactoryUri) : rpFactoryUri)
                 .setReferer(getUri()));

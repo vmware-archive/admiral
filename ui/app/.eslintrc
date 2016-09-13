@@ -21,7 +21,7 @@ Additional changes to the original file:
     "node": false,
     "amd": false,
     "mocha": false,
-    "jasmine": false
+    "jasmine": true
   },
   "plugins": [
     "objects"

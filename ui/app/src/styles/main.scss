@@ -1202,7 +1202,9 @@ text-shadow: 0px 0px 20px black;
 }
 
 .resourcePoolEdit-properties, {
-  /*margin-right: 60px;*/
+  label {
+    font-weight: normal;
+  }
 }
 
 .resourcePoolEdit-toolbar, .credentialsEdit-toolbar, .certificatesEdit-toolbar,
@@ -2376,5 +2378,30 @@ $alert-text-color: #ffffff;
   }
   .search-hint {
     display: none;
+  }
+}
+
+.tags {
+
+  display: none;
+
+  .form-control {
+    padding: 2px;
+    height: auto;
+  }
+
+  .tokenfield .token {
+    margin: 3px;
+  }
+
+  .twitter-typeahead {
+    .tt-input {
+      height: auto;
+      border: 0;
+      padding: 4px;
+    }
+    .tt-suggestion {
+      padding: 3px 9px;
+    }
   }
 }

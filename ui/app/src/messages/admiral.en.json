@@ -99,8 +99,10 @@
         "createNew": "New Placement Zone",
         "update": "Edit Placement Zone",
         "nameTitle": "Placement zone name",
-        "customPropertiesTitle": "Custom properties",
-        "endpointTitle": "Endpoint"
+        "endpointTitle": "Endpoint",
+        "dynamicTitle": "Dynamically allocate resources to this zone",
+        "tagsToMatchTitle": "Tags to match",
+        "tagsToMatchHint": "Enter key:value tags to match"
       },
       "contextPanelTooltip": "Placement Zones"
     },

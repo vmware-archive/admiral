@@ -366,6 +366,61 @@ services.deleteDeploymentPolicy = function(policy) {
   return deleteEntity(policy.documentSelfLink);
 };
 
+services.createTag = function(tag) {
+  return post(links.TAGS, tag);
+};
+
+services.loadTag = function(key, value) {
+  return list(links.TAGS, true, {
+    [ODATA_FILTER_PROP_NAME]: buildOdataQuery({
+      key: [{
+        val: key,
+        op: 'eq'
+      }],
+      value: [{
+        val: value,
+        op: 'eq'
+      }]
+    })
+  }).then((result) => {
+    return Object.values(result)[0];
+  });
+};
+
+services.loadTags = function(documentSelfLinks) {
+  var params = {};
+  if (documentSelfLinks && documentSelfLinks.length) {
+    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+      documentSelfLink: documentSelfLinks.map((link) => {
+        return {
+          val: link,
+          op: 'eq'
+        };
+      }),
+      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+    });
+  }
+  return list(links.TAGS, true, params);
+};
+
+services.searchTags = function(q) {
+  var params = {};
+  if (q) {
+    var pair = q.split(':');
+    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+      key: [{
+        val: pair[0] + '*',
+        op: 'eq'
+      }],
+      value: [{
+        val: (pair[1] || '') + '*',
+        op: 'eq'
+      }]
+    });
+  }
+  return list(links.TAGS, true, params);
+};
+
 services.loadResourcePools = function(documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
@@ -379,7 +434,7 @@ services.loadResourcePools = function(documentSelfLinks) {
       [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
     });
   }
-  return list(links.RESOURCE_POOLS, true, params);
+  return list(links.EPZ_CONFIG, true, params);
 };
 
 services.loadResourcePool = function(id) {
@@ -393,16 +448,16 @@ services.loadResourcePool = function(id) {
   return get(callParamId);
 };
 
-services.createResourcePool = function(resourcePool) {
-  return post(links.RESOURCE_POOLS, resourcePool);
+services.createResourcePool = function(config) {
+  return post(links.EPZ_CONFIG, config);
 };
 
-services.updateResourcePool = function(resourcePool) {
-  return patch(resourcePool.documentSelfLink, resourcePool);
+services.updateResourcePool = function(config) {
+  return patch(links.EPZ_CONFIG, config);
 };
 
-services.deleteResourcePool = function(resourcePool) {
-  return deleteEntity(resourcePool.documentSelfLink);
+services.deleteResourcePool = function(config) {
+  return deleteEntity(config.documentSelfLink);
 };
 
 services.countHostsPerResourcePool = function(resourcePoolLink, onlyContainerHosts) {

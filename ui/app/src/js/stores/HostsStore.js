@@ -388,7 +388,8 @@ let HostsStore = Reflux.createStore({
           this.getResourcePoolsForHostsCall(hosts).then((result) => {
             hosts.forEach((host) => {
               if (result[host.resourcePoolLink]) {
-                host.resourcePoolName = result[host.resourcePoolLink].name;
+                host.resourcePoolName =
+                    result[host.resourcePoolLink].resourcePoolState.name;
               }
             });
 
@@ -578,56 +579,55 @@ let HostsStore = Reflux.createStore({
     this.emitChange();
   },
 
-   loadHostData: function(hostModel, credentialLink, deploymentPolicyLink) {
-      var _this = this;
+  loadHostData: function(hostModel, credentialLink, deploymentPolicyLink) {
+    var _this = this;
 
-      var promises = [
-        services.loadResourcePool(hostModel.resourcePoolDocumentId).catch(() => Promise.resolve())
-      ];
+    var promises = [
+      services.loadResourcePool(hostModel.resourcePoolLink).catch(() => Promise.resolve())
+    ];
 
-      if (credentialLink) {
-        promises.push(services.loadCredential(credentialLink).catch(() => Promise.resolve()));
-      } else {
-        promises.push(Promise.resolve(credentialLink).catch(() => Promise.resolve()));
+    if (credentialLink) {
+      promises.push(services.loadCredential(credentialLink).catch(() => Promise.resolve()));
+    } else {
+      promises.push(Promise.resolve(credentialLink).catch(() => Promise.resolve()));
+    }
+
+    if (hostModel.customProperties && deploymentPolicyLink) {
+      promises.push(
+          services.loadDeploymentPolicy(deploymentPolicyLink).catch(() => Promise.resolve()));
+    }
+
+    Promise.all(promises).then(function([resourcePool, credential, deploymentPolicy]) {
+
+      if (credentialLink && credential) {
+        credential.name = (credential.customProperties
+            && credential.customProperties.__authCredentialsName)
+            ? credential.customProperties.__authCredentialsName
+            : utils.getDocumentId(credentialLink);
+        hostModel.credential = credential;
       }
+      hostModel.resourcePool = resourcePool;
+      hostModel.deploymentPolicy = deploymentPolicy;
 
-      if (hostModel.customProperties && deploymentPolicyLink) {
-        promises.push(
-            services.loadDeploymentPolicy(deploymentPolicyLink).catch(() => Promise.resolve()));
-      }
+      // preselection of resource pool and credentials
+      var hostAddView = {
+        id: hostModel.id,
+        hostAlias: utils.getHostName(hostModel),
+        address: hostModel.address ? hostModel.address : hostModel.id,
+        resourcePool: resourcePool,
+        credential: credential,
+        deploymentPolicy: hostModel.deploymentPolicy,
+        connectionType: hostModel.connectionType,
+        customProperties: utils.getDisplayableCustomProperties(hostModel.customProperties),
+        descriptionLink: hostModel.descriptionLink,
+        powerState: hostModel.powerState,
+        selfLinkId: hostModel.selfLinkId
+      };
 
-      Promise.all(promises)
-            .then(function([resourcePool, credential, deploymentPolicy]) {
+      _this.setInData(['hostAddView'], $.extend({}, _this.data.hostAddView, hostAddView));
 
-          if (credentialLink && credential) {
-            credential.name = (credential.customProperties
-                                && credential.customProperties.__authCredentialsName)
-                              ? credential.customProperties.__authCredentialsName
-                              : utils.getDocumentId(credentialLink);
-            hostModel.credential = credential;
-          }
-          hostModel.resourcePool = resourcePool;
-          hostModel.deploymentPolicy = deploymentPolicy;
-
-          // preselection of resource pool and credentials
-          var hostAddView = {
-            id: hostModel.id,
-            hostAlias: utils.getHostName(hostModel),
-            address: hostModel.address ? hostModel.address : hostModel.id,
-            resourcePool: resourcePool,
-            credential: credential,
-            deploymentPolicy: hostModel.deploymentPolicy,
-            connectionType: hostModel.connectionType,
-            customProperties: utils.getDisplayableCustomProperties(hostModel.customProperties),
-            descriptionLink: hostModel.descriptionLink,
-            powerState: hostModel.powerState,
-            selfLinkId: hostModel.selfLinkId
-          };
-
-          _this.setInData(['hostAddView'], $.extend({}, _this.data.hostAddView, hostAddView));
-
-          _this.emitChange();
-        }).catch(this.onGenericEditError);
+      _this.emitChange();
+    }).catch(this.onGenericEditError);
   },
 
   onUpdateHost: function(hostModel) {

@@ -163,11 +163,12 @@ PlacementsRowEditor.prototype.setData = function(data) {
       this.resourcePoolInput.setLoading(true);
     } else {
       this.resourcePoolInput.setLoading(false);
-      this.resourcePoolInput.setOptions(data.resourcePools);
+      this.resourcePoolInput.setOptions(
+          (data.resourcePools || []).map((config) => config.resourcePoolState));
     }
 
     if (oldData.selectedResourcePool !== data.selectedResourcePool && data.selectedResourcePool) {
-      this.resourcePoolInput.setSelectedOption(data.selectedResourcePool);
+      this.resourcePoolInput.setSelectedOption(data.selectedResourcePool.resourcePoolState);
     }
 
     // todo add loading for groups input
