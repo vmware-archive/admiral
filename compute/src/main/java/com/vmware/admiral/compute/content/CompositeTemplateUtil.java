@@ -425,6 +425,7 @@ public class CompositeTemplateUtil {
         ComponentTemplate<ContainerDescription> template = new ComponentTemplate<>();
         template.type = TEMPLATE_CONTAINER_TYPE;
         template.data = description;
+        template.data.id = null;
         template.dependsOn = description.dependsOn;
         return template;
     }
@@ -436,6 +437,7 @@ public class CompositeTemplateUtil {
         ComponentTemplate<ContainerNetworkDescription> template = new ComponentTemplate<>();
         template.type = TEMPLATE_CONTAINER_NETWORK_TYPE;
         template.data = description;
+        template.data.id = null;
         return template;
     }
 
@@ -446,6 +448,7 @@ public class CompositeTemplateUtil {
         ComponentTemplate<ContainerVolumeDescription> template = new ComponentTemplate<>();
         template.type = TEMPLATE_CONTAINER_VOLUME_TYPE;
         template.data = description;
+        template.data.id = null;
         return template;
     }
 

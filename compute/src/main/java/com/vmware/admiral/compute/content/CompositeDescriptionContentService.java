@@ -23,6 +23,8 @@ import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromCompo
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromCompositeTemplateToCompositeDescription;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromCompositeTemplateToDockerCompose;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromContainerDescriptionToComponentTemplate;
+import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromContainerNetworkDescriptionToComponentTemplate;
+import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromContainerVolumeDescriptionToComponentTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromDockerComposeToCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.getYamlType;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeCompositeTemplate;
@@ -30,6 +32,7 @@ import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serialize
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,7 +44,9 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.content.CompositeTemplateUtil.YamlType;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
 import com.vmware.xenon.common.Operation;
@@ -108,54 +113,90 @@ public class CompositeDescriptionContentService extends StatelessService {
 
             CompositeDescription description = o.getBody(CompositeDescription.class);
             CompositeTemplate template = fromCompositeDescriptionToCompositeTemplate(description);
-
-            QueryTask queryTask = QueryUtil.buildQuery(ContainerDescription.class, true);
-            QueryUtil.addExpandOption(queryTask);
-            QueryUtil.addListValueClause(queryTask, ServiceDocument.FIELD_NAME_SELF_LINK,
-                    description.descriptionLinks);
-
-            // query for all linked ContainerDescriptions
             template.components = new ConcurrentHashMap<>();
 
-            new ServiceDocumentQuery<ContainerDescription>(
-                    getHost(), ContainerDescription.class).query(queryTask, (r) -> {
-                        if (r.hasException()) {
-                            op.fail(r.getException());
-                        } else if (r.hasResult()) {
-                            ContainerDescription container = r.getResult();
-                            ComponentTemplate<?> component = fromContainerDescriptionToComponentTemplate(
-                                    container);
-                            template.components.put(container.name, component);
-                        } else {
-                            // done fetching ContainerDescriptions, serialize the result to YAML
-                            // and complete the request
-                            try {
-                                String content;
-                                if (returnDocker) {
-                                    DockerCompose compose = fromCompositeTemplateToDockerCompose(
-                                            template);
-                                    content = serializeDockerCompose(compose);
-                                } else {
-                                    content = serializeCompositeTemplate(template);
-                                }
-                                op.setBody(content);
-                                op.setContentType(MEDIA_TYPE_APPLICATION_YAML);
-
-                                String contentDisposition = (returnInline
-                                        ? CONTENT_DISPOSITION_INLINE
-                                        : CONTENT_DISPOSITION_ATTACHMENT)
-                                        + CONTENT_DISPOSITION_FILENAME;
-
-                                op.addResponseHeader(CONTENT_DISPOSITION_HEADER,
-                                        String.format(contentDisposition, template.name));
-
-                                op.complete();
-                            } catch (Exception e) {
-                                op.fail(e);
-                            }
-                        }
+            queryComponents(op, template, description,
+                    ContainerDescription.class, (c1) -> {
+                        queryComponents(op, template, description,
+                                ContainerNetworkDescription.class, (c2) -> {
+                                    queryComponents(op, template, description,
+                                            ContainerVolumeDescription.class, (c3) -> {
+                                                // done fetching ContainerDescriptions,
+                                                // serialize the result to YAML and
+                                                // complete the request
+                                                serializeAndComplete(template, returnDocker,
+                                                        returnInline, op);
+                                            });
+                                });
                     });
         }));
+    }
+
+    private <T extends ServiceDocument> void queryComponents(Operation op,
+            CompositeTemplate template, CompositeDescription description, Class<T> clazz,
+            Consumer<Void> next) {
+        QueryTask queryTask = QueryUtil.buildQuery(clazz, true);
+        QueryUtil.addExpandOption(queryTask);
+        QueryUtil.addListValueClause(queryTask, ServiceDocument.FIELD_NAME_SELF_LINK,
+                description.descriptionLinks);
+        new ServiceDocumentQuery<>(getHost(), clazz).query(queryTask, (r) -> {
+            if (r.hasException()) {
+                op.fail(r.getException());
+            } else if (r.hasResult()) {
+                handleResult(template, r.getResult());
+            } else {
+                next.accept(null);
+            }
+        });
+    }
+
+    private void handleResult(CompositeTemplate template, ServiceDocument state) {
+        String name;
+        ComponentTemplate<?> component;
+
+        if (state instanceof ContainerDescription) {
+            ContainerDescription desc = (ContainerDescription) state;
+            name = desc.name;
+            component = fromContainerDescriptionToComponentTemplate(desc);
+        } else if (state instanceof ContainerNetworkDescription) {
+            ContainerNetworkDescription desc = (ContainerNetworkDescription) state;
+            name = desc.name;
+            component = fromContainerNetworkDescriptionToComponentTemplate(desc);
+        } else if (state instanceof ContainerVolumeDescription) {
+            ContainerVolumeDescription desc = (ContainerVolumeDescription) state;
+            name = desc.name;
+            component = fromContainerVolumeDescriptionToComponentTemplate(desc);
+        } else {
+            throw new IllegalArgumentException("Unknown resource state: " + state.getClass());
+        }
+
+        template.components.put(name, component);
+    }
+
+    private void serializeAndComplete(CompositeTemplate template, boolean returnDocker,
+            boolean returnInline, Operation op) {
+        try {
+            String content;
+            if (returnDocker) {
+                DockerCompose compose = fromCompositeTemplateToDockerCompose(template);
+                content = serializeDockerCompose(compose);
+            } else {
+                content = serializeCompositeTemplate(template);
+            }
+            op.setBody(content);
+            op.setContentType(MEDIA_TYPE_APPLICATION_YAML);
+
+            String contentDisposition = (returnInline
+                    ? CONTENT_DISPOSITION_INLINE : CONTENT_DISPOSITION_ATTACHMENT)
+                    + CONTENT_DISPOSITION_FILENAME;
+
+            op.addResponseHeader(CONTENT_DISPOSITION_HEADER,
+                    String.format(contentDisposition, template.name));
+
+            op.complete();
+        } catch (Exception e) {
+            op.fail(e);
+        }
     }
 
     @Override

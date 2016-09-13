@@ -20,6 +20,7 @@ import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICA
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -27,10 +28,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
+import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.UriUtils;
 
 /**
@@ -83,6 +86,80 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
         });
 
         verifyCompositeDescription(location.get());
+    }
+
+    @Test
+    public void testValidateBadRequestOnImport() throws Throwable {
+        this.host.testStart(1);
+        this.host.send(validateBadRequestOnImportOperation((String) null, "body is required"));
+        this.host.testWait();
+
+        this.host.testStart(1);
+        this.host.send(validateBadRequestOnImportOperation("", "'yaml' cannot be empty"));
+        this.host.testWait();
+
+        this.host.testStart(1);
+        this.host.send(validateBadRequestOnImportOperation("abc",
+                "Error processing YAML content: Can not instantiate value of type [simple type, class com.vmware.admiral.compute.content.compose.CommonDescriptionEntity] from String value ('abc'); no single-String constructor/factory method"));
+        this.host.testWait();
+
+        this.host.testStart(1);
+        this.host.send(validateBadRequestOnImportOperation(getContent("docker.redis.v1.yaml"),
+                "Unknown YAML content type! Only Blueprint and Docker Compose v2 formats are supported."));
+        this.host.testWait();
+
+        this.host.testStart(1);
+        this.host.send(validateBadRequestOnImportOperation(getContent("composite.2.5.yaml"),
+                "Unsupported type 'Compute'!"));
+        this.host.testWait();
+
+        this.host.testStart(1);
+        this.host.send(validateBadRequestOnImportOperation(getContent("composite.bad.yaml"),
+                "Can not deserialize instance of java.lang.String out of START_OBJECT token"));
+        this.host.testWait();
+
+        this.host.testStart(1);
+        this.host.send(validateBadRequestOnImportOperation(getContent("docker.bad.yaml"),
+                "Error processing Docker Compose v2 YAML content: Can not instantiate value of type [simple type, class com.vmware.admiral.compute.content.compose.Logging] from String value (''); no single-String constructor/factory method"));
+        this.host.testWait();
+
+        this.host.testStart(1);
+        this.host.send(validateBadRequestOnImportOperation(new Date(),
+                "Failed to deserialize CompositeTemplate serialized content!"));
+        this.host.testWait();
+    }
+
+    private Operation validateBadRequestOnImportOperation(Object body, String expectedMsg) {
+        // import YAML to Container Description
+        return Operation.createPost(UriUtils.buildUri(host,
+                CompositeDescriptionContentService.SELF_LINK))
+                .setContentType((body instanceof String) ? MEDIA_TYPE_APPLICATION_YAML
+                        : Operation.MEDIA_TYPE_APPLICATION_JSON)
+                .setBody(body)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        if (e instanceof IllegalArgumentException) {
+                            try {
+                                assertEquals(Operation.STATUS_CODE_BAD_REQUEST, o.getStatusCode());
+                                assertTrue(e.getMessage().contains(expectedMsg));
+                                assertTrue(o.getBody(ServiceErrorResponse.class).message
+                                        .contains(expectedMsg));
+                            } catch (Throwable t) {
+                                host.failIteration(t);
+                                return;
+                            }
+                            host.completeIteration();
+                            return;
+                        }
+                        host.failIteration(e);
+                    } else {
+                        host.failIteration(new IllegalStateException("Test should have failed!"));
+                    }
+                });
+    }
+
+    private static String getContent(String filename) {
+        return FileUtil.getResourceAsString("/compose/" + filename, true);
     }
 
     private void verifyCompositeDescription(String location) throws Throwable {

@@ -18,6 +18,9 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonFilter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.apache.commons.io.FileUtils;
@@ -27,6 +30,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.CloneableResource;
+import com.vmware.admiral.compute.content.YamlMapper;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
@@ -46,7 +50,10 @@ public class ContainerVolumeDescriptionService extends StatefulService {
 
     private static final String DEFAULT_VOLUME_DRIVER = "local";
 
-    public static class ContainerVolumeDescription extends ResourceState implements CloneableResource {
+    @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
+    @JsonIgnoreProperties({ "customProperties" })
+    public static class ContainerVolumeDescription extends ResourceState
+            implements CloneableResource {
 
         public static final String FIELD_NAME_NAME = "name";
         public static final String FIELD_NAME_DRIVER = "driver";
@@ -58,6 +65,7 @@ public class ContainerVolumeDescriptionService extends StatefulService {
 
         /** Defines which adapter will serve the provision request */
         @Documentation(description = "Defines which adapter will serve the provision request")
+        @JsonIgnore
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public URI instanceAdapterReference;
 
@@ -137,9 +145,7 @@ public class ContainerVolumeDescriptionService extends StatefulService {
             this.documentSelfLink = null;
             return Operation.createPost(sender, FACTORY_LINK)
                     .setBody(this);
-
         }
-
     }
 
     public ContainerVolumeDescriptionService() {

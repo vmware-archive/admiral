@@ -17,6 +17,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -26,6 +27,7 @@ import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.CloneableResource;
+import com.vmware.admiral.compute.content.YamlMapper;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
@@ -40,6 +42,7 @@ public class ContainerNetworkDescriptionService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CONTAINER_NETWORK_DESC;
 
+    @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
     @JsonIgnoreProperties({ "customProperties" })
     public static class ContainerNetworkDescription extends ResourceState
             implements CloneableResource {

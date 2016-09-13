@@ -1,0 +1,63 @@
+---
+name: "Docker Compose 2016-09-13 16.06.02.509 GMT"
+components:
+  database:
+    type: "Volume.Docker"
+    data:
+      name: "database"
+      driver: "database-driver-1"
+      options:
+        mountpoint: "/data/local/data"
+  wordpress:
+    type: "Container.Docker"
+    data:
+      name: "wordpress"
+      image: "wordpress:latest"
+      env:
+      - var: "WORDPRESS_DB_HOST"
+        value: "db:3306"
+      - var: "WORDPRESS_DB_PASSWORD"
+        value: "wordpress"
+      volumes:
+      - "phpconf:/etc/php/conf.d"
+      ports:
+      - host_port: "8000"
+        container_port: "80"
+        protocol: "tcp"
+      depends_on:
+      - "db"
+      links:
+      - service: "db"
+        alias: "db"
+      restart_policy: "always"
+    dependsOn:
+    - "db"
+  phpconf:
+    type: "Volume.Docker"
+    data:
+      name: "phpconf"
+      driver: "phpconf-driver-2"
+      options:
+        mountpoint: "/etc/php5/conf.d"
+  db:
+    type: "Container.Docker"
+    data:
+      name: "db"
+      image: "mysql:5.7"
+      env:
+      - var: "MYSQL_ROOT_PASSWORD"
+        value: "wordpress"
+      - var: "MYSQL_DATABASE"
+        value: "wordpress"
+      - var: "MYSQL_USER"
+        value: "wordpress"
+      - var: "MYSQL_PASSWORD"
+        value: "wordpress"
+      volumes:
+      - "database:/var/lib/mysql/data"
+      log_config:
+        type: "json-file"
+        config:
+          max-size: "10m"
+          max-file: "5"
+      restart_policy: "always"
