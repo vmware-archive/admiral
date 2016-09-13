@@ -58,6 +58,7 @@ public interface DockerAdapterCommandExecutor {
     String DOCKER_CONTAINER_NETWORK_SETTINGS_PORTS_PROP_NAME = "Ports";
     String DOCKER_CONTAINER_NETWORK_SETTINGS_IP_ADDRESS_PROP_NAME = "IPAddress";
     String DOCKER_CONTAINER_NETWORKING_CONFIG_PROP_NAME = "NetworkingConfig";
+    String DOCKER_CONTAINER_NETWORK_CHECK_DUPLICATE_PROP_NAME = "CheckDuplicate";
 
     String DOCKER_CONTAINER_HOST_CONFIG_PROP_NAME = "HostConfig";
 
@@ -137,11 +138,6 @@ public interface DockerAdapterCommandExecutor {
     String DOCKER_IMAGE_TAG_PROP_NAME = "tag";
     String DOCKER_IMAGE_DATA_PROP_NAME = "imageData";
     String DOCKER_IMAGE_REGISTRY_AUTH = "X-Registry-Auth";
-
-    String DOCKER_NETWORK_ID_PROP_NAME = "Id";
-    String DOCKER_NETWORK_NAME_PROP_NAME = "Name";
-    String DOCKER_NETWORK_DRIVER_PROP_NAME = "Driver";
-    String DOCKER_NETWORK_CHECK_DUPLICATE_PROP_NAME = "CheckDuplicate";
 
     String DOCKER_VOLUME_NAME_PROP_NAME = "Name";
     String DOCKER_VOLUME_DRIVER_PROP_NAME = "Driver";

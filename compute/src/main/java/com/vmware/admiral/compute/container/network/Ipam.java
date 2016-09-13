@@ -16,6 +16,9 @@ package com.vmware.admiral.compute.container.network;
  * compose networking https://docs.docker.com/compose/compose-file/#ipam
  */
 public class Ipam {
+    // TODO consider adding Map<String, String> options field that will represent the IPAM driver
+    // specific options (set by --ipam-opt in CLI)
+
     public String driver;
     public IpamConfig[] config;
 

@@ -734,11 +734,11 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
         CommandBuilder cb = new CommandBuilder()
                 .withCommand("network create")
                 .withLongSwitchIfPresent(properties, PROP_NAME_TO_LONG_SWITCH,
-                        DOCKER_NETWORK_DRIVER_PROP_NAME)
-                .withArgumentIfPresent(properties, DOCKER_NETWORK_NAME_PROP_NAME);
+                        DOCKER_CONTAINER_NETWORK_DRIVER_PROP_NAME)
+                .withArgumentIfPresent(properties, DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME);
         // TODO other properties
         execWithInput(input, docker(cb), completionHandler,
-                (s) -> Collections.singletonMap(DOCKER_NETWORK_ID_PROP_NAME,
+                (s) -> Collections.singletonMap(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME,
                         s.replaceAll("[\r\n]+$", "")));
     }
 
@@ -748,7 +748,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
 
         CommandBuilder cb = new CommandBuilder()
                 .withCommand("network rm")
-                .withArgumentIfPresent(properties, DOCKER_NETWORK_ID_PROP_NAME);
+                .withArgumentIfPresent(properties, DOCKER_CONTAINER_NETWORK_ID_PROP_NAME);
 
         execWithInput(input, docker(cb), completionHandler);
     }

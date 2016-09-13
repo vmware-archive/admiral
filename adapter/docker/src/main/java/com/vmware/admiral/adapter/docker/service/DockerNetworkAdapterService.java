@@ -11,7 +11,11 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_DRIVER_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_ID_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_IPAM_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_OPTIONS_PROP_NAME;
 
 import java.util.Map;
 import java.util.logging.Level;
@@ -20,6 +24,7 @@ import org.apache.commons.lang3.NotImplementedException;
 
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.xenon.common.Operation;
@@ -169,20 +174,32 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
     }
 
     private void processCreateNetwork(RequestContext context) {
+        AssertUtil.assertNotNull(context.networkState, "networkState");
+        AssertUtil.assertNotEmpty(context.networkState.name, "networkState.name");
+
         CommandInput createCommandInput = context.commandInput.withPropertyIfNotNull(
-                DockerAdapterCommandExecutor.DOCKER_NETWORK_NAME_PROP_NAME,
+                DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME,
                 context.networkState.name);
         if (context.networkState.driver != null && !context.networkState.driver.isEmpty()) {
             createCommandInput.withProperty(
-                    DockerAdapterCommandExecutor.DOCKER_NETWORK_DRIVER_PROP_NAME,
+                    DOCKER_CONTAINER_NETWORK_DRIVER_PROP_NAME,
                     context.networkState.driver);
         } else {
             createCommandInput.withProperty(
-                    DockerAdapterCommandExecutor.DOCKER_NETWORK_DRIVER_PROP_NAME,
+                    DOCKER_CONTAINER_NETWORK_DRIVER_PROP_NAME,
                     DOCKER_NETWORK_TYPE_DEFAULT);
         }
 
-        // TODO other properties and verification if needed
+        if (context.networkState.options != null && !context.networkState.options.isEmpty()) {
+            createCommandInput.withProperty(
+                    DOCKER_CONTAINER_NETWORK_OPTIONS_PROP_NAME,
+                    context.networkState.options);
+        }
+
+        if (context.networkState.ipam != null) {
+            createCommandInput.withProperty(DOCKER_CONTAINER_NETWORK_IPAM_PROP_NAME,
+                    DockerAdapterUtils.ipamToMap(context.networkState.ipam));
+        }
 
         context.executor.createNetwork(createCommandInput, (op, ex) -> {
             if (ex != null) {
@@ -202,7 +219,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
     private void processDeleteNetwork(RequestContext context) {
         CommandInput deleteCommandInput = context.commandInput.withPropertyIfNotNull(
-                DockerAdapterCommandExecutor.DOCKER_NETWORK_ID_PROP_NAME,
+                DOCKER_CONTAINER_NETWORK_ID_PROP_NAME,
                 context.networkState.name);
 
         // TODO do verification and stuff

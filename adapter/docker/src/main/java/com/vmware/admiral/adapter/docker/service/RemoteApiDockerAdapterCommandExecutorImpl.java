@@ -292,7 +292,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     /**
      * https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#create-a-network
      * Mandatory properties for <code>input</code>:
-     * <li>{@link DockerAdapterCommandExecutor#DOCKER_NETWORK_NAME_PROP_NAME}
+     * <li>{@link DockerAdapterCommandExecutor#DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME}
      */
     @Override
     public void createNetwork(CommandInput input, CompletionHandler completionHandler) {
@@ -311,7 +311,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         createOrUpdateTargetSsl(input);
 
         String path = String.format("/networks/%s", input
-                .getProperties().get(DOCKER_NETWORK_ID_PROP_NAME));
+                .getProperties().get(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME));
 
         URI uri = UriUtils.extendUri(input.getDockerUri(), path);
         // TODO there is no force remove for networks. All connected containers must be disconnected
@@ -325,7 +325,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         createOrUpdateTargetSsl(input);
 
         String path = String.format("/networks/%s", input
-                .getProperties().get(DOCKER_NETWORK_ID_PROP_NAME));
+                .getProperties().get(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME));
 
         sendGet(UriUtils.extendUri(input.getDockerUri(), path), input.getProperties(),
                 completionHandler);
