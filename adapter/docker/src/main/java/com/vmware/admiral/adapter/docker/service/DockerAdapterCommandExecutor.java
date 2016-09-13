@@ -53,6 +53,8 @@ public interface DockerAdapterCommandExecutor {
     String DOCKER_CONTAINER_LOG_CONFIG_PROP_TYPE_NAME = "Type";
     String DOCKER_CONTAINER_LOG_CONFIG_PROP_CONFIG_NAME = "Config";
 
+    String DOCKER_CONTAINER_STOP_TIME = "Time";
+
     // Flag that forces container creation from a local image and only if the image is not available
     // download it
     // from a registry.

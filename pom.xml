@@ -79,7 +79,6 @@
 
         <!-- other -->
         <bouncycastle.version>1.54</bouncycastle.version>
-        <jsch.version>0.1.53</jsch.version>
         <jackson.version>2.6.3</jackson.version>
 
         <!-- JS -->
@@ -172,12 +171,6 @@
                 <groupId>com.vmware.photon.controller</groupId>
                 <artifactId>photon-vsphere-adapter</artifactId>
                 <version>${photon.model.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.jcraft</groupId>
-                <artifactId>jsch</artifactId>
-                <version>${jsch.version}</version>
             </dependency>
 
             <dependency>

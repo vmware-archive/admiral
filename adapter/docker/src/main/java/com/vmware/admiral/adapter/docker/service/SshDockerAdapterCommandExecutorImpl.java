@@ -11,9 +11,6 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.BINDS_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.CAP_ADD_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.CAP_DROP_PROP_NAME;
@@ -33,47 +30,38 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.RESTART_POLICY_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.RESTART_POLICY_RETRIES_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.VOLUMES_FROM_PROP_NAME;
-import static com.vmware.admiral.compute.ContainerHostService.SSH_HOST_KEY_PROP_NAME;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URI;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import net.schmizz.sshj.SSHClient;
 
 import com.vmware.admiral.adapter.docker.util.DockerDevice;
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.adapter.docker.util.PropertyToSwitchNameMapper;
-import com.vmware.admiral.adapter.docker.util.ssh.CachingJschSessionPoolImpl;
 import com.vmware.admiral.adapter.docker.util.ssh.CommandBuilder;
-import com.vmware.admiral.adapter.docker.util.ssh.JSchLoggerAdapter;
-import com.vmware.admiral.adapter.docker.util.ssh.JSchSessionPool;
 import com.vmware.admiral.adapter.docker.util.ssh.Mappers;
-import com.vmware.admiral.adapter.docker.util.ssh.SessionParams;
-import com.vmware.admiral.adapter.docker.util.ssh.SshExecTask;
-import com.vmware.admiral.adapter.docker.util.ssh.SshQueueExecutor;
-import com.vmware.admiral.common.AuthCredentialsType;
+import com.vmware.admiral.common.util.SshUtil;
+import com.vmware.admiral.common.util.SshUtil.AsyncResult;
+import com.vmware.admiral.common.util.SshUtil.ConsumedResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
-import com.vmware.xenon.common.OperationContext;
 import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 /**
@@ -81,95 +69,214 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
  * remote end
  */
 public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommandExecutor, Mappers {
+
+    private static final String SSH_OP_OUT_PREFIX = "ssh-op-out";
+    private static final String SSH_OP_ERR_PREFIX = "ssh-op-err";
+    private static final String SSH_OP_EXIT_CODE_PREFIX = "ssh-op-exitCode";
+
+    /*
+     * Depending on the load, lowering this may result in better performance for a single operation,
+     * but it will result in higher usage of ssh sessions as well. Change MaxSessions ssh property
+     * accordingly.
+     */
+    private static final int SSH_POLL_DELAY_SECONDS = Integer.parseInt(
+            System.getProperty("ssh.poll.delay", "10"));
+
+    private ServiceHost host;
+
+    private Map<String, SSHClient> clients = new HashMap<String, SSHClient>();
+
     private static Logger logger = Logger.getLogger(SshDockerAdapterCommandExecutorImpl.class
             .getName());
 
-    private static final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1,
-            new ThreadPoolExecutor.AbortPolicy());
-
     private static final UnaryOperator<String> PROP_NAME_TO_LONG_SWITCH = new PropertyToSwitchNameMapper();
 
-    static {
-        JSch.setLogger(new JSchLoggerAdapter(logger));
-    }
-
-    private final BiFunction<Runnable, Long, Future<?>> scheduler;
-    private final JSchSessionPool sessionPool;
-    private final SshQueueExecutor sshQueueExecutor;
+    Set<ExecutionState> execInProgress = ConcurrentHashMap.newKeySet();
+    Set<ScpState> scpInProgress = ConcurrentHashMap.newKeySet();
 
     public SshDockerAdapterCommandExecutorImpl(ServiceHost host) {
-        /*
-         * scheduler that will be used to periodically poll running tasks for completion
-         *
-         * this is using the ServiceHost's thread pool so there is no possibility of completion
-         * polling being starved by new tasks being started by the local executor
-         */
-        scheduler = (r, delayMillis) -> host.schedule(r, delayMillis, TimeUnit.MILLISECONDS);
-        sessionPool = new CachingJschSessionPoolImpl(scheduler);
-        sshQueueExecutor = new SshQueueExecutor(scheduler, sessionPool);
+        this.host = host;
+        host.schedule(() -> {
+            handleInProgress();
+        }, SSH_POLL_DELAY_SECONDS, TimeUnit.SECONDS);
+    }
+
+    public void handleInProgress() {
+        Iterator<ExecutionState> execIt = execInProgress.iterator();
+        while (execIt.hasNext()) {
+            ExecutionState state = execIt.next();
+            if (state.result.isDone()) {
+                execIt.remove();
+                ConsumedResult consumed = null;
+                try {
+                    consumed = state.result.join().consume();
+                    handleExecResult(state.id, consumed.exitCode, consumed.error, consumed.out,
+                            consumed.err, state.handler, state.mapper);
+                } catch (IOException e) {
+                    state.handler.handle(null, e);
+                    return;
+                }
+            }
+        }
+
+        Iterator<ScpState> scpIt = scpInProgress.iterator();
+        while (scpIt.hasNext()) {
+            ScpState state = scpIt.next();
+            if (state.result.isDone()) {
+                scpIt.remove();
+                Throwable error = null;
+                try {
+                    error = state.result.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    state.handler.handle(null, e);
+                }
+                Operation op = Operation.createPatch(null)
+                        .setBody(state.target);
+                state.handler.handle(op, error);
+            }
+        }
+
+        host.schedule(() -> {
+            handleInProgress();
+        }, SSH_POLL_DELAY_SECONDS, TimeUnit.SECONDS);
+    }
+
+    private static void handleExecResult(String id, int exitCode, Throwable error, String out,
+            String err,
+            CompletionHandler handler, Function<String, ?> mapper) {
+        if (exitCode != 0) {
+            if (error != null) { // SSH error, bad hostname, terminated
+                                 // session,
+                                 // etc.
+                handler.handle(null, error);
+            } else { // Executed, but bad status code
+                Throwable t = new RuntimeException(String.format(
+                        "Error executing ssh command with id %s%nSTATUS: %s%nOUT=%s%nERR=%s",
+                        id, exitCode, out, err));
+                handler.handle(null, t);
+            }
+        } else { // Operation completed successfully
+            logger.info(
+                    String.format("Completed ssh command with id %s%nSTATUS: %s",
+                            id,
+                            exitCode));
+            logger.fine(String.format("ID:%s%nOUT=%s%nERR=%s", id, out,
+                    err));
+            Object body = out;
+            if (mapper != null) {
+                body = mapper.apply(out);
+            }
+            Operation op = Operation.createPatch(null)
+                    .setBody(body);
+            handler.handle(op, null);
+        }
+    }
+
+    private class SshOperationState {
+        public String id = UUID.randomUUID().toString();
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (id == null) {
+                return false;
+            }
+            if (!(obj.getClass().equals(getClass()))) {
+                return false;
+            }
+
+            return id.equals(((SshOperationState) obj).id);
+        }
+
+        @Override
+        public int hashCode() {
+            if (id == null) {
+                return -1;
+            }
+
+            return id.hashCode();
+        }
+    }
+
+    private class ExecutionState extends SshOperationState {
+        public AsyncResult result;
+        public CompletionHandler handler;
+        public Function<String, ?> mapper;
+
+        public ExecutionState(AsyncResult result, CompletionHandler handler,
+                Function<String, ?> mapper) {
+            this.result = result;
+            this.handler = handler;
+            this.mapper = mapper;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (id == null) {
+                return false;
+            }
+            if (!(obj.getClass().equals(getClass()))) {
+                return false;
+            }
+
+            return id.equals(((ExecutionState) obj).id);
+        }
+
+        @Override
+        public int hashCode() {
+            if (id == null) {
+                return -1;
+            }
+
+            return id.hashCode();
+        }
+    }
+
+    private class ScpState extends SshOperationState {
+        public String target;
+        public Future<Throwable> result;
+        public CompletionHandler handler;
+
+        public ScpState(String target, Future<Throwable> result, CompletionHandler handler) {
+            super();
+            this.result = result;
+            this.handler = handler;
+            this.target = target;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (id == null) {
+                return false;
+            }
+            if (!(obj.getClass().equals(getClass()))) {
+                return false;
+            }
+
+            return id.equals(((ScpState) obj).id);
+        }
+
+        @Override
+        public int hashCode() {
+            if (id == null) {
+                return -1;
+            }
+
+            return id.hashCode();
+        }
     }
 
     @Override
     public void handleMaintenance(Operation post) {
         // add periodic maintenance logic here
-    }
-
-    /**
-     * Execute an SSH command
-     *
-     * Input will be read from the given input stream and output and error streams will be written
-     * to the given output streams.
-     *
-     * The command error status will be returned.
-     *
-     * @param commandInput
-     * @param command
-     * @param in
-     * @param out
-     * @param err
-     * @param completionHandler
-     * @return command error status code
-     * @throws JSchException
-     */
-    protected void exec(CommandInput commandInput, String command, InputStream in,
-            OutputStream out, OutputStream err, Consumer<SshExecTask> completionHandler)
-            throws JSchException {
-
-        logger.fine("Executing command: " + command);
-
-        URI dockerUri = commandInput.getDockerUri();
-        AuthCredentialsServiceState credentials = commandInput.getCredentials();
-
-        String hostKey = (String) commandInput.getProperties().get(SSH_HOST_KEY_PROP_NAME);
-
-        SessionParams sessionParams = new SessionParams()
-                .withHost(dockerUri.getHost())
-                .withPort(dockerUri.getPort())
-                .withUser(credentials.userEmail)
-                .withHostKey(hostKey);
-
-        switch (AuthCredentialsType.valueOf(credentials.type)) {
-        case PublicKey:
-            sessionParams.withPrivateKey(credentials.privateKey.getBytes());
-            break;
-
-        case Password:
-            sessionParams.withPassword(credentials.privateKey);
-            break;
-
-        default:
-            throw new IllegalArgumentException("Unsupported credentials type: "
-                    + credentials.type);
-        }
-
-        SshExecTask task = new SshExecTask(scheduler)
-                .withCommand(command)
-                .withInput(in)
-                .withOutput(out)
-                .withError(err)
-                .withCompletionHandler(completionHandler);
-
-        sshQueueExecutor.submit(task, sessionParams);
     }
 
     /**
@@ -180,10 +287,10 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
      * @param in
      * @param completionHandler
      */
-    protected void execWithInput(CommandInput commandInput, String command, InputStream in,
+    protected void execWithInput(CommandInput commandInput, String command,
             CompletionHandler completionHandler) {
 
-        execWithInput(commandInput, command, in, completionHandler, (s) -> s);
+        execWithInput(commandInput, command, completionHandler, (s) -> s);
     }
 
     /**
@@ -197,68 +304,181 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
      *
      * @param commandInput
      * @param command
-     * @param in
      * @param completionHandler
      * @param mapper
      */
-    protected void execWithInput(CommandInput commandInput, String command, InputStream in,
-            CompletionHandler completionHandler, Function<String, ?> mapper) {
+    protected void execWithInput(CommandInput commandInput, String command,
+            final CompletionHandler completionHandler, Function<String, ?> mapper) {
+        String outStreamFile = "/tmp/" + SSH_OP_OUT_PREFIX + UUID.randomUUID() + ".txt";
+        String errStreamFile = "/tmp/" + SSH_OP_ERR_PREFIX + UUID.randomUUID() + ".txt";
+        String exitCodeFile = "/tmp/" + SSH_OP_EXIT_CODE_PREFIX + UUID.randomUUID() + ".txt";
 
-        final OperationContext parentContext = OperationContext.getOperationContext();
+        String hostname = commandInput.getDockerUri().getHost();
+        AuthCredentialsServiceState credentials = commandInput.getCredentials();
 
-        executor.execute(() -> {
-            final OperationContext childContext = OperationContext.getOperationContext();
-            try {
-                // set the operation context of the parent thread in the current thread
-                OperationContext.restoreOperationContext(parentContext);
+        SSHClient client;
+        try {
+            client = getSshClient(hostname, credentials);
+        } catch (IOException e) {
+            completionHandler.handle(null, e);
+            return;
+        }
 
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                ByteArrayOutputStream err = new ByteArrayOutputStream();
+        command = String.format(
+                "nohup /bin/sh -c '%s > %s 2> %s ; echo $? > %s' &>/dev/null & echo $!",
+                command, outStreamFile, errStreamFile, exitCodeFile);
 
-                exec(commandInput, command, in, out, err, (task) -> {
-                    int exitStatus = task.getExitStatus();
-                    if (logger.isLoggable(Level.FINE)) {
-                        Utils.log(logger, null, getClass().getName(), Level.FINE,
-                                "command=[%s],status=[%d],stdout=[%s],stderr=[%s]", command,
-                                exitStatus, out, err);
-                    }
-
-                    if (exitStatus == 0) {
-                        String output = "";
-                        boolean outRequested = commandInput.getProperties() == null
-                                || commandInput.getProperties().get(
-                                        DOCKER_EXEC_ATTACH_STDOUT_PROP_NAME) == null
-                                || Boolean.valueOf(commandInput.getProperties().get(
-                                        DOCKER_EXEC_ATTACH_STDOUT_PROP_NAME).toString());
-                        if (outRequested) {
-                            output = out.toString();
-                        }
-
-                        Operation op = Operation.createPatch(null).setBody(mapper.apply(output));
-                        completionHandler.handle(op, null);
-
-                    } else {
-                        Throwable t = new RuntimeException(String.format(
-                                "Error executing command=[%s],status=[%s],stdout=[%s],stderr=[%s]",
-                                command, exitStatus, out, err));
-
-                        completionHandler.handle(null, t);
-                    }
-                });
-            } catch (Exception x) {
-                completionHandler.handle(null, x);
-            } finally {
-                // restore the operation context of the child thread
-                OperationContext.restoreOperationContext(childContext);
+        AsyncResult result = SshUtil.asyncExec(client, command);
+        // Not setting completion handler at constructor so I can use the state id in it (better
+        // log)
+        ExecutionState state = new ExecutionState(result, null, null);
+        state.handler = (op, failure) -> {
+            if (failure != null) {
+                // Failed to start the process
+                completionHandler.handle(op, failure);
+                return;
             }
-        });
+            String pid = op.getBody(String.class).replace("\n", "");
+            ProcessResultCollector prc = new ProcessResultCollector(pid, completionHandler, mapper);
+            logger.info(String.format(
+                    "Starting SSH process result collector with id %s for pid %s, origin %s",
+                    pid, prc.id, state.id));
+            pollForProcessCompletion(commandInput, outStreamFile,
+                    errStreamFile, exitCodeFile, prc);
+        };
+
+        logger.info(
+                String.format("SSH execution %s started on %s: %s", state.id, hostname, command));
+        execInProgress.add(state);
+    }
+
+    public class ProcessResultCollector {
+        private String id;
+        private String pid;
+        private CompletionHandler completionHandler;
+        private Function<String, ?> mapper;
+
+        // Result data
+        private String out = null;
+        private String err = null;
+        private int exitCode = -99;
+
+        public ProcessResultCollector(String pid, CompletionHandler completionHandler,
+                Function<String, ?> mapper) {
+            super();
+            this.id = UUID.randomUUID().toString();
+            this.pid = pid;
+            this.completionHandler = completionHandler;
+            this.mapper = mapper;
+        }
+
+        public void setOut(String out) {
+            this.out = out;
+            checkDone();
+        }
+
+        public void setErr(String err) {
+            this.err = err;
+            checkDone();
+        }
+
+        public void setExitCode(int exitCode) {
+            this.exitCode = exitCode;
+            checkDone();
+        }
+
+        public void checkDone() {
+            if (out != null && err != null && exitCode != -99) {
+                handleExecResult(id, exitCode, null, out, err, completionHandler, mapper);
+            }
+        }
+    }
+
+    public void pollForProcessCompletion(CommandInput commandInput,
+            String outStreamFile,
+            String errStreamFile, String exitCodeFile, ProcessResultCollector prc) {
+        String hostname = commandInput.getDockerUri().getHost();
+        AuthCredentialsServiceState credentials = commandInput.getCredentials();
+
+        SSHClient client;
+        try {
+            client = getSshClient(hostname, credentials);
+        } catch (IOException e) {
+            prc.completionHandler.handle(null, e);
+            return;
+        }
+
+        String command = String.format("ps -aux | awk '{print $2}' | { grep -w %s || true; }",
+                prc.pid);
+        AsyncResult result = SshUtil.asyncExec(client, command);
+        ExecutionState state = new ExecutionState(result, (op, failure) -> {
+            if (failure != null) {
+                prc.completionHandler.handle(op, failure);
+                return;
+            }
+            String pidOrEmpty = op.getBody(String.class).replace("\n", "");
+            if (pidOrEmpty.equals("")) {
+                // Process exited, collect data
+
+                AsyncResult outOp = SshUtil.asyncExec(client, "cat " + outStreamFile);
+                execInProgress.add(new ExecutionState(outOp, (op1, failure1) -> {
+                    if (failure1 != null) {
+                        prc.completionHandler.handle(null, failure1);
+                        return;
+                    }
+                    prc.setOut(op1.getBody(String.class));
+                }, null));
+                AsyncResult errOp = SshUtil.asyncExec(client, "cat " + errStreamFile);
+                execInProgress.add(new ExecutionState(errOp, (op1, failure1) -> {
+                    if (failure1 != null) {
+                        prc.completionHandler.handle(null, failure1);
+                        return;
+                    }
+                    prc.setErr(op1.getBody(String.class));
+                }, null));
+                AsyncResult exitCodeOp = SshUtil.asyncExec(client, "cat " + exitCodeFile);
+                execInProgress.add(new ExecutionState(exitCodeOp, (op1, failure1) -> {
+                    if (failure1 != null) {
+                        prc.completionHandler.handle(null, failure1);
+                        return;
+                    }
+                    prc.setExitCode(Integer.parseInt(op1.getBody(String.class).replace("\n", "")));
+                }, null));
+            } else {
+                // Try again in 10 seconds
+                host.schedule(() -> {
+                    pollForProcessCompletion(commandInput, outStreamFile, errStreamFile,
+                            exitCodeFile, prc);
+                }, 10, TimeUnit.SECONDS);
+            }
+        }, null);
+        logger.info(
+                String.format("SSH execution %s started on %s: %s", state.id, hostname, command));
+        execInProgress.add(state);
     }
 
     @Override
     public void loadImage(CommandInput input, CompletionHandler completionHandler) {
-        byte[] data = (byte[]) input.getProperties().get(DOCKER_IMAGE_DATA_PROP_NAME);
+        uploadImage(input, (completedOp, failure) -> {
+            if (failure != null) {
+                completionHandler.handle(null, failure);
+            } else {
+                execWithInput(input, docker("load --input " + completedOp.getBody(String.class)),
+                        completionHandler);
+            }
+        });
+    }
 
-        execWithInput(input, docker("load"), new ByteArrayInputStream(data), completionHandler);
+    protected void uploadImage(CommandInput commandInput, CompletionHandler completionHandler) {
+        String hostname = commandInput.getDockerUri().getHost();
+        AuthCredentialsServiceState credentials = commandInput.getCredentials();
+
+        String remoteFile = "/tmp/image" + System.currentTimeMillis();
+        byte[] data = (byte[]) commandInput.getProperties().get(DOCKER_IMAGE_DATA_PROP_NAME);
+        logger.info("" + data.length);
+        Future<Throwable> result = SshUtil.asyncUpload(hostname, credentials,
+                new ByteArrayInputStream(data), remoteFile);
+        scpInProgress.add(new ScpState(remoteFile, result, completionHandler));
     }
 
     @Override
@@ -269,7 +489,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                 .withCommand("pull")
                 .withArguments(imageName);
 
-        execWithInput(input, docker(cb), null, completionHandler);
+        execWithInput(input, docker(cb), completionHandler);
     }
 
     @Override
@@ -301,6 +521,10 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
 
         Map<String, Object> hostConfig = (Map<String, Object>) properties
                 .get(DOCKER_CONTAINER_HOST_CONFIG_PROP_NAME);
+
+        if (hostConfig == null) {
+            hostConfig = new HashMap<String, Object>();
+        }
 
         cb.withLongSwitchIfPresent(hostConfig, PROP_NAME_TO_LONG_SWITCH, MEMORY_PROP_NAME,
                 MEMORY_SWAP_PROP_NAME, CPU_SHARES_PROP_NAME, DNS_PROP_NAME, DNS_SEARCH_PROP_NAME,
@@ -348,7 +572,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
 
         cb.withArgumentIfPresent(properties, DOCKER_CONTAINER_COMMAND_PROP_NAME);
 
-        execWithInput(input, docker(cb), null, completionHandler,
+        execWithInput(input, docker(cb), completionHandler,
                 (s) -> Collections.singletonMap(DOCKER_CONTAINER_ID_PROP_NAME,
                         s.replaceAll("[\r\n]+$", "")));
     }
@@ -366,7 +590,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                 .withCommand("start")
                 .withArgumentIfPresent(properties, DOCKER_CONTAINER_ID_PROP_NAME);
 
-        execWithInput(input, docker(cb), null, completionHandler);
+        execWithInput(input, docker(cb), completionHandler);
     }
 
     @Override
@@ -375,9 +599,10 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
 
         CommandBuilder cb = new CommandBuilder()
                 .withCommand("stop")
+                .withLongSwitchIfPresent(properties, PROP_NAME_TO_LONG_SWITCH, DOCKER_CONTAINER_STOP_TIME)
                 .withArgumentIfPresent(properties, DOCKER_CONTAINER_ID_PROP_NAME);
 
-        execWithInput(input, docker(cb), null, completionHandler);
+        execWithInput(input, docker(cb), completionHandler);
     }
 
     @Override
@@ -388,7 +613,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                 .withCommand("inspect")
                 .withArgumentIfPresent(properties, DOCKER_CONTAINER_ID_PROP_NAME);
 
-        execWithInput(input, docker(cb), null, completionHandler,
+        execWithInput(input, docker(cb), completionHandler,
                 EXTRACT_FIRST_JSON_ELEMENT);
     }
 
@@ -408,7 +633,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                 .withArguments(containerId)
                 .withArguments(command);
 
-        execWithInput(input, docker(cb), null, completionHandler);
+        execWithInput(input, docker(cb), completionHandler);
     }
 
     @Override
@@ -426,7 +651,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                 .withCommand("rm -f -v")
                 .withArgumentIfPresent(properties, DOCKER_CONTAINER_ID_PROP_NAME);
 
-        execWithInput(input, docker(cb), null, completionHandler);
+        execWithInput(input, docker(cb), completionHandler);
     }
 
     @Override
@@ -438,22 +663,22 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                 .withLongSwitchIfPresent(properties, TIMESTAMPS, TAIL, SINCE)
                 .withArgumentIfPresent(properties, DOCKER_CONTAINER_ID_PROP_NAME);
 
-        execWithInput(input, docker(cb), null, completionHandler);
+        execWithInput(input, docker(cb), completionHandler);
     }
 
     @Override
     public void hostPing(CommandInput input, CompletionHandler completionHandler) {
-        execWithInput(input, docker("version"), null, completionHandler);
+        hostVersion(input, completionHandler);
     }
 
     @Override
     public void hostInfo(CommandInput input, CompletionHandler completionHandler) {
-        execWithInput(input, docker("info"), null, completionHandler, SIMPLE_YAML_MAPPER);
+        execWithInput(input, docker("info"), completionHandler, SIMPLE_YAML_MAPPER);
     }
 
     @Override
     public void hostVersion(CommandInput input, CompletionHandler completionHandler) {
-        execWithInput(input, docker("version"), null, completionHandler);
+        execWithInput(input, docker("version"), completionHandler);
     }
 
     @Override
@@ -477,7 +702,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                 })
                 .collect(Collectors.toList()));
 
-        execWithInput(input, docker(cb), null, completionHandler, psMapper);
+        execWithInput(input, docker(cb), completionHandler, psMapper);
     }
 
     @Override
@@ -489,7 +714,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                         DOCKER_NETWORK_DRIVER_PROP_NAME)
                 .withArgumentIfPresent(properties, DOCKER_NETWORK_NAME_PROP_NAME);
         // TODO other properties
-        execWithInput(input, docker(cb), null, completionHandler,
+        execWithInput(input, docker(cb), completionHandler,
                 (s) -> Collections.singletonMap(DOCKER_NETWORK_ID_PROP_NAME,
                         s.replaceAll("[\r\n]+$", "")));
     }
@@ -502,16 +727,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                 .withCommand("network rm")
                 .withArgumentIfPresent(properties, DOCKER_NETWORK_ID_PROP_NAME);
 
-        execWithInput(input, docker(cb), null, completionHandler);
-    }
-
-    @Override
-    public void stop() {
-        // stop accepting new requests
-        executor.shutdownNow();
-
-        // close active sessions
-        sessionPool.shutdown();
+        execWithInput(input, docker(cb), completionHandler);
     }
 
     private String docker(CommandBuilder subCommandBuilder) {
@@ -528,6 +744,27 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
     }
 
     @Override
+    public void stop() {
+        // TODO Auto-generated method stub
+
+    }
+
+    private SSHClient getSshClient(String hostname, AuthCredentialsServiceState creds)
+            throws IOException {
+        String id = creds.userEmail + "@" + hostname + ":" + creds.privateKey;
+        synchronized (clients) {
+            SSHClient client = clients.get(id);
+            if (client == null || !client.isConnected()) {
+                client = SshUtil.getDefaultSshClient(hostname, creds);
+                clients.put(id, client);
+                return client;
+            }
+
+            return client;
+        }
+    }
+
+    @Override
     public void createVolume(CommandInput input, CompletionHandler completionHandler) {
         Map<String, Object> properties = input.getProperties();
         CommandBuilder cb = new CommandBuilder().withCommand("volume create")
@@ -535,7 +772,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                         DOCKER_VOLUME_DRIVER_PROP_NAME)
                 .withArgumentIfPresent(properties, DOCKER_VOLUME_NAME_PROP_NAME);
 
-        execWithInput(input, docker(cb), null, completionHandler);
+        execWithInput(input, docker(cb), completionHandler);
 
     }
 
@@ -548,7 +785,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                 properties,
                 DOCKER_VOLUME_NAME_PROP_NAME);
 
-        execWithInput(input, docker(cb), null, completionHandler);
+        execWithInput(input, docker(cb), completionHandler);
     }
 
     @Override

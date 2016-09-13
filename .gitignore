@@ -13,6 +13,7 @@ lib/extjs/extjs/
 host/images-bin/
 tools/jenkins
 host/jce/
+test-integration/src/test/resources/pkey
 
 #Build-generated files
 **/bootstrap.json
