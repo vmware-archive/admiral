@@ -425,7 +425,9 @@
         "composite": {
           "name": "Application",
           "servicesCountLabel": "Services",
-          "containersCountLabel": "Total containers",
+          "containersCountLabel": "Containers",
+          "networksCountLabel": "Networks",
+          "volumesCountLabel": "Volumes",
           "childContainersLabel": "Child containers"
         },
         "searchCategoryFilterTitle": "View:",

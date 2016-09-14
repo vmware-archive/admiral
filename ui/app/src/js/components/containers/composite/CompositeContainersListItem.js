@@ -13,6 +13,7 @@ import CompositeContainersListItemVue from 'CompositeContainersListItemVue'; //e
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
 import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
 import utils from 'core/utils';
+import links from 'core/links';
 import { ContainerActions, NavigationActions } from 'actions/Actions'; //eslint-disable-line
 
 var CompositeContainersListItem = Vue.extend({
@@ -24,6 +25,16 @@ var CompositeContainersListItem = Vue.extend({
   computed: {
     showNumbers: function() {
       return (typeof this.model.componentLinks !== 'undefined');
+    },
+    containersCount: function() {
+      return this.model.componentLinks.filter(cl => cl.indexOf(links.CONTAINERS) === 0).length;
+    },
+    networksCount: function() {
+      return this.model.componentLinks.filter(cl => cl.indexOf(links.NETWORKS) === 0).length;
+    },
+    volumesCount: function() {
+      return this.model.componentLinks.filter(
+        cl => cl.indexOf(links.CONTAINER_VOLUMES) === 0).length;
     },
     servicesCount: function() {
       if (!this.showNumbers) {

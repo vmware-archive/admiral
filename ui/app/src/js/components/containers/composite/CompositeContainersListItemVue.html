@@ -31,9 +31,17 @@
       <span>{{servicesCount}}</span>
     </div>
     -->
-    <div class="container-containers-number-holder">
+    <div class="container-containers-number-holder" v-if="containersCount">
       <span class="container-label">{{i18n("app.container.list.composite.containersCountLabel")}}</span>
-      <span>{{model.componentLinks.length}}</span>
+      <span>{{containersCount}}</span>
+    </div>
+    <div class="container-containers-number-holder" v-if="networksCount">
+      <span class="container-label">{{i18n("app.container.list.composite.networksCountLabel")}}</span>
+      <span>{{networksCount}}</span>
+    </div>
+    <div class="container-containers-number-holder" v-if="volumesCount">
+      <span class="container-label">{{i18n("app.container.list.composite.volumesCountLabel")}}</span>
+      <span>{{volumesCount}}</span>
     </div>
   </template>
   </div>
