@@ -1182,6 +1182,7 @@ $elements-side-margin: $elements-margin / 2;
 
 .template-details .edit-container-definition-view, .template-details .edit-existing-container-definition-view {
   margin-right: $template-details-right;
+  overflow: auto;
 }
 
 .template-details .add-network.closable-view {
@@ -1199,6 +1200,7 @@ $elements-side-margin: $elements-margin / 2;
 
 .template-details .control-btns {
   margin-top: 20px;
+  margin-bottom: 20px;
 }
 
 .template-details .control-btns .admiral-btn {
