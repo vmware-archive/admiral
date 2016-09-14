@@ -35,15 +35,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.logging.Logger;
@@ -79,8 +77,12 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
      * but it will result in higher usage of ssh sessions as well. Change MaxSessions ssh property
      * accordingly.
      */
-    private static final int SSH_POLL_DELAY_SECONDS = Integer.parseInt(
-            System.getProperty("ssh.poll.delay", "10"));
+    private static final int SSH_POLL_MAX_DELAY_SECONDS = Integer.parseInt(
+            System.getProperty("ssh.poll.max_delay", "60"));
+    private static final int SSH_OPERATION_TIMEOUT_SHORT = Integer.parseInt(
+            System.getProperty("ssh.operation.timeout.short", "15"));
+    private static final int SSH_OPERATION_TIMEOUT_LONG = Integer.parseInt(
+            System.getProperty("ssh.operation.timeout.long", "300"));
 
     private ServiceHost host;
 
@@ -91,74 +93,65 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
 
     private static final UnaryOperator<String> PROP_NAME_TO_LONG_SWITCH = new PropertyToSwitchNameMapper();
 
-    Set<ExecutionState> execInProgress = ConcurrentHashMap.newKeySet();
-    Set<ScpState> scpInProgress = ConcurrentHashMap.newKeySet();
-
     public SshDockerAdapterCommandExecutorImpl(ServiceHost host) {
         this.host = host;
-        host.schedule(() -> {
-            handleInProgress();
-        }, SSH_POLL_DELAY_SECONDS, TimeUnit.SECONDS);
     }
 
-    public void handleInProgress() {
-        Iterator<ExecutionState> execIt = execInProgress.iterator();
-        while (execIt.hasNext()) {
-            ExecutionState state = execIt.next();
-            if (state.result.isDone()) {
-                execIt.remove();
-                ConsumedResult consumed = null;
+    private void handleExecInProgress(ExecutionState state) {
+        if (state.result.isDone()) {
+            ConsumedResult consumed = null;
+            try {
+                consumed = state.result.join().consume();
+                handleExecResult(state.id, consumed.exitCode, consumed.error, consumed.out,
+                        consumed.err, state.handler, state.mapper);
+            } catch (IOException e) {
+                state.handler.handle(null, e);
+                return;
+            }
+        } else {
+            int delay = state.nextDelay();
+            if (state.isTimeout()) {
+                state.handler.handle(null,
+                        new TimeoutException("SSH operation " + state.id + " timed out"));
+                return;
+            }
+            host.schedule(() -> {
+                handleExecInProgress(state);
+            }, delay, TimeUnit.SECONDS);
+        }
+    }
+
+    private void handleScpInProgress(ScpState state) {
+        if (state.result.isDone()) {
+            Throwable error = null;
+            try {
+                error = state.result.get();
+            } catch (InterruptedException | ExecutionException e) {
                 try {
-                    consumed = state.result.join().consume();
-                    try {
-                        handleExecResult(state.id, consumed.exitCode, consumed.error, consumed.out,
-                                consumed.err, state.handler, state.mapper);
-                    } catch (Exception e) {
-                        logger.info(
-                                "Handler for SSH state " + state.id + " failed: " + e.getMessage());
-                    }
-                } catch (IOException e) {
-                    try {
-                        state.handler.handle(null, e);
-                    } catch (Exception e1) {
-                        logger.info("Handler for SSH state " + state.id + " failed: "
-                                + e1.getMessage());
-                    }
-                    return;
+                    state.handler.handle(null, e);
+                } catch (Exception e1) {
+                    logger.info("Handler for SSH state " + state.id + " failed: "
+                            + e1.getMessage());
                 }
             }
-        }
-
-        Iterator<ScpState> scpIt = scpInProgress.iterator();
-        while (scpIt.hasNext()) {
-            ScpState state = scpIt.next();
-            if (state.result.isDone()) {
-                scpIt.remove();
-                Throwable error = null;
-                try {
-                    error = state.result.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    try {
-                        state.handler.handle(null, e);
-                    } catch (Exception e1) {
-                        logger.info("Handler for SSH state " + state.id + " failed: "
-                                + e1.getMessage());
-                    }
-                }
-                Operation op = Operation.createPatch(null)
-                        .setBody(state.target);
-                try {
-                    state.handler.handle(op, error);
-                } catch (Exception e) {
-                    logger.info("Handler for SSH state " + state.id + " failed.");
-                }
+            Operation op = Operation.createPatch(null)
+                    .setBody(state.target);
+            try {
+                state.handler.handle(op, error);
+            } catch (Exception e) {
+                logger.info("Handler for SSH state " + state.id + " failed.");
             }
+        } else {
+            int delay = state.nextDelay();
+            if (state.isTimeout()) {
+                state.handler.handle(null,
+                        new TimeoutException("SCP operation " + state.id + " timed out"));
+                return;
+            }
+            host.schedule(() -> {
+                handleScpInProgress(state);
+            }, delay, TimeUnit.SECONDS);
         }
-
-        logger.fine("Rescheduling SSH handle in progress.");
-        host.schedule(() -> {
-            handleInProgress();
-        }, SSH_POLL_DELAY_SECONDS, TimeUnit.SECONDS);
     }
 
     private static void handleExecResult(String id, int exitCode, Throwable error, String out,
@@ -197,6 +190,14 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
     private class SshOperationState {
         public String id = UUID.randomUUID().toString();
 
+        private int delay = 1;
+
+        private long endTime;
+
+        public SshOperationState(int timeout, TimeUnit unit) {
+            endTime = unit.toMillis(timeout) + System.currentTimeMillis();
+        }
+
         @Override
         public boolean equals(Object obj) {
             if (obj == null) {
@@ -220,6 +221,22 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
 
             return id.hashCode();
         }
+
+        public int nextDelay() {
+            delay *= 2;
+            if (delay > SSH_POLL_MAX_DELAY_SECONDS) {
+                delay = SSH_POLL_MAX_DELAY_SECONDS;
+            }
+            return delay;
+        }
+
+        public boolean isTimeout() {
+            if (System.currentTimeMillis() > endTime) {
+                return true;
+            }
+
+            return false;
+        }
     }
 
     private class ExecutionState extends SshOperationState {
@@ -228,7 +245,8 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
         public Function<String, ?> mapper;
 
         public ExecutionState(AsyncResult result, CompletionHandler handler,
-                Function<String, ?> mapper) {
+                Function<String, ?> mapper, int timeout, TimeUnit unit) {
+            super(timeout, unit);
             this.result = result;
             this.handler = handler;
             this.mapper = mapper;
@@ -264,8 +282,9 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
         public Future<Throwable> result;
         public CompletionHandler handler;
 
-        public ScpState(String target, Future<Throwable> result, CompletionHandler handler) {
-            super();
+        public ScpState(String target, Future<Throwable> result, CompletionHandler handler,
+                int timeout, TimeUnit unit) {
+            super(timeout, unit);
             this.result = result;
             this.handler = handler;
             this.target = target;
@@ -312,7 +331,15 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
     protected void execWithInput(CommandInput commandInput, String command,
             CompletionHandler completionHandler) {
 
-        execWithInput(commandInput, command, completionHandler, (s) -> s);
+        execWithInput(commandInput, command, completionHandler, (s) -> s,
+                SSH_OPERATION_TIMEOUT_SHORT, TimeUnit.SECONDS);
+    }
+
+    protected void execWithInput(CommandInput commandInput, String command,
+            CompletionHandler completionHandler, Function<String, ?> mapper) {
+
+        execWithInput(commandInput, command, completionHandler, mapper, SSH_OPERATION_TIMEOUT_SHORT,
+                TimeUnit.SECONDS);
     }
 
     /**
@@ -328,9 +355,12 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
      * @param command
      * @param completionHandler
      * @param mapper
+     * @param timeout
+     * @param unit
      */
     protected void execWithInput(CommandInput commandInput, String command,
-            final CompletionHandler completionHandler, Function<String, ?> mapper) {
+            final CompletionHandler completionHandler, Function<String, ?> mapper, int timeout,
+            TimeUnit unit) {
         String outStreamFile = "/tmp/" + SSH_OP_OUT_PREFIX + UUID.randomUUID() + ".txt";
         String errStreamFile = "/tmp/" + SSH_OP_ERR_PREFIX + UUID.randomUUID() + ".txt";
         String exitCodeFile = "/tmp/" + SSH_OP_EXIT_CODE_PREFIX + UUID.randomUUID() + ".txt";
@@ -348,12 +378,13 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
 
         command = String.format(
                 "nohup /bin/sh -c '%s > %s 2> %s ; echo $? > %s' &>/dev/null & echo $!",
-                command, outStreamFile, errStreamFile, exitCodeFile);
+                escape(command), outStreamFile, errStreamFile, exitCodeFile);
 
         AsyncResult result = SshUtil.asyncExec(client, command);
         // Not setting completion handler at constructor so I can use the state id in it (better
         // log)
-        ExecutionState state = new ExecutionState(result, null, null);
+        ExecutionState state = new ExecutionState(result, null, null, timeout,
+                unit);
         state.handler = (op, failure) -> {
             if (failure != null) {
                 // Failed to start the process
@@ -371,7 +402,11 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
 
         logger.info(
                 String.format("SSH execution %s started on %s: %s", state.id, hostname, command));
-        execInProgress.add(state);
+        handleExecInProgress(state);
+    }
+
+    private String escape(String command) {
+        return command.replace("'", "'\"'\"'");
     }
 
     public class ProcessResultCollector {
@@ -443,40 +478,41 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                 // Process exited, collect data
 
                 AsyncResult outOp = SshUtil.asyncExec(client, "cat " + outStreamFile);
-                execInProgress.add(new ExecutionState(outOp, (op1, failure1) -> {
+                handleExecInProgress(new ExecutionState(outOp, (op1, failure1) -> {
                     if (failure1 != null) {
                         prc.completionHandler.handle(null, failure1);
                         return;
                     }
                     prc.setOut(op1.getBody(String.class));
-                }, null));
+                }, null, SSH_OPERATION_TIMEOUT_SHORT, TimeUnit.SECONDS));
                 AsyncResult errOp = SshUtil.asyncExec(client, "cat " + errStreamFile);
-                execInProgress.add(new ExecutionState(errOp, (op1, failure1) -> {
+                handleExecInProgress(new ExecutionState(errOp, (op1, failure1) -> {
                     if (failure1 != null) {
                         prc.completionHandler.handle(null, failure1);
                         return;
                     }
                     prc.setErr(op1.getBody(String.class));
-                }, null));
+                }, null, SSH_OPERATION_TIMEOUT_SHORT, TimeUnit.SECONDS));
                 AsyncResult exitCodeOp = SshUtil.asyncExec(client, "cat " + exitCodeFile);
-                execInProgress.add(new ExecutionState(exitCodeOp, (op1, failure1) -> {
+                handleExecInProgress(new ExecutionState(exitCodeOp, (op1, failure1) -> {
                     if (failure1 != null) {
                         prc.completionHandler.handle(null, failure1);
                         return;
                     }
                     prc.setExitCode(Integer.parseInt(op1.getBody(String.class).replace("\n", "")));
-                }, null));
+                }, null, SSH_OPERATION_TIMEOUT_SHORT, TimeUnit.SECONDS));
             } else {
                 // Try again in 10 seconds
+                logger.fine("Reschedure process polling with id " + prc.id);
                 host.schedule(() -> {
                     pollForProcessCompletion(commandInput, outStreamFile, errStreamFile,
                             exitCodeFile, prc);
                 }, 10, TimeUnit.SECONDS);
             }
-        }, null);
+        }, null, SSH_OPERATION_TIMEOUT_SHORT, TimeUnit.SECONDS);
         logger.info(
                 String.format("SSH execution %s started on %s: %s", state.id, hostname, command));
-        execInProgress.add(state);
+        handleExecInProgress(state);
     }
 
     @Override
@@ -500,7 +536,8 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
         logger.info("" + data.length);
         Future<Throwable> result = SshUtil.asyncUpload(hostname, credentials,
                 new ByteArrayInputStream(data), remoteFile);
-        scpInProgress.add(new ScpState(remoteFile, result, completionHandler));
+        handleScpInProgress(new ScpState(remoteFile, result, completionHandler,
+                SSH_OPERATION_TIMEOUT_LONG, TimeUnit.SECONDS));
     }
 
     @Override
@@ -511,7 +548,8 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                 .withCommand("pull")
                 .withArguments(imageName);
 
-        execWithInput(input, docker(cb), completionHandler);
+        execWithInput(input, docker(cb), completionHandler, (s) -> s, SSH_OPERATION_TIMEOUT_LONG,
+                TimeUnit.SECONDS);
     }
 
     @Override

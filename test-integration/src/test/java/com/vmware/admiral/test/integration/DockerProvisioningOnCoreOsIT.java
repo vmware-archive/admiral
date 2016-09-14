@@ -55,7 +55,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -109,7 +108,6 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
         doProvisionDockerContainerOnCoreOS(true, DockerAdapterType.API);
     }
 
-    @Ignore("Fails from time to time with failure: Maximum number of channels per session exceeded")
     @Test
     public void testProvisionDockerContainerOnCoreOSWithImageDownloadSSH()
             throws Exception {
@@ -124,7 +122,6 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
         doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
     }
 
-    @Ignore("Issue tracker: https://jira-hzn.eng.vmware.com/browse/VSYM-26")
     @Test
     public void testProvisionDockerContainerOnCoreOSWithRegistryImageSSH()
             throws Exception {

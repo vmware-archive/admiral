@@ -426,6 +426,38 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
         }
     }
 
+    @Test
+    public void escapeTest() throws InterruptedException, TimeoutException {
+        SshDockerAdapterCommandExecutorImpl executor = new SshDockerAdapterCommandExecutorImpl(
+                host);
+
+        CommandInput input = new CommandInput();
+        input.withDockerUri(HOST_URI);
+        input.withCredentials(getPasswordCredentials());
+        input.getProperties().put(DockerAdapterCommandExecutor.DOCKER_CONTAINER_IMAGE_PROP_NAME,
+                "alpine");
+        String name = getRandomContainerName();
+        input.getProperties().put(DockerAdapterCommandExecutor.DOCKER_CONTAINER_NAME_PROP_NAME,
+                name);
+        input.getProperties().put(DockerAdapterCommandExecutor.DOCKER_CONTAINER_COMMAND_PROP_NAME,
+                "/bin/sh");
+        input.getProperties().put(DockerAdapterCommandExecutor.DOCKER_CONTAINER_ENV_PROP_NAME,
+                "'1234 \\'5678'");
+
+        List<DefaultSshOperationResultCompletionHandler> handlers = new ArrayList<>();
+
+        DefaultSshOperationResultCompletionHandler handler = new DefaultSshOperationResultCompletionHandler();
+        executor.createContainer(input, handler);
+        handlers.add(handler);
+        containersToDelete.add(name);
+
+        handler.join(45, TimeUnit.SECONDS);
+
+        Assert.assertTrue("Operation failed to complete on time!", handler.done);
+        Assert.assertNull("Unexpected failure!", handler.failure);
+        Assert.assertNotNull("Body should contain STDOUT!", handler.op.getBody(String.class));
+    }
+
     @After
     public void cleanup() {
         if (!containersToDelete.isEmpty()) {
