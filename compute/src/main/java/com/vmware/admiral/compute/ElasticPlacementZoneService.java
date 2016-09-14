@@ -141,6 +141,7 @@ public class ElasticPlacementZoneService extends StatefulService {
                 if (t != null) {
                     op.fail(t);
                 } else {
+                    setState(op, state);
                     op.complete();
                 }
             });

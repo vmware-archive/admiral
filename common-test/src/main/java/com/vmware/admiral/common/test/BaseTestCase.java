@@ -641,7 +641,8 @@ public abstract class BaseTestCase {
 
     protected <T extends ServiceDocument> T doPost(T inState, URI uri, boolean expectFailure)
             throws Throwable {
-        String documentSelfLink = doOperation(inState, uri, expectFailure, Action.POST);
+        String documentSelfLink = doOperation(inState, uri, expectFailure,
+                Action.POST).documentSelfLink;
         @SuppressWarnings("unchecked")
         T outState = (T) host.getServiceState(null,
                 inState.getClass(),
@@ -680,10 +681,16 @@ public abstract class BaseTestCase {
         doOperation(new ServiceDocument(), uri, expectFailure, Action.DELETE);
     }
 
-    protected <T extends ServiceDocument> String doOperation(T inState, URI uri,
+    @SuppressWarnings("unchecked")
+    protected <T extends ServiceDocument> T doOperation(T inState, URI uri,
+            boolean expectFailure, Action action) throws Throwable {
+        return (T)doOperation(inState, uri, ServiceDocument.class, expectFailure, action);
+    }
+
+    protected <T extends ServiceDocument> T doOperation(T inState, URI uri, Class<T> type,
             boolean expectFailure, Action action) throws Throwable {
         host.log("Executing operation %s for resource: %s ...", action.name(), uri);
-        final ServiceDocument[] doc = { null };
+        final List<T> doc = Arrays.asList((T)null);
         final Throwable[] error = { null };
         TestContext ctx = testCreate(1);
 
@@ -715,7 +722,7 @@ public abstract class BaseTestCase {
                                 ctx.failIteration(new IllegalStateException("body was expected"));
                                 return;
                             }
-                            doc[0] = o.getBody(ServiceDocument.class);
+                            doc.set(0, o.getBody(type));
                             if (expectFailure) {
                                 ctx.failIteration(new IllegalStateException(
                                         "ERROR: operation completed successfully but exception excepted."));
@@ -731,7 +738,7 @@ public abstract class BaseTestCase {
             Throwable ex = error[0];
             throw ex;
         }
-        return doc[0].documentSelfLink;
+        return doc.get(0);
     }
 
     public void delete(String selfLink) throws Throwable {

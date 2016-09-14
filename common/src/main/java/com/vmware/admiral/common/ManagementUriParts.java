@@ -36,7 +36,7 @@ public interface ManagementUriParts {
     String RESOURCE_NAME_PREFIXES = RESOURCES + "/name-prefixes";
     String DEPLOYMENT_POLICIES = RESOURCES + "/deployment-policies";
     String ELASTIC_PLACEMENT_ZONES = RESOURCES + "/elastic-placement-zones";
-    String ELASTIC_PLACEMENT_ZONE_MONITOR = ELASTIC_PLACEMENT_ZONES + "/monitor";
+    String ELASTIC_PLACEMENT_ZONE_CONFIGURATION = ELASTIC_PLACEMENT_ZONES + "-config";
 
     String CONTAINERS = RESOURCES + "/containers";
     String CONTAINER_LOGS = RESOURCES + "/container-logs";
