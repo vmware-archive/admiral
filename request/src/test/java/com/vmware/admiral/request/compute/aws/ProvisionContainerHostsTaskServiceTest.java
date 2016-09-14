@@ -181,6 +181,7 @@ public class ProvisionContainerHostsTaskServiceTest extends RequestBaseTest {
         computeDesc.instanceAdapterReference = UriUtils.buildUri(host,
                 AWSUriPaths.AWS_INSTANCE_ADAPTER);
         computeDesc.zoneId = EAST_1_ZONE_ID;
+        computeDesc.regionId = EAST_1_ZONE_ID;
 
         computeDesc.customProperties = new HashMap<>();
         computeDesc.customProperties.put(AWSConstants.AWS_SECURITY_GROUP, SECURITY_GROUP);

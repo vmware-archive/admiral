@@ -805,7 +805,7 @@ public class ComputeAllocationTaskService extends
         resource.resourcePoolLink = state.getCustomProperty(
                 ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK);
         resource.diskLinks = diskLinks;
-        resource.networkLinks = networkLinks;
+        resource.networkInterfaceLinks = networkLinks;
         resource.customProperties = new HashMap<>(state.customProperties);
         resource.customProperties.put(CUSTOM_DISPLAY_NAME, computeName);
         resource.customProperties.put(ComputeConstants.GROUP_RESOURCE_POLICY_LINK_NAME,

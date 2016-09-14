@@ -344,6 +344,7 @@ public class ProvisionContainerHostsTaskService
         parentComputeDesc.instanceAdapterReference = UriUtils.buildUri(getHost(),
                 AWSUriPaths.AWS_INSTANCE_ADAPTER);
         parentComputeDesc.zoneId = computeDesc.zoneId;
+        parentComputeDesc.regionId = computeDesc.zoneId;
 
         if (computeDesc.customProperties != null) {
             parentComputeDesc.authCredentialsLink = computeDesc.customProperties
