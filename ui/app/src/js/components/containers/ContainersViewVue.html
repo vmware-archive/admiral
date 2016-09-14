@@ -17,7 +17,8 @@
         <a class="close-button" v-on:click="goBack($event)"><i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
         <div class="toolbar">
           <search v-bind:suggestion-properties="['name', 'image', 'parentId', 'status']"
-                  v-bind:placeholder="i18n('app.container.list.searchPlaceholder')"
+                  v-bind:placeholder-by-category="placeholderByCategoryMap"
+          
                   v-bind:query-options="model.listView.queryOptions"
                   v-bind:occurrence-properties="
                     [{
@@ -29,7 +30,7 @@
                     }]"
                   v-on:search-change="search"
                   ></search>
-          <a href="#/templates" class="admiral-btn create-container-btn"><i class="fa fa-plus-circle"></i>{{i18n("app.container.list.createContainer")}}</a>
+          <a href="#/templates" class="admiral-btn create-container-btn" v-if="selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS"><i class="fa fa-plus-circle"></i>{{i18n("app.container.list.createContainer")}}</a>
         </div>
         <div class="selected-context-small-holder" v-if="model.selectedItem">
           <div class="grid-item">
@@ -79,8 +80,12 @@
             <a href="#"
                data-category="applications"
                v-on:click="selectCategory(constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS, $event)"
-               v-bind:class="{'active': selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS}"
-              >{{i18n('app.container.list.searchCategory.applications')}}</a>
+               v-bind:class="{'active': selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS}">{{i18n('app.container.list.searchCategory.applications')}}</a>
+            <a href="#"
+               data-category="networks"
+               v-if="isNetworkingAvailable"
+               v-on:click="selectCategory(constants.RESOURCES.SEARCH_CATEGORY.NETWORKS, $event)"
+               v-bind:class="{'active': selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS}">{{i18n('app.resource.list.searchCategory.networks')}}</a>
           </div>
 
           <div class="content">
@@ -105,6 +110,9 @@
                            v-bind:model="item"
                            v-on:click="handleItemClick($event, item, openCompositeContainerDetails)">
                 </composite-container-grid-item>
+                <network-grid-item v-if="item.type === constants.RESOURCES.TYPES.NETWORK"
+                                   v-bind:model="item">
+                </network-grid-item>
               </grid-item>
             </grid>
           </div>

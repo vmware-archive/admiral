@@ -1,0 +1,49 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="container-item">
+  <div class="status"><span class="status-state">{{i18n("app.resource.list.network.name")}}</span></div>
+  <div class="container-header">
+    <img v-bind:src="model.icon"/>
+    <div class="title-holder">
+      <div class="title truncateText" title="{{model.name}}">{{model.name}}</div>
+      <div class="image-tag truncateText">{{model.image}}</div>
+    </div>
+  </div>
+  <hr/>
+  <div class="container-content">
+    <div class="network-driver-holder">
+      <span class="container-label">{{i18n("app.resource.list.network.networkDriverLabel")}}</span>
+      <span>{{model.driver}}</span>
+    </div>
+    <div class="network-ipam-driver-holder">
+      <span class="container-label">{{i18n("app.resource.list.network.ipamDriverLabel")}}</span>
+      <span>{{model.ipam.driver}}</span>
+    </div>
+    <div class="network-subnet-holder">
+      <span class="container-label">{{i18n("app.resource.list.network.subnetLabel")}}</span>
+      <span><template v-for="config in model.ipam.config" track-by="$index">
+          <span>{{config.subnet}}</span>
+        </template></span>
+    </div>
+    <div class="network-gateway-holder">
+      <span class="container-label">{{i18n("app.resource.list.network.gatewayLabel")}}</span>
+      <span><template v-for="config in model.ipam.config" track-by="$index">
+          <span>{{config.gateway}}</span>
+        </template></span>
+    </div>
+    <div class="network-iprange-holder">
+      <span class="container-label">{{i18n("app.resource.list.network.ipRangeLabel")}}</span>
+      <span><template v-for="config in model.ipam.config" track-by="$index">
+          <span>{{config.ipRange}}</span>
+        </template></span>
+    </div>
+</div>

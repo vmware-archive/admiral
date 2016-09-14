@@ -408,6 +408,31 @@
         "searchPlaceholder": "Search for machines"
       }
     },
+    "resource": {
+      "list": {
+        "network": {
+          "name": "Network",
+          "networkDriverLabel": "Network Driver",
+          "ipamDriverLabel": "IPAM Driver",
+          "subnetLabel": "Subnet",
+          "gatewayLabel": "Gateway",
+          "ipRangeLabel": "IP Range"
+        },
+        "titleSearch": {
+          "containers": "Found Containers",
+          "applications": "Found Applications",
+          "networks": "Found Networks"
+        },
+        "searchPlaceholder": {
+          "containers": "Search for containers",
+          "applications": "Search for applications",
+          "networks": "Search for networks"
+        },
+        "searchCategory": {
+          "networks": "Networks"
+        }
+      }
+    },
     "container": {
       "list": {
         "title": "Items",

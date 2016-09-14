@@ -80,6 +80,13 @@ function enhanceCompositeComponent(compositeComponent) {
   return compositeComponent;
 }
 
+function enhanceNetwork(network) {
+  network.icon = imageUtils.getImageIconLink(network.name);
+  network.documentId = utils.getDocumentId(network.documentSelfLink);
+  network.type = constants.RESOURCES.TYPES.NETWORK;
+  return network;
+}
+
 function getSelectedItemDetailsCursor() {
   var selectedItemDetailsCursor = this.selectFromData(['selectedItemDetails']);
   var selectedItemDetails = selectedItemDetailsCursor.get();
@@ -262,7 +269,7 @@ ContainersStore = Reflux.createStore({
     actions.ContainersContextToolbarActions
   ],
 
-  decorateContainers: function(result, isCategoryContainers, mergeWithExisting) {
+  decorateContainers: function(result, category, mergeWithExisting) {
     let itemsCount = result.totalCount;
     let nextPageLink = result.nextPageLink;
 
@@ -270,9 +277,21 @@ ContainersStore = Reflux.createStore({
           return result.documents[documentLink];
         });
 
-    if (isCategoryContainers) {
-      items.forEach((container) => {
-        enhanceContainer(container);
+    if (category === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS ||
+        category === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS) {
+
+      let enhanceFunction;
+      switch (category) {
+        case constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS:
+          enhanceFunction = enhanceContainer;
+          break;
+        case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
+          enhanceFunction = enhanceNetwork;
+          break;
+      }
+
+      items.forEach((resource) => {
+        enhanceFunction(resource);
       });
 
       let previousItems = this.selectFromData(['listView', 'items']).get();
@@ -289,14 +308,16 @@ ContainersStore = Reflux.createStore({
 
       this.emitChange();
 
-      // retrieve host names
-      this.getHostsForContainersCall(items).then((hosts) => {
-        items.forEach((container) => {
-          decorateContainerHostName(container, utils.resultToArray(hosts));
-        });
-        this.setInData(['listView', 'items'], mergedItems);
-        this.emitChange();
-      }).catch(this.onListError);
+      if (category === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS) {
+        // retrieve host names
+        this.getHostsForContainersCall(items).then((hosts) => {
+          items.forEach((container) => {
+            decorateContainerHostName(container, utils.resultToArray(hosts));
+          });
+          this.setInData(['listView', 'items'], mergedItems);
+          this.emitChange();
+        }).catch(this.onListError);
+      }
 
     } else {
       let compositeComponentsContainersCalls = [];
@@ -378,14 +399,25 @@ ContainersStore = Reflux.createStore({
         this.emitChange();
       }
 
-      var isCategoryContainers =
-        queryOptions.$category === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS;
+      let loadResourceFunction;
 
-      operation.forPromise(isCategoryContainers
-          ? services.loadContainers(queryOptions)
-          : services.loadCompositeComponents(queryOptions)).then((result) => {
+      switch (queryOptions.$category) {
+        case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
+          loadResourceFunction = services.loadNetworks;
+          break;
 
-        return this.decorateContainers(result, isCategoryContainers, false);
+        case constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS:
+          loadResourceFunction = services.loadCompositeComponents;
+          break;
+
+        default:
+        case constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS:
+          loadResourceFunction = services.loadContainers;
+          break;
+      }
+      operation.forPromise(loadResourceFunction(queryOptions)).then((result) => {
+
+        return this.decorateContainers(result, queryOptions.$category, false);
       });
     }
 
@@ -403,15 +435,13 @@ ContainersStore = Reflux.createStore({
       this.setInData(['listView', 'error'], null);
 
       queryOptions = queryOptions || {
-        $category: constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS
+        $category: constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS
       };
-      var isCategoryContainers =
-        queryOptions.$category === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS;
 
       operation.forPromise(services.loadNextPage(nextPageLink))
         .then((result) => {
 
-          return this.decorateContainers(result, isCategoryContainers, true);
+          return this.decorateContainers(result, queryOptions.$category, true);
         });
     }
 
@@ -1067,7 +1097,6 @@ ContainersStore = Reflux.createStore({
     }
 
     var items = [];
-    //var clusters = [];
     for (let key in nodesByClusterId) {
 
       if (!nodesByClusterId.hasOwnProperty(key)) {

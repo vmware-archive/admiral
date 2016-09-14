@@ -152,7 +152,7 @@ export var NotificationsActions = Reflux.createActions([
 export var NavigationActions = Reflux.createActions([
   'openHome', 'openHomeAddHost', 'openHosts', 'openHostsSilently', 'openAddHost', 'editHost',
   'openTemplates', 'openEventLog', 'openRegistries', 'openContainerRequest', 'openContainers',
-  'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
+  'openNetworks', 'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
   'openTemplateDetails', 'showContainersPerPlacement', 'openPlacements', 'openEnvironments',
   'openMachines', 'openMachineDetails'
 ]);

@@ -56,6 +56,18 @@ var constants = Immutable({
       DATACOLLECT: 'DATACOLLECT'
     }
   },
+  // TODO move all entries from CONTAINERS to RESOURCES.CONTAINER
+  RESOURCES: {
+    TYPES: {
+      NETWORK: 'NETWORK'
+    },
+    SEARCH_CATEGORY: {
+      ALL: 'all',
+      CONTAINERS: 'containers',
+      APPLICATIONS: 'applications',
+      NETWORKS: 'networks'
+    }
+  },
   CONTAINERS: {
     STATES: {
       RUNNING: 'RUNNING',

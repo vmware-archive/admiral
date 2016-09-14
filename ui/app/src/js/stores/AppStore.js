@@ -98,6 +98,7 @@ let initializeStoreListeners = function() {
       this.emitChange();
     }
   });
+
 };
 
 AppStore = Reflux.createStore({

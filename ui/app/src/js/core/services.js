@@ -853,6 +853,22 @@ services.loadCompositeComponents = function(queryOptions) {
   });
 };
 
+services.loadNetworks = function(queryOptions) {
+  var filter = buildContainersSearchQuery(queryOptions);
+  var url = buildPaginationUrl(links.NETWORKS, filter, true);
+  return get(url).then(function(result) {
+    return result;
+  });
+};
+
+services.loadExposedService = function(link) {
+  return get(link);
+};
+
+services.loadExposedServices = function() {
+  return list(links.EXPOSED_SERVICES, true);
+};
+
 services.loadContainerLogs = function(containerId, sinceMs) {
   return new Promise(function(resolve, reject) {
     var logRequestUriPath = links.CONTAINER_LOGS + '?id=' + containerId;
@@ -1346,6 +1362,7 @@ var buildClusterQuery = function(descriptionLink, compositionContextId) {
   return buildOdataQuery(qOps);
 };
 
+// TODO consider renaming to buildResourcesSearchQuery
 var buildContainersSearchQuery = function(queryOptions) {
   var newQueryOptions = {};
   if (queryOptions) {

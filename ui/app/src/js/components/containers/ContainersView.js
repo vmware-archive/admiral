@@ -13,6 +13,7 @@ import ContainersViewVue from 'ContainersViewVue';
 import ContainersListItem from 'components/containers/ContainersListItem'; //eslint-disable-line
 import ClusterContainersListItem from 'components/containers/cluster/ClusterContainersListItem';  //eslint-disable-line
 import CompositeContainersListItem from 'components/containers/composite/CompositeContainersListItem'; //eslint-disable-line
+import NetworksListItem from 'components/networks/NetworksListItem'; //eslint-disable-line
 import ContainerDetails from 'components/containers/ContainerDetails';//eslint-disable-line
 import ClusterContainerDetails from 'components/containers/cluster/ClusterContainerDetails';//eslint-disable-line
 import CompositeContainerDetails from 'components/containers/composite/CompositeContainerDetails';//eslint-disable-line
@@ -20,9 +21,22 @@ import RequestsList from 'components/requests/RequestsList';//eslint-disable-lin
 import EventLogList from 'components/eventlog/EventLogList';//eslint-disable-line
 import VueAdapter from 'components/common/VueAdapter';
 import GridHolderMixin from 'components/common/GridHolderMixin';
+import utils from 'core/utils';
 import constants from 'core/constants';
 import { NavigationActions, RequestsActions, NotificationsActions,
           ContainerActions, ContainersContextToolbarActions } from 'actions/Actions';
+
+var categorySpecificText = function(key, category, defaultCategory) {
+  if (category) {
+    let wholeKey = key + category.toLowerCase();
+    let value = i18n.t(wholeKey);
+    if (value !== wholeKey) {
+      return value;
+    }
+  }
+
+  return i18n.t(key + defaultCategory.toLowerCase());
+};
 
 var ContainersViewVueComponent = Vue.extend({
   template: ContainersViewVue,
@@ -44,6 +58,19 @@ var ContainersViewVueComponent = Vue.extend({
     },
     isSelectedCategoryApplications: function() {
       return this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS;
+    },
+    searchResultsTitle: function() {
+      return categorySpecificText(
+        'app.resource.list.titleSearch.',
+        this.selectedCategory,
+        'containers');
+    },
+    placeholderByCategoryMap: function() {
+      return {
+        'containers': i18n.t('app.resource.list.searchPlaceholder.containers'),
+        'applications': i18n.t('app.resource.list.searchPlaceholder.applications'),
+        'networks': i18n.t('app.resource.list.searchPlaceholder.networks')
+      };
     },
     hasContainerDetailsError: function() {
       return this.model.selectedItemDetails.error && this.model.selectedItemDetails.error._generic;
@@ -95,6 +122,9 @@ var ContainersViewVueComponent = Vue.extend({
         return contextView.notifications.eventlogs;
       }
       return 0;
+    },
+    isNetworkingAvailable: function() {
+      return utils.isNetworkingAvailable();
     }
   },
   data: function() {
