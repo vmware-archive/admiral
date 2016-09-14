@@ -1,0 +1,60 @@
+package auth
+
+import (
+	//"bytes"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+
+	"admiral/paths"
+)
+
+var TokenFromFlagVar string
+
+type Error struct {
+	Message string `json:"message"`
+}
+
+//Function to get current auth token from the temp file.
+func GetAuthToken() (string, string) {
+	var token string
+	token = TokenFromFlag()
+	if token != "" {
+		return token, "flag"
+	}
+	token = TokenFromEnvVar()
+	if token != "" {
+		return token, "env variable"
+	}
+	token = TokenFromFile()
+	return token, "file"
+}
+
+//Function that verify after every single request if the user is still authorized.
+//Returns true if it's authorized and false if it's not authorized.
+func IsAuthorized(respBody []byte, tokenFrom string) bool {
+	authCheck := &Error{}
+	err := json.Unmarshal(respBody, authCheck)
+	if authCheck.Message == "forbidden" && err == nil {
+		fmt.Println("Authorization error.")
+		fmt.Println("Check if you are logged in.")
+		fmt.Println("Token used from " + tokenFrom)
+		return false
+	}
+	return true
+}
+
+func TokenFromFile() string {
+	token, _ := ioutil.ReadFile(paths.TokenPath())
+	return string(token)
+}
+
+func TokenFromEnvVar() string {
+	token := os.Getenv("ADMIRAL_TOKEN")
+	return token
+}
+
+func TokenFromFlag() string {
+	return TokenFromFlagVar
+}
