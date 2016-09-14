@@ -208,8 +208,9 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     protected abstract void extendEndpoint(EndpointState endpoint);
 
-    protected abstract void extendComputeDescription(ComputeDescription computeDescription)
-            throws Exception;
+    protected void extendComputeDescription(ComputeDescription computeDescription)
+            throws Exception {
+    }
 
     @Test
     public void testProvision() throws Throwable {
@@ -360,9 +361,19 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return createResourcePool(endpointType, null, VMS_RESOURCE_POOL_ID, documentLifeCycle);
     }
 
-    private ComputeDescription createComputeDescription(EndpointType endpointType,
+    protected ComputeDescription createComputeDescription(EndpointType endpointType,
             TestDocumentLifeCycle documentLifeCycle)
             throws Exception {
+        ComputeDescription computeDesc = prepareComputeDescription(endpointType);
+
+        ComputeDescription computeDescription = postDocument(ComputeDescriptionService.FACTORY_LINK,
+                computeDesc, documentLifeCycle);
+
+        return computeDescription;
+    }
+
+    protected ComputeDescription prepareComputeDescription(
+            EndpointType endpointType) throws Exception {
         String id = name(endpointType, "test", UUID.randomUUID().toString());
         ComputeDescription computeDesc = new ComputeDescription();
         computeDesc.id = id;
@@ -379,11 +390,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
                 vmsResourcePool.documentSelfLink);
 
         extendComputeDescription(computeDesc);
-
-        ComputeDescription computeDescription = postDocument(ComputeDescriptionService.FACTORY_LINK,
-                computeDesc, documentLifeCycle);
-
-        return computeDescription;
+        return computeDesc;
     }
 
     protected GroupResourcePolicyState createResourcePolicy(String name, EndpointType endpointType,

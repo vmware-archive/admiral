@@ -613,8 +613,11 @@ public class ComputeAllocationTaskService extends
         computeDesc.customProperties = mergeCustomProperties(computeDesc.customProperties,
                 state.customProperties);
 
-        ComputeAllocationTaskState patchState = createUpdateSubStageTask(state,
-                SubStage.COMPUTE_DESCRIPTION_RECONFIGURED);
+        SubStage nextStage = computeDesc.customProperties
+                .containsKey(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME) ?
+                SubStage.COMPUTE_DESCRIPTION_RECONFIGURED : SubStage.SELECT_PLACEMENT_COMPUTES;
+
+        ComputeAllocationTaskState patchState = createUpdateSubStageTask(state, nextStage);
         patchState.customProperties = state.customProperties;
 
         if (computeDesc.authCredentialsLink == null) {
@@ -835,7 +838,7 @@ public class ComputeAllocationTaskService extends
      * Create disks to attach to the compute resource. Use the disk description links to figure out
      * what type of disks to create.
      *
-     * @param currentState
+     * @param state
      * @param parentLink
      * @param computeResourceId
      * @param taskCallback
