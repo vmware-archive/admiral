@@ -89,7 +89,7 @@ public interface DockerAdapterCommandExecutor {
         String PRIVILEGED_PROP_NAME = "Privileged";
         String LINKS_PROP_NAME = "Links";
         String PID_MODE_PROP_NAME = "PidMode";
-        String PUBLISH_ALL_PORTS = "PublishAllPorts";
+        String PUBLISH_ALL = "PublishAll";
 
         interface DEVICE {
             String PATH_ON_HOST_PROP_NAME = "PathOnHost";

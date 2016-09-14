@@ -182,10 +182,6 @@ public class ContainerHostService extends StatelessService {
         AssertUtil.assertNotEmpty(adapterDockerType, "__adapterDockerType");
         DockerAdapterType adapterType = DockerAdapterType.valueOf(adapterDockerType);
         AssertUtil.assertNotNull(adapterType, "adapterType");
-        if (DockerAdapterType.SSH.equals(adapterType)) {
-            AssertUtil.assertState(ENABLE_ADAPTER_DOCKER_TYPE_SSH,
-                    "SSH Docker adapter is disabled.");
-        }
 
         cs.address = cs.address.trim();
         hostSpec.uri = getHostUri(cs);

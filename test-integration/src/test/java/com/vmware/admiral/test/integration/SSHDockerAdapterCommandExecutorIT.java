@@ -101,7 +101,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
         final DefaultSshOperationResultCompletionHandler handler = new DefaultSshOperationResultCompletionHandler();
         executor.loadImage(input, handler);
 
-        handler.join(60, TimeUnit.SECONDS);
+        handler.join(120, TimeUnit.SECONDS);
 
         Assert.assertTrue("Operation failed to complete on time!", handler.done);
         Assert.assertNull("Unexpected failure!", handler.failure);

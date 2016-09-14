@@ -82,6 +82,9 @@ var imageUtils = {
   },
 
   getImageIconLink: function(image) {
+    if (!image) {
+      return;
+    }
     return links.CONTAINER_IMAGE_ICONS + '?container-image=' + this.getImageNamespaceAndName(image);
   }
 };

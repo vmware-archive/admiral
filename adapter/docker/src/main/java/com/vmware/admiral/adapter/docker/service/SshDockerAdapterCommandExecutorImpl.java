@@ -25,7 +25,7 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.NETWORK_MODE_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.PID_MODE_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.PRIVILEGED_PROP_NAME;
-import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.PUBLISH_ALL_PORTS;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.PUBLISH_ALL;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.RESTART_POLICY_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.RESTART_POLICY_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.RESTART_POLICY_RETRIES_PROP_NAME;
@@ -110,10 +110,20 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                 ConsumedResult consumed = null;
                 try {
                     consumed = state.result.join().consume();
-                    handleExecResult(state.id, consumed.exitCode, consumed.error, consumed.out,
-                            consumed.err, state.handler, state.mapper);
+                    try {
+                        handleExecResult(state.id, consumed.exitCode, consumed.error, consumed.out,
+                                consumed.err, state.handler, state.mapper);
+                    } catch (Exception e) {
+                        logger.info(
+                                "Handler for SSH state " + state.id + " failed: " + e.getMessage());
+                    }
                 } catch (IOException e) {
-                    state.handler.handle(null, e);
+                    try {
+                        state.handler.handle(null, e);
+                    } catch (Exception e1) {
+                        logger.info("Handler for SSH state " + state.id + " failed: "
+                                + e1.getMessage());
+                    }
                     return;
                 }
             }
@@ -128,14 +138,24 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                 try {
                     error = state.result.get();
                 } catch (InterruptedException | ExecutionException e) {
-                    state.handler.handle(null, e);
+                    try {
+                        state.handler.handle(null, e);
+                    } catch (Exception e1) {
+                        logger.info("Handler for SSH state " + state.id + " failed: "
+                                + e1.getMessage());
+                    }
                 }
                 Operation op = Operation.createPatch(null)
                         .setBody(state.target);
-                state.handler.handle(op, error);
+                try {
+                    state.handler.handle(op, error);
+                } catch (Exception e) {
+                    logger.info("Handler for SSH state " + state.id + " failed.");
+                }
             }
         }
 
+        logger.fine("Rescheduling SSH handle in progress.");
         host.schedule(() -> {
             handleInProgress();
         }, SSH_POLL_DELAY_SECONDS, TimeUnit.SECONDS);
@@ -150,9 +170,11 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                                  // etc.
                 handler.handle(null, error);
             } else { // Executed, but bad status code
-                Throwable t = new RuntimeException(String.format(
+                String message = String.format(
                         "Error executing ssh command with id %s%nSTATUS: %s%nOUT=%s%nERR=%s",
-                        id, exitCode, out, err));
+                        id, exitCode, out, err);
+                logger.info(message);
+                Throwable t = new RuntimeException(message);
                 handler.handle(null, t);
             }
         } else { // Operation completed successfully
@@ -342,7 +364,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
             ProcessResultCollector prc = new ProcessResultCollector(pid, completionHandler, mapper);
             logger.info(String.format(
                     "Starting SSH process result collector with id %s for pid %s, origin %s",
-                    pid, prc.id, state.id));
+                    prc.id, pid, state.id));
             pollForProcessCompletion(commandInput, outStreamFile,
                     errStreamFile, exitCodeFile, prc);
         };
@@ -529,7 +551,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
         cb.withLongSwitchIfPresent(hostConfig, PROP_NAME_TO_LONG_SWITCH, MEMORY_PROP_NAME,
                 MEMORY_SWAP_PROP_NAME, CPU_SHARES_PROP_NAME, DNS_PROP_NAME, DNS_SEARCH_PROP_NAME,
                 VOLUMES_FROM_PROP_NAME, CAP_ADD_PROP_NAME, CAP_DROP_PROP_NAME,
-                PRIVILEGED_PROP_NAME, PUBLISH_ALL_PORTS);
+                PRIVILEGED_PROP_NAME, PUBLISH_ALL);
 
         cb.withLongSwitchIfPresent(hostConfig, NETWORK_MODE_PROP_NAME, "net");
         cb.withLongSwitchIfPresent(hostConfig, LINKS_PROP_NAME, "link");
@@ -599,7 +621,8 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
 
         CommandBuilder cb = new CommandBuilder()
                 .withCommand("stop")
-                .withLongSwitchIfPresent(properties, PROP_NAME_TO_LONG_SWITCH, DOCKER_CONTAINER_STOP_TIME)
+                .withLongSwitchIfPresent(properties, PROP_NAME_TO_LONG_SWITCH,
+                        DOCKER_CONTAINER_STOP_TIME)
                 .withArgumentIfPresent(properties, DOCKER_CONTAINER_ID_PROP_NAME);
 
         execWithInput(input, docker(cb), completionHandler);
