@@ -100,8 +100,28 @@ public class CommandBuilder {
      * @return
      */
     public CommandBuilder withLongSwitch(String switchName, Object value) {
-        switches.add(String.format("--%s='%s'", switchName,
-                escapeQuotedSwitch(String.valueOf(value))));
+        withLongSwitch(switchName, value, UnaryOperator.identity());
+
+        return this;
+    }
+
+    /**
+     * add a long switch (--switch=value) with the given name and value applying the unary operator
+     * on the key
+     *
+     * @param switchName
+     * @param value
+     * @param switchNameMapper
+     * @return
+     */
+    public CommandBuilder withLongSwitch(String switchName, Object value,
+            UnaryOperator<String> switchNameMapper) {
+        if (value != null) {
+            switches.add(String.format("--%s='%s'", switchNameMapper.apply(switchName),
+                    escapeQuotedSwitch(String.valueOf(value))));
+        } else {
+            switches.add("--" + switchNameMapper.apply(switchName));
+        }
 
         return this;
     }

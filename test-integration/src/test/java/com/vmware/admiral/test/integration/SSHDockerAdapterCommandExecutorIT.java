@@ -35,6 +35,7 @@ import com.vmware.admiral.common.util.SshUtil;
 import com.vmware.admiral.common.util.SshUtil.Result;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
@@ -456,6 +457,37 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
         Assert.assertTrue("Operation failed to complete on time!", handler.done);
         Assert.assertNull("Unexpected failure!", handler.failure);
         Assert.assertNotNull("Body should contain STDOUT!", handler.op.getBody(String.class));
+    }
+
+    @Test
+    public void stats() throws InterruptedException, TimeoutException {
+        String name = getRandomContainerName();
+        Result result = SshUtil.exec(HOST_NAME, getPasswordCredentials(), "docker run -d --name " +
+                name + " alpine /bin/sh -c 'sleep 120'");
+        Assert.assertTrue("Failed to start container", result.exitCode == 0);
+        containersToDelete.add(name);
+
+        SshDockerAdapterCommandExecutorImpl executor = new SshDockerAdapterCommandExecutorImpl(
+                host);
+
+        CommandInput input = new CommandInput();
+        input.withDockerUri(HOST_URI);
+        input.withCredentials(getPasswordCredentials());
+        input.getProperties().put(DockerAdapterCommandExecutor.DOCKER_CONTAINER_ID_PROP_NAME,
+                name);
+
+        List<DefaultSshOperationResultCompletionHandler> handlers = new ArrayList<>();
+
+        DefaultSshOperationResultCompletionHandler handler = new DefaultSshOperationResultCompletionHandler();
+        executor.fetchContainerStats(input, handler);
+        handlers.add(handler);
+
+        handler.join(45, TimeUnit.SECONDS);
+
+        Assert.assertTrue("Operation failed to complete on time!", handler.done);
+        Assert.assertNull("Unexpected failure!", handler.failure);
+        Assert.assertNotNull("Body should contain STDOUT!", handler.op.getBody(String.class));
+        Utils.fromJson(handler.op.getBody(String.class), Object.class);
     }
 
     @After

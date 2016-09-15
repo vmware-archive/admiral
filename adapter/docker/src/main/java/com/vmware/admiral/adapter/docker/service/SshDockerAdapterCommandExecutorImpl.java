@@ -33,7 +33,9 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +49,10 @@ import java.util.function.UnaryOperator;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.reflect.TypeToken;
+
 import net.schmizz.sshj.SSHClient;
 
 import com.vmware.admiral.adapter.docker.util.DockerDevice;
@@ -54,12 +60,14 @@ import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.adapter.docker.util.PropertyToSwitchNameMapper;
 import com.vmware.admiral.adapter.docker.util.ssh.CommandBuilder;
 import com.vmware.admiral.adapter.docker.util.ssh.Mappers;
+import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.common.util.SshUtil;
 import com.vmware.admiral.common.util.SshUtil.AsyncResult;
 import com.vmware.admiral.common.util.SshUtil.ConsumedResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 /**
@@ -67,6 +75,12 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
  * remote end
  */
 public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommandExecutor, Mappers {
+
+    private static final String STATS_TEMPLATE = FileUtil.getResourceAsString(
+            "/stats-template.json",
+            true);
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(
+            "yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
     private static final String SSH_OP_OUT_PREFIX = "ssh-op-out";
     private static final String SSH_OP_ERR_PREFIX = "ssh-op-err";
@@ -697,11 +711,114 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
         execWithInput(input, docker(cb), completionHandler);
     }
 
+    private static class CliStats {
+        private static final long BYTE_UNIT_MULTIPLIER = 1000L;
+
+        public String id;
+        public double cpuUsagePercent;
+        public double memUsage;
+        public double memLimit;
+        public double memUsagePercent;
+        public double netInput;
+        public double netOutput;
+        public double blockInput;
+        public double blockOutput;
+
+        /**
+         * @param cliOutput
+         *            - contains 2 lines, header and data
+         */
+        public CliStats(String cliOutput) {
+            String data = cliOutput.split("\n")[1]; // We don't really need the header
+            String[] splitted = data.split(" +");
+            id = splitted[0];
+            cpuUsagePercent = Double
+                    .parseDouble(splitted[1].substring(0, splitted[1].length() - 1));
+            memUsage = Double
+                    .parseDouble(splitted[2]) * getMultiplier(splitted[3]);
+            memLimit = Double
+                    .parseDouble(splitted[5]) * getMultiplier(splitted[6]);
+            memUsagePercent = Double
+                    .parseDouble(splitted[7].substring(0, splitted[7].length() - 1));
+            netInput = Double
+                    .parseDouble(splitted[8]) * getMultiplier(splitted[9]);
+            netOutput = Double
+                    .parseDouble(splitted[11]) * getMultiplier(splitted[12]);
+            blockInput = Double
+                    .parseDouble(splitted[13]) * getMultiplier(splitted[14]);
+            blockOutput = Double
+                    .parseDouble(splitted[16]) * getMultiplier(splitted[17]);
+        }
+
+        long getMultiplier(String unit) {
+            if (unit == null) {
+                return 1;
+            }
+            switch (unit.toUpperCase()) {
+            case "":
+                return 1;
+            case "B":
+                return 1;
+            case "KB":
+                return BYTE_UNIT_MULTIPLIER;
+            case "MB":
+                return BYTE_UNIT_MULTIPLIER * BYTE_UNIT_MULTIPLIER;
+            case "GB":
+                return BYTE_UNIT_MULTIPLIER * BYTE_UNIT_MULTIPLIER * BYTE_UNIT_MULTIPLIER;
+            case "TB":
+                return BYTE_UNIT_MULTIPLIER * BYTE_UNIT_MULTIPLIER * BYTE_UNIT_MULTIPLIER
+                        * BYTE_UNIT_MULTIPLIER;
+            default :
+                throw new IllegalArgumentException("Unknown unit: " + unit);
+            }
+        }
+
+        public String apiFormat() {
+            // As the API is much more verbose then the CLI, load some 'default' values
+            Map<String, JsonElement> stats = Utils.fromJson(STATS_TEMPLATE,
+                    new TypeToken<Map<String, JsonElement>>() {
+                    }.getType());
+            stats.put("read", new JsonPrimitive(DATE_FORMAT.format(new Date())));
+            stats.get("memory_stats").getAsJsonObject().addProperty("usage",
+                    (long) memUsage);
+            stats.get("memory_stats").getAsJsonObject().addProperty("limit",
+                    (long) memLimit);
+            stats.get("networks").getAsJsonObject().get("eth0").getAsJsonObject()
+                    .addProperty("rx_bytes", (long) netInput);
+            stats.get("networks").getAsJsonObject().get("eth0").getAsJsonObject()
+                    .addProperty("tx_bytes", (long) netOutput);
+
+            /*  @formatter:off
+             *  CPU is where it gets wicked - we need to fake some values based on a %
+             *  Currently the formula used in the ContainerStatsEvaluator is
+             *  cpuUsage = (cpuDelta / systemDelta) * percpu_usage.size()) * 100.0;
+             *  So we're going with a fake values to result in the following (for better precision)
+             *  cpuUsage = (cpuUsagePercent*100 / 10000) * 1) * 100.0;
+             *  @formatter:on
+             */
+            stats.get("cpu_stats").getAsJsonObject()
+                    .get("cpu_usage").getAsJsonObject()
+                    .addProperty("total_usage", (long) cpuUsagePercent * 100);
+            stats.get("cpu_stats").getAsJsonObject()
+                    .get("cpu_usage").getAsJsonObject()
+                    .addProperty("system_cpu_usage", 10000);
+
+            return Utils.toJson(stats);
+        }
+    }
+
     @Override
     public void fetchContainerStats(CommandInput input, CompletionHandler completionHandler) {
-        // TODO the CLI stats command is nowhere near the API version - skip for now
-        Operation op = Operation.createPatch(null).setBody("{ \"cpu_stats\": {} }");
-        completionHandler.handle(op, null);
+        Map<String, Object> properties = input.getProperties();
+
+        CommandBuilder cb = new CommandBuilder()
+                .withCommand("stats")
+                .withLongSwitch(DOCKER_CONTAINER_NO_STREAM, null, PROP_NAME_TO_LONG_SWITCH)
+                .withArgumentIfPresent(properties, DOCKER_CONTAINER_ID_PROP_NAME);
+
+        execWithInput(input, docker(cb), completionHandler, (s) -> {
+            return new CliStats(s).apiFormat();
+        });
     }
 
     @Override

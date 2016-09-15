@@ -1,0 +1,81 @@
+
+  {
+     "read" : "2015-01-08T22:57:31.547920715Z",
+     "pids_stats": {
+        "current": 0
+     },
+     "networks": {
+             "eth0": {
+                 "rx_bytes": 0,
+                 "rx_dropped": 0,
+                 "rx_errors": 0,
+                 "rx_packets": 0,
+                 "tx_bytes": 0,
+                 "tx_dropped": 0,
+                 "tx_errors": 0,
+                 "tx_packets": 0
+             }
+     },
+     "memory_stats" : {
+        "stats" : {
+           "total_pgmajfault" : 0,
+           "cache" : 0,
+           "mapped_file" : 0,
+           "total_inactive_file" : 0,
+           "pgpgout" : 0,
+           "rss" : 0,
+           "total_mapped_file" : 0,
+           "writeback" : 0,
+           "unevictable" : 0,
+           "pgpgin" : 0,
+           "total_unevictable" : 0,
+           "pgmajfault" : 0,
+           "total_rss" : 0,
+           "total_rss_huge" : 0,
+           "total_writeback" : 0,
+           "total_inactive_anon" : 0,
+           "rss_huge" : 6291456,
+           "hierarchical_memory_limit" : 0,
+           "total_pgfault" : 0,
+           "total_active_file" : 0,
+           "active_anon" : 0,
+           "total_active_anon" : 0,
+           "total_pgpgout" : 0,
+           "total_cache" : 0,
+           "inactive_anon" : 0,
+           "active_file" : 0,
+           "pgfault" : 0,
+           "inactive_file" : 0,
+           "total_pgpgin" : 0
+        },
+        "max_usage" : 0,
+        "usage" : 0,
+        "failcnt" : 0,
+        "limit" : 0
+     },
+     "blkio_stats" : {},
+     "cpu_stats" : {
+        "cpu_usage" : {
+           "percpu_usage" : [
+              0
+           ],
+           "usage_in_usermode" : 0,
+           "total_usage" : 0,
+           "usage_in_kernelmode" : 0
+        },
+        "system_cpu_usage" : 0,
+        "throttling_data" : {"periods":0,"throttled_periods":0,"throttled_time":0}
+     },
+     "precpu_stats" : {
+        "cpu_usage" : {
+           "percpu_usage" : [
+              0
+           ],
+           "usage_in_usermode" : 0,
+           "total_usage" : 0,
+           "usage_in_kernelmode" : 0
+        },
+        "system_cpu_usage" : 0,
+        "throttling_data" : {"periods":0,"throttled_periods":0,"throttled_time":0}
+     }
+  }

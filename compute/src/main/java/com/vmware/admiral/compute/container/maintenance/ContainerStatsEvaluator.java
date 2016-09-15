@@ -194,6 +194,10 @@ public class ContainerStatsEvaluator {
     private static void setContainerStopped(ContainerStats state, Map<String, JsonElement> stats) {
         try {
             JsonElement read_json = stats.get("read");
+            if (read_json == null || read_json.isJsonNull()) {
+                Utils.logWarning("read is null.");
+                return;
+            }
             String read = read_json.getAsString();
             state.containerStopped = Boolean.FALSE;
             if (CONTAINER_STOPPED_TIME.equals(read)) {
