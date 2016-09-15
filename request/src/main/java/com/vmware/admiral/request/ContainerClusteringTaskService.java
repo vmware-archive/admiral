@@ -13,6 +13,7 @@ package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
+import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_ALLOCATION_REQUEST;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
 import java.util.Arrays;
@@ -238,6 +239,10 @@ public class ContainerClusteringTaskService extends
         requestBrokerState.addCustomProperty(FIELD_NAME_CONTEXT_ID_KEY, state.contextId);
         requestBrokerState.addCustomProperty(RequestUtils.CLUSTERING_OPERATION_CUSTOM_PROP,
                 Boolean.TRUE.toString());
+        String allocationRequest = state.getCustomProperty(FIELD_NAME_ALLOCATION_REQUEST);
+        if (allocationRequest != null) {
+            requestBrokerState.addCustomProperty(FIELD_NAME_ALLOCATION_REQUEST, allocationRequest);
+        }
 
         sendRequest(Operation.createPost(this, RequestBrokerFactoryService.SELF_LINK)
                 .setBody(requestBrokerState).setCompletion((o, e) -> {
