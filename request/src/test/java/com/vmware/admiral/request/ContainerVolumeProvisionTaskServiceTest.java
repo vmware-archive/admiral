@@ -49,6 +49,7 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
         container1Desc.name = "container1";
         container1Desc.volumes = new String[] { "postgres:/etc/pgdata/postgres" };
 
+
         // Create another ContainerDescription without volume and placed it in different host.
         ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
         container2Desc.name = "container2";
@@ -121,10 +122,16 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
             AssertUtil.assertTrue(
                     volume.originatingHostReference.getPath().equals(cont1.parentLink),
                     "Volume is provisioned on wrong host.");
+
+            assertEquals(cont1.volumes.length, 1);
+            AssertUtil.assertTrue(cont1.volumes[0].contains(volume.name), "Host volume name is different than Container volume name.");
+
         } else {
             AssertUtil.assertTrue(
                     volume.originatingHostReference.getPath().equals(cont2.parentLink),
                     "Volume is provisioned on wrong host.");
+            assertEquals(cont2.volumes.length, 1);
+            AssertUtil.assertTrue(cont2.volumes[0].contains(volume.name), "Host volume name is different than Container volume name.");
         }
 
     }

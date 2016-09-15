@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -622,7 +623,7 @@ public class ContainerAllocationTaskService
             containerState.command = containerDesc.command;
             containerState.volumesFrom = hostSelection.mapNames(containerDesc.volumesFrom);
             containerState.volumeDriver = containerDesc.volumeDriver;
-
+            containerState.volumes = mapVolumes(containerDesc, hostSelection);
             containerState.networks = mapNetworks(containerDesc, hostSelection);
 
             containerState.documentExpirationTimeMicros = ServiceUtils
@@ -659,7 +660,6 @@ public class ContainerAllocationTaskService
 
                                 if (allocationRequest) {
                                     completeSubTasksCounter(taskCallback, null);
-                                    //TODO update volumes hosts.
                                 } else {
                                     createContainerInstanceRequests(state, taskCallback,
                                             body.documentSelfLink);
@@ -775,5 +775,28 @@ public class ContainerAllocationTaskService
         }
 
         return result;
+    }
+
+    /**
+     * Takes volumes from ContainerDescription in format [/host-directory:/container-directory] or
+     * [namedVolume:/container-directory] and puts the suffix for host part of the volume name.
+     *
+     * @param cd
+     *            - ContainerDescription
+     * @param hostSelection
+     *            - HostSelection for resource.
+     * @return new volume name equals to old one, but with suffix for host directory like:
+     *         [namedVolume-mcm376:/container-directory]
+     */
+    private static String[] mapVolumes(ContainerDescription cd, HostSelection hostSelection) {
+
+        if (cd.volumes == null || cd.volumes.length == 0) {
+            return null;
+        }
+
+        return Arrays.stream(cd.volumes).map((v) -> hostSelection
+                .mapNames(new String[] { v })[0])
+                .filter(Objects::nonNull).toArray(String[]::new);
+
     }
 }

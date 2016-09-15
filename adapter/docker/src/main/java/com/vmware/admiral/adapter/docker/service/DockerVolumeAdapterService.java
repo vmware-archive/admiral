@@ -17,6 +17,7 @@ import com.vmware.admiral.adapter.common.VolumeOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.TaskState.TaskStage;
 
 public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
 
@@ -25,11 +26,8 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
     public static final String DOCKER_VOLUME_DRIVER_TYPE_DEFAULT = "local";
 
     private static final VolumeOperationType[] DIRECT_OPERATIONS = {
-            VolumeOperationType.CREATE,
-            VolumeOperationType.DELETE,
             VolumeOperationType.LIST_VOLUMES,
             VolumeOperationType.INSPECT,
-
     };
 
     private static class RequestContext {
@@ -154,12 +152,9 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
 
         context.executor.createVolume(createCommandInput, (op, ex) -> {
             if (ex != null) {
-                context.operation.fail(ex);
+                fail(context.request, ex);
             } else {
-                if (op.hasBody()) {
-                    context.operation.setBody(op.getBody(String.class));
-                }
-                context.operation.complete();
+                patchTaskStage(context.request, TaskStage.FINISHED, null);
             }
         });
     }
@@ -171,12 +166,9 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
 
         context.executor.removeVolume(deleteCommandInput, (op, ex) -> {
             if (ex != null) {
-                context.operation.fail(ex);
+                fail(context.request, ex);
             } else {
-                if (op.hasBody()) {
-                    context.operation.setBody(op.getBody(String.class));
-                }
-                context.operation.complete();
+                patchTaskStage(context.request, TaskStage.FINISHED, null);
             }
         });
     }
@@ -225,7 +217,6 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
                 return true;
             }
         }
-
         return false;
     }
 

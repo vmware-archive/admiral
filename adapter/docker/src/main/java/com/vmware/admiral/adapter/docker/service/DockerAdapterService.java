@@ -694,7 +694,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         hostConfig.put(DNS_SEARCH_PROP_NAME, context.containerDescription.dnsSearch);
         hostConfig.put(EXTRA_HOSTS_PROP_NAME, context.containerState.extraHosts);
         // the volumes are added as binds property
-        hostConfig.put(BINDS_PROP_NAME, context.containerDescription.volumes);
+        hostConfig.put(BINDS_PROP_NAME, context.containerState.volumes);
         hostConfig.put(VOLUME_DRIVER, context.containerDescription.volumeDriver);
         hostConfig.put(CAP_ADD_PROP_NAME, context.containerDescription.capAdd);
         hostConfig.put(CAP_DROP_PROP_NAME, context.containerDescription.capDrop);
@@ -733,9 +733,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             hostConfig.put(RESTART_POLICY_PROP_NAME, restartPolicy);
         }
 
-        if (context.containerDescription.volumes != null) {
+        if (context.containerState.volumes != null) {
             Map<String, Object> volumeMap = new HashMap<>();
-            for (String volume : context.containerDescription.volumes) {
+            for (String volume : context.containerState.volumes) {
                 // docker expects each volume to be mapped to an empty object (an empty map)
                 // where the key is the container_path (second element in the volume string)
                 String[] split = volume.split(":");

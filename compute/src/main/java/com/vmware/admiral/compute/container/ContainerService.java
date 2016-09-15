@@ -169,6 +169,11 @@ public class ContainerService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public String volumeDriver;
 
+        /** Mount a volume e.g /host:/container[:ro] or just named volume like 'vol1' */
+        @Documentation(description = "Mount a volume e.g /host:/container[:ro] or just named volume like 'vol1'")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public String[] volumes;
+
         /** A list of environment variables in the form of VAR=value. */
         @JsonSerialize(contentUsing = EnvSerializer.class)
         @JsonDeserialize(contentUsing = EnvDeserializer.class)
@@ -373,6 +378,7 @@ public class ContainerService extends StatefulService {
         template.image = "library/hello-world";
         template.command = new String[] { "cat (string)" };
         template.volumesFrom = new String[] { "volumeFrom[:ro] (string)" };
+        template.volumes = new String [] {"host-volume-dir:/container-volume-dir"};
         template.extraHosts = new String[] { "hostname:ip" };
         template.env = new String[] {
                 "ENV_VAR=value (string)",
