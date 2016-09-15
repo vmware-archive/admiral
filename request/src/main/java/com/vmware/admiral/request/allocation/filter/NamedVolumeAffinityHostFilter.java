@@ -12,7 +12,9 @@
 package com.vmware.admiral.request.allocation.filter;
 
 import static com.vmware.admiral.compute.ContainerHostService.DOCKER_HOST_PLUGINS_VOLUME_PROP_NAME;
+import static com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.DEFAULT_VOLUME_DRIVER;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,6 +30,7 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
@@ -35,6 +38,7 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 /**
  * A filter implementing {@link HostSelectionFilter} aimed to provide host selection for containers
@@ -121,7 +125,7 @@ public class NamedVolumeAffinityHostFilter implements HostSelectionFilter {
         QueryUtil.addListValueClause(q,
                 ContainerVolumeState.FIELD_NAME_DESCRIPTION_LINK, descLinksWithNames.keySet());
 
-        final Set<String> requiredDrivers = new HashSet<>();
+        final Map<String, Set<String>> requiredDrivers = new HashMap<>();
         new ServiceDocumentQuery<ContainerVolumeState>(host, ContainerVolumeState.class)
                 .query(q, (r) -> {
                     if (r.hasException()) {
@@ -136,39 +140,142 @@ public class NamedVolumeAffinityHostFilter implements HostSelectionFilter {
                                 .get(volumeState.descriptionLink);
                         descName.addContainerNames(
                                 Collections.singletonList(volumeState.name));
-                        requiredDrivers.add(volumeState.driver);
+                        requiredDrivers.computeIfAbsent(volumeState.driver, v -> new HashSet<>())
+                                .add(descName.descriptionName);
 
                         for (HostSelection hs : hostSelectionMap.values()) {
                             hs.addDesc(descName);
                         }
                     } else {
-                        filterBySupportedVolumeDrivers(requiredDrivers, hostSelectionMap, callback);
+                        filterBySupportedVolumeDrivers(state, requiredDrivers, hostSelectionMap,
+                                callback);
                     }
                 });
     }
 
-    private void filterBySupportedVolumeDrivers(Set<String> requiredDrivers,
-            Map<String, HostSelection> hostSelectionMap, HostSelectionFilterCompletion callback) {
-
+    private void filterBySupportedVolumeDrivers(PlacementHostSelectionTaskState state,
+            Map<String, Set<String>> requiredDrivers, Map<String, HostSelection> hostSelectionMap,
+            HostSelectionFilterCompletion callback) {
 
         hostSelectionMap = hostSelectionMap.entrySet().stream()
-                .filter(hostEntry -> supportsDrivers(requiredDrivers, hostEntry.getValue()))
+                .filter(host -> supportsDrivers(requiredDrivers.keySet(), host.getValue()))
                 .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
 
-        try {
-            if (hostSelectionMap.isEmpty()) {
-                String errMsg = String.format("No hosts found supporting the '%s' volume drivers.",
-                        requiredDrivers.toString());
-                callback.complete(null, new HostSelectionFilterException(errMsg));
-                return;
-            }
-
-            callback.complete(hostSelectionMap, null);
-        } catch (Throwable e) {
-            host.log(Level.WARNING, "Exception when completing callback. Error: [%s]",
-                    e.getMessage());
-            callback.complete(null, e);
+        if (hostSelectionMap.isEmpty()) {
+            String errMsg = String.format("No hosts found supporting the '%s' volume drivers.",
+                    requiredDrivers.toString());
+            callback.complete(null, new HostSelectionFilterException(errMsg));
+            return;
         }
+
+        Set<String> localVolumeNames = requiredDrivers.get(DEFAULT_VOLUME_DRIVER);
+        if (localVolumeNames != null) {
+            // find container that share the same local volumes with us
+            // and have hosts already assigned
+            queryContainersDescs(state, localVolumeNames, hostSelectionMap, callback);
+        } else {
+            try {
+                callback.complete(hostSelectionMap, null);
+            } catch (Throwable e) {
+                host.log(Level.WARNING, "Exception when completing callback. Error: [%s]",
+                        e.getMessage());
+                callback.complete(null, e);
+            }
+        }
+    }
+
+    private void queryContainersDescs(PlacementHostSelectionTaskState state,
+            Set<String> volumeNames, Map<String, HostSelection> hostSelectionMap,
+            HostSelectionFilterCompletion callback) {
+
+        QueryTask descQueryTask = QueryUtil.buildQuery(ContainerDescription.class, false);
+
+        String volumeItemField = QueryTask.QuerySpecification.buildCollectionItemName(
+                ContainerDescription.FIELD_NAME_VOLUMES);
+
+        QueryUtil.addListValueClause(descQueryTask, volumeItemField,
+                volumeNames.stream().map(v -> v + "*").collect(Collectors.toSet()),
+                MatchType.WILDCARD);
+        QueryUtil.addExpandOption(descQueryTask);
+
+        List<String> containersDescLinks = new ArrayList<>();
+        new ServiceDocumentQuery<>(host, ContainerDescription.class)
+                .query(descQueryTask,
+                        (r) -> {
+                            if (r.hasException()) {
+                                String errMsg = String.format(
+                                        "Exception while filtering container descriptions"
+                                        + " with local volume names %s. Error: [%s]",
+                                        volumeNames.toString(),
+                                        r.getException().getMessage());
+                                callback.complete(null, new HostSelectionFilterException(errMsg));
+                            } else if (r.hasResult()) {
+                                containersDescLinks.add(r.getResult().documentSelfLink);
+                            } else {
+                                // there are no containers that share our local volumes
+                                if (containersDescLinks.isEmpty()) {
+                                    callback.complete(hostSelectionMap, null);
+                                    return;
+                                }
+
+                                queryContainers(state, containersDescLinks, hostSelectionMap,
+                                        callback);
+                            }
+                        });
+
+    }
+
+    private void queryContainers(PlacementHostSelectionTaskState state,
+            List<String> containersDescLinks, Map<String, HostSelection> hostSelectionMap,
+            HostSelectionFilterCompletion callback) {
+
+        QueryTask q = QueryUtil.buildPropertyQuery(ContainerState.class,
+                ContainerState.FIELD_NAME_COMPOSITE_COMPONENT_LINK, UriUtils.buildUriPath(
+                        CompositeComponentFactoryService.SELF_LINK, state.contextId));
+        q.taskInfo.isDirect = false;
+        QueryUtil.addExpandOption(q);
+
+        QueryUtil.addListValueClause(q,
+                ContainerState.FIELD_NAME_DESCRIPTION_LINK, containersDescLinks);
+
+        final List<String> parentLinks = new ArrayList<>();
+        new ServiceDocumentQuery<>(host, ContainerState.class)
+                .query(q, (r) -> {
+                    if (r.hasException()) {
+                        host.log(
+                                Level.WARNING,
+                                "Exception while filtering container states. Error: [%s]",
+                                r.getException().getMessage());
+                        callback.complete(null, r.getException());
+                    } else if (r.hasResult()) {
+                        String link = r.getResult().parentLink;
+                        if (link != null) {
+                            parentLinks.add(link);
+                        }
+                    } else {
+                        if (parentLinks.isEmpty()) {
+                            // other containers that share our local volumes do not have
+                            // hosts assigned; we can choose whichever host from the list
+                            callback.complete(hostSelectionMap, null);
+                        } else if (parentLinks.size() > 1) {
+                            // there are multiple containers that share our local volumes
+                            // but are placed on different hosts -> placement is impossible
+                            callback.complete(null, new HostSelectionFilterException(
+                                    "Detected multiple containers sharing local volumes"
+                                            + " but placed on different hosts."));
+                        } else {
+                            HostSelection host = hostSelectionMap.get(parentLinks.get(0));
+                            if (host == null) {
+                                callback.complete(null, new HostSelectionFilterException(
+                                        "Unable to place containers sharing local volumes"
+                                                + " on the same host."));
+                            } else {
+                                callback.complete(Collections.singletonMap(
+                                        parentLinks.get(0), host), null);
+                            }
+                        }
+                    }
+                });
     }
 
     private boolean supportsDrivers(Set<String> requiredDrivers, HostSelection hostSelection) {

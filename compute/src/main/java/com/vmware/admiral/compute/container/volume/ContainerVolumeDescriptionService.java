@@ -48,7 +48,7 @@ public class ContainerVolumeDescriptionService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CONTAINER_VOLUMES_DESC;
 
-    private static final String DEFAULT_VOLUME_DRIVER = "local";
+    public static final String DEFAULT_VOLUME_DRIVER = "local";
 
     @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
     @JsonIgnoreProperties({ "customProperties" })

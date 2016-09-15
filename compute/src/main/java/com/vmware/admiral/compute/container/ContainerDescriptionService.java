@@ -96,6 +96,7 @@ public class ContainerDescriptionService extends StatefulService {
 
         public static final String FIELD_NAME_POD = "pod";
         public static final String FIELD_NAME_IMAGE = "image";
+        public static final String FIELD_NAME_VOLUMES = "volumes";
         public static final String FIELD_NAME_VOLUMES_FROM = "volumesFrom";
         public static final String FIELD_NAME_VOLUME_DRIVER = "volumeDriver";
         public static final String FIELD_NAME_LINKS = "links";
@@ -715,6 +716,8 @@ public class ContainerDescriptionService extends StatefulService {
 
         ServiceDocumentTemplateUtil.indexCustomProperties(template);
         ServiceDocumentTemplateUtil.indexProperty(template, ContainerDescription.FIELD_NAME_LINKS);
+        ServiceDocumentTemplateUtil.indexProperty(template,
+                ContainerDescription.FIELD_NAME_VOLUMES);
         ServiceDocumentTemplateUtil.indexProperty(template,
                 ContainerDescription.FIELD_NAME_VOLUMES_FROM);
         ServiceDocumentTemplateUtil.indexProperty(template,
