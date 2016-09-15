@@ -81,7 +81,7 @@ var VueGrid = Vue.extend({
       let itemWidth = Math.min(Math.floor(width / columnsToUse) - marginWidth, maxWidth);
       let itemSpacing = columnsToUse === 1 || columns > length ? marginWidth :
           (width - marginWidth - columnsToUse * itemWidth) / (columnsToUse - 1);
-      let visible = length === this.count ? length : rows * columnsToUse;
+      let visible = !this.count || length === this.count ? length : rows * columnsToUse;
 
       let count = 0;
       for (let i = 0; i < visible; i++) {
