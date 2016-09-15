@@ -157,6 +157,7 @@ public class SystemImageRetrievalManagerTest extends BaseTestCase {
         List<Callable<Void>> callables = new ArrayList<>();
         for (int i = 0; i < numberOfRequests; i++) {
             callables.add(() -> {
+                host.log("Calling retrieveAgentImage");
                 retrievalManager.retrieveAgentImage(TEST_IMAGE_RES, req, (image) -> {
                     retrievedImages.add(image);
                     ctx.completeIteration();
@@ -165,6 +166,7 @@ public class SystemImageRetrievalManagerTest extends BaseTestCase {
             });
         }
 
+        host.log("Invoke all callables to retrieveAgentImage");
         threadPool.invokeAll(callables);
 
         ctx.await();
@@ -222,7 +224,7 @@ public class SystemImageRetrievalManagerTest extends BaseTestCase {
         Assert.assertEquals("Unexpected content", new String(content), new String(image));
     }
 
-    private static class MockConfigurationService extends StatelessService {
+    private class MockConfigurationService extends StatelessService {
 
         private int numberOfRequests = 0;
         private ConfigurationState state;
@@ -233,11 +235,15 @@ public class SystemImageRetrievalManagerTest extends BaseTestCase {
 
         @Override
         public void handleGet(Operation get) {
+            host.log("MockConfigurationService handles get. Current number of requests %s",
+                    numberOfRequests);
             numberOfRequests++;
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
             }
+            host.log("MockConfigurationService completes get. Current number of requests %s",
+                    numberOfRequests);
             get.setBody(state).complete();
         }
 
