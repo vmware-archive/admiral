@@ -152,12 +152,7 @@ var buildOdataQuery = function(queryOptions) {
 };
 
 var makeDay2OperationRequestContainer = function(containerId, op) {
-  var request = {};
-  request.resourceType = CONTAINER_TYPE_DOCKER;
-  request.resourceLinks = [links.CONTAINERS + '/' + containerId];
-  request.operation = op;
-
-  return request;
+  return makeDay2OperationRequestContainers([containerId], op);
 };
 
 var makeDay2OperationRequestCluster = function(clusterContainers, op) {
@@ -173,22 +168,41 @@ var makeDay2OperationRequestCluster = function(clusterContainers, op) {
   return request;
 };
 
-var makeDay2OperationRequestContainers = function(containerLinks, op) {
+var makeDay2OperationRequestComposite = function(compositeId, op) {
+  return makeDay2OperationRequestComposites([compositeId], op);
+};
+
+var batchDay2OperationResource = function(resourceType, resourceLinks, op) {
   var request = {};
-  request.resourceType = CONTAINER_TYPE_DOCKER;
-  request.resourceLinks = containerLinks;
+  request.resourceType = resourceType;
+  request.resourceLinks = resourceLinks;
   request.operation = op;
 
   return request;
 };
 
-var makeDay2OperationRequestComposite = function(compositeId, op) {
-  var request = {};
-  request.resourceType = COMPOSITE_COMPONENT_TYPE;
-  request.resourceLinks = [links.COMPOSITE_COMPONENTS + '/' + compositeId];
-  request.operation = op;
+var ensurePrefixResourceLinks = function(prefix, links) {
+  let resourceLinks = [];
 
-  return request;
+  links.forEach((link) => {
+    if (link.indexOf(prefix) === -1) {
+      resourceLinks.push(prefix + '/' + link);
+    } else {
+      resourceLinks.push(link);
+    }
+  });
+
+  return resourceLinks;
+};
+
+var makeDay2OperationRequestContainers = function(containerLinks, op) {
+  return batchDay2OperationResource(CONTAINER_TYPE_DOCKER,
+            ensurePrefixResourceLinks(links.CONTAINERS, containerLinks), op);
+};
+
+var makeDay2OperationRequestComposites = function(compositeComponentLinks, op) {
+  return batchDay2OperationResource(COMPOSITE_COMPONENT_TYPE,
+            ensurePrefixResourceLinks(links.COMPOSITE_COMPONENTS, compositeComponentLinks), op);
 };
 
 var makeDay2OperationRequestScale = function(descriptionLink, contextId,
@@ -902,23 +916,12 @@ services.removeContainer = function(containerId) {
     });
 };
 
-services.removeContainers = function(queryOptions) {
-  let filter = buildContainersSearchQuery(queryOptions);
-  let params = {};
-  if (filter) {
-    params[ODATA_FILTER_PROP_NAME] = filter;
-  }
-  let url = mergeUrl(links.CONTAINERS, params);
-
-  return get(url).then(function(result) {
-    let containerLinks = result.documentLinks;
-
-    return day2operation(links.REQUESTS,
-      makeDay2OperationRequestContainers(containerLinks, 'Container.Delete'))
-         .then(function(deleteRequest) {
-            return deleteRequest;
-        });
-      });
+services.batchOpContainers = function(containerIds, operation) {
+  return day2operation(links.REQUESTS,
+    makeDay2OperationRequestContainers(containerIds, operation))
+    .then(function(day2OpRequest) {
+      return day2OpRequest;
+    });
 };
 
 services.startCompositeContainer = function(compositeId) {
@@ -943,6 +946,14 @@ services.removeCompositeContainer = function(compositeId) {
     makeDay2OperationRequestComposite(compositeId, 'Container.Delete'))
     .then(function(deleteRequest) {
       return deleteRequest;
+    });
+};
+
+services.batchOpCompositeContainers = function(compositeIds, operation) {
+  return day2operation(links.REQUESTS,
+    makeDay2OperationRequestComposites(compositeIds, operation))
+    .then(function(day2OpRequest) {
+      return day2OpRequest;
     });
 };
 

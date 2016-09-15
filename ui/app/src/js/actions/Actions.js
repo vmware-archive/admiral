@@ -49,7 +49,8 @@ export var ContainerActions = Reflux.createActions([
   'removeCompositeContainer', 'startContainerDetails', 'stopContainerDetails',
   'removeContainerDetails', 'removeContainers', 'operationCompleted', 'operationFailed',
   'modifyClusterSize', 'scaleContainer', 'startCluster', 'stopCluster', 'removeCluster',
-  'closeContainers', 'openShell', 'closeShell'
+  'closeContainers', 'openShell', 'closeShell',
+  'batchOpContainers', 'batchOpCompositeContainers'
 ]);
 
 export var EventLogActions = Reflux.createActions([

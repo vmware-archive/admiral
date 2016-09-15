@@ -39,6 +39,9 @@ var ContainersViewVueComponent = Vue.extend({
     }
   },
   computed: {
+    hasItems: function() {
+      return this.model.listView.items && this.model.listView.items.length > 0;
+    },
     isSelectedCategoryApplications: function() {
       return this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS;
     },
@@ -98,7 +101,10 @@ var ContainersViewVueComponent = Vue.extend({
     return {
       constants: constants,
       // this view behaves better if the target width is set before the width transition
-      requiresPreTransitionWidth: true
+      requiresPreTransitionWidth: true,
+      selectionMode: false,
+      selectedItems: [],
+      lastSelectedItemId: null
     };
   },
   mixins: [GridHolderMixin],
@@ -206,6 +212,115 @@ var ContainersViewVueComponent = Vue.extend({
       }
     },
 
+    multiSelectionSupported: function() {
+      return this.hasItems &&
+              (this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS
+                || this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS);
+    },
+
+    clearSelections: function() {
+      // hide day2 ops bar
+      $(this.$el).find('.title-second-day-operations').addClass('hide');
+      // clear data
+      this.selectionMode = false;
+      this.selectedItems = [];
+      this.lastSelectedItemId = null;
+      // un-mark items
+      $(this.$el).find('.grid-item').removeClass('marked');
+    },
+
+    toggleSelectionMode: function() {
+      this.selectionMode = !this.selectionMode;
+      if (this.selectionMode) {
+        $(this.$el).find('.title-second-day-operations').removeClass('hide');
+      } else {
+        this.clearSelections();
+      }
+    },
+
+    isMarked: function(item) {
+      return !item.system && this.selectedItems.indexOf(item.documentId) > -1;
+    },
+
+    performBatchOperation: function(operation) {
+      let selectedItemIds = this.selectedItems;
+      this.clearSelections();
+
+      if (this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS) {
+
+        ContainerActions.batchOpContainers(selectedItemIds, operation);
+      } else if (this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS) {
+
+        ContainerActions.batchOpCompositeContainers(selectedItemIds, operation);
+      }
+    },
+
+    handleItemClick: function($event, item, defaultFn) {
+      let itemId = item.documentId;
+
+      if (!this.selectionMode) {
+        // standard flow
+        defaultFn.call(this, itemId);
+
+      } else {
+        // selection of items
+        $event.stopPropagation();
+
+        if (item.system) {
+          // no day 2 ops on system containers
+          return;
+        }
+
+        let $gridItemEl = $($event.target).closest('.grid-item');
+        let wasSelected = $gridItemEl.hasClass('marked');
+
+        if (!wasSelected) {
+          $gridItemEl.addClass('marked');
+        } else {
+          $gridItemEl.removeClass('marked');
+        }
+
+        let isSelected = !wasSelected;
+        if (isSelected) {
+          // add to selected items
+          this.selectedItems.push(itemId);
+
+          if ($event.shiftKey && this.lastSelectedItemId) {
+
+            let startIndex = this.model.listView.items.findIndex((item) => {
+              return item.documentId === this.lastSelectedItemId;
+            });
+            let lastIndex = this.model.listView.items.findIndex((item) => {
+              return item.documentId === itemId;
+            });
+
+            if (startIndex > lastIndex) {
+              // backwards selection
+              let tmp = startIndex;
+              startIndex = lastIndex;
+              lastIndex = tmp;
+            }
+
+            // add the items between the indices
+            this.model.listView.items.forEach((item, index) => {
+              if (index >= startIndex && index <= lastIndex) {
+                this.selectedItems.push(item.documentId);
+              }
+            });
+          }
+
+          this.lastSelectedItemId = itemId;
+        } else {
+          // remove from selected items
+          let idxSelectedItem = this.selectedItems.indexOf(itemId);
+          if (idxSelectedItem > -1) {
+            this.selectedItems.splice(idxSelectedItem, 1);
+          }
+          this.lastSelectedItemId = null;
+        }
+      }
+    },
+
     openToolbarRequests: ContainersContextToolbarActions.openToolbarRequests,
     openToolbarEventLogs: ContainersContextToolbarActions.openToolbarEventLogs,
     closeToolbar: ContainersContextToolbarActions.closeToolbar
@@ -214,7 +329,20 @@ var ContainersViewVueComponent = Vue.extend({
     'do-action': function(actionName) {
       if (actionName === 'deleteAll') {
         // Delete all/ Delete by search criteria
+        this.clearSelections();
+
         ContainerActions.removeContainers(this.queryOptions);
+      } else if (actionName === 'multiSelect') {
+          // Multi-selection mode
+        this.toggleSelectionMode();
+      } else if (actionName === 'multiStart') {
+        this.performBatchOperation('Container.Start');
+
+      } else if (actionName === 'multiStop') {
+        this.performBatchOperation('Container.Stop');
+
+      } else if (actionName === 'multiRemove') {
+        this.performBatchOperation('Container.Delete');
       }
     }
   }

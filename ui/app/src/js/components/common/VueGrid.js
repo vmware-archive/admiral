@@ -9,6 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import MarkableItemMixin from 'components/common/MarkableItemMixin'; //eslint-disable-line
+
 var VueGrid = Vue.extend({
   template: '<div class="grid"><slot></slot></div>',
   props: {
@@ -118,6 +120,8 @@ Vue.component('grid', VueGrid);
 
 var VueGridItem = Vue.extend({
   template: '<div class="grid-item" transition="grid-item-fade"><slot></slot></div>',
+  mixins: [MarkableItemMixin],
+
   attached: function() {
     this.$parent.throttleLayout();
   },

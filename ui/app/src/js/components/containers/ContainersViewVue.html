@@ -46,20 +46,39 @@
                       v-bind:title-search="isSelectedCategoryApplications
                                             ? i18n('app.container.list.titleSearchApplications')
                                             : i18n('app.container.list.titleSearchContainers')">
-            <title-action-button v-bind:name="'deleteAll'" v-bind:icon-name="'times'"
-                                 v-bind:spinnable="false"  v-bind:confirmable="true"
-                                 v-bind:tooltip="isShowingSearchResults
-                                                  ? i18n('deleteFound') : i18n('deleteAll')"></title-action-button>
+            <title-action-button v-bind:name="'multiSelect'" v-bind:icon-name="'hand-pointer-o'"
+                                 v-bind:confirmable="false" v-bind:button-type="'TOGGLE'"
+                                 v-bind:tooltip="i18n('app.resources.selectMultiple')"
+                                 v-bind:show="multiSelectionSupported()"
+                                 v-bind:toggle-off="!selectionMode"
+                                  ></title-action-button>
+            <timeout-alert v-bind:show="selectionMode" v-bind:text="i18n('app.resources.message.selectShift')"></timeout-alert>
+            <div class="title-second-day-operations hide" transition="fade-in">
+              <title-action-button v-bind:name="'multiStop'" v-bind:icon-name="'stop'"
+                                   v-bind:confirmable="false" v-bind:button-type="'SPIN_TIMEOUT'"
+                                   v-bind:tooltip="i18n('app.container.actions.stop')"
+                                   v-bind:show="selectionMode"></title-action-button>
+              <title-action-button v-bind:name="'multiStart'" v-bind:icon-name="'play'"
+                                   v-bind:confirmable="false" v-bind:button-type="'SPIN_TIMEOUT'"
+                                   v-bind:tooltip="i18n('app.container.actions.start')"
+                                   v-bind:show="selectionMode"></title-action-button>
+              <title-action-button v-bind:name="'multiRemove'" v-bind:icon-name="'times'"
+                                   v-bind:confirmable="true" v-bind:button-type="'SPIN_TIMEOUT'"
+                                   v-bind:tooltip="i18n('delete')"
+                                   v-bind:show="selectionMode"></title-action-button>
+            </div>
           </list-title>
 
           <div class="category-filter">
             <span class="title">{{i18n('app.container.list.searchCategoryFilterTitle')}}</span>
             <a href="#"
                v-on:click="selectCategory(constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS, $event)"
-               v-bind:class="{'active': selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS}">{{i18n('app.container.list.searchCategory.containers')}}</a>
+               v-bind:class="{'active': selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS}"
+              >{{i18n('app.container.list.searchCategory.containers')}}</a>
             <a href="#"
                v-on:click="selectCategory(constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS, $event)"
-               v-bind:class="{'active': selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS}">{{i18n('app.container.list.searchCategory.applications')}}</a>
+               v-bind:class="{'active': selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS}"
+              >{{i18n('app.container.list.searchCategory.applications')}}</a>
           </div>
 
           <div class="content">
@@ -69,19 +88,20 @@
                   v-infinite-scroll="loadMore()">
               <grid-item v-for="item in model.listView.items"
                          v-bind:class="{'context-selected': item.documentId == selectedItemDocumentId}"
-                         track-by="documentId">
+                         track-by="documentId"
+                         v-bind:select-mode-on="selectionMode"
+                         v-bind:is-marked="isMarked(item)">
                 <container-grid-item v-if="item.type === constants.CONTAINERS.TYPES.SINGLE"
                                      v-bind:model="item"
-                                     v-on:click="openContainerDetails(item.documentId)"
-                                     >
+                                     v-on:click="handleItemClick($event, item, openContainerDetails)">
                 </container-grid-item>
                 <cluster-grid-item v-if="item.type === constants.CONTAINERS.TYPES.CLUSTER"
                                    v-bind:model="item"
                                    v-on:click="openClusterDetails(item.documentId)">
                 </cluster-grid-item>
                 <composite-container-grid-item v-if="item.type === constants.CONTAINERS.TYPES.COMPOSITE"
-                                               v-bind:model="item"
-                                               v-on:click="openCompositeContainerDetails(item.documentId)">
+                           v-bind:model="item"
+                           v-on:click="handleItemClick($event, item, openCompositeContainerDetails)">
                 </composite-container-grid-item>
               </grid-item>
             </grid>

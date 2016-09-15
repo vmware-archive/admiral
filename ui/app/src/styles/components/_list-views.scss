@@ -641,6 +641,11 @@
   z-index: 1;
 }
 
+.list-view.containers-list .grid-item.marked {
+  border-color: $main-color-80;
+  @include box-shadow(0px 2px 10px 1px $main-color-semi);
+}
+
 .list-view.containers-list:not(.context-selected) {
   $heightOfListViewItem: 160px;
   .container-item .container-content {

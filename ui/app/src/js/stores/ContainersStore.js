@@ -666,11 +666,19 @@ ContainersStore = Reflux.createStore({
       });
   },
 
-  onRemoveContainers: function(queryOptions) {
-    services.removeContainers(queryOptions).then((removalRequest) => {
+  onBatchOpContainers: function(containerLinks, operation) {
+    services.batchOpContainers(containerLinks, operation).then((batchOpRequest) => {
       this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
 
-      actions.RequestsActions.requestCreated(removalRequest);
+      actions.RequestsActions.requestCreated(batchOpRequest);
+    });
+  },
+
+  onBatchOpCompositeContainers: function(compositeIds, operation) {
+    services.batchOpCompositeContainers(compositeIds, operation).then((batchOpRequest) => {
+      this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
+
+      actions.RequestsActions.requestCreated(batchOpRequest);
     });
   },
 

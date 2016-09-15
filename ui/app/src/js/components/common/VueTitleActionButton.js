@@ -11,7 +11,7 @@
 
 var VueTitleActionButton = Vue.extend({
   template: `<div class="title-action-button" v-show="show"><a class="btn btn-circle"
-              title="{{tooltip}}" v-on:mousedown="spinIt()" v-on:click="notifyAction()"
+              title="{{tooltip}}" v-on:mousedown="pressed()"
                 ><i class="fa fa-{{iconName}}"></i></a></div>`,
   props: {
     name: {
@@ -32,26 +32,37 @@ var VueTitleActionButton = Vue.extend({
       required: false,
       type: String
     },
-    spinnable: {
-      required: false,
-      type: Boolean,
-      default: true
-    },
     confirmable: {
       required: false,
       type: Boolean,
       default: true
     },
+    // NORMAL, SPIN, SPIN_TIMEOUT, TOGGLE
+    buttonType: {
+      required: false,
+      type: String,
+      default: 'SPIN'
+    },
     time: {
       required: false,
       type: Number,
-      default: 1000
+      default: 3000
     },
     stopSpin: {
       required: false,
       type: Boolean,
       default: false
+    },
+    toggleOff: {
+      required: false,
+      type: Boolean,
+      default: true
     }
+  },
+  data: function() {
+    return {
+      toggleOn: false
+    };
   },
   attached: function() {
     this.unwatchStopSpin = this.$watch('stopSpin', (stopSpin) => {
@@ -59,9 +70,18 @@ var VueTitleActionButton = Vue.extend({
         this.spinStop();
       }
     });
+
+    this.unwatchToggleOff = this.$watch('toggleOff', (toggleOff) => {
+      if (toggleOff) {
+        this.toggleOn = false;
+        $(this.$el).find('i').removeClass('selected');
+        $(this.$el).find('a').removeClass('selected');
+      }
+    });
   },
   detached: function() {
     this.unwatchStopSpin();
+    this.unwatchToggleOff();
   },
   methods: {
     notifyAction: function() {
@@ -74,15 +94,28 @@ var VueTitleActionButton = Vue.extend({
         this.$dispatch('title-action', this.name);
       }
     },
-    spinIt: function() {
-      if (!this.spinnable) {
+    pressed: function() {
+      // button type is toggable
+      if (this.buttonType === 'TOGGLE') {
+        this.toggleOn = !this.toggleOn;
 
+        if (this.toggleOn) {
+          $(this.$el).find('i').addClass('selected');
+          $(this.$el).find('a').addClass('selected');
+
+        } else {
+          $(this.$el).find('i').removeClass('selected');
+          $(this.$el).find('a').removeClass('selected');
+        }
+      } else if (this.buttonType === 'SPIN') {
         $(this.$el).find('i').removeClass('fa-' + this.iconName);
         $(this.$el).find('i').addClass('fa-spinner');
         $(this.$el).find('i').addClass('fa-spin');
 
-      } else {
-
+      } else if (this.buttonType === 'SPIN_TIMEOUT') {
+        // self-spin: $(this.$el).find('i').addClass('fa-spin');
+        $(this.$el).find('i').removeClass('fa-' + this.iconName);
+        $(this.$el).find('i').addClass('fa-spinner');
         $(this.$el).find('i').addClass('fa-spin');
 
         clearTimeout(this.timeoutId);
@@ -91,10 +124,15 @@ var VueTitleActionButton = Vue.extend({
           this.spinStop();
         }, this.time);
       }
+
+      return this.notifyAction();
     },
 
     spinStop: function() {
+      // self-spin: $(this.$el).find('i').removeClass('fa-spin');
+      $(this.$el).find('i').removeClass('fa-spinner');
       $(this.$el).find('i').removeClass('fa-spin');
+      $(this.$el).find('i').addClass('fa-' + this.iconName);
     }
   }
 });
