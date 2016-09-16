@@ -14,13 +14,12 @@ package com.vmware.admiral.compute.content;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_TYPE;
-
 import java.net.URL;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.junit.Test;
+
+import com.vmware.admiral.compute.ResourceType;
 
 /**
  * Test CompositeTemplate mapping
@@ -28,7 +27,8 @@ import org.junit.Test;
 public class CompositeTemplateMapperTest {
     @Test
     public void testMapper() throws Exception {
-        URL templateUrl = getClass().getClassLoader().getResource("WordPress_with_MySQL.yaml");
+        URL templateUrl = getClass().getClassLoader().getResource(
+                "WordPress_with_MySQL_containers.yaml");
         ObjectMapper mapper = YamlMapper.objectMapper();
 
         CompositeTemplate bp = mapper.readValue(templateUrl, CompositeTemplate.class);
@@ -42,6 +42,7 @@ public class CompositeTemplateMapperTest {
 
         ComponentTemplate<?> mysqlComponent = bp.components.get("mysql");
         assertNotNull("components[mysql]", mysqlComponent);
-        assertEquals("components[mysql].type", TEMPLATE_CONTAINER_TYPE, mysqlComponent.type);
+        assertEquals("components[mysql].type", ResourceType.CONTAINER_TYPE.getContentType(),
+                mysqlComponent.type);
     }
 }

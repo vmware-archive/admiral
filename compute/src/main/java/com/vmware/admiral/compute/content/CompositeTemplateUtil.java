@@ -14,9 +14,6 @@ package com.vmware.admiral.compute.content;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.compute.container.PortBinding.fromDockerPortMapping;
-import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_NETWORK_TYPE;
-import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_TYPE;
-import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_VOLUME_TYPE;
 
 import java.io.IOException;
 import java.time.ZoneOffset;
@@ -27,13 +24,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.compute.BindingUtils;
+import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
@@ -51,6 +51,7 @@ import com.vmware.admiral.compute.content.compose.Logging;
 import com.vmware.admiral.compute.content.compose.NetworkExternal;
 import com.vmware.admiral.compute.content.compose.ServiceNetworks;
 import com.vmware.admiral.compute.content.compose.VolumeExternal;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Utils;
 
@@ -140,7 +141,7 @@ public class CompositeTemplateUtil {
             List<Binding.ComponentBinding> componentBindings = BindingUtils
                     .extractBindings(deserialized);
 
-            entity = new ObjectMapper()
+            entity = YamlMapper.objectMapper()
                     .convertValue(deserialized, CompositeTemplate.class);
 
             entity.bindings = new ArrayList<>(componentBindings);
@@ -149,8 +150,7 @@ public class CompositeTemplateUtil {
             Utils.log(CompositeTemplateUtil.class,
                     CompositeTemplateUtil.class.getSimpleName(),
                     Level.INFO, format, e.getMessage());
-            throw new IllegalArgumentException(
-                    String.format(format, e.getOriginalMessage()));
+            throw new IllegalArgumentException(String.format(format, e.getOriginalMessage()));
         }
         sanitizeCompositeTemplate(entity);
         return entity;
@@ -227,7 +227,7 @@ public class CompositeTemplateUtil {
         if (!isNullOrEmpty(services)) {
             template.components = new LinkedHashMap<>();
             for (Entry<String, DockerComposeService> entry : services.entrySet()) {
-                ComponentTemplate<ContainerDescription> component = fromDockerServiceToCompositeComponent(
+                ComponentTemplate<ResourceState> component = fromDockerServiceToCompositeComponent(
                         entry.getValue());
                 // set the service name as the component name since in the ComponentTemplate
                 // context the component name must match the container name
@@ -269,7 +269,7 @@ public class CompositeTemplateUtil {
         return template;
     }
 
-    public static ComponentTemplate<ContainerDescription> fromDockerServiceToCompositeComponent(
+    public static ComponentTemplate<ResourceState> fromDockerServiceToCompositeComponent(
             DockerComposeService service) {
         assertNotNull(service, "service");
 
@@ -358,7 +358,8 @@ public class CompositeTemplateUtil {
         description.user = service.user;
         description.workingDir = service.working_dir;
 
-        return fromContainerDescriptionToComponentTemplate(description);
+        return fromDescriptionToComponentTemplate(description,
+                ResourceType.CONTAINER_TYPE.getName());
     }
 
     private static ComponentTemplate<ContainerNetworkDescription> fromDockerNetworkToCompositeComponent(
@@ -418,15 +419,21 @@ public class CompositeTemplateUtil {
         return fromContainerVolumeDescriptionToComponentTemplate(description);
     }
 
-    public static ComponentTemplate<ContainerDescription> fromContainerDescriptionToComponentTemplate(
-            ContainerDescription description) {
+    public static ComponentTemplate<ResourceState> fromDescriptionToComponentTemplate(
+            ResourceState description, String resourceTypeName) {
         assertNotNull(description, "description");
 
-        ComponentTemplate<ContainerDescription> template = new ComponentTemplate<>();
-        template.type = TEMPLATE_CONTAINER_TYPE;
+        ComponentTemplate<ResourceState> template = new ComponentTemplate<>();
+
+        ResourceType resourceType = ResourceType.fromName(resourceTypeName);
+
         template.data = description;
-        template.data.id = null;
-        template.dependsOn = description.dependsOn;
+
+        template.type = resourceType.getContentType();
+
+        if (description instanceof ContainerDescription) {
+            template.dependsOn = ((ContainerDescription) description).dependsOn;
+        }
         return template;
     }
 
@@ -435,7 +442,7 @@ public class CompositeTemplateUtil {
         assertNotNull(description, "description");
 
         ComponentTemplate<ContainerNetworkDescription> template = new ComponentTemplate<>();
-        template.type = TEMPLATE_CONTAINER_NETWORK_TYPE;
+        template.type = ResourceType.NETWORK_TYPE.getContentType();
         template.data = description;
         template.data.id = null;
         return template;
@@ -446,7 +453,7 @@ public class CompositeTemplateUtil {
         assertNotNull(description, "description");
 
         ComponentTemplate<ContainerVolumeDescription> template = new ComponentTemplate<>();
-        template.type = TEMPLATE_CONTAINER_VOLUME_TYPE;
+        template.type = ResourceType.VOLUME_TYPE.getContentType();
         template.data = description;
         template.data.id = null;
         return template;
@@ -700,10 +707,12 @@ public class CompositeTemplateUtil {
             Map<String, ComponentTemplate<?>> components) {
         assertNotEmpty(components, "components");
 
+        Set<String> yamlLiterals = Stream.of(ResourceType.values())
+                .map(type -> type.getContentType())
+                .collect(Collectors.toSet());
+
         components.forEach((componentName, component) -> {
-            if (!TEMPLATE_CONTAINER_NETWORK_TYPE.equals(component.type)
-                    && !TEMPLATE_CONTAINER_TYPE.equals(component.type)
-                    && !TEMPLATE_CONTAINER_VOLUME_TYPE.equals(component.type)) {
+            if (!yamlLiterals.contains(component.type)) {
                 throw new IllegalArgumentException(String.format(
                         "Component '%s' has an unsupported type '%s'",
                         componentName, component.type));

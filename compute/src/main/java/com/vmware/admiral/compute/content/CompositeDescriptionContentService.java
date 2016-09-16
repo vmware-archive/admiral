@@ -11,8 +11,6 @@
 
 package com.vmware.admiral.compute.content;
 
-import static java.util.stream.Stream.concat;
-
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
 import static com.vmware.admiral.common.util.ValidationUtils.handleValidationException;
@@ -22,45 +20,43 @@ import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deseriali
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromCompositeDescriptionToCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromCompositeTemplateToCompositeDescription;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromCompositeTemplateToDockerCompose;
-import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromContainerDescriptionToComponentTemplate;
-import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromContainerNetworkDescriptionToComponentTemplate;
-import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromContainerVolumeDescriptionToComponentTemplate;
+import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromDescriptionToComponentTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromDockerComposeToCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.getYamlType;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeDockerCompose;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
-import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
-import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
-import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
-import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
-import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.content.CompositeTemplateUtil.YamlType;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationSequence;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * Service for parsing a composite template and creating a CompositeDescription (and all its
  * components)
- *
+ * <p>
  * TODO need to implement a TaskService that handles creating all the objects and cleaning up on
  * failure
  */
@@ -77,13 +73,6 @@ public class CompositeDescriptionContentService extends StatelessService {
     public static final String CONTENT_DISPOSITION_INLINE = "inline";
     public static final String CONTENT_DISPOSITION_ATTACHMENT = "attachment";
     public static final String CONTENT_DISPOSITION_FILENAME = "; filename=\"%s.yaml\"";
-
-    public static final String TEMPLATE_CONTAINER_TYPE = "Container.Docker";
-
-    // TODO: This type is temporary and must be updated to match the expected network component type
-    // when available.
-    public static final String TEMPLATE_CONTAINER_NETWORK_TYPE = "Network.Docker";
-    public static final String TEMPLATE_CONTAINER_VOLUME_TYPE = "Volume.Docker";
 
     public static final String FORMAT_DOCKER_COMPOSE_TYPE = "Docker";
 
@@ -113,64 +102,62 @@ public class CompositeDescriptionContentService extends StatelessService {
 
             CompositeDescription description = o.getBody(CompositeDescription.class);
             CompositeTemplate template = fromCompositeDescriptionToCompositeTemplate(description);
-            template.components = new ConcurrentHashMap<>();
 
-            queryComponents(op, template, description,
-                    ContainerDescription.class, (c1) -> {
-                        queryComponents(op, template, description,
-                                ContainerNetworkDescription.class, (c2) -> {
-                                    queryComponents(op, template, description,
-                                            ContainerVolumeDescription.class, (c3) -> {
-                                                // done fetching ContainerDescriptions,
-                                                // serialize the result to YAML and
-                                                // complete the request
-                                                serializeAndComplete(template, returnDocker,
-                                                        returnInline, op);
-                                            });
+            QueryTask componentDescriptionQueryTask = buildDescriptionQuery(description);
+
+            sendRequest(Operation
+                    .createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
+                    .setBody(componentDescriptionQueryTask)
+                    .setCompletion((oq, exq) -> {
+                        if (exq != null) {
+                            op.fail(ex);
+                        } else {
+                            QueryTask resultTask = oq.getBody(QueryTask.class);
+                            ServiceDocumentQueryResult result = resultTask.results;
+
+                            if (result != null && result.documents != null) {
+                                template.components = new HashMap<>();
+                                result.documents.forEach((link, document) -> {
+                                    handleResult(template, link, document);
                                 });
-                    });
+                            }
+                            // done fetching descriptions, serialize the result to YAML
+                            // and complete the request
+                            serializeAndComplete(template, returnDocker, returnInline, op);
+                        }
+                    }));
         }));
     }
 
-    private <T extends ServiceDocument> void queryComponents(Operation op,
-            CompositeTemplate template, CompositeDescription description, Class<T> clazz,
-            Consumer<Void> next) {
-        QueryTask queryTask = QueryUtil.buildQuery(clazz, true);
-        QueryUtil.addExpandOption(queryTask);
-        QueryUtil.addListValueClause(queryTask, ServiceDocument.FIELD_NAME_SELF_LINK,
-                description.descriptionLinks);
-        new ServiceDocumentQuery<>(getHost(), clazz).query(queryTask, (r) -> {
-            if (r.hasException()) {
-                op.fail(r.getException());
-            } else if (r.hasResult()) {
-                handleResult(template, r.getResult());
-            } else {
-                next.accept(null);
-            }
-        });
+    private void handleResult(CompositeTemplate template, String link, Object document) {
+        CompositeComponentRegistry.ComponentMeta meta = CompositeComponentRegistry
+                .metaByDescriptionLink(link);
+
+        ResourceState componentDescription;
+        if (ComputeDescriptionService.ComputeDescription.class.equals(meta.descriptionClass)) {
+            componentDescription = Utils.fromJson(document, ComputeDescription.class);
+        } else {
+            componentDescription = Utils.fromJson(document, meta.descriptionClass);
+        }
+        ComponentTemplate<?> component = fromDescriptionToComponentTemplate(
+                componentDescription, meta.resourceType);
+        template.components.put(componentDescription.name, component);
     }
 
-    private void handleResult(CompositeTemplate template, ServiceDocument state) {
-        String name;
-        ComponentTemplate<?> component;
+    private QueryTask buildDescriptionQuery(
+            CompositeDescription description) {
+        QueryTask componentDescriptionQueryTask = new QueryTask();
+        componentDescriptionQueryTask.querySpec = new QueryTask.QuerySpecification();
+        componentDescriptionQueryTask.taskInfo.isDirect = true;
+        componentDescriptionQueryTask.documentExpirationTimeMicros = ServiceDocumentQuery
+                .getDefaultQueryExpiration();
 
-        if (state instanceof ContainerDescription) {
-            ContainerDescription desc = (ContainerDescription) state;
-            name = desc.name;
-            component = fromContainerDescriptionToComponentTemplate(desc);
-        } else if (state instanceof ContainerNetworkDescription) {
-            ContainerNetworkDescription desc = (ContainerNetworkDescription) state;
-            name = desc.name;
-            component = fromContainerNetworkDescriptionToComponentTemplate(desc);
-        } else if (state instanceof ContainerVolumeDescription) {
-            ContainerVolumeDescription desc = (ContainerVolumeDescription) state;
-            name = desc.name;
-            component = fromContainerVolumeDescriptionToComponentTemplate(desc);
-        } else {
-            throw new IllegalArgumentException("Unknown resource state: " + state.getClass());
-        }
+        QueryUtil.addExpandOption(componentDescriptionQueryTask);
 
-        template.components.put(name, component);
+        QueryUtil.addListValueClause(componentDescriptionQueryTask,
+                ServiceDocument.FIELD_NAME_SELF_LINK,
+                description.descriptionLinks);
+        return componentDescriptionQueryTask;
     }
 
     private void serializeAndComplete(CompositeTemplate template, boolean returnDocker,
@@ -257,7 +244,6 @@ public class CompositeDescriptionContentService extends StatelessService {
                         description.descriptionLinks = ops.values().stream()
                                 .map((o) -> o.getBody(ContainerDescription.class).documentSelfLink)
                                 .collect(Collectors.toList());
-                        description.bindings = template.bindings;
                         createDescriptionOp.setBody(description);
                     }
                 })
@@ -278,25 +264,16 @@ public class CompositeDescriptionContentService extends StatelessService {
 
     private Operation[] createComponents(Map<String, ComponentTemplate<?>> components) {
 
-        Stream<Operation> networks = components.values().stream()
-                .filter(template -> TEMPLATE_CONTAINER_NETWORK_TYPE.equals(template.type))
-                .map(component -> Operation
-                        .createPost(this, ContainerNetworkDescriptionService.FACTORY_LINK)
-                        .setBody(component.data));
+        List<Operation> operations = components.values().stream()
+                .map(component -> {
+                    ResourceType resourceType = ResourceType
+                            .fromContentType(component.type);
+                    return Operation.createPost(this, CompositeComponentRegistry
+                            .factoryLinkByType(resourceType.getName()))
+                            .setBody(component.data);
+                }).collect(Collectors.toList());
 
-        Stream<Operation> volumes = components.values().stream()
-                .filter(template -> TEMPLATE_CONTAINER_VOLUME_TYPE.equals(template.type))
-                .map(component -> Operation
-                        .createPost(this, ContainerVolumeDescriptionService.FACTORY_LINK)
-                        .setBody(component.data));
-
-        Stream<Operation> containers = components.values().stream()
-                .filter(template -> TEMPLATE_CONTAINER_TYPE.equals(template.type))
-                .map(component -> Operation
-                        .createPost(this, ContainerDescriptionService.FACTORY_LINK)
-                        .setBody(component.data));
-
-        return concat(containers, concat(networks, volumes)).toArray(Operation[]::new);
+        return operations.toArray(new Operation[1]);
     }
 
     private boolean isApplicationYamlContent(String contentType) {

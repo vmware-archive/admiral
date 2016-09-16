@@ -74,6 +74,22 @@ public class CompositeComponentRegistry {
     }
 
     /**
+     * Retrieve factory link for a Component by component's description link.
+     */
+    public static String factoryLinkByType(String type) {
+        if (null == type) {
+            return null;
+        }
+        List<RegistryEntry> list = entries.stream()
+                .filter(m -> type.equals(m.componentMeta.resourceType))
+                .collect(Collectors.toList());
+        if (list.isEmpty()) {
+            return null;
+        }
+        return list.get(0).descriptionFactoryLink;
+    }
+
+    /**
      * Retrieve meta data for a Component description by component's state(instance) Link.
      */
     public static ComponentMeta metaByStateLink(String stateLink) {
@@ -82,6 +98,22 @@ public class CompositeComponentRegistry {
         }
         List<RegistryEntry> list = entries.stream()
                 .filter(m -> stateLink.startsWith(m.stateFactoryLink))
+                .collect(Collectors.toList());
+        if (list.isEmpty()) {
+            return null;
+        }
+        return list.get(0).componentMeta;
+    }
+
+    /**
+     * Retrieve meta data for a Component description by component's state(instance) Link.
+     */
+    public static ComponentMeta metaByType(String type) {
+        if (null == type) {
+            return null;
+        }
+        List<RegistryEntry> list = entries.stream()
+                .filter(m -> type.startsWith(m.componentMeta.resourceType))
                 .collect(Collectors.toList());
         if (list.isEmpty()) {
             return null;

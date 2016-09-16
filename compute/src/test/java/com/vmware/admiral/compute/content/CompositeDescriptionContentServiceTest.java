@@ -20,12 +20,17 @@ import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICA
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.FileUtil;
@@ -39,14 +44,56 @@ import com.vmware.xenon.common.UriUtils;
 /**
  * Test the CompositeDescriptionContentService
  */
+@RunWith(Parameterized.class)
 public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
+    private final BiConsumer<Operation, List<String>> verifyTemplate;
+    private String templateFileName;
     private String template;
 
     public static final String MEDIA_TYPE_APPLICATION_YAML_WITH_CHARSET = "application/yaml; charset=utf-8";
 
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][] {
+                { "WordPress_with_MySQL_containers.yaml", verifyContainerTemplate },
+                { "WordPress_with_MySQL_compute.yaml", verifyComputeTemplate }
+        });
+
+    }
+
+    public CompositeDescriptionContentServiceTest(String templateFileName,
+            BiConsumer<Operation, List<String>> verifier) {
+        this.templateFileName = templateFileName;
+        this.verifyTemplate = verifier;
+    }
+
+    private static BiConsumer<Operation, List<String>> verifyContainerTemplate = (o, descLinks) -> {
+        CompositeDescription cd = o.getBody(CompositeDescription.class);
+        assertEquals("name", "wordPressWithMySql", cd.name);
+        assertEquals("descriptionLinks.size", 2, cd.descriptionLinks.size());
+        assertNotNull("customProperties", cd.customProperties);
+        assertEquals("customProperties.size", 1, cd.customProperties.size());
+        assertEquals("customProperties[_leaseDays]", "3",
+                cd.customProperties.get("_leaseDays"));
+
+        descLinks.addAll(cd.descriptionLinks);
+    };
+
+    private static BiConsumer<Operation, List<String>> verifyComputeTemplate = (o, descLinks) -> {
+        CompositeDescription cd = o.getBody(CompositeDescription.class);
+        assertEquals("name", "wordPressWithMySqlCompute", cd.name);
+        assertEquals("descriptionLinks.size", 2, cd.descriptionLinks.size());
+        assertNotNull("customProperties", cd.customProperties);
+        assertEquals("customProperties.size", 1, cd.customProperties.size());
+        assertEquals("customProperties[_leaseDays]", "3",
+                cd.customProperties.get("_leaseDays"));
+
+        descLinks.addAll(cd.descriptionLinks);
+    };
+
     @Before
     public void setUp() throws Throwable {
-        this.template = CommonTestStateFactory.getFileContent("WordPress_with_MySQL.yaml");
+        this.template = CommonTestStateFactory.getFileContent(templateFileName);
         waitForServiceAvailability(CompositeDescriptionContentService.SELF_LINK);
     }
 
@@ -109,11 +156,6 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
         this.host.testWait();
 
         this.host.testStart(1);
-        this.host.send(validateBadRequestOnImportOperation(getContent("composite.2.5.yaml"),
-                "Unsupported type 'Compute'!"));
-        this.host.testWait();
-
-        this.host.testStart(1);
         this.host.send(validateBadRequestOnImportOperation(getContent("composite.bad.yaml"),
                 "Can not deserialize instance of java.lang.String out of START_OBJECT token"));
         this.host.testWait();
@@ -168,26 +210,18 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
 
         Operation getCompositeDescOp = Operation.createGet(UriUtils.buildUri(host, location));
 
-        List<String> containerDescriptionLinks = new ArrayList<>();
-        verifyOperation(getCompositeDescOp, (o) -> {
-            CompositeDescription cd = o.getBody(CompositeDescription.class);
-            assertEquals("name", "wordPressWithMySql", cd.name);
-            assertEquals("descriptionLinks.size", 2, cd.descriptionLinks.size());
-            assertNotNull("customProperties", cd.customProperties);
-            assertEquals("customProperties.size", 1, cd.customProperties.size());
-            assertEquals("customProperties[_leaseDays]", "3",
-                    cd.customProperties.get("_leaseDays"));
+        List<String> descriptionLinks = new ArrayList<>();
 
-            containerDescriptionLinks.addAll(cd.descriptionLinks);
-        });
+        Consumer<Operation> verifier = (o) -> verifyTemplate
+                .accept(o, descriptionLinks);
+        verifyOperation(getCompositeDescOp, verifier);
 
-        verifyContainerDescriptions(containerDescriptionLinks);
+        verifyDescriptions(descriptionLinks);
 
         verifyExport(selfLink);
     }
 
-    private void verifyContainerDescriptions(List<String> containerDescriptionLinks)
-            throws Throwable {
+    private void verifyDescriptions(List<String> containerDescriptionLinks) throws Throwable {
         for (String link : containerDescriptionLinks) {
             verifyOperation(Operation.createGet(UriUtils.buildUri(host, link)), (o) -> {
                 ContainerDescription cd = o.getBody(ContainerDescription.class);

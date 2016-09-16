@@ -12,9 +12,6 @@
 package com.vmware.admiral.compute.content;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
-import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_NETWORK_TYPE;
-import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_TYPE;
-import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.TEMPLATE_CONTAINER_VOLUME_TYPE;
 
 import java.io.IOException;
 import java.util.Map;
@@ -25,38 +22,13 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
-import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
-import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
-import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
+import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 
 public class ComponentTemplateDeserializer extends StdDeserializer<ComponentTemplate<?>> {
 
     private static final long serialVersionUID = 1L;
-
-    private static enum TypeClass {
-        COMPONENT_CONTAINER(TEMPLATE_CONTAINER_TYPE, ContainerDescription.class), //
-        COMPONENT_CONTAINER_NETWORK(TEMPLATE_CONTAINER_NETWORK_TYPE,
-                ContainerNetworkDescription.class),
-        COMPONENT_CONTAINER_VOLUME(TEMPLATE_CONTAINER_VOLUME_TYPE,
-                ContainerVolumeDescription.class); //
-
-        TypeClass(String type, Class<?> clazz) {
-            this.type = type;
-            this.clazz = clazz;
-        }
-
-        public final String type;
-        public final Class<?> clazz;
-
-        public static TypeClass getByType(String type) {
-            for (TypeClass value : values()) {
-                if (value.type.equals(type)) {
-                    return value;
-                }
-            }
-            throw new IllegalArgumentException("Unsupported type '" + type + "'!");
-        }
-    }
 
     public ComponentTemplateDeserializer() {
         this(ComponentTemplate.class);
@@ -86,7 +58,7 @@ public class ComponentTemplateDeserializer extends StdDeserializer<ComponentTemp
         assertNotNull(data, "data");
         ComponentTemplate<T> template = new ComponentTemplate<>();
         template.type = type;
-        template.data = (T) new ObjectMapper().convertValue(data, TypeClass.getByType(type).clazz);
+        template.data = (T) new ObjectMapper().convertValue(data, getDescriptionClass(type));
         return template;
     }
 
@@ -95,6 +67,16 @@ public class ComponentTemplateDeserializer extends StdDeserializer<ComponentTemp
             return null;
         }
         return new ObjectMapper().convertValue(dependsOn, String[].class);
+    }
+
+    public static Class<?> getDescriptionClass(String type) {
+        ResourceType resourceType = ResourceType.fromContentType(type);
+        Class<?> clazz = CompositeComponentRegistry
+                .metaByType(resourceType.getName()).descriptionClass;
+        if (ComputeDescriptionService.ComputeDescription.class.equals(clazz)) {
+            return ComputeDescription.class;
+        }
+        return clazz;
     }
 
 }

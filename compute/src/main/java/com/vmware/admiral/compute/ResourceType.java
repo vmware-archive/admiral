@@ -17,21 +17,27 @@ import java.util.stream.Collectors;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 
 public enum ResourceType {
-    CONTAINER_TYPE(ComputeType.DOCKER_CONTAINER.toString()),
-    COMPOSITE_COMPONENT_TYPE("COMPOSITE_COMPONENT"),
-    COMPUTE_TYPE("COMPUTE"),
-    CONTAINER_HOST_TYPE("CONTAINER_HOST"),
-    NETWORK_TYPE("NETWORK"),
-    VOLUME_TYPE("VOLUME");
+    CONTAINER_TYPE(ComputeType.DOCKER_CONTAINER.toString(), "Container.Docker"),
+    COMPOSITE_COMPONENT_TYPE("COMPOSITE_COMPONENT", ""),
+    COMPUTE_TYPE("COMPUTE", "Compute"),
+    CONTAINER_HOST_TYPE("CONTAINER_HOST", ""),
+    NETWORK_TYPE("NETWORK", "Network.Docker"),
+    VOLUME_TYPE("VOLUME", "Volume.Docker");
 
     private final String name;
+    private final String contentType;
 
-    private ResourceType(String name) {
+    private ResourceType(String name, String contentType) {
         this.name = name;
+        this.contentType = contentType;
     }
 
     public String getName() {
         return name;
+    }
+
+    public String getContentType() {
+        return contentType;
     }
 
     public static ResourceType fromName(String name) {
@@ -44,6 +50,18 @@ public enum ResourceType {
             }
         }
         throw new IllegalArgumentException("No matching type for:" + name);
+    }
+
+    public static ResourceType fromContentType(String contentType) {
+        if (contentType == null || "".equals(contentType)) {
+            throw new IllegalArgumentException("ContentType cannot be null or empty!");
+        }
+        for (ResourceType r : ResourceType.values()) {
+            if (r.contentType.equals(contentType)) {
+                return r;
+            }
+        }
+        throw new IllegalArgumentException("No matching type for:" + contentType);
     }
 
     public static String getAllTypesAsString() {
