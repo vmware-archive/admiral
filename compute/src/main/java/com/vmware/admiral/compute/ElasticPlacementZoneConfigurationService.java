@@ -11,11 +11,15 @@
 
 package com.vmware.admiral.compute;
 
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -23,7 +27,9 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.OperationSequence;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
@@ -36,21 +42,22 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
  *
  * <p>Here are the supported actions and their behavior:<ul>
  *
- * <li>{@code GET}: Append the resource pool link to this service URL to retrieve the
- * {@link ElasticPlacementZoneConfigurationState} for an existing resource pool. For example:
+ * <li>{@code GET}: Use the service URL to get all elastic placement zones.
+ * Append the resource pool link to this service URL to retrieve the
+ * {@link ElasticPlacementZoneConfigurationState} for a single existing resource pool. For example:
  * {@code http://host:port/resources/elastic-placement-zones-config/resources/pools/pool-1}.
  *
  * <li>{@code POST}: Post a valid {@link ElasticPlacementZoneConfigurationState} with no document
  * self links to create a resource pool and optionally a corresponding elastic placement zone. The
  * returned body contains the created {@link ElasticPlacementZoneConfigurationState}.
  *
- * <li>{@code PATCH}: Post a valid {@link ElasticPlacementZoneConfigurationState} to update the
+ * <li>{@code PATCH}: Send a valid {@link ElasticPlacementZoneConfigurationState} to update the
  * resource pool and optionally the elastic placement zone. A {@code PATCH} is done for the
  * resource pool and a {@code PUT} is done for the elastic placement zone.
  * The response body contains the full updated state unless the resource pool is not changed.
  * In this case, the {@code resourcePoolState} field is {@code null}.
  *
- * <li>{@code DELETE}: Post a valid {@link ElasticPlacementZoneConfigurationState} to delete the
+ * <li>{@code DELETE}: Send a valid {@link ElasticPlacementZoneConfigurationState} to delete the
  * resource pool and optionally the elastic placement zone associated with it.
  * </ul>
  */
@@ -78,12 +85,12 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
         }
 
         if (resourcePoolLink == null || resourcePoolLink.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "No resource pool link given in the GET path: " + get.getUri().getPath());
+            // return the configuration state for all elastic placement zones
+            doGetAll(get, UriUtils.hasODataExpandParamValue(get.getUri()));
+        } else {
+            // return the configuration state for the requested resource pool
+            doGet(get, resourcePoolLink);
         }
-
-        // retrieve data
-        doGet(get, resourcePoolLink);
     }
 
     @Override
@@ -115,6 +122,73 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
             throw new IllegalArgumentException("Resource pool state is required");
         }
         return state;
+    }
+
+    private void doGetAll(Operation originalOp, boolean expand) {
+        // get all RPs and EPZs in parallel
+        List<Operation> operationsToJoin = new ArrayList<>();
+
+        URI rpFactoryUri = UriUtils.buildUri(getHost(), ResourcePoolService.FACTORY_LINK);
+        operationsToJoin.add(Operation
+                .createGet(expand ? UriUtils.buildExpandLinksQueryUri(rpFactoryUri) : rpFactoryUri)
+                .setReferer(getUri()));
+
+        if (expand) {
+            URI epzFactoryUri = UriUtils.buildUri(getHost(), ElasticPlacementZoneService.FACTORY_LINK);
+            operationsToJoin.add(Operation
+                    .createGet(UriUtils.buildExpandLinksQueryUri(epzFactoryUri))
+                    .setReferer(getUri()));
+        }
+
+        OperationJoin.create(operationsToJoin)
+                .setCompletion((ops, exs) -> {
+                    if (exs != null) {
+                        originalOp.fail(exs.values().iterator().next());
+                        return;
+                    }
+
+                    // if no expanding the content, just return the RP links
+                    if (!expand) {
+                        originalOp.setBody(ops.get(operationsToJoin.get(0).getId()).getBodyRaw());
+                        originalOp.complete();
+                        return;
+                    }
+
+                    // extract RPs and EPZs from the response
+                    Map<String, ResourcePoolState> rpByLink = QueryUtil.extractQueryResult(
+                            ops.get(operationsToJoin.get(0).getId())
+                                    .getBody(ServiceDocumentQueryResult.class),
+                            ResourcePoolState.class);
+                    Map<String, ElasticPlacementZoneState> epzByLink = QueryUtil.extractQueryResult(
+                            ops.get(operationsToJoin.get(1).getId())
+                                    .getBody(ServiceDocumentQueryResult.class),
+                            ElasticPlacementZoneState.class);
+
+                    // join EPZs to RPs
+                    Map<String, ElasticPlacementZoneConfigurationState> foundStates = new HashMap<>();
+                    rpByLink.values().forEach(rp -> {
+                        ElasticPlacementZoneConfigurationState state =
+                                new ElasticPlacementZoneConfigurationState();
+                        state.documentSelfLink = rp.documentSelfLink;
+                        state.resourcePoolState = rp;
+                        foundStates.put(state.documentSelfLink, state);
+                    });
+
+                    epzByLink.values().forEach(epz -> {
+                        ElasticPlacementZoneConfigurationState state =
+                                foundStates.get(epz.resourcePoolLink);
+                        if (state != null) {
+                            state.epzState = epz;
+                        }
+                    });
+
+                    // create a ServiceDocumentQueryResult to return
+                    ServiceDocumentQueryResult resultToReturn = QueryUtil
+                            .createQueryResult(foundStates.values());
+                    originalOp.setBody(resultToReturn);
+                    originalOp.complete();
+                })
+                .sendWith(getHost());
     }
 
     private void doGet(Operation originalOp, String resourcePoolLink) {

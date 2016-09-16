@@ -14,18 +14,23 @@ package com.vmware.admiral.compute;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
+import java.net.URI;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
 
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
 import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
 
@@ -62,9 +67,57 @@ public class ElasticPlacementZoneConfigurationServiceTest extends ComputeBaseTes
         getState("/resources/pools/invalid-link");
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testGetNullLink() throws Throwable {
-        getState("");
+    @Test
+    public void testGetAllNoExpand() throws Throwable {
+        String rp1Link = createRp().documentSelfLink;
+        String rp2Link = createRp().documentSelfLink;
+
+        URI serviceUri = UriUtils.buildUri(host, ElasticPlacementZoneConfigurationService.SELF_LINK);
+        ServiceDocumentQueryResult queryResult = doOperation(null,
+                serviceUri,
+                ServiceDocumentQueryResult.class, false, Action.GET);
+
+        assertNotNull(queryResult);
+        assertNull(queryResult.documents);
+        assertTrue(queryResult.documentCount >= 2);
+        assertTrue(queryResult.documentLinks.contains(rp1Link));
+        assertTrue(queryResult.documentLinks.contains(rp2Link));
+    }
+
+    @Test
+    public void testGetAllExpand() throws Throwable {
+        String rp1Link = createRp().documentSelfLink;
+        String rp2Link = createRp().documentSelfLink;
+        String epzLink = createEpz(rp2Link, "tag1").documentSelfLink;
+
+        URI serviceUri = UriUtils.buildUri(host, ElasticPlacementZoneConfigurationService.SELF_LINK);
+        ServiceDocumentQueryResult queryResult = doOperation(null,
+                UriUtils.buildExpandLinksQueryUri(serviceUri),
+                ServiceDocumentQueryResult.class, false, Action.GET);
+
+        assertNotNull(queryResult);
+        assertNotNull(queryResult.documents);
+        assertTrue(queryResult.documentCount >= 2);
+
+        Map<String, ElasticPlacementZoneConfigurationState> states = QueryUtil.extractQueryResult(
+                queryResult, ElasticPlacementZoneConfigurationState.class);
+
+        ElasticPlacementZoneConfigurationState state1 = states.get(rp1Link);
+        assertNotNull(state1);
+        assertNotNull(state1.resourcePoolState);
+        assertNull(state1.epzState);
+        assertEquals(rp1Link, state1.documentSelfLink);
+        assertEquals(rp1Link, state1.resourcePoolState.documentSelfLink);
+
+        ElasticPlacementZoneConfigurationState state2 = states.get(rp2Link);
+        assertNotNull(state2);
+        assertNotNull(state2.resourcePoolState);
+        assertNotNull(state2.epzState);
+        assertEquals(rp2Link, state2.documentSelfLink);
+        assertEquals(rp2Link, state2.resourcePoolState.documentSelfLink);
+        assertEquals(epzLink, state2.epzState.documentSelfLink);
+        assertEquals(state2.resourcePoolState.documentSelfLink, state2.epzState.resourcePoolLink);
+        assertEquals(tagSet("tag1"), state2.epzState.tagLinksToMatch);
     }
 
     @Test

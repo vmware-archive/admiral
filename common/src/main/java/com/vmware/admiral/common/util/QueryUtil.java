@@ -14,10 +14,14 @@ package com.vmware.admiral.common.util;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
@@ -249,4 +253,32 @@ public class QueryUtil {
         return createAnyPropertyClause(query, Occurance.SHOULD_OCCUR, propertyNames);
     }
 
+    /**
+     * Extracts the service documents from the given query result.
+     */
+    public static <T extends ServiceDocument> Map<String, T> extractQueryResult(
+            ServiceDocumentQueryResult result, Class<T> type) {
+        Map<String, T> documentsByLink = new HashMap<>();
+        if (result != null && result.documents != null) {
+            result.documents.values().forEach(json -> {
+                T document = Utils.fromJson(json, type);
+                documentsByLink.put(document.documentSelfLink, document);
+            });
+        }
+        return documentsByLink;
+    }
+
+    /**
+     * Creates a query result instance containing the given service documents.
+     */
+    public static <T extends ServiceDocument> ServiceDocumentQueryResult createQueryResult(
+            Collection<T> documents) {
+        ServiceDocumentQueryResult result = new ServiceDocumentQueryResult();
+        result.documentCount = (long)documents.size();
+        result.documentLinks = documents.stream().map(d -> d.documentSelfLink)
+                .collect(Collectors.toList());
+        result.documents = new HashMap<>();
+        documents.forEach(d -> result.documents.put(d.documentSelfLink, Utils.toJson(d)));
+        return result;
+    }
 }
