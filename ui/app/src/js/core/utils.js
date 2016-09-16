@@ -430,10 +430,12 @@ var utils = {
   operationSupportedHost: function(op, host) {
     if (op === constants.HOSTS.OPERATION.ENABLE) {
 
-      return host.powerState === constants.STATES.SUSPEND;
+      return host.powerState === constants.STATES.SUSPEND ||
+        host.powerState === constants.STATES.OFF;
     } else if (op === constants.HOSTS.OPERATION.DISABLE) {
 
-      return host.powerState !== constants.STATES.SUSPEND;
+      return host.powerState !== constants.STATES.SUSPEND &&
+        host.powerState !== constants.STATES.OFF;
     }
 
     return true;
