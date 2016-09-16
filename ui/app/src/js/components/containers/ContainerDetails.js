@@ -214,6 +214,28 @@ var ContainerDetailsVueComponent = Vue.extend({
 
       return i18n.t(i18nKey, {hostMappings: input});
     }
+  },
+  components: {
+    'logs-scroll': {
+      template: '<div></div>',
+      props: {
+        logs: {required: true}
+      },
+      attached: function() {
+        this.logsUnwatch = this.$watch('logs', (logs) => {
+          var scrolledToBottom = (this.$el.scrollTop / this.$el.scrollHeight) > 0.95;
+          Vue.nextTick(() => {
+            this.$el.textContent = logs;
+            if (scrolledToBottom) {
+              this.$el.scrollTop = this.$el.scrollHeight;
+            }
+          });
+        }, {immediate: true});
+      },
+      detached: function() {
+        this.logsUnwatch();
+      }
+    }
   }
 });
 
