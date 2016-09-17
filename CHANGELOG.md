@@ -4,6 +4,8 @@
 
 * Added Admiral CLI, **a command line tool to manage and automate Admiral**. More information [here] (https://github.com/vmware/admiral/blob/master/cli/README.md).
 
+* Groups are now Projects
+
 ## 0.5.0
 
 * Initial open source release.

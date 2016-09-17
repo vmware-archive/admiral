@@ -103,24 +103,24 @@
       "entity": "business group"
     },
     "group": {
-      "createNew": "New Group",
-      "manage": "Manage Groups",
-      "entity": "group",
-      "contextPanelTooltip": "Groups",
+      "createNew": "New Project",
+      "manage": "Manage Projects",
+      "entity": "project",
+      "contextPanelTooltip": "Projects",
       "list": {
-        "title": "Groups",
+        "title": "Project",
         "addButton": "Add",
         "nameColumn": "Name",
         "descriptionColumn": "Description",
         "details": {
-          "title": "Group details"
+          "title": "Project details"
         }
       },
       "edit": {
-        "createNew": "New Group",
-        "update": "Edit Group",
-        "nameTitle": "Group name",
-        "descriptionTitle": "Group description"
+        "createNew": "New Project",
+        "update": "Edit Project",
+        "nameTitle": "Project name",
+        "descriptionTitle": "Project description"
       }
     },
     "credential": {
@@ -288,7 +288,7 @@
         "title": "Policies",
         "addButton": "Add",
         "nameColumn": "Name",
-        "groupColumn": "Group",
+        "groupColumn": "Project",
         "businessGroupColumn": "Business Group",
         "resourcePoolColumn": "Resource Pool",
         "deploymentPolicyColumn": "Deployment Policy",
@@ -304,8 +304,8 @@
         "createNew": "New Policy",
         "update": "Edit Policy",
         "nameLabel": "Name",
-        "groupLabel": "Group",
-        "selectGroup": "Select Group",
+        "groupLabel": "Project",
+        "selectGroup": "Select Project",
         "businessGroupLabel": "Business Group",
         "selectBusinessGroup": "Select Business Group",
         "resourcePoolLabel": "Resource Pool",
@@ -486,7 +486,7 @@
         "inputs": {
           "image": "Image",
           "name": "Name",
-          "group": "Group",
+          "group": "Project",
           "commands": "Command",
           "commandsDescription": "Command array to execute on container start",
           "commandsInputs": {
