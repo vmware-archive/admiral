@@ -50,6 +50,7 @@ import com.vmware.admiral.request.ContainerOperationTaskService.ContainerOperati
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState;
 import com.vmware.admiral.request.ContainerVolumeAllocationTaskService.ContainerVolumeAllocationTaskState;
 import com.vmware.admiral.request.ContainerVolumeProvisionTaskService.ContainerVolumeProvisionTaskState;
+import com.vmware.admiral.request.ContainerVolumeRemovalTaskService.ContainerVolumeRemovalTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState.SubStage;
 import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.request.ReservationRemovalTaskService.ReservationRemovalTaskState;
@@ -221,6 +222,8 @@ public class RequestBrokerService extends
                     createComputeRemovalTask(state);
                 } else if (isContainerNetworkType(state)) {
                     createContainerNetworkRemovalTask(state);
+                } else if (isContainerVolumeType(state)) {
+                    createContainerVolumeRemovalTask(state);
                 } else {
                     createContainerRemovalAllocationTasks(state, false);
                 }
@@ -240,6 +243,8 @@ public class RequestBrokerService extends
                 createComputeRemovalTask(state);
             } else if (isContainerNetworkType(state)) {
                 createContainerNetworkRemovalTask(state);
+            } else if (isContainerVolumeType(state)) {
+                createContainerVolumeRemovalTask(state);
             } else {
                 createContainerRemovalAllocationTasks(state, true);
             }
@@ -405,7 +410,7 @@ public class RequestBrokerService extends
             }
         } else if (isContainerVolumeType(state)) {
             if (isRemoveOperation(state)) {
-                // TODO createContainerVolumeRemovalTask(state);
+                createContainerVolumeRemovalTask(state);
             } else {
                 failTask(null, new IllegalArgumentException("Not supported operation: "
                         + state.operation));
@@ -580,6 +585,34 @@ public class RequestBrokerService extends
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         failTask("Failed to create container network removal operation task", ex);
+                        return;
+                    }
+                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                }));
+    }
+
+    private void createContainerVolumeRemovalTask(RequestBrokerState state) {
+        if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
+            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
+            return;
+        }
+        ContainerVolumeRemovalTaskState removalState = new ContainerVolumeRemovalTaskState();
+        removalState.resourceLinks = state.resourceLinks;
+        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED;
+        removalState.serviceTaskCallback = ServiceTaskCallback.create(
+                state.documentSelfLink,
+                TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
+                TaskStage.FAILED, SubStage.ERROR);
+        removalState.documentSelfLink = getSelfId();
+        removalState.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation.createPost(this,
+                ContainerVolumeRemovalTaskService.FACTORY_LINK)
+                .setBody(removalState)
+                .setContextId(getSelfId())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        failTask("Failed to create container volume removal operation task", ex);
                         return;
                     }
                     sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));

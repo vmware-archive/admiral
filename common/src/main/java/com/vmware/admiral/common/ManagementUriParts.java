@@ -75,6 +75,7 @@ public interface ManagementUriParts {
     String REQUEST_CONTAINER_NETWORK_REMOVAL_TASKS = REQUEST + "/container-network-removal-tasks";
     String REQUEST_CONTAINER_VOLUME_ALLOCATION_TASKS = REQUEST
             + "/container-volume-allocation-tasks";
+    String REQUEST_CONTAINER_VOLUME_REMOVAL_TASKS = REQUEST + "/container-volume-removal-tasks";
     String REQUEST_RESERVATION_TASKS = REQUEST + "/reservation-tasks";
     String REQUEST_RESERVATION_ALLOCATION_TASKS = REQUEST + "/reservation-allocation-tasks";
     String REQUEST_COMPUTE_RESERVATION_TASKS = REQUEST + "/compute-reservation-tasks";

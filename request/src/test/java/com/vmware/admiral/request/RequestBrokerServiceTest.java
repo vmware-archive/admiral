@@ -46,6 +46,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
@@ -549,6 +550,97 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(cc.documentSelfLink, cont1.compositeComponentLink);
         assertEquals(cc.documentSelfLink, cont2.compositeComponentLink);
         assertEquals(cc.documentSelfLink, volume.compositeComponentLink);
+    }
+
+    @Test
+    public void testRequestLifeCycleWithContainerVolumeFailureShouldCleanVolumes()
+            throws Throwable {
+        host.log(
+                "########  Start of testRequestLifeCycleWithContainerVolumeFailureShouldCleanVolumes ######## ");
+
+        // setup Docker Host:
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+
+        delete(computeHost.documentSelfLink);
+        computeHost = null;
+
+        ComputeState dockerHost1 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost1);
+
+        ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost2);
+
+        // setup Composite description with 2 containers and 1 network
+
+        String volumeName = "myvolume";
+
+        ContainerVolumeDescription volumeDesc = TestRequestStateFactory
+                .createContainerVolumeDescription(volumeName);
+        volumeDesc.documentSelfLink = UUID.randomUUID().toString();
+
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
+        container1Desc.documentSelfLink = UUID.randomUUID().toString();
+        container1Desc.name = "container1";
+        container1Desc.volumes = new String[] { volumeName + ":/tmp" };
+
+        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
+        container2Desc.documentSelfLink = UUID.randomUUID().toString();
+        container2Desc.name = "container2";
+        container2Desc.volumes = new String[] { volumeName + ":/tmp" };
+        container2Desc.customProperties.put(MockDockerAdapterService.FAILURE_EXPECTED,
+                Boolean.TRUE.toString());
+
+        CompositeDescription compositeDesc = createCompositeDesc(volumeDesc, container1Desc,
+                container2Desc);
+        assertNotNull(compositeDesc);
+
+        // setup Group Policy:
+        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+
+        // 1. Request a composite container with expected failure:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+        request.tenantLinks = groupPolicyState.tenantLinks;
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // 2. Wait for reservation removed substage
+        waitForRequestToFail(request);
+
+        // 3. Verify that the group policy has been released.
+        groupPolicyState = getDocument(GroupResourcePolicyState.class,
+                groupPolicyState.documentSelfLink);
+        assertEquals(groupPolicyState.allocatedInstancesCount, 0);
+
+        String containerLink1 = null;
+        String containerLink2 = null;
+
+        Iterator<String> iterator = compositeDesc.descriptionLinks.iterator();
+        while (iterator.hasNext()) {
+            String link = iterator.next();
+            if (link.startsWith(ContainerVolumeDescriptionService.FACTORY_LINK)) {
+                continue;
+            } else if (containerLink1 == null) {
+                containerLink1 = link;
+            } else {
+                containerLink2 = link;
+            }
+        }
+
+        assertEquals(0,
+                groupPolicyState.resourceQuotaPerResourceDesc.get(containerLink1).intValue());
+        assertEquals(0,
+                groupPolicyState.resourceQuotaPerResourceDesc.get(containerLink2).intValue());
+
+        // Verify request status
+        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+
+        // and there must be no container network state left
+        ServiceDocumentQueryResult volumeStates = getDocument(ServiceDocumentQueryResult.class,
+                ContainerVolumeService.FACTORY_LINK);
+        assertEquals(0L, volumeStates.documentCount.longValue());
     }
 
     @Test

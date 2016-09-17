@@ -65,7 +65,7 @@ public class ContainerVolumeService extends StatefulService {
         /** Defines which adapter will serve the provision request */
         @Documentation(description = "Defines which adapter will serve the provision request")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public URI instanceAdapterReference;
+        public URI adapterManagementReference;
 
         /** Name of the volume driver to use. Defaults to local for the name. */
         @Documentation(description = "Name of the volume driver to use. Defaults to local for the name.")
@@ -213,8 +213,8 @@ public class ContainerVolumeService extends StatefulService {
             Utils.validateState(getStateDescription(), state);
         }
 
-        if (state.instanceAdapterReference == null) {
-            state.instanceAdapterReference = UriUtilsExtended.buildUri(getHost(),
+        if (state.adapterManagementReference == null) {
+            state.adapterManagementReference = UriUtilsExtended.buildUri(getHost(),
                     ManagementUriParts.ADAPTER_DOCKER_VOLUME);
         }
 

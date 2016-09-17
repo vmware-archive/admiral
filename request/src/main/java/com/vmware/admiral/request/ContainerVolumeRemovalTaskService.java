@@ -1,0 +1,332 @@
+/*
+ * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
+package com.vmware.admiral.request;
+
+import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import com.vmware.admiral.adapter.common.AdapterRequest;
+import com.vmware.admiral.adapter.common.VolumeOperationType;
+import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.admiral.request.ContainerVolumeRemovalTaskService.ContainerVolumeRemovalTaskState.SubStage;
+import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.admiral.service.common.CounterSubTaskService;
+import com.vmware.admiral.service.common.CounterSubTaskService.CounterSubTaskState;
+import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
+import com.vmware.xenon.common.TaskState;
+import com.vmware.xenon.common.TaskState.TaskStage;
+import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
+
+/**
+ * Task implementing removal of Container Volumes.
+ */
+public class ContainerVolumeRemovalTaskService extends
+        AbstractTaskStatefulService<ContainerVolumeRemovalTaskService.ContainerVolumeRemovalTaskState, ContainerVolumeRemovalTaskService.ContainerVolumeRemovalTaskState.SubStage> {
+
+    public static final String FACTORY_LINK = ManagementUriParts.REQUEST_CONTAINER_VOLUME_REMOVAL_TASKS;
+
+    public static final String DISPLAY_NAME = "Container Volume Removal";
+
+    public static class ContainerVolumeRemovalTaskState extends
+            com.vmware.admiral.service.common.TaskServiceDocument<ContainerVolumeRemovalTaskState.SubStage> {
+        private static final String FIELD_NAME_RESOURCE_LINKS = "resourceLinks";
+        private static final String FIELD_NAME_REMOVE_ONLY = "removeOnly";
+
+        public static enum SubStage {
+            CREATED, INSTANCES_REMOVING, INSTANCES_REMOVED, REMOVING_RESOURCE_STATES, COMPLETED, ERROR;
+
+            static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
+                    Arrays.asList(INSTANCES_REMOVING, REMOVING_RESOURCE_STATES));
+        }
+
+        /** (Required) The resources on which the given operation will be applied */
+        public List<String> resourceLinks;
+
+        /**
+         * whether to actually go and destroy the container volume using the adapter or just remove
+         * the ContainerVolumeState
+         */
+        public boolean removeOnly;
+    }
+
+    public ContainerVolumeRemovalTaskService() {
+        super(ContainerVolumeRemovalTaskState.class, SubStage.class, DISPLAY_NAME);
+        super.toggleOption(ServiceOption.PERSISTENCE, true);
+        super.toggleOption(ServiceOption.REPLICATION, true);
+        super.toggleOption(ServiceOption.OWNER_SELECTION, true);
+        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
+        super.transientSubStages = SubStage.TRANSIENT_SUB_STAGES;
+    }
+
+    @Override
+    protected void handleStartedStagePatch(ContainerVolumeRemovalTaskState state) {
+        switch (state.taskSubStage) {
+        case CREATED:
+            queryContainerResources(state);
+            break;
+        case INSTANCES_REMOVING:
+            break;// just patch with the links
+        case INSTANCES_REMOVED:
+            removeResources(state, null);
+            break;
+        case REMOVING_RESOURCE_STATES:
+            break;
+        case COMPLETED:
+            complete(state, SubStage.COMPLETED);
+            break;
+        case ERROR:
+            completeWithError(state, SubStage.ERROR);
+            break;
+        default:
+            break;
+        }
+    }
+
+    @Override
+    protected boolean validateStageTransition(Operation patch,
+            ContainerVolumeRemovalTaskState patchBody,
+            ContainerVolumeRemovalTaskState currentState) {
+        return false;
+    }
+
+    @Override
+    protected void validateStateOnStart(ContainerVolumeRemovalTaskState state)
+            throws IllegalArgumentException {
+        assertNotEmpty(state.resourceLinks, "resourceLinks");
+    }
+
+    @Override
+    protected TaskStatusState fromTask(TaskServiceDocument<SubStage> state) {
+        TaskStatusState statusTask = super.fromTask(state);
+        if (SubStage.INSTANCES_REMOVED == state.taskSubStage
+                || SubStage.COMPLETED == state.taskSubStage) {
+            statusTask.name = VolumeOperationType
+                    .extractDisplayName(VolumeOperationType.DELETE.id);
+        }
+        return statusTask;
+    }
+
+    private void queryContainerResources(ContainerVolumeRemovalTaskState state) {
+        QueryTask volumeQuery = createResourcesQuery(ContainerVolumeState.class,
+                state.resourceLinks);
+        ServiceDocumentQuery<ContainerVolumeState> query = new ServiceDocumentQuery<>(getHost(),
+                ContainerVolumeState.class);
+        List<String> volumeLinks = new ArrayList<>();
+        QueryUtil.addBroadcastOption(volumeQuery);
+        QueryUtil.addExpandOption(volumeQuery);
+        query.query(volumeQuery, (r) -> {
+            if (r.hasException()) {
+                failTask("Failure retrieving query results", r.getException());
+            } else if (r.hasResult()) {
+                volumeLinks.add(r.getDocumentSelfLink());
+            } else {
+                if (volumeLinks.isEmpty()) {
+                    logWarning("No available resources found to be removed with links: %s",
+                            state.resourceLinks);
+                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
+                } else {
+                    deleteResourceInstances(state, volumeLinks, null);
+                }
+            }
+        });
+    }
+
+    private void deleteResourceInstances(ContainerVolumeRemovalTaskState state,
+            Collection<String> resourceLinks, String subTaskLink) {
+        if (state.removeOnly) {
+            logFine("Skipping actual container volume removal by the adapter since the removeOnly "
+                    + "flag was set: %s", state.documentSelfLink);
+
+            // skip the actual removal of container volumes through the adapter
+            sendSelfPatch(createUpdateSubStageTask(state, SubStage.INSTANCES_REMOVED));
+            return;
+        }
+
+        if (subTaskLink == null) {
+            createDeleteResourceCounterSubTask(state, resourceLinks);
+            return;
+        }
+
+        try {
+            logInfo("Starting delete of %d container resources", resourceLinks.size());
+            for (String resourceLink : resourceLinks) {
+                sendRequest(Operation
+                        .createGet(this, resourceLink)
+                        .setCompletion(
+                                (o, e) -> {
+                                    if (e != null) {
+                                        logWarning("Failed retrieving ContainerVolumeState: "
+                                                + resourceLink);
+                                        completeSubTasksCounter(subTaskLink, e);
+                                        return;
+                                    }
+                                    ContainerVolumeState volumeState = o
+                                            .getBody(ContainerVolumeState.class);
+                                    sendContainerVolumeDeleteRequest(volumeState,
+                                            subTaskLink);
+                                }));
+            }
+            ContainerVolumeRemovalTaskState patchBody = createUpdateSubStageTask(state,
+                    SubStage.INSTANCES_REMOVING);
+            sendSelfPatch(patchBody);
+        } catch (Throwable e) {
+            failTask("Unexpected exception while deleting container instances", e);
+        }
+    }
+
+    private void completeSubTasksCounter(String subTaskLink, Throwable ex) {
+        CounterSubTaskState body = new CounterSubTaskState();
+        body.taskInfo = new TaskState();
+        if (ex == null) {
+            body.taskInfo.stage = TaskStage.FINISHED;
+        } else {
+            body.taskInfo.stage = TaskStage.FAILED;
+            body.taskInfo.failure = Utils.toServiceErrorResponse(ex);
+        }
+
+        sendRequest(Operation.createPatch(this, subTaskLink)
+                .setBody(body)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Notifying counting task failed: %s", e);
+                    }
+                }));
+    }
+
+    private void createDeleteResourceCounterSubTask(ContainerVolumeRemovalTaskState state,
+            Collection<String> resourceLinks) {
+        CounterSubTaskState subTaskInitState = new CounterSubTaskState();
+        subTaskInitState.completionsRemaining = resourceLinks.size();
+        subTaskInitState.documentExpirationTimeMicros = ServiceUtils
+                .getDefaultTaskExpirationTimeInMicros();
+        subTaskInitState.serviceTaskCallback = ServiceTaskCallback.create(
+                state.documentSelfLink,
+                TaskStage.STARTED, SubStage.INSTANCES_REMOVED,
+                TaskStage.STARTED, SubStage.ERROR);
+
+        CounterSubTaskService.createSubTask(this, subTaskInitState,
+                (subTaskLink) -> deleteResourceInstances(state, resourceLinks, subTaskLink));
+    }
+
+    private void sendContainerVolumeDeleteRequest(ContainerVolumeState state,
+            String subTaskLink) {
+        AdapterRequest adapterRequest = new AdapterRequest();
+        String selfLink = state.documentSelfLink;
+        adapterRequest.resourceReference = UriUtils.buildUri(getHost(), selfLink);
+        adapterRequest.serviceTaskCallback = ServiceTaskCallback.create(UriUtils.buildUri(
+                getHost(), subTaskLink).toString());
+        adapterRequest.operationTypeId = VolumeOperationType.DELETE.id;
+        sendRequest(Operation.createPatch(state.adapterManagementReference)
+                .setBody(adapterRequest)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("AdapterRequest failed for container volume: " + selfLink, e);
+                        return;
+                    }
+                }));
+    }
+
+    private void removeResources(ContainerVolumeRemovalTaskState state, String subTaskLink) {
+        if (subTaskLink == null) {
+            // count 2 * resourceLinks (to keep track of each removal operation starting and ending)
+            createCounterSubTask(state, state.resourceLinks.size(),
+                    (link) -> removeResources(state, link));
+            return;
+        }
+
+        try {
+            for (String resourceLink : state.resourceLinks) {
+                sendRequest(Operation
+                        .createGet(this, resourceLink)
+                        .setCompletion(
+                                (o, e) -> {
+                                    if (e != null) {
+                                        failTask("Failed retrieving Container Volume State: "
+                                                + resourceLink, e);
+                                        return;
+                                    }
+
+                                    ContainerVolumeState cns = o
+                                            .getBody(ContainerVolumeState.class);
+                                    doDeleteResource(state, subTaskLink, cns);
+                                }));
+            }
+            sendSelfPatch(createUpdateSubStageTask(state, SubStage.REMOVING_RESOURCE_STATES));
+        } catch (Throwable e) {
+            failTask("Unexpected exception while deleting resources", e);
+        }
+    }
+
+    private void doDeleteResource(ContainerVolumeRemovalTaskState state, String subTaskLink,
+            ContainerVolumeState cns) {
+
+        Operation.createDelete(this, cns.documentSelfLink)
+                .setBody(new ServiceDocument())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failed deleting container volume resources: "
+                                + Utils.toString(e), null);
+                        return;
+                    }
+
+                    logInfo("Deleted ContainerVolumeState: " + cns.documentSelfLink);
+                    completeSubTasksCounter(subTaskLink, null);
+                }).sendWith(this);
+    }
+
+    private QueryTask createResourcesQuery(Class<? extends ServiceDocument> type,
+            List<String> resourceLinks) {
+        QueryTask query = QueryUtil.buildQuery(type, false);
+        QueryUtil.addListValueClause(query, ServiceDocument.FIELD_NAME_SELF_LINK, resourceLinks);
+
+        return query;
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+
+        setDocumentTemplateIndexingOptions(template, EnumSet.of(PropertyIndexingOption.STORE_ONLY),
+                ContainerVolumeRemovalTaskState.FIELD_NAME_RESOURCE_LINKS,
+                ContainerVolumeRemovalTaskState.FIELD_NAME_REMOVE_ONLY);
+
+        setDocumentTemplateUsageOptions(template,
+                EnumSet.of(PropertyUsageOption.SINGLE_ASSIGNMENT),
+                ContainerVolumeRemovalTaskState.FIELD_NAME_RESOURCE_LINKS,
+                ContainerVolumeRemovalTaskState.FIELD_NAME_REMOVE_ONLY);
+
+        setDocumentTemplateUsageOptions(template, EnumSet.of(PropertyUsageOption.SERVICE_USE));
+
+        template.documentDescription.serializedStateSizeLimit = 128 * 1024; // 128 Kb
+
+        return template;
+    }
+}
