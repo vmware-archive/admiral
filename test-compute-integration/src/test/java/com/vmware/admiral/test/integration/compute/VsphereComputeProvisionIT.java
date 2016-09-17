@@ -20,7 +20,6 @@ import com.vmware.admiral.compute.EnvironmentMappingService;
 import com.vmware.admiral.compute.EnvironmentMappingService.EnvironmentMappingState;
 import com.vmware.admiral.compute.PropertyMapping;
 import com.vmware.admiral.compute.ResourceType;
-import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.compute.ComputeOperationType;
@@ -28,6 +27,7 @@ import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
+import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 
 public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     public static final String VC_USERNAME = "test.vsphere.username";
@@ -95,10 +95,10 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
 
     @Override
     protected void extendEndpoint(EndpointState endpoint) {
-        endpoint.privateKeyId = getTestRequiredProp(VC_USERNAME);
-        endpoint.privateKey = getTestRequiredProp(VC_PASSWORD);
-        endpoint.regionId = getTestRequiredProp(VC_DATACENTER_ID);
-        endpoint.endpointHost = getTestRequiredProp(VC_HOST);
+        endpoint.endpointProperties.put("privateKeyId", getTestRequiredProp(VC_USERNAME));
+        endpoint.endpointProperties.put("privateKey", getTestRequiredProp(VC_PASSWORD));
+        endpoint.endpointProperties.put("regionId", getTestRequiredProp(VC_DATACENTER_ID));
+        endpoint.endpointProperties.put("endpointHost", getTestRequiredProp(VC_HOST));
     }
 
     @Override

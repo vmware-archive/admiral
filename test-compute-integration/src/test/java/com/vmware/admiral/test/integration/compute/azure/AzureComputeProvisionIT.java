@@ -13,15 +13,14 @@ package com.vmware.admiral.test.integration.compute.azure;
 
 import static com.vmware.photon.controller.model.adapters.azure.constants.AzureConstants.AZURE_TENANT_ID;
 
-import java.util.HashMap;
 import java.util.UUID;
 
 import org.junit.Ignore;
 
-import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
 import com.vmware.admiral.test.integration.compute.BaseComputeProvisionIT;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
@@ -45,12 +44,11 @@ public class AzureComputeProvisionIT extends BaseComputeProvisionIT {
 
     @Override
     protected void extendEndpoint(EndpointState endpoint) {
-        endpoint.privateKeyId = getTestRequiredProp(ACCESS_KEY_PROP);
-        endpoint.privateKey = getTestRequiredProp(ACCESS_SECRET_PROP);
-        endpoint.userLink = getTestRequiredProp(SUBSCRIPTION_PROP);
-        endpoint.regionId = getTestProp(REGION_ID_PROP, "westus");
-        endpoint.customProperties = new HashMap<>();
-        endpoint.customProperties.put(AZURE_TENANT_ID, getTestRequiredProp(TENANT_ID_PROP));
+        endpoint.endpointProperties.put("privateKeyId", getTestRequiredProp(ACCESS_KEY_PROP));
+        endpoint.endpointProperties.put("privateKey", getTestRequiredProp(ACCESS_SECRET_PROP));
+        endpoint.endpointProperties.put("userLink", getTestRequiredProp(SUBSCRIPTION_PROP));
+        endpoint.endpointProperties.put("regionId", getTestProp(REGION_ID_PROP, "westus"));
+        endpoint.endpointProperties.put(AZURE_TENANT_ID, getTestRequiredProp(TENANT_ID_PROP));
     }
 
     @Override

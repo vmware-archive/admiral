@@ -47,8 +47,7 @@ import com.vmware.admiral.compute.container.GroupResourcePolicyService;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
 import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.container.PortBinding;
-import com.vmware.admiral.compute.endpoint.EndpointService;
-import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
+import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.ReservationRemovalTaskFactoryService;
@@ -62,6 +61,8 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.EndpointService;
+import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -295,9 +296,10 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         endpoint.endpointType = endpointType.name();
         endpoint.name = name;
         endpoint.tenantLinks = getTenantLinks();
+        endpoint.endpointProperties = new HashMap<>();
         extendEndpoint(endpoint);
 
-        return postDocument(EndpointService.FACTORY_LINK, endpoint,
+        return postDocument(EndpointAdapterService.SELF_LINK, endpoint,
                 documentLifeCycle);
     }
 

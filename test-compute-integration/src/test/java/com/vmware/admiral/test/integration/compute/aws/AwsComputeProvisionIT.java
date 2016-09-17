@@ -11,10 +11,10 @@
 
 package com.vmware.admiral.test.integration.compute.aws;
 
-import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
 import com.vmware.admiral.test.integration.compute.BaseComputeProvisionIT;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSConstants;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 
 public class AwsComputeProvisionIT extends BaseComputeProvisionIT {
 
@@ -30,9 +30,9 @@ public class AwsComputeProvisionIT extends BaseComputeProvisionIT {
 
     @Override
     protected void extendEndpoint(EndpointState endpoint) {
-        endpoint.privateKeyId = getTestRequiredProp(ACCESS_KEY_PROP);
-        endpoint.privateKey = getTestRequiredProp(ACCESS_SECRET_PROP);
-        endpoint.regionId = getTestProp(REGION_ID_PROP, "us-east-1");
+        endpoint.endpointProperties.put("privateKeyId", getTestRequiredProp(ACCESS_KEY_PROP));
+        endpoint.endpointProperties.put("privateKey", getTestRequiredProp(ACCESS_SECRET_PROP));
+        endpoint.endpointProperties.put("regionId", getTestProp(REGION_ID_PROP, "us-east-1"));
     }
 
     @Override

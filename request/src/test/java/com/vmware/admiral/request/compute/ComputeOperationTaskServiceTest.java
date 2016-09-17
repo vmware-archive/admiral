@@ -29,17 +29,17 @@ import com.vmware.admiral.compute.EnvironmentMappingService;
 import com.vmware.admiral.compute.EnvironmentMappingService.EnvironmentMappingState;
 import com.vmware.admiral.compute.PropertyMapping;
 import com.vmware.admiral.compute.ResourceType;
-import com.vmware.admiral.compute.endpoint.EndpointService;
-import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
-import com.vmware.admiral.compute.endpoint.EndpointType;
+import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.compute.ComputeOperationTaskService.ComputeOperationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
+import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
+import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
@@ -112,8 +112,8 @@ public class ComputeOperationTaskServiceTest extends RequestBaseTest {
             if (endpoint == null) {
                 endpoint = TestRequestStateFactory.createEndpoint();
                 endpoint.endpointType = getEndpointType().name();
-                endpoint.endpointHost = "https://somehost";
-                endpoint = getOrCreateDocument(endpoint, EndpointService.FACTORY_LINK);
+                endpoint.endpointProperties.put("endpointHost", "https://somehost");
+                endpoint = getOrCreateDocument(endpoint, EndpointAdapterService.SELF_LINK);
                 assertNotNull(endpoint);
             }
             return endpoint;

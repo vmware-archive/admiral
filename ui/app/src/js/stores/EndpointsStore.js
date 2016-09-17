@@ -55,15 +55,12 @@ let EndpointsStore = Reflux.createStore({
   },
 
   onCreateEndpoint: function(endpoint) {
-    var createReq = {};
-    createReq.endpointState = endpoint;
-    createReq.enumerationRequest = {};
-    createReq.taskInfo = {};
-    createReq.taskInfo.isDirect = true;
 
+    this.setInData(['editingItemData', 'saving'], true);
+    this.emitChange();
 
-    services.createEndpoint(createReq).then((createdEndpoint) => {
-      var immutableEndpoint = Immutable(createdEndpoint.endpointState);
+    services.createEndpoint(endpoint).then((createdEndpoint) => {
+      var immutableEndpoint = Immutable(createdEndpoint);
 
       var endpoints = this.data.items.asMutable();
       endpoints.push(immutableEndpoint);
@@ -81,14 +78,13 @@ let EndpointsStore = Reflux.createStore({
   },
 
   onUpdateEndpoint: function(endpoint) {
-    var updReq = {};
-    updReq.endpointState = endpoint;
-    updReq.taskInfo = {};
-    updReq.taskInfo.isDirect = true;
 
-    services.updateEndpoint(updReq).then((updatedEndpoint) => {
+    this.setInData(['editingItemData', 'saving'], true);
+    this.emitChange();
+
+    services.updateEndpoint(endpoint).then((updatedEndpoint) => {
       // If the backend did not make any changes, the response will be empty
-      updatedEndpoint = updatedEndpoint.endpointState || endpoint;
+      updatedEndpoint = updatedEndpoint || endpoint;
 
       var immutableEndpoint = Immutable(updatedEndpoint);
 
@@ -113,12 +109,8 @@ let EndpointsStore = Reflux.createStore({
   },
 
   onDeleteEndpoint: function(endpoint) {
-    var delReq = {};
-    delReq.endpointLink = endpoint.documentSelfLink;
-    delReq.taskInfo = {};
-    delReq.taskInfo.isDirect = true;
 
-    services.deleteEndpoint(delReq).then(() => {
+    services.deleteEndpoint(endpoint).then(() => {
       var endpoints = this.data.items.asMutable();
 
       for (var i = endpoints.length - 1; i >= 0; i--) {
@@ -135,6 +127,7 @@ let EndpointsStore = Reflux.createStore({
   onGenericEditError: function(e) {
     var validationErrors = utils.getValidationErrors(e);
     this.setInData(['editingItemData', 'validationErrors'], validationErrors);
+    this.setInData(['editingItemData', 'saving'], false);
     console.error(e);
     this.emitChange();
   }

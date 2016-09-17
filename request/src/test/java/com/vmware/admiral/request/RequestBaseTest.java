@@ -49,8 +49,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
-import com.vmware.admiral.compute.endpoint.EndpointService;
-import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
+import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.admiral.host.CompositeComponentNotificationProcessingChain;
 import com.vmware.admiral.host.HostInitAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
@@ -72,6 +71,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.OperationProcessingChain;
@@ -423,7 +423,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         synchronized (initializationLock) {
             if (endpoint == null) {
                 endpoint = getOrCreateDocument(TestRequestStateFactory.createEndpoint(),
-                        EndpointService.FACTORY_LINK);
+                        EndpointAdapterService.SELF_LINK);
                 assertNotNull(endpoint);
             }
             return endpoint;

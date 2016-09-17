@@ -92,15 +92,22 @@ var EndpointEditor = Vue.extend({
       toSave.name = $(this.$el).find('.nameInput > input').val();
       var selectedType = this.typeInputDropdown.getSelectedOption();
       toSave.endpointType = selectedType && selectedType.id;
-      if (!toSave.endpointProperties) {
-        toSave.endpointProperties = {};
+
+      var props = {};
+
+      if (toSave.endpointProperties) {
+        props = toSave.endpointProperties.asMutable();
       }
-      toSave.endpointProperties.privateKey = $(this.$el).find('.secretAccessKey > input').val();
-      toSave.endpointProperties.privateKeyId = $(this.$el).find('.accessKeyId > input').val();
-      toSave.endpointProperties.regionId = $(this.$el).find('.regionIdInput > input').val();
-      toSave.endpointProperties.hostName = $(this.$el).find('.endpointHostInput > input').val();
-      toSave.endpointProperties.userLink = $(this.$el).find('.subscriptionIdInput > input').val();
-      toSave.endpointProperties.azureTenantId = $(this.$el).find('.tenantIdInput > input').val();
+
+      props.privateKey = $(this.$el).find('.secretAccessKey > input').val();
+      props.privateKeyId = $(this.$el).find('.accessKeyId > input').val();
+      props.regionId = $(this.$el).find('.regionIdInput > input').val();
+      props.hostName = $(this.$el).find('.endpointHostInput > input').val();
+      props.userLink = $(this.$el).find('.subscriptionIdInput > input').val();
+      props.azureTenantId = $(this.$el).find('.tenantIdInput > input').val();
+
+      toSave.endpointProperties = props;
+
       return toSave;
     }
   },

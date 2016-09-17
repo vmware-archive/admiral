@@ -156,7 +156,7 @@ var addEventListeners = function() {
     if (_this.endpointInput) {
       rp.customProperties = rp.customProperties || {};
       var selectedEndpoint = _this.endpointInput.getSelectedOption();
-      rp.customProperties.__endpointLink = selectedEndpoint && selectedEndpoint.id;
+      rp.customProperties.__endpointLink = selectedEndpoint && selectedEndpoint.documentSelfLink;
     }
 
     if (_this.resourcePool) {

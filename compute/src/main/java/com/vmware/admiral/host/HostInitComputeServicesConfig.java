@@ -45,7 +45,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
-import com.vmware.admiral.compute.endpoint.EndpointService;
+import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -61,6 +61,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         startServices(host,
                 ContainerFactoryService.class,
                 ContainerHostService.class,
+                EndpointAdapterService.class,
                 ExposedServiceDescriptionFactoryService.class,
                 HostContainerListDataCollectionFactoryService.class,
                 RegistryHostConfigService.class,
@@ -79,7 +80,6 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ContainerHostDataCollectionService.class,
                 EnvironmentMappingService.class,
                 DeploymentPolicyService.class,
-                EndpointService.class,
                 ContainerNetworkService.class,
                 ContainerNetworkDescriptionService.class,
                 ContainerVolumeDescriptionService.class,

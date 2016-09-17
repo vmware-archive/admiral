@@ -787,23 +787,23 @@ services.loadEndpoints = function() {
 };
 
 services.loadEndpoint = function(documentSelfLink) {
-  return get(documentSelfLink);
+  return get(links.ENDPOINTS + documentSelfLink);
 };
 
 services.verifyEndpoint = function(endpoint) {
-  return create(links.ENDPOINT_CU, endpoint);
+  return put(links.ENDPOINTS + '?validate', endpoint);
 };
 
 services.createEndpoint = function(endpoint) {
-  return create(links.ENDPOINT_CU, endpoint);
+  return create(links.ENDPOINTS + '?enumerate', endpoint);
 };
 
 services.updateEndpoint = function(endpoint) {
-  return create(links.ENDPOINT_CU, endpoint);
+  return put(links.ENDPOINTS + endpoint.documentSelfLink, endpoint);
 };
 
 services.deleteEndpoint = function(endpoint) {
-  return create(links.ENDPOINT_DELETE, endpoint);
+  return deleteEntity(links.ENDPOINTS + endpoint.documentSelfLink);
 };
 
 services.loadContainer = function(containerId) {

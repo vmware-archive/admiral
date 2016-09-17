@@ -33,8 +33,6 @@ import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
-import com.vmware.admiral.compute.endpoint.EndpointService;
-import com.vmware.admiral.compute.endpoint.EndpointService.EndpointState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -43,6 +41,8 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
+import com.vmware.photon.controller.model.resources.EndpointService;
+import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.UriUtils;
@@ -305,7 +305,8 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
     public static ContainerNetworkState createNetwork(String name) {
         ContainerNetworkState net = new ContainerNetworkState();
         net.name = name;
-        net.originatingHostLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, DOCKER_COMPUTE_ID);
+        net.originatingHostLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK,
+                DOCKER_COMPUTE_ID);
 
         return net;
     }
@@ -321,9 +322,12 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
                 ENDPOINT_ID);
         endpoint.endpointType = "aws";
         endpoint.name = ENDPOINT_ID;
-        endpoint.privateKeyId = "testId";
-        endpoint.privateKey = getFileContent("docker-host-private-key.PEM");
-        endpoint.regionId = ENDPOINT_REGION_ID;
+        endpoint.endpointProperties = new HashMap<>();
+        endpoint.endpointProperties.put("privateKeyId", "testId");
+        endpoint.endpointProperties.put("privateKey",
+                getFileContent("docker-host-private-key.PEM"));
+        endpoint.endpointProperties.put("regionId", ENDPOINT_REGION_ID);
+        endpoint.endpointProperties.put("hostName", "127.0.0.1");
 
         return endpoint;
     }

@@ -138,5 +138,7 @@ public interface ManagementUriParts {
 
     String REQUEST_PARAM_VALIDATE_OPERATION_NAME = "validate";
 
+    String REQUEST_PARAM_ENUMERATE_OPERATION_NAME = "enumerate";
+
     String EXEC = "/exec";
 }
