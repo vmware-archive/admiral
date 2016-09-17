@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
 package cmd
 
 import (
@@ -13,7 +24,7 @@ import (
 
 var ShowVersion bool
 var (
-	defaultVersion string = "0.5.0-SNAPSHOT"
+	defaultVersion string = "${admiral.build.tag}"
 	version        string
 )
 
@@ -46,7 +57,7 @@ func init() {
 var RootCmd = &cobra.Command{
 	Use:   "admiral",
 	Short: "Admiral CLI",
-	Long:  "Type \"admiral readme\" for more information about the Admiral CLI.",
+	Long:  "For more information about the Admiral CLI visit https://github.com/vmware/admiral/wiki/CLI-guide",
 	Run: func(cmd *cobra.Command, args []string) {
 		if !ShowVersion {
 			cmd.Help()
@@ -130,7 +141,7 @@ var GroupsRootCmd = &cobra.Command{
 
 var AutocompleteCmd = &cobra.Command{
 	Use:   "autocomplete",
-	Short: "Generate autocomplete file. It's generated in home/.admiral-cli",
+	Short: "Generate autocomplete file. It is generated in home/.admiral-cli",
 	Run: func(cmd *cobra.Command, args []string) {
 		RootCmd.GenBashCompletionFile(paths.CliDir() + "/admiral-cli-autocomplete.sh")
 	},

@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
 package containers
 
 import (
@@ -42,30 +53,33 @@ func (lc *ListContainers) FetchContainers(queryF string) int {
 //parameter. If it's true will print all the containers. If it's false
 //will print only the running containers.
 func (lc *ListContainers) Print(allContainers bool) {
+	nameLen := 38
 	if allContainers {
-		fmt.Printf("%-40s %-40s %-15s %-15s %-17s %-17s %-20s %s\n",
-			"ID", "NAME", "ADDRESS", "STATUS", "CREATED", "STARTED", "[HOST:CONTAINER]", "EXTERNAL ID")
+		fmt.Printf("%-40s %-40s %-15s %-25s %-17s %-20s %s\n",
+			"ID", "NAME", "ADDRESS", "STATUS", "CREATED", "[HOST:CONTAINER]", "EXTERNAL ID")
 
 		for _, link := range lc.DocumentLinks {
 			val := lc.Documents[link]
 			if val.System {
 				continue
 			}
-			fmt.Printf("%-40s %-40s %-15s %-15s %-17s %-17s %-20s %s\n", val.GetID(), strings.Join(val.Names, " "), val.Address, val.PowerState,
-				val.GetCreated(), val.GetStarted(), val.GetPorts(), val.Id)
+			name := functions.ShortString(strings.Join(val.Names[0:1], ""), nameLen)
+			fmt.Printf("%-40s %-40s %-15s %-25s %-17s %-20s %s\n", val.GetID(), name, val.Address, val.GetStatus(),
+				val.GetCreated(), val.GetPorts(), val.GetExternalID())
 		}
 	} else {
-		fmt.Printf("%-40s %-40s %-15s %-15s %-17s %-17s %-20s %s\n",
-			"ID", "NAME", "ADDRESS", "STATUS", "CREATED", "STARTED", "[HOST:CONTAINER]", "EXTERNAL ID")
+		fmt.Printf("%-40s %-40s %-15s %-25s %-17s %-20s %s\n",
+			"ID", "NAME", "ADDRESS", "STATUS", "CREATED", "[HOST:CONTAINER]", "EXTERNAL ID")
 		for _, link := range lc.DocumentLinks {
 			val := lc.Documents[link]
 			if val.System {
 				continue
 			}
 			if val.PowerState == "RUNNING" {
-				fmt.Printf("%-40s %-40s %-15s %-15s %-17s %-17s %-20s %s\n",
-					val.GetID(), strings.Join(val.Names, " "), val.Address, val.PowerState,
-					val.GetCreated(), val.GetStarted(), val.GetPorts(), val.Id)
+				name := functions.ShortString(strings.Join(val.Names[0:1], ""), nameLen)
+				fmt.Printf("%-40s %-40s %-15s %-25s %-17s %-20s %s\n",
+					val.GetID(), name, val.Address, val.GetStatus(),
+					val.GetCreated(), val.GetPorts(), val.GetExternalID())
 			}
 		}
 	}

@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
 package config
 
 import (
@@ -13,23 +24,26 @@ import (
 )
 
 type Config struct {
-	Url     string `json:"url"`
-	User    string `json:"user"`
-	Timeout string `json:"timeout"`
+	Url           string `json:"url"`
+	User          string `json:"user"`
+	TaskTimeout   string `json:"taskTimeout"`
+	ClientTimeout string `json:"clientTimeout"`
 }
 
 //Default Values
 var (
-	defaultURL     = "http://127.0.0.1:8282"
-	defaultUSER    = ""
-	defaultTimeout = 70
+	defaultURL           = "http://127.0.0.1:8282"
+	defaultUSER          = ""
+	defaultTaskTimeout   = 70
+	defaultClientTimeout = 70
 )
 
 //Values used from commands.
 var (
-	URL     string
-	USER    string
-	TIMEOUT int
+	URL            string
+	USER           string
+	TASK_TIMEOUT   int
+	CLIENT_TIMEOUT int
 )
 
 //GetCfg is trying to load configurable properties from the config file.
@@ -60,10 +74,17 @@ func GetCfg() {
 		USER = cfg.User
 	}
 
-	if strings.TrimSpace(cfg.Timeout) == "" {
-		TIMEOUT = defaultTimeout
+	if strings.TrimSpace(cfg.TaskTimeout) == "" {
+		TASK_TIMEOUT = defaultTaskTimeout
 	} else {
-		TIMEOUT, err = strconv.Atoi(cfg.Timeout)
+		TASK_TIMEOUT, err = strconv.Atoi(cfg.TaskTimeout)
+		functions.CheckParse(err)
+	}
+
+	if strings.TrimSpace(cfg.ClientTimeout) == "" {
+		CLIENT_TIMEOUT = defaultClientTimeout
+	} else {
+		CLIENT_TIMEOUT, err = strconv.Atoi(cfg.ClientTimeout)
 		functions.CheckParse(err)
 	}
 }
@@ -72,9 +93,10 @@ func GetCfg() {
 //configurable properties.
 func createDefaultCfgFile() {
 	cfg := &Config{
-		Url:     defaultURL,
-		User:    defaultUSER,
-		Timeout: strconv.Itoa(defaultTimeout),
+		Url:           defaultURL,
+		User:          defaultUSER,
+		TaskTimeout:   strconv.Itoa(defaultTaskTimeout),
+		ClientTimeout: strconv.Itoa(defaultClientTimeout),
 	}
 	paths.MkCliDir()
 	file, err := os.Create(paths.ConfigPath())

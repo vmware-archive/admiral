@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
 package requests
 
 import (
@@ -9,8 +20,8 @@ import (
 
 	"admiral/client"
 	"admiral/config"
-	"admiral/functions"
 	"admiral/events"
+	"admiral/functions"
 )
 
 type TaskInfo struct {
@@ -65,12 +76,7 @@ type RequestsList struct {
 	DocumentLinks []string               `json:"documentLinks"`
 }
 
-var (
-	defaultFormat       = "%-40s %-45s %-15s %-10s %s\n"
-	specificFormat      = "%-3d %-9s %-37s %-10s %-12s\n"
-	defaultFailedFormat = "%-3d %-9s %-37s %-10s %-12s %s\n"
-	failedFormat        = "%-3d %-9s %-37s %-10s %-12s %s\n"
-)
+var defaultFormat = "%-40s %-45s %-15s %-10s %s\n"
 
 func (rl *RequestsList) ClearAllRequests() {
 	for i := len(rl.DocumentLinks) - 1; i >= 0; i-- {
@@ -104,7 +110,7 @@ func (rl *RequestsList) PrintStartedOnly() {
 		}
 		res, failure := checkFailed(&val)
 		if res {
-			failure = failure[0:50] + "..."
+			failure = functions.ShortString(failure, 50)
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), failure)
 		} else {
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), "")
@@ -131,7 +137,7 @@ func (rl *RequestsList) PrintFailedOnly() {
 		}
 		res, failure := checkFailed(&val)
 		if res {
-			failure = failure[0:50] + "..."
+			failure = functions.ShortString(failure, 50)
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), failure)
 		} else {
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), "")
@@ -158,7 +164,7 @@ func (rl *RequestsList) PrintFinishedOnly() {
 		}
 		res, failure := checkFailed(&val)
 		if res {
-			failure = failure[0:50] + "..."
+			failure = functions.ShortString(failure, 50)
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), failure)
 		} else {
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), "")
@@ -181,7 +187,7 @@ func (rl *RequestsList) PrintAll() {
 		val := rl.Documents[rl.DocumentLinks[i]]
 		res, failure := checkFailed(&val)
 		if res {
-			failure = failure[0:50] + "..."
+			failure = functions.ShortString(failure, 50)
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), failure)
 		} else {
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), "")

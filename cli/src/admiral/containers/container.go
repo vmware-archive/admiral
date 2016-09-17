@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
 package containers
 
 import (
@@ -32,17 +43,32 @@ func (c *Container) GetID() string {
 	return strings.Replace(c.DocumentSelfLink, "/resources/containers/", "", -1)
 }
 
+func (c *Container) GetExternalID() string {
+	if len(c.Id) <= 14 {
+		return c.Id
+	}
+	return c.Id[0:15]
+}
+
+func (c *Container) GetStatus() string {
+	if c.PowerState != "RUNNING" {
+		return c.PowerState
+	}
+	status := fmt.Sprintf("%s %s", c.PowerState, c.GetStarted())
+	return status
+}
+
 //GetPorts returns exposed ports of the container as string.
 //The format is similar to [XXXX:XXXX YYYY:YYYY]
 //This is commonly used for printing
 func (c *Container) GetPorts() string {
 	var output bytes.Buffer
 	output.WriteString("[")
-	for i := range c.Ports {
-		output.WriteString(c.Ports[i].String())
-		if i != len(c.Ports)-1 {
-			output.WriteString(" ")
-		}
+	if len(c.Ports) > 0 && len(c.Ports) < 2 {
+		output.WriteString(c.Ports[0].String())
+	} else if len(c.Ports) >= 2 {
+		output.WriteString(c.Ports[0].String())
+		output.WriteString("...")
 	}
 	output.WriteString("]")
 	return output.String()
@@ -52,8 +78,15 @@ func (c *Container) GetPorts() string {
 //to the format "%d hours/minutes/seconds ago".
 //This is commonly used for printing.
 func (c *Container) GetCreated() string {
+	if c.Created <= 0 {
+		return "unknown"
+	}
 	then := time.Unix(0, c.Created*int64(time.Millisecond))
 	timeSinceCreate := time.Now().Sub(then)
+	if timeSinceCreate.Hours() > 72 {
+		daysAgo := int(float64(timeSinceCreate.Hours()) / 24.0)
+		return fmt.Sprintf("%d days ago", daysAgo)
+	}
 	if timeSinceCreate.Hours() > 1 {
 		return fmt.Sprintf("%d hours ago", int64(timeSinceCreate.Hours()))
 	}
@@ -70,18 +103,25 @@ func (c *Container) GetCreated() string {
 //to the format "%d hours/minutes/seconds ago".
 //This is commonly used for printing.
 func (c *Container) GetStarted() string {
+	if c.Started <= 0 {
+		return "unknown"
+	}
 	then := time.Unix(0, c.Started*int64(time.Millisecond))
 	timeSinceStart := time.Now().Sub(then)
+	if timeSinceStart.Hours() > 72 {
+		daysAgo := int(float64(timeSinceStart.Hours()) / 24.0)
+		return fmt.Sprintf("%d days", daysAgo)
+	}
 	if timeSinceStart.Hours() > 1 {
-		return fmt.Sprintf("%d hours ago", int64(timeSinceStart.Hours()))
+		return fmt.Sprintf("%d hours", int64(timeSinceStart.Hours()))
 	}
 	if timeSinceStart.Minutes() > 1 {
-		return fmt.Sprintf("%d minutes ago", int64(timeSinceStart.Minutes()))
+		return fmt.Sprintf("%d minutes", int64(timeSinceStart.Minutes()))
 	}
 	if timeSinceStart.Seconds() > 1 {
-		return fmt.Sprintf("%d seconds ago", int64(timeSinceStart.Seconds()))
+		return fmt.Sprintf("%d seconds", int64(timeSinceStart.Seconds()))
 	}
-	return "0 seconds ago"
+	return "0 seconds"
 }
 
 //StringJson returns the Container to string in json format.
