@@ -193,7 +193,7 @@ public class ComputePlacementSelectionTaskService extends
             ComputeDescription desc,
             Collection<String> computeDescriptionLinks, int maxRetries) {
 
-        ResourcePoolQueryHelper helper = new ResourcePoolQueryHelper(getHost(),
+        ResourcePoolQueryHelper helper = ResourcePoolQueryHelper.createForResourcePool(getHost(),
                 state.resourcePoolLink);
         helper.setAdditionalQueryClausesProvider(qb -> {
             qb.addInClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK, computeDescriptionLinks)

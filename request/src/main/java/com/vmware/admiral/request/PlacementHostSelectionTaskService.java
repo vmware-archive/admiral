@@ -195,7 +195,7 @@ public class PlacementHostSelectionTaskService
             ContainerDescription desc,
             Collection<String> computeDescriptionLinks, int errorCount) {
 
-        ResourcePoolQueryHelper helper = new ResourcePoolQueryHelper(getHost(),
+        ResourcePoolQueryHelper helper = ResourcePoolQueryHelper.createForResourcePools(getHost(),
                 state.resourcePoolLinks);
         helper.setAdditionalQueryClausesProvider(qb -> {
             qb.addInClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK, computeDescriptionLinks)

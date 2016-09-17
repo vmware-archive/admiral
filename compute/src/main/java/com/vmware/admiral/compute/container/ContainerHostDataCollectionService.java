@@ -16,7 +16,6 @@ import static com.vmware.admiral.compute.ContainerHostService.RETRIES_COUNT_PROP
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +39,8 @@ import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ResourcePoolQueryHelper;
+import com.vmware.admiral.compute.ResourcePoolQueryHelper.QueryResult.ResourcePoolData;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
@@ -48,10 +49,10 @@ import com.vmware.admiral.service.common.AbstractCallbackServiceHandler;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
-import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
+import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.ServiceDocument;
@@ -61,7 +62,6 @@ import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 public class ContainerHostDataCollectionService extends StatefulService {
@@ -165,7 +165,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
             if (state.lastRunTimeMicros + FREQUENCY_OF_GENERAL_HOST_COLLECTION_MICROS > now) {
                 if (state.skipRunCount++ > 2) {
                     // don't run general data collection on all hosts if the requests are too
-                    // frequent.
+                    // frequent
                     patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
                     patch.complete();
                     return;
@@ -178,189 +178,173 @@ public class ContainerHostDataCollectionService extends StatefulService {
             state.lastRunTimeMicros = Utils.getNowMicrosUtc();
             updateHostInfoDataCollection(patch);
         } else {
-            for (String computeHostLink : body.computeContainerHostLinks) {
-                if (!body.remove) {
-                    // if we're adding a host we need to wait for the host info to be populated
-                    // first
-                    updateContainerHostInfo(computeHostLink, (o, error) -> {
-                        if (error) {
-                            handleHostNotAvailable(computeHostLink);
-                        } else {
-                            handleHostAvailable(computeHostLink);
-                            updateResourcePool(computeHostLink, body.remove);
-                            updateContainerHostContainers(computeHostLink);
-                            updateHostStats(computeHostLink);
-                        }
-                    }, null);
-                } else {
-                    updateResourcePool(computeHostLink, body.remove);
+            // retrieve resource pools for the given computes
+            ResourcePoolQueryHelper rpHelper = ResourcePoolQueryHelper.createForComputes(getHost(),
+                    body.computeContainerHostLinks);
+
+            rpHelper.query(qr -> {
+                if (qr.error != null) {
+                    patch.fail(qr.error);
+                    return;
                 }
-            }
+
+                for (ComputeState computeState : qr.computesByLink.values()) {
+                    if (!body.remove) {
+                        // if we're adding a host we need to wait for the host info to be populated
+                        // first
+                        updateContainerHostInfo(computeState.documentSelfLink, (o, error) -> {
+                            if (error) {
+                                handleHostNotAvailable(computeState);
+                            } else {
+                                handleHostAvailable(computeState);
+                                // TODO multiple operations in parallel for the same RP;
+                                //      needs to be reworked
+                                updateResourcePool(computeState,
+                                        qr.rpLinksByComputeLink.get(computeState.documentSelfLink),
+                                        body.remove);
+                                updateContainerHostContainers(computeState.documentSelfLink);
+                                updateHostStats(computeState.documentSelfLink);
+                            }
+                        }, null);
+                    } else {
+                        // TODO multiple operations in parallel for the same RP;
+                        //      needs to be reworked
+                        updateResourcePool(computeState,
+                                qr.rpLinksByComputeLink.get(computeState.documentSelfLink),
+                                body.remove);
+                    }
+                }
+            });
 
             patch.complete();
         }
     }
 
-    private void handleHostAvailable(String computeHostLink) {
-        sendRequest(Operation.createGet(this, computeHostLink).setCompletion((oo, ex) -> {
-            if (ex != null) {
-                logWarning("Error while getting computeState: %s", ex);
-                return;
-            }
-            ComputeState computeState = oo.getBody(ComputeState.class);
-            PowerState patchPowerState = computeState.powerState;
-            String countString = computeState.customProperties.get(RETRIES_COUNT_PROP_NAME);
-            int count = Integer.valueOf(countString != null ? countString : "0");
+    private void handleHostAvailable(ComputeState computeState) {
+        PowerState patchPowerState = computeState.powerState;
+        String countString = computeState.customProperties.get(RETRIES_COUNT_PROP_NAME);
+        int count = Integer.parseInt(countString != null ? countString : "0");
 
-            if (PowerState.SUSPEND.equals(computeState.powerState) && count == 0) {
-                patchPowerState = PowerState.SUSPEND;
-            } else if (!PowerState.OFF.equals(computeState.powerState)) {
-                /* when a host is disabled manually the state should not be changed to ON */
+        if (PowerState.SUSPEND.equals(computeState.powerState) && count == 0) {
+            patchPowerState = PowerState.SUSPEND;
+        } else if (!PowerState.OFF.equals(computeState.powerState)) {
+            /* when a host is disabled manually the state should not be changed to ON */
+            count = 0;
+            patchPowerState = PowerState.ON;
+        }
+
+        ComputeState patchState = new ComputeState();
+        patchState.powerState = patchPowerState;
+        patchState.customProperties = new HashMap<String, String>();
+        patchState.customProperties.put(RETRIES_COUNT_PROP_NAME, String.valueOf(count));
+        sendRequest(Operation.createPatch(this, computeState.documentSelfLink)
+                .setBody(patchState)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Error while patching computeState: %s", e);
+                        return;
+                    }
+                }));
+    }
+
+    private void handleHostNotAvailable(ComputeState computeState) {
+        if (computeState.powerState.equals(PowerState.OFF)) {
+            return;
+        }
+        PowerState patchPowerState;
+        int count;
+        if (computeState.customProperties.get(RETRIES_COUNT_PROP_NAME) != null) {
+            count = Integer.parseInt(computeState.customProperties.get(RETRIES_COUNT_PROP_NAME));
+            count++;
+            if (count == MAX_RETRIES_COUNT) {
+                patchPowerState = PowerState.OFF;
                 count = 0;
-                patchPowerState = PowerState.ON;
-            }
-
-            ComputeState patchState = new ComputeState();
-            patchState.powerState = patchPowerState;
-            patchState.customProperties = new HashMap<String, String>();
-            patchState.customProperties.put(RETRIES_COUNT_PROP_NAME, String.valueOf(count));
-            sendRequest(Operation.createPatch(this, computeState.documentSelfLink)
-                    .setBody(patchState)
-                    .setCompletion((o, e) -> {
-                        if (e != null) {
-                            logWarning("Error while patching computeState: %s", e);
-                            return;
-                        }
-                    }));
-        }));
-    }
-
-    private void handleHostNotAvailable(String computeHostLink) {
-        CompletionHandler c = (oo, ex) -> {
-            if (ex != null) {
-                logSevere(Utils.toString(ex));
-                return;
-            }
-
-            if (getHost().isStopping()) {
-                return;
-            }
-            ComputeState computeState = oo.getBody(ComputeState.class);
-            PowerState patchPowerState;
-            Integer count;
-            if (computeState.powerState.equals(PowerState.OFF)) {
-                return;
-            }
-            if (computeState.customProperties
-                    .get(RETRIES_COUNT_PROP_NAME) != null) {
-                count = Integer.valueOf(computeState.customProperties.get(RETRIES_COUNT_PROP_NAME));
-                count++;
-                if (count == MAX_RETRIES_COUNT) {
-                    patchPowerState = PowerState.OFF;
-                    count = 0;
-                } else {
-                    patchPowerState = PowerState.SUSPEND;
-                }
             } else {
-                count = 1;
                 patchPowerState = PowerState.SUSPEND;
             }
-            ComputeState patchState = new ComputeState();
-            patchState.powerState = patchPowerState;
-            patchState.customProperties = new HashMap<>();
-            patchState.customProperties.put(RETRIES_COUNT_PROP_NAME,
-                    count.toString());
+        } else {
+            count = 1;
+            patchPowerState = PowerState.SUSPEND;
+        }
+        ComputeState patchState = new ComputeState();
+        patchState.powerState = patchPowerState;
+        patchState.customProperties = new HashMap<>();
+        patchState.customProperties.put(RETRIES_COUNT_PROP_NAME, Integer.toString(count));
 
-            CompletionHandler cc = (operation, e) -> {
-                if (e != null) {
-                    logWarning("Failed updating ComputeState: "
-                            + computeState.documentSelfLink);
-                    return;
-                }
+        CompletionHandler cc = (operation, e) -> {
+            if (e != null) {
+                logWarning("Failed updating ComputeState: " + computeState.documentSelfLink);
+                return;
+            }
 
-                if (PowerState.OFF.equals(patchPowerState)) {
-                    disableContainersForHost(computeState.documentSelfLink);
-                }
-            };
-            sendRequest(Operation
-                    .createPatch(this, computeState.documentSelfLink)
-                    .setBody(patchState)
-                    .setCompletion(cc));
+            if (PowerState.OFF.equals(patchPowerState)) {
+                disableContainersForHost(computeState.documentSelfLink);
+            }
         };
-
-        sendRequest(Operation.createGet(this, computeHostLink)
-                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
-                .setCompletion(c));
+        sendRequest(Operation
+                .createPatch(this, computeState.documentSelfLink)
+                .setBody(patchState)
+                .setCompletion(cc));
     }
 
-    private void updateResourcePool(String computeHostLink, boolean remove) {
-        CompletionHandler c = (o, ex) -> {
-            if (ex != null) {
-                logSevere(Utils.toString(ex));
+    private void updateResourcePool(ComputeState computeState, Collection<String> rpLinks,
+            boolean remove) {
+        Long totalMemory = PropertyUtils.getPropertyLong(computeState.customProperties,
+                ContainerHostService.DOCKER_HOST_TOTAL_MEMORY_PROP_NAME).orElse(Long.MAX_VALUE);
+
+        Long hostAvailableMemory = PropertyUtils.getPropertyLong(computeState.customProperties,
+                ContainerHostService.DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME)
+                .orElse(totalMemory);
+
+        CompletionHandler cc = (o1, ex1) -> {
+            if (ex1 != null) {
+                logSevere(Utils.toString(ex1));
                 return;
             }
+            ResourcePoolService.ResourcePoolState resourcePoolState = o1
+                    .getBody(ResourcePoolService.ResourcePoolState.class);
 
-            if (getHost().isStopping()) {
-                return;
+            int coef = remove ? -1 : 1;
+
+            resourcePoolState.minMemoryBytes = 0;
+            if (resourcePoolState.maxMemoryBytes == Long.MAX_VALUE || totalMemory
+                    .equals(Long.MAX_VALUE)) {
+                resourcePoolState.maxMemoryBytes = Long.MAX_VALUE;
+            } else {
+                resourcePoolState.maxMemoryBytes += totalMemory * coef;
             }
 
-            ComputeState computeState = o.getBody(ComputeState.class);
+            Long resourcePoolAvailableMemory = resourcePoolState.customProperties != null
+                    ? PropertyUtils
+                            .getPropertyLong(resourcePoolState.customProperties,
+                                    RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP)
+                            .orElse(null)
+                    : null;
+            if (hostAvailableMemory != Long.MAX_VALUE
+                    && resourcePoolAvailableMemory != null
+                    && resourcePoolAvailableMemory != Long.MAX_VALUE) {
+                resourcePoolAvailableMemory += hostAvailableMemory * coef;
+                resourcePoolState.customProperties
+                        .put(RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP,
+                                Long.toString(resourcePoolAvailableMemory));
+            }
 
-            Long totalMemory = PropertyUtils.getPropertyLong(computeState.customProperties,
-                    ContainerHostService.DOCKER_HOST_TOTAL_MEMORY_PROP_NAME).orElse(Long.MAX_VALUE);
-
-            Long hostAvailableMemory = PropertyUtils.getPropertyLong(computeState.customProperties,
-                    ContainerHostService.DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME)
-                    .orElse(totalMemory);
-
-            CompletionHandler cc = (o1, ex1) -> {
-                if (ex1 != null) {
-                    logSevere(Utils.toString(ex1));
-                    return;
-                }
-                ResourcePoolService.ResourcePoolState resourcePoolState = o1
-                        .getBody(ResourcePoolService.ResourcePoolState.class);
-
-                int coef = remove ? -1 : 1;
-
-                resourcePoolState.minMemoryBytes = 0;
-                if (resourcePoolState.maxMemoryBytes == Long.MAX_VALUE || totalMemory
-                        .equals(Long.MAX_VALUE)) {
-                    resourcePoolState.maxMemoryBytes = Long.MAX_VALUE;
-                } else {
-                    resourcePoolState.maxMemoryBytes += totalMemory * coef;
-                }
-
-                Long resourcePoolAvailableMemory = resourcePoolState.customProperties != null
-                        ? PropertyUtils
-                                .getPropertyLong(resourcePoolState.customProperties,
-                                        RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP)
-                                .orElse(null)
-                        : null;
-                if (hostAvailableMemory != Long.MAX_VALUE
-                        && resourcePoolAvailableMemory != null
-                        && resourcePoolAvailableMemory != Long.MAX_VALUE) {
-                    resourcePoolAvailableMemory += hostAvailableMemory * coef;
-                    resourcePoolState.customProperties
-                            .put(RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP,
-                                    Long.toString(resourcePoolAvailableMemory));
-                }
-
-                sendRequest(Operation.createPut(this, resourcePoolState.documentSelfLink)
-                        .setBody(resourcePoolState).setCompletion((op, e) -> {
-                            if (e != null) {
-                                logSevere("Unable to update the resource pool with link "
-                                        + resourcePoolState.documentSelfLink);
-                            }
-                            updatePolicies(resourcePoolState);
-                        }));
-            };
-
-            sendRequest(Operation.createGet(this, computeState.resourcePoolLink)
-                    .setCompletion(cc));
+            sendRequest(Operation.createPut(this, resourcePoolState.documentSelfLink)
+                    .setBody(resourcePoolState).setCompletion((op, e) -> {
+                        if (e != null) {
+                            logSevere("Unable to update the resource pool with link "
+                                    + resourcePoolState.documentSelfLink);
+                        }
+                        updatePolicies(resourcePoolState);
+                    }));
         };
 
-        sendRequest(Operation.createGet(this, computeHostLink).setCompletion(c));
+        // update all resource pools this compute is part of
+        if (rpLinks != null) {
+            for (String rpLink : rpLinks) {
+                sendRequest(Operation.createGet(this, rpLink).setCompletion(cc));
+            }
+        }
     }
 
     /**
@@ -448,7 +432,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
         }
     }
 
-    private void updateResourcePool(String resourcePoolLink, Set<ComputeState> computeStates) {
+    private void updateResourcePool(ResourcePoolState resourcePoolState,
+            Collection<ComputeState> computeStates) {
         if (getHost().isStopping()) {
             return;
         }
@@ -494,37 +479,28 @@ public class ContainerHostDataCollectionService extends StatefulService {
 
         final Long totalMemory = memorySum;
 
-        // TODO this will not work in a multi node setting, with consensus. There is a race.
-        // Resource pool should support PATCJ
+        // TODO this will not work in a multi-node setting, with consensus. There is a race.
+        // Resource pool should support PATCH
         // need to do a GET and then PUT because PATCH is not implemented for these fields
-        CompletionHandler c = (o, ex) -> {
-            if (ex != null) {
-                logSevere(Utils.toString(ex));
-                return;
-            }
-            ResourcePoolService.ResourcePoolState resourcePoolState = o
-                    .getBody(ResourcePoolService.ResourcePoolState.class);
-
-            if (resourcePoolState.customProperties == null) {
-                resourcePoolState.customProperties = new HashMap<>();
-            }
-            resourcePoolState.customProperties
-                    .put(RESOURCE_POOL_CPU_USAGE_CUSTOM_PROP, Double.toString(aggregateCpuUsage));
-            resourcePoolState.customProperties
-                    .put(RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP,
-                            Long.toString(resourcePoolAvailableMemory));
-            resourcePoolState.maxMemoryBytes = totalMemory;
-            resourcePoolState.minMemoryBytes = 0;
-            sendRequest(Operation.createPut(this, resourcePoolLink)
-                    .setBody(resourcePoolState).setCompletion((op, e) -> {
-                        if (e != null) {
-                            logSevere("Unable to update the resource pool with link "
-                                    + resourcePoolState.documentSelfLink);
-                        }
-                        updatePolicies(resourcePoolState);
-                    }));
-        };
-        sendRequest(Operation.createGet(this, resourcePoolLink).setCompletion(c));
+        ResourcePoolState rpPutState = Utils.clone(resourcePoolState);
+        if (rpPutState.customProperties == null) {
+            rpPutState.customProperties = new HashMap<>();
+        }
+        rpPutState.customProperties
+                .put(RESOURCE_POOL_CPU_USAGE_CUSTOM_PROP, Double.toString(aggregateCpuUsage));
+        rpPutState.customProperties
+                .put(RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP,
+                        Long.toString(resourcePoolAvailableMemory));
+        rpPutState.maxMemoryBytes = totalMemory;
+        rpPutState.minMemoryBytes = 0;
+        sendRequest(Operation.createPut(this, rpPutState.documentSelfLink)
+                .setBody(rpPutState).setCompletion((op, e) -> {
+                    if (e != null) {
+                        logSevere("Unable to update the resource pool with link "
+                                + rpPutState.documentSelfLink);
+                    }
+                    updatePolicies(rpPutState);
+                }));
     }
 
     private void updateHostStats(String computeHostLink) {
@@ -598,112 +574,41 @@ public class ContainerHostDataCollectionService extends StatefulService {
             return;
         }
 
-        QueryTask q = createDockerComputeStateQuery(computeDescriptionLinks);
-        QueryUtil.addExpandOption(q);
-        ServiceDocumentQuery<ComputeState> query = new ServiceDocumentQuery<>(getHost(),
-                ComputeState.class);
+        ResourcePoolQueryHelper rpHelper = ResourcePoolQueryHelper.create(getHost());
+        rpHelper.setAdditionalQueryClausesProvider(qb -> {
+            qb.addInClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK, computeDescriptionLinks);
+            qb.addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                        ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
+        });
 
-        Map<String, Set<ComputeState>> resourcePoolToComputeStates = new HashMap<>();
-        query.query(q, (r) -> {
-            if (r.hasException()) {
+        rpHelper.query(qr -> {
+            if (qr.error != null) {
                 logWarning("Exception while retrieving docker host. Error: %s",
-                        (r.getException() instanceof CancellationException)
-                                ? r.getException().getClass().getName()
-                                : Utils.toString(r.getException()));
-                maintOp.fail(r.getException());
-            } else if (r.hasResult()) {
-                updateContainerHostInfo(r.getDocumentSelfLink(), (o, error) -> {
-                    maintOp.complete(); /*
-                                         * we complete maintOp here, not waiting for container
-                                         * update
-                                         */
+                        (qr.error instanceof CancellationException)
+                                ? qr.error.getClass().getName()
+                                : Utils.toString(qr.error));
+                maintOp.fail(qr.error);
+                return;
+            }
+
+            for (ComputeState compute : qr.computesByLink.values()) {
+                updateContainerHostInfo(compute.documentSelfLink, (o, error) -> {
+                    // we complete maintOp here, not waiting for container update
+                    maintOp.complete();
                     if (error) {
-                        handleHostNotAvailable(r.getDocumentSelfLink());
+                        handleHostNotAvailable(compute);
                     } else {
-                        handleHostAvailable(r.getDocumentSelfLink());
+                        handleHostAvailable(compute);
                     }
                 }, null);
 
-                updateContainerHostContainers(r.getDocumentSelfLink());
+                updateContainerHostContainers(compute.documentSelfLink);
+            }
 
-                Set<ComputeState> computeStates = resourcePoolToComputeStates
-                        .get(r.getResult().resourcePoolLink);
-
-                if (computeStates == null) {
-                    computeStates = new HashSet<>();
-                    resourcePoolToComputeStates.put(r.getResult().resourcePoolLink, computeStates);
-                }
-
-                computeStates.add(r.getResult());
-            } else {
-                updateResourcePools(resourcePoolToComputeStates, maintOp);
+            for (ResourcePoolData rpData : qr.resourcesPools.values()) {
+                updateResourcePool(rpData.resourcePoolState, rpData.computeStates);
             }
         });
-    }
-
-    private void updateResourcePools(
-            Map<String, Set<ComputeState>> resourcePoolToComputeStates, Operation maintOp) {
-        if (getHost().isStopping()) {
-            maintOp.complete();
-            return;
-        }
-        // resourcePoolToComputeStates contains all added hosts in the system.
-        // We need to get the empty resource pools and update them too
-        QueryTask emptyResourcePoolQueryTask = createEmptyResourcePoolQueryTask(
-                resourcePoolToComputeStates.keySet());
-        ServiceDocumentQuery<ResourcePoolService.ResourcePoolState> emptyResourcePoolQuery = new ServiceDocumentQuery<>(
-                getHost(),
-                ResourcePoolService.ResourcePoolState.class);
-
-        // TODO countersubtask?
-        emptyResourcePoolQuery.query(emptyResourcePoolQueryTask, (r) -> {
-            maintOp.complete(); /* complete here, in parallel with resource pool update */
-            if (r.hasException()) {
-                logWarning(
-                        "Exception while retrieving empty resource pools. Error: %s",
-                        (r.getException() instanceof CancellationException)
-                                ? r.getException().getClass().getName()
-                                : Utils.toString(r.getException()));
-            } else if (r.hasResult()) {
-                updateResourcePool(r.getDocumentSelfLink(), Collections.emptySet());
-            }
-        });
-
-        // do a PUT for each resource pool in parallel
-        // TODO use a counter sub-task?
-        resourcePoolToComputeStates.entrySet().forEach(entry -> {
-            updateResourcePool(entry.getKey(), entry.getValue());
-        });
-    }
-
-    private QueryTask createEmptyResourcePoolQueryTask(Collection<String> resourcePoolLinks) {
-        QueryTask q = QueryUtil.buildQuery(ResourcePoolService.ResourcePoolState.class, false);
-        q.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
-        q.documentExpirationTimeMicros = ServiceDocumentQuery.getDefaultQueryExpiration();
-
-        QueryUtil.addListValueExcludeClause(q,
-                ResourcePoolService.ResourcePoolState.FIELD_NAME_SELF_LINK,
-                resourcePoolLinks);
-        return q;
-    }
-
-    private QueryTask createDockerComputeStateQuery(Collection<String> computeDescriptionLinks) {
-        QueryTask q = QueryUtil.buildQuery(ComputeState.class, false);
-        q.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
-        q.documentExpirationTimeMicros = ServiceDocumentQuery.getDefaultQueryExpiration();
-
-        QueryUtil.addListValueClause(q, ComputeService.ComputeState.FIELD_NAME_DESCRIPTION_LINK,
-                computeDescriptionLinks);
-
-        QueryTask.Query containerHost = new QueryTask.Query().setTermPropertyName(QuerySpecification
-                .buildCompositeFieldName(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
-                        ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME))
-                .setTermMatchValue("true");
-        containerHost.occurance = Occurance.MUST_OCCUR;
-
-        q.querySpec.query.addBooleanClause(containerHost);
-
-        return q;
     }
 
     private QueryTask createDockerComputeDescriptionQuery() {

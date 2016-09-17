@@ -35,17 +35,33 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
- * {@code ResourcePoolQueryHelper} performs an asynchronous retrieval of computes participating
- * in a given list of resource pools or all resource pools in the system.
+ * {@code ResourcePoolQueryHelper} aims to simplify the retrieval of computes per resource pool
+ * and vice-versa. Resource pools are query-driven and there is no explicit link from the compute
+ * to the resource pool it participates in, and this helper hides the complexity of dealing with
+ * this.
  *
- * <p>The latter is particularly useful if the resource pool of a compute has to be identified -
- * there is no explicit link from the compute to the resource pool (because of the query-driven
- * resource pools) and this helper solves that by providing these links in its result.
+ * <p>Three types of operations are supported:
+ * <ul>
+ * <li>Querying all resource pools and their associated computes. Computes without a resource pool
+ * are also returned.
+ * <li>Querying specific resource pool(s). Only computes participating in the given resource pools
+ * are returned.
+ * <li>Querying specific computes. The resource pools of the given computes are returned.
+ * </ul>
+ *
+ * <p>In the first two operation types, clients of the helper can restrict the list of computes that
+ * are included in the result. This is done by adding additional query clauses to the ones already
+ * defined in the resource pool queries
+ * (see {@link ResourcePoolQueryHelper#setAdditionalQueryClausesProvider()}).
  */
 public class ResourcePoolQueryHelper {
+    // input fields
     private final ServiceHost host;
-    private final Collection<String> resourcePoolLinks;
+    private Collection<String> resourcePoolLinks;
+    private Collection<String> computeLinks;
     private Consumer<Query.Builder> additionalQueryClausesProvider;
+
+    // internal state
     private Consumer<QueryResult> completionHandler;
     private QueryResult result;
 
@@ -76,26 +92,34 @@ public class ResourcePoolQueryHelper {
     /**
      * Creates a new instance.
      */
-    public ResourcePoolQueryHelper(ServiceHost host) {
+    private ResourcePoolQueryHelper(ServiceHost host) {
         this.host = host;
-        this.resourcePoolLinks = new ArrayList<>();
     }
 
-    /**
-     * Creates a new instance.
-     */
-    public ResourcePoolQueryHelper(ServiceHost host, String resourcePoolLink) {
-        this.host = host;
-        this.resourcePoolLinks = new ArrayList<>();
-        this.resourcePoolLinks.add(resourcePoolLink);
+    public static ResourcePoolQueryHelper create(ServiceHost host) {
+        return new ResourcePoolQueryHelper(host);
     }
 
-    /**
-     * Creates a new instance.
-     */
-    public ResourcePoolQueryHelper(ServiceHost host, Collection<String> resourcePoolLinks) {
-        this.host = host;
-        this.resourcePoolLinks = resourcePoolLinks;
+    public static ResourcePoolQueryHelper createForResourcePool(ServiceHost host,
+            String resourcePoolLink) {
+        ResourcePoolQueryHelper helper = new ResourcePoolQueryHelper(host);
+        helper.resourcePoolLinks = new ArrayList<>();
+        helper.resourcePoolLinks.add(resourcePoolLink);
+        return helper;
+    }
+
+    public static ResourcePoolQueryHelper createForResourcePools(ServiceHost host,
+            Collection<String> resourcePoolLinks) {
+        ResourcePoolQueryHelper helper = new ResourcePoolQueryHelper(host);
+        helper.resourcePoolLinks = new ArrayList<>(resourcePoolLinks);
+        return helper;
+    }
+
+    public static ResourcePoolQueryHelper createForComputes(ServiceHost host,
+            Collection<String> computeLinks) {
+        ResourcePoolQueryHelper helper = new ResourcePoolQueryHelper(host);
+        helper.computeLinks = new ArrayList<>(computeLinks);
+        return helper;
     }
 
     /**
@@ -123,7 +147,7 @@ public class ResourcePoolQueryHelper {
     private void retrieveResourcePools() {
         Query.Builder queryBuilder = Query.Builder.create()
                 .addKindFieldClause(ResourcePoolState.class);
-        if (!this.resourcePoolLinks.isEmpty()) {
+        if (this.resourcePoolLinks != null && !this.resourcePoolLinks.isEmpty()) {
             queryBuilder.addInClause(ServiceDocument.FIELD_NAME_SELF_LINK, this.resourcePoolLinks);
         }
 
@@ -143,7 +167,8 @@ public class ResourcePoolQueryHelper {
 
                     QueryTask task = o.getBody(QueryTask.class);
                     if (task.results.documents == null ||
-                            task.results.documents.size() < this.resourcePoolLinks.size()) {
+                            (this.resourcePoolLinks != null && task.results.documents.size() <
+                                    this.resourcePoolLinks.size())) {
                         completionHandler.accept(QueryResult.forError(new IllegalStateException(
                                 "Couldn't retrieve the requested resource pools")));
                         return;
@@ -169,7 +194,9 @@ public class ResourcePoolQueryHelper {
             Query rpQuery = rpData.resourcePoolState.query;
 
             Query.Builder queryBuilder = Query.Builder.create().addClause(rpQuery);
-            if (this.additionalQueryClausesProvider != null) {
+            if (this.computeLinks != null && !this.computeLinks.isEmpty()) {
+                queryBuilder.addInClause(ServiceDocument.FIELD_NAME_SELF_LINK, this.computeLinks);
+            } else if (this.additionalQueryClausesProvider != null) {
                 this.additionalQueryClausesProvider.accept(queryBuilder);
             }
 
@@ -204,8 +231,95 @@ public class ResourcePoolQueryHelper {
                         .collect(Collectors.toSet()));
             }
 
-            this.completionHandler.accept(this.result);
+            // last step is to find computes that are not part of any resource pool
+            findComputesWithoutPool();
         }).sendWith(this.host);
+    }
+
+    /**
+     * Finds computes that are not part of any resource pool.
+     *
+     * - If we have input resource pool(s), don't do anything.
+     * - If we have input computeLinks, check them.
+     * - Otherwise, get all computes and check which are missing in the already collected result.
+     */
+    private void findComputesWithoutPool() {
+        if (this.resourcePoolLinks != null && !this.resourcePoolLinks.isEmpty()) {
+            this.completionHandler.accept(this.result);
+            return;
+
+        }
+
+        if (this.computeLinks != null && !this.computeLinks.isEmpty()) {
+            handleMissingComputes(this.computeLinks);
+            return;
+        }
+
+        // query for all computes (without expanding the documents)
+        Query.Builder queryBuilder = Query.Builder.create()
+                .addKindFieldClause(ComputeState.class);
+        if (this.additionalQueryClausesProvider != null) {
+            this.additionalQueryClausesProvider.accept(queryBuilder);
+        }
+        QueryTask queryTask = QueryTask.Builder.createDirectTask()
+                .setQuery(queryBuilder.build())
+                .build();
+
+        host.sendRequest(Operation
+                .createPost(host, ServiceUriPaths.CORE_QUERY_TASKS)
+                .setBody(queryTask)
+                .setReferer(this.host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        this.completionHandler.accept(QueryResult.forError(e));
+                        return;
+                    }
+
+                    QueryTask task = o.getBody(QueryTask.class);
+                    handleMissingComputes(task.results.documentLinks);
+                }));
+    }
+
+    /**
+     * With the given compute links, finds which ones are not already retrieved as part of a
+     * resource pool, and loads the corresponding ComputeState documents into the result.
+     */
+    private void handleMissingComputes(Collection<String> allComputeLinks) {
+        Collection<String> missingComputeLinks = new HashSet<>(allComputeLinks);
+        missingComputeLinks.removeAll(this.result.computesByLink.keySet());
+        if (missingComputeLinks.isEmpty()) {
+            this.completionHandler.accept(this.result);
+            return;
+        }
+
+        Query query = Query.Builder.create()
+                .addKindFieldClause(ComputeState.class)
+                .addInClause(ServiceDocument.FIELD_NAME_SELF_LINK, missingComputeLinks)
+                .build();
+        QueryTask queryTask = QueryTask.Builder.createDirectTask()
+                .setQuery(query)
+                .addOption(QueryOption.EXPAND_CONTENT)
+                .build();
+
+        host.sendRequest(Operation
+                .createPost(host, ServiceUriPaths.CORE_QUERY_TASKS)
+                .setBody(queryTask)
+                .setReferer(this.host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        this.completionHandler.accept(QueryResult.forError(e));
+                        return;
+                    }
+
+                    QueryTask task = o.getBody(QueryTask.class);
+                    if (task.results != null && task.results.documents != null) {
+                        storeComputes(null, task.results.documents.values().stream()
+                                .map(json -> Utils.fromJson(json, ComputeState.class))
+                                .collect(Collectors.toSet()));
+                    }
+
+                    this.completionHandler.accept(this.result);
+                }));
     }
 
     /**
@@ -222,20 +336,27 @@ public class ResourcePoolQueryHelper {
 
     /**
      * Stores the retrieved compute states into the QueryResult instance.
+     * The rpLink may be null in case the given computes do not fall into any resource pool.
      */
     private void storeComputes(String rpLink, Collection<ComputeState> computes) {
-        ResourcePoolData rpData = this.result.resourcesPools.get(rpLink);
-        rpData.computeStates.addAll(computes);
+        if (rpLink != null) {
+            ResourcePoolData rpData = this.result.resourcesPools.get(rpLink);
+            rpData.computeStates.addAll(computes);
+        }
 
         for (ComputeState compute : computes) {
             this.result.computesByLink.put(compute.documentSelfLink, compute);
 
+            // make sure rpLinksByComputeLink has an empty item even for computes with no rp link
             Set<String> rpLinks = this.result.rpLinksByComputeLink.get(compute.documentSelfLink);
             if (rpLinks == null) {
                 rpLinks = new HashSet<String>();
                 this.result.rpLinksByComputeLink.put(compute.documentSelfLink, rpLinks);
             }
-            rpLinks.add(rpLink);
+
+            if (rpLink != null) {
+                rpLinks.add(rpLink);
+            }
         }
     }
 }
