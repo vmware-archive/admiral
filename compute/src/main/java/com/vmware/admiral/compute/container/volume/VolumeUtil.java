@@ -11,7 +11,25 @@
 
 package com.vmware.admiral.compute.container.volume;
 
+import static java.util.Collections.disjoint;
+
+import static com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.DEFAULT_VOLUME_DRIVER;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
+
+import com.vmware.admiral.compute.ComponentDescription;
+import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
+import com.vmware.photon.controller.model.resources.ResourceState;
 
 /**
  * Utility class for docker volume related operations.
@@ -49,4 +67,150 @@ public class VolumeUtil {
         return hostDir;
     }
 
+    /**
+     * Creates additional affinity rules between container descriptions which share
+     * local volumes. Each container group should be deployed on a single host.
+     */
+    public static void applyLocalNamedVolumeConstraints(
+            Collection<ComponentDescription> componentDescriptions) {
+
+        Map<String, ContainerVolumeDescription> volumes = filterDescriptions(
+                ContainerVolumeDescription.class, componentDescriptions);
+
+        List<String> localVolumes = volumes.values().stream()
+                .filter(v -> DEFAULT_VOLUME_DRIVER.equals(v.driver))
+                .map(v -> v.name)
+                .collect(Collectors.toList());
+
+        if (localVolumes.isEmpty()) {
+            return;
+        }
+
+        Map<String, ContainerDescription> containers = filterDescriptions(
+                ContainerDescription.class, componentDescriptions);
+
+        // sort containers by local volume: each set is a group of container names
+        // that share a particular local volume
+        List<Set<String>> localVolumeContainers = localVolumes.stream()
+                .map(v -> filterByVolume(v, containers.values()))
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+
+        if (localVolumeContainers.isEmpty()) {
+            return;
+        }
+
+        /** Merge sets of containers sharing local volumes
+         *
+         *  C1  C2  C3  C4  C5  C6
+         *   \  /\  /   |    \  /
+         *    L1  L2    L3    L4
+         *
+         *    Input: [C1, C2], [C2, C3], [C4], [C5, C6]
+         *    Output: [C1, C2, C3], [C4], [C5, C6]
+         */
+        localVolumeContainers = mergeSets(localVolumeContainers);
+
+        Map<String, List<ContainerVolumeDescription>> containerToVolumes =
+                containers.values().stream()
+                        .collect(Collectors.toMap(cd -> cd.name,
+                                cd -> filterVolumes(cd, volumes.values())));
+
+        Map<String, Integer> containerToDriverCount = containerToVolumes.entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey(),
+                        e -> e.getValue().stream()
+                                .map(vd -> vd.driver)
+                                .collect(Collectors.toSet()).size()));
+
+        for (Set<String> s: localVolumeContainers) {
+            if (s.size() > 1) {
+                // find the container with highest number of required drivers
+                int max = s.stream()
+                        .map(cn -> containerToDriverCount.get(cn))
+                        .max((vc1, vc2) -> Integer.compare(vc1, vc2))
+                        .get();
+                Set<String> maxDrivers = s.stream()
+                        .filter(cn -> containerToDriverCount.get(cn) == max)
+                        .collect(Collectors.toSet());
+
+                String maxCont = maxDrivers.iterator().next();
+                s.remove(maxCont);
+                s.stream().forEach(cn -> addAffinity(maxCont, containers.get(cn)));
+            }
+        }
+    }
+
+    private static void addAffinity(String affinityTo, ContainerDescription cd) {
+        if (cd.affinity != null) {
+            boolean alreadyIn = Arrays.stream(cd.affinity).anyMatch(af -> affinityTo.equals(af));
+            if (!alreadyIn) {
+                int newSize = cd.affinity.length + 1;
+                cd.affinity = Arrays.copyOf(cd.affinity, newSize);
+                cd.affinity[newSize] = affinityTo;
+            }
+        } else {
+            cd.affinity = new String[] { affinityTo };
+        }
+    }
+
+    private static Set<String> filterByVolume(String volumeName,
+            Collection<ContainerDescription> descs) {
+
+        Predicate<ContainerDescription> hasVolume = cd -> {
+            if (cd.volumes != null) {
+                return Arrays.stream(cd.volumes).anyMatch(v -> v.startsWith(volumeName));
+            }
+            return false;
+        };
+
+        return descs.stream()
+                .filter(hasVolume)
+                .map(cd -> cd.name)
+                .collect(Collectors.toSet());
+    }
+
+    private static List<ContainerVolumeDescription> filterVolumes(ContainerDescription cd,
+            Collection<ContainerVolumeDescription> volumes) {
+
+        if (cd.volumes == null) {
+            return Collections.emptyList();
+        }
+
+        Predicate<ContainerVolumeDescription> hasVolume = vd -> Arrays.stream(cd.volumes)
+                .anyMatch(v -> v.startsWith(vd.name));
+
+        return volumes.stream()
+                .filter(hasVolume)
+                .collect(Collectors.toList());
+    }
+
+    private static <T extends ResourceState> Map<String, T> filterDescriptions(
+            Class<T> clazz, Collection<ComponentDescription> componentDescriptions) {
+
+        return componentDescriptions.stream()
+                .filter(cd -> clazz.isInstance(cd.component))
+                .map(cd -> clazz.cast(cd.component))
+                .collect(Collectors.toMap(c -> c.name, c -> c));
+    }
+
+    private static List<Set<String>> mergeSets(List<Set<String>> list) {
+        if (list.size() < 2) {
+            return list;
+        }
+
+        for (int i = 0; i < list.size() - 1; i++) {
+            Set<String> current = list.get(i);
+            Set<String> next = list.get(i + 1);
+            if (!disjoint(current, next)) {
+                list.remove(current);
+                list.remove(next);
+                current.addAll(next);
+                list.add(current);
+                list = mergeSets(list);
+                break;
+            }
+        }
+
+        return list;
+    }
 }

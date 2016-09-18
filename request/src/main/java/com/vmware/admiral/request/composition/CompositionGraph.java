@@ -27,6 +27,7 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.volume.VolumeUtil;
 import com.vmware.admiral.request.allocation.filter.AffinityFilters;
 
 public class CompositionGraph {
@@ -55,6 +56,7 @@ public class CompositionGraph {
 
         populateResourceNodesByName(compositeDescription.componentDescriptions);
         calculateResourceDependsOnNodes(compositeDescription);
+        addNamedVolumeConstraints(compositeDescription.componentDescriptions);
         calculateResourceNodeDependents();
 
         // Store dependOn ResourceNodes by ResourceNode name.
@@ -80,6 +82,12 @@ public class CompositionGraph {
         }
 
         return processed;
+    }
+
+    private void addNamedVolumeConstraints(
+            Collection<ComponentDescription> componentDescriptions) {
+
+        VolumeUtil.applyLocalNamedVolumeConstraints(componentDescriptions);
     }
 
     private Queue<ResourceNode> calculateQueueWithFirstLevelNodes(
