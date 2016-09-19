@@ -14,7 +14,6 @@ package com.vmware.admiral.compute.container;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.AssertUtil.assertTrue;
 import static com.vmware.admiral.common.util.ValidationUtils.validateContainerName;
-import static com.vmware.admiral.common.util.ValidationUtils.validatePort;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -335,17 +334,6 @@ public class ContainerDescriptionService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public Map<String, ServiceNetwork> networks;
 
-        /**
-         * Configuration for exposing the service behind this container definition to the public.
-         * All container nodes of the service are automatically load balanced through this
-         * addresses.
-         */
-        @JsonProperty("expose_service")
-        @Documentation(description = "Configuration for exposing the service behind this container definition to the public."
-                + " All container nodes of the service are automatically load balanced through this addresses.")
-        @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public ServiceAddressConfig[] exposeService;
-
         /** PID namespace for the container ( "" / host ) */
         @JsonProperty("pid_mode")
         @Documentation(description = "PID namespace for the container ( '' / host )")
@@ -486,11 +474,6 @@ public class ContainerDescriptionService extends StatefulService {
         if (state.restartPolicy != null) {
             assertTrue(state.restartPolicy.matches("no|always|on-failure"),
                     "Restart policy must be one of no, on-failure, always.");
-        }
-        if (state.exposeService != null) {
-            for (ServiceAddressConfig s : state.exposeService) {
-                validateServiceAddressConfig(s);
-            }
         }
         // Since there's no way to set the dependsOn field from the UI, we can ensure at least that
         // the field includes exactly the services that the container has links to. This should fix
@@ -685,17 +668,6 @@ public class ContainerDescriptionService extends StatefulService {
                         });
     }
 
-    private static void validateServiceAddressConfig(ServiceAddressConfig s) {
-        assertTrue(s.address != null && !s.address.isEmpty(),
-                "Address needs to be specified when exposing public service");
-
-        ServiceAddressConfig.validateAddress(s.address);
-
-        assertTrue(s.port != null && !s.port.isEmpty(),
-                "Port needs to be specified when exposing public service");
-        validatePort(s.port);
-    }
-
     public static Long getContainerMinMemoryLimit() {
         if (containerMinMemory.get() == -1) {
             try {
@@ -761,10 +733,6 @@ public class ContainerDescriptionService extends StatefulService {
         template.capDrop = new String[] { "MKNOD" };
         template.device = new String[] { "/dev/sdc:/dev/xvdc:rwm" };
 
-        ServiceAddressConfig config = new ServiceAddressConfig();
-        config.address = "http://web-service-%s.dev.vmware/portal/";
-        config.port = "5000";
-        template.exposeService = new ServiceAddressConfig[] { config };
         template.dnsSearch = new String[] { "dns search entries (string)" };
         template.extraHosts = new String[] { "hostname:ip" };
         template.affinity = new String[] { "container", "container:soft", "!container:hard" };

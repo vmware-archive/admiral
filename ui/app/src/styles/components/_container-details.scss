@@ -264,36 +264,6 @@ $elements-side-margin: $elements-margin / 2;
 
 
 /* Container Details Content */
-.container-details.with-exposed-service {
-  > .exposed-service {
-    clear: both;
-    max-height: 40px;
-    overflow: auto;
-
-    a {
-      margin-right: 20px;
-    }
-    .exposed-service-hint {
-      color: $main-color;
-      margin-right: 5px;
-
-      .tooltip-inner {
-        max-width: 500px;
-
-        textarea {
-          resize: none;
-          overflow: auto;
-          height: 52px;
-        }
-      }
-    }
-  }
-  /* Container Details Content */
-  > .content {
-    @include transition(top 0.4s);
-    top: 120px;
-  }
-}
 
 .container-shell.modal {
   .modal-dialog {

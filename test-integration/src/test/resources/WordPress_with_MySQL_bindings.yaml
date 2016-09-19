@@ -23,9 +23,6 @@ components:
         value: ${_resource~mysql~address}:3306
       ports:
       - container_port: "80"
-      expose_service:
-      - address: wordpress.cmp
-        port: "80"
   mysql:
     type: Container.Docker
     data:

@@ -853,14 +853,6 @@ services.loadCompositeComponents = function(queryOptions) {
   });
 };
 
-services.loadExposedService = function(link) {
-  return get(link);
-};
-
-services.loadExposedServices = function() {
-  return list(links.EXPOSED_SERVICES, true);
-};
-
 services.loadContainerLogs = function(containerId, sinceMs) {
   return new Promise(function(resolve, reject) {
     var logRequestUriPath = links.CONTAINER_LOGS + '?id=' + containerId;

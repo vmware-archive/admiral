@@ -139,17 +139,6 @@ public class ContainerService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public Map<String, ServiceNetwork> networks;
 
-        /**
-         * The link to the exposed service description if this container is part of an exposed
-         * service. All container nodes of the service are automatically load balanced through the
-         * access points that are configured in this description.
-         */
-        @Documentation(description = "The link to the exposed service description if this container is part of an exposed service."
-                + " All container nodes of the service are automatically load balanced through the access points tha "
-                + " are configured in this description.")
-        @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public String exposedServiceLink;
-
         /** (Required) The docker image */
         @Documentation(description = "The docker image.")
         public String image;

@@ -197,22 +197,6 @@ var ContainerDetailsVueComponent = Vue.extend({
 
     refresh: function() {
       ContainerActions.refreshContainer();
-    },
-
-    exposedServicesDescription: function(i18nKey) {
-      var exposedService = this.model.exposedService;
-      var mappings = exposedService.hostname;
-      for (var key in exposedService.addressConfigs) {
-        if (!exposedService.addressConfigs.hasOwnProperty(key)) {
-          continue;
-        }
-        mappings += ' ' + utils.getURLParts(exposedService.addressConfigs[key].address).host;
-      }
-
-      var input = '<textarea onclick="this.setSelectionRange(0, ' + mappings.length +
-          ')" readonly="readonly" >' + mappings + '</textarea>';
-
-      return i18n.t(i18nKey, {hostMappings: input});
     }
   },
   components: {

@@ -31,7 +31,6 @@ import com.vmware.admiral.compute.container.ContainerLogService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerShellService;
 import com.vmware.admiral.compute.container.DeploymentPolicyService;
-import com.vmware.admiral.compute.container.ExposedServiceDescriptionService.ExposedServiceDescriptionFactoryService;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
@@ -62,7 +61,6 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ContainerFactoryService.class,
                 ContainerHostService.class,
                 EndpointAdapterService.class,
-                ExposedServiceDescriptionFactoryService.class,
                 HostContainerListDataCollectionFactoryService.class,
                 RegistryHostConfigService.class,
                 CompositeDescriptionFactoryService.class,

@@ -23,9 +23,6 @@ components:
            value: ${mysql~name}
       ports:
          - container_port: "80"
-      expose_service:
-         - address: wordpress.cmp
-           port: "80"
     dependsOn: [mysql]
 layout:
   mysql: 0,0

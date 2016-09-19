@@ -45,9 +45,6 @@ components:
       - service: "h1"
       restart_policy: "always"
       network_mode: "host"
-      expose_service:
-      - address: "wp.example.com"
-        port: "80"
   h3:
     type: "Container.Docker"
     data:
@@ -82,9 +79,6 @@ components:
       - "datacontainer2"
       restart_policy: "no"
       network_mode: "bridge"
-      expose_service:
-      - address: "h3.example.com"
-        port: "80"
       TEST_CUSTOM_3_1: "value31"
       TEST_CUSTOM_3_2: "value32"
   h4:

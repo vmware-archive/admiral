@@ -41,7 +41,6 @@ var links = Immutable({
   COMPOSITE_COMPONENTS: RESOURCES + '/composite-components',
   NETWORKS: RESOURCES + '/container-networks',
   CONTAINER_VOLUMES: RESOURCES + '/container-volumes',
-  EXPOSED_SERVICES: RESOURCES + '/exposed-services',
   DATA_COLLECTION: '/data-collection/types/Container.Docker',
 
   SSL_TRUST_CERTS: CONFIG + '/trust-certs',

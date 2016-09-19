@@ -1039,20 +1039,6 @@ ContainersStore = Reflux.createStore({
           currentItemCursor.merge(container);
           currentItemDetailsCursor.setIn(['instance'], container);
           this.emitChange();
-
-          if (container.exposedServiceLink) {
-            services.loadExposedService(container.exposedServiceLink).then((exposedService) => {
-              services.loadHostByLink(exposedService.hostLink).then((host) => {
-
-                if (currentItemDetailsCursor.getIn(['documentId']) === containerId) {
-                  exposedService.hostname = utils.getURLParts(host.address).host;
-
-                  currentItemDetailsCursor.setIn(['exposedService'], exposedService);
-                  this.emitChange();
-                }
-              });
-            });
-          }
         });
       }).catch(this.onGenericDetailsError);
   },

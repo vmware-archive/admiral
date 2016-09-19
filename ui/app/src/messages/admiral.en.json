@@ -448,9 +448,6 @@
         "networkTrafficSent": "Sent",
         "networkTrafficReceived": "Received",
         "showingLogsSince": "Showing logs since",
-        "exposedService": {
-          "description": "This service can be accessed from your browser by clicking on a link. Make sure you have the following entry in your hosts file: <br />__hostMappings__"
-        },
         "attributes": {
           "host": "Host",
           "createdDateLabel": "Created",
@@ -531,14 +528,6 @@
             "ipv4Hint": "Example: 172.16.1.8",
             "ipv6": "IPv6",
             "ipv6Hint": "Example: fe80::42:31ff:fecf:83e2"
-          },
-          "exposeService": "Expose Service",
-          "exposeServiceDescription": "Exposes the service for usage outside of the host(s) it is deployed (HTTP/L7 mode). If service contains multiple nodes, a load balancer will be configured automatically. <br/><br />It can be accessed by the address provided, it will have a generated part for uniqueness. The address supports format character \"%s\" to specify where the unique generated name part is placed. If omitted it will be placed either as a prefix or suffix of the hostname, depending on system config.<br /><br />The host of the address will act as a virtual host. In order to access it, users should add a mapping in hosts file or have a DNS that maps the container address to the hostname.",
-          "exposeServiceInputs": {
-            "address": "Address",
-            "addressHint": "Example: http://wordpress-dev.vmware.com, https://wordpress-%s.vmware.com/path/, etc.",
-            "port": "Container Port",
-            "portHint": "Example: 80"
           },
           "volumes": "Volumes",
           "volumesDescription": "Mount point paths inside the container",
@@ -717,8 +706,6 @@
     "positiveNumber": "Value must be a positive integer less than 2147483648.",
     "nonNegativeNumberAndMinusOne": "Value must be an integer between -1 and 2147483647.",
     "portNumber": "Invalid port number. A valid port number ranges from 0 to 65535.",
-    "exposeServiceAddress": "Invalid service address. Address must be a URL without port and optional scheme and format character in the hostname \"%s\"",
-    "exposeServiceAddressPortDefined": "Port is not allowed in address. It will be selected based on system config for HTTP or HTTPS scheme.",
     "containerMemory": "Memory must be 0 (no limit) or at least 4194304 bytes (4MB).",
     "required": "Value is required.",
     "requiredAll": "All fields are required.",

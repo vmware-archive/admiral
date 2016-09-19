@@ -40,7 +40,6 @@ import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
-import com.vmware.admiral.compute.container.ServiceAddressConfig;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
@@ -66,10 +65,6 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testContainerRemovalResourceOperationCycle() throws Throwable {
-        ServiceAddressConfig serviceAddressConfig = new ServiceAddressConfig();
-        serviceAddressConfig.address = "testAlias";
-        serviceAddressConfig.port = "80";
-        containerDesc.exposeService = new ServiceAddressConfig[] { serviceAddressConfig };
         URI uri = UriUtils.buildUri(host, containerDesc.documentSelfLink);
         doOperation(containerDesc, uri, false, Action.PATCH);
 

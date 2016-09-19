@@ -12,8 +12,7 @@
 <div>
 <alert alert-type="danger" v-bind:show-alert="hasGeneralError" v-bind:alert-message="generalError"></alert>
 <div class="container-details"
-     v-if="model.instance"
-     v-bind:class="{'with-exposed-service': model.exposedService}">
+     v-if="model.instance">
   <alert alert-type="danger" v-bind:show-alert="hasOperationError"
                              v-bind:alert-message="i18n('app.container.details.operation.failure')"></alert>
   <div class="container-details-header">
@@ -48,16 +47,6 @@
                                v-on:click="openShell($event)"></toolbar-action-button>
       </template>
     </div>
-  </div>
-  <div v-if="model.exposedService" class="exposed-service">
-    <span class="exposed-service-hint">
-      <i class="fa fa-external-link" data-toggle="tooltip" data-placement="bottom"
-         v-tooltip="exposedServicesDescription('app.container.details.exposedService.description')"></i>
-    </span>
-    <a v-for="addressConfig in model.exposedService.addressConfigs"
-       track-by="alias"
-       target="_blank"
-       href="{{addressConfig.address}}">{{addressConfig.address}}</a>
   </div>
   <div class="content">
     <maximizable-behaviour class="container-details-properties">

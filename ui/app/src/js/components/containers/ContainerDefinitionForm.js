@@ -92,19 +92,6 @@ let containerDescriptionConstraints = {
       return error;
     });
   },
-  exposeService: function(exposeService) {
-    return prepareMultiInputErrors(exposeService, (exposeServiceConfig) => {
-      var error = {};
-      var addressError = validateServiceAddress(exposeServiceConfig.address);
-      if (addressError) {
-        error.address = addressError;
-      }
-      if (!utils.isValidPort(exposeServiceConfig.port)) {
-        error.port = 'errors.portNumber';
-      }
-      return error;
-    });
-  },
   _cluster: function(clusterSize) {
     if (clusterSize && !utils.isPositiveInteger(clusterSize)) {
       return 'errors.positiveNumber';
@@ -191,42 +178,6 @@ let containerDescriptionConstraints = {
     return validateNameValuePair(logConfig.config);
   }
 };
-
-function validateServiceAddress(address) {
-  if (!address || validator.trim(address).length === 0) {
-    return 'errors.required';
-  }
-
-  var placeholder = 'plc-' + new Date().getTime();
-
-  var addressToTest = address;
-  if (addressToTest.indexOf('%s') !== -1) {
-    addressToTest = addressToTest.replace('%s', placeholder);
-    if (addressToTest.indexOf('%s') !== -1) {
-      // Only one is supported
-      return 'errors.exposeServiceAddress';
-    }
-  }
-
-  if (!validator.isURL(addressToTest, {
-      require_tld: false,
-      allow_underscores: true
-    })) {
-    return 'errors.exposeServiceAddress';
-  }
-
-  var parts = utils.getURLParts(addressToTest);
-
-  if (parts.port) {
-    return 'errors.exposeServiceAddressPortDefined';
-  }
-
-  if (addressToTest.indexOf(placeholder) !== -1 && parts.host.indexOf(placeholder) === -1) {
-    return 'errors.exposeServiceAddress';
-  }
-
-  return null;
-}
 
 function typeaheadSource($typeaheadHolder) {
   var timeout;
@@ -332,15 +283,6 @@ class ContainerDefinitionForm extends Component {
         TemplateActions.openEditNetwork(networks);
       }
     });
-
-    this.exposeServiceEditor = new MulticolumnInputs(
-      this.$el.find('.container-network-expose-service-input .form-control'), {
-        address: enhanceLabels('app.container.request.inputs.exposeServiceInputs.address'),
-        port: enhanceLabels('app.container.request.inputs.exposeServiceInputs.port', {
-          type: 'number'
-        })
-      }
-    );
 
     this.volumesEditor = new MulticolumnInputs(
       this.$el.find('.container-volumes-input .form-control'), {
@@ -456,7 +398,6 @@ class ContainerDefinitionForm extends Component {
       result.networks = this.networksEditor.getData();
     }
 
-    result.exposeService = this.exposeServiceEditor.getData();
     result.volumes = this.volumesEditor.getData();
     result.volumesFrom = this.volumesFromEditor.getData();
     result.workingDir = this.$el.find('.container-working-directory-input .form-control').val() ||
@@ -605,13 +546,6 @@ class ContainerDefinitionForm extends Component {
     });
     result.env = env;
 
-    var exposeServices = [];
-    result.exposeService.forEach(function(o) {
-      if (o.port !== '__null') {
-        exposeServices.push(o);
-      }
-    });
-    result.exposeService = exposeServices;
     result.customProperties = utils.arrayToObject(result.customProperties);
     result.logConfig.config = utils.arrayToObject(result.logConfig.config);
 
@@ -644,9 +578,6 @@ class ContainerDefinitionForm extends Component {
 
     var networks = this.$el.find('.container-networks-input');
     utils.applyMultilineValidationError(networks, errors.networks);
-
-    var exposeService = this.$el.find('.container-network-expose-service-input');
-    utils.applyMultilineValidationError(exposeService, errors.exposeService);
 
     var cluster = this.$el.find('.container-cluster-size-input');
     utils.applyValidationError(cluster, errors._cluster);
@@ -726,9 +657,6 @@ class ContainerDefinitionForm extends Component {
     }
     if (errors.networks) {
       fillTabsToActivate(this.networksEditor.$el);
-    }
-    if (errors.exposeService) {
-      fillTabsToActivate(this.exposeServiceEditor.$el);
     }
     if (errors._cluster) {
       fillTabsToActivate(this.$el.find('.container-cluster-size-input'));
@@ -934,10 +862,6 @@ var updateForm = function(data, oldData) {
     if (data.networkMode === '' || data.networkMode) {
       $networkMode.find('.form-control').val(data.networkMode);
     }
-  }
-
-  if (data.exposeService !== oldData.exposeService) {
-    this.exposeServiceEditor.setData(data.exposeService);
   }
 
   if (data.volumes !== oldData.volumes) {
