@@ -33,6 +33,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.content.Binding;
 import com.vmware.admiral.compute.content.Binding.BindingPlaceholder;
+import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
@@ -102,7 +103,7 @@ public class CompositeDescriptionService extends StatefulService {
         }
     }
 
-    public static class CompositeDescriptionImages {
+    public static class CompositeDescriptionImages extends MultiTenantDocument {
         public Map<String, String> descriptionImages;
     }
 
@@ -278,6 +279,7 @@ public class CompositeDescriptionService extends StatefulService {
                 descriptionLinks);
 
         Map<String, String> images = new HashMap<>();
+        CompositeDescriptionImages result = new CompositeDescriptionImages();
 
         new ServiceDocumentQuery<>(getHost(), ContainerDescription.class)
                 .query(queryTask, (r) -> {
@@ -285,11 +287,10 @@ public class CompositeDescriptionService extends StatefulService {
                         op.fail(r.getException());
                     } else if (r.hasResult()) {
                         images.put(r.getResult().documentSelfLink, r.getResult().image);
+                        result.tenantLinks = r.getResult().tenantLinks;
                     } else {
-                        CompositeDescriptionImages body = new CompositeDescriptionImages();
-                        body.descriptionImages = images;
-
-                        op.setBody(body).complete();
+                        result.descriptionImages = images;
+                        op.setBody(result).complete();
                     }
                 });
     }
