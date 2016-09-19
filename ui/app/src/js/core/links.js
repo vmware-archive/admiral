@@ -63,7 +63,10 @@ var links = Immutable({
   DELETE_TASKS: '/delete-tasks',
 
   // Explicitly relative for both standalone and CAFE
-  CONTAINER_IMAGE_ICONS: 'container-image-icons'
+  CONTAINER_IMAGE_ICONS: 'container-image-icons',
+
+  // Artificial internal only link
+  SYSTEM_NETWORK_LINK: '/system-networks-link'
 });
 
 export default links;

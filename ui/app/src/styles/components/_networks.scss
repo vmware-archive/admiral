@@ -16,23 +16,37 @@ $network-details-size: 150px;
   border-radius: 5px;
   background-color: $context-view-background-color;
 
-  .network-icon, .network-label {
-    display: inline-block;
-    margin-left: 5px;
+  .delete-inline-item-confirmation-holder {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  .network-icon {
+    position: absolute;
+  }
+  .network-label {
+    margin-left: 20px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
   }
 
   .network-actions {
     display: none;
     position: absolute;
-    right: 0;
+    right: 5px;
     top: 0;
   }
 
   .network-actions .btn {
+    padding: 0px;
+    border: none;
     color: $secondary_hint_title_color;
+    font-size: 18px;
   }
 
-  .network-actions:hover .btn {
+  .network-actions .btn:hover {
     color: $main_color;
   }
 }

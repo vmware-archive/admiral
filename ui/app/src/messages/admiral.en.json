@@ -518,9 +518,10 @@
           "networkModeTypes": {
             "none": "None",
             "bridge": "Bridge",
-            "host": "Host",
-            "userDefined": "User Defined"
+            "host": "Host"
           },
+          "networks": "Networks",
+          "networksDescription": "Connects the container to these networks (in addition to the network mode).",
           "exposeService": "Expose Service",
           "exposeServiceDescription": "Exposes the service for usage outside of the host(s) it is deployed (HTTP/L7 mode). If service contains multiple nodes, a load balancer will be configured automatically. <br/><br />It can be accessed by the address provided, it will have a generated part for uniqueness. The address supports format character \"%s\" to specify where the unique generated name part is placed. If omitted it will be placed either as a prefix or suffix of the hostname, depending on system config.<br /><br />The host of the address will act as a virtual host. In order to access it, users should add a mapping in hosts file or have a DNS that maps the container address to the hostname.",
           "exposeServiceInputs": {
@@ -695,6 +696,7 @@
   "pendingOperationCancel": "operation in",
   "openInNewTab": "Open in new tab",
   "unavailable": "N/A",
+  "advanced": "Advanced",
   "errors": {
     "hostIp": "Value must be hostname or IP address.",
     "urlPath": "URL path is invalid.",

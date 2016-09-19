@@ -31,8 +31,6 @@ const OPERATION = {
   LIST: 'LIST'
 };
 
-const SYSTEM_NETWORK_LINK = '/system-networks-link';
-
 let navigateTemplatesAndOpenRequests = function(request) {
   var openTemplatesUnsubscribe = actions.TemplateActions.openTemplates.listen(() => {
     openTemplatesUnsubscribe();
@@ -240,7 +238,7 @@ let getCompleteNetworkDescriptions = function(containerDescriptions, networkDesc
       if (index !== -1) {
         systemNetworkModes.splice(index, 1);
         result.push({
-          documentSelfLink: SYSTEM_NETWORK_LINK + '/' + networkName,
+          documentSelfLink: links.SYSTEM_NETWORK_LINK + '/' + networkName,
           name: networkName
         });
       }
@@ -250,29 +248,9 @@ let getCompleteNetworkDescriptions = function(containerDescriptions, networkDesc
   return result;
 };
 
-let getAllNetworkDescriptions = function(networkDescriptions) {
-  var systemNetworkModes = [constants.NETWORK_MODES.BRIDGE.toLowerCase(),
-                            constants.NETWORK_MODES.NONE.toLowerCase(),
-                            constants.NETWORK_MODES.HOST.toLowerCase()];
-
-  var result = [];
-
-  for (let i = 0; i < systemNetworkModes.length; i++) {
-    let name = systemNetworkModes[i];
-    result.push({
-      name: name,
-      label: i18n.t('app.container.request.inputs.networkModeTypes.' + name)
-    });
-  }
-
-  for (let i = 0; i < networkDescriptions.length; i++) {
-    var network = networkDescriptions[i];
-    if (network.name && systemNetworkModes.indexOf(network.name.toLowerCase()) === -1) {
-      result.push(network);
-    }
-  }
-
-  return result;
+let getUserDefinedNetworkDescriptions = function(networkDescriptions) {
+  return networkDescriptions.filter(
+    n => n.documentSelfLink.indexOf(links.SYSTEM_NETWORK_LINK) === -1);
 };
 
 let getNetworkLinks = function(containerDescriptions, networkDescriptions) {
@@ -660,7 +638,7 @@ let TemplatesStore = Reflux.createStore({
         var networks = utils.getIn(this.getData(),
                                ['selectedItemDetails', 'templateDetails', 'listView',
                                 'networks']) || [];
-        containerDefinition.availableNetworks = getAllNetworkDescriptions(networks);
+        containerDefinition.availableNetworks = getUserDefinedNetworkDescriptions(networks);
 
         this.setContainerDefinitionData(containerDefinition);
 
@@ -669,77 +647,100 @@ let TemplatesStore = Reflux.createStore({
     }).catch(this.onGenericEditError);
   },
 
-  onOpenAddNetwork: function(editDefinitionSelectedNetworks) {
-    this.setInData(['selectedItemDetails', 'addNetwork'], {
-      editDefinitionSelectedNetworks: editDefinitionSelectedNetworks
+  onOpenEditNetwork: function(editDefinitionSelectedNetworks, network) {
+    this.setInData(['selectedItemDetails', 'editNetwork'], {
+      editDefinitionSelectedNetworks: editDefinitionSelectedNetworks,
+      definitionInstance: network
     });
     this.emitChange();
   },
 
-  onCancelAddNetwork: function() {
+  onCancelEditNetwork: function() {
     var cdSelector = this.selectFromData(['selectedItemDetails', 'editContainerDefinition',
                                           'definitionInstance']);
-    var addNetworkSelector = this.selectFromData(['selectedItemDetails', 'addNetwork']);
+    var editNetworkSelector = this.selectFromData(['selectedItemDetails', 'editNetwork']);
 
-    var editDefinitionSelectedNetworks = addNetworkSelector.getIn(
+    var editDefinitionSelectedNetworks = editNetworkSelector.getIn(
       ['editDefinitionSelectedNetworks']);
     if (cdSelector.get() && editDefinitionSelectedNetworks) {
       editDefinitionSelectedNetworks = editDefinitionSelectedNetworks.asMutable();
       delete editDefinitionSelectedNetworks[constants.NEW_ITEM_SYSTEM_VALUE];
-      cdSelector.setIn('availableNetworks',
-                       getAllNetworkDescriptions(editDefinitionSelectedNetworks));
+
+      var networks = utils.getIn(this.getData(),
+                               ['selectedItemDetails', 'templateDetails', 'listView', 'networks']);
+
+      cdSelector.setIn('availableNetworks', getUserDefinedNetworkDescriptions(networks));
       cdSelector.setIn('networks', editDefinitionSelectedNetworks);
     }
-    addNetworkSelector.clear();
+    editNetworkSelector.clear();
 
     this.emitChange();
   },
 
-  onAddNetwork: function(templateId, network) {
-    let networkDescription = {
-      name: network.name,
-      driver: 'overlay'
-    };
-    services.createNetworkDescription(networkDescription).then((createdDescription) => {
-
-      services.loadContainerTemplate(templateId).then((template) => {
-
-        template.descriptionLinks.push(createdDescription.documentSelfLink);
-
-        return services.updateContainerTemplate(template);
-
-      }).then(() => {
-
+  onSaveNetwork: function(templateId, network) {
+    if (network.documentSelfLink) {
+      services.updateDocument(network.documentSelfLink, network).then((updatedDescription) => {
         if (this.data.selectedItemDetails &&
             this.data.selectedItemDetails.documentId === templateId) {
 
           var networks = utils.getIn(this.getData(),
                                ['selectedItemDetails', 'templateDetails', 'listView', 'networks']);
-          networks = networks.asMutable();
-          networks.push(createdDescription);
+          networks = networks.map((n) => {
+            if (n.documentSelfLink === updatedDescription.documentSelfLink) {
+              return updatedDescription;
+            } else {
+              return n;
+            }
+          });
           this.setInData(
             ['selectedItemDetails', 'templateDetails', 'listView', 'networks'], networks);
 
-          var cdSelector = this.selectFromData(['selectedItemDetails', 'editContainerDefinition',
-                                          'definitionInstance']);
-          var addNetworkSelector = this.selectFromData(['selectedItemDetails', 'addNetwork']);
-
-          var editDefinitionSelectedNetworks = addNetworkSelector.getIn(
-            ['editDefinitionSelectedNetworks']);
-          if (cdSelector.get() && editDefinitionSelectedNetworks) {
-            editDefinitionSelectedNetworks = editDefinitionSelectedNetworks.asMutable();
-            delete editDefinitionSelectedNetworks[constants.NEW_ITEM_SYSTEM_VALUE];
-            editDefinitionSelectedNetworks[createdDescription.name] = {};
-
-            cdSelector.setIn('availableNetworks', getAllNetworkDescriptions(networks));
-            cdSelector.setIn('networks', editDefinitionSelectedNetworks);
-          }
-          addNetworkSelector.clear();
-
+          this.setInData(['selectedItemDetails', 'editNetwork'], null);
           this.emitChange();
         }
+      });
+    } else {
+      services.createNetworkDescription(network).then((createdDescription) => {
+        services.loadContainerTemplate(templateId).then((template) => {
+
+          template.descriptionLinks.push(createdDescription.documentSelfLink);
+
+          return services.updateContainerTemplate(template);
+
+        }).then(() => {
+
+          if (this.data.selectedItemDetails &&
+              this.data.selectedItemDetails.documentId === templateId) {
+
+            var networks = utils.getIn(this.getData(),
+                                 ['selectedItemDetails', 'templateDetails', 'listView',
+                                  'networks']);
+            networks = networks.asMutable();
+            networks.push(createdDescription);
+            this.setInData(
+              ['selectedItemDetails', 'templateDetails', 'listView', 'networks'], networks);
+
+            var cdSelector = this.selectFromData(['selectedItemDetails', 'editContainerDefinition',
+                                            'definitionInstance']);
+            var editNetworkSelector = this.selectFromData(['selectedItemDetails', 'editNetwork']);
+
+            var editDefinitionSelectedNetworks = editNetworkSelector.getIn(
+              ['editDefinitionSelectedNetworks']);
+            if (cdSelector.get() && editDefinitionSelectedNetworks) {
+              editDefinitionSelectedNetworks = editDefinitionSelectedNetworks.asMutable();
+              delete editDefinitionSelectedNetworks[constants.NEW_ITEM_SYSTEM_VALUE];
+              editDefinitionSelectedNetworks[createdDescription.name] = {};
+
+              cdSelector.setIn('availableNetworks', getUserDefinedNetworkDescriptions(networks));
+              cdSelector.setIn('networks', editDefinitionSelectedNetworks);
+            }
+            editNetworkSelector.clear();
+
+            this.emitChange();
+          }
+        }).catch(this.onGenericEditError);
       }).catch(this.onGenericEditError);
-    }).catch(this.onGenericEditError);
+    }
   },
 
   onRemoveNetwork: function(templateId, network) {
@@ -761,7 +762,7 @@ let TemplatesStore = Reflux.createStore({
             networkDescriptionLink: networkDescirptionLink
           });
         }
-        if (c.networks && c.networks === network.name) {
+        if (c.networks && c.networks[network.name]) {
           containersToDetach.push({
             containerDescriptionLink: c.documentSelfLink,
             networkDescriptionLink: networkDescirptionLink
@@ -776,7 +777,7 @@ let TemplatesStore = Reflux.createStore({
       this.emitChange();
     };
 
-    if (networkDescirptionLink.indexOf(SYSTEM_NETWORK_LINK) === 0) {
+    if (networkDescirptionLink.indexOf(links.SYSTEM_NETWORK_LINK) === 0) {
       doDelete.call(this);
       return;
     }

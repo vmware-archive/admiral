@@ -288,6 +288,10 @@ services.patchDocument = function(documentSelfLink, diff) {
   return ajax('PATCH', documentSelfLink, JSON.stringify(diff));
 };
 
+services.updateDocument = function(documentSelfLink, document) {
+  return ajax('PUT', documentSelfLink, JSON.stringify(document));
+};
+
 services.loadCredentials = function() {
   var oDataFilter = {};
   oDataFilter[ODATA_FILTER_PROP_NAME] = 'customProperties/scope ne \'SYSTEM\'';

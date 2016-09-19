@@ -2307,3 +2307,49 @@ $alert-text-color: #ffffff;
   background-color: #fff8be;
   border: 1px solid $tooltip-border-color;
 }
+
+.app-view .form-group {
+  margin-right: 15px;
+  position: relative;
+
+  .control-label {
+    text-align: left;
+    font-size: 17px;
+    font-weight: 500;
+  }
+
+  .form-control.multicolumn-inputs {
+    height: auto;
+    height: auto;
+    border: none;
+    box-shadow: none;
+    -webkit-box-shadow: none;
+    padding-left: 0;
+    padding-right: 0;
+    background-color: transparent;
+  }
+
+  input.checkbox-control {
+    margin-top: 14px;
+  }
+
+  .loader-inline {
+    display: none;
+    position: absolute;
+    right: 20px;
+    top: 10px;
+  }
+
+  > .fa-question-circle {
+    @extend .hint;
+    position: absolute;
+    top: 6px;
+    right: -12px;
+  }
+}
+
+.app-view .form-group.loading {
+  .loader-inline {
+    display: block;
+  }
+}

@@ -78,7 +78,8 @@
       </div>
       <div class="grid-container">
         <grid sort-by-dom-index="true" v-bind:preferred-width="preferredGridWidth"
-              v-on:layout-complete="layoutComplete" v-ref:container-grid>
+              v-on:layout-complete="layoutComplete" v-ref:container-grid
+              v-bind:hide-partial-rows="false">
           <grid-item v-for="item in model.templateDetails.listView.items" track-by="documentId">
             <container-template-item v-bind:model="item"
                                      v-bind:template-id="model.documentId"
@@ -87,23 +88,26 @@
             </container-template-item>
           </grid-item>
           <grid-item class="new-item">
-            <div class="item-content new-definition" v-on:click="openAddNewContainerDefinition">
-              <i class='fa fa-plus'></i>
-              <span class='title'>{{i18n('app.template.details.newDefinition.title')}}</span>
-            </div>
-            <div v-if="isNetworkingAvailable" class="item-content right" v-on:click="openAddNewNetwork">
-              <i class='fa fa-plus'></i>
-              <span class='title'>{{i18n('app.template.details.editNetwork.newTitle')}}</span>
-            </div>
+            <template-new-item-menu>
+              <div class="new-definition template-new-item" v-on:click="openAddNewContainerDefinition">
+                <img src="image-assets/resource-icons/container.png"/>
+                <span class="label">{{i18n("app.template.details.newDefinition.title")}}</span>
+              </div>
+              <div class="template-new-item" v-if="isNetworkingAvailable" v-on:click="openAddNewNetwork">
+                <img src="image-assets/resource-icons/network.png"/>
+                <span class="label">{{i18n("app.template.details.editNetwork.newTitle")}}</span>
+              </div>
+            </template-new-item>
           </grid-item>
         </grid>
         <div v-if="model.templateDetails.listView.itemsLoading" class="loading">
           <span class="vertical-helper"></span>
           <img src="image-assets/loading-animation.gif">
         </div>
-        <network-box v-if="isNetworkingAvailable" v-for="network in networks | networksOrderBy" track-by="name" v-bind:model="network"
+        <network-box v-if="isNetworkingAvailable" v-for="network in networks | networksOrderBy" track-by="documentSelfLink" v-bind:model="network"
              v-on:attached="networkAttached"
              v-on:detached="networkDetached"
+             v-on:edit="editNetwork"
              v-on:remove="removeNetwork"></network-box>
 
       </div>
@@ -162,26 +166,20 @@
               v-on:click="saveContainerDefinition($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
     </div>
   </div>
-  <div class="mask" v-if="!!model.addNetwork"></div>
-  <div class="add-network closable-view " v-if="!!model.addNetwork" transition="slide-and-fade">
+  <div class="mask" v-if="!!model.editNetwork"></div>
+  <div class="edit-network closable-view " v-if="!!model.editNetwork" transition="slide-and-fade">
     <a class="close-button" v-on:click="handleBackButton($event)"><i
       class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
     <div class="content">
-      <div class="title">{{i18n('app.template.details.editNetwork.newTitle')}}</div>
-      <div class="form-horizontal">
-        <div class="form-group">
-          <label class="col-sm-3 control-label">{{i18n('app.template.details.editNetwork.name')}}</label>
-          <div class="col-sm-9">
-            <input class="form-control network-name" />
-          </div>
-        </div>
-        <div class="pull-right control-btns">
-          <button class="btn admiral-btn save-container-definition"
-                  v-bind:class="{'loading': addingNetwork}"
-                  v-bind:disabled="buttonsDisabled"
-                  v-on:click="addNetwork($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
-        </div>
-      </div>
+      <div class="title" v-if="model.editNetwork.definitionInstance">{{i18n('app.template.details.editNetwork.editTitle')}}</div>
+      <div class="title" v-else>{{i18n('app.template.details.editNetwork.newTitle')}}</div>
+      <network-definition-form v-ref:network-edit-form v-bind:model="model.editNetwork.definitionInstance"></network-definition-form>
+      <div class="pull-right control-btns">
+      <button class="btn admiral-btn save-container-definition"
+              v-bind:class="{'loading': savingNetwork}"
+              v-bind:disabled="buttonsDisabled"
+              v-on:click="saveNetwork($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+    </div>
     </div>
   </div>
 </div>

@@ -21,6 +21,8 @@ import ActionConfirmationSupportMixin from 'components/common/ActionConfirmation
 import NetworkConnectorMixin from 'components/templates/NetworkConnectorMixin';
 import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
 import NetworkBox from 'components/networks/NetworkBox'; //eslint-disable-line
+import NetworkDefinitionForm from 'components/networks/NetworkDefinitionForm'; //eslint-disable-line
+import TemplateNewItemMenu from 'components/templates/TemplateNewItemMenu'; //eslint-disable-line
 import exportHelper from 'components/templates/TemplateExportHelper';
 import { TemplateActions } from 'actions/Actions';
 import utils from 'core/utils';
@@ -38,7 +40,7 @@ var TemplateDetailsView = Vue.extend({
     return {
       savingContainer: false,
       addingContainer: false,
-      addingNetwork: false,
+      savingNetwork: false,
       editingTemplateName: false,
       templateName: '',
       networkType: 'bridge'
@@ -49,7 +51,7 @@ var TemplateDetailsView = Vue.extend({
       return this.$parent.model.contextView && this.$parent.model.contextView.expanded;
     },
     buttonsDisabled: function() {
-       return this.savingContainer || this.addingContainer || this.addingNetwork;
+       return this.savingContainer || this.addingContainer || this.savingNetwork;
     },
     networks: function() {
       var networks = this.model.templateDetails && this.model.templateDetails.listView.networks;
@@ -352,7 +354,7 @@ var TemplateDetailsView = Vue.extend({
     this.unwatchModel = this.$watch('model', (model) => {
       this.savingContainer = false;
       this.addingContainer = false;
-      this.addingNetwork = false;
+      this.savingNetwork = false;
 
       if (model.alert) {
         this.$dispatch('container-form-alert', model.alert.message, model.alert.type);
@@ -363,7 +365,7 @@ var TemplateDetailsView = Vue.extend({
 
     this.unwatchNetworks = this.$watch('networks', (networks, oldNetworks) => {
       if (networks !== oldNetworks) {
-        this.networksChanged();
+        this.networksChanged(networks);
       }
     });
 
@@ -402,8 +404,8 @@ var TemplateDetailsView = Vue.extend({
         e.stopImmediatePropagation();
       }
       var data = this.model || {};
-      if (data.addNetwork) {
-        TemplateActions.cancelAddNetwork();
+      if (data.editNetwork) {
+        TemplateActions.cancelEditNetwork();
         return true;
       }
       if (data.newContainerDefinition || data.editContainerDefinition) {
@@ -442,16 +444,14 @@ var TemplateDetailsView = Vue.extend({
       TemplateActions.openAddNewContainerDefinition();
     },
     openAddNewNetwork: function() {
-      TemplateActions.openAddNetwork();
+      TemplateActions.openEditNetwork();
     },
-    addNetwork: function($event) {
+    saveNetwork: function($event) {
       $event.preventDefault();
-      this.addingNetwork = true;
-      var network = {
-        type: 'userDefined',
-        name: $(this.$el).find('.add-network .network-name').val()
-      };
-      TemplateActions.addNetwork(this.model.documentId, network);
+
+      this.savingNetwork = true;
+      var network = this.$refs.networkEditForm.getNetworkDefinition();
+      TemplateActions.saveNetwork(this.model.documentId, network);
     },
     searchForImage: function(queryOptions) {
       TemplateActions.searchImagesForContainerDefinition(queryOptions);
@@ -515,13 +515,13 @@ var TemplateDetailsView = Vue.extend({
     operationSupported: function(op) {
       return utils.operationSupportedTemplate(op);
     },
-    networksChanged: function() {
+    networksChanged: function(networks) {
       var gridChildren = this.$refs.containerGrid.$children;
       gridChildren.forEach((child) => {
         if (child.$children && child.$children.length === 1) {
           var container = child.$children[0];
           if (container.model && container.model.documentSelfLink) {
-            this.containerAttached(container);
+            this.updateContainerEndpoints(networks, container.model.documentSelfLink);
           }
         }
       });
@@ -529,10 +529,8 @@ var TemplateDetailsView = Vue.extend({
     },
     containerAttached: function(e) {
       var containerDescriptionLink = e.model.documentSelfLink;
-      var that = this;
-      $(e.$el).find('.container-network-anchor').each(function() {
-        that.prepareContainerEndpoint(this, containerDescriptionLink);
-      });
+      this.prepareContainerEndpoints($(e.$el).find('.container-networks')[0],
+                                     containerDescriptionLink);
     },
     networkAttached: function(e) {
       var networkDescriptionLink = e.model.documentSelfLink;
@@ -542,6 +540,9 @@ var TemplateDetailsView = Vue.extend({
     networkDetached: function(e) {
       var networkAnchor = $(e.$el).find('.network-anchor')[0];
       this.removeNetworkEndpoint(networkAnchor);
+    },
+    editNetwork: function(e) {
+      TemplateActions.openEditNetwork(this.model.documentId, e.model);
     },
     removeNetwork: function(e) {
       TemplateActions.removeNetwork(this.model.documentId, e.model);

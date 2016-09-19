@@ -9,13 +9,20 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import InlineDeleteConfirmationTemplate from 'InlineDeleteConfirmationTemplate';
+import utils from 'core/utils';
+import links from 'core/links';
+
 const TEMPLATE = `<div class="network">
                     <div class="network-details">
-                      <img class="network-icon" src="image-assets/network-and-security.png"/>
+                      <img class="network-icon"
+                        src="image-assets/resource-icons/network-small.png"/>
                       <div class="network-label">{{model.name}}</div>
-                      <div class="network-actions">
-                        <a class="btn item-edit hide"><i class="btn fa fa-pencil"></i></a>
-                        <a class="btn item-delete"v-on:click="onDelete($event)">
+                      <div class="network-actions" v-if="!isSystemNetwork">
+                        <a class="btn item-edit" v-on:click="onEdit($event)">
+                          <i class="btn fa fa-pencil"></i>
+                        </a>
+                        <a class="btn item-delete" v-on:click="onDelete($event)">
                           <i class="fa fa-times"></i>
                         </a>
                       </div>
@@ -28,6 +35,12 @@ const TEMPLATE = `<div class="network">
                         {{i18n('app.template.details.network.drop')}}</div>
                     </div>
                   </div>`;
+
+var removeConfirmationHolder = function($deleteConfirmationHolder) {
+  utils.fadeOut($deleteConfirmationHolder, function() {
+    $deleteConfirmationHolder.remove();
+  });
+};
 
 var NetworkBox = Vue.extend({
   template: TEMPLATE,
@@ -42,14 +55,56 @@ var NetworkBox = Vue.extend({
   attached: function() {
     this.attached = true;
     this.$dispatch('attached', this);
+
+    $(this.$el).on('click', '.network-details .delete-inline-item-confirmation-cancel',
+                   this.onDeleteCancel);
+    $(this.$el).on('click', '.network-details .delete-inline-item-confirmation-confirm',
+                   this.onDeleteConfirm);
   },
   detached: function() {
     this.$dispatch('detached', this);
   },
+  computed: {
+    isSystemNetwork: function() {
+      return this.model && this.model.documentSelfLink.indexOf(links.SYSTEM_NETWORK_LINK) === 0;
+    }
+  },
   methods: {
+    onEdit: function(e) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      this.$dispatch('edit', this);
+    },
     onDelete: function(e) {
       e.preventDefault();
       e.stopImmediatePropagation();
+
+      var $row = $(this.$el).find('.network-details');
+      var $deleteConfirmationHolder = $(InlineDeleteConfirmationTemplate());
+      var $deleteConfirmation = $deleteConfirmationHolder.find('.delete-inline-item-confirmation');
+      $deleteConfirmationHolder.height($row.outerHeight(true) + 1);
+      $row.append($deleteConfirmationHolder);
+
+      utils.slideToLeft($deleteConfirmation);
+    },
+    onDeleteCancel: function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var $deleteConfirmationHolder = $(e.currentTarget)
+        .closest('.delete-inline-item-confirmation-holder');
+
+      removeConfirmationHolder($deleteConfirmationHolder);
+    },
+    onDeleteConfirm(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var $deleteConfirmationHolder = $(e.currentTarget)
+        .closest('.delete-inline-item-confirmation-holder');
+
+      removeConfirmationHolder($deleteConfirmationHolder);
+
       this.$dispatch('remove', this);
     }
   }

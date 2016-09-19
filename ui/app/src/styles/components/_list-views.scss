@@ -1084,6 +1084,21 @@ $template-details-right: 20px;
   }
 }
 
+.template-details .template-new-item-menu {
+  height: 100%;
+
+  .template-new-item {
+    opacity: 0;
+    height: 0;
+  }
+
+  canvas {
+    left: 50%;
+    position: absolute;
+    transform: translateX(-50%);
+  }
+}
+
 .template-details .list-view .new-item.grid-item:hover {
   .item-content.left {
     transform: translate(-80px, 0) scale(0.5);
@@ -1190,7 +1205,7 @@ $elements-side-margin: $elements-margin / 2;
   overflow: auto;
 }
 
-.template-details .add-network.closable-view {
+.template-details .edit-network.closable-view {
   left: 50%;
   top: -$template-details-top;
 

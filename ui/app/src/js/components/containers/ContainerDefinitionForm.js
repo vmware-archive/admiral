@@ -317,7 +317,7 @@ class ContainerDefinitionForm extends Component {
           networks[o.network] = {};
         });
 
-        TemplateActions.openAddNetwork(networks);
+        TemplateActions.openEditNetwork(networks);
       }
     });
 
@@ -358,7 +358,13 @@ class ContainerDefinitionForm extends Component {
         }),
         constraint: enhanceLabels('app.container.request.inputs.affinityInputs.constraint', {
           type: 'dropdown',
-          options: ['soft', 'hard']
+          options: [{
+            value: 'soft',
+            label: 'soft'
+          }, {
+            value: 'hard',
+            label: 'hard'
+          }]
         })
       }
     );
@@ -432,9 +438,9 @@ class ContainerDefinitionForm extends Component {
 
     var $networkMode = this.$el.find('.container-network-mode-input');
 
-    if (!$networkMode.hasClass('hide')) {
-      result.networkMode = $networkMode.find('.form-control').val() || null;
-    } else {
+    result.networkMode = $networkMode.find('.form-control').val() || null;
+    var $networks = this.$el.find('.container-networks-input');
+    if (!$networks.hasClass('hide')) {
       result.networks = this.networksEditor.getData();
     }
 
@@ -887,9 +893,7 @@ var updateForm = function(data, oldData) {
     var $networks = this.$el.find('.container-networks-input');
     if (data.availableNetworks) {
       $networks.removeClass('hide');
-      $networkMode.addClass('hide');
     } else {
-      $networkMode.removeClass('hide');
       $networks.addClass('hide');
     }
   }

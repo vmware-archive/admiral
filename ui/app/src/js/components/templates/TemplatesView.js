@@ -103,7 +103,7 @@ var TemplatesViewVueComponent = Vue.extend({
           || this.model.selectedItemDetails && this.model.selectedItemDetails.selectedForEdit
               && !this.model.selectedItemDetails.editContainerDefinition
               && !this.model.selectedItemDetails.newContainerDefinition
-              && !this.model.selectedItemDetails.addNetwork);
+              && !this.model.selectedItemDetails.editNetwork);
     }
   },
   mixins: [GridHolderMixin],

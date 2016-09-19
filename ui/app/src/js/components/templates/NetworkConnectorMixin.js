@@ -131,8 +131,8 @@ var bindToNetworkConnectionEvent = function(jsplumbInstance, eventName, callback
   });
 };
 
-var findFreeEndpoint = function(jsplumbInstance, $els) {
-  var sourceEndpoint;
+var findFreeEndpoints = function(jsplumbInstance, $els) {
+  var sourceEndpoints = [];
   $els.sort(function(a, b) {
     var d1 = distance(0, 0, a.offsetLeft, a.offsetTop);
     var d2 = distance(0, 0, b.offsetLeft, b.offsetTop);
@@ -140,13 +140,13 @@ var findFreeEndpoint = function(jsplumbInstance, $els) {
   }).each((_, el) => {
     var endpoints = jsplumbInstance.getEndpoints(el);
     endpoints.forEach((endpoint) => {
-      if (!sourceEndpoint && !endpoint.isFull()) {
-        sourceEndpoint = endpoint;
+      if (!endpoint.isFull()) {
+        sourceEndpoints.push(endpoint);
       }
     });
   });
 
-  return sourceEndpoint;
+  return sourceEndpoints;
 };
 
 var NetworkConnectorMixin = {
@@ -208,29 +208,58 @@ var NetworkConnectorMixin = {
         }
       }
     });
+
+    this.containerEndpointsPerLink = {};
+    this.containerNetworksHolder = {};
   },
   methods: {
-    prepareContainerEndpoint: function(el, containerDescriptionLink) {
+    prepareContainerEndpoints: function(networksHolder, containerDescriptionLink) {
       if (!utils.isNetworkingAvailable()) {
         return;
       }
 
-      if (this.jsplumbInstance.getEndpoints(el)) {
-        return;
+      this.containerNetworksHolder[containerDescriptionLink] = networksHolder;
+    },
+    updateContainerEndpoints(networks, containerDescriptionLink) {
+      try {
+        var containerEndpoints = $(this.$el)
+          .find('[data-containerDescriptionLink="' + containerDescriptionLink + '"]');
+
+        var diff = networks.length - containerEndpoints.length;
+        if (diff === 0) {
+          return;
+        } else if (diff > 0) {
+          for (let i = 0; i < diff; i++) {
+            var $el = $('<div>', {class: 'container-network-anchor'});
+            $(this.containerNetworksHolder[containerDescriptionLink]).append($el);
+
+            var el = $el[0];
+            el.setAttribute('data-containerDescriptionLink', containerDescriptionLink);
+            this.jsplumbInstance.addEndpoint(el, {
+              maxConnections: 1,
+              isSource: true,
+              isTarget: true,
+              anchor: 'BottomCenter',
+              endpoint: ['Image', {
+                src: 'image-assets/resource-icons/network-small.png',
+                cssClass: 'container-link'
+              }],
+              deleteEndpointsOnDetach: false,
+              connectorOverlays: getConnectorOverlays()
+            });
+          }
+        } else {
+          var freeEndpoints = findFreeEndpoints(this.jsplumbInstance, containerEndpoints);
+          for (let i = 0; i < -diff && i < freeEndpoints.length; i++) {
+            this.jsplumbInstance.deleteEndpoint(freeEndpoints[i]);
+            $(freeEndpoints[i].getElement()).remove();
+          }
+        }
+
+        this.containerEndpointsPerLink[containerDescriptionLink] = networks;
+      } catch (e) {
+        console.error(e);
       }
-      el.setAttribute('data-containerDescriptionLink', containerDescriptionLink);
-      this.jsplumbInstance.addEndpoint(el, {
-        maxConnections: 1,
-        isSource: true,
-        isTarget: true,
-        anchor: 'BottomCenter',
-        endpoint: ['Image', {
-          src: 'image-assets/network-and-security.png',
-          cssClass: 'container-link'
-        }],
-        deleteEndpointsOnDetach: false,
-        connectorOverlays: getConnectorOverlays()
-      });
     },
     addNetworkEndpoint: function(el, networkDescriptionLink) {
       if (!utils.isNetworkingAvailable()) {
@@ -245,7 +274,7 @@ var NetworkConnectorMixin = {
           anchorCount: 160
         }],
         endpoint: ['Image', {
-          src: 'image-assets/network-link.png',
+          src: 'image-assets/resource-icons/network-link.png',
           cssClass: 'network-link'
         }],
         deleteEndpointsOnDetach: false,
@@ -258,7 +287,7 @@ var NetworkConnectorMixin = {
           shape: 'Rectangle',
           anchorCount: 160
         }],
-        endpoint: ['Image', {src: 'image-assets/network-link.png'}],
+        endpoint: ['Image', {src: 'image-assets/resource-icons/network-link.png'}],
         deleteEndpointsOnDetach: false,
         connectorOverlays: getConnectorOverlays()
       });
@@ -300,7 +329,7 @@ var NetworkConnectorMixin = {
       var existingLinks = getContainerToNetworkLinks(this.jsplumbInstance);
 
       var linksToAdd = {};
-      var linksToRemove = existingLinks;
+      var linksToRemove = $.extend({}, existingLinks);
 
       for (var link in containerToNetworksLinks) {
         if (!containerToNetworksLinks.hasOwnProperty(link)) {
@@ -311,8 +340,6 @@ var NetworkConnectorMixin = {
 
         linksToAdd[link] = networks.filter(x => existingNetworks.indexOf(x) === -1);
         linksToRemove[link] = existingNetworks.filter(x => networks.indexOf(x) === -1);
-
-        delete existingLinks[link];
       }
 
       this.jsplumbInstance.batch(() => {
@@ -332,6 +359,9 @@ var NetworkConnectorMixin = {
               }
             });
           }
+
+          var networks = this.containerEndpointsPerLink[containerToRemove];
+          this.updateContainerEndpoints(networks, containerToRemove);
         }
 
         for (var containerToAdd in linksToAdd) {
@@ -339,13 +369,13 @@ var NetworkConnectorMixin = {
             continue;
           }
           let $containers = $(this.$el)
-            .find('[data-containerDescriptionLink="' + containerToAdd + '"]');
+            .find('[data-containerDescriptionLink="' + containerToAdd + '"]:visible');
 
           let networksToAdd = linksToAdd[containerToAdd];
           for (let i = 0; i < networksToAdd.length; i++) {
             var networkToAdd = networksToAdd[i];
-            var sourceEndpoint = findFreeEndpoint(this.jsplumbInstance, $containers);
-            if (!sourceEndpoint) {
+            var sourceEndpoints = findFreeEndpoints(this.jsplumbInstance, $containers);
+            if (!sourceEndpoints || !sourceEndpoints.length) {
               // no free source endpoint
               continue;
             }
@@ -354,7 +384,7 @@ var NetworkConnectorMixin = {
               .find('[data-networkDescriptionLink="' + networkToAdd + '"]');
 
             this.jsplumbInstance.connect({
-              sourceEndpoint: sourceEndpoint,
+              sourceEndpoint: sourceEndpoints[0],
               target: $networks[0],
               fireEvent: false
             });
