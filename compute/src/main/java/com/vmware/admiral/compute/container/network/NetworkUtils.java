@@ -31,36 +31,100 @@ public class NetworkUtils {
         return PropertyUtils.mergeProperty(copyTo, copyFrom);
     };
 
-    public static final String IPV4_VALIDATION_ERROR_FORMAT = "Specified input "
-            + "is not a valid IPv4 address: %s";
-    public static final String IPV4_CIDR_VALIDATION_ERROR_FORMAT = "Specified input "
-            + "is not a valid IPv4 CIDR notation: %s";
+    public static final String ERROR_NETWORK_NAME_IS_REQUIRED = "Network name is required.";
+    public static final String FORMAT_IP_VALIDATION_ERROR = "Specified input "
+            + "is not a valid IP address: %s";
+    public static final String FORMAT_CIDR_NOTATION_VALIDATION_ERROR = "Specified input "
+            + "is not a valid CIDR notation: %s";
 
-    public static final String REGEXP_IPV4_ADDRESS = "((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}"
-            + "(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])";
-    public static final String REGEXP_IPV4_CIDR_NOTATION = REGEXP_IPV4_ADDRESS
-            + "\\/(3[0-2]|[1-2]?[0-9])";
+    /**
+     * Matches IPv4 addresses specified in form [0-255].[0-255].[0-255].[0-255]
+     */
+    public static final String REGEXP_IPV4_ADDRESS = "(25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\.){3}"
+            + "(25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d";
+
+    /**
+     * Matches all valid IPv6 text representations as specified in
+     * https://tools.ietf.org/html/rfc4291#section-2.2
+     */
+    public static final String REGEXP_IPV6_ADDRESS = "(([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|"
+
+            + "(([0-9A-Fa-f]{1,4}:){6}"
+            + "(:[0-9A-Fa-f]{1,4}|"
+            + "((25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)|:))|"
+
+            + "(([0-9A-Fa-f]{1,4}:){5}"
+            + "(:((25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)|"
+            + "((:[0-9A-Fa-f]{1,4}){1,2})|:))|"
+
+            + "(([0-9A-Fa-f]{1,4}:){4}"
+            + "(((:[0-9A-Fa-f]{1,4})?"
+            + ":((25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d))|"
+            + "((:[0-9A-Fa-f]{1,4}){1,3})|:))|"
+
+            + "(([0-9A-Fa-f]{1,4}:){3}"
+            + "(((:[0-9A-Fa-f]{1,4}){0,2}:"
+            + "((25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d))|"
+            + "((:[0-9A-Fa-f]{1,4}){1,4})|:))|"
+
+            + "(([0-9A-Fa-f]{1,4}:){2}"
+            + "(((:[0-9A-Fa-f]{1,4}){0,3}:"
+            + "((25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d))|"
+            + "((:[0-9A-Fa-f]{1,4}){1,5})|:))|"
+
+            + "(([0-9A-Fa-f]{1,4}:)"
+            + "(((:[0-9A-Fa-f]{1,4}){0,4}:"
+            + "((25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d))|"
+            + "((:[0-9A-Fa-f]{1,4}){1,6})|:))|"
+
+            + "(:"
+            + "(((:[0-9A-Fa-f]{1,4}){0,5}:"
+            + "((25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d))|"
+            + "((:[0-9A-Fa-f]{1,4}){1,7})|:))";
+
+    /**
+     * Matches an IPv4 network mask or IP range specified in CIDR notation
+     */
+    public static final String REGEXP_IPV4_CIDR_NOTATION = "(" + REGEXP_IPV4_ADDRESS
+            + ")\\/(3[0-2]|[1-2]?[0-9])";
+
+    /**
+     * Matches an IPv6 network mask or IP range specified in CIDR notation
+     */
+    public static final String REGEXP_IPV6_CIDR_NOTATION = "(" + REGEXP_IPV6_ADDRESS
+            + ")\\/(12[0-8]|1[0-1]\\d|\\d{1,2})";
+
+    /**
+     * Matches an IPv4 or IPv6 address
+     */
+    public static final String REGEXP_IP_ADDRESS = "("
+            + REGEXP_IPV4_ADDRESS + ")|("
+            + REGEXP_IPV6_ADDRESS + ")";
+
+    public static final String REGEXP_CIDR_NOTATION = "("
+            + REGEXP_IPV4_CIDR_NOTATION + ")|("
+            + REGEXP_IPV6_CIDR_NOTATION + ")";
 
     public static void validateIpCidrNotation(String subnet) {
-        if (subnet != null && !subnet.matches(REGEXP_IPV4_CIDR_NOTATION)) {
+        if (subnet != null && !subnet.matches(REGEXP_CIDR_NOTATION)) {
             String error = String.format(
-                    IPV4_CIDR_VALIDATION_ERROR_FORMAT,
+                    FORMAT_CIDR_NOTATION_VALIDATION_ERROR,
                     subnet);
             throw new IllegalArgumentException(error);
         }
     }
 
     public static void validateIpAddress(String gateway) {
-        if (gateway != null && !gateway.matches(REGEXP_IPV4_ADDRESS)) {
-            String error = String.format(IPV4_VALIDATION_ERROR_FORMAT,
+        if (gateway != null && !gateway.matches(REGEXP_IP_ADDRESS)) {
+            String error = String.format(FORMAT_IP_VALIDATION_ERROR,
                     gateway);
             throw new IllegalArgumentException(error);
         }
     }
 
     public static void validateNetworkName(String name) {
-        if (name == null) {
-            throw new IllegalArgumentException("name is required.");
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException(ERROR_NETWORK_NAME_IS_REQUIRED);
         }
         // currently, it looks like there are no restrictions on the network name from docker side.
         // Numbers-only names and even space-delimited words are supported. We can add some
