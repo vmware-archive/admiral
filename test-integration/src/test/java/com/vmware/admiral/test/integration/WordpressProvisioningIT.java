@@ -15,12 +15,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.request.ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY;
+
 import java.net.Socket;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -32,15 +37,28 @@ import org.junit.runners.Parameterized.Parameters;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
+import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerLogService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.PortBinding;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.request.ContainerNetworkAllocationTaskService;
+import com.vmware.admiral.request.ContainerNetworkAllocationTaskService.ContainerNetworkAllocationTaskState;
+import com.vmware.admiral.request.ContainerNetworkProvisionTaskService;
+import com.vmware.admiral.request.ContainerNetworkProvisionTaskService.ContainerNetworkProvisionTaskState;
+import com.vmware.admiral.request.ContainerNetworkRemovalTaskService;
+import com.vmware.admiral.request.ContainerNetworkRemovalTaskService.ContainerNetworkRemovalTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.service.common.LogService;
+import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -51,6 +69,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
     private static final String WP_PATH = "wp-admin/install.php?step=1";
     private static final String WP_NAME = "wordpress";
     private static final String MYSQL_NAME = "mysql";
+    private static final String EXTERNAL_NETWORK_NAME = "external_wpnet";
     private static final String MYSQL_START_MESSAGE_BEGIN = "Ready for start up.";
     private static final String MYSQL_START_MESSAGE_END = "ready for connections";
     private static final int MYSQL_START_WAIT_RETRY_COUNT = 20;
@@ -66,22 +85,28 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         BRIDGE, OVERLAY
     }
 
-    @Parameters(name = "{index}: {0} {1}")
+    @Parameters(name = "{index}: {0} {1} {2}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                { "WordPress_with_MySQL_bindings.yaml", NetworkType.CUSTOM },
-                { "WordPress_with_MySQL_network.yaml", NetworkType.BRIDGE },
-                { "WordPress_with_MySQL_network.yaml", NetworkType.OVERLAY }
+                { "WordPress_with_MySQL_bindings.yaml", NetworkType.CUSTOM, false },
+                { "WordPress_with_MySQL_network.yaml", NetworkType.BRIDGE, false },
+                { "WordPress_with_MySQL_network.yaml", NetworkType.OVERLAY, false },
+                { "WordPress_with_MySQL_network_external.yaml", NetworkType.BRIDGE, true },
+                { "WordPress_with_MySQL_network_external.yaml", NetworkType.OVERLAY, true }
         });
 
     }
 
     private String templateFile;
     private NetworkType networkType;
+    private boolean useExternalNetwork;
+    private ContainerNetworkState externalNetwork;
 
-    public WordpressProvisioningIT(String templateFile, NetworkType networkType) {
+    public WordpressProvisioningIT(String templateFile, NetworkType networkType,
+            boolean useExternalNetwork) {
         this.templateFile = templateFile;
         this.networkType = networkType;
+        this.useExternalNetwork = useExternalNetwork;
     }
 
     @BeforeClass
@@ -100,10 +125,87 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         compositeDescriptionLink = importTemplate(serviceClient, templateFile);
     }
 
+    @After
+    public void tearDown() throws Exception {
+        if (useExternalNetwork) {
+            cleanupExternalNetwork();
+        }
+    }
+
     @Test
     public void testProvision() throws Exception {
         boolean setupOnCluster = NetworkType.OVERLAY.equals(networkType);
-        doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API, setupOnCluster);
+        setupCoreOsHost(DockerAdapterType.API, setupOnCluster);
+
+        if (useExternalNetwork) {
+            setupExternalNetwork();
+        }
+
+        logger.info("---------- 5. Create test docker image container description. --------");
+        requestContainerAndDelete(getResourceDescriptionLink(false, RegistryType.V1_SSL_SECURE));
+    }
+
+    private void setupExternalNetwork() throws Exception {
+        logger.info("Setting up external network...");
+
+        ContainerNetworkDescription description = new ContainerNetworkDescription();
+        description.documentSelfLink = UUID.randomUUID().toString();
+        description.name = EXTERNAL_NETWORK_NAME;
+        description.tenantLinks = TENANT;
+        description = postDocument(ContainerNetworkDescriptionService.FACTORY_LINK, description);
+
+        ContainerNetworkAllocationTaskState allocationTask = new ContainerNetworkAllocationTaskState();
+        allocationTask.resourceDescriptionLink = description.documentSelfLink;
+        allocationTask.resourceCount = 1L;
+        allocationTask.resourceNames = Arrays.asList(description.name);
+        allocationTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        allocationTask.customProperties = new HashMap<>();
+        allocationTask.tenantLinks = description.tenantLinks;
+        allocationTask = postDocument(ContainerNetworkAllocationTaskService.FACTORY_LINK,
+                allocationTask);
+        waitForTaskToComplete(allocationTask.documentSelfLink);
+        allocationTask = getDocument(allocationTask.documentSelfLink,
+                ContainerNetworkAllocationTaskState.class);
+
+        ContainerNetworkProvisionTaskState provisionTask = new ContainerNetworkProvisionTaskState();
+        provisionTask.resourceDescriptionLink = description.documentSelfLink;
+        provisionTask.resourceCount = 1L;
+        provisionTask.resourceType = ResourceType.NETWORK_TYPE.getName();
+        provisionTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        provisionTask.customProperties = new HashMap<>();
+        provisionTask.customProperties.put(CONTAINER_HOST_ID_CUSTOM_PROPERTY, getDockerHost().id);
+        provisionTask.tenantLinks = description.tenantLinks;
+        provisionTask.resourceLinks = allocationTask.resourceLinks;
+        provisionTask = postDocument(ContainerNetworkProvisionTaskService.FACTORY_LINK,
+                provisionTask);
+        waitForTaskToComplete(provisionTask.documentSelfLink);
+
+        externalNetwork = getDocument(
+                UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK, description.name),
+                ContainerNetworkState.class);
+        assertNotNull(externalNetwork);
+
+        logger.info("External network created.");
+    }
+
+    private void cleanupExternalNetwork() throws Exception {
+        logger.info("Cleaning up external network...");
+
+        assertNotNull("External network should have been set!", externalNetwork);
+
+        ContainerNetworkState network = getDocument(
+                UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK, externalNetwork.name),
+                ContainerNetworkState.class);
+        assertNotNull("External network should still exist!", network);
+
+        ContainerNetworkRemovalTaskState removalTask = new ContainerNetworkRemovalTaskState();
+        removalTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        removalTask.resourceLinks = Arrays.asList(
+                UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK, externalNetwork.name));
+        removalTask = postDocument(ContainerNetworkRemovalTaskService.FACTORY_LINK, removalTask);
+        waitForTaskToComplete(removalTask.documentSelfLink);
+
+        logger.info("External network deleted.");
     }
 
     @Override
@@ -182,7 +284,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
             assertNotNull("Failed to find WP host port", wpHostPort);
 
             wpHost = getHostnameOfComputeHost(wpContainerState.parentLink);
-            // connect to wordpress main page by accessing a specific container instance through the docker exposed port
+            // connect to wordpress main page by accessing a specific container instance through the
+            // docker exposed port
             URI uri = URI.create(String.format("http://%s:%s/%s", wpHost, wpHostPort, WP_PATH));
             logger.info("------------- 4.%s.2. connecting to wordpress main page %s. -------------",
                     wpContainersCount,
@@ -204,7 +307,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
                 wpContainerState = getDocument(wpContainerLink, ContainerState.class);
                 wpHostPort = wpContainerState.ports.get(0).hostPort;
 
-                // connect to wordpress main page by accessing a specific container instance through the docker exposed port
+                // connect to wordpress main page by accessing a specific container instance through
+                // the docker exposed port
                 uri = URI.create(String.format("http://%s:%s/%s", wpHost, wpHostPort, WP_PATH));
 
                 logger.info(

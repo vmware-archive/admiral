@@ -20,7 +20,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
@@ -28,7 +27,6 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
-import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.request.ContainerNetworkRemovalTaskService.ContainerNetworkRemovalTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
@@ -37,7 +35,6 @@ import com.vmware.admiral.service.common.CounterSubTaskService.CounterSubTaskSta
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -193,7 +190,7 @@ public class ContainerNetworkRemovalTaskService extends
         }
 
         try {
-            logInfo("Starting delete of %d container resources", resourceLinks.size());
+            logInfo("Starting delete of %d container network resources", resourceLinks.size());
             for (String resourceLink : resourceLinks) {
                 sendRequest(Operation
                         .createGet(this, resourceLink)
@@ -221,7 +218,7 @@ public class ContainerNetworkRemovalTaskService extends
                     SubStage.INSTANCES_REMOVING);
             sendSelfPatch(patchBody);
         } catch (Throwable e) {
-            failTask("Unexpected exception while deleting container instances", e);
+            failTask("Unexpected exception while deleting container network instances", e);
         }
     }
 
@@ -259,15 +256,22 @@ public class ContainerNetworkRemovalTaskService extends
                 (subTaskLink) -> deleteResourceInstances(state, resourceLinks, subTaskLink));
     }
 
-    private void sendContainerNetworkDeleteRequest(ContainerNetworkState state,
+    private void sendContainerNetworkDeleteRequest(ContainerNetworkState networkState,
             String subTaskLink) {
+
+        if (Boolean.TRUE.equals(networkState.external)) {
+            // The network is defined as external, skip the actual deletion.
+            completeSubTasksCounter(subTaskLink, null);
+            return;
+        }
+
         AdapterRequest adapterRequest = new AdapterRequest();
-        String selfLink = state.documentSelfLink;
+        String selfLink = networkState.documentSelfLink;
         adapterRequest.resourceReference = UriUtils.buildUri(getHost(), selfLink);
         adapterRequest.serviceTaskCallback = ServiceTaskCallback.create(UriUtils.buildUri(
                 getHost(), subTaskLink).toString());
         adapterRequest.operationTypeId = NetworkOperationType.DELETE.id;
-        sendRequest(Operation.createPatch(state.adapterManagementReference)
+        sendRequest(Operation.createPatch(networkState.adapterManagementReference)
                 .setBody(adapterRequest)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
@@ -290,78 +294,29 @@ public class ContainerNetworkRemovalTaskService extends
             for (String resourceLink : state.resourceLinks) {
                 sendRequest(Operation
                         .createGet(this, resourceLink)
-                        .setCompletion(
-                                (o, e) -> {
-                                    if (e != null) {
-                                        failTask("Failed retrieving Container Network State: "
-                                                + resourceLink, e);
-                                        return;
-                                    }
+                        .setCompletion((o, e) -> {
+                            if (e != null) {
+                                failTask("Failed retrieving Container Network State: "
+                                        + resourceLink, e);
+                                return;
+                            }
 
-                                    ContainerNetworkState cns = o
-                                            .getBody(ContainerNetworkState.class);
-                                    doDeleteResource(state, subTaskLink, cns);
-                                }));
+                            ContainerNetworkState cns = o.getBody(ContainerNetworkState.class);
+
+                            deleteContainerNetwork(cns).setCompletion((o2, e2) -> {
+                                if (e2 != null) {
+                                    failTask("Failed removing Container Network State: "
+                                            + resourceLink, e2);
+                                    return;
+                                }
+                                completeSubTasksCounter(subTaskLink, null);
+                            }).sendWith(this);
+                        }));
             }
             sendSelfPatch(createUpdateSubStageTask(state, SubStage.REMOVING_RESOURCE_STATES));
         } catch (Throwable e) {
             failTask("Unexpected exception while deleting resources", e);
         }
-    }
-
-    private void doDeleteResource(ContainerNetworkRemovalTaskState state, String subTaskLink,
-            ContainerNetworkState cns) {
-
-        QueryTask compositeQueryTask = QueryUtil.buildQuery(ContainerNetworkState.class, true);
-
-        QueryUtil.addListValueClause(compositeQueryTask,
-                ContainerNetworkState.FIELD_NAME_DESCRIPTION_LINK,
-                Arrays.asList(cns.descriptionLink));
-
-        final List<String> resourcesSharingDesc = new ArrayList<String>();
-        new ServiceDocumentQuery<ContainerNetworkState>(getHost(), ContainerNetworkState.class)
-                .query(compositeQueryTask, (r) -> {
-                    if (r.hasException()) {
-                        logSevere(
-                                "Failed to retrieve container networks, sharing the same container "
-                                        + "network description: %s -%s",
-                                r.getDocumentSelfLink(), r.getException());
-                    } else if (r.hasResult()) {
-                        resourcesSharingDesc.add(r.getDocumentSelfLink());
-                    } else {
-                        AtomicLong skipOperationException = new AtomicLong();
-
-                        Operation delOp = deleteContainerNetwork(cns);
-
-                        // list of operations to execute to release container network resources
-                        List<Operation> operations = new ArrayList<>();
-                        operations.add(delOp);
-
-                        // delete container network description when deleting all its container
-                        // networks
-                        if (state.resourceLinks.containsAll(resourcesSharingDesc)) {
-                            Operation delDescOp = deleteContainerNetworkDescription(cns);
-                            operations.add(delDescOp);
-                        }
-
-                        OperationJoin.create(operations).setCompletion((ops, exs) -> {
-                            // remove skipped exceptions
-                            if (exs != null && skipOperationException.get() != 0) {
-                                exs.remove(skipOperationException.get());
-                            }
-                            // fail the task is there are exceptions in the children operations
-                            if (exs != null && !exs.isEmpty()) {
-                                failTask("Failed deleting container network resources: "
-                                        + Utils.toString(exs), null);
-                                return;
-                            }
-
-                            // complete the counter task after all remove operations finished
-                            // successfully
-                            completeSubTasksCounter(subTaskLink, null);
-                        }).sendWith(this);
-                    }
-                });
     }
 
     private Operation deleteContainerNetwork(ContainerNetworkState cns) {
@@ -376,38 +331,6 @@ public class ContainerNetworkRemovalTaskService extends
                                 return;
                             }
                             logInfo("Deleted ContainerNetworkState: " + cns.documentSelfLink);
-                        });
-    }
-
-    private Operation deleteContainerNetworkDescription(ContainerNetworkState cns) {
-        return Operation
-                .createGet(this, cns.descriptionLink)
-                .setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                logWarning("Failed retrieving ContainerNetworkDescription: "
-                                        + cns.descriptionLink, e);
-                                return;
-                            }
-
-                            ContainerNetworkDescription cnd = o
-                                    .getBody(ContainerNetworkDescription.class);
-
-                            sendRequest(Operation
-                                    .createDelete(this, cnd.documentSelfLink)
-                                    .setBody(new ServiceDocument())
-                                    .setCompletion(
-                                            (op, ex) -> {
-                                                if (ex != null) {
-                                                    logWarning(
-                                                            "Failed deleting ContainerNetworkDescription: "
-                                                                    + cnd.documentSelfLink,
-                                                            ex);
-                                                    return;
-                                                }
-                                                logInfo("Deleted ContainerNetworkDescription: "
-                                                        + cnd.documentSelfLink);
-                                            }));
                         });
     }
 

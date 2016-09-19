@@ -79,7 +79,7 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
  * Base class for test that provision a container
  */
 public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportIT {
-    private static final List<String> TENANT = Collections.singletonList("docker-test");
+    protected static final List<String> TENANT = Collections.singletonList("docker-test");
     private static final List<String> TENANT_LINKS = Collections
             .singletonList("/tenants/docker-test");
     private static final List<String> OTHER_TENANT_LINKS = Collections
@@ -220,12 +220,12 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
                 getTestRequiredProp("docker.host.ssl.trust.file"),
                 CommonTestStateFactory.REGISTRATION_DOCKER_ID);
 
-        if (dockerHostCompute != null) {
-            dockerHostSslTrust.resourceLink = dockerHostCompute.documentSelfLink;
-        } else {
-            dockerHostSslTrust.resourceLink = dockerHostsInCluster.get(0).documentSelfLink;
-        }
+        dockerHostSslTrust.resourceLink = getDockerHost().documentSelfLink;
         postDocument(SslTrustCertificateService.FACTORY_LINK, dockerHostSslTrust);
+    }
+
+    protected ComputeState getDockerHost() {
+        return (dockerHostCompute != null) ? dockerHostCompute : dockerHostsInCluster.get(0);
     }
 
     protected abstract String getResourceDescriptionLink(boolean downloadImage,
@@ -579,7 +579,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
                 adapterType.name());
 
         // link credentials to host
-        compute.customProperties.put(ComputeConstants.HOST_AUTH_CREDNTIALS_PROP_NAME, credLink);
+        compute.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME, credLink);
         return addHost(compute);
     }
 }

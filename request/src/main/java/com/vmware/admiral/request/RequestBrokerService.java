@@ -856,7 +856,6 @@ public class RequestBrokerService extends
                         return;
                     }
                 }));
-
     }
 
     private void createComputeAllocationTask(RequestBrokerState state) {

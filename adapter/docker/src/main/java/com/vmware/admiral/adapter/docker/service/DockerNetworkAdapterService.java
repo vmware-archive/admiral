@@ -217,38 +217,32 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
         });
     }
 
-    private void processDeleteNetwork(RequestContext context) {
-        CommandInput deleteCommandInput = context.commandInput.withPropertyIfNotNull(
-                DOCKER_CONTAINER_NETWORK_ID_PROP_NAME,
-                context.networkState.name);
-
-        // TODO do verification and stuff
-
-        context.executor.removeNetwork(deleteCommandInput, (op, ex) -> {
-            if (ex != null) {
-                fail(context.request, ex);
-            } else {
-                patchTaskStage(context.request, TaskStage.FINISHED, null);
-            }
-        });
-    }
-
     @SuppressWarnings("unchecked")
     private void inspectAndUpdateNetwork(RequestContext context) {
-        CommandInput inspectCommandInput = new CommandInput(context.commandInput).withProperty(
-                DOCKER_CONTAINER_NETWORK_ID_PROP_NAME, context.networkState.id);
 
-        getHost().log(Level.FINE, "Executing inspect network: %s %s",
-                context.networkState.documentSelfLink, context.request.getRequestTrackingLog());
+        String networkId;
+        if (Boolean.TRUE.equals(context.networkState.external)) {
+            // Actual network name in Docker!
+            networkId = context.networkState.name;
+        } else {
+            networkId = context.networkState.id;
+        }
 
-        if (context.networkState.id == null) {
-            fail(context.request, new IllegalStateException("network id is required"
+        if (networkId == null) {
+            fail(context.request, new IllegalStateException("network id is required "
                     + context.request.getRequestTrackingLog()));
             return;
         }
 
+        CommandInput inspectCommandInput = new CommandInput(context.commandInput).withProperty(
+                DOCKER_CONTAINER_NETWORK_ID_PROP_NAME, networkId);
+
+        getHost().log(Level.FINE, "Executing inspect network: %s %s",
+                context.networkState.documentSelfLink, context.request.getRequestTrackingLog());
+
         context.executor.inspectNetwork(
                 inspectCommandInput,
+                // commandInput,
                 (o, ex) -> {
                     if (ex != null) {
                         fail(context.request, o, ex);
@@ -289,6 +283,24 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
                         patchTaskStage(request, TaskStage.FINISHED, ex);
                     }
                 }));
+    }
+
+    private void processDeleteNetwork(RequestContext context) {
+        AssertUtil.assertNotNull(context.networkState, "networkState");
+        AssertUtil.assertNotEmpty(context.networkState.name, "networkState.name");
+
+        CommandInput deleteCommandInput = context.commandInput.withPropertyIfNotNull(
+                DOCKER_CONTAINER_NETWORK_ID_PROP_NAME, context.networkState.name);
+
+        // TODO do verification and stuff
+
+        context.executor.removeNetwork(deleteCommandInput, (op, ex) -> {
+            if (ex != null) {
+                fail(context.request, ex);
+            } else {
+                patchTaskStage(context.request, TaskStage.FINISHED, null);
+            }
+        });
     }
 
     private void processListNetworks(RequestContext context) {

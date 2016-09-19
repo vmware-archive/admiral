@@ -76,6 +76,16 @@ public class ContainerNetworkService extends StatefulService {
         public String driver;
 
         /**
+         * Composite Template use only. If set to true, specifies that this network exists outside
+         * of the Composite Template.
+         */
+        @Documentation(description = "Composite Template use only. If set to true, specifies that "
+                + "this network exists outside of the Composite Template.")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public Boolean external;
+
+        /**
          * A map of field-value pairs for a given network. These are used to specify network option
          * that are to be used by the network drivers.
          */

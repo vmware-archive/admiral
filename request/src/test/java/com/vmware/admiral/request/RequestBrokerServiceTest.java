@@ -612,7 +612,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         computeHost.resourcePoolLink = resourcePool.documentSelfLink;
         computeHost.descriptionLink = hostDesc.documentSelfLink;
         computeHost.customProperties = new HashMap<>();
-        computeHost.customProperties.put(ComputeConstants.HOST_AUTH_CREDNTIALS_PROP_NAME,
+        computeHost.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 UriUtils.buildUriPath(AuthCredentialsService.FACTORY_LINK,
                         CommonTestStateFactory.AUTH_CREDENTIALS_ID));
         computeHost.customProperties.put(

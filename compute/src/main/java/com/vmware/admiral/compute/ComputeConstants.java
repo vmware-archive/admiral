@@ -16,7 +16,7 @@ import com.vmware.xenon.common.UriUtils;
 
 public class ComputeConstants {
 
-    public static final String HOST_AUTH_CREDNTIALS_PROP_NAME = "__authCredentialsLink";
+    public static final String HOST_AUTH_CREDENTIALS_PROP_NAME = "__authCredentialsLink";
 
     public static final String ENDPOINT_AUTH_CREDNTIALS_PROP_NAME = "__endpointAuthCredentialsLink";
 

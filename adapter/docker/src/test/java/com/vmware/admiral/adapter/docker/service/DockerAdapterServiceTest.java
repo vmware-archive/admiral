@@ -363,7 +363,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
         computeState.descriptionLink = computeDescriptionLink;
         computeState.customProperties = new HashMap<String, String>();
         computeState.customProperties.put(
-                ComputeConstants.HOST_AUTH_CREDNTIALS_PROP_NAME,
+                ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 testDockerCredentialsLink);
         computeState.address = dockerUri.getHost();
         computeState.customProperties.put(

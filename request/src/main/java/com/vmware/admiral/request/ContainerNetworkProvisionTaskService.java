@@ -15,12 +15,13 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
+import static com.vmware.admiral.request.ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
-
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,7 +30,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
@@ -81,7 +81,7 @@ public class ContainerNetworkProvisionTaskService
                     Arrays.asList(PROVISIONING));
         }
 
-        /**  (Required) The description that defines the requested resource. */
+        /** (Required) The description that defines the requested resource. */
         @Documentation(description = "Type of resource to create.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT })
@@ -196,7 +196,8 @@ public class ContainerNetworkProvisionTaskService
             String networkLink, String hostLink, ServiceTaskCallback taskCallback) {
         getNetworkAndHost(networkLink, hostLink, (network, host) -> {
             updateContainerNetworkStateWithContainerHostLink(network, host,
-                    () -> createAndSendContainerNetworkRequest(state, taskCallback, networkLink));
+                    () -> createAndSendContainerNetworkRequest(network, state, taskCallback,
+                            networkLink));
         });
     }
 
@@ -214,7 +215,8 @@ public class ContainerNetworkProvisionTaskService
                 return;
             }
 
-            ContainerNetworkState network = ops.get(getNetworkOp.getId()).getBody(ContainerNetworkState.class);
+            ContainerNetworkState network = ops.get(getNetworkOp.getId())
+                    .getBody(ContainerNetworkState.class);
             ComputeState host = ops.get(getHostOp.getId()).getBody(ComputeState.class);
 
             callback.accept(network, host);
@@ -253,13 +255,19 @@ public class ContainerNetworkProvisionTaskService
                         }));
     }
 
-    private void createAndSendContainerNetworkRequest(ContainerNetworkProvisionTaskState state,
-            ServiceTaskCallback taskCallback, String networkSelfLink) {
+    private void createAndSendContainerNetworkRequest(ContainerNetworkState networkState,
+            ContainerNetworkProvisionTaskState state, ServiceTaskCallback taskCallback,
+            String networkSelfLink) {
 
         AdapterRequest networkRequest = new AdapterRequest();
         networkRequest.resourceReference = UriUtils.buildUri(getHost(), networkSelfLink);
         networkRequest.serviceTaskCallback = taskCallback;
-        networkRequest.operationTypeId = NetworkOperationType.CREATE.id;
+        if (Boolean.TRUE.equals(networkState.external)) {
+            // The network is defined as external, just validate that it exists actually.
+            networkRequest.operationTypeId = NetworkOperationType.INSPECT.id;
+        } else {
+            networkRequest.operationTypeId = NetworkOperationType.CREATE.id;
+        }
         networkRequest.customProperties = state.customProperties;
 
         sendRequest(Operation.createPatch(state.instanceAdapterReference)
@@ -270,7 +278,8 @@ public class ContainerNetworkProvisionTaskService
                         failTask("AdapterRequest failed for network: " + networkSelfLink, e);
                         return;
                     }
-                    logInfo("Network provisioning started  for: " + networkSelfLink);
+                    logInfo("Network '%s' request started for: %s", networkRequest.operationTypeId,
+                            networkSelfLink);
                 }));
     }
 
@@ -343,7 +352,8 @@ public class ContainerNetworkProvisionTaskService
                             if (r.hasException()) {
                                 failTask(
                                         "Exception while selecting containers with contextId ["
-                                                + contextId + "]", r.getException());
+                                                + contextId + "]",
+                                        r.getException());
                             } else if (r.hasResult()) {
                                 ContainerState result = r.getResult();
 
@@ -360,12 +370,17 @@ public class ContainerNetworkProvisionTaskService
                                 callback.accept(containersByDescriptionLink);
                             }
                         });
-
     }
 
     private void getContextContainerDescriptions(
             Map<String, List<ContainerState>> containersByDescriptionLink,
             Consumer<List<ContainerDescription>> callback) {
+
+        if ((containersByDescriptionLink == null) || (containersByDescriptionLink.isEmpty())) {
+            callback.accept(Collections.emptyList());
+            return;
+        }
+
         QueryTask q = QueryUtil.buildQuery(ContainerDescription.class, true);
 
         QueryUtil.addExpandOption(q);
@@ -387,7 +402,6 @@ public class ContainerNetworkProvisionTaskService
                         callback.accept(result);
                     }
                 });
-
     }
 
     private List<ContainerState> getDependantContainerStates(
@@ -405,25 +419,65 @@ public class ContainerNetworkProvisionTaskService
 
     private void selectHostLink(ContainerNetworkProvisionTaskState state,
             ContainerNetworkDescription networkDescription, Consumer<String> callback) {
-        getContextContainerStates(
-                state,
-                (states) -> {
-                    getContextContainerDescriptions(
-                            states,
-                            (descriptions) -> {
-                                List<ContainerState> containerStatesForNetwork = getDependantContainerStates(
-                                        descriptions, states, networkDescription);
-                                if (containerStatesForNetwork.isEmpty()) {
-                                    String err = String
-                                            .format("No container states depending on network description [%s] found.",
-                                                    networkDescription.name);
-                                    failTask(err, null);
-                                } else {
-                                    String hostLink = containerStatesForNetwork.get(0).parentLink;
-                                    callback.accept(hostLink);
-                                }
-                            });
-                });
+
+        // If property __containerHostId exists then use it directly to try to provision the network
+        // (e.g. when External network CRUD operations)
+        if (state.customProperties != null
+                && state.customProperties.containsKey(CONTAINER_HOST_ID_CUSTOM_PROPERTY)) {
+            retrieveContainerHostById(state, (host) -> {
+                String hostLink = host.documentSelfLink;
+                callback.accept(hostLink);
+            });
+            return;
+        }
+
+        getContextContainerStates(state, (states) -> {
+            getContextContainerDescriptions(states, (descriptions) -> {
+                List<ContainerState> containerStatesForNetwork = getDependantContainerStates(
+                        descriptions, states, networkDescription);
+                if (containerStatesForNetwork.isEmpty()) {
+                    String err = String.format(
+                            "No container states depending on network description [%s] found.",
+                            networkDescription.name);
+                    failTask(err, null);
+                } else {
+                    String hostLink = containerStatesForNetwork.get(0).parentLink;
+                    callback.accept(hostLink);
+                }
+            });
+        });
     }
 
+    private void retrieveContainerHostById(ContainerNetworkProvisionTaskState state,
+            Consumer<ComputeState> callbackFunction) {
+
+        final ComputeState[] result = new ComputeState[1];
+
+        final QueryTask queryTask = QueryUtil.buildPropertyQuery(ComputeState.class,
+                ComputeState.FIELD_NAME_ID,
+                state.getCustomProperty(CONTAINER_HOST_ID_CUSTOM_PROPERTY));
+
+        QueryUtil.addExpandOption(queryTask);
+
+        new ServiceDocumentQuery<ComputeState>(getHost(), ComputeState.class)
+                .query(queryTask, (r) -> {
+                    if (r.hasException()) {
+                        failTask(String.format(
+                                "Exception during retrieving a host with id [%s]. Error: [%s]",
+                                state.getCustomProperty(CONTAINER_HOST_ID_CUSTOM_PROPERTY),
+                                Utils.toString(r.getException())), r.getException());
+                    } else if (r.hasResult()) {
+                        result[0] = r.getResult();
+                    } else {
+                        if (result[0] == null) {
+                            failTask(String.format("Host with id: [%s] not found!",
+                                    state.getCustomProperty(CONTAINER_HOST_ID_CUSTOM_PROPERTY)),
+                                    r.getException());
+                            return;
+                        }
+
+                        callbackFunction.accept(result[0]);
+                    }
+                });
+    }
 }

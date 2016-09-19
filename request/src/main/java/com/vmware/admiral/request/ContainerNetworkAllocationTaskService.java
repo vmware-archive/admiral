@@ -222,8 +222,7 @@ public class ContainerNetworkAllocationTaskService extends
         if (networkDescription == null) {
             getContainerNetworkDescription(state,
                     (netwkDesc) -> this.prepareContextAndCreateResourcePrefixNameSelectionTask(
-                            state,
-                            netwkDesc));
+                            state, netwkDesc));
             return;
         }
 
@@ -318,12 +317,19 @@ public class ContainerNetworkAllocationTaskService extends
 
             final ContainerNetworkState networkState = new ContainerNetworkState();
             networkState.documentSelfLink = buildResourceId(resourceName);
-            networkState.name = resourceName;
+            if (Boolean.TRUE.equals(networkDescription.external)) {
+                // external networks must be referenced with the original name by containers
+                networkState.name = networkDescription.name;
+            } else {
+                networkState.name = resourceName;
+            }
             networkState.tenantLinks = state.tenantLinks;
             networkState.descriptionLink = state.resourceDescriptionLink;
             networkState.customProperties = state.customProperties;
             networkState.ipam = networkDescription.ipam;
             networkState.driver = networkDescription.driver;
+            networkState.external = networkDescription.external;
+
             networkState.options = networkDescription.options;
             networkState.documentExpirationTimeMicros = ServiceUtils
                     .getDefaultTaskExpirationTimeInMicros();

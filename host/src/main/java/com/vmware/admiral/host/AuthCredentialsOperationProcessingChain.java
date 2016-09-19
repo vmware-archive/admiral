@@ -46,7 +46,7 @@ class AuthCredentialsOperationProcessingChain extends OperationProcessingChain {
                         .setBody(QueryUtil.addCountOption(QueryUtil.buildPropertyQuery(ComputeState.class,
                                 QuerySpecification.buildCompositeFieldName(
                                         ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
-                                        ComputeConstants.HOST_AUTH_CREDNTIALS_PROP_NAME), service.getSelfLink())))
+                                        ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME), service.getSelfLink())))
                         .setCompletion((o, e) -> {
                             if (e != null) {
                                 service.logWarning(Utils.toString(e));

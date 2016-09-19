@@ -192,7 +192,7 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
         computeState.id = "testParentComputeState";
         computeState.descriptionLink = computeDescriptionLink;
         computeState.customProperties = new HashMap<String, String>();
-        computeState.customProperties.put(ComputeConstants.HOST_AUTH_CREDNTIALS_PROP_NAME,
+        computeState.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 testDockerCredentialsLink);
         computeState.address = dockerUri.getHost();
         computeState.customProperties.put(ContainerHostService.DOCKER_HOST_SCHEME_PROP_NAME,

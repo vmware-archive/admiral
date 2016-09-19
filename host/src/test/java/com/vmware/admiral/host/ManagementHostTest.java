@@ -163,7 +163,7 @@ public class ManagementHostTest {
 
             ComputeState compute = new ComputeState();
             compute.customProperties = new HashMap<>();
-            compute.customProperties.put(ComputeConstants.HOST_AUTH_CREDNTIALS_PROP_NAME,
+            compute.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                     credentials.documentSelfLink);
             compute.descriptionLink = computeDescription.documentSelfLink;
             compute = doPost(host, compute, ComputeService.FACTORY_LINK);

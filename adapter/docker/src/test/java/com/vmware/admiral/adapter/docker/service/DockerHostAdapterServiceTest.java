@@ -133,7 +133,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         request.operationTypeId = ContainerHostOperationType.PING.id;
         request.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
         request.customProperties = new HashMap<>();
-        request.customProperties.put(ComputeConstants.HOST_AUTH_CREDNTIALS_PROP_NAME,
+        request.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 testDockerCredentialsLink);
         request.customProperties.put(ContainerHostService.DOCKER_HOST_ADDRESS_PROP_NAME,
                 dockerUri.toString());
@@ -408,7 +408,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         computeState.descriptionLink = computeDescriptionLink;
         computeState.customProperties = new HashMap<String, String>();
         computeState.customProperties.put(
-                ComputeConstants.HOST_AUTH_CREDNTIALS_PROP_NAME, testDockerCredentialsLink);
+                ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME, testDockerCredentialsLink);
         computeState.customProperties.put(
                 ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
                 ContainerHostService.DockerAdapterType.API.name());

@@ -393,7 +393,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         computeState.address = "https://test-server";
         computeState.resourcePoolLink = "test-resource-pool";
         computeState.customProperties = new HashMap<>();
-        computeState.customProperties.put(ComputeConstants.HOST_AUTH_CREDNTIALS_PROP_NAME,
+        computeState.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 "authCredentialsLink");
         computeState.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
                 DockerAdapterType.API.name());

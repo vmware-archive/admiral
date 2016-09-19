@@ -219,7 +219,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
             return null;
         }
         return hostComputeState.customProperties
-                .get(ComputeConstants.HOST_AUTH_CREDNTIALS_PROP_NAME);
+                .get(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME);
     }
 
     protected void fail(AdapterRequest request, Throwable e) {

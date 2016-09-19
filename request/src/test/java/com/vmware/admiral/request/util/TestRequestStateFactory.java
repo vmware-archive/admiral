@@ -152,7 +152,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
 
     public static ContainerVolumeDescription createContainerVolumeDescription(String name) {
         ContainerVolumeDescription desc = new ContainerVolumeDescription();
-        desc.documentSelfLink = "test-network-" + name;
+        desc.documentSelfLink = "test-volume-" + name;
         desc.name = name;
         desc.tenantLinks = Collections.singletonList("test-group");
 
@@ -253,7 +253,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
                 RESOURCE_POOL_ID);
         cs.adapterManagementReference = URI.create("http://localhost:8081");
         cs.customProperties = new HashMap<>();
-        cs.customProperties.put(ComputeConstants.HOST_AUTH_CREDNTIALS_PROP_NAME,
+        cs.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 UriUtils.buildUriPath(
                         AuthCredentialsService.FACTORY_LINK, AUTH_CREDENTIALS_ID));
         return cs;

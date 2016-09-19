@@ -123,9 +123,11 @@ public abstract class RequestBaseTest extends BaseTestCase {
         // setup Container desc:
         createContainerDescription();
 
+        // setup Container Network description.
+        createContainerNetworkDescription(UUID.randomUUID().toString());
+
         // setup Container Volume description.
         createContainerVolumeDescription(UUID.randomUUID().toString());
-
     }
 
     @Override
@@ -359,6 +361,14 @@ public abstract class RequestBaseTest extends BaseTestCase {
         if (computePolicy != null) {
             containerHost.customProperties.put(ComputeConstants.GROUP_RESOURCE_POLICY_LINK_NAME,
                     computePolicy.documentSelfLink);
+        }
+
+        if (computeDesc.customProperties != null && computeDesc.customProperties
+                .containsKey(ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME)) {
+            containerHost.customProperties.put(
+                    ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME,
+                    computeDesc.customProperties.get(
+                            ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME));
         }
 
         if (volumeDrivers == null) {
