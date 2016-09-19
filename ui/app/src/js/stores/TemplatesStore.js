@@ -818,6 +818,24 @@ let TemplatesStore = Reflux.createStore({
     updateContainersNetworks.call(this, containersToAttach, containersToDetach);
   },
 
+  onAttachDetachNetwork: function(oldContainerDescriptionLink, oldNetworkDescriptionLink,
+                                  newContainerDescriptionLink, newNetworkDescriptionLink) {
+    if (oldContainerDescriptionLink === newContainerDescriptionLink &&
+        oldNetworkDescriptionLink === newNetworkDescriptionLink) {
+      return;
+    }
+
+    var containersToAttach = [{
+      containerDescriptionLink: newContainerDescriptionLink,
+      networkDescriptionLink: newNetworkDescriptionLink
+    }];
+    var containersToDetach = [{
+      containerDescriptionLink: oldContainerDescriptionLink,
+      networkDescriptionLink: oldNetworkDescriptionLink
+    }];
+    updateContainersNetworks.call(this, containersToAttach, containersToDetach);
+  },
+
   setContainerDefinitionData: function(containerDefinition) {
     var containerDefs = utils.getIn(this.getData(),
                     ['selectedItemDetails', 'templateDetails', 'listView', 'items']);

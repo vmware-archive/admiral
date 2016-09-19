@@ -125,8 +125,27 @@ var getContainerToNetworkLinks = function(jsplumbInstance) {
 var bindToNetworkConnectionEvent = function(jsplumbInstance, eventName, callback) {
   jsplumbInstance.bind(eventName, function(info) {
     var links = getContainerNetworkLinksFromEventInfo(info);
-    if (links) {
+    if (links && !this.ignoreSingleConnectionEvents) {
       callback(links[0], links[1]);
+    }
+  });
+};
+
+var bindToNetworkConnectionMovedEvent = function(jsplumbInstance, callback) {
+  jsplumbInstance.bind('connectionMoved', function(info) {
+
+    // Fix for JSPlumb invoking a synchronous "connection" event right after "connectionMoved"
+    this.ignoreSingleConnectionEvents = true;
+    setTimeout(() => {
+      this.ignoreSingleConnectionEvents = false;
+    }, 0);
+
+    var oldLinks = getContainerNetworkLinksFromEndpoints(info.originalSourceEndpoint,
+                                                         info.originalTargetEndpoint);
+    var newLinks = getContainerNetworkLinksFromEndpoints(info.newSourceEndpoint,
+                                                         info.newTargetEndpoint);
+    if (oldLinks && newLinks) {
+      callback(oldLinks[0], oldLinks[1], newLinks[0], newLinks[1]);
     }
   });
 };
@@ -320,6 +339,13 @@ var NetworkConnectorMixin = {
       }
 
       bindToNetworkConnectionEvent(this.jsplumbInstance, 'connectionDetached', callback);
+    },
+    bindNetworkAttachDetachConnection: function(callback) {
+      if (!utils.isNetworkingAvailable()) {
+        return;
+      }
+
+      bindToNetworkConnectionMovedEvent(this.jsplumbInstance, callback);
     },
     applyContainerToNetworksLinks: function(containerToNetworksLinks) {
       if (!utils.isNetworkingAvailable()) {

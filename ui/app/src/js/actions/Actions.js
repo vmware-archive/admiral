@@ -37,7 +37,7 @@ export var TemplateActions = Reflux.createActions([
   'increaseClusterSize', 'decreaseClusterSize',
   'removeTemplate', 'saveTemplateName', 'copyTemplate', 'publishTemplate', 'openImportTemplate',
   'importTemplate', 'openEditNetwork', 'cancelEditNetwork', 'attachNetwork', 'detachNetwork',
-  'saveNetwork', 'removeNetwork'
+  'attachDetachNetwork', 'saveNetwork', 'removeNetwork'
 ]);
 
 export var ContainerActions = Reflux.createActions([

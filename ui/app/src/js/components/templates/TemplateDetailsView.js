@@ -377,13 +377,9 @@ var TemplateDetailsView = Vue.extend({
       }
     });
 
-    this.bindNetworkConnection((containerDescriptionLink, networkDescriptionLink) => {
-      TemplateActions.attachNetwork(containerDescriptionLink, networkDescriptionLink);
-    });
-    this.bindNetworkDetachConnection((containerDescriptionLink, networkDescriptionLink) => {
-      TemplateActions.detachNetwork(containerDescriptionLink, networkDescriptionLink);
-    });
-
+    this.bindNetworkConnection(TemplateActions.attachNetwork);
+    this.bindNetworkDetachConnection(TemplateActions.detachNetwork);
+    this.bindNetworkAttachDetachConnection(TemplateActions.attachDetachNetwork);
   },
   detached: function() {
     this.unwatchExpanded();
