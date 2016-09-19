@@ -159,7 +159,7 @@ function MulticolumnInputs($el, model) {
   this.$list.on('click', '.multicolumn-input-remove', function(e) {
     e.preventDefault();
     var $propetyElement = $(e.currentTarget).closest('.multicolumn-input');
-    removeProperty($propetyElement, _this.$listBody, model, false);
+    removeProperty($propetyElement, _this.$listBody, model, false, this._keepRemovedProperties);
   });
 
   this.$listBody.on('click', '.multicolumn-input-add', function(e) {
@@ -177,6 +177,8 @@ function MulticolumnInputs($el, model) {
       }
     }
   });
+
+  this._keepRemovedProperties = true;
 }
 
 MulticolumnInputs.prototype.setOptions = function(keysToOptions) {
@@ -186,6 +188,10 @@ MulticolumnInputs.prototype.setOptions = function(keysToOptions) {
     }
   }
   this.setData(this._data);
+};
+
+MulticolumnInputs.prototype.keepRemovedProperties = function(value) {
+  this._keepRemovedProperties = value;
 };
 
 MulticolumnInputs.prototype.setData = function(data) {
@@ -279,7 +285,7 @@ MulticolumnInputs.prototype.removeEmptyProperties = function() {
 
     // Remove entries with actual values
     if (!hasNonEmptyValue) {
-      removeProperty($item, this.$listBody, this.model, true);
+      removeProperty($item, this.$listBody, this.model, true, this._keepRemovedProperties);
     }
   }
 };
@@ -300,11 +306,12 @@ var insertEmptyProperty = function($listBody, model, focus) {
   }
 };
 
-var removeProperty = function($propertyElement, $listBody, $model, isFromRemoveEmptyProperties) {
+var removeProperty = function($propertyElement, $listBody, $model,
+                               isFromRemoveEmptyProperties, keepRemovedProperties) {
   let visibleProps = $listBody.children().filter(':visible');
   if (visibleProps.length >= 1) {
     //removing element which contains only value
-    if ($propertyElement.find('li').length === 1) {
+    if (!keepRemovedProperties || $propertyElement.find('li').length === 1) {
       $propertyElement.remove();
     } else if ($propertyElement.find('input').eq(0).val() === '') {
       $propertyElement.remove();

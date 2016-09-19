@@ -522,6 +522,16 @@
           },
           "networks": "Networks",
           "networksDescription": "Connects the container to these networks (in addition to the network mode).",
+          "networksInputs": {
+            "name": "Name",
+            "nameHint": "Example: mynet",
+            "aliases": "Aliases",
+            "aliasesHint": "Example: my-service, my-other-service",
+            "ipv4": "IPv4",
+            "ipv4Hint": "Example: 172.16.1.8",
+            "ipv6": "IPv6",
+            "ipv6Hint": "Example: fe80::42:31ff:fecf:83e2"
+          },
           "exposeService": "Expose Service",
           "exposeServiceDescription": "Exposes the service for usage outside of the host(s) it is deployed (HTTP/L7 mode). If service contains multiple nodes, a load balancer will be configured automatically. <br/><br />It can be accessed by the address provided, it will have a generated part for uniqueness. The address supports format character \"%s\" to specify where the unique generated name part is placed. If omitted it will be placed either as a prefix or suffix of the hostname, depending on system config.<br /><br />The host of the address will act as a virtual host. In order to access it, users should add a mapping in hosts file or have a DNS that maps the container address to the hostname.",
           "exposeServiceInputs": {
@@ -713,6 +723,7 @@
     "required": "Value is required.",
     "requiredAll": "All fields are required.",
     "serviceNameRequired": "Service name is required.",
+    "networkRequired": "Network is required.",
     "itemNotFound": "Item was not found."
   },
   "infoMessages": {

@@ -83,6 +83,15 @@ let containerDescriptionConstraints = {
       return error;
     });
   },
+  networks: function(networks) {
+    return prepareMultiInputErrors(networks, (network) => {
+      var error = {};
+      if (!network.network) {
+        error.network = 'errors.networkRequired';
+      }
+      return error;
+    });
+  },
   exposeService: function(exposeService) {
     return prepareMultiInputErrors(exposeService, (exposeServiceConfig) => {
       var error = {};
@@ -302,19 +311,22 @@ class ContainerDefinitionForm extends Component {
 
     this.networksEditor = new MulticolumnInputs(
       this.$el.find('.container-networks-input .form-control'), {
-        network: enhanceLabels('', {
+        network: enhanceLabels('app.container.request.inputs.networksInputs.name', {
           type: 'dropdown'
-        })
+        }),
+        aliases: enhanceLabels('app.container.request.inputs.networksInputs.aliases'),
+        'ipv4_address': enhanceLabels('app.container.request.inputs.networksInputs.ipv4'),
+        'ipv6_address': enhanceLabels('app.container.request.inputs.networksInputs.ipv6')
       }
     );
+    this.networksEditor.keepRemovedProperties(false);
 
     var thatNetworksEditor = this.networksEditor;
     this.networksEditor.$el.on('change', 'select', function() {
-      console.log(thatNetworksEditor);
       if (this.value === constants.NEW_ITEM_SYSTEM_VALUE) {
         var networks = {};
         thatNetworksEditor.getData().forEach(function(o) {
-          networks[o.network] = {};
+          networks[o.network] = toNetworkModel(o);
         });
 
         TemplateActions.openEditNetwork(networks);
@@ -544,13 +556,13 @@ class ContainerDefinitionForm extends Component {
     });
     result.portBindings = portBindings;
 
+    var networks = {};
     if (result.networks) {
-      var networks = {};
       result.networks.forEach(function(o) {
-        networks[o.network] = {};
+        networks[o.network] = toNetworkModel(o);
       });
-      result.networks = networks;
     }
+    result.networks = networks;
 
     var volumes = [];
     result.volumes.forEach(function(o) {
@@ -630,6 +642,9 @@ class ContainerDefinitionForm extends Component {
     var portBindings = this.$el.find('.container-ports-input');
     utils.applyMultilineValidationError(portBindings, errors.portBindings);
 
+    var networks = this.$el.find('.container-networks-input');
+    utils.applyMultilineValidationError(networks, errors.networks);
+
     var exposeService = this.$el.find('.container-network-expose-service-input');
     utils.applyMultilineValidationError(exposeService, errors.exposeService);
 
@@ -708,6 +723,9 @@ class ContainerDefinitionForm extends Component {
     }
     if (errors.portBindings) {
       fillTabsToActivate(this.portsEditor.$el);
+    }
+    if (errors.networks) {
+      fillTabsToActivate(this.networksEditor.$el);
     }
     if (errors.exposeService) {
       fillTabsToActivate(this.exposeServiceEditor.$el);
@@ -903,7 +921,9 @@ var updateForm = function(data, oldData) {
     if (data.networks) {
       for (var key in data.networks) {
         if (data.networks.hasOwnProperty(key)) {
-          networks.push({network: key});
+          var viewModel = fromNetworkModel(data.networks[key]);
+          viewModel.network = key;
+          networks.push(viewModel);
         }
       }
     }
@@ -1105,6 +1125,40 @@ var normalizeToKB = function(size) {
     size.value /= 1000;
     size.unit = 'kB';
   }
+};
+
+var toNetworkModel = function(viewModel) {
+  var result = {};
+  if (viewModel.aliases) {
+    result.aliases = viewModel.aliases.split(',').map(a => a.trim());
+  }
+
+  if (viewModel.ipv4_address) {
+    result.ipv4_address = viewModel.ipv4_address;
+  }
+
+  if (viewModel.ipv6_address) {
+    result.ipv6_address = viewModel.ipv6_address;
+  }
+
+  return result;
+};
+
+var fromNetworkModel = function(netModel) {
+  var result = {};
+  if (netModel.aliases) {
+    result.aliases = netModel.aliases.join(', ');
+  }
+
+  if (netModel.ipv4_address) {
+    result.ipv4_address = netModel.ipv4_address;
+  }
+
+  if (netModel.ipv6_address) {
+    result.ipv6_address = netModel.ipv6_address;
+  }
+
+  return result;
 };
 
 export default ContainerDefinitionForm;
