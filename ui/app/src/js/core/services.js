@@ -90,19 +90,15 @@ var get = function(url, paramsData) {
   return ajax('GET', url, paramsData);
 };
 
-var post = function(url, paramsData) {
-  return ajax('POST', url, paramsData);
+var post = function(url, entity) {
+  return ajax('POST', url, JSON.stringify(entity));
 };
 
-var put = function(url, paramsData) {
-  return ajax('PUT', url, paramsData);
+var put = function(url, entity) {
+  return ajax('PUT', url, JSON.stringify(entity));
 };
 
-var create = function(url, entity) {
-  return post(url, JSON.stringify(entity));
-};
-
-var update = function(url, entity) {
+var patch = function(url, entity) {
   return ajax('PATCH', url, JSON.stringify(entity));
 };
 
@@ -120,7 +116,7 @@ var deleteEntity = function(url) {
 };
 
 var day2operation = function(url, entity) {
-  return post(url, JSON.stringify(entity));
+  return post(url, entity);
 };
 
 // Simple Odata query builder. By default it will build 'and' query. If provided OCCURRENCE option,
@@ -324,11 +320,11 @@ services.loadCredential = function(id) {
 };
 
 services.createCredential = function(credential) {
-  return create(links.CREDENTIALS, credential);
+  return post(links.CREDENTIALS, credential);
 };
 
 services.updateCredential = function(credential) {
-  return update(credential.documentSelfLink, credential);
+  return patch(credential.documentSelfLink, credential);
 };
 
 services.deleteCredential = function(credential) {
@@ -356,11 +352,11 @@ services.loadDeploymentPolicy = function(policyLink) {
 };
 
 services.createDeploymentPolicy = function(policy) {
-  return create(links.DEPLOYMENT_POLICIES, policy);
+  return post(links.DEPLOYMENT_POLICIES, policy);
 };
 
 services.updateDeploymentPolicy = function(policy) {
-  return update(policy.documentSelfLink, policy);
+  return patch(policy.documentSelfLink, policy);
 };
 
 services.deleteDeploymentPolicy = function(policy) {
@@ -395,11 +391,11 @@ services.loadResourcePool = function(id) {
 };
 
 services.createResourcePool = function(resourcePool) {
-  return create(links.RESOURCE_POOLS, resourcePool);
+  return post(links.RESOURCE_POOLS, resourcePool);
 };
 
 services.updateResourcePool = function(resourcePool) {
-  return update(resourcePool.documentSelfLink, resourcePool);
+  return patch(resourcePool.documentSelfLink, resourcePool);
 };
 
 services.deleteResourcePool = function(resourcePool) {
@@ -461,11 +457,11 @@ services.importCertificate = function(hostUri, acceptCertificate) {
 };
 
 services.createCertificate = function(certificate) {
-  return create(links.SSL_TRUST_CERTS, certificate);
+  return post(links.SSL_TRUST_CERTS, certificate);
 };
 
 services.updateCertificate = function(certificate) {
-  return update(certificate.documentSelfLink, certificate);
+  return patch(certificate.documentSelfLink, certificate);
 };
 
 services.deleteCertificate = function(certificate) {
@@ -473,7 +469,7 @@ services.deleteCertificate = function(certificate) {
 };
 
 services.addHost = function(host) {
-  return put(links.CONTAINER_HOSTS, JSON.stringify(host));
+  return put(links.CONTAINER_HOSTS, host);
 };
 
 services.createHostDescription = function(hostData) {
@@ -495,7 +491,7 @@ services.createHostDescription = function(hostData) {
     hostDescription.environmentName = envName;
   }
 
-  return post(links.COMPUTE_DESCRIPTIONS, JSON.stringify(hostDescription));
+  return post(links.COMPUTE_DESCRIPTIONS, hostDescription);
 };
 
 services.createHost = function(hostDescription, clusterSize) {
@@ -505,12 +501,12 @@ services.createHost = function(hostDescription, clusterSize) {
   request.resourceDescriptionLink = hostDescription.documentSelfLink;
   request.resourceCount = clusterSize;
 
-  return post(links.REQUESTS, JSON.stringify(request));
+  return post(links.REQUESTS, request);
 };
 
 services.validateHost = function(host) {
   return put(links.CONTAINER_HOSTS + '?' + REQUEST_PARAM_VALIDATE_OPERATION_NAME + '=true',
-              JSON.stringify(host));
+              host);
 };
 
 services.loadHostDescriptionByLink = function(hostDescriptionLink) {
@@ -526,17 +522,17 @@ services.loadHostByLink = function(hostLink) {
 };
 
 services.updateHost = function(hostId, hostData) {
-   return update(links.COMPUTE_RESOURCES + '/' + hostId, hostData);
+   return patch(links.COMPUTE_RESOURCES + '/' + hostId, hostData);
 };
 
 services.enableHost = function(hostId) {
-  return update(links.COMPUTE_RESOURCES + '/' + hostId, {
+  return patch(links.COMPUTE_RESOURCES + '/' + hostId, {
     'powerState': 'ON'
   });
 };
 
 services.disableHost = function(hostId) {
-  return update(links.COMPUTE_RESOURCES + '/' + hostId, {
+  return patch(links.COMPUTE_RESOURCES + '/' + hostId, {
     'powerState': 'SUSPEND'
   });
 };
@@ -685,11 +681,11 @@ services.createOrUpdateRegistry = function(registry) {
 
 services.validateRegistry = function(registry) {
   return put(links.REGISTRY_HOSTS + '?' + REQUEST_PARAM_VALIDATE_OPERATION_NAME + '=true',
-      JSON.stringify(registry));
+      registry);
 };
 
 services.updateRegistry = function(registry) {
-  return update(registry.documentSelfLink, registry);
+  return patch(registry.documentSelfLink, registry);
 };
 
 services.deleteRegistry = function(registry) {
@@ -769,11 +765,11 @@ services.loadPolicy = function(documentSelfLink) {
 };
 
 services.createPolicy = function(policy) {
-  return create(links.RESOURCE_GROUP_POLICIES, policy);
+  return post(links.RESOURCE_GROUP_POLICIES, policy);
 };
 
 services.updatePolicy = function(policy) {
-  return put(policy.documentSelfLink, JSON.stringify(policy));
+  return put(policy.documentSelfLink, policy);
 };
 
 services.deletePolicy = function(policy) {
@@ -789,11 +785,11 @@ services.loadEnvironment = function(documentSelfLink) {
 };
 
 services.createEnvironment = function(environment) {
-  return create(links.ENVIRONMENT_MAPPING, environment);
+  return post(links.ENVIRONMENT_MAPPING, environment);
 };
 
 services.updateEnvironment = function(environment) {
-  return put(environment.documentSelfLink, JSON.stringify(environment));
+  return put(environment.documentSelfLink, environment);
 };
 
 services.deleteEnvironment = function(environment) {
@@ -813,7 +809,7 @@ services.verifyEndpoint = function(endpoint) {
 };
 
 services.createEndpoint = function(endpoint) {
-  return create(links.ENDPOINTS + '?enumerate', endpoint);
+  return post(links.ENDPOINTS + '?enumerate', endpoint);
 };
 
 services.updateEndpoint = function(endpoint) {
@@ -997,7 +993,7 @@ services.createContainerTemplate = function(containerDescription) {
         descriptionLinks: [createdContainerDescription.documentSelfLink]
       };
 
-      return create(links.COMPOSITE_DESCRIPTIONS, multiContainerDescription);
+      return post(links.COMPOSITE_DESCRIPTIONS, multiContainerDescription);
   });
 };
 
@@ -1032,7 +1028,7 @@ services.createContainerFromDescriptionLink = function(resourceDescriptionLink,
     }
   }
 
-  return create(links.REQUESTS, request).then(function(createdRequest) {
+  return post(links.REQUESTS, request).then(function(createdRequest) {
     return createdRequest;
   });
 };
@@ -1046,11 +1042,11 @@ services.loadContainerTemplate = function(documentId) {
 };
 
 services.updateContainerTemplate = function(template) {
-  return update(template.documentSelfLink, template);
+  return patch(template.documentSelfLink, template);
 };
 
 services.copyContainerTemplate = function(template) {
-  return create(links.COMPOSITE_DESCRIPTIONS_CLONE, template);
+  return post(links.COMPOSITE_DESCRIPTIONS_CLONE, template);
 };
 
 services.importContainerTemplate = function(template) {
@@ -1072,15 +1068,15 @@ services.importContainerTemplate = function(template) {
 };
 
 services.createContainerDescription = function(containerDescription) {
-  return create(links.CONTAINER_DESCRIPTIONS, containerDescription);
+  return post(links.CONTAINER_DESCRIPTIONS, containerDescription);
 };
 
 services.updateContainerDescription = function(containerDescription) {
-  return put(containerDescription.documentSelfLink, JSON.stringify(containerDescription));
+  return put(containerDescription.documentSelfLink, containerDescription);
 };
 
 services.createNetworkDescription = function(networkDescription) {
-  return create(links.CONTAINER_NETWORK_DESCRIPTIONS, networkDescription);
+  return post(links.CONTAINER_NETWORK_DESCRIPTIONS, networkDescription);
 };
 
 services.loadClusterContainers = function(descriptionLink, compositionContextId) {
@@ -1174,11 +1170,11 @@ services.loadResourceGroup = function(groupLink) {
 };
 
 services.createResourceGroup = function(group) {
-  return create(links.RESOURCE_GROUPS, group);
+  return post(links.RESOURCE_GROUPS, group);
 };
 
 services.updateResourceGroup = function(group) {
-  return update(group.documentSelfLink, group);
+  return patch(group.documentSelfLink, group);
 };
 
 services.deleteResourceGroup = function(group) {
@@ -1224,9 +1220,9 @@ services.login = function(username, password) {
 };
 
 services.logout = function() {
-  var data = JSON.stringify({
+  var data = {
     requestType: 'LOGOUT'
-  });
+  };
 
   return post(links.BASIC_AUTH, data);
 };
