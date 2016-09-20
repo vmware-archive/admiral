@@ -32,6 +32,40 @@ var (
 )
 
 func init() {
+	initLogin()
+	initLogout()
+}
+
+var loginCmd = &cobra.Command{
+	Use:   "login",
+	Short: "Login with username and pass",
+	Long:  "Login with username and pass",
+
+	Run: func(cmd *cobra.Command, args []string) {
+		if showToken {
+			fmt.Println(loginout.GetInfo())
+			return
+		}
+
+		if config.USER != "" {
+			fmt.Println(config.USER)
+		}
+		if strings.TrimSpace(username) == "" {
+			if config.USER == "" {
+				username = prompUsername()
+			} else {
+				username = config.USER
+			}
+		}
+		if strings.TrimSpace(password) == "" {
+			password = promptPassword()
+		}
+		loginout.Login(username, password, urlF)
+
+	},
+}
+
+func initLogin() {
 	loginCmd.Flags().StringVarP(&username, "user", "u", "", "Username")
 	loginCmd.Flags().StringVarP(&password, "pass", "p", "", "Password")
 	loginCmd.Flags().StringVar(&urlF, "url", "", "Set URL config property.")
@@ -57,35 +91,16 @@ func promptPassword() string {
 	return password
 }
 
-var loginCmd = &cobra.Command{
-	Use:   "login",
-	Short: "Login with username and pass",
-	Long:  "Login with username and pass",
+var logoutCmd = &cobra.Command{
+	Use:   "logout",
+	Short: "Logout user",
+	Long:  "Logout user",
 
-	//Main function for the "login" command.
-	//You can either be prompted to enter your username and password or to enter them as arguments to -u or --user and -p or --pass flags.
-	//If username and password are correct a temp file will be created in the OS temp directory where the auth token will be held.
-	//If the username and/or password are incorrect again temp file will be created but it will be empty and user won't be authorized with missing token.
 	Run: func(cmd *cobra.Command, args []string) {
-		if showToken {
-			fmt.Println(loginout.GetInfo())
-			return
-		}
-
-		if config.USER != "" {
-			fmt.Println(config.USER)
-		}
-		if strings.TrimSpace(username) == "" {
-			if config.USER == "" {
-				username = prompUsername()
-			} else {
-				username = config.USER
-			}
-		}
-		if strings.TrimSpace(password) == "" {
-			password = promptPassword()
-		}
-		loginout.Login(username, password, urlF)
-
+		loginout.Logout()
 	},
+}
+
+func initLogout() {
+	RootCmd.AddCommand(logoutCmd)
 }

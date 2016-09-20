@@ -39,10 +39,13 @@ type Container struct {
 	DocumentSelfLink string      `json:"documentSelfLink"`
 }
 
+//GetID returns the ID of the container.
 func (c *Container) GetID() string {
 	return strings.Replace(c.DocumentSelfLink, "/resources/containers/", "", -1)
 }
 
+//GetExternalID returns shorten external ID similar
+//to how docker ps shows containers IDs.
 func (c *Container) GetExternalID() string {
 	if len(c.Id) <= 14 {
 		return c.Id
@@ -50,6 +53,8 @@ func (c *Container) GetExternalID() string {
 	return c.Id[0:15]
 }
 
+//GetStatus returns the power state of the container.
+//If the status is "RUNNING" it also contains since when it is running.
 func (c *Container) GetStatus() string {
 	if c.PowerState != "RUNNING" {
 		return c.PowerState
@@ -144,7 +149,7 @@ func (p Port) String() string {
 //SetPorts is setting the host and container port fields.
 //Expected format of the parameter is "HostPort:ContainerPort"
 func (p *Port) SetPorts(s string) {
-	r, _ := regexp.Compile("[0-9]+\\:[0-9]+")
+	r, _ := regexp.Compile("[0-9]+:[0-9]+")
 	if !r.MatchString(s) {
 		fmt.Println("Invalid format of ports. \n Usage: \n    -p hostPort:containerPort \n Example:    -p 9080:80")
 		os.Exit(0)

@@ -47,10 +47,7 @@ type ImagesList struct {
 
 func (li *ImagesList) Print() {
 	if len(li.Results) > 0 {
-		//		fmt.Println("Preparing to sort...")
-		//		tm := time.Now()
 		sort.Sort(ImageSorter(li.Results))
-		//		fmt.Printf("Sorted complete. Took: %.5f seconds\n", time.Now().Sub(tm).Seconds())
 		fmt.Printf("%-55s %-45s %-10s %-10s %-10s %-10s\n", "NAME", "DESCRIPTION", "STARS", "OFFICIAL", "AUTOMATED", "TRUSTED")
 		for _, image := range li.Results {
 			var (
@@ -81,6 +78,7 @@ func (li *ImagesList) Print() {
 	}
 }
 
+//cutImgName removes any default path that name is containing.
 func cutImgName(name string) string {
 	officialRegAddresses := []string{
 		"registry.hub.docker.com/library/",
@@ -101,7 +99,8 @@ func cutImgName(name string) string {
 	return name
 }
 
-//Function to get the existing templates which call another function to map names with the templates that have the same name.
+//QueryImages fetches images matching the imgName parameter.
+//The function returns the count of the fetched images.
 func (li *ImagesList) QueryImages(imgName string) int {
 	url := config.URL + "/templates?&documentType=true&imagesOnly=true&q=" + imgName
 	req, _ := http.NewRequest("GET", url, nil)
@@ -114,6 +113,9 @@ func (li *ImagesList) QueryImages(imgName string) int {
 
 type PopularImages []Image
 
+//PrintPopular prints popular images.
+//This function is called when user execute "admiral search"
+//without passing any name as parameter.
 func PrintPopular() {
 	url := config.URL + "/popular-images?documentType=true"
 	req, _ := http.NewRequest("GET", url, nil)
@@ -121,16 +123,11 @@ func PrintPopular() {
 	pi := PopularImages{}
 	err := json.Unmarshal(respBody, &pi)
 	functions.CheckJson(err)
-	fmt.Println("POPULAR TEMPLATES.")
-	fmt.Printf("%-5s %-30s %-45s %-10s %-10s %-10s %-10s\n", "#", "NAME", "DESCRIPTION", "STARS", "OFFICIAL", "AUTOMATED", "TRUSTED")
-	for i, img := range pi {
+	fmt.Println("POPULAR TEMPLATES")
+	fmt.Printf("%-30s %-45s %-10s %-10s %-10s %-10s\n", "NAME", "DESCRIPTION", "STARS", "OFFICIAL", "AUTOMATED", "TRUSTED")
+	for _, img := range pi {
 		cuttedName := cutImgName(img.Name)
-		var desc string
-		if len(img.Description) > 40 {
-			desc = img.Description[:40] + "..."
-		} else {
-			desc = img.Description
-		}
-		fmt.Printf("%-5d %-30s %-45s %-10s %-10s %-10s %-10s\n", i+1, cuttedName, desc, "---", "---", "---", "---")
+		desc := functions.ShortString(img.Description, 40)
+		fmt.Printf("%-30s %-45s %-10s %-10s %-10s %-10s\n", cuttedName, desc, "---", "---", "---", "---")
 	}
 }

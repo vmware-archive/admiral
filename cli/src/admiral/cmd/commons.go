@@ -42,12 +42,73 @@ var (
 	custProps     []string
 	custPropsDesc string = "Add some custom properties"
 
-	//Flag used to update name.
-	newName string
+	//Flag used to update.
+	newName        string
+	newDescription string
+	newAddress     string
+	newCred        string
 
 	//Flag for group.
 	groupID     string
 	groupIDDesc string = "Group ID."
+
+	//If true print all containers.
+	allContainers bool
+
+	//Container Run Command Flags
+	clusterSize int32
+	cmds        []string
+	env         []string
+	hostName    string
+	retryCount  int32
+	logDriver   string
+	memory      int64
+	memorySwap  int64
+	networkMode string
+	ports       []string
+	publishAll  bool
+	restartPol  string
+	workingDir  string
+	volumes     []string
+	//Container Run Command Flags
+
+	//Count for clusters
+	scaleCount int32
+	//Count for clusters
+
+	//Credentials flags
+	credName    string
+	publicCert  string
+	privateCert string
+	userName    string
+	passWord    string
+
+	publicCertDesc  string = "Location to your public key."
+	privateCertDesc string = "Location to your private key."
+	//Credentials flags
+
+	//Custom Properties flags
+	cpHostIP    string
+	cpCredID    string
+	cpResPoolID string
+	cpKeys      []string
+	cpVals      []string
+	//Custom Properties flags
+
+	//Deployment policy flags
+	dpName        string
+	dpDescription string
+	//Deployment policy flags
+
+	//Group description flag
+	groupDescription string
+
+	//Host flags
+	ipF         string
+	resPoolF    string
+	deplPolicyF string
+	autoAccept  bool
+	//Host flags
 )
 
 var admiralLogo = `

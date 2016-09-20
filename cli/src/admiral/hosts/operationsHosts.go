@@ -188,8 +188,8 @@ func RemoveHost(hostAddress string, asyncTask bool) (string, error) {
 		_ = json.Unmarshal(respBody, taskStatus)
 		taskStatus.PrintTracerId()
 		if !asyncTask {
-			track.Wait(taskStatus.GetTracerId())
-			return hostAddress, nil
+			_, err = track.Wait(taskStatus.GetTracerId())
+			return hostAddress, err
 		}
 	}
 	return "", errors.New("Error occured when removing host.")

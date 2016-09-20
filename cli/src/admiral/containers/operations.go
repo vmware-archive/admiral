@@ -267,14 +267,14 @@ func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (strin
 }
 
 //Function to get information about container in JSON format.
-func InspectContainer(id string) (string, error) {
+func InspectContainer(id string) *Container {
 	url := config.URL + functions.CreateResLinksForContainer([]string{id})[0]
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody := client.ProcessRequest(req)
 	container := &Container{}
 	err := json.Unmarshal(respBody, container)
 	functions.CheckJson(err)
-	return container.StringJson(), nil
+	return container
 }
 
 func GetContainerLinks(name string) []string {
