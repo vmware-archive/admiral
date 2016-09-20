@@ -233,7 +233,7 @@ public class ContainerClusteringTaskService extends
         requestBrokerState.operation = RequestBrokerState.PROVISION_RESOURCE_OPERATION;
         requestBrokerState.groupResourcePolicyLink = groupResourcePolicyLink;
         requestBrokerState.tenantLinks = state.tenantLinks;
-        requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskState.TaskStage.STARTED, SubStage.ALLOCATED, TaskState.TaskStage.FAILED,
                 SubStage.ERROR);
         requestBrokerState.addCustomProperty(FIELD_NAME_CONTEXT_ID_KEY, state.contextId);
@@ -268,7 +268,7 @@ public class ContainerClusteringTaskService extends
         requestBrokerState.resourceLinks = containersToRemove.stream().map(c -> c.documentSelfLink)
                 .collect(Collectors.toList());
         requestBrokerState.requestTrackerLink = state.requestTrackerLink;
-        requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskState.TaskStage.STARTED, SubStage.ALLOCATED, TaskState.TaskStage.FAILED,
                 SubStage.ERROR);
         requestBrokerState.addCustomProperty(FIELD_NAME_CONTEXT_ID_KEY, state.contextId);

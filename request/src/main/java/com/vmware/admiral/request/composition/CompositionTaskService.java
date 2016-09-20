@@ -361,7 +361,7 @@ public class CompositionTaskService
                     .collect(Collectors.toSet());
         }
 
-        compositionSubTask.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        compositionSubTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.ALLOCATING,
                 TaskStage.STARTED, SubStage.ERROR_ALLOCATING);
 
@@ -411,7 +411,7 @@ public class CompositionTaskService
                     .stream().map((r) -> buildCompositionSubTaskLink(r))
                     .collect(Collectors.toSet());
         }
-        compositionSubTask.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        compositionSubTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.PROVISIONING,
                 TaskStage.STARTED, SubStage.ERROR_PROVISIONING);
         compositionSubTask.taskInfo = new TaskState();
@@ -594,7 +594,7 @@ public class CompositionTaskService
 
         CompositeComponentRemovalTaskState removalTaskState = new CompositeComponentRemovalTaskState();
         removalTaskState.documentSelfLink = getSelfId() + "-cleanup";
-        removalTaskState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        removalTaskState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.FAILED, SubStage.FAILED, TaskStage.FAILED, SubStage.FAILED);
         removalTaskState.customProperties = state.customProperties;
         removalTaskState.resourceLinks = Collections.singletonList(state.compositeComponentLink);

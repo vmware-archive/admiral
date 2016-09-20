@@ -138,7 +138,7 @@ public class ContainerHostRemovalTaskService extends
             subTaskInitState.documentExpirationTimeMicros = ServiceUtils
                     .getDefaultTaskExpirationTimeInMicros();
             subTaskInitState.serviceTaskCallback = ServiceTaskCallback.create(
-                    state.documentSelfLink,
+                    getSelfLink(),
                     TaskStage.STARTED, SubStage.SUSPENDED_HOSTS,
                     TaskStage.STARTED, SubStage.ERROR);
 
@@ -205,7 +205,7 @@ public class ContainerHostRemovalTaskService extends
         containerRemovalTask.resourceLinks = containerSelfLinks;
         containerRemovalTask.removeOnly = true;
         containerRemovalTask.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink,
+                getSelfLink(),
                 TaskStage.STARTED, SubStage.REMOVED_CONTAINERS,
                 TaskStage.STARTED, SubStage.ERROR);
         containerRemovalTask.requestTrackerLink = state.requestTrackerLink;

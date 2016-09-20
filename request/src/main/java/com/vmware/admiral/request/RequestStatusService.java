@@ -24,7 +24,6 @@ import com.vmware.admiral.request.composition.CompositionGraph.ResourceNode;
 import com.vmware.admiral.request.composition.CompositionSubTaskService;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.StatefulService;
@@ -47,8 +46,7 @@ public class RequestStatusService extends StatefulService {
     public static class RequestStatus extends
             com.vmware.admiral.service.common.AbstractTaskStatefulService.TaskStatusState {
 
-        public static final String FIELD_NAME_REQUEST_PROGRESS_BY_COMPONENT =
-                "requestProgressByComponent";
+        public static final String FIELD_NAME_REQUEST_PROGRESS_BY_COMPONENT = "requestProgressByComponent";
         public static final String FIELD_NAME_COMPONENTS = "components";
 
         /** Request progress (0-100%) */
@@ -117,7 +115,7 @@ public class RequestStatusService extends StatefulService {
     private void handleUpdateProgress(RequestStatus state, RequestStatus body) {
         state.phase = body.phase;
         String component = DEFAULT_COMPONENT_NAME;
-        String requestId = Service.getId(state.documentSelfLink);
+        String requestId = getSelfId();
         if (body.eventLogLink != null) {
             state.eventLogLink = body.eventLogLink;
         }
@@ -240,11 +238,11 @@ public class RequestStatusService extends StatefulService {
 
         template.documentDescription.propertyDescriptions.get(
                 RequestStatus.FIELD_NAME_REQUEST_PROGRESS_BY_COMPONENT).indexingOptions = EnumSet
-                .of(PropertyIndexingOption.STORE_ONLY);
+                        .of(PropertyIndexingOption.STORE_ONLY);
 
         template.documentDescription.propertyDescriptions.get(
                 RequestStatus.FIELD_NAME_COMPONENTS).indexingOptions = EnumSet
-                .of(PropertyIndexingOption.STORE_ONLY);
+                        .of(PropertyIndexingOption.STORE_ONLY);
 
         return template;
     }

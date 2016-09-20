@@ -158,7 +158,7 @@ public class AuthBootstrapService extends StatefulService {
         users.forEach(user -> {
             try {
                 createUserIfNotExist(host, user);
-                if (usersCounter.getAndDecrement() == 0) {
+                if (usersCounter.decrementAndGet() == 0) {
                     post.complete();
                 }
             } catch (Exception e) {

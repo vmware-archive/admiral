@@ -32,7 +32,6 @@ import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.service.common.CounterSubTaskService.CounterSubTaskState;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyDescription;
@@ -83,7 +82,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         /** Name of a given task status */
         public String name;
 
-        /** Available when task is marked failed. Link to the corresponding event log.  */
+        /** Available when task is marked failed. Link to the corresponding event log. */
         public String eventLogLink;
 
         /** List of resource links provisioned or performed operation on them. */
@@ -120,7 +119,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         // sorting
         template.documentDescription.propertyDescriptions.get(
                 ServiceDocument.FIELD_NAME_UPDATE_TIME_MICROS).indexingOptions.add(
-                PropertyIndexingOption.SORT);
+                        PropertyIndexingOption.SORT);
 
         return template;
     }
@@ -153,11 +152,23 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
         T state = getBody(post);
 
-        boolean completed = validateNewState(state, post);
-        //in exceptional cases the validation could complete the operation.
+        boolean completed = false;
+        try {
+            post.nestCompletion((o) -> {
+                post.setBody(state);
+                post.complete();
+            });
+            completed = validateNewState(state, post);
+        } catch (Exception e) {
+            post.fail(e);
+            return;
+        }
+
+        // in exceptional cases the validation could complete the operation.
         if (!completed) {
             post.complete();
         }
+
     }
 
     @Override
@@ -173,19 +184,21 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             return;
         }
 
-        startPost.complete();
-
         if (state.taskInfo.stage.ordinal() >= TaskStage.FINISHED.ordinal()) {
+            startPost.complete();
             return; // the task should not restart in this stage
         }
 
         if (state.taskInfo.stage == TaskStage.CREATED || state.documentVersion == 0) {
             state.taskInfo.stage = TaskStage.STARTED;
-            logInfo("starting task with parent link: %s", state.serviceTaskCallback.serviceSelfLink);
+            logInfo("starting task with parent link: %s",
+                    state.serviceTaskCallback.serviceSelfLink);
         } else {
             logWarning("restarting task with parent link: %s",
                     state.serviceTaskCallback.serviceSelfLink);
         }
+        startPost.setBody(state);
+        startPost.complete();
 
         handleStagePatch(state);
     }
@@ -231,6 +244,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         T patchBody = getBody(patch);
         T state = getState(patch);
 
+        logWarning("Patch from: %s , selfLink: %s", patch.getRefererAsString(),
+                state.documentSelfLink);
         // validates AND transitions the stage to the next state by using the patchBody.
         if (validateStageTransitionAndState(patch, patchBody, state)) {
             return;
@@ -263,9 +278,9 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                             } else if (TaskStage.FINISHED.name()
                                     .equals(state.taskInfo.stage.name())
                                     || TaskStage.FAILED.name().equals(state.taskInfo.stage.name())
-                                    && retryCount > 0) {
-                                getHost().schedule(() ->
-                                        updateRequestTracker(state, retryCount - 1),
+                                            && retryCount > 0) {
+                                getHost().schedule(
+                                        () -> updateRequestTracker(state, retryCount - 1),
                                         QueryUtil.QUERY_RETRY_INTERVAL_MILLIS,
                                         TimeUnit.MILLISECONDS);
                             } else {
@@ -386,7 +401,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         return validateStageTransition(patch, patchBody, currentState);
     }
 
-    protected abstract boolean validateStageTransition(Operation patch, T patchBody, T currentState);
+    protected abstract boolean validateStageTransition(Operation patch, T patchBody,
+            T currentState);
 
     protected void createCounterSubTask(T state, long count,
             Consumer<String> callbackFunction) {
@@ -398,7 +414,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         CounterSubTaskState subTaskInitState = new CounterSubTaskState();
         subTaskInitState.completionsRemaining = count;
         subTaskInitState.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink, TaskStage.STARTED, substageComplete,
+                getSelfLink(), TaskStage.STARTED, substageComplete,
                 TaskStage.STARTED, DefaultSubStage.ERROR);
 
         CounterSubTaskService.createSubTask(this, subTaskInitState, callbackFunction);
@@ -421,8 +437,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             Consumer<ServiceTaskCallback> callbackFunction) {
         if (count == 1 && !useCounterService) {
             ServiceTaskCallback taksCallback = ServiceTaskCallback.create(
-                    external ? UriUtils.buildUri(getHost(), state.documentSelfLink).toString()
-                            : state.documentSelfLink,
+                    external ? getUri().toString() : getSelfLink(),
                     TaskStage.STARTED, substageComplete,
                     TaskStage.STARTED, DefaultSubStage.ERROR);
             callbackFunction.accept(taksCallback);
@@ -495,7 +510,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     protected boolean isFailedOrCancelledTask(T state) {
         return state.taskInfo != null &&
                 (TaskStage.FAILED == state.taskInfo.stage ||
-                TaskStage.CANCELLED == state.taskInfo.stage);
+                        TaskStage.CANCELLED == state.taskInfo.stage);
     }
 
     @Override
@@ -537,7 +552,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             errMsg = "Unexpected State";
         }
         if (t != null) {
-            logWarning("%s%s Error: %s", errMsg, errMsg.endsWith(".") ? "" : ".", Utils.toString(t));
+            logWarning("%s%s Error: %s", errMsg, errMsg.endsWith(".") ? "" : ".",
+                    Utils.toString(t));
         } else {
             logWarning(errMsg);
         }
@@ -663,7 +679,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     protected <S extends TaskStatusState> S fromTask(S taskStatus, TaskServiceDocument<E> state) {
-        taskStatus.documentSelfLink = Service.getId(state.documentSelfLink);
+        taskStatus.documentSelfLink = getSelfId();
         taskStatus.phase = displayName;
         taskStatus.taskInfo = state.taskInfo;
         taskStatus.subStage = state.taskSubStage.name();

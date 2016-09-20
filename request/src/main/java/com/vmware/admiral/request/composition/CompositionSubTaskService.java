@@ -58,7 +58,6 @@ import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallback
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -325,7 +324,7 @@ public class CompositionSubTaskService
         final AtomicBoolean error = new AtomicBoolean();
         for (final String dependentTaskLink : state.dependentLinks) {
             final CompositionSubTaskState task = new CompositionSubTaskState();
-            task.currentDependsOnLink = state.documentSelfLink;
+            task.currentDependsOnLink = getSelfLink();
             task.taskInfo = state.taskInfo;
             task.taskSubStage = taskSubStage;
             sendRequest(Operation.createPatch(this, dependentTaskLink)
@@ -354,7 +353,7 @@ public class CompositionSubTaskService
         RequestBrokerState requestBrokerState = new RequestBrokerState();
         requestBrokerState.documentSelfLink = state.allocationRequest ? getSelfId() + ALLOC_SUFFIX
                 : getSelfId();
-        requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.ALLOCATED, TaskStage.STARTED, SubStage.ERROR);
         requestBrokerState.resourceDescriptionLink = state.resourceDescriptionLink;
         requestBrokerState.resourceType = state.resourceType;
@@ -409,7 +408,7 @@ public class CompositionSubTaskService
     private void createContainerAllocationTaskState(CompositionSubTaskState state) {
         ContainerAllocationTaskState allocationTask = new ContainerAllocationTaskState();
         allocationTask.documentSelfLink = getSelfId();
-        allocationTask.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        allocationTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
         allocationTask.customProperties = state.customProperties;
         allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
@@ -436,7 +435,7 @@ public class CompositionSubTaskService
     private void createContainerNetworkProvisionTaskState(CompositionSubTaskState state) {
         ContainerNetworkProvisionTaskState task = new ContainerNetworkProvisionTaskState();
         task.documentSelfLink = getSelfId();
-        task.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        task.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
         task.customProperties = state.customProperties;
         task.resourceCount = Long.valueOf(state.resourceLinks.size());
@@ -462,7 +461,7 @@ public class CompositionSubTaskService
     private void createContainerVolumeProvisionTaskState(CompositionSubTaskState state) {
         ContainerVolumeProvisionTaskState task = new ContainerVolumeProvisionTaskState();
         task.documentSelfLink = getSelfId();
-        task.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        task.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
         task.customProperties = state.customProperties;
         task.resourceCount = Long.valueOf(state.resourceLinks.size());
@@ -487,8 +486,8 @@ public class CompositionSubTaskService
 
     private void createComputeProvisionTaskState(CompositionSubTaskState state) {
         ComputeProvisionTaskState ps = new ComputeProvisionTaskState();
-        ps.documentSelfLink = Service.getId(state.documentSelfLink);
-        ps.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        ps.documentSelfLink = getSelfId();
+        ps.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
         ps.customProperties = state.customProperties;
         ps.tenantLinks = state.tenantLinks;
@@ -512,7 +511,7 @@ public class CompositionSubTaskService
     private void createOperationTaskState(CompositionSubTaskState state) {
         RequestBrokerState requestBrokerState = new RequestBrokerState();
         requestBrokerState.documentSelfLink = getSelfId() + "-" + state.operation;
-        requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
         requestBrokerState.resourceLinks = state.resourceLinks;
         requestBrokerState.resourceType = state.resourceType;

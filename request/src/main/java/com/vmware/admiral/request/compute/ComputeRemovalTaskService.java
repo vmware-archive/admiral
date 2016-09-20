@@ -183,7 +183,7 @@ public class ComputeRemovalTaskService extends
         hostRemovalState.resourceLinks = state.resourceLinks;
         hostRemovalState.skipComputeHostRemoval = true;
         boolean errorState = state.taskSubStage == SubStage.ERROR;
-        hostRemovalState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        hostRemovalState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.REMOVED_CONTAINER_HOSTS,
                 TaskStage.FAILED, SubStage.ERROR);
         hostRemovalState.documentSelfLink = getSelfId();

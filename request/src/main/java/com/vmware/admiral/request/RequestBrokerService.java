@@ -78,7 +78,6 @@ import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallback
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -458,7 +457,7 @@ public class RequestBrokerService extends
 
         CompositeComponentRemovalTaskState removalState = new CompositeComponentRemovalTaskState();
         removalState.resourceLinks = state.resourceLinks;
-        removalState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        removalState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 SubStage.COMPLETED, SubStage.ERROR);
         removalState.documentSelfLink = getSelfId();
         removalState.requestTrackerLink = state.requestTrackerLink;
@@ -485,7 +484,7 @@ public class RequestBrokerService extends
         provisionContainerHostTask.customProperties = state.customProperties;
         provisionContainerHostTask.requestTrackerLink = state.requestTrackerLink;
         provisionContainerHostTask.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink,
+                getSelfLink(),
                 TaskStage.STARTED, SubStage.ALLOCATED,
                 TaskStage.STARTED, SubStage.REQUEST_FAILED);
 
@@ -509,7 +508,7 @@ public class RequestBrokerService extends
         ContainerHostRemovalTaskState hostRemovalState = new ContainerHostRemovalTaskState();
         hostRemovalState.resourceLinks = state.resourceLinks;
         boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED;
-        hostRemovalState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        hostRemovalState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
                 TaskStage.FAILED, SubStage.ERROR);
         hostRemovalState.documentSelfLink = getSelfId();
@@ -540,7 +539,7 @@ public class RequestBrokerService extends
         ComputeRemovalTaskState computeRemovalState = new ComputeRemovalTaskState();
         computeRemovalState.resourceLinks = state.resourceLinks;
         computeRemovalState.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink,
+                getSelfLink(),
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
                 TaskStage.FAILED, SubStage.ERROR);
         computeRemovalState.documentSelfLink = getSelfId();
@@ -568,7 +567,7 @@ public class RequestBrokerService extends
         removalState.resourceLinks = state.resourceLinks;
         boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED;
         removalState.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink,
+                getSelfLink(),
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
                 TaskStage.FAILED, SubStage.ERROR);
         removalState.documentSelfLink = getSelfId();
@@ -604,7 +603,7 @@ public class RequestBrokerService extends
                 .filter((l) -> l.startsWith(ContainerFactoryService.SELF_LINK))
                 .collect(Collectors.toList());
 
-        removalState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        removalState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
                 TaskStage.FAILED, SubStage.ERROR);
         removalState.documentSelfLink = getSelfId();
@@ -626,7 +625,7 @@ public class RequestBrokerService extends
     private void createContainerOperationTasks(RequestBrokerState state) {
         ContainerOperationTaskState operationState = new ContainerOperationTaskState();
         operationState.resourceLinks = state.resourceLinks;
-        operationState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        operationState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.ALLOCATED, TaskStage.FAILED, SubStage.ERROR);
         operationState.operation = state.operation;
         operationState.documentSelfLink = getSelfId();
@@ -647,7 +646,7 @@ public class RequestBrokerService extends
     private void createComputeOperationTasks(RequestBrokerState state) {
         ComputeOperationTaskState operationState = new ComputeOperationTaskState();
         operationState.resourceLinks = state.resourceLinks;
-        operationState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        operationState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.ALLOCATED, TaskStage.FAILED, SubStage.ERROR);
         operationState.operation = state.operation;
         operationState.documentSelfLink = getSelfId();
@@ -685,8 +684,8 @@ public class RequestBrokerService extends
         }
 
         ReservationTaskState rsrvTask = new ReservationTaskState();
-        rsrvTask.documentSelfLink = Service.getId(state.documentSelfLink);
-        rsrvTask.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        rsrvTask.documentSelfLink = getSelfId();
+        rsrvTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.RESERVED, TaskStage.STARTED, SubStage.ERROR);
 
         long resourceCount;
@@ -732,8 +731,8 @@ public class RequestBrokerService extends
         }
 
         ComputeReservationTaskState rsrvTask = new ComputeReservationTaskState();
-        rsrvTask.documentSelfLink = Service.getId(state.documentSelfLink);
-        rsrvTask.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        rsrvTask.documentSelfLink = getSelfId();
+        rsrvTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.RESERVED, TaskStage.STARTED, SubStage.ERROR);
 
         long resourceCount = state.resourceCount;
@@ -766,9 +765,9 @@ public class RequestBrokerService extends
     private void createContainerAllocationTask(RequestBrokerState state) {
         getContainerDescription(state, (containerDesc) -> {
             ContainerAllocationTaskState allocationTask = new ContainerAllocationTaskState();
-            allocationTask.documentSelfLink = Service.getId(state.documentSelfLink);
+            allocationTask.documentSelfLink = getSelfId();
             allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
-                    state.documentSelfLink, TaskStage.STARTED, SubStage.ALLOCATED,
+                    getSelfLink(), TaskStage.STARTED, SubStage.ALLOCATED,
                     TaskStage.STARTED, SubStage.REQUEST_FAILED);
             allocationTask.customProperties = state.customProperties;
             allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
@@ -806,9 +805,9 @@ public class RequestBrokerService extends
     private void createNetworkAllocationTask(RequestBrokerState state) {
         // 1. allocate the network
         ContainerNetworkAllocationTaskState allocationTask = new ContainerNetworkAllocationTaskState();
-        allocationTask.documentSelfLink = Service.getId(state.documentSelfLink);
+        allocationTask.documentSelfLink = getSelfId();
         allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink, TaskStage.STARTED, SubStage.ALLOCATED,
+                getSelfLink(), TaskStage.STARTED, SubStage.ALLOCATED,
                 TaskStage.STARTED, SubStage.ERROR);
         allocationTask.customProperties = state.customProperties;
         allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
@@ -834,9 +833,9 @@ public class RequestBrokerService extends
     private void createNetworkProvisioningTask(RequestBrokerState state) {
         // 2. provision the network
         ContainerNetworkProvisionTaskState provisionTask = new ContainerNetworkProvisionTaskState();
-        provisionTask.documentSelfLink = Service.getId(state.documentSelfLink);
+        provisionTask.documentSelfLink = getSelfId();
         provisionTask.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
+                getSelfLink(), TaskStage.STARTED, SubStage.COMPLETED,
                 TaskStage.STARTED, SubStage.REQUEST_FAILED);
         provisionTask.customProperties = state.customProperties;
 
@@ -861,9 +860,9 @@ public class RequestBrokerService extends
     private void createComputeAllocationTask(RequestBrokerState state) {
 
         ComputeAllocationTaskState allocationTask = new ComputeAllocationTaskState();
-        allocationTask.documentSelfLink = Service.getId(state.documentSelfLink);
+        allocationTask.documentSelfLink = getSelfId();
         allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink, TaskStage.STARTED, SubStage.ALLOCATED,
+                getSelfLink(), TaskStage.STARTED, SubStage.ALLOCATED,
                 TaskStage.STARTED, SubStage.REQUEST_FAILED);
         allocationTask.customProperties = state.customProperties;
         allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
@@ -892,8 +891,8 @@ public class RequestBrokerService extends
     private void createComputeProvisioningTask(RequestBrokerState state) {
         // 2. provision the compute
         ComputeProvisionTaskState ps = new ComputeProvisionTaskState();
-        ps.documentSelfLink = Service.getId(state.documentSelfLink);
-        ps.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        ps.documentSelfLink = getSelfId();
+        ps.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
         ps.customProperties = state.customProperties;
         ps.tenantLinks = state.tenantLinks;
@@ -915,9 +914,9 @@ public class RequestBrokerService extends
     private void createVolumeAllocationTask(RequestBrokerState state) {
 
         ContainerVolumeAllocationTaskState allocationTask = new ContainerVolumeAllocationTaskState();
-        allocationTask.documentSelfLink = Service.getId(state.documentSelfLink);
+        allocationTask.documentSelfLink = getSelfId();
         allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink, TaskStage.STARTED, SubStage.ALLOCATED,
+                getSelfLink(), TaskStage.STARTED, SubStage.ALLOCATED,
                 TaskStage.STARTED, SubStage.ERROR);
         allocationTask.customProperties = state.customProperties;
         allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
@@ -943,9 +942,9 @@ public class RequestBrokerService extends
     private void createVolumeProvisioningTask(RequestBrokerState state) {
 
         ContainerVolumeProvisionTaskState provisionTask = new ContainerVolumeProvisionTaskState();
-        provisionTask.documentSelfLink = Service.getId(state.documentSelfLink);
+        provisionTask.documentSelfLink = getSelfId();
         provisionTask.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
+                getSelfLink(), TaskStage.STARTED, SubStage.COMPLETED,
                 TaskStage.STARTED, SubStage.REQUEST_FAILED);
         provisionTask.customProperties = state.customProperties;
 
@@ -998,9 +997,9 @@ public class RequestBrokerService extends
     private void createCompositionTask(RequestBrokerState state) {
         if (isCompositeComponentType(state)) {
             CompositionTaskState compositionTask = new CompositionTaskState();
-            compositionTask.documentSelfLink = Service.getId(state.documentSelfLink);
+            compositionTask.documentSelfLink = getSelfId();
             compositionTask.serviceTaskCallback = ServiceTaskCallback.create(
-                    state.documentSelfLink, TaskStage.STARTED,
+                    getSelfLink(), TaskStage.STARTED,
                     SubStage.ALLOCATED, TaskStage.STARTED, SubStage.ERROR);
             compositionTask.customProperties = state.customProperties;
             compositionTask.resourceDescriptionLink = state.resourceDescriptionLink;
@@ -1033,9 +1032,9 @@ public class RequestBrokerService extends
             return;
         }
         ReservationRemovalTaskState rsrvTask = new ReservationRemovalTaskState();
-        rsrvTask.documentSelfLink = Service.getId(state.documentSelfLink);
+        rsrvTask.documentSelfLink = getSelfId();
 
-        rsrvTask.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        rsrvTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.RESERVATION_CLEANED_UP, TaskStage.FAILED,
                 SubStage.ERROR);
         rsrvTask.resourceCount = state.resourceCount;
@@ -1067,7 +1066,7 @@ public class RequestBrokerService extends
         clusteringState.contextId = state.getCustomProperty(FIELD_NAME_CONTEXT_ID_KEY);
 
         boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED;
-        clusteringState.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        clusteringState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
                 TaskStage.FAILED, SubStage.ERROR);
 

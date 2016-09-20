@@ -438,7 +438,7 @@ public class ContainerAllocationTaskService
         placementTask.tenantLinks = state.tenantLinks;
         placementTask.customProperties = state.customProperties;
         placementTask.contextId = getContextId(state);
-        placementTask.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        placementTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.PLACEMENT_HOST_SELECTED,
                 TaskStage.STARTED, SubStage.ERROR);
         placementTask.requestTrackerLink = state.requestTrackerLink;
@@ -505,7 +505,7 @@ public class ContainerAllocationTaskService
         namePrefixTask.tenantLinks = state.tenantLinks;
 
         namePrefixTask.customProperties = state.customProperties;
-        namePrefixTask.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        namePrefixTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.RESOURCES_NAMED,
                 TaskStage.STARTED, SubStage.ERROR);
         namePrefixTask.requestTrackerLink = state.requestTrackerLink;

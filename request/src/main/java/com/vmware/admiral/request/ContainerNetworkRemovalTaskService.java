@@ -248,7 +248,7 @@ public class ContainerNetworkRemovalTaskService extends
         subTaskInitState.documentExpirationTimeMicros = ServiceUtils
                 .getDefaultTaskExpirationTimeInMicros();
         subTaskInitState.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink,
+                getSelfLink(),
                 TaskStage.STARTED, SubStage.INSTANCES_REMOVED,
                 TaskStage.STARTED, SubStage.ERROR);
 

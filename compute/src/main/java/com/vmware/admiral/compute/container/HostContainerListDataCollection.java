@@ -766,6 +766,13 @@ public class HostContainerListDataCollection extends StatefulService {
         } else {
             AtomicInteger counter = new AtomicInteger(containerStates.size());
             for (ContainerState containerState : containerStates) {
+                if (containerState.names == null || containerState.names.isEmpty()) {
+                    logInfo("Names not set for container: %s", containerState.documentSelfLink);
+                    if (counter.decrementAndGet() == 0) {
+                        callback.accept(null);
+                    }
+                    continue;
+                }
                 // check again if the container state already exists by names. This is needed in
                 // cluster mode not to create container states that we already have
                 Operation operation = Operation

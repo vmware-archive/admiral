@@ -706,7 +706,7 @@ public class ComputeAllocationTaskService
         computePlacementSelection.tenantLinks = state.tenantLinks;
         computePlacementSelection.customProperties = state.customProperties;
         computePlacementSelection.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink,
+                getSelfLink(),
                 TaskStage.STARTED, SubStage.START_COMPUTE_ALLOCATION,
                 TaskStage.STARTED, SubStage.ERROR);
         computePlacementSelection.requestTrackerLink = state.requestTrackerLink;

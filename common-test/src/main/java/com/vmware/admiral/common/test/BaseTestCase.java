@@ -647,6 +647,9 @@ public abstract class BaseTestCase {
         T outState = (T) host.getServiceState(null,
                 inState.getClass(),
                 UriUtils.buildUri(uri.getHost(), uri.getPort(), documentSelfLink, null));
+        if (outState.documentSelfLink == null) {
+            outState.documentSelfLink = documentSelfLink;
+        }
         return outState;
     }
 

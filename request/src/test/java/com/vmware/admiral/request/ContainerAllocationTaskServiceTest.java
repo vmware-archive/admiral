@@ -177,10 +177,6 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         provisioningRequest = doPost(provisioningRequest, RequestBrokerFactoryService.SELF_LINK);
         assertNotNull(provisioningRequest);
 
-        String containerAllocationTaskLink = UriUtils.buildUriPath(
-                ContainerAllocationTaskFactoryService.SELF_LINK,
-                extractId(provisioningRequest.documentSelfLink));
-        waitForTaskSuccess(containerAllocationTaskLink, ContainerAllocationTaskState.class);
         waitForTaskSuccess(provisioningRequest.documentSelfLink, RequestBrokerState.class);
 
         // verify container state is provisioned and patched:

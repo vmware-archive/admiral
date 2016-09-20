@@ -234,7 +234,7 @@ public class ReservationTaskService
         reservationAllocationTask.resourceCount = reservationTask.resourceCount;
         reservationAllocationTask.requestTrackerLink = reservationTask.requestTrackerLink;
         reservationAllocationTask.serviceTaskCallback = ServiceTaskCallback.create(
-                reservationTask.documentSelfLink,
+                getSelfLink(),
                 TaskStage.STARTED, SubStage.RESERVATION_SELECTED,
                 TaskStage.STARTED, SubStage.ERROR);
 
@@ -435,7 +435,7 @@ public class ReservationTaskService
         placementTask.tenantLinks = state.tenantLinks;
         placementTask.customProperties = state.customProperties;
         placementTask.contextId = getContextId(state);
-        placementTask.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        placementTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED,
                 isGlobal(state) ? SubStage.HOSTS_SELECTED_GLOBAL : SubStage.HOSTS_SELECTED,
                 TaskStage.STARTED, SubStage.ERROR);

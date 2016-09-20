@@ -267,7 +267,7 @@ public class ContainerNetworkAllocationTaskService extends
         namePrefixTask.tenantLinks = state.tenantLinks;
 
         namePrefixTask.customProperties = state.customProperties;
-        namePrefixTask.serviceTaskCallback = ServiceTaskCallback.create(state.documentSelfLink,
+        namePrefixTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.RESOURCES_NAMED,
                 TaskStage.STARTED, SubStage.ERROR);
         namePrefixTask.requestTrackerLink = state.requestTrackerLink;

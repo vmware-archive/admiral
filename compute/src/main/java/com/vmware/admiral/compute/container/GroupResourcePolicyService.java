@@ -521,7 +521,7 @@ public class GroupResourcePolicyService extends StatefulService {
 
         QueryTask.Query notThisGroupClause = new QueryTask.Query()
                 .setTermPropertyName(GroupResourcePolicyPoolState.FIELD_NAME_SELF_LINK)
-                .setTermMatchValue(state.documentSelfLink);
+                .setTermMatchValue(getSelfLink());
         notThisGroupClause.occurance = QueryTask.Query.Occurance.MUST_NOT_OCCUR;
 
         q.querySpec.query.addBooleanClause(resourcePoolClause);
