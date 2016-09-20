@@ -16,6 +16,7 @@ import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOr
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -29,6 +30,7 @@ import org.junit.Test;
 import com.vmware.admiral.adapter.docker.service.CommandInput;
 import com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor;
 import com.vmware.admiral.adapter.docker.service.SshDockerAdapterCommandExecutorImpl;
+import com.vmware.admiral.adapter.docker.service.SshDockerAdapterCommandExecutorImpl.GcData;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.common.util.SshUtil;
@@ -48,6 +50,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
     private static final int DEFAULT_TIMEOUT = 45;
 
     private List<String> containersToDelete = new ArrayList<String>();
+    private Iterator<String> it;
 
     @Test
     public void pingWithPassword() throws InterruptedException, TimeoutException {
@@ -488,6 +491,47 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
         Assert.assertNull("Unexpected failure!", handler.failure);
         Assert.assertNotNull("Body should contain STDOUT!", handler.op.getBody(String.class));
         Utils.fromJson(handler.op.getBody(String.class), Object.class);
+    }
+
+    @Test
+    public void gc() throws InterruptedException, IOException {
+        SshDockerAdapterCommandExecutorImpl executor = new SshDockerAdapterCommandExecutorImpl(
+                host);
+
+        CommandInput input = new CommandInput();
+        input.withDockerUri(HOST_URI);
+        input.withCredentials(getPasswordCredentials());
+
+        DefaultSshOperationResultCompletionHandler handler = new DefaultSshOperationResultCompletionHandler();
+        executor.listContainers(input, handler);
+
+        int retryCount = 0;
+        while (executor.gcData.size() < 3 && retryCount < 45) {
+            Thread.sleep(1000);
+            retryCount++;
+        }
+        Assert.assertTrue("Timed out filling gcData", retryCount < 45);
+        Assert.assertEquals("Unexpected number of files for gc", 3, executor.gcData.size());
+        List<String> files = new ArrayList<String>();
+        for (GcData data : executor.gcData) {
+            files.add(data.filePath);
+        }
+        executor.gc();
+        Assert.assertEquals("Unexpected number of files for gc", 0, executor.gcData.size());
+        retryCount = 0;
+        it = files.iterator();
+        String currentFile = null;
+        while (retryCount < 25 && it.hasNext()) {
+            if (retryCount == 0) {
+                currentFile = it.next();
+            }
+            Result res = SshUtil.exec(HOST_NAME, getPasswordCredentials(), "ls " + currentFile);
+            if (res.consume().err.contains("No such file")) {
+                retryCount = 0;
+            }
+            Thread.sleep(1000);
+        }
+        Assert.assertTrue("Failed to delete file on time: " + currentFile, retryCount < 25);
     }
 
     @After

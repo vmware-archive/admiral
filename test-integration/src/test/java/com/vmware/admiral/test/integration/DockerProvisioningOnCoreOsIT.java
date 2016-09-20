@@ -158,8 +158,9 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
             throws Exception {
         setupCoreOsHost(DockerAdapterType.API);
 
-        logger.info("---------- 5. Create test docker image container description using local image with priority. "
-                + "--------");
+        logger.info(
+                "---------- 5. Create test docker image container description using local image with priority. "
+                        + "--------");
         String contDescriptionLink = getResourceDescriptionLinkUsingLocalImage(false,
                 RegistryType.V1_SSL_SECURE);
         requestContainerAndDelete(contDescriptionLink);
