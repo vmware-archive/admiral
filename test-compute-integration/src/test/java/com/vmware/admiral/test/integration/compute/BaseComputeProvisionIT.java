@@ -61,7 +61,6 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -122,12 +121,13 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     private List<String> tenantLinks;
 
     private AuthCredentialsServiceState dockerRemoteApiClientCredentials;
+    private EndpointState endpoint;
 
     @Before
     public void setUp() throws Exception {
 
         endpointType = getEndpointType();
-        EndpointState endpoint = createEndpoint(endpointType, documentLifeCycle);
+        endpoint = createEndpoint(endpointType, TestDocumentLifeCycle.NO_DELETE);
         ResourcePoolState poolState = createResourcePool(endpointType, endpoint, documentLifeCycle);
         groupResourcePolicyState = createResourcePolicy("host-policy", endpointType, poolState,
                 documentLifeCycle);
@@ -172,6 +172,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         }
 
         super.baseTearDown();
+
+        delete(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK, endpoint.documentSelfLink));
     }
 
     private void cleanupReservation(ComputeState compute) throws Exception {
@@ -293,7 +295,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
             throws Exception {
         String name = name(endpointType, ENDPOINT_ID, SUFFIX);
         EndpointState endpoint = new EndpointState();
-        endpoint.documentSelfLink = getLink(EndpointService.FACTORY_LINK, name);
+        // endpoint.documentSelfLink = getLink(EndpointService.FACTORY_LINK, name);
         endpoint.endpointType = endpointType.name();
         endpoint.name = name;
         endpoint.tenantLinks = getTenantLinks();
