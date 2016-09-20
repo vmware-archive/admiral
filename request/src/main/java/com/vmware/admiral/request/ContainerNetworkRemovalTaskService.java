@@ -50,16 +50,14 @@ import com.vmware.xenon.services.common.QueryTask;
 /**
  * Task implementing removal of Container Networks.
  */
-public class ContainerNetworkRemovalTaskService
-        extends
+public class ContainerNetworkRemovalTaskService extends
         AbstractTaskStatefulService<ContainerNetworkRemovalTaskService.ContainerNetworkRemovalTaskState, ContainerNetworkRemovalTaskService.ContainerNetworkRemovalTaskState.SubStage> {
 
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_CONTAINER_NETWORK_REMOVAL_TASKS;
 
     public static final String DISPLAY_NAME = "Container Network Removal";
 
-    public static class ContainerNetworkRemovalTaskState
-            extends
+    public static class ContainerNetworkRemovalTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ContainerNetworkRemovalTaskState.SubStage> {
         private static final String FIELD_NAME_RESOURCE_LINKS = "resourceLinks";
         private static final String FIELD_NAME_REMOVE_ONLY = "removeOnly";
@@ -322,53 +320,48 @@ public class ContainerNetworkRemovalTaskService
 
         final List<String> resourcesSharingDesc = new ArrayList<String>();
         new ServiceDocumentQuery<ContainerNetworkState>(getHost(), ContainerNetworkState.class)
-                .query(compositeQueryTask,
-                        (r) -> {
-                            if (r.hasException()) {
-                                logSevere(
-                                        "Failed to retrieve container networks, sharing the same container "
-                                                + "network description: %s -%s",
-                                        r.getDocumentSelfLink(), r.getException());
-                            } else if (r.hasResult()) {
-                                resourcesSharingDesc.add(r.getDocumentSelfLink());
-                            } else {
-                                AtomicLong skipOperationException = new AtomicLong();
+                .query(compositeQueryTask, (r) -> {
+                    if (r.hasException()) {
+                        logSevere(
+                                "Failed to retrieve container networks, sharing the same container "
+                                        + "network description: %s -%s",
+                                r.getDocumentSelfLink(), r.getException());
+                    } else if (r.hasResult()) {
+                        resourcesSharingDesc.add(r.getDocumentSelfLink());
+                    } else {
+                        AtomicLong skipOperationException = new AtomicLong();
 
-                                Operation delOp = deleteContainerNetwork(cns);
+                        Operation delOp = deleteContainerNetwork(cns);
 
-                                // list of operations to execute to release container network resources
-                                List<Operation> operations = new ArrayList<>();
-                                operations.add(delOp);
+                        // list of operations to execute to release container network resources
+                        List<Operation> operations = new ArrayList<>();
+                        operations.add(delOp);
 
-                                // delete container network description when deleting all its container
-                                // networks
-                                if (state.resourceLinks.containsAll(resourcesSharingDesc)) {
-                                    Operation delDescOp = deleteContainerNetworkDescription(cns);
-                                    operations.add(delDescOp);
-                                }
+                        // delete container network description when deleting all its container
+                        // networks
+                        if (state.resourceLinks.containsAll(resourcesSharingDesc)) {
+                            Operation delDescOp = deleteContainerNetworkDescription(cns);
+                            operations.add(delDescOp);
+                        }
 
-                                OperationJoin
-                                        .create(operations)
-                                        .setCompletion((ops, exs) -> {
-                                            // remove skipped exceptions
-                                                if (exs != null
-                                                        && skipOperationException.get() != 0) {
-                                                    exs.remove(skipOperationException.get());
-                                                }
-                                                // fail the task is there are exceptions in the children operations
-                                                if (exs != null && !exs.isEmpty()) {
-                                                    failTask(
-                                                            "Failed deleting container network resources: "
-                                                                    + Utils.toString(exs), null);
-                                                    return;
-                                                }
-
-                                                // complete the counter task after all remove operations finished
-                                                // successfully
-                                                completeSubTasksCounter(subTaskLink, null);
-                                            }).sendWith(this);
+                        OperationJoin.create(operations).setCompletion((ops, exs) -> {
+                            // remove skipped exceptions
+                            if (exs != null && skipOperationException.get() != 0) {
+                                exs.remove(skipOperationException.get());
                             }
-                        });
+                            // fail the task is there are exceptions in the children operations
+                            if (exs != null && !exs.isEmpty()) {
+                                failTask("Failed deleting container network resources: "
+                                        + Utils.toString(exs), null);
+                                return;
+                            }
+
+                            // complete the counter task after all remove operations finished
+                            // successfully
+                            completeSubTasksCounter(subTaskLink, null);
+                        }).sendWith(this);
+                    }
+                });
     }
 
     private Operation deleteContainerNetwork(ContainerNetworkState cns) {
