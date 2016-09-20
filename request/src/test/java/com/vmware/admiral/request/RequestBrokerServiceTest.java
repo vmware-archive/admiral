@@ -408,7 +408,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 groupPolicyState.documentSelfLink);
         assertEquals(groupPolicyState.allocatedInstancesCount, 0);
 
-        String networkLink = null;
         String containerLink1 = null;
         String containerLink2 = null;
 
@@ -416,7 +415,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         while (iterator.hasNext()) {
             String link = iterator.next();
             if (link.startsWith(ContainerNetworkDescriptionService.FACTORY_LINK)) {
-                networkLink = link;
+                continue;
             } else if (containerLink1 == null) {
                 containerLink1 = link;
             } else {

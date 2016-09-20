@@ -41,8 +41,6 @@ import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService.CompositionSubTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
-import com.vmware.photon.controller.model.resources.ComputeService;
-import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.services.common.QueryTask;
@@ -126,7 +124,6 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
         CompositionSubTaskState containerSubTaskState = null;
         CompositionSubTaskState networkSubTaskState = null;
         for (CompositionSubTaskState compositionSubTaskState : queryCompositionSubTasks) {
-            compositionSubTaskState.documentSelfLink.endsWith(ResourceType.NETWORK_TYPE.getName());
             if (compositionSubTaskState.documentSelfLink
                     .endsWith(ResourceType.CONTAINER_TYPE.getName())) {
                 containerSubTaskState = compositionSubTaskState;
@@ -179,13 +176,6 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
         network = doPost(network, ContainerNetworkService.FACTORY_LINK);
         addForDeletion(network);
         return network;
-    }
-
-    private ComputeState createCompute(CompositeComponent composite) throws Throwable {
-        ComputeState compute = TestRequestStateFactory.createCompute();
-        compute = doPost(compute, ComputeService.FACTORY_LINK);
-        addForDeletion(compute);
-        return compute;
     }
 
     private void verifyRemoved(ServiceDocument doc) throws Throwable {

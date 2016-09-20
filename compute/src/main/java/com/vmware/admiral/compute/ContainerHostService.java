@@ -58,9 +58,6 @@ import com.vmware.xenon.services.common.QueryTask;
  */
 public class ContainerHostService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.CONTAINER_HOSTS;
-    private static final boolean ENABLE_ADAPTER_DOCKER_TYPE_SSH = Boolean.getBoolean(
-            "com.vmware.admiral.compute.ContainerHostService.enable.adapter.docker.type.ssh");
-
     public static final String CONTAINER_HOST_ALREADY_EXISTS_MESSAGE = "Container host already exists";
 
     public static final String DOCKER_COMPUTE_DESC_ID = "docker-host-compute-desc-id";

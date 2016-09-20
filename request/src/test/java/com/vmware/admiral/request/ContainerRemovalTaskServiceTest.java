@@ -143,6 +143,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
             String containers = computeState.customProperties == null ? null
                     : computeState.customProperties
                             .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
+            host.log("Container count waiting for 0 is currently: %s", containers);
             return "0".equals(containers);
         });
     }
