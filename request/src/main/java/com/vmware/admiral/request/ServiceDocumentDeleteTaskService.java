@@ -82,6 +82,9 @@ public class ServiceDocumentDeleteTaskService
         query.querySpec.options = EnumSet.of(QueryOption.TOP_RESULTS);
         query.querySpec.resultLimit = 50;
         query.documentExpirationTimeMicros = Utils.getNowMicrosUtc() + TimeUnit.HOURS.toMicros(5);
+        if (task.tenantLinks != null) {
+            query.querySpec.query.addBooleanClause(QueryUtil.addTenantClause(task.tenantLinks));
+        }
 
         List<String> documents = new ArrayList<String>();
         new ServiceDocumentQuery<ServiceDocument>(getHost(), ServiceDocument.class)
