@@ -21,6 +21,7 @@ import static com.vmware.admiral.common.util.UriUtilsExtended.parseBooleanParam;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -122,6 +123,10 @@ public class TemplateSearchService extends StatelessService {
             Consumer<ServiceDocumentQueryElementResult<TemplateSpec>> resultConsumer) {
 
         String tenantLink = queryParams.get(GROUP_PARAM);
+        List<String> tenantLinks = null;
+        if (tenantLink != null) {
+            tenantLinks = Arrays.asList(tenantLink.split("\\s*,\\s*"));
+        }
 
         QueryTask queryTask = new QueryTask();
         queryTask.querySpec = new QueryTask.QuerySpecification();
@@ -131,10 +136,10 @@ public class TemplateSearchService extends StatelessService {
 
         boolean templatesParentOnly = parseBooleanParam(queryParams.remove(TEMPLATES_PARENT_ONLY_PARAM));
 
-        QueryTask.Query compositeDescClause = createCompositeDescClause(query, tenantLink, templatesParentOnly);
+        QueryTask.Query compositeDescClause = createCompositeDescClause(query, tenantLinks, templatesParentOnly);
         compositeDescClause.occurance = Occurance.SHOULD_OCCUR;
 
-        QueryTask.Query containerDescClause = createContainerDescClause(query, tenantLink, templatesParentOnly);
+        QueryTask.Query containerDescClause = createContainerDescClause(query, tenantLinks, templatesParentOnly);
         containerDescClause.occurance = Occurance.SHOULD_OCCUR;
 
         queryTask.querySpec.query.addBooleanClause(compositeDescClause);
@@ -269,7 +274,7 @@ public class TemplateSearchService extends StatelessService {
         return template;
     }
 
-    private QueryTask.Query createCompositeDescClause(String query, String tenantLink, boolean templatesParentOnly) {
+    private QueryTask.Query createCompositeDescClause(String query, List<String> tenantLinks, boolean templatesParentOnly) {
         QueryTask.Query compositeDescClause = new QueryTask.Query();
         compositeDescClause.addBooleanClause(createKindClause(CompositeDescription.class));
 
@@ -287,14 +292,14 @@ public class TemplateSearchService extends StatelessService {
                 CompositeDescription.FIELD_NAME_NAME));
 
         // if tenant is null, do a global search, if not search in tenant
-        if (tenantLink != null) {
-            compositeDescClause.addBooleanClause(QueryUtil.addTenantClause(tenantLink));
+        if (tenantLinks != null && !tenantLinks.isEmpty()) {
+            compositeDescClause.addBooleanClause(QueryUtil.addTenantClause(tenantLinks));
         }
 
         return compositeDescClause;
     }
 
-    private QueryTask.Query createContainerDescClause(String query, String tenantLink, boolean templatesParentOnly) {
+    private QueryTask.Query createContainerDescClause(String query, List<String> tenantLinks, boolean templatesParentOnly) {
         QueryTask.Query containerDescClause = new QueryTask.Query();
         containerDescClause.addBooleanClause(createKindClause(ContainerDescription.class));
         containerDescClause.addBooleanClause(createAnyPropertyClause(query,
@@ -311,8 +316,8 @@ public class TemplateSearchService extends StatelessService {
         }
 
         // if tenant is null, do a global search, if not search in tenant
-        if (tenantLink != null) {
-            containerDescClause.addBooleanClause(QueryUtil.addTenantClause(tenantLink));
+        if (tenantLinks != null && !tenantLinks.isEmpty()) {
+            containerDescClause.addBooleanClause(QueryUtil.addTenantClause(tenantLinks));
         }
 
         return containerDescClause;

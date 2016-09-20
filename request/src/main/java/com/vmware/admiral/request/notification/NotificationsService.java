@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.request.notification;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -48,14 +50,20 @@ public class NotificationsService extends StatelessService {
         public long activeRequestsCount;
     }
 
+    private List<String> tenantLinks = null;
+
     @Override
     public void handleGet(Operation get) {
         Map<String, String> queryParams = UriUtils.parseUriQueryParams(get.getUri());
-        String group = queryParams.get(MultiTenantDocument.FIELD_NAME_TENANT_LINKS);
+        String tenantLink = queryParams.get(MultiTenantDocument.FIELD_NAME_TENANT_LINKS);
+
+        if (tenantLink != null) {
+            tenantLinks = Arrays.asList(tenantLink.split("\\s*,\\s*"));
+        }
 
         NotificationsAggregatorState state = new NotificationsAggregatorState();
 
-        QueryTask requestStatusQuery = buildRequestStatusQuery(group);
+        QueryTask requestStatusQuery = buildRequestStatusQuery(tenantLinks);
         new ServiceDocumentQuery<RequestStatus>(getHost(), RequestStatus.class)
                 .query(requestStatusQuery, (r) -> {
                     if (r.hasException()) {
@@ -64,7 +72,7 @@ public class NotificationsService extends StatelessService {
                     } else {
                         state.activeRequestsCount = r.getCount();
 
-                        QueryTask eventLogQuery = buildEventLogCountQuery(group);
+                        QueryTask eventLogQuery = buildEventLogCountQuery(tenantLinks);
                         new ServiceDocumentQuery<EventLogState>(getHost(), EventLogState.class)
                                 .query(eventLogQuery, (counter) -> {
                                     if (counter.hasException()) {
@@ -81,11 +89,11 @@ public class NotificationsService extends StatelessService {
                 });
     }
 
-    private QueryTask buildEventLogCountQuery(String group) {
+    private QueryTask buildEventLogCountQuery(List<String> tenantLinks) {
         QueryTask qt = QueryUtil.buildQuery(EventLogState.class, true);
 
-        if (group != null) {
-            qt.querySpec.query.addBooleanClause(QueryUtil.addTenantClause(group));
+        if (tenantLinks != null) {
+            qt.querySpec.query.addBooleanClause(QueryUtil.addTenantClause(tenantLinks));
         }
 
         long nMinutesAgo = Utils.getNowMicrosUtc() - EVENTS_TIME_INTERVAL_MICROS;
@@ -108,12 +116,12 @@ public class NotificationsService extends StatelessService {
         return qt;
     }
 
-    private QueryTask buildRequestStatusQuery(String group) {
+    private QueryTask buildRequestStatusQuery(List<String> tenantLinks) {
         QueryTask requestStatusQuery = QueryUtil.buildQuery(RequestStatus.class, true);
         QueryTask.Query runningTasksClause = new QueryTask.Query();
 
-        if (group != null) {
-            requestStatusQuery.querySpec.query.addBooleanClause(QueryUtil.addTenantClause(group));
+        if (tenantLinks != null) {
+            requestStatusQuery.querySpec.query.addBooleanClause(QueryUtil.addTenantClause(tenantLinks));
         }
 
         QueryTask.Query taskCreatedClause = new QueryTask.Query()
