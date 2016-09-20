@@ -143,7 +143,7 @@
             <collectionProp name="Arguments.arguments">
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">{&quot;hostState&quot;:{&quot;id&quot;:&quot;${hostsCounter}&quot;,&quot;address&quot;:&quot;192.168.99.100:2376&quot;,&quot;resourcePoolLink&quot;:&quot;/resources/pools/default-resource-pool&quot;,&quot;customProperties&quot;:{&quot;__authCredentialsLink&quot;:&quot;/core/auth/credentials/cert1&quot;,&quot;adapterDockerType&quot;:&quot;API&quot;,&quot;dockerHostPort&quot;:2377}},&quot;acceptCertificate&quot;:&quot;true&quot;,&quot;acceptHostAddress&quot;:&quot;true&quot;}</stringProp>
+                <stringProp name="Argument.value">{&quot;hostState&quot;:{&quot;id&quot;:&quot;${hostsCounter}&quot;,&quot;address&quot;:&quot;192.168.99.100:2376&quot;,&quot;resourcePoolLink&quot;:&quot;/resources/pools/default-placement-zone&quot;,&quot;customProperties&quot;:{&quot;__authCredentialsLink&quot;:&quot;/core/auth/credentials/cert1&quot;,&quot;adapterDockerType&quot;:&quot;API&quot;,&quot;dockerHostPort&quot;:2377}},&quot;acceptCertificate&quot;:&quot;true&quot;,&quot;acceptHostAddress&quot;:&quot;true&quot;}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
             </collectionProp>
@@ -1018,7 +1018,7 @@ log.info(&quot;*** about to delete &quot; + h + &quot; hosts&quot;);</stringProp
             <collectionProp name="Arguments.arguments">
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">{&quot;hostState&quot;:{&quot;id&quot;:&quot;10.23.64.63:23${hostsCounter}6&quot;,&quot;address&quot;:&quot;10.23.64.63:23${hostsCounter}6&quot;,&quot;resourcePoolLink&quot;:&quot;/resources/pools/default-resource-pool&quot;,&quot;customProperties&quot;:{&quot;authCredentialsLink&quot;:&quot;/core/auth/credentials/a&quot;,&quot;adapterDockerType&quot;:&quot;API&quot;,&quot;dockerHostPort&quot;:23${hostsCounter}${hostsCounter}}}}</stringProp>
+                <stringProp name="Argument.value">{&quot;hostState&quot;:{&quot;id&quot;:&quot;10.23.64.63:23${hostsCounter}6&quot;,&quot;address&quot;:&quot;10.23.64.63:23${hostsCounter}6&quot;,&quot;resourcePoolLink&quot;:&quot;/resources/pools/default-placement-zone&quot;,&quot;customProperties&quot;:{&quot;authCredentialsLink&quot;:&quot;/core/auth/credentials/a&quot;,&quot;adapterDockerType&quot;:&quot;API&quot;,&quot;dockerHostPort&quot;:23${hostsCounter}${hostsCounter}}}}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
             </collectionProp>
@@ -1079,7 +1079,7 @@ log.info(&quot;*** about to delete &quot; + h + &quot; hosts&quot;);</stringProp
             <collectionProp name="Arguments.arguments">
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">{&quot;hostState&quot;:{&quot;id&quot;:&quot;10.23.64.63:23${hostsCounter}6&quot;,&quot;address&quot;:&quot;10.23.64.63:23${hostsCounter}6&quot;,&quot;resourcePoolLink&quot;:&quot;/resources/pools/default-resource-pool&quot;,&quot;customProperties&quot;:{&quot;authCredentialsLink&quot;:&quot;/core/auth/credentials/a&quot;,&quot;adapterDockerType&quot;:&quot;API&quot;,&quot;dockerHostPort&quot;:23${hostsCounter}${hostsCounter}}}}</stringProp>
+                <stringProp name="Argument.value">{&quot;hostState&quot;:{&quot;id&quot;:&quot;10.23.64.63:23${hostsCounter}6&quot;,&quot;address&quot;:&quot;10.23.64.63:23${hostsCounter}6&quot;,&quot;resourcePoolLink&quot;:&quot;/resources/pools/default-placement-zone&quot;,&quot;customProperties&quot;:{&quot;authCredentialsLink&quot;:&quot;/core/auth/credentials/a&quot;,&quot;adapterDockerType&quot;:&quot;API&quot;,&quot;dockerHostPort&quot;:23${hostsCounter}${hostsCounter}}}}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
             </collectionProp>

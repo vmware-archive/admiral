@@ -54,7 +54,7 @@ import com.vmware.xenon.services.common.QueryTask;
  */
 public class GroupResourcePlacementService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.RESOURCE_GROUP_PLACEMENTS;
-    public static final String DEFAULT_RESOURCE_POOL_ID = "default-resource-pool";
+    public static final String DEFAULT_RESOURCE_POOL_ID = "default-placement-zone";
     public static final String DEFAULT_RESOURCE_POOL_LINK = UriUtils.buildUriPath(
             ResourcePoolService.FACTORY_LINK, DEFAULT_RESOURCE_POOL_ID);
     public static final String DEFAULT_RESOURCE_PLACEMENT_ID = "default-resource-placement";

@@ -14,7 +14,7 @@ var ContainersMockData = {};
 ContainersMockData.parentHosts = [{
   "id": "test-id",
   "descriptionLink": "/resources/compute-descriptions/docker-host-compute-desc-id",
-  "resourcePoolLink": "/resources/pools/default-resource-pool",
+  "resourcePoolLink": "/resources/pools/default-placement-zone",
   "address": "test-id:2376",
   "powerState": "ON",
   "customProperties": {

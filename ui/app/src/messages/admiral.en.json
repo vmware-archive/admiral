@@ -23,7 +23,7 @@
       "applications": "Applications",
       "networks": "Networks",
       "eventlog": "Event Log",
-      "resourcePools": "Resource Pools",
+      "resourcePools": "Placement Zones",
       "environments": "Environments",
       "machines": "Machines"
     },
@@ -39,7 +39,7 @@
         "hostnameHint": "Please specify the appropriate scheme and port, e.g. https://myhost.com:2376. Default scheme: 'https'. Default ports: https/443, http/80.",
         "hostAlias": "Name",
         "hostAddress": "Address",
-        "resourcePool": "Resource pool",
+        "resourcePool": "Placement zone",
         "credential": "Login credential",
         "deploymentPolicy": "Deployment policy",
         "reservationPolicy": "Reservation policy",
@@ -82,11 +82,11 @@
       }
     },
     "resourcePool": {
-      "createNew": "New Resource Pool",
-      "manage": "Manage Resource Pools",
-      "entity": "resource pool",
+      "createNew": "New Placement Zone",
+      "manage": "Manage Placement Zones",
+      "entity": "placement zone",
       "list": {
-        "title": "Resource Pools",
+        "title": "Placement Zones",
         "addButton": "Add",
         "nameColumn": "Name",
         "cpuColumn": "CPU",
@@ -95,13 +95,13 @@
         "hostsColumn": "Hosts"
       },
       "edit": {
-        "createNew": "New Resource Pool",
-        "update": "Edit Resource Pool",
-        "nameTitle": "Resource rool name",
+        "createNew": "New Placement Zone",
+        "update": "Edit Placement Zone",
+        "nameTitle": "Placement zone name",
         "customPropertiesTitle": "Custom properties",
         "endpointTitle": "Endpoint"
       },
-      "contextPanelTooltip": "Resource Pools"
+      "contextPanelTooltip": "Placement Zones"
     },
     "businessGroup": {
       "entity": "business group"
@@ -298,7 +298,7 @@
         "nameColumn": "Name",
         "groupColumn": "Project",
         "businessGroupColumn": "Business Group",
-        "resourcePoolColumn": "Resource Pool",
+        "resourcePoolColumn": "Placement Zone",
         "deploymentPolicyColumn": "Deployment Policy",
         "priorityColumn": "Priority",
         "instancesColumn": "Instances",
@@ -316,8 +316,8 @@
         "selectGroup": "Select Project",
         "businessGroupLabel": "Business Group",
         "selectBusinessGroup": "Select Business Group",
-        "resourcePoolLabel": "Resource Pool",
-        "selectResourcePool": "Select Resource Pool",
+        "resourcePoolLabel": "Placement Zone",
+        "selectResourcePool": "Select Placement Zone",
         "deploymentPolicyLabel": "Deployment Policy",
         "selectDeploymentPolicy": "Select Deployment Policy",
         "priorityLabel": "Priority",

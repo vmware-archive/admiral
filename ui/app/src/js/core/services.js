@@ -1351,7 +1351,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts) {
       }
     }
 
-    var resourcePoolArray = toArrayIfDefined(queryOptions.resourcePool);
+    var resourcePoolArray = toArrayIfDefined(queryOptions.placementZone);
     if (resourcePoolArray) {
       let prefixPath = links.RESOURCE_POOLS + '/';
 

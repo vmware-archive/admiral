@@ -147,7 +147,7 @@ if [[ -f "$cert" && -f "$key" ]];then
     echo "    Credential created."
 fi
 
-host="{\"hostState\": {\"address\": \"$dockeraddress\", \"id\": \"$dockerip\", \"resourcePoolLink\": \"/resources/pools/default-resource-pool\", \"customProperties\": {$credentailsproperty\"__adapterDockerType\": \"API\"}}, \"acceptCertificate\": true, \"acceptHostAddress\": $accepthostvalue}"
+host="{\"hostState\": {\"address\": \"$dockeraddress\", \"id\": \"$dockerip\", \"resourcePoolLink\": \"/resources/pools/default-placement-zone\", \"customProperties\": {$credentailsproperty\"__adapterDockerType\": \"API\"}}, \"acceptCertificate\": true, \"acceptHostAddress\": $accepthostvalue}"
 
 echo "Creating host..."
 
