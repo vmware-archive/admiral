@@ -40,23 +40,24 @@ let toViewModel = function(dto) {
     name: dto.name,
     address: dto.address,
     powerState: dto.powerState,
-    resourcePoolLink: dto.resourcePoolLink,
     descriptionLink: dto.descriptionLink,
+    resourcePoolLink: dto.resourcePoolLink,
     resourcePoolDocumentId: dto.resourcePoolLink && utils.getDocumentId(dto.resourcePoolLink),
     connectionType: hasCustomProperties ? dto.customProperties.__adapterDockerType : null,
-    customProperties: customProperties
+    customProperties: customProperties,
+    computeType: dto.customProperties.computeType
   };
 };
 
-let MachinesStore = Reflux.createStore({
+let ComputeStore = Reflux.createStore({
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
 
   init: function() {
   },
 
-  listenables: [actions.MachineActions],
+  listenables: [actions.ComputeActions],
 
-  onOpenMachines: function(queryOptions, forceReload) {
+  onOpenCompute: function(queryOptions, forceReload) {
     var items = utils.getIn(this.data, ['listView', 'items']);
     if (!forceReload && items) {
       return;
@@ -72,39 +73,39 @@ let MachinesStore = Reflux.createStore({
       this.cancelOperations(OPERATION.DETAILS);
       this.setInData(['listView', 'itemsLoading'], true);
 
-      operation.forPromise(services.loadMachines(queryOptions, false)).then((result) => {
+      operation.forPromise(services.loadCompute(queryOptions)).then((result) => {
         // Transforming to the model of the view
         var documents = result.documents;
         var nextPageLink = result.nextPageLink;
 
         // TODO: temporary client side filter
-        var machines = [];
+        var compute = [];
         for (var key in documents) {
           if (documents.hasOwnProperty(key)) {
             var document = documents[key];
-            machines.push(toViewModel(document));
+            compute.push(toViewModel(document));
           }
         }
 
-        this.getResourcePools(machines).then((result) => {
-          machines.forEach((machine) => {
-            if (result[machine.resourcePoolLink]) {
-              machine.resourcePoolName = result[machine.resourcePoolLink].name;
+        this.getResourcePools(compute).then((result) => {
+          compute.forEach((compute) => {
+            if (result[compute.resourcePoolLink]) {
+              compute.resourcePoolName = result[compute.resourcePoolLink].name;
             }
           });
-          return this.getDescriptions(machines);
+          return this.getDescriptions(compute);
         }).then((result) => {
 
-          machines.forEach((machine) => {
-            if (result[machine.descriptionLink]) {
-              machine.cpuCount = result[machine.descriptionLink].cpuCount;
-              machine.cpuMhzPerCore = result[machine.descriptionLink].cpuMhzPerCore;
-              machine.memory =
-                  Math.floor(result[machine.descriptionLink].totalMemoryBytes / 1048576);
+          compute.forEach((compute) => {
+            if (result[compute.descriptionLink]) {
+              compute.cpuCount = result[compute.descriptionLink].cpuCount;
+              compute.cpuMhzPerCore = result[compute.descriptionLink].cpuMhzPerCore;
+              compute.memory =
+                  Math.floor(result[compute.descriptionLink].totalMemoryBytes / 1048576);
             }
           });
 
-          this.setInData(['listView', 'items'], machines);
+          this.setInData(['listView', 'items'], compute);
           this.setInData(['listView', 'itemsLoading'], false);
           this.setInData(['listView', 'itemsCount'], result.itemsCount);
           this.setInData(['listView', 'nextPageLink'], nextPageLink);
@@ -116,18 +117,18 @@ let MachinesStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onOpenMachineDetails: function(machineId) {
+  onOpenComputeDetails: function(computeId) {
     // If switching between views, there will be a short period that we show old data,
     // until the new one is loaded.
     var currentItemDetailsCursor = this.selectFromData(['selectedItemDetails']);
     currentItemDetailsCursor.merge({
-      documentSelfLink: '/resources/compute/' + machineId,
+      documentSelfLink: '/resources/compute/' + computeId,
       logsLoading: true
     });
 
     var currentItemCursor = this.selectFromData(['selectedItem']);
     currentItemCursor.merge({
-      documentSelfLink: '/resources/compute/' + machineId
+      documentSelfLink: '/resources/compute/' + computeId
     });
     this.emitChange();
 
@@ -135,21 +136,21 @@ let MachinesStore = Reflux.createStore({
 
     this.cancelOperations(OPERATION.DETAILS);
     var operation = this.requestCancellableOperation(OPERATION.DETAILS);
-    operation.forPromise(services.loadHost(machineId))
-      .then((machine) => {
-        machine = toViewModel(machine);
+    operation.forPromise(services.loadHost(computeId))
+      .then((compute) => {
+        compute = toViewModel(compute);
 
-        currentItemCursor.merge(machine);
-        currentItemDetailsCursor.setIn(['instance'], machine);
+        currentItemCursor.merge(compute);
+        currentItemDetailsCursor.setIn(['instance'], compute);
 
         this.emitChange();
       });
   },
 
-  getResourcePools: function(machines) {
+  getResourcePools: function(compute) {
     let resourcePools = utils.getIn(this.data, ['listView', 'resourcePools']) || {};
-    let resourcePoolLinks = machines.filter((machine) =>
-        machine.resourcePoolLink).map((machine) => machine.resourcePoolLink);
+    let resourcePoolLinks = compute.filter((compute) =>
+        compute.resourcePoolLink).map((compute) => compute.resourcePoolLink);
     let links = [...new Set(resourcePoolLinks)].filter((link) =>
         !resourcePools.hasOwnProperty(link));
     if (links.length === 0) {
@@ -161,10 +162,10 @@ let MachinesStore = Reflux.createStore({
     });
   },
 
-  getDescriptions: function(machines) {
+  getDescriptions: function(compute) {
     let descriptions = utils.getIn(this.data, ['listView', 'descriptions']) || {};
-    let descriptionLinks = machines.filter((machine) =>
-        machine.descriptionLink).map((machine) => machine.descriptionLink);
+    let descriptionLinks = compute.filter((compute) =>
+        compute.descriptionLink).map((compute) => compute.descriptionLink);
     let links = [...new Set(descriptionLinks)].filter((link) =>
         !descriptions.hasOwnProperty(link));
     if (links.length === 0) {
@@ -177,4 +178,4 @@ let MachinesStore = Reflux.createStore({
   }
 });
 
-export default MachinesStore;
+export default ComputeStore;

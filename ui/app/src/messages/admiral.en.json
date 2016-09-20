@@ -25,7 +25,8 @@
       "eventlog": "Event Log",
       "resourcePools": "Placement Zones",
       "environments": "Environments",
-      "machines": "Machines"
+      "machines": "Machines",
+      "compute": "Compute"
     },
     "host": {
       "entity": "host",
@@ -411,6 +412,16 @@
         "title": "Machines",
         "titleSearch": "Found Machines",
         "searchPlaceholder": "Search for machines"
+      }
+    },
+    "compute": {
+      "list": {
+        "title": "Compute",
+        "titleSearch": "Found Compute",
+        "searchPlaceholder": "Search for compute"
+      },
+      "details": {
+        "type": "Type"
       }
     },
     "resource": {

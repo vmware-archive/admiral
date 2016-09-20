@@ -13,6 +13,7 @@ import AppComputeVue from 'AppComputeVue';
 import AppMixin from 'components/AppMixin';
 import HomeCompute from 'components/HomeCompute';//eslint-disable-line
 import MachinesView from 'components/machines/MachinesView';//eslint-disable-line
+import ComputeView from 'components/compute/ComputeView';//eslint-disable-line
 import PlacementsView from 'components/placements/PlacementsView';//eslint-disable-line
 import EnvironmentsView from 'components/environments/EnvironmentsView';//eslint-disable-line
 import computeConstants from 'core/computeConstants';

@@ -25,6 +25,10 @@ export var MachineActions = Reflux.createActions([
   'openMachines', 'openMachineDetails'
 ]);
 
+export var ComputeActions = Reflux.createActions([
+  'openCompute', 'openComputeDetails'
+]);
+
 export var PlacementActions = Reflux.createActions([
   'openPlacements', 'editPlacement', 'cancelEditPlacement', 'createPlacement', 'updatePlacement',
   'deletePlacement'
@@ -155,5 +159,5 @@ export var NavigationActions = Reflux.createActions([
   'openTemplates', 'openEventLog', 'openRegistries', 'openContainerRequest', 'openContainers',
   'openNetworks', 'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
   'openTemplateDetails', 'showContainersPerPlacement', 'openPlacements', 'openEnvironments',
-  'openMachines', 'openMachineDetails'
+  'openMachines', 'openMachineDetails', 'openCompute', 'openComputeDetails'
 ]);

@@ -1,0 +1,75 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<alert alert-type="danger" v-bind:show-alert="hasGeneralError" v-bind:alert-message="generalError"></alert>
+<div class="compute-details" v-if="model.instance">
+  <alert alert-type="danger" v-bind:show-alert="hasOperationError"
+                             v-bind:alert-message="i18n('app.container.details.operation.failure')"></alert>
+  <div class="compute-details-header">
+    <div class="title">{{model.instance.names}}<refresh-button v-on:click="refresh()"></refresh-button></div>
+    <div class="status {{model.instance.powerState}}">{{statusDisplay(model.instance.powerState, model.instance.started)}}</div>
+    <div class="toolbar-actions">
+      <template v-if="hasOperationInProgress()">
+        <div class="loading">{{i18n('app.container.details.operation.pending')}} <i class="fa fa-spinner fa-2x fa-spin"></i></div>
+      </template>
+      <template v-else>
+        <toolbar-action-button icon-name="stop" v-bind:label="i18n('app.container.actions.stop')"
+                               v-bind:supported="operationSupported('STOP')"
+                               v-on:click="stopCompute($event)"></toolbar-action-button>
+
+        <toolbar-action-button icon-name="play" v-bind:label="i18n('app.container.actions.start')"
+                               v-bind:supported="operationSupported('START')"
+                               v-on:click="startCompute($event)"></toolbar-action-button>
+
+        <toolbar-action-button icon-name="close" v-bind:label="i18n('app.container.actions.remove')"
+                               v-bind:supported="operationSupported('REMOVE')"
+                               v-on:click="removeCompute($event)"></toolbar-action-button>
+      </template>
+    </div>
+  </div>
+  <div v-if="model.exposedService" class="exposed-service">
+    <span class="exposed-service-hint">
+      <i class="fa fa-external-link" data-toggle="tooltip" data-placement="bottom"
+         v-tooltip="exposedServicesDescription('app.container.details.exposedService.description')"></i>
+    </span>
+    <a v-for="addressConfig in model.exposedService.addressConfigs"
+       track-by="alias"
+       href="{{addressConfig.address}}">{{addressConfig.address}}</a>
+  </div>
+  <div class="content">
+    <maximizable-behaviour class="container-details-properties">
+      <div class="title">{{i18n('app.container.details.properties')}}</div>
+      <div class="content">
+        <compute-properties v-bind:custom-properties="model.instance.customProperties"></compute-properties>
+      </div>
+    </maximizable-behaviour>
+    <maximizable-behaviour class="container-details-usages">
+      <div class="title">{{i18n('app.container.details.usages')}}</div>
+      <div class="content">
+      </div>
+      <div class="loading loading-background" v-bind:class="{'hide': !model.statsLoading}">
+        <span class="vertical-helper"></span>
+        <img src="image-assets/loading-animation.gif">
+      </div>
+    </maximizable-behaviour>
+    <maximizable-behaviour class="container-details-logs">
+      <div class="title">{{i18n('app.container.details.logs')}}</div>
+      <div class="content">{{model.logs}}</div>
+      <div class="loading" v-bind:class="{'hide': !model.logsLoading}">
+        <span class="vertical-helper"></span>
+        <img src="image-assets/loading-animation.gif">
+      </div>
+      <div class="container-details-logs-settings">
+        <span>{{i18n('app.container.details.showingLogsSince')}}</span>
+      </div>
+    </maximizable-behaviour>
+  </div>
+</div>

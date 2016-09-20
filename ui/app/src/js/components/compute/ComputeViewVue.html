@@ -9,11 +9,10 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="machines-view">
-  <div class="machines-list-holder">
+<div class="compute-view">
+  <div class="compute-list-holder">
     <div class="main-panel">
-      <div class="list-view machines-list scroll-view"
-           v-bind:class="{'context-selected': model.selectedItem}"
+      <div class="list-view compute-list scroll-view" v-bind:class="{'context-selected': model.selectedItem}"
            v-if="model.listView">
 
         <a class="close-button hide" v-on:click="goBack($event)"><i
@@ -21,7 +20,7 @@
 
         <div class="toolbar">
           <search v-bind:suggestion-properties="['address']"
-                  v-bind:placeholder="i18n('app.machine.list.searchPlaceholder')"
+                  v-bind:placeholder="i18n('app.compute.list.searchPlaceholder')"
                   v-bind:query-options="model.listView.queryOptions"
                   v-on:search-change="search">
             </search>
@@ -29,15 +28,15 @@
 
         <div class="selected-context-small-holder" v-if="model.selectedItem">
           <div class="grid-item">
-            <machine-grid-item v-bind:model="model.selectedItem"></machine-grid-item>
+            <compute-grid-item v-bind:model="model.selectedItem"></compute-grid-item>
           </div>
         </div>
 
         <div class="grid-container">
           <list-title v-on:refresh-list="refresh()"
                       v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
-                      v-bind:title="i18n('app.machine.list.title')"
-                      v-bind:title-search="i18n('app.machine.list.titleSearch')"></list-title>
+                      v-bind:title="i18n('app.compute.list.title')"
+                      v-bind:title-search="i18n('app.compute.list.titleSearch')"></list-title>
           <div class="content">
             <grid v-bind:context-selected="model.selectedItem"
                   v-bind:preferred-width="preferredGridWidth"
@@ -45,9 +44,9 @@
                   v-infinite-scroll="loadMore()">
                 <grid-item v-for="item in model.listView.items"
                            track-by="documentSelfLink">
-                  <machine-grid-item v-bind:model="item"
-                                     v-on:click="openMachineDetails(item)">
-                  </machine-grid-item>
+                  <compute-grid-item v-bind:model="item"
+                                     v-on:click="openComputeDetails(item)">
+                  </compute-grid-item>
               </grid-item>
             </grid>
           </div>
@@ -67,7 +66,7 @@
     <alert alert-type="danger" v-bind:show-alert="hasContainerDetailsError"
                                v-bind:alert-message="containerDetailsError"></alert>
 
-    <machine-details class="content" v-bind:model="model.selectedItemDetails">
-    </machine-details>
+    <compute-details class="content" v-bind:model="model.selectedItemDetails">
+    </compute-details>
   </div>
 </div>

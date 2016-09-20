@@ -12,6 +12,7 @@
 import PlacementsStore from 'stores/PlacementsStore';
 import EnvironmentsStore from 'stores/EnvironmentsStore';
 import MachinesStore from 'stores/MachinesStore';
+import ComputeStore from 'stores/ComputeStore';
 import * as actions from 'actions/Actions';
 import routes from 'core/routes';
 import constants from 'core/computeConstants';
@@ -62,9 +63,14 @@ let initializeStoreListeners = function() {
       this.emitChange();
     }
   });
-
   MachinesStore.listen((quotesData) => {
     if (this.data.centerView && this.data.centerView.name === constants.VIEWS.MACHINES.name) {
+      this.setInData(['centerView', 'data'], quotesData);
+      this.emitChange();
+    }
+  });
+  ComputeStore.listen((quotesData) => {
+    if (this.data.centerView && this.data.centerView.name === constants.VIEWS.COMPUTE.name) {
       this.setInData(['centerView', 'data'], quotesData);
       this.emitChange();
     }

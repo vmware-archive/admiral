@@ -9,15 +9,15 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import MachinesViewVue from 'MachinesViewVue';
-import MachineItem from 'components/machines/MachineItem'; //eslint-disable-line
-import MachineDetails from 'components/machines/MachineDetails'; //eslint-disable-line
+import ComputeViewVue from 'ComputeViewVue';
+import ComputeItem from 'components/compute/ComputeItem'; //eslint-disable-line
+import ComputeDetails from 'components/compute/ComputeDetails'; //eslint-disable-line
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
-import { MachineActions, NavigationActions } from 'actions/Actions';
+import { ComputeActions, NavigationActions } from 'actions/Actions';
 
-var MachinesViewVueComponent = Vue.extend({
-  template: MachinesViewVue,
+var ComputeViewVueComponent = Vue.extend({
+  template: ComputeViewVue,
 
   props: {
     model: {
@@ -54,23 +54,23 @@ var MachinesViewVueComponent = Vue.extend({
 
   methods: {
     search: function(queryOptions) {
-      NavigationActions.openMachines(queryOptions);
+      NavigationActions.openCompute(queryOptions);
     },
     refresh: function() {
-      MachineActions.openMachines(this.model.listView.queryOptions, true);
+      ComputeActions.openCompute(this.model.listView.queryOptions, true);
     },
     loadMore: function() {
       if (this.model.listView.nextPageLink) {
-        MachineActions.openMachinesNext(this.model.listView.queryOptions,
+        ComputeActions.openComputeNext(this.model.listView.queryOptions,
           this.model.listView.nextPageLink);
       }
     },
-    openMachineDetails: function(machine) {
-      NavigationActions.openMachineDetails(machine.id);
+    openComputeDetails: function(compute) {
+      NavigationActions.openComputeDetails(compute.id);
     }
   }
 });
 
-Vue.component('machines-view', MachinesViewVueComponent);
+Vue.component('compute-view', ComputeViewVueComponent);
 
-export default MachinesViewVueComponent;
+export default ComputeViewVueComponent;

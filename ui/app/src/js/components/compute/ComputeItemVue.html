@@ -9,20 +9,20 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="machine-item">
+<div class="compute-item">
   <div class="status {{stateMessage(model.powerState)}}"><span class="status-state">{{stateMessage(model.powerState)}}</span></div>
   <div title="{{id}}" class="title truncateText">{{hostName}}</div>
   <div class="details form-horizontal">
     <div class="form-group">
-      <label class="col-xs-5">{{i18n("app.host.details.hostAddress")}}</label>
+      <label class="col-xs-5">{{i18n("app.compute.details.type")}}</label>
       <div class="col-xs-7 truncateText"
-           title="{{model.address}}">{{model.address}}</div>
+           title="{{model.computeType}}">{{model.computeType}}</div>
     </div>
     <div class="form-group">
       <label class="col-xs-5">{{i18n("app.host.details.resourcePool")}}</label>
       <div class="col-xs-7 truncateText" title="{{resourcePoolDocumentId}}">
-        <a href="#/machines?resourcePool={{model.resourcePoolDocumentId}}"
-           class="navigation-link">{{model.resourcePoolName}}</a>
+        <a href="#/compute?resourcePool={{model.resourcePoolDocumentId}}"
+            class="navigation-link">{{model.resourcePoolName}}</a>
       </div>
     </div>
     <div class="form-group">

@@ -471,8 +471,20 @@ services.deleteCertificate = function(certificate) {
   return deleteEntity(certificate.documentSelfLink);
 };
 
-services.addHost = function(host) {
-  return put(links.CONTAINER_HOSTS, host);
+services.loadHostDescriptions = function(documentSelfLinks) {
+  var params = {};
+  if (documentSelfLinks && documentSelfLinks.length) {
+    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+      documentSelfLink: documentSelfLinks.map((link) => {
+        return {
+          val: link,
+          op: 'eq'
+        };
+      }),
+      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+    });
+  }
+  return list(links.COMPUTE_DESCRIPTIONS, true, params);
 };
 
 services.createHostDescription = function(hostData) {
@@ -495,6 +507,10 @@ services.createHostDescription = function(hostData) {
   }
 
   return post(links.COMPUTE_DESCRIPTIONS, hostDescription);
+};
+
+services.addHost = function(host) {
+  return put(links.CONTAINER_HOSTS, host);
 };
 
 services.createHost = function(hostDescription, clusterSize) {
@@ -587,6 +603,22 @@ services.searchHosts = function(query, limit) {
     return documentLinks.map((link) => {
       return data.documents[link];
     });
+  });
+};
+
+services.loadMachines = function(queryOptions) {
+  let filter = buildHostsQuery(queryOptions, false, false);
+  let url = buildPaginationUrl(links.COMPUTE_RESOURCES, filter, true, 'creationTimeMicros asc');
+  return get(url).then(function(result) {
+    return result;
+  });
+};
+
+services.loadCompute = function(queryOptions) {
+  let filter = buildHostsQuery(queryOptions, false, true);
+  let url = buildPaginationUrl(links.COMPUTE_RESOURCES, filter, true, 'creationTimeMicros asc');
+  return get(url).then(function(result) {
+    return result;
   });
 };
 
@@ -1297,7 +1329,7 @@ var toArrayIfDefined = function(obj) {
   return null;
 };
 
-var buildHostsQuery = function(queryOptions, onlyContainerHosts) {
+var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
   let qOps = [];
 
   // Filter out Amazon parent hosts
@@ -1309,8 +1341,14 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts) {
   ];
 
   //  Filter only actual compute hosts
-  if (!onlyContainerHosts) {
+  if (onlyContainerHosts === false) {
     qOps['customProperties/__endpointType'] = [
+      {
+        op: 'ne',
+        val: '*'
+      }
+    ];
+    qOps['customProperties/__computeContainerHost'] = [
       {
         op: 'ne',
         val: '*'
@@ -1319,11 +1357,29 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts) {
   }
 
   //Filter only actual compute hosts that are container hosts
-  if (onlyContainerHosts) {
+  if (onlyContainerHosts === true) {
     qOps['customProperties/__computeContainerHost'] = [
       {
         op: 'eq',
         val: '*'
+      }
+    ];
+  }
+
+  if (onlyCompute === false) {
+    qOps['customProperties/computeType'] = [
+      {
+        op: 'eq',
+        val: 'VirtualMachine'
+      }
+    ];
+  }
+
+  if (onlyCompute === true) {
+    qOps['customProperties/computeType'] = [
+      {
+        op: 'ne',
+        val: 'VirtualMachine'
       }
     ];
   }

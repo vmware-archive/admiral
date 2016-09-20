@@ -9,12 +9,12 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import MachineItemVue from 'MachineItemVue';
+import ComputeItemVue from 'ComputeItemVue';
 import constants from 'core/constants';
 import utils from 'core/utils';
 
-var MachineItem = Vue.extend({
-  template: MachineItemVue,
+var ComputeItem = Vue.extend({
+  template: ComputeItemVue,
   props: {
     model: {required: true}
   },
@@ -52,6 +52,6 @@ var MachineItem = Vue.extend({
   }
 });
 
-Vue.component('machine-grid-item', MachineItem);
+Vue.component('compute-grid-item', ComputeItem);
 
-export default MachineItem;
+export default ComputeItem;

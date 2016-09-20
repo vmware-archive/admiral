@@ -9,7 +9,8 @@
   margin-right: 240px;
 }
 
-.machines-view .list-view .toolbar .query-search-input {
+.machines-view .list-view .toolbar .query-search-input,
+.compute-view .list-view .toolbar .query-search-input {
   margin-right: 0;
 }
 
@@ -203,7 +204,7 @@
 .containers-view .container-item .container-header .title-holder .truncateText {
   color: #000;
 }
-.hosts-view, .machines-view {
+.hosts-view, .machines-view, .compute-view {
   .list-holder {
     > .main-panel {
       @extend .position-expand;
@@ -236,7 +237,7 @@
   font-weight: 300;
 }
 
-.hosts-view, .machines-view {
+.hosts-view, .machines-view, .compute-view {
   .list-view .grid-item .stats-holder {
     position: relative;
   }

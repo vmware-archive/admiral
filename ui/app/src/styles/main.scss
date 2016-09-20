@@ -488,7 +488,7 @@ textarea {
   overflow: hidden;
 }
 
-.hosts-view, .images-view, .containers-view, .machines-view {
+.hosts-view, .images-view, .containers-view, .machines-view, .compute-view {
   @extend .position-expand;
   overflow: hidden;
 }

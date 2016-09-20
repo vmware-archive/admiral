@@ -36,6 +36,11 @@
           <span class="nav-item-image"><i class="fa fa-cube"></i></span>
           <span>{{i18n("app.navbar.machines")}}</span>
         </a>
+        <a v-bind:class="{'active': model.sideView.currentView === computeConstants.VIEWS.COMPUTE.name}"
+           class="nav-item containers" href="#/compute">
+          <span class="nav-item-image"><i class="fa fa-gear"></i></span>
+          <span>{{i18n("app.navbar.compute")}}</span>
+        </a>
       </div>
     </div>
     <div v-if="model.centerView.name === computeConstants.VIEWS.HOME.name"
@@ -45,16 +50,20 @@
     <div v-else class="center-view" transition="fade">
       <environments-view v-if="model.centerView.name === computeConstants.VIEWS.ENVIRONMENTS.name"
                    v-bind:model="model.centerView.data"
-                   v-ref:center-view >
+                   v-ref:center-view>
       </environments-view>
       <placements-view v-if="model.centerView.name === computeConstants.VIEWS.PLACEMENTS.name"
                    v-bind:model="model.centerView.data"
-                   v-ref:center-view >
+                   v-ref:center-view>
       </placements-view>
-       <machines-view v-if="model.centerView.name === computeConstants.VIEWS.MACHINES.name"
+      <machines-view v-if="model.centerView.name === computeConstants.VIEWS.MACHINES.name"
                    v-bind:model="model.centerView.data"
-                   v-ref:center-view >
+                   v-ref:center-view>
       </machines-view>
+      <compute-view v-if="model.centerView.name === computeConstants.VIEWS.COMPUTE.name"
+                   v-bind:model="model.centerView.data"
+                   v-ref:center-view>
+      </compute-view>
       <div class = "core-build-number"
            v-if="buildNumberSupported()">
         Build number: {{buildNumber}}

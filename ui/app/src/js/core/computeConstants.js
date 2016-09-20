@@ -28,6 +28,9 @@ var computeConstants = Immutable({
     },
     MACHINES: {
       name: 'machines'
+    },
+    COMPUTE: {
+      name: 'compute'
     }
   }
 });

@@ -200,6 +200,18 @@ crossroads.addRoute('/machines/{machineId*}', function() {
   // actions.MachineActions.openMachineDetails(machineId);
 });
 
+crossroads.addRoute('/compute:?query:', function(query) {
+  actions.AppActions.openView(computeConstants.VIEWS.COMPUTE.name);
+  actions.ComputeActions.openCompute(query, true);
+});
+
+
+crossroads.addRoute('/compute/{computeId*}', function(computeId) {
+  actions.AppActions.openView(computeConstants.VIEWS.COMPUTE.name);
+  actions.ComputeActions.openCompute();
+  actions.ComputeActions.openComputeDetails(computeId);
+});
+
 // Nothing from the above is matched, redirect to main
 crossroads.bypassed.add(function() {
   hasher.setHash('');
@@ -304,6 +316,10 @@ actions.NavigationActions.openEnvironments.listen(function() {
 
 actions.NavigationActions.openMachines.listen(function(queryOptions) {
   hasher.setHash(getHashWithQuery('machines', queryOptions));
+});
+
+actions.NavigationActions.openCompute.listen(function(queryOptions) {
+  hasher.setHash(getHashWithQuery('compute', queryOptions));
 });
 
 actions.NavigationActions.openMachineDetails.listen(function() {
