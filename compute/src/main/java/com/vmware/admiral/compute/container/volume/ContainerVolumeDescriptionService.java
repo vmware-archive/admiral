@@ -122,7 +122,7 @@ public class ContainerVolumeDescriptionService extends StatefulService {
 
         /** Link to the parent volume description */
         @JsonProperty("parent_description_link")
-        @Documentation(description = "Link to the parent network description.")
+        @Documentation(description = "Link to the parent volume description.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public String parentDescriptionLink;
 

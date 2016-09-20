@@ -459,12 +459,11 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
         addForDeletion(dockerHost2);
 
-        // setup Composite description with 2 containers and 1 network
-
-        String volumeName = "/etc/pgdata/postgres:/postgres";
+        String sharedVolumeName = "postgres";
+        String volumeName = String.format("%s:/etc/pgdata/postgres", sharedVolumeName);
 
         ContainerVolumeDescription volumeDesc = TestRequestStateFactory
-                .createContainerVolumeDescription(volumeName);
+                .createContainerVolumeDescription(sharedVolumeName);
         volumeDesc.documentSelfLink = UUID.randomUUID().toString();
 
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
@@ -477,6 +476,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         container2Desc.name = "container2";
         container2Desc.affinity = new String[] { "!container1:hard" };
 
+        // setup Composite description with 2 containers and 1 network
         CompositeDescription compositeDesc = createCompositeDesc(volumeDesc, container1Desc,
                 container2Desc);
         assertNotNull(compositeDesc);
@@ -499,8 +499,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
         assertNotNull(rs);
 
-        // Removal task of volumes is not ready yet.
-        // assertEquals(Integer.valueOf(100), rs.progress);
+        assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
         CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
@@ -538,7 +537,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertFalse(cont1.parentLink.equals(cont2.parentLink));
 
         ContainerVolumeState volume = getDocument(ContainerVolumeState.class, volumeLink);
-        assertTrue(volume.name.contains(volumeName));
+        assertTrue(volume.name.contains(sharedVolumeName));
 
         String volumeHostPath = volume.originatingHostReference.getPath();
 

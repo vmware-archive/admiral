@@ -962,6 +962,7 @@ public class HostContainerListDataCollection extends StatefulService {
                         containerState.groupResourcePlacementLink =
                                 GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
                         containerState.system = Boolean.TRUE;
+                        containerState.volumes = containerDesc.volumes;
 
                         sendRequest(OperationUtil
                                 .createForcedPost(this, ContainerFactoryService.SELF_LINK)
