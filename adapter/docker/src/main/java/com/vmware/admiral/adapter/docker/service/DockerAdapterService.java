@@ -27,6 +27,7 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.DNS_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.DNS_SEARCH_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.EXTRA_HOSTS_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.LINKS_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.MEMORY_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.MEMORY_SWAP_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.NETWORK_MODE_PROP_NAME;
@@ -699,6 +700,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         hostConfig.put(CAP_ADD_PROP_NAME, context.containerDescription.capAdd);
         hostConfig.put(CAP_DROP_PROP_NAME, context.containerDescription.capDrop);
         hostConfig.put(NETWORK_MODE_PROP_NAME, context.containerDescription.networkMode);
+        hostConfig.put(LINKS_PROP_NAME, context.containerState.links);
         hostConfig.put(PRIVILEGED_PROP_NAME, context.containerDescription.privileged);
         hostConfig.put(PID_MODE_PROP_NAME, context.containerDescription.pidMode);
 
@@ -836,6 +838,11 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             if (value.aliases != null) {
                 endpointConfig.put(DOCKER_CONTAINER_NETWORKING_CONFIG.ENDPOINTS_CONFIG.ALIASES,
                         value.aliases);
+            }
+
+            if (value.links != null) {
+                endpointConfig.put(DOCKER_CONTAINER_NETWORKING_CONFIG.ENDPOINTS_CONFIG.LINKS,
+                        value.links);
             }
 
             endpointsConfig.put(entry.getKey(), endpointConfig);

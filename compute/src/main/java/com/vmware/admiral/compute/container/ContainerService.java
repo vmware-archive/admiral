@@ -163,6 +163,11 @@ public class ContainerService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public String[] volumes;
 
+        /** A list of services (in a blueprint) the container depends on */
+        @Documentation(description = "A list of services (in a blueprint) the container depends on.")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public String[] links;
+
         /** A list of environment variables in the form of VAR=value. */
         @JsonSerialize(contentUsing = EnvSerializer.class)
         @JsonDeserialize(contentUsing = EnvDeserializer.class)
@@ -391,6 +396,7 @@ public class ContainerService extends StatefulService {
         template.attributes.put("Hostname (string)", "nginx (string)");
 
         template.networks = new LinkedHashMap<>();
+        template.links = new String[] { "service:alias" };
 
         return template;
     }

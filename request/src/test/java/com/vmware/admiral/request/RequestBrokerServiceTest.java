@@ -18,6 +18,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -36,6 +37,7 @@ import com.vmware.admiral.compute.container.CompositeComponentService.CompositeC
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
@@ -982,4 +984,127 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
             return reqStatus == null;
         });
     }
+
+    @Test
+    public void testCompositeComponentWithContainerServiceLinks() throws Throwable {
+        CompositeComponent cc = setUpCompositeWithServiceLinks(false);
+
+        String containerLink1 = null;
+        String containerLink2 = null;
+
+        Iterator<String> iterator = cc.componentLinks.iterator();
+        while (iterator.hasNext()) {
+            String link = iterator.next();
+            if (link.startsWith(ContainerFactoryService.SELF_LINK + "/container1")) {
+                containerLink1 = link;
+            } else if (link.startsWith(ContainerFactoryService.SELF_LINK + "/container2")) {
+                containerLink2 = link;
+            }
+        }
+
+        ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
+        ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
+
+        String[] links = cont2.links;
+
+        assertEquals(1, links.length);
+        assertEquals(cont1.names.get(0) + ":mycontainer", cont2.links[0]);
+
+        // Containers are placed on a single host when using "legacy" links
+        assertTrue(cont1.parentLink.equals(cont2.parentLink));
+    }
+
+    @Test
+    public void testCompositeComponentWithContainerServiceLinksAndNetwork() throws Throwable {
+        CompositeComponent cc = setUpCompositeWithServiceLinks(true);
+
+        String containerLink1 = null;
+        String containerLink2 = null;
+
+        Iterator<String> iterator = cc.componentLinks.iterator();
+        while (iterator.hasNext()) {
+            String link = iterator.next();
+            if (link.startsWith(ContainerFactoryService.SELF_LINK + "/container1")) {
+                containerLink1 = link;
+            } else if (link.startsWith(ContainerFactoryService.SELF_LINK + "/container2")) {
+                containerLink2 = link;
+            }
+        }
+
+        ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
+        ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
+
+        String[] links = cont2.networks.values().iterator().next().links;
+
+        assertEquals(1, links.length);
+        assertEquals(cont1.names.get(0) + ":mycontainer", links[0]);
+
+        // Containers are placed on multiple hosts when using user define network links
+    }
+
+    private CompositeComponent setUpCompositeWithServiceLinks(boolean includeNetwork)
+            throws Throwable {
+        // setup Docker Host:
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+
+        delete(computeHost.documentSelfLink);
+        computeHost = null;
+
+        ComputeState dockerHost1 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost1);
+
+        ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost2);
+
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
+        container1Desc.documentSelfLink = UUID.randomUUID().toString();
+        container1Desc.name = "container1";
+
+        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
+        container2Desc.documentSelfLink = UUID.randomUUID().toString();
+        container2Desc.name = "container2";
+        container2Desc.links = new String[] { "container1:mycontainer" };
+
+        CompositeDescription compositeDesc;
+        if (includeNetwork) {
+            ContainerNetworkDescription networkDesc = TestRequestStateFactory
+                    .createContainerNetworkDescription("testnet");
+            networkDesc.documentSelfLink = UUID.randomUUID().toString();
+
+            container1Desc.networks = Collections.singletonMap(networkDesc.name,
+                    new ServiceNetwork());
+            container2Desc.networks = Collections.singletonMap(networkDesc.name,
+                    new ServiceNetwork());
+
+            compositeDesc = createCompositeDesc(networkDesc, container1Desc, container2Desc);
+        } else {
+            compositeDesc = createCompositeDesc(container1Desc, container2Desc);
+        }
+
+        assertNotNull(compositeDesc);
+
+        // setup Group Policy:
+        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+
+        // 1. Request a composite container:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+        request.tenantLinks = groupPolicyState.tenantLinks;
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+
+        // Verify request status
+        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+
+        assertEquals(Integer.valueOf(100), rs.progress);
+        assertEquals(1, request.resourceLinks.size());
+
+        return getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+    }
+
 }

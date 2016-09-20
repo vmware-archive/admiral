@@ -35,6 +35,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -50,6 +51,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
 import com.vmware.admiral.compute.container.ServiceNetwork;
+import com.vmware.admiral.compute.content.ServiceLinkSerializer;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
@@ -626,6 +628,25 @@ public class ContainerAllocationTaskService
             containerState.volumes = mapVolumes(containerDesc, hostSelection);
             containerState.networks = mapNetworks(containerDesc, hostSelection);
 
+            String[] mapLinks = mapLinks(containerDesc, hostSelection);
+            if (mapLinks != null) {
+                if (containerState.networks != null && !containerState.networks.isEmpty()) {
+                    // use links in user defined networks
+                    for (ServiceNetwork sn : containerState.networks.values()) {
+                        if (sn.links == null) {
+                            sn.links = mapLinks;
+                        } else {
+                            sn.links = Stream
+                                    .concat(Arrays.stream(sn.links), Arrays.stream(mapLinks))
+                                    .toArray(String[]::new);
+                        }
+                    }
+                } else {
+                    // Fallback to legacy links
+                    containerState.links = mapLinks;
+                }
+            }
+
             containerState.documentExpirationTimeMicros = ServiceUtils
                     .getDefaultTaskExpirationTimeInMicros();
 
@@ -798,5 +819,29 @@ public class ContainerAllocationTaskService
                 .mapNames(new String[] { v })[0])
                 .filter(Objects::nonNull).toArray(String[]::new);
 
+    }
+
+    private static String[] mapLinks(ContainerDescription cd,
+            HostSelection hostSelection) {
+        if (cd.links == null) {
+            return null;
+        }
+
+        return Arrays.stream(cd.links).map((link) -> {
+
+            String[] split = link.split(ServiceLinkSerializer.SPLIT_REGEX);
+
+            String service = split[0];
+            String alias = split.length == 2 ? split[1] : null;
+
+            String mappedService = hostSelection.mapNames(new String[] { service })[0];
+
+            if (alias != null) {
+                return mappedService + ServiceLinkSerializer.SPLIT_REGEX + alias;
+            } else {
+                return mappedService;
+            }
+
+        }).toArray(String[]::new);
     }
 }

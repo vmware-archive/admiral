@@ -17,7 +17,7 @@ package com.vmware.admiral.compute.content;
 public class ServiceLinkSerializer extends SplitStringToMapSerializer {
     private static final long serialVersionUID = 1L;
 
-    private static final String SPLIT_REGEX = ":";
+    public static final String SPLIT_REGEX = ":";
     private static final String[] ARG_NAMES = { "service", "alias" };
 
     protected ServiceLinkSerializer() {

@@ -24,12 +24,15 @@ public class ServiceNetwork {
 
     public String[] aliases;
 
+    public String[] links;
+
     public String ipv4_address;
 
     public String ipv6_address;
 
     public boolean useDefaults() {
-        return (aliases == null) && (ipv4_address == null) && (ipv6_address == null);
+        return (aliases == null) && (links == null) && (ipv4_address == null)
+                && (ipv6_address == null);
     }
 
     @Override
@@ -50,6 +53,9 @@ public class ServiceNetwork {
         if (!Arrays.equals(aliases, other.aliases)) {
             return false;
         }
+        if (!Arrays.equals(links, other.links)) {
+            return false;
+        }
         if (ipv4_address != null ? !ipv4_address.equals(other.ipv4_address)
                 : other.ipv4_address != null) {
             return false;
@@ -68,6 +74,7 @@ public class ServiceNetwork {
         result = prime * result + Arrays.hashCode(aliases);
         result = prime * result + ((ipv4_address == null) ? 0 : ipv4_address.hashCode());
         result = prime * result + ((ipv6_address == null) ? 0 : ipv6_address.hashCode());
+        result = prime * result + Arrays.hashCode(links);
         return result;
     }
 
@@ -80,6 +87,16 @@ public class ServiceNetwork {
             StringJoiner sj = new StringJoiner(",");
             for (String alias : aliases) {
                 sj.add(alias);
+            }
+            sb.append("{").append(sj.toString()).append("}");
+        } else {
+            sb.append("-");
+        }
+        sb.append("links='");
+        if (links != null) {
+            StringJoiner sj = new StringJoiner(",");
+            for (String link : links) {
+                sj.add(link);
             }
             sb.append("{").append(sj.toString()).append("}");
         } else {

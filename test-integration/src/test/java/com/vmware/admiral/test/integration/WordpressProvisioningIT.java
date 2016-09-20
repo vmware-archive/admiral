@@ -82,31 +82,29 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
 
     private enum NetworkType {
         CUSTOM, // agent or bindings
-        BRIDGE, OVERLAY
+        USER_DEFINED_BRIDGE, USER_DEFINED_OVERLAY, EXTERNAL_BRIDGE, EXTERNAL_OVERLAY, BRIDGE
     }
 
-    @Parameters(name = "{index}: {0} {1} {2}")
+    @Parameters(name = "{index}: {0} {1}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                { "WordPress_with_MySQL_bindings.yaml", NetworkType.CUSTOM, false },
-                { "WordPress_with_MySQL_network.yaml", NetworkType.BRIDGE, false },
-                { "WordPress_with_MySQL_network.yaml", NetworkType.OVERLAY, false },
-                { "WordPress_with_MySQL_network_external.yaml", NetworkType.BRIDGE, true },
-                { "WordPress_with_MySQL_network_external.yaml", NetworkType.OVERLAY, true }
+                { "WordPress_with_MySQL_bindings.yaml", NetworkType.CUSTOM },
+                { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_BRIDGE },
+                { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_OVERLAY },
+                { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_BRIDGE },
+                { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_OVERLAY },
+                { "WordPress_with_MySQL_links.yaml", NetworkType.BRIDGE }
         });
 
     }
 
     private String templateFile;
     private NetworkType networkType;
-    private boolean useExternalNetwork;
     private ContainerNetworkState externalNetwork;
 
-    public WordpressProvisioningIT(String templateFile, NetworkType networkType,
-            boolean useExternalNetwork) {
+    public WordpressProvisioningIT(String templateFile, NetworkType networkType) {
         this.templateFile = templateFile;
         this.networkType = networkType;
-        this.useExternalNetwork = useExternalNetwork;
     }
 
     @BeforeClass
@@ -127,17 +125,17 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
 
     @After
     public void tearDown() throws Exception {
-        if (useExternalNetwork) {
+        if (useExternalNetwork()) {
             cleanupExternalNetwork();
         }
     }
 
     @Test
     public void testProvision() throws Exception {
-        boolean setupOnCluster = NetworkType.OVERLAY.equals(networkType);
+        boolean setupOnCluster = useOverlayNetwork();
         setupCoreOsHost(DockerAdapterType.API, setupOnCluster);
 
-        if (useExternalNetwork) {
+        if (useExternalNetwork()) {
             setupExternalNetwork();
         }
 
@@ -219,7 +217,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
             throws Exception {
         int expectedNumberOfResources = 3;
 
-        if (!networkType.equals(NetworkType.CUSTOM)) {
+        if (createsNetworkResource()) {
             // +1 resource for the network itself
             expectedNumberOfResources++;
         }
@@ -284,8 +282,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
             assertNotNull("Failed to find WP host port", wpHostPort);
 
             wpHost = getHostnameOfComputeHost(wpContainerState.parentLink);
-            // connect to wordpress main page by accessing a specific container instance through the
-            // docker exposed port
+            // connect to wordpress main page by accessing a specific container instance through the docker exposed port
             URI uri = URI.create(String.format("http://%s:%s/%s", wpHost, wpHostPort, WP_PATH));
             logger.info("------------- 4.%s.2. connecting to wordpress main page %s. -------------",
                     wpContainersCount,
@@ -307,8 +304,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
                 wpContainerState = getDocument(wpContainerLink, ContainerState.class);
                 wpHostPort = wpContainerState.ports.get(0).hostPort;
 
-                // connect to wordpress main page by accessing a specific container instance through
-                // the docker exposed port
+                // connect to wordpress main page by accessing a specific container instance through the docker exposed port
                 uri = URI.create(String.format("http://%s:%s/%s", wpHost, wpHostPort, WP_PATH));
 
                 logger.info(
@@ -391,5 +387,37 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
     private String getHostnameOfComputeHost(String hostLink) throws Exception {
         String address = getDocument(hostLink, ComputeState.class).address;
         return UriUtilsExtended.extractHost(address);
+    }
+
+    private boolean useExternalNetwork() {
+        switch (networkType) {
+        case EXTERNAL_BRIDGE:
+        case EXTERNAL_OVERLAY:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    private boolean useOverlayNetwork() {
+        switch (networkType) {
+        case USER_DEFINED_OVERLAY:
+        case EXTERNAL_OVERLAY:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    private boolean createsNetworkResource() {
+        switch (networkType) {
+        case USER_DEFINED_BRIDGE:
+        case USER_DEFINED_OVERLAY:
+        case EXTERNAL_BRIDGE:
+        case EXTERNAL_OVERLAY:
+            return true;
+        default:
+            return false;
+        }
     }
 }
