@@ -26,9 +26,7 @@ import com.vmware.xenon.common.FileUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.FileContentService;
-import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class ContainerImageIconService extends StatelessService {
 
@@ -131,9 +129,7 @@ public class ContainerImageIconService extends StatelessService {
             String subPath = f.getAbsolutePath().replace(
                     iconResourcePath.toAbsolutePath().toString(), "");
 
-            Path servicePath = Paths.get(ServiceUriPaths.UI_RESOURCES,
-                    Utils.buildServicePath(UiService.class),
-                    ManagementUriParts.CONTAINER_ICONS_RESOURCE_PATH, subPath);
+            Path servicePath = Paths.get(ManagementUriParts.CONTAINER_ICONS_RESOURCE_PATH, subPath);
             String servicePathString = FileUtil.getForwardSlashesPathString(servicePath);
 
             Operation post = Operation
