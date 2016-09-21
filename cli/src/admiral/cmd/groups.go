@@ -12,11 +12,14 @@
 package cmd
 
 import (
+	"errors"
+
 	"admiral/groups"
-	"fmt"
 
 	"github.com/spf13/cobra"
 )
+
+var groupIdError = errors.New("Group ID not provided.")
 
 func init() {
 	initGroupAdd()
@@ -31,23 +34,8 @@ var groupAddCmd = &cobra.Command{
 	Long:  "Add group.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			name  string
-			ok    bool
-		)
-		if name, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter group name.")
-			return
-		}
-		newID, err = groups.AddGroup(name, groupDescription)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Print("Group added: " + newID)
-		}
+		output, err := RunGroupAdd(args)
+		processOutput(output, err)
 	},
 }
 
@@ -56,20 +44,43 @@ func initGroupAdd() {
 	GroupsRootCmd.AddCommand(groupAddCmd)
 }
 
+func RunGroupAdd(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		name  string
+		ok    bool
+	)
+	if name, ok = ValidateArgsCount(args); !ok {
+		return "", errors.New("Group name not provided.")
+	}
+	newID, err = groups.AddGroup(name, groupDescription)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Group added: " + newID, err
+	}
+}
+
 var groupListCmd = &cobra.Command{
 	Use:   "ls",
 	Short: "List groups.",
 	Long:  "List groups.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		gl := &groups.GroupList{}
-		gl.FetchGroups()
-		gl.Print()
+		RunGroupList(args)
 	},
 }
 
 func initGroupList() {
 	GroupsRootCmd.AddCommand(groupListCmd)
+}
+
+func RunGroupList(args []string) {
+	gl := &groups.GroupList{}
+	gl.FetchGroups()
+	gl.Print()
 }
 
 var groupRemoveCmd = &cobra.Command{
@@ -78,30 +89,33 @@ var groupRemoveCmd = &cobra.Command{
 	Long:  "Remove group.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			id    string
-			ok    bool
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter group ID.")
-			return
-		}
-		newID, err = groups.RemoveGroupID(id)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Group removed: " + newID)
-		}
-
+		output, err := RunGroupRemove(args)
+		processOutput(output, err)
 	},
 }
 
 func initGroupRemove() {
 	GroupsRootCmd.AddCommand(groupRemoveCmd)
+}
+
+func RunGroupRemove(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		id    string
+		ok    bool
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", groupIdError
+	}
+	newID, err = groups.RemoveGroupID(id)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Group removed: " + newID, err
+	}
 }
 
 var groupUpdateCmd = &cobra.Command{
@@ -110,24 +124,8 @@ var groupUpdateCmd = &cobra.Command{
 	Long:  "Update group.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			id    string
-			ok    bool
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter group ID.")
-			return
-		}
-		newID, err = groups.EditGroupID(id, newName, newDescription)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Group updated: " + newID)
-		}
+		output, err := RunGroupUpdate(args)
+		processOutput(output, err)
 	},
 }
 
@@ -135,4 +133,24 @@ func initGroupUpdate() {
 	groupUpdateCmd.Flags().StringVar(&newName, "name", "", "New name.")
 	groupUpdateCmd.Flags().StringVar(&newDescription, "description", "", "New description.")
 	GroupsRootCmd.AddCommand(groupUpdateCmd)
+}
+
+func RunGroupUpdate(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		id    string
+		ok    bool
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", groupIdError
+	}
+	newID, err = groups.EditGroupID(id, newName, newDescription)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Group updated: " + newID, err
+	}
 }

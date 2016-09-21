@@ -12,13 +12,17 @@
 package cmd
 
 import (
-	"admiral/deplPolicy"
 	"fmt"
 
+	"admiral/deplPolicy"
 	"admiral/help"
+
+	"errors"
 
 	"github.com/spf13/cobra"
 )
+
+var deploymentPolIdError = errors.New("Deployment policy ID not provided.")
 
 func init() {
 	initDeploymentPolicyAdd()
@@ -33,23 +37,8 @@ var deploymentPolicyAddCmd = &cobra.Command{
 	Long:  "Adds deployment policy.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			id     string
-			err    error
-			dpName string
-			ok     bool
-		)
-		if dpName, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter deployment policy name.")
-			return
-		}
-		id, err = deplPolicy.AddDP(dpName, dpDescription)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Deployment policy added: " + id)
-		}
+		output, err := RunDeploymentPolicyAdd(args)
+		processOutput(output, err)
 	},
 }
 
@@ -58,19 +47,32 @@ func initDeploymentPolicyAdd() {
 	DeploymentPoliciesRootCmd.AddCommand(deploymentPolicyAddCmd)
 }
 
+func RunDeploymentPolicyAdd(args []string) (string, error) {
+	var (
+		id     string
+		err    error
+		dpName string
+		ok     bool
+	)
+	if dpName, ok = ValidateArgsCount(args); !ok {
+		return "", errors.New("Enter deployment policy name.")
+	}
+	id, err = deplPolicy.AddDP(dpName, dpDescription)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Deployment policy added: " + id, err
+	}
+}
+
 var deploymentPolicyListCmd = &cobra.Command{
 	Use:   "ls",
 	Short: "Lists existing deployment policies.",
 	Long:  "Lists existing deployment policies.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		dpl := &deplPolicy.DeploymentPolicyList{}
-		count := dpl.FetchDP()
-		if count < 1 {
-			fmt.Println("n/a")
-			return
-		}
-		dpl.Print()
+		RunDeploymentPolicyList(args)
 	},
 }
 
@@ -79,35 +81,49 @@ func initDeploymentPolicyList() {
 	DeploymentPoliciesRootCmd.AddCommand(deploymentPolicyListCmd)
 }
 
+func RunDeploymentPolicyList(args []string) {
+	dpl := &deplPolicy.DeploymentPolicyList{}
+	count := dpl.FetchDP()
+	if count < 1 {
+		fmt.Println("n/a")
+		return
+	}
+	dpl.Print()
+}
+
 var deploymentPolicyRemoveCmd = &cobra.Command{
 	Use:   "rm [DEPLOYMENT-POLICY-ID]",
 	Short: "Removes existing depoyment policy.",
 	Long:  "Removes existing depoyment policy.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			id    string
-			ok    bool
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter deployment policy ID.")
-			return
-		}
-		newID, err = deplPolicy.RemoveDPID(id)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Deployment policy removed: " + newID)
-		}
+		output, err := RunDeploymentPolicyRemove(args)
+		processOutput(output, err)
 	},
 }
 
 func initDeploymentPolicyRemove() {
 	DeploymentPoliciesRootCmd.AddCommand(deploymentPolicyRemoveCmd)
+}
+
+func RunDeploymentPolicyRemove(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		id    string
+		ok    bool
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", deploymentPolIdError
+	}
+	newID, err = deplPolicy.RemoveDPID(id)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Deployment policy removed: " + newID, err
+	}
 }
 
 var deploymentPolicyUpdateCmd = &cobra.Command{
@@ -116,24 +132,8 @@ var deploymentPolicyUpdateCmd = &cobra.Command{
 	Long:  "Update deployment policy.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			id    string
-			ok    bool
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter deployment policy ID.")
-			return
-		}
-		newID, err = deplPolicy.EditDPID(id, dpName, dpDescription)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Deployment policy updated: " + newID)
-		}
+		output, err := RunDeploymentPolicyUpdate(args)
+		processOutput(output, err)
 	},
 }
 
@@ -141,4 +141,24 @@ func initDeploymentPolicyUpdate() {
 	deploymentPolicyUpdateCmd.Flags().StringVar(&dpDescription, "description", "", "(Required) New deployment policy description.")
 	deploymentPolicyUpdateCmd.Flags().StringVar(&dpName, "name", "", "(Required) New deployment policy name")
 	DeploymentPoliciesRootCmd.AddCommand(deploymentPolicyUpdateCmd)
+}
+
+func RunDeploymentPolicyUpdate(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		id    string
+		ok    bool
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", deploymentPolIdError
+	}
+	newID, err = deplPolicy.EditDPID(id, dpName, dpDescription)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Deployment policy updated: " + newID, err
+	}
 }

@@ -12,15 +12,19 @@
 package cmd
 
 import (
-	"admiral/hosts"
 	"fmt"
 
 	"admiral/help"
+	"admiral/hosts"
+
+	"errors"
 
 	"admiral/functions"
 
 	"github.com/spf13/cobra"
 )
+
+var hostAddressError = errors.New("Host address not provided.")
 
 func init() {
 	initHostAdd()
@@ -37,19 +41,8 @@ var hostAddCmd = &cobra.Command{
 	Long:  "Add host",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-		)
-		newID, err = hosts.AddHost(ipF, resPoolF, deplPolicyF, credName, publicCert, privateCert, userName, passWord,
-			autoAccept,
-			custProps)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Host added: " + newID)
-		}
+		output, err := RunAddHost(args)
+		processOutput(output, err)
 	},
 }
 
@@ -67,32 +60,52 @@ func initHostAdd() {
 	HostsRootCmd.AddCommand(hostAddCmd)
 }
 
+func RunAddHost(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+	)
+	newID, err = hosts.AddHost(ipF, resPoolF, deplPolicyF, credName, publicCert, privateCert, userName, passWord,
+		autoAccept,
+		custProps)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Host added: " + newID, nil
+	}
+}
+
 var hostDisableCmd = &cobra.Command{
 	Use:   "disable [HOST-ADDRESS]",
 	Short: "Disable host with address provided.",
 	Long:  "Disable host with address provided.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			hostAddress string
-			ok          bool
-		)
-		if hostAddress, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter host address.")
-			return
-		}
-		newID, err := hosts.DisableHost(hostAddress)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Host disabled " + newID)
-		}
+		output, err := RunHostDisable(args)
+		processOutput(output, err)
 	},
 }
 
 func initHostDisable() {
 	HostsRootCmd.AddCommand(hostDisableCmd)
+}
+
+func RunHostDisable(args []string) (string, error) {
+	var (
+		hostAddress string
+		ok          bool
+	)
+	if hostAddress, ok = ValidateArgsCount(args); !ok {
+		return "", hostAddressError
+	}
+	newID, err := hosts.DisableHost(hostAddress)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Host disabled " + newID, err
+	}
 }
 
 var hostEnableCmd = &cobra.Command{
@@ -101,26 +114,30 @@ var hostEnableCmd = &cobra.Command{
 	Long:  "Enable host with address provided.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			hostAddress string
-			ok          bool
-		)
-		if hostAddress, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter host address.")
-			return
-		}
-		newID, err := hosts.EnableHost(hostAddress)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Host enabled: " + newID)
-		}
+		output, err := RunHostEnable(args)
+		processOutput(output, err)
 	},
 }
 
 func initHostEnable() {
 	HostsRootCmd.AddCommand(hostEnableCmd)
+}
+
+func RunHostEnable(args []string) (string, error) {
+	var (
+		hostAddress string
+		ok          bool
+	)
+	if hostAddress, ok = ValidateArgsCount(args); !ok {
+		return "", hostAddressError
+	}
+	newID, err := hosts.EnableHost(hostAddress)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Host enabled: " + newID, err
+	}
 }
 
 var hostListCmd = &cobra.Command{
@@ -129,13 +146,7 @@ var hostListCmd = &cobra.Command{
 	Long:  "Lists existing hosts.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		hl := &hosts.HostsList{}
-		count := hl.FetchHosts(queryF)
-		if count < 1 {
-			fmt.Println("n/a")
-			return
-		}
-		hl.Print()
+		RunHostList(args)
 	},
 }
 
@@ -145,40 +156,57 @@ func initHostList() {
 	HostsRootCmd.AddCommand(hostListCmd)
 }
 
+func RunHostList(args []string) {
+	hl := &hosts.HostsList{}
+	count := hl.FetchHosts(queryF)
+	if count < 1 {
+		fmt.Println("n/a")
+		return
+	}
+	hl.Print()
+}
+
 var hostRemoveCmd = &cobra.Command{
 	Use:   "rm [HOST-ADDRESS]",
 	Short: "Remove existing host.",
 	Long:  "Remove existing host.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			address string
-			ok      bool
-		)
-		if address, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter host address.")
-			return
-		}
-		fmt.Printf("Are you sure you want to remove %s? (y/n)\n", address)
-		answer := functions.PromptAgreement()
-		if answer == "n" || answer == "no" {
-			fmt.Println("Remove command aborted!")
-			return
-		}
-
-		newID, err := hosts.RemoveHost(address, asyncTask)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Host removed: " + newID)
-		}
+		output, err := RunHostRemove(args)
+		processOutput(output, err)
 	},
 }
 
 func initHostRemove() {
+	hostRemoveCmd.Flags().BoolVar(&forceF, "force", false, forceDesc)
 	hostRemoveCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
 	HostsRootCmd.AddCommand(hostRemoveCmd)
+}
+
+func RunHostRemove(args []string) (string, error) {
+	var (
+		address string
+		ok      bool
+	)
+	if address, ok = ValidateArgsCount(args); !ok {
+		return "", hostAddressError
+	}
+
+	if !forceF {
+		fmt.Printf("Are you sure you want to remove %s? (y/n)\n", address)
+		answer := functions.PromptAgreement()
+		if answer == "n" || answer == "no" {
+			return "", errors.New("Remove command aborted!")
+		}
+	}
+
+	newID, err := hosts.RemoveHost(address, asyncTask)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Host removed: " + newID, err
+	}
 }
 
 var hostUpdateCmd = &cobra.Command{
@@ -186,21 +214,8 @@ var hostUpdateCmd = &cobra.Command{
 	Short: "Edit existing hosts.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			address string
-			ok      bool
-		)
-		if address, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter host address.")
-			return
-		}
-		newID, err := hosts.EditHost(address, hostName, resPoolF, deplPolicyF, credName, autoAccept)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Host updated: " + newID)
-		}
+		output, err := RunHostUpdate(args)
+		processOutput(output, err)
 	},
 }
 
@@ -211,4 +226,21 @@ func initHostUpdate() {
 	hostUpdateCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", "New deployment policy ID.")
 	hostUpdateCmd.Flags().BoolVar(&autoAccept, "accept", false, "Auto accept if certificate is not trusted.")
 	HostsRootCmd.AddCommand(hostUpdateCmd)
+}
+
+func RunHostUpdate(args []string) (string, error) {
+	var (
+		address string
+		ok      bool
+	)
+	if address, ok = ValidateArgsCount(args); !ok {
+		return "", hostAddressError
+	}
+	newID, err := hosts.EditHost(address, hostName, resPoolF, deplPolicyF, credName, autoAccept)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Host updated: " + newID, err
+	}
 }

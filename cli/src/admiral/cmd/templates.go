@@ -12,14 +12,18 @@
 package cmd
 
 import (
-	"admiral/help"
-	"admiral/templates"
 	"fmt"
 
 	"admiral/apps"
+	"admiral/help"
+	"admiral/templates"
+
+	"errors"
 
 	"github.com/spf13/cobra"
 )
+
+var templateIdError = errors.New("Template ID not provided.")
 
 func init() {
 	initTemplateList()
@@ -34,17 +38,7 @@ var templateListCmd = &cobra.Command{
 	Long:  "Lists existing templates.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		lt := &templates.TemplatesList{}
-		count := lt.FetchTemplates(queryF)
-		if count < 1 {
-			fmt.Println("n/a")
-			return
-		}
-		if inclCont {
-			lt.PrintWithContainer()
-		} else {
-			lt.PrintWithoutContainers()
-		}
+		RunTemplatesList(args)
 	},
 }
 
@@ -55,35 +49,53 @@ func initTemplateList() {
 	TemplatesRootCmd.AddCommand(templateListCmd)
 }
 
+func RunTemplatesList(args []string) {
+	lt := &templates.TemplatesList{}
+	count := lt.FetchTemplates(queryF)
+	if count < 1 {
+		fmt.Println("n/a")
+		return
+	}
+	if inclCont {
+		lt.PrintWithContainer()
+	} else {
+		lt.PrintWithoutContainers()
+	}
+}
+
 var templateRemoveCmd = &cobra.Command{
 	Use:   "rm [TEMPLATE-ID]",
 	Short: "Remove template.",
 	Long:  "Remove template.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			id    string
-			ok    bool
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter template ID.")
-			return
-		}
-		newID, err = templates.RemoveTemplateID(id)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Template removed: " + newID)
-		}
+		output, err := RunTemplateRemove(args)
+		processOutput(output, err)
 	},
 }
 
 func initTemplateRemove() {
 	TemplatesRootCmd.AddCommand(templateRemoveCmd)
+}
+
+func RunTemplateRemove(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		id    string
+		ok    bool
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", templateIdError
+	}
+	newID, err = templates.RemoveTemplateID(id)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Template removed: " + newID, err
+	}
 }
 
 var templateImportCmd = &cobra.Command{
@@ -93,30 +105,30 @@ var templateImportCmd = &cobra.Command{
 
 	//Main function for the command "import". No args are needed, just path to file after -f or --file flag.
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 {
-			fmt.Println("Please enter existing file.")
-			return
-		}
-		var (
-			filePath string
-			ok       bool
-		)
-		if filePath, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter path to file.")
-			return
-		}
-		id, err := apps.Import(filePath)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Template imported: " + id)
-		}
+		output, err := RunTemplateImport(args)
+		processOutput(output, err)
 	},
 }
 
 func initTemplateImport() {
 	TemplatesRootCmd.AddCommand(templateImportCmd)
+}
+
+func RunTemplateImport(args []string) (string, error) {
+	var (
+		filePath string
+		ok       bool
+	)
+	if filePath, ok = ValidateArgsCount(args); !ok {
+		return "", errors.New("Path to file not provided.")
+	}
+	id, err := apps.Import(filePath)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Template imported: " + id, err
+	}
 }
 
 var templateExportCmd = &cobra.Command{
@@ -125,23 +137,8 @@ var templateExportCmd = &cobra.Command{
 	Long:  "Download exported application.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		if !verifyFormat() {
-			return
-		}
-		var (
-			id string
-			ok bool
-		)
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter template ID.")
-			return
-		}
-		newID, err := apps.Export(id, dirF, formatTemplate)
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Template exported: " + newID)
-		}
+		output, err := RunTemplateExport(args)
+		processOutput(output, err)
 	},
 }
 
@@ -151,12 +148,30 @@ func initTemplateExport() {
 	TemplatesRootCmd.AddCommand(templateExportCmd)
 }
 
+func RunTemplateExport(args []string) (string, error) {
+	if ok, err := verifyFormat(); !ok {
+		return "", err
+	}
+	var (
+		id string
+		ok bool
+	)
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", templateIdError
+	}
+	newID, err := apps.Export(id, dirF, formatTemplate)
+	if err != nil {
+		return "", err
+	} else {
+		return "Template exported: " + newID, err
+	}
+}
+
 //Function to verify the given template in the flag.
 //Returns true if format is valid, false if invalid.
-func verifyFormat() bool {
+func verifyFormat() (bool, error) {
 	if formatTemplate != "yaml" && formatTemplate != "docker" {
-		fmt.Println("Choose either yaml or docker file format.")
-		return false
+		return false, errors.New("Choose either yaml or docker file format.")
 	}
-	return true
+	return true, nil
 }

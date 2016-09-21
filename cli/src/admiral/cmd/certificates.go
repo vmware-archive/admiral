@@ -12,13 +12,16 @@
 package cmd
 
 import (
-	"admiral/certificates"
+	"errors"
 	"fmt"
 
+	"admiral/certificates"
 	"admiral/help"
 
 	"github.com/spf13/cobra"
 )
+
+var certIdError = errors.New("Certificate ID not provided.")
 
 func init() {
 	initCertAdd()
@@ -33,28 +36,8 @@ var certAddCmd = &cobra.Command{
 	Long:  "Add certificate",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		if urlF != "" && dirF != "" {
-			fmt.Println("--file and --url flags are exclusive, provide only one of them.")
-			return
-		}
-
-		var (
-			id  string
-			err error
-		)
-		if dirF != "" {
-			id, err = certificates.AddFromFile(dirF)
-		} else if urlF != "" {
-			id, err = certificates.AddFromUrl(urlF)
-		} else {
-			fmt.Println("Provide url or file to add certificate.")
-		}
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Certificate added: " + id)
-		}
+		output, err := RunCertAdd(args)
+		processOutput(output, err)
 	},
 }
 
@@ -64,19 +47,37 @@ func initCertAdd() {
 	CertsRootCmd.AddCommand(certAddCmd)
 }
 
+func RunCertAdd(args []string) (string, error) {
+	if urlF != "" && dirF != "" {
+		return "", errors.New("--file and --url flags are exclusive, provide only one of them.")
+	}
+
+	var (
+		id  string
+		err error
+	)
+	if dirF != "" {
+		id, err = certificates.AddFromFile(dirF)
+	} else if urlF != "" {
+		id, err = certificates.AddFromUrl(urlF)
+	} else {
+		return "", errors.New("Provide url or file to add certificate.")
+	}
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Certificate added: " + id, err
+	}
+}
+
 var certListCmd = &cobra.Command{
 	Use:   "ls",
 	Short: "Lists existing certificates",
 	Long:  "Lists existing certificates",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		cl := certificates.CertificateList{}
-		count := cl.FetchCertificates()
-		if count < 1 {
-			fmt.Println("n/a")
-			return
-		}
-		cl.Print()
+		RunCertList(args)
 	},
 }
 
@@ -85,35 +86,49 @@ func initCertList() {
 	CertsRootCmd.AddCommand(certListCmd)
 }
 
+func RunCertList(args []string) {
+	cl := certificates.CertificateList{}
+	count := cl.FetchCertificates()
+	if count < 1 {
+		fmt.Println("n/a")
+		return
+	}
+	cl.Print()
+}
+
 var certRemoveCmd = &cobra.Command{
 	Use:   "rm [CERTIFICATE-ID]",
 	Short: "Remove certificate.",
 	Long:  "Remove certificate.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			ok    bool
-			id    string
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter certificate ID.")
-			return
-		}
-		newID, err = certificates.RemoveCertificateID(id)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Certificate removed: " + newID)
-		}
+		output, err := RunCertRemove(args)
+		processOutput(output, err)
 	},
 }
 
 func initCertRemove() {
 	CertsRootCmd.AddCommand(certRemoveCmd)
+}
+
+func RunCertRemove(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		ok    bool
+		id    string
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", certIdError
+	}
+	newID, err = certificates.RemoveCertificateID(id)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Certificate removed: " + newID, err
+	}
 }
 
 var certUpdateCmd = &cobra.Command{
@@ -122,24 +137,8 @@ var certUpdateCmd = &cobra.Command{
 	Long:  "Update certificate.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			ok    bool
-			id    string
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter certificate ID.")
-			return
-		}
-		newID, err = certificates.EditCertificateID(id, dirF, urlF)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Certificate updated: " + newID)
-		}
+		output, err := RunCertUpdate(args)
+		processOutput(output, err)
 	},
 }
 
@@ -147,4 +146,24 @@ func initCertUpdate() {
 	certUpdateCmd.Flags().StringVarP(&urlF, "url", "u", "", "Url to import certificate. (NOT IMPLEMENTED YET).")
 	certUpdateCmd.Flags().StringVarP(&dirF, "file", "f", "", "File to import certificate.")
 	CertsRootCmd.AddCommand(certUpdateCmd)
+}
+
+func RunCertUpdate(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		ok    bool
+		id    string
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", certIdError
+	}
+	newID, err = certificates.EditCertificateID(id, dirF, urlF)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Certificate updated: " + newID, err
+	}
 }

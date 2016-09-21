@@ -12,13 +12,17 @@
 package cmd
 
 import (
-	"admiral/resourcePools"
 	"fmt"
 
 	"admiral/help"
+	"admiral/resourcePools"
+
+	"errors"
 
 	"github.com/spf13/cobra"
 )
+
+var resourcePoolIdError = errors.New("Resource pool ID not provided.")
 
 func init() {
 	initResourcePoolAdd()
@@ -35,26 +39,30 @@ var resourcePoolAddCmd = &cobra.Command{
 	Long: "Add resource pool by given name.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			rpName string
-			ok     bool
-		)
-		if rpName, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter resource pool name.")
-			return
-		}
-		id, err := resourcePools.AddRP(rpName, custProps)
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Resource pool added: " + id)
-		}
+		output, err := RunResourcePoolAdd(args)
+		processOutput(output, err)
 	},
 }
 
 func initResourcePoolAdd() {
 	resourcePoolAddCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)
 	ResourcePoolsRootCmd.AddCommand(resourcePoolAddCmd)
+}
+
+func RunResourcePoolAdd(args []string) (string, error) {
+	var (
+		rpName string
+		ok     bool
+	)
+	if rpName, ok = ValidateArgsCount(args); !ok {
+		return "", errors.New("Resource pool name not provided.")
+	}
+	id, err := resourcePools.AddRP(rpName, custProps)
+	if err != nil {
+		return "", err
+	} else {
+		return "Resource pool added: " + id, err
+	}
 }
 
 var resourcePoolListCmd = &cobra.Command{
@@ -88,24 +96,8 @@ var resourcePoolRemoveCmd = &cobra.Command{
 	Long: "Removes existing resource pool",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			err   error
-			newID string
-			id    string
-			ok    bool
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter resource pool ID.")
-			return
-		}
-		newID, err = resourcePools.RemoveRPID(id)
-
-		if err == nil {
-			fmt.Println("Resource pool removed: " + newID)
-		} else if err != nil {
-			fmt.Println(err)
-		}
+		output, err := RunResourcePoolRemove(args)
+		processOutput(output, err)
 	},
 }
 
@@ -113,33 +105,57 @@ func initResourcePoolRemove() {
 	ResourcePoolsRootCmd.AddCommand(resourcePoolRemoveCmd)
 }
 
+func RunResourcePoolRemove(args []string) (string, error) {
+	var (
+		err   error
+		newID string
+		id    string
+		ok    bool
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", resourcePoolIdError
+	}
+	newID, err = resourcePools.RemoveRPID(id)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Resource pool removed: " + newID, err
+	}
+}
+
 var resourcePoolUpdateCmd = &cobra.Command{
 	Use:   "update [RESOURCE-POOL-ID]",
 	Short: "Edit resource pool",
 	Long:  "Edit resource pool",
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			id    string
-			ok    bool
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter resource pool.")
-			return
-		}
-		newID, err = resourcePools.EditRPID(id, newName)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Resource pool updated: " + newID)
-		}
+		output, err := RunResourcePoolUpdate(args)
+		processOutput(output, err)
 	},
 }
 
 func initResourcePoolUpdate() {
 	resourcePoolUpdateCmd.Flags().StringVar(&newName, "name", "", "New name of resource pool.")
 	ResourcePoolsRootCmd.AddCommand(resourcePoolUpdateCmd)
+}
+
+func RunResourcePoolUpdate(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		id    string
+		ok    bool
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", resourcePoolIdError
+	}
+	newID, err = resourcePools.EditRPID(id, newName)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Resource pool updated: " + newID, err
+	}
 }

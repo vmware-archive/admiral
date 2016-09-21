@@ -25,6 +25,7 @@ type Host struct {
 	Address          string             `json:"Address,omitempty"`
 	PowerState       string             `json:"powerState,omitempty"`
 	CustomProperties map[string]*string `json:"customProperties"`
+	ResourcePoolLink string             `json:"resourcePoolLink"`
 }
 
 //Struct to parse data when getting information about existing hosts.

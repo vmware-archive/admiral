@@ -30,17 +30,21 @@ var searchCmd = &cobra.Command{
 	Long:  "Search for image from which you can provision container.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 {
-			images.PrintPopular()
-			return
-		}
-		query := strings.Join(args, " ")
-		il := &images.ImagesList{}
-		count := il.QueryImages(query)
-		if count < 1 {
-			fmt.Println("n/a")
-			return
-		}
-		il.Print()
+		RunSearch(args)
 	},
+}
+
+func RunSearch(args []string) {
+	if len(args) < 1 {
+		images.PrintPopular()
+		return
+	}
+	query := strings.Join(args, " ")
+	il := &images.ImagesList{}
+	count := il.QueryImages(query)
+	if count < 1 {
+		fmt.Println("n/a")
+		return
+	}
+	il.Print()
 }

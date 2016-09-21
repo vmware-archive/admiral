@@ -12,12 +12,16 @@
 package cmd
 
 import (
+	"errors"
+	"fmt"
+
 	"admiral/credentials"
 	"admiral/help"
-	"fmt"
 
 	"github.com/spf13/cobra"
 )
+
+var credentialsIdError = errors.New("Credentials ID not provided.")
 
 func init() {
 	initCredentialsAdd()
@@ -32,28 +36,8 @@ var credentialsAddCmd = &cobra.Command{
 	Long:  "Add credentials",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		if credName == "" {
-			fmt.Println("Provide crendetial name.")
-			return
-		}
-		var (
-			newID string
-			err   error
-		)
-		if userName != "" && passWord != "" {
-			newID, err = credentials.AddByUsername(credName, userName, passWord, custProps)
-		} else if publicCert != "" && privateCert != "" {
-			newID, err = credentials.AddByCert(credName, publicCert, privateCert, custProps)
-		} else {
-			fmt.Println("Missing required flags.")
-		}
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Credentials added: " + newID)
-		}
-
+		output, err := RunCredentialsAdd(args)
+		processOutput(output, err)
 	},
 }
 
@@ -67,19 +51,37 @@ func initCredentialsAdd() {
 	CredentialsRootCmd.AddCommand(credentialsAddCmd)
 }
 
+func RunCredentialsAdd(args []string) (string, error) {
+	if credName == "" {
+		return "", errors.New("Provide crendetial name.")
+	}
+	var (
+		newID string
+		err   error
+	)
+	if userName != "" && passWord != "" {
+		newID, err = credentials.AddByUsername(credName, userName, passWord, custProps)
+	} else if publicCert != "" && privateCert != "" {
+		newID, err = credentials.AddByCert(credName, publicCert, privateCert, custProps)
+	} else {
+		return "", errors.New("Missing required flags.")
+	}
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Credentials added: " + newID, err
+	}
+
+}
+
 var credentialsListCmd = &cobra.Command{
 	Use:   "ls",
 	Short: "Lists credentials.",
 	Long:  "Lists credentials.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		lc := &credentials.ListCredentials{}
-		count := lc.FetchCredentials()
-		if count < 1 {
-			fmt.Println("n/a")
-			return
-		}
-		lc.Print()
+		RunCredentialsList(args)
 	},
 }
 
@@ -88,35 +90,49 @@ func initCredentialsList() {
 	CredentialsRootCmd.AddCommand(credentialsListCmd)
 }
 
+func RunCredentialsList(args []string) {
+	lc := &credentials.ListCredentials{}
+	count := lc.FetchCredentials()
+	if count < 1 {
+		fmt.Println("n/a")
+		return
+	}
+	lc.Print()
+}
+
 var credentialsRemoveCmd = &cobra.Command{
 	Use:   "rm [CREDENTIALS-ID]",
 	Short: "Removes existing credentials.",
 	Long:  "Removes existing credentials.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			ok    bool
-			id    string
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter credentials ID.")
-			return
-		}
-		newID, err = credentials.RemoveCredentialsID(id)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Credentials removed: " + newID)
-		}
+		output, err := RunCredentialsRemove(args)
+		processOutput(output, err)
 	},
 }
 
 func initCredentialsRemove() {
 	CredentialsRootCmd.AddCommand(credentialsRemoveCmd)
+}
+
+func RunCredentialsRemove(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		ok    bool
+		id    string
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", credentialsIdError
+	}
+	newID, err = credentials.RemoveCredentialsID(id)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Credentials removed: " + newID, err
+	}
 }
 
 var credentialsUpdateCmd = &cobra.Command{
@@ -125,24 +141,8 @@ var credentialsUpdateCmd = &cobra.Command{
 	Long:  "Update credentials.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			ok    bool
-			id    string
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter credentials ID.")
-			return
-		}
-		id, err = credentials.EditCredetialsID(id, publicCert, privateCert, userName, passWord)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Credentials updated: " + newID)
-		}
+		output, err := RunCredentialsUpdate(args)
+		processOutput(output, err)
 	},
 }
 
@@ -152,4 +152,24 @@ func initCredentialsUpdate() {
 	credentialsUpdateCmd.Flags().StringVar(&userName, "username", "", "New username.")
 	credentialsUpdateCmd.Flags().StringVar(&passWord, "password", "", "New password.")
 	CredentialsRootCmd.AddCommand(credentialsUpdateCmd)
+}
+
+func RunCredentialsUpdate(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		ok    bool
+		id    string
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", credentialsIdError
+	}
+	id, err = credentials.EditCredetialsID(id, publicCert, privateCert, userName, passWord)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Credentials updated: " + newID, err
+	}
 }

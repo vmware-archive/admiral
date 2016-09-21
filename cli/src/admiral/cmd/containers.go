@@ -12,18 +12,20 @@
 package cmd
 
 import (
-	"admiral/containers"
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 
+	"admiral/containers"
 	"admiral/functions"
-
 	"admiral/help"
 
 	"github.com/spf13/cobra"
 )
+
+var containerIdError = errors.New("Container ID not provided.")
 
 func init() {
 	initContainerExec()
@@ -43,25 +45,10 @@ var containerExecCmd = &cobra.Command{
 	Long:  "Run a command in a running container.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 {
-			fmt.Println("Enter container ID.")
-			return
+		err := RunContainerExecute(args)
+		if err != nil {
+			fmt.Println(err)
 		}
-
-		var (
-			ok bool
-			id string
-		)
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter container.")
-			return
-		}
-
-		if interact {
-			interactive(id)
-			return
-		}
-		containers.ExecuteCmd(id, execF)
 	},
 }
 
@@ -74,6 +61,23 @@ func initContainerExec() {
 	containerExecCmd.Flags().StringVar(&execF, "cmd", "", "Command to execute.")
 	containerExecCmd.Flags().BoolVarP(&interact, "interactive", "i", false, "Interactive mode.")
 	RootCmd.AddCommand(containerExecCmd)
+}
+
+func RunContainerExecute(args []string) error {
+	var (
+		ok bool
+		id string
+	)
+	if id, ok = ValidateArgsCount(args); !ok {
+		return containerIdError
+	}
+
+	if interact {
+		interactive(id)
+		return nil
+	}
+	containers.ExecuteCmd(id, execF)
+	return nil
 }
 
 func interactive(id string) {
@@ -97,21 +101,25 @@ var containerInspectCmd = &cobra.Command{
 	Long:  "Return low-level information on a container.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			ok bool
-			id string
-		)
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter container.")
-			return
-		}
-		container := containers.InspectContainer(id)
-		fmt.Println(container.StringJson())
+		output, err := RunContainerInspect(args)
+		processOutput(output, err)
 	},
 }
 
 func initContainerInspect() {
 	RootCmd.AddCommand(containerInspectCmd)
+}
+
+func RunContainerInspect(args []string) (string, error) {
+	var (
+		ok bool
+		id string
+	)
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", containerIdError
+	}
+	container := containers.InspectContainer(id)
+	return container.StringJson(), nil
 }
 
 var containerRemoveCmd = &cobra.Command{
@@ -124,43 +132,53 @@ var containerRemoveCmd = &cobra.Command{
 	//Main function for "rm" command.
 	//Args are the names of containers.
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			resIDs []string
-			err    error
-		)
-		if queryF != "" {
-			resIDs, err = containers.RemoveMany(queryF, asyncTask)
-		} else {
-			if len(args) > 0 {
-				fmt.Printf("Are you sure you want to remove %s? (y/n)\n", strings.Join(args, " "))
-				answer := functions.PromptAgreement()
-				if answer == "n" || answer == "no" {
-					fmt.Println("Remove command aborted!")
-					return
-				}
-				resIDs, err = containers.RemoveContainer(args, asyncTask)
-			} else {
-				fmt.Println("Enter container(s) ID.")
-				return
-			}
-		}
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			if asyncTask {
-				fmt.Println("Container(s) are being removed: " + strings.Join(resIDs, " "))
-			} else {
-				fmt.Println("Container(s) removed: " + strings.Join(resIDs, " "))
-			}
-		}
+		output, err := RunContainersRemove(args)
+		processOutput(output, err)
 	},
 }
 
 func initContainerRemove() {
 	containerRemoveCmd.Flags().StringVarP(&queryF, "query", "q", "", "Every container that match the query will be removed.")
 	containerRemoveCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
+	containerRemoveCmd.Flags().BoolVar(&autoAccept, "force", false, "Do not prompt asking for remove.")
 	RootCmd.AddCommand(containerRemoveCmd)
+}
+
+func RunContainersRemove(args []string) (string, error) {
+	var (
+		resIDs []string
+		err    error
+	)
+	if queryF != "" {
+		resIDs, err = containers.RemoveMany(queryF, asyncTask)
+	} else {
+		if len(args) > 0 {
+			if !autoAccept {
+				fmt.Printf("Are you sure you want to remove %s? (y/n)\n", strings.Join(args, " "))
+				answer := functions.PromptAgreement()
+				if answer == "n" || answer == "no" {
+					return "", errors.New("Remove command aborted.")
+				}
+				resIDs, err = containers.RemoveContainer(args, asyncTask)
+			} else {
+				resIDs, err = containers.RemoveContainer(args, asyncTask)
+			}
+		} else {
+			return "", containerIdError
+		}
+	}
+
+	if err != nil {
+		return "", err
+	} else {
+		var output string
+		if asyncTask {
+			output = "Container(s) are being removed: " + strings.Join(resIDs, " ")
+		} else {
+			output = "Container(s) removed: " + strings.Join(resIDs, " ")
+		}
+		return output, err
+	}
 }
 
 var containerRestartCmd = &cobra.Command{
@@ -169,28 +187,8 @@ var containerRestartCmd = &cobra.Command{
 	Long:  "Restart container.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			resIDs []string
-			err    error
-		)
-		if len(args) > 0 {
-			resIDs, err = containers.StopContainer(args, asyncTask)
-			resIDs, err = containers.StartContainer(args, asyncTask)
-		} else {
-			fmt.Println("Enter container(s) ID.")
-			return
-		}
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			if asyncTask {
-				fmt.Println("Container(s) are being started: " + strings.Join(resIDs, " "))
-			} else {
-				fmt.Println("Container(s) started: " + strings.Join(resIDs, " "))
-			}
-		}
-
+		output, err := RunContainerRestart(args)
+		processOutput(output, err)
 	},
 }
 
@@ -199,40 +197,39 @@ func initContainerRestart() {
 	RootCmd.AddCommand(containerRestartCmd)
 }
 
+func RunContainerRestart(args []string) (string, error) {
+	var (
+		resIDs []string
+		err    error
+	)
+	if len(args) > 0 {
+		resIDs, err = containers.StopContainer(args, asyncTask)
+		resIDs, err = containers.StartContainer(args, asyncTask)
+	} else {
+		return "", containerIdError
+	}
+
+	if err != nil {
+		return "", err
+	} else {
+		var output string
+		if asyncTask {
+			output = "Container(s) are being started: " + strings.Join(resIDs, " ")
+		} else {
+			output = "Container(s) started: " + strings.Join(resIDs, " ")
+		}
+		return output, err
+	}
+}
+
 var containerScaleCmd = &cobra.Command{
 	Use:   "scale [CONTAINER-ID]",
 	Short: "Scale existing container",
 	Long:  "Scale existing container",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			id    string
-			ok    bool
-			newID string
-			err   error
-		)
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter container.")
-			return
-		}
-
-		if scaleCount < 1 {
-			fmt.Println("Please provide scale count > 0")
-			return
-		}
-
-		newID, err = containers.ScaleContainer(id, scaleCount, asyncTask)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			if asyncTask {
-				fmt.Println("Container is being scaled: " + newID)
-			} else {
-				fmt.Println("Container scaled: " + newID)
-			}
-		}
-
+		output, err := RunContainerScale(args)
+		processOutput(output, err)
 	},
 }
 
@@ -242,20 +239,43 @@ func initContainerScale() {
 	RootCmd.AddCommand(containerScaleCmd)
 }
 
+func RunContainerScale(args []string) (string, error) {
+	var (
+		id    string
+		ok    bool
+		newID string
+		err   error
+	)
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", containerIdError
+	}
+
+	if scaleCount < 1 {
+		return "", errors.New("Scale count should be > 0.")
+	}
+
+	newID, err = containers.ScaleContainer(id, scaleCount, asyncTask)
+
+	if err != nil {
+		return "", err
+	} else {
+		var output string
+		if asyncTask {
+			output = "Container is being scaled: " + newID
+		} else {
+			output = "Container scaled: " + newID
+		}
+		return output, err
+	}
+}
+
 var containerListCmd = &cobra.Command{
 	Use:   "ps",
 	Short: "Lists existing containers.",
 	Long:  "Lists existing containers.",
 
-	//Main function for "ls" command. It doesn't require any arguments.
 	Run: func(cmd *cobra.Command, args []string) {
-		lc := &containers.ListContainers{}
-		count := lc.FetchContainers(queryF)
-		if count < 1 {
-			fmt.Println("n/a")
-			return
-		}
-		lc.Print(allContainers)
+		RunContainerList(args)
 	},
 }
 
@@ -266,32 +286,24 @@ func initContainerList() {
 	RootCmd.AddCommand(containerListCmd)
 }
 
+func RunContainerList(args []string) {
+	lc := &containers.ListContainers{}
+	count := lc.FetchContainers(queryF)
+	if count < 1 {
+		fmt.Println("n/a")
+		return
+	}
+	lc.Print(allContainers)
+}
+
 var containerStartCmd = &cobra.Command{
 	Use:   "start [CONTAINER-ID]...",
 	Short: "Starts existing container",
 	Long:  "Starts existing container",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			resIDs []string
-			err    error
-		)
-		if len(args) > 0 {
-			resIDs, err = containers.StartContainer(args, asyncTask)
-		} else {
-			fmt.Println("Enter container(s) ID.")
-			return
-		}
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			if asyncTask {
-				fmt.Println("Container(s) are being started: " + strings.Join(resIDs, " "))
-			} else {
-				fmt.Println("Container(s) started: " + strings.Join(resIDs, " "))
-			}
-		}
+		output, err := RunContainerStart(args)
+		processOutput(output, err)
 	},
 }
 
@@ -300,35 +312,39 @@ func initContainerStart() {
 	RootCmd.AddCommand(containerStartCmd)
 }
 
+func RunContainerStart(args []string) (string, error) {
+	var (
+		resIDs []string
+		err    error
+	)
+	if len(args) > 0 {
+		resIDs, err = containers.StartContainer(args, asyncTask)
+	} else {
+		return "", containerIdError
+	}
+
+	if err != nil {
+		return "", err
+	} else {
+		var output string
+		if asyncTask {
+			output = "Container(s) are being started: " + strings.Join(resIDs, " ")
+			return output, err
+		} else {
+			output = "Container(s) started: " + strings.Join(resIDs, " ")
+			return output, err
+		}
+	}
+}
+
 var containerStopCmd = &cobra.Command{
 	Use:   "stop [CONTAINER-ID]",
 	Short: "Stops existing container",
 	Long:  "Stops existing container",
-	//Main function to stop existing container by provided name.
-	//At this state it will try to stop all of the given containers, without check their current state or if non-unique names are given.
+
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			resIDs []string
-			err    error
-		)
-
-		if len(args) > 0 {
-			resIDs, err = containers.StopContainer(args, asyncTask)
-		} else {
-			fmt.Println("Enter container(s) ID.")
-			return
-		}
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			if asyncTask {
-				fmt.Println("Container(s) are being stopped: " + strings.Join(resIDs, " "))
-			} else {
-				fmt.Println("Container(s) stopped: " + strings.Join(resIDs, " "))
-			}
-		}
-
+		output, err := RunContainerStop(args)
+		processOutput(output, err)
 	},
 }
 
@@ -337,42 +353,40 @@ func initContainerStop() {
 	RootCmd.AddCommand(containerStopCmd)
 }
 
+func RunContainerStop(args []string) (string, error) {
+	var (
+		resIDs []string
+		err    error
+	)
+
+	if len(args) > 0 {
+		resIDs, err = containers.StopContainer(args, asyncTask)
+	} else {
+		return "", containerIdError
+	}
+
+	if err != nil {
+		return "", err
+	} else {
+		var output string
+		if asyncTask {
+			output = "Container(s) are being stopped: " + strings.Join(resIDs, " ")
+			return output, err
+		} else {
+			output = "Container(s) stopped: " + strings.Join(resIDs, " ")
+			return output, err
+		}
+	}
+}
+
 var containerRunCmd = &cobra.Command{
 	Use:   "run [IMAGE]",
 	Short: "Provision container",
 	Long:  "Provision container",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			imgName string
-			ok      bool
-			newID   string
-			err     error
-		)
-		if imgName, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter image.")
-			return
-		}
-		imgNameArr := strings.Split(imgName, "/")
-		name := imgNameArr[len(imgNameArr)-1]
-
-		cd := &containers.ContainerDescription{}
-		cd.Create(
-			imgName, name, cpuShares, networkMode, restartPol, workingDir, logDriver, hostName, deplPolicyF, //strings
-			clusterSize, retryCount, //int32
-			memory, memorySwap, //int64
-			cmds, env, volumes, ports, //[]string
-			publishAll) //bool
-		newID, err = cd.RunContainer(asyncTask)
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			if asyncTask {
-				fmt.Println("\x1b[31;1mImage is being provisioned.\x1b[37;1m")
-			} else {
-				fmt.Println("Image is provisioned: " + newID)
-			}
-		}
+		output, err := RunContainerRun(args)
+		processOutput(output, err)
 	},
 }
 
@@ -397,4 +411,40 @@ func initContainerRun() {
 	containerRunCmd.Flags().Bool("help", false, "Help for "+RootCmd.Name())
 	containerRunCmd.Flags().MarkHidden("help")
 	RootCmd.AddCommand(containerRunCmd)
+}
+
+func RunContainerRun(args []string) (string, error) {
+	var (
+		imgName string
+		ok      bool
+		newID   string
+		err     error
+	)
+	if imgName, ok = ValidateArgsCount(args); !ok {
+		return "", errors.New("Image not provided.")
+	}
+	imgNameArr := strings.Split(imgName, "/")
+	name := imgNameArr[len(imgNameArr)-1]
+
+	cd := &containers.ContainerDescription{}
+	cd.Create(
+		imgName, name, cpuShares, networkMode, restartPol, workingDir, logDriver, hostName, deplPolicyF, //strings
+		clusterSize, retryCount, //int32
+		memory, memorySwap, //int64
+		cmds, env, volumes, ports, //[]string
+		publishAll) //bool
+	newID, err = cd.RunContainer(asyncTask)
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	} else {
+		var output string
+		if asyncTask {
+			output = "\x1b[31;1mImage is being provisioned.\x1b[37;1m"
+			return output, err
+		} else {
+			output = "Image provisioned: " + newID
+			return output, err
+		}
+	}
 }

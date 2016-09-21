@@ -42,26 +42,7 @@ var loginCmd = &cobra.Command{
 	Long:  "Login with username and pass",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		if showToken {
-			fmt.Println(loginout.GetInfo())
-			return
-		}
-
-		if config.USER != "" {
-			fmt.Println(config.USER)
-		}
-		if strings.TrimSpace(username) == "" {
-			if config.USER == "" {
-				username = prompUsername()
-			} else {
-				username = config.USER
-			}
-		}
-		if strings.TrimSpace(password) == "" {
-			password = promptPassword()
-		}
-		loginout.Login(username, password, urlF)
-
+		RunLogin(args)
 	},
 }
 
@@ -71,6 +52,29 @@ func initLogin() {
 	loginCmd.Flags().StringVar(&urlF, "url", "", "Set URL config property.")
 	loginCmd.Flags().BoolVar(&showToken, "status", false, "Print information about current user.")
 	RootCmd.AddCommand(loginCmd)
+}
+
+func RunLogin(args []string) string {
+	if showToken {
+		fmt.Println(loginout.GetInfo())
+		return ""
+	}
+
+	if config.USER != "" {
+		fmt.Println(config.USER)
+	}
+	if strings.TrimSpace(username) == "" {
+		if config.USER == "" {
+			username = prompUsername()
+		} else {
+			username = config.USER
+		}
+	}
+	if strings.TrimSpace(password) == "" {
+		password = promptPassword()
+	}
+	token := loginout.Login(username, password, urlF)
+	return token
 }
 
 //Function that prompt the user to enter his username.
@@ -97,10 +101,14 @@ var logoutCmd = &cobra.Command{
 	Long:  "Logout user",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		loginout.Logout()
+		RunLogout()
 	},
 }
 
 func initLogout() {
 	RootCmd.AddCommand(logoutCmd)
+}
+
+func RunLogout() {
+	loginout.Logout()
 }

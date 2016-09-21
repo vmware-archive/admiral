@@ -36,17 +36,8 @@ var customPropertiesListCmd = &cobra.Command{
 	Long:  "Lists current properties of given entity.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		if cpHostIP != "" {
-			fmt.Println(hostCpString())
-		}
-
-		if cpCredID != "" {
-			fmt.Println(credCpString())
-		}
-
-		if cpResPoolID != "" {
-			fmt.Println(rpCpString())
-		}
+		output := RunCustomPropertiesList(args)
+		processOutput(output, nil)
 	},
 }
 
@@ -55,6 +46,25 @@ func initCustomPropertiesList() {
 	customPropertiesListCmd.Flags().StringVar(&cpCredID, "credentials", "", "ID of the credentials that you want to manage custom properties.")
 	customPropertiesListCmd.Flags().StringVar(&cpResPoolID, "resource-pool", "", "ID of the resource pool that you want to manage custom properties.")
 	CustomPropertiesRootCmd.AddCommand(customPropertiesListCmd)
+}
+
+func RunCustomPropertiesList(args []string) string {
+	var buffer bytes.Buffer
+
+	if cpHostIP != "" {
+		buffer.WriteString(hostCpString())
+		buffer.WriteString("\n")
+	}
+
+	if cpCredID != "" {
+		buffer.WriteString(credCpString())
+		buffer.WriteString("\n")
+	}
+
+	if cpResPoolID != "" {
+		buffer.WriteString(rpCpString())
+	}
+	return buffer.String()
 }
 
 func hostCpString() string {
@@ -102,23 +112,8 @@ var customPropertiesSetCmd = &cobra.Command{
 	Long:  "Set custom property to given entity.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		if cpHostIP != "" {
-			if hosts.AddCustomProperties(cpHostIP, cpKeys, cpVals) {
-				fmt.Println("Host's custom properties are set.")
-			}
-		}
-
-		if cpResPoolID != "" {
-			if resourcePools.AddCustomProperties(cpResPoolID, cpKeys, cpVals) {
-				fmt.Println("Resource pool's custom properties are set.")
-			}
-		}
-
-		if cpCredID != "" {
-			if credentials.AddCustomProperties(cpCredID, cpKeys, cpVals) {
-				fmt.Println("Credentials's custom properties are set.")
-			}
-		}
+		output := RunCustomPropertiesSet(args)
+		processOutput(output, nil)
 	},
 }
 
@@ -131,28 +126,37 @@ func initCustomPropertiesSet() {
 	CustomPropertiesRootCmd.AddCommand(customPropertiesSetCmd)
 }
 
+func RunCustomPropertiesSet(args []string) string {
+	var buffer bytes.Buffer
+	if cpHostIP != "" {
+		if hosts.AddCustomProperties(cpHostIP, cpKeys, cpVals) {
+			buffer.WriteString("Host's custom properties are set.")
+			buffer.WriteString("\n")
+		}
+	}
+
+	if cpResPoolID != "" {
+		if resourcePools.AddCustomProperties(cpResPoolID, cpKeys, cpVals) {
+			buffer.WriteString("Resource pool's custom properties are set.")
+			buffer.WriteString("\n")
+		}
+	}
+
+	if cpCredID != "" {
+		if credentials.AddCustomProperties(cpCredID, cpKeys, cpVals) {
+			buffer.WriteString("Credentials's custom properties are set.")
+		}
+	}
+	return buffer.String()
+}
+
 var customPropertiesRemoveCmd = &cobra.Command{
 	Use:   "rm",
 	Short: "Remove custom property to given entity.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		if cpHostIP != "" {
-			if hosts.RemoveCustomProperties(cpHostIP, cpKeys) {
-				fmt.Println("Host's custom properties are removed.")
-			}
-		}
-
-		if cpResPoolID != "" {
-			if resourcePools.RemoveCustomProperties(cpResPoolID, cpKeys) {
-				fmt.Println("Resource pool's custom properties are removed.")
-			}
-		}
-
-		if cpCredID != "" {
-			if credentials.RemoveCustomProperties(cpCredID, cpKeys) {
-				fmt.Println("Credentials's custom properties are removed.")
-			}
-		}
+		output := RunCustomPropertiesRemove(args)
+		processOutput(output, nil)
 	},
 }
 
@@ -162,4 +166,28 @@ func initCustomPropertiesRemove() {
 	customPropertiesRemoveCmd.Flags().StringVar(&cpCredID, "credentials", "", "ID of the credentials that you want to manage custom properties.")
 	customPropertiesRemoveCmd.Flags().StringVar(&cpResPoolID, "resource-pool", "", "ID of the resource pool that you want to manage custom properties.")
 	CustomPropertiesRootCmd.AddCommand(customPropertiesRemoveCmd)
+}
+
+func RunCustomPropertiesRemove(args []string) string {
+	var buffer bytes.Buffer
+	if cpHostIP != "" {
+		if hosts.RemoveCustomProperties(cpHostIP, cpKeys) {
+			buffer.WriteString("Host's custom properties are removed.")
+			buffer.WriteString("\n")
+		}
+	}
+
+	if cpResPoolID != "" {
+		if resourcePools.RemoveCustomProperties(cpResPoolID, cpKeys) {
+			buffer.WriteString("Resource pool's custom properties are removed.")
+			buffer.WriteString("\n")
+		}
+	}
+
+	if cpCredID != "" {
+		if credentials.RemoveCustomProperties(cpCredID, cpKeys) {
+			buffer.WriteString("Credentials's custom properties are removed.")
+		}
+	}
+	return buffer.String()
 }

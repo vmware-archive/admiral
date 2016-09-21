@@ -12,10 +12,11 @@
 package cmd
 
 import (
-	"fmt"
 	"strings"
 
 	"admiral/config"
+
+	"errors"
 
 	"github.com/spf13/cobra"
 )
@@ -41,20 +42,23 @@ var cfgGetCmd = &cobra.Command{
 	Short: "Set value from provided key key.",
 	Long:  "Set value from provided key key.",
 	Run: func(cmd *cobra.Command, args []string) {
-		if keyProp == "" {
-			fmt.Println("Please enter any key.")
-			return
-		}
-
-		v := config.GetProperty(strings.Title(keyProp))
-
-		if v.IsValid() {
-			fmt.Println(v.String())
-		} else {
-			fmt.Println("Invalid key.")
-		}
-
+		output, err := RunCfgGet(args)
+		processOutput(output, err)
 	},
+}
+
+func RunCfgGet(args []string) (string, error) {
+	if keyProp == "" {
+		return "", errors.New("Key not provided.")
+	}
+
+	v := config.GetProperty(strings.Title(keyProp))
+
+	if v.IsValid() {
+		return v.String(), nil
+	} else {
+		return "", errors.New("Invalid key.")
+	}
 }
 
 var cfgSetCmd = &cobra.Command{
@@ -62,20 +66,25 @@ var cfgSetCmd = &cobra.Command{
 	Short: "Set value to provided key.",
 	Long:  "Set value to provided key.",
 	Run: func(cmd *cobra.Command, args []string) {
-		if keyProp == "" {
-			fmt.Println("Please enter any key.")
-			return
-		}
-		if valProp == "" {
-			fmt.Println("Please enter any value.")
-			return
-		}
-
-		isSet := config.SetProperty(strings.Title(keyProp), valProp)
-		if isSet {
-			fmt.Println("New property set successfully.")
-		}
+		output, err := RunCfgSet(args)
+		processOutput(output, err)
 	},
+}
+
+func RunCfgSet(args []string) (string, error) {
+	if keyProp == "" {
+		return "", errors.New("Key not provided.")
+	}
+	if valProp == "" {
+		return "", errors.New("Value not provided.")
+	}
+
+	isSet := config.SetProperty(strings.Title(keyProp), valProp)
+	if isSet {
+		return "New property set successfully.", nil
+	} else {
+		return "", errors.New("Error when setting new property.")
+	}
 }
 
 var cfgInspectCmd = &cobra.Command{
@@ -83,7 +92,12 @@ var cfgInspectCmd = &cobra.Command{
 	Short: "Shows current config properties",
 	Long:  "Shows current config properties",
 	Run: func(cmd *cobra.Command, args []string) {
-		jsonBody := config.Inspect()
-		fmt.Println(string(jsonBody))
+		output := RunCfgInspect(args)
+		processOutput(output, nil)
 	},
+}
+
+func RunCfgInspect(args []string) string {
+	jsonBody := config.Inspect()
+	return string(jsonBody)
 }

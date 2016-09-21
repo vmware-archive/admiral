@@ -30,15 +30,19 @@ var eventCmd = &cobra.Command{
 	Long:  "Prints events log.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		el := events.EventList{}
-		count := el.FetchEvents()
-		if clearAll {
-			el.ClearAllEvent()
-			return
-		}
-		if count < 1 {
-			fmt.Println("n/a")
-		}
-		el.Print()
+		RunEvents()
 	},
+}
+
+func RunEvents() {
+	el := events.EventList{}
+	count := el.FetchEvents()
+	if clearAll {
+		el.ClearAllEvent()
+		return
+	}
+	if count < 1 {
+		fmt.Println("n/a")
+	}
+	el.Print()
 }

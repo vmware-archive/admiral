@@ -32,8 +32,13 @@ var logsCmd = &cobra.Command{
 	Long:  "Fetch the logs of a container",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		contName := strings.Join(args, " ")
-		sinceSecs := since * 60
-		logs.GetLog(contName, string(sinceSecs))
+		output := RunLogs(args)
+		processOutput(output, nil)
 	},
+}
+
+func RunLogs(args []string) string {
+	contName := strings.Join(args, " ")
+	sinceSecs := since * 60
+	return logs.GetLog(contName, string(sinceSecs))
 }

@@ -12,9 +12,10 @@
 package cmd
 
 import (
+	"fmt"
+
 	"admiral/help"
 	"admiral/network"
-	"fmt"
 
 	"github.com/spf13/cobra"
 )

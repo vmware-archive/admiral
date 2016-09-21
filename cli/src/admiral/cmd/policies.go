@@ -12,7 +12,6 @@
 package cmd
 
 import (
-	"admiral/policies"
 	"errors"
 	"fmt"
 	"regexp"
@@ -20,9 +19,12 @@ import (
 	"strings"
 
 	"admiral/help"
+	"admiral/policies"
 
 	"github.com/spf13/cobra"
 )
+
+var policyIdError = errors.New("Policy ID not provided.")
 
 func init() {
 	initPolicyAdd()
@@ -51,27 +53,8 @@ var policyAddCmd = &cobra.Command{
 	Long:  "Add policy",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			name  string
-			ok    bool
-		)
-		if name, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter policy name.")
-			return
-		}
-		memoryLimit, err := parseMemory(memoryLimitStr)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		newID, err = policies.AddPolicy(name, cpuShares, instances, priority, tenants, resPoolID, deplPolID, memoryLimit)
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Policy added: " + newID)
-		}
+		output, err := RunPolicyAdd(args)
+		processOutput(output, err)
 	},
 }
 
@@ -106,18 +89,35 @@ func parseMemory(memory string) (size int64, err error) {
 	return 0, errors.New("Unable to parse the memory provided.")
 }
 
+func RunPolicyAdd(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		name  string
+		ok    bool
+	)
+	if name, ok = ValidateArgsCount(args); !ok {
+		return "", errors.New("Policy name not provided.")
+	}
+	memoryLimit, err := parseMemory(memoryLimitStr)
+	if err != nil {
+		return "", err
+	}
+	newID, err = policies.AddPolicy(name, cpuShares, instances, priority, tenants, resPoolID, deplPolID, memoryLimit)
+	if err != nil {
+		return "", err
+	} else {
+		return "Policy added: " + newID, err
+	}
+}
+
 var policyListCmd = &cobra.Command{
 	Use:   "ls",
 	Short: "Lists existing policies.",
 	Long:  "Lists existing policies.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		pl := &policies.PolicyList{}
-		count := pl.FetchPolices()
-		if count < 0 {
-			fmt.Println("n/a")
-		}
-		pl.Print()
+		RunPolicyList(args)
 	},
 }
 
@@ -126,35 +126,48 @@ func initPolicyList() {
 	PoliciesRootCmd.AddCommand(policyListCmd)
 }
 
+func RunPolicyList(args []string) {
+	pl := &policies.PolicyList{}
+	count := pl.FetchPolices()
+	if count < 0 {
+		fmt.Println("n/a")
+	}
+	pl.Print()
+}
+
 var policyRemoveCmd = &cobra.Command{
 	Use:   "rm [POLICY-ID]",
 	Short: "Remove existing pool",
 	Long:  "Remove existing pool",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			id    string
-			ok    bool
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter policy ID.")
-			return
-		}
-		newID, err = policies.RemovePolicyID(id)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Policy removed: " + newID)
-		}
+		output, err := RunPolicyRemove(args)
+		processOutput(output, err)
 	},
 }
 
 func initPolicyRemove() {
 	PoliciesRootCmd.AddCommand(policyRemoveCmd)
+}
+
+func RunPolicyRemove(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		id    string
+		ok    bool
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", policyIdError
+	}
+	newID, err = policies.RemovePolicyID(id)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Policy removed: " + newID, err
+	}
 }
 
 var policyUpdateCmd = &cobra.Command{
@@ -163,30 +176,8 @@ var policyUpdateCmd = &cobra.Command{
 	Long:  "Update policy.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			id    string
-			ok    bool
-		)
-		memoryLimit, err := parseMemory(memoryLimitStr)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter policy ID.")
-			return
-		}
-		newID, err = policies.EditPolicyID(id, newName, tenants, resPoolID, deplPolID, cpuSharesInt, maxNumberInstances, priorityInt, memoryLimit)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Policy updates: " + newID)
-		}
-
+		output, err := RunPolicyUpdate(args)
+		processOutput(output, err)
 	},
 }
 
@@ -200,4 +191,28 @@ func initPolicyUpdate() {
 	policyUpdateCmd.Flags().StringVar(&deplPolID, "deployment-policy", "", "New deployment policy ID")
 	policyUpdateCmd.Flags().StringVar(&memoryLimitStr, "memory", "0kb", "New memory limit. Default unit: kb. Units supported: kb/mb/gb. Example: 1024mb")
 	PoliciesRootCmd.AddCommand(policyUpdateCmd)
+}
+
+func RunPolicyUpdate(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		id    string
+		ok    bool
+	)
+	memoryLimit, err := parseMemory(memoryLimitStr)
+	if err != nil {
+		return "", err
+	}
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", policyIdError
+	}
+	newID, err = policies.EditPolicyID(id, newName, tenants, resPoolID, deplPolID, cpuSharesInt, maxNumberInstances, priorityInt, memoryLimit)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Policy updates: " + newID, err
+	}
 }

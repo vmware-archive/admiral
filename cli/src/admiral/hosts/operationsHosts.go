@@ -24,7 +24,6 @@ import (
 	"admiral/config"
 	"admiral/containers"
 	"admiral/credentials"
-	"admiral/deplPolicy"
 	"admiral/functions"
 	"admiral/properties"
 	"admiral/resourcePools"
@@ -53,9 +52,10 @@ func (hl *HostsList) FetchHosts(queryF string) int {
 //Print already fetched hosts.
 func (hl *HostsList) Print() {
 	count := 1
-	fmt.Printf("%-22s %-22s %-8s %-3s\n", "ADDRESS", "NAME", "STATE", "CONTAINERS COUNT")
+	fmt.Printf("%-22s %-22s %-8s %-15s %-22s\n", "ADDRESS", "NAME", "STATE", "CONTAINERS", "RESOURCE POOLS")
 	for _, val := range hl.Documents {
-		fmt.Printf("%-22s %-22s %-8s %-3s\n", val.Address, *val.CustomProperties["__Name"], val.PowerState, *val.CustomProperties["__Containers"])
+		rpName := resourcePools.GetRPName(val.ResourcePoolLink)
+		fmt.Printf("%-22s %-22s %-8s %-15s %-22s\n", val.Address, *val.CustomProperties["__Name"], val.PowerState, *val.CustomProperties["__Containers"], rpName)
 		count++
 	}
 }
@@ -196,7 +196,6 @@ func RemoveHost(hostAddress string, asyncTask bool) (string, error) {
 }
 
 func DisableHost(hostAddress string) (string, error) {
-	//hostAddress := getHostAddress(name)
 	url := config.URL + "/resources/compute/" + hostAddress
 	hostp := HostPatch{
 		PowerState: "SUSPEND",
@@ -214,7 +213,6 @@ func DisableHost(hostAddress string) (string, error) {
 }
 
 func EnableHost(hostAddress string) (string, error) {
-	//hostAddress := getHostAddress(name)
 	url := config.URL + "/resources/compute/" + hostAddress
 	hostp := HostPatch{
 		PowerState: "ON",
@@ -370,23 +368,11 @@ func getHostAddress(name string) string {
 func MakeUpdateHostProperties(dp, cred, name string) (map[string]*string, error) {
 	props := make(map[string]*string, 0)
 	if dp != "" {
-		dpLinks := deplPolicy.GetDPLinks(dp)
-		if len(dpLinks) < 1 {
-			return nil, errors.New("Deployment policy not found.")
-		} else if len(dpLinks) > 1 {
-			return nil, errors.New("Multiple deployment policy found with that name, resolve it manually and then proceed.")
-		}
-		props["__deploymentPolicyLink"] = &dpLinks[0]
+		props["__deploymentPolicyLink"] = &dp
 	}
 
 	if cred != "" {
-		credLinks := credentials.GetCredentialsLinks(cred)
-		if len(credLinks) < 1 {
-			return nil, errors.New("Credentials not found.")
-		} else if len(credLinks) > 1 {
-			return nil, errors.New("Multiple credentials found with that name, resolve it manually and then proceed.")
-		}
-		props["__authCredentialsLink"] = &credLinks[0]
+		props["__authCredentialsLink"] = &cred
 	}
 
 	if name != "" {

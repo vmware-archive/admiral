@@ -33,7 +33,7 @@ type LogInOut struct {
 	RequestType string `json:"requestType"`
 }
 
-func Login(username, password, configUrl string) {
+func Login(username, password, configUrl string) string {
 	if configUrl != "" {
 		config.URL = configUrl
 		config.SetProperty("Url", configUrl)
@@ -53,7 +53,7 @@ func Login(username, password, configUrl string) {
 	token := resp.Header.Get("x-xenon-auth-token")
 	if token == "" {
 		fmt.Println("Login failed.")
-		return
+		return ""
 	}
 	if functions.Verbose {
 		fmt.Printf("%s: %s\n", "x-xenon-aut-token", token)
@@ -65,6 +65,7 @@ func Login(username, password, configUrl string) {
 	tokenFile.Write([]byte(token))
 	tokenFile.Close()
 	fmt.Println("Login successful.")
+	return token
 }
 
 func Logout() {

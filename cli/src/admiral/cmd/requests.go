@@ -47,30 +47,34 @@ var reqCmd = &cobra.Command{
 	Long:  "Prints request log.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		rl := &requests.RequestsList{}
-		count := rl.FetchRequests()
-		if count < 1 {
-			fmt.Println("n/a")
-			return
-		}
-
-		if clearAll {
-			rl.ClearAllRequests()
-			return
-		}
-
-		if allFalse() {
-			rl.PrintAll()
-		} else {
-			if startedOnly {
-				rl.PrintStartedOnly()
-			}
-			if failedOnly {
-				rl.PrintFailedOnly()
-			}
-			if finishedOnly {
-				rl.PrintFinishedOnly()
-			}
-		}
+		RunRequest()
 	},
+}
+
+func RunRequest() {
+	rl := &requests.RequestsList{}
+	count := rl.FetchRequests()
+	if count < 1 {
+		fmt.Println("n/a")
+		return
+	}
+
+	if clearAll {
+		rl.ClearAllRequests()
+		return
+	}
+
+	if allFalse() {
+		rl.PrintAll()
+	} else {
+		if startedOnly {
+			rl.PrintStartedOnly()
+		}
+		if failedOnly {
+			rl.PrintFailedOnly()
+		}
+		if finishedOnly {
+			rl.PrintFinishedOnly()
+		}
+	}
 }

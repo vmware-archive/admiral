@@ -36,15 +36,6 @@ func PromptAgreement() string {
 	return answer
 }
 
-//ValidateArgsCount takes array of arguments and return the first element and true
-//if their count is more than 0 or empty string and false if the count is less than 0.
-func ValidateArgsCount(args []string) (string, bool) {
-	if len(args) > 0 {
-		return args[0], true
-	}
-	return "", false
-}
-
 //ShortString is trimming string to desired length and adding three dots in the end of it.
 //In case len(s) <= desired length, the function returns the same string unmodified.
 func ShortString(s string, outputLen int) string {

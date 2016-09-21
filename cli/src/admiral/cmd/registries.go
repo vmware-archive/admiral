@@ -12,13 +12,15 @@
 package cmd
 
 import (
-	"admiral/registries"
-	"fmt"
-
 	"admiral/help"
+	"admiral/registries"
+
+	"errors"
 
 	"github.com/spf13/cobra"
 )
+
+var registryIdError = errors.New("Registry ID not provided.")
 
 func init() {
 	initRegistryAdd()
@@ -34,21 +36,8 @@ var registryAddCmd = &cobra.Command{
 	Long:  "Add registry",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			name string
-			ok   bool
-		)
-		if name, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter policy name.")
-			return
-		}
-		newID, err := registries.AddRegistry(name, addressF, credName, publicCert, privateCert, userName, passWord, autoAccept)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Registry added: " + newID)
-		}
+		output, err := RunRegistryAdd(args)
+		processOutput(output, err)
 	},
 }
 
@@ -66,15 +55,30 @@ func initRegistryAdd() {
 	RegistriesRootCmd.AddCommand(registryAddCmd)
 }
 
+func RunRegistryAdd(args []string) (string, error) {
+	var (
+		name string
+		ok   bool
+	)
+	if name, ok = ValidateArgsCount(args); !ok {
+		return "", errors.New("Registry name not provided.")
+	}
+	newID, err := registries.AddRegistry(name, addressF, credName, publicCert, privateCert, userName, passWord, autoAccept)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Registry added: " + newID, err
+	}
+}
+
 var registryListCmd = &cobra.Command{
 	Use:   "ls",
 	Short: "Lists existing registries.",
 	Long:  "Lists existing registries.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		rl := &registries.RegistryList{}
-		rl.FetchRegistries()
-		rl.Print()
+		RunRegistryList(args)
 	},
 }
 
@@ -83,31 +87,20 @@ func initRegistryList() {
 	RegistriesRootCmd.AddCommand(registryListCmd)
 }
 
+func RunRegistryList(args []string) {
+	rl := &registries.RegistryList{}
+	rl.FetchRegistries()
+	rl.Print()
+}
+
 var registryRemoveCmd = &cobra.Command{
 	Use:   "rm [REGISTRY-ID]",
 	Short: "Remove existing registry.",
 	Long:  "Remove existing registry.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			id    string
-			ok    bool
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter registry ID.")
-			return
-		}
-		newID, err = registries.RemoveRegistryID(id)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Registry removed: " + newID)
-		}
-
+		output, err := RunRegistryRemove(args)
+		processOutput(output, err)
 	},
 }
 
@@ -115,55 +108,83 @@ func initRegistryRemove() {
 	RegistriesRootCmd.AddCommand(registryRemoveCmd)
 }
 
+func RunRegistryRemove(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		id    string
+		ok    bool
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", registryIdError
+	}
+	newID, err = registries.RemoveRegistryID(id)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Registry removed: " + newID, err
+	}
+}
+
 var registryDisableCmd = &cobra.Command{
 	Use:   "disable [REGISTRY-ID]",
 	Short: "Disable registry.",
 	Long:  "Disable registry.",
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			id    string
-			ok    bool
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter registry ID.")
-			return
-		}
-		newID, err = registries.DisableID(id)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Registry disabled: " + newID)
-		}
+		output, err := RunRegistryDisable(args)
+		processOutput(output, err)
 	},
+}
+
+func RunRegistryDisable(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		id    string
+		ok    bool
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", registryIdError
+	}
+	newID, err = registries.DisableID(id)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Registry disabled: " + newID, err
+	}
 }
 
 var registryEnableCmd = &cobra.Command{
 	Use:   "enable [REGISTRY-ID]",
 	Short: "Enable registry.",
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			id    string
-			ok    bool
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter registry ID.")
-			return
-		}
-		newID, err = registries.EnableID(id)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Registry enabled: " + newID)
-		}
+		output, err := RunRegistryEnable(args)
+		processOutput(output, err)
 	},
+}
+
+func RunRegistryEnable(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		id    string
+		ok    bool
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", registryIdError
+	}
+	newID, err = registries.EnableID(id)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Registry enabled: " + newID, err
+	}
 }
 
 func initRegistryEnableDisable() {
@@ -177,24 +198,8 @@ var registryUpdateCmd = &cobra.Command{
 	Long:  "",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			newID string
-			err   error
-			id    string
-			ok    bool
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter registry ID.")
-			return
-		}
-		newID, err = registries.EditRegistryID(id, newAddress, newName, newCred, autoAccept)
-
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Registry updated: " + newID)
-		}
+		output, err := RunRegistryUpdate(args)
+		processOutput(output, err)
 	},
 }
 
@@ -204,4 +209,24 @@ func initRegistryUpdate() {
 	registryUpdateCmd.Flags().StringVar(&newName, "name", "", "New registry name.")
 	registryUpdateCmd.Flags().BoolVar(&autoAccept, "accept", false, "Auto accept if certificate is not trusted.")
 	RegistriesRootCmd.AddCommand(registryUpdateCmd)
+}
+
+func RunRegistryUpdate(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		id    string
+		ok    bool
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", registryIdError
+	}
+	newID, err = registries.EditRegistryID(id, newAddress, newName, newCred, autoAccept)
+
+	if err != nil {
+		return "", err
+	} else {
+		return "Registry updated: " + newID, err
+	}
 }

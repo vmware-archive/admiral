@@ -44,9 +44,17 @@ func (lc *ListContainers) FetchContainers(queryF string) int {
 	err := json.Unmarshal(respBody, lc)
 	functions.CheckJson(err)
 
+	systemCount := 0
+
+	for _, c := range lc.Documents {
+		if c.System {
+			systemCount++
+		}
+	}
+
 	count := len(lc.DocumentLinks)
 
-	return count - 1
+	return count - systemCount
 }
 
 //Print is printing the containers to the console. It takes boolean

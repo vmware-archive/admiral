@@ -12,15 +12,18 @@
 package cmd
 
 import (
-	"admiral/apps"
 	"fmt"
 
+	"admiral/apps"
 	"admiral/help"
+
+	"errors"
 
 	"github.com/spf13/cobra"
 )
 
 var keepTemplate bool
+var appIdError = errors.New("Application ID not provided.")
 
 func init() {
 	initAppInspect()
@@ -38,15 +41,10 @@ var appInspectCmd = &cobra.Command{
 	Long:  "Inspect application for additional info.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			id string
-			ok bool
-		)
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter application ID.")
-			return
+		err := RunAppInspect(args)
+		if err != nil {
+			fmt.Println(err)
 		}
-		apps.InspectID(id)
 	},
 }
 
@@ -54,26 +52,25 @@ func initAppInspect() {
 	AppsRootCmd.AddCommand(appInspectCmd)
 }
 
+func RunAppInspect(args []string) error {
+	var (
+		id string
+		ok bool
+	)
+	if id, ok = ValidateArgsCount(args); !ok {
+		return appIdError
+	}
+	apps.InspectID(id)
+	return nil
+}
+
 var appListCmd = &cobra.Command{
 	Use:   "ls",
 	Short: "Lists existing apps",
 	Long:  "Lists existing applications.",
 
-	//Main function for the "ls-app" command. It doesn't require any arguments.
 	Run: func(cmd *cobra.Command, args []string) {
-		la := apps.ListApps{}
-		count := la.FetchApps(queryF)
-		if count == 0 {
-			fmt.Println("n/a")
-			return
-		}
-
-		fmt.Println("Active Applications:")
-		if inclCont {
-			la.PrintActiveWithContainer()
-		} else {
-			la.PrintActiveWithoutContainer()
-		}
+		RunAppList(args)
 	},
 }
 
@@ -85,36 +82,30 @@ func initAppList() {
 	AppsRootCmd.AddCommand(appListCmd)
 }
 
+func RunAppList(args []string) {
+	la := apps.ListApps{}
+	count := la.FetchApps(queryF)
+	if count == 0 {
+		fmt.Println("n/a")
+		return
+	}
+
+	fmt.Println("Active Applications:")
+	if inclCont {
+		la.PrintActiveWithContainer()
+	} else {
+		la.PrintActiveWithoutContainer()
+	}
+}
+
 var appRemoveCmd = &cobra.Command{
 	Use:   "rm [APPLICATION-ID]",
 	Short: "Stops existing application",
 	Long:  "Stops existing application",
 
-	//Main function for the "rm-app" command.
-	//For arguments take application names.
-	//If any of the name is non-unique the command will be aborted.
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			IDs []string
-			err error
-			ok  bool
-			id  string
-		)
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter application ID.")
-			return
-		}
-		IDs, err = apps.RemoveAppID(id, asyncTask)
-
-		if err != nil {
-			fmt.Println(err)
-		} else if len(IDs) > 0 {
-			if asyncTask {
-				fmt.Println("Application is being removed: " + IDs[0])
-			} else {
-				fmt.Println("Application removed: " + IDs[0])
-			}
-		}
+		output, err := RunAppRemove(args)
+		processOutput(output, err)
 	},
 }
 
@@ -123,34 +114,40 @@ func initAppRemove() {
 	AppsRootCmd.AddCommand(appRemoveCmd)
 }
 
+func RunAppRemove(args []string) (string, error) {
+	var (
+		IDs []string
+		err error
+		ok  bool
+		id  string
+	)
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", appIdError
+	}
+	IDs, err = apps.RemoveAppID(id, asyncTask)
+
+	if err != nil {
+		return "", err
+	} else if len(IDs) > 0 {
+		var output string
+		if asyncTask {
+			output = "Application is being removed: " + IDs[0]
+		} else {
+			output = "Application removed: " + IDs[0]
+		}
+		return output, err
+	}
+	return "", err
+}
+
 var appRestartCmd = &cobra.Command{
 	Use:   "restart [APPLICATION-ID]",
 	Short: "Restarts application.",
 	Long:  "Restarts application.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			IDs []string
-			err error
-			ok  bool
-			id  string
-		)
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter application ID.")
-			return
-		}
-		IDs, err = apps.StopAppID(id, asyncTask)
-		IDs, err = apps.StartAppID(id, asyncTask)
-
-		if err != nil {
-			fmt.Println(err)
-		} else if len(IDs) > 0 {
-			if asyncTask {
-				fmt.Println("Application is being restarted: " + IDs[0])
-			} else {
-				fmt.Println("Application restarted: " + IDs[0])
-			}
-		}
+		output, err := RunAppRestart(args)
+		processOutput(output, err)
 	},
 }
 
@@ -159,38 +156,41 @@ func initAppRestart() {
 	AppsRootCmd.AddCommand(appRestartCmd)
 }
 
+func RunAppRestart(args []string) (string, error) {
+	var (
+		IDs []string
+		err error
+		ok  bool
+		id  string
+	)
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", appIdError
+	}
+	IDs, err = apps.StopAppID(id, asyncTask)
+	IDs, err = apps.StartAppID(id, asyncTask)
+
+	if err != nil {
+		return "", err
+	} else if len(IDs) > 0 {
+		var output string
+		if asyncTask {
+			output = "Application is being restarted: " + IDs[0]
+		} else {
+			output = "Application restarted: " + IDs[0]
+		}
+		return output, err
+	}
+	return "", err
+}
+
 var appRunCmd = &cobra.Command{
 	Use:   "run [TEMPLATE-ID]",
 	Short: "Provision application from template.",
 	Long:  "Provision application from template.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			IDs []string
-			err error
-			ok  bool
-			id  string
-		)
-
-		if dirF != "" {
-			IDs, err = apps.RunAppFile(dirF, keepTemplate, asyncTask)
-		} else {
-			if id, ok = ValidateArgsCount(args); !ok {
-				fmt.Println("Enter template ID.")
-				return
-			}
-			IDs, err = apps.RunAppID(id, asyncTask)
-		}
-
-		if err != nil {
-			fmt.Println(err)
-		} else if len(IDs) > 0 {
-			if asyncTask {
-				fmt.Println("Application is provisioning: " + IDs[0])
-			} else {
-				fmt.Println("Application provisioned: " + IDs[0])
-			}
-		}
+		output, err := RunAppRun(args)
+		processOutput(output, err)
 	},
 }
 
@@ -202,6 +202,37 @@ func initAppRun() {
 	AppsRootCmd.AddCommand(appRunCmd)
 }
 
+func RunAppRun(args []string) (string, error) {
+	var (
+		IDs []string
+		err error
+		ok  bool
+		id  string
+	)
+
+	if dirF != "" {
+		IDs, err = apps.RunAppFile(dirF, keepTemplate, asyncTask)
+	} else {
+		if id, ok = ValidateArgsCount(args); !ok {
+			return "", templateIdError
+		}
+		IDs, err = apps.RunAppID(id, asyncTask)
+	}
+
+	if err != nil {
+		return "", err
+	} else if len(IDs) > 0 {
+		var output string
+		if asyncTask {
+			output = "Application is provisioning: " + IDs[0]
+		} else {
+			output = "Application provisioned: " + IDs[0]
+		}
+		return output, err
+	}
+	return "", err
+}
+
 var appStartCmd = &cobra.Command{
 	Use:   "start [APPLICATION-ID]",
 	Short: "Starts existing application",
@@ -211,33 +242,40 @@ var appStartCmd = &cobra.Command{
 	//For arguments take application names.
 	//If any of the name is non-unique the command will be aborted.
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			IDs []string
-			err error
-			ok  bool
-			id  string
-		)
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter application ID.")
-			return
-		}
-		IDs, err = apps.StartAppID(id, asyncTask)
-
-		if err != nil {
-			fmt.Println(err)
-		} else if len(IDs) > 0 {
-			if asyncTask {
-				fmt.Println("Application is being started: " + IDs[0])
-			} else {
-				fmt.Println("Application started: " + IDs[0])
-			}
-		}
+		output, err := RunAppStart(args)
+		processOutput(output, err)
 	},
 }
 
 func initAppStart() {
 	appStartCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
 	AppsRootCmd.AddCommand(appStartCmd)
+}
+
+func RunAppStart(args []string) (string, error) {
+	var (
+		IDs []string
+		err error
+		ok  bool
+		id  string
+	)
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", appIdError
+	}
+	IDs, err = apps.StartAppID(id, asyncTask)
+
+	if err != nil {
+		return "", err
+	} else if len(IDs) > 0 {
+		var output string
+		if asyncTask {
+			output = "Application is being started: " + IDs[0]
+		} else {
+			output = "Application started: " + IDs[0]
+		}
+		return output, err
+	}
+	return "", err
 }
 
 var appStopCmd = &cobra.Command{
@@ -248,32 +286,39 @@ var appStopCmd = &cobra.Command{
 	//For arguments take application names.
 	//If any of the name is non-unique the command will be aborted.
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			IDs []string
-			err error
-			ok  bool
-			id  string
-		)
-
-		if id, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter application ID.")
-			return
-		}
-		IDs, err = apps.StopAppID(id, asyncTask)
-
-		if err != nil {
-			fmt.Println(err)
-		} else if len(IDs) > 0 {
-			if asyncTask {
-				fmt.Println("Application is being stopped: " + IDs[0])
-			} else {
-				fmt.Println("Application stopped: " + IDs[0])
-			}
-		}
+		output, err := RunAppStop(args)
+		processOutput(output, err)
 	},
 }
 
 func initAppStop() {
 	appStopCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
 	AppsRootCmd.AddCommand(appStopCmd)
+}
+
+func RunAppStop(args []string) (string, error) {
+	var (
+		IDs []string
+		err error
+		ok  bool
+		id  string
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", appIdError
+	}
+	IDs, err = apps.StopAppID(id, asyncTask)
+
+	if err != nil {
+		return "", err
+	} else if len(IDs) > 0 {
+		var output string
+		if asyncTask {
+			output = "Application is being stopped: " + IDs[0]
+		} else {
+			output = "Application stopped: " + IDs[0]
+		}
+		return output, err
+	}
+	return "", err
 }

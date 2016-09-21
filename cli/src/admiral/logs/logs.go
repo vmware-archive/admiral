@@ -26,7 +26,7 @@ type LogResponse struct {
 	Logs string `json:"logs"`
 }
 
-func GetLog(contName, since string) {
+func GetLog(contName, since string) string {
 	id := "id=" + contName
 	sinceQ := "&since=" + since
 
@@ -42,5 +42,5 @@ func GetLog(contName, since string) {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-	fmt.Println(string(log))
+	return string(log)
 }

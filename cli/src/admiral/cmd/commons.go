@@ -11,6 +11,8 @@
 
 package cmd
 
+import "fmt"
+
 var (
 	//Flag to wait for task
 	asyncTask bool
@@ -34,9 +36,9 @@ var (
 	//Flag for verbose option.
 	verbose bool
 
-	//Flag to execute commands by enitity's self link, in order to avoid duplicates.
-	//selfID     string
-	//selfIDDesc string = "Executing command by ID will avoid duplicate names conflict."
+	//Flag to force remove.
+	forceF    bool
+	forceDesc string = "Force remove."
 
 	//Flag to store custom properties.
 	custProps     []string
@@ -137,4 +139,12 @@ func ValidateArgsCount(args []string) (string, bool) {
 		return args[0], true
 	}
 	return "", false
+}
+
+func processOutput(output string, err error) {
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(output)
+	}
 }
