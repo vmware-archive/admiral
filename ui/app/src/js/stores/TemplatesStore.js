@@ -538,6 +538,8 @@ let TemplatesStore = Reflux.createStore({
 
         if (groupsResult) {
           containerRequest.groups = Object.values(groupsResult);
+        } else {
+          containerRequest.groups = ResourceGroupsStore.getData().items;
         }
 
         this.setInData(['selectedItem'], containerRequest);
@@ -579,6 +581,8 @@ let TemplatesStore = Reflux.createStore({
 
         if (groupsResult) {
           detailsObject.groups = Object.values(groupsResult);
+        } else {
+          detailsObject.groups = ResourceGroupsStore.getData().items;
         }
 
         var descriptionPromises = [];

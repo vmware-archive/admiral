@@ -55,24 +55,24 @@
               </div>
             </div>
             </template>
-              <template v-else>
-                <toolbar-action-button id="provision" icon-name="send"
+            <template v-else>
+              <toolbar-action-button id="provision" icon-name="send"
                                      v-bind:label="i18n('app.template.actions.provision')"
                                      v-bind:supported="operationSupported('PROVISION')"
                                      v-on:click="provision($event)"></toolbar-action-button>
-                <toolbar-action-button id="publish" icon-name="book"
+              <toolbar-action-button id="publish" icon-name="book"
                                      v-bind:label="i18n('app.template.actions.publish')"
                                      v-bind:supported="operationSupported('PUBLISH')"
                                      v-bind:tooltip="i18n('app.template.publish.tooltip')"
                                      v-on:click="publishTemplate($event)"></toolbar-action-button>
-                <toolbar-action-button id="export" icon-name="download"
+              <toolbar-action-button id="export" icon-name="download"
                                      v-bind:label="i18n('app.template.actions.export')"
                                      v-on:click="exportTemplate($event)"></toolbar-action-button>
-                <toolbar-action-button id="remove" icon-name="close"
+              <toolbar-action-button id="remove" icon-name="close"
                                      v-bind:label="i18n('app.template.actions.remove')"
                                      v-on:click="askConfirmation($event, 'removeTemplate')"
                                       ></toolbar-action-button>
-              </template>
+            </template>
           </template>
         </div>
       </div>
