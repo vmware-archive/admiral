@@ -439,7 +439,6 @@ public class CompositionSubTaskService
                 TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
         task.customProperties = state.customProperties;
         task.resourceCount = Long.valueOf(state.resourceLinks.size());
-        task.resourceType = state.resourceType;
         task.tenantLinks = state.tenantLinks;
         task.requestTrackerLink = state.requestTrackerLink;
         task.resourceLinks = state.resourceLinks;

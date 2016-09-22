@@ -37,7 +37,6 @@ import org.junit.runners.Parameterized.Parameters;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
-import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerLogService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
@@ -168,7 +167,6 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         ContainerNetworkProvisionTaskState provisionTask = new ContainerNetworkProvisionTaskState();
         provisionTask.resourceDescriptionLink = description.documentSelfLink;
         provisionTask.resourceCount = 1L;
-        provisionTask.resourceType = ResourceType.NETWORK_TYPE.getName();
         provisionTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         provisionTask.customProperties = new HashMap<>();
         provisionTask.customProperties.put(CONTAINER_HOST_ID_CUSTOM_PROPERTY, getDockerHost().id);

@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.request;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
@@ -87,12 +86,6 @@ public class ContainerNetworkProvisionTaskService
                 PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT })
         public String resourceDescriptionLink;
 
-        /** (Required) Type of resource to create. */
-        @Documentation(description = "Type of resource to create.")
-        @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
-                PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT })
-        public String resourceType;
-
         /** (Required) Number of resources to provision. */
         @Documentation(description = "Number of resources to provision.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
@@ -126,7 +119,6 @@ public class ContainerNetworkProvisionTaskService
 
     @Override
     protected void validateStateOnStart(ContainerNetworkProvisionTaskState state) {
-        assertNotEmpty(state.resourceType, "resourceType");
         assertNotNull(state.resourceDescriptionLink, "resourceDescriptionLink");
         assertNotNull(state.resourceLinks, "resourceLinks");
 
