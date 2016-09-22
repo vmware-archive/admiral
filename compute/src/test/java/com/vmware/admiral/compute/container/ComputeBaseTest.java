@@ -13,11 +13,9 @@ package com.vmware.admiral.compute.container;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.After;
 import org.junit.Before;
@@ -26,6 +24,7 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.host.CompositeComponentNotificationProcessingChain;
+import com.vmware.admiral.host.ComputeInitialBootService;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
@@ -36,7 +35,6 @@ import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
 
 public abstract class ComputeBaseTest extends BaseTestCase {
@@ -46,6 +44,8 @@ public abstract class ComputeBaseTest extends BaseTestCase {
     @Before
     public void beforeForComputeBase() throws Throwable {
         startServices(host);
+        waitForServiceAvailability(ComputeInitialBootService.SELF_LINK);
+        waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
     }
 
     @After
@@ -69,40 +69,6 @@ public abstract class ComputeBaseTest extends BaseTestCase {
         HostInitTestDcpServicesConfig.startServices(serviceHost);
         HostInitCommonServiceConfig.startServices(serviceHost);
         HostInitComputeServicesConfig.startServices(serviceHost);
-    }
-
-    protected void waitForInitialBootServiceToBeSelfStopped(String bootServiceSelfLink)
-            throws Throwable {
-        waitFor("Failed waiting for " + bootServiceSelfLink
-                + " to self stop itself after all instances created.",
-                () -> {
-                    TestContext ctx = testCreate(1);
-                    URI uri = UriUtils.buildUri(host, bootServiceSelfLink);
-                    AtomicBoolean serviceStopped = new AtomicBoolean();
-                    Operation get = Operation
-                            .createGet(uri)
-                            .setReferer(host.getReferer())
-                            .setCompletion((o, e) -> {
-                                if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                                    serviceStopped.set(true);
-                                    ctx.completeIteration();
-                                    return;
-                                }
-
-                                if (e != null) {
-                                    host.log("Can't get status of  %s. Error: %s", uri,
-                                            Utils.toString(e));
-                                    ctx.failIteration(e);
-                                    return;
-                                }
-
-                                ctx.completeIteration();
-                            });
-                    host.send(get);
-                    ctx.await();
-
-                    return serviceStopped.get();
-                });
     }
 
     protected void startInitialBootService(

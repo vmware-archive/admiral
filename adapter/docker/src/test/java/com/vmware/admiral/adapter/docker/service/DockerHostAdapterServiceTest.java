@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
 import javax.net.ssl.TrustManager;
 
 import org.junit.After;
@@ -36,7 +37,6 @@ import com.vmware.admiral.adapter.docker.mock.BaseMockDockerTestCase;
 import com.vmware.admiral.adapter.docker.mock.MockDockerHostService;
 import com.vmware.admiral.adapter.docker.mock.MockDockerPathConstants;
 import com.vmware.admiral.common.DeploymentProfileConfig;
-import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ComputeConstants;
@@ -48,9 +48,6 @@ import com.vmware.admiral.compute.container.ContainerService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
-import com.vmware.admiral.host.HostInitCommonServiceConfig;
-import com.vmware.admiral.host.HostInitComputeServicesConfig;
-import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
@@ -84,15 +81,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
 
     @Before
     public void startServices() throws Throwable {
-        HostInitTestDcpServicesConfig.startServices(host);
-        HostInitPhotonModelServiceConfig.startServices(host);
-        HostInitCommonServiceConfig.startServices(host);
-        HostInitComputeServicesConfig.startServices(host);
         DeploymentProfileConfig.getInstance().setTest(true);
-
-        host.startService(Operation.createPost(UriUtils.buildUri(host,
-                MockTaskFactoryService.SELF_LINK)),
-                new MockTaskFactoryService());
 
         mockDockerHost.startService(
                 Operation.createPost(UriUtils.buildUri(

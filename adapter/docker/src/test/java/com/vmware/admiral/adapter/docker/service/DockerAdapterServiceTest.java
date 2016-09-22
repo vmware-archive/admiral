@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+
 import javax.net.ssl.TrustManager;
 
 import org.junit.After;
@@ -47,7 +48,6 @@ import com.vmware.admiral.adapter.docker.mock.MockDockerPathConstants;
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping.Protocol;
 import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
-import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
@@ -59,9 +59,6 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState.Powe
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.maintenance.ContainerHealthEvaluator;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
-import com.vmware.admiral.host.HostInitCommonServiceConfig;
-import com.vmware.admiral.host.HostInitComputeServicesConfig;
-import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -115,14 +112,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
     @Before
     public void startServices() throws Throwable {
-        HostInitTestDcpServicesConfig.startServices(host);
-        HostInitPhotonModelServiceConfig.startServices(host);
-        HostInitCommonServiceConfig.startServices(host);
-        HostInitComputeServicesConfig.startServices(host);
-
-        host.startService(Operation.createPost(UriUtils.buildUri(host,
-                MockTaskFactoryService.SELF_LINK)),
-                new MockTaskFactoryService());
 
         // set up a service that serves a docker image tar file from the filesystem.
         // note that to work with an external docker server the IP must be the external

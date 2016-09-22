@@ -37,7 +37,6 @@ import com.vmware.admiral.adapter.common.service.mock.MockTaskFactoryService;
 import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskState;
 import com.vmware.admiral.adapter.docker.mock.BaseMockDockerTestCase;
 import com.vmware.admiral.adapter.docker.mock.MockDockerVolumeListService;
-import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
@@ -45,9 +44,6 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
-import com.vmware.admiral.host.HostInitCommonServiceConfig;
-import com.vmware.admiral.host.HostInitComputeServicesConfig;
-import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
@@ -93,14 +89,6 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
 
     @Before
     public void startServices() throws Throwable {
-        HostInitTestDcpServicesConfig.startServices(host);
-        HostInitPhotonModelServiceConfig.startServices(host);
-        HostInitCommonServiceConfig.startServices(host);
-        HostInitComputeServicesConfig.startServices(host);
-
-        host.startService(
-                Operation.createPost(UriUtils.buildUri(host, MockTaskFactoryService.SELF_LINK)),
-                new MockTaskFactoryService());
 
         URL testImageResource = DockerAdapterServiceTest.class.getResource(TEST_IMAGE_FILE);
         assertNotNull("Missing test resource: " + TEST_IMAGE_FILE, testImageResource);

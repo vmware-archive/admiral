@@ -23,9 +23,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -132,21 +132,10 @@ public abstract class BaseTestCase {
 
     @After
     public void after() throws Throwable {
-        // Instead of waiting to gracefully stop services, just clean them up.
-        // In any case the host will not be used anymore.
-        Field f = ServiceHost.class.getDeclaredField("attachedServices");
-        f.setAccessible(true);
-        Map<?, ?> attachedServices = (Map<?, ?>) f.get(host);
-        attachedServices.clear();
-
-        f = ServiceHost.class.getDeclaredField("coreServices");
-        f.setAccessible(true);
-        Set<?> coreServices = (Set<?>) f.get(host);
-        coreServices.clear();
-
         try {
-            host.tearDown();
             host.tearDownInProcessPeers();
+            host.tearDown();
+
         } catch (CancellationException e) {
             host.log(Level.FINE, e.getClass().getName());
         }
@@ -834,6 +823,40 @@ public abstract class BaseTestCase {
         }
     }
 
+    protected void waitForInitialBootServiceToBeSelfStopped(String bootServiceSelfLink)
+            throws Throwable {
+        waitFor("Failed waiting for " + bootServiceSelfLink
+                + " to self stop itself after all instances created.",
+                () -> {
+                    TestContext ctx = testCreate(1);
+                    URI uri = UriUtils.buildUri(host, bootServiceSelfLink);
+                    AtomicBoolean serviceStopped = new AtomicBoolean();
+                    Operation get = Operation
+                            .createGet(uri)
+                            .setReferer(host.getReferer())
+                            .setCompletion((o, e) -> {
+                                if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                                    serviceStopped.set(true);
+                                    ctx.completeIteration();
+                                    return;
+                                }
+
+                                if (e != null) {
+                                    host.log("Can't get status of  %s. Error: %s", uri,
+                                            Utils.toString(e));
+                                    ctx.failIteration(e);
+                                    return;
+                                }
+
+                                ctx.completeIteration();
+                            });
+                    host.send(get);
+                    ctx.await();
+
+                    return serviceStopped.get();
+                });
+    }
+
     @FunctionalInterface
     protected static interface IllegalArgumentHandler {
         void call() throws Throwable;
@@ -843,5 +866,4 @@ public abstract class BaseTestCase {
     protected static interface RunnableHandler {
         void run() throws Throwable;
     }
-
 }

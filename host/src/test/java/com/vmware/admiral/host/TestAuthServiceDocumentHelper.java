@@ -37,7 +37,7 @@ public class TestAuthServiceDocumentHelper extends AbstractInitialBootService {
         ArrayList<ServiceDocument> states = new ArrayList<>();
         states.add(
                 createContainerDescription());
-        initInstances(post, true, states.toArray(new ServiceDocument[states.size()]));
+        initInstances(post, states.toArray(new ServiceDocument[states.size()]));
     }
 
     private ContainerDescription createContainerDescription() {

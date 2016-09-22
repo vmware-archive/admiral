@@ -541,7 +541,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     }
 
     protected void enableContainerHost(ComputeDescription computeDescription) {
-        computeDescription.customProperties.put(ComputeConstants.HOST_AUTH_CREDNTIALS_PROP_NAME,
+        computeDescription.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 dockerRemoteApiClientCredentials.documentSelfLink);
 
         computeDescription.customProperties

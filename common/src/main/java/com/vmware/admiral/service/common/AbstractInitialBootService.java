@@ -38,7 +38,7 @@ public abstract class AbstractInitialBootService extends StatelessService {
      * called only once per instance initialization.
      */
     protected void initInstances(Operation post, ServiceDocument... states) {
-        initInstances(post, true, states);
+        initInstances(post, true, true, states);
     }
 
     /**
@@ -49,21 +49,26 @@ public abstract class AbstractInitialBootService extends StatelessService {
      *            flag to indicate whether to check if exists first before create or override
      *            existing entries.
      */
-    protected void initInstances(Operation post, boolean checkIfExists, ServiceDocument... states) {
+    protected void initInstances(Operation post, boolean checkIfExists, boolean selfDelete,
+            ServiceDocument... states) {
         final AtomicInteger countDown = new AtomicInteger(states.length);
-        final Consumer<Throwable> callback = (e) -> countDown(countDown, post, e);
+        final Consumer<Throwable> callback = (e) -> countDown(countDown, selfDelete, post, e);
         for (ServiceDocument state : states) {
             initInstance(state, checkIfExists, callback);
         }
     }
 
-    private void countDown(AtomicInteger countDown, Operation post, Throwable e) {
+    private void countDown(AtomicInteger countDown, boolean selfDelete, Operation post,
+            Throwable e) {
         if (e != null) {
             post.fail(e);
         } else if (countDown.decrementAndGet() == 0) {
             post.complete();
-            logInfo("Stopping initial boot service: %s", getSelfLink());
-            sendRequest(Operation.createDelete(getUri()));
+            logInfo("Finish initial boot service: %s", getSelfLink());
+            if (selfDelete) {
+                logInfo("Stopping initial boot service: %s", getSelfLink());
+                sendRequest(Operation.createDelete(getUri()));
+            }
         }
     }
 

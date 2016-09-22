@@ -20,7 +20,13 @@ import java.util.logging.Level;
 import org.junit.AfterClass;
 import org.junit.Before;
 
+import com.vmware.admiral.adapter.common.service.mock.MockTaskFactoryService;
 import com.vmware.admiral.common.test.BaseTestCase;
+import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
+import com.vmware.admiral.host.ComputeInitialBootService;
+import com.vmware.admiral.host.HostInitCommonServiceConfig;
+import com.vmware.admiral.host.HostInitComputeServicesConfig;
+import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
@@ -51,6 +57,13 @@ public class BaseMockDockerTestCase extends BaseTestCase {
 
     @Before
     public void setUpMockDockerHost() throws Throwable {
+        HostInitTestDcpServicesConfig.startServices(host);
+        HostInitPhotonModelServiceConfig.startServices(host);
+        HostInitCommonServiceConfig.startServices(host);
+        HostInitComputeServicesConfig.startServices(host);
+        waitForServiceAvailability(ComputeInitialBootService.SELF_LINK);
+        waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
+
         // check if a properties file exist and use those details instead of
         // starting a mock server
         try (InputStream testPropertiesStream = BaseMockDockerTestCase.class
@@ -90,6 +103,11 @@ public class BaseMockDockerTestCase extends BaseTestCase {
         host.log("Using test docker URI: %s", dockerUri);
 
         System.setProperty("dcp.management.container.shell.availability.retry", "0");
+
+        host.startService(
+                Operation.createPost(UriUtils.buildUri(host, MockTaskFactoryService.SELF_LINK)),
+                new MockTaskFactoryService());
+
     }
 
     @AfterClass
