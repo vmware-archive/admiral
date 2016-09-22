@@ -571,6 +571,13 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
         // create policy without a group
         GroupResourcePolicyState policy = TestRequestStateFactory
                 .createGroupResourcePolicyState();
+
+        //NOTE: the userId is also part of the links.
+        policy.tenantLinks = TestRequestStateFactory.createTenantLinks(
+                TestRequestStateFactory.TENANT_NAME,
+                TestRequestStateFactory.GROUP_NAME_FINANCE,
+                TestRequestStateFactory.USER_NAME
+                );
         policy = doPost(policy,
                 GroupResourcePolicyService.FACTORY_LINK);
         addForDeletion(policy);
@@ -614,6 +621,49 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
 
         policyFinance = getDocument(GroupResourcePolicyState.class,
                 policyFinance.documentSelfLink);
+
+        assertEquals(task.groupResourcePolicyLink, policyDevelopment.documentSelfLink);
+    }
+
+    // test when the request comes from Catalog
+    // the ReservationTaskState contains tenant links in format
+    // "/tenants/{tenant-name}/groups/{group-id}"
+    // expected to return the policy that match the {group-id}
+    @Test
+    public void testReservationTaskLifeCycleWithRequestComingFromTheCatalogWithTwoRoles()
+            throws Throwable {
+
+        // create policy without a group DEVELOPMENT
+        GroupResourcePolicyState policyDevelopment = TestRequestStateFactory
+                .createGroupResourcePolicyState();
+
+        //NOTE: the userId is also part of the links.
+        policyDevelopment.tenantLinks = TestRequestStateFactory.createTenantLinks(
+                TestRequestStateFactory.TENANT_NAME,
+                TestRequestStateFactory.GROUP_NAME_DEVELOPMENT,
+                TestRequestStateFactory.USER_NAME);
+        policyDevelopment = doPost(policyDevelopment, GroupResourcePolicyService.FACTORY_LINK);
+        addForDeletion(policyDevelopment);
+
+        // create a reservation
+        //NOTE: the user as part of the catalog request is different.
+        ReservationTaskState task = new ReservationTaskState();
+        task.tenantLinks = TestRequestStateFactory
+                .createTenantLinks(TestRequestStateFactory.TENANT_NAME,
+                        TestRequestStateFactory.GROUP_NAME_DEVELOPMENT,
+                        "requestorUserId");
+
+        task.resourceDescriptionLink = containerDesc.documentSelfLink;
+        task.resourceCount = 3;
+        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+
+        task = doPost(task, ReservationTaskFactoryService.SELF_LINK);
+        assertNotNull(task);
+
+        task = waitForTaskSuccess(task.documentSelfLink, ReservationTaskState.class);
+
+        policyDevelopment = getDocument(GroupResourcePolicyState.class,
+                policyDevelopment.documentSelfLink);
 
         assertEquals(task.groupResourcePolicyLink, policyDevelopment.documentSelfLink);
     }

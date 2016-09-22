@@ -66,9 +66,11 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
     public static final String TENANT_NAME = "admiral";
     public static final String GROUP_NAME_DEVELOPMENT = "Development";
     public static final String GROUP_NAME_FINANCE = "Finance";
+    public static final String USER_NAME = "fritz";
 
     public static final String TENANT_LINK_TEMPLATE = "/tenants/%s";
     public static final String TENANT_LINK_WITH_GROUP_TEMPLATE = "/tenants/%s/groups/%s";
+    public static final String USER_LINK_TEMPLATE = "/users/%s";
 
     public static final String MOCK_COMPUTE_HOST_SERVICE_SELF_LINK = "/mock-boot-service";
 
@@ -347,5 +349,20 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return new ArrayList<String>(
                 Arrays.asList(String.format(TENANT_LINK_TEMPLATE, tenant),
                         String.format(TENANT_LINK_WITH_GROUP_TEMPLATE, tenant, subTenant)));
+    }
+
+    public static List<String> createTenantLinks(String tenant, String subTenant, String user) {
+        List<String> tenantLinks = new ArrayList<>(3);
+        if (tenant != null) {
+            tenantLinks.add(String.format(TENANT_LINK_TEMPLATE, tenant));
+        }
+        if (subTenant != null) {
+            tenantLinks.add(String.format(TENANT_LINK_WITH_GROUP_TEMPLATE, tenant, subTenant));
+        }
+        if (user != null) {
+            tenantLinks.add(String.format(USER_LINK_TEMPLATE, user));
+        }
+
+        return tenantLinks;
     }
 }

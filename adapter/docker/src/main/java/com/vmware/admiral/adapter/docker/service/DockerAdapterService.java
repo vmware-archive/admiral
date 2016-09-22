@@ -439,7 +439,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
         QueryTask registryQuery = QueryUtil.buildQuery(RegistryState.class, false);
         if (context.containerDescription.tenantLinks != null) {
-            registryQuery.querySpec.query.addBooleanClause(QueryUtil.addTenantClause(
+            registryQuery.querySpec.query.addBooleanClause(QueryUtil.addTenantGroupAndUserClause(
                     context.containerDescription.tenantLinks));
         }
         registryQuery.querySpec.query.addBooleanClause(createAnyPropertyClause(

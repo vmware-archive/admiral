@@ -16,14 +16,12 @@ import java.util.List;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 
-
-
-
 public abstract class MultiTenantDocument extends ServiceDocument {
 
     public static final String FIELD_NAME_TENANT_LINKS = "tenantLinks";
     public static final String TENANTS_PREFIX = "/tenants";
     public static final String USERS_PREFIX = "/users";
+    public static final String GROUP_IDENTIFIER = "/groups";
 
     /**
      * A list of tenant links which can access this service.

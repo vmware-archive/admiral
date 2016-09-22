@@ -49,7 +49,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
 
     private static final int DEFAULT_TIMEOUT = 45;
 
-    private List<String> containersToDelete = new ArrayList<String>();
+    private final List<String> containersToDelete = new ArrayList<String>();
     private Iterator<String> it;
 
     @Test
@@ -418,7 +418,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
                     executor.inspectContainer(input, handler);
                     handlers.add(handler);
                 }
-            }).run();
+            }).start();
         }
 
         for (DefaultSshOperationResultCompletionHandler handler : handlers) {

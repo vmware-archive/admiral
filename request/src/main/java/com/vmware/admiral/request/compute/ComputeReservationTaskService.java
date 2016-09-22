@@ -52,14 +52,16 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 /**
  * Task implementing the reservation request resource work flow.
  */
-public class ComputeReservationTaskService extends
+public class ComputeReservationTaskService
+        extends
         AbstractTaskStatefulService<ComputeReservationTaskService.ComputeReservationTaskState, ComputeReservationTaskService.ComputeReservationTaskState.SubStage> {
 
     public static final String DISPLAY_NAME = "Reservation";
 
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_COMPUTE_RESERVATION_TASKS;
 
-    public static class ComputeReservationTaskState extends
+    public static class ComputeReservationTaskState
+            extends
             com.vmware.admiral.service.common.TaskServiceDocument<ComputeReservationTaskState.SubStage> {
 
         public static enum SubStage {
@@ -184,7 +186,7 @@ public class ComputeReservationTaskService extends
                     state.tenantLinks, state.resourceDescriptionLink, state.resourceCount);
         }
 
-        Query tenantLinksQuery = QueryUtil.addTenantClause(state.tenantLinks);
+        Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(state.tenantLinks);
         q.querySpec.query.addBooleanClause(tenantLinksQuery);
 
         // match on available number of instances:
@@ -231,7 +233,8 @@ public class ComputeReservationTaskService extends
 
         QueryUtil.addExpandOption(q);
 
-        ServiceDocumentQuery<GroupResourcePolicyState> query = new ServiceDocumentQuery<>(getHost(),
+        ServiceDocumentQuery<GroupResourcePolicyState> query = new ServiceDocumentQuery<>(
+                getHost(),
                 GroupResourcePolicyState.class);
         List<GroupResourcePolicyState> policies = new ArrayList<>();
         query.query(q, (r) -> {
@@ -292,29 +295,37 @@ public class ComputeReservationTaskService extends
         }
 
         if (!queryOperations.isEmpty()) {
-            OperationJoin.create(queryOperations.toArray(new Operation[0]))
-                    .setCompletion((ops, exs) -> {
-                        if (exs != null) {
-                            failTask("Failure retrieving ResourcePools: " + Utils.toString(exs),
-                                    null);
-                            return;
-                        }
+            OperationJoin
+                    .create(queryOperations.toArray(new Operation[0]))
+                    .setCompletion(
+                            (ops, exs) -> {
+                                if (exs != null) {
+                                    failTask(
+                                            "Failure retrieving ResourcePools: "
+                                                    + Utils.toString(exs),
+                                            null);
+                                    return;
+                                }
 
-                        Set<String> pools = ops.values().stream()
-                                .map((v) -> v.getBody(ResourcePoolState.class))
-                                .filter((r) -> r != null)
-                                .filter((r) -> hasProp(r.customProperties,
-                                        ComputeConstants.ENDPOINT_LINK_PROP_NAME)
-                                        || hasEndpointLink)
-                                .map((r) -> r.documentSelfLink).collect(Collectors.toSet());
+                                Set<String> pools = ops.values().stream()
+                                        .map((v) -> v.getBody(ResourcePoolState.class))
+                                        .filter((r) -> r != null)
+                                        .filter((r) -> hasProp(r.customProperties,
+                                                ComputeConstants.ENDPOINT_LINK_PROP_NAME)
+                                                || hasEndpointLink)
+                                        .map((r) -> r.documentSelfLink).collect(Collectors.toSet());
 
-                        state.resourcePoolsPerGroupPolicyLinks = state.resourcePoolsPerGroupPolicyLinks
-                                .entrySet().stream().filter((e) -> pools.contains(e.getValue()))
-                                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-                                        (k1, k2) -> k1, LinkedHashMap::new));
+                                state.resourcePoolsPerGroupPolicyLinks = state.resourcePoolsPerGroupPolicyLinks
+                                        .entrySet()
+                                        .stream()
+                                        .filter((e) -> pools.contains(e.getValue()))
+                                        .collect(
+                                                Collectors.toMap(Map.Entry::getKey,
+                                                        Map.Entry::getValue,
+                                                        (k1, k2) -> k1, LinkedHashMap::new));
 
-                        selectReservation(state, state.resourcePoolsPerGroupPolicyLinks);
-                    }).sendWith(this);
+                                selectReservation(state, state.resourcePoolsPerGroupPolicyLinks);
+                            }).sendWith(this);
         } else {
             selectReservation(state, state.resourcePoolsPerGroupPolicyLinks);
         }
@@ -362,28 +373,31 @@ public class ComputeReservationTaskService extends
                 reservationRequest.resourceCount, reservationRequest.resourceDescriptionLink,
                 Service.getId(policyLink));
 
-        sendRequest(Operation.createPatch(this, policyLink)
+        sendRequest(Operation
+                .createPatch(this, policyLink)
                 .setBody(reservationRequest)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logWarning(
-                                "Failure reserving group policy: %s. Retrying with the next one...",
-                                e.getMessage());
-                        selectReservation(state, resourcePoolsPerGroupPolicyLinks);
-                        return;
-                    }
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                logWarning(
+                                        "Failure reserving group policy: %s. Retrying with the next one...",
+                                        e.getMessage());
+                                selectReservation(state, resourcePoolsPerGroupPolicyLinks);
+                                return;
+                            }
 
-                    GroupResourcePolicyState policy = o.getBody(GroupResourcePolicyState.class);
-                    ComputeReservationTaskState body = createUpdateSubStageTask(state,
-                            SubStage.COMPLETED);
-                    body.taskInfo.stage = TaskStage.FINISHED;
-                    body.customProperties = mergeCustomProperties(state.customProperties,
-                            policy.customProperties);
-                    body.groupResourcePolicyLink = policy.documentSelfLink;
-                    body.resourcePoolsPerGroupPolicyLinks = state.resourcePoolsPerGroupPolicyLinks;
+                            GroupResourcePolicyState policy = o
+                                    .getBody(GroupResourcePolicyState.class);
+                            ComputeReservationTaskState body = createUpdateSubStageTask(state,
+                                    SubStage.COMPLETED);
+                            body.taskInfo.stage = TaskStage.FINISHED;
+                            body.customProperties = mergeCustomProperties(state.customProperties,
+                                    policy.customProperties);
+                            body.groupResourcePolicyLink = policy.documentSelfLink;
+                            body.resourcePoolsPerGroupPolicyLinks = state.resourcePoolsPerGroupPolicyLinks;
 
-                    sendSelfPatch(body);
-                }));
+                            sendSelfPatch(body);
+                        }));
     }
 
     private void getComputeDescription(String resourceDescriptionLink,

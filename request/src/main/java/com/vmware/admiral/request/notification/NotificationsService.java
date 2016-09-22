@@ -41,9 +41,12 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 public class NotificationsService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.NOTIFICATIONS;
 
-    public static final long EVENTS_TIME_INTERVAL_MICROS = TimeUnit.MICROSECONDS.convert(
-            Long.getLong("com.vmware.admiral.log.notificationsaggregator.eventstimeinterval.minutes", 20),
-            TimeUnit.MINUTES);
+    public static final long EVENTS_TIME_INTERVAL_MICROS = TimeUnit.MICROSECONDS
+            .convert(
+                    Long.getLong(
+                            "com.vmware.admiral.log.notificationsaggregator.eventstimeinterval.minutes",
+                            20),
+                    TimeUnit.MINUTES);
 
     public static class NotificationsAggregatorState {
         public long recentEventLogsCount;
@@ -93,7 +96,7 @@ public class NotificationsService extends StatelessService {
         QueryTask qt = QueryUtil.buildQuery(EventLogState.class, true);
 
         if (tenantLinks != null) {
-            qt.querySpec.query.addBooleanClause(QueryUtil.addTenantClause(tenantLinks));
+            qt.querySpec.query.addBooleanClause(QueryUtil.addTenantGroupAndUserClause(tenantLinks));
         }
 
         long nMinutesAgo = Utils.getNowMicrosUtc() - EVENTS_TIME_INTERVAL_MICROS;
@@ -121,7 +124,8 @@ public class NotificationsService extends StatelessService {
         QueryTask.Query runningTasksClause = new QueryTask.Query();
 
         if (tenantLinks != null) {
-            requestStatusQuery.querySpec.query.addBooleanClause(QueryUtil.addTenantClause(tenantLinks));
+            requestStatusQuery.querySpec.query.addBooleanClause(QueryUtil
+                    .addTenantGroupAndUserClause(tenantLinks));
         }
 
         QueryTask.Query taskCreatedClause = new QueryTask.Query()

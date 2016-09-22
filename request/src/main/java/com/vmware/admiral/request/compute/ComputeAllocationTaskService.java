@@ -88,7 +88,8 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 
-public class ComputeAllocationTaskService extends
+public class ComputeAllocationTaskService
+        extends
         AbstractTaskStatefulService<ComputeAllocationTaskService.ComputeAllocationTaskState, ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage> {
 
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_COMPUTE_ALLOCATION_TASKS;
@@ -103,7 +104,8 @@ public class ComputeAllocationTaskService extends
     private static final String SERVER_CERT_PLACEHOLDER = "\\{\\{serverCertPem\\}\\}";
     private static final String SERVER_KEY_PLACEHOLDER = "\\{\\{serverKeyPem\\}\\}";
 
-    public static class ComputeAllocationTaskState extends
+    public static class ComputeAllocationTaskState
+            extends
             com.vmware.admiral.service.common.TaskServiceDocument<ComputeAllocationTaskState.SubStage> {
 
         public static final String ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME = "compute.container.host";
@@ -210,7 +212,8 @@ public class ComputeAllocationTaskService extends
     }
 
     @Override
-    protected boolean validateStageTransition(Operation patch, ComputeAllocationTaskState patchBody,
+    protected boolean validateStageTransition(Operation patch,
+            ComputeAllocationTaskState patchBody,
             ComputeAllocationTaskState currentState) {
 
         currentState.resourceLinks = mergeLists(
@@ -353,7 +356,7 @@ public class ComputeAllocationTaskService extends
             rootDisk.documentSelfLink = rootDisk.id;
             String diskName = state
                     .getCustomProperty(
-                            ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_DISK_NAME);
+                    ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_DISK_NAME);
             if (diskName == null) {
                 diskName = "Default disk";
             }
@@ -569,7 +572,8 @@ public class ComputeAllocationTaskService extends
             return;
         }
         if (expandedEndpointComputeState == null) {
-            getServiceState(state.endpointComputeStateLink, ComputeStateWithDescription.class, true,
+            getServiceState(state.endpointComputeStateLink, ComputeStateWithDescription.class,
+                    true,
                     (compState) -> configureComputeDescription(state, computeDesc, mapping,
                             compState));
             return;
@@ -896,14 +900,14 @@ public class ComputeAllocationTaskService extends
                             .getBody(DiskService.DiskState.class);
                     // create a new disk based off the template but use a
                     // unique ID
-                    templateDisk.id = UUID.randomUUID().toString();
-                    templateDisk.documentSelfLink = templateDisk.id;
-                    templateDisk.tenantLinks = state.tenantLinks;
-                    sendRequest(Operation
-                            .createPost(this, DiskService.FACTORY_LINK)
-                            .setBody(templateDisk)
-                            .setCompletion(diskCreateCompletion));
-                }));
+                templateDisk.id = UUID.randomUUID().toString();
+                templateDisk.documentSelfLink = templateDisk.id;
+                templateDisk.tenantLinks = state.tenantLinks;
+                sendRequest(Operation
+                        .createPost(this, DiskService.FACTORY_LINK)
+                        .setBody(templateDisk)
+                        .setCompletion(diskCreateCompletion));
+            }));
     }
 
     private void createNetworkResources(ComputeAllocationTaskState state, String parentLink,
@@ -960,20 +964,20 @@ public class ComputeAllocationTaskService extends
 
                             NetworkInterfaceService.NetworkInterfaceState templateNetwork = o
                                     .getBody(
-                                            NetworkInterfaceService.NetworkInterfaceState.class);
+                                    NetworkInterfaceService.NetworkInterfaceState.class);
                             templateNetwork.id = UUID.randomUUID().toString();
                             templateNetwork.documentSelfLink = templateNetwork.id;
                             templateNetwork.tenantLinks = state.tenantLinks;
                             // create a new network based off the template
                             // but use a unique ID
-                            sendRequest(Operation
-                                    .createPost(
-                                            this,
-                                            NetworkInterfaceService.FACTORY_LINK)
-                                    .setBody(templateNetwork)
-                                    .setCompletion(
-                                            networkInterfaceCreateCompletion));
-                        }));
+                        sendRequest(Operation
+                                .createPost(
+                                        this,
+                                        NetworkInterfaceService.FACTORY_LINK)
+                                .setBody(templateNetwork)
+                                .setCompletion(
+                                        networkInterfaceCreateCompletion));
+                    }));
     }
 
     private void getGroupResourcePolicy(ComputeAllocationTaskState state,
@@ -1037,9 +1041,10 @@ public class ComputeAllocationTaskService extends
             logInfo("Quering for group [%s] environments for endpoint type: [%s]...",
                     tenantLinks, endpointType);
         }
-        Query tenantLinksQuery = QueryUtil.addTenantClause(tenantLinks);
+        Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(tenantLinks);
 
-        QueryTask q = QueryUtil.buildQuery(EnvironmentMappingState.class, false, endpointTypeClause,
+        QueryTask q = QueryUtil.buildQuery(EnvironmentMappingState.class, false,
+                endpointTypeClause,
                 tenantLinksQuery);
         q.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
         QueryUtil.addExpandOption(q);

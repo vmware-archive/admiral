@@ -360,7 +360,7 @@ public class RegistryService extends StatefulService {
      * @return QueryTask
      */
     private static QueryTask buildRegistryQueryByGroup(String tenantLink) {
-        Query groupClause = QueryUtil.addTenantClause(tenantLink);
+        Query groupClause = QueryUtil.addTenantGroupAndUserClause(tenantLink);
         return buildRegistryQuery(groupClause);
     }
 

@@ -195,20 +195,21 @@ public class QueryUtil {
         return groupClause;
     }
 
-    public static Query addTenantClause(String tenantLink) {
+    public static Query addTenantGroupAndUserClause(String tenantLink) {
         List<String> listValues = null;
         if (tenantLink != null && !tenantLink.isEmpty()) {
             AssertUtil.assertTrue(tenantLink.startsWith(MultiTenantDocument.TENANTS_PREFIX)
-                            || tenantLink.startsWith(MultiTenantDocument.USERS_PREFIX),
-                    String.format("tenantLink does not have %s or %s prefix.", MultiTenantDocument.TENANTS_PREFIX,
+                    || tenantLink.startsWith(MultiTenantDocument.USERS_PREFIX),
+                    String.format("tenantLink does not have %s or %s prefix.",
+                            MultiTenantDocument.TENANTS_PREFIX,
                             MultiTenantDocument.USERS_PREFIX));
             listValues = Collections.singletonList(tenantLink);
         }
 
-        return addTenantClause(listValues);
+        return addTenantGroupAndUserClause(listValues);
     }
 
-    public static Query addTenantClause(List<String> tenantLinks) {
+    public static Query addTenantGroupAndUserClause(List<String> tenantLinks) {
         Query groupClause = null;
 
         String propertyName = QueryTask.QuerySpecification
@@ -229,6 +230,29 @@ public class QueryUtil {
         return groupClause;
     }
 
+    public static Query addTenantAndGroupClause(List<String> tenantLinks) {
+        Query groupClause = null;
+
+        String propertyName = QueryTask.QuerySpecification
+                .buildCollectionItemName(MultiTenantDocument.FIELD_NAME_TENANT_LINKS);
+
+        // if a tenant is not specified, search global only
+        if (tenantLinks == null || tenantLinks.isEmpty()) {
+            groupClause = new Query()
+                    .setTermPropertyName(propertyName);
+            groupClause.setTermMatchType(MatchType.WILDCARD)
+                    .setTermMatchValue(UriUtils.URI_WILDCARD_CHAR);
+            groupClause.occurance = Occurance.MUST_NOT_OCCUR;
+
+        } else {
+            groupClause = addListValueClause(propertyName, tenantLinks.stream()
+                    .filter(tenantLink -> !tenantLink.startsWith(MultiTenantDocument.USERS_PREFIX))
+                    .collect(Collectors.toList()), MatchType.TERM);
+        }
+
+        return groupClause;
+    }
+
     public static QueryTask.Query createKindClause(Class<?> c) {
         QueryTask.Query kindClause = new QueryTask.Query()
                 .setTermPropertyName(ServiceDocument.FIELD_NAME_KIND)
@@ -237,7 +261,8 @@ public class QueryUtil {
         return kindClause;
     }
 
-    public static QueryTask.Query createAnyPropertyClause(String query, Occurance occurence, String... propertyNames) {
+    public static QueryTask.Query createAnyPropertyClause(String query, Occurance occurence,
+            String... propertyNames) {
         QueryTask.Query anyPropertyClause = new QueryTask.Query();
 
         for (String propertyName : propertyNames) {
@@ -278,7 +303,7 @@ public class QueryUtil {
     public static <T extends ServiceDocument> ServiceDocumentQueryResult createQueryResult(
             Collection<T> documents) {
         ServiceDocumentQueryResult result = new ServiceDocumentQueryResult();
-        result.documentCount = (long)documents.size();
+        result.documentCount = (long) documents.size();
         result.documentLinks = documents.stream().map(d -> d.documentSelfLink)
                 .collect(Collectors.toList());
         result.documents = new HashMap<>();

@@ -155,7 +155,7 @@ public class ContainerHostService extends StatelessService {
 
             List<String> tenantLinks = hostSpec.hostState.tenantLinks;
             if (tenantLinks != null) {
-                q.querySpec.query.addBooleanClause(QueryUtil.addTenantClause(tenantLinks));
+                q.querySpec.query.addBooleanClause(QueryUtil.addTenantGroupAndUserClause(tenantLinks));
             }
 
             AtomicBoolean found = new AtomicBoolean(false);

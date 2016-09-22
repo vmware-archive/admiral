@@ -134,12 +134,15 @@ public class TemplateSearchService extends StatelessService {
 
         QueryUtil.addExpandOption(queryTask);
 
-        boolean templatesParentOnly = parseBooleanParam(queryParams.remove(TEMPLATES_PARENT_ONLY_PARAM));
+        boolean templatesParentOnly = parseBooleanParam(queryParams
+                .remove(TEMPLATES_PARENT_ONLY_PARAM));
 
-        QueryTask.Query compositeDescClause = createCompositeDescClause(query, tenantLinks, templatesParentOnly);
+        QueryTask.Query compositeDescClause = createCompositeDescClause(query, tenantLinks,
+                templatesParentOnly);
         compositeDescClause.occurance = Occurance.SHOULD_OCCUR;
 
-        QueryTask.Query containerDescClause = createContainerDescClause(query, tenantLinks, templatesParentOnly);
+        QueryTask.Query containerDescClause = createContainerDescClause(query, tenantLinks,
+                templatesParentOnly);
         containerDescClause.occurance = Occurance.SHOULD_OCCUR;
 
         queryTask.querySpec.query.addBooleanClause(compositeDescClause);
@@ -194,7 +197,7 @@ public class TemplateSearchService extends StatelessService {
 
                         String descriptionLinksItemField = QueryTask.QuerySpecification
                                 .buildCollectionItemName(
-                                        CompositeDescription.FIELD_NAME_DESCRIPTION_LINKS);
+                                CompositeDescription.FIELD_NAME_DESCRIPTION_LINKS);
 
                         QueryUtil.addExpandOption(compositeQueryTask);
                         QueryUtil.addListValueClause(compositeQueryTask,
@@ -210,13 +213,14 @@ public class TemplateSearchService extends StatelessService {
                                 compositeDescriptionLinks);
 
                         new ServiceDocumentQuery<TemplateSpec>(getHost(), TemplateSpec.class)
-                                .query(compositeQueryTask, (r) -> {
-                                    if (r.hasResult()) {
-                                        // mark the template type before passing to the results
-                                        r.getResult().templateType = TemplateType.COMPOSITE_DESCRIPTION;
-                                    }
-                                    resultConsumer.accept(r);
-                                });
+                                .query(compositeQueryTask,
+                                        (r) -> {
+                                            if (r.hasResult()) {
+                                                // mark the template type before passing to the results
+                                                r.getResult().templateType = TemplateType.COMPOSITE_DESCRIPTION;
+                                            }
+                                            resultConsumer.accept(r);
+                                        });
                     }
                 }));
     }
@@ -274,7 +278,8 @@ public class TemplateSearchService extends StatelessService {
         return template;
     }
 
-    private QueryTask.Query createCompositeDescClause(String query, List<String> tenantLinks, boolean templatesParentOnly) {
+    private QueryTask.Query createCompositeDescClause(String query, List<String> tenantLinks,
+            boolean templatesParentOnly) {
         QueryTask.Query compositeDescClause = new QueryTask.Query();
         compositeDescClause.addBooleanClause(createKindClause(CompositeDescription.class));
 
@@ -293,13 +298,15 @@ public class TemplateSearchService extends StatelessService {
 
         // if tenant is null, do a global search, if not search in tenant
         if (tenantLinks != null && !tenantLinks.isEmpty()) {
-            compositeDescClause.addBooleanClause(QueryUtil.addTenantClause(tenantLinks));
+            compositeDescClause
+                    .addBooleanClause(QueryUtil.addTenantGroupAndUserClause(tenantLinks));
         }
 
         return compositeDescClause;
     }
 
-    private QueryTask.Query createContainerDescClause(String query, List<String> tenantLinks, boolean templatesParentOnly) {
+    private QueryTask.Query createContainerDescClause(String query, List<String> tenantLinks,
+            boolean templatesParentOnly) {
         QueryTask.Query containerDescClause = new QueryTask.Query();
         containerDescClause.addBooleanClause(createKindClause(ContainerDescription.class));
         containerDescClause.addBooleanClause(createAnyPropertyClause(query,
@@ -317,7 +324,8 @@ public class TemplateSearchService extends StatelessService {
 
         // if tenant is null, do a global search, if not search in tenant
         if (tenantLinks != null && !tenantLinks.isEmpty()) {
-            containerDescClause.addBooleanClause(QueryUtil.addTenantClause(tenantLinks));
+            containerDescClause
+                    .addBooleanClause(QueryUtil.addTenantGroupAndUserClause(tenantLinks));
         }
 
         return containerDescClause;

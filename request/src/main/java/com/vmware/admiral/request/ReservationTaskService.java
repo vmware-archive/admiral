@@ -286,7 +286,7 @@ public class ReservationTaskService
                     state.tenantLinks, state.resourceDescriptionLink, state.resourceCount);
         }
 
-        Query tenantLinksQuery = QueryUtil.addTenantClause(state.tenantLinks);
+        Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(state.tenantLinks);
         q.querySpec.query.addBooleanClause(tenantLinksQuery);
 
         // match on available number of instances:
@@ -396,7 +396,7 @@ public class ReservationTaskService
                     .filter((e) -> {
                         return e.deploymentPolicyLink != null
                                 && e.deploymentPolicyLink
-                                .endsWith(containerDesc.deploymentPolicyId);
+                                        .endsWith(containerDesc.deploymentPolicyId);
                     }).collect(Collectors.toList());
         }
 
