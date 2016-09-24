@@ -94,7 +94,7 @@
                 <img src="image-assets/resource-icons/container.png"/>
                 <span class="label">{{i18n("app.template.details.newDefinition.title")}}</span>
               </div>
-              <div class="template-new-item" v-if="isNetworkingAvailable" v-on:click="openAddNewNetwork">
+              <div class="template-new-item" v-on:click="openAddNewNetwork">
                 <img src="image-assets/resource-icons/network.png"/>
                 <span class="label">{{i18n("app.template.details.editNetwork.newTitle")}}</span>
               </div>
@@ -105,7 +105,7 @@
           <span class="vertical-helper"></span>
           <img src="image-assets/loading-animation.gif">
         </div>
-        <network-box v-if="isNetworkingAvailable" v-for="network in networks | networksOrderBy" track-by="documentSelfLink" v-bind:model="network"
+        <network-box v-for="network in networks | networksOrderBy" track-by="documentSelfLink" v-bind:model="network"
              v-on:attached="networkAttached"
              v-on:detached="networkDetached"
              v-on:edit="editNetwork"

@@ -9,8 +9,6 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import utils from 'core/utils';
-
 var distance = function(x1, y1, x2, y2) {
   return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 };
@@ -170,9 +168,6 @@ var findFreeEndpoints = function(jsplumbInstance, $els) {
 
 var NetworkConnectorMixin = {
   attached: function() {
-    if (!utils.isNetworkingAvailable()) {
-      return;
-    }
     this.jsplumbInstance = jsPlumb.getInstance({
       Connector: ['Flowchart', {
         cornerRadius: 5
@@ -233,10 +228,6 @@ var NetworkConnectorMixin = {
   },
   methods: {
     prepareContainerEndpoints: function(networksHolder, containerDescriptionLink) {
-      if (!utils.isNetworkingAvailable()) {
-        return;
-      }
-
       this.containerNetworksHolder[containerDescriptionLink] = networksHolder;
     },
     updateContainerEndpoints(networks, containerDescriptionLink) {
@@ -281,10 +272,6 @@ var NetworkConnectorMixin = {
       }
     },
     addNetworkEndpoint: function(el, networkDescriptionLink) {
-      if (!utils.isNetworkingAvailable()) {
-        return;
-      }
-
       el.setAttribute('data-networkDescriptionLink', networkDescriptionLink);
       this.jsplumbInstance.makeSource(el, {
         maxConnections: -1,
@@ -312,46 +299,22 @@ var NetworkConnectorMixin = {
       });
     },
     removeNetworkEndpoint: function(el) {
-      if (!utils.isNetworkingAvailable()) {
-        return;
-      }
-
       this.jsplumbInstance.unmakeTarget(el);
       this.jsplumbInstance.unmakeSource(el);
     },
     onLayoutUpdate: function() {
-      if (!utils.isNetworkingAvailable()) {
-        return;
-      }
-
       this.jsplumbInstance.repaintEverything();
     },
     bindNetworkConnection: function(callback) {
-      if (!utils.isNetworkingAvailable()) {
-        return;
-      }
-
       bindToNetworkConnectionEvent(this.jsplumbInstance, 'connection', callback);
     },
     bindNetworkDetachConnection: function(callback) {
-      if (!utils.isNetworkingAvailable()) {
-        return;
-      }
-
       bindToNetworkConnectionEvent(this.jsplumbInstance, 'connectionDetached', callback);
     },
     bindNetworkAttachDetachConnection: function(callback) {
-      if (!utils.isNetworkingAvailable()) {
-        return;
-      }
-
       bindToNetworkConnectionMovedEvent(this.jsplumbInstance, callback);
     },
     applyContainerToNetworksLinks: function(containerToNetworksLinks) {
-      if (!utils.isNetworkingAvailable()) {
-        return;
-      }
-
       var existingLinks = getContainerToNetworkLinks(this.jsplumbInstance);
 
       var linksToAdd = {};

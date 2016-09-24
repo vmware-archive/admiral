@@ -835,7 +835,7 @@ var updateForm = function(data, oldData) {
 
   var $networkMode = this.$el.find('.container-network-mode-input');
 
-  if (utils.isNetworkingAvailable() && data.availableNetworks !== oldData.availableNetworks) {
+  if (data.availableNetworks !== oldData.availableNetworks) {
     var $networks = this.$el.find('.container-networks-input');
     if (data.availableNetworks) {
       $networks.removeClass('hide');

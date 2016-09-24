@@ -8,6 +8,10 @@
 
 * (Group Resource) Policies are now (Group Resource) Placements.
 
+* Add support for single and multi host user defined application networking using native Docker networking. Support for Docker compose container networking configuration.
+
+  More information [here](https://github.com/vmware/admiral/wiki/User-guide#networking)
+
 ## 0.5.0
 
 * Initial open source release.
