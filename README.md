@@ -43,7 +43,7 @@ Open `http://127.0.0.1:8282` in browser...[Configure Docker Host](https://github
 
 #### 3. Clone the repo and build locally. Detailed instructions about building locally can be found in the [Admiral developer guide](https://github.com/vmware/admiral/wiki/Developer-Guide):
 
-* Building the Admiral agent first
+* Building the Admiral agent first (to achieve smaller image file size an LZMA2 compression is used, you need [xz utils](http://tukaani.org/xz/) )
 ```shell
 cd container-images/admiral-agent
 make buildall
@@ -55,9 +55,11 @@ mvn clean install -DskipTests
 ```
 
 * Run the project
+```shell
 java -jar host/target/admiral-host-*-jar-with-dependencies-and-agent.jar --bindAddress=0.0.0.0 --port=8282
+```
 
-Open `http://127.0.0.1:8282` in browser...[Configure Docker Host](https://github.com/vmware/admiral/wiki/User-guide#configure-existing-container-docker-host) 
+Open `http://127.0.0.1:8282` in browser...[Configure Docker Host](https://github.com/vmware/admiral/wiki/User-guide#configure-existing-container-docker-host)
 
 ### Building the code
 
