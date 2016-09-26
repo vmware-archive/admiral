@@ -40,14 +40,17 @@
           <div class="category-filter">
             <span class="title">{{i18n('app.template.list.searchCategoryFilterTitle')}}</span>
             <a href="#"
+               data-category="all"
                v-on:click="selectCategory(constants.TEMPLATES.SEARCH_CATEGORY.ALL, $event)"
                v-bind:class="{'active': selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.ALL}"
               >{{i18n('app.template.list.searchCategory.all')}}</a>
             <a href="#"
+               data-category="images"
                v-on:click="selectCategory(constants.TEMPLATES.SEARCH_CATEGORY.IMAGES, $event)"
                v-bind:class="{'active': selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.IMAGES}"
               >{{i18n('app.template.list.searchCategory.images')}}</a>
             <a href="#"
+               data-category="templates"
                v-on:click="selectCategory(constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES, $event)"
                v-bind:class="{'active': selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES}"
               >{{i18n('app.template.list.searchCategory.templates')}}</a>

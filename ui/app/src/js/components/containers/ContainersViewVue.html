@@ -72,10 +72,12 @@
           <div class="category-filter">
             <span class="title">{{i18n('app.container.list.searchCategoryFilterTitle')}}</span>
             <a href="#"
+               data-category="containers"
                v-on:click="selectCategory(constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS, $event)"
                v-bind:class="{'active': selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS}"
               >{{i18n('app.container.list.searchCategory.containers')}}</a>
             <a href="#"
+               data-category="applications"
                v-on:click="selectCategory(constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS, $event)"
                v-bind:class="{'active': selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS}"
               >{{i18n('app.container.list.searchCategory.applications')}}</a>
