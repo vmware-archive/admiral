@@ -14,30 +14,35 @@
     <label class="col-sm-3 control-label">{{i18n('app.template.details.editNetwork.name')}}</label>
     <div class="col-sm-9">
       <input class="form-control" />
+      <span class="help-block"></span>
     </div>
   </div>
   <div class="form-group">
     <label class="col-sm-3 control-label">{{i18n('advanced')}}</label>
     <div class="col-sm-9">
       <input type="checkbox" class="checkbox-control" v-model="showAdvanced"/>
+      <span class="help-block"></span>
     </div>
   </div>
   <div class="form-group network-driver" v-show="showAdvanced">
     <label class="col-sm-3 control-label">Driver</label>
     <div class="col-sm-9">
       <input class="form-control" />
+      <span class="help-block"></span>
     </div>
   </div>
   <div class="form-group ipam-driver" v-show="showAdvanced">
     <label class="col-sm-3 control-label">IPAM Driver</label>
     <div class="col-sm-9">
       <input class="form-control" />
+      <span class="help-block"></span>
     </div>
   </div>
   <div class="form-group ipam-config" v-show="showAdvanced">
     <label class="col-sm-3 control-label">IPAM config</label>
     <div class="col-sm-9 ">
       <div class="form-control"></div>
+      <span class="help-block"></span>
     </div>
   </div>
 </div>

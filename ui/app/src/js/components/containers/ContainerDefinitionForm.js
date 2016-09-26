@@ -588,17 +588,11 @@ class ContainerDefinitionForm extends Component {
     var cpuShares = $(this.$el).find('.container-cpu-shares-input');
     utils.applyValidationError(cpuShares, errors.cpuShares);
 
-    var memLimitVal = $(this.$el).find('.container-memory-limit-input input');
-    utils.applyValidationError(memLimitVal, errors.memoryLimitVal);
+    var memLimitVal = $(this.$el).find('.container-memory-limit-input');
+    utils.applyValidationError(memLimitVal, errors.memoryLimit);
 
-    var memLimitUnit = $(this.$el).find('.container-memory-limit-input select');
-    utils.applyValidationError(memLimitUnit, errors.memoryLimitUnit);
-
-    var memSwapLimitVal = $(this.$el).find('.container-memory-swap-input input');
-    utils.applyValidationError(memSwapLimitVal, errors.memorySwapLimitVal);
-
-    var memSwapLimitUnit = $(this.$el).find('.container-memory-swap-input select');
-    utils.applyValidationError(memSwapLimitUnit, errors.memorySwapLimitUnit);
+    var memSwapLimitVal = $(this.$el).find('.container-memory-swap-input');
+    utils.applyValidationError(memSwapLimitVal, errors.memorySwapLimit);
 
     var affinityProps = $(this.$el).find('.container-affinity-constraints-input');
     utils.applyMultilineValidationError(affinityProps, errors.affinity);
@@ -667,10 +661,10 @@ class ContainerDefinitionForm extends Component {
     if (errors.cpuShares) {
       fillTabsToActivate(this.$el.find('.container-cpu-shares-input'));
     }
-    if (errors.memoryLimitVal || errors.memoryLimitUnit) {
+    if (errors.memoryLimit) {
       fillTabsToActivate(this.$el.find('.container-memory-limit-input'));
     }
-    if (errors.memorySwapLimitVal || errors.memorySwapLimitUnit) {
+    if (errors.memorySwapLimit) {
       fillTabsToActivate(this.$el.find('.container-memory-swap-input'));
     }
     if (errors.affinity) {

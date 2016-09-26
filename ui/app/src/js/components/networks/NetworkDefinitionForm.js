@@ -11,6 +11,15 @@
 
 import NetworkDefinitionFormVue from 'NetworkDefinitionFormVue';
 import MulticolumnInputs from 'components/common/MulticolumnInputs';
+import utils from 'core/utils';
+
+let constraints = {
+  name: function(name) {
+    if (!name || validator.trim(name).length === 0) {
+      return 'errors.required';
+    }
+  }
+};
 
 var NetworkDefinitionForm = Vue.extend({
   template: NetworkDefinitionFormVue,
@@ -56,6 +65,19 @@ var NetworkDefinitionForm = Vue.extend({
       }
 
       return network;
+    },
+    validate: function() {
+      var definition = this.getNetworkDefinition();
+      var validationErrors = utils.validate(definition, constraints);
+      this.applyValidationErrors(validationErrors);
+      return validationErrors;
+    },
+
+    applyValidationErrors: function(errors) {
+      errors = errors || {};
+
+      var image = $(this.$el).find('.network-name');
+      utils.applyValidationError(image, errors.name);
     }
   },
   attached: function() {
@@ -80,8 +102,10 @@ var NetworkDefinitionForm = Vue.extend({
       if (network) {
         $(this.$el).find('.network-name .form-control').val(network.name);
 
-        this.showAdvanced = network.driver ||
+        var hasAdvancedProps = network.driver ||
           (network.ipam && (network.ipam.config || network.ipam.driver));
+
+        this.showAdvanced = !!hasAdvancedProps;
 
         $(this.$el).find('.network-driver .form-control').val(network.driver);
 
@@ -90,6 +114,11 @@ var NetworkDefinitionForm = Vue.extend({
 
         var ipamConfig = ipam.config || [];
         this.ipamConfigEditor.setData(ipamConfig);
+
+        var alertMessage = (network.error) ? network.error._generic : network.error;
+        if (alertMessage) {
+          this.$dispatch('container-form-alert', alertMessage);
+        }
       }
     }, {immediate: true});
   },

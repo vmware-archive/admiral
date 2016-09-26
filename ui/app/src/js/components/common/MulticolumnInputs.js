@@ -268,6 +268,10 @@ MulticolumnInputs.prototype.setVisibilityFilter = function(shouldHide) {
 };
 
 MulticolumnInputs.prototype.removeEmptyProperties = function() {
+  if (this._keepRemovedProperties) {
+    return;
+  }
+
   var $items = this.$listBody.children();
   for (var i = 0; i < $items.length; i++) {
     var $item = $($items[i]);

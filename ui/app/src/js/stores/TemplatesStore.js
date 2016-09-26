@@ -654,7 +654,7 @@ let TemplatesStore = Reflux.createStore({
   onOpenEditNetwork: function(editDefinitionSelectedNetworks, network) {
     this.setInData(['selectedItemDetails', 'editNetwork'], {
       editDefinitionSelectedNetworks: editDefinitionSelectedNetworks,
-      definitionInstance: network
+      definitionInstance: network || {}
     });
     this.emitChange();
   },
@@ -682,6 +682,7 @@ let TemplatesStore = Reflux.createStore({
   },
 
   onSaveNetwork: function(templateId, network) {
+    this.setInData(['selectedItemDetails', 'editNetwork', 'definitionInstance'], network);
     if (network.documentSelfLink) {
       services.updateDocument(network.documentSelfLink, network).then((updatedDescription) => {
         if (this.data.selectedItemDetails &&
@@ -1246,14 +1247,29 @@ let TemplatesStore = Reflux.createStore({
     this.closeToolbar();
   },
 
-  addGenericEditError: function(e) {
-    this.setInData(['selectedItemDetails', 'editContainerDefinition',
-                        'definitionInstance', 'error'], utils.getErrorMessage(e));
-  },
-
   onGenericEditError: function(e) {
     var validationErrors = utils.getValidationErrors(e);
-    this.setInData(['selectedItemDetails', 'definitionInstance', 'error'], validationErrors);
+    var currentInstanceSelector = this.selectFromData(['selectedItemDetails',
+                                                       'newContainerDefinition',
+                                                       'definitionInstance']);
+    if (!currentInstanceSelector.get()) {
+      currentInstanceSelector = this.selectFromData(['selectedItemDetails',
+                                                     'editContainerDefinition',
+                                                     'definitionInstance']);
+    }
+
+    if (!currentInstanceSelector.get()) {
+      currentInstanceSelector = this.selectFromData(['selectedItemDetails',
+                                                     'editNetwork',
+                                                     'definitionInstance']);
+    }
+
+    if (!currentInstanceSelector.get()) {
+      console.warn('Unknown edit state');
+      return;
+    }
+
+    currentInstanceSelector.setIn(['error'], validationErrors);
     this.emitChange();
   },
 

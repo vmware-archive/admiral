@@ -442,9 +442,13 @@ var TemplateDetailsView = Vue.extend({
     saveNetwork: function($event) {
       $event.preventDefault();
 
-      this.savingNetwork = true;
-      var network = this.$refs.networkEditForm.getNetworkDefinition();
-      TemplateActions.saveNetwork(this.model.documentId, network);
+      var networkForm = this.$refs.networkEditForm;
+      var validationErrors = networkForm.validate();
+      if (!validationErrors) {
+        var network = networkForm.getNetworkDefinition();
+        this.savingNetwork = true;
+        TemplateActions.saveNetwork(this.model.documentId, network);
+      }
     },
     searchForImage: function(queryOptions) {
       TemplateActions.searchImagesForContainerDefinition(queryOptions);

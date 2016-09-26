@@ -68,7 +68,7 @@ var ContainerRequestForm = Vue.extend({
       if (data) {
         this.definitionForm.setData(data);
 
-        var alertMessage = (data.error) ? data._generic : data.error;
+        var alertMessage = (data.error) ? data.error._generic : data.error;
         if (alertMessage) {
           this.$dispatch('container-form-alert', alertMessage);
         }
