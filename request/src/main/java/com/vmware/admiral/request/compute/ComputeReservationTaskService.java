@@ -60,12 +60,21 @@ public class ComputeReservationTaskService
 
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_COMPUTE_RESERVATION_TASKS;
 
+    // cached compute description
+    private transient volatile ComputeDescription computeDescription;
+
     public static class ComputeReservationTaskState
             extends
             com.vmware.admiral.service.common.TaskServiceDocument<ComputeReservationTaskState.SubStage> {
 
         public static enum SubStage {
-            CREATED, SELECTED, QUERYING_GLOBAL, SELECTED_GLOBAL, RESERVATION_SELECTED, COMPLETED, ERROR;
+            CREATED,
+            SELECTED,
+            QUERYING_GLOBAL,
+            SELECTED_GLOBAL,
+            RESERVATION_SELECTED,
+            COMPLETED,
+            ERROR;
 
         }
 
@@ -100,11 +109,11 @@ public class ComputeReservationTaskService
     protected void handleStartedStagePatch(ComputeReservationTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            queryGroupResourcePolicies(state, null);
+            queryGroupResourcePolicies(state, state.tenantLinks, this.computeDescription);
             break;
         case SELECTED:
         case SELECTED_GLOBAL:
-            quatasSelected(state, null);
+            quatasSelected(state, this.computeDescription);
             break;
         case RESERVATION_SELECTED:
             makeReservation(state, state.groupResourcePolicyLink,
@@ -112,7 +121,7 @@ public class ComputeReservationTaskService
             break;
         case QUERYING_GLOBAL:
             // query again but with global group (group set to null):
-            queryGroupResourcePolicies(state, null);
+            queryGroupResourcePolicies(state, null, this.computeDescription);
             break;
         case COMPLETED:
             complete(state, SubStage.COMPLETED);
@@ -128,11 +137,6 @@ public class ComputeReservationTaskService
     @Override
     protected boolean validateStageTransition(Operation patch,
             ComputeReservationTaskState patchBody, ComputeReservationTaskState currentState) {
-
-        if (SubStage.QUERYING_GLOBAL == patchBody.taskSubStage) {
-            // In this case try global group instead of the provided one.
-            currentState.tenantLinks = null;
-        }
 
         currentState.groupResourcePolicyLink = mergeProperty(currentState.groupResourcePolicyLink,
                 patchBody.groupResourcePolicyLink);
@@ -164,11 +168,13 @@ public class ComputeReservationTaskService
     }
 
     private void queryGroupResourcePolicies(ComputeReservationTaskState state,
+            List<String> tenantLinks,
             ComputeDescription computeDesc) {
 
         if (computeDesc == null) {
             getComputeDescription(state.resourceDescriptionLink,
-                    (retrievedCompDesc) -> queryGroupResourcePolicies(state, retrievedCompDesc));
+                    (retrievedCompDesc) -> queryGroupResourcePolicies(state, tenantLinks,
+                            retrievedCompDesc));
             return;
         }
 
@@ -176,17 +182,17 @@ public class ComputeReservationTaskService
         QueryTask q = QueryUtil.buildQuery(GroupResourcePolicyState.class, false);
         q.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
 
-        if (state.tenantLinks == null || state.tenantLinks.isEmpty()) {
+        if (tenantLinks == null || tenantLinks.isEmpty()) {
 
             logInfo("Quering for global policies for resource description: [%s] and resource count: [%s]...",
                     state.resourceDescriptionLink, state.resourceCount);
         } else {
 
-            logInfo("Quering for group [%s] policies for resource description: [%s] and resource count: [%s]...",
-                    state.tenantLinks, state.resourceDescriptionLink, state.resourceCount);
+            logInfo("Quering for group policies in [%s], for resource description: [%s] and resource count: [%s]...",
+                    tenantLinks, state.resourceDescriptionLink, state.resourceCount);
         }
 
-        Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(state.tenantLinks);
+        Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(tenantLinks);
         q.querySpec.query.addBooleanClause(tenantLinksQuery);
 
         // match on available number of instances:
@@ -223,8 +229,7 @@ public class ComputeReservationTaskService
 
         /*
          * TODO Get the policies from the DB ordered by priority. This should work..but it doesn't
-         * :)
-         * QueryTask.QueryTerm sortTerm = new QueryTask.QueryTerm(); sortTerm.propertyName =
+         * :) QueryTask.QueryTerm sortTerm = new QueryTask.QueryTerm(); sortTerm.propertyName =
          * GroupResourcePolicyState.FIELD_NAME_PRIORITY; sortTerm.propertyType =
          * ServiceDocumentDescription.TypeName.LONG; q.querySpec.sortTerm = sortTerm;
          * q.querySpec.sortOrder = QueryTask.QuerySpecification.SortOrder.ASC;
@@ -244,7 +249,7 @@ public class ComputeReservationTaskService
                 policies.add(r.getResult());
             } else {
                 if (policies.isEmpty()) {
-                    if (state.tenantLinks != null && !state.tenantLinks.isEmpty()) {
+                    if (tenantLinks != null && !tenantLinks.isEmpty()) {
                         sendSelfPatch(createUpdateSubStageTask(state, SubStage.QUERYING_GLOBAL));
                     } else {
                         failTask("No available group policies.", null);
@@ -325,7 +330,8 @@ public class ComputeReservationTaskService
                                                         (k1, k2) -> k1, LinkedHashMap::new));
 
                                 selectReservation(state, state.resourcePoolsPerGroupPolicyLinks);
-                            }).sendWith(this);
+                            })
+                    .sendWith(this);
         } else {
             selectReservation(state, state.resourcePoolsPerGroupPolicyLinks);
         }
@@ -402,6 +408,10 @@ public class ComputeReservationTaskService
 
     private void getComputeDescription(String resourceDescriptionLink,
             Consumer<ComputeDescription> callbackFunction) {
+        if (this.computeDescription != null) {
+            callbackFunction.accept(this.computeDescription);
+            return;
+        }
         sendRequest(Operation.createGet(this, resourceDescriptionLink)
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -409,8 +419,8 @@ public class ComputeReservationTaskService
                         return;
                     }
 
-                    ComputeDescription desc = o.getBody(ComputeDescription.class);
-                    callbackFunction.accept(desc);
+                    this.computeDescription = o.getBody(ComputeDescription.class);
+                    callbackFunction.accept(this.computeDescription);
                 }));
     }
 }

@@ -104,6 +104,9 @@ public class ComputeAllocationTaskService
     private static final String SERVER_CERT_PLACEHOLDER = "\\{\\{serverCertPem\\}\\}";
     private static final String SERVER_KEY_PLACEHOLDER = "\\{\\{serverKeyPem\\}\\}";
 
+    // cached compute description
+    private transient volatile ComputeDescription computeDescription;
+
     public static class ComputeAllocationTaskState
             extends
             com.vmware.admiral.service.common.TaskServiceDocument<ComputeAllocationTaskState.SubStage> {
@@ -183,10 +186,10 @@ public class ComputeAllocationTaskService
     protected void handleStartedStagePatch(ComputeAllocationTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            prepareContext(state, null, null, null, null);
+            prepareContext(state, this.computeDescription, null, null, null);
             break;
         case CONTEXT_PREPARED:
-            configureComputeDescription(state, null, null, null);
+            configureComputeDescription(state, this.computeDescription, null, null);
             break;
         case COMPUTE_DESCRIPTION_RECONFIGURED:
             createOsDiskState(state, SubStage.SELECT_PLACEMENT_COMPUTES, null);
@@ -195,7 +198,7 @@ public class ComputeAllocationTaskService
             selectPlacement(state, null);
             break;
         case START_COMPUTE_ALLOCATION:
-            allocateComputeState(state, null);
+            allocateComputeState(state, this.computeDescription, null);
             break;
         case COMPUTE_ALLOCATION_COMPLETED:
             queryForAllocatedResources(state);
@@ -282,9 +285,8 @@ public class ComputeAllocationTaskService
         }
 
         if (computeDesc == null) {
-            getServiceState(state.resourceDescriptionLink, ComputeDescription.class,
-                    (compDesc) -> prepareContext(state, compDesc, resourcePool, endpoint,
-                            environment));
+            getComputeDescription(state.resourceDescriptionLink, (compDesc) -> prepareContext(state,
+                    compDesc, resourcePool, endpoint, environment));
             return;
         }
 
@@ -328,16 +330,6 @@ public class ComputeAllocationTaskService
                     ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK,
                     resourcePool.documentSelfLink);
         }
-        if (body.getCustomProperty(
-                ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_REGION_ID) == null) {
-            body.addCustomProperty(
-                    ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_REGION_ID,
-                    computeDesc.regionId);
-        }
-
-        if (body.getCustomProperty(CUSTOM_DISPLAY_NAME) == null) {
-            body.addCustomProperty(CUSTOM_DISPLAY_NAME, computeDesc.name);
-        }
 
         sendSelfPatch(body);
     }
@@ -356,7 +348,7 @@ public class ComputeAllocationTaskService
             rootDisk.documentSelfLink = rootDisk.id;
             String diskName = state
                     .getCustomProperty(
-                    ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_DISK_NAME);
+                            ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_DISK_NAME);
             if (diskName == null) {
                 diskName = "Default disk";
             }
@@ -618,8 +610,9 @@ public class ComputeAllocationTaskService
                 state.customProperties);
 
         SubStage nextStage = computeDesc.customProperties
-                .containsKey(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME) ?
-                SubStage.COMPUTE_DESCRIPTION_RECONFIGURED : SubStage.SELECT_PLACEMENT_COMPUTES;
+                .containsKey(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME)
+                        ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
+                        : SubStage.SELECT_PLACEMENT_COMPUTES;
 
         ComputeAllocationTaskState patchState = createUpdateSubStageTask(state, nextStage);
         patchState.customProperties = state.customProperties;
@@ -638,6 +631,7 @@ public class ComputeAllocationTaskService
                                         null);
                                 return;
                             }
+                            this.computeDescription = o.getBody(ComputeDescription.class);
                             sendSelfPatch(patchState);
                         })
                         .sendWith(this);
@@ -651,6 +645,7 @@ public class ComputeAllocationTaskService
                                     null);
                             return;
                         }
+                        this.computeDescription = o.getBody(ComputeDescription.class);
                         sendSelfPatch(patchState);
                     })
                     .sendWith(this);
@@ -722,12 +717,19 @@ public class ComputeAllocationTaskService
     }
 
     private void allocateComputeState(ComputeAllocationTaskState state,
-            ServiceTaskCallback taskCallback) {
+            ComputeDescription computeDescription, ServiceTaskCallback taskCallback) {
+
+        if (computeDescription == null) {
+            getComputeDescription(state.resourceDescriptionLink,
+                    (compDesc) -> allocateComputeState(state,
+                            compDesc, taskCallback));
+            return;
+        }
         if (taskCallback == null) {
             // recurse after creating a sub task
             createCounterSubTaskCallback(state, state.resourceCount, false,
                     SubStage.COMPUTE_ALLOCATION_COMPLETED,
-                    (serviceTask) -> allocateComputeState(state, serviceTask));
+                    (serviceTask) -> allocateComputeState(state, computeDescription, serviceTask));
             return;
         }
 
@@ -758,7 +760,7 @@ public class ComputeAllocationTaskService
 
         logInfo("Creating %d provision tasks, reporting through sub task %s",
                 state.resourceCount, taskCallback.serviceSelfLink);
-        String name = "";
+        String name = computeDescription.name;
         if (state.customProperties.get(CUSTOM_DISPLAY_NAME) != null) {
             name = state.customProperties.get(CUSTOM_DISPLAY_NAME);
         }
@@ -814,7 +816,6 @@ public class ComputeAllocationTaskService
         resource.diskLinks = diskLinks;
         resource.networkInterfaceLinks = networkLinks;
         resource.customProperties = new HashMap<>(state.customProperties);
-        resource.customProperties.put(CUSTOM_DISPLAY_NAME, computeName);
         resource.customProperties.put(ComputeConstants.GROUP_RESOURCE_POLICY_LINK_NAME,
                 state.groupResourcePolicyLink);
         resource.tenantLinks = state.tenantLinks;
@@ -900,14 +901,14 @@ public class ComputeAllocationTaskService
                             .getBody(DiskService.DiskState.class);
                     // create a new disk based off the template but use a
                     // unique ID
-                templateDisk.id = UUID.randomUUID().toString();
-                templateDisk.documentSelfLink = templateDisk.id;
-                templateDisk.tenantLinks = state.tenantLinks;
-                sendRequest(Operation
-                        .createPost(this, DiskService.FACTORY_LINK)
-                        .setBody(templateDisk)
-                        .setCompletion(diskCreateCompletion));
-            }));
+                    templateDisk.id = UUID.randomUUID().toString();
+                    templateDisk.documentSelfLink = templateDisk.id;
+                    templateDisk.tenantLinks = state.tenantLinks;
+                    sendRequest(Operation
+                            .createPost(this, DiskService.FACTORY_LINK)
+                            .setBody(templateDisk)
+                            .setCompletion(diskCreateCompletion));
+                }));
     }
 
     private void createNetworkResources(ComputeAllocationTaskState state, String parentLink,
@@ -964,20 +965,20 @@ public class ComputeAllocationTaskService
 
                             NetworkInterfaceService.NetworkInterfaceState templateNetwork = o
                                     .getBody(
-                                    NetworkInterfaceService.NetworkInterfaceState.class);
+                                            NetworkInterfaceService.NetworkInterfaceState.class);
                             templateNetwork.id = UUID.randomUUID().toString();
                             templateNetwork.documentSelfLink = templateNetwork.id;
                             templateNetwork.tenantLinks = state.tenantLinks;
                             // create a new network based off the template
                             // but use a unique ID
-                        sendRequest(Operation
-                                .createPost(
-                                        this,
-                                        NetworkInterfaceService.FACTORY_LINK)
-                                .setBody(templateNetwork)
-                                .setCompletion(
-                                        networkInterfaceCreateCompletion));
-                    }));
+                            sendRequest(Operation
+                                    .createPost(
+                                            this,
+                                            NetworkInterfaceService.FACTORY_LINK)
+                                    .setBody(templateNetwork)
+                                    .setCompletion(
+                                            networkInterfaceCreateCompletion));
+                        }));
     }
 
     private void getGroupResourcePolicy(ComputeAllocationTaskState state,
@@ -1071,6 +1072,18 @@ public class ComputeAllocationTaskService
                 }
                 callbackFunction.accept(environments.get(0));
             }
+        });
+    }
+
+    private void getComputeDescription(String uriLink,
+            Consumer<ComputeDescription> callbackFunction) {
+        if (this.computeDescription != null) {
+            callbackFunction.accept(computeDescription);
+            return;
+        }
+        getServiceState(uriLink, ComputeDescription.class, cd -> {
+            this.computeDescription = cd;
+            callbackFunction.accept(cd);
         });
     }
 

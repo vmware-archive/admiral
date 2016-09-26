@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.integration.compute;
+package com.vmware.admiral.test.integration.compute.vsphere;
 
 import java.net.URI;
 

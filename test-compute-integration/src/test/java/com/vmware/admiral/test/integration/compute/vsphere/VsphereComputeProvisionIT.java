@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.integration.compute;
+package com.vmware.admiral.test.integration.compute.vsphere;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -23,6 +23,7 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.compute.ComputeOperationType;
+import com.vmware.admiral.test.integration.compute.BaseComputeProvisionIT;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -98,7 +99,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
         endpoint.endpointProperties.put("privateKeyId", getTestRequiredProp(VC_USERNAME));
         endpoint.endpointProperties.put("privateKey", getTestRequiredProp(VC_PASSWORD));
         endpoint.endpointProperties.put("regionId", getTestRequiredProp(VC_DATACENTER_ID));
-        endpoint.endpointProperties.put("endpointHost", getTestRequiredProp(VC_HOST));
+        endpoint.endpointProperties.put("hostName", getTestRequiredProp(VC_HOST));
     }
 
     @Override

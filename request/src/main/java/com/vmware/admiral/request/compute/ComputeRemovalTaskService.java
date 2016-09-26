@@ -278,7 +278,7 @@ public class ComputeRemovalTaskService extends
                 ? cs.customProperties.get(ComputeConstants.GROUP_RESOURCE_POLICY_LINK_NAME)
                 : null;
         if (groupResourcePolicyLink == null) {
-            logInfo("No policy was used for %s", cs.documentSelfLink);
+            logInfo("Policy was not used for %s", cs.documentSelfLink);
             completeSubTasksCounter(taskCallback, null);
             return;
         }
