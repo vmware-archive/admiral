@@ -26,10 +26,10 @@
           <img class="nav-item-image" src="image-assets/hosts.png">
           <span>{{i18n("app.navbar.hosts")}}</span>
         </a>
-        <a v-bind:class="{'active': model.sideView.currentView === constants.VIEWS.POLICIES.name}"
-           class="nav-item policies" href="#/policies">
-          <img class="nav-item-image" src="image-assets/policies.png">
-          <span>{{i18n("app.navbar.policies")}}</span>
+        <a v-bind:class="{'active': model.sideView.currentView === constants.VIEWS.PLACEMENTS.name}"
+           class="nav-item placements" href="#/placements">
+          <img class="nav-item-image" src="image-assets/placements.png">
+          <span>{{i18n("app.navbar.placements")}}</span>
         </a>
         <a v-bind:class="{'active': model.sideView.currentView === constants.VIEWS.TEMPLATES.name}"
            class="nav-item templates" href="#/templates">
@@ -52,10 +52,10 @@
                   v-bind:model="model.centerView.data"
                   v-ref:center-view >
       </hosts-view>
-      <policies-view v-if="model.centerView.name === constants.VIEWS.POLICIES.name"
+      <placements-view v-if="model.centerView.name === constants.VIEWS.PLACEMENTS.name"
                    v-bind:model="model.centerView.data"
                    v-ref:center-view >
-      </policies-view>
+      </placements-view>
       <templates-view v-if="model.centerView.name === constants.VIEWS.TEMPLATES.name"
                       v-bind:model="model.centerView.data"
                       v-ref:center-view >

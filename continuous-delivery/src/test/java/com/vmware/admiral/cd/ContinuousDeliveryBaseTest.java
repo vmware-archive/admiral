@@ -21,7 +21,7 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.host.HostInitAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
@@ -79,7 +79,7 @@ public abstract class ContinuousDeliveryBaseTest extends BaseTestCase {
         waitForServiceAvailability(ContainerClusteringTaskFactoryService.SELF_LINK);
 
         // admiral states:
-        waitForServiceAvailability(GroupResourcePolicyService.FACTORY_LINK);
+        waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);
         waitForServiceAvailability(ContainerFactoryService.SELF_LINK);
         waitForServiceAvailability(RegistryService.FACTORY_LINK);
 
@@ -94,7 +94,7 @@ public abstract class ContinuousDeliveryBaseTest extends BaseTestCase {
 
         // Default services:
         waitForServiceAvailability(ResourceNamePrefixService.DEFAULT_RESOURCE_NAME_PREFIX_SELF_LINK);
-        waitForServiceAvailability(GroupResourcePolicyService.DEFAULT_RESOURCE_POLICY_LINK);
+        waitForServiceAvailability(GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK);
     }
 
     protected void waitForContainerPowerState(final PowerState expectedPowerState,

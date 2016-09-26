@@ -274,11 +274,11 @@ public class ComputeRemovalTaskService extends
     private void releaseResourceQuota(ComputeRemovalTaskState state, ComputeState cs,
             ServiceTaskCallback taskCallback) {
 
-        String groupResourcePolicyLink = cs.customProperties != null
-                ? cs.customProperties.get(ComputeConstants.GROUP_RESOURCE_POLICY_LINK_NAME)
+        String groupResourcePlacementLink = cs.customProperties != null
+                ? cs.customProperties.get(ComputeConstants.GROUP_RESOURCE_PLACEMENT_LINK_NAME)
                 : null;
-        if (groupResourcePolicyLink == null) {
-            logInfo("Policy was not used for %s", cs.documentSelfLink);
+        if (groupResourcePlacementLink == null) {
+            logInfo("Placement was not used for %s", cs.documentSelfLink);
             completeSubTasksCounter(taskCallback, null);
             return;
         }
@@ -287,18 +287,18 @@ public class ComputeRemovalTaskService extends
         rsrvTask.serviceTaskCallback = taskCallback;
         rsrvTask.resourceCount = 1;
         rsrvTask.resourceDescriptionLink = cs.descriptionLink;
-        rsrvTask.groupResourcePolicyLink = groupResourcePolicyLink;
+        rsrvTask.groupResourcePlacementLink = groupResourcePlacementLink;
         rsrvTask.requestTrackerLink = state.requestTrackerLink;
 
         Operation.createPost(this, ReservationRemovalTaskFactoryService.SELF_LINK)
                 .setBody(rsrvTask)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning("Quotas can't be cleaned up for: " + groupResourcePolicyLink, e);
+                        logWarning("Quotas can't be cleaned up for: " + groupResourcePlacementLink, e);
                         completeSubTasksCounter(taskCallback, e);
                         return;
                     }
-                    logInfo("Requested Quota removal for: %s", groupResourcePolicyLink);
+                    logInfo("Requested Quota removal for: %s", groupResourcePlacementLink);
                 }).sendWith(this);
     }
 

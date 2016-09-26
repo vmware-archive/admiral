@@ -35,8 +35,8 @@ import com.vmware.admiral.compute.container.CompositeComponentService.CompositeC
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
@@ -179,7 +179,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testWithMultipleDependentDescs() throws Throwable {
-        addAdditionalPolicy();
+        addAdditionalPlacement();
 
         CompositeDescription compositeDesc = createComplexCompositeDesc();
 
@@ -190,16 +190,16 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
     }
 
     @Test
-    public void testWithPoliciesNotEnoughForSomeComponents() throws Throwable {
+    public void testWithPlacementsPoliciesNotEnoughForSomeComponents() throws Throwable {
         CountDownLatch latch = new CountDownLatch(3);
 
-        host.log(">>>>>>>>>>>>>>>> testWithPoliciesNotEnoughForSomeComponents <<<<<<<<<<<<");
+        host.log(">>>>>>>>>>>>>>>> testWithPlacementsNotEnoughForSomeComponents <<<<<<<<<<<<");
         CompositeDescription compositeDesc = createComplexCompositeDesc();
         verifyContainerStatesRemoved(compositeDesc, latch);
 
-        // Make sure that policies are less than the requested containers in order to fail
+        // Make sure that placements are less than the requested containers in order to fail
         // allocation
-        assertTrue(compositeDesc.descriptionLinks.size() > groupPolicyState.availableInstancesCount);
+        assertTrue(compositeDesc.descriptionLinks.size() > groupPlacementState.availableInstancesCount);
 
         // fail on host placement:
         RequestBrokerState request = startRequest(compositeDesc);
@@ -208,10 +208,10 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         verifyContainerStatesRemoved(compositeDesc, latch);
 
         delete(DEFAULT_GROUP_RESOURCE_POLICY);
-        // fail on policies not available:
+        // fail on placements not available:
         request = startRequest(compositeDesc);
         host.log(
-                ">>>>>>>>>>>>>>>> testWithPoliciesNotEnoughForSomeComponents: Test request started: %s <<<<<<<<<<<<",
+                ">>>>>>>>>>>>>>>> testWithPlacementsNotEnoughForSomeComponents: Test request started: %s <<<<<<<<<<<<",
                 request.documentSelfLink);
         waitForTaskError(request.documentSelfLink, RequestBrokerState.class);
 
@@ -225,7 +225,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
     public void testWithComponentsProvisioningFailures() throws Throwable {
         CountDownLatch latch = new CountDownLatch(2);
 
-        host.log(">>>>>>>>>>>>>>>> testWithPoliciesNotEnoughForSomeComponents <<<<<<<<<<<<");
+        host.log(">>>>>>>>>>>>>>>> testWithPlacementsNotEnoughForSomeComponents <<<<<<<<<<<<");
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
         desc2.affinity = new String[] { desc1.name };
@@ -247,7 +247,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
 
         RequestBrokerState request = startRequest(compositeDesc);
         host.log(
-                ">>>>>>>>>>>>>>>> testWithPoliciesNotEnoughForSomeComponents: Test request started: %s <<<<<<<<<<<<",
+                ">>>>>>>>>>>>>>>> testWithPlacementsNotEnoughForSomeComponents: Test request started: %s <<<<<<<<<<<<",
                 request.documentSelfLink);
         waitForTaskError(request.documentSelfLink, RequestBrokerState.class);
 
@@ -258,9 +258,9 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
     }
 
     @Test
-    public void testCleanUpCompositeOnFailureToFindPolicies() throws Throwable {
-        // make sure no policies are available
-        removeAllPolicies();
+    public void testCleanUpCompositeOnFailureToFindPlacements() throws Throwable {
+        // make sure no placements are available
+        removeAllPlacements();
 
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         CompositeDescription compositeDesc = createCompositeDesc(desc1);
@@ -346,7 +346,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
     private RequestBrokerState startRequest(CompositeDescription desc) throws Throwable {
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), desc.documentSelfLink);
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
 
         request = super.startRequest(request);
         return request;
@@ -355,7 +355,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
     private RequestBrokerState startComputeRequest(CompositeDescription desc) throws Throwable {
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), desc.documentSelfLink);
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceDescriptionLink = desc.documentSelfLink;
 
         request = super.startRequest(request);
@@ -383,13 +383,13 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         }
     }
 
-    private void addAdditionalPolicy() throws Throwable {
-        GroupResourcePolicyState additionalPolicy = TestRequestStateFactory
-                .createGroupResourcePolicyState();
-        additionalPolicy.resourcePoolLink = resourcePool.documentSelfLink;
-        additionalPolicy = doPost(additionalPolicy, GroupResourcePolicyService.FACTORY_LINK);
-        addForDeletion(additionalPolicy);
-        assertNotNull(additionalPolicy);
+    private void addAdditionalPlacement() throws Throwable {
+        GroupResourcePlacementState additionalPlacement = TestRequestStateFactory
+                .createGroupResourcePlacementState();
+        additionalPlacement.resourcePoolLink = resourcePool.documentSelfLink;
+        additionalPlacement = doPost(additionalPlacement, GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(additionalPlacement);
+        assertNotNull(additionalPlacement);
     }
 
     private void verifyContainerStatesRemoved(CompositeDescription compositeDesc,
@@ -420,29 +420,29 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         });
     }
 
-    private void removeAllPolicies() throws Throwable {
-        QueryTask q = QueryUtil.buildQuery(GroupResourcePolicyState.class, false);
+    private void removeAllPlacements() throws Throwable {
+        QueryTask q = QueryUtil.buildQuery(GroupResourcePlacementState.class, false);
 
         ServiceDocumentQuery<?> query = new ServiceDocumentQuery<>(host,
-                GroupResourcePolicyState.class);
-        List<String> policyLinks = new ArrayList<>();
+                GroupResourcePlacementState.class);
+        List<String> placementLinks = new ArrayList<>();
 
         TestContext ctx = testCreate(1);
         query.query(q, (r) -> {
             if (r.hasException()) {
                 host.log(Level.SEVERE,
-                        "Exception during search for GroupResourcePolicyStates",
+                        "Exception during search for GroupResourcePlacementStates",
                         r.getException().getMessage());
                 ctx.failIteration(r.getException());
             } else if (r.hasResult()) {
-                policyLinks.add(r.getDocumentSelfLink());
+                placementLinks.add(r.getDocumentSelfLink());
             } else {
                 ctx.completeIteration();
             }
         });
         ctx.await();
 
-        for (String selfLink : policyLinks) {
+        for (String selfLink : placementLinks) {
             delete(selfLink);
         }
     }

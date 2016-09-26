@@ -57,7 +57,7 @@ import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.EnvironmentMappingService.EnvironmentMappingState;
 import com.vmware.admiral.compute.PropertyMapping;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.host.DefaultCertCredentials;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
@@ -141,9 +141,9 @@ public class ComputeAllocationTaskService
         @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
         public String resourceType;
 
-        @Documentation(description = "(Required) the groupResourcePolicyState that links to ResourcePool")
+        @Documentation(description = "(Required) the groupResourcePlacementState that links to ResourcePool")
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT, OPTIONAL, LINK }, indexing = STORE_ONLY)
-        public String groupResourcePolicyLink;
+        public String groupResourcePlacementLink;
 
         @Documentation(description = "(Required) Number of resources to provision. ")
         @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
@@ -251,7 +251,7 @@ public class ComputeAllocationTaskService
 
         assertNotEmpty(state.resourceType, "resourceType");
         assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
-        assertNotEmpty(state.groupResourcePolicyLink, "groupResourcePolicyLink");
+        assertNotEmpty(state.groupResourcePlacementLink, "groupResourcePlacementLink");
 
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
@@ -681,14 +681,14 @@ public class ComputeAllocationTaskService
     }
 
     private void selectPlacement(ComputeAllocationTaskState state,
-            GroupResourcePolicyState groupResourcePolicy) {
-        if (groupResourcePolicy == null) {
-            getGroupResourcePolicy(state, (policy) -> selectPlacement(state, policy));
+            GroupResourcePlacementState groupResourcePlacement) {
+        if (groupResourcePlacement == null) {
+            getGroupResourcePlacement(state, (placement) -> selectPlacement(state, placement));
             return;
         }
 
-        if (groupResourcePolicy.resourcePoolLink == null) {
-            failTask("Group resource policy has no resource pool link", null);
+        if (groupResourcePlacement.resourcePoolLink == null) {
+            failTask("Group resource placement has no resource pool link", null);
             return;
         }
 
@@ -697,7 +697,7 @@ public class ComputeAllocationTaskService
         computePlacementSelection.documentSelfLink = getSelfId();
         computePlacementSelection.computeDescriptionLink = state.resourceDescriptionLink;
         computePlacementSelection.resourceCount = state.resourceCount;
-        computePlacementSelection.resourcePoolLink = groupResourcePolicy.resourcePoolLink;
+        computePlacementSelection.resourcePoolLink = groupResourcePlacement.resourcePoolLink;
         computePlacementSelection.tenantLinks = state.tenantLinks;
         computePlacementSelection.customProperties = state.customProperties;
         computePlacementSelection.serviceTaskCallback = ServiceTaskCallback.create(
@@ -816,8 +816,8 @@ public class ComputeAllocationTaskService
         resource.diskLinks = diskLinks;
         resource.networkInterfaceLinks = networkLinks;
         resource.customProperties = new HashMap<>(state.customProperties);
-        resource.customProperties.put(ComputeConstants.GROUP_RESOURCE_POLICY_LINK_NAME,
-                state.groupResourcePolicyLink);
+        resource.customProperties.put(ComputeConstants.GROUP_RESOURCE_PLACEMENT_LINK_NAME,
+                state.groupResourcePlacementLink);
         resource.tenantLinks = state.tenantLinks;
         resource.documentSelfLink = computeResourceLink;
 
@@ -981,42 +981,42 @@ public class ComputeAllocationTaskService
                         }));
     }
 
-    private void getGroupResourcePolicy(ComputeAllocationTaskState state,
-            Consumer<GroupResourcePolicyState> callbackFunction) {
-        sendRequest(Operation.createGet(this, state.groupResourcePolicyLink)
+    private void getGroupResourcePlacement(ComputeAllocationTaskState state,
+            Consumer<GroupResourcePlacementState> callbackFunction) {
+        sendRequest(Operation.createGet(this, state.groupResourcePlacementLink)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        failTask("Failure retrieving group resource policy", e);
+                        failTask("Failure retrieving group resource placement", e);
                         return;
                     }
 
-                    GroupResourcePolicyState groupResourcePolicy = o
-                            .getBody(GroupResourcePolicyState.class);
-                    callbackFunction.accept(groupResourcePolicy);
+                    GroupResourcePlacementState groupResourcePlacement = o
+                            .getBody(GroupResourcePlacementState.class);
+                    callbackFunction.accept(groupResourcePlacement);
                 }));
     }
 
     private void getResourcePool(ComputeAllocationTaskState state,
             Consumer<ResourcePoolState> callbackFunction) {
-        Operation opRQL = Operation.createGet(this, state.groupResourcePolicyLink);
+        Operation opRQL = Operation.createGet(this, state.groupResourcePlacementLink);
         Operation opRP = Operation.createGet(this, null);
         OperationSequence.create(opRQL)
                 .setCompletion((ops, exs) -> {
                     if (exs != null) {
-                        failTask("Failure retrieving GroupResourcePolicy: " + Utils.toString(exs),
+                        failTask("Failure retrieving GroupResourcePlacement: " + Utils.toString(exs),
                                 null);
                         return;
                     }
                     Operation o = ops.get(opRQL.getId());
 
-                    GroupResourcePolicyState policyState = o
-                            .getBody(GroupResourcePolicyState.class);
-                    if (policyState.resourcePoolLink == null) {
+                    GroupResourcePlacementState placementState = o
+                            .getBody(GroupResourcePlacementState.class);
+                    if (placementState.resourcePoolLink == null) {
                         failTask(null, new IllegalStateException(
-                                "Policy state has no resourcePoolLink"));
+                                "Placement state has no resourcePoolLink"));
                         return;
                     }
-                    opRP.setUri(UriUtils.buildUri(getHost(), policyState.resourcePoolLink));
+                    opRP.setUri(UriUtils.buildUri(getHost(), placementState.resourcePoolLink));
                 }).next(opRP).setCompletion((ops, exs) -> {
                     if (exs != null) {
                         failTask("Failure retrieving ResourcePool: " + Utils.toString(exs), null);

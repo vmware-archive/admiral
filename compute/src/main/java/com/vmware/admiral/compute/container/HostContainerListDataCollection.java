@@ -959,8 +959,8 @@ public class HostContainerListDataCollection extends StatefulService {
                         containerState.adapterManagementReference = containerDesc.instanceAdapterReference;
                         containerState.image = containerDesc.image;
                         containerState.command = containerDesc.command;
-                        containerState.groupResourcePolicyLink =
-                                GroupResourcePolicyService.DEFAULT_RESOURCE_POLICY_LINK;
+                        containerState.groupResourcePlacementLink =
+                                GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
                         containerState.system = Boolean.TRUE;
 
                         sendRequest(OperationUtil

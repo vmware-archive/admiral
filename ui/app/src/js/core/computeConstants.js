@@ -23,8 +23,8 @@ var computeConstants = Immutable({
     ENVIRONMENTS: {
       name: 'environments'
     },
-    POLICIES: {
-      name: 'policies'
+    PLACEMENTS: {
+      name: 'placements'
     },
     MACHINES: {
       name: 'machines'

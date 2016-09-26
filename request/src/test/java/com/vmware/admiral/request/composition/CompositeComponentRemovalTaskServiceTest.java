@@ -157,7 +157,7 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
         container.descriptionLink = containerDesc.documentSelfLink;
         container.adapterManagementReference = containerDesc.instanceAdapterReference;
         container.compositeComponentLink = composite.documentSelfLink;
-        container.groupResourcePolicyLink = groupPolicyState.documentSelfLink;
+        container.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
         container = doPost(container, ContainerFactoryService.SELF_LINK);
         addForDeletion(container);
         return container;

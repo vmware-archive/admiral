@@ -1231,7 +1231,7 @@ $elements-side-margin: $elements-margin / 2;
   margin-top: 20px;
 }
 
-.policies-view {
+.placements-view {
   > .main-panel {
     @extend .position-expand;
     z-index: 1;
@@ -1254,7 +1254,7 @@ $elements-side-margin: $elements-margin / 2;
     > .list-holder {
       margin: 20px 0 35px 25px;
       overflow: hidden !important;
-      .toolbar-policies {
+      .toolbar-placements {
         margin: 0 50px 25px 0;
       }
       .inline-editable-list {
@@ -1281,7 +1281,7 @@ $elements-side-margin: $elements-margin / 2;
   }
 }
 
-.policies-view.right-context-expanded {
+.placements-view.right-context-expanded {
   > .main-panel {
     > .mask {
       display: block;

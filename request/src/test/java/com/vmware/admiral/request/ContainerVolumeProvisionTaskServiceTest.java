@@ -25,7 +25,7 @@ import com.vmware.admiral.compute.container.CompositeComponentService.CompositeC
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
@@ -73,14 +73,14 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
         assertNotNull(compositeDesc);
         assertEquals(3, compositeDesc.descriptionLinks.size());
 
-        // setup Group Policy:
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
 
         // 1. Request a composite container:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
 
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
 

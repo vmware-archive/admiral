@@ -67,7 +67,7 @@ public class ComputeOperationTaskServiceTest extends RequestBaseTest {
 
         request = TestRequestStateFactory.createRequestState(ResourceType.COMPUTE_TYPE.getName(),
                 hostDesc.documentSelfLink);
-        request.tenantLinks = computeGroupPolicyState.tenantLinks;
+        request.tenantLinks = computeGroupPlacementState.tenantLinks;
         request.resourceCount = 1;
     }
 

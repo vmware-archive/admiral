@@ -186,11 +186,12 @@ public class ContainerService extends StatefulService {
         public String parentLink;
 
         /**
-         * Link to the resource policy associated with a given container instance. Null if no policy
+         * Link to the resource placement associated with a given container instance. Null if no
+         * placement
          */
-        @Documentation(description = "Link to the resource policy associated with a given container instance. Null if no policy")
+        @Documentation(description = "Link to the resource placement associated with a given container instance. Null if no placement")
         @PropertyOptions(usage = { PropertyUsageOption.LINK, PropertyUsageOption.OPTIONAL })
-        public String groupResourcePolicyLink;
+        public String groupResourcePlacementLink;
 
         /** Status of the container */
         @Documentation(description = "Status of the container")

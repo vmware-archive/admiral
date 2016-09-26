@@ -40,8 +40,8 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
@@ -570,22 +570,22 @@ public class SelfProvisioningTaskService extends
         poolState.id = poolState.name;
         poolState.projectName = state.endpointType.name();
 
-        GroupResourcePolicyState policyState = new GroupResourcePolicyState();
-        policyState.maxNumberInstances = 10;
-        policyState.resourcePoolLink = poolState.documentSelfLink;
-        policyState.name = String.format("%s-%s-%s", "policy", state.endpointType.name(),
+        GroupResourcePlacementState placementState = new GroupResourcePlacementState();
+        placementState.maxNumberInstances = 10;
+        placementState.resourcePoolLink = poolState.documentSelfLink;
+        placementState.name = String.format("%s-%s-%s", "placement", state.endpointType.name(),
                 state.availabilityZoneId);
-        policyState.documentSelfLink = policyState.name;
-        policyState.priority = 1;
+        placementState.documentSelfLink = placementState.name;
+        placementState.priority = 1;
 
         OperationJoin.create(
                 Operation.createPost(this, ResourcePoolService.FACTORY_LINK)
                         .setBody(poolState),
-                Operation.createPost(this, GroupResourcePolicyService.FACTORY_LINK)
-                        .setBody(policyState))
+                Operation.createPost(this, GroupResourcePlacementService.FACTORY_LINK)
+                        .setBody(placementState))
                 .setCompletion((ops, exs) -> {
                     if (exs != null) {
-                        failTask("ResourcePool or GroupPolicy can't be created: "
+                        failTask("ResourcePool or GroupPlacement can't be created: "
                                 + Utils.toString(exs), exs.values().iterator().next());
                         return;
                     }

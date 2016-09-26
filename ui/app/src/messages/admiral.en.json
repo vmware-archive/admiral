@@ -16,7 +16,7 @@
     },
     "navbar": {
       "hosts": "Hosts",
-      "policies": "Policies",
+      "placements": "Placements",
       "templates": "Templates",
       "resources": "Resources",
       "containers": "Containers",
@@ -285,9 +285,9 @@
         }
       }
     },
-    "policy": {
+    "placement": {
       "list": {
-        "title": "Policies",
+        "title": "Placements",
         "addButton": "Add",
         "nameColumn": "Name",
         "groupColumn": "Project",
@@ -299,12 +299,12 @@
         "cpuColumn": "CPU shares",
         "memoryColumn": "Memory limit",
         "storageColumn": "Storage limit",
-        "instancesPerPolicy": "Show instances per policy",
+        "instancesPerPlacement": "Show instances per placement",
         "unlimitedInstances": "Unlimited"
       },
       "edit": {
-        "createNew": "New Policy",
-        "update": "Edit Policy",
+        "createNew": "New Placement",
+        "update": "Edit Placement",
         "nameLabel": "Name",
         "groupLabel": "Project",
         "selectGroup": "Select Project",

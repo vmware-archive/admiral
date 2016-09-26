@@ -122,7 +122,7 @@ public class ResourceNamePrefixTaskService
             Iterator<String> iterator, boolean globalSearch) {
         if (!iterator.hasNext()) {
             if (state.tenantLinks != null && !state.tenantLinks.isEmpty() && !globalSearch) {
-                // search for global policies (without group)
+                // search for global placements (without group)
                 queryResourceNamePrefixes(state, true);
             } else {
                 failTask("No available resource name prefixes", null);

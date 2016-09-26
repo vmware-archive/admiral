@@ -33,8 +33,8 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.ResourcePolicyReservationRequest;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.ResourcePlacementReservationRequest;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
 import com.vmware.admiral.request.ReservationAllocationTaskService.ReservationAllocationTaskState;
 import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState.SubStage;
@@ -62,7 +62,7 @@ public class ReservationTaskService
         AbstractTaskStatefulService<ReservationTaskService.ReservationTaskState, ReservationTaskService.ReservationTaskState.SubStage> {
 
     private static final int QUERY_RETRIES_COUNT = Integer.getInteger(
-            "com.vmware.admiral.service.policies.query.retries", 2);
+            "com.vmware.admiral.service.placements.query.retries", 2);
 
     public static final String DISPLAY_NAME = "Reservation";
 
@@ -74,7 +74,7 @@ public class ReservationTaskService
         private static final String FIELD_NAME_RESOURCE_DESC_LINK = "resourceDescriptionLink";
         private static final String FIELD_NAME_TENANT_LINKS = "tenantLinks";
         private static final String FIELD_NAME_RESOURCE_COUNT = "resourceCount";
-        private static final String FIELD_NAME_GROUP_RESOURCE_POLICY = "groupResourcePolicyLink";
+        private static final String FIELD_NAME_GROUP_RESOURCE_POLICY = "groupResourcePlacementLink";
 
         public static enum SubStage {
             CREATED,
@@ -105,14 +105,14 @@ public class ReservationTaskService
         public long resourceCount;
 
         // Service fields:
-        /** (Internal) Set by task. The link to the selected group policy. */
-        public String groupResourcePolicyLink;
+        /** (Internal) Set by task. The link to the selected group placement. */
+        public String groupResourcePlacementLink;
 
         /**
-         * Set by task. Selected group policy links and associated resourcePoolLinks. Ordered by
+         * Set by task. Selected group placement links and associated resourcePoolLinks. Ordered by
          * priority asc
          */
-        public LinkedHashMap<String, String> resourcePoolsPerGroupPolicyLinks;
+        public LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks;
 
         /** (Internal) Set by task after the ComputeState is found to host the containers */
         public List<HostSelection> hostSelections;
@@ -131,12 +131,12 @@ public class ReservationTaskService
     protected void handleStartedStagePatch(ReservationTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            queryGroupResourcePolicies(state, containerDescription, QUERY_RETRIES_COUNT);
+            queryGroupResourcePlacements(state, containerDescription, QUERY_RETRIES_COUNT);
             break;
         case SELECTED:
         case SELECTED_GLOBAL:
             selectPlacementComputeHosts(state, new HashSet<String>(
-                    state.resourcePoolsPerGroupPolicyLinks.values()));
+                    state.resourcePoolsPerGroupPlacementLinks.values()));
             break;
         case PLACEMENT:
         case PLACEMENT_GLOBAL:
@@ -151,12 +151,12 @@ public class ReservationTaskService
         case ALLOCATING_RESOURCE_POOL:
             break;
         case RESERVATION_SELECTED:
-            makeReservation(state, state.groupResourcePolicyLink,
-                    state.resourcePoolsPerGroupPolicyLinks);
+            makeReservation(state, state.groupResourcePlacementLink,
+                    state.resourcePoolsPerGroupPlacementLinks);
             break;
         case QUERYING_GLOBAL:
             // query again but with global group (group set to null):
-            queryGroupResourcePolicies(state, containerDescription, QUERY_RETRIES_COUNT);
+            queryGroupResourcePlacements(state, containerDescription, QUERY_RETRIES_COUNT);
             break;
         case COMPLETED:
             complete(state, SubStage.COMPLETED);
@@ -178,11 +178,11 @@ public class ReservationTaskService
             currentState.tenantLinks = null;
         }
 
-        currentState.groupResourcePolicyLink = mergeProperty(currentState.groupResourcePolicyLink,
-                patchBody.groupResourcePolicyLink);
-        currentState.resourcePoolsPerGroupPolicyLinks = mergeProperty(
-                currentState.resourcePoolsPerGroupPolicyLinks,
-                patchBody.resourcePoolsPerGroupPolicyLinks);
+        currentState.groupResourcePlacementLink = mergeProperty(currentState.groupResourcePlacementLink,
+                patchBody.groupResourcePlacementLink);
+        currentState.resourcePoolsPerGroupPlacementLinks = mergeProperty(
+                currentState.resourcePoolsPerGroupPlacementLinks,
+                patchBody.resourcePoolsPerGroupPlacementLinks);
         currentState.hostSelections = mergeProperty(currentState.hostSelections,
                 patchBody.hostSelections);
 
@@ -204,12 +204,12 @@ public class ReservationTaskService
     protected ServiceTaskCallbackResponse getFinishedCallbackResponse(ReservationTaskState state) {
         CallbackCompleteResponse finishedResponse = new CallbackCompleteResponse();
         finishedResponse.copy(state.serviceTaskCallback.getFinishedResponse());
-        finishedResponse.groupResourcePolicyLink = state.groupResourcePolicyLink;
+        finishedResponse.groupResourcePlacementLink = state.groupResourcePlacementLink;
         return finishedResponse;
     }
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
-        String groupResourcePolicyLink;
+        String groupResourcePlacementLink;
     }
 
     private void createReservationAllocationTask(ReservationTaskState reservationTask,
@@ -227,7 +227,7 @@ public class ReservationTaskService
         reservationAllocationTask.tenantLinks = reservationTask.tenantLinks;
         reservationAllocationTask.customProperties = containerDesc.customProperties;
         reservationAllocationTask.name = containerDesc.name;
-        reservationAllocationTask.resourcePoolsPerGroupPolicyLinks = reservationTask.resourcePoolsPerGroupPolicyLinks;
+        reservationAllocationTask.resourcePoolsPerGroupPlacementLinks = reservationTask.resourcePoolsPerGroupPlacementLinks;
         reservationAllocationTask.documentSelfLink = getSelfId();
         reservationAllocationTask.contextId = getContextId(reservationTask);
         reservationAllocationTask.resourceDescriptionLink = reservationTask.resourceDescriptionLink;
@@ -254,12 +254,12 @@ public class ReservationTaskService
 
     }
 
-    private void queryGroupResourcePolicies(ReservationTaskState state,
+    private void queryGroupResourcePlacements(ReservationTaskState state,
             ContainerDescription containerDesc, int retriesCount) {
 
         if (containerDesc == null) {
             getContainerDescription(state.resourceDescriptionLink,
-                    (retrievedContDesc) -> queryGroupResourcePolicies(state, retrievedContDesc,
+                    (retrievedContDesc) -> queryGroupResourcePlacements(state, retrievedContDesc,
                             retriesCount));
             return;
         }
@@ -273,16 +273,16 @@ public class ReservationTaskService
         }
 
         // match on group property:
-        QueryTask q = QueryUtil.buildQuery(GroupResourcePolicyState.class, false);
+        QueryTask q = QueryUtil.buildQuery(GroupResourcePlacementState.class, false);
         q.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
 
         if (state.tenantLinks == null || state.tenantLinks.isEmpty()) {
 
-            logInfo("Quering for global policiess for resource description: [%s] and resource count: [%s]...",
+            logInfo("Quering for global placements for resource description: [%s] and resource count: [%s]...",
                     state.resourceDescriptionLink, state.resourceCount);
         } else {
 
-            logInfo("Quering for group [%s] policies for resource description: [%s] and resource count: [%s]...",
+            logInfo("Quering for group [%s] placements for resource description: [%s] and resource count: [%s]...",
                     state.tenantLinks, state.resourceDescriptionLink, state.resourceCount);
         }
 
@@ -293,13 +293,13 @@ public class ReservationTaskService
         QueryTask.Query numOfInstancesClause = new QueryTask.Query();
 
         QueryTask.Query moreInstancesThanRequired = new QueryTask.Query()
-                .setTermPropertyName(GroupResourcePolicyState.FIELD_NAME_AVAILABLE_INSTANCES_COUNT)
+                .setTermPropertyName(GroupResourcePlacementState.FIELD_NAME_AVAILABLE_INSTANCES_COUNT)
                 .setNumericRange(NumericRange.createLongRange(state.resourceCount,
                         Long.MAX_VALUE, true, false))
                 .setTermMatchType(MatchType.TERM);
 
         QueryTask.Query unlimitedInstances = new QueryTask.Query()
-                .setTermPropertyName(GroupResourcePolicyState.FIELD_NAME_MAX_NUMBER_INSTANCES)
+                .setTermPropertyName(GroupResourcePlacementState.FIELD_NAME_MAX_NUMBER_INSTANCES)
                 .setNumericRange(NumericRange.createEqualRange(0L))
                 .setTermMatchType(MatchType.TERM);
 
@@ -315,29 +315,29 @@ public class ReservationTaskService
             QueryTask.Query memoryLimitClause = new QueryTask.Query();
 
             QueryTask.Query moreAvailableMemoryThanRequired = new QueryTask.Query()
-                    .setTermPropertyName(GroupResourcePolicyState.FIELD_NAME_AVAILABLE_MEMORY)
+                    .setTermPropertyName(GroupResourcePlacementState.FIELD_NAME_AVAILABLE_MEMORY)
                     .setNumericRange(NumericRange
                             .createLongRange(state.resourceCount * containerDesc.memoryLimit,
                                     Long.MAX_VALUE, true, false))
                     .setTermMatchType(MatchType.TERM).setOccurance(Occurance.SHOULD_OCCUR);
 
-            QueryTask.Query unlimitedPolicies = new QueryTask.Query()
-                    .setTermPropertyName(GroupResourcePolicyState.FIELD_NAME_MEMORY_LIMIT)
+            QueryTask.Query unlimitedPlacements = new QueryTask.Query()
+                    .setTermPropertyName(GroupResourcePlacementState.FIELD_NAME_MEMORY_LIMIT)
                     .setNumericRange(NumericRange.createEqualRange(0L))
                     .setTermMatchType(MatchType.TERM).setOccurance(Occurance.SHOULD_OCCUR);
 
             memoryLimitClause.addBooleanClause(moreAvailableMemoryThanRequired);
-            memoryLimitClause.addBooleanClause(unlimitedPolicies);
+            memoryLimitClause.addBooleanClause(unlimitedPlacements);
             memoryLimitClause.occurance = Occurance.MUST_OCCUR;
 
             q.querySpec.query.addBooleanClause(memoryLimitClause);
-            logInfo("Policy query includes memory limit of: [%s]: ", containerDesc.memoryLimit);
+            logInfo("Placement query includes memory limit of: [%s]: ", containerDesc.memoryLimit);
         }
 
         /*
-         * TODO Get the policies from the DB ordered by priority. This should work..but it doesn't :)
+         * TODO Get the placements from the DB ordered by priority. This should work..but it doesn't :)
          * QueryTask.QueryTerm sortTerm = new QueryTask.QueryTerm(); sortTerm.propertyName =
-         * GroupResourcePolicyState.FIELD_NAME_PRIORITY; sortTerm.propertyType =
+         * GroupResourcePlacementState.FIELD_NAME_PRIORITY; sortTerm.propertyType =
          * ServiceDocumentDescription.TypeName.LONG; q.querySpec.sortTerm = sortTerm;
          * q.querySpec.sortOrder = QueryTask.QuerySpecification.SortOrder.ASC;
          * q.querySpec.options.add(QueryTask.QuerySpecification.QueryOption.SORT);
@@ -345,22 +345,22 @@ public class ReservationTaskService
 
         QueryUtil.addExpandOption(q);
 
-        ServiceDocumentQuery<GroupResourcePolicyState> query = new ServiceDocumentQuery<>(
+        ServiceDocumentQuery<GroupResourcePlacementState> query = new ServiceDocumentQuery<>(
                 getHost(),
-                GroupResourcePolicyState.class);
-        List<GroupResourcePolicyState> policies = new ArrayList<>();
+                GroupResourcePlacementState.class);
+        List<GroupResourcePlacementState> placements = new ArrayList<>();
         query.query(
                 q,
                 (r) -> {
                     if (r.hasException()) {
-                        failTask("Exception while quering for policies", r.getException());
+                        failTask("Exception while quering for placements", r.getException());
                     } else if (r.hasResult()) {
-                        policies.add(r.getResult());
+                        placements.add(r.getResult());
                     } else {
-                        if (policies.isEmpty()) {
+                        if (placements.isEmpty()) {
                             if (retriesCount > 0) {
                                 getHost().schedule(() -> {
-                                    queryGroupResourcePolicies(state,
+                                    queryGroupResourcePlacements(state,
                                             this.containerDescription, retriesCount - 1);
                                 }, QueryUtil.QUERY_RETRY_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
                             } else {
@@ -368,7 +368,7 @@ public class ReservationTaskService
                                     sendSelfPatch(createUpdateSubStageTask(state,
                                             SubStage.QUERYING_GLOBAL));
                                 } else {
-                                    failTask("No available group policies.", null);
+                                    failTask("No available group placements.", null);
                                 }
                             }
                             return;
@@ -377,21 +377,21 @@ public class ReservationTaskService
                         ReservationTaskState body = createUpdateSubStageTask(state,
                                 isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED);
                         /* Use a LinkedHashMap to preserve the order */
-                        body.resourcePoolsPerGroupPolicyLinks = new LinkedHashMap<>();
-                        body.resourcePoolsPerGroupPolicyLinks.putAll(buildResourcePoolsMap(
-                                containerDesc, policies));
+                        body.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>();
+                        body.resourcePoolsPerGroupPlacementLinks.putAll(buildResourcePoolsMap(
+                                containerDesc, placements));
                         sendSelfPatch(body);
                     }
                 });
     }
 
     private LinkedHashMap<String, String> buildResourcePoolsMap(ContainerDescription containerDesc,
-            List<GroupResourcePolicyState> policies) {
+            List<GroupResourcePlacementState> placements) {
         LinkedHashMap<String, String> resPools = new LinkedHashMap<String, String>();
-        List<GroupResourcePolicyState> filteredPolicies = null;
+        List<GroupResourcePlacementState> filteredPlacements = null;
         if (containerDesc.deploymentPolicyId != null && !containerDesc.deploymentPolicyId
                 .isEmpty()) {
-            filteredPolicies = policies
+            filteredPlacements = placements
                     .stream()
                     .filter((e) -> {
                         return e.deploymentPolicyLink != null
@@ -400,18 +400,18 @@ public class ReservationTaskService
                     }).collect(Collectors.toList());
         }
 
-        if (filteredPolicies == null || filteredPolicies.isEmpty()) {
-            filteredPolicies = policies;
+        if (filteredPlacements == null || filteredPlacements.isEmpty()) {
+            filteredPlacements = placements;
         }
 
-        /* for now sort the policies by priority in memory. */
-        filteredPolicies.sort((g1, g2) -> g1.priority - g2.priority);
+        /* for now sort the placements by priority in memory. */
+        filteredPlacements.sort((g1, g2) -> g1.priority - g2.priority);
 
-        for (GroupResourcePolicyState policy : filteredPolicies) {
-            logInfo("Policies found: [%s] with available instances: [%s] and available memory: [%s].",
-                    policy.documentSelfLink, policy.availableInstancesCount,
-                    policy.availableMemory);
-            resPools.put(policy.documentSelfLink, policy.resourcePoolLink);
+        for (GroupResourcePlacementState placement : filteredPlacements) {
+            logInfo("Placements found: [%s] with available instances: [%s] and available memory: [%s].",
+                    placement.documentSelfLink, placement.availableInstancesCount,
+                    placement.availableMemory);
+            resPools.put(placement.documentSelfLink, placement.resourcePoolLink);
         }
         return resPools;
     }
@@ -468,73 +468,73 @@ public class ReservationTaskService
         final Set<String> resourcePools = new HashSet<>();
         state.hostSelections.forEach(hs -> resourcePools.addAll(hs.resourcePoolLinks));
 
-        if (state.resourcePoolsPerGroupPolicyLinks != null) {
-            state.resourcePoolsPerGroupPolicyLinks = state.resourcePoolsPerGroupPolicyLinks
+        if (state.resourcePoolsPerGroupPlacementLinks != null) {
+            state.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks
                     .entrySet().stream().filter((e) -> resourcePools.contains(e.getValue()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                             (k1, k2) -> k1, LinkedHashMap::new));
         } else {
-            state.resourcePoolsPerGroupPolicyLinks = new LinkedHashMap<>();
+            state.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>();
         }
 
-        selectReservation(state, state.resourcePoolsPerGroupPolicyLinks);
+        selectReservation(state, state.resourcePoolsPerGroupPlacementLinks);
     }
 
     private void selectReservation(ReservationTaskState state,
-            LinkedHashMap<String, String> resourcePoolsPerGroupPolicyLinks) {
-        if (resourcePoolsPerGroupPolicyLinks.isEmpty()) {
-            failTask("No available group policies.", null);
+            LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks) {
+        if (resourcePoolsPerGroupPlacementLinks.isEmpty()) {
+            failTask("No available group placements.", null);
             return;
         }
 
-        Iterator<String> iter = resourcePoolsPerGroupPolicyLinks.keySet().iterator();
-        String policyLink = iter.next();
+        Iterator<String> iter = resourcePoolsPerGroupPlacementLinks.keySet().iterator();
+        String placementLink = iter.next();
         iter.remove();
 
-        logInfo("Current selected policy: %s", policyLink);
+        logInfo("Current selected placement: %s", placementLink);
         ReservationTaskState patchBody = createUpdateSubStageTask(state,
                 SubStage.RESERVATION_SELECTED);
-        patchBody.resourcePoolsPerGroupPolicyLinks = resourcePoolsPerGroupPolicyLinks;
-        patchBody.groupResourcePolicyLink = policyLink;
+        patchBody.resourcePoolsPerGroupPlacementLinks = resourcePoolsPerGroupPlacementLinks;
+        patchBody.groupResourcePlacementLink = placementLink;
         sendSelfPatch(patchBody);
     }
 
     private void makeReservation(ReservationTaskState state,
-            String policyLink, LinkedHashMap<String, String> resourcePoolsPerGroupPolicyLinks) {
+            String placementLink, LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks) {
 
-        // TODO: implement more sophisticated algorithm to pick the right group policy based on
+        // TODO: implement more sophisticated algorithm to pick the right group placement based on
         // availability and current allocation of resources.
 
-        ResourcePolicyReservationRequest reservationRequest = new ResourcePolicyReservationRequest();
+        ResourcePlacementReservationRequest reservationRequest = new ResourcePlacementReservationRequest();
         reservationRequest.resourceCount = state.resourceCount;
         reservationRequest.resourceDescriptionLink = state.resourceDescriptionLink;
 
-        logInfo("Reserving instances: %d for descLink: %s and groupPolicyId: %s",
+        logInfo("Reserving instances: %d for descLink: %s and groupPlacementId: %s",
                 reservationRequest.resourceCount, reservationRequest.resourceDescriptionLink,
-                Service.getId(policyLink));
+                Service.getId(placementLink));
 
         sendRequest(Operation
-                .createPatch(this, policyLink)
+                .createPatch(this, placementLink)
                 .setBody(reservationRequest)
                 .setCompletion(
                         (o, e) -> {
                             if (e != null) {
                                 logWarning(
-                                        "Failure reserving group policy: %s. Retrying with the next one...",
+                                        "Failure reserving group placement: %s. Retrying with the next one...",
                                         e.getMessage());
-                                selectReservation(state, resourcePoolsPerGroupPolicyLinks);
+                                selectReservation(state, resourcePoolsPerGroupPlacementLinks);
                                 return;
                             }
 
-                            GroupResourcePolicyState policy = o
-                                    .getBody(GroupResourcePolicyState.class);
+                            GroupResourcePlacementState placement = o
+                                    .getBody(GroupResourcePlacementState.class);
                             ReservationTaskState body = createUpdateSubStageTask(state,
                                     SubStage.COMPLETED);
                             body.taskInfo.stage = TaskStage.FINISHED;
                             body.customProperties = mergeCustomProperties(state.customProperties,
-                                    policy.customProperties);
-                            body.groupResourcePolicyLink = policy.documentSelfLink;
-                            body.resourcePoolsPerGroupPolicyLinks = state.resourcePoolsPerGroupPolicyLinks;
+                                    placement.customProperties);
+                            body.groupResourcePlacementLink = placement.documentSelfLink;
+                            body.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks;
 
                             sendSelfPatch(body);
                         }));

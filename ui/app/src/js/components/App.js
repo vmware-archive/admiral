@@ -14,7 +14,7 @@ import AppMixin from 'components/AppMixin';
 import Home from 'components/Home';//eslint-disable-line
 import HostsView from 'components/hosts/HostsView';//eslint-disable-line
 import TemplatesView from 'components/templates/TemplatesView';//eslint-disable-line
-import PoliciesView from 'components/policies/PoliciesView';//eslint-disable-line
+import PlacementsView from 'components/placements/PlacementsView';//eslint-disable-line
 import ContainersView from 'components/containers/ContainersView';//eslint-disable-line
 
 var AppVueComponent = Vue.extend({

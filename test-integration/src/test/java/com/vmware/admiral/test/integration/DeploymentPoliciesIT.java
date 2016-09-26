@@ -24,8 +24,8 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.DeploymentPolicyService;
 import com.vmware.admiral.compute.container.DeploymentPolicyService.DeploymentPolicy;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState.SubStage;
@@ -41,11 +41,11 @@ public class DeploymentPoliciesIT extends BaseProvisioningOnCoreOsIT {
 
     @After
     public void tearDown() throws Exception {
-        GroupResourcePolicyState policy = getDocument(
-                GroupResourcePolicyService.DEFAULT_RESOURCE_POLICY_LINK,
-                GroupResourcePolicyState.class);
-        policy.deploymentPolicyLink = null;
-        sendRequest(HttpMethod.PUT, policy.documentSelfLink, Utils.toJson(policy));
+        GroupResourcePlacementState placement = getDocument(
+                GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK,
+                GroupResourcePlacementState.class);
+        placement.deploymentPolicyLink = null;
+        sendRequest(HttpMethod.PUT, placement.documentSelfLink, Utils.toJson(placement));
     }
 
     @Test
@@ -58,11 +58,11 @@ public class DeploymentPoliciesIT extends BaseProvisioningOnCoreOsIT {
 
         validateContainerRequestSuccess(request);
 
-        GroupResourcePolicyState policy = getDocument(
-                GroupResourcePolicyService.DEFAULT_RESOURCE_POLICY_LINK,
-                GroupResourcePolicyState.class);
-        policy.deploymentPolicyLink = deploymentPolicy.documentSelfLink;
-        sendRequest(HttpMethod.PUT, policy.documentSelfLink, Utils.toJson(policy));
+        GroupResourcePlacementState placement = getDocument(
+                GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK,
+                GroupResourcePlacementState.class);
+        placement.deploymentPolicyLink = deploymentPolicy.documentSelfLink;
+        sendRequest(HttpMethod.PUT, placement.documentSelfLink, Utils.toJson(placement));
 
         request = requestContainer(containerDescription.documentSelfLink);
 

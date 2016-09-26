@@ -43,8 +43,8 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
@@ -114,7 +114,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     private static final String SUFFIX = "bel10";
     private final Set<ComputeState> computesToDelete = new HashSet<>();
     private final Set<String> containersToDelete = new HashSet<>();
-    private GroupResourcePolicyState groupResourcePolicyState;
+    private GroupResourcePlacementState groupResourcePlacementState;
     private EndpointType endpointType;
     protected final TestDocumentLifeCycle documentLifeCycle = TestDocumentLifeCycle.FOR_DELETE;
     protected ResourcePoolState vmsResourcePool;
@@ -129,7 +129,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         endpointType = getEndpointType();
         endpoint = createEndpoint(endpointType, TestDocumentLifeCycle.NO_DELETE);
         ResourcePoolState poolState = createResourcePool(endpointType, endpoint, documentLifeCycle);
-        groupResourcePolicyState = createResourcePolicy("host-policy", endpointType, poolState,
+        groupResourcePlacementState = createResourcePlacement("host-placement", endpointType, poolState,
                 documentLifeCycle);
         vmsResourcePool = createResourcePoolOfVMs(endpointType, documentLifeCycle);
         doSetUp();
@@ -177,7 +177,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     }
 
     private void cleanupReservation(ComputeState compute) throws Exception {
-        if (groupResourcePolicyState == null) {
+        if (groupResourcePlacementState == null) {
             // no group quata
             return;
         }
@@ -185,7 +185,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         task.resourceDescriptionLink = compute.descriptionLink;
         task.resourceCount = 1;
         task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-        task.groupResourcePolicyLink = groupResourcePolicyState.documentSelfLink;
+        task.groupResourcePlacementLink = groupResourcePlacementState.documentSelfLink;
 
         task = postDocument(ReservationRemovalTaskFactoryService.SELF_LINK, task);
         assertNotNull(task);
@@ -395,26 +395,26 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return computeDesc;
     }
 
-    protected GroupResourcePolicyState createResourcePolicy(String name, EndpointType endpointType,
+    protected GroupResourcePlacementState createResourcePlacement(String name, EndpointType endpointType,
             ResourcePoolState poolState, TestDocumentLifeCycle documentLifeCycle)
             throws Exception {
-        GroupResourcePolicyState policyState = new GroupResourcePolicyState();
-        policyState.maxNumberInstances = 30;
-        policyState.resourcePoolLink = poolState.documentSelfLink;
-        policyState.name = name(endpointType, name, SUFFIX);
-        policyState.documentSelfLink = policyState.name;
-        policyState.availableInstancesCount = 1000000;
-        policyState.priority = 1;
-        policyState.tenantLinks = getTenantLinks();
+        GroupResourcePlacementState placementState = new GroupResourcePlacementState();
+        placementState.maxNumberInstances = 30;
+        placementState.resourcePoolLink = poolState.documentSelfLink;
+        placementState.name = name(endpointType, name, SUFFIX);
+        placementState.documentSelfLink = placementState.name;
+        placementState.availableInstancesCount = 1000000;
+        placementState.priority = 1;
+        placementState.tenantLinks = getTenantLinks();
 
-        GroupResourcePolicyState currentQuata = getDocument(
-                getLink(GroupResourcePolicyService.FACTORY_LINK, policyState.name),
-                GroupResourcePolicyState.class);
+        GroupResourcePlacementState currentQuata = getDocument(
+                getLink(GroupResourcePlacementService.FACTORY_LINK, placementState.name),
+                GroupResourcePlacementState.class);
         if (currentQuata != null) {
             return currentQuata;
         }
-        GroupResourcePolicyState resourcePolicyState = postDocument(
-                GroupResourcePolicyService.FACTORY_LINK, policyState, documentLifeCycle);
+        GroupResourcePlacementState resourcePolicyState = postDocument(
+                GroupResourcePlacementService.FACTORY_LINK, placementState, documentLifeCycle);
 
         assertNotNull(resourcePolicyState);
 
@@ -577,7 +577,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         dockerRemoteApiClientCredentials = postDocument(AuthCredentialsService.FACTORY_LINK, auth,
                 documentLifeCycle);
 
-        createResourcePolicy("vm-policy", getEndpointType(), vmsResourcePool, documentLifeCycle);
+        createResourcePlacement("vm-placement", getEndpointType(), vmsResourcePool, documentLifeCycle);
     }
 
     private String getConfigContent() {

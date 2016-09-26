@@ -49,7 +49,7 @@ import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.content.ServiceLinkSerializer;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage;
@@ -88,7 +88,7 @@ public class ContainerAllocationTaskService
         private static final String FIELD_NAME_RESOURCE_DESCRIPTION_LINK = "resourceDescriptionLink";
         private static final String FIELD_NAME_RESOURCE_TYPE = "resourceType";
         private static final String FIELD_NAME_TENANT_LINKS = "tenantLinks";
-        private static final String FIELD_NAME_GROUP_RESOURCE_POLICY = "groupResourcePolicyLink";
+        private static final String FIELD_NAME_GROUP_RESOURCE_POLICY = "groupResourcePlacementLink";
         private static final String FIELD_NAME_RESOURCE_COUNT = "resourceCount";
         private static final String FIELD_NAME_RESOURCE_LINKS = "resourceLinks";
         private static final String FIELD_NAME_RESOURCE_NAMES = "resourceNames";
@@ -126,8 +126,8 @@ public class ContainerAllocationTaskService
         /** (Required) Type of resource to create. */
         public String resourceType;
 
-        /** (Required) the groupResourcePolicyState that links to ResourcePool */
-        public String groupResourcePolicyLink;
+        /** (Required) the groupResourcePlacementState that links to ResourcePool */
+        public String groupResourcePlacementLink;
 
         /** (Required) Number of resources to provision. */
         public Long resourceCount;
@@ -255,7 +255,7 @@ public class ContainerAllocationTaskService
             assertTrue(state.resourceCount <= state.resourceLinks.size(),
                     "Resource count must be equal to number of resources during post allocation.");
         } else {
-            assertNotEmpty(state.groupResourcePolicyLink, "groupResourcePolicyLink");
+            assertNotEmpty(state.groupResourcePlacementLink, "groupResourcePlacementLink");
         }
 
         if (state.resourceCount < 1) {
@@ -457,37 +457,37 @@ public class ContainerAllocationTaskService
 
     private void getResourcePool(ContainerAllocationTaskState state,
             Consumer<String> callbackFunction) {
-        sendRequest(Operation.createGet(this, state.groupResourcePolicyLink)
+        sendRequest(Operation.createGet(this, state.groupResourcePlacementLink)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        failTask("Failure retrieving GroupResourcePolicy", e);
+                        failTask("Failure retrieving GroupResourcePlacement", e);
                         return;
                     }
 
-                    GroupResourcePolicyState policyState = o
-                            .getBody(GroupResourcePolicyState.class);
-                    if (policyState.resourcePoolLink == null) {
+                    GroupResourcePlacementState placementState = o
+                            .getBody(GroupResourcePlacementState.class);
+                    if (placementState.resourcePoolLink == null) {
                         failTask(null, new IllegalStateException(
-                                "Policy state has no resourcePoolLink"));
+                                "Placement state has no resourcePoolLink"));
                         return;
                     }
-                    callbackFunction.accept(policyState.resourcePoolLink);
+                    callbackFunction.accept(placementState.resourcePoolLink);
                 }));
     }
 
-    private void getResourcePolicyState(ContainerAllocationTaskState state,
-            Consumer<GroupResourcePolicyState> callbackFunction) {
-        sendRequest(Operation.createGet(this, state.groupResourcePolicyLink)
+    private void getResourcePlacementState(ContainerAllocationTaskState state,
+            Consumer<GroupResourcePlacementState> callbackFunction) {
+        sendRequest(Operation.createGet(this, state.groupResourcePlacementLink)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        failTask("Failure retrieving GroupResourcePolicy", e);
+                        failTask("Failure retrieving GroupResourcePlacement", e);
                         return;
                     }
 
-                    GroupResourcePolicyState policyState = o
-                            .getBody(GroupResourcePolicyState.class);
+                    GroupResourcePlacementState placementState = o
+                            .getBody(GroupResourcePlacementState.class);
 
-                    callbackFunction.accept(policyState);
+                    callbackFunction.accept(placementState);
                 }));
     }
 
@@ -595,17 +595,16 @@ public class ContainerAllocationTaskService
     private void createContainerState(ContainerAllocationTaskState state,
             ContainerDescription containerDesc,
             String resourceName, boolean allocationRequest,
-            GroupResourcePolicyState groupResourcePolicyState, HostSelection hostSelection,
+            GroupResourcePlacementState groupResourcePlacementState, HostSelection hostSelection,
             ServiceTaskCallback taskCallback) {
         try {
 
-            if (groupResourcePolicyState == null) {
-                getResourcePolicyState(
+            if (groupResourcePlacementState == null) {
+                getResourcePlacementState(
                         state,
-                        (resourcePolicyState) -> createContainerState(state, containerDesc,
-                                resourceName, allocationRequest, resourcePolicyState,
-                                hostSelection,
-                                taskCallback));
+                        (resourcePlacementState) -> createContainerState(state, containerDesc,
+                                resourceName, allocationRequest, resourcePlacementState,
+                                hostSelection, taskCallback));
                 return;
             }
 
@@ -615,7 +614,7 @@ public class ContainerAllocationTaskService
             containerState.names.add(resourceName);
             containerState.tenantLinks = state.tenantLinks;
             containerState.descriptionLink = state.resourceDescriptionLink;
-            containerState.groupResourcePolicyLink = state.groupResourcePolicyLink;
+            containerState.groupResourcePlacementLink = state.groupResourcePlacementLink;
             containerState.parentLink = hostSelection.hostLink;
             containerState.powerState = PowerState.PROVISIONING;
             containerState.status = ContainerState.CONTAINER_ALLOCATION_STATUS;
@@ -650,10 +649,10 @@ public class ContainerAllocationTaskService
             containerState.documentExpirationTimeMicros = ServiceUtils
                     .getDefaultTaskExpirationTimeInMicros();
 
-            containerState.memoryLimit = getMinParam(groupResourcePolicyState.memoryLimit,
+            containerState.memoryLimit = getMinParam(groupResourcePlacementState.memoryLimit,
                     containerDesc.memoryLimit);
 
-            Long cpuShares = getMinParam(groupResourcePolicyState.cpuShares,
+            Long cpuShares = getMinParam(groupResourcePlacementState.cpuShares,
                     containerDesc.cpuShares);
             containerState.cpuShares = cpuShares != null ? cpuShares.intValue() : null;
 
@@ -749,16 +748,16 @@ public class ContainerAllocationTaskService
     /**
      * Returns the minimum. Handles nulls and treats 0 as no limit
      */
-    public static Long getMinParam(long policyLimit, Number descLimit) {
-        // get the defined one. policyLimit will probably be changed to Long
+    public static Long getMinParam(long placementLimit, Number descLimit) {
+        // get the defined one. placementLimit will probably be changed to Long
         if (descLimit == null) {
-            return policyLimit;
-        } else if (policyLimit == 0) { // 0 means no limit, so get the other one
+            return placementLimit;
+        } else if (placementLimit == 0) { // 0 means no limit, so get the other one
             return descLimit.longValue();
         } else if (descLimit.longValue() == 0) {
-            return policyLimit;
+            return placementLimit;
         } else {
-            return Math.min(policyLimit, descLimit.longValue());
+            return Math.min(placementLimit, descLimit.longValue());
         }
     }
 

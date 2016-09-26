@@ -32,7 +32,7 @@ public interface ManagementUriParts {
     String EXPAND_SUFFIX = "?$expand=true";
 
     String RESOURCES = "/resources";
-    String RESOURCE_GROUP_POLICIES = RESOURCES + "/group-policies";
+    String RESOURCE_GROUP_PLACEMENTS = RESOURCES + "/group-placements";
     String RESOURCE_NAME_PREFIXES = RESOURCES + "/name-prefixes";
     String DEPLOYMENT_POLICIES = RESOURCES + "/deployment-policies";
     String ELASTIC_PLACEMENT_ZONES = RESOURCES + "/elastic-placement-zones";

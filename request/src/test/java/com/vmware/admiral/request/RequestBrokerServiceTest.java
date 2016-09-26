@@ -39,8 +39,8 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
@@ -85,13 +85,13 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         // setup Container desc:
         ContainerDescription containerDesc = createContainerDescription();
 
-        // setup Group Policy:
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
 
         // 1. Request a container instance:
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
         request.resourceDescriptionLink = containerDesc.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
 
@@ -165,13 +165,13 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         // setup Composite description with 1 container
         CompositeDescription compositeDesc = createCompositeDesc(containerDesc);
 
-        // setup Group Policy:
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
 
         // 1. Request a composite container:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
 
@@ -283,13 +283,13 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 container2Desc);
         assertNotNull(compositeDesc);
 
-        // setup Group Policy:
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
 
         // 1. Request a composite container:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
 
@@ -393,23 +393,23 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 container2Desc);
         assertNotNull(compositeDesc);
 
-        // setup Group Policy:
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
 
         // 1. Request a composite container with expected failure:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
 
         // 2. Wait for reservation removed substage
         waitForRequestToFail(request);
 
-        // 3. Verify that the group policy has been released.
-        groupPolicyState = getDocument(GroupResourcePolicyState.class,
-                groupPolicyState.documentSelfLink);
-        assertEquals(groupPolicyState.allocatedInstancesCount, 0);
+        // 3. Verify that the group placement has been released.
+        groupPlacementState = getDocument(GroupResourcePlacementState.class,
+                groupPlacementState.documentSelfLink);
+        assertEquals(groupPlacementState.allocatedInstancesCount, 0);
 
         String containerLink1 = null;
         String containerLink2 = null;
@@ -427,9 +427,9 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         }
 
         assertEquals(0,
-                groupPolicyState.resourceQuotaPerResourceDesc.get(containerLink1).intValue());
+                groupPlacementState.resourceQuotaPerResourceDesc.get(containerLink1).intValue());
         assertEquals(0,
-                groupPolicyState.resourceQuotaPerResourceDesc.get(containerLink2).intValue());
+                groupPlacementState.resourceQuotaPerResourceDesc.get(containerLink2).intValue());
 
         // Verify request status
         RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
@@ -481,14 +481,14 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 container2Desc);
         assertNotNull(compositeDesc);
 
-        // setup Group Policy:
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
 
         // 1. Request a composite container:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
 
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
 
@@ -595,23 +595,23 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 container2Desc);
         assertNotNull(compositeDesc);
 
-        // setup Group Policy:
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
 
         // 1. Request a composite container with expected failure:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
 
         // 2. Wait for reservation removed substage
         waitForRequestToFail(request);
 
-        // 3. Verify that the group policy has been released.
-        groupPolicyState = getDocument(GroupResourcePolicyState.class,
-                groupPolicyState.documentSelfLink);
-        assertEquals(groupPolicyState.allocatedInstancesCount, 0);
+        // 3. Verify that the group placement has been released.
+        groupPlacementState = getDocument(GroupResourcePlacementState.class,
+                groupPlacementState.documentSelfLink);
+        assertEquals(groupPlacementState.allocatedInstancesCount, 0);
 
         String containerLink1 = null;
         String containerLink2 = null;
@@ -629,9 +629,9 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         }
 
         assertEquals(0,
-                groupPolicyState.resourceQuotaPerResourceDesc.get(containerLink1).intValue());
+                groupPlacementState.resourceQuotaPerResourceDesc.get(containerLink1).intValue());
         assertEquals(0,
-                groupPolicyState.resourceQuotaPerResourceDesc.get(containerLink2).intValue());
+                groupPlacementState.resourceQuotaPerResourceDesc.get(containerLink2).intValue());
 
         // Verify request status
         RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
@@ -653,29 +653,29 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         // setup Container desc:
         ContainerDescription containerDesc = createContainerDescription();
 
-        // setup Group Policy:
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
 
         // 1. Request a container instance:
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
         request.resourceDescriptionLink = containerDesc.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.customProperties = new HashMap<>();
         request.customProperties.put(MockDockerAdapterService.FAILURE_EXPECTED,
                 Boolean.TRUE.toString());
 
-        assertEquals(groupPolicyState.allocatedInstancesCount, 0);
+        assertEquals(groupPlacementState.allocatedInstancesCount, 0);
         request = startRequest(request);
 
         // 2. Wait for reservation removed substage
         waitForRequestToFail(request);
 
-        // 3. Verify that the group policy has been released.
-        groupPolicyState = getDocument(GroupResourcePolicyState.class,
-                groupPolicyState.documentSelfLink);
-        assertEquals(groupPolicyState.allocatedInstancesCount, 0);
+        // 3. Verify that the group placement has been released.
+        groupPlacementState = getDocument(GroupResourcePlacementState.class,
+                groupPlacementState.documentSelfLink);
+        assertEquals(groupPlacementState.allocatedInstancesCount, 0);
         assertEquals(0,
-                groupPolicyState.resourceQuotaPerResourceDesc.get(containerDesc.documentSelfLink)
+                groupPlacementState.resourceQuotaPerResourceDesc.get(containerDesc.documentSelfLink)
                         .intValue());
     }
 
@@ -687,7 +687,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         safeDelete(resourcePool);
         safeDelete(hostDesc);
         safeDelete(computeHost);
-        safeDelete(groupPolicyState);
+        safeDelete(groupPlacementState);
 
         // setup Docker Host:
         resourcePool = TestRequestStateFactory.createResourcePool();
@@ -720,16 +720,16 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         containerDesc = doPost(desc, ContainerDescriptionService.FACTORY_LINK);
         assertNotNull(containerDesc);
 
-        // setup Group Policy:
-        groupPolicyState = TestRequestStateFactory.createGroupResourcePolicyState();
-        groupPolicyState.resourcePoolLink = resourcePool.documentSelfLink;
-        groupPolicyState = doPost(groupPolicyState, GroupResourcePolicyService.FACTORY_LINK);
-        assertNotNull(groupPolicyState);
+        // setup Group Placement:
+        groupPlacementState = TestRequestStateFactory.createGroupResourcePlacementState();
+        groupPlacementState.resourcePoolLink = resourcePool.documentSelfLink;
+        groupPlacementState = doPost(groupPlacementState, GroupResourcePlacementService.FACTORY_LINK);
+        assertNotNull(groupPlacementState);
 
         // 1. Request a container instance:
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
         request.resourceDescriptionLink = containerDesc.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
 
@@ -756,7 +756,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ComputeDescription dockerHostDesc = createDockerHostDescription();
 
         ResourcePoolState defaultResourcePool = getDocument(ResourcePoolState.class,
-                GroupResourcePolicyService.DEFAULT_RESOURCE_POOL_LINK);
+                GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK);
 
         try {
             createDockerHost(dockerHostDesc, resourcePool);
@@ -764,19 +764,19 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
             // setup Container desc:
             ContainerDescription containerDesc = createContainerDescription();
 
-            // setup Group Policy:
-            GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+            // setup Group Placement:
+            GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
 
-            GroupResourcePolicyState groupPolicyState2 = TestRequestStateFactory
-                    .createGroupResourcePolicyState();
-            groupPolicyState2.memoryLimit = 0;
-            groupPolicyState2.resourcePoolLink = defaultResourcePool.documentSelfLink;
-            groupPolicyState2 = doPost(groupPolicyState2, GroupResourcePolicyService.FACTORY_LINK);
+            GroupResourcePlacementState groupPlacementState2 = TestRequestStateFactory
+                    .createGroupResourcePlacementState();
+            groupPlacementState2.memoryLimit = 0;
+            groupPlacementState2.resourcePoolLink = defaultResourcePool.documentSelfLink;
+            groupPlacementState2 = doPost(groupPlacementState2, GroupResourcePlacementService.FACTORY_LINK);
 
             // 1. Request a container instance:
             RequestBrokerState request = TestRequestStateFactory.createRequestState();
             request.resourceDescriptionLink = containerDesc.documentSelfLink;
-            request.tenantLinks = groupPolicyState.tenantLinks;
+            request.tenantLinks = groupPlacementState.tenantLinks;
             host.log("########  Start of request ######## ");
             request = startRequest(request);
 
@@ -805,11 +805,11 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // Try to deploy a container
         ContainerDescription containerDescription = createContainerDescription();
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_TYPE.getName();
         request.resourceDescriptionLink = containerDescription.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request = startRequest(request);
         request = waitForRequestToFail(request);
 
@@ -854,12 +854,12 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // Deploy a container
         ContainerDescription containerDescription = createContainerDescription();
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
 
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_TYPE.getName();
         request.resourceDescriptionLink = containerDescription.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request = startRequest(request);
         request = waitForRequestToComplete(request);
 
@@ -886,11 +886,11 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // Try to deploy a container
         ContainerDescription containerDescription = createContainerDescription();
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_TYPE.getName();
         request.resourceDescriptionLink = containerDescription.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request = startRequest(request);
         request = waitForRequestToFail(request);
         assertTrue(request.taskInfo.failure.message.startsWith("Container host not found"));
@@ -915,7 +915,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ResourcePoolState resourcePool = createResourcePool();
         // try to deploy a container
         ContainerDescription containerDescription = createContainerDescription();
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
 
         // stop the adapter service
         MockDockerAdapterService service = new MockDockerAdapterService();
@@ -925,7 +925,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_TYPE.getName();
         request.resourceDescriptionLink = containerDescription.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request = startRequest(request);
         request = waitForRequestToFail(request);
         ContainerState containerState = searchForDocument(ContainerState.class,
@@ -945,13 +945,13 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         // setup Container desc:
         ContainerDescription containerDesc = createContainerDescription();
 
-        // setup Group Policy:
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
 
         // Request a container instance:
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
         request.resourceDescriptionLink = containerDesc.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
 
@@ -969,23 +969,23 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
     @Test
     // Issue VSYM-443
-    public void testGroupResourcePolicyAfterFailedProvisionOperation() throws Throwable {
+    public void testGroupResourcePlacementAfterFailedProvisionOperation() throws Throwable {
         ResourcePoolState resourcePool = createResourcePool();
         ContainerDescription containerDescription = createContainerDescription();
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
-        long allocatedInstancesCount = groupPolicyState.allocatedInstancesCount;
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        long allocatedInstancesCount = groupPlacementState.allocatedInstancesCount;
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_TYPE.getName();
         request.resourceDescriptionLink = containerDescription.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
 
         request = startRequest(request);
         waitForRequestToComplete(request);
 
-        groupPolicyState = getDocument(GroupResourcePolicyState.class,
-                groupPolicyState.documentSelfLink);
+        groupPlacementState = getDocument(GroupResourcePlacementState.class,
+                groupPlacementState.documentSelfLink);
         assertEquals("Allocated instances count is not correct",
-                groupPolicyState.allocatedInstancesCount, allocatedInstancesCount + 1);
+                groupPlacementState.allocatedInstancesCount, allocatedInstancesCount + 1);
 
         // stop the adapter service
         MockDockerAdapterService service = new MockDockerAdapterService();
@@ -995,51 +995,51 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_TYPE.getName();
         request.resourceDescriptionLink = containerDescription.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request = startRequest(request);
         waitForRequestToFail(request);
 
         // verify available instances are not changed after the failure
-        groupPolicyState = getDocument(GroupResourcePolicyState.class,
-                groupPolicyState.documentSelfLink);
+        groupPlacementState = getDocument(GroupResourcePlacementState.class,
+                groupPlacementState.documentSelfLink);
         assertEquals("Allocated instances count is not correct after a failed provisioning",
-                groupPolicyState.allocatedInstancesCount, allocatedInstancesCount + 1);
+                groupPlacementState.allocatedInstancesCount, allocatedInstancesCount + 1);
     }
 
     @Test
-    public void testGroupResourcePolicyAfterSuccessfulProvisionOperation() throws Throwable {
+    public void testGroupResourcePlacementAfterSuccessfulProvisionOperation() throws Throwable {
         ResourcePoolState resourcePool = createResourcePool();
         ContainerDescription containerDescription = createContainerDescription();
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
-        long allocatedInstancesCount = groupPolicyState.allocatedInstancesCount;
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        long allocatedInstancesCount = groupPlacementState.allocatedInstancesCount;
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_TYPE.getName();
         request.resourceDescriptionLink = containerDescription.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
 
         request = startRequest(request);
         request = waitForRequestToComplete(request);
         List<String> resourceLinks = request.resourceLinks;
 
-        groupPolicyState = getDocument(GroupResourcePolicyState.class,
-                groupPolicyState.documentSelfLink);
+        groupPlacementState = getDocument(GroupResourcePlacementState.class,
+                groupPlacementState.documentSelfLink);
         assertEquals("Allocated instances count was not increased after provisioning",
-                groupPolicyState.allocatedInstancesCount, allocatedInstancesCount + 1);
+                groupPlacementState.allocatedInstancesCount, allocatedInstancesCount + 1);
 
         request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_TYPE.getName();
         request.resourceDescriptionLink = containerDescription.documentSelfLink;
         request.resourceLinks = resourceLinks;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);
         waitForRequestToComplete(request);
 
         // verify available instances are not changed after the failure
-        groupPolicyState = getDocument(GroupResourcePolicyState.class,
-                groupPolicyState.documentSelfLink);
-        assertEquals("Policy was not cleaned",
-                groupPolicyState.allocatedInstancesCount, allocatedInstancesCount);
+        groupPlacementState = getDocument(GroupResourcePlacementState.class,
+                groupPlacementState.documentSelfLink);
+        assertEquals("Placement was not cleaned",
+                groupPlacementState.allocatedInstancesCount, allocatedInstancesCount);
     }
 
     @Test
@@ -1052,13 +1052,13 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         // setup Container desc:
         ContainerDescription containerDesc = createContainerDescription();
 
-        // setup Group Policy:
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
 
         // 1. Request a container instance:
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
         request.resourceDescriptionLink = containerDesc.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
 
@@ -1176,13 +1176,13 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         assertNotNull(compositeDesc);
 
-        // setup Group Policy:
-        GroupResourcePolicyState groupPolicyState = createGroupResourcePolicy(resourcePool);
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacememtState = createGroupResourcePlacement(resourcePool);
 
         // 1. Request a composite container:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacememtState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
 

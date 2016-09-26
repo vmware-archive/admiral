@@ -26,10 +26,10 @@
           <span class="nav-item-image"><i class="fa fa-cloud"></i></span>
           <span>{{i18n("app.navbar.environments")}}</span>
         </a>
-        <a v-bind:class="{'active': model.sideView.currentView === computeConstants.VIEWS.POLICIES.name}"
-           class="nav-item policies" href="#/policies">
-          <img class="nav-item-image" src="image-assets/policies.png">
-          <span>{{i18n("app.navbar.policies")}}</span>
+        <a v-bind:class="{'active': model.sideView.currentView === computeConstants.VIEWS.PLACEMENTS.name}"
+           class="nav-item placements" href="#/placements">
+          <img class="nav-item-image" src="image-assets/placements.png">
+          <span>{{i18n("app.navbar.placements")}}</span>
         </a>
         <a v-bind:class="{'active': model.sideView.currentView === computeConstants.VIEWS.MACHINES.name}"
            class="nav-item containers" href="#/machines">
@@ -47,10 +47,10 @@
                    v-bind:model="model.centerView.data"
                    v-ref:center-view >
       </environments-view>
-      <policies-view v-if="model.centerView.name === computeConstants.VIEWS.POLICIES.name"
+      <placements-view v-if="model.centerView.name === computeConstants.VIEWS.PLACEMENTS.name"
                    v-bind:model="model.centerView.data"
                    v-ref:center-view >
-      </policies-view>
+      </placements-view>
        <machines-view v-if="model.centerView.name === computeConstants.VIEWS.MACHINES.name"
                    v-bind:model="model.centerView.data"
                    v-ref:center-view >

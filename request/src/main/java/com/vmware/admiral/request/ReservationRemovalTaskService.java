@@ -16,8 +16,8 @@ import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 
 import java.util.EnumSet;
 
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.ResourcePolicyReservationRequest;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.ResourcePlacementReservationRequest;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.TaskServiceDocument;
@@ -29,7 +29,7 @@ import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState.TaskStage;
 
 /**
- * Task implementing the removal/free up of the previously reserved resource policies.
+ * Task implementing the removal/free up of the previously reserved resource placements.
  */
 public class ReservationRemovalTaskService
         extends
@@ -40,7 +40,7 @@ public class ReservationRemovalTaskService
     public static class ReservationRemovalTaskState extends TaskServiceDocument<DefaultSubStage> {
         private static final String FIELD_NAME_RESOURCE_DESC_LINK = "resourceDescriptionLink";
         private static final String FIELD_NAME_RESOURCE_COUNT = "resourceCount";
-        private static final String FIELD_NAME_GROUP_RESOURCE_POLICY_LINK = "groupResourcePolicyLink";
+        private static final String FIELD_NAME_GROUP_RESOURCE_POLICY_LINK = "groupResourcePlacementLink";
 
         /** (Required) The description that defines the requested resource. */
         public String resourceDescriptionLink;
@@ -48,8 +48,8 @@ public class ReservationRemovalTaskService
         /** (Required) Number of resources to provision. */
         public long resourceCount;
 
-        /** (Required) The {@link GroupResourcePolicyState} to release the policies. */
-        public String groupResourcePolicyLink;
+        /** (Required) The {@link GroupResourcePlacementState} to release the placements. */
+        public String groupResourcePlacementLink;
     }
 
     public ReservationRemovalTaskService() {
@@ -63,14 +63,14 @@ public class ReservationRemovalTaskService
 
     @Override
     protected void handleStartedStagePatch(ReservationRemovalTaskState state) {
-        getGroupResourcePolicies(state);
+        getGroupResourcePlacements(state);
     }
 
     @Override
     protected boolean validateStageTransition(Operation patch,
             ReservationRemovalTaskState patchBody, ReservationRemovalTaskState currentState) {
-        currentState.groupResourcePolicyLink = mergeProperty(currentState.groupResourcePolicyLink,
-                patchBody.groupResourcePolicyLink);
+        currentState.groupResourcePlacementLink = mergeProperty(currentState.groupResourcePlacementLink,
+                patchBody.groupResourcePlacementLink);
 
         return false;
     }
@@ -78,44 +78,44 @@ public class ReservationRemovalTaskService
     @Override
     protected void validateStateOnStart(ReservationRemovalTaskState state) {
         assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
-        assertNotEmpty(state.groupResourcePolicyLink, "groupResourcePolicyLink");
+        assertNotEmpty(state.groupResourcePlacementLink, "groupResourcePlacementLink");
 
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
         }
     }
 
-    private void getGroupResourcePolicies(ReservationRemovalTaskState state) {
-        logInfo("Retrieving group resource policy: %s", state.groupResourcePolicyLink);
-        sendRequest(Operation.createGet(this, state.groupResourcePolicyLink)
+    private void getGroupResourcePlacements(ReservationRemovalTaskState state) {
+        logInfo("Retrieving group resource placement: %s", state.groupResourcePlacementLink);
+        sendRequest(Operation.createGet(this, state.groupResourcePlacementLink)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        failTask("Failure retriving group policy", e);
+                        failTask("Failure retriving group placement", e);
                         return;
                     }
-                    GroupResourcePolicyState groupPolicyState = o
-                            .getBody(GroupResourcePolicyState.class);
-                    releaseResourcePolicy(state, groupPolicyState);
+                    GroupResourcePlacementState groupPlacementState = o
+                            .getBody(GroupResourcePlacementState.class);
+                    releaseResourcePlacement(state, groupPlacementState);
                 }));
 
     }
 
-    private void releaseResourcePolicy(ReservationRemovalTaskState state,
-            GroupResourcePolicyState groupPolicyState) {
+    private void releaseResourcePlacement(ReservationRemovalTaskState state,
+            GroupResourcePlacementState groupPlacementState) {
 
-        ResourcePolicyReservationRequest reservationRequest = new ResourcePolicyReservationRequest();
+        ResourcePlacementReservationRequest reservationRequest = new ResourcePlacementReservationRequest();
         reservationRequest.resourceCount = -state.resourceCount;
         reservationRequest.resourceDescriptionLink = state.resourceDescriptionLink;
 
-        logInfo("Releasing policy instances: %d for descLink: %s and groupPolicyId: %s",
+        logInfo("Releasing placement instances: %d for descLink: %s and groupPlacementId: %s",
                 reservationRequest.resourceCount, reservationRequest.resourceDescriptionLink,
-                Service.getId(groupPolicyState.documentSelfLink));
+                Service.getId(groupPlacementState.documentSelfLink));
 
-        sendRequest(Operation.createPatch(this, groupPolicyState.documentSelfLink)
+        sendRequest(Operation.createPatch(this, groupPlacementState.documentSelfLink)
                 .setBody(reservationRequest)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        failTask("Failure releasing group policy", e);
+                        failTask("Failure releasing group placement", e);
                         return;
                     }
                     state.taskInfo.stage = TaskStage.FINISHED;

@@ -42,7 +42,7 @@ public class ComputeAllocationTaskServiceTest extends RequestBaseTest {
     private ComputeState vmGuestCompute;
 
     @Override
-    protected ResourceType policyResourceType() {
+    protected ResourceType placementResourceType() {
         return ResourceType.COMPUTE_TYPE;
     }
 
@@ -155,7 +155,7 @@ public class ComputeAllocationTaskServiceTest extends RequestBaseTest {
             long resourceCount, boolean allocation) {
         ComputeAllocationTaskState allocationTask = new ComputeAllocationTaskState();
         allocationTask.resourceDescriptionLink = containerDescLink;
-        allocationTask.groupResourcePolicyLink = computeGroupPolicyState.documentSelfLink;
+        allocationTask.groupResourcePlacementLink = computeGroupPlacementState.documentSelfLink;
         allocationTask.resourceType = "Compute";
         allocationTask.resourceCount = resourceCount;
         allocationTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();

@@ -56,7 +56,7 @@ ContainersMockData.containers = {
       "export WORDPRESS_DB_HOST=$MYSQL_PORT_3306_TCP_ADDR:$MYSQL_PORT_3306_TCP_PORT ; /entrypoint.sh apache2-foreground"
     ],
     "parentLink": "/resources/compute/test-docker-host-compute-id",
-    "groupResourcePolicyLink": "/resources/group-policies/default-resource-policy",
+    "groupResourcePlacementLink": "/resources/group-placements/default-resource-placement",
     "status": "Started",
     "created": 1445613814650,
     "customProperties": {
@@ -102,7 +102,7 @@ ContainersMockData.containers = {
       "-"
     ],
     "parentLink": "/resources/compute/test-docker-host-compute-id",
-    "groupResourcePolicyLink": "/resources/group-policies/default-resource-policy",
+    "groupResourcePlacementLink": "/resources/group-placements/default-resource-placement",
     "status": "Started",
     "created": 1445621700908,
     "attributes": {
@@ -143,7 +143,7 @@ ContainersMockData.containers = {
       "export WORDPRESS_DB_HOST=$MYSQL_PORT_3306_TCP_ADDR:$MYSQL_PORT_3306_TCP_PORT ; /entrypoint.sh apache2-foreground"
     ],
     "parentLink": "/resources/compute/test-docker-host-compute-id",
-    "groupResourcePolicyLink": "/resources/group-policies/default-resource-policy",
+    "groupResourcePlacementLink": "/resources/group-placements/default-resource-placement",
     "status": "Started",
     "created": 1445613814650,
     "customProperties": {
@@ -189,7 +189,7 @@ ContainersMockData.containers = {
       "-"
     ],
     "parentLink": "/resources/compute/test-docker-host-compute-id",
-    "groupResourcePolicyLink": "/resources/group-policies/default-resource-policy",
+    "groupResourcePlacementLink": "/resources/group-placements/default-resource-placement",
     "status": "Started",
     "created": 1445621690187,
     "attributes": {
@@ -230,7 +230,7 @@ ContainersMockData.containers = {
       "-"
     ],
     "parentLink": "/resources/compute/test-docker-host-compute-id",
-    "groupResourcePolicyLink": "/resources/group-policies/default-resource-policy",
+    "groupResourcePlacementLink": "/resources/group-placements/default-resource-placement",
     "status": "Started",
     "created": 1445621695798,
     "attributes": {
@@ -266,7 +266,7 @@ ContainersMockData.containers = {
     ],
     "image": "vmware-registry:5000/mariadb:10.0.21",
     "parentLink": "/resources/compute/test-docker-host-compute-id",
-    "groupResourcePolicyLink": "/resources/group-policies/default-resource-policy",
+    "groupResourcePlacementLink": "/resources/group-placements/default-resource-placement",
     "status": "Started",
     "created": 1445613811531,
     "customProperties": {
@@ -311,7 +311,7 @@ ContainersMockData.containers = {
       "-"
     ],
     "parentLink": "/resources/compute/test-docker-host-compute-id",
-    "groupResourcePolicyLink": "/resources/group-policies/default-resource-policy",
+    "groupResourcePlacementLink": "/resources/group-placements/default-resource-placement",
     "status": "Started",
     "created": 1445621682408,
     "attributes": {

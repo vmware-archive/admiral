@@ -23,8 +23,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.request.ReservationAllocationTaskService.ReservationAllocationTaskState;
 import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -44,7 +44,7 @@ public class ReservationAllocationTaskServiceTest extends RequestBaseTest {
 
         waitForServiceAvailability(ResourcePoolService.FACTORY_LINK);
         waitForServiceAvailability(ReservationAllocationTaskService.FACTORY_LINK);
-        waitForServiceAvailability(GroupResourcePolicyService.FACTORY_LINK);
+        waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);
 
         // setup Docker Host:
         ResourcePoolService.ResourcePoolState resourcePool = createResourcePool();
@@ -74,7 +74,7 @@ public class ReservationAllocationTaskServiceTest extends RequestBaseTest {
                     reservationState.customProperties = containerDesc.customProperties;
                     reservationState.name = containerDesc.name;
                     reservationState.resourceCount = 1;
-                    Assert.assertNull(reservationState.groupResourcePolicyLink);
+                    Assert.assertNull(reservationState.groupResourcePlacementLink);
 
                     return reservationState;
 
@@ -85,7 +85,7 @@ public class ReservationAllocationTaskServiceTest extends RequestBaseTest {
                     waitFor(() -> {
 
                         return getDocument(ReservationAllocationTaskState.class,
-                                reservationAllocationState.documentSelfLink).groupResourcePolicyLink != null;
+                                reservationAllocationState.documentSelfLink).groupResourcePlacementLink != null;
 
                     });
 
@@ -93,17 +93,17 @@ public class ReservationAllocationTaskServiceTest extends RequestBaseTest {
                             ReservationAllocationTaskState.class,
                             reservationAllocationState.documentSelfLink);
                     assertEquals(Collections.singletonList("testGroup"), result.tenantLinks);
-                    assertNotNull(result.groupResourcePolicyLink);
-                    assertTrue(result.groupResourcePolicyLink.contains(containerDesc.name));
+                    assertNotNull(result.groupResourcePlacementLink);
+                    assertTrue(result.groupResourcePlacementLink.contains(containerDesc.name));
 
-                    // Get GroupResourcePolicy that has been created.
-                    GroupResourcePolicyState groupResourcePolicy = getDocument(
-                            GroupResourcePolicyState.class, result.groupResourcePolicyLink);
-                    assertNotNull(groupResourcePolicy);
-                    assertNotNull(groupResourcePolicy.resourcePoolLink);
+                    // Get GroupResourcePlacement that has been created.
+                    GroupResourcePlacementState groupResourcePlacement = getDocument(
+                            GroupResourcePlacementState.class, result.groupResourcePlacementLink);
+                    assertNotNull(groupResourcePlacement);
+                    assertNotNull(groupResourcePlacement.resourcePoolLink);
 
                     // Verify that the name of container exists in resource pool.
-                    assertTrue(groupResourcePolicy.resourcePoolLink.contains(containerDesc.name));
+                    assertTrue(groupResourcePlacement.resourcePoolLink.contains(containerDesc.name));
 
                 });
     }
@@ -115,8 +115,8 @@ public class ReservationAllocationTaskServiceTest extends RequestBaseTest {
         task.resourceDescriptionLink = containerDesc.documentSelfLink;
         task.resourceCount = 1;
         task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-        task.groupResourcePolicyLink = null;
-        task.resourcePoolsPerGroupPolicyLinks = null;
+        task.groupResourcePlacementLink = null;
+        task.resourcePoolsPerGroupPlacementLinks = null;
 
         task = doPost(task, ReservationTaskFactoryService.SELF_LINK);
         assertNotNull(task);
@@ -124,27 +124,27 @@ public class ReservationAllocationTaskServiceTest extends RequestBaseTest {
         ReservationTaskState result = waitForTaskSuccess(task.documentSelfLink,
                 ReservationTaskState.class);
 
-        assertNotNull(result.groupResourcePolicyLink);
-        assertNotNull(result.resourcePoolsPerGroupPolicyLinks);
-        assertTrue(result.resourcePoolsPerGroupPolicyLinks.size() == 1);
-        assertTrue(result.groupResourcePolicyLink.contains(containerDesc.name));
-        assertTrue(result.resourcePoolsPerGroupPolicyLinks.keySet()
-                .contains(result.groupResourcePolicyLink));
+        assertNotNull(result.groupResourcePlacementLink);
+        assertNotNull(result.resourcePoolsPerGroupPlacementLinks);
+        assertTrue(result.resourcePoolsPerGroupPlacementLinks.size() == 1);
+        assertTrue(result.groupResourcePlacementLink.contains(containerDesc.name));
+        assertTrue(result.resourcePoolsPerGroupPlacementLinks.keySet()
+                .contains(result.groupResourcePlacementLink));
 
         ReservationAllocationTaskState rsvAllocation = getDocument(
                 ReservationAllocationTaskState.class,
                 task.documentSelfLink);
         assertNotNull(rsvAllocation);
-        assertEquals(result.groupResourcePolicyLink, rsvAllocation.groupResourcePolicyLink);
-        assertEquals(result.resourcePoolsPerGroupPolicyLinks,
-                rsvAllocation.resourcePoolsPerGroupPolicyLinks);
+        assertEquals(result.groupResourcePlacementLink, rsvAllocation.groupResourcePlacementLink);
+        assertEquals(result.resourcePoolsPerGroupPlacementLinks,
+                rsvAllocation.resourcePoolsPerGroupPlacementLinks);
 
-        GroupResourcePolicyState groupResourcePolicy = getDocument(
-                GroupResourcePolicyState.class, result.groupResourcePolicyLink);
-        assertNotNull(groupResourcePolicy);
-        assertNotNull(groupResourcePolicy.resourcePoolLink);
+        GroupResourcePlacementState groupResourcePlacement = getDocument(
+                GroupResourcePlacementState.class, result.groupResourcePlacementLink);
+        assertNotNull(groupResourcePlacement);
+        assertNotNull(groupResourcePlacement.resourcePoolLink);
 
-        assertEquals(groupResourcePolicy.documentSelfLink, rsvAllocation.groupResourcePolicyLink);
+        assertEquals(groupResourcePlacement.documentSelfLink, rsvAllocation.groupResourcePlacementLink);
 
     }
 

@@ -25,7 +25,7 @@ var links = Immutable({
   CONTAINER_SHELL: RESOURCES + '/container-shell',
   CREDENTIALS: '/core/auth/credentials',
   RESOURCE_POOLS: RESOURCES + '/pools',
-  RESOURCE_GROUP_POLICIES: RESOURCES + '/group-policies',
+  RESOURCE_GROUP_PLACEMENTS: RESOURCES + '/group-placements',
   EVENT_LOGS: RESOURCES + '/event-logs',
   NOTIFICATIONS: RESOURCES + '/notifications',
   DEPLOYMENT_POLICIES: RESOURCES + '/deployment-policies',

@@ -10,7 +10,7 @@
  */
 
 import HostsStore from 'stores/HostsStore';
-import PoliciesStore from 'stores/PoliciesStore';
+import PlacementsStore from 'stores/PlacementsStore';
 import TemplatesStore from 'stores/TemplatesStore';
 import ContainersStore from 'stores/ContainersStore';
 import * as actions from 'actions/Actions';
@@ -78,8 +78,8 @@ let initializeStoreListeners = function() {
     }
   });
 
-  PoliciesStore.listen((quotesData) => {
-    if (this.data.centerView && this.data.centerView.name === constants.VIEWS.POLICIES.name) {
+  PlacementsStore.listen((quotesData) => {
+    if (this.data.centerView && this.data.centerView.name === constants.VIEWS.PLACEMENTS.name) {
       this.setInData(['centerView', 'data'], quotesData);
       this.emitChange();
     }

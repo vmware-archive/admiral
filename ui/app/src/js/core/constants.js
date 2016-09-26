@@ -27,8 +27,8 @@ var constants = Immutable({
       name: 'hosts',
       NEW: {name: 'hosts/new'}
     },
-    POLICIES: {
-      name: 'policies'
+    PLACEMENTS: {
+      name: 'placements'
     },
     TEMPLATES: {
       name: 'templates',

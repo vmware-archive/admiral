@@ -41,8 +41,8 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
@@ -97,12 +97,12 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected ContainerDescription containerDesc;
     protected ContainerNetworkDescription containerNetworkDesc;
     protected ContainerVolumeDescription containerVolumeDesc;
-    protected GroupResourcePolicyState groupPolicyState;
-    protected GroupResourcePolicyState computeGroupPolicyState;
+    protected GroupResourcePlacementState groupPlacementState;
+    protected GroupResourcePlacementState computeGroupPlacementState;
     private final List<ServiceDocument> documentsForDeletion = new ArrayList<>();
     protected final Object initializationLock = new Object();
 
-    protected static final String DEFAULT_GROUP_RESOURCE_POLICY = GroupResourcePolicyService.DEFAULT_RESOURCE_POLICY_LINK;
+    protected static final String DEFAULT_GROUP_RESOURCE_POLICY = GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
 
     @Before
     public void setUp() throws Throwable {
@@ -114,9 +114,9 @@ public abstract class RequestBaseTest extends BaseTestCase {
         // setup Docker Host:
         createResourcePool();
         createComputeResourcePool();
-        // setup Group Policy:
-        groupPolicyState = createGroupResourcePolicy(resourcePool);
-        computeGroupPolicyState = createGroupResourcePolicy(computeResourcePool);
+        // setup Group Placement:
+        groupPlacementState = createGroupResourcePlacement(resourcePool);
+        computeGroupPlacementState = createGroupResourcePlacement(computeResourcePool);
         ComputeDescription dockerHostDesc = createDockerHostDescription();
         createDockerHost(dockerHostDesc, resourcePool);
 
@@ -157,7 +157,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
 
         // admiral states:
         services.addAll(Arrays.asList(
-                GroupResourcePolicyService.FACTORY_LINK,
+                GroupResourcePlacementService.FACTORY_LINK,
                 ContainerDescriptionService.FACTORY_LINK,
                 ContainerFactoryService.SELF_LINK,
                 RegistryService.FACTORY_LINK,
@@ -207,47 +207,47 @@ public abstract class RequestBaseTest extends BaseTestCase {
         documentsForDeletion.add(doc);
     }
 
-    protected GroupResourcePolicyState createGroupResourcePolicy(ResourcePoolState resourcePool)
+    protected GroupResourcePlacementState createGroupResourcePlacement(ResourcePoolState resourcePool)
             throws Throwable {
-        return createGroupResourcePolicy(resourcePool, 10);
+        return createGroupResourcePlacement(resourcePool, 10);
     }
 
-    protected GroupResourcePolicyState createGroupResourcePolicy(ResourcePoolState resourcePool,
+    protected GroupResourcePlacementState createGroupResourcePlacement(ResourcePoolState resourcePool,
             int numberOfInstances) throws Throwable {
         synchronized (initializationLock) {
-            if (groupPolicyState == null) {
-                groupPolicyState = TestRequestStateFactory
-                        .createGroupResourcePolicyState(policyResourceType());
-                groupPolicyState.maxNumberInstances = numberOfInstances;
-                groupPolicyState.resourcePoolLink = resourcePool.documentSelfLink;
-                groupPolicyState = getOrCreateDocument(groupPolicyState,
-                        GroupResourcePolicyService.FACTORY_LINK);
-                assertNotNull(groupPolicyState);
+            if (groupPlacementState == null) {
+                groupPlacementState = TestRequestStateFactory
+                        .createGroupResourcePlacementState(placementResourceType());
+                groupPlacementState.maxNumberInstances = numberOfInstances;
+                groupPlacementState.resourcePoolLink = resourcePool.documentSelfLink;
+                groupPlacementState = getOrCreateDocument(groupPlacementState,
+                        GroupResourcePlacementService.FACTORY_LINK);
+                assertNotNull(groupPlacementState);
             }
 
-            return groupPolicyState;
+            return groupPlacementState;
         }
     }
 
-    protected GroupResourcePolicyState createComputeGroupResourcePolicy(
+    protected GroupResourcePlacementState createComputeGroupResourcePlacement(
             ResourcePoolState resourcePool,
             int numberOfInstances) throws Throwable {
         synchronized (initializationLock) {
-            if (computeGroupPolicyState == null) {
-                computeGroupPolicyState = TestRequestStateFactory
-                        .createGroupResourcePolicyState(ResourceType.COMPUTE_TYPE);
-                computeGroupPolicyState.maxNumberInstances = numberOfInstances;
-                computeGroupPolicyState.resourcePoolLink = resourcePool.documentSelfLink;
-                computeGroupPolicyState = getOrCreateDocument(computeGroupPolicyState,
-                        GroupResourcePolicyService.FACTORY_LINK);
-                assertNotNull(computeGroupPolicyState);
+            if (computeGroupPlacementState == null) {
+                computeGroupPlacementState = TestRequestStateFactory
+                        .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
+                computeGroupPlacementState.maxNumberInstances = numberOfInstances;
+                computeGroupPlacementState.resourcePoolLink = resourcePool.documentSelfLink;
+                computeGroupPlacementState = getOrCreateDocument(computeGroupPlacementState,
+                        GroupResourcePlacementService.FACTORY_LINK);
+                assertNotNull(computeGroupPlacementState);
             }
 
-            return computeGroupPolicyState;
+            return computeGroupPlacementState;
         }
     }
 
-    protected ResourceType policyResourceType() {
+    protected ResourceType placementResourceType() {
         return ResourceType.CONTAINER_TYPE;
     }
 
@@ -334,12 +334,12 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected ComputeState createDockerHost(ComputeDescription computeDesc,
             ResourcePoolState resourcePool, Long availableMemory, boolean generateId)
             throws Throwable {
-        return createDockerHost(computeDesc, resourcePool, computeGroupPolicyState, availableMemory,
+        return createDockerHost(computeDesc, resourcePool, computeGroupPlacementState, availableMemory,
                 null, generateId);
     }
 
     protected ComputeState createDockerHost(ComputeDescription computeDesc,
-            ResourcePoolState resourcePool, GroupResourcePolicyState computePolicy,
+            ResourcePoolState resourcePool, GroupResourcePlacementState computePlacement,
             Long availableMemory, Set<String> volumeDrivers, boolean generateId)
             throws Throwable {
         ComputeState containerHost = TestRequestStateFactory.createDockerComputeHost();
@@ -358,9 +358,9 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 ContainerHostService.DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME,
                 availableMemory.toString());
 
-        if (computePolicy != null) {
-            containerHost.customProperties.put(ComputeConstants.GROUP_RESOURCE_POLICY_LINK_NAME,
-                    computePolicy.documentSelfLink);
+        if (computePlacement != null) {
+            containerHost.customProperties.put(ComputeConstants.GROUP_RESOURCE_PLACEMENT_LINK_NAME,
+                    computePlacement.documentSelfLink);
         }
 
         if (computeDesc.customProperties != null && computeDesc.customProperties

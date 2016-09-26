@@ -31,7 +31,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
 import com.vmware.admiral.request.ContainerOperationTaskService.ContainerOperationTaskState;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState;
@@ -60,7 +60,7 @@ public class ContainerOperationTaskServiceTest extends RequestBaseTest {
 
         request = TestRequestStateFactory.createRequestState();
         request.resourceDescriptionLink = containerDesc.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceCount = 2;
     }
 
@@ -113,7 +113,7 @@ public class ContainerOperationTaskServiceTest extends RequestBaseTest {
         request = new RequestBrokerState();
         request.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
         request.resourceDescriptionLink = composite.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.customProperties = new HashMap<>();
         request.resourceCount = 1;
 
@@ -198,11 +198,11 @@ public class ContainerOperationTaskServiceTest extends RequestBaseTest {
 
         waitForContainerPowerState(PowerState.PROVISIONING, request.resourceLinks);
 
-        // verify the policies has been reserved:
-        GroupResourcePolicyState groupResourcePolicy = getDocument(GroupResourcePolicyState.class,
-                request.groupResourcePolicyLink);
-        assertNotNull(groupResourcePolicy);
-        assertEquals(groupResourcePolicy.allocatedInstancesCount, request.resourceCount);
+        // verify the placements has been reserved:
+        GroupResourcePlacementState groupResourcePlacement = getDocument(GroupResourcePlacementState.class,
+                request.groupResourcePlacementLink);
+        assertNotNull(groupResourcePlacement);
+        assertEquals(groupResourcePlacement.allocatedInstancesCount, request.resourceCount);
 
         host.log("########  Start Day2 Provisioning Request ######## ");
 
@@ -240,11 +240,11 @@ public class ContainerOperationTaskServiceTest extends RequestBaseTest {
         assertTrue("containerStates not cleaned for request id:  "
                 + day2ProvisionRequest.documentSelfLink, containerStates.isEmpty());
 
-        // verified the policies have been released:
-        groupResourcePolicy = getDocument(GroupResourcePolicyState.class,
-                request.groupResourcePolicyLink);
-        assertNotNull(groupResourcePolicy);
-        assertEquals(groupResourcePolicy.allocatedInstancesCount, 0);
+        // verified the placements have been released:
+        groupResourcePlacement = getDocument(GroupResourcePlacementState.class,
+                request.groupResourcePlacementLink);
+        assertNotNull(groupResourcePlacement);
+        assertEquals(groupResourcePlacement.allocatedInstancesCount, 0);
     }
 
     private Collection<ContainerState> findResources(Class<? extends ServiceDocument> type,

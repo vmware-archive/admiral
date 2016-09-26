@@ -22,7 +22,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.DeploymentPolicyService.DeploymentPolicy;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -102,12 +102,12 @@ public class DeploymentPolicyServiceTest extends ComputeBaseTest {
         compute.descriptionLink = computeDescription.documentSelfLink;
         compute = doPost(compute, ComputeService.FACTORY_LINK);
 
-        GroupResourcePolicyState resourcePolicy = new GroupResourcePolicyState();
-        resourcePolicy.deploymentPolicyLink = deploymentPolicy.documentSelfLink;
-        resourcePolicy.maxNumberInstances = 1;
-        resourcePolicy.name = "test-group-resource-policy";
-        resourcePolicy.resourcePoolLink = resourcePool.documentSelfLink;
-        resourcePolicy = doPost(resourcePolicy, GroupResourcePolicyService.FACTORY_LINK);
+        GroupResourcePlacementState resourcePlacement = new GroupResourcePlacementState();
+        resourcePlacement.deploymentPolicyLink = deploymentPolicy.documentSelfLink;
+        resourcePlacement.maxNumberInstances = 1;
+        resourcePlacement.name = "test-group-resource-placement";
+        resourcePlacement.resourcePoolLink = resourcePool.documentSelfLink;
+        resourcePlacement = doPost(resourcePlacement, GroupResourcePlacementService.FACTORY_LINK);
 
         try {
             doDelete(UriUtils.buildUri(host, deploymentPolicy.documentSelfLink), true);
@@ -123,7 +123,7 @@ public class DeploymentPolicyServiceTest extends ComputeBaseTest {
         } catch (IllegalStateException e) {
             assertEquals("Deployment Policy is in use", e.getMessage());
         }
-        doDelete(UriUtils.buildUri(host, resourcePolicy.documentSelfLink), false);
+        doDelete(UriUtils.buildUri(host, resourcePlacement.documentSelfLink), false);
         doDelete(UriUtils.buildUri(host, resourcePool.documentSelfLink), false);
         doDelete(UriUtils.buildUri(host, deploymentPolicy.documentSelfLink), false);
     }

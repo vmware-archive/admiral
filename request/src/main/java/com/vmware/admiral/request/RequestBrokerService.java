@@ -110,7 +110,7 @@ public class RequestBrokerService extends
         private static final String FIELD_RESOURCE_TENANT_LINKS = "tenantLinks";
         private static final String FIELD_RESOURCE_COUNT = "resourceCount";
         private static final String FIELD_RESOURCE_LINKS = "resourceLinks";
-        private static final String FIELD_RESOURCE_POLICY_LINK = "groupResourcePolicyLink";
+        private static final String FIELD_RESOURCE_POLICY_LINK = "groupResourcePlacementLink";
 
         public static enum SubStage {
             CREATED,
@@ -143,7 +143,7 @@ public class RequestBrokerService extends
         /** Set by Task when resources are provisioned. */
         public List<String> resourceLinks;
 
-        public String groupResourcePolicyLink;
+        public String groupResourcePlacementLink;
     }
 
     public RequestBrokerService() {
@@ -260,8 +260,8 @@ public class RequestBrokerService extends
     @Override
     protected boolean validateStageTransition(Operation patch, RequestBrokerState patchBody,
             RequestBrokerState currentState) {
-        currentState.groupResourcePolicyLink = mergeProperty(currentState.groupResourcePolicyLink,
-                patchBody.groupResourcePolicyLink);
+        currentState.groupResourcePlacementLink = mergeProperty(currentState.groupResourcePlacementLink,
+                patchBody.groupResourcePlacementLink);
         currentState.resourceLinks = mergeProperty(currentState.resourceLinks,
                 patchBody.resourceLinks);
         currentState.requestTrackerLink = mergeProperty(currentState.requestTrackerLink,
@@ -620,7 +620,7 @@ public class RequestBrokerService extends
     }
 
     private void createContainerRemovalAllocationTasks(RequestBrokerState state,
-            boolean skipReleaseResourcePolicy) {
+            boolean skipReleaseResourcePlacement) {
         boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED
                 || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
 
@@ -631,7 +631,7 @@ public class RequestBrokerService extends
         }
 
         ContainerRemovalTaskState removalState = new ContainerRemovalTaskState();
-        removalState.skipReleaseResourcePolicy = skipReleaseResourcePolicy;
+        removalState.skipReleaseResourcePlacement = skipReleaseResourcePlacement;
         removalState.resourceLinks = state.resourceLinks.stream()
                 .filter((l) -> l.startsWith(ContainerFactoryService.SELF_LINK))
                 .collect(Collectors.toList());
@@ -737,10 +737,10 @@ public class RequestBrokerService extends
                 state.customProperties, containerDescription.customProperties);
         rsrvTask.requestTrackerLink = state.requestTrackerLink;
 
-        if (state.groupResourcePolicyLink != null) {
-            rsrvTask.groupResourcePolicyLink = state.groupResourcePolicyLink;
+        if (state.groupResourcePlacementLink != null) {
+            rsrvTask.groupResourcePlacementLink = state.groupResourcePlacementLink;
             rsrvTask.taskSubStage = ReservationTaskState.SubStage.RESERVATION_SELECTED;
-            rsrvTask.resourcePoolsPerGroupPolicyLinks = new LinkedHashMap<>(0);
+            rsrvTask.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>(0);
         }
 
         sendRequest(Operation.createPost(this, ReservationTaskFactoryService.SELF_LINK)
@@ -777,10 +777,10 @@ public class RequestBrokerService extends
                 state.customProperties, computeDescription.customProperties);
         rsrvTask.requestTrackerLink = state.requestTrackerLink;
 
-        if (state.groupResourcePolicyLink != null) {
-            rsrvTask.groupResourcePolicyLink = state.groupResourcePolicyLink;
+        if (state.groupResourcePlacementLink != null) {
+            rsrvTask.groupResourcePlacementLink = state.groupResourcePlacementLink;
             rsrvTask.taskSubStage = ComputeReservationTaskState.SubStage.RESERVATION_SELECTED;
-            rsrvTask.resourcePoolsPerGroupPolicyLinks = new LinkedHashMap<>(0);
+            rsrvTask.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>(0);
         }
 
         sendRequest(Operation.createPost(this, ComputeReservationTaskService.FACTORY_LINK)
@@ -816,7 +816,7 @@ public class RequestBrokerService extends
 
             allocationTask.resourceType = state.resourceType;
             allocationTask.tenantLinks = state.tenantLinks;
-            allocationTask.groupResourcePolicyLink = state.groupResourcePolicyLink;
+            allocationTask.groupResourcePlacementLink = state.groupResourcePlacementLink;
             allocationTask.requestTrackerLink = state.requestTrackerLink;
             allocationTask.resourceLinks = state.resourceLinks;
             allocationTask.postAllocation = isPostAllocationOperation(state);
@@ -904,7 +904,7 @@ public class RequestBrokerService extends
 
         allocationTask.resourceType = state.resourceType;
         allocationTask.tenantLinks = state.tenantLinks;
-        allocationTask.groupResourcePolicyLink = state.groupResourcePolicyLink;
+        allocationTask.groupResourcePlacementLink = state.groupResourcePlacementLink;
         allocationTask.requestTrackerLink = state.requestTrackerLink;
         allocationTask.resourceLinks = state.resourceLinks;
 
@@ -1056,7 +1056,7 @@ public class RequestBrokerService extends
     }
 
     private void createReservationRemovalTask(RequestBrokerState state) {
-        if (state.groupResourcePolicyLink == null || state.groupResourcePolicyLink.isEmpty()) {
+        if (state.groupResourcePlacementLink == null || state.groupResourcePlacementLink.isEmpty()) {
             RequestBrokerState body = new RequestBrokerState();
             body.taskInfo = new TaskState();
             body.taskInfo.stage = TaskStage.FAILED;
@@ -1072,7 +1072,7 @@ public class RequestBrokerService extends
                 SubStage.ERROR);
         rsrvTask.resourceCount = state.resourceCount;
         rsrvTask.resourceDescriptionLink = state.resourceDescriptionLink;
-        rsrvTask.groupResourcePolicyLink = state.groupResourcePolicyLink;
+        rsrvTask.groupResourcePlacementLink = state.groupResourcePlacementLink;
         rsrvTask.requestTrackerLink = state.requestTrackerLink;
 
         sendRequest(Operation.createPost(this, ReservationRemovalTaskFactoryService.SELF_LINK)

@@ -1088,7 +1088,7 @@ text-shadow: 0px 0px 20px black;
   }
 }
 
-.registry-view, .policies-view, .environments-view {
+.registry-view, .placements-view, .environments-view {
   @extend .inline-editable-list-and-context-view;
 }
 
@@ -1168,7 +1168,7 @@ text-shadow: 0px 0px 20px black;
 }
 
 .resourcePoolEditHolder, .credentialsEditHolder, .certificatesEditHolder, .registryEditHolder,
-.policyEditHolder, .environmentEditHolder, .deploymentPolicyEditHolder,
+.placementEditHolder, .environmentEditHolder, .deploymentPolicyEditHolder,
 .resourceGroupEditHolder {
   background-color: #ffffff;
   @include box-shadow(0px 0px 15px 5px rgba(0, 0, 0, 0.15));
@@ -1312,7 +1312,7 @@ text-shadow: 0px 0px 20px black;
   float: left;
 }
 .resourcePoolEdit .title, .credentialsEdit .title, .certificatesEdit .title,
-.policyEdit .title, .deploymentPolicyEdit .title, .resourceGroupEdit .title {
+.placementEdit .title, .deploymentPolicyEdit .title, .resourceGroupEdit .title {
   color: $main_color;
   font-size: 16px;
   padding: 0 0 12px 0;
@@ -1639,42 +1639,42 @@ body > .loading, .container-details > .content .loading {
   margin-right: 10px;
 }
 
-.policyEdit .title, .policyEdit .policyRowEdit-inputs {
+.placementEdit .title, .placementEdit .placementRowEdit-inputs {
   margin-right: 60px;
 }
 
-.policyEdit .policyRowEdit-inputs {
+.placementEdit .placementRowEdit-inputs {
   margin-left: -15px;
 }
 
-.policyEdit .form-horizontal .form-group {
+.placementEdit .form-horizontal .form-group {
   margin-left: 0;
   margin-right: 0;
 }
 
-.policyEdit .form-horizontal .group > label {
+.placementEdit .form-horizontal .group > label {
   margin-right: -5px;
 }
 
-.policyEdit .form-horizontal .group > div {
+.placementEdit .form-horizontal .group > div {
   padding-right: 10px;
 }
 
-.policyEdit .policyRowEdit-toolbar {
+.placementEdit .placementRowEdit-toolbar {
   padding-top: $inline-edit-top-padding;
 }
 
-.policyEdit .policyRowEdit-toolbar > * {
+.placementEdit .placementRowEdit-toolbar > * {
   margin-right: 10px;
 }
 
-.policyEdit .fa-question-circle {
+.placementEdit .fa-question-circle {
   color: $link_color;
   margin-left: 2px;
   font-size: 20px;
 }
 
-.policyEdit .form-horizontal .control-label {
+.placementEdit .form-horizontal .control-label {
   text-align: left;
   padding-top: 5px;
 }

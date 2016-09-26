@@ -10,25 +10,25 @@
  */
 
 import InlineEditableList from 'components/common/InlineEditableList';
-import PoliciesViewVue from 'PoliciesViewVue';
-import PoliciesListTemplate from 'PoliciesListTemplate';
-import PoliciesRowRenderers from 'components/policies/PoliciesRowRenderers';
-import PoliciesRowEditor from 'components/policies/PoliciesRowEditor';
+import PlacementsViewVue from 'PlacementsViewVue';
+import PlacementsListTemplate from 'PlacementsListTemplate';
+import PlacementsRowRenderers from 'components/placements/PlacementsRowRenderers';
+import PlacementsRowEditor from 'components/placements/PlacementsRowEditor';
 import ResourcePoolsList from 'components/resourcepools/ResourcePoolsList'; //eslint-disable-line
 import ResourceGroupsList from 'components/resourcegroups/ResourceGroupsList'; //eslint-disable-line
 import DeploymentPoliciesList from 'components/deploymentpolicies/DeploymentPoliciesList'; //eslint-disable-line
-import { PolicyActions, PolicyContextToolbarActions } from 'actions/Actions';
+import { PlacementActions, PlacementContextToolbarActions } from 'actions/Actions';
 import utils from 'core/utils';
 
-var PoliciesView = Vue.extend({
-  template: PoliciesViewVue,
+var PlacementsView = Vue.extend({
+  template: PlacementsViewVue,
   props: {
     model: {
       required: true,
       type: Object,
       default: () => {
         return {
-          policies: {},
+          placements: {},
           contextView: {}
         };
       }
@@ -54,20 +54,20 @@ var PoliciesView = Vue.extend({
       return this.hasError ? this.model.error._generic : '';
     },
     itemsCount: function() {
-      return this.model.policies && this.model.policies.items.length;
+      return this.model.placements && this.model.placements.items.length;
     }
   },
   attached: function() {
-    var $policiesListHolder = $(this.$el).find('.list-holder');
-    this.policiesList = new InlineEditableList($policiesListHolder, PoliciesListTemplate,
-                                             PoliciesRowRenderers);
+    var $placementsListHolder = $(this.$el).find('.list-holder');
+    this.placementsList = new InlineEditableList($placementsListHolder, PlacementsListTemplate,
+                                             PlacementsRowRenderers);
 
-    this.policiesList.setRowEditor(PoliciesRowEditor);
-    this.policiesList.setDeleteCallback(PolicyActions.deletePolicy);
-    this.policiesList.setEditCallback(PolicyActions.editPolicy);
+    this.placementsList.setRowEditor(PlacementsRowEditor);
+    this.placementsList.setDeleteCallback(PlacementActions.deletePlacement);
+    this.placementsList.setEditCallback(PlacementActions.editPlacement);
 
-    this.unwatchModel = this.$watch('model.policies', (policies) => {
-      this.policiesList.setData(policies);
+    this.unwatchModel = this.$watch('model.placements', (placements) => {
+      this.placementsList.setData(placements);
     });
   },
   detached: function() {
@@ -75,17 +75,17 @@ var PoliciesView = Vue.extend({
   },
   methods: {
     i18n: i18n.t,
-    openToolbarResourcePools: PolicyContextToolbarActions.openToolbarResourcePools,
-    openToolbarResourceGroups: PolicyContextToolbarActions.openToolbarResourceGroups,
-    openToolbarDeploymentPolicies: PolicyContextToolbarActions.openToolbarDeploymentPolicies,
-    closeToolbar: PolicyContextToolbarActions.closeToolbar,
-    refresh: PolicyActions.openPolicies,
+    openToolbarResourcePools: PlacementContextToolbarActions.openToolbarResourcePools,
+    openToolbarResourceGroups: PlacementContextToolbarActions.openToolbarResourceGroups,
+    openToolbarDeploymentPolicies: PlacementContextToolbarActions.openToolbarDeploymentPolicies,
+    closeToolbar: PlacementContextToolbarActions.closeToolbar,
+    refresh: PlacementActions.openPlacements,
     isStandaloneMode: function() {
       return !utils.isApplicationEmbedded();
     }
   }
 });
 
-Vue.component('policies-view', PoliciesView);
+Vue.component('placements-view', PlacementsView);
 
-export default PoliciesView;
+export default PlacementsView;

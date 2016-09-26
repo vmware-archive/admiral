@@ -16,8 +16,8 @@
   <td class="truncateText" title="{{getDocumentId deploymentPolicyLink}}">{{deploymentPolicyName}}</td>
   <td class="truncateText" title="{{priority}}">{{priority}}</td>
   <td data-sort="{{instancesPercentage}}">
-    <div class="stats-holder policyInstances navigation-link" title="{{i18n 'app.policy.list.instancesPerPolicy'}}">
-      <div class="help-text">{{numOfInstances}} of {{#if maxNumberInstances}}{{maxNumberInstances}}{{else}}{{i18n "app.policy.list.unlimitedInstances"}}{{/if}}</div>
+    <div class="stats-holder placementInstances navigation-link" title="{{i18n 'app.placement.list.instancesPerPlacement'}}">
+      <div class="help-text">{{numOfInstances}} of {{#if maxNumberInstances}}{{maxNumberInstances}}{{else}}{{i18n "app.placement.list.unlimitedInstances"}}{{/if}}</div>
       <div class="progress">
         <div class="progress-bar progress-bar-{{resourcePoolPercentageLevel instancesPercentage}}" role="progressbar" style="width:{{instancesPercentage}}%"></div>
       </div>

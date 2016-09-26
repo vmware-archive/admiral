@@ -75,14 +75,14 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         assertEquals(containerDesc.instanceAdapterReference.getPath(),
                 containerState.adapterManagementReference.getPath());
         assertNotNull(containerState.created);
-        assertEquals(groupPolicyState.documentSelfLink, containerState.groupResourcePolicyLink);
+        assertEquals(groupPlacementState.documentSelfLink, containerState.groupResourcePlacementLink);
 
         assertEquals(ContainerAllocationTaskService
-                .getMinParam(groupPolicyState.cpuShares, containerDesc.cpuShares.longValue())
+                .getMinParam(groupPlacementState.cpuShares, containerDesc.cpuShares.longValue())
                 .longValue(),
                 containerState.cpuShares.longValue());
         assertEquals(ContainerAllocationTaskService
-                .getMinParam(groupPolicyState.memoryLimit, containerDesc.memoryLimit),
+                .getMinParam(groupPlacementState.memoryLimit, containerDesc.memoryLimit),
                 containerState.memoryLimit);
 
         assertNotNull(containerState.env);
@@ -153,7 +153,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         assertEquals(containerDesc.documentSelfLink, containerState.descriptionLink);
         assertNull(containerState.created);
         assertEquals(allocationTask.hostSelections.get(0).hostLink, containerState.parentLink);
-        assertEquals(groupPolicyState.documentSelfLink, containerState.groupResourcePolicyLink);
+        assertEquals(groupPlacementState.documentSelfLink, containerState.groupResourcePlacementLink);
         assertEquals(allocationTask.tenantLinks, containerState.tenantLinks);
         assertEquals(containerDesc.instanceAdapterReference.getPath(),
                 containerState.adapterManagementReference.getPath());
@@ -198,7 +198,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         assertEquals(containerDesc.instanceAdapterReference.getPath(),
                 containerState.adapterManagementReference.getPath());
         assertNotNull(containerState.created);
-        assertEquals(groupPolicyState.documentSelfLink, containerState.groupResourcePolicyLink);
+        assertEquals(groupPlacementState.documentSelfLink, containerState.groupResourcePlacementLink);
 
         assertFalse(ContainerState.CONTAINER_ALLOCATION_STATUS.equals(containerState.status));
         assertEquals(0, containerState.documentExpirationTimeMicros);
@@ -409,7 +409,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
             long resourceCount) {
         ContainerAllocationTaskState allocationTask = new ContainerAllocationTaskState();
         allocationTask.resourceDescriptionLink = containerDescLink;
-        allocationTask.groupResourcePolicyLink = groupPolicyState.documentSelfLink;
+        allocationTask.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
         allocationTask.resourceType = ResourceType.CONTAINER_TYPE.getName();
         allocationTask.resourceCount = resourceCount;
         allocationTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();

@@ -28,7 +28,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
@@ -203,13 +203,13 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return request;
     }
 
-    public static GroupResourcePolicyState createGroupResourcePolicyState() {
-        return createGroupResourcePolicyState(ResourceType.CONTAINER_TYPE);
+    public static GroupResourcePlacementState createGroupResourcePlacementState() {
+        return createGroupResourcePlacementState(ResourceType.CONTAINER_TYPE);
     }
 
-    public static GroupResourcePolicyState createGroupResourcePolicyState(
+    public static GroupResourcePlacementState createGroupResourcePlacementState(
             ResourceType resourceType) {
-        GroupResourcePolicyState rsrvState = new GroupResourcePolicyState();
+        GroupResourcePlacementState rsrvState = new GroupResourcePlacementState();
         rsrvState.resourcePoolLink = UriUtils.buildUriPath(ResourcePoolService.FACTORY_LINK,
                 RESOURCE_POOL_ID);
         rsrvState.tenantLinks = createTenantLinks(TENANT_NAME);

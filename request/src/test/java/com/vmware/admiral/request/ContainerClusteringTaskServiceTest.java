@@ -36,7 +36,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.request.ContainerClusteringTaskService.ContainerClusteringTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.allocation.filter.AffinityConstraint;
@@ -58,7 +58,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         super.setUp();
         request = TestRequestStateFactory.createRequestState();
         request.resourceDescriptionLink = containerDesc.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceCount = 3;
         Map<String, String> customProp = new HashMap<>();
         customProp.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, "test");
@@ -104,7 +104,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         // of resources in the cluster
         RequestBrokerState day2OperationClustering = TestRequestStateFactory.createRequestState();
         day2OperationClustering.resourceDescriptionLink = initialState.resourceDescriptionLink;
-        day2OperationClustering.tenantLinks = groupPolicyState.tenantLinks;
+        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
         day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
         int desiredResourceCount = clustered._cluster + 1;
         day2OperationClustering.resourceCount = desiredResourceCount;
@@ -183,7 +183,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         // of resources in the cluster
         RequestBrokerState day2OperationClustering = TestRequestStateFactory.createRequestState();
         day2OperationClustering.resourceDescriptionLink = initialState.resourceDescriptionLink;
-        day2OperationClustering.tenantLinks = groupPolicyState.tenantLinks;
+        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
         day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
         int desiredResourceCount = clustered._cluster + 1;
         day2OperationClustering.resourceCount = desiredResourceCount;
@@ -241,7 +241,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         // of resources in the cluster
         RequestBrokerState day2OperationClustering = TestRequestStateFactory.createRequestState();
         day2OperationClustering.resourceDescriptionLink = initialState.resourceDescriptionLink;
-        day2OperationClustering.tenantLinks = groupPolicyState.tenantLinks;
+        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
         day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
         int desiredResourceCount = clustered._cluster + 2;
         day2OperationClustering.resourceCount = desiredResourceCount;
@@ -306,7 +306,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         // Create Day 2 operation for clustering containers.
         RequestBrokerState day2OperationClustering = TestRequestStateFactory.createRequestState();
         day2OperationClustering.resourceDescriptionLink = initialState.resourceDescriptionLink;
-        day2OperationClustering.tenantLinks = groupPolicyState.tenantLinks;
+        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
         day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
         // Set 'resourceCount' to 5, which is 2 more than initial resources. This means that 2 new
         // containers should be provisioned.
@@ -336,16 +336,16 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
         assertTrue(containersIdsAfterClustering.containsAll(containersIdsBeforeClustering));
 
-        GroupResourcePolicyService.GroupResourcePolicyPoolState policyState = getDocument(
-                GroupResourcePolicyService.GroupResourcePolicyPoolState.class,
-                groupPolicyState.documentSelfLink);
+        GroupResourcePlacementService.GroupResourcePlacementPoolState placementState = getDocument(
+                GroupResourcePlacementService.GroupResourcePlacementPoolState.class,
+                groupPlacementState.documentSelfLink);
 
-        assertEquals(5, policyState.availableInstancesCount);
-        assertEquals(5, policyState.allocatedInstancesCount);
+        assertEquals(5, placementState.availableInstancesCount);
+        assertEquals(5, placementState.allocatedInstancesCount);
     }
 
     @Test
-    public void testContainerClusteringTaskAddContainersServiceInsufficientPolicy()
+    public void testContainerClusteringTaskAddContainersServiceInsufficientPlacement()
             throws Throwable {
 
         long containersNumberBeforeProvisioning = MockDockerAdapterService.getNumberOfContainers();
@@ -364,11 +364,11 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         // Create Day 2 operation for clustering containers.
         RequestBrokerState day2OperationClustering = TestRequestStateFactory.createRequestState();
         day2OperationClustering.resourceDescriptionLink = initialState.resourceDescriptionLink;
-        day2OperationClustering.tenantLinks = groupPolicyState.tenantLinks;
+        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
         day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
         // Set 'resourceCount' to 10, which is 7 more than initial resources. This means that 7 new
         // containers should be provisioned.
-        day2OperationClustering.resourceCount = 30; // policy size is 10
+        day2OperationClustering.resourceCount = 30; // placement size is 10
         day2OperationClustering.documentDescription = containerDesc.documentDescription;
         day2OperationClustering.customProperties = initialState.customProperties;
 
@@ -388,12 +388,12 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         // Number of containers after clustering, should be the same.
         assertEquals(3, containersNumberAfterClustering);
 
-        GroupResourcePolicyService.GroupResourcePolicyPoolState policyState = getDocument(
-                GroupResourcePolicyService.GroupResourcePolicyPoolState.class,
-                groupPolicyState.documentSelfLink);
+        GroupResourcePlacementService.GroupResourcePlacementPoolState placementState = getDocument(
+                GroupResourcePlacementService.GroupResourcePlacementPoolState.class,
+                groupPlacementState.documentSelfLink);
 
-        assertEquals(7, policyState.availableInstancesCount);
-        assertEquals(3, policyState.allocatedInstancesCount);
+        assertEquals(7, placementState.availableInstancesCount);
+        assertEquals(3, placementState.allocatedInstancesCount);
 
         Set<String> containersIdsAfterClustering = MockDockerAdapterService.getContainerIds();
 
@@ -418,11 +418,11 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         // Create Day 2 operation for clustering containers.
         RequestBrokerState day2OperationClustering = TestRequestStateFactory.createRequestState();
         day2OperationClustering.resourceDescriptionLink = initialState.resourceDescriptionLink;
-        day2OperationClustering.tenantLinks = groupPolicyState.tenantLinks;
+        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
         day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
         // Set 'resourceCount' to 10, which is 7 more than initial resources. This means that 7 new
         // containers should be provisioned.
-        day2OperationClustering.resourceCount = 2; // policy size is 10
+        day2OperationClustering.resourceCount = 2; // placement size is 10
         day2OperationClustering.documentDescription = containerDesc.documentDescription;
         day2OperationClustering.customProperties = initialState.customProperties;
 
@@ -442,12 +442,12 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         // Number of containers after clustering, should be the same.
         assertEquals(2, containersNumberAfterClustering);
 
-        GroupResourcePolicyService.GroupResourcePolicyPoolState policyState = getDocument(
-                GroupResourcePolicyService.GroupResourcePolicyPoolState.class,
-                groupPolicyState.documentSelfLink);
+        GroupResourcePlacementService.GroupResourcePlacementPoolState placementState = getDocument(
+                GroupResourcePlacementService.GroupResourcePlacementPoolState.class,
+                groupPlacementState.documentSelfLink);
 
-        assertEquals(8, policyState.availableInstancesCount);
-        assertEquals(2, policyState.allocatedInstancesCount);
+        assertEquals(8, placementState.availableInstancesCount);
+        assertEquals(2, placementState.allocatedInstancesCount);
     }
 
     @Test
@@ -456,7 +456,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         ContainerState container = TestRequestStateFactory.createContainer();
         container.descriptionLink = containerDesc.documentSelfLink;
         container.adapterManagementReference = containerDesc.instanceAdapterReference;
-        container.groupResourcePolicyLink = groupPolicyState.documentSelfLink;
+        container.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
         container.system = Boolean.TRUE;
         container = doPost(container, ContainerFactoryService.SELF_LINK);
 
@@ -464,7 +464,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         resourceLinks.add(container.documentSelfLink);
         RequestBrokerState day2OperationClustering = TestRequestStateFactory.createRequestState();
         day2OperationClustering.resourceDescriptionLink = request.resourceDescriptionLink;
-        day2OperationClustering.tenantLinks = groupPolicyState.tenantLinks;
+        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
         day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
         day2OperationClustering.resourceCount = 10;
 
@@ -530,7 +530,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         RequestBrokerState day2OperationClustering = TestRequestStateFactory.createRequestState();
         day2OperationClustering.resourceDescriptionLink = "/resources/container-descriptions/"
                 + desc1.documentSelfLink;
-        day2OperationClustering.tenantLinks = groupPolicyState.tenantLinks;
+        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
         day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
         day2OperationClustering.resourceCount = 4;
         day2OperationClustering.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY,
@@ -628,7 +628,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         RequestBrokerState day2OperationClustering = TestRequestStateFactory.createRequestState();
         day2OperationClustering.resourceDescriptionLink = "/resources/container-descriptions/"
                 + desc1.documentSelfLink;
-        day2OperationClustering.tenantLinks = groupPolicyState.tenantLinks;
+        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
         day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
         day2OperationClustering.resourceCount = 4;
         day2OperationClustering.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY,
@@ -724,7 +724,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         RequestBrokerState day2OperationClustering = TestRequestStateFactory.createRequestState();
         day2OperationClustering.resourceDescriptionLink = "/resources/container-descriptions/"
                 + desc1.documentSelfLink;
-        day2OperationClustering.tenantLinks = groupPolicyState.tenantLinks;
+        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
         day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
         day2OperationClustering.resourceCount = 4;
         day2OperationClustering.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY,
@@ -800,7 +800,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         // Create Day 2 operation for clustering containers.
         RequestBrokerState day2OperationClustering = TestRequestStateFactory.createRequestState();
         day2OperationClustering.resourceDescriptionLink = initialRequest.resourceDescriptionLink;
-        day2OperationClustering.tenantLinks = groupPolicyState.tenantLinks;
+        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
         day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
         // Set 'resourceCount' to 10, which is 7 more than initial resources. This means that 7 new
         // containers should be provisioned.

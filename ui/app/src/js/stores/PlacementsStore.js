@@ -23,43 +23,44 @@ const OPERATION = {
   LIST: 'list'
 };
 
-let _enhancePolicy = function(policy) {
-  let policyEditData = this.selectFromData(['policies', 'editingItemData']).get();
+let _enhancePlacement = function(placement) {
+  let placementEditData = this.selectFromData(['placements', 'editingItemData']).get();
 
-  let resourcePools = (policyEditData && policyEditData.resourcePools)
-                          || this.selectFromData(['policies', 'resourcePools']).get();
+  let resourcePools = (placementEditData && placementEditData.resourcePools)
+                          || this.selectFromData(['placements', 'resourcePools']).get();
   for (let i = 0; i < resourcePools.length; i++) {
-    if (resourcePools[i].documentSelfLink === policy.resourcePoolLink) {
-      policy.resourcePoolName = resourcePools[i].name;
+    if (resourcePools[i].documentSelfLink === placement.resourcePoolLink) {
+      placement.resourcePoolName = resourcePools[i].name;
       break;
     }
   }
 
-  let deploymentPolicies = (policyEditData && policyEditData.deploymentPolicies)
-                              || this.selectFromData(['policies', 'deploymentPolicies']).get();
+  let deploymentPolicies = (placementEditData && placementEditData.deploymentPolicies)
+                              || this.selectFromData(['placements', 'deploymentPolicies']).get();
   for (let i = 0; i < deploymentPolicies.length; i++) {
-    if (deploymentPolicies[i].documentSelfLink === policy.deploymentPolicyLink) {
-      policy.deploymentPolicyName = deploymentPolicies[i].name;
+    if (deploymentPolicies[i].documentSelfLink === placement.deploymentPolicyLink) {
+      placement.deploymentPolicyName = deploymentPolicies[i].name;
       break;
     }
   }
 
-  policy.numOfInstances = policy.allocatedInstancesCount;
+  placement.numOfInstances = placement.allocatedInstancesCount;
   // maxNumberInstances = 0 means Unlimited
-  policy.instancesPercentage = policy.maxNumberInstances > 0
-    ? Math.round((policy.allocatedInstancesCount / policy.maxNumberInstances) * 100 * 10) / 10 : 0;
+  placement.instancesPercentage = placement.maxNumberInstances > 0
+    ? Math.round((placement.allocatedInstancesCount / placement.maxNumberInstances) * 100 * 10) / 10
+    : 0;
 
-  let groupId = utils.getGroup(policy.tenantLinks);
+  let groupId = utils.getGroup(placement.tenantLinks);
   if (groupId) {
-    let groups = (policyEditData && policyEditData.groups)
-                  || this.selectFromData(['policies', 'groups']).get();
+    let groups = (placementEditData && placementEditData.groups)
+                  || this.selectFromData(['placements', 'groups']).get();
 
-    policy.groupId = groupId;
-    policy.group = groups && _getGroup(groupId, groups);
+    placement.groupId = groupId;
+    placement.group = groups && _getGroup(groupId, groups);
 
-    policy.groupName = groupId;
-    if (policy.group) {
-      policy.groupName = policy.group.label ? policy.group.label : policy.group.name;
+    placement.groupName = groupId;
+    if (placement.group) {
+      placement.groupName = placement.group.label ? placement.group.label : placement.group.name;
     }
   }
 };
@@ -72,51 +73,51 @@ let _getGroup = function(id, groups) {
   return matchingGroups.length > 0 ? matchingGroups[0] : null;
 };
 
-let onPolicyCreated = function(policy) {
-  _enhancePolicy.call(this, policy);
+let onPlacementCreated = function(placement) {
+  _enhancePlacement.call(this, placement);
 
-  var immutablePolicy = Immutable(policy);
+  var immutablePlacement = Immutable(placement);
 
-  var policies = this.data.policies.items.asMutable();
-  policies.push(immutablePolicy);
+  var placements = this.data.placements.items.asMutable();
+  placements.push(immutablePlacement);
 
-  this.setInData(['policies', 'items'], policies);
-  this.setInData(['policies', 'newItem'], immutablePolicy);
-  this.setInData(['policies', 'editingItemData'], null);
-  this.emitChange();
-
-  // After we notify listeners, the new item is no logner actual
-  this.setInData(['policies', 'newItem'], null);
-};
-
-let onPolicyUpdated = function(policy) {
-  _enhancePolicy.call(this, policy);
-
-  var immutablePolicy = Immutable(policy);
-
-  var policies = this.data.policies.items.asMutable();
-
-  for (var i = 0; i < policies.length; i++) {
-    if (policies[i].documentSelfLink === immutablePolicy.documentSelfLink) {
-      policies[i] = immutablePolicy;
-    }
-  }
-
-  this.setInData(['policies', 'items'], policies);
-  this.setInData(['policies', 'updatedItem'], immutablePolicy);
-  this.setInData(['policies', 'editingItemData'], null);
+  this.setInData(['placements', 'items'], placements);
+  this.setInData(['placements', 'newItem'], immutablePlacement);
+  this.setInData(['placements', 'editingItemData'], null);
   this.emitChange();
 
   // After we notify listeners, the new item is no longer actual
-  this.setInData(['policies', 'updatedItem'], null);
+  this.setInData(['placements', 'newItem'], null);
 };
 
-let _createDto = function(policy) {
-  var dto = $.extend({}, policy);
+let onPlacementUpdated = function(placement) {
+  _enhancePlacement.call(this, placement);
+
+  var immutablePlacement = Immutable(placement);
+
+  var placements = this.data.placements.items.asMutable();
+
+  for (var i = 0; i < placements.length; i++) {
+    if (placements[i].documentSelfLink === immutablePlacement.documentSelfLink) {
+      placements[i] = immutablePlacement;
+    }
+  }
+
+  this.setInData(['placements', 'items'], placements);
+  this.setInData(['placements', 'updatedItem'], immutablePlacement);
+  this.setInData(['placements', 'editingItemData'], null);
+  this.emitChange();
+
+  // After we notify listeners, the new item is no longer actual
+  this.setInData(['placements', 'updatedItem'], null);
+};
+
+let _createDto = function(placement) {
+  var dto = $.extend({}, placement);
   dto.resourcePoolLink = dto.resourcePool ? dto.resourcePool.documentSelfLink : null;
   dto.deploymentPolicyLink = dto.deploymentPolicy ? dto.deploymentPolicy.documentSelfLink : null;
 
-  dto.name = policy.name ? policy.name
+  dto.name = placement.name ? placement.name
                 : (dto.group || 'group') + ' : ' + (dto.resourcePoolLink || 'resourcePoolLink');
   dto.tenantLinks = [];
   if (dto.groupId) {
@@ -127,7 +128,7 @@ let _createDto = function(policy) {
       dto.tenantLinks.push(tenantLink.substring(0, tenantLink.indexOf('/groups/')));
     }
 
-    let groups = this.selectFromData(['policies', 'groups']).get();
+    let groups = this.selectFromData(['placements', 'groups']).get();
     if (groups) {
       let group = _getGroup(dto.groupId, groups);
       if (group && group.documentSelfLink) {
@@ -144,7 +145,7 @@ let _createDto = function(policy) {
   return dto;
 };
 
-let PoliciesStore = Reflux.createStore({
+let PlacementsStore = Reflux.createStore({
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
 
   init: function() {
@@ -159,7 +160,7 @@ let PoliciesStore = Reflux.createStore({
           clearTimeout(this.itemSelectTimeout);
 
           this.itemSelectTimeout = setTimeout(() => {
-            this.setInData(['policies', 'editingItemData', 'selectedResourcePool'], itemToSelect);
+            this.setInData(['placements', 'editingItemData', 'selectedResourcePool'], itemToSelect);
             this.emitChange();
 
             this.closeToolbar();
@@ -169,9 +170,9 @@ let PoliciesStore = Reflux.createStore({
         this.emitChange();
       }
 
-      if (resourcePoolsData.items && this.data.policies && this.data.policies.editingItemData) {
+      if (resourcePoolsData.items && this.data.placements && this.data.placements.editingItemData) {
 
-        this.setInData(['policies', 'editingItemData', 'resourcePools'], resourcePoolsData.items);
+        this.setInData(['placements', 'editingItemData', 'resourcePools'], resourcePoolsData.items);
         this.emitChange();
       }
     });
@@ -187,7 +188,7 @@ let PoliciesStore = Reflux.createStore({
             clearTimeout(this.itemSelectTimeout);
 
             this.itemSelectTimeout = setTimeout(() => {
-              this.setInData(['policies', 'editingItemData', 'selectedGroup'], itemToSelect);
+              this.setInData(['placements', 'editingItemData', 'selectedGroup'], itemToSelect);
               this.emitChange();
 
               this.onCloseToolbar();
@@ -197,24 +198,25 @@ let PoliciesStore = Reflux.createStore({
           this.emitChange();
         }
 
-        if (resourceGroupsData.items && this.data.policies && this.data.policies.editingItemData) {
+        if (resourceGroupsData.items && this.data.placements
+            && this.data.placements.editingItemData) {
 
-          this.setInData(['policies', 'editingItemData', 'groups'], resourceGroupsData.items);
+          this.setInData(['placements', 'editingItemData', 'groups'], resourceGroupsData.items);
           this.emitChange();
         }
 
       });
     }
 
-    DeploymentPolicyStore.listen((policiesData) => {
+    DeploymentPolicyStore.listen((placementsData) => {
       if (this.isContextPanelActive(constants.CONTEXT_PANEL.DEPLOYMENT_POLICIES)) {
-        this.setActiveItemData(policiesData);
+        this.setActiveItemData(placementsData);
 
-        var itemToSelect = policiesData.newItem || policiesData.updatedItem;
+        var itemToSelect = placementsData.newItem || placementsData.updatedItem;
         if (itemToSelect && this.data.contextView.shouldSelectAndComplete) {
           clearTimeout(this.itemSelectTimeout);
           this.itemSelectTimeout = setTimeout(() => {
-            this.setInData(['policies', 'editingItemData', 'selectedDeploymentPolicy'],
+            this.setInData(['placements', 'editingItemData', 'selectedDeploymentPolicy'],
               itemToSelect);
             this.emitChange();
 
@@ -225,46 +227,46 @@ let PoliciesStore = Reflux.createStore({
         this.emitChange();
       }
 
-      if (policiesData.items && this.data.policies && this.data.policies.editingItemData) {
-        this.setInData(['policies', 'editingItemData', 'deploymentPolicies'],
-          policiesData.items);
+      if (placementsData.items && this.data.placements && this.data.placements.editingItemData) {
+        this.setInData(['placements', 'editingItemData', 'deploymentPolicies'],
+          placementsData.items);
         this.emitChange();
       }
     });
   },
 
   listenables: [
-    actions.PolicyActions,
-    actions.PolicyContextToolbarActions
+    actions.PlacementActions,
+    actions.PlacementContextToolbarActions
   ],
 
-  onOpenPolicies: function() {
-    this.setInData(['policies', 'editingItemData'], null);
+  onOpenPlacements: function() {
+    this.setInData(['placements', 'editingItemData'], null);
     this.setInData(['contextView'], {});
 
     var operation = this.requestCancellableOperation(OPERATION.LIST);
     if (operation) {
-      this.setInData(['policies', 'items'], constants.LOADING);
+      this.setInData(['placements', 'items'], constants.LOADING);
 
       if (utils.isApplicationEmbedded()) {
-        this.setInData(['policies', 'groups'], constants.LOADING);
+        this.setInData(['placements', 'groups'], constants.LOADING);
 
         operation.forPromise(Promise.all([
-          services.loadPolicies(),
+          services.loadPlacements(),
           services.loadGroups()
-        ])).then(([policiesResult, groupsResult]) => {
+        ])).then(([placementsResult, groupsResult]) => {
 
-          this.setInData(['policies', 'groups'], Object.values(groupsResult));
+          this.setInData(['placements', 'groups'], Object.values(groupsResult));
           this.emitChange();
 
-          this.processPolicies(policiesResult);
+          this.processPlacements(placementsResult);
         });
       } else {
         operation.forPromise(
-          services.loadPolicies()
-        ).then((policiesResult) => {
+          services.loadPlacements()
+        ).then((placementsResult) => {
 
-          this.processPolicies(policiesResult);
+          this.processPlacements(placementsResult);
         });
       }
     }
@@ -278,59 +280,59 @@ let PoliciesStore = Reflux.createStore({
     actions.DeploymentPolicyActions.retrieveDeploymentPolicies();
   },
 
-  processPolicies: function(policiesResult) {
-    var policies = utils.resultToArray(policiesResult);
+  processPlacements: function(placementsResult) {
+    var placements = utils.resultToArray(placementsResult);
 
-    let resourcePoolLinks = policies
-        .filter((policy) => policy.resourcePoolLink)
-        .map((policy) => policy.resourcePoolLink);
+    let resourcePoolLinks = placements
+        .filter((placement) => placement.resourcePoolLink)
+        .map((placement) => placement.resourcePoolLink);
 
-    let deploymentPolicyLinks = policies
-        .filter((policy) => policy.deploymentPolicyLink)
-        .map((policy) => policy.deploymentPolicyLink);
+    let deploymentPolicyLinks = placements
+        .filter((placement) => placement.deploymentPolicyLink)
+        .map((placement) => placement.deploymentPolicyLink);
 
     var calls = [
       services.loadResourcePools([...new Set(resourcePoolLinks)]).then((result) => {
-        this.setInData(['policies', 'resourcePools'], Object.values(result));
+        this.setInData(['placements', 'resourcePools'], Object.values(result));
       }),
       services.loadDeploymentPolicies([...new Set(deploymentPolicyLinks)]).then((result) => {
-        this.setInData(['policies', 'deploymentPolicies'], Object.values(result));
+        this.setInData(['placements', 'deploymentPolicies'], Object.values(result));
       })
     ];
     if (!utils.isApplicationEmbedded()) {
-      let resourceGroupLinks = policies
-                                    .filter((policy) => policy.tenantLinks)
-                                    .map((policy) => utils.getGroup(policy.tenantLinks));
+      let resourceGroupLinks = placements
+                                    .filter((placement) => placement.tenantLinks)
+                                    .map((placement) => utils.getGroup(placement.tenantLinks));
 
       calls.push(services.loadResourceGroups([...new Set(resourceGroupLinks)]).then((result) => {
-        this.setInData(['policies', 'groups'], Object.values(result));
+        this.setInData(['placements', 'groups'], Object.values(result));
       }));
     }
     Promise.all(calls).then(() => {
-      policies.forEach((policy) => {
-        _enhancePolicy.call(this, policy);
+      placements.forEach((placement) => {
+        _enhancePlacement.call(this, placement);
       });
 
-      this.setInData(['policies', 'items'], policies);
+      this.setInData(['placements', 'items'], placements);
       this.emitChange();
     });
   },
 
-  onEditPolicy: function(policy) {
+  onEditPlacement: function(placement) {
     this.clearEditError();
 
-    var policyModel = {};
-    if (policy) {
-      policyModel = $.extend({}, policy);
+    var placementModel = {};
+    if (placement) {
+      placementModel = $.extend({}, placement);
     }
 
     var resourcePools = ResourcePoolsStore.getData().items;
 
-    if (resourcePools && policy) {
+    if (resourcePools && placement) {
       for (let i = 0; i < resourcePools.length; i++) {
         var resourcePool = resourcePools[i];
-        if (resourcePool.documentSelfLink === policy.resourcePoolLink) {
-          policyModel.resourcePool = resourcePool;
+        if (resourcePool.documentSelfLink === placement.resourcePoolLink) {
+          placementModel.resourcePool = resourcePool;
           break;
         }
       }
@@ -338,83 +340,83 @@ let PoliciesStore = Reflux.createStore({
 
     var deploymentPolicies = DeploymentPolicyStore.getData().items;
 
-    if (deploymentPolicies && policy) {
+    if (deploymentPolicies && placement) {
       for (let i = 0; i < deploymentPolicies.length; i++) {
         var deploymentPolicy = deploymentPolicies[i];
-        if (deploymentPolicy.documentSelfLink === policy.deploymentPolicyLink) {
-          policyModel.deploymentPolicy = deploymentPolicy;
+        if (deploymentPolicy.documentSelfLink === placement.deploymentPolicyLink) {
+          placementModel.deploymentPolicy = deploymentPolicy;
           break;
         }
       }
     }
 
     let groups = utils.isApplicationEmbedded()
-                    ? this.selectFromData(['policies', 'groups']).get()
+                    ? this.selectFromData(['placements', 'groups']).get()
                     : ResourceGroupsStore.getData().items;
-    if (groups && policy) {
-      let groupId = utils.getGroup(policy.tenantLinks);
-      policyModel.groupId = groupId;
+    if (groups && placement) {
+      let groupId = utils.getGroup(placement.tenantLinks);
+      placementModel.groupId = groupId;
 
       if (groupId) {
-        policyModel.group = _getGroup(groupId, groups);
+        placementModel.group = _getGroup(groupId, groups);
       }
     }
 
-    this.setInData(['policies', 'editingItemData', 'item'], policyModel);
-    this.setInData(['policies', 'editingItemData', 'resourcePools'], resourcePools);
-    this.setInData(['policies', 'editingItemData', 'deploymentPolicies'], deploymentPolicies);
-    this.setInData(['policies', 'editingItemData', 'groups'], groups);
+    this.setInData(['placements', 'editingItemData', 'item'], placementModel);
+    this.setInData(['placements', 'editingItemData', 'resourcePools'], resourcePools);
+    this.setInData(['placements', 'editingItemData', 'deploymentPolicies'], deploymentPolicies);
+    this.setInData(['placements', 'editingItemData', 'groups'], groups);
 
     this.emitChange();
   },
 
-  onCancelEditPolicy: function() {
-    this.setInData(['policies', 'editingItemData'], null);
+  onCancelEditPlacement: function() {
+    this.setInData(['placements', 'editingItemData'], null);
     this.emitChange();
   },
 
-  onCreatePolicy: function(policy) {
+  onCreatePlacement: function(placement) {
     this.clearEditError();
 
-    var policyDto = _createDto.call(this, policy);
+    var placementDto = _createDto.call(this, placement);
 
-    services.createPolicy(policyDto).then((policy) => {
+    services.createPlacement(placementDto).then((placement) => {
 
-      onPolicyCreated.call(this, policy);
+      onPlacementCreated.call(this, placement);
 
     }).catch(this.onGenericEditError);
   },
 
-  onUpdatePolicy: function(policy) {
+  onUpdatePlacement: function(placement) {
     this.clearEditError();
 
-    var dto = _createDto.call(this, policy);
+    var dto = _createDto.call(this, placement);
 
-    services.updatePolicy(dto).then((policy) => {
+    services.updatePlacement(dto).then((placement) => {
       // If the backend did not make any changes, the response will be empty
-      policy = policy || dto;
+      placement = placement || dto;
 
-      onPolicyUpdated.call(this, policy);
+      onPlacementUpdated.call(this, placement);
 
     }).catch(this.onGenericEditError);
   },
 
-  onDeletePolicy: function(policy) {
+  onDeletePlacement: function(placement) {
     this.clearGeneralError();
 
-    services.deletePolicy(policy).then(() => {
-      var policies = this.data.policies.items.asMutable();
+    services.deletePlacement(placement).then(() => {
+      var placements = this.data.placements.items.asMutable();
 
-      for (var i = policies.length - 1; i >= 0; i--) {
-        if (policies[i].documentSelfLink === policy.documentSelfLink) {
-          policies.splice(i, 1);
+      for (var i = placements.length - 1; i >= 0; i--) {
+        if (placements[i].documentSelfLink === placement.documentSelfLink) {
+          placements.splice(i, 1);
         }
       }
 
-      this.setInData(['policies', 'items'], policies);
+      this.setInData(['placements', 'items'], placements);
       this.emitChange();
 
-    }).catch(this.onPolicyDeleteError);
+    }).catch(this.onPlacementDeleteError);
   },
 
   onOpenToolbarResourcePools: function() {
@@ -472,17 +474,17 @@ let PoliciesStore = Reflux.createStore({
   onGenericEditError: function(e) {
     var validationErrors = utils.getValidationErrors(e);
 
-    this.setInData(['policies', 'editingItemData', 'validationErrors'], validationErrors);
+    this.setInData(['placements', 'editingItemData', 'validationErrors'], validationErrors);
     this.emitChange();
   },
 
-  onPolicyDeleteError: function(e) {
+  onPlacementDeleteError: function(e) {
     this.setInData(['error'], utils.getErrorMessage(e));
     this.emitChange();
   },
 
   clearEditError: function() {
-    this.setInData(['policies', 'editingItemData', 'validationErrors'], null);
+    this.setInData(['placements', 'editingItemData', 'validationErrors'], null);
     this.emitChange();
   },
 
@@ -492,5 +494,5 @@ let PoliciesStore = Reflux.createStore({
   }
 });
 
-export default PoliciesStore;
+export default PlacementsStore;
 

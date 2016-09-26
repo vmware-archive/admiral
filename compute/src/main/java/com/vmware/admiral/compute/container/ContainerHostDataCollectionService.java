@@ -42,7 +42,7 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourcePoolQueryHelper;
 import com.vmware.admiral.compute.ResourcePoolQueryHelper.QueryResult.ResourcePoolData;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.service.common.AbstractCallbackServiceHandler;
@@ -335,7 +335,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                             logSevere("Unable to update the resource pool with link "
                                     + resourcePoolState.documentSelfLink);
                         }
-                        updatePolicies(resourcePoolState);
+                        updatePlacements(resourcePoolState);
                     }));
         };
 
@@ -348,75 +348,74 @@ public class ContainerHostDataCollectionService extends StatefulService {
     }
 
     /**
-     * Update the policies if we have more resources reserved than what's actually in the resource
-     * pool. Sort the policies by priority and decrease from their reservations
+     * Update the placements if we have more resources reserved than what's actually in the resource
+     * pool. Sort the placements by priority and decrease from their reservations
      *
      * @param resourcePoolState
      */
-    private void updatePolicies(ResourcePoolService.ResourcePoolState resourcePoolState) {
+    private void updatePlacements(ResourcePoolService.ResourcePoolState resourcePoolState) {
         QueryTask queryTask = QueryUtil.buildPropertyQuery(
-                GroupResourcePolicyService.GroupResourcePolicyState.class,
-                GroupResourcePolicyService.GroupResourcePolicyState.FIELD_NAME_RESOURCE_POOL_LINK,
+                GroupResourcePlacementService.GroupResourcePlacementState.class,
+                GroupResourcePlacementService.GroupResourcePlacementState.FIELD_NAME_RESOURCE_POOL_LINK,
                 resourcePoolState.documentSelfLink);
         QueryUtil.addExpandOption(queryTask);
-        ServiceDocumentQuery<GroupResourcePolicyState> query = new ServiceDocumentQuery<>(
-                getHost(), GroupResourcePolicyState.class);
-        List<GroupResourcePolicyState> policies = new ArrayList<>();
+        ServiceDocumentQuery<GroupResourcePlacementState> query = new ServiceDocumentQuery<>(
+                getHost(), GroupResourcePlacementState.class);
+        List<GroupResourcePlacementState> placements = new ArrayList<>();
         query.query(queryTask, (r) -> {
             if (r.hasException()) {
                 logSevere(r.getException());
             } else if (r.hasResult()) {
-                policies.add(r.getResult());
+                placements.add(r.getResult());
             } else {
-                if (policies.isEmpty()) {
+                if (placements.isEmpty()) {
                     return;
                 }
 
-                long diff = policies.stream()
+                long diff = placements.stream()
                         .map(q -> q.memoryLimit).reduce(0L, (a, b) -> a + b)
                         - resourcePoolState.maxMemoryBytes;
                 if (diff <= 0) {
                     return;
                 }
 
-                // Sort the policies by their "normalized" priority (priority divided by the sum of
-                // all
-                // priorities in the group). We do that because the priorities are relative within
-                // the group. E.g. Group A has two policies with priorities 1 and 2; group B has two
-                // policies with priorities 100 and 200 thus the normalized priorities will be:
+                // Sort the placements by their "normalized" priority (priority divided by the sum of
+                // all priorities in the group). We do that because the priorities are relative within
+                // the group. E.g. Group A has two placements with priorities 1 and 2; group B has two
+                // placements with priorities 100 and 200 thus the normalized priorities will be:
                 // 0.33; 0.66 for A and 0.33 and 0.66 for B
-                Map<String, Integer> sumOfPrioritiesByGroup = policies
+                Map<String, Integer> sumOfPrioritiesByGroup = placements
                         .stream().collect(
                                 Collectors.groupingBy(
-                                        (GroupResourcePolicyState policy) -> getGroup(policy),
+                                        (GroupResourcePlacementState placement) -> getGroup(placement),
                                         Collectors.summingInt((
-                                                GroupResourcePolicyState policy) -> policy.priority)));
+                                                GroupResourcePlacementState placement) -> placement.priority)));
 
-                Comparator<GroupResourcePolicyService.GroupResourcePolicyState> comparator = (q1,
+                Comparator<GroupResourcePlacementService.GroupResourcePlacementState> comparator = (q1,
                         q2) -> Double.compare(
                                 ((double) q2.priority) / sumOfPrioritiesByGroup.get(getGroup(q2)),
                                 ((double) q1.priority) / sumOfPrioritiesByGroup.get(getGroup(q1)));
 
-                policies.sort(comparator);
-                Set<GroupResourcePolicyService.GroupResourcePolicyState> policiesToUpdate = new HashSet<>();
-                for (GroupResourcePolicyService.GroupResourcePolicyState policy : policies) {
-                    if (policy.availableMemory == 0 || policy.memoryLimit == 0) {
+                placements.sort(comparator);
+                Set<GroupResourcePlacementService.GroupResourcePlacementState> placementsToUpdate = new HashSet<>();
+                for (GroupResourcePlacementService.GroupResourcePlacementState placement : placements) {
+                    if (placement.availableMemory == 0 || placement.memoryLimit == 0) {
                         continue;
                     }
 
-                    policiesToUpdate.add(policy);
-                    if (diff > policy.availableMemory) {
-                        policy.memoryLimit -= policy.availableMemory;
-                        diff -= policy.availableMemory;
+                    placementsToUpdate.add(placement);
+                    if (diff > placement.availableMemory) {
+                        placement.memoryLimit -= placement.availableMemory;
+                        diff -= placement.availableMemory;
                     } else {
-                        policy.memoryLimit -= diff;
+                        placement.memoryLimit -= diff;
                         break;
                     }
                 }
 
-                for (GroupResourcePolicyService.GroupResourcePolicyState policyToUpdate : policiesToUpdate) {
-                    sendRequest(Operation.createPut(this, policyToUpdate.documentSelfLink)
-                            .setBody(policyToUpdate));
+                for (GroupResourcePlacementService.GroupResourcePlacementState placementToUpdate : placementsToUpdate) {
+                    sendRequest(Operation.createPut(this, placementToUpdate.documentSelfLink)
+                            .setBody(placementToUpdate));
                 }
 
             }
@@ -424,9 +423,9 @@ public class ContainerHostDataCollectionService extends StatefulService {
     }
 
     // Assume for now there's only one
-    private static String getGroup(GroupResourcePolicyService.GroupResourcePolicyState policy) {
-        if (policy.tenantLinks != null) {
-            return policy.tenantLinks.get(0);
+    private static String getGroup(GroupResourcePlacementService.GroupResourcePlacementState placement) {
+        if (placement.tenantLinks != null) {
+            return placement.tenantLinks.get(0);
         } else {
             return "";
         }
@@ -499,7 +498,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                         logSevere("Unable to update the resource pool with link "
                                 + rpPutState.documentSelfLink);
                     }
-                    updatePolicies(rpPutState);
+                    updatePlacements(rpPutState);
                 }));
     }
 

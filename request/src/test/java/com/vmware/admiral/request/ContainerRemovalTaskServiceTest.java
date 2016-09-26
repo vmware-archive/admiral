@@ -40,7 +40,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
@@ -60,7 +60,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         super.setUp();
         request = TestRequestStateFactory.createRequestState();
         request.resourceDescriptionLink = containerDesc.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceCount = 2;
     }
 
@@ -82,11 +82,11 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
                 request.resourceLinks);
 
         assertEquals(request.resourceCount, containerStateLinks.size());
-        // verify the policies has been reserved:
-        GroupResourcePolicyState groupResourcePolicy = getDocument(GroupResourcePolicyState.class,
-                request.groupResourcePolicyLink);
-        assertNotNull(groupResourcePolicy);
-        assertEquals(groupResourcePolicy.allocatedInstancesCount, request.resourceCount);
+        // verify the placements has been reserved:
+        GroupResourcePlacementState groupResourcePlacement = getDocument(GroupResourcePlacementState.class,
+                request.groupResourcePlacementLink);
+        assertNotNull(groupResourcePlacement);
+        assertEquals(groupResourcePlacement.allocatedInstancesCount, request.resourceCount);
 
         waitFor(() -> {
             ComputeState computeState = getDocument(ComputeState.class,
@@ -116,11 +116,11 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         containerStateLinks = findResourceLinks(ContainerState.class, request.resourceLinks);
         assertTrue(containerStateLinks.isEmpty());
 
-        // verified the policies have been released:
-        groupResourcePolicy = getDocument(GroupResourcePolicyState.class,
-                request.groupResourcePolicyLink);
-        assertNotNull(groupResourcePolicy);
-        assertEquals(groupResourcePolicy.allocatedInstancesCount, 0);
+        // verified the placements have been released:
+        groupResourcePlacement = getDocument(GroupResourcePlacementState.class,
+                request.groupResourcePlacementLink);
+        assertNotNull(groupResourcePlacement);
+        assertEquals(groupResourcePlacement.allocatedInstancesCount, 0);
 
         // verify that the containers where removed from the docker mock
         Map<String, String> containerRefsByIds = MockDockerAdapterService
@@ -169,11 +169,11 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
             waitForContainerPowerState(PowerState.PROVISIONING, container.documentSelfLink);
         }
 
-        // verify the policies has been reserved:
-        GroupResourcePolicyState groupResourcePolicy = getDocument(GroupResourcePolicyState.class,
-                request.groupResourcePolicyLink);
-        assertNotNull(groupResourcePolicy);
-        assertEquals(groupResourcePolicy.allocatedInstancesCount, request.resourceCount);
+        // verify the placements has been reserved:
+        GroupResourcePlacementState groupResourcePlacement = getDocument(GroupResourcePlacementState.class,
+                request.groupResourcePlacementLink);
+        assertNotNull(groupResourcePlacement);
+        assertEquals(groupResourcePlacement.allocatedInstancesCount, request.resourceCount);
 
         RequestBrokerState day2RemovalRequest = new RequestBrokerState();
         day2RemovalRequest.documentSelfLink = extractId(request.documentSelfLink) + "-removal";
@@ -194,11 +194,11 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         containerStateLinks = findResourceLinks(ContainerState.class, request.resourceLinks);
         assertTrue(containerStateLinks.isEmpty());
 
-        // verified the policies have been released:
-        groupResourcePolicy = getDocument(GroupResourcePolicyState.class,
-                request.groupResourcePolicyLink);
-        assertNotNull(groupResourcePolicy);
-        assertEquals(groupResourcePolicy.allocatedInstancesCount, 0);
+        // verified the placements have been released:
+        groupResourcePlacement = getDocument(GroupResourcePlacementState.class,
+                request.groupResourcePlacementLink);
+        assertNotNull(groupResourcePlacement);
+        assertEquals(groupResourcePlacement.allocatedInstancesCount, 0);
 
         // verify that the containers where removed from the docker mock
         Map<String, String> containerRefsByIds = MockDockerAdapterService
@@ -279,7 +279,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         ContainerState container = TestRequestStateFactory.createContainer();
         container.descriptionLink = containerDesc.documentSelfLink;
         container.adapterManagementReference = containerDesc.instanceAdapterReference;
-        container.groupResourcePolicyLink = groupPolicyState.documentSelfLink;
+        container.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
         container.system = Boolean.TRUE;
         container = doPost(container, ContainerFactoryService.SELF_LINK);
 
@@ -311,7 +311,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request = startRequest(request);
         request = waitForRequestToComplete(request);
 
@@ -331,7 +331,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         //Remove Containers
         request = TestRequestStateFactory.createRequestState();
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceLinks = containerLinks;
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);
@@ -357,7 +357,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request = startRequest(request);
         request = waitForRequestToComplete(request);
 
@@ -378,7 +378,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         //Remove Containers
         request = TestRequestStateFactory.createRequestState();
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceLinks = containerLinks;
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);
@@ -418,7 +418,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request = startRequest(request);
         request = waitForRequestToComplete(request);
 
@@ -442,7 +442,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         //Remove Containers
         request = TestRequestStateFactory.createRequestState();
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceLinks = containerLinks;
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);
@@ -483,7 +483,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request = startRequest(request);
         request = waitForRequestToComplete(request);
 
@@ -498,7 +498,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceLinks = new ArrayList<String>();
         request.resourceLinks.add(container1.documentSelfLink);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
@@ -511,7 +511,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceLinks = new ArrayList<String>();
         request.resourceLinks.add(container2.documentSelfLink);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
@@ -534,14 +534,14 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         desc = doPost(desc, ContainerDescriptionService.FACTORY_LINK);
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceDescriptionLink = desc.documentSelfLink;
         request = startRequest(request);
         request = waitForRequestToComplete(request);
         String documentLink1 = request.resourceLinks.get(0);
 
         request = TestRequestStateFactory.createRequestState();
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceDescriptionLink = desc.documentSelfLink;
         request = startRequest(request);
         request = waitForRequestToComplete(request);
@@ -549,7 +549,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceLinks = new ArrayList<String>();
         request.resourceLinks.add(documentLink1);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
@@ -563,7 +563,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceLinks = new ArrayList<String>();
         request.resourceLinks.add(documentLink2);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
@@ -580,7 +580,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         container.descriptionLink = containerDesc.documentSelfLink;
         container.adapterManagementReference = containerDesc.instanceAdapterReference;
         container.compositeComponentLink = component.documentSelfLink;
-        container.groupResourcePolicyLink = groupPolicyState.documentSelfLink;
+        container.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
         container = doPost(container, ContainerFactoryService.SELF_LINK);
         return container;
     }

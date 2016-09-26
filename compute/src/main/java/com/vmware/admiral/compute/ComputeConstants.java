@@ -28,7 +28,7 @@ public class ComputeConstants {
 
     public static final String COMPUTE_CONFIG_CONTENT_PROP_NAME = "__computeConfigContent";
 
-    public static final String GROUP_RESOURCE_POLICY_LINK_NAME = "__groupResourcePolicyLink";
+    public static final String GROUP_RESOURCE_PLACEMENT_LINK_NAME = "__groupResourcePlacementLink";
 
     public static final String DOCKER_URI_PROP_NAME = "__dockerUri";
 

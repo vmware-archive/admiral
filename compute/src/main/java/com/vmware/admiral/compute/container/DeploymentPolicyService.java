@@ -14,7 +14,7 @@ package com.vmware.admiral.compute.container;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ContainerHostService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
@@ -56,8 +56,8 @@ public class DeploymentPolicyService extends StatefulService {
         Operation[] ops = new Operation[] {
             createReferenceCountOperation(ComputeState.class, QuerySpecification.buildCompositeFieldName(
                     ComputeState.FIELD_NAME_CUSTOM_PROPERTIES, ContainerHostService.CUSTOM_PROPERTY_DEPLOYMENT_POLICY)),
-            createReferenceCountOperation(GroupResourcePolicyState.class,
-                    GroupResourcePolicyState.FIELD_NAME_DEPLOYMENT_POLICY_LINK)
+            createReferenceCountOperation(GroupResourcePlacementState.class,
+                    GroupResourcePlacementState.FIELD_NAME_DEPLOYMENT_POLICY_LINK)
         };
 
         OperationJoin.create(ops).setCompletion((os, es) -> {

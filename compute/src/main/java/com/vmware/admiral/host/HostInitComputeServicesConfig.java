@@ -31,7 +31,7 @@ import com.vmware.admiral.compute.container.ContainerLogService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerShellService;
 import com.vmware.admiral.compute.container.DeploymentPolicyService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.admiral.compute.container.TemplateSearchService;
@@ -74,7 +74,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ElasticPlacementZoneConfigurationService.class);
 
         startServiceFactories(host, ContainerDescriptionService.class,
-                GroupResourcePolicyService.class,
+                GroupResourcePlacementService.class,
                 ContainerHostDataCollectionService.class,
                 EnvironmentMappingService.class,
                 DeploymentPolicyService.class,

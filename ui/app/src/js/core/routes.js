@@ -50,9 +50,9 @@ crossroads.addRoute('/hosts/{hostId*}', function(hostId) {
   actions.HostActions.editHost(hostId);
 });
 
-crossroads.addRoute('/policies', function() {
-  actions.AppActions.openView(constants.VIEWS.POLICIES.name);
-  actions.PolicyActions.openPolicies();
+crossroads.addRoute('/placements', function() {
+  actions.AppActions.openView(constants.VIEWS.PLACEMENTS.name);
+  actions.PlacementActions.openPlacements();
 });
 
 crossroads.addRoute('/templates:?query:', function(query) {
@@ -248,17 +248,17 @@ actions.NavigationActions.openCompositeContainerDetails.listen(function(composit
   hasher.setHash('containers/composite/' + compositeComponentId);
 });
 
-actions.NavigationActions.showContainersPerPolicy.listen(function(policyId) {
+actions.NavigationActions.showContainersPerPlacement.listen(function(placementId) {
   let queryOptions = {
-    'policy': policyId
+    'placement': placementId
   };
 
   hasher.setHash(getHashWithQuery('containers', queryOptions));
 });
 
 
-actions.NavigationActions.openPolicies.listen(function() {
-  hasher.setHash('policies');
+actions.NavigationActions.openPlacements.listen(function() {
+  hasher.setHash('placements');
 });
 
 actions.NavigationActions.openEnvironments.listen(function() {

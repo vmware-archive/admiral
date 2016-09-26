@@ -9,9 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import PoliciesRowEditTemplate from 'PoliciesRowEditTemplate';
+import PlacementsRowEditTemplate from 'PlacementsRowEditTemplate';
 import {
-  PolicyContextToolbarActions, PolicyActions
+  PlacementContextToolbarActions, PlacementActions
 }
 from 'actions/Actions';
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
@@ -49,8 +49,8 @@ const deploymentPolicyManageOptions = [{
   icon: 'pencil'
 }];
 
-function PoliciesRowEditor() {
-  this.$el = $(PoliciesRowEditTemplate());
+function PlacementsRowEditor() {
+  this.$el = $(PlacementsRowEditTemplate());
 
   if (utils.isApplicationEmbedded()) {
     let groupFromEl = this.$el.find('.group');
@@ -60,14 +60,14 @@ function PoliciesRowEditor() {
 
   this.$el.find('.fa-question-circle').tooltip();
 
-  this.alert = new Alert(this.$el, this.$el.find('.policyEdit'), true);
+  this.alert = new Alert(this.$el, this.$el.find('.placementEdit'), true);
 
-  this.policyGroupInput = new GroupInput(this.$el.find('.policyGroupInput'), () =>
+  this.placementGroupInput = new GroupInput(this.$el.find('.placementGroupInput'), () =>
     toggleButtonsState.call(this));
 
   let resourcePoolInputEl = this.$el.find('.resourcePool .form-control');
   this.resourcePoolInput = new DropdownSearchMenu(resourcePoolInputEl, {
-    title: i18n.t('app.policy.edit.selectResourcePool'),
+    title: i18n.t('app.placement.edit.selectResourcePool'),
     searchPlaceholder: i18n.t('dropdownSearchMenu.searchPlaceholder', {
       entity: i18n.t('app.resourcePool.entity')
     })
@@ -76,9 +76,9 @@ function PoliciesRowEditor() {
   this.resourcePoolInput.setManageOptions(resourcePoolManageOptions);
   this.resourcePoolInput.setManageOptionSelectCallback(function(option) {
     if (option.id === 'rp-create') {
-      PolicyContextToolbarActions.createResourcePool();
+      PlacementContextToolbarActions.createResourcePool();
     } else {
-      PolicyContextToolbarActions.manageResourcePools();
+      PlacementContextToolbarActions.manageResourcePools();
     }
   });
   this.resourcePoolInput.setClearOptionSelectCallback(() => toggleButtonsState.call(this));
@@ -87,7 +87,7 @@ function PoliciesRowEditor() {
 
   var deploymentPolicyEl = this.$el.find('.deploymentPolicy .form-control');
   this.deploymentPolicyInput = new DropdownSearchMenu(deploymentPolicyEl, {
-    title: i18n.t('app.policy.edit.selectDeploymentPolicy'),
+    title: i18n.t('app.placement.edit.selectDeploymentPolicy'),
     searchPlaceholder: i18n.t('dropdownSearchMenu.searchPlaceholder', {
       entity: i18n.t('app.deploymentPolicy.entity')
     })
@@ -96,9 +96,9 @@ function PoliciesRowEditor() {
   this.deploymentPolicyInput.setManageOptions(deploymentPolicyManageOptions);
   this.deploymentPolicyInput.setManageOptionSelectCallback(function(option) {
     if (option.id === 'policy-create') {
-      PolicyContextToolbarActions.createDeploymentPolicy();
+      PlacementContextToolbarActions.createDeploymentPolicy();
     } else {
-      PolicyContextToolbarActions.manageDeploymentPolicies();
+      PlacementContextToolbarActions.manageDeploymentPolicies();
     }
   });
 
@@ -107,34 +107,35 @@ function PoliciesRowEditor() {
   addEventListeners.call(this);
 }
 
-PoliciesRowEditor.prototype.getEl = function() {
+PlacementsRowEditor.prototype.getEl = function() {
   return this.$el;
 };
 
-PoliciesRowEditor.prototype.setData = function(data) {
+PlacementsRowEditor.prototype.setData = function(data) {
   if (this.data !== data) {
     var oldData = this.data || {};
 
     if (oldData.item !== data.item) {
-      var policyObject = data.item;
+      var placementObject = data.item;
 
-      if (policyObject && policyObject.documentSelfLink) {
-        this.$el.find('.title').html(i18n.t('app.policy.edit.update'));
+      if (placementObject && placementObject.documentSelfLink) {
+        this.$el.find('.title').html(i18n.t('app.placement.edit.update'));
       } else {
-        this.$el.find('.title').html(i18n.t('app.policy.edit.createNew'));
-        policyObject = {};
+        this.$el.find('.title').html(i18n.t('app.placement.edit.createNew'));
+        placementObject = {};
       }
 
-      let groupInputValue = policyObject.group ? policyObject.group.id : policyObject.groupId;
-      this.policyGroupInput.setValue(groupInputValue);
-      this.resourcePoolInput.setSelectedOption(policyObject.resourcePool);
-      this.deploymentPolicyInput.setSelectedOption(policyObject.deploymentPolicy);
-      this.$el.find('.maxInstancesInput input').val(policyObject.maxNumberInstances);
-      this.$el.find('.priorityInput input').val(policyObject.priority);
-      this.$el.find('.nameInput input').val(policyObject.name);
+      let groupInputValue = placementObject.group ? placementObject.group.id :
+        placementObject.groupId;
+      this.placementGroupInput.setValue(groupInputValue);
+      this.resourcePoolInput.setSelectedOption(placementObject.resourcePool);
+      this.deploymentPolicyInput.setSelectedOption(placementObject.deploymentPolicy);
+      this.$el.find('.maxInstancesInput input').val(placementObject.maxNumberInstances);
+      this.$el.find('.priorityInput input').val(placementObject.priority);
+      this.$el.find('.nameInput input').val(placementObject.name);
 
-      if ($.isNumeric(policyObject.memoryLimit)) {
-        let size = utils.fromBytes(policyObject.memoryLimit);
+      if ($.isNumeric(placementObject.memoryLimit)) {
+        let size = utils.fromBytes(placementObject.memoryLimit);
         normalizeToKB(size);
 
         this.$el.find('.memoryLimitInput input').val(size.value);
@@ -144,8 +145,8 @@ PoliciesRowEditor.prototype.setData = function(data) {
         this.$el.find('.memoryLimitInput select').val('MB');
       }
 
-      if ($.isNumeric(policyObject.storageLimit)) {
-        let size = utils.fromBytes(policyObject.storageLimit);
+      if ($.isNumeric(placementObject.storageLimit)) {
+        let size = utils.fromBytes(placementObject.storageLimit);
         normalizeToKB(size);
 
         this.$el.find('.storageLimitInput input').val(size.value);
@@ -155,7 +156,7 @@ PoliciesRowEditor.prototype.setData = function(data) {
         this.$el.find('.storageLimitInput select').val('MB');
       }
 
-      this.$el.find('.cpuSharesInput input').val(policyObject.cpuShares);
+      this.$el.find('.cpuSharesInput input').val(placementObject.cpuShares);
     }
 
     if (data.resourcePools === constants.LOADING) {
@@ -170,7 +171,7 @@ PoliciesRowEditor.prototype.setData = function(data) {
     }
 
     // todo add loading for groups input
-    this.policyGroupInput.setItems(data.groups);
+    this.placementGroupInput.setItems(data.groups);
 
     let oldSelectedGroup = oldData.item ? oldData.item.group : oldData.group;
     let selectedGroup = data.selectedGroup;
@@ -178,7 +179,7 @@ PoliciesRowEditor.prototype.setData = function(data) {
       selectedGroup = data.item ? data.item.group : data.group;
     }
     if (oldSelectedGroup !== selectedGroup && selectedGroup) {
-      this.policyGroupInput.setValue(selectedGroup.id ? selectedGroup.id : selectedGroup.name);
+      this.placementGroupInput.setValue(selectedGroup.id ? selectedGroup.id : selectedGroup.name);
     }
 
     if (data.deploymentPolicies === constants.LOADING) {
@@ -206,23 +207,23 @@ PoliciesRowEditor.prototype.setData = function(data) {
 var addEventListeners = function() {
   var _this = this;
 
-  this.$el.find('.policyEditHolder').on('click', '.policyRowEdit-save', function(e) {
+  this.$el.find('.placementEditHolder').on('click', '.placementRowEdit-save', function(e) {
     e.preventDefault();
 
     $(e.currentTarget).addClass('loading');
 
-    var toReturn = getPolicyModel.call(_this);
+    var toReturn = getPlacementModel.call(_this);
 
     if (toReturn.documentSelfLink) {
-      PolicyActions.updatePolicy(toReturn);
+      PlacementActions.updatePlacement(toReturn);
     } else {
-      PolicyActions.createPolicy(toReturn);
+      PlacementActions.createPlacement(toReturn);
     }
   });
 
-  this.$el.find('.policyEditHolder').on('click', '.policyRowEdit-cancel', function(e) {
+  this.$el.find('.placementEditHolder').on('click', '.placementRowEdit-cancel', function(e) {
     e.preventDefault();
-    PolicyActions.cancelEditPolicy();
+    PlacementActions.cancelEditPlacement();
   });
 
   this.$el.on('change input', function() {
@@ -230,7 +231,7 @@ var addEventListeners = function() {
   });
 };
 
-var getPolicyModel = function() {
+var getPlacementModel = function() {
   var toReturn = {};
   if (this.data.item && this.data.item.documentSelfLink) {
     $.extend(toReturn, this.data.item);
@@ -238,7 +239,7 @@ var getPolicyModel = function() {
 
   toReturn.name = this.$el.find('.nameInput input').val();
 
-  toReturn.groupId = this.policyGroupInput.getValue();
+  toReturn.groupId = this.placementGroupInput.getValue();
   toReturn.resourcePool = this.resourcePoolInput.getSelectedOption();
   toReturn.deploymentPolicy = this.deploymentPolicyInput.getSelectedOption();
 
@@ -280,13 +281,13 @@ var toggleButtonsState = function() {
   var memoryLimit = this.$el.find('.memoryLimitInput input').val();
   var cpuShares = this.$el.find('.cpuSharesInput input').val();
 
-  var $verifyBtn = this.$el.find('.policyRowEdit-verify');
+  var $verifyBtn = this.$el.find('.placementRowEdit-verify');
   $verifyBtn.removeClass('loading');
 
-  var $saveBtn = this.$el.find('.policyRowEdit-save');
+  var $saveBtn = this.$el.find('.placementRowEdit-save');
   $saveBtn.removeClass('loading');
 
-  var groupClause = !utils.isApplicationEmbedded() || this.policyGroupInput.getValue();
+  var groupClause = !utils.isApplicationEmbedded() || this.placementGroupInput.getValue();
   var maxNumberInstancesClause = !maxNumberInstances || $.isNumeric(maxNumberInstances)
                                                           && parseInt(maxNumberInstances, 10) >= 0;
   var memoryLimitClause = !memoryLimit
@@ -326,7 +327,7 @@ class GroupInput {
     if (utils.isApplicationEmbedded()) {
 
       this.businessGroupInput = new DropdownSearchMenu($groupEl, {
-        title: i18n.t('app.policy.edit.selectBusinessGroup'),
+        title: i18n.t('app.placement.edit.selectBusinessGroup'),
         searchPlaceholder: i18n.t('dropdownSearchMenu.searchPlaceholder', {
           entity: i18n.t('app.businessGroup.entity')
         })
@@ -338,7 +339,7 @@ class GroupInput {
     } else {
 
       this.groupInput = new DropdownSearchMenu($groupEl, {
-        title: i18n.t('app.policy.edit.selectGroup'),
+        title: i18n.t('app.placement.edit.selectGroup'),
         searchPlaceholder: i18n.t('dropdownSearchMenu.searchPlaceholder', {
           entity: i18n.t('app.group.entity')
         })
@@ -347,9 +348,9 @@ class GroupInput {
       this.groupInput.setManageOptions(GROUPS_MANAGE_OPTIONS);
       this.groupInput.setManageOptionSelectCallback(function(option) {
         if (option.id === 'group-create') {
-          PolicyContextToolbarActions.createResourceGroup();
+          PlacementContextToolbarActions.createResourceGroup();
         } else {
-          PolicyContextToolbarActions.manageResourceGroups();
+          PlacementContextToolbarActions.manageResourceGroups();
         }
       });
 
@@ -414,4 +415,4 @@ class GroupInput {
   }
 }
 
-export default PoliciesRowEditor;
+export default PlacementsRowEditor;

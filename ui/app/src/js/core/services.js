@@ -756,24 +756,24 @@ services.loadNotifications = function() {
   return get(links.NOTIFICATIONS);
 };
 
-services.loadPolicies = function() {
-  return list(links.RESOURCE_GROUP_POLICIES, true);
+services.loadPlacements = function() {
+  return list(links.RESOURCE_GROUP_PLACEMENTS, true);
 };
 
-services.loadPolicy = function(documentSelfLink) {
+services.loadPlacement = function(documentSelfLink) {
   return get(documentSelfLink);
 };
 
-services.createPolicy = function(policy) {
-  return post(links.RESOURCE_GROUP_POLICIES, policy);
+services.createPlacement = function(placement) {
+  return post(links.RESOURCE_GROUP_PLACEMENTS, placement);
 };
 
-services.updatePolicy = function(policy) {
-  return put(policy.documentSelfLink, policy);
+services.updatePlacement = function(placement) {
+  return put(placement.documentSelfLink, placement);
 };
 
-services.deletePolicy = function(policy) {
-  return deleteEntity(policy.documentSelfLink);
+services.deletePlacement = function(placement) {
+  return deleteEntity(placement.documentSelfLink);
 };
 
 services.loadEnvironments = function() {
@@ -1425,12 +1425,12 @@ var buildContainersSearchQuery = function(queryOptions) {
       }
     }
 
-    var policyLinkArray = toArrayIfDefined(queryOptions.policy);
-    if (policyLinkArray) {
-      newQueryOptions.groupResourcePolicyLink = [];
-      for (let i = 0; i < policyLinkArray.length; i++) {
-        newQueryOptions.groupResourcePolicyLink.push({
-          val: policyLinkArray[i] + '*',
+    var placementLinkArray = toArrayIfDefined(queryOptions.placement);
+    if (placementLinkArray) {
+      newQueryOptions.groupResourcePlacementLink = [];
+      for (let i = 0; i < placementLinkArray.length; i++) {
+        newQueryOptions.groupResourcePlacementLink.push({
+          val: placementLinkArray[i] + '*',
           op: 'eq'
         });
       }

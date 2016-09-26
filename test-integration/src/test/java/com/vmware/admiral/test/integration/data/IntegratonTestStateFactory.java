@@ -20,8 +20,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.compute.ContainerHostService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -101,7 +101,7 @@ public class IntegratonTestStateFactory extends CommonTestStateFactory {
         cs.primaryMAC = UUID.randomUUID().toString();
         cs.address = "ssh://somehost:22"; // this will be used for ssh to access the host
         cs.powerState = PowerState.ON;
-        cs.resourcePoolLink = GroupResourcePolicyService.DEFAULT_RESOURCE_POOL_LINK;
+        cs.resourcePoolLink = GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK;
         cs.adapterManagementReference = URI.create("http://localhost:8081"); // not real reference
         cs.customProperties = new HashMap<>();
         cs.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
@@ -111,8 +111,8 @@ public class IntegratonTestStateFactory extends CommonTestStateFactory {
         return cs;
     }
 
-    public static GroupResourcePolicyState createGroupResourcePolicyState() {
-        GroupResourcePolicyState rsrvState = new GroupResourcePolicyState();
+    public static GroupResourcePlacementState createGroupResourcePlacementState() {
+        GroupResourcePlacementState rsrvState = new GroupResourcePlacementState();
         rsrvState.documentSelfLink = GLOBAL_TEST_RESERVATION_ID;
         rsrvState.resourcePoolLink = UriUtils.buildUriPath(
                 ResourcePoolService.FACTORY_LINK, RESOURCE_POOL_ID);

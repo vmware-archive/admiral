@@ -643,7 +643,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
     }
 
     @Test
-    public void testPolicyUpdates() throws Throwable {
+    public void testPlacementUpdates() throws Throwable {
         host.log(">>>> ResourcePool data collection test start <<<<<<<");
         ComputeDescription hostDescription = new ComputeDescription();
         hostDescription.id = UUID.randomUUID().toString();
@@ -677,10 +677,10 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
             return resourcePoolStateUpdated.maxMemoryBytes == 2000;
         });
 
-        //Create two policies with different priorities
-        GroupResourcePolicyService.GroupResourcePolicyState a100 = createGroupResourcePolicyState(
+        //Create two placements with different priorities
+        GroupResourcePlacementService.GroupResourcePlacementState a100 = createGroupResourcePlacementState(
                 resourcePoolState.documentSelfLink, "A", 100, 1000, 700);
-        GroupResourcePolicyService.GroupResourcePolicyState a200 = createGroupResourcePolicyState(
+        GroupResourcePlacementService.GroupResourcePlacementState a200 = createGroupResourcePlacementState(
                 resourcePoolState.documentSelfLink, "A", 200, 1000, 800);
 
         doDelete(UriUtils.buildUri(host, second.documentSelfLink), false);
@@ -690,24 +690,24 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                 false,
                 Service.Action.PATCH);
 
-        //The memory limit of the policy with the lower priority should be decreased
+        //The memory limit of the placement with the lower priority should be decreased
         waitFor(() -> {
-            GroupResourcePolicyService.GroupResourcePolicyState policyStateA200 = getDocument(
-                    GroupResourcePolicyService.GroupResourcePolicyState.class, a200.documentSelfLink);
-            GroupResourcePolicyService.GroupResourcePolicyState policyStateA100 = getDocument(
-                    GroupResourcePolicyService.GroupResourcePolicyState.class, a100.documentSelfLink);
-            return policyStateA200.memoryLimit == 0 && policyStateA100.memoryLimit == 1000;
+            GroupResourcePlacementService.GroupResourcePlacementState placementStateA200 = getDocument(
+                    GroupResourcePlacementService.GroupResourcePlacementState.class, a200.documentSelfLink);
+            GroupResourcePlacementService.GroupResourcePlacementState placementStateA100 = getDocument(
+                    GroupResourcePlacementService.GroupResourcePlacementState.class, a100.documentSelfLink);
+            return placementStateA200.memoryLimit == 0 && placementStateA100.memoryLimit == 1000;
         });
 
         //Create a host with 1000 memory and 1000 storage
         second = createAndStoreComputeState(hostDescription, resourcePoolState,
                 1000L, 1000L, 0L, 0.0, 1);
 
-        //Create another two policies for a different group
-        GroupResourcePolicyService.GroupResourcePolicyState b1 = createGroupResourcePolicyState(
+        //Create another two placements for a different group
+        GroupResourcePlacementService.GroupResourcePlacementState b1 = createGroupResourcePlacementState(
                 resourcePoolState.documentSelfLink, "B", 1, 500, 800);
 
-        GroupResourcePolicyService.GroupResourcePolicyState b12 = createGroupResourcePolicyState(
+        GroupResourcePlacementService.GroupResourcePlacementState b12 = createGroupResourcePlacementState(
                 resourcePoolState.documentSelfLink, "B", 1, 500, 800);
 
         doDelete(UriUtils.buildUri(host, second.documentSelfLink), false);
@@ -719,11 +719,11 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         //The normalized priorities will be B: 0.5, 0.5; A: 0.33, 0.66. Because the 0.33 one is
         //already empty we expect to decrease the 1000 from the two 0.5
         waitFor(() -> {
-            GroupResourcePolicyService.GroupResourcePolicyState policyState = getDocument(
-                    GroupResourcePolicyService.GroupResourcePolicyState.class, b1.documentSelfLink);
-            GroupResourcePolicyService.GroupResourcePolicyState policyState2 = getDocument(
-                    GroupResourcePolicyService.GroupResourcePolicyState.class, b12.documentSelfLink);
-            return policyState.memoryLimit == 0 && policyState2.memoryLimit == 0;
+            GroupResourcePlacementService.GroupResourcePlacementState placementState = getDocument(
+                    GroupResourcePlacementService.GroupResourcePlacementState.class, b1.documentSelfLink);
+            GroupResourcePlacementService.GroupResourcePlacementState placementState2 = getDocument(
+                    GroupResourcePlacementService.GroupResourcePlacementState.class, b12.documentSelfLink);
+            return placementState.memoryLimit == 0 && placementState2.memoryLimit == 0;
         });
 
         host.log(">>>> ResourcePool data collection test end <<<<<<<");
@@ -832,10 +832,10 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         }
     }
 
-    private GroupResourcePolicyService.GroupResourcePolicyState createGroupResourcePolicyState(
+    private GroupResourcePlacementService.GroupResourcePlacementState createGroupResourcePlacementState(
             String resourcePoolLink, String group, int priority, long memoryLimit,
             long availableMemory) throws Throwable {
-        GroupResourcePolicyService.GroupResourcePolicyState rsrvState = new GroupResourcePolicyService.GroupResourcePolicyState();
+        GroupResourcePlacementService.GroupResourcePlacementState rsrvState = new GroupResourcePlacementService.GroupResourcePlacementState();
         rsrvState.resourcePoolLink = resourcePoolLink;
         rsrvState.name = UUID.randomUUID().toString();
         rsrvState.maxNumberInstances = 10;
@@ -845,7 +845,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         rsrvState.tenantLinks = Collections.singletonList(group);
         rsrvState.priority = priority;
 
-        return doPost(rsrvState, GroupResourcePolicyService.FACTORY_LINK);
+        return doPost(rsrvState, GroupResourcePlacementService.FACTORY_LINK);
     }
 
     private ResourcePoolService.ResourcePoolState createAndStoreResourcePool() throws Throwable {

@@ -25,8 +25,8 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.request.ReservationAllocationTaskService.ReservationAllocationTaskState.SubStage;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
@@ -49,7 +49,7 @@ import com.vmware.xenon.services.common.QueryTask;
  * The work flow is the following:
  * <ul>
  * <li>Create resource pool</li>
- * <li>Create GroupResourcePolicy and linked it to created resource pool</li>
+ * <li>Create GroupResourcePlacement and linked it to created resource pool</li>
  * <li>Find container's host</li>
  * <li>Update resourcePoolLink of container's host</li>
  * </ul>
@@ -88,17 +88,17 @@ public class ReservationAllocationTaskService extends
                 indexing = { PropertyIndexingOption.STORE_ONLY })
         public long resourceCount;
 
-        /** Set by task. The link to the selected group policy. */
-        @Documentation(description = "Set by task. The link to the selected group policy.")
+        /** Set by task. The link to the selected group placement. */
+        @Documentation(description = "Set by task. The link to the selected group placement.")
         @PropertyOptions(usage = PropertyUsageOption.SERVICE_USE, indexing = STORE_ONLY)
-        public String groupResourcePolicyLink;
+        public String groupResourcePlacementLink;
 
         /**
-         * Set by task. Selected group policy links and associated resourcePoolLinks. Ordered by priority asc.
+         * Set by task. Selected group placement links and associated resourcePoolLinks. Ordered by priority asc.
          */
-        @Documentation(description = "Set by task. Selected group policy links and associated resourcePoolLinks. Ordered by priority asc.")
+        @Documentation(description = "Set by task. Selected group placement links and associated resourcePoolLinks. Ordered by priority asc.")
         @PropertyOptions(usage = PropertyUsageOption.SERVICE_USE, indexing = STORE_ONLY)
-        public LinkedHashMap<String, String> resourcePoolsPerGroupPolicyLinks;
+        public LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks;
 
         /** (Internal) Set by task after the ComputeState is found to host the containers */
         @Documentation(description = "Set by task after the ComputeState is found to host the containers.")
@@ -152,8 +152,8 @@ public class ReservationAllocationTaskService extends
             createResourcePool(state);
             break;
         case GROUP_POLICY_CREATED:
-            // Resource pool has been created, now create a GroupResourcePolicy.
-            createGroupResourcePolicy(state);
+            // Resource pool has been created, now create a GroupResourcePlacement.
+            createGroupResourcePlacement(state);
             break;
         case RESOURCE_POOL_ADJUSTMENT:
             // Change resource pool of container's host.
@@ -175,12 +175,12 @@ public class ReservationAllocationTaskService extends
     protected boolean validateStageTransition(Operation patch,
             ReservationAllocationTaskState patchBody, ReservationAllocationTaskState currentState) {
 
-        currentState.groupResourcePolicyLink = mergeProperty(currentState.groupResourcePolicyLink,
-                patchBody.groupResourcePolicyLink);
+        currentState.groupResourcePlacementLink = mergeProperty(currentState.groupResourcePlacementLink,
+                patchBody.groupResourcePlacementLink);
 
-        currentState.resourcePoolsPerGroupPolicyLinks = mergeProperty(
-                currentState.resourcePoolsPerGroupPolicyLinks,
-                patchBody.resourcePoolsPerGroupPolicyLinks);
+        currentState.resourcePoolsPerGroupPlacementLinks = mergeProperty(
+                currentState.resourcePoolsPerGroupPlacementLinks,
+                patchBody.resourcePoolsPerGroupPlacementLinks);
 
         currentState.resourcePoolLink = mergeProperty(currentState.resourcePoolLink,
                 patchBody.resourcePoolLink);
@@ -192,17 +192,17 @@ public class ReservationAllocationTaskService extends
             ReservationAllocationTaskState state) {
         CallbackCompleteResponse finishedResponse = new CallbackCompleteResponse();
         finishedResponse.copy(state.serviceTaskCallback.getFinishedResponse());
-        finishedResponse.groupResourcePolicyLink = state.groupResourcePolicyLink;
-        finishedResponse.resourcePoolsPerGroupPolicyLinks = state.resourcePoolsPerGroupPolicyLinks;
-        if (state.groupResourcePolicyLink == null || state.groupResourcePolicyLink.isEmpty()) {
-            logWarning("No GroupResourcePolicy found for reservated resources.");
+        finishedResponse.groupResourcePlacementLink = state.groupResourcePlacementLink;
+        finishedResponse.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks;
+        if (state.groupResourcePlacementLink == null || state.groupResourcePlacementLink.isEmpty()) {
+            logWarning("No GroupResourcePlacement found for reservated resources.");
         }
         return finishedResponse;
     }
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
-        public String groupResourcePolicyLink;
-        public LinkedHashMap<String, String> resourcePoolsPerGroupPolicyLinks;
+        public String groupResourcePlacementLink;
+        public LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks;
     }
 
     private void createResourcePool(ReservationAllocationTaskState state) {
@@ -237,40 +237,40 @@ public class ReservationAllocationTaskService extends
                         }));
     }
 
-    private void createGroupResourcePolicy(ReservationAllocationTaskState state) {
+    private void createGroupResourcePlacement(ReservationAllocationTaskState state) {
 
-        GroupResourcePolicyState policyState = new GroupResourcePolicyState();
-        policyState.name = state.name + "-" + UUID.randomUUID().toString();
-        policyState.documentSelfLink = policyState.name;
-        policyState.tenantLinks = state.tenantLinks;
-        policyState.maxNumberInstances = state.resourceCount;
-        policyState.memoryLimit = 0;
-        policyState.storageLimit = 0;
-        policyState.resourcePoolLink = state.resourcePoolLink;
+        GroupResourcePlacementState placementState = new GroupResourcePlacementState();
+        placementState.name = state.name + "-" + UUID.randomUUID().toString();
+        placementState.documentSelfLink = placementState.name;
+        placementState.tenantLinks = state.tenantLinks;
+        placementState.maxNumberInstances = state.resourceCount;
+        placementState.memoryLimit = 0;
+        placementState.storageLimit = 0;
+        placementState.resourcePoolLink = state.resourcePoolLink;
 
         sendRequest(Operation
-                .createPost(this, GroupResourcePolicyService.FACTORY_LINK)
-                .setBody(policyState)
+                .createPost(this, GroupResourcePlacementService.FACTORY_LINK)
+                .setBody(placementState)
                 .setCompletion(
                         (o, e) -> {
                             if (e != null) {
                                 failTask(
                                         String.format(
-                                                "Failed to create GroupResourcePolicyState. Error: %s",
+                                                "Failed to create GroupResourcePlacementState. Error: %s",
                                                 Utils.toString(e)),
                                         e);
                                 return;
                             }
 
-                            GroupResourcePolicyState groupResourcePolicy = o
-                                    .getBody(GroupResourcePolicyState.class);
+                            GroupResourcePlacementState groupResourcePlacement = o
+                                    .getBody(GroupResourcePlacementState.class);
 
                             ReservationAllocationTaskState body = createUpdateSubStageTask(state,
                                     ReservationAllocationTaskState.SubStage.RESOURCE_POOL_ADJUSTMENT);
 
-                            body.groupResourcePolicyLink = groupResourcePolicy.documentSelfLink;
-                            body.resourcePoolsPerGroupPolicyLinks = new LinkedHashMap<>();
-                            body.resourcePoolsPerGroupPolicyLinks.put(groupResourcePolicy.documentSelfLink, groupResourcePolicy.resourcePoolLink);
+                            body.groupResourcePlacementLink = groupResourcePlacement.documentSelfLink;
+                            body.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>();
+                            body.resourcePoolsPerGroupPlacementLinks.put(groupResourcePlacement.documentSelfLink, groupResourcePlacement.resourcePoolLink);
                             sendSelfPatch(body);
 
                         }));
@@ -304,7 +304,7 @@ public class ReservationAllocationTaskService extends
                             ReservationAllocationTaskState body = createUpdateSubStageTask(state,
                                     ReservationAllocationTaskState.SubStage.COMPLETED);
 
-                            body.groupResourcePolicyLink = state.groupResourcePolicyLink;
+                            body.groupResourcePlacementLink = state.groupResourcePlacementLink;
                             sendSelfPatch(body);
 
                         }));

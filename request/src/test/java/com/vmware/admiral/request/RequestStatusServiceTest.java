@@ -190,7 +190,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request = startRequest(request);
         waitForRequestToFail(request);
         requestId = extractId(request.documentSelfLink);
@@ -242,7 +242,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request = startRequest(request);
         waitForRequestToFail(request);
         requestId = extractId(request.documentSelfLink);
@@ -277,7 +277,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         // Request a container instance:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(type.getName(),
                 descriptionLink);
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         host.log("########  Start of request ######## ");
         request = startRequest(request);
         waitForRequestToComplete(request);
@@ -356,7 +356,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
             throws Throwable {
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
         request.resourceDescriptionLink = null;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceLinks = requestBroker.resourceLinks;
         request.operation = operation;
         request = startRequest(request);

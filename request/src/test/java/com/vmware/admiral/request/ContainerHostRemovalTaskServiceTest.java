@@ -43,7 +43,7 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
 
         request = TestRequestStateFactory.createRequestState();
         request.resourceDescriptionLink = containerDesc.documentSelfLink;
-        request.tenantLinks = groupPolicyState.tenantLinks;
+        request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceCount = 2;
     }
 
@@ -148,7 +148,7 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
         ContainerState container = TestRequestStateFactory.createContainer();
         container.descriptionLink = containerDesc.documentSelfLink;
         container.adapterManagementReference = containerDesc.instanceAdapterReference;
-        container.groupResourcePolicyLink = groupPolicyState.documentSelfLink;
+        container.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
         container.parentLink = computeHost.documentSelfLink;
         container.system = Boolean.TRUE;
         container = doPost(container, ContainerFactoryService.SELF_LINK);

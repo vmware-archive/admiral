@@ -20,8 +20,8 @@ import java.util.HashMap;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ResourceType;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
@@ -53,17 +53,17 @@ public class ComputeReservationTaskServiceTest extends RequestBaseTest {
     }
 
     @Test
-    public void testReservationTaskLifeCycleWhenNoAvailableGroupPolicies() throws Throwable {
-        GroupResourcePolicyState groupPolicyState = doPost(
+    public void testReservationTaskLifeCycleWhenNoAvailableGroupPlacements() throws Throwable {
+        GroupResourcePlacementState groupPlacementState = doPost(
                 TestRequestStateFactory
-                        .createGroupResourcePolicyState(ResourceType.COMPUTE_TYPE),
-                GroupResourcePolicyService.FACTORY_LINK);
-        addForDeletion(groupPolicyState);
+                        .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE),
+                GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(groupPlacementState);
 
         ComputeReservationTaskState task = new ComputeReservationTaskState();
-        task.tenantLinks = groupPolicyState.tenantLinks;
+        task.tenantLinks = groupPlacementState.tenantLinks;
         task.resourceDescriptionLink = hostDesc.documentSelfLink;
-        task.resourceCount = groupPolicyState.maxNumberInstances + 1;
+        task.resourceCount = groupPlacementState.maxNumberInstances + 1;
         task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
 
         task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
@@ -74,35 +74,35 @@ public class ComputeReservationTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testReservationTaskLifeCycle() throws Throwable {
-        GroupResourcePolicyState groupPolicyState = TestRequestStateFactory
-                .createGroupResourcePolicyState();
-        groupPolicyState.maxNumberInstances = 10;
-        groupPolicyState.resourcePoolLink = resourcePool.documentSelfLink;
-        groupPolicyState.customProperties = new HashMap<>();
-        groupPolicyState.customProperties.put("key1", "policy-value1");
-        groupPolicyState.customProperties.put("key2", "policy-value2");
-        groupPolicyState = doPost(groupPolicyState, GroupResourcePolicyService.FACTORY_LINK);
-        addForDeletion(groupPolicyState);
+        GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
+                .createGroupResourcePlacementState();
+        groupPlacementState.maxNumberInstances = 10;
+        groupPlacementState.resourcePoolLink = resourcePool.documentSelfLink;
+        groupPlacementState.customProperties = new HashMap<>();
+        groupPlacementState.customProperties.put("key1", "placement-value1");
+        groupPlacementState.customProperties.put("key2", "placement-value2");
+        groupPlacementState = doPost(groupPlacementState, GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(groupPlacementState);
 
-        GroupResourcePolicyState notEnougInstancesPolicy = TestRequestStateFactory
-                .createGroupResourcePolicyState();
-        notEnougInstancesPolicy.name = "not available";
-        notEnougInstancesPolicy.maxNumberInstances = 4;
-        notEnougInstancesPolicy = doPost(notEnougInstancesPolicy,
-                GroupResourcePolicyService.FACTORY_LINK);
-        addForDeletion(notEnougInstancesPolicy);
+        GroupResourcePlacementState notEnougInstancesPlacement = TestRequestStateFactory
+                .createGroupResourcePlacementState();
+        notEnougInstancesPlacement.name = "not available";
+        notEnougInstancesPlacement.maxNumberInstances = 4;
+        notEnougInstancesPlacement = doPost(notEnougInstancesPlacement,
+                GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(notEnougInstancesPlacement);
 
-        GroupResourcePolicyState differentGroupPolicy = TestRequestStateFactory
-                .createGroupResourcePolicyState();
-        differentGroupPolicy.maxNumberInstances = 10;
-        differentGroupPolicy.name = "different group";
-        differentGroupPolicy.tenantLinks = Collections.singletonList("different-group");
-        differentGroupPolicy = doPost(differentGroupPolicy,
-                GroupResourcePolicyService.FACTORY_LINK);
-        addForDeletion(differentGroupPolicy);
+        GroupResourcePlacementState differentGroupPlacement = TestRequestStateFactory
+                .createGroupResourcePlacementState();
+        differentGroupPlacement.maxNumberInstances = 10;
+        differentGroupPlacement.name = "different group";
+        differentGroupPlacement.tenantLinks = Collections.singletonList("different-group");
+        differentGroupPlacement = doPost(differentGroupPlacement,
+                GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(differentGroupPlacement);
 
         ComputeReservationTaskState task = new ComputeReservationTaskState();
-        task.tenantLinks = groupPolicyState.tenantLinks;
+        task.tenantLinks = groupPlacementState.tenantLinks;
         task.resourceDescriptionLink = hostDesc.documentSelfLink;
         task.resourceCount = 5;
         task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
@@ -114,54 +114,54 @@ public class ComputeReservationTaskServiceTest extends RequestBaseTest {
 
         task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
 
-        groupPolicyState = getDocument(GroupResourcePolicyState.class,
-                groupPolicyState.documentSelfLink);
+        groupPlacementState = getDocument(GroupResourcePlacementState.class,
+                groupPlacementState.documentSelfLink);
 
-        assertEquals(groupPolicyState.documentSelfLink, task.groupResourcePolicyLink);
+        assertEquals(groupPlacementState.documentSelfLink, task.groupResourcePlacementLink);
 
-        assertEquals(groupPolicyState.allocatedInstancesCount, task.resourceCount);
-        assertEquals(1, groupPolicyState.resourceQuotaPerResourceDesc.size());
-        Long countPerDesc = groupPolicyState.resourceQuotaPerResourceDesc
+        assertEquals(groupPlacementState.allocatedInstancesCount, task.resourceCount);
+        assertEquals(1, groupPlacementState.resourceQuotaPerResourceDesc.size());
+        Long countPerDesc = groupPlacementState.resourceQuotaPerResourceDesc
                 .get(task.resourceDescriptionLink);
         assertEquals(task.resourceCount, countPerDesc.longValue());
 
         // check custom properties overridden:
         assertEquals(2, task.customProperties.size());
-        assertEquals(groupPolicyState.customProperties.get("key1"),
+        assertEquals(groupPlacementState.customProperties.get("key1"),
                 task.customProperties.get("key1"));
-        assertEquals(groupPolicyState.customProperties.get("key2"),
+        assertEquals(groupPlacementState.customProperties.get("key2"),
                 task.customProperties.get("key2"));
     }
 
     @Test
     public void testReservationTaskLifeCyclePriorities() throws Throwable {
-        GroupResourcePolicyState policyState = TestRequestStateFactory
-                .createGroupResourcePolicyState();
-        policyState.maxNumberInstances = 10;
-        policyState.resourcePoolLink = resourcePool.documentSelfLink;
-        policyState.priority = 3;
-        policyState = doPost(policyState, GroupResourcePolicyService.FACTORY_LINK);
-        addForDeletion(policyState);
+        GroupResourcePlacementState placementState = TestRequestStateFactory
+                .createGroupResourcePlacementState();
+        placementState.maxNumberInstances = 10;
+        placementState.resourcePoolLink = resourcePool.documentSelfLink;
+        placementState.priority = 3;
+        placementState = doPost(placementState, GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(placementState);
 
-        GroupResourcePolicyState policyState1 = TestRequestStateFactory
-                .createGroupResourcePolicyState();
-        policyState1.maxNumberInstances = 10;
-        policyState1.resourcePoolLink = resourcePool.documentSelfLink;
+        GroupResourcePlacementState placementState1 = TestRequestStateFactory
+                .createGroupResourcePlacementState();
+        placementState1.maxNumberInstances = 10;
+        placementState1.resourcePoolLink = resourcePool.documentSelfLink;
 
-        policyState1.priority = 1;
-        policyState1 = doPost(policyState1, GroupResourcePolicyService.FACTORY_LINK);
-        addForDeletion(policyState1);
+        placementState1.priority = 1;
+        placementState1 = doPost(placementState1, GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(placementState1);
 
-        GroupResourcePolicyState policyState2 = TestRequestStateFactory
-                .createGroupResourcePolicyState();
-        policyState2.maxNumberInstances = 10;
-        policyState2.resourcePoolLink = resourcePool.documentSelfLink;
-        policyState2.priority = 2;
-        policyState2 = doPost(policyState2, GroupResourcePolicyService.FACTORY_LINK);
-        addForDeletion(policyState2);
+        GroupResourcePlacementState placementState2 = TestRequestStateFactory
+                .createGroupResourcePlacementState();
+        placementState2.maxNumberInstances = 10;
+        placementState2.resourcePoolLink = resourcePool.documentSelfLink;
+        placementState2.priority = 2;
+        placementState2 = doPost(placementState2, GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(placementState2);
 
         ComputeReservationTaskState task = new ComputeReservationTaskState();
-        task.tenantLinks = policyState.tenantLinks;
+        task.tenantLinks = placementState.tenantLinks;
         task.resourceDescriptionLink = hostDesc.documentSelfLink;
         task.resourceCount = 5;
         task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
@@ -171,23 +171,23 @@ public class ComputeReservationTaskServiceTest extends RequestBaseTest {
 
         task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
 
-        policyState1 = getDocument(GroupResourcePolicyState.class,
-                policyState1.documentSelfLink);
-        assertEquals(policyState1.documentSelfLink, task.groupResourcePolicyLink);
+        placementState1 = getDocument(GroupResourcePlacementState.class,
+                placementState1.documentSelfLink);
+        assertEquals(placementState1.documentSelfLink, task.groupResourcePlacementLink);
     }
 
     @Test
-    public void testReservationTaskLifeCycleUnlimitedMemoryPolicy() throws Throwable {
-        GroupResourcePolicyState policyState = TestRequestStateFactory
-                .createGroupResourcePolicyState();
-        policyState.maxNumberInstances = 10;
-        policyState.resourcePoolLink = resourcePool.documentSelfLink;
-        policyState.priority = 3;
-        policyState = doPost(policyState, GroupResourcePolicyService.FACTORY_LINK);
-        addForDeletion(policyState);
+    public void testReservationTaskLifeCycleUnlimitedMemoryPlacement() throws Throwable {
+        GroupResourcePlacementState placementState = TestRequestStateFactory
+                .createGroupResourcePlacementState();
+        placementState.maxNumberInstances = 10;
+        placementState.resourcePoolLink = resourcePool.documentSelfLink;
+        placementState.priority = 3;
+        placementState = doPost(placementState, GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(placementState);
 
         ComputeReservationTaskState task = new ComputeReservationTaskState();
-        task.tenantLinks = policyState.tenantLinks;
+        task.tenantLinks = placementState.tenantLinks;
         task.resourceDescriptionLink = hostDesc.documentSelfLink;
         task.resourceCount = 5;
         task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
@@ -197,23 +197,23 @@ public class ComputeReservationTaskServiceTest extends RequestBaseTest {
 
         task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
 
-        policyState = getDocument(GroupResourcePolicyState.class,
-                policyState.documentSelfLink);
-        assertEquals(policyState.documentSelfLink, task.groupResourcePolicyLink);
+        placementState = getDocument(GroupResourcePlacementState.class,
+                placementState.documentSelfLink);
+        assertEquals(placementState.documentSelfLink, task.groupResourcePlacementLink);
     }
 
     @Test
     public void testReservationTaskLifeCycleWithNoGroup() throws Throwable {
-        GroupResourcePolicyState groupPolicytState = TestRequestStateFactory
-                .createGroupResourcePolicyState();
-        groupPolicytState.tenantLinks = null;
-        groupPolicytState = doPost(groupPolicytState,
-                GroupResourcePolicyService.FACTORY_LINK);
-        addForDeletion(groupPolicytState);
+        GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
+                .createGroupResourcePlacementState();
+        groupPlacementState.tenantLinks = null;
+        groupPlacementState = doPost(groupPlacementState,
+                GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(groupPlacementState);
 
-        // create another suitable group policy but with a group that should not be selected
-        doPost(TestRequestStateFactory.createGroupResourcePolicyState(),
-                GroupResourcePolicyService.FACTORY_LINK);
+        // create another suitable group placement but with a group that should not be selected
+        doPost(TestRequestStateFactory.createGroupResourcePlacementState(),
+                GroupResourcePlacementService.FACTORY_LINK);
 
         ComputeReservationTaskState task = new ComputeReservationTaskState();
         task.tenantLinks = null;
@@ -226,47 +226,47 @@ public class ComputeReservationTaskServiceTest extends RequestBaseTest {
 
         task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
 
-        groupPolicytState = getDocument(GroupResourcePolicyState.class,
-                groupPolicytState.documentSelfLink);
+        groupPlacementState = getDocument(GroupResourcePlacementState.class,
+                groupPlacementState.documentSelfLink);
 
-        assertEquals(groupPolicytState.documentSelfLink, task.groupResourcePolicyLink);
+        assertEquals(groupPlacementState.documentSelfLink, task.groupResourcePlacementLink);
 
-        assertEquals(groupPolicytState.allocatedInstancesCount, task.resourceCount);
-        assertEquals(1, groupPolicytState.resourceQuotaPerResourceDesc.size());
-        Long countPerDesc = groupPolicytState.resourceQuotaPerResourceDesc
+        assertEquals(groupPlacementState.allocatedInstancesCount, task.resourceCount);
+        assertEquals(1, groupPlacementState.resourceQuotaPerResourceDesc.size());
+        Long countPerDesc = groupPlacementState.resourceQuotaPerResourceDesc
                 .get(task.resourceDescriptionLink);
         assertEquals(task.resourceCount, countPerDesc.longValue());
     }
 
     @Test
     public void testReservationTaskLifeCycleWithGlobalGroup() throws Throwable {
-        // create policy with same group but less number of instances:
-        GroupResourcePolicyState groupPolicytState = TestRequestStateFactory
-                .createGroupResourcePolicyState();
-        groupPolicytState.maxNumberInstances = 2;
-        groupPolicytState = doPost(groupPolicytState,
-                GroupResourcePolicyService.FACTORY_LINK);
-        addForDeletion(groupPolicytState);
+        // create placement with same group but less number of instances:
+        GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
+                .createGroupResourcePlacementState();
+        groupPlacementState.maxNumberInstances = 2;
+        groupPlacementState = doPost(groupPlacementState,
+                GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(groupPlacementState);
 
-        // create global policy that should be selected since the groupPolicy is not applicable.
-        GroupResourcePolicyState globalGroupState = TestRequestStateFactory
-                .createGroupResourcePolicyState();
+        // create global placement that should be selected since the group placement is not applicable.
+        GroupResourcePlacementState globalGroupState = TestRequestStateFactory
+                .createGroupResourcePlacementState();
         globalGroupState.tenantLinks = null;
         globalGroupState = doPost(globalGroupState,
-                GroupResourcePolicyService.FACTORY_LINK);
+                GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(globalGroupState);
 
-        // create another suitable group policy but with a group that should not be selected
-        GroupResourcePolicyState differentGroup = TestRequestStateFactory
-                .createGroupResourcePolicyState();
+        // create another suitable group placement but with a group that should not be selected
+        GroupResourcePlacementState differentGroup = TestRequestStateFactory
+                .createGroupResourcePlacementState();
         differentGroup.tenantLinks = Collections.singletonList("different-group");
-        differentGroup = doPost(differentGroup, GroupResourcePolicyService.FACTORY_LINK);
+        differentGroup = doPost(differentGroup, GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(differentGroup);
 
         ComputeReservationTaskState task = new ComputeReservationTaskState();
-        task.tenantLinks = groupPolicytState.tenantLinks;
+        task.tenantLinks = groupPlacementState.tenantLinks;
         task.resourceDescriptionLink = hostDesc.documentSelfLink;
-        task.resourceCount = groupPolicytState.maxNumberInstances + 1;
+        task.resourceCount = groupPlacementState.maxNumberInstances + 1;
         task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
 
         task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
@@ -274,11 +274,11 @@ public class ComputeReservationTaskServiceTest extends RequestBaseTest {
 
         task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
 
-        globalGroupState = getDocument(GroupResourcePolicyState.class,
+        globalGroupState = getDocument(GroupResourcePlacementState.class,
                 globalGroupState.documentSelfLink);
 
         assertEquals(globalGroupState.allocatedInstancesCount, task.resourceCount);
-        assertEquals(globalGroupState.documentSelfLink, task.groupResourcePolicyLink);
+        assertEquals(globalGroupState.documentSelfLink, task.groupResourcePlacementLink);
         assertEquals(1, globalGroupState.resourceQuotaPerResourceDesc.size());
         Long countPerDesc = globalGroupState.resourceQuotaPerResourceDesc
                 .get(task.resourceDescriptionLink);

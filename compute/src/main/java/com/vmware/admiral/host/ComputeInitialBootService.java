@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.EnvironmentMappingService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
@@ -38,8 +38,8 @@ public class ComputeInitialBootService extends AbstractInitialBootService {
         states = new ArrayList<>();
         states.add(ContainerHostDataCollectionService.buildDefaultStateInstance());
         states.add(HostContainerListDataCollectionFactoryService.buildDefaultStateInstance());
-        states.add(GroupResourcePolicyService.buildDefaultResourcePool());
-        states.add(GroupResourcePolicyService.buildDefaultStateInstance());
+        states.add(GroupResourcePlacementService.buildDefaultResourcePool());
+        states.add(GroupResourcePlacementService.buildDefaultStateInstance());
         states.addAll(EnvironmentMappingService.getDefaultMappings());
 
         initInstances(post, states.toArray(new ServiceDocument[states.size()]));

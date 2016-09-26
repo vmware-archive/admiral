@@ -25,8 +25,9 @@ export var MachineActions = Reflux.createActions([
   'openMachines', 'openMachineDetails'
 ]);
 
-export var PolicyActions = Reflux.createActions([
-  'openPolicies', 'editPolicy', 'cancelEditPolicy', 'createPolicy', 'updatePolicy', 'deletePolicy'
+export var PlacementActions = Reflux.createActions([
+  'openPlacements', 'editPlacement', 'cancelEditPlacement', 'createPlacement', 'updatePlacement',
+  'deletePlacement'
 ]);
 
 export var TemplateActions = Reflux.createActions([
@@ -81,7 +82,7 @@ export var HostsContextToolbarActions = Reflux.createActions([
   'openToolbarRequests', 'openToolbarEventLogs', 'closeToolbar'
 ]);
 
-export var PolicyContextToolbarActions = Reflux.createActions([
+export var PlacementContextToolbarActions = Reflux.createActions([
   'openToolbarResourcePools', 'createResourcePool', 'manageResourcePools',
   'openToolbarDeploymentPolicies', 'createDeploymentPolicy', 'manageDeploymentPolicies',
   'openToolbarResourceGroups', 'createResourceGroup', 'manageResourceGroups',
@@ -152,6 +153,6 @@ export var NavigationActions = Reflux.createActions([
   'openHome', 'openHomeAddHost', 'openHosts', 'openHostsSilently', 'openAddHost', 'editHost',
   'openTemplates', 'openEventLog', 'openRegistries', 'openContainerRequest', 'openContainers',
   'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
-  'openTemplateDetails', 'showContainersPerPolicy', 'openPolicies', 'openEnvironments',
+  'openTemplateDetails', 'showContainersPerPlacement', 'openPlacements', 'openEnvironments',
   'openMachines', 'openMachineDetails'
 ]);

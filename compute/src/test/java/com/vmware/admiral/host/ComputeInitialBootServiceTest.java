@@ -22,8 +22,8 @@ import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService;
-import com.vmware.admiral.compute.container.GroupResourcePolicyService.GroupResourcePolicyState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionState;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
@@ -104,30 +104,30 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
     }
 
     @Test
-    public void testDefaultGroupPolicyServiceCreatedOnStartUp() throws Throwable {
-        waitForServiceAvailability(GroupResourcePolicyService.DEFAULT_RESOURCE_POLICY_LINK);
-        GroupResourcePolicyState groupResourcePolicyState = getDocument(
-                GroupResourcePolicyState.class,
-                GroupResourcePolicyService.DEFAULT_RESOURCE_POLICY_LINK);
+    public void testDefaultGroupPlacementServiceCreatedOnStartUp() throws Throwable {
+        waitForServiceAvailability(GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK);
+        GroupResourcePlacementState groupResourcePlacementState = getDocument(
+                GroupResourcePlacementState.class,
+                GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK);
 
-        assertNotNull(groupResourcePolicyState);
-        assertEquals(GroupResourcePolicyService.DEFAULT_RESOURCE_POLICY_ID,
-                groupResourcePolicyState.name);
-        assertEquals(GroupResourcePolicyService.DEFAULT_RESOURCE_POOL_LINK,
-                groupResourcePolicyState.resourcePoolLink);
-        assertEquals(1000000, groupResourcePolicyState.maxNumberInstances);
-        assertEquals(100, groupResourcePolicyState.priority);
-        assertNull(groupResourcePolicyState.tenantLinks);// assert global default group policy
+        assertNotNull(groupResourcePlacementState);
+        assertEquals(GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_ID,
+                groupResourcePlacementState.name);
+        assertEquals(GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK,
+                groupResourcePlacementState.resourcePoolLink);
+        assertEquals(1000000, groupResourcePlacementState.maxNumberInstances);
+        assertEquals(100, groupResourcePlacementState.priority);
+        assertNull(groupResourcePlacementState.tenantLinks);// assert global default group placement
     }
 
     @Test
     public void testDefaultResourcePoolServiceCreatedOnStartUp() throws Throwable {
-        waitForServiceAvailability(GroupResourcePolicyService.DEFAULT_RESOURCE_POOL_LINK);
+        waitForServiceAvailability(GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK);
         ResourcePoolState resourcePoolState = getDocument(ResourcePoolState.class,
-                GroupResourcePolicyService.DEFAULT_RESOURCE_POOL_LINK);
+                GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK);
 
         assertNotNull(resourcePoolState);
-        assertEquals(GroupResourcePolicyService.DEFAULT_RESOURCE_POOL_ID, resourcePoolState.name);
-        assertEquals(GroupResourcePolicyService.DEFAULT_RESOURCE_POOL_ID, resourcePoolState.id);
+        assertEquals(GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_ID, resourcePoolState.name);
+        assertEquals(GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_ID, resourcePoolState.id);
     }
 }

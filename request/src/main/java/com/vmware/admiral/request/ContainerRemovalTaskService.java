@@ -100,7 +100,7 @@ public class ContainerRemovalTaskService
         /**
          * whether to skip the associated reservation or not
          */
-        public boolean skipReleaseResourcePolicy;
+        public boolean skipReleaseResourcePlacement;
     }
 
     public ContainerRemovalTaskService() {
@@ -400,14 +400,14 @@ public class ContainerRemovalTaskService
                         AtomicLong skipOperationException = new AtomicLong();
 
                         Operation delContainerOpr = deleteContainer(cs);
-                        Operation policyOpr = releaseResourcePolicy(state, cs, subTaskLink);
+                        Operation placementOpr = releaseResourcePlacement(state, cs, subTaskLink);
 
                         // list of operations to execute to release container resources
                         List<Operation> operations = new ArrayList<>();
                         operations.add(delContainerOpr);
-                        // add policyOpr only when needed
-                        if (policyOpr != null) {
-                            operations.add(policyOpr);
+                        // add placementOpr only when needed
+                        if (placementOpr != null) {
+                            operations.add(placementOpr);
                         } else {
                             // if ReservationRemovalTask is not started, count it as finished
                             completeSubTasksCounter(subTaskLink, null);
@@ -489,11 +489,11 @@ public class ContainerRemovalTaskService
         return deleteContanerDesc;
     }
 
-    private Operation releaseResourcePolicy(ContainerRemovalTaskState state, ContainerState cs,
+    private Operation releaseResourcePlacement(ContainerRemovalTaskState state, ContainerState cs,
             String subTaskLink) {
 
-        if (isDiscoveredContainer(cs) || state.skipReleaseResourcePolicy) {
-            logFine("Skipping releasing policy because container is a discovered one: %s",
+        if (isDiscoveredContainer(cs) || state.skipReleaseResourcePlacement) {
+            logFine("Skipping releasing placement because container is a discovered one: %s",
                     cs.documentSelfLink);
             return null;
         }
@@ -501,7 +501,7 @@ public class ContainerRemovalTaskService
         ReservationRemovalTaskState rsrvTask = new ReservationRemovalTaskState();
         rsrvTask.resourceCount = 1;
         rsrvTask.resourceDescriptionLink = cs.descriptionLink;
-        rsrvTask.groupResourcePolicyLink = cs.groupResourcePolicyLink;
+        rsrvTask.groupResourcePlacementLink = cs.groupResourcePlacementLink;
         rsrvTask.requestTrackerLink = state.requestTrackerLink;
         // Completion of the reservation removal also notifies the counter task
         rsrvTask.serviceTaskCallback = ServiceTaskCallback.create(subTaskLink);
@@ -510,8 +510,8 @@ public class ContainerRemovalTaskService
                 .setBody(rsrvTask)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning("Failed creating task to delete policy "
-                                + cs.groupResourcePolicyLink, e);
+                        logWarning("Failed creating task to delete placement "
+                                + cs.groupResourcePlacementLink, e);
                         return;
                     }
                 });

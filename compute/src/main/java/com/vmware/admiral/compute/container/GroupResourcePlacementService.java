@@ -38,7 +38,7 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
 
 /**
- * Group resource policy service - reserving resources for a given group.
+ * Group resource placement service - reserving resources for a given group.
  * <p>
  * The properties <code>maxNumberInstances</code>, <code>memoryLimit</code> and
  * <code>storageLimit</code> are hard constraints for which the allocation will fail if not
@@ -49,17 +49,17 @@ import com.vmware.xenon.services.common.QueryTask;
  * indicator that a containers with higher CPU utilization requirements should be placed to a less
  * utilized hosts.
  * <p>
- * The resource policies are inspired by the blog-post:
+ * The resource placements are inspired by the blog-post:
  * https://goldmann.pl/blog/2014/09/11/resource-management-in-docker/
  */
-public class GroupResourcePolicyService extends StatefulService {
-    public static final String FACTORY_LINK = ManagementUriParts.RESOURCE_GROUP_POLICIES;
+public class GroupResourcePlacementService extends StatefulService {
+    public static final String FACTORY_LINK = ManagementUriParts.RESOURCE_GROUP_PLACEMENTS;
     public static final String DEFAULT_RESOURCE_POOL_ID = "default-resource-pool";
     public static final String DEFAULT_RESOURCE_POOL_LINK = UriUtils.buildUriPath(
             ResourcePoolService.FACTORY_LINK, DEFAULT_RESOURCE_POOL_ID);
-    public static final String DEFAULT_RESOURCE_POLICY_ID = "default-resource-policy";
-    public static final String DEFAULT_RESOURCE_POLICY_LINK = UriUtils.buildUriPath(
-            FACTORY_LINK, DEFAULT_RESOURCE_POLICY_ID);
+    public static final String DEFAULT_RESOURCE_PLACEMENT_ID = "default-resource-placement";
+    public static final String DEFAULT_RESOURCE_PLACEMENT_LINK = UriUtils.buildUriPath(
+            FACTORY_LINK, DEFAULT_RESOURCE_PLACEMENT_ID);
 
     public static final long UNLIMITED_NUMBER_INSTANCES = 0;
 
@@ -82,18 +82,18 @@ public class GroupResourcePolicyService extends StatefulService {
     }
 
     public static ServiceDocument buildDefaultStateInstance() {
-        GroupResourcePolicyState rsrvState = new GroupResourcePolicyState();
-        rsrvState.documentSelfLink = DEFAULT_RESOURCE_POLICY_LINK;
-        rsrvState.name = DEFAULT_RESOURCE_POLICY_ID;
+        GroupResourcePlacementState rsrvState = new GroupResourcePlacementState();
+        rsrvState.documentSelfLink = DEFAULT_RESOURCE_PLACEMENT_LINK;
+        rsrvState.name = DEFAULT_RESOURCE_PLACEMENT_ID;
         rsrvState.resourcePoolLink = DEFAULT_RESOURCE_POOL_LINK;
-        rsrvState.tenantLinks = null; // global default group policy
+        rsrvState.tenantLinks = null; // global default group placement
         rsrvState.maxNumberInstances = 1000000;
         rsrvState.priority = 100;
 
         return rsrvState;
     }
 
-    public static class GroupResourcePolicyState extends MultiTenantDocument {
+    public static class GroupResourcePlacementState extends MultiTenantDocument {
         public static final String FIELD_NAME_RESOURCE_POOL_LINK = "resourcePoolLink";
         public static final String FIELD_NAME_NAME = "name";
         public static final String FIELD_NAME_MAX_NUMBER_INSTANCES = "maxNumberInstances";
@@ -110,22 +110,22 @@ public class GroupResourcePolicyService extends StatefulService {
         public String name;
 
         /** {@link ResourcePoolState} link */
-        @Documentation(description = "The link of the ResourcePoolState associated with this policy")
+        @Documentation(description = "The link of the ResourcePoolState associated with this placement")
         @UsageOption(option = PropertyUsageOption.LINK)
         public String resourcePoolLink;
 
-        /** The priority with which the group resource policies will be applied */
-        @Documentation(description = "The priority with which the group resource policies will be applied.")
+        /** The priority with which the group resource placements will be applied */
+        @Documentation(description = "The priority with which the group resource placements will be applied.")
         public int priority;
 
         @Documentation(description = "The resource type for which the group resource quotas will be applied.")
         public String resourceType;
 
         /**
-         * The maximum number of resource instances for this policy for a group.
+         * The maximum number of resource instances for this placement for a group.
          * Value of 0 will be considered unlimited.
          */
-        @Documentation(description = "The maximum number of resource instances for this policy for a group.")
+        @Documentation(description = "The maximum number of resource instances for this placement for a group.")
         public long maxNumberInstances = UNLIMITED_NUMBER_INSTANCES;
 
         /** Memory limit in bytes per group for a resource pool. */
@@ -149,11 +149,11 @@ public class GroupResourcePolicyService extends StatefulService {
         public int cpuShares; // TODO: Not included in the reservation algorithm yet
 
         /**
-         * Link to the deployment policy of this policy. If the same policy is set to a container
-         * description, then that description should be provisioned from this policy.
+         * Link to the deployment policy of this placement. If the same policy is set to a container
+         * description, then that description should be provisioned from this placement.
          */
-        @Documentation(description = " Link to the deployment policy of this policy. If the same policy "
-                + "is set to a container description, then that description should be provisioned from this policy.")
+        @Documentation(description = " Link to the deployment policy of this placement. If the same policy "
+                + "is set to a container description, then that description should be provisioned from this placement.")
         @UsageOption(option = PropertyUsageOption.LINK)
         public String deploymentPolicyLink;
 
@@ -192,7 +192,7 @@ public class GroupResourcePolicyService extends StatefulService {
     /**
      * An DTO used during PATCH operation in order to reserve resources.
      */
-    public static class ResourcePolicyReservationRequest {
+    public static class ResourcePlacementReservationRequest {
         public long resourceCount;
         public String resourceDescriptionLink;
     }
@@ -200,30 +200,31 @@ public class GroupResourcePolicyService extends StatefulService {
     /**
      * State with in-line, expanded ResourcePoolLink.
      */
-    public static class GroupResourcePolicyPoolState extends GroupResourcePolicyState {
+    public static class GroupResourcePlacementPoolState extends GroupResourcePlacementState {
         public static URI buildUri(URI reservationServiceLink) {
             return UriUtils.extendUriWithQuery(reservationServiceLink,
                     UriUtils.URI_PARAM_ODATA_EXPAND,
-                    GroupResourcePolicyState.FIELD_NAME_RESOURCE_POOL_LINK);
+                    GroupResourcePlacementState.FIELD_NAME_RESOURCE_POOL_LINK);
         }
 
         public ResourcePoolState resourcePool;
 
-        public static GroupResourcePolicyPoolState create(
-                ResourcePoolState resourcePool, GroupResourcePolicyState groupResourcePolicyState) {
-            GroupResourcePolicyPoolState poolState = new GroupResourcePolicyPoolState();
-            groupResourcePolicyState.copyTo(poolState);
+        public static GroupResourcePlacementPoolState create(
+                ResourcePoolState resourcePool,
+                GroupResourcePlacementState groupResourcePlacementState) {
+            GroupResourcePlacementPoolState poolState = new GroupResourcePlacementPoolState();
+            groupResourcePlacementState.copyTo(poolState);
 
-            poolState.name = groupResourcePolicyState.name;
-            poolState.tenantLinks = groupResourcePolicyState.tenantLinks;
-            poolState.maxNumberInstances = groupResourcePolicyState.maxNumberInstances;
-            poolState.availableInstancesCount = groupResourcePolicyState.availableInstancesCount;
-            poolState.allocatedInstancesCount = groupResourcePolicyState.allocatedInstancesCount;
-            poolState.resourceQuotaPerResourceDesc = groupResourcePolicyState.resourceQuotaPerResourceDesc;
-            poolState.customProperties = groupResourcePolicyState.customProperties;
-            poolState.cpuShares = groupResourcePolicyState.cpuShares;
-            poolState.memoryLimit = groupResourcePolicyState.memoryLimit;
-            poolState.storageLimit = groupResourcePolicyState.storageLimit;
+            poolState.name = groupResourcePlacementState.name;
+            poolState.tenantLinks = groupResourcePlacementState.tenantLinks;
+            poolState.maxNumberInstances = groupResourcePlacementState.maxNumberInstances;
+            poolState.availableInstancesCount = groupResourcePlacementState.availableInstancesCount;
+            poolState.allocatedInstancesCount = groupResourcePlacementState.allocatedInstancesCount;
+            poolState.resourceQuotaPerResourceDesc = groupResourcePlacementState.resourceQuotaPerResourceDesc;
+            poolState.customProperties = groupResourcePlacementState.customProperties;
+            poolState.cpuShares = groupResourcePlacementState.cpuShares;
+            poolState.memoryLimit = groupResourcePlacementState.memoryLimit;
+            poolState.storageLimit = groupResourcePlacementState.storageLimit;
 
             poolState.resourcePoolLink = resourcePool.documentSelfLink;
             poolState.resourcePool = resourcePool;
@@ -232,8 +233,8 @@ public class GroupResourcePolicyService extends StatefulService {
         }
     }
 
-    public GroupResourcePolicyService() {
-        super(GroupResourcePolicyState.class);
+    public GroupResourcePlacementService() {
+        super(GroupResourcePlacementState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
@@ -242,7 +243,7 @@ public class GroupResourcePolicyService extends StatefulService {
 
     @Override
     public void handleGet(Operation get) {
-        GroupResourcePolicyState currentState = getState(get);
+        GroupResourcePlacementState currentState = getState(get);
         boolean doExpand = get.getUri().getQuery() != null
                 && get.getUri().getQuery().contains(UriUtils.URI_PARAM_ODATA_EXPAND);
         if (!doExpand) {
@@ -260,7 +261,7 @@ public class GroupResourcePolicyService extends StatefulService {
                                 return;
                             }
                             ResourcePoolState resourcePool = o.getBody(ResourcePoolState.class);
-                            GroupResourcePolicyPoolState reservationResourcePool = GroupResourcePolicyPoolState
+                            GroupResourcePlacementPoolState reservationResourcePool = GroupResourcePlacementPoolState
                                     .create(resourcePool, currentState);
                             get.setBody(reservationResourcePool).complete();
                         });
@@ -273,7 +274,7 @@ public class GroupResourcePolicyService extends StatefulService {
         if (!checkForBody(start)) {
             return;
         }
-        GroupResourcePolicyState state = start.getBody(GroupResourcePolicyState.class);
+        GroupResourcePlacementState state = start.getBody(GroupResourcePlacementState.class);
         logFine("Initial name is %s", state.name);
 
         validateStateOnStart(state, start, (o) -> {
@@ -284,14 +285,14 @@ public class GroupResourcePolicyService extends StatefulService {
 
     @Override
     public void handlePut(Operation put) {
-        GroupResourcePolicyState currentState = getState(put);
-        GroupResourcePolicyState putBody = put.getBody(GroupResourcePolicyState.class);
+        GroupResourcePlacementState currentState = getState(put);
+        GroupResourcePlacementState putBody = put.getBody(GroupResourcePlacementState.class);
 
-        // make sure that the active policies are not overridden before validation
+        // make sure that the active placements are not overridden before validation
         putBody.resourceQuotaPerResourceDesc = currentState.resourceQuotaPerResourceDesc;
 
         validateStateOnStart(putBody, put, (a) -> {
-            // make sure the current policies are not overridden
+            // make sure the current placements are not overridden
             currentState.name = putBody.name;
             currentState.priority = putBody.priority;
             currentState.customProperties = putBody.customProperties;
@@ -304,21 +305,21 @@ public class GroupResourcePolicyService extends StatefulService {
                 return;
             }
             currentState.maxNumberInstances = putBody.maxNumberInstances;
-            currentState.availableInstancesCount =
-                    putBody.maxNumberInstances != UNLIMITED_NUMBER_INSTANCES
-                        ? currentState.maxNumberInstances - reserved : UNLIMITED_NUMBER_INSTANCES;
+            currentState.availableInstancesCount = putBody.maxNumberInstances != UNLIMITED_NUMBER_INSTANCES
+                    ? currentState.maxNumberInstances - reserved : UNLIMITED_NUMBER_INSTANCES;
 
-            if (currentState.allocatedInstancesCount > 0) { // there are already active instances for the policy
+            if (currentState.allocatedInstancesCount > 0) { // there are already active instances
+                                                            // for the placement
                 if (currentState.cpuShares != putBody.cpuShares
                         || currentState.storageLimit != putBody.storageLimit
                         || !currentState.resourcePoolLink.equals(putBody.resourcePoolLink)) {
                     put.fail(new IllegalArgumentException(
-                            "'cpuShares' or 'resourcePoolLink' can't be modified while there are active instances for the policy"));
+                            "'cpuShares' or 'resourcePoolLink' can't be modified while there are active instances for the placement"));
                     return;
                 }
             }
 
-            // update only for policies without active policies:
+            // update only for placements without active placements:
             currentState.cpuShares = putBody.cpuShares;
             currentState.storageLimit = putBody.storageLimit;
             currentState.resourcePoolLink = putBody.resourcePoolLink;
@@ -354,11 +355,11 @@ public class GroupResourcePolicyService extends StatefulService {
             return;
         }
 
-        ResourcePolicyReservationRequest request = patch
-                .getBody(ResourcePolicyReservationRequest.class);
+        ResourcePlacementReservationRequest request = patch
+                .getBody(ResourcePlacementReservationRequest.class);
 
-        GroupResourcePolicyState state = getState(patch);
-        adjustStat(ResourcePolicyReservationRequest.class.getSimpleName().toString(), 1);
+        GroupResourcePlacementState state = getState(patch);
+        adjustStat(ResourcePlacementReservationRequest.class.getSimpleName().toString(), 1);
 
         final long currentCount = state.maxNumberInstances != UNLIMITED_NUMBER_INSTANCES
                 ? state.availableInstancesCount - request.resourceCount
@@ -369,12 +370,12 @@ public class GroupResourcePolicyService extends StatefulService {
 
         if (currentCount < 0) {
             patch.fail(new IllegalArgumentException(
-                    "Requested instances are more than the available resource policy: "
+                    "Requested instances are more than the available resource placement: "
                             + state.availableInstancesCount));
             return;
         } else if (currentCount > state.maxNumberInstances) {
             logWarning(
-                    "Releasing the requested resource policy of %d is more than the max %d for the current available %d",
+                    "Releasing the requested resource placement of %d is more than the max %d for the current available %d",
                     request.resourceCount, state.maxNumberInstances, state.availableInstancesCount);
             patch.complete();
             return;
@@ -393,7 +394,7 @@ public class GroupResourcePolicyService extends StatefulService {
         if (countPerDesc == null) {
             if (request.resourceCount < 0) {
                 patch.fail(new IllegalArgumentException(
-                        "Releasing policy do not exist for requested resourceDescriptionLink: "
+                        "Releasing placement do not exist for requested resourceDescriptionLink: "
                                 + request.resourceDescriptionLink));
                 return;
             }
@@ -403,7 +404,7 @@ public class GroupResourcePolicyService extends StatefulService {
             long currentCountPerDesc = countPerDesc + request.resourceCount;
             if (currentCountPerDesc < 0) {
                 patch.fail(new IllegalArgumentException(
-                        "Releasing policy is more than previously requested for the resourceDescriptionLink: "
+                        "Releasing placement is more than previously requested for the resourceDescriptionLink: "
                                 + request.resourceDescriptionLink));
                 return;
             }
@@ -457,8 +458,8 @@ public class GroupResourcePolicyService extends StatefulService {
     }
 
     private boolean reserveMemory(Operation patch,
-            ResourcePolicyReservationRequest request,
-            GroupResourcePolicyState state, Long memoryBytes) {
+            ResourcePlacementReservationRequest request,
+            GroupResourcePlacementState state, Long memoryBytes) {
 
         // TODO what do we do in this case?
         if (memoryBytes == null) {
@@ -471,7 +472,7 @@ public class GroupResourcePolicyService extends StatefulService {
         if (state.memoryLimit != 0) {
             if (currentMemory < 0) {
                 patch.fail(new IllegalArgumentException(
-                        "Requested memory is more than the available memory policy: "
+                        "Requested memory is more than the available memory placement: "
                                 + state.availableMemory));
                 return false;
             }
@@ -497,7 +498,7 @@ public class GroupResourcePolicyService extends StatefulService {
 
     @Override
     public void handleDelete(Operation delete) {
-        GroupResourcePolicyState state = getState(delete);
+        GroupResourcePlacementState state = getState(delete);
         if (state == null || state.documentSelfLink == null) {
             delete.complete();
             return;
@@ -511,16 +512,16 @@ public class GroupResourcePolicyService extends StatefulService {
         super.handleDelete(delete);
     }
 
-    private QueryTask createGroupResourcePolicyQueryTask(GroupResourcePolicyState state) {
-        QueryTask q = QueryUtil.buildQuery(GroupResourcePolicyState.class, false);
+    private QueryTask createGroupResourcePlacementQueryTask(GroupResourcePlacementState state) {
+        QueryTask q = QueryUtil.buildQuery(GroupResourcePlacementState.class, false);
         q.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
 
         QueryTask.Query resourcePoolClause = new QueryTask.Query()
-                .setTermPropertyName(GroupResourcePolicyPoolState.FIELD_NAME_RESOURCE_POOL_LINK)
+                .setTermPropertyName(GroupResourcePlacementPoolState.FIELD_NAME_RESOURCE_POOL_LINK)
                 .setTermMatchValue(state.resourcePoolLink);
 
         QueryTask.Query notThisGroupClause = new QueryTask.Query()
-                .setTermPropertyName(GroupResourcePolicyPoolState.FIELD_NAME_SELF_LINK)
+                .setTermPropertyName(GroupResourcePlacementPoolState.FIELD_NAME_SELF_LINK)
                 .setTermMatchValue(getSelfLink());
         notThisGroupClause.occurance = QueryTask.Query.Occurance.MUST_NOT_OCCUR;
 
@@ -531,12 +532,13 @@ public class GroupResourcePolicyService extends StatefulService {
         return q;
     }
 
-    private void validateStateOnStart(GroupResourcePolicyState state, Operation operation,
+    private void validateStateOnStart(GroupResourcePlacementState state, Operation operation,
             Consumer<Void> callbackFunction) {
         assertNotEmpty(state.name, "name");
         assertNotEmpty(state.resourcePoolLink, "resourcePoolLink");
         if (state.maxNumberInstances < 0) {
-            throw new IllegalArgumentException("'maxNumberInstances' must be greater or eq to zero.");
+            throw new IllegalArgumentException(
+                    "'maxNumberInstances' must be greater or eq to zero.");
         }
 
         if (state.resourceType == null) {
@@ -553,7 +555,7 @@ public class GroupResourcePolicyService extends StatefulService {
                     "'cpuShares' must be greater than or equal to zero.");
         }
 
-        validatePolicySize(state, operation, (o) -> {
+        validatePlacementSize(state, operation, (o) -> {
 
             if (state.resourceQuotaPerResourceDesc == null
                     || state.resourceQuotaPerResourceDesc.isEmpty()) {
@@ -566,7 +568,7 @@ public class GroupResourcePolicyService extends StatefulService {
         });
     }
 
-    private void validatePolicySize(GroupResourcePolicyState state, Operation operation,
+    private void validatePlacementSize(GroupResourcePlacementState state, Operation operation,
             Consumer<Void> callbackFunction) {
         sendRequest(Operation.createGet(this, state.resourcePoolLink)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
@@ -590,37 +592,39 @@ public class GroupResourcePolicyService extends StatefulService {
 
                             // TODO This query does not depend on the enclosing one. Probably should
                             // be run in parallel
-                            getOtherPoliciesInResourcePoolAndValidate(state, operation, totalMemory,
+                            getOtherPlacementsInResourcePoolAndValidate(state, operation,
+                                    totalMemory,
                                     callbackFunction);
 
                         }));
     }
 
-    private void getOtherPoliciesInResourcePoolAndValidate(GroupResourcePolicyState state,
+    private void getOtherPlacementsInResourcePoolAndValidate(GroupResourcePlacementState state,
             Operation operation,
             long totalMemory, Consumer<Void> callbackFunction) {
-        ServiceDocumentQuery<GroupResourcePolicyState> query = new ServiceDocumentQuery<>(getHost(),
-                GroupResourcePolicyState.class);
-        QueryTask q = createGroupResourcePolicyQueryTask(state);
-        List<GroupResourcePolicyState> groupResourcePolicyStates = new ArrayList<>();
+        ServiceDocumentQuery<GroupResourcePlacementState> query = new ServiceDocumentQuery<>(
+                getHost(),
+                GroupResourcePlacementState.class);
+        QueryTask q = createGroupResourcePlacementQueryTask(state);
+        List<GroupResourcePlacementState> groupResourcePlacementStates = new ArrayList<>();
         query.query(q, (r) -> {
             if (r.hasException()) {
                 operation.fail(new RuntimeException(
-                        "Exception while querying for GroupResourcePolicyStates",
+                        "Exception while querying for GroupResourcePlacementStates",
                         r.getException()));
                 return;
             } else if (r.hasResult()) {
-                groupResourcePolicyStates.add(r.getResult());
+                groupResourcePlacementStates.add(r.getResult());
             } else {
-                long allPolicyMemory = groupResourcePolicyStates.stream()
-                        .mapToLong(groupResourcePolicyState -> {
-                            return Long.valueOf(groupResourcePolicyState.memoryLimit);
+                long allPlacementMemory = groupResourcePlacementStates.stream()
+                        .mapToLong(groupResourcePlacementState -> {
+                            return Long.valueOf(groupResourcePlacementState.memoryLimit);
                         }).sum();
 
-                long availableMemory = totalMemory - allPolicyMemory;
+                long availableMemory = totalMemory - allPlacementMemory;
                 if (availableMemory > 0 && availableMemory < state.memoryLimit) {
                     operation.fail(new IllegalArgumentException(
-                            "Memory already reserved by other policies. Available memory: "
+                            "Memory already reserved by other placements. Available memory: "
                                     + availableMemory + ", requested: " + state.memoryLimit));
                     return;
                 }
@@ -632,7 +636,7 @@ public class GroupResourcePolicyService extends StatefulService {
 
     @Override
     public ServiceDocument getDocumentTemplate() {
-        GroupResourcePolicyState template = (GroupResourcePolicyState) super.getDocumentTemplate();
+        GroupResourcePlacementState template = (GroupResourcePlacementState) super.getDocumentTemplate();
         template.resourceQuotaPerResourceDesc = new HashMap<>();
         template.memoryQuotaPerResourceDesc = new HashMap<>();
         template.customProperties = new HashMap<String, String>(1);

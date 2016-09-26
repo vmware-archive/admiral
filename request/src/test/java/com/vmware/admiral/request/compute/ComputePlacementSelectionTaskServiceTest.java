@@ -35,7 +35,7 @@ public class ComputePlacementSelectionTaskServiceTest extends RequestBaseTest {
     private ComputeState vmGuestCompute;
 
     @Override
-    protected ResourceType policyResourceType() {
+    protected ResourceType placementResourceType() {
         return ResourceType.COMPUTE_TYPE;
     }
 

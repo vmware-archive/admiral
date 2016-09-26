@@ -96,7 +96,7 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
 
         // setup Group Policy:
         int numberOfInstances = 2 * ITERATIONS_COUNT;
-        groupPolicyState = createGroupResourcePolicy(resourcePool, numberOfInstances);
+        groupPlacementState = createGroupResourcePlacement(resourcePool, numberOfInstances);
     }
 
     @Override
@@ -488,7 +488,7 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
             // 1. Request a container instance:
             RequestBrokerState request = TestRequestStateFactory.createRequestState();
             request.resourceDescriptionLink = createContainerDescription().documentSelfLink;
-            request.tenantLinks = groupPolicyState.tenantLinks;
+            request.tenantLinks = groupPlacementState.tenantLinks;
             host.log("########  Start of request ######## ");
             request = startRequest(request);
 

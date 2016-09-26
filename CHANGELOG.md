@@ -6,6 +6,8 @@
 
 * Groups are now Projects
 
+* (Group Resource) Policies are now (Group Resource) Placements.
+
 ## 0.5.0
 
 * Initial open source release.

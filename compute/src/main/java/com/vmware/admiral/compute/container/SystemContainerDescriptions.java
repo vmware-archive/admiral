@@ -60,12 +60,12 @@ public class SystemContainerDescriptions {
 
     public static boolean isDiscoveredContainer(ContainerState containerState) {
         // container is discovered if its description link is discovered, or it is a
-        // system container without groupResourcePolicyLink
+        // system container without groupResourcePlacementLink
         return (containerState.descriptionLink != null && containerState.descriptionLink
                 .startsWith(DISCOVERED_DESCRIPTION_LINK))
                 || (Boolean.TRUE.equals(containerState.system)
-                        && (containerState.groupResourcePolicyLink == null
-                                || containerState.groupResourcePolicyLink.isEmpty()));
+                        && (containerState.groupResourcePlacementLink == null
+                                || containerState.groupResourcePlacementLink.isEmpty()));
     }
 
     public static String getSystemContainerSelfLink(String systemContainerName, String hostId) {

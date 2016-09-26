@@ -189,13 +189,13 @@ public class ContainerClusteringTaskService extends
                     .subList(desiredContainerCount, sortedContainers.size());
         }
 
-        String groupResourcePolicyLink = null;
+        String groupResourcePlacementLink = null;
         if (sortedContainers.size() >= 1) {
-            groupResourcePolicyLink = sortedContainers.get(0).groupResourcePolicyLink;
+            groupResourcePlacementLink = sortedContainers.get(0).groupResourcePlacementLink;
         }
         if (containersToAdd >= 1) {
             createAdditionalContainers(state, state.resourceDescriptionLink,
-                    groupResourcePolicyLink,
+                    groupResourcePlacementLink,
                     sortedContainers,
                     containersToAdd);
         } else {
@@ -219,7 +219,7 @@ public class ContainerClusteringTaskService extends
     }
 
     private void createAdditionalContainers(ContainerClusteringTaskState state, String descLink,
-            String groupResourcePolicyLink, List<ContainerState> existingContainers,
+            String groupResourcePlacementLink, List<ContainerState> existingContainers,
             int containersToAdd) {
 
         if (containersToAdd < 1) {
@@ -231,7 +231,7 @@ public class ContainerClusteringTaskService extends
         requestBrokerState.resourceDescriptionLink = descLink;
         requestBrokerState.resourceType = state.resourceType;
         requestBrokerState.operation = RequestBrokerState.PROVISION_RESOURCE_OPERATION;
-        requestBrokerState.groupResourcePolicyLink = groupResourcePolicyLink;
+        requestBrokerState.groupResourcePlacementLink = groupResourcePlacementLink;
         requestBrokerState.tenantLinks = state.tenantLinks;
         requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskState.TaskStage.STARTED, SubStage.ALLOCATED, TaskState.TaskStage.FAILED,

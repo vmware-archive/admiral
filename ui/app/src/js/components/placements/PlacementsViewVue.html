@@ -9,12 +9,12 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="policies-view" v-bind:class="{'right-context-expanded':  contextExpanded}">
+<div class="placements-view" v-bind:class="{'right-context-expanded':  contextExpanded}">
   <div class="main-panel">
     <list-title
       v-bind:has-search-query="false"
-      v-bind:title="i18n('app.policy.list.title')"
-      v-bind:title-search="i18n('app.policy.list.title')"
+      v-bind:title="i18n('app.placement.list.title')"
+      v-bind:title-search="i18n('app.placement.list.title')"
       v-bind:count="itemsCount" v-on:refresh-list="refresh()"></list-title>
     <alert alert-type="danger" v-bind:show-alert="hasError"
       v-bind:alert-message="errorMessage"></alert>
