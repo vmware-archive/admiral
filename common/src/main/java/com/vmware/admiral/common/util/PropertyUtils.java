@@ -143,7 +143,7 @@ public class PropertyUtils {
     @SuppressWarnings("unchecked")
     public static <T> T getValue(Object instance, String fieldName) {
         try {
-            Field field = ReflectionUtils.getField(instance.getClass(), fieldName);
+            Field field = findField(instance.getClass(), fieldName);
             return (T) field.get(instance);
         } catch (Exception e) {
             return null;

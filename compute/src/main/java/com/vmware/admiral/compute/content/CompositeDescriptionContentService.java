@@ -41,7 +41,6 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.content.CompositeTemplateUtil.YamlType;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationSequence;
@@ -133,12 +132,8 @@ public class CompositeDescriptionContentService extends StatelessService {
         CompositeComponentRegistry.ComponentMeta meta = CompositeComponentRegistry
                 .metaByDescriptionLink(link);
 
-        ResourceState componentDescription;
-        if (ComputeDescriptionService.ComputeDescription.class.equals(meta.descriptionClass)) {
-            componentDescription = Utils.fromJson(document, ComputeDescription.class);
-        } else {
-            componentDescription = Utils.fromJson(document, meta.descriptionClass);
-        }
+        ResourceState componentDescription = Utils.fromJson(document, meta.descriptionClass);
+
         ComponentTemplate<?> component = fromDescriptionToComponentTemplate(
                 componentDescription, meta.resourceType);
         template.components.put(componentDescription.name, component);

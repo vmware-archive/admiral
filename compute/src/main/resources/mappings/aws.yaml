@@ -14,3 +14,4 @@ properties:
       coreos: "ami-80108b97"
       windows: "ami-c8a9baa2"
       ubuntu: "ami-787d6e12"
+      ubuntu-server-1604: "ami-2ef48339"

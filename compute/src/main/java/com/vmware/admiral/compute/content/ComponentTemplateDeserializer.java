@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 
 public class ComponentTemplateDeserializer extends StdDeserializer<ComponentTemplate<?>> {
 
@@ -73,9 +72,6 @@ public class ComponentTemplateDeserializer extends StdDeserializer<ComponentTemp
         ResourceType resourceType = ResourceType.fromContentType(type);
         Class<?> clazz = CompositeComponentRegistry
                 .metaByType(resourceType.getName()).descriptionClass;
-        if (ComputeDescriptionService.ComputeDescription.class.equals(clazz)) {
-            return ComputeDescription.class;
-        }
         return clazz;
     }
 

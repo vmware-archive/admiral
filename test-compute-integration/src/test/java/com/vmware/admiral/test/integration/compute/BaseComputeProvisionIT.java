@@ -39,6 +39,7 @@ import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
@@ -112,7 +113,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     }
 
     private static final String SUFFIX = "bel10";
-    private final Set<ComputeState> computesToDelete = new HashSet<>();
+    protected final Set<ComputeState> computesToDelete = new HashSet<>();
     private final Set<String> containersToDelete = new HashSet<>();
     private GroupResourcePlacementState groupResourcePlacementState;
     private EndpointType endpointType;
@@ -216,11 +217,28 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     @Test
     public void testProvision() throws Throwable {
+        String resourceDescriptionLink = getResourceDescriptionLink();
 
-        ComputeDescription computeDescription = createComputeDescription(endpointType,
-                documentLifeCycle);
+        RequestBrokerState provisionRequest = allocateAndProvision(resourceDescriptionLink);
 
-        RequestBrokerState allocateRequest = requestCompute(computeDescription, true, null);
+        try {
+            doWithResources(provisionRequest.resourceLinks);
+        } finally {
+            // create a host removal task - RequestBroker
+            RequestBrokerState deleteRequest = new RequestBrokerState();
+            deleteRequest.resourceType = getResourceType(resourceDescriptionLink);
+            deleteRequest.resourceLinks = provisionRequest.resourceLinks;
+            deleteRequest.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
+            RequestBrokerState cleanupRequest = postDocument(RequestBrokerFactoryService.SELF_LINK,
+                    deleteRequest);
+
+            waitForTaskToComplete(cleanupRequest.documentSelfLink);
+        }
+    }
+
+    protected RequestBrokerState allocateAndProvision(
+            String resourceDescriptionLink) throws Exception {
+        RequestBrokerState allocateRequest = requestCompute(resourceDescriptionLink, true, null);
 
         allocateRequest = getDocument(allocateRequest.documentSelfLink, RequestBrokerState.class);
 
@@ -232,39 +250,28 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
             computesToDelete.add(computeState);
         }
 
-        RequestBrokerState provisionRequest = requestCompute(computeDescription, false,
+        RequestBrokerState provisionRequest = requestCompute(resourceDescriptionLink, false,
                 allocateRequest.resourceLinks);
 
         provisionRequest = getDocument(provisionRequest.documentSelfLink, RequestBrokerState.class);
         assertNotNull(provisionRequest);
         assertNotNull(provisionRequest.resourceLinks);
-
-        try {
-            doWithResources(provisionRequest.resourceLinks);
-        } finally {
-            // create a host removal task - RequestBroker
-            RequestBrokerState deleteRequest = new RequestBrokerState();
-            deleteRequest.resourceType = ResourceType.COMPUTE_TYPE.getName();
-            deleteRequest.resourceLinks = provisionRequest.resourceLinks;
-            deleteRequest.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
-            RequestBrokerState cleanupRequest = postDocument(RequestBrokerFactoryService.SELF_LINK,
-                    deleteRequest);
-
-            waitForTaskToComplete(cleanupRequest.documentSelfLink);
-        }
+        return provisionRequest;
     }
 
     protected void doWithResources(List<String> resourceLinks) throws Throwable {
         validateHostState(resourceLinks);
     }
 
-    private RequestBrokerState requestCompute(ComputeDescription computeDescription,
+    protected RequestBrokerState requestCompute(String resourceDescLink,
             boolean allocation, List<String> resourceLinks)
             throws Exception {
         RequestBrokerState requestBrokerState = new RequestBrokerState();
-        requestBrokerState.resourceType = ResourceType.COMPUTE_TYPE.getName();
+
+        requestBrokerState.resourceType = getResourceType(resourceDescLink);
+        requestBrokerState.resourceDescriptionLink = resourceDescLink;
+
         requestBrokerState.resourceCount = 1;
-        requestBrokerState.resourceDescriptionLink = computeDescription.documentSelfLink;
         requestBrokerState.resourceLinks = resourceLinks;
         requestBrokerState.tenantLinks = getTenantLinks();
         requestBrokerState.customProperties = new HashMap<>();
@@ -280,6 +287,14 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
         waitForTaskToComplete(request.documentSelfLink);
         return request;
+    }
+
+    private String getResourceType(String resourceDescLink) {
+        if (resourceDescLink.startsWith(CompositeDescriptionFactoryService.SELF_LINK)) {
+            return ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
+        } else {
+            return ResourceType.COMPUTE_TYPE.getName();
+        }
     }
 
     private String getLink(String factoryLink, String name) {
@@ -363,10 +378,14 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return createResourcePool(endpointType, null, VMS_RESOURCE_POOL_ID, documentLifeCycle);
     }
 
-    protected ComputeDescription createComputeDescription(EndpointType endpointType,
-            TestDocumentLifeCycle documentLifeCycle)
+    protected String getResourceDescriptionLink() throws Exception {
+        return createComputeDescription().documentSelfLink;
+    }
+
+    protected ComputeDescription createComputeDescription()
             throws Exception {
-        ComputeDescription computeDesc = prepareComputeDescription(endpointType);
+
+        ComputeDescription computeDesc = prepareComputeDescription();
 
         ComputeDescription computeDescription = postDocument(ComputeDescriptionService.FACTORY_LINK,
                 computeDesc, documentLifeCycle);
@@ -374,9 +393,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return computeDescription;
     }
 
-    protected ComputeDescription prepareComputeDescription(
-            EndpointType endpointType) throws Exception {
-        String id = name(endpointType, "test", UUID.randomUUID().toString());
+    protected ComputeDescription prepareComputeDescription() throws Exception {
+        String id = name(getEndpointType(), "test", UUID.randomUUID().toString());
         ComputeDescription computeDesc = new ComputeDescription();
         computeDesc.id = id;
         computeDesc.name = "belvm" + String.valueOf(System.currentTimeMillis() / 1000);

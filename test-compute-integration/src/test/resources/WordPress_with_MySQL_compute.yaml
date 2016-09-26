@@ -1,0 +1,52 @@
+---
+name: "wordPressWithMySqlCompute"
+properties:
+  _leaseDays: "3"
+components:
+  mysql:
+    type: "Compute"
+    data:
+      name: "mysql"
+      environmentName: "On premise"
+      instanceType: small
+      __compute_image_id: "ubuntu-server-1604"
+      __computeConfigContent: |
+          #cloud-config
+          repo_update: true
+          repo_upgrade: all
+
+          packages:
+           - mysql-server
+
+          runcmd:
+           - sed -e '/bind-address/ s/^#*/#/' -i /etc/mysql/mysql.conf.d/mysqld.cnf
+           - service mysql restart
+           - mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'mysqlpassword';"
+           - mysql -e "FLUSH PRIVILEGES;"
+  wordpress:
+    type: "Compute"
+    data:
+      name: "wordpress"
+      environmentName: "On premise"
+      instanceType: small
+      __compute_image_id: "ubuntu-server-1604"
+      __computeConfigContent: |
+          #cloud-config
+          repo_update: true
+          repo_upgrade: all
+
+          packages:
+           - apache2
+           - php
+           - php-mysql
+           - libapache2-mod-php
+           - php-mcrypt
+           - mysql-client
+
+          runcmd:
+           - mkdir -p /var/www/html/mywordpresssite && cd /var/www/html && wget https://wordpress.org/latest.tar.gz && tar -xzf /var/www/html/latest.tar.gz -C /var/www/html/mywordpresssite --strip-components 1
+           - for i in {1..5}; do mysql --connect-timeout=3 -h ${_resource~mysql~address}-u root -pmysqlpassword -e "SHOW STATUS;" && break || sleep 15; done
+           - mysql -u root -pmysqlpassword -h ${_resource~mysql~address} -e "create database wordpress_blog;"
+           - mv /var/www/html/mywordpresssite/wp-config-sample.php /var/www/html/mywordpresssite/wp-config.php
+           - sed -i -e s/"define('DB_NAME', 'database_name_here');"/"define('DB_NAME', 'wordpress_blog');"/ /var/www/html/mywordpresssite/wp-config.php && sed -i -e s/"define('DB_USER', 'username_here');"/"define('DB_USER', 'root');"/ /var/www/html/mywordpresssite/wp-config.php && sed -i -e s/"define('DB_PASSWORD', 'password_here');"/"define('DB_PASSWORD', 'mysqlpassword');"/ /var/www/html/mywordpresssite/wp-config.php && sed -i -e s/"define('DB_HOST', 'localhost');"/"define('DB_HOST', '${_resource~mysql~address}');"/ /var/www/html/mywordpresssite/wp-config.php
+           - service apache2 reload

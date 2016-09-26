@@ -28,11 +28,9 @@ public class VsphereComputeProvisionOvfIT extends VsphereComputeProvisionIT {
     public static final String OVF_URI = "test.vsphere.ovf.uri";
 
     @Override
-    protected ComputeDescription createComputeDescription(
-            EndpointType endpointType,
-            TestDocumentLifeCycle documentLifeCycle) throws Exception {
+    protected ComputeDescription createComputeDescription() throws Exception {
 
-        ComputeDescription computeDesc = prepareComputeDescription(endpointType);
+        ComputeDescription computeDesc = prepareComputeDescription();
         //remove the image key, as we don't need for Ovf provisioning
         computeDesc.customProperties
                 .remove(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME);

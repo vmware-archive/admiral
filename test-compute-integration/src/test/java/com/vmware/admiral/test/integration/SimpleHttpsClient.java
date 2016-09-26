@@ -28,8 +28,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Level;
-
+import java.util.stream.Collectors;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
@@ -102,8 +103,7 @@ public class SimpleHttpsClient {
 
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         setRequestMethodUsingWorkaroundForJREBug(conn, method.name());
-        conn.addRequestProperty("Content-type", Operation.MEDIA_TYPE_APPLICATION_JSON);
-        conn.addRequestProperty("Accept", Operation.MEDIA_TYPE_APPLICATION_JSON);
+
 
         Operation op = new Operation()
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE);
@@ -112,6 +112,16 @@ public class SimpleHttpsClient {
 
         for (Entry<String, String> entry : headers.entrySet()) {
             conn.addRequestProperty(entry.getKey(), entry.getValue());
+        }
+
+        Set<String> userHeaders = headers.keySet().stream().map(k -> k.toUpperCase())
+                .collect(Collectors.toSet());
+
+        if (!userHeaders.contains(Operation.CONTENT_TYPE_HEADER.toUpperCase())) {
+            conn.addRequestProperty("Content-type", Operation.MEDIA_TYPE_APPLICATION_JSON);
+        }
+        if (!userHeaders.contains(Operation.ACCEPT_HEADER.toUpperCase())) {
+            conn.addRequestProperty("Accept", Operation.MEDIA_TYPE_APPLICATION_JSON);
         }
 
         if (sslSocketFactory != null && UriUtils.HTTPS_SCHEME.equals(url.getProtocol())) {

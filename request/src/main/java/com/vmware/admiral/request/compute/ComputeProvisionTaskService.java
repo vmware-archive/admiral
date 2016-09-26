@@ -13,18 +13,23 @@ package com.vmware.admiral.request.compute;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
+import static com.vmware.admiral.compute.ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
@@ -35,6 +40,7 @@ import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.tasks.ProvisionComputeTaskService;
 import com.vmware.photon.controller.model.tasks.SubTaskService;
 import com.vmware.xenon.common.Operation;
@@ -43,7 +49,6 @@ import com.vmware.xenon.common.OperationSequence;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState;
-import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -64,6 +69,7 @@ public class ComputeProvisionTaskService extends
 
         public static enum SubStage {
             CREATED,
+            CUSTOMIZED_COMPUTE,
             PROVISIONING_COMPUTE,
             PROVISIONING_COMPUTE_COMPLETED,
             COMPLETED,
@@ -109,6 +115,9 @@ public class ComputeProvisionTaskService extends
     protected void handleStartedStagePatch(ComputeProvisionTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
+            customizeCompute(state);
+            break;
+        case CUSTOMIZED_COMPUTE:
             provisionResources(state, null);
             break;
         case PROVISIONING_COMPUTE:
@@ -125,6 +134,78 @@ public class ComputeProvisionTaskService extends
         default:
             break;
         }
+    }
+
+    private void customizeCompute(ComputeProvisionTaskState state) {
+
+        OperationJoin.JoinedCompletionHandler getComputeCompletion = (opsGetComputes, exsGetComputes) -> {
+
+            if (exsGetComputes != null && !exsGetComputes.isEmpty()) {
+                failTask("Error retrieving compute states",
+                        exsGetComputes.values().iterator().next());
+            }
+
+            Map<String, String> diskLinkToContent = new HashMap<>();
+
+            Predicate<ComputeState> hasCustomConfigContent = cs -> cs.customProperties != null
+                    && cs.customProperties.containsKey(COMPUTE_CONFIG_CONTENT_PROP_NAME);
+
+            opsGetComputes.values().stream()
+                    .map(op -> op.getBody(ComputeState.class))
+                    .filter(hasCustomConfigContent)
+                    .forEach(cs -> {
+                        for (String diskLink : cs.diskLinks) {
+                            diskLinkToContent.put(diskLink, cs.customProperties
+                                    .get(COMPUTE_CONFIG_CONTENT_PROP_NAME));
+                        }
+                    });
+
+
+            OperationJoin.JoinedCompletionHandler getDisksCompletion = (opsGetDisks, exsGetDisks) -> {
+                if (exsGetDisks != null && !exsGetDisks.isEmpty()) {
+                    failTask("Unable to get disk(s)", exsGetDisks.values().iterator().next());
+                    return;
+                }
+
+                Stream<Operation> updateOperations = opsGetDisks.values().stream()
+                        .map(op -> op.getBody(DiskService.DiskState.class))
+                        .filter(diskState -> diskState.type == DiskService.DiskType.HDD)
+                        .filter(diskState -> diskState.bootConfig != null
+                                && diskState.bootConfig.files.length > 0)
+                        .map(diskState -> {
+                            diskState.bootConfig.files[0].contents = diskLinkToContent
+                                    .get(diskState.documentSelfLink);
+                            return Operation.createPut(this, diskState.documentSelfLink)
+                                    .setBody(diskState);
+                        });
+
+                OperationJoin.create(updateOperations).setCompletion((opsUpdDisks, exsUpdDisks) -> {
+                    if (exsUpdDisks != null && !exsUpdDisks.isEmpty()) {
+                        failTask("Unable to update disk(s)",
+                                exsUpdDisks.values().iterator().next());
+                        return;
+                    }
+
+                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.CUSTOMIZED_COMPUTE));
+                }).sendWith(this);
+            };
+
+            List<Operation> getDisksOperations = diskLinkToContent.keySet().stream()
+                    .map(link -> Operation.createGet(this, link)).collect(Collectors.toList());
+
+            if (getDisksOperations.size() > 0) {
+                OperationJoin.create(getDisksOperations).setCompletion(getDisksCompletion)
+                        .sendWith(this);
+                return;
+            } else {
+                sendSelfPatch(createUpdateSubStageTask(state, SubStage.CUSTOMIZED_COMPUTE));
+            }
+        };
+
+        Stream<Operation> getComputeOperations = state.resourceLinks.stream()
+                .map(link -> Operation.createGet(this, link));
+        OperationJoin.create(getComputeOperations).setCompletion(getComputeCompletion)
+                .sendWith(this);
     }
 
     private void provisionResources(ComputeProvisionTaskState state, String subTaskLink) {
@@ -181,7 +262,7 @@ public class ComputeProvisionTaskService extends
         ComputeProvisionTaskState subTaskPatchBody = new ComputeProvisionTaskState();
         subTaskPatchBody.taskInfo = new TaskState();
         subTaskPatchBody.taskSubStage = SubStage.PROVISIONING_COMPUTE_COMPLETED;
-        subTaskPatchBody.taskInfo.stage = TaskStage.STARTED;
+        subTaskPatchBody.taskInfo.stage = TaskState.TaskStage.STARTED;
         // tell the sub task with what to patch us, on completion
         subTaskInitState.parentPatchBody = Utils.toJson(subTaskPatchBody);
         subTaskInitState.errorThreshold = 0;
