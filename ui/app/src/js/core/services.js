@@ -241,11 +241,11 @@ var mergeUrl = function(path, params) {
   return path;
 };
 
-var buildPaginationUrl = function(path, filter, count, order) {
+var buildPaginationUrl = function(path, filter, count, order, limit) {
   var params = {
     [DOCUMENT_TYPE_PROP_NAME]: true,
     [ODATA_COUNT_PROP_NAME]: count,
-    [ODATA_LIMIT_PROP_NAME]: calculateLimit(),
+    [ODATA_LIMIT_PROP_NAME]: limit || calculateLimit(),
     [ODATA_ORDERBY_PROP_NAME]: order
   };
   if (filter) {
@@ -1069,6 +1069,17 @@ services.updateContainerDescription = function(containerDescription) {
 
 services.createNetworkDescription = function(networkDescription) {
   return post(links.CONTAINER_NETWORK_DESCRIPTIONS, networkDescription);
+};
+
+services.searchNetworks = function(query, limit) {
+  var filter = 'name eq *' + query + '*';
+  let url = buildPaginationUrl(links.NETWORKS, filter, true, 'name asc', limit);
+  return get(url).then(function(data) {
+    var documentLinks = data.documentLinks || [];
+    return documentLinks.map((link) => {
+      return data.documents[link];
+    });
+  });
 };
 
 services.loadClusterContainers = function(descriptionLink, compositionContextId) {

@@ -249,7 +249,8 @@
           "newTitle": "Add Network",
           "newDropdownTitle": "Add Network...",
           "editTitle": "Edit Network",
-          "name": "Name"
+          "name": "Name",
+          "existingNetwork": "Existing"
         },
         "network": {
           "drag": "Drag to attach container to this network",

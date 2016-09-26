@@ -16,6 +16,11 @@
   background-clip: padding-box;
 }
 
+.tt-suggestion {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
 .tt-suggestion:hover {
   color: #262626;
   background-image: -webkit-linear-gradient(top, #f5f5f5 0%, #e8e8e8 100%);

@@ -172,7 +172,7 @@
     <a class="close-button" v-on:click="handleBackButton($event)"><i
       class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
     <div class="content">
-      <div class="title" v-if="model.editNetwork.definitionInstance">{{i18n('app.template.details.editNetwork.editTitle')}}</div>
+      <div class="title" v-if="model.editNetwork.definitionInstance.documentSelfLink">{{i18n('app.template.details.editNetwork.editTitle')}}</div>
       <div class="title" v-else>{{i18n('app.template.details.editNetwork.newTitle')}}</div>
       <network-definition-form v-ref:network-edit-form v-bind:model="model.editNetwork.definitionInstance"></network-definition-form>
       <div class="pull-right control-btns">

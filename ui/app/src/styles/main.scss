@@ -2333,11 +2333,15 @@ $alert-text-color: #ffffff;
     margin-top: 14px;
   }
 
-  .loader-inline {
-    display: none;
+  .loader-inline, .search-hint {
+    z-index: 1;
     position: absolute;
     right: 20px;
     top: 10px;
+  }
+
+  .loader-inline {
+    display: none;
   }
 
   > .fa-question-circle {
@@ -2351,5 +2355,8 @@ $alert-text-color: #ffffff;
 .app-view .form-group.loading {
   .loader-inline {
     display: block;
+  }
+  .search-hint {
+    display: none;
   }
 }
