@@ -32,6 +32,7 @@ import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.ServiceStateCollectionUpdateRequest;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.Utils.MergeResult;
 import com.vmware.xenon.services.common.QueryTask.Query;
 
 /**
@@ -102,14 +103,9 @@ public class ElasticPlacementZoneService extends StatefulService {
 
         boolean hasStateChanged = false;
         try {
-            // first check for collection update requests
-            if (Utils.mergeWithState(currentState, patch)) {
-                hasStateChanged = true; // TODO pmitrov: fix this to correctly reflect changes
-            } else {
-                // auto-merge properties
-                hasStateChanged = Utils.mergeWithState(getStateDescription(),
-                        currentState, getBody(patch));
-            }
+            EnumSet<Utils.MergeResult> mergeResult = Utils.mergeWithStateAdvanced(
+                    getStateDescription(), currentState, ElasticPlacementZoneState.class, patch);
+            hasStateChanged = mergeResult.contains(MergeResult.STATE_CHANGED);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             patch.fail(e);
             return;
@@ -119,8 +115,6 @@ public class ElasticPlacementZoneService extends StatefulService {
             patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
             patch.complete();
         } else {
-            patch.setBody(currentState);
-
             // update the underlying resource pool
             setResourcePoolElasticity(currentState, (t) -> {
                 if (t != null) {
