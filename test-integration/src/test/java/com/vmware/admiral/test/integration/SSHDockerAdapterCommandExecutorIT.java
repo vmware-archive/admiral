@@ -90,6 +90,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
         Assert.assertNotNull("Body should contain STDOUT!", handler.op.getBody(String.class));
     }
 
+    @Ignore("Failing intermittently: https://jira-hzn.eng.vmware.com/browse/VBV-608")
     @Test
     public void load() throws InterruptedException, TimeoutException, IOException {
         SshDockerAdapterCommandExecutorImpl executor = new SshDockerAdapterCommandExecutorImpl(
@@ -354,6 +355,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
         Assert.assertTrue(handler.op.getBody(String.class).contains("hello"));
     }
 
+    @Ignore("Failing intermittently: https://jira-hzn.eng.vmware.com/browse/VBV-609")
     @Test
     public void list() throws InterruptedException, TimeoutException {
         String name = getRandomContainerName();
