@@ -71,7 +71,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
     }
 
     /**
-     * Check whether the patch {@link Operation} id direct operation or not
+     * Check whether the patch {@link Operation} is direct operation or not
      */
     private boolean isDirectOperationRequested(RequestContext context) {
         NetworkOperationType operationType = context.request.getOperationType();
@@ -269,20 +269,28 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
         newNetworkState.documentExpirationTimeMicros = -1; // make sure the expiration is reset.
         newNetworkState.adapterManagementReference = networkState.adapterManagementReference;
 
-        ContainerNetworkStateMapper.propertiesToContainerNetworkState(newNetworkState, properties);
-
-        getHost().log(Level.FINE, "Patching ContainerNetworkState: %s %s",
-                networkState.documentSelfLink, request.getRequestTrackingLog());
-        sendRequest(Operation
-                .createPatch(request.getNetworkStateReference())
-                .setBody(newNetworkState)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        fail(context.request, o, ex);
+        ContainerNetworkStateMapper.propertiesToContainerNetworkState(newNetworkState, properties,
+                getHost(),
+                (mapResult) -> {
+                    if (mapResult.hasException()) {
+                        fail(request, mapResult.getException());
                     } else {
-                        patchTaskStage(request, TaskStage.FINISHED, ex);
+                        getHost().log(Level.FINE, "Patching ContainerNetworkState: %s %s",
+                                mapResult.getResultState().documentSelfLink,
+                                request.getRequestTrackingLog());
+                        sendRequest(Operation
+                                .createPatch(request.getNetworkStateReference())
+                                .setBody(mapResult.getResultState())
+                                .setCompletion((o, ex) -> {
+                                    if (ex != null) {
+                                        fail(context.request, o, ex);
+                                    } else {
+                                        patchTaskStage(request, TaskStage.FINISHED, ex);
+                                    }
+                                }));
                     }
-                }));
+                });
+
     }
 
     private void processDeleteNetwork(RequestContext context) {

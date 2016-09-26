@@ -12,7 +12,9 @@
 package com.vmware.admiral.compute.container.network;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -84,6 +86,16 @@ public class ContainerNetworkService extends StatefulService {
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Boolean external;
+
+        /**
+         * Runtime property that will be populated during network inspections. Contains links to all
+         * containers that are connected to this container network.
+         */
+        @Documentation(description = "Runtime property that will be populated during network inspections. "
+                + "Contains links to all containers that are connected to this container network.")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public List<String> containerStateLinks;
 
         /**
          * A map of field-value pairs for a given network. These are used to specify network option
@@ -238,6 +250,8 @@ public class ContainerNetworkService extends StatefulService {
 
         template.customProperties = new HashMap<>(1);
         template.customProperties.put("key (string)", "value (string)");
+
+        template.containerStateLinks = new ArrayList<String>(0);
 
         ServiceDocumentTemplateUtil.indexProperty(template,
                 ContainerNetworkState.FIELD_NAME_OPTIONS);
