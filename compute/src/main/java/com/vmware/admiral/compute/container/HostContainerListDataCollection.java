@@ -603,6 +603,7 @@ public class HostContainerListDataCollection extends StatefulService {
                 // Upload trusted self-signed registry certificates to host
                 HostConfigCertificateDistributionState distState = new HostConfigCertificateDistributionState();
                 distState.hostLink = container.parentLink;
+                distState.tenantLinks = container.tenantLinks;
                 sendRequest(Operation.createPost(this,
                         HostConfigCertificateDistributionService.SELF_LINK)
                         .setBody(distState));

@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute;
 
 import java.net.URI;
+import java.util.List;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -35,6 +36,7 @@ public class HostConfigCertificateDistributionService extends
 
     public static class HostConfigCertificateDistributionState {
         public String hostLink;
+        public List<String> tenantLinks;
     }
 
     @Override
@@ -44,13 +46,13 @@ public class HostConfigCertificateDistributionService extends
                     op.getBody(HostConfigCertificateDistributionState.class);
             AssertUtil.assertNotNull(distState.hostLink, "hostLink");
 
-            handleAddDockerHostOperation(distState.hostLink);
+            handleAddDockerHostOperation(distState.hostLink, distState.tenantLinks);
         } catch (Throwable t) {
             logSevere("Failed to process certificate distributuon request. %s", Utils.toString(t));
         }
     }
 
-    private void handleAddDockerHostOperation(String hostLink) {
+    private void handleAddDockerHostOperation(String hostLink, List<String> tenantLinks) {
         sendRequest(Operation.createGet(this, RegistryService.FACTORY_LINK)
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -64,8 +66,8 @@ public class HostConfigCertificateDistributionService extends
                         fetchRegistryState(registryLink, (registry) -> {
                             fetchSslTrustLink(registry.address, (sslTrustLink) -> {
                                 fetchSslTrustCertificate(sslTrustLink, (cert) -> {
-                                    uploadCertificate(hostLink,
-                                            getCertificateDirName(registry.address), cert);
+                                    uploadCertificate(hostLink, registry.address, cert,
+                                            tenantLinks);
                                 });
                             });
                         });

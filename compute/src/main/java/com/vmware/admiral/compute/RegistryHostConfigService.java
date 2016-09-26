@@ -146,7 +146,8 @@ public class RegistryHostConfigService extends StatelessService {
                             op.nestCompletion((nestedOp) -> {
                                 completeOperationSuccess(op);
                             });
-                            distributeCertificate(hostState.address, hostSpec.sslTrust, op);
+                            distributeCertificate(hostState.address, hostSpec.sslTrust, op,
+                                    hostState.tenantLinks);
                         }));
     }
 
@@ -222,10 +223,11 @@ public class RegistryHostConfigService extends StatelessService {
     }
 
     private void distributeCertificate(String registryAddress, SslTrustCertificateState certState,
-            Operation parentOp) {
+            Operation parentOp, List<String> tenantLinks) {
         RegistryConfigCertificateDistributionState distributionState = new RegistryConfigCertificateDistributionState();
         distributionState.registryAddress = registryAddress;
         distributionState.certState = certState;
+        distributionState.tenantLinks = tenantLinks;
 
         parentOp.complete();
 

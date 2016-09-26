@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -18,8 +19,10 @@ import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService.ShellContainerExecutorState;
+import com.vmware.admiral.log.EventLogService;
+import com.vmware.admiral.log.EventLogService.EventLogState;
+import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -35,7 +38,9 @@ public class AbstractCertificateDistributionService extends StatelessService {
     public static final long QUERY_RETRIEVAL_RETRY_INTERVAL_SECONDS = Integer.getInteger(
             "cmp.management.query.certificatedistribution.maxRetryIntervalSec", 5);
 
-    protected void uploadCertificate(String hostLink, String dirName, String certificate) {
+    protected void uploadCertificate(String hostLink, String registryAddress, String certificate,
+            List<String> tenantLinks) {
+
         OperationUtil.getDocumentState(this, hostLink, ComputeState.class,
                 (ComputeState host) -> {
                     if (ContainerHostUtil.isVicHost(host)) {
@@ -43,11 +48,12 @@ public class AbstractCertificateDistributionService extends StatelessService {
                         return;
                     }
                     ShellContainerExecutorState execState = new ShellContainerExecutorState();
-                    execState.command = new String[]
-                            { "sh", "/copy-certificate.sh", dirName, certificate };
+                    execState.command = new String[] { "sh", "/copy-certificate.sh",
+                            getCertificateDirName(registryAddress), certificate };
 
                     try {
-                        processUploadCertificateQuery(execState, hostLink, MAX_RETRIES);
+                        processUploadCertificateQuery(execState, hostLink, MAX_RETRIES,
+                                registryAddress, tenantLinks);
                     } catch (Throwable t) {
                         logSevere("Fail to upload registry certificate to host %s: "
                                 + "failed to connect to shell container executor service.",
@@ -57,7 +63,7 @@ public class AbstractCertificateDistributionService extends StatelessService {
     }
 
     protected void processUploadCertificateQuery(ShellContainerExecutorState execState,
-            String hostLink, int retries) {
+            String hostLink, int retries, String registryAddress, List<String> tenantLinks) {
         Operation post = Operation.createPost(this, ShellContainerExecutorService.SELF_LINK);
         post.setUri(UriUtils.appendQueryParam(post.getUri(),
                 ShellContainerExecutorService.HOST_LINK_URI_PARAM, hostLink));
@@ -68,12 +74,17 @@ public class AbstractCertificateDistributionService extends StatelessService {
                         hostLink, Utils.toString(ex));
                 if (retries > 0) {
                     getHost().schedule(() -> {
-                        processUploadCertificateQuery(execState, hostLink, retries - 1);
+                        processUploadCertificateQuery(execState, hostLink, retries - 1,
+                                registryAddress, tenantLinks);
                     }, QUERY_RETRIEVAL_RETRY_INTERVAL_SECONDS, TimeUnit.SECONDS);
                 } else {
-                    logSevere("Failed to upload registry certificate to host %s after %s attempts. "
-                            + "Suspending host.", hostLink, MAX_RETRIES);
-                    suspendHost(hostLink);
+                    String errMsg = String.format(
+                            "Failed to upload registry certificate for [%s] to host [%s] after %s "
+                                    + "attempts. Your host may experience issues connecting to this registry. "
+                                    + "For more info see: https://docs.docker.com/registry/insecure/#/using-self-signed-certificates",
+                            registryAddress, hostLink, MAX_RETRIES);
+                    logSevere(errMsg);
+                    publishEventLog(errMsg, tenantLinks);
                 }
             } else {
                 logInfo("Registry certificate successfully uploaded to host %s", hostLink);
@@ -84,11 +95,20 @@ public class AbstractCertificateDistributionService extends StatelessService {
         }));
     }
 
-    protected void suspendHost(String hostLink) {
-        ComputeState computeState = new ComputeState();
-        computeState.powerState = PowerState.SUSPEND;
-        sendRequest(Operation.createPatch(this, hostLink)
-                .setBody(computeState));
+    protected void publishEventLog(String errMsg, List<String> tenantLinks) {
+        EventLogState eventLog = new EventLogState();
+        eventLog.description = errMsg;
+        eventLog.eventLogType = EventLogType.WARNING;
+        eventLog.resourceType = getClass().getName();
+        eventLog.tenantLinks = tenantLinks;
+
+        sendRequest(Operation.createPost(this, EventLogService.FACTORY_LINK)
+                .setBody(eventLog)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Failed to create event log: %s", Utils.toString(e));
+                    }
+                }));
     }
 
     protected String getCertificateDirName(String registryAddress) {

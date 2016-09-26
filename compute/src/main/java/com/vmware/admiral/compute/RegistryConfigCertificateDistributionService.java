@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute;
 
+import java.util.List;
+
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
@@ -30,6 +32,7 @@ public class RegistryConfigCertificateDistributionService
     public static class RegistryConfigCertificateDistributionState {
         public String registryAddress;
         public SslTrustCertificateState certState;
+        public List<String> tenantLinks;
     }
 
     @Override
@@ -40,15 +43,17 @@ public class RegistryConfigCertificateDistributionService
 
             AssertUtil.assertNotNull(distState.certState, "certState");
             AssertUtil.assertNotNull(distState.registryAddress, "registryAddress");
-            String dirName = getCertificateDirName(distState.registryAddress);
 
-            handleAddRegistryHostOperation(dirName, distState.certState.certificate);
+            handleAddRegistryHostOperation(distState.registryAddress,
+                    distState.certState.certificate, distState.tenantLinks);
         } catch (Throwable t) {
             logSevere("Failed to process certificate distribution request: %s", Utils.toString(t));
         }
     }
 
-    private void handleAddRegistryHostOperation(String dirName, String certificate) {
+    private void handleAddRegistryHostOperation(String registryAddress, String certificate,
+            List<String> tenantLinks) {
+
         sendRequest(Operation.createGet(this, ComputeService.FACTORY_LINK)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -57,7 +62,7 @@ public class RegistryConfigCertificateDistributionService
                         ServiceDocumentQueryResult doc = o
                                 .getBody(ServiceDocumentQueryResult.class);
                         for (String hostLink : doc.documentLinks) {
-                            uploadCertificate(hostLink, dirName, certificate);
+                            uploadCertificate(hostLink, registryAddress, certificate, tenantLinks);
                         }
                     }
                 }));
