@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="image-item" data-name="{{model.registry}}/{{model.name}}">
+<div class="image-item" data-name="{{model.registry}}/{{model.name}}" v-on:click="hideGroups($event)">
   <span class="image-stamp"><i class="fa fa-picture-o"></i></span>
   <div class="image-header">
     <img v-bind:src="model.icon"/>
@@ -42,7 +42,8 @@
       <button type="button" class="btn admiral-btn select-image-btn">Continue</button>
     </template>
     <template v-else>
-      <button v-if="model.provisioning" type="button" class="btn admiral-btn create-container-btn loading">{{i18n ("app.template.list.provision")}}<i class="fa fa-spinner fa-spin loader"></i></button>
+      <button v-if="model.provisioning" type="button" class="btn admiral-btn create-container-btn
+        loading">{{i18n ("app.template.list.provision")}}<i class="fa fa-spinner fa-spin loader"></i></button>
       <template v-else><div>
         <template v-if="showGroupForProvisioning">
           <div class="provisionGroup">
@@ -51,6 +52,7 @@
                       value="{{option.id}}">
                 {{option.name}}
               </option>
+              <option v-if="clearSelectionSupported()" value="">{{i18n('noSelection')}}</option>
             </select>
             <button type="button" class="btn admiral-btn create-container-with-group-btn"
                     v-on:click="provisionContainer($event)">{{i18n("app.template.list.provision")}}</button>

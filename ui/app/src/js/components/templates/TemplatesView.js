@@ -160,8 +160,12 @@ var TemplatesViewVueComponent = Vue.extend({
           $event.stopPropagation();
           $event.preventDefault();
 
-          this.handleGroup(ContainerActions.createContainer,
-                              [this.model.type, this.model.documentId]);
+          if ($event.shiftKey) {
+            this.showGroupForProvisioning = false;
+          } else {
+            this.handleGroup(ContainerActions.createContainer,
+              [this.model.type, this.model.documentId]);
+          }
         },
         provisionContainerAdditionalInfo: function($event) {
           $event.stopPropagation();
@@ -184,11 +188,15 @@ var TemplatesViewVueComponent = Vue.extend({
           $event.stopPropagation();
           $event.preventDefault();
 
-          var template = {
-            'documentSelfLink': this.model.documentSelfLink
-          };
+          if ($event.shiftKey) {
+            this.showGroupForProvisioning = false;
+          } else {
+            var template = {
+              'documentSelfLink': this.model.documentSelfLink
+            };
 
-          this.handleGroup(TemplateActions.copyTemplate, [this.model.type, template]);
+            this.handleGroup(TemplateActions.copyTemplate, [this.model.type, template]);
+          }
         },
         editTemplate: function($event) {
           $event.stopPropagation();
@@ -254,6 +262,7 @@ var TemplatesViewVueComponent = Vue.extend({
     openToolbarRequests: TemplatesContextToolbarActions.openToolbarRequests,
     openToolbarEventLogs: TemplatesContextToolbarActions.openToolbarEventLogs,
     closeToolbar: TemplatesContextToolbarActions.closeToolbar,
+
     alertType: function(alert) {
       return alert && alert.type;
     }

@@ -13,7 +13,7 @@
      role="alert" v-if="model.alert"><i class="fa alert-icon"
   v-bind:class="{'fa-check': model.alert.type === 'success', 'fa-exclamation-circle': model.alert.type === 'fail'}"
   ></i><span>{{model.alert.message}}</span></div>
-<div class="image-item">
+<div class="image-item" v-on:click="hideGroups($event)">
   <div class="image-header">
     <div v-bind:class="'icons icons-' + Math.min(model.icons.length, 4)">
       <template v-for="i in Math.min(model.icons.length, 4)">
@@ -69,6 +69,7 @@
                     value="{{option.id}}">
               {{option.name}}
             </option>
+            <option v-if="clearSelectionSupported()" value="">{{i18n('noSelection')}}</option>
           </select>
           <button type="button" class="btn admiral-btn create-container-with-group-btn"
                   v-on:click="createTemplate($event)">{{i18n("app.template.list.provision")}}</button>

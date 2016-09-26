@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="template-details">
+<div class="template-details" v-on:click="hideGroups($event)">
   <div class="details-contents">
     <div class="list-view">
       <div class="template-details-header">
@@ -42,18 +42,19 @@
           </template>
           <template v-else>
             <template v-if="showGroupForProvisioning">
-            <div class="provisionGroup">
-              <select v-model="preferredGroupId">
-                <option v-for="option in groupOptions" track-by="id" value="{{option.id}}">
-                  {{option.name}}
-                </option>
-              </select>
-              <div class="toolbar-action" v-on:click="provision($event)">
-                <a class="btn btn-circle" data-toggle="tooltip" data-placement="top"
-                   title="{{i18n('app.template.actions.provision')}}"
-                   data-name="provision"><i class="fa fa-send"></i></a>
+              <div class="provisionGroup">
+                <select v-model="preferredGroupId">
+                  <option v-for="option in groupOptions" track-by="id" value="{{option.id}}">
+                    {{option.name}}
+                  </option>
+                  <option v-if="clearSelectionSupported()" value="">{{i18n('noSelection')}}</option>
+                </select>
+                <div class="toolbar-action" v-on:click="provision($event)">
+                  <a class="btn btn-circle" data-toggle="tooltip" data-placement="top"
+                     title="{{i18n('app.template.actions.provision')}}"
+                     data-name="provision"><i class="fa fa-send"></i></a>
+                </div>
               </div>
-            </div>
             </template>
             <template v-else>
               <toolbar-action-button id="provision" icon-name="send"

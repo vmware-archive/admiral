@@ -1,3 +1,16 @@
+/*
+ * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
+import utils from 'core/utils';
+
 var ResourceGroupsMixin = {
   computed: {
     hasGroups: function() {
@@ -26,13 +39,32 @@ var ResourceGroupsMixin = {
     };
   },
   methods: {
+    clearSelectionSupported: function() {
+      // available only in standalone mode
+      return !utils.isApplicationEmbedded();
+    },
+    showGroups: function() {
+      this.showGroupForProvisioning = true;
+      this.preferredGroupId = localStorage.getItem('preferredGroupId');
+
+      if (!this.preferredGroupId) {
+        if (!this.clearSelectionSupported() && !this.preferredGroupId) {
+          let groups = this.groups || this.model.groups;
+          if (groups && groups.length > 0) {
+            this.preferredGroupId = groups[0].id;
+          }
+        } else {
+          this.preferredGroupId = '';
+        }
+        localStorage.setItem('preferredGroupId', this.preferredGroupId);
+      }
+    },
     handleGroup: function(fnToCall, params) {
 
       if (this.hasGroups) {
         if (!this.showGroupForProvisioning) {
 
-          this.preferredGroupId = localStorage.getItem('preferredGroupId');
-          this.showGroupForProvisioning = true;
+          this.showGroups();
         } else {
 
           localStorage.setItem('preferredGroupId', this.preferredGroupId);
@@ -57,9 +89,17 @@ var ResourceGroupsMixin = {
     },
     toggleGroupsDisplay: function() {
       if (this.hasGroups) {
-        this.showGroupForProvisioning = true;
-        this.preferredGroupId = localStorage.getItem('preferredGroupId');
+        this.showGroups();
       } else {
+        this.showGroupForProvisioning = false;
+      }
+    },
+    hideGroups: function($event) {
+      if ($event.target.tagName === 'SELECT' || $event.target.tagName === 'OPTION') {
+        return;
+      }
+
+      if (this.showGroupForProvisioning) {
         this.showGroupForProvisioning = false;
       }
     }

@@ -24,6 +24,7 @@
                 value="{{option.id}}">
           {{option.name}}
         </option>
+        <option v-if="clearSelectionSupported()" value="">{{i18n('noSelection')}}</option>
       </select>
     </div>
     <button class="btn admiral-btn"

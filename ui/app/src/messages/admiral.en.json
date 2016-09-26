@@ -18,7 +18,9 @@
       "hosts": "Hosts",
       "policies": "Policies",
       "templates": "Templates",
+      "resources": "Resources",
       "containers": "Containers",
+      "networks": "Networks",
       "eventlog": "Event Log",
       "resourcePools": "Resource Pools",
       "environments": "Environments",
@@ -696,6 +698,7 @@
   "openInNewTab": "Open in new tab",
   "unavailable": "N/A",
   "advanced": "Advanced",
+  "noSelection": "No Selection",
   "errors": {
     "hostIp": "Value must be hostname or IP address.",
     "urlPath": "URL path is invalid.",

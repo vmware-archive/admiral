@@ -479,11 +479,15 @@ var TemplateDetailsView = Vue.extend({
       $event.stopPropagation();
       $event.preventDefault();
 
-      var template = {
-        'documentSelfLink': this.model.templateDetails.documentSelfLink
-      };
+      if ($event.shiftKey) {
+        this.showGroupForProvisioning = false;
+      } else {
+        var template = {
+          'documentSelfLink': this.model.templateDetails.documentSelfLink
+        };
 
-      this.handleGroup(TemplateActions.copyTemplate, [this.model.type, template]);
+        this.handleGroup(TemplateActions.copyTemplate, [this.model.type, template]);
+      }
     },
     handleConfirmation: function(actionName) {
 
