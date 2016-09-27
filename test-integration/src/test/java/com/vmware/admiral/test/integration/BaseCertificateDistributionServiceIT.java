@@ -11,10 +11,15 @@
 
 package com.vmware.admiral.test.integration;
 
+import static com.vmware.admiral.test.integration.TestPropertiesUtil.getTestRequiredProp;
+
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.Before;
+
+import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -23,6 +28,14 @@ public abstract class BaseCertificateDistributionServiceIT extends BaseProvision
 
     private static final int RETRY_COUNT = 10;
     private static final int RETRY_TIMEOUT = 3000;
+
+    protected String registryHostAndPort;
+
+    @Before
+    public void setUpRegistryAddress() {
+        registryAddress = getTestRequiredProp("docker.v2.registry.host.address");
+        registryHostAndPort = UriUtilsExtended.extractHostAndPort(registryAddress);
+    }
 
     protected static boolean waitUntilRegistryCertificateExists(String hostLink,
             String registryAddress) throws Exception {
@@ -57,7 +70,9 @@ public abstract class BaseCertificateDistributionServiceIT extends BaseProvision
         return false;
     }
 
-    protected static void removeCertificateDirectoryOnCoreOsHost(String hostLink) throws Exception {
+    protected static void removeCertificateDirectoryOnCoreOsHost(String hostLink,
+            String registryAddress) throws Exception {
+
         URI uri = URI.create(getBaseUrl() + buildServiceUri(
                 ShellContainerExecutorService.SELF_LINK));
 
@@ -68,7 +83,7 @@ public abstract class BaseCertificateDistributionServiceIT extends BaseProvision
 
         Map<String, Object> command = new HashMap<>();
         command.put(ShellContainerExecutorService.COMMAND_KEY, new String[] {
-                "rm", "-rf", "/etc/docker/certs.d" });
+                "rm", "-rf", "/etc/docker/certs.d/" +  registryAddress });
 
         SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.POST, url,
                 Utils.toJson(command));

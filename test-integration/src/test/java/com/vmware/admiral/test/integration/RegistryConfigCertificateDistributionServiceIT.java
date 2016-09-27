@@ -13,12 +13,9 @@ package com.vmware.admiral.test.integration;
 
 import static org.junit.Assert.assertTrue;
 
-import static com.vmware.admiral.test.integration.TestPropertiesUtil.getTestRequiredProp;
-
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ContainerHostService;
 
 public class RegistryConfigCertificateDistributionServiceIT extends
@@ -27,18 +24,16 @@ public class RegistryConfigCertificateDistributionServiceIT extends
     @Before
     public void setUp() throws Exception {
         setupCoreOsHost(ContainerHostService.DockerAdapterType.API);
-        removeCertificateDirectoryOnCoreOsHost(dockerHostCompute.documentSelfLink);
+        removeCertificateDirectoryOnCoreOsHost(dockerHostCompute.documentSelfLink,
+                registryHostAndPort);
     }
 
     @Test
     public void testUploadRegistryCertificateOnDockerHostConfig() throws Exception {
-        configureRegistries(getTestRequiredProp("docker.registry.host.address"), null);
-
-        String registryAddress = UriUtilsExtended.extractHostAndPort(
-                getTestRequiredProp("docker.registry.host.address"));
+        configureRegistries(registryAddress, null);
 
         boolean exists = waitUntilRegistryCertificateExists(dockerHostCompute.documentSelfLink,
-                registryAddress);
+                registryHostAndPort);
 
         assertTrue("Cert does not exist.", exists);
     }

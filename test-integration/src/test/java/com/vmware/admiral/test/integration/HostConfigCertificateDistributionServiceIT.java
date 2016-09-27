@@ -13,8 +13,6 @@ package com.vmware.admiral.test.integration;
 
 import static org.junit.Assert.assertTrue;
 
-import static com.vmware.admiral.test.integration.TestPropertiesUtil.getTestRequiredProp;
-
 import java.net.URI;
 import java.util.Collections;
 
@@ -24,7 +22,6 @@ import org.junit.Test;
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
@@ -44,11 +41,12 @@ public class HostConfigCertificateDistributionServiceIT extends
         logger.info("---------- Adding host, to remove old certificate directory if any --------");
         setupCoreOsHost(ContainerHostService.DockerAdapterType.API);
         logger.info("---------- Removing old certificate directory --------");
-        removeCertificateDirectoryOnCoreOsHost(dockerHostCompute.documentSelfLink);
+        removeCertificateDirectoryOnCoreOsHost(dockerHostCompute.documentSelfLink,
+                registryHostAndPort);
         removeHost(dockerHostCompute);
 
         logger.info("---------- Configure registries on a clean host --------");
-        configureRegistries(getTestRequiredProp("docker.registry.host.address"), null);
+        configureRegistries(registryAddress, null);
     }
 
     @Test
@@ -61,31 +59,30 @@ public class HostConfigCertificateDistributionServiceIT extends
         String systemContainerLink = SystemContainerDescriptions.getSystemContainerSelfLink(
                 SystemContainerDescriptions.AGENT_CONTAINER_NAME, hostId);
 
-        String registryAddress = UriUtilsExtended.extractHostAndPort(
-                getTestRequiredProp("docker.registry.host.address"));
-
         logger.info("---------- Waiting until certificate exists --------");
         boolean exists = waitUntilRegistryCertificateExists(dockerHostCompute.documentSelfLink,
-                registryAddress);
+                registryHostAndPort);
         assertTrue("Cert does not exist.", exists);
         logger.info("Certificate exists");
 
         // Step 2: verify that certificate is added after data collection starts system container
         logger.info("---------- Removing old certificate directory --------");
-        removeCertificateDirectoryOnCoreOsHost(dockerHostCompute.documentSelfLink);
+        removeCertificateDirectoryOnCoreOsHost(dockerHostCompute.documentSelfLink,
+                registryHostAndPort);
         logger.info("---------- Stoping system container --------");
         stopContainer(systemContainerLink);
         requestDataCollection();
 
         logger.info("---------- Waiting until certificate exists --------");
         exists = waitUntilRegistryCertificateExists(dockerHostCompute.documentSelfLink,
-                registryAddress);
+                registryHostAndPort);
         assertTrue("Cert does not exist.", exists);
         logger.info("Certificate exists");
 
         // Step 3: verify that certificate is added after data collection creates the system container
         logger.info("---------- Removing old certificate directory --------");
-        removeCertificateDirectoryOnCoreOsHost(dockerHostCompute.documentSelfLink);
+        removeCertificateDirectoryOnCoreOsHost(dockerHostCompute.documentSelfLink,
+                registryHostAndPort);
         logger.info("---------- Deleting system container --------");
         delete(systemContainerLink);
 
@@ -110,7 +107,7 @@ public class HostConfigCertificateDistributionServiceIT extends
 
         logger.info("---------- Waiting until certificate exists --------");
         exists = waitUntilRegistryCertificateExists(dockerHostCompute.documentSelfLink,
-                registryAddress);
+                registryHostAndPort);
         assertTrue("Cert does not exist.", exists);
         logger.info("Certificate exists");
     }
