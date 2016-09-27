@@ -23,6 +23,7 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
@@ -30,7 +31,6 @@ import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputePro
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
-import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -85,8 +85,7 @@ public class ComputeAllocationTaskServiceTest extends RequestBaseTest {
 
         ComputeState computeState = getDocument(ComputeState.class,
                 allocationTask.resourceLinks.get(0));
-        assertTrue(computeState.customProperties
-                .get(ComputeProperties.CUSTOM_DISPLAY_NAME).startsWith(TEST_VM_NAME));
+        assertTrue(computeState.name.startsWith(TEST_VM_NAME));
         assertNotNull(computeState.id);
         assertEquals(computeDescription.documentSelfLink, computeState.descriptionLink);
         assertEquals(allocationTask.tenantLinks, computeState.tenantLinks);
@@ -113,11 +112,11 @@ public class ComputeAllocationTaskServiceTest extends RequestBaseTest {
     private ComputeDescription createComputeDescription() {
         ComputeDescription cd = new ComputeDescription();
         cd.id = UUID.randomUUID().toString();
-        cd.name = "small"; // aws adapter is using name as value for instance type
+        cd.name = TEST_VM_NAME;
+        cd.instanceType = "small";
         cd.customProperties = new HashMap<>();
-        cd.customProperties.put(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME,
+        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
                 "linux");
-        cd.customProperties.put(ComputeProperties.CUSTOM_DISPLAY_NAME, TEST_VM_NAME);
         return cd;
     }
 

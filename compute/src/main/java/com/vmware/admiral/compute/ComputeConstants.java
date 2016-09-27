@@ -34,6 +34,12 @@ public class ComputeConstants {
 
     public static final String FIELD_NAME_COMPOSITE_COMPONENT_LINK_KEY = "__compositeComponentLink";
 
+    public static final String CUSTOM_PROP_ENDPOINT_TYPE_NAME = "__endpointType";
+
+    public static final String CUSTOM_PROP_IMAGE_ID_NAME = "__compute_image_id";
+
+    public static final String CUSTOM_PROP_SSH_AUTHORIZED_KEY_NAME = "sshKey";
+
     public enum AdapterType {
         INSTANCE_ADAPTER("instance-adapter"),
         NETWORK_ADAPTER("network-adapter"),

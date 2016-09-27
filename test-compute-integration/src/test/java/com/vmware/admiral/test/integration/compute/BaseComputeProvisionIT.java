@@ -403,7 +403,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         computeDesc.customProperties = new HashMap<>();
         computeDesc.customProperties.put(ComputeProperties.CUSTOM_DISPLAY_NAME, computeDesc.name);
         computeDesc.customProperties
-                .put(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
+                .put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
 
         computeDesc.customProperties.put(
                 ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK,
@@ -563,7 +563,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
                 dockerRemoteApiClientCredentials.documentSelfLink);
 
         computeDescription.customProperties
-                .put(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
+                .put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
 
         computeDescription.customProperties.put(
                 ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME,

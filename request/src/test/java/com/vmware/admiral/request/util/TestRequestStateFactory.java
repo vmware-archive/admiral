@@ -34,7 +34,6 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
-import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
@@ -237,8 +236,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         hostDescription.instanceType = "linux";
         hostDescription.customProperties = new HashMap<>();
         hostDescription.customProperties.put(
-                ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME,
-                "linux");
+                ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "linux");
 
         return hostDescription;
     }

@@ -19,6 +19,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,16 +39,20 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.NumericRange;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Builder;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * Task implementing the reservation request resource work flow.
@@ -281,69 +286,69 @@ public class ComputeReservationTaskService
     }
 
     private void quatasSelected(ComputeReservationTaskState state, ComputeDescription computeDesc) {
+        if (state.resourcePoolsPerGroupPlacementLinks == null) {
+            failTask("No available group placements.", null);
+            return;
+        }
         if (computeDesc == null) {
             getComputeDescription(state.resourceDescriptionLink,
                     (retrievedCompDesc) -> quatasSelected(state, retrievedCompDesc));
             return;
         }
 
-        boolean hasEndpointLink = hasProp(computeDesc.customProperties,
+        Builder builder = Query.Builder.create()
+                .addKindFieldClause(ResourcePoolState.class)
+                .addInClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        state.resourcePoolsPerGroupPlacementLinks.values());
+
+        String envLink = getProp(computeDesc.customProperties,
                 ComputeConstants.ENDPOINT_LINK_PROP_NAME);
-
-        if (state.resourcePoolsPerGroupPlacementLinks == null) {
-            state.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>();
-        }
-
-        List<Operation> queryOperations = new ArrayList<>();
-        for (String poolLink : state.resourcePoolsPerGroupPlacementLinks.values()) {
-            queryOperations.add(Operation.createGet(this, poolLink));
-        }
-
-        if (!queryOperations.isEmpty()) {
-            OperationJoin
-                    .create(queryOperations.toArray(new Operation[0]))
-                    .setCompletion(
-                            (ops, exs) -> {
-                                if (exs != null) {
-                                    failTask(
-                                            "Failure retrieving ResourcePools: "
-                                                    + Utils.toString(exs),
-                                            null);
-                                    return;
-                                }
-
-                                Set<String> pools = ops.values().stream()
-                                        .map((v) -> v.getBody(ResourcePoolState.class))
-                                        .filter((r) -> r != null)
-                                        .filter((r) -> hasProp(r.customProperties,
-                                                ComputeConstants.ENDPOINT_LINK_PROP_NAME)
-                                                || hasEndpointLink)
-                                        .map((r) -> r.documentSelfLink).collect(Collectors.toSet());
-
-                                state.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks
-                                        .entrySet()
-                                        .stream()
-                                        .filter((e) -> pools.contains(e.getValue()))
-                                        .collect(
-                                                Collectors.toMap(Map.Entry::getKey,
-                                                        Map.Entry::getValue,
-                                                        (k1, k2) -> k1, LinkedHashMap::new));
-
-                                selectReservation(state, state.resourcePoolsPerGroupPlacementLinks);
-                            })
-                    .sendWith(this);
+        if (envLink != null) {
+            builder.addCompositeFieldClause(ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
+                    ComputeConstants.ENDPOINT_LINK_PROP_NAME, envLink);
         } else {
-            selectReservation(state, state.resourcePoolsPerGroupPlacementLinks);
+            builder.addFieldClause(
+                    QuerySpecification.buildCompositeFieldName(
+                            ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
+                            ComputeConstants.ENDPOINT_LINK_PROP_NAME),
+                    "*", MatchType.WILDCARD);
         }
+
+        QueryTask queryTask = QueryTask.Builder.createDirectTask()
+                .setQuery(builder.build())
+                .build();
+
+        Operation.createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
+                .setBody(queryTask)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure retrieving ResourcePools: " + Utils.toString(e), null);
+                        return;
+                    }
+
+                    QueryTask task = o.getBody(QueryTask.class);
+                    if (task.results != null && task.results.documentLinks != null) {
+                        Set<String> pools = new HashSet<>();
+                        pools.addAll(task.results.documentLinks);
+                        state.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks
+                                .entrySet().stream()
+                                .filter((re) -> pools.contains(re.getValue()))
+                                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                                        (k1, k2) -> k1, LinkedHashMap::new));
+
+                        selectReservation(state, state.resourcePoolsPerGroupPlacementLinks);
+                    } else {
+                        failTask("No available placement zones.", null);
+                    }
+                })
+                .sendWith(this);
     }
 
-    /**
-     * @param customProperties
-     * @param key
-     * @return
-     */
-    private boolean hasProp(Map<String, String> customProperties, String key) {
-        return customProperties != null && customProperties.containsKey(key);
+    private String getProp(Map<String, String> customProperties, String key) {
+        if (customProperties == null) {
+            return null;
+        }
+        return customProperties.get(key);
     }
 
     private void selectReservation(ComputeReservationTaskState state,

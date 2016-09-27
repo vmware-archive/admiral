@@ -98,7 +98,7 @@ public class ComputeAllocationTaskService
 
     private static final String ID_DELIMITER_CHAR = "-";
 
-    private static final String SSH_AUTHORIZED_KEY_PROP = "sshAuthorizedKey";
+    private static final String SSH_AUTHORIZED_KEY_PROP = "sshKey";
     private static final String SSH_KEY_PLACEHOLDER = "\\{\\{sshAuthorizedKey\\}\\}";
     private static final String CA_CERT_KEY_PLACEHOLDER = "\\{\\{caCertPem\\}\\}";
     private static final String SERVER_CERT_PLACEHOLDER = "\\{\\{serverCertPem\\}\\}";
@@ -118,7 +118,6 @@ public class ComputeAllocationTaskService
         public static final String FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK = "__resourcePoolLink";
         public static final String FIELD_NAME_CUSTOM_PROP_REGION_ID = "__regionId";
         private static final String FIELD_NAME_CUSTOM_PROP_DISK_NAME = "__diskName";
-        public static final String FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME = "__compute_image_id";
         private static final String FIELD_NAME_CUSTOM_PROP_DISK_LINK = "__diskStateLink";
         private static final String FIELD_NAME_CUSTOM_PROP_NETWORK_LINK = "__networkStateLink";
 
@@ -357,7 +356,7 @@ public class ComputeAllocationTaskService
             rootDisk.bootOrder = 1;
 
             String absImageId = state.getCustomProperty(
-                    ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME);
+                    ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
             String imageId = mapping.getMappingValue("imageType", absImageId);
 
             rootDisk.sourceImageReference = URI.create(imageId);
@@ -409,7 +408,8 @@ public class ComputeAllocationTaskService
             Consumer<String> callback) {
         if (state.customProperties.containsKey(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME)) {
             callback.accept(
-                    state.customProperties.get(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME));
+                    state.customProperties
+                            .remove(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME));
             return;
         }
         if (computeDesc == null) {
@@ -608,9 +608,11 @@ public class ComputeAllocationTaskService
 
         computeDesc.customProperties = mergeCustomProperties(computeDesc.customProperties,
                 state.customProperties);
+        computeDesc.customProperties.put(ComputeConstants.CUSTOM_PROP_ENDPOINT_TYPE_NAME,
+                state.endpointType);
 
         SubStage nextStage = computeDesc.customProperties
-                .containsKey(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME)
+                .containsKey(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME)
                         ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
                         : SubStage.SELECT_PLACEMENT_COMPUTES;
 

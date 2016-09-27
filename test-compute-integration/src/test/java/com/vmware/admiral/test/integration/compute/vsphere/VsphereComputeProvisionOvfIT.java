@@ -13,7 +13,7 @@ package com.vmware.admiral.test.integration.compute.vsphere;
 
 import java.net.URI;
 
-import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.test.integration.SimpleHttpsClient;
 import com.vmware.photon.controller.model.adapters.vsphere.ovf.ImportOvfRequest;
 import com.vmware.photon.controller.model.adapters.vsphere.ovf.OvfImporterService;
@@ -33,7 +33,7 @@ public class VsphereComputeProvisionOvfIT extends VsphereComputeProvisionIT {
         ComputeDescription computeDesc = prepareComputeDescription();
         //remove the image key, as we don't need for Ovf provisioning
         computeDesc.customProperties
-                .remove(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_IMAGE_ID_NAME);
+                .remove(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
 
         importOvf(computeDesc);
 
