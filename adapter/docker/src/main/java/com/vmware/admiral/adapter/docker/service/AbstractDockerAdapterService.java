@@ -43,6 +43,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
     protected static final long MAINTENANCE_INTERVAL_MICROS = Long.getLong(
             "dcp.management.docker.adapter.periodic.maintenance.period.micros",
             TimeUnit.SECONDS.toMicros(10));
+    protected static final String NOT_FOUND_EXCEPTION_MESSAGE = "returned error 404";
 
     private static DockerAdapterCommandExecutor sshCommandExecutor;
     private static DockerAdapterCommandExecutor apiCommandExecutor;
@@ -223,7 +224,12 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
     }
 
     protected void fail(AdapterRequest request, Throwable e) {
-        logWarning(Utils.toString(e));
+        if (e.getMessage().contains(NOT_FOUND_EXCEPTION_MESSAGE)) {
+            logWarning(e.getMessage());
+        } else {
+            logWarning(Utils.toString(e));
+        }
+
         patchTaskStage(request, TaskStage.FAILED, e);
     }
 
@@ -231,6 +237,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
         if (o != null && o.getBodyRaw() != null) {
             String errMsg = String.format("%s; Reason: %s", e.getMessage(),
                     o.getBodyRaw().toString());
+
             e = new Exception(errMsg, e);
         }
         fail(request, e);
