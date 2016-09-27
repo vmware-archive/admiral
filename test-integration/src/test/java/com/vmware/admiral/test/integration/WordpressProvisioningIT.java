@@ -88,17 +88,18 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
                 { "WordPress_with_MySQL_bindings.yaml", NetworkType.CUSTOM },
-                { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_BRIDGE },
-                { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_OVERLAY },
-                { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_BRIDGE },
-                { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_OVERLAY },
-                { "WordPress_with_MySQL_links.yaml", NetworkType.BRIDGE }
+                { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_BRIDGE }
+                // https://jira-hzn.eng.vmware.com/browse/VBV-614
+                // { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_OVERLAY },
+                // { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_BRIDGE },
+                // { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_OVERLAY },
+                // { "WordPress_with_MySQL_links.yaml", NetworkType.BRIDGE }
         });
 
     }
 
-    private String templateFile;
-    private NetworkType networkType;
+    private final String templateFile;
+    private final NetworkType networkType;
     private ContainerNetworkState externalNetwork;
 
     public WordpressProvisioningIT(String templateFile, NetworkType networkType) {
@@ -282,7 +283,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
             wpHost = getHostnameOfComputeHost(wpContainerState.parentLink);
             // connect to wordpress main page by accessing a specific container instance through the docker exposed port
             URI uri = URI.create(String.format("http://%s:%s/%s", wpHost, wpHostPort, WP_PATH));
-            logger.info("------------- 4.%s.2. connecting to wordpress main page %s. -------------",
+            logger.info(
+                    "------------- 4.%s.2. connecting to wordpress main page %s. -------------",
                     wpContainersCount,
                     uri);
             try {
