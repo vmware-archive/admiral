@@ -392,6 +392,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                 ComputeService.FACTORY_LINK,
                 hostId);
         missingContainerState.powerState = PowerState.STOPPED;
+        missingContainerState.system = false;
         missingContainerState = doPost(missingContainerState, ContainerFactoryService.SELF_LINK);
         documentsForDeletion.add(missingContainerState);
 

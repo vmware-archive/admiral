@@ -876,6 +876,12 @@ public class HostContainerListDataCollection extends StatefulService {
     }
 
     private void handleMissingContainer(ContainerState containerState) {
+
+        // do not set RETIRED state to the system container.
+        if (containerState.system) {
+            return;
+        }
+
         // patch container status to RETIRED
         ContainerState patchContainerState = new ContainerState();
         patchContainerState.powerState = PowerState.RETIRED;
