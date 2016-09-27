@@ -278,16 +278,16 @@ public class ReservationTaskService
 
         if (state.tenantLinks == null || state.tenantLinks.isEmpty()) {
 
-            logInfo("Quering for global placements for resource description: [%s] and resource count: [%s]...",
+            logInfo("Quering for all placements for resource description: [%s] and resource count: [%s]...",
                     state.resourceDescriptionLink, state.resourceCount);
         } else {
 
             logInfo("Quering for group [%s] placements for resource description: [%s] and resource count: [%s]...",
                     state.tenantLinks, state.resourceDescriptionLink, state.resourceCount);
-        }
 
-        Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(state.tenantLinks);
-        q.querySpec.query.addBooleanClause(tenantLinksQuery);
+            Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(state.tenantLinks);
+            q.querySpec.query.addBooleanClause(tenantLinksQuery);
+        }
 
         // match on available number of instances:
         QueryTask.Query numOfInstancesClause = new QueryTask.Query();

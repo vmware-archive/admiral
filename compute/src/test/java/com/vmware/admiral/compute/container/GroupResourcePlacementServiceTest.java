@@ -29,6 +29,7 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 
 import org.junit.After;
 import org.junit.Before;
@@ -37,6 +38,7 @@ import org.junit.Test;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementPoolState;
@@ -51,6 +53,11 @@ import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.VerificationHost;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.NumericRange;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
 
@@ -262,6 +269,94 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         assertEquals(outPlacementState.allocatedInstancesCount, poolState.allocatedInstancesCount);
         assertNotNull(poolState.resourcePool);
         assertEquals(resourcePool.id, poolState.resourcePool.id);
+    }
+
+    @Test
+    public void testGroupResourcePlacementQueryEmptyTenantLinks() throws Throwable {
+
+        GroupResourcePlacementState state = new GroupResourcePlacementState();
+        state.name = "reservation-test";
+        state.tenantLinks = Collections.singletonList("testGroup");
+        state.maxNumberInstances = 10;
+        state.resourcePoolLink = resourcePool.documentSelfLink;
+        state.documentSelfLink = UUID.randomUUID().toString();
+
+        doPost(state, GroupResourcePlacementService.FACTORY_LINK);
+
+        // match on group property:
+        QueryTask q = QueryUtil.buildQuery(GroupResourcePlacementState.class, false);
+        q.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
+
+        /**
+         * When new policy is created it sets Project id in tenantLinks. In ReservationTaskService
+         * we search for available GroupResourcePlacementStates, passing a query clause for
+         * tenantLinks which are retrieved from ReservationTaskService itself. In stand alone mode
+         * they are equal to null - means only global (default) placements should be returned as
+         * result of query. That's why if default placement is missing, the query doesn't find any
+         * results. This proves that tenant clause should be added only if
+         * ReservationTaskService.tenantLinks are not null.
+         */
+        Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(null);
+        q.querySpec.query.addBooleanClause(tenantLinksQuery);
+
+        // match on available number of instances:
+        QueryTask.Query numOfInstancesClause = new QueryTask.Query();
+
+        QueryTask.Query moreInstancesThanRequired = new QueryTask.Query()
+                .setTermPropertyName(
+                        GroupResourcePlacementState.FIELD_NAME_AVAILABLE_INSTANCES_COUNT)
+                .setNumericRange(NumericRange.createLongRange(Long.valueOf(10),
+                        Long.MAX_VALUE, true, false))
+                .setTermMatchType(MatchType.TERM);
+
+        QueryTask.Query unlimitedInstances = new QueryTask.Query()
+                .setTermPropertyName(GroupResourcePlacementState.FIELD_NAME_MAX_NUMBER_INSTANCES)
+                .setNumericRange(NumericRange.createEqualRange(0L))
+                .setTermMatchType(MatchType.TERM);
+
+        moreInstancesThanRequired.occurance = Occurance.SHOULD_OCCUR;
+        numOfInstancesClause.addBooleanClause(moreInstancesThanRequired);
+        unlimitedInstances.occurance = Occurance.SHOULD_OCCUR;
+        numOfInstancesClause.addBooleanClause(unlimitedInstances);
+        numOfInstancesClause.occurance = Occurance.MUST_OCCUR;
+
+        q.querySpec.query.addBooleanClause(numOfInstancesClause);
+
+        List<GroupResourcePlacementState> placements = new ArrayList<>();
+
+        QueryUtil.addExpandOption(q);
+
+        ServiceDocumentQuery<GroupResourcePlacementState> query = new ServiceDocumentQuery<>(
+                host,
+                GroupResourcePlacementState.class);
+
+        host.testStart(1);
+        query.query(
+                q,
+                (r) -> {
+                    if (r.hasException()) {
+                        host.log("Exception while quering for placements:",
+                                Utils.toString(r.getException()));
+                        host.failIteration(r.getException());
+                    } else if (r.hasResult()) {
+                        placements.add(r.getResult());
+                    } else {
+                        // Global placement (empty tenantLinks) should exists in list.
+                        if (placements.isEmpty()) {
+                            host.log(Level.SEVERE, "No available group placements");
+                            host.failIteration(
+                                    new RuntimeException("No available group placements"));
+                        }
+                        host.completeIteration();
+                    }
+                });
+        host.testWait();
+
+        assertEquals(placements.size(), 1);
+
+        // Query retrieves only global placement, because of tenantLinks clause ( tenantLinks=null )
+        assertTrue(!placements.get(0).documentSelfLink.equals(state.documentSelfLink));
+
     }
 
     @Test
