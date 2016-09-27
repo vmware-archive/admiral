@@ -54,6 +54,9 @@ var NetworkDefinitionForm = Vue.extend({
     model: {
       required: false,
       type: Object
+    },
+    allowExisting: {
+      type: Boolean
     }
   },
   data: function() {
@@ -192,9 +195,20 @@ var NetworkDefinitionForm = Vue.extend({
         }
       }
     }, {immediate: true});
+
+    this.unwatchExistingNetwork = this.$watch('existingNetwork', (existingNetwork) => {
+      if (existingNetwork) {
+        let name = $(this.$el).find('.network-name .form-control').val();
+        this.$networksSearch.typeahead('val', name);
+      } else {
+        let name = this.$networksSearch.typeahead('val');
+        $(this.$el).find('.network-name .form-control').val(name);
+      }
+    });
   },
   detached: function() {
     this.unwatchModel();
+    this.unwatchExistingNetwork();
   }
 });
 

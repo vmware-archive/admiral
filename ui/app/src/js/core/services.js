@@ -26,6 +26,7 @@ const REQUEST_PARAM_VALIDATE_OPERATION_NAME = 'validate';
 const CONTAINER_TYPE_DOCKER = 'DOCKER_CONTAINER';
 const CONTAINER_HOST = 'CONTAINER_HOST';
 const COMPOSITE_COMPONENT_TYPE = 'COMPOSITE_COMPONENT';
+const NETWORK_TYPE = 'NETWORK';
 
 const DOCUMENT_TYPE_PROP_NAME = 'documentType';
 const EXPAND_QUERY_PROP_NAME = 'expand';
@@ -891,9 +892,16 @@ services.loadContainerLogs = function(containerId, sinceMs) {
 services.createContainer = function(containerDescription, group) {
   return services.createContainerDescription(containerDescription).then(
     function(createdContainerDescription) {
-      return services.createContainerFromDescriptionLink(
-                            createdContainerDescription.documentSelfLink,
-                            createdContainerDescription.tenantLinks, group);
+      return services.createRequest(createdContainerDescription.documentSelfLink,
+                            createdContainerDescription.tenantLinks, group, CONTAINER_TYPE_DOCKER);
+    });
+};
+
+services.createNetwork = function(networkDescription) {
+  return services.createNetworkDescription(networkDescription).then(
+    function(createdNetworkDescription) {
+      return services.createRequest(createdNetworkDescription.documentSelfLink,
+                            createdNetworkDescription.tenantLinks, null, NETWORK_TYPE);
     });
 };
 
@@ -1011,15 +1019,14 @@ services.removeContainerTemplate = function(templateId) {
 
 services.createMultiContainerFromTemplate = function(templateId, group) {
   return services.loadContainerTemplate(templateId).then((template) => {
-    return services.createContainerFromDescriptionLink(template.documentSelfLink,
-                                                        template.tenantLinks, group, true);
+    return services.createRequest(template.documentSelfLink, template.tenantLinks, group,
+                                  COMPOSITE_COMPONENT_TYPE);
   });
 };
 
-services.createContainerFromDescriptionLink = function(resourceDescriptionLink,
-                                                        tenantLinks, group, composite) {
+services.createRequest = function(resourceDescriptionLink, tenantLinks, group, resourceType) {
   var request = {};
-  request.resourceType = composite ? COMPOSITE_COMPONENT_TYPE : CONTAINER_TYPE_DOCKER;
+  request.resourceType = resourceType;
   request.resourceDescriptionLink = resourceDescriptionLink;
 
   if (group) {
@@ -1407,9 +1414,23 @@ var buildContainersSearchQuery = function(queryOptions) {
     var documentIdArray = toArrayIfDefined(queryOptions.documentId);
     if (documentIdArray) {
       newQueryOptions.documentSelfLink = [];
-      var link = (queryOptions[constants.SEARCH_CATEGORY_PARAM]
-              === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS) ?
-                links.CONTAINERS : links.COMPOSITE_COMPONENTS;
+
+      var link;
+      var category = queryOptions[constants.SEARCH_CATEGORY_PARAM];
+      switch (category) {
+        case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
+          link = links.NETWORKS;
+          break;
+        case constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS:
+          link = links.COMPOSITE_COMPONENTS;
+          break;
+
+        default:
+        case constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS:
+          link = links.CONTAINERS;
+          break;
+      }
+
       for (let i = 0; i < documentIdArray.length; i++) {
         newQueryOptions.documentSelfLink.push({
           val: link + '/' + documentIdArray[i] + '*',

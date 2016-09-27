@@ -36,6 +36,7 @@ export var TemplateActions = Reflux.createActions([
   'searchImagesForContainerDefinition', 'selectImageForContainerDescription',
   'addContainerDefinition', 'removeContainerDefinition', 'saveContainerDefinition',
   'increaseClusterSize', 'decreaseClusterSize',
+  'createContainer', 'createContainerWithDetails', 'createContainerTemplate',
   'removeTemplate', 'saveTemplateName', 'copyTemplate', 'publishTemplate', 'openImportTemplate',
   'importTemplate', 'openEditNetwork', 'cancelEditNetwork', 'attachNetwork', 'detachNetwork',
   'attachDetachNetwork', 'saveNetwork', 'removeNetwork'
@@ -44,14 +45,14 @@ export var TemplateActions = Reflux.createActions([
 export var ContainerActions = Reflux.createActions([
   'openContainers', 'openContainersNext', 'openContainerDetails', 'openClusterDetails',
   'openCompositeContainerDetails', 'refreshContainer', 'refreshContainerStats',
-  'refreshContainerLogs', 'changeLogsSinceDuration', 'createContainer',
-  'createContainerWithDetails', 'createContainerTemplate', 'startContainer', 'stopContainer',
+  'refreshContainerLogs', 'changeLogsSinceDuration', 'startContainer', 'stopContainer',
   'removeContainer', 'startCompositeContainer', 'stopCompositeContainer',
   'removeCompositeContainer', 'startContainerDetails', 'stopContainerDetails',
   'removeContainerDetails', 'removeContainers', 'operationCompleted', 'operationFailed',
   'modifyClusterSize', 'scaleContainer', 'startCluster', 'stopCluster', 'removeCluster',
   'closeContainers', 'openShell', 'closeShell',
-  'batchOpContainers', 'batchOpCompositeContainers'
+  'batchOpContainers', 'batchOpCompositeContainers',
+  'openCreateContainer', 'openCreateNetwork', 'createContainer', 'createNetwork'
 ]);
 
 export var EventLogActions = Reflux.createActions([

@@ -1,0 +1,22 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="network-form">
+  <div class="title" v-else>{{i18n('app.template.details.editNetwork.newTitle')}}</div>
+  <network-definition-form v-ref:network-edit-form v-bind:model="model.definitionInstance"></network-definition-form>
+  <div class="pull-right control-btns">
+    <button class="btn admiral-btn"
+            v-bind:class="{'loading': creatingNetwork}"
+            v-bind:disabled="creatingNetwork"
+            v-on:click="createNetwork()">{{i18n('app.template.details.editNetwork.create')}}<i
+                class="fa fa-spinner fa-spin loader-inline"></i></button>
+  </div>
+</div>

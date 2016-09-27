@@ -93,6 +93,18 @@ crossroads.addRoute('/containers:?query:', function(query) {
   actions.ContainerActions.openContainers(query, true);
 });
 
+crossroads.addRoute('/containers/new-container', function() {
+  actions.AppActions.openView(constants.VIEWS.CONTAINERS.name);
+  actions.ContainerActions.openContainers();
+  actions.ContainerActions.openCreateContainer();
+});
+
+crossroads.addRoute('/containers/new-network', function() {
+  actions.AppActions.openView(constants.VIEWS.CONTAINERS.name);
+  actions.ContainerActions.openContainers();
+  actions.ContainerActions.openCreateNetwork();
+});
+
 crossroads.addRoute('containers/composite/{compositeComponentId*}' +
                     '/cluster/{clusterId*}/containers/{childContainerId*}',
                     function(compositeComponentId, clusterId, childContainerId) {

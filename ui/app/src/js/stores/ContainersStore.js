@@ -374,6 +374,7 @@ ContainersStore = Reflux.createStore({
 
     this.setInData(['listView', 'queryOptions'], queryOptions);
     this.setInData(['selectedItem'], null);
+    this.setInData(['creatingResource'], null);
     this.setInData(['selectedItemDetails'], null);
 
     if (!keepContext) {
@@ -494,6 +495,32 @@ ContainersStore = Reflux.createStore({
     var operation = this.requestCancellableOperation(constants.CONTAINERS.OPERATION.DETAILS);
 
     this.loadCompositeComponent(compositeComponentId, operation, true);
+  },
+
+  onOpenCreateContainer: function() {
+    this.setInData(['creatingResource'], {});
+    this.setInData(['listView', 'queryOptions', '$category'],
+                   constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS);
+    this.emitChange();
+  },
+
+  openCreateNetwork: function() {
+    this.setInData(['creatingResource'], {});
+    this.setInData(['listView', 'queryOptions', '$category'],
+                   constants.RESOURCES.SEARCH_CATEGORY.NETWORKS);
+    this.emitChange();
+  },
+
+  onCreateContainer: function(containerDescription, group) {
+    services.createContainer(containerDescription, group).then((request) => {
+      this.navigateContainersListViewAndOpenRequests(request);
+    }).catch(this.onGenericCreateError);
+  },
+
+  onCreateNetwork: function(networkDescription) {
+    services.createNetwork(networkDescription).then((request) => {
+      this.navigateContainersListViewAndOpenRequests(request);
+    }).catch(this.onGenericCreateError);
   },
 
   onRefreshContainer: function() {
@@ -816,6 +843,18 @@ ContainersStore = Reflux.createStore({
     } else {
       actions.ContainerActions.openContainers(queryOptions, true, true);
     }
+  },
+
+  navigateContainersListViewAndOpenRequests: function(request) {
+    var queryOptions = utils.getIn(this.data, ['listView', 'queryOptions']);
+
+    var openContainersUnsubscribe = actions.ContainerActions.openContainers.listen(() => {
+      openContainersUnsubscribe();
+      this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
+      actions.RequestsActions.requestCreated(request);
+    });
+
+    actions.NavigationActions.openContainers(queryOptions);
   },
 
   onOperationCompleted: function(operationType, resourceIds) {

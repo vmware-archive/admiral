@@ -12,7 +12,7 @@
 import ContainerRequestFormVue from 'ContainerRequestFormVue';
 import ContainerDefinitionForm from 'components/containers/ContainerDefinitionForm';
 import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin'; // eslint-disable-line
-import { ContainerActions } from 'actions/Actions';
+import { TemplateActions, ContainerActions } from 'actions/Actions';
 
 var ContainerRequestForm = Vue.extend({
   template: ContainerRequestFormVue,
@@ -21,6 +21,9 @@ var ContainerRequestForm = Vue.extend({
     model: {
       required: true,
       type: Object
+    },
+    useResourceAction: {
+      type: Boolean
     }
   },
   data: function() {
@@ -42,7 +45,12 @@ var ContainerRequestForm = Vue.extend({
         this.creatingContainer = true;
         var containerDescription = this.definitionForm.getContainerDescription();
 
-        this.handleGroup(ContainerActions.createContainerWithDetails, [containerDescription]);
+        var acitonCallback = TemplateActions.createContainerWithDetails;
+        if (this.useResourceAction) {
+          acitonCallback = ContainerActions.createContainer;
+        }
+
+        this.handleGroup(acitonCallback, [containerDescription]);
       }
     },
     saveTemplate: function() {
@@ -51,7 +59,7 @@ var ContainerRequestForm = Vue.extend({
       if (!validationErrors) {
         this.savingTemplate = true;
         var containerDescription = this.definitionForm.getContainerDescription();
-        ContainerActions.createContainerTemplate(containerDescription);
+        TemplateActions.createContainerTemplate(containerDescription);
       }
     }
   },

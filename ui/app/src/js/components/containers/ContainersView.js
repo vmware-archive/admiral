@@ -19,24 +19,14 @@ import ClusterContainerDetails from 'components/containers/cluster/ClusterContai
 import CompositeContainerDetails from 'components/containers/composite/CompositeContainerDetails';//eslint-disable-line
 import RequestsList from 'components/requests/RequestsList';//eslint-disable-line
 import EventLogList from 'components/eventlog/EventLogList';//eslint-disable-line
+import ContainerRequestForm from 'components/containers/ContainerRequestForm'; // eslint-disable-line
+import NetworkRequestForm from 'components/networks/NetworkRequestForm'; // eslint-disable-line
 import VueAdapter from 'components/common/VueAdapter';
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import utils from 'core/utils';
 import constants from 'core/constants';
 import { NavigationActions, RequestsActions, NotificationsActions,
           ContainerActions, ContainersContextToolbarActions } from 'actions/Actions';
-
-var categorySpecificText = function(key, category, defaultCategory) {
-  if (category) {
-    let wholeKey = key + category.toLowerCase();
-    let value = i18n.t(wholeKey);
-    if (value !== wholeKey) {
-      return value;
-    }
-  }
-
-  return i18n.t(key + defaultCategory.toLowerCase());
-};
 
 var ContainersViewVueComponent = Vue.extend({
   template: ContainersViewVue,
@@ -56,14 +46,15 @@ var ContainersViewVueComponent = Vue.extend({
     hasItems: function() {
       return this.model.listView.items && this.model.listView.items.length > 0;
     },
-    isSelectedCategoryApplications: function() {
-      return this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS;
-    },
-    searchResultsTitle: function() {
-      return categorySpecificText(
-        'app.resource.list.titleSearch.',
-        this.selectedCategory,
-        'containers');
+    titleSearch: function() {
+      switch (this.selectedCategory) {
+          case constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS:
+            return i18n.t('app.resource.list.titleSearch.applications');
+          case constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS:
+            return i18n.t('app.resource.list.titleSearch.containers');
+          case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
+            return i18n.t('app.resource.list.titleSearch.networks');
+      }
     },
     placeholderByCategoryMap: function() {
       return {
@@ -125,6 +116,14 @@ var ContainersViewVueComponent = Vue.extend({
     },
     isNetworkingAvailable: function() {
       return utils.isNetworkingAvailable();
+    },
+    creatingContainer: function() {
+      return this.model.creatingResource &&
+        this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS;
+    },
+    creatingNetwork: function() {
+      return this.model.creatingResource &&
+        this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS;
     }
   },
   data: function() {

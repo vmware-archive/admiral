@@ -26,7 +26,7 @@ import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
 import utils from 'core/utils';
 import exportHelper from 'components/templates/TemplateExportHelper';
-import { NavigationActions, ContainerActions, RequestsActions, NotificationsActions,
+import { NavigationActions, RequestsActions, NotificationsActions,
           TemplateActions, TemplatesContextToolbarActions } from 'actions/Actions';
 
 var TemplatesViewVueComponent = Vue.extend({
@@ -163,7 +163,7 @@ var TemplatesViewVueComponent = Vue.extend({
           if ($event.shiftKey) {
             this.showGroupForProvisioning = false;
           } else {
-            this.handleGroup(ContainerActions.createContainer,
+            this.handleGroup(TemplateActions.createContainer,
               [this.model.type, this.model.documentId]);
           }
         },

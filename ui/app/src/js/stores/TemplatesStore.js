@@ -459,7 +459,7 @@ let TemplatesStore = Reflux.createStore({
     });
   },
 
-  listenables: [actions.TemplateActions, actions.RegistryActions, actions.ContainerActions,
+  listenables: [actions.TemplateActions, actions.RegistryActions,
                 actions.TemplatesContextToolbarActions],
 
   onOpenTemplates: function(queryOptions, forceReload) {
@@ -1163,7 +1163,7 @@ let TemplatesStore = Reflux.createStore({
 
   onCopyTemplate: function(type, template, group) {
     services.copyContainerTemplate(template).then((result) => {
-      actions.ContainerActions.createContainer(type,
+      actions.TemplateActions.createContainer(type,
                                               utils.getDocumentId(result.documentSelfLink), group);
     }).catch(this.onGenericCreateError);
   },

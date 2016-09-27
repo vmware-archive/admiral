@@ -250,7 +250,9 @@
           "newDropdownTitle": "Add Network...",
           "editTitle": "Edit Network",
           "name": "Name",
-          "existingNetwork": "Existing"
+          "existingNetwork": "Existing",
+          "hosts": "Hosts",
+          "create": "Create Network"
         },
         "network": {
           "drag": "Drag to attach container to this network",
@@ -416,7 +418,11 @@
           "ipamDriverLabel": "IPAM Driver",
           "subnetLabel": "Subnet",
           "gatewayLabel": "Gateway",
-          "ipRangeLabel": "IP Range"
+          "ipRangeLabel": "IP Range",
+          "create": "Create Network"
+        },
+        "container": {
+          "create": "Create Container"
         },
         "titleSearch": {
           "containers": "Found Containers",
@@ -436,10 +442,6 @@
     "container": {
       "list": {
         "title": "Items",
-        "titleSearchContainers": "Found Containers",
-        "titleSearchApplications": "Found Applications",
-        "searchPlaceholder": "Search for containers",
-        "createContainer": "Create Container",
         "hostLabel": "Host",
         "createdDateLabel": "Created",
         "portsLabel": "Ports",

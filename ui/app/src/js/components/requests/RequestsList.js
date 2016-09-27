@@ -136,10 +136,13 @@ var RequestsListVueComponent = Vue.extend({
                 params.documentId = utils.getDocumentId(link);
                 if (link.indexOf(links.COMPOSITE_COMPONENTS) !== -1) {
                   params[constants.SEARCH_CATEGORY_PARAM] =
-                      constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS;
+                      constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS;
                 } else if (link.indexOf(links.CONTAINERS) !== -1) {
                   params[constants.SEARCH_CATEGORY_PARAM] =
-                      constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS;
+                      constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS;
+                } else if (link.indexOf(links.NETWORKS) !== -1) {
+                  params[constants.SEARCH_CATEGORY_PARAM] =
+                      constants.RESOURCES.SEARCH_CATEGORY.NETWORKS;
                 }
               }
             }

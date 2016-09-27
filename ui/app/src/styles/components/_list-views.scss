@@ -410,7 +410,7 @@
     background-color: #e7e7e7;
     color: $link_color;
   }
-  .list-view .image-item .btn-group > .admiral-btn.create-container-btn {
+  .list-view .image-item .btn-group > .admiral-btn.create-resource-btn {
     padding: 0 12px 0 20px;
     font-size: 15px;
     line-height: 30px;
@@ -710,8 +710,21 @@
       }
     }
   }
-  > .closable-view {
+  > .selected-context-holder {
+    @include transition(left 0.4s);
     left: $margin-left + $width - $border-overlap-size;
+  }
+  .create-network.closable-view {
+    left: 50%;
+    .network-form {
+      position: absolute;
+      top: 40px;
+      left: 20px;
+      right: 20px;
+    }
+    .title {
+      font-size: 22px;
+    }
   }
 }
 
@@ -773,8 +786,7 @@
 
   .closable-view {
     border-left: 2px solid $main-border-color;
-    z-index: 11;
-    @include transition(left 0.4s);
+    background-color: #f7f7f7;
   }
 
   .closable-view.expanded {

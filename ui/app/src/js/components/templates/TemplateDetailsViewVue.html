@@ -174,7 +174,10 @@
     <div class="content">
       <div class="title" v-if="model.editNetwork.definitionInstance.documentSelfLink">{{i18n('app.template.details.editNetwork.editTitle')}}</div>
       <div class="title" v-else>{{i18n('app.template.details.editNetwork.newTitle')}}</div>
-      <network-definition-form v-ref:network-edit-form v-bind:model="model.editNetwork.definitionInstance"></network-definition-form>
+      <network-definition-form v-ref:network-edit-form
+                               v-bind:model="model.editNetwork.definitionInstance"
+                               v-bind:allow-existing="true"
+                               ></network-definition-form>
       <div class="pull-right control-btns">
       <button class="btn admiral-btn save-container-definition"
               v-bind:class="{'loading': savingNetwork}"
