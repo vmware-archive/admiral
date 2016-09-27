@@ -146,7 +146,7 @@ var NetworkDefinitionForm = Vue.extend({
     this.$networksSearch.typeahead({}, {
       name: 'networks-search',
       limit: NETWORK_RESULT_LIMIT,
-      source: typeaheadSource($(this.$el).find('.network-name-search')),
+      source: typeaheadSource($(this.$el).find('.network-name-search .search-input')),
       display: 'name',
       templates: {
         suggestion: function(context) {

@@ -11,6 +11,7 @@
 
 import NetworkRequestFormVue from 'NetworkRequestFormVue';
 import NetworkDefinitionForm from 'components/networks/NetworkDefinitionForm'; // eslint-disable-line
+import HostPicker from 'components/networks/HostPicker';
 import { ContainerActions } from 'actions/Actions';
 
 var NetworkRequestForm = Vue.extend({
@@ -35,8 +36,12 @@ var NetworkRequestForm = Vue.extend({
       var validationErrors = networkForm.validate();
       if (!validationErrors) {
         var network = networkForm.getNetworkDefinition();
+
+        var hosts = this.$refs.hostPicker.getHosts();
+        var hostLinks = hosts.map(h => h.documentSelfLink);
+
         this.savingNetwork = true;
-        ContainerActions.createNetwork(network);
+        ContainerActions.createNetwork(network, hostLinks);
       }
     }
   },
@@ -47,6 +52,9 @@ var NetworkRequestForm = Vue.extend({
   },
   detached: function() {
     this.unwatchModel();
+  },
+  components: {
+    hostPicker: HostPicker
   }
 });
 

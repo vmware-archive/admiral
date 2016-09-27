@@ -226,7 +226,7 @@ class ContainerDefinitionForm extends Component {
     this.$imageSearch.typeahead({},
     {
       name: 'images',
-      source: typeaheadSource(this.$el.find('.container-image-input'))
+      source: typeaheadSource(this.$el.find('.container-image-input .search-input'))
     });
 
     this.commandsEditor = new MulticolumnInputs(

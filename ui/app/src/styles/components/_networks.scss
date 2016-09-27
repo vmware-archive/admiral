@@ -142,3 +142,12 @@ $network-details-size: 150px;
 
 .container-link.jsplumb-dragging {
 }
+
+.network-form {
+  overflow: auto;
+}
+
+.network-form .multicolumn-inputs-list-body-wrapper {
+  overflow: visible;
+  max-height: initial;
+}

@@ -28,9 +28,11 @@
           <div class="form-group container-image-input">
             <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.image'}}</label>
             <div class="col-sm-9">
-              <input class="form-control">
-              <i class="fa fa-spinner fa-spin loader-inline"></i>
-              <i class="fa fa-search search-hint"></i>
+              <div class="search-input">
+                <input class="form-control">
+                <i class="fa fa-spinner fa-spin loader-inline form-control-feedback"></i>
+                <i class="fa fa-search search-hint form-control-feedback"></i>
+              </div>
               <span class="help-block"></span>
             </div>
           </div>

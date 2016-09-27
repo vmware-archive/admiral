@@ -29,56 +29,56 @@ $rightMarginInputs: 55px;
  visibility: visible;
 }
 
-.multicolumn-inputs-list ul {
+.multicolumn-inputs-list .multicolumn-input-controls > ul, .multicolumn-inputs-list .multicolumn-inputs-list-head > ul {
   display: table;
   width: 100%;
   table-layout: fixed;
   list-style-type: none;
   padding: 0;
-}
 
-.multicolumn-inputs-list li:first-child {
-  padding-left: 0;
-}
-
-.multicolumn-inputs-list li:last-child {
-  padding-right: 0;
-}
-
-.multicolumn-inputs-list li {
-  padding-left: 5px;
-  padding-right: 5px;
-  display: table-cell;
-}
-
-.multicolumn-inputs-list li input {
-  $border-size: 1px;
-  $height: 26px;
-  width: 100%;
-  padding: 0 5px;
-  line-height: $height - 2 * $border-size;
-  border: $border-size solid #ccc;
-  font-size: 13px;
-  height: $height;
-  border-radius: 2px;
-}
-
-.multicolumn-inputs-list li .inline-input-holder {
-  margin: 0;
-
-  .help-block {
-    margin-bottom: 0;
+  > li:first-child {
+    padding-left: 0;
   }
 
-  .help-block:empty {
-    margin-top: 0;
+  > li:last-child {
+    padding-right: 0;
   }
-}
 
-.multicolumn-inputs-list li input[type="checkbox"] {
-  width: auto;
-  height: auto;
-  margin-right: 5px;
+  > li {
+    padding-left: 5px;
+    padding-right: 5px;
+    display: table-cell;
+
+    input {
+      $border-size: 1px;
+      $height: 26px;
+      width: 100%;
+      padding: 0 5px;
+      line-height: $height - 2 * $border-size;
+      border: $border-size solid #ccc;
+      font-size: 13px;
+      height: $height;
+      border-radius: 2px;
+    }
+
+    input[type="checkbox"] {
+      width: auto;
+      height: auto;
+      margin-right: 5px;
+    }
+
+    .inline-input-holder {
+      margin: 0;
+
+      .help-block {
+        margin-bottom: 0;
+      }
+
+      .help-block:empty {
+        margin-top: 0;
+      }
+    }
+  }
 }
 
 .multicolumn-input .multicolumn-input-toolbar {

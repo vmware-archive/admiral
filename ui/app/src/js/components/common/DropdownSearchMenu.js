@@ -92,6 +92,12 @@ function DropdownSearchMenu($el, componentOptions) {
   this.setManageOptions({});
 }
 
+/** Provides an async callback to provide options based on filter, iseful for server side search */
+DropdownSearchMenu.prototype.setFilterCallback = function(callback) {
+  this.filterCallback = callback;
+};
+
+/** Provides static options, useful for client side filtering */
 DropdownSearchMenu.prototype.setOptions = function(options) {
   this.options = options;
   updateFilteredOptions(this.$el, this.options, this.filter, this.selectedOption);
@@ -115,12 +121,13 @@ DropdownSearchMenu.prototype.setManageOptions = function(manageOptions) {
       icon: 'close'
   }));
 
-  this.$el.find('.divider').toggleClass('hide', newElements.length === 0);
-  $dropDownManage.toggleClass('hide', newElements.length === 0);
   $dropDownManage.append(newElements);
 
   if (this.selectedOption === null) {
-    $dropDownManage.children().last().hide();
+    var children = $dropDownManage.children();
+    children.last().hide();
+    $dropDownManage.toggleClass('hide', children.length === 1);
+    this.$el.find('.divider').toggleClass('hide', children.length === 1);
   }
 };
 
@@ -131,7 +138,11 @@ DropdownSearchMenu.prototype.setFilter = function(filter) {
 
   this.filter = filter;
 
-  updateFilteredOptions(this.$el, this.options, this.filter, this.selectedOption);
+  if (this.filterCallback) {
+    invokeFilterCallback.call(this, this.filter);
+  } else {
+    updateFilteredOptions(this.$el, this.options, this.filter, this.selectedOption);
+  }
 };
 
 DropdownSearchMenu.prototype.setLoading = function(isLoading) {
@@ -186,12 +197,17 @@ DropdownSearchMenu.prototype.setSelectedOption = function(option) {
     }
 
     $dropDownManage.children().last().show();
+    $dropDownManage.toggleClass('hide', false);
+    this.$el.find('.divider').toggleClass('hide', false);
   } else {
     this.$el.find('.dropdown-title').html(this.componentOptions.title);
     if (!this.$el.find('.dropdown-title').hasClass('placeholder')) {
       this.$el.find('.dropdown-title').addClass('placeholder');
     }
-    $dropDownManage.children().last().hide();
+    var children = $dropDownManage.children();
+    children.last().hide();
+    $dropDownManage.toggleClass('hide', children.length === 1);
+    this.$el.find('.divider').toggleClass('hide', children.length === 1);
   }
 };
 
@@ -236,8 +252,54 @@ function updateFilteredOptions($el, options, filter, selectedOption) {
   $el.find('.dropdown-options').append(newElements);
 }
 
+function applyExternallyFilteredOptions($el, options, filter, selectedOption) {
+  $el.find('.dropdown-options').empty();
+
+  if (options && options.length > 0) {
+    var newElements = $();
+
+    for (var i = 0; i < options.length; i++) {
+      var option = options[i];
+      var newElement = createItem(option);
+      if (selectedOption === option) {
+        newElement.addClass('active');
+      }
+
+      newElements = newElements.add(newElement);
+    }
+
+    $el.find('.dropdown-options').append(newElements);
+  } else if (filter) {
+    $el.find('.dropdown-options').append($('<div>').addClass('dropdown-options-hint')
+      .text(i18n.t('dropdownSearchMenu.noResults')));
+  }
+}
+
 function matchesFilter(option, filter) {
   return option && option.name && option.name.toLowerCase().indexOf(filter) !== -1;
+}
+
+function invokeFilterCallback(filter) {
+  var $search = this.$el.find('.search-input');
+
+  clearTimeout(this.timeout);
+  if (!filter) {
+    applyExternallyFilteredOptions(this.$el, [], this.filter, this.selectedOption);
+    $search.removeClass('loading');
+    return;
+  }
+
+  $search.addClass('loading');
+  this.timeout = setTimeout(() => {
+    this.filterCallback(filter, (options) => {
+      if (this.filter !== filter) {
+        // Filter is already different, no need to apply options
+        return;
+      }
+      $search.removeClass('loading');
+      applyExternallyFilteredOptions(this.$el, options, this.filter, this.selectedOption);
+    });
+  }, 300);
 }
 
 export default DropdownSearchMenu;

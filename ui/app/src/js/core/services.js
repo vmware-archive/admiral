@@ -574,6 +574,19 @@ services.loadHostsByLinks = function(documentSelfLinks) {
   return list(links.COMPUTE_RESOURCES, true, params);
 };
 
+services.searchHosts = function(query, limit) {
+  var qOps = { any: query };
+
+  let filter = buildHostsQuery(qOps, true);
+  let url = buildPaginationUrl(links.COMPUTE_RESOURCES, filter, true,
+                               'creationTimeMicros asc', limit);
+  return get(url).then(function(data) {
+    var documentLinks = data.documentLinks || [];
+    return documentLinks.map((link) => {
+      return data.documents[link];
+    });
+  });
+};
 
 services.loadNextPage = function(nextPageLink) {
   return get(nextPageLink + '&' + DOCUMENT_TYPE_PROP_NAME + '=true').then(function(result) {
@@ -897,11 +910,15 @@ services.createContainer = function(containerDescription, group) {
     });
 };
 
-services.createNetwork = function(networkDescription) {
+services.createNetwork = function(networkDescription, hostLinks) {
+  var customProperties = {
+    '__containerHostIds': hostLinks.join(',')
+  };
   return services.createNetworkDescription(networkDescription).then(
     function(createdNetworkDescription) {
       return services.createRequest(createdNetworkDescription.documentSelfLink,
-                            createdNetworkDescription.tenantLinks, null, NETWORK_TYPE);
+                            createdNetworkDescription.tenantLinks, null, NETWORK_TYPE,
+                            customProperties);
     });
 };
 
@@ -1024,10 +1041,13 @@ services.createMultiContainerFromTemplate = function(templateId, group) {
   });
 };
 
-services.createRequest = function(resourceDescriptionLink, tenantLinks, group, resourceType) {
+services.createRequest = function(resourceDescriptionLink, tenantLinks, group, resourceType,
+  customProperties) {
+
   var request = {};
   request.resourceType = resourceType;
   request.resourceDescriptionLink = resourceDescriptionLink;
+  request.customProperties = customProperties;
 
   if (group) {
     if (tenantLinks) {
@@ -1095,7 +1115,12 @@ services.createNetworkDescription = function(networkDescription) {
 };
 
 services.searchNetworks = function(query, limit) {
-  var filter = 'name eq *' + query + '*';
+  var filter = buildOdataQuery({
+    name: [{
+      val: '*' + query + '*',
+      op: 'eq'
+    }]
+  });
   let url = buildPaginationUrl(links.NETWORKS, filter, true, 'name asc', limit);
   return get(url).then(function(data) {
     var documentLinks = data.documentLinks || [];

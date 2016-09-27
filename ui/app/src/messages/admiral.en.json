@@ -27,6 +27,7 @@
       "machines": "Machines"
     },
     "host": {
+      "entity": "host",
       "details": {
         "title": {
           "add": "Add Host",
@@ -252,6 +253,7 @@
           "name": "Name",
           "existingNetwork": "Existing",
           "hosts": "Hosts",
+          "hostsSearchPlaceholder": "Search for host",
           "create": "Create Network"
         },
         "network": {
@@ -698,7 +700,8 @@
   "dropdownSearchMenu": {
     "title": "Select from the __entity__ list",
     "searchPlaceholder": "Search for __entity__",
-    "clear": "Clear Selection"
+    "clear": "Clear Selection",
+    "noResults": "No elements found"
   },
   "customProperties": {
     "name": "Name",

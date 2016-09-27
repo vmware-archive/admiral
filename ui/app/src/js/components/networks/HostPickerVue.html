@@ -1,0 +1,40 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="multicolumn-inputs">
+  <div class="multicolumn-inputs-list">
+    <div class="multicolumn-inputs-list-body-wrapper">
+      <div class="multicolumn-inputs-list-body">
+        <div class="multicolumn-input" v-for="host in viewHosts" track-by="viewId">
+          <div class="multicolumn-input-controls">
+            <ul>
+              <li>
+                <div class="inline-input-holder" name="subnet">
+                  <host-search class="dropdown-holder"></host-search>
+                  <span class="help-block"></span>
+                  </input>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div class="multicolumn-input-toolbar">
+            <a class="multicolumn-input-remove" tabindex="-1" v-on:click="removeHost(host.viewId)">
+              <i class="btn admiral-btn admiral-btn-circle fa fa-minus"></i>
+            </a>
+            <a class="multicolumn-input-add" v-show="$index === viewHosts.length - 1" v-on:click="addHost()">
+              <i class="btn admiral-btn admiral-btn-circle fa fa-plus"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

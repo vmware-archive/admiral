@@ -40,6 +40,10 @@
   right: 0;
   overflow: hidden;
   z-index: 0;
+
+  .loading,  {
+    z-index: 1;
+  }
 }
 
 .list-view .grid-container:hover {
@@ -68,7 +72,6 @@
   margin-bottom: -60px;
   padding-bottom: 60px;
   top: 60px;
-  z-index: 1;
 }
 
 // Leave some space for the error banner
@@ -721,6 +724,7 @@
       top: 40px;
       left: 20px;
       right: 20px;
+      bottom: 20px;
     }
     .title {
       font-size: 22px;

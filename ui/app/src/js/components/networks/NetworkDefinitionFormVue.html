@@ -13,9 +13,11 @@
   <div class="form-group network-name-search" v-show="existingNetwork">
     <label class="col-sm-3 control-label">{{i18n('app.template.details.editNetwork.name')}}</label>
     <div class="col-sm-9">
-      <input class="form-control" />
-      <i class="fa fa-spinner fa-spin loader-inline"></i>
-      <i class="fa fa-search search-hint"></i>
+      <div class="search-input">
+        <input class="form-control" />
+        <i class="fa fa-spinner fa-spin loader-inline form-control-feedback"></i>
+        <i class="fa fa-search search-hint form-control-feedback"></i>
+      </div>
       <span class="help-block"></span>
     </div>
   </div>
@@ -29,14 +31,14 @@
   <div class="form-group" v-show="allowExisting">
     <label class="col-sm-3 control-label">{{i18n('app.template.details.editNetwork.existingNetwork')}}</label>
     <div class="col-sm-9">
-      <input type="checkbox" class="checkbox-control" v-model="existingNetwork"/>
+      <input type="checkbox" class="checkbox-control" v-model="existingNetwork" />
       <span class="help-block"></span>
     </div>
   </div>
   <div class="form-group" v-show="!existingNetwork">
     <label class="col-sm-3 control-label">{{i18n('advanced')}}</label>
     <div class="col-sm-6">
-      <input type="checkbox" class="checkbox-control" v-model="hasAdvancedSettings"/>
+      <input type="checkbox" class="checkbox-control" v-model="hasAdvancedSettings" />
       <span class="help-block"></span>
     </div>
   </div>

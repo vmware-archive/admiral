@@ -708,14 +708,15 @@ $main-list-view-right: 10px;
   @include box-shadow(none);
 }
 
-.form-group .form-control.dropdown-holder {
+.form-group .dropdown-holder {
+  @extend .form-control;
   padding: 0;
-}
 
-.form-group .form-control.dropdown-holder button {
-  border: none;
-  padding-top: 5px;
-  padding-bottom: 5px;
+  button {
+    border: none;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
 }
 
 .form-group .dropdown button, .form-group .dropdown .dropdown-menu {
@@ -724,7 +725,11 @@ $main-list-view-right: 10px;
 
 .form-group .dropdown .dropdown-menu {
   margin: 0;
-  padding:10px 0 5px;
+  padding: 10px 0 5px;
+
+  .search-input {
+    margin-top: 10px;
+  }
 }
 
 .form-group .dropdown button .loading {
@@ -759,21 +764,6 @@ $main-list-view-right: 10px;
 
 .form-group .help-block:empty {
   margin: 0;
-}
-
-.search-input {
-  position: relative;
-}
-
-.search-input input {
-  @extend .form-control;
-  padding-left: 30px;
-  border-radius: 20px;
-  margin-top: 10px;
-}
-
-.search-input span {
-  left: 0;
 }
 
 .form-group .dropdown .dropdown-options, .form-group .dropdown .dropdown-manage {
@@ -1704,8 +1694,10 @@ body > .loading, .container-details > .content .loading {
     position: absolute;
     right: 65px;
 }
-.form-group .dropdown .dropdown-options > li > a {
+.form-group .dropdown .dropdown-options {
+  > li > a, .dropdown-options-hint {
     padding: 5px 20px;
+  }
 }
 
 .host-form.form-horizontal input.form-control {
@@ -2333,17 +2325,6 @@ $alert-text-color: #ffffff;
     margin-top: 14px;
   }
 
-  .loader-inline, .search-hint {
-    z-index: 1;
-    position: absolute;
-    right: 20px;
-    top: 10px;
-  }
-
-  .loader-inline {
-    display: none;
-  }
-
   > .fa-question-circle {
     @extend .hint;
     position: absolute;
@@ -2352,7 +2333,34 @@ $alert-text-color: #ffffff;
   }
 }
 
-.app-view .form-group.loading {
+.app-view .search-input, .app-view .multicolumn-inputs-list .search-input {
+  position: relative;
+
+  input, .twitter-typeahead input {
+    @extend .form-control;
+    padding-left: 30px;
+  }
+
+  input:not(.tt-input) {
+    border-radius: 20px;
+  }
+
+  .search-input span {
+    left: 0;
+  }
+
+  .loader-inline, .search-hint {
+    z-index: 1;
+    left: 0;
+    top: 0;
+  }
+
+  .loader-inline {
+    display: none;
+  }
+}
+
+.app-view .search-input.loading {
   .loader-inline {
     display: block;
   }
