@@ -7,7 +7,6 @@ import (
 )
 
 func TestAddUseRemoveProjects(t *testing.T) {
-	t.SkipNow()
 	// Preparing the test.
 	testPrintln("Configuring the env.")
 	config.GetCfg()

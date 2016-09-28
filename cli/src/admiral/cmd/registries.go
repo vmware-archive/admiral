@@ -78,7 +78,8 @@ var registryListCmd = &cobra.Command{
 	Long:  "Lists existing registries.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		RunRegistryList(args)
+		output, err := RunRegistryList(args)
+		formatAndPrintOutput(output, err)
 	},
 }
 
@@ -87,10 +88,10 @@ func initRegistryList() {
 	RegistriesRootCmd.AddCommand(registryListCmd)
 }
 
-func RunRegistryList(args []string) {
+func RunRegistryList(args []string) (string, error) {
 	rl := &registries.RegistryList{}
-	rl.FetchRegistries()
-	rl.Print()
+	_, err := rl.FetchRegistries()
+	return rl.GetOutputString(), err
 }
 
 var registryRemoveCmd = &cobra.Command{

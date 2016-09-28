@@ -59,7 +59,7 @@ func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 	functions.CheckVerboseResponse(resp)
 
 	if err = CheckResponseError(resp, from); err != nil {
-		return nil, nil, err
+		return resp, nil, err
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)

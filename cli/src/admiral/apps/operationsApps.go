@@ -243,12 +243,6 @@ func queryTemplateName(tmplName string) []string {
 
 }
 
-//Function to get the unique ID from the link.
-//Returns the ID.
-func GetIdFromApp(fullLink string) string {
-	return functions.GetResourceID(fullLink)
-}
-
 func InspectID(id string) bool {
 	links := functions.CreateResLinksForApps([]string{id})
 	url := config.URL + links[0]
@@ -265,7 +259,7 @@ func InspectID(id string) bool {
 	la := ListApps{
 		Documents: customMap,
 	}
-	la.PrintActiveWithContainer()
+	la.GetOutputStringWithContainers()
 	return true
 }
 
@@ -291,13 +285,13 @@ func (ra *RunApplication) run(asyncTask bool) ([]string, error) {
 		taskStatus.PrintTracerId()
 		if !asyncTask {
 			links, err = track.Wait(taskStatus.GetTracerId())
+			return links, err
 		} else {
 			links, err = track.GetResLinks(taskStatus.GetTracerId())
+			return links, err
 		}
-	} else {
-		links = nil
 	}
-	return links, respErr
+	return nil, respErr
 }
 
 func GetAppLinks(name string) []string {

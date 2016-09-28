@@ -117,7 +117,7 @@ var placementListCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		output, err := RunPlacementList(args)
-		formatAndWriteOutput(output, err)
+		formatAndPrintOutput(output, err)
 	},
 }
 
@@ -213,6 +213,6 @@ func RunPlacementUpdate(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Placement updates: " + newID, err
+		return "Placement updated: " + newID, err
 	}
 }

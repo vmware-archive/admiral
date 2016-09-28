@@ -15,7 +15,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -60,16 +59,20 @@ func (dpl *DeploymentPolicyList) FetchDP() (int, error) {
 }
 
 //Print prints already fetched deployment policies.
-func (dpl *DeploymentPolicyList) Print() {
+func (dpl *DeploymentPolicyList) GetOutputString() string {
 	if len(dpl.DocumentLinks) < 1 {
-		fmt.Println("n/a")
-		return
+		return "No elements found."
 	}
-	fmt.Printf("%-40s %-10s %s\n", "ID", "NAME", "DESCRIPTION")
+	var buffer bytes.Buffer
+	buffer.WriteString("ID\tNAME\tDESCRIPTION")
+	buffer.WriteString("\n")
 	for _, link := range dpl.DocumentLinks {
 		val := dpl.Documents[link]
-		fmt.Printf("%-40s %-10s %s\n", val.GetID(), val.Name, val.Description)
+		output := functions.GetFormattedString(val.GetID(), val.Name, val.Description)
+		buffer.WriteString(output)
+		buffer.WriteString("\n")
 	}
+	return strings.TrimSpace(buffer.String())
 }
 
 //RemoveDP removes deployment policy by name. Returns the ID of the removed

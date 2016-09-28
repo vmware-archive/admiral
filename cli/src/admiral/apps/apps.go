@@ -21,12 +21,18 @@ import (
 	"admiral/config"
 	"admiral/containers"
 	"admiral/functions"
+	"bytes"
 )
 
 type App struct {
 	Name                     string   `json:"name"`
 	CompositeDescriptionLink string   `json:"compositeDescriptionLink"`
+	DocumentSelfLink         string   `json:"documentSelfLink"`
 	ComponentLinks           []string `json:"componentLinks"`
+}
+
+func (a *App) GetID() string {
+	return functions.GetResourceID(a.DocumentSelfLink)
 }
 
 type ListApps struct {
@@ -64,26 +70,41 @@ func (la *ListApps) GetMatchingNames(name string) []string {
 }
 
 //Function to print active applications without the containers in the apps.
-func (listApps *ListApps) PrintActiveWithoutContainer() {
-	fmt.Printf("%-40s %-18s \n", "ID", "NAME")
-	for link, app := range listApps.Documents {
-		fmt.Printf("%-40s %-18s \n", GetIdFromApp(link), app.Name)
+func (listApps *ListApps) GetOutputStringWithoutContainers() string {
+	if listApps.TotalCount < 1 {
+		return "No elements found."
 	}
+	var buffer bytes.Buffer
+	buffer.WriteString("ID\tNAME")
+	buffer.WriteString("\n")
+	for _, app := range listApps.Documents {
+		output := functions.GetFormattedString(app.GetID(), app.Name)
+		buffer.WriteString(output)
+		buffer.WriteString("\n")
+	}
+	return strings.TrimSpace(buffer.String())
 }
 
 //Function to print the active applications with the containers in the apps.
-func (listApps *ListApps) PrintActiveWithContainer() {
+func (listApps *ListApps) GetOutputStringWithContainers() string {
+	if listApps.TotalCount < 1 {
+		return "No elements found."
+	}
+	var buffer bytes.Buffer
 	indent := "\u251c\u2500\u2500"
 	url := config.URL
-	fmt.Printf("%-40s %-18s \n", "ID", "NAME")
-	for link, app := range listApps.Documents {
-		fmt.Printf("%-40s %-18s \n", GetIdFromApp(link), app.Name)
-
+	buffer.WriteString("ID\tNAME")
+	buffer.WriteString("\n")
+	for _, app := range listApps.Documents {
+		output := functions.GetFormattedString(app.GetID(), app.Name)
+		buffer.WriteString(output)
+		buffer.WriteString("\n")
 		if len(app.ComponentLinks) < 1 {
 			continue
 		}
-		fmt.Printf("%s%-40s %-15s %-8s %-17s %-17s %s\n",
-			indent, "NAME", "ADDRESS", "STATUS", "CREATED", "STARTED", "[HOST:CONTAINER]")
+		output = indent + "NAME\tADDRESS\tSTATUS\tCREATED\tSTARTED\t[HOST:CONTAINER]"
+		buffer.WriteString(output)
+		buffer.WriteString("\n")
 		for _, cntr := range app.ComponentLinks {
 			containerUrl := url + cntr
 			container := &containers.Container{}
@@ -91,10 +112,11 @@ func (listApps *ListApps) PrintActiveWithContainer() {
 			_, respBody, _ := client.ProcessRequest(req)
 			err := json.Unmarshal(respBody, container)
 			functions.CheckJson(err)
-			fmt.Printf("%s%-40s %-15s %-8s %-17s %-17s %s\n", indent,
-				strings.Join(container.Names, " "), container.Address, container.PowerState, container.GetCreated(), container.GetStarted(), container.Ports)
+			output = functions.GetFormattedString(indent+strings.Join(container.Names, " "), container.Address,
+				container.PowerState, container.GetCreated(), container.GetStarted(), container.Ports)
+			buffer.WriteString(output)
+			buffer.WriteString("\n")
 		}
-
 	}
-
+	return strings.TrimSpace(buffer.String())
 }

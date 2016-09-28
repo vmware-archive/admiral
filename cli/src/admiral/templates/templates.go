@@ -21,6 +21,7 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/functions"
+	"bytes"
 )
 
 type LightContainer struct {
@@ -28,20 +29,15 @@ type LightContainer struct {
 	Image string `json:"image"`
 }
 
-func (lc *LightContainer) FetchAndPrintCont(link string) {
-
+func (lc *LightContainer) GetOutput(link string) (string, error) {
 	req, _ := http.NewRequest("GET", link, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
-		fmt.Println(respErr)
-		return
+		return "", respErr
 	}
 	err := json.Unmarshal(respBody, lc)
-	if err != nil {
-		fmt.Println(err.Error())
-	} else {
-		fmt.Printf("   Container Name: %-22s\tContainer Image: %s\n", lc.Name, lc.Image)
-	}
+	functions.CheckJson(err)
+	return fmt.Sprintf("   Container Name: %-22s\tContainer Image: %s\n", lc.Name, lc.Image), nil
 }
 
 type Template struct {
@@ -90,9 +86,12 @@ func (lt *TemplatesList) FetchTemplates(queryF string) (int, error) {
 
 //PrintWithoutContainers prints already fetched templates without
 //printing containers inside the templates.
-func (lt *TemplatesList) PrintWithoutContainers() {
-	count := 1
-	fmt.Printf("%-40s %-35s %-15s\n", "ID", "NAME", "CONTAINERS")
+func (lt *TemplatesList) GetOutputStringWithoutContainers() string {
+	var buffer bytes.Buffer
+	if len(lt.Results) < 1 {
+		return "No elements found."
+	}
+	buffer.WriteString("ID\tNAME\tCONTAINERS\n")
 	for _, template := range lt.Results {
 		if template.ParentDescriptionLink != "" {
 			continue
@@ -101,16 +100,22 @@ func (lt *TemplatesList) PrintWithoutContainers() {
 		if len(template.DescriptionLinks) > 0 {
 			contCnt = fmt.Sprintf("%d", len(template.DescriptionLinks))
 		}
-		fmt.Printf("%-40s %-35s %-15s\n", template.GetID(), template.Name, contCnt)
-		count++
+		output := functions.GetFormattedString(template.GetID(), template.Name, contCnt)
+		buffer.WriteString(output)
+		buffer.WriteString("\n")
 	}
+	return strings.TrimSpace(buffer.String())
 }
 
 //PrintWithContainer prints already fetched template with containers inside them.
-func (lt *TemplatesList) PrintWithContainer() {
+func (lt *TemplatesList) GetOutputStringWithContainers() (string, error) {
 	//TODO: Figure out some better for formatting for better vision on console.
 	url := config.URL
-	fmt.Printf("%-40s %-35s %-15s\n", "ID", "NAME", "CONTAINERS")
+	var buffer bytes.Buffer
+	if len(lt.Results) < 1 {
+		return "No elements found.", nil
+	}
+	buffer.WriteString("ID\tNAME\tCONTAINERS\n")
 	for _, template := range lt.Results {
 		if template.ParentDescriptionLink != "" {
 			continue
@@ -119,13 +124,21 @@ func (lt *TemplatesList) PrintWithContainer() {
 		if len(template.DescriptionLinks) > 0 {
 			contCnt = fmt.Sprintf("%d", len(template.DescriptionLinks))
 		}
-		fmt.Printf("%-40s %-35s %-15s\n", template.GetID(), template.Name, contCnt)
+		output := functions.GetFormattedString(template.GetID(), template.Name, contCnt)
+		buffer.WriteString(output)
+		buffer.WriteString("\n")
 		for _, link := range template.DescriptionLinks {
 			currentUrl := url + link
 			container := &LightContainer{}
-			container.FetchAndPrintCont(currentUrl)
+			output, err := container.GetOutput(currentUrl)
+			if err != nil {
+				return "", err
+			}
+			buffer.WriteString(output)
+			buffer.WriteString("\n")
 		}
 	}
+	return strings.TrimSpace(buffer.String()), nil
 }
 
 //GetTemplateLinks returns array of self links of templates which names

@@ -15,7 +15,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -63,15 +62,19 @@ func (rpl *ResourcePoolList) FetchRP() (int, error) {
 	return len(rpl.Documents), nil
 }
 
-func (rpl *ResourcePoolList) Print() {
+func (rpl *ResourcePoolList) GetOutputString() string {
+	var buffer bytes.Buffer
 	if len(rpl.Documents) > 0 {
-		count := 1
-		fmt.Printf("%-40s %-23s\n", "ID", "NAME")
+		buffer.WriteString("ID\tNAME\n")
 		for _, val := range rpl.Documents {
-			fmt.Printf("%-40s %-23s\n", val.GetID(), val.Name)
-			count++
+			output := functions.GetFormattedString(val.GetID(), val.Name)
+			buffer.WriteString(output)
+			buffer.WriteString("\n")
 		}
+	} else {
+		buffer.WriteString("No elements found.")
 	}
+	return strings.TrimSpace(buffer.String())
 }
 
 func RemoveRP(rpName string) (string, error) {

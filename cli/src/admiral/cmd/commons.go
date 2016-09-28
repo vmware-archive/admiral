@@ -153,7 +153,7 @@ func processOutput(output string, err error) {
 	}
 }
 
-func formatAndWriteOutput(output string, err error) {
+func formatAndPrintOutput(output string, err error) {
 	writer := tabwriter.NewWriter(os.Stdout, 5, 0, 5, ' ', 0)
 	if err != nil {
 		fmt.Fprintln(writer, err)

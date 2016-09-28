@@ -146,7 +146,8 @@ var hostListCmd = &cobra.Command{
 	Long:  "Lists existing hosts.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		RunHostList(args)
+		output, err := RunHostList(args)
+		formatAndPrintOutput(output, err)
 	},
 }
 
@@ -156,18 +157,10 @@ func initHostList() {
 	HostsRootCmd.AddCommand(hostListCmd)
 }
 
-func RunHostList(args []string) {
+func RunHostList(args []string) (string, error) {
 	hl := &hosts.HostsList{}
-	count, err := hl.FetchHosts(queryF)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	if count < 1 {
-		fmt.Println("n/a")
-		return
-	}
-	hl.Print()
+	_, err := hl.FetchHosts(queryF)
+	return hl.GetOutputString(), err
 }
 
 var hostRemoveCmd = &cobra.Command{

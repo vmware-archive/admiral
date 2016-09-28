@@ -30,6 +30,52 @@ import (
 	"admiral/track"
 )
 
+//Struct part of "Host" struct in order to parse inner data.
+type HostProperties struct {
+	Containers string `json:"__Containers"`
+	Name       string `json:"__Name"`
+}
+
+//Struct part of "ListHosts" struct in order to parse inner data.
+type Host struct {
+	Id               string             `json:"id,omitempty"`
+	Address          string             `json:"Address,omitempty"`
+	PowerState       string             `json:"powerState,omitempty"`
+	CustomProperties map[string]*string `json:"customProperties"`
+	ResourcePoolLink string             `json:"resourcePoolLink"`
+}
+
+//Struct to parse data when getting information about existing hosts.
+type HostsList struct {
+	TotalCount    int32           `json:"totalCount"`
+	Documents     map[string]Host `json:"documents"`
+	DocumentLinks []string        `json:"documentLinks"`
+}
+
+//Struct used to send data in order to change host's power state.
+type HostPatch struct {
+	PowerState string `json:"powerState"`
+}
+
+//Struct used to send needed data when creating host.
+type HostState struct {
+	Id               string             `json:"id"`
+	Address          string             `json:"address"`
+	ResourcePoolLink string             `json:"resourcePoolLink"`
+	CustomProperties map[string]*string `json:"customProperties"`
+}
+
+//Struct used as wrapper of HostState for valid request.
+type HostObj struct {
+	HostState HostState `json:"hostState"`
+}
+
+type HostUpdate struct {
+	Credential       credentials.Credentials `json:"credential,omitempty"`
+	ResourcePoolLink string                  `json:"resourcePoolLink,omitempty"`
+	CustomProperties map[string]*string      `json:"customProperties"`
+}
+
 //FetchHosts fetches host by query passed as parameter, in case
 //all hosts should be fetched, pass empty string as parameter.
 //Returns the count of fetched hosts.
@@ -52,14 +98,18 @@ func (hl *HostsList) FetchHosts(queryF string) (int, error) {
 }
 
 //Print already fetched hosts.
-func (hl *HostsList) Print() {
-	count := 1
-	fmt.Printf("%-22s %-22s %-8s %-15s %-22s\n", "ADDRESS", "NAME", "STATE", "CONTAINERS", "RESOURCE POOLS")
+func (hl *HostsList) GetOutputString() string {
+	var buffer bytes.Buffer
+	buffer.WriteString("ADDRESS\tNAME\tSTATE\tCONTAINERS\tRESOURCE POOL")
+	buffer.WriteString("\n")
 	for _, val := range hl.Documents {
 		rpName, _ := resourcePools.GetRPName(val.ResourcePoolLink)
-		fmt.Printf("%-22s %-22s %-8s %-15s %-22s\n", val.Address, *val.CustomProperties["__Name"], val.PowerState, *val.CustomProperties["__Containers"], rpName)
-		count++
+		output := functions.GetFormattedString(val.Address, *val.CustomProperties["__Name"], val.PowerState,
+			*val.CustomProperties["__Containers"], rpName)
+		buffer.WriteString(output)
+		buffer.WriteString("\n")
 	}
+	return strings.TrimSpace(buffer.String())
 }
 
 //AddHost adds host. The function parameters are the address of the host,

@@ -13,7 +13,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 
 	"admiral/certificates"
 	"admiral/help"
@@ -77,7 +76,8 @@ var certListCmd = &cobra.Command{
 	Long:  "Lists existing certificates",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		RunCertList(args)
+		output, err := RunCertList(args)
+		formatAndPrintOutput(output, err)
 	},
 }
 
@@ -86,18 +86,13 @@ func initCertList() {
 	CertsRootCmd.AddCommand(certListCmd)
 }
 
-func RunCertList(args []string) {
+func RunCertList(args []string) (string, error) {
 	cl := certificates.CertificateList{}
-	count, err := cl.FetchCertificates()
+	_, err := cl.FetchCertificates()
 	if err != nil {
-		fmt.Println(err)
-		return
+		return "", err
 	}
-	if count < 1 {
-		fmt.Println("n/a")
-		return
-	}
-	cl.Print()
+	return cl.GetOutputString(), err
 }
 
 var certRemoveCmd = &cobra.Command{

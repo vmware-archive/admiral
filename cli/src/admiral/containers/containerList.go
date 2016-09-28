@@ -20,6 +20,7 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/functions"
+	"bytes"
 )
 
 type ListContainers struct {
@@ -63,37 +64,34 @@ func (lc *ListContainers) FetchContainers(queryF string) (int, error) {
 //Print is printing the containers to the console. It takes boolean
 //parameter. If it's true will print all the containers. If it's false
 //will print only the running containers.
-func (lc *ListContainers) Print(allContainers bool) {
+func (lc *ListContainers) GetOutputString(allContainers bool) string {
 	nameLen := 38
-	if allContainers {
-		fmt.Printf("%-40s %-40s %-15s %-25s %-17s %-20s %s\n",
-			"ID", "NAME", "ADDRESS", "STATUS", "CREATED", "[HOST:CONTAINER]", "EXTERNAL ID")
-
-		for _, link := range lc.DocumentLinks {
-			val := lc.Documents[link]
-			if val.System {
-				continue
-			}
-			name := functions.ShortString(strings.Join(val.Names[0:1], ""), nameLen)
-			fmt.Printf("%-40s %-40s %-15s %-25s %-17s %-20s %s\n", val.GetID(), name, val.Address, val.GetStatus(),
-				val.GetCreated(), val.GetPorts(), val.GetExternalID())
+	var buffer bytes.Buffer
+	buffer.WriteString("ID\tNAME\tADDRESS\tSTATUS\tCREATED\t[HOST:CONTAINER]\tEXTERNAL ID")
+	buffer.WriteString("\n")
+	for _, link := range lc.DocumentLinks {
+		val := lc.Documents[link]
+		if val.System {
+			continue
 		}
-	} else {
-		fmt.Printf("%-40s %-40s %-15s %-25s %-17s %-20s %s\n",
-			"ID", "NAME", "ADDRESS", "STATUS", "CREATED", "[HOST:CONTAINER]", "EXTERNAL ID")
-		for _, link := range lc.DocumentLinks {
-			val := lc.Documents[link]
-			if val.System {
-				continue
-			}
+		if allContainers {
+			name := functions.ShortString(strings.Join(val.Names[0:1], ""), nameLen)
+			output := functions.GetFormattedString(val.GetID(), name, val.Address, val.GetStatus(),
+				val.GetCreated(), val.GetPorts(), val.GetExternalID())
+			buffer.WriteString(output)
+			buffer.WriteString("\n")
+		} else {
 			if val.PowerState == "RUNNING" {
 				name := functions.ShortString(strings.Join(val.Names[0:1], ""), nameLen)
-				fmt.Printf("%-40s %-40s %-15s %-25s %-17s %-20s %s\n",
-					val.GetID(), name, val.Address, val.GetStatus(),
+				output := functions.GetFormattedString(val.GetID(), name, val.Address, val.GetStatus(),
 					val.GetCreated(), val.GetPorts(), val.GetExternalID())
+				buffer.WriteString(output)
+				buffer.WriteString("\n")
 			}
 		}
 	}
+
+	return strings.TrimSpace(buffer.String())
 }
 
 //Function to get container description if the name is equal to one passed in parameter.

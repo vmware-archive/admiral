@@ -52,6 +52,16 @@ func (c *Credentials) GetID() string {
 	return strings.Replace(c.DocumentSelfLink, "/core/auth/credentials/", "", -1)
 }
 
+func (c *Credentials) GetName() string {
+	var checker string
+	if c.CustomProperties["__authCredentialsName"] == nil {
+		checker = "n/a"
+	} else {
+		checker = strings.TrimSpace(*c.CustomProperties["__authCredentialsName"])
+	}
+	return checker
+}
+
 type ListCredentials struct {
 	Documents map[string]Credentials `json:"documents"`
 }
@@ -71,23 +81,16 @@ func (lc *ListCredentials) FetchCredentials() (int, error) {
 }
 
 //Print prints already fetched credentials.
-func (lc *ListCredentials) Print() {
-	count := 1
-	fmt.Printf("%-40s %-30s %-10s\n", "ID", "Name", "Type")
+func (lc *ListCredentials) GetOutputString() string {
+	var buffer bytes.Buffer
+	buffer.WriteString("ID\tName\tType")
+	buffer.WriteString("\n")
 	for _, val := range lc.Documents {
-		var checker string
-		if val.CustomProperties["__authCredentialsName"] == nil {
-			checker = ""
-		} else {
-			checker = strings.TrimSpace(*val.CustomProperties["__authCredentialsName"])
-		}
-		if checker == "" {
-			fmt.Printf("%-40s %-30s %-10s\n", val.GetID(), "n/a", val.Type)
-		} else {
-			fmt.Printf("%-40s %-30s %-10s\n", val.GetID(), *val.CustomProperties["__authCredentialsName"], val.Type)
-		}
-		count++
+		output := functions.GetFormattedString(val.GetID(), val.GetName(), val.Type)
+		buffer.WriteString(output)
+		buffer.WriteString("\n")
 	}
+	return strings.TrimSpace(buffer.String())
 }
 
 type AddUserCredentials struct {

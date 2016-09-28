@@ -69,7 +69,8 @@ var projectListCmd = &cobra.Command{
 	Long:  "List projects.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		RunProjectList(args)
+		output, err := RunProjectList(args)
+		formatAndPrintOutput(output, err)
 	},
 }
 
@@ -77,10 +78,10 @@ func initProjectList() {
 	ProjectsRootCmd.AddCommand(projectListCmd)
 }
 
-func RunProjectList(args []string) {
+func RunProjectList(args []string) (string, error) {
 	gl := &projects.ProjectList{}
-	gl.FetchProjects()
-	gl.Print()
+	_, err := gl.FetchProjects()
+	return gl.GetOutputString(), err
 }
 
 var projectRemoveCmd = &cobra.Command{

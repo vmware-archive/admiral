@@ -304,7 +304,7 @@ func GetContainerLinks(name string) []string {
 type RunContainer struct {
 	ResourceDescriptionLink string   `json:"resourceDescriptionLink"`
 	ResourceType            string   `json:"resourceType"`
-	TenantLinks             []string `json:"tenantLinks,omitempty"`
+	TenantLinks             []string `json:"tenantLinks"`
 }
 
 type OperationScale struct {

@@ -105,7 +105,7 @@ func (pl *PlacementList) FetchPlacements() (int, error) {
 
 func (pl *PlacementList) GetOutputString() string {
 	if len(pl.DocumentLinks) < 1 {
-		return "n/a"
+		return "No elements found."
 	}
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tNAME\tPROJECT\tRESOURCE POOL\tDEPLOYMENT POLICY\tPRIORITY\tINSTANCES\tCPU SHARES\tMEMORY LIMIT")
@@ -133,7 +133,12 @@ func (pl *PlacementList) GetOutputString() string {
 		if len(val.TenantLinks) < 1 {
 			project = ""
 		} else {
-			project, _ = projects.GetProjectName(val.TenantLinks[0])
+			projectIndex := GetProjectLinkIndex(val.TenantLinks)
+			if projectIndex != -1 && val.TenantLinks[projectIndex] != "" {
+				project, _ = projects.GetProjectName(val.TenantLinks[0])
+			} else {
+				project = ""
+			}
 		}
 		output := functions.GetFormattedString(val.GetID(), val.Name, project, rp, dp, val.Priority,
 			val.AvailableInstancesCount, val.CpuShares, val.MemoryLimit)
@@ -157,7 +162,7 @@ func RemovePlacement(polName string) (string, error) {
 }
 
 func RemovePlacementID(id string) (string, error) {
-	link := functions.CreateResLinkForPolicy(id)
+	link := functions.CreateResLinksForPlacement(id)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
@@ -179,11 +184,15 @@ func AddPlacement(namePol, cpuShares, instances, priority, projectId, resPoolID,
 		return "", errors.New("Resource pool ID is required.")
 	}
 
-	dpLink = functions.CreateResLinkForDP(deplPolID)
+	if deplPolID != "" {
+		dpLink = functions.CreateResLinkForDP(deplPolID)
+	}
 
 	rpLink = functions.CreateResLinkForRP(resPoolID)
 
-	projectLink = functions.CreateResLinkForProject(projectId)
+	if projectId != "" {
+		projectLink = functions.CreateResLinkForProject(projectId)
+	}
 
 	placement := PlacementToAdd{
 		//Must
@@ -226,7 +235,7 @@ func EditPlacement(name, namePol, projectId, resPoolID, deplPolID string, cpuSha
 }
 
 func EditPlacementID(id, namePol, projectId, resPoolID, deplPolID string, cpuShares, instances, priority int32, memoryLimit int64) (string, error) {
-	url := config.URL + functions.CreateResLinkForPolicy(id)
+	url := config.URL + functions.CreateResLinksForPlacement(id)
 	//Workaround
 	oldPlacement := &PlacementToUpdate{}
 	req, _ := http.NewRequest("GET", url, nil)

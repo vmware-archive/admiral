@@ -12,8 +12,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"admiral/events"
 
 	"github.com/spf13/cobra"
@@ -30,24 +28,20 @@ var eventCmd = &cobra.Command{
 	Long:  "Prints events log.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		RunEvents()
+		output, err := RunEvents()
+		formatAndPrintOutput(output, err)
 	},
 }
 
-func RunEvents() {
+func RunEvents() (string, error) {
 	el := events.EventList{}
-	count, err := el.FetchEvents()
+	_, err := el.FetchEvents()
 	if clearAll {
 		el.ClearAllEvent()
-		return
+		return "Events cleared", err
 	}
 	if err != nil {
-		fmt.Println(err)
-		return
+		return "", err
 	}
-	if count < 1 {
-		fmt.Println("n/a")
-		return
-	}
-	el.Print()
+	return el.GetOutputString(), nil
 }

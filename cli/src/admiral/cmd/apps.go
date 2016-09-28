@@ -70,7 +70,8 @@ var appListCmd = &cobra.Command{
 	Long:  "Lists existing applications.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		RunAppList(args)
+		output, err := RunAppList(args)
+		formatAndPrintOutput(output, err)
 	},
 }
 
@@ -82,24 +83,17 @@ func initAppList() {
 	AppsRootCmd.AddCommand(appListCmd)
 }
 
-func RunAppList(args []string) {
+func RunAppList(args []string) (string, error) {
 	la := apps.ListApps{}
-	count, err := la.FetchApps(queryF)
+	_, err := la.FetchApps(queryF)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return "", err
 	}
-	if count == 0 {
-		fmt.Println("n/a")
-		return
-	}
-
-	fmt.Println("Active Applications:")
 	if inclCont {
-		la.PrintActiveWithContainer()
-	} else {
-		la.PrintActiveWithoutContainer()
+		return la.GetOutputStringWithContainers(), err
 	}
+	return la.GetOutputStringWithoutContainers(), nil
+
 }
 
 var appRemoveCmd = &cobra.Command{

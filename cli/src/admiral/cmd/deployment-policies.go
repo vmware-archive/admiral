@@ -12,8 +12,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"admiral/deplPolicy"
 	"admiral/help"
 
@@ -72,7 +70,8 @@ var deploymentPolicyListCmd = &cobra.Command{
 	Long:  "Lists existing deployment policies.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		RunDeploymentPolicyList(args)
+		output, err := RunDeploymentPolicyList(args)
+		formatAndPrintOutput(output, err)
 	},
 }
 
@@ -81,18 +80,13 @@ func initDeploymentPolicyList() {
 	DeploymentPoliciesRootCmd.AddCommand(deploymentPolicyListCmd)
 }
 
-func RunDeploymentPolicyList(args []string) {
+func RunDeploymentPolicyList(args []string) (string, error) {
 	dpl := &deplPolicy.DeploymentPolicyList{}
-	count, err := dpl.FetchDP()
+	_, err := dpl.FetchDP()
 	if err != nil {
-		fmt.Println(err)
-		return
+		return "", err
 	}
-	if count < 1 {
-		fmt.Println("n/a")
-		return
-	}
-	dpl.Print()
+	return dpl.GetOutputString(), nil
 }
 
 var deploymentPolicyRemoveCmd = &cobra.Command{

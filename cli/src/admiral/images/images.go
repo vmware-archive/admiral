@@ -13,7 +13,6 @@ package images
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"sort"
 	"strings"
@@ -21,6 +20,7 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/functions"
+	"bytes"
 )
 
 type ImageSorter []Image
@@ -45,10 +45,11 @@ type ImagesList struct {
 	Results []Image `json:"results"`
 }
 
-func (li *ImagesList) Print() {
+func (li *ImagesList) GetOuputString() string {
+	var buffer bytes.Buffer
 	if len(li.Results) > 0 {
 		sort.Sort(ImageSorter(li.Results))
-		fmt.Printf("%-55s %-45s %-10s %-10s %-10s %-10s\n", "NAME", "DESCRIPTION", "STARS", "OFFICIAL", "AUTOMATED", "TRUSTED")
+		buffer.WriteString("NAME\tDESCRIPTION\tSTARS\tOFFICIAL\tAUTOMATED\tTRUSTED\n")
 		for _, image := range li.Results {
 			var (
 				desc      string
@@ -71,11 +72,14 @@ func (li *ImagesList) Print() {
 				trusted = "[OK]"
 			}
 			cuttedName := cutImgName(image.Name)
-			fmt.Printf("%-55s %-45s %-10d %-10s %-10s %-10s\n", cuttedName, desc, image.StarsCount, official, automated, trusted)
+			output := functions.GetFormattedString(cuttedName, desc, image.StarsCount, official, automated, trusted)
+			buffer.WriteString(output)
+			buffer.WriteString("\n")
 		}
 	} else {
-		fmt.Println("No results.")
+		buffer.WriteString("No results.")
 	}
+	return strings.TrimSpace(buffer.String())
 }
 
 //cutImgName removes any default path that name is containing.
@@ -118,22 +122,25 @@ type PopularImages []Image
 //PrintPopular prints popular images.
 //This function is called when user execute "admiral search"
 //without passing any name as parameter.
-func PrintPopular() {
+func GetPopular() (string, error) {
 	url := config.URL + "/popular-images?documentType=true"
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
-		fmt.Println(respErr)
-		return
+		return "", respErr
 	}
 	pi := PopularImages{}
 	err := json.Unmarshal(respBody, &pi)
 	functions.CheckJson(err)
-	fmt.Println("POPULAR TEMPLATES")
-	fmt.Printf("%-30s %-45s %-10s %-10s %-10s %-10s\n", "NAME", "DESCRIPTION", "STARS", "OFFICIAL", "AUTOMATED", "TRUSTED")
+	var buffer bytes.Buffer
+	buffer.WriteString("POPULAR TEMPLATES\n")
+	buffer.WriteString("NAME\tDESCRIPTION\tSTARS\tOFFICIAL\tAUTOMATED\tTRUSTED\n")
 	for _, img := range pi {
 		cuttedName := cutImgName(img.Name)
 		desc := functions.ShortString(img.Description, 40)
-		fmt.Printf("%-30s %-45s %-10s %-10s %-10s %-10s\n", cuttedName, desc, "---", "---", "---", "---")
+		output := functions.GetFormattedString(cuttedName, desc, "---", "---", "---", "---")
+		buffer.WriteString(output)
+		buffer.WriteString("\n")
 	}
+	return strings.TrimSpace(buffer.String()), nil
 }

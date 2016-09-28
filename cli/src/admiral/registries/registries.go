@@ -15,7 +15,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -70,16 +69,20 @@ func (rl *RegistryList) FetchRegistries() (int, error) {
 	return len(rl.DocumentLinks), nil
 }
 
-func (rl *RegistryList) Print() {
+func (rl *RegistryList) GetOutputString() string {
+	var buffer bytes.Buffer
 	if len(rl.DocumentLinks) > 0 {
-		fmt.Printf("%-40s %-20s %-40s %-15s\n", "ID", "NAME", "ADDRESS", "STATUS")
+		buffer.WriteString("ID\tNAME\tADDRESS\tSTATUS\n")
 		for _, link := range rl.DocumentLinks {
 			val := rl.Documents[link]
-			fmt.Printf("%-40s %-20s %-40s %-15s\n", val.GetID(), val.Name, val.Address, val.Status())
+			output := functions.GetFormattedString(val.GetID(), val.Name, val.Address, val.Status())
+			buffer.WriteString(output)
+			buffer.WriteString("\n")
 		}
 	} else {
-		fmt.Println("n/a")
+		buffer.WriteString("No elements found.")
 	}
+	return strings.TrimSpace(buffer.String())
 }
 
 func RemoveRegistry(address string) (string, error) {

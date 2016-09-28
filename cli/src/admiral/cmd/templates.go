@@ -12,8 +12,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"admiral/apps"
 	"admiral/help"
 	"admiral/templates"
@@ -38,7 +36,8 @@ var templateListCmd = &cobra.Command{
 	Long:  "Lists existing templates.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		RunTemplatesList(args)
+		output, err := RunTemplatesList(args)
+		formatAndPrintOutput(output, err)
 	},
 }
 
@@ -49,21 +48,16 @@ func initTemplateList() {
 	TemplatesRootCmd.AddCommand(templateListCmd)
 }
 
-func RunTemplatesList(args []string) {
+func RunTemplatesList(args []string) (string, error) {
 	lt := &templates.TemplatesList{}
-	count, err := lt.FetchTemplates(queryF)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	if count < 1 {
-		fmt.Println("n/a")
-		return
-	}
+	_, err := lt.FetchTemplates(queryF)
 	if inclCont {
-		lt.PrintWithContainer()
+		if err != nil {
+			return "", err
+		}
+		return lt.GetOutputStringWithContainers()
 	} else {
-		lt.PrintWithoutContainers()
+		return lt.GetOutputStringWithoutContainers(), err
 	}
 }
 

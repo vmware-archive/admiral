@@ -13,13 +13,13 @@ package events
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
 	"admiral/client"
 	"admiral/config"
 	"admiral/functions"
+	"bytes"
 )
 
 type EventInfo struct {
@@ -46,13 +46,18 @@ func (el *EventList) FetchEvents() (int, error) {
 }
 
 //Print already fetched events.
-func (el *EventList) Print() {
-	if el.TotalCount > 0 {
-		for _, val := range el.Documents {
-			description := strings.Replace(val.Description, "\n", "", -1)
-			fmt.Printf("%-10s %s\n", val.EventLogType, description)
-		}
+func (el *EventList) GetOutputString() string {
+	if el.TotalCount < 1 {
+		return "No elements found."
 	}
+	var buffer bytes.Buffer
+	for _, val := range el.Documents {
+		description := strings.Replace(val.Description, "\n", "", -1)
+		output := functions.GetFormattedString(val.EventLogType, description)
+		buffer.WriteString(output)
+		buffer.WriteString("\n")
+	}
+	return strings.TrimSpace(buffer.String())
 }
 
 //Clear all events.
@@ -62,5 +67,4 @@ func (el *EventList) ClearAllEvent() {
 		req, _ := http.NewRequest("DELETE", url, nil)
 		client.ProcessRequest(req)
 	}
-	fmt.Println("Events successfully cleared.")
 }

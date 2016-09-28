@@ -15,7 +15,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -54,16 +53,19 @@ func (gl *ProjectList) FetchProjects() (int, error) {
 }
 
 //Print prints already fetched projects.
-func (gl *ProjectList) Print() {
+func (gl *ProjectList) GetOutputString() string {
 	if len(gl.DocumentLinks) < 1 {
-		fmt.Println("n/a")
-		return
+		return "No elements found."
 	}
-	fmt.Printf("%-40s %-25s \n", "ID", "NAME")
+	var buffer bytes.Buffer
+	buffer.WriteString("ID\tNAME\n")
 	for i := range gl.DocumentLinks {
 		val := gl.Documents[gl.DocumentLinks[i]]
-		fmt.Printf("%-40s %-25s \n", val.GetID(), val.Name)
+		output := functions.GetFormattedString(val.GetID(), val.Name)
+		buffer.WriteString(output)
+		buffer.WriteString("\n")
 	}
+	return strings.TrimSpace(buffer.String())
 }
 
 //AddProject adds project and takes as parameters the name and description of the new project.

@@ -19,7 +19,6 @@ import (
 )
 
 func TestApplicationProvision(t *testing.T) {
-	t.SkipNow()
 	// Preparing the test
 	testPrintln("Configuring the env.")
 	config.GetCfg()
@@ -58,4 +57,5 @@ func TestApplicationProvision(t *testing.T) {
 	testPrintln("Removing the template.")
 	templateMsg, err = RunTemplateRemove([]string{templateId})
 	CheckTestError(err, t)
+
 }

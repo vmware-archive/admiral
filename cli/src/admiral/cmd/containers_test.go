@@ -21,7 +21,6 @@ import (
 //TestContainerProvision will add host and credentials,
 //it will provision container, stop it, remove it and remove the host.
 func TestContainerProvision(t *testing.T) {
-	t.SkipNow()
 	// Preparing the test.
 	testPrintln("Configuring the env.")
 	config.GetCfg()

@@ -12,7 +12,6 @@
 package cmd
 
 import (
-	"fmt"
 	"strings"
 
 	"admiral/images"
@@ -30,25 +29,17 @@ var searchCmd = &cobra.Command{
 	Long:  "Search for image from which you can provision container.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		RunSearch(args)
+		output, err := RunSearch(args)
+		formatAndPrintOutput(output, err)
 	},
 }
 
-func RunSearch(args []string) {
+func RunSearch(args []string) (string, error) {
 	if len(args) < 1 {
-		images.PrintPopular()
-		return
+		return images.GetPopular()
 	}
 	query := strings.Join(args, " ")
 	il := &images.ImagesList{}
-	count, err := il.QueryImages(query)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	if count < 1 {
-		fmt.Println("n/a")
-		return
-	}
-	il.Print()
+	_, err := il.QueryImages(query)
+	return il.GetOuputString(), err
 }

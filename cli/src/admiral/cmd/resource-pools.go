@@ -12,8 +12,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"admiral/help"
 	"admiral/resourcePools"
 
@@ -73,23 +71,20 @@ var resourcePoolListCmd = &cobra.Command{
 	Long: "Lists existing resource pools.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		rpl := resourcePools.ResourcePoolList{}
-		count, err := rpl.FetchRP()
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		if count < 1 {
-			fmt.Println("n/a")
-			return
-		}
-		rpl.Print()
+		output, err := RunResourcePoolList(args)
+		formatAndPrintOutput(output, err)
 	},
 }
 
 func initResourcePoolList() {
 	resourcePoolListCmd.SetUsageTemplate(help.DefaultUsageListTemplate)
 	ResourcePoolsRootCmd.AddCommand(resourcePoolListCmd)
+}
+
+func RunResourcePoolList(args []string) (string, error) {
+	rpl := resourcePools.ResourcePoolList{}
+	_, err := rpl.FetchRP()
+	return rpl.GetOutputString(), err
 }
 
 var resourcePoolRemoveCmd = &cobra.Command{

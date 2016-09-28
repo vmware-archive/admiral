@@ -77,7 +77,7 @@ func CreateResLinkForRegistry(id string) string {
 
 //Function to create resource links from the provided ID as parameter.
 //This link will be used to execute command, avoiding duplicating names.
-func CreateResLinkForPolicy(id string) string {
+func CreateResLinksForPlacement(id string) string {
 	return "/resources/group-placements/" + id
 }
 

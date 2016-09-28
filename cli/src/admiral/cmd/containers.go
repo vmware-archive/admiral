@@ -275,7 +275,8 @@ var containerListCmd = &cobra.Command{
 	Long:  "Lists existing containers.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		RunContainerList(args)
+		output, err := RunContainerList(args)
+		formatAndPrintOutput(output, err)
 	},
 }
 
@@ -286,18 +287,13 @@ func initContainerList() {
 	RootCmd.AddCommand(containerListCmd)
 }
 
-func RunContainerList(args []string) {
+func RunContainerList(args []string) (string, error) {
 	lc := &containers.ListContainers{}
-	count, err := lc.FetchContainers(queryF)
+	_, err := lc.FetchContainers(queryF)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return "", err
 	}
-	if count < 1 {
-		fmt.Println("n/a")
-		return
-	}
-	lc.Print(allContainers)
+	return lc.GetOutputString(allContainers), nil
 }
 
 var containerStartCmd = &cobra.Command{
@@ -440,7 +436,6 @@ func RunContainerRun(args []string) (string, error) {
 		publishAll) //bool
 	newID, err = cd.RunContainer(projectF, asyncTask)
 	if err != nil {
-		fmt.Println(err)
 		return "", err
 	} else {
 		var output string

@@ -86,16 +86,20 @@ func (cl *CertificateList) FetchCertificates() (int, error) {
 }
 
 //Print is printing already fetched certificates.
-func (cl *CertificateList) Print() {
+func (cl *CertificateList) GetOutputString() string {
 	if len(cl.DocumentLinks) < 1 {
-		fmt.Println("n/a")
-		return
+		return "No elements found."
 	}
-	fmt.Printf("%-25s %-15s %-15s %-20s\n", "ID", "NAME", "VALID SINCE", "VALID TO")
+	var buffer bytes.Buffer
+	buffer.WriteString("ID\tNAME\tVALID SINCE\tVALID TO")
+	buffer.WriteString("\n")
 	for _, link := range cl.DocumentLinks {
 		val := cl.Documents[link]
-		fmt.Printf("%-25s %-15s %-15s %-20s\n", val.GetID(), val.IssuerName, val.GetValidSince(), val.GetValidTo())
+		output := functions.GetFormattedString(val.GetID(), val.IssuerName, val.GetValidSince(), val.GetValidTo())
+		buffer.WriteString(output)
+		buffer.WriteString("\n")
 	}
+	return strings.TrimSpace(buffer.String())
 }
 
 //GetCertLinks compares certificates' issuer names if match with the one

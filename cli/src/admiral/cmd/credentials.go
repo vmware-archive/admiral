@@ -13,7 +13,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 
 	"admiral/credentials"
 	"admiral/help"
@@ -81,7 +80,8 @@ var credentialsListCmd = &cobra.Command{
 	Long:  "Lists credentials.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		RunCredentialsList(args)
+		output, err := RunCredentialsList(args)
+		formatAndPrintOutput(output, err)
 	},
 }
 
@@ -90,18 +90,13 @@ func initCredentialsList() {
 	CredentialsRootCmd.AddCommand(credentialsListCmd)
 }
 
-func RunCredentialsList(args []string) {
+func RunCredentialsList(args []string) (string, error) {
 	lc := &credentials.ListCredentials{}
-	count, err := lc.FetchCredentials()
+	_, err := lc.FetchCredentials()
 	if err != nil {
-		fmt.Println(err)
-		return
+		return "", err
 	}
-	if count < 1 {
-		fmt.Println("n/a")
-		return
-	}
-	lc.Print()
+	return lc.GetOutputString(), nil
 }
 
 var credentialsRemoveCmd = &cobra.Command{
