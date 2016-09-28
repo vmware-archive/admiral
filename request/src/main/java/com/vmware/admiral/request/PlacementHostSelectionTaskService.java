@@ -29,8 +29,6 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ContainerHostService;
-import com.vmware.admiral.compute.ResourcePoolQueryHelper;
-import com.vmware.admiral.compute.ResourcePoolQueryHelper.QueryResult;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.request.allocation.filter.AffinityFilters;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
@@ -42,6 +40,8 @@ import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallback
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
+import com.vmware.photon.controller.model.resources.util.ResourcePoolQueryHelper;
+import com.vmware.photon.controller.model.resources.util.ResourcePoolQueryHelper.QueryResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification;

@@ -24,7 +24,7 @@ import java.util.List;
 
 import javax.net.ssl.SSLException;
 
-import org.apache.http.conn.ssl.StrictHostnameVerifier;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ImageOperationType;
@@ -262,7 +262,7 @@ public class RegistryHostConfigService extends StatelessService {
         }
 
         try {
-            new StrictHostnameVerifier().verify(hostname, certificate);
+            new DefaultHostnameVerifier().verify(hostname, certificate);
         } catch (SSLException e) {
             String errorMessage = String.format(
                     "Registry hostname (%s) does not match certificates CN (%s).",

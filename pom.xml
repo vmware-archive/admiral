@@ -75,11 +75,12 @@
         <xenon.group>com.vmware.xenon</xenon.group>
 
         <!-- Photon Model -->
-        <photon.model.version>0.4.8-SNAPSHOT</photon.model.version>
+        <photon.model.version>0.4.10-SNAPSHOT</photon.model.version>
 
         <!-- other -->
         <bouncycastle.version>1.54</bouncycastle.version>
         <jackson.version>2.6.3</jackson.version>
+        <httpclient.version>4.5.2</httpclient.version>
 
         <!-- JS -->
         <maven.plugin.frontend.version>0.0.29</maven.plugin.frontend.version>
@@ -188,6 +189,11 @@
                 <artifactId>jackson-databind</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
+		    <dependency>
+		      <groupId>org.apache.httpcomponents</groupId>
+		      <artifactId>httpclient</artifactId>
+		      <version>${httpclient.version}</version>
+		    </dependency>
 
             <!--TEST -->
             <dependency>
