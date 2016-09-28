@@ -58,7 +58,7 @@
     <maximizable-behaviour class="container-details-usages">
       <div class="title">{{i18n('app.container.details.usages')}}</div>
       <div class="content">
-        <container-stats v-bind:model="model.stats"></container-stats>
+        <container-stats v-bind:model="model"></container-stats>
       </div>
       <div class="loading loading-background" v-bind:class="{'hide': !model.statsLoading}">
         <span class="vertical-helper"></span>

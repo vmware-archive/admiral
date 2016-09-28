@@ -24,6 +24,7 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.request.ContainerOperationTaskService.ContainerOperationTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -45,7 +46,8 @@ public class ContainerOperationTaskService extends
 
     public static final String DISPLAY_NAME = "Container Operation";
 
-    public static class ContainerOperationTaskState extends
+    public static class ContainerOperationTaskState
+            extends
             com.vmware.admiral.service.common.TaskServiceDocument<ContainerOperationTaskState.SubStage> {
         private static final String FIELD_NAME_OPERATION = "operation";
         private static final String FIELD_RESOURCE_LINKS = "resourceLinks";
@@ -183,8 +185,19 @@ public class ContainerOperationTaskService extends
                     if (e != null) {
                         failTask("AdapterRequest failed for container: " + selfLink, e);
                         return;
+                    } else {
+                        patchContainerStats(state, containerState);
                     }
                 }));
+    }
+
+    private void patchContainerStats(ContainerOperationTaskState state, ContainerState containerState) {
+        if (state.operation.equals(ContainerOperationType.STOP.toString())) {
+            ContainerStats patch = new ContainerStats();
+            patch.containerStopped = true;
+            sendRequest(Operation.createPatch(this, containerState.documentSelfLink)
+                    .setBody(patch));
+        }
     }
 
     @Override

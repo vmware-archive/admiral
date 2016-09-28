@@ -25,7 +25,12 @@ const NA = i18n.t('unavailable');
 var ContainerStats = Vue.extend({
   template: TEMPLATE,
   props: {
-    model: { required: true }
+    model: { required: true },
+    containerStopped: {
+      required: false,
+      type: Boolean,
+      default: false
+    }
   },
   ready: function() {
     this.cpuStats = new RadialProgress($(this.$el).find('.cpu-stats')[0]).diameter(150).value(0)
@@ -34,10 +39,16 @@ var ContainerStats = Vue.extend({
       .value(0).majorTitle(NA).label(i18n.t('app.container.details.memory')).render();
     this.networkStats = new NetworkTrafficVisualization($(this.$el).find('.network-stats'));
     resetStats.call(this);
+
+    this.modelUnwatch = this.$watch('model.instance.powerState', this.onContainerUpdate);
   },
 
   attached: function() {
-    this.modelUnwatch = this.$watch('model', this.onDataUpdate);
+    this.modelUnwatch = this.$watch('model.stats', this.onDataUpdate);
+
+    if (this.model.instance.powerState === 'STOPPED') {
+      this.containerStopped = true;
+    }
   },
 
   detached: function() {
@@ -64,7 +75,7 @@ var ContainerStats = Vue.extend({
 
   methods: {
     onDataUpdate: function(newData) {
-      if (newData) {
+      if (newData && !this.containerStopped) {
         var cpuPercentage = newData.cpuUsage;
         if (typeof cpuPercentage !== 'undefined') {
           this.cpuStats.value(cpuPercentage).majorTitle(null).render();
@@ -90,6 +101,14 @@ var ContainerStats = Vue.extend({
         this.networkStats.setData(newData.networkIn, newData.networkOut);
       } else {
         resetStats.call(this);
+      }
+    },
+    onContainerUpdate: function(data) {
+      if (data === 'STOPPED') {
+        this.containerStopped = true;
+        resetStats.call(this);
+      } else {
+        this.containerStopped = false;
       }
     }
   }
