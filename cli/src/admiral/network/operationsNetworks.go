@@ -24,14 +24,16 @@ import (
 	"admiral/functions"
 )
 
-func (nl *NetworkList) FetchNetworks() int {
+func (nl *NetworkList) FetchNetworks() (int, error) {
 	url := config.URL + "/resources/container-networks?expand"
 	req, err := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return 0, respErr
+	}
 	err = json.Unmarshal(respBody, nl)
 	functions.CheckJson(err)
-	return len(nl.DocumentLinks)
+	return len(nl.DocumentLinks), nil
 }
 
 func (nl *NetworkList) Print() {
@@ -50,9 +52,8 @@ func RemoveNetwork(name string) bool {
 		if name == val.Name {
 			url := config.URL + link
 			req, _ := http.NewRequest("DELETE", url, nil)
-			resp, _ := client.ProcessRequest(req)
-			defer resp.Body.Close()
-			if resp.StatusCode != 200 {
+			_, _, respErr := client.ProcessRequest(req)
+			if respErr != nil {
 				return false
 			}
 			return true
@@ -69,8 +70,8 @@ func InspectNetwork(name string) (bool, string) {
 		if name == val.Name {
 			url := config.URL + link
 			req, _ := http.NewRequest("GET", url, nil)
-			resp, respBody := client.ProcessRequest(req)
-			if resp.StatusCode != 200 {
+			_, respBody, respErr := client.ProcessRequest(req)
+			if respErr != nil {
 				return false, ""
 			}
 			n := &Network{}
@@ -92,8 +93,10 @@ func (n *Network) Create() (bool, string) {
 	functions.CheckJson(err)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
+	resp, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return false, ""
+	}
 	msg := &auth.Error{}
 	json.Unmarshal(respBody, msg)
 	if resp.StatusCode != 200 {

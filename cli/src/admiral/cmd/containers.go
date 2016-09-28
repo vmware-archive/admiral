@@ -118,8 +118,8 @@ func RunContainerInspect(args []string) (string, error) {
 	if id, ok = ValidateArgsCount(args); !ok {
 		return "", containerIdError
 	}
-	container := containers.InspectContainer(id)
-	return container.StringJson(), nil
+	container, err := containers.InspectContainer(id)
+	return container.StringJson(), err
 }
 
 var containerRemoveCmd = &cobra.Command{
@@ -288,7 +288,11 @@ func initContainerList() {
 
 func RunContainerList(args []string) {
 	lc := &containers.ListContainers{}
-	count := lc.FetchContainers(queryF)
+	count, err := lc.FetchContainers(queryF)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	if count < 1 {
 		fmt.Println("n/a")
 		return
@@ -408,6 +412,7 @@ func initContainerRun() {
 	containerRunCmd.Flags().StringVarP(&workingDir, "workdir", "w", "", "Working directory inside the container")
 	containerRunCmd.Flags().StringSliceVarP(&volumes, "volume", "v", []string{}, "Bind mount volume")
 	containerRunCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
+	containerRunCmd.Flags().StringVar(&projectF, "project", "", projectFDesc)
 	containerRunCmd.Flags().Bool("help", false, "Help for "+RootCmd.Name())
 	containerRunCmd.Flags().MarkHidden("help")
 	RootCmd.AddCommand(containerRunCmd)
@@ -433,14 +438,14 @@ func RunContainerRun(args []string) (string, error) {
 		memory, memorySwap, //int64
 		cmds, env, volumes, ports, //[]string
 		publishAll) //bool
-	newID, err = cd.RunContainer(asyncTask)
+	newID, err = cd.RunContainer(projectF, asyncTask)
 	if err != nil {
 		fmt.Println(err)
 		return "", err
 	} else {
 		var output string
 		if asyncTask {
-			output = "\x1b[31;1mImage is being provisioned.\x1b[37;1m"
+			output = "Image is being provisioned."
 			return output, err
 		} else {
 			output = "Image provisioned: " + newID

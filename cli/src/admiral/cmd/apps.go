@@ -84,7 +84,11 @@ func initAppList() {
 
 func RunAppList(args []string) {
 	la := apps.ListApps{}
-	count := la.FetchApps(queryF)
+	count, err := la.FetchApps(queryF)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	if count == 0 {
 		fmt.Println("n/a")
 		return
@@ -198,7 +202,7 @@ func initAppRun() {
 	appRunCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
 	appRunCmd.Flags().StringVar(&dirF, "file", "", "Provision template from file.")
 	appRunCmd.Flags().BoolVar(&keepTemplate, "keep", false, "Do not remove template after provisioning.")
-	appRunCmd.Flags().StringVar(&groupID, "group", "", "(Required) "+groupIDDesc)
+	appRunCmd.Flags().StringVar(&projectF, "project", "", "(Required) "+projectFDesc)
 	AppsRootCmd.AddCommand(appRunCmd)
 }
 
@@ -224,7 +228,7 @@ func RunAppRun(args []string) (string, error) {
 	} else if len(IDs) > 0 {
 		var output string
 		if asyncTask {
-			output = "Application is provisioning: " + IDs[0]
+			output = "Application is being provisioned: " + IDs[0]
 		} else {
 			output = "Application provisioned: " + IDs[0]
 		}

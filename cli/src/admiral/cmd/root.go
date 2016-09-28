@@ -39,14 +39,14 @@ func init() {
 	RootCmd.AddCommand(CredentialsRootCmd)
 	RootCmd.AddCommand(DeploymentPoliciesRootCmd)
 	RootCmd.AddCommand(HostsRootCmd)
-	RootCmd.AddCommand(PoliciesRootCmd)
+	RootCmd.AddCommand(PlacementsRootCmd)
 	RootCmd.AddCommand(ResourcePoolsRootCmd)
 	RootCmd.AddCommand(TemplatesRootCmd)
 	RootCmd.AddCommand(RegistriesRootCmd)
 	RootCmd.AddCommand(NetworksRootCmd)
 	RootCmd.AddCommand(CustomPropertiesRootCmd)
 	RootCmd.AddCommand(AutocompleteCmd)
-	RootCmd.AddCommand(GroupsRootCmd)
+	RootCmd.AddCommand(ProjectsRootCmd)
 	RootCmd.Flags().BoolVar(&ShowVersion, "version", false, "Admiral CLI Version.")
 	RootCmd.PersistentFlags().BoolVar(&functions.Verbose, "verbose", false, "Showing every request/response json body.")
 	RootCmd.PersistentFlags().StringVar(&auth.TokenFromFlagVar, "token", "", helpToken)
@@ -104,9 +104,9 @@ var HostsRootCmd = &cobra.Command{
 	Short: "Perform operations with hosts.",
 }
 
-var PoliciesRootCmd = &cobra.Command{
-	Use:   "policy",
-	Short: "Perform operations with policies.",
+var PlacementsRootCmd = &cobra.Command{
+	Use:   "placement",
+	Short: "Perform operations with placements.",
 }
 
 var ResourcePoolsRootCmd = &cobra.Command{
@@ -134,9 +134,9 @@ var CustomPropertiesRootCmd = &cobra.Command{
 	Short: "Perform opertaions with custom properties.",
 }
 
-var GroupsRootCmd = &cobra.Command{
-	Use:   "group",
-	Short: "Perform operations with groups.",
+var ProjectsRootCmd = &cobra.Command{
+	Use:   "project",
+	Short: "Perform operations with projects.",
 }
 
 var AutocompleteCmd = &cobra.Command{

@@ -104,7 +104,11 @@ var networkListCmd = &cobra.Command{
 	Long:  "Lists existing networks.",
 	Run: func(cmd *cobra.Command, args []string) {
 		nl := network.NetworkList{}
-		count := nl.FetchNetworks()
+		count, err := nl.FetchNetworks()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		if count < 1 {
 			fmt.Println("n/a")
 			return

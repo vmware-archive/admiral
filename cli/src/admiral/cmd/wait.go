@@ -42,6 +42,9 @@ var waitCmd = &cobra.Command{
 			fmt.Println("Enter task id.")
 			return
 		}
-		track.Wait(taskId)
+		_, err := track.Wait(taskId)
+		if err != nil {
+			fmt.Println(err)
+		}
 	},
 }

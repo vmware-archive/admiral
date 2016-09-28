@@ -33,14 +33,16 @@ type EventList struct {
 }
 
 //FetchEvents fetches all events and returns their count.
-func (el *EventList) FetchEvents() int {
+func (el *EventList) FetchEvents() (int, error) {
 	url := config.URL + "/resources/event-logs?documentType=true&$count=false&$limit=1000&$orderby=documentExpirationTimeMicros+desc"
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return 0, respErr
+	}
 	err := json.Unmarshal(respBody, el)
 	functions.CheckJson(err)
-	return len(el.Documents)
+	return len(el.Documents), nil
 }
 
 //Print already fetched events.

@@ -101,14 +101,16 @@ func cutImgName(name string) string {
 
 //QueryImages fetches images matching the imgName parameter.
 //The function returns the count of the fetched images.
-func (li *ImagesList) QueryImages(imgName string) int {
+func (li *ImagesList) QueryImages(imgName string) (int, error) {
 	url := config.URL + "/templates?&documentType=true&imagesOnly=true&q=" + imgName
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return 0, respErr
+	}
 	err := json.Unmarshal(respBody, li)
 	functions.CheckJson(err)
-	defer resp.Body.Close()
-	return len(li.Results)
+	return len(li.Results), nil
 }
 
 type PopularImages []Image
@@ -119,7 +121,11 @@ type PopularImages []Image
 func PrintPopular() {
 	url := config.URL + "/popular-images?documentType=true"
 	req, _ := http.NewRequest("GET", url, nil)
-	_, respBody := client.ProcessRequest(req)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		fmt.Println(respErr)
+		return
+	}
 	pi := PopularImages{}
 	err := json.Unmarshal(respBody, &pi)
 	functions.CheckJson(err)

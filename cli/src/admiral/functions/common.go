@@ -12,6 +12,7 @@
 package functions
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 )
@@ -43,4 +44,13 @@ func ShortString(s string, outputLen int) string {
 		return s
 	}
 	return s[:outputLen-3] + "..."
+}
+
+func GetFormattedString(v ...interface{}) string {
+	var buffer bytes.Buffer
+	for i := range v {
+		buffer.WriteString(fmt.Sprintf("%v", v[i]))
+		buffer.WriteString("\t")
+	}
+	return buffer.String()
 }

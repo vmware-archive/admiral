@@ -14,7 +14,6 @@ package logs
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"admiral/client"
@@ -26,7 +25,7 @@ type LogResponse struct {
 	Logs string `json:"logs"`
 }
 
-func GetLog(contName, since string) string {
+func GetLog(contName, since string) (string, error) {
 	id := "id=" + contName
 	sinceQ := "&since=" + since
 
@@ -34,13 +33,15 @@ func GetLog(contName, since string) string {
 	lresp := &LogResponse{}
 
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
+	}
 	err := json.Unmarshal(respBody, lresp)
 	functions.CheckJson(err)
 	log, err := base64.StdEncoding.DecodeString(lresp.Logs)
 	if err != nil {
-		fmt.Println(err.Error())
+		return "", err
 	}
-	return string(log)
+	return string(log), nil
 }

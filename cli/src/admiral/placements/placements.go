@@ -9,13 +9,12 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package policies
+package placements
 
 import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -23,11 +22,11 @@ import (
 	"admiral/config"
 	"admiral/deplPolicy"
 	"admiral/functions"
-	"admiral/groups"
+	"admiral/projects"
 	"admiral/resourcePools"
 )
 
-type Policy struct {
+type Placement struct {
 	Name                    string   `json:"name"`
 	ResourcePoolLink        string   `json:"resourcePoolLink"`
 	Priority                int32    `json:"priority"`
@@ -44,11 +43,11 @@ type Policy struct {
 	DocumentKind            string   `json:"documentKind,omitempty"`
 }
 
-func (p *Policy) GetID() string {
-	return strings.Replace(*p.DocumentSelfLink, "/resources/group-policies/", "", -1)
+func (p *Placement) GetID() string {
+	return strings.Replace(*p.DocumentSelfLink, "/resources/group-placements/", "", -1)
 }
 
-type PolicyToAdd struct {
+type PlacementToAdd struct {
 	Name                 string   `json:"name,omitempty"`
 	ResourcePoolLink     string   `json:"resourcePoolLink,omitempty"`
 	Priority             string   `json:"priority,omitempty"`
@@ -67,7 +66,7 @@ type PolicyToAdd struct {
 	ResourceQuotaPerResourceDesc map[string]int32 `json:"resourceQuotaPerResourceDesc"`
 }
 
-type PolicyToUpdate struct {
+type PlacementToUpdate struct {
 	Name                 string   `json:"name,omitempty"`
 	ResourcePoolLink     string   `json:"resourcePoolLink,omitempty"`
 	Priority             int32    `json:"priority,omitempty"`
@@ -86,216 +85,209 @@ type PolicyToUpdate struct {
 	ResourceQuotaPerResourceDesc map[string]int32 `json:"resourceQuotaPerResourceDesc"`
 }
 
-type PolicyList struct {
-	DocumentLinks []string          `json:"documentLinks"`
-	Documents     map[string]Policy `json:"documents"`
+type PlacementList struct {
+	DocumentLinks []string             `json:"documentLinks"`
+	Documents     map[string]Placement `json:"documents"`
 }
 
-func (pl *PolicyList) FetchPolices() int {
-	url := config.URL + "/resources/group-policies?expand"
+func (pl *PlacementList) FetchPlacements() (int, error) {
+	url := config.URL + "/resources/group-placements?expand"
 
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return 0, respErr
+	}
 	err := json.Unmarshal(respBody, pl)
 	functions.CheckJson(err)
-	return len(pl.DocumentLinks)
+	return len(pl.DocumentLinks), nil
 }
 
-func (pl *PolicyList) Print() {
+func (pl *PlacementList) GetOutputString() string {
 	if len(pl.DocumentLinks) < 1 {
-		fmt.Println("n/a")
-		return
+		return "n/a"
 	}
-	fmt.Printf("%-40s %-25s %-25s %-25s %-20s %-15s %-15s %-15s %-15s \n",
-		"ID", "NAME", "GROUP", "RESOURCE POOL", "DEPLOYMENT POLICY", "PRIORITY", "INSTANCES", "CPU SHARES", "MEMORY LIMIT")
+	var buffer bytes.Buffer
+	buffer.WriteString("ID\tNAME\tPROJECT\tRESOURCE POOL\tDEPLOYMENT POLICY\tPRIORITY\tINSTANCES\tCPU SHARES\tMEMORY LIMIT")
+	buffer.WriteString("\n")
 	for _, link := range pl.DocumentLinks {
 		val := pl.Documents[link]
 		var (
-			rp    string
-			dp    string
-			group string
+			rp      string
+			dp      string
+			project string
 		)
 
 		if strings.TrimSpace(val.ResourcePoolLink) == "" {
 			rp = ""
 		} else {
-			rp = resourcePools.GetRPName(val.ResourcePoolLink)
+			rp, _ = resourcePools.GetRPName(val.ResourcePoolLink)
 		}
 
 		if strings.TrimSpace(val.DeploymentPolicyLink) == "" {
 			dp = ""
 		} else {
-			dp = deplPolicy.GetDPName(val.DeploymentPolicyLink)
+			dp, _ = deplPolicy.GetDPName(val.DeploymentPolicyLink)
 		}
 
 		if len(val.TenantLinks) < 1 {
-			group = ""
+			project = ""
 		} else {
-			group = groups.GetGroupName(val.TenantLinks[0])
+			project, _ = projects.GetProjectName(val.TenantLinks[0])
 		}
+		output := functions.GetFormattedString(val.GetID(), val.Name, project, rp, dp, val.Priority,
+			val.AvailableInstancesCount, val.CpuShares, val.MemoryLimit)
+		buffer.WriteString(output)
+		buffer.WriteString("\n")
 
-		fmt.Printf("%-40s %-25s %-25s %-25s %-20s %-15d %-15d %-15d %-15d\n",
-			val.GetID(), val.Name, group, rp, dp, val.Priority, val.AvailableInstancesCount,
-			val.CpuShares, val.MemoryLimit)
 	}
+	return strings.TrimSpace(buffer.String())
 }
 
-func RemovePolicy(polName string) (string, error) {
-	polLinks := GetPolLinks(polName)
+func RemovePlacement(polName string) (string, error) {
+	polLinks := GetPlacementLinks(polName)
 	if len(polLinks) > 1 {
-		return "", errors.New("Policy with duplicate name found, provide ID to remove specific policy.")
+		return "", errors.New("Placement with duplicate name found, provide ID to remove specific placement.")
 	}
 	if len(polLinks) < 1 {
-		return "", errors.New("Policy not found.")
+		return "", errors.New("Placement not found.")
 	}
 	id := functions.GetResourceID(polLinks[0])
-	return RemovePolicy(id)
+	return RemovePlacement(id)
 }
 
-func RemovePolicyID(id string) (string, error) {
+func RemovePlacementID(id string) (string, error) {
 	link := functions.CreateResLinkForPolicy(id)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
-	resp, _ := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error occured when removing policy.")
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
 	return id, nil
 }
 
-func AddPolicy(namePol, cpuShares, instances, priority, groupID, resPoolID, deplPolID string, memoryLimit int64) (string, error) {
-	url := config.URL + "/resources/group-policies"
+func AddPlacement(namePol, cpuShares, instances, priority, projectId, resPoolID, deplPolID string, memoryLimit int64) (string, error) {
+	url := config.URL + "/resources/group-placements"
 	var (
-		dpLink    string
-		rpLink    string
-		groupLink string
+		dpLink      string
+		rpLink      string
+		projectLink string
 	)
 
-	if !haveNeeded(deplPolID, instances, namePol, resPoolID, groupID) {
-		return "", errors.New("--deployment-policy, --instances, --name, --resource-pool, --group parameters are must!")
+	if !haveNeeded(resPoolID) {
+		return "", errors.New("Resource pool ID is required.")
 	}
 
 	dpLink = functions.CreateResLinkForDP(deplPolID)
 
 	rpLink = functions.CreateResLinkForRP(resPoolID)
 
-	groupLink = functions.CreateResLinkForGroup(groupID)
+	projectLink = functions.CreateResLinkForProject(projectId)
 
-	policy := PolicyToAdd{
+	placement := PlacementToAdd{
 		//Must
 		Name:                 namePol,
 		MaxNumberInstances:   instances,
 		ResourcePoolLink:     rpLink,
 		DeploymentPolicyLink: dpLink,
-		TenantLinks:          []string{groupLink},
+		TenantLinks:          []string{projectLink},
 		//Optional
 		CpuShares:   cpuShares,
 		MemoryLimit: memoryLimit,
 		Priority:    priority,
 	}
 
-	jsonBody, err := json.Marshal(policy)
+	jsonBody, err := json.Marshal(placement)
 	functions.CheckJson(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error occured when adding policy.")
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
-	newPolicy := &Policy{}
+	newPolicy := &Placement{}
 	err = json.Unmarshal(respBody, newPolicy)
 	functions.CheckJson(err)
 	return newPolicy.GetID(), nil
 }
 
-func EditPolicy(name, namePol, groupID, resPoolID, deplPolID string, cpuShares, instances, priority int32, memoryLimit int64) (string, error) {
-	polLinks := GetPolLinks(name)
+func EditPlacement(name, namePol, projectId, resPoolID, deplPolID string, cpuShares, instances, priority int32, memoryLimit int64) (string, error) {
+	polLinks := GetPlacementLinks(name)
 	if len(polLinks) > 1 {
-		return "", errors.New("Policy with duplicate name found, provide ID to remove specific policy.")
+		return "", errors.New("Placement with duplicate name found, provide ID to remove specific policy.")
 	}
 	if len(polLinks) < 1 {
-		return "", errors.New("Policy not found.")
+		return "", errors.New("Placement not found.")
 	}
 
 	id := functions.GetResourceID(polLinks[0])
-	return EditPolicyID(id, namePol, groupID, resPoolID, deplPolID, cpuShares, instances, priority, memoryLimit)
+	return EditPlacementID(id, namePol, projectId, resPoolID, deplPolID, cpuShares, instances, priority, memoryLimit)
 }
 
-func EditPolicyID(id, namePol, groupID, resPoolID, deplPolID string, cpuShares, instances, priority int32, memoryLimit int64) (string, error) {
+func EditPlacementID(id, namePol, projectId, resPoolID, deplPolID string, cpuShares, instances, priority int32, memoryLimit int64) (string, error) {
 	url := config.URL + functions.CreateResLinkForPolicy(id)
 	//Workaround
-	oldPolicy := &PolicyToUpdate{}
+	oldPlacement := &PlacementToUpdate{}
 	req, _ := http.NewRequest("GET", url, nil)
-	_, respBody := client.ProcessRequest(req)
-	err := json.Unmarshal(respBody, oldPolicy)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
+	}
+	err := json.Unmarshal(respBody, oldPlacement)
 	functions.CheckJson(err)
 	//Workaround
 
 	if cpuShares != -1 {
-		oldPolicy.CpuShares = cpuShares
+		oldPlacement.CpuShares = cpuShares
 	}
 	if instances != -1 {
-		oldPolicy.MaxNumberInstances = instances
+		oldPlacement.MaxNumberInstances = instances
 	}
 	if namePol != "" {
-		oldPolicy.Name = namePol
+		oldPlacement.Name = namePol
 	}
 	if priority != -1 {
-		oldPolicy.Priority = priority
+		oldPlacement.Priority = priority
 	}
-	if groupID != "" {
-		groupLinkIndex := GetGroupLinkIndex(oldPolicy.TenantLinks)
-		groupLink := functions.CreateResLinkForGroup(groupID)
-		oldPolicy.TenantLinks[groupLinkIndex] = groupLink
+	if projectId != "" {
+		projectLinkIndex := GetProjectLinkIndex(oldPlacement.TenantLinks)
+		projectLink := functions.CreateResLinkForProject(projectId)
+		oldPlacement.TenantLinks[projectLinkIndex] = projectLink
 	}
 	if resPoolID != "" {
-		oldPolicy.ResourcePoolLink = functions.CreateResLinkForRP(resPoolID)
+		oldPlacement.ResourcePoolLink = functions.CreateResLinkForRP(resPoolID)
 	}
 	if deplPolID != "" {
-		oldPolicy.DeploymentPolicyLink = functions.CreateResLinkForDP(deplPolID)
+		oldPlacement.DeploymentPolicyLink = functions.CreateResLinkForDP(deplPolID)
 	}
 	if memoryLimit != 0 {
-		oldPolicy.MemoryLimit = 0
+		oldPlacement.MemoryLimit = 0
 	}
 
-	jsonBody, err := json.Marshal(oldPolicy)
+	jsonBody, err := json.Marshal(oldPlacement)
 	functions.CheckJson(err)
 	req, _ = http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error occured when updating policy.")
+	_, respBody, respErr = client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
-	newPolicy := &Policy{}
-	err = json.Unmarshal(respBody, newPolicy)
+	newPlacement := &Placement{}
+	err = json.Unmarshal(respBody, newPlacement)
 	functions.CheckJson(err)
-	return newPolicy.GetID(), nil
+	return newPlacement.GetID(), nil
 }
 
-func haveNeeded(deplPolName, instances, namePol, resPoolName, tenants string) bool {
-	if deplPolName == "" {
-		return false
-	}
-	if instances == "" {
-		return false
-	}
-	if namePol == "" {
-		return false
-	}
-	if resPoolName == "" {
-		return false
-	}
-	if tenants == "" {
+func haveNeeded(resourcePool string) bool {
+	if resourcePool == "" {
 		return false
 	}
 	return true
 }
 
-func GetPolLinks(name string) []string {
-	pl := &PolicyList{}
-	pl.FetchPolices()
+func GetPlacementLinks(name string) []string {
+	pl := &PlacementList{}
+	pl.FetchPlacements()
 	links := make([]string, 0)
 	for key, val := range pl.Documents {
 		if name == val.Name {
@@ -305,7 +297,7 @@ func GetPolLinks(name string) []string {
 	return links
 }
 
-func GetGroupLinkIndex(tenantLinks []string) int {
+func GetProjectLinkIndex(tenantLinks []string) int {
 	for i := range tenantLinks {
 		if strings.Contains(tenantLinks[i], "/resources/groups/") {
 			return i

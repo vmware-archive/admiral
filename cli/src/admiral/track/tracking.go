@@ -114,8 +114,11 @@ func Wait(taskId string) ([]string, error) {
 			break
 		} else if taskStatus.SubStage == "ERROR" {
 			result = taskStatus.SubStage
-			errorMsg = getErrorMessage(req)
+			errorMsg, err = getErrorMessage(req)
 			stop <- true
+			if err != nil {
+				return nil, err
+			}
 			break
 		}
 		time.Sleep(2 * time.Second)
@@ -162,8 +165,10 @@ func GetResLinks(taskId string) ([]string, error) {
 		result = taskStatus.SubStage
 	} else if taskStatus.SubStage == "ERROR" {
 		result = taskStatus.SubStage
-		errorMsg = getErrorMessage(req)
-
+		errorMsg, err = getErrorMessage(req)
+		if err != nil {
+			return nil, err
+		}
 	}
 	resourceLinks = taskStatus.ResourceLinks
 
@@ -175,21 +180,27 @@ func GetResLinks(taskId string) ([]string, error) {
 	return resourceLinks, nil
 }
 
-func getErrorMessage(statusReq *http.Request) string {
+func getErrorMessage(statusReq *http.Request) (string, error) {
 	//Wait because sometimes event log link is not generated.
 	time.Sleep(1 * time.Second)
-	_, respBody := client.ProcessRequest(statusReq)
+	_, respBody, respErr := client.ProcessRequest(statusReq)
+	if respErr != nil {
+		return "", respErr
+	}
 	taskStatus := &TaskStatus{}
 	err := json.Unmarshal(respBody, taskStatus)
 	functions.CheckJson(err)
 	if taskStatus.EventLogLink == "" {
-		return ""
+		return "", errors.New("No event log link.")
 	}
 	url := config.URL + taskStatus.EventLogLink
 	req, _ := http.NewRequest("GET", url, nil)
-	_, respBody = client.ProcessRequest(req)
+	_, respBody, respErr = client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
+	}
 	event := &events.EventInfo{}
 	err = json.Unmarshal(respBody, event)
 	functions.CheckJson(err)
-	return event.Description
+	return event.Description, nil
 }

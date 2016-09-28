@@ -78,12 +78,12 @@ func CreateResLinkForRegistry(id string) string {
 //Function to create resource links from the provided ID as parameter.
 //This link will be used to execute command, avoiding duplicating names.
 func CreateResLinkForPolicy(id string) string {
-	return "/resources/group-policies/" + id
+	return "/resources/group-placements/" + id
 }
 
 //Function to create resource links from the provided ID as parameter.
 //This link will be used to execute command, avoiding duplicating names.
-func CreateResLinkForGroup(id string) string {
+func CreateResLinkForProject(id string) string {
 	return "/resources/groups/" + id
 }
 

@@ -58,14 +58,16 @@ type RegistryList struct {
 	Documents     map[string]Registry `json:"documents"`
 }
 
-func (rl *RegistryList) FetchRegistries() int {
+func (rl *RegistryList) FetchRegistries() (int, error) {
 	url := config.URL + "/config/registries?documentType=true&expand=true"
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return 0, respErr
+	}
 	err := json.Unmarshal(respBody, rl)
 	functions.CheckJson(err)
-	defer resp.Body.Close()
-	return len(rl.DocumentLinks)
+	return len(rl.DocumentLinks), nil
 }
 
 func (rl *RegistryList) Print() {
@@ -95,12 +97,11 @@ func RemoveRegistryID(id string) (string, error) {
 	link := functions.CreateResLinkForRegistry(id)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
-	resp, _ := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
-		return id, nil
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
-	return id, errors.New("Error occured when removing registry.")
+	return id, nil
 
 }
 
@@ -151,12 +152,12 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 	functions.CheckJson(err)
 
 	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
+	resp, respBody, respErr := client.ProcessRequest(req)
 	if resp.StatusCode == 204 {
 		link := resp.Header.Get("Location")
 		url = config.URL + link
 		req, _ = http.NewRequest("GET", url, nil)
-		_, respBody = client.ProcessRequest(req)
+		_, respBody, respErr = client.ProcessRequest(req)
 		addedRegistry := &Registry{}
 		err = json.Unmarshal(respBody, addedRegistry)
 		functions.CheckJson(err)
@@ -165,20 +166,25 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 		checkRes := certificates.CheckTrustCert(respBody, autoAccept)
 		if checkRes {
 			req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
-			resp, respBody := client.ProcessRequest(req)
-			if resp.StatusCode != 204 {
-				return "", errors.New("Error occured when adding registry")
+			resp, respBody, respErr := client.ProcessRequest(req)
+			if respErr != nil {
+				return "", respErr
 			}
 			link := resp.Header.Get("Location")
 			url = config.URL + link
 			req, _ = http.NewRequest("GET", url, nil)
-			_, respBody = client.ProcessRequest(req)
+			_, respBody, respErr = client.ProcessRequest(req)
+			if respErr != nil {
+				return "", respErr
+			}
 			addedRegistry := &Registry{}
 			err = json.Unmarshal(respBody, addedRegistry)
 			functions.CheckJson(err)
 			return addedRegistry.GetID(), nil
 		}
 		return "", errors.New("Certificate has not been accepted.")
+	} else if respErr != nil {
+		return "", respErr
 	} else {
 		return "", errors.New("Error occured when adding registry.")
 	}
@@ -202,7 +208,10 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 	link := functions.CreateResLinkForRegistry(id)
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
-	_, respBody := client.ProcessRequest(req)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
+	}
 	reg := &Registry{}
 	err := json.Unmarshal(respBody, reg)
 	functions.CheckJson(err)
@@ -229,19 +238,19 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 	jsonBody, err := json.Marshal(registryObj)
 	functions.CheckJson(err)
 	req, _ = http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
+	resp, respBody, respErr := client.ProcessRequest(req)
 	if resp.StatusCode == 200 {
 		checkCert := certificates.CheckTrustCert(respBody, autoAccept)
 		if checkCert {
 			req, _ = http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
-			resp, respBody = client.ProcessRequest(req)
-			if resp.StatusCode != 204 {
-				return "", errors.New("Error occured when updating registry.")
+			resp, respBody, respErr = client.ProcessRequest(req)
+			if respErr != nil {
+				return "", respErr
 			}
 			link := resp.Header.Get("Location")
 			url = config.URL + link
 			req, _ = http.NewRequest("GET", url, nil)
-			_, respBody = client.ProcessRequest(req)
+			_, respBody, _ = client.ProcessRequest(req)
 			reg = &Registry{}
 			err = json.Unmarshal(respBody, reg)
 			functions.CheckJson(err)
@@ -252,11 +261,16 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 		link := resp.Header.Get("Location")
 		url = config.URL + link
 		req, _ = http.NewRequest("GET", url, nil)
-		_, respBody = client.ProcessRequest(req)
+		_, respBody, respErr = client.ProcessRequest(req)
+		if respErr != nil {
+			return "", respErr
+		}
 		reg = &Registry{}
 		err = json.Unmarshal(respBody, reg)
 		functions.CheckJson(err)
 		return reg.GetID(), nil
+	} else if respErr != nil {
+		return "", respErr
 	} else {
 		return "", errors.New("Error occured when updating registry.")
 	}
@@ -286,13 +300,11 @@ func DisableID(id string) (string, error) {
 	functions.CheckJson(err)
 	url := config.URL + link
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	resp, _ := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr == nil {
 		return id, nil
-	} else {
-		return id, errors.New("Error occured when disabling registry.")
 	}
+	return "", respErr
 }
 
 func Enable(address string) (string, error) {
@@ -319,13 +331,11 @@ func EnableID(id string) (string, error) {
 	functions.CheckJson(err)
 	url := config.URL + link
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	resp, _ := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr == nil {
 		return id, nil
-	} else {
-		return id, errors.New("Error occured when enabling registry.")
 	}
+	return "", respErr
 }
 
 func getRegLink(address string) []string {

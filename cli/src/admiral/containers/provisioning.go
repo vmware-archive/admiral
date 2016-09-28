@@ -14,7 +14,6 @@ package containers
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -138,48 +137,60 @@ func (cd *ContainerDescription) Create(
 	cd.Volumes = volumes
 }
 
-func (cd *ContainerDescription) RunContainer(asyncTask bool) (string, error) {
-	linkToRun := getContaierRunLink(cd)
-
+func (cd *ContainerDescription) RunContainer(projectId string, asyncTask bool) (string, error) {
+	linkToRun, err := getContaierRunLink(cd)
+	if err != nil {
+		return "", err
+	}
+	var tenantLinks []string
+	if projectId != "" {
+		tenantLinks = make([]string, 0)
+		projectLink := functions.CreateResLinkForProject(projectId)
+		tenantLinks = append(tenantLinks, projectLink)
+	}
 	url := config.URL + "/requests"
 	runContainer := &RunContainer{
 		ResourceType:            "DOCKER_CONTAINER",
 		ResourceDescriptionLink: linkToRun,
+		TenantLinks:             tenantLinks,
 	}
 
 	jsonBody, err := json.MarshalIndent(runContainer, "", "    ")
 	functions.CheckJson(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
-		taskStatus := &track.OperationResponse{}
-		_ = json.Unmarshal(respBody, taskStatus)
-		taskStatus.PrintTracerId()
-		if !asyncTask {
-			resLinks, err = track.Wait(taskStatus.GetTracerId())
-		} else {
-			resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
-		}
-		if len(resLinks) > 0 {
-			return functions.GetResourceID(resLinks[0]), err
-		}
-		return "", err
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
-	return "", errors.New("Error occured when removing container.")
+	taskStatus := &track.OperationResponse{}
+	_ = json.Unmarshal(respBody, taskStatus)
+	taskStatus.PrintTracerId()
+	if !asyncTask {
+		resLinks, err = track.Wait(taskStatus.GetTracerId())
+	} else {
+		resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
+	}
+	if len(resLinks) > 0 {
+		return functions.GetResourceID(resLinks[0]), err
+	}
+	return "", err
+
 }
 
-func getContaierRunLink(cd *ContainerDescription) string {
+func getContaierRunLink(cd *ContainerDescription) (string, error) {
 	var runLink string
 	url := config.URL + "/resources/container-descriptions"
 	jsonBody, err := json.MarshalIndent(cd, "", "    ")
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	_, respBody := client.ProcessRequest(req)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
+	}
 	image := &images.Image{}
 	_ = json.Unmarshal(respBody, image)
 	runLink = image.DocumentSelfLink
-	return runLink
+	return runLink, nil
 
 }

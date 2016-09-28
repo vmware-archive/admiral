@@ -53,14 +53,18 @@ var reqCmd = &cobra.Command{
 
 func RunRequest() {
 	rl := &requests.RequestsList{}
-	count := rl.FetchRequests()
-	if count < 1 {
-		fmt.Println("n/a")
+	count, err := rl.FetchRequests()
+	if clearAll {
+		rl.ClearAllRequests()
+		return
+	}
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
 
-	if clearAll {
-		rl.ClearAllRequests()
+	if count < 1 {
+		fmt.Println("n/a")
 		return
 	}
 

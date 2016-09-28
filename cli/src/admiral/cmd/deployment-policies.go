@@ -83,7 +83,11 @@ func initDeploymentPolicyList() {
 
 func RunDeploymentPolicyList(args []string) {
 	dpl := &deplPolicy.DeploymentPolicyList{}
-	count := dpl.FetchDP()
+	count, err := dpl.FetchDP()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	if count < 1 {
 		fmt.Println("n/a")
 		return

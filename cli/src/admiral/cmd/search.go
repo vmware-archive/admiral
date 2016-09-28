@@ -41,7 +41,11 @@ func RunSearch(args []string) {
 	}
 	query := strings.Join(args, " ")
 	il := &images.ImagesList{}
-	count := il.QueryImages(query)
+	count, err := il.QueryImages(query)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	if count < 1 {
 		fmt.Println("n/a")
 		return

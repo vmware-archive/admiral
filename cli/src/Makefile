@@ -20,6 +20,8 @@ DARWIN_BUILD_i386=env GOPATH=$(CURDIR)/.. GOOS=darwin GOARCH=386 go build ${LDFL
 WINDOWS_BUILD_AMD64=env GOPATH=$(CURDIR)/.. GOOS=windows GOARCH=amd64 go build ${LDFLAGS} -o ../bin/windows-amd64/${BINARY_WIN} ${BUILD_PACKAGE}
 WINDOWS_BUILD_i386=env GOPATH=$(CURDIR)/.. GOOS=windows GOARCH=386 go build ${LDFLAGS} -o ../bin/windows-i386/${BINARY_WIN} ${BUILD_PACKAGE}
 
+TEST=env GOPATH=$(CURDIR)/.. go test admiral/cmd
+
 all:
 	./prepare.sh
 	#linux-amd64 build
@@ -56,3 +58,5 @@ windows:
 	#windows-i386 build
 	${WINDOWS_BUILD_i386}
 
+test:
+	${TEST}

@@ -63,9 +63,8 @@ func StartAppID(id string, asyncTask bool) ([]string, error) {
 	jsonBody, err := json.Marshal(oc)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr == nil {
 		taskStatus := &track.OperationResponse{}
 		_ = json.Unmarshal(respBody, taskStatus)
 		taskStatus.PrintTracerId()
@@ -78,9 +77,8 @@ func StartAppID(id string, asyncTask bool) ([]string, error) {
 		}
 	} else {
 		resLinks = nil
-		err = errors.New("Error occured when starting application.")
 	}
-	return resLinks, err
+	return resLinks, respErr
 }
 
 //Function to stop application.
@@ -114,9 +112,8 @@ func StopAppID(id string, asyncTask bool) ([]string, error) {
 	jsonBody, err := json.Marshal(oc)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr == nil {
 		taskStatus := &track.OperationResponse{}
 		_ = json.Unmarshal(respBody, taskStatus)
 		taskStatus.PrintTracerId()
@@ -127,12 +124,10 @@ func StopAppID(id string, asyncTask bool) ([]string, error) {
 			resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
 			resLinks = []string{id}
 		}
-
 	} else {
 		resLinks = nil
-		err = errors.New("Error occured when stopping application.")
 	}
-	return resLinks, err
+	return resLinks, respErr
 }
 
 //Function to remove application.
@@ -167,9 +162,8 @@ func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 	jsonBody, err := json.Marshal(oc)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr == nil {
 		taskStatus := &track.OperationResponse{}
 		_ = json.Unmarshal(respBody, taskStatus)
 		taskStatus.PrintTracerId()
@@ -180,12 +174,10 @@ func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 			resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
 			resLinks = []string{id}
 		}
-
 	} else {
 		resLinks = nil
-		err = errors.New("Error occured when removing application.")
 	}
-	return resLinks, err
+	return resLinks, respErr
 }
 
 //Function to provision application.
@@ -213,7 +205,10 @@ func RunAppID(id string, asyncTask bool) ([]string, error) {
 
 	url := config.URL + "/resources/composite-descriptions-clone"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
-	_, respBody := client.ProcessRequest(req)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return nil, respErr
+	}
 	f := make(map[string]interface{}, 0)
 	err = json.Unmarshal(respBody, f)
 	link = jsonBody["documentSelfLink"]
@@ -258,8 +253,8 @@ func InspectID(id string) bool {
 	links := functions.CreateResLinksForApps([]string{id})
 	url := config.URL + links[0]
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
 		return false
 	}
 	app := &App{}
@@ -289,10 +284,8 @@ func (ra *RunApplication) run(asyncTask bool) ([]string, error) {
 	jsonBody, err := json.Marshal(ra)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
-
-	if resp.StatusCode == 200 {
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr == nil {
 		taskStatus := &track.OperationResponse{}
 		_ = json.Unmarshal(respBody, taskStatus)
 		taskStatus.PrintTracerId()
@@ -303,9 +296,8 @@ func (ra *RunApplication) run(asyncTask bool) ([]string, error) {
 		}
 	} else {
 		links = nil
-		err = errors.New("Error occured when provisioning application.")
 	}
-	return links, err
+	return links, respErr
 }
 
 func GetAppLinks(name string) []string {

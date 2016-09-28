@@ -14,7 +14,6 @@ package functions
 import (
 	"fmt"
 	"os"
-	"testing"
 )
 
 //Check for error raised by response.
@@ -56,12 +55,5 @@ func CheckParse(err error) {
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(-2)
-	}
-}
-
-func CheckTestError(err error, t *testing.T) {
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
 	}
 }

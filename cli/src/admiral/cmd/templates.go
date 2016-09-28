@@ -51,7 +51,11 @@ func initTemplateList() {
 
 func RunTemplatesList(args []string) {
 	lt := &templates.TemplatesList{}
-	count := lt.FetchTemplates(queryF)
+	count, err := lt.FetchTemplates(queryF)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	if count < 1 {
 		fmt.Println("n/a")
 		return

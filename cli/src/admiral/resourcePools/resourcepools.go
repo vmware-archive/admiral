@@ -51,13 +51,16 @@ type ResourcePoolOperation struct {
 	CustomProperties map[string]*string `json:"customProperties"`
 }
 
-func (rpl *ResourcePoolList) FetchRP() int {
+func (rpl *ResourcePoolList) FetchRP() (int, error) {
 	url := config.URL + "/resources/pools?api_key=resource%20pools"
 	req, _ := http.NewRequest("GET", url, nil)
-	_, respBody := client.ProcessRequest(req)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return 0, respErr
+	}
 	err := json.Unmarshal(respBody, rpl)
 	functions.CheckJson(err)
-	return len(rpl.Documents)
+	return len(rpl.Documents), nil
 }
 
 func (rpl *ResourcePoolList) Print() {
@@ -85,10 +88,9 @@ func RemoveRP(rpName string) (string, error) {
 func RemoveRPID(id string) (string, error) {
 	url := config.URL + functions.CreateResLinkForRP(id)
 	req, _ := http.NewRequest("DELETE", url, nil)
-	resp, _ := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error occured when removing resource pool.")
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
 	return id, nil
 }
@@ -102,16 +104,14 @@ func AddRP(rpName string, custProps []string) (string, error) {
 	}
 	jsonBody, _ := json.Marshal(rpOp)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error occured when adding resource pool.")
-	} else {
-		rp := &ResourcePool{}
-		err := json.Unmarshal(respBody, rp)
-		functions.CheckJson(err)
-		return rp.GetID(), nil
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
+	rp := &ResourcePool{}
+	err := json.Unmarshal(respBody, rp)
+	functions.CheckJson(err)
+	return rp.GetID(), nil
 
 }
 
@@ -133,10 +133,9 @@ func EditRPID(id, newName string) (string, error) {
 	jsonBody, _ := json.Marshal(rpOp)
 	url := config.URL + functions.CreateResLinkForRP(id)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	resp, _ := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error occured when editing resource pool")
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
 	return id, nil
 }
@@ -153,35 +152,37 @@ func GetRPLinks(rpName string) []string {
 	return links
 }
 
-func GetRPName(link string) string {
+func GetRPName(link string) (string, error) {
 	url := config.URL + link
 	rp := &ResourcePool{}
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
+	}
 	err := json.Unmarshal(respBody, rp)
 	functions.CheckJson(err)
-	return rp.Name
+	return rp.Name, nil
 }
 
-func GetCustomProperties(id string) map[string]string {
+func GetCustomProperties(id string) (map[string]string, error) {
 	link := functions.CreateResLinkForRP(id)
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return nil
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return nil, respErr
 	}
 	resPool := &ResourcePool{}
 	err := json.Unmarshal(respBody, resPool)
 	functions.CheckJson(err)
-	return resPool.CustomProperties
+	return resPool.CustomProperties, nil
 }
 
-func GetPublicCustomProperties(id string) map[string]string {
-	custProps := GetCustomProperties(id)
+func GetPublicCustomProperties(id string) (map[string]string, error) {
+	custProps, err := GetCustomProperties(id)
 	if custProps == nil {
-		return nil
+		return nil, err
 	}
 	publicCustProps := make(map[string]string)
 	for key, val := range custProps {
@@ -192,10 +193,10 @@ func GetPublicCustomProperties(id string) map[string]string {
 		}
 		publicCustProps[key] = val
 	}
-	return publicCustProps
+	return publicCustProps, nil
 }
 
-func AddCustomProperties(id string, keys, vals []string) bool {
+func AddCustomProperties(id string, keys, vals []string) error {
 	link := functions.CreateResLinkForRP(id)
 	url := config.URL + link
 	var lowerLen []string
@@ -214,15 +215,15 @@ func AddCustomProperties(id string, keys, vals []string) bool {
 	jsonBody, err := json.Marshal(rp)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	resp, _ := client.ProcessRequest(req)
+	_, _, respErr := client.ProcessRequest(req)
 
-	if resp.StatusCode != 200 {
-		return false
+	if respErr != nil {
+		return respErr
 	}
-	return true
+	return nil
 }
 
-func RemoveCustomProperties(id string, keys []string) bool {
+func RemoveCustomProperties(id string, keys []string) error {
 	link := functions.CreateResLinkForRP(id)
 	url := config.URL + link
 	custProps := make(map[string]*string)
@@ -235,10 +236,10 @@ func RemoveCustomProperties(id string, keys []string) bool {
 	jsonBody, err := json.Marshal(rp)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	resp, _ := client.ProcessRequest(req)
+	_, _, respErr := client.ProcessRequest(req)
 
-	if resp.StatusCode != 200 {
-		return false
+	if respErr != nil {
+		return respErr
 	}
-	return true
+	return nil
 }

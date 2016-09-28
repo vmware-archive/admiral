@@ -74,7 +74,11 @@ var resourcePoolListCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		rpl := resourcePools.ResourcePoolList{}
-		count := rpl.FetchRP()
+		count, err := rpl.FetchRP()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		if count < 1 {
 			fmt.Println("n/a")
 			return

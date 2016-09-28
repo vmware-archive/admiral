@@ -88,7 +88,11 @@ func initCertList() {
 
 func RunCertList(args []string) {
 	cl := certificates.CertificateList{}
-	count := cl.FetchCertificates()
+	count, err := cl.FetchCertificates()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	if count < 1 {
 		fmt.Println("n/a")
 		return

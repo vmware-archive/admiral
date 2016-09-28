@@ -73,14 +73,16 @@ type CertificateList struct {
 }
 
 //FetchCertificates is fetching all certificates and returns their count.
-func (cl *CertificateList) FetchCertificates() int {
+func (cl *CertificateList) FetchCertificates() (int, error) {
 	url := config.URL + "/config/trust-certs?expand"
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return 0, respErr
+	}
 	err := json.Unmarshal(respBody, cl)
 	functions.CheckJson(err)
-	return len(cl.DocumentLinks)
+	return len(cl.DocumentLinks), nil
 }
 
 //Print is printing already fetched certificates.
@@ -134,9 +136,9 @@ func RemoveCertificateID(id string) (string, error) {
 	link := functions.CreateResLinkForCerts(id)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
-	resp, _ := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error occured when removing certificate.")
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
 	return id, nil
 }
@@ -173,9 +175,9 @@ func EditCertificateID(id, dirF, urlF string) (string, error) {
 		jsonBody, err := json.Marshal(cff)
 		url := config.URL + functions.CreateResLinkForCerts(id)
 		req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-		resp, respBody := client.ProcessRequest(req)
-		if resp.StatusCode != 200 {
-			return "", errors.New("Error occured when adding certificate from file.")
+		_, respBody, respErr := client.ProcessRequest(req)
+		if respErr != nil {
+			return "", respErr
 		}
 		cert := &Certificate{}
 		err = json.Unmarshal(respBody, cert)
@@ -204,9 +206,9 @@ func AddFromFile(dirF string) (string, error) {
 	jsonBody, err := json.Marshal(cff)
 	url := config.URL + "/config/trust-certs"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error occured when adding certificate from file.")
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
 	cert := &Certificate{}
 	err = json.Unmarshal(respBody, cert)
@@ -229,9 +231,9 @@ func AddFromUrl(urlF string) (string, error) {
 	functions.CheckJson(err)
 	url := config.URL + "/config/trust-certs-import"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error occured when adding certificate from url.")
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
 	cert := &Certificate{}
 	err = json.Unmarshal(respBody, cert)
@@ -262,9 +264,9 @@ func CheckTrustCert(respBody []byte, autoAccept bool) bool {
 		return false
 	}
 
-	resp, _ := client.ProcessRequest(req)
-	if resp.StatusCode == 200 {
-		return true
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return false
 	}
-	return false
+	return true
 }

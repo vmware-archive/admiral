@@ -158,7 +158,11 @@ func initHostList() {
 
 func RunHostList(args []string) {
 	hl := &hosts.HostsList{}
-	count := hl.FetchHosts(queryF)
+	count, err := hl.FetchHosts(queryF)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	if count < 1 {
 		fmt.Println("n/a")
 		return

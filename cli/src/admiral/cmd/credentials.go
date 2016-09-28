@@ -92,7 +92,11 @@ func initCredentialsList() {
 
 func RunCredentialsList(args []string) {
 	lc := &credentials.ListCredentials{}
-	count := lc.FetchCredentials()
+	count, err := lc.FetchCredentials()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	if count < 1 {
 		fmt.Println("n/a")
 		return

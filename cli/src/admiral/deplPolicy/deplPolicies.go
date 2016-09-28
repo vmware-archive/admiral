@@ -47,14 +47,16 @@ type DeploymentPolicyList struct {
 }
 
 //FetchDP fetches existing deployment policies and returns their count.
-func (dpl *DeploymentPolicyList) FetchDP() int {
+func (dpl *DeploymentPolicyList) FetchDP() (int, error) {
 	url := config.URL + "/resources/deployment-policies?expand"
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return 0, respErr
+	}
 	err := json.Unmarshal(respBody, dpl)
 	functions.CheckJson(err)
-	return len(dpl.DocumentLinks)
+	return len(dpl.DocumentLinks), nil
 }
 
 //Print prints already fetched deployment policies.
@@ -91,10 +93,9 @@ func RemoveDPID(id string) (string, error) {
 	link := functions.CreateResLinkForDP(id)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
-	resp, _ := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return "", errors.New(defaultMsg)
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
 	return id, nil
 }
@@ -117,9 +118,9 @@ func AddDP(dpName, dpDescription string) (string, error) {
 	functions.CheckJson(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error occured when adding deployment policy.")
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
 	dp = &DeploymentPolicy{}
 	err = json.Unmarshal(respBody, dp)
@@ -157,9 +158,9 @@ func EditDPID(id, newName, newDescription string) (string, error) {
 	jsonBody, err := json.Marshal(dp)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error occured when editing deployment policy.")
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
 	dp = &DeploymentPolicy{}
 	err = json.Unmarshal(respBody, dp)
@@ -192,14 +193,16 @@ func GetDPLinks(name string) []string {
 }
 
 //GetDPName takes deployment policy self link as parameter and returns it's name.
-func GetDPName(link string) string {
+func GetDPName(link string) (string, error) {
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
+	}
 	dp := DeploymentPolicy{}
 	//Ignoring error, because default deployment policy is crashing
 	_ = json.Unmarshal(respBody, dp)
 	//functions.CheckJson(err)
-	return dp.Name
+	return dp.Name, nil
 }

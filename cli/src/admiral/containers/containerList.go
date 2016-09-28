@@ -31,7 +31,7 @@ type ListContainers struct {
 //FetchContainers fetches containers by given query which is passed as parameter.
 //In case you want to fetch all containers, pass empty string as parameter.
 //The return result is the count of fetched containers.
-func (lc *ListContainers) FetchContainers(queryF string) int {
+func (lc *ListContainers) FetchContainers(queryF string) (int, error) {
 	url := config.URL + "/resources/containers?documentType=true&$count=true&$limit=10000&$orderby=documentSelfLink+asc"
 
 	var query string
@@ -40,7 +40,10 @@ func (lc *ListContainers) FetchContainers(queryF string) int {
 		url = url + query
 	}
 	req, _ := http.NewRequest("GET", url, nil)
-	_, respBody := client.ProcessRequest(req)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return 0, respErr
+	}
 	err := json.Unmarshal(respBody, lc)
 	functions.CheckJson(err)
 
@@ -54,7 +57,7 @@ func (lc *ListContainers) FetchContainers(queryF string) int {
 
 	count := len(lc.DocumentLinks)
 
-	return count - systemCount
+	return count - systemCount, nil
 }
 
 //Print is printing the containers to the console. It takes boolean

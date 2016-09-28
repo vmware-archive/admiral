@@ -11,7 +11,11 @@
 
 package cmd
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"text/tabwriter"
+)
 
 var (
 	//Flag to wait for task
@@ -40,6 +44,10 @@ var (
 	forceF    bool
 	forceDesc string = "Force remove."
 
+	//Flag for proejct.
+	projectF     string
+	projectFDesc string = "Project ID."
+
 	//Flag to store custom properties.
 	custProps     []string
 	custPropsDesc string = "Add some custom properties"
@@ -49,10 +57,6 @@ var (
 	newDescription string
 	newAddress     string
 	newCred        string
-
-	//Flag for group.
-	groupID     string
-	groupIDDesc string = "Group ID."
 
 	//If true print all containers.
 	allContainers bool
@@ -102,8 +106,8 @@ var (
 	dpDescription string
 	//Deployment policy flags
 
-	//Group description flag
-	groupDescription string
+	//Project description flag
+	projectDescription string
 
 	//Host flags
 	ipF         string
@@ -147,4 +151,14 @@ func processOutput(output string, err error) {
 	} else {
 		fmt.Println(output)
 	}
+}
+
+func formatAndWriteOutput(output string, err error) {
+	writer := tabwriter.NewWriter(os.Stdout, 5, 0, 5, ' ', 0)
+	if err != nil {
+		fmt.Fprintln(writer, err)
+	} else {
+		fmt.Fprintln(writer, output)
+	}
+	writer.Flush()
 }

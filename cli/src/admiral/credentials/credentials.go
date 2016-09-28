@@ -58,14 +58,16 @@ type ListCredentials struct {
 
 //FetchCredentials fetches all credentials. It return the count
 //of fetched credentials.
-func (lc *ListCredentials) FetchCredentials() int {
+func (lc *ListCredentials) FetchCredentials() (int, error) {
 	url := config.URL + "/core/auth/credentials?expand"
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return 0, respErr
+	}
 	err := json.Unmarshal(respBody, lc)
 	functions.CheckJson(err)
-	return len(lc.Documents)
+	return len(lc.Documents), nil
 }
 
 //Print prints already fetched credentials.
@@ -155,7 +157,7 @@ func AddByUsername(name, userName, passWord string,
 		bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 		passWord = string(bytePassword)
 		if err != nil {
-			panic(err.Error())
+			return "", err
 		}
 	}
 
@@ -178,10 +180,9 @@ func AddByUsername(name, userName, passWord string,
 	jsonBody, err := json.Marshal(user)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error occured when adding credentials.")
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
 	creds := &Credentials{}
 	err = json.Unmarshal(respBody, creds)
@@ -200,12 +201,12 @@ func AddByCert(name, publicCert, privateCert string,
 	url := config.URL + "/core/auth/credentials"
 	bytePrivate, err := ioutil.ReadFile(privateCert)
 	if err != nil {
-		panic(err.Error())
+		return "", err
 	}
 	privateKey := string(bytePrivate)
 	bytePublic, err := ioutil.ReadFile(publicCert)
 	if err != nil {
-		panic(err.Error())
+		return "", err
 	}
 	publicKey := string(bytePublic)
 	cp := properties.ParseCustomProperties(custProps)
@@ -223,10 +224,9 @@ func AddByCert(name, publicCert, privateCert string,
 	jsonBody, err := json.Marshal(cert)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error occured when adding credentials.")
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
 	creds := &Credentials{}
 	err = json.Unmarshal(respBody, creds)
@@ -246,15 +246,8 @@ func RemoveCredentials(name string) (string, error) {
 
 	if len(links) > 1 {
 		return "", errors.New(duplMsg)
-
 	}
-	url := config.URL + links[0]
-	req, _ := http.NewRequest("DELETE", url, nil)
-	resp, _ := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error, probably credentials still in use.")
-	}
-	return functions.GetResourceID(links[0]), nil
+	return RemoveCredentialsID(links[0])
 }
 
 //RemoveCredentialsID removes credentials by ID that is passed as parameter.
@@ -264,9 +257,9 @@ func RemoveCredentialsID(id string) (string, error) {
 	link := functions.CreateResLinkForCredentials(id)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
-	resp, _ := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error, probably credentials still in use.")
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
 	return id, nil
 }
@@ -286,36 +279,7 @@ func EditCredetials(credName, publicCert, privateCert, userName, passWord string
 		return "", errors.New(duplMsg)
 
 	}
-	url := config.URL + links[0]
-	var cred interface{}
-	if publicCert != "" && privateCert != "" {
-		publicKey, err := ioutil.ReadFile(publicCert)
-		functions.CheckFile(err)
-		privateKey, err := ioutil.ReadFile(privateCert)
-		functions.CheckFile(err)
-		cred = &AddCertCredentials{
-			PublicKey:  string(publicKey),
-			PrivateKey: string(privateKey),
-			Type:       "PublicKey",
-		}
-	} else if userName != "" && passWord != "" {
-		cred = &AddUserCredentials{
-			PrivateKey: passWord,
-			UserEmail:  userName,
-			Type:       "Password",
-		}
-	}
-	jsonBody, err := json.Marshal(cred)
-	functions.CheckJson(err)
-	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error, probably credentials still in use.")
-	}
-	creds := &Credentials{}
-	err = json.Unmarshal(respBody, creds)
-	functions.CheckJson(err)
-	return creds.GetID(), nil
+	return EditCredetialsID(links[0], publicCert, privateCert, userName, passWord)
 }
 
 //EditCredentialsID edits credentials by ID that is passed as parameter.
@@ -346,9 +310,9 @@ func EditCredetialsID(id, publicCert, privateCert, userName, passWord string) (s
 	jsonBody, err := json.Marshal(cred)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error, probably credentials still in use.")
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
 	creds := &Credentials{}
 	err = json.Unmarshal(respBody, creds)
@@ -360,10 +324,10 @@ func EditCredetialsID(id, publicCert, privateCert, userName, passWord string) (s
 //custom properties of the credentials. As private properties are considered
 //these one starting with "__". Note that keys are strings, but values are
 //pointer to strings.
-func GetPublicCustomProperties(id string) map[string]*string {
-	custProps := GetCustomProperties(id)
+func GetPublicCustomProperties(id string) (map[string]*string, error) {
+	custProps, err := GetCustomProperties(id)
 	if custProps == nil {
-		return nil
+		return nil, err
 	}
 	publicCustProps := make(map[string]*string)
 	for key, val := range custProps {
@@ -374,24 +338,24 @@ func GetPublicCustomProperties(id string) map[string]*string {
 		}
 		publicCustProps[key] = val
 	}
-	return publicCustProps
+	return publicCustProps, nil
 }
 
 //GetCustomProperties returns map containing the all
 //custom properties of the credentials.  Note that keys are strings,
 //but values are pointer to strings.
-func GetCustomProperties(id string) map[string]*string {
+func GetCustomProperties(id string) (map[string]*string, error) {
 	link := functions.CreateResLinkForCredentials(id)
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return nil
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return nil, respErr
 	}
 	credentials := &Credentials{}
 	err := json.Unmarshal(respBody, credentials)
 	functions.CheckJson(err)
-	return credentials.CustomProperties
+	return credentials.CustomProperties, nil
 }
 
 //AddCustomProperties adds custom properties to the credentials. The parameters
@@ -399,7 +363,7 @@ func GetCustomProperties(id string) map[string]*string {
 //Note: If length of the keys and values arrays is different, properties are added
 //matching the same indexes from both arrays. That also means if the one array is longer
 //than the other, it's left elements are ignored.
-func AddCustomProperties(id string, keys, vals []string) bool {
+func AddCustomProperties(id string, keys, vals []string) error {
 	link := functions.CreateResLinkForCredentials(id)
 	url := config.URL + link
 	var lowerLen []string
@@ -419,18 +383,17 @@ func AddCustomProperties(id string, keys, vals []string) bool {
 	jsonBody, err := json.Marshal(credentials)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	resp, _ := client.ProcessRequest(req)
-
-	if resp.StatusCode != 200 {
-		return false
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return respErr
 	}
-	return true
+	return nil
 }
 
 //RemoveCustomProperties removes properties of credentials.
 //The function takes as parameter the ID of the credentials
 //and array of keys to be removed.
-func RemoveCustomProperties(id string, keys []string) bool {
+func RemoveCustomProperties(id string, keys []string) error {
 	link := functions.CreateResLinkForCredentials(id)
 	url := config.URL + link
 	custProps := make(map[string]*string)
@@ -444,10 +407,10 @@ func RemoveCustomProperties(id string, keys []string) bool {
 	jsonBody, err := json.Marshal(credentials)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	resp, _ := client.ProcessRequest(req)
+	_, _, respErr := client.ProcessRequest(req)
 
-	if resp.StatusCode != 200 {
-		return false
+	if respErr != nil {
+		return respErr
 	}
-	return true
+	return nil
 }

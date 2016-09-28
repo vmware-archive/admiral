@@ -36,8 +36,14 @@ var customPropertiesListCmd = &cobra.Command{
 	Long:  "Lists current properties of given entity.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		output := RunCustomPropertiesList(args)
-		processOutput(output, nil)
+		output, errors := RunCustomPropertiesList(args)
+		if len(errors) > 0 {
+			for i := range errors {
+				fmt.Println(errors[i])
+			}
+		} else {
+			fmt.Println(output)
+		}
 	},
 }
 
@@ -48,62 +54,73 @@ func initCustomPropertiesList() {
 	CustomPropertiesRootCmd.AddCommand(customPropertiesListCmd)
 }
 
-func RunCustomPropertiesList(args []string) string {
+func RunCustomPropertiesList(args []string) (string, []error) {
 	var buffer bytes.Buffer
-
+	errors := make([]error, 0)
 	if cpHostIP != "" {
-		buffer.WriteString(hostCpString())
-		buffer.WriteString("\n")
+		if hostCp, err := hostCpString(); err == nil {
+			buffer.WriteString(hostCp)
+			buffer.WriteString("\n")
+		} else {
+			errors = append(errors, err)
+		}
 	}
-
 	if cpCredID != "" {
-		buffer.WriteString(credCpString())
-		buffer.WriteString("\n")
+		if credCp, err := credCpString(); err == nil {
+			buffer.WriteString(credCp)
+			buffer.WriteString("\n")
+		} else {
+			errors = append(errors, err)
+		}
 	}
 
 	if cpResPoolID != "" {
-		buffer.WriteString(rpCpString())
+		if rpCp, err := rpCpString(); err == nil {
+			buffer.WriteString(rpCp)
+		} else {
+			errors = append(errors, err)
+		}
 	}
-	return buffer.String()
+	return buffer.String(), errors
 }
 
-func hostCpString() string {
-	cpHost := hosts.GetPublicCustomProperties(cpHostIP)
-	if cpHost == nil {
-		return "Host with this IP not found."
+func hostCpString() (string, error) {
+	cpHost, err := hosts.GetPublicCustomProperties(cpHostIP)
+	if err != nil {
+		return "", err
 	}
 	cpJson, err := json.MarshalIndent(cpHost, "", "    ")
 	functions.CheckJson(err)
 	buffer := bytes.Buffer{}
 	buffer.WriteString(fmt.Sprintf("Custom Properties of Host: %s\n", cpHostIP))
 	buffer.WriteString(fmt.Sprint(string(cpJson)))
-	return buffer.String()
+	return buffer.String(), nil
 }
 
-func credCpString() string {
-	cpCred := credentials.GetPublicCustomProperties(cpCredID)
-	if cpCred == nil {
-		return "Credentials with this ID not found."
+func credCpString() (string, error) {
+	cpCred, err := credentials.GetPublicCustomProperties(cpCredID)
+	if err != nil {
+		return "", err
 	}
 	cpJson, err := json.MarshalIndent(cpCred, "", "    ")
 	functions.CheckJson(err)
 	buffer := bytes.Buffer{}
 	buffer.WriteString(fmt.Sprintf("Custom Properties of Credentials: %s\n", cpCredID))
 	buffer.WriteString(fmt.Sprint(string(cpJson)))
-	return buffer.String()
+	return buffer.String(), nil
 }
 
-func rpCpString() string {
-	cpRp := resourcePools.GetPublicCustomProperties(cpResPoolID)
-	if cpRp == nil {
-		return "Resource pool with this ID not found."
+func rpCpString() (string, error) {
+	cpRp, err := resourcePools.GetPublicCustomProperties(cpResPoolID)
+	if err != nil {
+		return "", err
 	}
 	cpJson, err := json.MarshalIndent(cpRp, "", "    ")
 	functions.CheckJson(err)
 	buffer := bytes.Buffer{}
 	buffer.WriteString(fmt.Sprintf("Custom Properties of Resource pool: %s\n", cpCredID))
 	buffer.WriteString(fmt.Sprint(string(cpJson)))
-	return buffer.String()
+	return buffer.String(), nil
 }
 
 var customPropertiesSetCmd = &cobra.Command{
@@ -112,8 +129,14 @@ var customPropertiesSetCmd = &cobra.Command{
 	Long:  "Set custom property to given entity.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		output := RunCustomPropertiesSet(args)
-		processOutput(output, nil)
+		output, errors := RunCustomPropertiesSet(args)
+		if len(errors) > 0 {
+			for i := range errors {
+				fmt.Println(errors[i])
+			}
+		} else {
+			fmt.Println(output)
+		}
 	},
 }
 
@@ -126,28 +149,35 @@ func initCustomPropertiesSet() {
 	CustomPropertiesRootCmd.AddCommand(customPropertiesSetCmd)
 }
 
-func RunCustomPropertiesSet(args []string) string {
+func RunCustomPropertiesSet(args []string) (string, []error) {
 	var buffer bytes.Buffer
+	errors := make([]error, 0)
 	if cpHostIP != "" {
-		if hosts.AddCustomProperties(cpHostIP, cpKeys, cpVals) {
+		if err := hosts.AddCustomProperties(cpHostIP, cpKeys, cpVals); err == nil {
 			buffer.WriteString("Host's custom properties are set.")
 			buffer.WriteString("\n")
+		} else {
+			errors = append(errors, err)
 		}
 	}
 
 	if cpResPoolID != "" {
-		if resourcePools.AddCustomProperties(cpResPoolID, cpKeys, cpVals) {
+		if err := resourcePools.AddCustomProperties(cpResPoolID, cpKeys, cpVals); err == nil {
 			buffer.WriteString("Resource pool's custom properties are set.")
 			buffer.WriteString("\n")
+		} else {
+			errors = append(errors, err)
 		}
 	}
 
 	if cpCredID != "" {
-		if credentials.AddCustomProperties(cpCredID, cpKeys, cpVals) {
+		if err := credentials.AddCustomProperties(cpCredID, cpKeys, cpVals); err == nil {
 			buffer.WriteString("Credentials's custom properties are set.")
+		} else {
+			errors = append(errors, err)
 		}
 	}
-	return buffer.String()
+	return buffer.String(), errors
 }
 
 var customPropertiesRemoveCmd = &cobra.Command{
@@ -155,8 +185,14 @@ var customPropertiesRemoveCmd = &cobra.Command{
 	Short: "Remove custom property to given entity.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		output := RunCustomPropertiesRemove(args)
-		processOutput(output, nil)
+		output, errors := RunCustomPropertiesRemove(args)
+		if len(errors) > 0 {
+			for i := range errors {
+				fmt.Println(errors[i])
+			}
+		} else {
+			fmt.Println(output)
+		}
 	},
 }
 
@@ -168,26 +204,33 @@ func initCustomPropertiesRemove() {
 	CustomPropertiesRootCmd.AddCommand(customPropertiesRemoveCmd)
 }
 
-func RunCustomPropertiesRemove(args []string) string {
+func RunCustomPropertiesRemove(args []string) (string, []error) {
 	var buffer bytes.Buffer
+	errors := make([]error, 0)
 	if cpHostIP != "" {
-		if hosts.RemoveCustomProperties(cpHostIP, cpKeys) {
+		if err := hosts.RemoveCustomProperties(cpHostIP, cpKeys); err == nil {
 			buffer.WriteString("Host's custom properties are removed.")
 			buffer.WriteString("\n")
+		} else {
+			errors = append(errors, err)
 		}
 	}
 
 	if cpResPoolID != "" {
-		if resourcePools.RemoveCustomProperties(cpResPoolID, cpKeys) {
+		if err := resourcePools.RemoveCustomProperties(cpResPoolID, cpKeys); err == nil {
 			buffer.WriteString("Resource pool's custom properties are removed.")
 			buffer.WriteString("\n")
+		} else {
+			errors = append(errors, err)
 		}
 	}
 
 	if cpCredID != "" {
-		if credentials.RemoveCustomProperties(cpCredID, cpKeys) {
+		if err := credentials.RemoveCustomProperties(cpCredID, cpKeys); err == nil {
 			buffer.WriteString("Credentials's custom properties are removed.")
+		} else {
+			errors = append(errors, err)
 		}
 	}
-	return buffer.String()
+	return buffer.String(), errors
 }

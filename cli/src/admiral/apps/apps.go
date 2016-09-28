@@ -25,7 +25,7 @@ import (
 
 type App struct {
 	Name                     string   `json:"name"`
-	CompositeDescriptionLink string   `json"compositeDescriptionLink"`
+	CompositeDescriptionLink string   `json:"compositeDescriptionLink"`
 	ComponentLinks           []string `json:"componentLinks"`
 }
 
@@ -35,7 +35,7 @@ type ListApps struct {
 	Documents     map[string]App `json:"documents"`
 }
 
-func (la *ListApps) FetchApps(queryF string) int {
+func (la *ListApps) FetchApps(queryF string) (int, error) {
 	url := config.URL + "/resources/composite-components?documentType=true&$count=true&$limit=21&$orderby=documentSelfLink+asc"
 	var query string
 	if strings.TrimSpace(queryF) != "" {
@@ -43,11 +43,13 @@ func (la *ListApps) FetchApps(queryF string) int {
 		url = url + query
 	}
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return 0, respErr
+	}
 	err := json.Unmarshal(respBody, la)
 	functions.CheckJson(err)
-	defer resp.Body.Close()
-	return len(la.DocumentLinks)
+	return len(la.DocumentLinks), nil
 }
 
 //Function to get links of applications, matching the name from argument.
@@ -86,8 +88,7 @@ func (listApps *ListApps) PrintActiveWithContainer() {
 			containerUrl := url + cntr
 			container := &containers.Container{}
 			req, _ := http.NewRequest("GET", containerUrl, nil)
-			resp, respBody := client.ProcessRequest(req)
-			defer resp.Body.Close()
+			_, respBody, _ := client.ProcessRequest(req)
 			err := json.Unmarshal(respBody, container)
 			functions.CheckJson(err)
 			fmt.Printf("%s%-40s %-15s %-8s %-17s %-17s %s\n", indent,

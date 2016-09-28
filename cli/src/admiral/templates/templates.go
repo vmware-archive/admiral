@@ -31,8 +31,11 @@ type LightContainer struct {
 func (lc *LightContainer) FetchAndPrintCont(link string) {
 
 	req, _ := http.NewRequest("GET", link, nil)
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		fmt.Println(respErr)
+		return
+	}
 	err := json.Unmarshal(respBody, lc)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -65,7 +68,7 @@ type TemplatesList struct {
 //FetchTemplates fetches the templates by query. If it's needed to
 //fetch all templates, empty string should be passed. Returns the
 //count of fetched templates.
-func (lt *TemplatesList) FetchTemplates(queryF string) int {
+func (lt *TemplatesList) FetchTemplates(queryF string) (int, error) {
 	url := config.URL + "/templates?documentType=true&templatesOnly=true&q="
 	var query string
 	if queryF != "" {
@@ -76,11 +79,13 @@ func (lt *TemplatesList) FetchTemplates(queryF string) int {
 		url = url + query
 	}
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return 0, respErr
+	}
 	err := json.Unmarshal(respBody, lt)
 	functions.CheckJson(err)
-	defer resp.Body.Close()
-	return len(lt.Results)
+	return len(lt.Results), nil
 }
 
 //PrintWithoutContainers prints already fetched templates without
@@ -162,7 +167,10 @@ func RemoveTemplateID(id string) (string, error) {
 	url := config.URL + "/resources/composite-descriptions/" + id
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Add("Pragma", "xn-force-index-update")
-	_, respBody := client.ProcessRequest(req)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
+	}
 	template := &Template{}
 	err := json.Unmarshal(respBody, template)
 	functions.CheckJson(err)
@@ -172,9 +180,9 @@ func RemoveTemplateID(id string) (string, error) {
 		client.ProcessRequest(req)
 	}
 	req, _ = http.NewRequest("DELETE", url, nil)
-	resp, _ := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error occured when removing template.")
+	_, _, respErr = client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
 	return id, nil
 

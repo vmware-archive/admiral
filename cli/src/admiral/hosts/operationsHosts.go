@@ -33,7 +33,7 @@ import (
 //FetchHosts fetches host by query passed as parameter, in case
 //all hosts should be fetched, pass empty string as parameter.
 //Returns the count of fetched hosts.
-func (hl *HostsList) FetchHosts(queryF string) int {
+func (hl *HostsList) FetchHosts(queryF string) (int, error) {
 	var query string
 	url := config.URL + "/resources/compute?documentType=true&$count=true&$limit=1000&$orderby=documentSelfLink%20asc&$filter=descriptionLink%20ne%20%27/resources/compute-descriptions/*-parent-compute-desc%27%20and%20customProperties/__computeHost%20eq%20%27*%27%20and%20customProperties/__computeContainerHost%20eq%20%27*%27"
 
@@ -42,11 +42,13 @@ func (hl *HostsList) FetchHosts(queryF string) int {
 		url = url + query
 	}
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return 0, respErr
+	}
 	err := json.Unmarshal(respBody, hl)
 	functions.CheckJson(err)
-	defer resp.Body.Close()
-	return int(hl.TotalCount)
+	return int(hl.TotalCount), nil
 }
 
 //Print already fetched hosts.
@@ -54,7 +56,7 @@ func (hl *HostsList) Print() {
 	count := 1
 	fmt.Printf("%-22s %-22s %-8s %-15s %-22s\n", "ADDRESS", "NAME", "STATE", "CONTAINERS", "RESOURCE POOLS")
 	for _, val := range hl.Documents {
-		rpName := resourcePools.GetRPName(val.ResourcePoolLink)
+		rpName, _ := resourcePools.GetRPName(val.ResourcePoolLink)
 		fmt.Printf("%-22s %-22s %-8s %-15s %-22s\n", val.Address, *val.CustomProperties["__Name"], val.PowerState, *val.CustomProperties["__Containers"], rpName)
 		count++
 	}
@@ -127,20 +129,23 @@ func AddHost(ipF, resPoolID, deplPolicyID, credID, publicCert, privateCert, user
 	functions.CheckJson(err)
 
 	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
+	resp, respBody, respErr := client.ProcessRequest(req)
 	if resp.StatusCode == 200 {
 		checkRes := certificates.CheckTrustCert(respBody, autoAccept)
 		if checkRes {
 			req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
-			resp, respBody = client.ProcessRequest(req)
+			resp, respBody, respErr := client.ProcessRequest(req)
 			if resp.StatusCode != 204 {
 				credentials.RemoveCredentialsID(newCredID)
-				return "", errors.New("Error occured when adding host.")
+				return "", respErr
 			}
 			link := resp.Header.Get("Location")
 			url = config.URL + link
 			req, _ = http.NewRequest("GET", url, nil)
-			_, respBody = client.ProcessRequest(req)
+			_, respBody, respErr = client.ProcessRequest(req)
+			if respErr != nil {
+				return "", respErr
+			}
 			addedHost := &Host{}
 			err = json.Unmarshal(respBody, addedHost)
 			functions.CheckJson(err)
@@ -152,13 +157,16 @@ func AddHost(ipF, resPoolID, deplPolicyID, credID, publicCert, privateCert, user
 		link := resp.Header.Get("Location")
 		url = config.URL + link
 		req, _ = http.NewRequest("GET", url, nil)
-		_, respBody = client.ProcessRequest(req)
+		_, respBody, respErr := client.ProcessRequest(req)
+		if respErr != nil {
+			return "", respErr
+		}
 		addedHost := &Host{}
 		err = json.Unmarshal(respBody, addedHost)
 		functions.CheckJson(err)
 		return addedHost.Id, nil
 	}
-	return "", errors.New("Error occured when adding host.")
+	return "", respErr
 }
 
 //RemoveHost removes host by address passed as parameter, the other parameter is boolean
@@ -181,18 +189,17 @@ func RemoveHost(hostAddress string, asyncTask bool) (string, error) {
 	functions.CheckJson(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
-		taskStatus := &track.OperationResponse{}
-		_ = json.Unmarshal(respBody, taskStatus)
-		taskStatus.PrintTracerId()
-		if !asyncTask {
-			_, err = track.Wait(taskStatus.GetTracerId())
-			return hostAddress, err
-		}
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
-	return "", errors.New("Error occured when removing host.")
+	taskStatus := &track.OperationResponse{}
+	_ = json.Unmarshal(respBody, taskStatus)
+	taskStatus.PrintTracerId()
+	if !asyncTask {
+		_, err = track.Wait(taskStatus.GetTracerId())
+	}
+	return hostAddress, err
 }
 
 func DisableHost(hostAddress string) (string, error) {
@@ -204,12 +211,11 @@ func DisableHost(hostAddress string) (string, error) {
 	functions.CheckJson(err)
 
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	resp, _ := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
-		return hostAddress, nil
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
-	return "", errors.New("Error occurred, host was not disabled.")
+	return hostAddress, nil
 }
 
 func EnableHost(hostAddress string) (string, error) {
@@ -220,18 +226,17 @@ func EnableHost(hostAddress string) (string, error) {
 	jsonBody, err := json.Marshal(hostp)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	resp, _ := client.ProcessRequest(req)
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
-		return hostAddress, nil
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
 	}
-	return "", errors.New("Error occurred, host was not enabled.")
+	return hostAddress, nil
 }
 
-func GetPublicCustomProperties(address string) map[string]*string {
-	props := GetCustomProperties(address)
+func GetPublicCustomProperties(address string) (map[string]*string, error) {
+	props, err := GetCustomProperties(address)
 	if props == nil {
-		return nil
+		return nil, err
 	}
 	pubProps := make(map[string]*string)
 	for key, val := range props {
@@ -242,24 +247,24 @@ func GetPublicCustomProperties(address string) map[string]*string {
 		}
 		pubProps[key] = val
 	}
-	return pubProps
+	return pubProps, nil
 }
 
-func GetCustomProperties(address string) map[string]*string {
+func GetCustomProperties(address string) (map[string]*string, error) {
 	link := functions.CreateResLinksForHosts(address)
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return nil
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return nil, respErr
 	}
 	host := &Host{}
 	err := json.Unmarshal(respBody, host)
 	functions.CheckJson(err)
-	return host.CustomProperties
+	return host.CustomProperties, nil
 }
 
-func AddCustomProperties(address string, keys, vals []string) bool {
+func AddCustomProperties(address string, keys, vals []string) error {
 	link := functions.CreateResLinksForHosts(address)
 	url := config.URL + link
 	var lowerLen []string
@@ -278,14 +283,14 @@ func AddCustomProperties(address string, keys, vals []string) bool {
 	jsonBody, err := json.Marshal(host)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	resp, _ := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return false
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return respErr
 	}
-	return true
+	return nil
 }
 
-func RemoveCustomProperties(address string, keys []string) bool {
+func RemoveCustomProperties(address string, keys []string) error {
 	link := functions.CreateResLinksForHosts(address)
 	url := config.URL + link
 	custProps := make(map[string]*string)
@@ -298,11 +303,11 @@ func RemoveCustomProperties(address string, keys []string) bool {
 	jsonBody, err := json.Marshal(host)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	resp, _ := client.ProcessRequest(req)
-	if resp.StatusCode != 200 {
-		return false
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return respErr
 	}
-	return true
+	return nil
 }
 
 func EditHost(ipF, name, resPoolF, deplPolicyF, credName string,
@@ -336,10 +341,10 @@ func EditHost(ipF, name, resPoolF, deplPolicyF, credName string,
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	req.Header.Add("Pragma", "xn-force-index-update")
-	resp, _ := client.ProcessRequest(req)
+	_, _, respErr := client.ProcessRequest(req)
 
-	if resp.StatusCode != 200 {
-		return "", errors.New("Error occured when updating host.")
+	if respErr != nil {
+		return "", respErr
 	}
 	return ipF, nil
 }

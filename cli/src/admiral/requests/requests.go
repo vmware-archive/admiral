@@ -87,14 +87,16 @@ func (rl *RequestsList) ClearAllRequests() {
 	fmt.Println("Requests successfully cleared.")
 }
 
-func (rl *RequestsList) FetchRequests() int {
+func (rl *RequestsList) FetchRequests() (int, error) {
 	url := config.URL + "/request-status?documentType=true&$count=false&$limit=1000&$orderby=documentExpirationTimeMicros+desc&$filter=taskInfo/stage+eq+'*'"
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, respBody := client.ProcessRequest(req)
-	defer resp.Body.Close()
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return 0, respErr
+	}
 	err := json.Unmarshal(respBody, rl)
 	functions.CheckJson(err)
-	return len(rl.DocumentLinks)
+	return len(rl.DocumentLinks), nil
 }
 
 func (rl *RequestsList) PrintStartedOnly() {
@@ -209,10 +211,9 @@ func checkFailed(ri *RequestInfo) (bool, string) {
 	if ri.TaskInfo.Failure.Message != "" {
 		return true, ri.TaskInfo.Failure.Message
 	}
-
 	url := config.URL + ri.EventLogLink
 	req, _ := http.NewRequest("GET", url, nil)
-	_, respBody := client.ProcessRequest(req)
+	_, respBody, _ := client.ProcessRequest(req)
 	event := &events.EventInfo{}
 	err := json.Unmarshal(respBody, event)
 	functions.CheckJson(err)
