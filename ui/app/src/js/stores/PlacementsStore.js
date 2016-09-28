@@ -243,6 +243,7 @@ let PlacementsStore = Reflux.createStore({
   onOpenPlacements: function() {
     this.setInData(['placements', 'editingItemData'], null);
     this.setInData(['contextView'], {});
+    this.setInData(['error'], null);
 
     var operation = this.requestCancellableOperation(OPERATION.LIST);
     if (operation) {
