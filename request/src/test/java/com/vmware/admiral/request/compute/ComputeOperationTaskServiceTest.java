@@ -86,7 +86,7 @@ public class ComputeOperationTaskServiceTest extends RequestBaseTest {
 
         host.log("wait for computes to be in on state for request: "
                 + request.documentSelfLink);
-        waitForComputePowerState(PowerState.UNKNOWN, provisionRequest.resourceLinks);
+        waitForComputePowerState(PowerState.ON, provisionRequest.resourceLinks);
 
         RequestBrokerState day2StopRequest = new RequestBrokerState();
         day2StopRequest.resourceType = provisionRequest.resourceType;

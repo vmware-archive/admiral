@@ -584,6 +584,9 @@ public class ComputeAllocationTaskService
             computeDesc.authCredentialsLink = mapping.getMappingValue("authentication",
                     "guestAuthLink");
         }
+        if (computeDesc.zoneId == null) {
+            computeDesc.zoneId = mapping.getMappingValue("placement", "zoneId");
+        }
 
         final ComputeDescription endpointComputeDescription = expandedEndpointComputeState.description;
         computeDesc.instanceAdapterReference = endpointComputeDescription.instanceAdapterReference;
@@ -822,6 +825,7 @@ public class ComputeAllocationTaskService
                 state.groupResourcePlacementLink);
         resource.tenantLinks = state.tenantLinks;
         resource.documentSelfLink = computeResourceLink;
+        resource.powerState = ComputeService.PowerState.ON;
 
         sendRequest(Operation
                 .createPost(this, ComputeService.FACTORY_LINK)

@@ -15,9 +15,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.UriUtilsExtended;
@@ -25,18 +31,59 @@ import com.vmware.admiral.compute.container.CompositeComponentService.CompositeC
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.request.RequestBrokerService;
 import com.vmware.admiral.test.integration.SimpleHttpsClient;
+import com.vmware.admiral.test.integration.compute.aws.AwsComputeProvisionIT;
+import com.vmware.admiral.test.integration.compute.vsphere.VsphereComputeProvisionIT;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.photon.controller.model.resources.EndpointService;
+import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.xenon.common.Operation;
 
-public class AwsWordpressProvisionIT extends BaseComputeProvisionIT {
+@RunWith(Parameterized.class)
+public class WordpressProvisionIT extends BaseComputeProvisionIT {
 
-    private static final String SECURITY_GROUP_PROP = "test.aws.security.group";
-    private static final String ACCESS_KEY_PROP = "test.aws.access.key";
-    private static final String ACCESS_SECRET_PROP = "test.aws.secret.key";
-    private static final String REGION_ID_PROP = "test.aws.region.id";
     private static final String WP_PATH = "mywordpresssite";
     private static final int STATUS_CODE_WAIT_POLLING_RETRY_COUNT = 300; //5 min
+
+    private static Consumer<EndpointState> awsEndpointExtender = endpointState -> new AwsComputeProvisionIT()
+            .extendEndpoint(endpointState);
+
+    private static Consumer<EndpointState> vSphereEndpointExtender = endpointState -> new VsphereComputeProvisionIT()
+            .extendEndpoint(endpointState);
+
+    private static Runnable awsSetUp = () -> {
+    };
+
+    private static Runnable vSphereSetUp = () -> {
+        try {
+            new VsphereComputeProvisionIT().doSetUp();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    };
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][] {
+                { EndpointType.aws, awsEndpointExtender, awsSetUp }
+                //TODO uncomment once the vsphere issues are resolved
+                //{ EndpointType.vsphere, vSphereEndpointExtender, vSphereSetUp }
+        });
+    }
+
+    private EndpointType endpointType;
+    private Consumer<EndpointState> endpointExtender;
+    private Runnable setUp;
+
+    public WordpressProvisionIT(EndpointType endpointType,
+            Consumer<EndpointState> endpointExtender, Runnable setUp) {
+        this.endpointType = endpointType;
+        this.endpointExtender = endpointExtender;
+        this.setUp = setUp;
+    }
+
+    @Override
+    protected void doSetUp() throws Exception {
+        setUp.run();
+    }
 
     protected String importTemplate(String filePath) throws Exception {
         String template = CommonTestStateFactory.getFileContent(filePath);
@@ -54,6 +101,16 @@ public class AwsWordpressProvisionIT extends BaseComputeProvisionIT {
         String location = httpResponse.headers.get(Operation.LOCATION_HEADER).get(0);
         assertNotNull("Missing location header", location);
         return URI.create(location).getPath();
+    }
+
+    @Override
+    protected EndpointType getEndpointType() {
+        return endpointType;
+    }
+
+    @Override
+    protected void extendEndpoint(EndpointState endpoint) {
+        endpointExtender.accept(endpoint);
     }
 
     @Override
@@ -103,18 +160,6 @@ public class AwsWordpressProvisionIT extends BaseComputeProvisionIT {
             logger.error("Failed to verify wordpress connection: %s", eInner.getMessage());
             fail();
         }
-    }
-
-    @Override
-    protected EndpointType getEndpointType() {
-        return EndpointType.aws;
-    }
-
-    @Override
-    protected void extendEndpoint(EndpointService.EndpointState endpoint) {
-        endpoint.endpointProperties.put("privateKeyId", getTestRequiredProp(ACCESS_KEY_PROP));
-        endpoint.endpointProperties.put("privateKey", getTestRequiredProp(ACCESS_SECRET_PROP));
-        endpoint.endpointProperties.put("regionId", getTestProp(REGION_ID_PROP, "us-east-1"));
     }
 
     @Override

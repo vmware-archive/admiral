@@ -40,6 +40,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     public static final String VC_NETWORK_ID = "test.vsphere.network.id";
     public static final String VC_TARGET_FOLDER_PATH = "test.vsphere.vm.folder";
     public static final String VC_VM_DISK_URI = "test.vsphere.disk.uri";
+    public static final String VC_VM_DISK_URI_TEMPLATE = "test.vsphere.disk.%s.uri";
 
     @Override
     protected EndpointType getEndpointType() {
@@ -95,7 +96,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     }
 
     @Override
-    protected void extendEndpoint(EndpointState endpoint) {
+    public void extendEndpoint(EndpointState endpoint) {
         endpoint.endpointProperties.put("privateKeyId", getTestRequiredProp(VC_USERNAME));
         endpoint.endpointProperties.put("privateKey", getTestRequiredProp(VC_PASSWORD));
         endpoint.endpointProperties.put("regionId", getTestRequiredProp(VC_DATACENTER_ID));
@@ -116,7 +117,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     }
 
     @Override
-    protected void doSetUp() throws Exception {
+    public void doSetUp() throws Exception {
         EnvironmentMappingState ems = new EnvironmentMappingState();
         ems.endpointType = getEndpointType().name();
         ems.name = ems.endpointType;
@@ -131,14 +132,32 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
         imageRefs.mappings = new HashMap<>();
         imageRefs.mappings.put("linux", getDiskUri());
         imageRefs.mappings.put("coreos", getDiskUri());
+        imageRefs.mappings.put("ubuntu-server-1604", getDiskUri("ubuntu-server-1604"));
         ems.properties.put("imageType", imageRefs);
+
+        PropertyMapping placementRefs = new PropertyMapping();
+        placementRefs.mappings = new HashMap<>();
+        placementRefs.mappings.put("networkId", getTestRequiredProp(VC_NETWORK_ID));
+        placementRefs.mappings.put("dataStoreId", getTestRequiredProp(VC_DATASTORE_ID));
+        placementRefs.mappings.put("zoneId", getTestRequiredProp(VC_RESOURCE_POOL_ID));
+        ems.properties.put("placement", placementRefs);
 
         postDocument(EnvironmentMappingService.FACTORY_LINK,
                 ems, documentLifeCycle);
     }
 
     private String getDiskUri() {
-        String diskUri = getTestProp(VC_VM_DISK_URI);
+        return getDiskUri(null);
+    }
+
+    private String getDiskUri(String image) {
+        String diskUri;
+        if (image == null) {
+            diskUri = getTestProp(VC_VM_DISK_URI);
+        } else {
+            diskUri = getTestProp(String.format(VC_VM_DISK_URI_TEMPLATE, image));
+        }
+
         if (diskUri == null) {
             return null;
         } else {

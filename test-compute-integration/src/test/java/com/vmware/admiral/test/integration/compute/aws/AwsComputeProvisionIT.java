@@ -29,7 +29,7 @@ public class AwsComputeProvisionIT extends BaseComputeProvisionIT {
     }
 
     @Override
-    protected void extendEndpoint(EndpointState endpoint) {
+    public void extendEndpoint(EndpointState endpoint) {
         endpoint.endpointProperties.put("privateKeyId", getTestRequiredProp(ACCESS_KEY_PROP));
         endpoint.endpointProperties.put("privateKey", getTestRequiredProp(ACCESS_SECRET_PROP));
         endpoint.endpointProperties.put("regionId", getTestProp(REGION_ID_PROP, "us-east-1"));

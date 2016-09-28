@@ -299,6 +299,7 @@ public class ComputeProvisionTaskService extends
         for (String link : resourceLinks) {
             operations.add(Operation.createGet(this, link));
         }
+
         OperationSequence.create(operations.toArray(new Operation[operations.size()]))
                 .setCompletion((ops, exs) -> {
                     if (exs != null) {
