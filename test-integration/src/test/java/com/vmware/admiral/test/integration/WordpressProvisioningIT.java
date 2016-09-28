@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
 import static com.vmware.admiral.request.ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY;
 
 import java.net.Socket;
@@ -34,6 +35,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
@@ -45,6 +47,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.request.ContainerNetworkAllocationTaskService;
 import com.vmware.admiral.request.ContainerNetworkAllocationTaskService.ContainerNetworkAllocationTaskState;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService;
@@ -88,19 +91,18 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
                 { "WordPress_with_MySQL_bindings.yaml", NetworkType.CUSTOM },
-                { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_BRIDGE }
-                // https://jira-hzn.eng.vmware.com/browse/VBV-614
-                // { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_OVERLAY },
-                // { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_BRIDGE },
-                // { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_OVERLAY },
-                // { "WordPress_with_MySQL_links.yaml", NetworkType.BRIDGE }
+                { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_BRIDGE },
+                { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_OVERLAY },
+                { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_BRIDGE },
+                { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_OVERLAY },
+                { "WordPress_with_MySQL_links.yaml", NetworkType.BRIDGE }
         });
-
     }
 
     private final String templateFile;
     private final NetworkType networkType;
     private ContainerNetworkState externalNetwork;
+    private String externalNetworkName;
 
     public WordpressProvisioningIT(String templateFile, NetworkType networkType) {
         this.templateFile = templateFile;
@@ -143,14 +145,49 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         requestContainerAndDelete(getResourceDescriptionLink(false, RegistryType.V1_SSL_SECURE));
     }
 
+    /*
+     * TODO - Workaround to re-enable the tests ASAP. It's setting unique external networks names
+     * for the tests with external networks instead of reusing the always the same.
+     * The proper fix can be implemented once the external network data collection is implemented
+     * and the tests use that logic to detect possible conflicts when creating the external network
+     * (VBV-560). Furthermore, like we do when removing containers, network deletion should emulate
+     * the "--force" flag that Docker does not support out of the box.
+     */
+    private String importTemplateWithExternalNetwork(ServiceClient serviceClient, String filePath)
+            throws Exception {
+        String template = CommonTestStateFactory.getFileContent(filePath);
+
+        externalNetworkName = EXTERNAL_NETWORK_NAME + "_"
+                + UUID.randomUUID().toString().split("-")[0];
+
+        template = template.replaceAll(EXTERNAL_NETWORK_NAME, externalNetworkName);
+
+        URI uri = URI.create(getBaseUrl()
+                + buildServiceUri(CompositeDescriptionContentService.SELF_LINK));
+
+        Operation op = sendRequest(serviceClient, Operation.createPost(uri)
+                .setContentType(MEDIA_TYPE_APPLICATION_YAML)
+                .setBody(template));
+
+        String location = op.getResponseHeader(Operation.LOCATION_HEADER);
+        assertNotNull("Missing location header", location);
+        return URI.create(location).getPath();
+    }
+
     private void setupExternalNetwork() throws Exception {
         logger.info("Setting up external network...");
 
+        compositeDescriptionLink = importTemplateWithExternalNetwork(serviceClient,
+                templateFile);
+
         ContainerNetworkDescription description = new ContainerNetworkDescription();
         description.documentSelfLink = UUID.randomUUID().toString();
-        description.name = EXTERNAL_NETWORK_NAME;
+        description.name = externalNetworkName;
         description.tenantLinks = TENANT;
+
         description = postDocument(ContainerNetworkDescriptionService.FACTORY_LINK, description);
+
+        // TODO - replace the two tasks request with a single request to the request broker
 
         ContainerNetworkAllocationTaskState allocationTask = new ContainerNetworkAllocationTaskState();
         allocationTask.resourceDescriptionLink = description.documentSelfLink;
@@ -170,7 +207,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         provisionTask.resourceCount = 1L;
         provisionTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         provisionTask.customProperties = new HashMap<>();
-        provisionTask.customProperties.put(CONTAINER_HOST_ID_CUSTOM_PROPERTY, getDockerHost().id);
+        provisionTask.customProperties.put(CONTAINER_HOST_ID_CUSTOM_PROPERTY,
+                getDockerHost().id);
         provisionTask.tenantLinks = description.tenantLinks;
         provisionTask.resourceLinks = allocationTask.resourceLinks;
         provisionTask = postDocument(ContainerNetworkProvisionTaskService.FACTORY_LINK,
@@ -186,23 +224,33 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
     }
 
     private void cleanupExternalNetwork() throws Exception {
-        logger.info("Cleaning up external network...");
 
-        assertNotNull("External network should have been set!", externalNetwork);
+        try {
+            logger.info("Cleaning up external network...");
 
-        ContainerNetworkState network = getDocument(
-                UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK, externalNetwork.name),
-                ContainerNetworkState.class);
-        assertNotNull("External network should still exist!", network);
+            assertNotNull("External network should have been set to clean it up!", externalNetwork);
 
-        ContainerNetworkRemovalTaskState removalTask = new ContainerNetworkRemovalTaskState();
-        removalTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-        removalTask.resourceLinks = Arrays.asList(
-                UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK, externalNetwork.name));
-        removalTask = postDocument(ContainerNetworkRemovalTaskService.FACTORY_LINK, removalTask);
-        waitForTaskToComplete(removalTask.documentSelfLink);
+            ContainerNetworkState network = getDocument(
+                    UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK,
+                            externalNetwork.name),
+                    ContainerNetworkState.class);
+            assertNotNull("External network should still exist!", network);
 
-        logger.info("External network deleted.");
+            // TODO - replace the direct task request with a request to the request broker
+
+            ContainerNetworkRemovalTaskState removalTask = new ContainerNetworkRemovalTaskState();
+            removalTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+            removalTask.resourceLinks = Arrays.asList(
+                    UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK,
+                            externalNetwork.name));
+            removalTask = postDocument(ContainerNetworkRemovalTaskService.FACTORY_LINK,
+                    removalTask);
+            waitForTaskToComplete(removalTask.documentSelfLink);
+
+            logger.info("External network deleted.");
+        } catch (Exception e) {
+            logger.warning("Exception cleaning up external network: %s", e.getMessage());
+        }
     }
 
     @Override
@@ -281,7 +329,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
             assertNotNull("Failed to find WP host port", wpHostPort);
 
             wpHost = getHostnameOfComputeHost(wpContainerState.parentLink);
-            // connect to wordpress main page by accessing a specific container instance through the docker exposed port
+            // connect to wordpress main page by accessing a specific container instance through the
+            // docker exposed port
             URI uri = URI.create(String.format("http://%s:%s/%s", wpHost, wpHostPort, WP_PATH));
             logger.info(
                     "------------- 4.%s.2. connecting to wordpress main page %s. -------------",
@@ -304,7 +353,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
                 wpContainerState = getDocument(wpContainerLink, ContainerState.class);
                 wpHostPort = wpContainerState.ports.get(0).hostPort;
 
-                // connect to wordpress main page by accessing a specific container instance through the docker exposed port
+                // connect to wordpress main page by accessing a specific container instance through
+                // the docker exposed port
                 uri = URI.create(String.format("http://%s:%s/%s", wpHost, wpHostPort, WP_PATH));
 
                 logger.info(

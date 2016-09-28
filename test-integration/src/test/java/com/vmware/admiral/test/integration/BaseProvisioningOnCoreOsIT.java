@@ -540,7 +540,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         waitForTaskToComplete(day2DeleteRequest.documentSelfLink);
     }
 
-    private Operation sendRequest(ServiceClient serviceClient, Operation op)
+    protected Operation sendRequest(ServiceClient serviceClient, Operation op)
             throws InterruptedException, ExecutionException,
             TimeoutException {
         return sendRequest(serviceClient, op, DEFAULT_OPERATION_TIMEOUT_MILLIS);

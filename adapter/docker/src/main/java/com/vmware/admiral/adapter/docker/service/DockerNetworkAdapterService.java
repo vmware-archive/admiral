@@ -287,10 +287,10 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
     private void processDeleteNetwork(RequestContext context) {
         AssertUtil.assertNotNull(context.networkState, "networkState");
-        AssertUtil.assertNotEmpty(context.networkState.name, "networkState.name");
+        AssertUtil.assertNotEmpty(context.networkState.id, "networkState.id");
 
         CommandInput deleteCommandInput = context.commandInput.withPropertyIfNotNull(
-                DOCKER_CONTAINER_NETWORK_ID_PROP_NAME, context.networkState.name);
+                DOCKER_CONTAINER_NETWORK_ID_PROP_NAME, context.networkState.id);
 
         // TODO do verification and stuff
 
