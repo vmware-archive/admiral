@@ -324,7 +324,7 @@
         "priorityPlaceholder": "Positive number (optional)",
         "priorityHint": "Leave it blank to make it lowest priority",
         "instancesLabel": "Instances",
-        "instancesPlaceholder": "Number of instances",
+        "instancesPlaceholder": "Number of instances (optional)",
         "instancesHint": "Positive integer to limit the maximum number of instances. Leave empty or 0 for unlimited number.",
         "cpuSharesLabel": "CPU shares",
         "memoryLimitLabel": "Memory limit",
