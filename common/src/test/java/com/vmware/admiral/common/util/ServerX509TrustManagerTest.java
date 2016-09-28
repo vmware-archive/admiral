@@ -11,8 +11,8 @@
 
 package com.vmware.admiral.common.util;
 
-import static com.vmware.admiral.common.util.ServerX509TrustManager.JAVAX_NET_SSL_TRUST_STORE;
-import static com.vmware.admiral.common.util.ServerX509TrustManager.JAVAX_NET_SSL_TRUST_STORE_PASSWORD;
+import static com.vmware.admiral.common.util.ServerX509TrustManager.DCP_NET_SSL_TRUST_STORE;
+import static com.vmware.admiral.common.util.ServerX509TrustManager.DCP_NET_SSL_TRUST_STORE_PASSWORD;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,8 +38,8 @@ public class ServerX509TrustManagerTest {
         URI customStore = ServerX509TrustManagerTest.class
                 .getResource("/certs/trusted_certificates.jks").toURI();
         File f = new File(customStore.getPath());
-        System.setProperty(JAVAX_NET_SSL_TRUST_STORE, f.getPath());
-        System.setProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD, "changeit");
+        System.setProperty(DCP_NET_SSL_TRUST_STORE, f.getPath());
+        System.setProperty(DCP_NET_SSL_TRUST_STORE_PASSWORD, "changeit");
 
         // Fake host, not really needed for the purpose of the trust manager test.
         ServiceHost host = new ServiceHost() {

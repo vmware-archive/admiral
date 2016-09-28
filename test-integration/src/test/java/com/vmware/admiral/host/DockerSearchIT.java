@@ -16,8 +16,8 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import static com.vmware.admiral.common.util.ServerX509TrustManager.JAVAX_NET_SSL_TRUST_STORE;
-import static com.vmware.admiral.common.util.ServerX509TrustManager.JAVAX_NET_SSL_TRUST_STORE_PASSWORD;
+import static com.vmware.admiral.common.util.ServerX509TrustManager.DCP_NET_SSL_TRUST_STORE;
+import static com.vmware.admiral.common.util.ServerX509TrustManager.DCP_NET_SSL_TRUST_STORE_PASSWORD;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -56,8 +56,8 @@ public class DockerSearchIT extends BaseTestCase {
         // Force a custom trust store... that shouldn't override the Java default cacerts.
         URI customStore = DockerSearchIT.class.getResource("/certs/trusted_certificates.jks")
                 .toURI();
-        System.setProperty(JAVAX_NET_SSL_TRUST_STORE, customStore.getPath());
-        System.setProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD, "changeit");
+        System.setProperty(DCP_NET_SSL_TRUST_STORE, customStore.getPath());
+        System.setProperty(DCP_NET_SSL_TRUST_STORE_PASSWORD, "changeit");
     }
 
     @Before
