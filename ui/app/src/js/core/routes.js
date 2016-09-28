@@ -55,6 +55,20 @@ crossroads.addRoute('/placements', function() {
   actions.PlacementActions.openPlacements();
 });
 
+crossroads.addRoute('/applications', function() {
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name);
+  actions.ContainerActions.openContainers({
+    '$category': 'applications'
+  }, true);
+});
+
+crossroads.addRoute('/networks', function() {
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name);
+  actions.ContainerActions.openContainers({
+    '$category': 'networks'
+  }, true);
+});
+
 crossroads.addRoute('/templates:?query:', function(query) {
   actions.AppActions.openView(constants.VIEWS.TEMPLATES.name);
   actions.TemplateActions.openTemplates(query, true);
@@ -89,66 +103,77 @@ crossroads.addRoute('/import-template', function() {
 });
 
 crossroads.addRoute('/containers:?query:', function(query) {
-  actions.AppActions.openView(constants.VIEWS.CONTAINERS.name);
+  let viewName = constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name;
+  if (query && query.$category) {
+    if (query.$category === 'applications') {
+      viewName = constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name;
+    } else if (query.$category === 'networks') {
+      viewName = constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name;
+    }
+  }
+
+  actions.AppActions.openView(viewName);
   actions.ContainerActions.openContainers(query, true);
 });
 
-crossroads.addRoute('/containers/new-container', function() {
-  actions.AppActions.openView(constants.VIEWS.CONTAINERS.name);
+crossroads.addRoute('/containers/new', function() {
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
   actions.ContainerActions.openContainers();
   actions.ContainerActions.openCreateContainer();
 });
 
-crossroads.addRoute('/containers/new-network', function() {
-  actions.AppActions.openView(constants.VIEWS.CONTAINERS.name);
-  actions.ContainerActions.openContainers();
+crossroads.addRoute('/networks/new', function() {
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name);
+  actions.ContainerActions.openContainers({
+    '$category': 'networks'
+  }, true);
   actions.ContainerActions.openCreateNetwork();
 });
 
 crossroads.addRoute('containers/composite/{compositeComponentId*}' +
                     '/cluster/{clusterId*}/containers/{childContainerId*}',
                     function(compositeComponentId, clusterId, childContainerId) {
-  actions.AppActions.openView(constants.VIEWS.CONTAINERS.name);
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
   actions.ContainerActions.openContainers();
   actions.ContainerActions.openContainerDetails(childContainerId, clusterId, compositeComponentId);
 });
 
 crossroads.addRoute('containers/composite/{compositeComponentId*}/containers/{childContainerId*}',
                     function(compositeComponentId, childContainerId) {
-  actions.AppActions.openView(constants.VIEWS.CONTAINERS.name);
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
   actions.ContainerActions.openContainers();
   actions.ContainerActions.openContainerDetails(childContainerId, null, compositeComponentId);
 });
 
 crossroads.addRoute('containers/composite/{compositeComponentId*}/cluster/{clusterId*}',
                     function(compositeComponentId, clusterId) {
-  actions.AppActions.openView(constants.VIEWS.CONTAINERS.name);
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
   actions.ContainerActions.openContainers();
   actions.ContainerActions.openClusterDetails(clusterId, compositeComponentId);
 });
 
 crossroads.addRoute('containers/composite/{compositeComponentId*}', function(compositeComponentId) {
-  actions.AppActions.openView(constants.VIEWS.CONTAINERS.name);
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
   actions.ContainerActions.openContainers();
   actions.ContainerActions.openCompositeContainerDetails(compositeComponentId);
 });
 
 crossroads.addRoute('/containers/cluster/{clusterId*}/containers/{containerId*}',
   function(clusterId, containerId) {
-    actions.AppActions.openView(constants.VIEWS.CONTAINERS.name);
+    actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
     actions.ContainerActions.openContainers();
     actions.ContainerActions.openContainerDetails(containerId, clusterId);
   });
 
 
 crossroads.addRoute('/containers/cluster/{clusterId*}', function(clusterId) {
-  actions.AppActions.openView(constants.VIEWS.CONTAINERS.name);
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
   actions.ContainerActions.openContainers();
   actions.ContainerActions.openClusterDetails(clusterId);
 });
 
 crossroads.addRoute('/containers/{containerId*}', function(containerId) {
-  actions.AppActions.openView(constants.VIEWS.CONTAINERS.name);
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
   actions.ContainerActions.openContainers();
   actions.ContainerActions.openContainerDetails(containerId);
 });

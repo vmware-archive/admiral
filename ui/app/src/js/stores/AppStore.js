@@ -24,9 +24,15 @@ import recommendedImages from 'core/recommendedImages';
 
 let AppStore;
 
+var isSameView = function(newViewName, oldViewName) {
+  return newViewName === oldViewName ||
+    utils.showResourcesView(newViewName) && utils.showResourcesView(oldViewName);
+};
+
 var updateCenterViewIfNeeded = function(viewName, data, force) {
-  if (!force && this.data.centerView && this.data.centerView &&
-      this.data.centerView.name === viewName) {
+  var oldViewName = this.data.centerView && this.data.centerView.name;
+
+  if (!force && isSameView(viewName, oldViewName)) {
     return;
   }
 
@@ -93,7 +99,7 @@ let initializeStoreListeners = function() {
   });
 
   ContainersStore.listen((containersData) => {
-    if (this.data.centerView && this.data.centerView.name === constants.VIEWS.CONTAINERS.name) {
+    if (this.data.centerView && utils.showResourcesView(this.data.centerView.name)) {
       this.setInData(['centerView', 'data'], containersData);
       this.emitChange();
     }
@@ -176,7 +182,7 @@ AppStore = Reflux.createStore({
       return;
     }
 
-    if (this.data.centerView && this.data.centerView.name === constants.VIEWS.CONTAINERS.name) {
+    if (this.data.centerView && utils.showResourcesView(this.data.centerView.name)) {
       actions.ContainersContextToolbarActions.openToolbarEventLogs(highlightedItemLink);
       return;
     }

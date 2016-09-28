@@ -29,13 +29,13 @@
                     }]"
                   v-on:search-change="search"
                   ></search>
-          <a href="#/containers/new-container" class="admiral-btn create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS">
+          <a href="#/containers/new" class="admiral-btn create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS">
             <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.container.create")}}
           </a>
-          <a href="#/containers/new-container" class="admiral-btn create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS">
+          <a href="#/containers/new" class="admiral-btn create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS">
             <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.container.create")}}
           </a>
-          <a href="#/containers/new-network" class="admiral-btn create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS">
+          <a href="#/networks/new" class="admiral-btn create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS">
             <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.network.create")}}
           </a>
         </div>
@@ -74,24 +74,6 @@
                                    v-bind:show="selectionMode"></title-action-button>
             </div>
           </list-title>
-
-          <div class="category-filter">
-            <span class="title">{{i18n('app.container.list.searchCategoryFilterTitle')}}</span>
-            <a href="#"
-               data-category="containers"
-               v-on:click="selectCategory(constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS, $event)"
-               v-bind:class="{'active': selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS}"
-              >{{i18n('app.container.list.searchCategory.containers')}}</a>
-            <a href="#"
-               data-category="applications"
-               v-on:click="selectCategory(constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS, $event)"
-               v-bind:class="{'active': selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS}">{{i18n('app.container.list.searchCategory.applications')}}</a>
-            <a href="#"
-               data-category="networks"
-               v-if="isNetworkingAvailable"
-               v-on:click="selectCategory(constants.RESOURCES.SEARCH_CATEGORY.NETWORKS, $event)"
-               v-bind:class="{'active': selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS}">{{i18n('app.resource.list.searchCategory.networks')}}</a>
-          </div>
 
           <div class="content">
             <grid v-bind:context-selected="model.selectedItem"

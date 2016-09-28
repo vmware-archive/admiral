@@ -20,6 +20,7 @@
       "templates": "Templates",
       "resources": "Resources",
       "containers": "Containers",
+      "applications": "Applications",
       "networks": "Networks",
       "eventlog": "Event Log",
       "resourcePools": "Resource Pools",
@@ -428,9 +429,9 @@
           "create": "Create Container"
         },
         "titleSearch": {
-          "containers": "Found Containers",
-          "applications": "Found Applications",
-          "networks": "Found Networks"
+          "containers": "Containers",
+          "applications": "Applications",
+          "networks": "Networks"
         },
         "searchPlaceholder": {
           "containers": "Search for containers",
@@ -445,6 +446,10 @@
     "container": {
       "list": {
         "title": "Items",
+        "titleSearchContainers": "Found Containers",
+        "titleSearchApplications": "Found Applications",
+        "searchPlaceholder": "Search for containers",
+        "createContainer": "Create Container",
         "hostLabel": "Host",
         "createdDateLabel": "Created",
         "portsLabel": "Ports",

@@ -34,8 +34,19 @@ var constants = Immutable({
       name: 'templates',
       NEW: {name: 'templates/new'}
     },
-    CONTAINERS: {
-      name: 'containers'
+    RESOURCES: {
+      name: 'resources',
+      VIEWS: {
+        CONTAINERS: {
+          name: 'containers'
+        },
+        APPLICATIONS: {
+          name: 'applications'
+        },
+        NETWORKS: {
+          name: 'networks'
+        }
+      }
     }
   },
   CREDENTIALS_TYPE: {
@@ -110,7 +121,8 @@ var constants = Immutable({
       REMOVE: 'REMOVE',
       SHELL: 'SHELL',
       CLUSTERING: 'CLUSTERING',
-      DEFAULT: 'DEFAULT'
+      DEFAULT: 'DEFAULT',
+      NETWORKCREATE: 'NETWORKCREATE'
     }
   },
   TEMPLATES: {

@@ -99,6 +99,9 @@ var AppMixin = {
     },
     currentUserShown: function() {
       return !utils.isApplicationEmbedded() && this.model.currentUser;
+    },
+    showResources: function() {
+      return utils.showResourcesView(this.model.centerView.name);
     }
   }
 };

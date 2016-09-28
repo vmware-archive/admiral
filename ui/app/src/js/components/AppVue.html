@@ -20,28 +20,7 @@
 
   <div class="app-view" v-bind:class="[sideClass]" v-if="model.centerView">
     <div class="side-view">
-      <div v-if="model.sideView" class="nav-bar">
-        <a v-bind:class="{'active': model.sideView.currentView === constants.VIEWS.HOSTS.name}"
-           class="nav-item hosts" href="#/hosts">
-          <img class="nav-item-image" src="image-assets/hosts.png">
-          <span>{{i18n("app.navbar.hosts")}}</span>
-        </a>
-        <a v-bind:class="{'active': model.sideView.currentView === constants.VIEWS.PLACEMENTS.name}"
-           class="nav-item placements" href="#/placements">
-          <img class="nav-item-image" src="image-assets/placements.png">
-          <span>{{i18n("app.navbar.placements")}}</span>
-        </a>
-        <a v-bind:class="{'active': model.sideView.currentView === constants.VIEWS.TEMPLATES.name}"
-           class="nav-item templates" href="#/templates">
-          <img class="nav-item-image" src="image-assets/templates.png">
-          <span>{{i18n("app.navbar.templates")}}</span>
-        </a>
-        <a v-bind:class="{'active': model.sideView.currentView === constants.VIEWS.CONTAINERS.name}"
-           class="nav-item containers" href="#/containers">
-          <img class="nav-item-image" src="image-assets/containers.png">
-          <span>{{i18n("app.navbar.containers")}}</span>
-        </a>
-      </div>
+      <navigation v-bind:model="model.sideView"></navigation>
     </div>
     <div v-if="model.centerView.name === constants.VIEWS.HOME.name"
          class="center-view" transition="fade">
@@ -60,14 +39,11 @@
                       v-bind:model="model.centerView.data"
                       v-ref:center-view >
       </templates-view>
-      <containers-view v-if="model.centerView.name === constants.VIEWS.CONTAINERS.name"
+      <containers-view v-if="showResources"
                        v-bind:model="model.centerView.data"
                        v-ref:center-view >
       </containers-view>
-      <div class = "core-build-number"
-           v-if="buildNumberSupported()">
-        Build number: {{buildNumber}}
-      </div>
+      <div class="core-build-number" v-if="buildNumberSupported()">{{i18n("buildNumber")}} {{buildNumber}}</div>
     </div>
   </div>
 </div>

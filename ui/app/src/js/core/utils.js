@@ -54,6 +54,12 @@ var utils = {
   isNetworkingAvailable: function() {
     return this.getConfigurationPropertyBoolean('allow.ft.network');
   },
+  showResourcesView: function(viewName) {
+   return viewName === constants.VIEWS.RESOURCES.name
+            || viewName === constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name
+            || viewName === constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name
+            || viewName === constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name;
+  },
 
   validate: function(model, constraints) {
     var validationErrors = {};

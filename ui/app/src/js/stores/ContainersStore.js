@@ -891,6 +891,9 @@ ContainersStore = Reflux.createStore({
     } else if (operationType === constants.CONTAINERS.OPERATION.DEFAULT) {
       // default - refresh current view on operation finished
       this.backFromContainerAction(operationType, resourceIds);
+    } else if (operationType === constants.CONTAINERS.OPERATION.NETWORKCREATE) {
+      // Network created
+      this.backFromContainerAction(operationType, resourceIds);
     }
   },
 

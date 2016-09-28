@@ -1144,13 +1144,13 @@ text-shadow: 0px 0px 20px black;
   @extend .truncateText;
   display: block;
   padding-top: 0;
-    margin-left: 63px;
-    color: #333;
-    font-size: 15px;
-    font-weight: 500;
+  margin-left: 63px;
+  color: #333;
+  font-size: 15px;
+  font-weight: 500;
 }
 .app-view > .side-view .nav-item.active > span:not(.nav-item-image) {
-    font-weight: bold;
+  font-weight: bold;
 }
 .col-sm-0 {
   width: 0;
@@ -1458,6 +1458,10 @@ text-shadow: 0px 0px 20px black;
   line-height: 52px;
   margin: 9px 0;
 }
+.nav-bar .nav-item.inner {
+  padding-left: 6px;
+}
+
 .nav-bar .nav-item:not(.active):hover {
   background: #e9e9e9;
   @include box-shadow(inset -7px 0 9px -7px rgba(0,0,0,0.4));
@@ -1474,6 +1478,12 @@ text-shadow: 0px 0px 20px black;
   float: left;
   color: #333333;
   font-size: 24px;
+}
+
+.nav-bar .nav-item .nav-category {
+  position: absolute;
+  top: 0;
+  right: 10px;
 }
 
 .nav-bar .nav-item.active {

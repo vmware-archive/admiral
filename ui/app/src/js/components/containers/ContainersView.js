@@ -48,12 +48,12 @@ var ContainersViewVueComponent = Vue.extend({
     },
     titleSearch: function() {
       switch (this.selectedCategory) {
-          case constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS:
-            return i18n.t('app.resource.list.titleSearch.applications');
-          case constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS:
-            return i18n.t('app.resource.list.titleSearch.containers');
-          case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
-            return i18n.t('app.resource.list.titleSearch.networks');
+        case constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS:
+          return i18n.t('app.resource.list.titleSearch.applications');
+        case constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS:
+          return i18n.t('app.resource.list.titleSearch.containers');
+        case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
+          return i18n.t('app.resource.list.titleSearch.networks');
       }
     },
     placeholderByCategoryMap: function() {
