@@ -381,6 +381,7 @@ let HostsStore = Reflux.createStore({
               result.documents[documentLink]).filter(({customProperties}) =>
                   customProperties && customProperties.__computeContainerHost);
           let nextPageLink = result.nextPageLink;
+          let itemsCount = result.totalCount;
 
           // Transforming to the model of the view
           let hosts = documents.map((document) => toViewModel(document));
@@ -393,8 +394,10 @@ let HostsStore = Reflux.createStore({
 
             this.setInData(['listView', 'items'], hosts);
             this.setInData(['listView', 'itemsLoading'], false);
-            this.setInData(['listView', 'itemsCount'], result.itemsCount);
             this.setInData(['listView', 'nextPageLink'], nextPageLink);
+            if (itemsCount !== undefined) {
+              this.setInData(['listView', 'itemsCount'], itemsCount);
+            }
 
             this.emitChange();
           });
