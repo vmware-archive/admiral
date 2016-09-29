@@ -197,6 +197,7 @@ public class PlacementHostSelectionTaskService
 
         ResourcePoolQueryHelper helper = ResourcePoolQueryHelper.createForResourcePools(getHost(),
                 state.resourcePoolLinks);
+        helper.setExpandComputes(true);
         helper.setAdditionalQueryClausesProvider(qb -> {
             qb.addInClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK, computeDescriptionLinks)
                     .addFieldClause(ComputeState.FIELD_NAME_POWER_STATE, PowerState.ON.toString());

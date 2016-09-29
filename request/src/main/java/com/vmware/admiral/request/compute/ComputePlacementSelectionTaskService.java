@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
@@ -211,7 +210,7 @@ public class ComputePlacementSelectionTaskService extends
                 return;
             }
 
-            selection(state, qr.computesByLink.values());
+            selection(state, qr.computesByLink.keySet());
         });
     }
 
@@ -225,7 +224,7 @@ public class ComputePlacementSelectionTaskService extends
         }
 
         if (computeDescriptionLinks.contains(endpointCompute.descriptionLink)) {
-            selection(state, Arrays.asList(endpointCompute));
+            selection(state, Arrays.asList(endpointCompute.documentSelfLink));
         } else {
             failTask(null, new IllegalStateException(
                     "No powered-on compute placement candidates found in "
@@ -234,15 +233,15 @@ public class ComputePlacementSelectionTaskService extends
     }
 
     private void selection(final ComputePlacementSelectionTaskState state,
-            final Collection<ComputeState> availableComputeStates) {
-        if (availableComputeStates.isEmpty()) {
+            final Collection<String> availableComputeLinks) {
+        if (availableComputeLinks.isEmpty()) {
             failTask("No compute placements found", null);
             return;
         }
-        ArrayList<ComputeState> selectedComputeStates = new ArrayList<>(availableComputeStates);
-        Collections.shuffle(selectedComputeStates);
+        ArrayList<String> selectedComputeLinks = new ArrayList<>(availableComputeLinks);
+        Collections.shuffle(selectedComputeLinks);
 
-        int initialSize = selectedComputeStates.size();
+        int initialSize = selectedComputeLinks.size();
         int diff = (int) (state.resourceCount - initialSize);
         if (diff > 0) {
             /*
@@ -251,16 +250,15 @@ public class ComputePlacementSelectionTaskService extends
              * B, C, A]
              */
             for (int i = 0; i < diff / initialSize; ++i) {
-                selectedComputeStates.addAll(selectedComputeStates.subList(0, initialSize));
+                selectedComputeLinks.addAll(selectedComputeLinks.subList(0, initialSize));
             }
 
-            selectedComputeStates.addAll(selectedComputeStates.subList(0, diff % initialSize));
+            selectedComputeLinks.addAll(selectedComputeLinks.subList(0, diff % initialSize));
         }
 
         ComputePlacementSelectionTaskState newState = createUpdateSubStageTask(state,
                 DefaultSubStage.COMPLETED);
-        newState.selectedComputePlacementLinks = selectedComputeStates.stream()
-                .map(cr -> cr.documentSelfLink).collect(Collectors.toList());
+        newState.selectedComputePlacementLinks = selectedComputeLinks;
         sendSelfPatch(newState);
     }
 

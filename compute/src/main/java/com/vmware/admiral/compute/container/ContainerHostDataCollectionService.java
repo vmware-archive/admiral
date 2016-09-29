@@ -181,6 +181,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
             // retrieve resource pools for the given computes
             ResourcePoolQueryHelper rpHelper = ResourcePoolQueryHelper.createForComputes(getHost(),
                     body.computeContainerHostLinks);
+            rpHelper.setExpandComputes(true);
 
             rpHelper.query(qr -> {
                 if (qr.error != null) {
@@ -574,6 +575,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         }
 
         ResourcePoolQueryHelper rpHelper = ResourcePoolQueryHelper.create(getHost());
+        rpHelper.setExpandComputes(true);
         rpHelper.setAdditionalQueryClausesProvider(qb -> {
             qb.addInClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK, computeDescriptionLinks);
             qb.addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
@@ -605,7 +607,9 @@ public class ContainerHostDataCollectionService extends StatefulService {
             }
 
             for (ResourcePoolData rpData : qr.resourcesPools.values()) {
-                updateResourcePool(rpData.resourcePoolState, rpData.computeStates);
+                updateResourcePool(rpData.resourcePoolState, rpData.computeStateLinks.stream()
+                        .map(link -> qr.computesByLink.get(link))
+                        .collect(Collectors.toList()));
             }
         });
     }
