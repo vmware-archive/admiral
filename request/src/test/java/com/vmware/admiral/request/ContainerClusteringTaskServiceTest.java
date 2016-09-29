@@ -166,6 +166,11 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
         // Number of containers before provisioning.
         assertEquals(2, containersNumberBeforeClustering);
+        waitFor(() -> {
+            ComputeState cs = getDocument(ComputeState.class, hostSelfLink);
+            return ((cs.customProperties.get("__Containers") != null) &&
+                    ( Integer.valueOf(cs.customProperties.get("__Containers")) == 2));
+        });
 
         // disable the container hosts in order to fail the operation
         ComputeState state = new ComputeState();
