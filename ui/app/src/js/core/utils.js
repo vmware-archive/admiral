@@ -365,10 +365,15 @@ var utils = {
     return (containerPowerState === constants.CONTAINERS.STATES.UNKNOWN);
   },
 
+  isContainerStatusProvisioning: function(containerPowerState) {
+    return (containerPowerState === constants.CONTAINERS.STATES.PROVISIONING);
+  },
+
   isContainerStatusOk: function(containerPowerState) {
     return !this.isContainerStatusError(containerPowerState)
             && !this.isContainerStatusRetired(containerPowerState)
-            && !this.isContainerStatusUnknown(containerPowerState);
+            && !this.isContainerStatusUnknown(containerPowerState)
+            && !this.isContainerStatusProvisioning(containerPowerState);
   },
 
   operationSupportedMulti: function(op, items) {

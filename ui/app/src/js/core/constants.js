@@ -70,6 +70,7 @@ var constants = Immutable({
   },
   CONTAINERS: {
     STATES: {
+      PROVISIONING: 'PROVISIONING',
       RUNNING: 'RUNNING',
       REBOOTING: 'REBOOTING',
       STOPPED: 'STOPPED',
