@@ -421,6 +421,7 @@
           "subnetLabel": "Subnet",
           "gatewayLabel": "Gateway",
           "ipRangeLabel": "IP Range",
+          "connectedContainers": "Containers",
           "create": "Create Network"
         },
         "container": {

@@ -10,11 +10,45 @@
  */
 
 import NetworksListItemVue from 'NetworksListItemVue'; //eslint-disable-line
+import { NavigationActions } from 'actions/Actions';
 
 var NetworksListItem = Vue.extend({
   template: NetworksListItemVue,
   props: {
     model: {required: true}
+  },
+
+  computed: {
+
+    hasConnectedContainers: function() {
+      return this.model.containers && this.model.containers.length > 0;
+    },
+
+    connectedContainersCount: function() {
+      return this.hasConnectedContainers ? this.model.containers.length : 0;
+    },
+
+    connectedContainersDocumentIds: function() {
+      return !this.hasConnectedContainers ? [] : this.model.containers.map(
+        (container) => {
+          return container.documentId;
+        });
+    }
+
+  },
+  methods: {
+    openConnectedContainers: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      if (this.hasConnectedContainers) {
+        let queryOptions = {
+          network: this.model.name
+        };
+
+        NavigationActions.openContainers(queryOptions);
+      }
+    }
   }
 });
 

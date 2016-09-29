@@ -46,4 +46,11 @@
           <span>{{config.ipRange}}</span>
         </template></span>
     </div>
+    <div class="network-connected-containers-holder">
+      <span class="container-label">{{i18n("app.resource.list.network.connectedContainers")}}</span>
+      <span v-if="hasConnectedContainers">
+        <a href="#" v-on:click="openConnectedContainers($event)">{{connectedContainersCount}}</a>
+      </span>
+      <span v-else>--</span>
+    </div>
 </div>

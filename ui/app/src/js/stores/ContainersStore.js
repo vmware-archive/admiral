@@ -83,6 +83,16 @@ function enhanceCompositeComponent(compositeComponent) {
 function enhanceNetwork(network) {
   network.icon = imageUtils.getImageIconLink(network.name);
   network.documentId = utils.getDocumentId(network.documentSelfLink);
+
+  network.containers = [];
+  if (network.containerStateLinks) {
+    network.containers = network.containerStateLinks.map((documentSelfLink) => {
+        return {
+          documentId: utils.getDocumentId(documentSelfLink)
+        };
+    });
+  }
+
   network.type = constants.RESOURCES.TYPES.NETWORK;
   return network;
 }

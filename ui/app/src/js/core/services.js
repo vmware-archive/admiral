@@ -1530,6 +1530,18 @@ var buildContainersSearchQuery = function(queryOptions) {
       //      }];
 
     }
+
+    var networkArray = toArrayIfDefined(queryOptions.network);
+    if (networkArray) {
+      newQueryOptions.networks = [];
+      for (let i = 0; i < networkArray.length; i++) {
+        newQueryOptions.networks.push({
+          val: '*' + networkArray[i] + '*',
+          op: 'eq'
+        });
+      }
+    }
+
   }
  return buildOdataQuery(newQueryOptions);
 
