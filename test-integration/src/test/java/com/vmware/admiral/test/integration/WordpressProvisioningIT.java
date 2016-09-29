@@ -93,8 +93,9 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
                 { "WordPress_with_MySQL_bindings.yaml", NetworkType.CUSTOM },
                 { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_BRIDGE },
                 { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_OVERLAY },
-                { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_BRIDGE },
-                { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_OVERLAY },
+                // Check https://jira-hzn.eng.vmware.com/browse/VBV-624
+                // { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_BRIDGE },
+                // { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_OVERLAY },
                 { "WordPress_with_MySQL_links.yaml", NetworkType.BRIDGE }
         });
     }
