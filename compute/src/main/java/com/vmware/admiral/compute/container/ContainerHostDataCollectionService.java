@@ -43,6 +43,9 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
+import com.vmware.admiral.log.EventLogService;
+import com.vmware.admiral.log.EventLogService.EventLogState;
+import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.admiral.service.common.AbstractCallbackServiceHandler;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -194,8 +197,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
                         // if we're adding a host we need to wait for the host info to be populated
                         // first
                         updateContainerHostInfo(computeState.documentSelfLink, (o, error) -> {
-                            if (error) {
-                                handleHostNotAvailable(computeState);
+                            if (error != null) {
+                                handleHostNotAvailable(computeState, error);
                             } else {
                                 handleHostAvailable(computeState);
                                 // TODO multiple operations in parallel for the same RP;
@@ -248,10 +251,16 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 }));
     }
 
-    private void handleHostNotAvailable(ComputeState computeState) {
+    private void handleHostNotAvailable(ComputeState computeState, ServiceErrorResponse error) {
         if (computeState.powerState.equals(PowerState.OFF)) {
             return;
         }
+
+        final EventLogState eventLog = new EventLogState();
+        eventLog.tenantLinks = computeState.tenantLinks;
+        eventLog.resourceType = getClass().getName();
+        eventLog.eventLogType = EventLogType.ERROR;
+
         PowerState patchPowerState;
         int count;
         if (computeState.customProperties.get(RETRIES_COUNT_PROP_NAME) != null) {
@@ -267,6 +276,19 @@ public class ContainerHostDataCollectionService extends StatefulService {
             count = 1;
             patchPowerState = PowerState.SUSPEND;
         }
+
+        if (PowerState.OFF.equals(patchPowerState)) {
+            eventLog.description = String.format(
+                    "Host [%s] has been marked [OFF] after exceeding the maximum number [%s] of"
+                    + " failed data collections. Error message is: %s",
+                    computeState.address, MAX_RETRIES_COUNT, error.message);
+        } else {
+            eventLog.description = String.format(
+                    "Host [%s] has been marked [DISABLED] after failure to perform data"
+                    + " collection. Error message is: %s",
+                    computeState.address, error.message);
+        }
+
         ComputeState patchState = new ComputeState();
         patchState.powerState = patchPowerState;
         patchState.customProperties = new HashMap<>();
@@ -277,6 +299,14 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 logWarning("Failed updating ComputeState: " + computeState.documentSelfLink);
                 return;
             }
+
+            sendRequest(Operation.createPost(getHost(), EventLogService.FACTORY_LINK)
+                    .setBody(eventLog)
+                    .setCompletion((op, ex) -> {
+                        if (ex != null) {
+                            logWarning("Failed to publish event log error: %s", Utils.toString(ex));
+                        }
+                    }));
 
             if (PowerState.OFF.equals(patchPowerState)) {
                 disableContainersForHost(computeState.documentSelfLink);
@@ -596,8 +626,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 updateContainerHostInfo(compute.documentSelfLink, (o, error) -> {
                     // we complete maintOp here, not waiting for container update
                     maintOp.complete();
-                    if (error) {
-                        handleHostNotAvailable(compute);
+                    if (error != null) {
+                        handleHostNotAvailable(compute, error);
                     } else {
                         handleHostAvailable(compute);
                     }
@@ -628,7 +658,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
 
     private void updateContainerHostInfo(
             String documentSelfLink,
-            BiConsumer<AbstractCallbackServiceHandler.CallbackServiceHandlerState, Boolean> consumer,
+            BiConsumer<AbstractCallbackServiceHandler.CallbackServiceHandlerState, ServiceErrorResponse> consumer,
             ServiceTaskCallback serviceTaskCallback) {
 
         if (serviceTaskCallback == null) {
@@ -668,7 +698,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
     }
 
     private void startAndCreateCallbackHandlerService(
-            BiConsumer<AbstractCallbackServiceHandler.CallbackServiceHandlerState, Boolean> actualCallback,
+            BiConsumer<AbstractCallbackServiceHandler.CallbackServiceHandlerState, ServiceErrorResponse> actualCallback,
             Consumer<ServiceTaskCallback> caller) {
         if (actualCallback == null) {
             caller.accept(ServiceTaskCallback.createEmpty());
@@ -698,10 +728,10 @@ public class ContainerHostDataCollectionService extends StatefulService {
     private static class HostInfoUpdatedCallbackHandler extends
             AbstractCallbackServiceHandler {
 
-        private final BiConsumer<CallbackServiceHandlerState, Boolean> consumer;
+        private final BiConsumer<CallbackServiceHandlerState, ServiceErrorResponse> consumer;
 
         public HostInfoUpdatedCallbackHandler(
-                BiConsumer<CallbackServiceHandlerState, Boolean> consumer) {
+                BiConsumer<CallbackServiceHandlerState, ServiceErrorResponse> consumer) {
 
             this.consumer = consumer;
         }
@@ -713,13 +743,13 @@ public class ContainerHostDataCollectionService extends StatefulService {
             if (err != null && err.stackTrace != null) {
                 logFine("Task failure stack trace: %s", err.stackTrace);
                 logWarning("Task failure error message: %s", err.message);
-                consumer.accept(state, true);
+                consumer.accept(state, err);
             }
         }
 
         @Override
         protected void handleFinishedStagePatch(CallbackServiceHandlerState state) {
-            consumer.accept(state, false);
+            consumer.accept(state, null);
         }
     }
 
