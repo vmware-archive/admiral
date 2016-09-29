@@ -517,8 +517,8 @@ ContainersStore = Reflux.createStore({
     }).catch(this.onGenericCreateError);
   },
 
-  onCreateNetwork: function(networkDescription, hostLinks) {
-    services.createNetwork(networkDescription, hostLinks).then((request) => {
+  onCreateNetwork: function(networkDescription, hostIds) {
+    services.createNetwork(networkDescription, hostIds).then((request) => {
       this.navigateContainersListViewAndOpenRequests(request);
     }).catch(this.onGenericCreateError);
   },

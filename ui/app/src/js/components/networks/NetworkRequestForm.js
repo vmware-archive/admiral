@@ -38,10 +38,10 @@ var NetworkRequestForm = Vue.extend({
         var network = networkForm.getNetworkDefinition();
 
         var hosts = this.$refs.hostPicker.getHosts();
-        var hostLinks = hosts.map(h => h.documentSelfLink);
+        var hostIds = hosts.map(h => h.id);
 
         this.savingNetwork = true;
-        ContainerActions.createNetwork(network, hostLinks);
+        ContainerActions.createNetwork(network, hostIds);
       }
     }
   },

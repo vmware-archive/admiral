@@ -40,6 +40,8 @@ const PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE = 'xn-force-index-update';
 
 const FILTER_VALUE_ALL_FIELDS = 'ALL_FIELDS';
 
+const CONTAINER_HOST_ID_CUSTOM_PROPERTY = '__containerHostId';
+
 const DEBUG_SLOW_MODE_TIMEOUT = utils.getDebugSlowModeTimeout();
 if (DEBUG_SLOW_MODE_TIMEOUT) {
   console.warn('DEBUG SLOW MODE ENABLED! Make sure you are running in dev/test mode.');
@@ -910,10 +912,9 @@ services.createContainer = function(containerDescription, group) {
     });
 };
 
-services.createNetwork = function(networkDescription, hostLinks) {
-  var customProperties = {
-    '__containerHostIds': hostLinks.join(',')
-  };
+services.createNetwork = function(networkDescription, hostIds) {
+  var customProperties = {};
+  customProperties[CONTAINER_HOST_ID_CUSTOM_PROPERTY] = hostIds.join(',');
   return services.createNetworkDescription(networkDescription).then(
     function(createdNetworkDescription) {
       return services.createRequest(createdNetworkDescription.documentSelfLink,

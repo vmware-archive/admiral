@@ -12,10 +12,14 @@
 package com.vmware.admiral.request;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.Test;
@@ -81,7 +85,8 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
         assertEquals(3, compositeDesc.descriptionLinks.size());
 
         // setup Group Placement:
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
 
         // 1. Request a composite container:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
@@ -126,6 +131,74 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
 
         assertNotNull(cont1.networks.get(network.name));
         assertNotNull(cont2.networks.get(network.name));
+
+        List<String> hostLinks = Arrays.asList(cont1.parentLink,
+                cont2.parentLink);
+        // Network is provisioned on one of the hosts of the containers
+        assertTrue(hostLinks.contains(network.originatingHostLink));
+    }
+
+    @Test
+    public void testNetworkProvisioningTaskWithProvidedHostIds() throws Throwable {
+
+        ContainerNetworkDescription networkDesc = TestRequestStateFactory
+                .createContainerNetworkDescription("my-net");
+        networkDesc.documentSelfLink = UUID.randomUUID().toString();
+        // TODO: Uncomment once RequestBroker can handle single network provisioning
+        // networkDesc = doPost(networkDesc, ContainerNetworkDescriptionService.FACTORY_LINK);
+        CompositeDescription compositeDesc = createCompositeDesc(networkDesc);
+
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+        if (dockerHostDesc.customProperties == null) {
+            dockerHostDesc.customProperties = new HashMap<>();
+        }
+        dockerHostDesc.customProperties
+                .put(ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME, "my-kv-store");
+
+        ComputeState dockerHost1 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost1);
+
+        ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost2);
+
+        // TODO: Uncomment once RequestBroker can handle single network provisioning
+        // RequestBrokerState request = TestRequestStateFactory.createRequestState(
+        //   ResourceType.NETWORK_TYPE.getName(), networkDesc.documentSelfLink);
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+
+        String hostIds = dockerHost1.id + "," + dockerHost2.id;
+        request.customProperties = new HashMap<>();
+        request.customProperties
+                .put(ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY, hostIds);
+
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+
+        // TODO: Uncomment once RequestBroker can handle single network provisioning
+        // List<String> networkLinks = request.resourceLinks;
+
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        List<String> networkLinks = cc.componentLinks;
+
+        ContainerNetworkState net1 = getDocument(ContainerNetworkState.class,
+                networkLinks.get(0));
+        ContainerNetworkState net2 = getDocument(ContainerNetworkState.class,
+                networkLinks.get(1));
+
+        assertNotNull(net1);
+        assertNotNull(net2);
+
+        List<String> hostLinks = Arrays.asList(dockerHost1.documentSelfLink,
+                dockerHost2.documentSelfLink);
+
+        // Networks are provisioned on the provided hosts
+        assertTrue(hostLinks.contains(net1.originatingHostLink));
+        assertTrue(hostLinks.contains(net2.originatingHostLink));
+        assertFalse(net1.originatingHostLink.equals(net2.originatingHostLink));
     }
 
 }

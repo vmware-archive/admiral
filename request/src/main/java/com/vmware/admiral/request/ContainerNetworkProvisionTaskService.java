@@ -14,7 +14,6 @@ package com.vmware.admiral.request;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
-import static com.vmware.admiral.request.ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 
 import java.net.URI;
@@ -23,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,7 +46,6 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.UriUtils;
@@ -174,10 +173,25 @@ public class ContainerNetworkProvisionTaskService
 
         createTaskCallbackAndGetNetworkDescription(state, (taskCallback, networkDescription) -> {
             state.instanceAdapterReference = networkDescription.instanceAdapterReference;
-            selectHostLink(state, networkDescription, (hostLink) -> {
-                for (String networkLink : state.resourceLinks) {
-                    provisionNetwork(state, networkLink, hostLink, taskCallback);
+            selectHosts(state, networkDescription, (hosts) -> {
+
+                if (hosts.size() == 1 || state.resourceLinks.size() == hosts.size()) {
+                    Iterator<ComputeState> hostIt = hosts.iterator();
+                    ComputeState host = hostIt.next();
+                    for (String networkLink : state.resourceLinks) {
+                        provisionNetwork(state, networkLink, host, taskCallback);
+
+                        if (hostIt.hasNext()) {
+                            host = hostIt.next();
+                        }
+                    }
+                } else {
+                    String err = String.format(
+                            "Unexpected size of resource links and hosts, hosts should be one or equal to resource links! Actual resources - [%s], hosts - [%s]",
+                            state.resourceLinks.size(), hosts.size());
+                    failTask(err, null);
                 }
+
             });
         });
 
@@ -185,33 +199,35 @@ public class ContainerNetworkProvisionTaskService
     }
 
     private void provisionNetwork(ContainerNetworkProvisionTaskState state,
-            String networkLink, String hostLink, ServiceTaskCallback taskCallback) {
-        getNetworkAndHost(networkLink, hostLink, (network, host) -> {
+            String networkLink, ComputeState host, ServiceTaskCallback taskCallback) {
+        getNetwork(networkLink, (network) -> {
             updateContainerNetworkStateWithContainerHostLink(network, host,
                     () -> createAndSendContainerNetworkRequest(network, state, taskCallback,
                             networkLink));
         });
     }
 
-    private void getNetworkAndHost(String networkLink, String hostLink,
-            BiConsumer<ContainerNetworkState, ComputeState> callback) {
-        List<Operation> operations = new ArrayList<>();
-        Operation getNetworkOp = Operation.createGet(this, networkLink);
-        Operation getHostOp = Operation.createGet(this, hostLink);
-        operations.add(getNetworkOp);
-        operations.add(getHostOp);
-
-        OperationJoin.create(operations).setCompletion((ops, exs) -> {
-            if (exs != null) {
-                failTask("Failed retrieving network and host: " + Utils.toString(exs), null);
+    private void getNetwork(String networkLink, Consumer<ContainerNetworkState> callback) {
+        Operation.createGet(this, networkLink).setCompletion((op, ex) -> {
+            if (ex != null) {
+                failTask("Failed retrieving network: " + Utils.toString(ex), null);
                 return;
             }
 
-            ContainerNetworkState network = ops.get(getNetworkOp.getId())
-                    .getBody(ContainerNetworkState.class);
-            ComputeState host = ops.get(getHostOp.getId()).getBody(ComputeState.class);
+            ContainerNetworkState network = op.getBody(ContainerNetworkState.class);
+            callback.accept(network);
+        }).sendWith(this);
+    }
 
-            callback.accept(network, host);
+    private void getHost(String hostLink, Consumer<ComputeState> callback) {
+        Operation.createGet(this, hostLink).setCompletion((op, ex) -> {
+            if (ex != null) {
+                failTask("Failed retrieving host: " + Utils.toString(ex), null);
+                return;
+            }
+
+            ComputeState host = op.getBody(ComputeState.class);
+            callback.accept(host);
         }).sendWith(this);
     }
 
@@ -409,16 +425,17 @@ public class ContainerNetworkProvisionTaskService
         return result;
     }
 
-    private void selectHostLink(ContainerNetworkProvisionTaskState state,
-            ContainerNetworkDescription networkDescription, Consumer<String> callback) {
+    private void selectHosts(ContainerNetworkProvisionTaskState state,
+            ContainerNetworkDescription networkDescription, Consumer<List<ComputeState>> callback) {
 
-        // If property __containerHostId exists then use it directly to try to provision the network
+        // If hosts are provided use them directly to try to provision the network
         // (e.g. when External network CRUD operations)
-        if (state.customProperties != null
-                && state.customProperties.containsKey(CONTAINER_HOST_ID_CUSTOM_PROPERTY)) {
-            retrieveContainerHostById(state, (host) -> {
-                String hostLink = host.documentSelfLink;
-                callback.accept(hostLink);
+        List<String> providedHostIds = ContainerNetworkAllocationTaskService
+                .getProvidedHostIds(state);
+
+        if (providedHostIds != null) {
+            retrieveContainerHostsByIds(state, providedHostIds, (hosts) -> {
+                callback.accept(hosts);
             });
             return;
         }
@@ -434,41 +451,47 @@ public class ContainerNetworkProvisionTaskService
                     failTask(err, null);
                 } else {
                     String hostLink = containerStatesForNetwork.get(0).parentLink;
-                    callback.accept(hostLink);
+                    getHost(hostLink, (host) -> {
+                        callback.accept(Collections.singletonList(host));
+                    });
                 }
             });
         });
     }
 
-    private void retrieveContainerHostById(ContainerNetworkProvisionTaskState state,
-            Consumer<ComputeState> callbackFunction) {
+    private void retrieveContainerHostsByIds(ContainerNetworkProvisionTaskState state,
+            List<String> hostIds,
+            Consumer<List<ComputeState>> callbackFunction) {
 
-        final ComputeState[] result = new ComputeState[1];
+        final List<ComputeState> result = new ArrayList<>();
 
-        final QueryTask queryTask = QueryUtil.buildPropertyQuery(ComputeState.class,
-                ComputeState.FIELD_NAME_ID,
-                state.getCustomProperty(CONTAINER_HOST_ID_CUSTOM_PROPERTY));
+        List<String> remainingHostIds = new ArrayList<>(hostIds);
 
+        final QueryTask queryTask = QueryUtil.buildQuery(ComputeState.class, true);
+        QueryUtil.addListValueClause(queryTask, ComputeState.FIELD_NAME_ID, hostIds);
         QueryUtil.addExpandOption(queryTask);
 
         new ServiceDocumentQuery<ComputeState>(getHost(), ComputeState.class)
                 .query(queryTask, (r) -> {
                     if (r.hasException()) {
                         failTask(String.format(
-                                "Exception during retrieving a host with id [%s]. Error: [%s]",
-                                state.getCustomProperty(CONTAINER_HOST_ID_CUSTOM_PROPERTY),
+                                "Exception during retrieving hosts with ids [%s]. Error: [%s]",
+                                hostIds,
                                 Utils.toString(r.getException())), r.getException());
                     } else if (r.hasResult()) {
-                        result[0] = r.getResult();
+                        ComputeState cs = r.getResult();
+                        result.add(cs);
+                        remainingHostIds.remove(cs.id);
                     } else {
-                        if (result[0] == null) {
-                            failTask(String.format("Host with id: [%s] not found!",
-                                    state.getCustomProperty(CONTAINER_HOST_ID_CUSTOM_PROPERTY)),
+                        if (!remainingHostIds.isEmpty()) {
+                            failTask(String.format(
+                                    "Not all hosts were found! Remaining hosts: [%s]!",
+                                    remainingHostIds),
                                     r.getException());
                             return;
                         }
 
-                        callbackFunction.accept(result[0]);
+                        callbackFunction.accept(result);
                     }
                 });
     }

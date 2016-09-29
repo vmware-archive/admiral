@@ -307,8 +307,6 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
     public static ContainerNetworkState createNetwork(String name) {
         ContainerNetworkState net = new ContainerNetworkState();
         net.name = name;
-        net.originatingHostLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK,
-                DOCKER_COMPUTE_ID);
 
         return net;
     }

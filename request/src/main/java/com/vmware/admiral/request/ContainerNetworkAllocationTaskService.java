@@ -15,9 +15,11 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
+import static com.vmware.admiral.request.ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -120,6 +122,12 @@ public class ContainerNetworkAllocationTaskService extends
 
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
+        }
+
+        List<String> providedHostIds = getProvidedHostIds(state);
+
+        if (providedHostIds != null) {
+            state.resourceCount = state.resourceCount * providedHostIds.size();
         }
     }
 
@@ -379,6 +387,15 @@ public class ContainerNetworkAllocationTaskService extends
                     this.networkDescription = desc;
                     callbackFunction.accept(desc);
                 }));
+    }
+
+    public static List<String> getProvidedHostIds(TaskServiceDocument<?> state) {
+        String hostId = state.getCustomProperty(CONTAINER_HOST_ID_CUSTOM_PROPERTY);
+        if (hostId == null) {
+            return null;
+        }
+        // Can be a a single id or comma separated values of ids
+        return Arrays.asList(hostId.split(","));
     }
 
 }
