@@ -994,6 +994,30 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
     }
 
     @Override
+    public void listNetworks(CommandInput input, CompletionHandler completionHandler) {
+        String idNameSeperator = "@@@";
+        CommandBuilder cb = new CommandBuilder()
+                .withCommand("inspect")
+                .withLongSwitch("format", "{{.Id}}" + idNameSeperator + "{{.Name}}")
+                .withArguments("$(docker network ls --quiet --no-trunc)");
+
+        // each line in the output is a network ID
+        // map it to a list of maps with the Id key set
+        Function<String, ?> psMapper = NEWLINE_DELIMITED_MAPPER.andThen((c) -> c.stream()
+                .map((row) -> {
+                    String[] idNameValues = row.split(idNameSeperator);
+                    Map<String, Object> rowMap = new HashMap<>(2);
+                    rowMap.put(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME, idNameValues[0]);
+                    rowMap.put(DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME,
+                            Collections.singletonList(idNameValues[1]));
+                    return rowMap;
+                })
+                .collect(Collectors.toList()));
+
+        execWithInput(input, docker(cb), completionHandler, psMapper);
+    }
+
+    @Override
     public void inspectNetwork(CommandInput input, CompletionHandler completionHandler) {
         Map<String, Object> properties = input.getProperties();
 

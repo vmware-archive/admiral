@@ -320,6 +320,17 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         sendDelete(uri, completionHandler);
     }
 
+    /**
+     * https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/list-networks
+     */
+    @Override
+    public void listNetworks(CommandInput input, CompletionHandler completionHandler) {
+        createOrUpdateTargetSsl(input);
+        URI uri = UriUtils.extendUri(input.getDockerUri(), "/networks");
+
+        sendGet(uri, null, completionHandler);
+    }
+
     @Override
     public void inspectNetwork(CommandInput input, CompletionHandler completionHandler) {
         createOrUpdateTargetSsl(input);

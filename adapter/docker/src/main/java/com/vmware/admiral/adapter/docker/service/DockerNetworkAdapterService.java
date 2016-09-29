@@ -312,8 +312,19 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
     }
 
     private void processListNetworks(RequestContext context) {
-        // TODO implement
-        throw new NotImplementedException("listing networks is not implemented yet");
+
+        CommandInput createListNetworkCommandInput = new CommandInput(context.commandInput);
+
+        context.executor.listNetworks(createListNetworkCommandInput, (op, ex) -> {
+            if (ex != null) {
+                context.operation.fail(ex);
+            } else {
+                if (op.hasBody()) {
+                    context.operation.setBody(op.getBody(String.class));
+                }
+                context.operation.complete();
+            }
+        });
     }
 
     private void processConnectNetwork(RequestContext context) {

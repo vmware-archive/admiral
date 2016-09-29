@@ -188,18 +188,18 @@ public interface DockerAdapterCommandExecutor {
     // Network operations:
     void createNetwork(CommandInput input, CompletionHandler completionHandler);
 
-    void removeNetwork(CommandInput input, CompletionHandler completionHandler);
+    void listNetworks(CommandInput input, CompletionHandler completionHandler);
 
     void inspectNetwork(CommandInput input, CompletionHandler completionHandler);
+
+    void removeNetwork(CommandInput input, CompletionHandler completionHandler);
 
     // TODO uncomment and implement
     // void connectNetwork(CommandInput input, CompletionHandler completionHandler);
     //
     // void disconnectNetwork(CommandInput input, CompletionHandler completionHandler);
-    //
-    // void listNetworks(CommandInput input, CompletionHandler completionHandler);
 
-    // Volume operations
+    // Volume operations:
     void createVolume(CommandInput input, CompletionHandler completionHandler);
 
     void listVolumes(CommandInput input, CompletionHandler completionHandler);
