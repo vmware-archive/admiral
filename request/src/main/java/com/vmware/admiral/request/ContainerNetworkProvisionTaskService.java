@@ -121,13 +121,10 @@ public class ContainerNetworkProvisionTaskService
         assertNotNull(state.resourceDescriptionLink, "resourceDescriptionLink");
         assertNotNull(state.resourceLinks, "resourceLinks");
 
+        state.resourceCount = (long) state.resourceLinks.size();
+
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
-        }
-
-        if (state.resourceCount != state.resourceLinks.size()) {
-            throw new IllegalArgumentException(
-                    "size of 'resourceLinks' must be equal to 'resourcesCount'");
         }
     }
 

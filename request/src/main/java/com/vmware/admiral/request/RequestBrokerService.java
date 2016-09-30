@@ -14,6 +14,7 @@ package com.vmware.admiral.request;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
+import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_ALLOCATION_REQUEST;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
 import java.util.ArrayList;
@@ -212,7 +213,13 @@ public class RequestBrokerService extends
         case ALLOCATING:
             break;
         case ALLOCATED:
-            complete(state, SubStage.COMPLETED);
+            String postAllocationOperation = getPostAllocationOperation(state);
+            if (postAllocationOperation != null) {
+                state.operation = postAllocationOperation;
+                createAllocationTasks(state);
+            } else {
+                complete(state, SubStage.COMPLETED);
+            }
             break;
         case REQUEST_FAILED:
             if (isProvisionOperation(state)) {
@@ -1131,6 +1138,33 @@ public class RequestBrokerService extends
                         || NetworkOperationType.CREATE.id.equals(state.operation)
                         || ComputeOperationType.CREATE.id.equals(state.operation)
                         || VolumeOperationType.CREATE.id.equals(state.operation));
+    }
+
+    private String getPostAllocationOperation(RequestBrokerState state) {
+
+        if (!isProvisionOperation(state)) {
+            // It's not a provision resource operation but other type of operation without a
+            // post-allocation operation associated.
+            return null;
+        }
+
+        if (state.customProperties != null && Boolean.parseBoolean(
+                state.customProperties.get(FIELD_NAME_ALLOCATION_REQUEST))) {
+            // It's a provision resource operation but the __allocation_request flag indicates that
+            // only the allocation must happen so that skipping the post-allocation operation.
+            return null;
+        }
+
+        if (isContainerNetworkType(state)) {
+            return NetworkOperationType.CREATE.id;
+        } else if (isComputeType(state)) {
+            return ComputeOperationType.CREATE.id;
+        } else if (isContainerVolumeType(state)) {
+            return VolumeOperationType.CREATE.id;
+        } else {
+            // No ContainerType here since its "unified" ContainerAllocationTaskService handles it!
+            return null;
+        }
     }
 
     private boolean isRemoveOperation(RequestBrokerState state) {

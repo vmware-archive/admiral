@@ -33,6 +33,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.ServiceNetwork;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
@@ -144,9 +145,7 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
         ContainerNetworkDescription networkDesc = TestRequestStateFactory
                 .createContainerNetworkDescription("my-net");
         networkDesc.documentSelfLink = UUID.randomUUID().toString();
-        // TODO: Uncomment once RequestBroker can handle single network provisioning
-        // networkDesc = doPost(networkDesc, ContainerNetworkDescriptionService.FACTORY_LINK);
-        CompositeDescription compositeDesc = createCompositeDesc(networkDesc);
+        networkDesc = doPost(networkDesc, ContainerNetworkDescriptionService.FACTORY_LINK);
 
         ComputeDescription dockerHostDesc = createDockerHostDescription();
         if (dockerHostDesc.customProperties == null) {
@@ -161,11 +160,8 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
         ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
         addForDeletion(dockerHost2);
 
-        // TODO: Uncomment once RequestBroker can handle single network provisioning
-        // RequestBrokerState request = TestRequestStateFactory.createRequestState(
-        //   ResourceType.NETWORK_TYPE.getName(), networkDesc.documentSelfLink);
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
-                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+                ResourceType.NETWORK_TYPE.getName(), networkDesc.documentSelfLink);
 
         String hostIds = dockerHost1.id + "," + dockerHost2.id;
         request.customProperties = new HashMap<>();
@@ -178,11 +174,7 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
         // wait for request completed state:
         request = waitForRequestToComplete(request);
 
-        // TODO: Uncomment once RequestBroker can handle single network provisioning
-        // List<String> networkLinks = request.resourceLinks;
-
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
-        List<String> networkLinks = cc.componentLinks;
+        List<String> networkLinks = request.resourceLinks;
 
         ContainerNetworkState net1 = getDocument(ContainerNetworkState.class,
                 networkLinks.get(0));

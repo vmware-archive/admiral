@@ -23,6 +23,7 @@ import static com.vmware.admiral.test.integration.data.IntegratonTestStateFactor
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -37,6 +38,7 @@ import org.junit.After;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
+import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse;
 import com.vmware.admiral.common.AuthCredentialsType;
@@ -55,6 +57,7 @@ import com.vmware.admiral.compute.container.CompositeComponentRegistry.Component
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.image.service.ContainerImageService;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
@@ -94,6 +97,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
     private SslTrustCertificateState dockerHostSslTrust;
 
     private final Set<String> containersToDelete = new HashSet<>();
+    private final Set<String> externalNetworksToDelete = new HashSet<>();
 
     protected String registryAddress;
 
@@ -118,6 +122,26 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
                 requestContainerDelete(Collections.singletonList(containerLink), false);
             } catch (Throwable t) {
                 logger.warning(String.format("Unable to remove container %s: %s", containerLink,
+                        t.getMessage()));
+            }
+        }
+
+        // remove the external networks, if any
+        it = externalNetworksToDelete.iterator();
+        while (it.hasNext()) {
+            String networkLink = it.next();
+            ContainerNetworkState networkState = getDocument(networkLink,
+                    ContainerNetworkState.class);
+            if (networkState == null) {
+                logger.warning(String.format("Unable to find network %s", networkLink));
+                continue;
+            }
+
+            try {
+                logger.info("---------- Clean up: Request Delete the network instance. --------");
+                requestExternalNetworkDelete(networkLink);
+            } catch (Throwable t) {
+                logger.warning(String.format("Unable to remove network %s: %s", networkLink,
                         t.getMessage()));
             }
         }
@@ -291,8 +315,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         requestContainerDelete(request.resourceLinks, true);
     }
 
-    protected RequestBrokerState requestContainer(String resourceDescLink)
-            throws Exception {
+    protected RequestBrokerState requestContainer(String resourceDescLink) throws Exception {
 
         RequestBrokerState request = new RequestBrokerState();
         if (resourceDescLink.startsWith(CompositeDescriptionFactoryService.SELF_LINK)) {
@@ -347,6 +370,39 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
             assertNull(computeState);
             containersToDelete.remove(containerLink);
         }
+    }
+
+    protected RequestBrokerState requestExternalNetwork(String networkDescLink) throws Exception {
+
+        RequestBrokerState request = new RequestBrokerState();
+        ComponentMeta meta = CompositeComponentRegistry.metaByDescriptionLink(networkDescLink);
+
+        request.resourceType = meta.resourceType;
+        request.resourceDescriptionLink = networkDescLink;
+        request.tenantLinks = TENANT;
+        request = postDocument(RequestBrokerFactoryService.SELF_LINK, request);
+
+        waitForTaskToComplete(request.documentSelfLink);
+
+        request = getDocument(request.documentSelfLink, RequestBrokerState.class);
+        for (String networkLink : request.resourceLinks) {
+            externalNetworksToDelete.add(networkLink);
+        }
+
+        return request;
+    }
+
+    protected void requestExternalNetworkDelete(String resourceLink) throws Exception {
+
+        RequestBrokerState day2DeleteRequest = new RequestBrokerState();
+        ComponentMeta metaByStateLink = CompositeComponentRegistry.metaByStateLink(resourceLink);
+
+        day2DeleteRequest.resourceType = metaByStateLink.resourceType;
+        day2DeleteRequest.operation = NetworkOperationType.DELETE.id;
+        day2DeleteRequest.resourceLinks = new ArrayList<>(Arrays.asList(resourceLink));
+        day2DeleteRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2DeleteRequest);
+
+        waitForTaskToComplete(day2DeleteRequest.documentSelfLink);
     }
 
     /**
