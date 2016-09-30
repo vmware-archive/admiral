@@ -692,12 +692,13 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
         cb.withLongSwitchIfPresent(hostConfig, PROP_NAME_TO_LONG_SWITCH, MEMORY_PROP_NAME,
                 MEMORY_SWAP_PROP_NAME, CPU_SHARES_PROP_NAME, DNS_PROP_NAME, DNS_SEARCH_PROP_NAME,
                 VOLUMES_FROM_PROP_NAME, CAP_ADD_PROP_NAME, CAP_DROP_PROP_NAME,
-                PRIVILEGED_PROP_NAME, PUBLISH_ALL);
+                PRIVILEGED_PROP_NAME);
 
         cb.withLongSwitchIfPresent(hostConfig, NETWORK_MODE_PROP_NAME, "net");
         cb.withLongSwitchIfPresent(hostConfig, LINKS_PROP_NAME, "link");
         cb.withLongSwitchIfPresent(hostConfig, PID_MODE_PROP_NAME, "pid");
         cb.withLongSwitchIfPresent(hostConfig, EXTRA_HOSTS_PROP_NAME, "add-host");
+        cb.withLongSwitchIfPresent(hostConfig, PUBLISH_ALL, "publish-all");
 
         Map<String, List<Map<String, String>>> portBindings = (Map<String, List<Map<String, String>>>) hostConfig
                 .get(DOCKER_CONTAINER_PORT_BINDINGS_PROP_NAME);

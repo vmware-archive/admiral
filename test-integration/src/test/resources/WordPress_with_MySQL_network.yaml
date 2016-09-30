@@ -19,8 +19,7 @@ components:
       - var: WORDPRESS_DB_HOST
         value: mysql:3306
       network_mode: bridge
-      ports:
-      - container_port: 80
+      publish_all: true
       depends_on:
       - mysql
       networks:
