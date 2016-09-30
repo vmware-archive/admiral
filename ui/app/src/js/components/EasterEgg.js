@@ -19,9 +19,6 @@ var EasterEgg = Vue.extend({
       var userLang = i18n.detectLanguage();
 
       return (userLang && userLang.toLowerCase().indexOf('ca') === 0);
-    },
-    isStani: function() {
-      return window.location.search && window.location.search.indexOf('stani') !== -1;
     }
   }
 });
