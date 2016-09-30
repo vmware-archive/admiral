@@ -79,9 +79,9 @@ public class HostContainerListDataCollection extends StatefulService {
     public static class HostContainerListDataCollectionFactoryService extends FactoryService {
         public static final String SELF_LINK = ManagementUriParts.HOST_CONTAINER_LIST_DATA_COLLECTION;
 
-        public static final String DEFAULT_HOST_CONAINER_LIST_DATA_COLLECTION_ID = "__default-list-data-collection";
-        public static final String DEFAULT_HOST_CONAINER_LIST_DATA_COLLECTION_LINK = UriUtils
-                .buildUriPath(SELF_LINK, DEFAULT_HOST_CONAINER_LIST_DATA_COLLECTION_ID);
+        public static final String DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_ID = "__default-list-data-collection";
+        public static final String DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK = UriUtils
+                .buildUriPath(SELF_LINK, DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_ID);
 
         public HostContainerListDataCollectionFactoryService() {
             super(HostContainerListDataCollectionState.class);
@@ -99,7 +99,7 @@ public class HostContainerListDataCollection extends StatefulService {
                     .getBody(HostContainerListDataCollectionState.class);
             if (initState.documentSelfLink == null
                     || !initState.documentSelfLink
-                            .endsWith(DEFAULT_HOST_CONAINER_LIST_DATA_COLLECTION_ID)) {
+                            .endsWith(DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_ID)) {
                 post.fail(new IllegalArgumentException(
                         "Only one instance of list containers data collection can be started"));
                 return;
@@ -115,7 +115,7 @@ public class HostContainerListDataCollection extends StatefulService {
 
         public static ServiceDocument buildDefaultStateInstance() {
             HostContainerListDataCollectionState state = new HostContainerListDataCollectionState();
-            state.documentSelfLink = DEFAULT_HOST_CONAINER_LIST_DATA_COLLECTION_LINK;
+            state.documentSelfLink = DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK;
             state.taskInfo = new TaskState();
             state.taskInfo.stage = TaskStage.STARTED;
             state.containerHostLinks = new HashSet<>();
@@ -822,6 +822,7 @@ public class HostContainerListDataCollection extends StatefulService {
                                         containerState.id,
                                         ex.getMessage());
                                 callback.accept(ex);
+                                return;
                             } else {
                                 logInfo("Created ContainerState for discovered container: %s",
                                         containerState.id);

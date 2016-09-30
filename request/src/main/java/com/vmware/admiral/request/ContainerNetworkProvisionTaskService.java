@@ -234,6 +234,7 @@ public class ContainerNetworkProvisionTaskService
 
         ContainerNetworkState patch = new ContainerNetworkState();
         patch.originatingHostLink = host.documentSelfLink;
+        patch.parentLinks = new ArrayList<>(Arrays.asList(host.documentSelfLink));
 
         if (currentNetworkState.driver == null || currentNetworkState.driver.isEmpty()) {
 

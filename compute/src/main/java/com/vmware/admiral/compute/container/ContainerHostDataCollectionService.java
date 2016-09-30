@@ -43,6 +43,8 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
+import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionFactoryService;
+import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
@@ -207,6 +209,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                                         qr.rpLinksByComputeLink.get(computeState.documentSelfLink),
                                         body.remove);
                                 updateContainerHostContainers(computeState.documentSelfLink);
+                                updateContainerHostNetworks(computeState.documentSelfLink);
                                 updateHostStats(computeState.documentSelfLink);
                             }
                         }, null);
@@ -634,6 +637,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 }, null);
 
                 updateContainerHostContainers(compute.documentSelfLink);
+                updateContainerHostNetworks(compute.documentSelfLink);
             }
 
             for (ResourcePoolData rpData : qr.resourcesPools.values()) {
@@ -687,7 +691,23 @@ public class ContainerHostDataCollectionService extends StatefulService {
         sendRequest(Operation
                 .createPatch(
                         this,
-                        HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONAINER_LIST_DATA_COLLECTION_LINK)
+                        HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
+                .setBody(body)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logWarning(Utils.toString(ex));
+                        return;
+                    }
+                }));
+    }
+
+    private void updateContainerHostNetworks(String documentSelfLink) {
+        NetworkListCallback body = new NetworkListCallback();
+        body.containerHostLink = documentSelfLink;
+        sendRequest(Operation
+                .createPatch(
+                        this,
+                        HostNetworkListDataCollectionFactoryService.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK)
                 .setBody(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {

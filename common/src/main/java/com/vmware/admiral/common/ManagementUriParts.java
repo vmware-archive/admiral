@@ -51,6 +51,7 @@ public interface ManagementUriParts {
     String CONTAINER_HOSTS = RESOURCES + "/hosts";
     String CONTAINER_HOST_DATA_COLLECTION = RESOURCES + "/hosts-data-collections";
     String HOST_CONTAINER_LIST_DATA_COLLECTION = RESOURCES + "/host-container-list-data-collection";
+    String HOST_NETWORK_LIST_DATA_COLLECTION = RESOURCES + "/host-network-list-data-collection";
 
     String EVENT_LOG = RESOURCES + "/event-logs";
     String NOTIFICATIONS = RESOURCES + "/notifications";

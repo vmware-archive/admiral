@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.function.BinaryOperator;
 
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 
 public class NetworkUtils {
 
@@ -129,6 +131,23 @@ public class NetworkUtils {
         // currently, it looks like there are no restrictions on the network name from docker side.
         // Numbers-only names and even space-delimited words are supported. We can add some
         // restrictions here.
+    }
+
+    public static ContainerNetworkDescription createContainerNetworkDescription(
+            ContainerNetworkState state) {
+
+        ContainerNetworkDescription networkDescription = new ContainerNetworkDescription();
+
+        networkDescription.documentSelfLink = state.descriptionLink;
+        networkDescription.documentDescription = state.documentDescription;
+        networkDescription.tenantLinks = state.tenantLinks;
+        networkDescription.instanceAdapterReference = state.adapterManagementReference;
+        networkDescription.name = state.name;
+        networkDescription.customProperties = state.customProperties;
+
+        // TODO - fill in other network settings
+
+        return networkDescription;
     }
 
 }

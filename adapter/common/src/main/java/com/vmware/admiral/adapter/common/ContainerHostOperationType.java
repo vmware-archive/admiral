@@ -19,6 +19,7 @@ public enum ContainerHostOperationType {
     VERSION("Host.Container.Version"),
     PING("Host.Container.Ping"),
     LIST_CONTAINERS("Host.Container.ListContainers"),
+    LIST_NETWORKS("Host.Network.ListNetworks"),
     STATS("Host.Container.Stats");
 
     ContainerHostOperationType(String id) {

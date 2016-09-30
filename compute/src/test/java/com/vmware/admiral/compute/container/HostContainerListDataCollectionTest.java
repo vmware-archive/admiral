@@ -65,7 +65,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
 
         waitForServiceAvailability(MockDockerAdapterService.SELF_LINK);
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
-        waitForServiceAvailability(HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONAINER_LIST_DATA_COLLECTION_LINK);
+        waitForServiceAvailability(HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
 
         containerListBody = new ContainerListCallback();
         containerListBody.containerHostLink = COMPUTE_HOST_LINK;
@@ -188,7 +188,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
                         UriUtilsExtended
                                 .buildUri(
                                         host,
-                                        HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONAINER_LIST_DATA_COLLECTION_LINK))
+                                        HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK))
                 .setBody(containerListBody)
                 .setReferer(host.getUri())
                 .setCompletion(host.getCompletion()));
@@ -226,7 +226,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
     private void waitForDataCollectionFinished() throws Throwable {
         AtomicBoolean cotinue = new AtomicBoolean();
 
-        String dataCollectionLink = HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONAINER_LIST_DATA_COLLECTION_LINK;
+        String dataCollectionLink = HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK;
         waitFor(() -> {
             ServiceDocumentQuery<HostContainerListDataCollectionState> query = new ServiceDocumentQuery<>(
                     host, HostContainerListDataCollectionState.class);

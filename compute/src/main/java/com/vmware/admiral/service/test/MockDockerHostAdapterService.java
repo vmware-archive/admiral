@@ -21,6 +21,7 @@ import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
+import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -74,6 +75,19 @@ public class MockDockerHostAdapterService extends StatelessService {
                         MockDockerAdapterService.getContainerNames(containerId));
                 callbackResponse.containerIdsAndImage.put(containerId,
                         MockDockerAdapterService.getContainerImage(containerId));
+            }
+            patchTaskStage(request, null, callbackResponse);
+            op.setBody(callbackResponse);
+            op.complete();
+
+        } else if (ContainerHostOperationType.LIST_NETWORKS.id == request.operationTypeId) {
+            NetworkListCallback callbackResponse = new NetworkListCallback();
+            callbackResponse.containerHostLink = request.resourceReference.getPath();
+            String hostId = Service.getId(request.resourceReference.getPath());
+            callbackResponse.networkIdsAndNames = new HashMap<>();
+            for (String networkId : MockDockerNetworkAdapterService.getNetworkIds(hostId)) {
+                callbackResponse.networkIdsAndNames.put(networkId,
+                        MockDockerNetworkAdapterService.getNetworkNames(networkId));
             }
             patchTaskStage(request, null, callbackResponse);
             op.setBody(callbackResponse);

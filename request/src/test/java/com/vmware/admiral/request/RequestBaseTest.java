@@ -200,7 +200,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK);
         waitForServiceAvailability(
                 h,
-                HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONAINER_LIST_DATA_COLLECTION_LINK);
+                HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
     }
 
     protected void addForDeletion(ServiceDocument doc) {

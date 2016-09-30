@@ -20,6 +20,7 @@ import java.util.Map;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
+import com.vmware.admiral.compute.container.maintenance.ContainerNetworkMaintenance;
 import com.vmware.admiral.compute.container.util.CompositeComponentNotifier;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
@@ -35,15 +36,31 @@ public class ContainerNetworkService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CONTAINER_NETWORKS;
 
+    private volatile ContainerNetworkMaintenance containerNetworkMaintenance;
+
     public static class ContainerNetworkState extends ResourceState {
 
         public static final String FIELD_NAME_DESCRIPTION_LINK = "descriptionLink";
+        public static final String FIELD_NAME_POWER_STATE = "powerState";
+        public static final String FIELD_NAME_PARENT_LINKS = "parentLinks";
         public static final String FIELD_NAME_IPAM = "ipam";
         public static final String FIELD_NAME_DRIVER = "driver";
         public static final String FIELD_NAME_OPTIONS = "options";
         public static final String FIELD_NAME_ORIGINATIONG_HOST_REFERENCE = "originatingHostReference";
         public static final String FIELD_NAME_ADAPTER_MANAGEMENT_REFERENCE = "adapterManagementReference";
         public static final String FIELD_NAME_COMPOSITE_COMPONENT_LINK = "compositeComponentLink";
+
+        public static enum PowerState {
+            UNKNOWN,
+            PROVISIONING,
+            CONNECTED,
+            RETIRED,
+            ERROR;
+
+            public boolean isUnmanaged() {
+                return this == PROVISIONING || this == RETIRED;
+            }
+        }
 
         /** Defines the description of the network */
         @Documentation(description = "Defines the description of the network.")
@@ -63,6 +80,17 @@ public class ContainerNetworkService extends StatefulService {
         @Documentation(description = "Defines which adapter will serve the provision request")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public URI adapterManagementReference;
+
+        /** Network state indicating runtime state of a network instance. */
+        @Documentation(description = "Network state indicating runtime state of a network instance.")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public PowerState powerState;
+
+        /** Container host links */
+        @Documentation(description = "Container host links")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public List<String> parentLinks;
 
         /** An IPAM configuration for a given network. */
         @Documentation(description = "An IPAM configuration for a given network.")
@@ -115,6 +143,8 @@ public class ContainerNetworkService extends StatefulService {
         toggleOption(ServiceOption.PERSISTENCE, true);
         toggleOption(ServiceOption.REPLICATION, true);
         toggleOption(ServiceOption.OWNER_SELECTION, true);
+        toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
+        super.setMaintenanceIntervalMicros(ContainerNetworkMaintenance.MAINTENANCE_INTERVAL_MICROS);
     }
 
     @Override
@@ -133,6 +163,14 @@ public class ContainerNetworkService extends StatefulService {
     public void handleCreate(Operation create) {
         if (create.hasBody()) {
             ContainerNetworkState body = create.getBody(ContainerNetworkState.class);
+
+            if (body.powerState == null) {
+                body.powerState = ContainerNetworkState.PowerState.UNKNOWN;
+            }
+
+            // start the monitoring service instance for this network
+            startMonitoringContainerNetworkState(body);
+
             CompositeComponentNotifier.notifyCompositionComponent(this,
                     body.compositeComponentLink, create.getAction());
         }
@@ -174,6 +212,13 @@ public class ContainerNetworkService extends StatefulService {
             CompositeComponentNotifier.notifyCompositionComponentOnChange(this, patch.getAction(),
                     currentState.compositeComponentLink, currentCompositeComponentLink);
         }
+
+        // TODO implement the equivalent for networks?
+        // if (ContainerUtil.isDiscoveredContainer(currentState)) {
+        // ContainerUtil.ContainerDescriptionHelper.createInstance(this)
+        // .updateDiscoveredContainerDesc(currentState, patchBody, null);
+        // }
+
         patch.complete();
     }
 
@@ -184,6 +229,35 @@ public class ContainerNetworkService extends StatefulService {
                 currentState.compositeComponentLink, delete.getAction());
 
         super.handleDelete(delete);
+    }
+
+    @Override
+    public void handleMaintenance(Operation post) {
+        if (getProcessingStage() != ProcessingStage.AVAILABLE) {
+            logFine("Skipping maintenance since service is not available: %s ", getUri());
+            return;
+        }
+
+        if (containerNetworkMaintenance == null) {
+            containerNetworkMaintenance = ContainerNetworkMaintenance.create(getHost(),
+                    getSelfLink());
+        }
+        containerNetworkMaintenance.handleMaintenance(post);
+    }
+
+    private void startMonitoringContainerNetworkState(ContainerNetworkState body) {
+        if (body.id != null) {
+            // perform maintenance on startup to refresh the network attributes
+            // but only for networks that already exist (and have and ID)
+            getHost().registerForServiceAvailability((o, ex) -> {
+                if (ex != null) {
+                    logWarning("Skipping maintenance because service failed to start: "
+                            + ex.getMessage());
+                } else {
+                    handleMaintenance(o);
+                }
+            }, getSelfLink());
+        }
     }
 
     /**
@@ -228,6 +302,8 @@ public class ContainerNetworkService extends StatefulService {
                 ContainerNetworkDescriptionService.FACTORY_LINK,
                 "docker-network");
 
+        template.powerState = ContainerNetworkState.PowerState.UNKNOWN;
+
         Ipam ipam = new Ipam();
         ipam.driver = "default";
 
@@ -252,6 +328,8 @@ public class ContainerNetworkService extends StatefulService {
         template.customProperties.put("key (string)", "value (string)");
 
         template.containerStateLinks = new ArrayList<String>(0);
+
+        template.parentLinks = new ArrayList<String>(0);
 
         ServiceDocumentTemplateUtil.indexProperty(template,
                 ContainerNetworkState.FIELD_NAME_OPTIONS);

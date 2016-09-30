@@ -17,6 +17,8 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_OPTIONS_PROP_NAME;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -38,6 +40,9 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
     public static final String DOCKER_NETWORK_TYPE_DEFAULT = ContainerNetworkDescription.NETWORK_DRIVER_BRIDGE;
 
     private static final NetworkOperationType[] DIRECT_OPERATIONS = {};
+
+    public static final List<String> DOCKER_PREDEFINED_NETWORKS = Arrays.asList("none", "host",
+            "bridge");
 
     private static class RequestContext {
         public NetworkRequest request;

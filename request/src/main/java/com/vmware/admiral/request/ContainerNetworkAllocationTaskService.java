@@ -30,6 +30,7 @@ import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState.PowerState;
 import com.vmware.admiral.request.ContainerNetworkAllocationTaskService.ContainerNetworkAllocationTaskState.SubStage;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
@@ -337,6 +338,8 @@ public class ContainerNetworkAllocationTaskService extends
             networkState.ipam = networkDescription.ipam;
             networkState.driver = networkDescription.driver;
             networkState.external = networkDescription.external;
+
+            networkState.powerState = PowerState.PROVISIONING;
 
             networkState.options = networkDescription.options;
             networkState.documentExpirationTimeMicros = ServiceUtils

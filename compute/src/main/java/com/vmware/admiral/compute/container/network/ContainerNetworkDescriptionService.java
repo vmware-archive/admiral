@@ -36,11 +36,17 @@ import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class ContainerNetworkDescriptionService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CONTAINER_NETWORK_DESC;
+
+    /* Instance to link to when existing networks are discovered on a host */
+    public static final String DISCOVERED_INSTANCE = "discovered";
+    public static final String DISCOVERED_DESCRIPTION_LINK = UriUtils.buildUriPath(FACTORY_LINK,
+            DISCOVERED_INSTANCE);
 
     @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
     @JsonIgnoreProperties({ "customProperties" })

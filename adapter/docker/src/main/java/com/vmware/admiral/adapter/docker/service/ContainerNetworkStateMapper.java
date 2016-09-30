@@ -36,6 +36,7 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState.PowerState;
 import com.vmware.admiral.compute.container.network.Ipam;
 import com.vmware.admiral.compute.container.network.IpamConfig;
 import com.vmware.xenon.common.ServiceHost;
@@ -98,6 +99,8 @@ public class ContainerNetworkStateMapper {
         networkState.id = (String) properties.get(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME);
         networkState.name = (String) properties.get(DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME);
         networkState.driver = (String) properties.get(DOCKER_CONTAINER_NETWORK_DRIVER_PROP_NAME);
+
+        networkState.powerState = PowerState.CONNECTED;
 
         networkState.options = getMap(properties, DOCKER_CONTAINER_NETWORK_OPTIONS_PROP_NAME);
         Map<String, Object> ipamProperties = getMap(properties,

@@ -998,7 +998,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
     public void listNetworks(CommandInput input, CompletionHandler completionHandler) {
         String idNameSeperator = "@@@";
         CommandBuilder cb = new CommandBuilder()
-                .withCommand("inspect")
+                .withCommand("network inspect")
                 .withLongSwitch("format", "{{.Id}}" + idNameSeperator + "{{.Name}}")
                 .withArguments("$(docker network ls --quiet --no-trunc)");
 

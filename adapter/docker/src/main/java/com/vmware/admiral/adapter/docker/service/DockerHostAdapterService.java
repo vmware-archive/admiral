@@ -14,6 +14,9 @@ package com.vmware.admiral.adapter.docker.service;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_ID_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_IMAGE_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NAMES_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_ID_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerNetworkAdapterService.DOCKER_PREDEFINED_NETWORKS;
 import static com.vmware.admiral.compute.ContainerHostService.SSH_HOST_KEY_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_CERT_PROP_NAME;
@@ -34,6 +37,7 @@ import com.vmware.admiral.common.UntrustedServerException;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
+import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -72,6 +76,11 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             getContainerHost(request, op, request.resourceReference,
                     (computeState, commandInput) ->
                     directListContainers(request, op, computeState, commandInput));
+        } else if (ContainerHostOperationType.LIST_NETWORKS == request.getOperationType()
+                && request.serviceTaskCallback.isEmpty()) {
+            getContainerHost(request, op, request.resourceReference,
+                    (computeState, commandInput) ->
+                    directListNetworks(request, op, computeState, commandInput));
         } else {
             getContainerHost(request, op, request.resourceReference,
                     (computeState, commandInput) ->
@@ -94,6 +103,9 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             break;
         case LIST_CONTAINERS:
             doListContainers(request, computeState, commandInput);
+            break;
+        case LIST_NETWORKS:
+            doListNetworks(request, computeState, commandInput);
             break;
         case STATS:
             doStats(request, computeState);
@@ -198,7 +210,6 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                 (o, ex) -> {
                     if (ex != null) {
                         fail(request, o, ex);
-
                     } else {
                         ContainerListCallback callbackResponse = createContainerListCallback(
                                 computeState, o);
@@ -262,6 +273,76 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             callbackResponse.addIdAndNames(id, names);
             callbackResponse.containerIdsAndImage.put(id,
                     (String) containerData.get(DOCKER_CONTAINER_IMAGE_PROP_NAME));
+        }
+        return callbackResponse;
+    }
+
+    private void doListNetworks(ContainerHostRequest request, ComputeState computeState,
+            CommandInput commandInput) {
+
+        updateSslTrust(request, commandInput);
+
+        getCommandExecutor(computeState).listNetworks(
+                commandInput,
+                (o, ex) -> {
+                    if (ex != null) {
+                        fail(request, o, ex);
+                    } else {
+                        NetworkListCallback callbackResponse = createNetworkListCallback(
+                                computeState, o);
+
+                        if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
+                            logFine("Collection returned network IDs: %s %s",
+                                    callbackResponse.networkIdsAndNames.keySet().stream()
+                                            .collect(Collectors.toList()),
+                                    request.getRequestTrackingLog());
+                        }
+
+                        patchTaskStage(request, TaskStage.FINISHED, null, callbackResponse);
+                    }
+                });
+    }
+
+    // get containers within the current operation without using callback
+    private void directListNetworks(ContainerHostRequest request, Operation op,
+            ComputeState computeState, CommandInput commandInput) {
+        updateSslTrust(request, commandInput);
+
+        getCommandExecutor(computeState).listNetworks(
+                commandInput,
+                (o, ex) -> {
+                    if (ex != null) {
+                        op.fail(ex);
+                    } else {
+                        NetworkListCallback callbackResponse = createNetworkListCallback(
+                                computeState, o);
+                        if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
+                            logFine("Collection returned network IDs: %s %s",
+                                    callbackResponse.networkIdsAndNames.keySet().stream()
+                                            .collect(Collectors.toList()),
+                                    request.getRequestTrackingLog());
+                        }
+                        op.setBody(callbackResponse);
+                        op.complete();
+                    }
+                });
+    }
+
+    @SuppressWarnings("unchecked")
+    private NetworkListCallback createNetworkListCallback(ComputeState computeState,
+            Operation o) {
+        List<Map<String, Object>> networkList = o.getBody(List.class);
+
+        NetworkListCallback callbackResponse = new NetworkListCallback();
+        callbackResponse.containerHostLink = computeState.documentSelfLink;
+
+        for (Map<String, Object> networkData : networkList) {
+            String id = (String) networkData.get(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME);
+            String name = (String) networkData.get(DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME);
+
+            if (!DOCKER_PREDEFINED_NETWORKS.contains(name)) {
+                callbackResponse.addIdAndNames(id, name);
+            }
         }
         return callbackResponse;
     }

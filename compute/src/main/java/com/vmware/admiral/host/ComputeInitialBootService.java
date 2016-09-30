@@ -18,6 +18,7 @@ import com.vmware.admiral.compute.EnvironmentMappingService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
+import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
 import com.vmware.xenon.common.Operation;
@@ -38,6 +39,7 @@ public class ComputeInitialBootService extends AbstractInitialBootService {
         states = new ArrayList<>();
         states.add(ContainerHostDataCollectionService.buildDefaultStateInstance());
         states.add(HostContainerListDataCollectionFactoryService.buildDefaultStateInstance());
+        states.add(HostNetworkListDataCollectionFactoryService.buildDefaultStateInstance());
         states.add(GroupResourcePlacementService.buildDefaultResourcePool());
         states.add(GroupResourcePlacementService.buildDefaultStateInstance());
         states.addAll(EnvironmentMappingService.getDefaultMappings());
