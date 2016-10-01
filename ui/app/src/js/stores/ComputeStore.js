@@ -90,7 +90,8 @@ let ComputeStore = Reflux.createStore({
         this.getResourcePools(compute).then((result) => {
           compute.forEach((compute) => {
             if (result[compute.resourcePoolLink]) {
-              compute.resourcePoolName = result[compute.resourcePoolLink].name;
+              compute.resourcePoolName =
+                  result[compute.resourcePoolLink].resourcePoolState.name;
             }
           });
           return this.getDescriptions(compute);

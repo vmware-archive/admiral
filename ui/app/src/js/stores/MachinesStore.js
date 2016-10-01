@@ -89,7 +89,8 @@ let MachinesStore = Reflux.createStore({
         this.getResourcePools(machines).then((result) => {
           machines.forEach((machine) => {
             if (result[machine.resourcePoolLink]) {
-              machine.resourcePoolName = result[machine.resourcePoolLink].name;
+              machine.resourcePoolName =
+                 result[machine.resourcePoolLink].resourcePoolState.name;
             }
           });
           return this.getDescriptions(machines);
