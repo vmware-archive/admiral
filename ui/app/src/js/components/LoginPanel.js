@@ -13,13 +13,16 @@ import LoginPanelVue from 'LoginPanelVue';
 import services from 'core/services';
 
 const SUCCESSFUL_REDIRECT_TIMEOUT = 1000;
+const AUTOFILL_TIMEOUT = 100;
+const AUTOFILL_CHECK_MAX_TRIES = 10;
 
 var LoginPanel = Vue.extend({
   template: LoginPanelVue,
 
   computed: {
     loginDisabled: function() {
-      return !!this.loading || !this.username || !this.password;
+      return !!this.loading ||
+        !this.autofilled && (!this.username || !this.password);
     }
   },
 
@@ -29,8 +32,27 @@ var LoginPanel = Vue.extend({
       loginSuccess: false,
       loginError: false,
       username: '',
-      password: ''
+      password: '',
+      autofilled: false
     };
+  },
+
+  attached: function() {
+    var autofillCheckTries = 1;
+    var waitForAutofill = () => {
+      this.changeUNPW();
+      if (this.username) {
+        this.autofilled = true;
+        return;
+      }
+
+      autofillCheckTries++;
+      if (autofillCheckTries < AUTOFILL_CHECK_MAX_TRIES) {
+        setTimeout(waitForAutofill, AUTOFILL_TIMEOUT);
+      }
+    };
+
+    setTimeout(waitForAutofill, AUTOFILL_TIMEOUT);
   },
 
   methods: {
@@ -59,6 +81,7 @@ var LoginPanel = Vue.extend({
     changeUNPW: function() {
       this.username = $(this.$el).find('#username').val();
       this.password = $(this.$el).find('#password').val();
+      this.autofilled = false;
     }
   }
 });
