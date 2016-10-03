@@ -68,6 +68,11 @@ var ajax = function(method, url, data, headers, disableReloadOnUnauthorized) {
             if (!disableReloadOnUnauthorized) {
               window.location.reload(true);
             }
+          },
+          401: function() {
+            if (!disableReloadOnUnauthorized) {
+              window.location.reload(true);
+            }
           }
         },
         accepts: {
