@@ -127,25 +127,23 @@ public abstract class BaseIntegrationSupportIT {
 
     @AfterClass
     public static void baseAfterClass() throws Exception {
-        try {
-            while (!documentsForDeletionAfterClass.isEmpty()) {
+        while (!documentsForDeletionAfterClass.isEmpty()) {
+            try {
                 delete(documentsForDeletionAfterClass.poll());
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            documentsForDeletionAfterClass.clear();
-            e.printStackTrace();
         }
     }
 
     @After
     public void baseTearDown() throws Exception {
-        try {
-            while (!documentsForDeletion.isEmpty()) {
+        while (!documentsForDeletion.isEmpty()) {
+            try {
                 delete(documentsForDeletion.poll());
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            documentsForDeletion.clear();
-            e.printStackTrace();
         }
     }
 
