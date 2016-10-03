@@ -84,8 +84,8 @@
 
         <!-- JS -->
         <maven.plugin.frontend.version>0.0.29</maven.plugin.frontend.version>
-        <nodejs.version>v5.10.1</nodejs.version>
-        <npm.version>3.8.3</npm.version>
+        <nodejs.version>v6.7.0</nodejs.version>
+        <npm.version>3.10.7</npm.version>
 
         <!-- internal container port to listen on -->
         <admiral.container.port>8282</admiral.container.port>
