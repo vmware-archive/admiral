@@ -22,6 +22,12 @@ var Navigation = Vue.extend({
     }
   },
 
+  computed: {
+    currentView: function() {
+      return this.model && this.model.currentView;
+    }
+  },
+
   data: function() {
     return {
       constants: constants
@@ -30,7 +36,7 @@ var Navigation = Vue.extend({
 
   attached: function() {
 
-    this.unwatchCurrentView = this.$watch('model.currentView', (currentView) => {
+    this.unwatchCurrentView = this.$watch('currentView', (currentView) => {
 
       Object.values(constants.VIEWS).forEach((item) => {
         if (item.VIEWS) { // categories

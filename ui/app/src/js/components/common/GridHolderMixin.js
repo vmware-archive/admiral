@@ -38,7 +38,7 @@ var GridHolderMixin = {
      * after the transition. For example when you animate the width of a container that holds other
      * layout elements that are calculated based on the width of the container, it is helpful and
      * better UI to re-layout the elements prior the transition and re-layout them based on the
-     * final width expected width of the container. Remmeber to call
+     * final width expected width of the container. Remember to call
      * unsetPostTransitionTargetWidth($targetEl) after the transition.
      */
     setPreTransitionGridTargetWidth: function($targetEl) {

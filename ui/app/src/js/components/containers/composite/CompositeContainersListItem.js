@@ -55,6 +55,9 @@ var CompositeContainersListItem = Vue.extend({
       */
 
       return Object.keys(containerTypesCount).length;
+    },
+    numberOfIcons: function() {
+      return Math.min(this.model.icons && this.model.icons.length, 4);
     }
   },
   methods: {

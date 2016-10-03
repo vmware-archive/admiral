@@ -50,9 +50,8 @@
 
       <grid v-bind:context-selected="model.selectedItem" v-bind:preferred-width="preferredGridWidth">
 
-        <grid-item v-for="item in model.listView.items" transition="grid-item-fade"
-                   v-bind:class="{'context-selected': item.documentId == model.selectedItem.documentId}"
-                   track-by="documentId">
+        <grid-item v-for="item in model.listView.items" transition="grid-item-fade" track-by="documentId"
+                   v-bind:class="{'context-selected': item.documentId == model.selectedItem && model.selectedItem.documentId}">
 
             <cluster-grid-item v-if="item.type === constants.CONTAINERS.TYPES.CLUSTER"
                                v-bind:model="item"

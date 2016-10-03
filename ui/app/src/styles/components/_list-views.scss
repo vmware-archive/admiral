@@ -741,12 +741,6 @@
   @include size-containers-view-context-selected(70px, 20px);
 }
 
-.containers-view.right-context-expanded {
-  > .selected-context-holder > .composite-child-containers-view > .list-view {
-     right: 30%;
-  }
-}
-
 .images-view.right-context-expanded {
   > .selected-context-holder > .content > .template-details > .details-contents > .list-view {
     right: 30%;
@@ -771,6 +765,7 @@
   > .right-context-panel {
     @extend .position-expand;
     left: 100%;
+    z-index: 100;
   }
 
   .list-view {

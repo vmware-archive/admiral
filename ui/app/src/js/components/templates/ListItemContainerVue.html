@@ -15,8 +15,8 @@
   ></i><span>{{model.alert.message}}</span></div>
 <div class="image-item" v-on:click="hideGroups($event)">
   <div class="image-header">
-    <div v-bind:class="'icons icons-' + Math.min(model.icons.length, 4)">
-      <template v-for="i in Math.min(model.icons.length, 4)">
+    <div v-bind:class="'icons icons-' + numberOfIcons">
+      <template v-for="i in numberOfIcons">
         <img v-bind:src="model.icons[i]"/>
       </template>
     </div>

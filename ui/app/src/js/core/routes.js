@@ -133,43 +133,29 @@ crossroads.addRoute('/networks/new', function() {
 crossroads.addRoute('containers/composite/{compositeComponentId*}' +
                     '/cluster/{clusterId*}/containers/{childContainerId*}',
                     function(compositeComponentId, clusterId, childContainerId) {
-  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name);
   actions.ContainerActions.openContainers();
   actions.ContainerActions.openContainerDetails(childContainerId, clusterId, compositeComponentId);
 });
 
 crossroads.addRoute('containers/composite/{compositeComponentId*}/containers/{childContainerId*}',
                     function(compositeComponentId, childContainerId) {
-  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name);
   actions.ContainerActions.openContainers();
   actions.ContainerActions.openContainerDetails(childContainerId, null, compositeComponentId);
 });
 
 crossroads.addRoute('containers/composite/{compositeComponentId*}/cluster/{clusterId*}',
                     function(compositeComponentId, clusterId) {
-  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name);
   actions.ContainerActions.openContainers();
   actions.ContainerActions.openClusterDetails(clusterId, compositeComponentId);
 });
 
 crossroads.addRoute('containers/composite/{compositeComponentId*}', function(compositeComponentId) {
-  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name);
   actions.ContainerActions.openContainers();
   actions.ContainerActions.openCompositeContainerDetails(compositeComponentId);
-});
-
-crossroads.addRoute('/containers/cluster/{clusterId*}/containers/{containerId*}',
-  function(clusterId, containerId) {
-    actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
-    actions.ContainerActions.openContainers();
-    actions.ContainerActions.openContainerDetails(containerId, clusterId);
-  });
-
-
-crossroads.addRoute('/containers/cluster/{clusterId*}', function(clusterId) {
-  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
-  actions.ContainerActions.openContainers();
-  actions.ContainerActions.openClusterDetails(clusterId);
 });
 
 crossroads.addRoute('/containers/{containerId*}', function(containerId) {

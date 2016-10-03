@@ -182,6 +182,11 @@ var TemplatesViewVueComponent = Vue.extend({
         model: {required: true},
         groups: {required: false}
       },
+      computed: {
+        numberOfIcons: function() {
+          return Math.min(this.model.icons && this.model.icons.length, 4);
+        }
+      },
       methods: {
         createTemplate: function($event) {
           // this does the provisioning of the Application

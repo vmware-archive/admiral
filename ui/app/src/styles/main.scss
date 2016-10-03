@@ -852,6 +852,7 @@ $main-list-view-right: 10px;
 .right-context-panel {
   position: relative;
   z-index: 15;
+  background-color: $context-view-background-color;
 }
 
 .right-context-panel > .toolbar {
@@ -998,10 +999,6 @@ text-shadow: 0px 0px 20px black;
   display: block;
 }
 
-.right-context-panel {
-  background-color: $context-view-background-color;
-}
-
 .right-context-panel > .content {
   @extend .position-expand;
   overflow: auto;
@@ -1116,7 +1113,7 @@ text-shadow: 0px 0px 20px black;
 .app-view.small-side {
   .side-view {
     width: 65px;
-    .nav-item > span:not(.nav-item-image) {
+    .nav-bar .nav-item > span:not(.nav-item-image) {
       display: none;
     }
   }
@@ -1140,7 +1137,7 @@ text-shadow: 0px 0px 20px black;
   @include box-shadow(inset -1px 0px 7px 0px rgba(0, 0, 0, 0.20));
 }
 
-.app-view > .side-view .nav-item > span:not(.nav-item-image) {
+.app-view > .side-view .nav-item:not(.inner) > span:not(.nav-item-image) {
   @extend .truncateText;
   display: block;
   padding-top: 0;
@@ -1152,6 +1149,20 @@ text-shadow: 0px 0px 20px black;
 .app-view > .side-view .nav-item.active > span:not(.nav-item-image) {
   font-weight: bold;
 }
+
+.app-view > .side-view .nav-item.inner > span:not(.nav-item-image) {
+  @extend .truncateText;
+  display: block;
+  padding-top: 0;
+  margin-left: 53px;
+  color: #3c3c3c;
+  font-size: 13px;
+  font-weight: 500;
+}
+.app-view > .side-view .nav-item.inner.active > span:not(.nav-item-image) {
+  font-weight: bold;
+}
+
 .col-sm-0 {
   width: 0;
   float: left;
@@ -1375,7 +1386,7 @@ text-shadow: 0px 0px 20px black;
     .template-import-option {
       .fileUpload {
         position: relative;
-	      overflow: hidden;
+        overflow: hidden;
         padding: 5px 20px 5px 20px;
         font-size: 14px;
         float: left;
@@ -1460,8 +1471,11 @@ text-shadow: 0px 0px 20px black;
   line-height: 52px;
   margin: 9px 0;
 }
+
 .nav-bar .nav-item.inner {
-  padding-left: 6px;
+  padding-left: 14px;
+  height: 42px;
+  line-height: 42px;
 }
 
 .nav-bar .nav-item:not(.active):hover {
@@ -1474,12 +1488,8 @@ text-shadow: 0px 0px 20px black;
   float: left;
   width: 24px;
 }
-
-.nav-bar .nav-item > span.nav-item-image {
-  margin: 0 0 0 23px;
-  float: left;
-  color: #333333;
-  font-size: 24px;
+.nav-bar .nav-item.inner > img.nav-item-image {
+  margin: 10px 0 0 23px;
 }
 
 .nav-bar .nav-item .nav-category {
@@ -1502,6 +1512,18 @@ text-shadow: 0px 0px 20px black;
   height: 0;
   border-style: solid;
   border-width: 27px 0 27px 10px;
+  border-color: transparent transparent transparent #cccccc;
+}
+
+.nav-bar .nav-item.inner.active:after {
+  content: " ";
+  position: absolute;
+  left: 100%;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 21px 0 21px 10px;
   border-color: transparent transparent transparent #cccccc;
 }
 
@@ -1974,7 +1996,7 @@ body > .loading, .container-details > .content .loading {
 }
 
 .app-view.normal-side .side-view {
-    width: 180px;
+  width: 180px;
 }
 .app-view.normal-side .center-view {
   left: 180px;

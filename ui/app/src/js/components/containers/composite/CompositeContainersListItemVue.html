@@ -13,8 +13,8 @@
   <div class="container-header-holder">
     <div class="status {{model.powerState}}"><span class="status-state">{{i18n("app.container.list.composite.name")}}</span></div>
     <div class="container-header">
-      <div v-bind:class="'icons icons-' + Math.min(model.icons.length, 4)">
-        <template v-for="i in Math.min(model.icons.length, 4)">
+      <div v-bind:class="'icons icons-' + numberOfIcons">
+        <template v-for="i in numberOfIcons">
           <img v-bind:src="model.icons[i]"/>
         </template>
       </div>
