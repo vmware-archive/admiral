@@ -9,11 +9,21 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import utils from 'core/utils';
+import constants from 'core/constants';
+
 import NetworksListItemVue from 'NetworksListItemVue'; //eslint-disable-line
-import { NavigationActions } from 'actions/Actions';
+import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
+import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
+import { NetworkActions, NavigationActions } from 'actions/Actions';
+
+const possibleDay2Operations = [
+  constants.RESOURCES.NETWORKS.OPERATION.REMOVE
+];
 
 var NetworksListItem = Vue.extend({
   template: NetworksListItemVue,
+  mixins: [DeleteConfirmationSupportMixin],
   props: {
     model: {required: true}
   },
@@ -21,22 +31,39 @@ var NetworksListItem = Vue.extend({
   computed: {
 
     hasConnectedContainers: function() {
-      return this.model.containers && this.model.containers.length > 0;
+      return this.model.connectedContainers
+              && this.model.connectedContainers.length > 0;
     },
 
     connectedContainersCount: function() {
-      return this.hasConnectedContainers ? this.model.containers.length : 0;
+      return this.hasConnectedContainers
+              ? this.model.connectedContainers.length : 0;
     },
 
     connectedContainersDocumentIds: function() {
-      return !this.hasConnectedContainers ? [] : this.model.containers.map(
+      return !this.hasConnectedContainers
+              ? [] : this.model.connectedContainers.map(
         (container) => {
           return container.documentId;
+        });
+    },
+
+    supportsDay2Operations: function() {
+      return possibleDay2Operations.some(
+        (operation) => {
+          if (this.operationSupported(operation)) {
+            return true;
+          }
         });
     }
 
   },
   methods: {
+
+    getNetworkDocumentId: function() {
+      return this.model.documentId;
+    },
+
     openConnectedContainers: function($event) {
       $event.stopPropagation();
       $event.preventDefault();
@@ -48,7 +75,17 @@ var NetworksListItem = Vue.extend({
 
         NavigationActions.openContainers(queryOptions);
       }
+    },
+
+    removeNetwork: function() {
+      this.confirmRemoval(NetworkActions.removeNetwork,
+                          [this.getNetworkDocumentId()]);
+    },
+
+    operationSupported: function(op) {
+      return utils.operationSupported(op, this.model);
     }
+
   }
 });
 

@@ -1295,6 +1295,8 @@ public class RequestBrokerService extends
             if (isRemoveOperation(state)) {
                 if (isContainerHostType(state)) {
                     requestStatus.addTrackedTasks(ContainerHostRemovalTaskService.DISPLAY_NAME);
+                } else if (isContainerNetworkType(state)) {
+                    requestStatus.addTrackedTasks(ContainerNetworkRemovalTaskService.DISPLAY_NAME);
                 } else {
                     requestStatus.addTrackedTasks(ContainerRemovalTaskService.DISPLAY_NAME);
                 }

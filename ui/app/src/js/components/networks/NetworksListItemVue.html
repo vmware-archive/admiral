@@ -53,4 +53,17 @@
       </span>
       <span v-else>--</span>
     </div>
+  </div>
+  <div class="container-actions"
+       v-if="supportsDay2Operations"
+       v-bind:class="{'hide': showDeleteConfirmation}">
+    <action-button name="remove" icon-name="times"
+                   v-bind:label="i18n('app.container.actions.remove')"
+                   v-bind:supported="operationSupported('REMOVE')"
+                   v-on:click="askConfirmation($event)"></action-button>
+  </div>
+  <delete-confirmation v-bind:class="{'hide': !showDeleteConfirmation}"
+                       v-bind:show="showDeleteConfirmation"
+                       v-on:confirm-delete="removeNetwork()"
+                       v-on:cancel-delete="cancelRemoval($event)"></delete-confirmation>
 </div>

@@ -248,6 +248,11 @@ let RequestsStore = Reflux.createStore({
           // Container Removed
           this.containerOperationSuccess(constants.CONTAINERS.OPERATION.REMOVE, resourceLinks);
 
+        } else if (req.requestProgressByComponent.hasOwnProperty('Container Network Removal')) {
+          // Network Removed
+          this.networkOperationSuccess(
+            constants.RESOURCES.NETWORKS.OPERATION.REMOVE);
+
         } else if (req.requestProgressByComponent.hasOwnProperty('Container Operation')) {
 
           if (req.name === 'Start') {
@@ -278,6 +283,10 @@ let RequestsStore = Reflux.createStore({
           // Container Removed
           this.containerOperationFail(constants.CONTAINERS.OPERATION.REMOVE, resourceLinks);
 
+        } else if (req.requestProgressByComponent.hasOwnProperty('Container Network Removal')) {
+          // Container Removed
+          this.networkOperationFail(constants.RESOURCES.NETWORKS.OPERATION.REMOVE);
+
         } else if (req.requestProgressByComponent.hasOwnProperty('Container Operation')) {
 
           if (req.name === 'Start') {
@@ -303,9 +312,19 @@ let RequestsStore = Reflux.createStore({
     actions.ContainerActions.operationCompleted(operationType, this.getResourceIds(resourceLinks));
   },
 
+  networkOperationSuccess: function(operationType) {
+
+    actions.NetworkActions.networkOperationCompleted(operationType);
+  },
+
   containerOperationFail: function(operationType, resourceLinks) {
 
     actions.ContainerActions.operationFailed(operationType, this.getResourceIds(resourceLinks));
+  },
+
+  networkOperationFail: function(operationType) {
+
+    actions.NetworkActions.networkOperationFailed(operationType);
   },
 
   getResourceIds: function(resourceLinks) {

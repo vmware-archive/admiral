@@ -154,6 +154,10 @@ var makeDay2OperationRequestContainer = function(containerId, op) {
   return makeDay2OperationRequestContainers([containerId], op);
 };
 
+var makeDay2OperationRequestNetwork = function(networkId, op) {
+  return makeDay2OperationRequestNetworks([networkId], op);
+};
+
 var makeDay2OperationRequestCluster = function(clusterContainers, op) {
   var request = {};
   request.resourceType = CONTAINER_TYPE_DOCKER;
@@ -197,6 +201,11 @@ var ensurePrefixResourceLinks = function(prefix, links) {
 var makeDay2OperationRequestContainers = function(containerLinks, op) {
   return batchDay2OperationResource(CONTAINER_TYPE_DOCKER,
             ensurePrefixResourceLinks(links.CONTAINERS, containerLinks), op);
+};
+
+var makeDay2OperationRequestNetworks = function(networkLinks, op) {
+  return batchDay2OperationResource(NETWORK_TYPE,
+            ensurePrefixResourceLinks(links.NETWORKS, networkLinks), op);
 };
 
 var makeDay2OperationRequestComposites = function(compositeComponentLinks, op) {
@@ -1032,6 +1041,15 @@ services.removeContainer = function(containerId) {
 
   return day2operation(links.REQUESTS,
     makeDay2OperationRequestContainer(containerId, 'Container.Delete'))
+    .then(function(deleteRequest) {
+      return deleteRequest;
+    });
+};
+
+services.removeNetwork = function(networkId) {
+
+  return day2operation(links.REQUESTS,
+    makeDay2OperationRequestNetwork(networkId, 'Network.Delete'))
     .then(function(deleteRequest) {
       return deleteRequest;
     });

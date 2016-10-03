@@ -77,6 +77,11 @@ var constants = Immutable({
       CONTAINERS: 'containers',
       APPLICATIONS: 'applications',
       NETWORKS: 'networks'
+    },
+    NETWORKS: {
+      OPERATION: {
+        REMOVE: 'REMOVE'
+      }
     }
   },
   CONTAINERS: {

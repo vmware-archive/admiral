@@ -146,6 +146,7 @@ public class ContainerNetworkStateMapper {
 
         if (containers == null || containers.size() == 0) {
             // no need to find any container states
+            networkState.containerStateLinks = new ArrayList<>();
             callback.accept(new Result(networkState));
         } else {
             // find by id all the container states that are related to this network

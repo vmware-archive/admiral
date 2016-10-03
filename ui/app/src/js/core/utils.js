@@ -395,44 +395,50 @@ var utils = {
     return false;
   },
 
-  operationSupported: function(op, container) {
-    if (this.isSystemContainer(container)) {
+  operationSupported: function(op, resource) {
+    if (this.isSystemContainer(resource)) {
       return false;
 
-    } else if (container.type === constants.CONTAINERS.TYPES.COMPOSITE
-                || container.type === constants.CONTAINERS.TYPES.CLUSTER) {
+    } else if (resource.type === constants.CONTAINERS.TYPES.COMPOSITE
+                || resource.type === constants.CONTAINERS.TYPES.CLUSTER) {
       if (op === constants.CONTAINERS.OPERATION.REMOVE) {
         return true;
       }
 
       let items;
-      if (container.containers) {
-        items = container.containers;
-      } else if (container.listView) {
-        items = container.listView.items;
+      if (resource.containers) {
+        items = resource.containers;
+      } else if (resource.listView) {
+        items = resource.listView.items;
       }
 
       return this.operationSupportedMulti(op, items);
 
+    } else if (resource.type === constants.RESOURCES.TYPES.NETWORK) {
+      if (op === constants.RESOURCES.NETWORKS.OPERATION.REMOVE) {
+        return !resource.connectedContainers
+          || resource.connectedContainers.length === 0;
+      }
+
     } else if (op === constants.CONTAINERS.OPERATION.STOP) {
       return (!this.isApplicationSingleView())
-                && this.isContainerStatusActive(container.powerState);
+                && this.isContainerStatusActive(resource.powerState);
 
     } else if (op === constants.CONTAINERS.OPERATION.START) {
       return (!this.isApplicationSingleView())
-                && this.isContainerStatusInactive(container.powerState);
+                && this.isContainerStatusInactive(resource.powerState);
 
     } else if (op === constants.CONTAINERS.OPERATION.REMOVE) {
       return !this.isApplicationSingleView();
 
     } else if (op === constants.CONTAINERS.OPERATION.CLUSTERING) {
       return !this.isApplicationSingleView()
-                && this.isContainerStatusOk(container.powerState);
+                && this.isContainerStatusOk(resource.powerState);
 
     } else if (op === constants.CONTAINERS.OPERATION.SHELL) {
       return this.getConfigurationPropertyBoolean('allow.browser.ssh.console')
                 && !this.isApplicationSingleView()
-                && this.isContainerStatusOk(container.powerState);
+                && this.isContainerStatusOk(resource.powerState);
     }
 
     return true;

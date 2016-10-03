@@ -84,9 +84,9 @@ function enhanceNetwork(network) {
   network.icon = imageUtils.getImageIconLink(network.name);
   network.documentId = utils.getDocumentId(network.documentSelfLink);
 
-  network.containers = [];
+  network.connectedContainers = [];
   if (network.containerStateLinks) {
-    network.containers = network.containerStateLinks.map((documentSelfLink) => {
+    network.connectedContainers = network.containerStateLinks.map((documentSelfLink) => {
         return {
           documentId: utils.getDocumentId(documentSelfLink)
         };
@@ -275,7 +275,10 @@ ContainersStore = Reflux.createStore({
     });
   },
 
-  listenables: [actions.ContainerActions, actions.RegistryActions,
+  listenables: [
+    actions.ContainerActions,
+    actions.NetworkActions,
+    actions.RegistryActions,
     actions.ContainersContextToolbarActions
   ],
 
@@ -631,6 +634,16 @@ ContainersStore = Reflux.createStore({
       });
   },
 
+  onRemoveNetwork: function(networkId) {
+
+    services.removeNetwork(networkId)
+      .then((removalRequest) => {
+
+        this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
+        actions.RequestsActions.requestCreated(removalRequest);
+      });
+  },
+
   onStartCompositeContainer: function(compositeId) {
 
     services.startCompositeContainer(compositeId)
@@ -906,6 +919,18 @@ ContainersStore = Reflux.createStore({
       cursor.setIn(['operationFailure'], operationType);
 
       actions.ContainerActions.refreshContainer();
+    }
+  },
+
+  onNetworkOperationCompleted: function(operationType) {
+    if (operationType === constants.RESOURCES.NETWORKS.OPERATION.REMOVE) {
+      this.navigateToContainersListView(false);
+    }
+  },
+
+  onNetworkOperationFailed: function(operationType) {
+    if (operationType === constants.RESOURCES.NETWORKS.OPERATION.REMOVE) {
+      this.navigateToContainersListView(false);
     }
   },
 
