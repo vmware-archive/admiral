@@ -12,16 +12,19 @@
 package templates
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
+	"admiral/auth"
 	"admiral/client"
 	"admiral/config"
 	"admiral/functions"
-	"bytes"
 )
 
 type LightContainer struct {
@@ -199,4 +202,71 @@ func RemoveTemplateID(id string) (string, error) {
 	}
 	return id, nil
 
+}
+
+func Import(dirF string) (string, error) {
+	importFile, err := ioutil.ReadFile(dirF)
+
+	if err != nil {
+		return "", err
+	}
+
+	url := config.URL + "/resources/composite-templates"
+
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(importFile))
+	req.Header.Set("Content-Type", "application/yaml")
+	resp, _, respErr := client.ProcessRequest(req)
+
+	if respErr != nil {
+		return "", respErr
+	}
+
+	link := resp.Header.Get("Location")
+	id := functions.GetResourceID(link)
+	return id, nil
+}
+
+func Export(id, dirF, format string) (string, error) {
+	file, err := verifyFile(dirF)
+	if err != nil {
+		return "", err
+	}
+	url := config.URL + "/resources/composite-templates?selfLink=" + id
+	if format == "docker" {
+		url = url + "&format=docker"
+	}
+	req, _ := http.NewRequest("GET", url, nil)
+	token, from := auth.GetAuthToken()
+	functions.CheckVerboseRequest(req)
+	req.Header.Set("content-type", "application/json")
+	req.Header.Set("x-xenon-auth-token", token)
+	resp, err := client.NetClient.Do(req)
+	functions.CheckResponse(err)
+	functions.CheckVerboseResponse(resp)
+	respBody, err := ioutil.ReadAll(resp.Body)
+	functions.CheckJson(err)
+	defer resp.Body.Close()
+	isAuth := auth.IsAuthorized(respBody, from)
+	if !isAuth {
+		os.Remove(dirF)
+		os.Exit(-1)
+	}
+	if err != nil {
+		os.Remove(dirF)
+		return "", err
+	}
+	_, err = file.Write(respBody)
+
+	if err != nil {
+		os.Remove(dirF)
+		return "", err
+	}
+	return id, nil
+}
+
+//Function to verify if file can be created.
+//Returns the file and result of verification
+func verifyFile(dirF string) (*os.File, error) {
+	file, err := os.Create(dirF)
+	return file, err
 }

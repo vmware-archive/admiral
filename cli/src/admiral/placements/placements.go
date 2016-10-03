@@ -22,8 +22,8 @@ import (
 	"admiral/config"
 	"admiral/deplPolicy"
 	"admiral/functions"
+	"admiral/placementzones"
 	"admiral/projects"
-	"admiral/resourcePools"
 )
 
 type Placement struct {
@@ -113,15 +113,15 @@ func (pl *PlacementList) GetOutputString() string {
 	for _, link := range pl.DocumentLinks {
 		val := pl.Documents[link]
 		var (
-			rp      string
+			pz      string
 			dp      string
 			project string
 		)
 
 		if strings.TrimSpace(val.ResourcePoolLink) == "" {
-			rp = ""
+			pz = ""
 		} else {
-			rp, _ = resourcePools.GetRPName(val.ResourcePoolLink)
+			pz, _ = placementzones.GetPZName(val.ResourcePoolLink)
 		}
 
 		if strings.TrimSpace(val.DeploymentPolicyLink) == "" {
@@ -140,7 +140,7 @@ func (pl *PlacementList) GetOutputString() string {
 				project = ""
 			}
 		}
-		output := functions.GetFormattedString(val.GetID(), val.Name, project, rp, dp, val.Priority,
+		output := functions.GetFormattedString(val.GetID(), val.Name, project, pz, dp, val.Priority,
 			val.AvailableInstancesCount, val.CpuShares, val.MemoryLimit)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
@@ -181,7 +181,7 @@ func AddPlacement(namePol, cpuShares, instances, priority, projectId, resPoolID,
 	)
 
 	if !haveNeeded(resPoolID) {
-		return "", errors.New("Resource pool ID is required.")
+		return "", errors.New("Placement zone ID is required.")
 	}
 
 	if deplPolID != "" {
@@ -234,7 +234,7 @@ func EditPlacement(name, namePol, projectId, resPoolID, deplPolID string, cpuSha
 	return EditPlacementID(id, namePol, projectId, resPoolID, deplPolID, cpuShares, instances, priority, memoryLimit)
 }
 
-func EditPlacementID(id, namePol, projectId, resPoolID, deplPolID string, cpuShares, instances, priority int32, memoryLimit int64) (string, error) {
+func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolID string, cpuShares, instances, priority int32, memoryLimit int64) (string, error) {
 	url := config.URL + functions.CreateResLinksForPlacement(id)
 	//Workaround
 	oldPlacement := &PlacementToUpdate{}
@@ -264,8 +264,8 @@ func EditPlacementID(id, namePol, projectId, resPoolID, deplPolID string, cpuSha
 		projectLink := functions.CreateResLinkForProject(projectId)
 		oldPlacement.TenantLinks[projectLinkIndex] = projectLink
 	}
-	if resPoolID != "" {
-		oldPlacement.ResourcePoolLink = functions.CreateResLinkForRP(resPoolID)
+	if placementZoneID != "" {
+		oldPlacement.ResourcePoolLink = functions.CreateResLinkForRP(placementZoneID)
 	}
 	if deplPolID != "" {
 		oldPlacement.DeploymentPolicyLink = functions.CreateResLinkForDP(deplPolID)

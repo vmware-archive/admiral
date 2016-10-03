@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package resourcePools
+package placementzones
 
 import (
 	"bytes"
@@ -25,33 +25,31 @@ import (
 )
 
 var (
-	duplMsg  = "Resource pools with duplicate name found, provide ID to remove specific resource pools."
-	notFound = "Resource pool not found."
+	duplMsg  = "Placement zones with duplicate name found, provide ID to remove specific placement zone."
+	notFound = "Placement zone not found."
 )
 
-type ResourcePool struct {
-	Id               string            `json:"id"`
-	Name             string            `json:"name"`
-	DocumentSelfLink *string           `json:"documentSelfLink"`
-	CustomProperties map[string]string `json:"customProperties"`
+type PlacementZone struct {
+	PlacementZoneState PlacementZoneState `json:"resourcePoolState"`
 }
 
-func (rp *ResourcePool) GetID() string {
-	return strings.Replace(*rp.DocumentSelfLink, "/resources/pools/", "", -1)
+type PlacementZoneList struct {
+	TotalCount int32                    `json:"totalCount"`
+	Documents  map[string]PlacementZone `json:"documents"`
 }
 
-type ResourcePoolList struct {
-	TotalCount int32                   `json:"totalCount"`
-	Documents  map[string]ResourcePool `json:"documents"`
-}
-
-type ResourcePoolOperation struct {
+type PlacementZoneState struct {
 	Name             string             `json:"name,omitempty"`
 	CustomProperties map[string]*string `json:"customProperties"`
+	DocumentSelfLink string             `json:"documentSelfLink,omitempty"`
 }
 
-func (rpl *ResourcePoolList) FetchRP() (int, error) {
-	url := config.URL + "/resources/pools?api_key=resource%20pools"
+func (pzs *PlacementZoneState) GetID() string {
+	return strings.Replace(pzs.DocumentSelfLink, "/resources/pools/", "", -1)
+}
+
+func (rpl *PlacementZoneList) FetchPZ() (int, error) {
+	url := config.URL + "/resources/elastic-placement-zones-config?documentType=true&expand=true"
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -62,12 +60,12 @@ func (rpl *ResourcePoolList) FetchRP() (int, error) {
 	return len(rpl.Documents), nil
 }
 
-func (rpl *ResourcePoolList) GetOutputString() string {
+func (rpl *PlacementZoneList) GetOutputString() string {
 	var buffer bytes.Buffer
 	if len(rpl.Documents) > 0 {
 		buffer.WriteString("ID\tNAME\n")
 		for _, val := range rpl.Documents {
-			output := functions.GetFormattedString(val.GetID(), val.Name)
+			output := functions.GetFormattedString(val.PlacementZoneState.GetID(), val.PlacementZoneState.Name)
 			buffer.WriteString(output)
 			buffer.WriteString("\n")
 		}
@@ -77,18 +75,18 @@ func (rpl *ResourcePoolList) GetOutputString() string {
 	return strings.TrimSpace(buffer.String())
 }
 
-func RemoveRP(rpName string) (string, error) {
-	links := GetRPLinks(rpName)
+func RemovePZ(pzName string) (string, error) {
+	links := GetPZLinks(pzName)
 	if len(links) > 1 {
 		return "", errors.New(duplMsg)
 	} else if len(links) < 1 {
 		return "", errors.New(notFound)
 	}
 	id := functions.GetResourceID(links[0])
-	return RemoveRPID(id)
+	return RemovePZID(id)
 }
 
-func RemoveRPID(id string) (string, error) {
+func RemovePZID(id string) (string, error) {
 	url := config.URL + functions.CreateResLinkForRP(id)
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
@@ -98,42 +96,45 @@ func RemoveRPID(id string) (string, error) {
 	return id, nil
 }
 
-func AddRP(rpName string, custProps []string) (string, error) {
-	url := config.URL + "/resources/pools"
+func AddPZ(rpName string, custProps []string) (string, error) {
+	url := config.URL + "/resources/elastic-placement-zones-config"
 	cp := properties.ParseCustomProperties(custProps)
-	rpOp := ResourcePoolOperation{
+	pzState := PlacementZoneState{
 		Name:             rpName,
 		CustomProperties: cp,
 	}
-	jsonBody, _ := json.Marshal(rpOp)
+	pz := &PlacementZone{
+		PlacementZoneState: pzState,
+	}
+	jsonBody, _ := json.Marshal(pz)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return "", respErr
 	}
-	rp := &ResourcePool{}
-	err := json.Unmarshal(respBody, rp)
+	pz = &PlacementZone{}
+	err := json.Unmarshal(respBody, pz)
 	functions.CheckJson(err)
-	return rp.GetID(), nil
+	return pz.PlacementZoneState.GetID(), nil
 
 }
 
-func EditRP(rpName, newName string) (string, error) {
-	links := GetRPLinks(rpName)
+func EditPZ(pzName, newName string) (string, error) {
+	links := GetPZLinks(pzName)
 	if len(links) > 1 {
 		return "", errors.New(duplMsg)
 	} else if len(links) < 1 {
 		return "", errors.New(notFound)
 	}
 	id := functions.GetResourceID(links[0])
-	return EditRPID(id, newName)
+	return EditPZID(id, newName)
 }
 
-func EditRPID(id, newName string) (string, error) {
-	rpOp := ResourcePoolOperation{
+func EditPZID(id, newName string) (string, error) {
+	pzState := PlacementZoneState{
 		Name: newName,
 	}
-	jsonBody, _ := json.Marshal(rpOp)
+	jsonBody, _ := json.Marshal(pzState)
 	url := config.URL + functions.CreateResLinkForRP(id)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
@@ -143,32 +144,32 @@ func EditRPID(id, newName string) (string, error) {
 	return id, nil
 }
 
-func GetRPLinks(rpName string) []string {
-	rpl := ResourcePoolList{}
-	rpl.FetchRP()
+func GetPZLinks(pzName string) []string {
+	pzl := PlacementZoneList{}
+	pzl.FetchPZ()
 	links := make([]string, 0)
-	for key, val := range rpl.Documents {
-		if val.Name == rpName {
+	for key, val := range pzl.Documents {
+		if val.PlacementZoneState.Name == pzName {
 			links = append(links, key)
 		}
 	}
 	return links
 }
 
-func GetRPName(link string) (string, error) {
+func GetPZName(link string) (string, error) {
 	url := config.URL + link
-	rp := &ResourcePool{}
+	pz := &PlacementZone{}
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return "", respErr
 	}
-	err := json.Unmarshal(respBody, rp)
+	err := json.Unmarshal(respBody, pz)
 	functions.CheckJson(err)
-	return rp.Name, nil
+	return pz.PlacementZoneState.Name, nil
 }
 
-func GetCustomProperties(id string) (map[string]string, error) {
+func GetCustomProperties(id string) (map[string]*string, error) {
 	link := functions.CreateResLinkForRP(id)
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
@@ -176,10 +177,10 @@ func GetCustomProperties(id string) (map[string]string, error) {
 	if respErr != nil {
 		return nil, respErr
 	}
-	resPool := &ResourcePool{}
-	err := json.Unmarshal(respBody, resPool)
+	placementZone := &PlacementZone{}
+	err := json.Unmarshal(respBody, placementZone)
 	functions.CheckJson(err)
-	return resPool.CustomProperties, nil
+	return placementZone.PlacementZoneState.CustomProperties, nil
 }
 
 func GetPublicCustomProperties(id string) (map[string]string, error) {
@@ -194,7 +195,7 @@ func GetPublicCustomProperties(id string) (map[string]string, error) {
 				continue
 			}
 		}
-		publicCustProps[key] = val
+		publicCustProps[key] = *val
 	}
 	return publicCustProps, nil
 }
@@ -212,10 +213,13 @@ func AddCustomProperties(id string, keys, vals []string) error {
 	for i, _ := range lowerLen {
 		custProps[keys[i]] = &vals[i]
 	}
-	rp := &ResourcePoolOperation{
+	pzState := &PlacementZoneState{
 		CustomProperties: custProps,
 	}
-	jsonBody, err := json.Marshal(rp)
+	pz := &PlacementZone{
+		PlacementZoneState: *pzState,
+	}
+	jsonBody, err := json.Marshal(pz)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
@@ -233,10 +237,13 @@ func RemoveCustomProperties(id string, keys []string) error {
 	for i := range keys {
 		custProps[keys[i]] = nil
 	}
-	rp := &ResourcePoolOperation{
+	pzState := &PlacementZoneState{
 		CustomProperties: custProps,
 	}
-	jsonBody, err := json.Marshal(rp)
+	pz := &PlacementZone{
+		PlacementZoneState: *pzState,
+	}
+	jsonBody, err := json.Marshal(pz)
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)

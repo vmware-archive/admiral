@@ -1,3 +1,5 @@
+// +build e2e
+
 /*
  * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
  *
@@ -16,37 +18,54 @@ import (
 	"testing"
 
 	"admiral/config"
+	. "admiral/testutils"
 )
 
 //TestContainerProvision will add host and credentials,
 //it will provision container, stop it, remove it and remove the host.
 func TestContainerProvision(t *testing.T) {
 	// Preparing the test.
-	testPrintln("Configuring the env.")
+	TestPrintln("Configuring the env.")
 	config.GetCfg()
-	tc, err := configureTestEnv()
+	tc, err := ConfigureTestEnv()
 	CheckTestError(err, t)
 
-	testPrintln("Login and adding host.")
-	hostMsg := loginAndAddHost(tc, t)
+	TestPrintln("Login")
+	err = loginCmd.ParseFlags([]string{"--user=" + tc.Username, "--pass=" + tc.Password, "--url=" + tc.AdmiralAddress})
+	CheckTestError(err, t)
+	token := RunLogin([]string{})
+	if token == "" {
+		t.Error("Login failed.")
+		t.FailNow()
+	}
+
+	TestPrintln("Removing host before add new one. Having error here is expected.")
+	hostRemoveCmd.ParseFlags([]string{"--force"})
+	RunHostRemove([]string{tc.HostAddress})
+
+	TestPrintln("Adding host.")
+	hostAddCmd.ParseFlags([]string{"--ip=" + tc.HostAddress, "--placement-zone=" + tc.PlacementZone,
+		"--public=" + tc.PublicKey, "--private=" + tc.PrivateKey, "--accept"})
+	hostMsg, err := RunAddHost([]string{})
+	CheckTestError(err, t)
 	hostId := strings.Split(hostMsg, " ")[2]
 
 	// Run the test
-	testPrintln("Provisioning container.")
+	TestPrintln("Provisioning container.")
 	contMsg, err := RunContainerRun([]string{"kitematic/hello-world-nginx"})
 	CheckTestError(err, t)
 
-	testPrintln("Stopping container.")
+	TestPrintln("Stopping container.")
 	contId := strings.Split(contMsg, " ")[2]
 	contMsg, err = RunContainerStop([]string{contId})
 	CheckTestError(err, t)
 
-	testPrintln("Removing container.")
+	TestPrintln("Removing container.")
 	contMsg, err = RunContainersRemove([]string{contId})
 	CheckTestError(err, t)
 
 	// Clean up env.
-	testPrintln("Removing host.")
+	TestPrintln("Removing host.")
 	hostRemoveCmd.ParseFlags([]string{"--force"})
 	hostMsg, err = RunHostRemove([]string{hostId})
 	CheckTestError(err, t)

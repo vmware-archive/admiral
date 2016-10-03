@@ -37,7 +37,6 @@ var (
 	instances      string
 	priority       string
 	tenants        string
-	resPoolID      string
 	deplPolID      string
 	memoryLimitStr string
 
@@ -62,7 +61,7 @@ func initPlacementAdd() {
 	placementAddCmd.Flags().StringVar(&instances, "instances", "", "Instances")
 	placementAddCmd.Flags().StringVar(&priority, "priority", "", "Priority")
 	placementAddCmd.Flags().StringVar(&tenants, "project", "", "Project")
-	placementAddCmd.Flags().StringVar(&resPoolID, "resource-pool", "", "(Required) Resource pool ID")
+	placementAddCmd.Flags().StringVar(&placementZoneID, "placement-zone", "", "(Required) Placement zone ID")
 	placementAddCmd.Flags().StringVar(&deplPolID, "deployment-policy", "", "Deployment policy ID")
 	placementAddCmd.Flags().StringVar(&memoryLimitStr, "memory", "0kb", "Memory limit. Default unit: kb. Units supported: kb/mb/gb. Example: 1024mb")
 	PlacementsRootCmd.AddCommand(placementAddCmd)
@@ -102,7 +101,7 @@ func RunPlacementAdd(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	newID, err = placements.AddPlacement(name, cpuShares, instances, priority, tenants, resPoolID, deplPolID, memoryLimit)
+	newID, err = placements.AddPlacement(name, cpuShares, instances, priority, tenants, placementZoneID, deplPolID, memoryLimit)
 	if err != nil {
 		return "", err
 	} else {
@@ -187,7 +186,7 @@ func initPlacementUpdate() {
 	placementUpdateCmd.Flags().Int32Var(&maxNumberInstances, "instances", -1, "New instances")
 	placementUpdateCmd.Flags().Int32Var(&priorityInt, "prio", -1, "New priority")
 	placementUpdateCmd.Flags().StringVar(&tenants, "group", "", "New group")
-	placementUpdateCmd.Flags().StringVar(&resPoolID, "resource-pool", "", "New resource pool ID")
+	placementUpdateCmd.Flags().StringVar(&placementZoneID, "placement-zone", "", "New placement zone ID")
 	placementUpdateCmd.Flags().StringVar(&deplPolID, "deployment-policy", "", "New deployment policy ID")
 	placementUpdateCmd.Flags().StringVar(&memoryLimitStr, "memory", "0kb", "New memory limit. Default unit: kb. Units supported: kb/mb/gb. Example: 1024mb")
 	PlacementsRootCmd.AddCommand(placementUpdateCmd)
@@ -208,7 +207,7 @@ func RunPlacementUpdate(args []string) (string, error) {
 	if id, ok = ValidateArgsCount(args); !ok {
 		return "", placementIdError
 	}
-	newID, err = placements.EditPlacementID(id, newName, tenants, resPoolID, deplPolID, cpuSharesInt, maxNumberInstances, priorityInt, memoryLimit)
+	newID, err = placements.EditPlacementID(id, newName, tenants, placementZoneID, deplPolID, cpuSharesInt, maxNumberInstances, priorityInt, memoryLimit)
 
 	if err != nil {
 		return "", err

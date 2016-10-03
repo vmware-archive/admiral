@@ -72,20 +72,11 @@ func Wait(taskId string) ([]string, error) {
 		errorMsg      string
 		resourceLinks []string
 	)
-	go func() {
-		fmt.Print("Waiting for task..")
-		for {
-			select {
-			case <-stop:
-				fmt.Println()
-				return
-			default:
-				fmt.Print(".")
-			}
-			time.Sleep(1 * time.Second)
-		}
-	}()
 
+	pb := ProgressBar{
+		Widht: 55,
+	}
+	pb.InitPrint()
 	begin := time.Now()
 	for {
 		elapsed := time.Now().Sub(begin)
@@ -107,24 +98,27 @@ func Wait(taskId string) ([]string, error) {
 		}
 		err = json.Unmarshal(respBody, taskStatus)
 		functions.CheckJson(err)
+		pb.UpdateBar(taskStatus.Progress)
 		if taskStatus.SubStage == "COMPLETED" {
 			result = taskStatus.SubStage
 			resourceLinks = taskStatus.ResourceLinks
+			break
 			stop <- true
 			break
 		} else if taskStatus.SubStage == "ERROR" {
 			result = taskStatus.SubStage
 			errorMsg, err = getErrorMessage(req)
+			break
 			stop <- true
 			if err != nil {
 				return nil, err
 			}
 			break
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(500 * time.Millisecond)
 	}
 
-	fmt.Printf("%s The task has %s.\n", time.Now().Format("2006.01.02 15:04:05"), result)
+	fmt.Printf("\n%s The task has %s.\n", time.Now().Format("2006.01.02 15:04:05"), result)
 
 	if result == "ERROR" {
 		if errorMsg != "" {
@@ -203,4 +197,41 @@ func getErrorMessage(statusReq *http.Request) (string, error) {
 	err = json.Unmarshal(respBody, event)
 	functions.CheckJson(err)
 	return event.Description, nil
+}
+
+type ProgressBar struct {
+	Widht int
+}
+
+func (pb *ProgressBar) InitPrint() {
+	fmt.Print("|>")
+	for i := 0; i < pb.Widht; i++ {
+		fmt.Print("-")
+	}
+	fmt.Print("|")
+}
+
+func (pb *ProgressBar) UpdateBar(percentage int) {
+	fmt.Print("\r|")
+	result := int((float32(percentage) / 100) * float32(pb.Widht))
+	if result == pb.Widht && percentage == 100 {
+		pb.FillUp()
+		return
+	}
+	for i := 0; i < result; i++ {
+		fmt.Print("=")
+	}
+	fmt.Print(">")
+	for i := result; i < pb.Widht; i++ {
+		fmt.Print("-")
+	}
+	fmt.Print("|    ", percentage, "%")
+}
+
+func (pb *ProgressBar) FillUp() {
+	fmt.Print("\r|")
+	for i := 0; i < pb.Widht; i++ {
+		fmt.Print("=")
+	}
+	fmt.Print(">|    ", 100, "%")
 }

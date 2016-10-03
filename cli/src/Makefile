@@ -10,7 +10,7 @@
 BINARY=admiral
 BINARY_WIN=admiral.exe
 BUILD_PACKAGE=admiral
-VERSION=$(shell grep  -oP -e "(?<=<version>).*?(?=<\/version>)" ../../pom.xml | head -1)
+VERSION=$(shell perl -lne 'print "$$&" if /(?<=<version>).*?(?=<\/version>)/' ../../pom.xml | head -1)
 LDFLAGS=-ldflags "-X admiral/cmd.version=${VERSION}"
 
 LINUX_BUILD_AMD64=env GOPATH=$(CURDIR)/.. GOOS=linux GOARCH=amd64 go build ${LDFLAGS} -o ../bin/linux-amd64/${BINARY} ${BUILD_PACKAGE}
@@ -20,22 +20,13 @@ DARWIN_BUILD_i386=env GOPATH=$(CURDIR)/.. GOOS=darwin GOARCH=386 go build ${LDFL
 WINDOWS_BUILD_AMD64=env GOPATH=$(CURDIR)/.. GOOS=windows GOARCH=amd64 go build ${LDFLAGS} -o ../bin/windows-amd64/${BINARY_WIN} ${BUILD_PACKAGE}
 WINDOWS_BUILD_i386=env GOPATH=$(CURDIR)/.. GOOS=windows GOARCH=386 go build ${LDFLAGS} -o ../bin/windows-i386/${BINARY_WIN} ${BUILD_PACKAGE}
 
-TEST=env GOPATH=$(CURDIR)/.. go test admiral/cmd
+TEST_INTEGRATION=env GOPATH=$(CURDIR)/.. go test -p=1 -tags=integration admiral/...
+TEST_E2E=env GOPATH=$(CURDIR)/.. go test -p=1 -tags=e2e admiral/...
 
 all:
-	./prepare.sh
-	#linux-amd64 build
-	${LINUX_BUILD_AMD64}
-	#linux-i386 build
-	${LINUX_BUILD_i386}
-	#darwin-amd64 build
-	${DARWIN_BUILD_AMD64}
-	#darwin-i386 build
-	${DARWIN_BUILD_i386}
-	#windows-amd64 build
-	${WINDOWS_BUILD_AMD64}
-	#windows-i386 build
-	${WINDOWS_BUILD_i386}
+	make linux
+	make darwin
+	make windows
 
 linux:
 	./prepare.sh
@@ -59,4 +50,5 @@ windows:
 	${WINDOWS_BUILD_i386}
 
 test:
-	${TEST}
+	${TEST_INTEGRATION}
+	${TEST_E2E}

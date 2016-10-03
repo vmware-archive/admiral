@@ -52,7 +52,9 @@ var NetClient = &http.Client{
 func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 	token, from := auth.GetAuthToken()
 	functions.CheckVerboseRequest(req)
-	req.Header.Set("Content-Type", "application/json")
+	if req.Header.Get("Content-Type") == "" {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	req.Header.Set("x-xenon-auth-token", token)
 	resp, err := NetClient.Do(req)
 	functions.CheckResponse(err)
@@ -85,7 +87,9 @@ func CheckResponseError(resp *http.Response, tokenFrom string) error {
 		message := &ResponseError{}
 		functions.CheckResponse(err)
 		err = json.Unmarshal(respBody, message)
-		functions.CheckJson(err)
+		if err != nil {
+			return err
+		}
 		if message.Message == "forbidden" {
 			return errors.New("Authorization error. Token used from " + tokenFrom)
 		}

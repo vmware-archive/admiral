@@ -12,7 +12,6 @@
 package cmd
 
 import (
-	"admiral/apps"
 	"admiral/help"
 	"admiral/templates"
 
@@ -120,7 +119,7 @@ func RunTemplateImport(args []string) (string, error) {
 	if filePath, ok = ValidateArgsCount(args); !ok {
 		return "", errors.New("Path to file not provided.")
 	}
-	id, err := apps.Import(filePath)
+	id, err := templates.Import(filePath)
 
 	if err != nil {
 		return "", err
@@ -157,7 +156,7 @@ func RunTemplateExport(args []string) (string, error) {
 	if id, ok = ValidateArgsCount(args); !ok {
 		return "", templateIdError
 	}
-	newID, err := apps.Export(id, dirF, formatTemplate)
+	newID, err := templates.Export(id, dirF, formatTemplate)
 	if err != nil {
 		return "", err
 	} else {

@@ -1,3 +1,5 @@
+// +build e2e
+
 /*
  * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
  *
@@ -16,45 +18,62 @@ import (
 	"testing"
 
 	"admiral/config"
+	. "admiral/testutils"
 )
 
 func TestApplicationProvision(t *testing.T) {
 	// Preparing the test
-	testPrintln("Configuring the env.")
+	TestPrintln("Configuring the env.")
 	config.GetCfg()
-	tc, err := configureTestEnv()
+	tc, err := ConfigureTestEnv()
 	CheckTestError(err, t)
 
-	testPrintln("Login and adding host.")
-	hostMsg := loginAndAddHost(tc, t)
+	TestPrintln("Login")
+	err = loginCmd.ParseFlags([]string{"--user=" + tc.Username, "--pass=" + tc.Password, "--url=" + tc.AdmiralAddress})
+	CheckTestError(err, t)
+	token := RunLogin([]string{})
+	if token == "" {
+		t.Error("Login failed.")
+		t.FailNow()
+	}
+
+	TestPrintln("Removing host before add new one. Having error here is expected.")
+	hostRemoveCmd.ParseFlags([]string{"--force"})
+	RunHostRemove([]string{tc.HostAddress})
+
+	TestPrintln("Adding host.")
+	hostAddCmd.ParseFlags([]string{"--ip=" + tc.HostAddress, "--placement-zone=" + tc.PlacementZone,
+		"--public=" + tc.PublicKey, "--private=" + tc.PrivateKey, "--accept"})
+	hostMsg, err := RunAddHost([]string{})
+	CheckTestError(err, t)
 	hostId := strings.Split(hostMsg, " ")[2]
 
-	testPrintln("Importing template.")
+	TestPrintln("Importing template.")
 	templateMsg, err := RunTemplateImport([]string{"../testdata/wordpress.yaml"})
 	CheckTestError(err, t)
 	templateId := strings.Split(templateMsg, " ")[2]
 
 	// Run the test
-	testPrintln("Provisioning application.")
+	TestPrintln("Provisioning application.")
 	appMsg, err := RunAppRun([]string{templateId})
 	CheckTestError(err, t)
 	appId := strings.Split(appMsg, " ")[2]
 
-	testPrintln("Restarting the application.")
+	TestPrintln("Restarting the application.")
 	appMsg, err = RunAppRestart([]string{appId})
 	CheckTestError(err, t)
 
-	testPrintln("Removing the application.")
+	TestPrintln("Removing the application.")
 	appMsg, err = RunAppRemove([]string{appId})
 	CheckTestError(err, t)
 
 	// Clean up env
-	testPrintln("Removing the host.")
+	TestPrintln("Removing the host.")
 	hostRemoveCmd.ParseFlags([]string{"--force"})
 	hostMsg, err = RunHostRemove([]string{hostId})
 	CheckTestError(err, t)
 
-	testPrintln("Removing the template.")
+	TestPrintln("Removing the template.")
 	templateMsg, err = RunTemplateRemove([]string{templateId})
 	CheckTestError(err, t)
 

@@ -41,6 +41,10 @@ type Image struct {
 	Description      string   `json:"description"`
 }
 
+func (i *Image) GetShortName() string {
+	return cutImgName(i.Name)
+}
+
 type ImagesList struct {
 	Results []Image `json:"results"`
 }
@@ -71,8 +75,7 @@ func (li *ImagesList) GetOuputString() string {
 			if image.IsTrusted {
 				trusted = "[OK]"
 			}
-			cuttedName := cutImgName(image.Name)
-			output := functions.GetFormattedString(cuttedName, desc, image.StarsCount, official, automated, trusted)
+			output := functions.GetFormattedString(image.GetShortName(), desc, image.StarsCount, official, automated, trusted)
 			buffer.WriteString(output)
 			buffer.WriteString("\n")
 		}

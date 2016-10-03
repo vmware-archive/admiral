@@ -41,6 +41,7 @@ type CustomProperties struct {
 }
 
 type Credentials struct {
+	UserEmail        string             `json:"userEmail"`
 	PrivateKey       string             `json:"privateKey,omitempty"`
 	PublicKey        string             `json:"publicKey,omitempty"`
 	Type             string             `json:"type,omitempty"`
@@ -83,7 +84,7 @@ func (lc *ListCredentials) FetchCredentials() (int, error) {
 //Print prints already fetched credentials.
 func (lc *ListCredentials) GetOutputString() string {
 	var buffer bytes.Buffer
-	buffer.WriteString("ID\tName\tType")
+	buffer.WriteString("ID\tNAME\tTYPE")
 	buffer.WriteString("\n")
 	for _, val := range lc.Documents {
 		output := functions.GetFormattedString(val.GetID(), val.GetName(), val.Type)

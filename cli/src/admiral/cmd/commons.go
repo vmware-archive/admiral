@@ -110,10 +110,10 @@ var (
 	projectDescription string
 
 	//Host flags
-	ipF         string
-	resPoolF    string
-	deplPolicyF string
-	autoAccept  bool
+	ipF             string
+	placementZoneID string
+	deplPolicyF     string
+	autoAccept      bool
 	//Host flags
 )
 

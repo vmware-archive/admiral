@@ -12,6 +12,7 @@
 package containers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -20,7 +21,6 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/functions"
-	"bytes"
 )
 
 type ListContainers struct {

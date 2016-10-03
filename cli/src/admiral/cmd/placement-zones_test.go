@@ -1,3 +1,5 @@
+// +build e2e
+
 /*
  * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
  *
@@ -12,17 +14,18 @@
 package cmd
 
 import (
+	"strings"
 	"testing"
 
 	"admiral/config"
-	"strings"
+	. "admiral/testutils"
 )
 
 func TestAddUseRemoveResourcePools(t *testing.T) {
 	// Preparing the test.
-	testPrintln("Configuring the env.")
+	TestPrintln("Configuring the env.")
 	config.GetCfg()
-	tc, err := configureTestEnv()
+	tc, err := ConfigureTestEnv()
 	CheckTestError(err, t)
 
 	err = loginCmd.ParseFlags([]string{"--user=" + tc.Username, "--pass=" + tc.Password, "--url=" + tc.AdmiralAddress})
@@ -34,25 +37,25 @@ func TestAddUseRemoveResourcePools(t *testing.T) {
 	}
 
 	// Run the test.
-	testPrintln("Adding new resource pool.")
-	rpMsg, err := RunResourcePoolAdd([]string{"test-resource-pool"})
+	TestPrintln("Adding new placement zone.")
+	rpMsg, err := RunPlacementZoneAdd([]string{"test-placement-zone"})
 	CheckTestError(err, t)
 	rpId := strings.Split(rpMsg, " ")[3]
 
-	testPrintln("Adding new host with the new resource pool.")
-	hostAddCmd.ParseFlags([]string{"--ip=" + tc.HostAddress, "--resource-pool=" + rpId,
+	TestPrintln("Adding new host with the new placement zone.")
+	hostAddCmd.ParseFlags([]string{"--ip=" + tc.HostAddress, "--placement-zone=" + rpId,
 		"--public=" + tc.PublicKey, "--private=" + tc.PrivateKey, "--accept"})
 	hostMsg, err := RunAddHost([]string{})
 	CheckTestError(err, t)
 	hostId := strings.Split(hostMsg, " ")[2]
 
 	// Clean up the env.
-	testPrintln("Removing host.")
+	TestPrintln("Removing host.")
 	hostRemoveCmd.ParseFlags([]string{"--force"})
 	hostMsg, err = RunHostRemove([]string{hostId})
 	CheckTestError(err, t)
 
-	testPrintln("Removing resource pool.")
-	rpMsg, err = RunResourcePoolRemove([]string{rpId})
+	TestPrintln("Removing placement zone.")
+	rpMsg, err = RunPlacementZoneRemove([]string{rpId})
 	CheckTestError(err, t)
 }

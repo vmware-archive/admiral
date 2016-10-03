@@ -1,50 +1,70 @@
+// +build e2e
+
 package cmd
 
 import (
 	"admiral/config"
 	"strings"
 	"testing"
+
+	. "admiral/testutils"
 )
 
 func TestAddUseRemoveProjects(t *testing.T) {
 	// Preparing the test.
-	testPrintln("Configuring the env.")
+	TestPrintln("Configuring the env.")
 	config.GetCfg()
-	tc, err := configureTestEnv()
+	tc, err := ConfigureTestEnv()
 	CheckTestError(err, t)
 
-	testPrintln("Login and adding host.")
-	hostMsg := loginAndAddHost(tc, t)
+	TestPrintln("Login")
+	err = loginCmd.ParseFlags([]string{"--user=" + tc.Username, "--pass=" + tc.Password, "--url=" + tc.AdmiralAddress})
+	CheckTestError(err, t)
+	token := RunLogin([]string{})
+	if token == "" {
+		t.Error("Login failed.")
+		t.FailNow()
+	}
+
+	TestPrintln("Removing host before add new one. Having error here is expected.")
+	hostRemoveCmd.ParseFlags([]string{"--force"})
+	RunHostRemove([]string{tc.HostAddress})
+
+	TestPrintln("Adding host.")
+	hostAddCmd.ParseFlags([]string{"--ip=" + tc.HostAddress, "--placement-zone=" + tc.PlacementZone,
+		"--public=" + tc.PublicKey, "--private=" + tc.PrivateKey, "--accept"})
+	hostMsg, err := RunAddHost([]string{})
+	CheckTestError(err, t)
 	hostId := strings.Split(hostMsg, " ")[2]
 
 	// Run the test
-	testPrintln("Adding new project.")
+	TestPrintln("Adding new project.")
 	projectAddCmd.ParseFlags([]string{"--description=test-description"})
 	projectMsg, err := RunProjectAdd([]string{"test-project"})
 	CheckTestError(err, t)
 	projectId := strings.Split(projectMsg, " ")[2]
 
-	testPrintln("Provisioning image with the new project.")
+	TestPrintln("Provisioning image with the new project.")
 	containerRunCmd.ParseFlags([]string{"--project=" + projectId})
 	contMsg, err := RunContainerRun([]string{"kitematic/hello-world-nginx"})
 	CheckTestError(err, t)
 	contId := strings.Split(contMsg, " ")[2]
 
-	testPrintln("Removing the provisioned container.")
+	TestPrintln("Removing the provisioned container.")
 	contMsg, err = RunContainersRemove([]string{contId})
 	CheckTestError(err, t)
 
-	testPrintln("Updating the project.")
+	TestPrintln("Updating the project.")
 	projectUpdateCmd.ParseFlags([]string{"--name=test-test-project", "--description==test-test-description"})
 	projectMsg, err = RunProjectUpdate([]string{projectId})
 	CheckTestError(err, t)
 
-	testPrintln("Removing the project.")
+	TestPrintln("Removing the project.")
 	projectMsg, err = RunProjectRemove([]string{projectId})
 	CheckTestError(err, t)
 
 	// Clean up the env.
-	testPrintln("Removing the host.")
+	TestPrintln("Removing the host.")
 	hostMsg, err = RunHostRemove([]string{hostId})
 	CheckTestError(err, t)
 }

@@ -52,8 +52,7 @@ func Login(username, password, configUrl string) string {
 	functions.CheckVerboseResponse(resp)
 	token := resp.Header.Get("x-xenon-auth-token")
 	if token == "" {
-		fmt.Println("Login failed.")
-		return ""
+		return "Login failed."
 	}
 	if functions.Verbose {
 		fmt.Printf("%s: %s\n", "x-xenon-aut-token", token)
@@ -64,8 +63,7 @@ func Login(username, password, configUrl string) string {
 	functions.CheckFile(err)
 	tokenFile.Write([]byte(token))
 	tokenFile.Close()
-	fmt.Println("Login successful.")
-	return token
+	return "Login successful."
 }
 
 func Logout() {

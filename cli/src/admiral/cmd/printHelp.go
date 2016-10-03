@@ -28,11 +28,11 @@ var printHelpCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		generateContentTable()
 		fmt.Println()
-		generateBody1()
+		generateBody()
 	},
 }
 
-func generateBody1() {
+func generateBody() {
 	forContainers, rest := distinguishCommands(RootCmd)
 
 	//Iterate administrative commands
@@ -80,7 +80,7 @@ func generateContentTable() {
 	fmt.Println("# Admiral CLI commands")
 
 	//Iterate administrative commands
-	fmt.Println("### [admiral _(basic)_] (#admiral-basic)   ")
+	fmt.Println("### [admiral _(basic)_] (#admiral-basic-1)   ")
 	for _, cmd := range rest {
 		if !cmd.Hidden && len(cmd.Commands()) < 1 && !IsHelpCmd(cmd) {
 			fmt.Println("   " + getLinkLastCommand(cmd) + "   ")
@@ -88,7 +88,7 @@ func generateContentTable() {
 	}
 
 	//Iterate containers related commands
-	fmt.Println("### [admiral _(container management)_] (#admiral-container-management)   ")
+	fmt.Println("### [admiral _(container management)_] (#admiral-container-management-1)   ")
 	for _, cmd := range forContainers {
 		if !cmd.Hidden && len(cmd.Commands()) < 1 && !IsHelpCmd(cmd) {
 			fmt.Println("  " + getLinkLastCommand(cmd) + "   ")
@@ -139,5 +139,5 @@ func getLinkLastCommand(cmd *cobra.Command) string {
 
 func getCmdLink(cmd *cobra.Command) string {
 	cmds := strings.Split(cmd.CommandPath(), " ")
-	return fmt.Sprintf("[%s] (%s)", cmd.CommandPath(), "#"+strings.Join(cmds, "-"))
+	return fmt.Sprintf("[%s] (%s-1)", cmd.CommandPath(), "#"+strings.Join(cmds, "-"))
 }

@@ -109,8 +109,8 @@ func RemoveDPID(id string) (string, error) {
 //response code is different from 200.
 func AddDP(dpName, dpDescription string) (string, error) {
 	url := config.URL + "/resources/deployment-policies"
-	if !checkNameDesc(dpName, dpDescription) {
-		return "", errors.New("Name or description is missing.")
+	if dpName == "" {
+		return "", errors.New("Deployment policy name is missing.")
 	}
 	dp := &DeploymentPolicy{
 		Name:             dpName,

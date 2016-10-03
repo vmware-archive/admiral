@@ -67,7 +67,6 @@ func initNetworkCreate() {
 	networkCreateCmd.Flags().StringSliceVar(&gateways, "gateway", []string{}, "Gateway for the master subnet.")
 	networkCreateCmd.Flags().StringSliceVar(&subnets, "subnet", []string{}, "Subnet in CIDR format that represents a network segment.")
 	networkCreateCmd.Flags().StringSliceVarP(&options, "opt", "o", []string{}, "Set driver options. Format: \"key:value\"")
-	networkCreateCmd.SetHelpTemplate(help.NetworkUsageTmpl)
 	NetworksRootCmd.AddCommand(networkCreateCmd)
 }
 

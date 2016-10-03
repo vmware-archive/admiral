@@ -223,7 +223,7 @@ func RunAppID(id string, asyncTask bool) ([]string, error) {
 }
 
 func RunAppFile(dirF string, keepTemplate, asyncTask bool) ([]string, error) {
-	id, _ := Import(dirF)
+	id, _ := templates.Import(dirF)
 	resLinks, err := RunAppID(id, false)
 	if !keepTemplate {
 		templates.RemoveTemplateID(id)

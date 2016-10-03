@@ -22,11 +22,10 @@ import (
 	"admiral/certificates"
 	"admiral/client"
 	"admiral/config"
-	"admiral/containers"
 	"admiral/credentials"
 	"admiral/functions"
+	"admiral/placementzones"
 	"admiral/properties"
-	"admiral/resourcePools"
 	"admiral/track"
 )
 
@@ -43,6 +42,17 @@ type Host struct {
 	PowerState       string             `json:"powerState,omitempty"`
 	CustomProperties map[string]*string `json:"customProperties"`
 	ResourcePoolLink string             `json:"resourcePoolLink"`
+}
+
+func (h *Host) GetResourcePoolID() string {
+	return functions.GetResourceID(h.ResourcePoolLink)
+}
+
+func (h *Host) GetCredentialsID() string {
+	if val, ok := h.CustomProperties["__authCredentialsLink"]; ok && val != nil {
+		return functions.GetResourceID(*val)
+	}
+	return ""
 }
 
 //Struct to parse data when getting information about existing hosts.
@@ -76,6 +86,12 @@ type HostUpdate struct {
 	CustomProperties map[string]*string      `json:"customProperties"`
 }
 
+type OperationHost struct {
+	Operation     string   `json:"operation"`
+	ResourceLinks []string `json:"resourceLinks"`
+	ResourceType  string   `json:"resourceType"`
+}
+
 //FetchHosts fetches host by query passed as parameter, in case
 //all hosts should be fetched, pass empty string as parameter.
 //Returns the count of fetched hosts.
@@ -103,7 +119,7 @@ func (hl *HostsList) GetOutputString() string {
 	buffer.WriteString("ADDRESS\tNAME\tSTATE\tCONTAINERS\tRESOURCE POOL")
 	buffer.WriteString("\n")
 	for _, val := range hl.Documents {
-		rpName, _ := resourcePools.GetRPName(val.ResourcePoolLink)
+		rpName, _ := placementzones.GetPZName(val.ResourcePoolLink)
 		output := functions.GetFormattedString(val.Address, *val.CustomProperties["__Name"], val.PowerState,
 			*val.CustomProperties["__Containers"], rpName)
 		buffer.WriteString(output)
@@ -113,19 +129,19 @@ func (hl *HostsList) GetOutputString() string {
 }
 
 //AddHost adds host. The function parameters are the address of the host,
-//name of the resource pool, name of the deployment policy, name of the credentials.
+//name of the placement zone, name of the deployment policy, name of the credentials.
 //The other parameters are in case you want to add new credentials as well. Pass either
 //path to files for public and private certificates or username and password. autoaccept is boolean
 //which if is true will automatically accept if there is prompt for new certificate, otherwise will prompt
 //the user to either agree or disagree. custProps is array of custom properties. Returns the ID of the new
 //host that is added and error.
-func AddHost(ipF, resPoolID, deplPolicyID, credID, publicCert, privateCert, userName, passWord string,
+func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert, userName, passWord string,
 	autoAccept bool,
 	custProps []string) (string, error) {
 
 	url := config.URL + "/resources/hosts"
 
-	if ok, err := allFlagReadyHost(ipF, resPoolID); !ok {
+	if ok, err := allFlagReadyHost(ipF, placementZoneID); !ok {
 		return "", err
 	}
 
@@ -152,7 +168,7 @@ func AddHost(ipF, resPoolID, deplPolicyID, credID, publicCert, privateCert, user
 		newCredID = credID
 	}
 
-	rp := functions.CreateResLinkForRP(resPoolID)
+	rp := functions.CreateResLinkForRP(placementZoneID)
 
 	dp := functions.CreateResLinkForDP(deplPolicyID)
 
@@ -228,7 +244,7 @@ func RemoveHost(hostAddress string, asyncTask bool) (string, error) {
 
 	link := functions.CreateResLinksForHosts(hostAddress)
 
-	jsonRemoveHost := &containers.OperationContainer{
+	jsonRemoveHost := &OperationHost{
 		Operation:     "REMOVE_RESOURCE",
 		ResourceLinks: []string{link},
 		ResourceType:  "CONTAINER_HOST",
@@ -360,27 +376,19 @@ func RemoveCustomProperties(address string, keys []string) error {
 	return nil
 }
 
-func EditHost(ipF, name, resPoolF, deplPolicyF, credName string,
+func EditHost(ipF, name, resPoolF, deplPolicyF, credentials string,
 	autoAccept bool) (string, error) {
 	url := config.URL + "/resources/compute/" + ipF
-	props, err := MakeUpdateHostProperties(deplPolicyF, credName, name)
+	props, err := MakeUpdateHostProperties(deplPolicyF, credentials, name)
 	if err != nil {
 		return "", err
 	}
 
 	var (
-		rpLinks []string
-		rpLink  string
+		rpLink string
 	)
 	if resPoolF != "" {
-		rpLinks = resourcePools.GetRPLinks(resPoolF)
-		if len(rpLinks) < 1 {
-			return "", errors.New("Resource pool not found.")
-		}
-		if len(rpLinks) > 1 {
-			return "", errors.New("Multiple resource pools found with that name, resolve it manually and then proceed.")
-		}
-		rpLink = rpLinks[0]
+		rpLink = functions.GetResourceID(resPoolF)
 	}
 
 	newHost := &HostUpdate{

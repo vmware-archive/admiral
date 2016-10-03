@@ -52,7 +52,7 @@ func (el *EventList) GetOutputString() string {
 	}
 	var buffer bytes.Buffer
 	for _, val := range el.Documents {
-		description := strings.Replace(val.Description, "\n", "", -1)
+		description := strings.TrimSpace(val.Description)
 		output := functions.GetFormattedString(val.EventLogType, description)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")

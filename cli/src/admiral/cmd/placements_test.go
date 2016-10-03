@@ -1,39 +1,59 @@
+// +build e2e
+
 package cmd
 
 import (
-	"admiral/config"
 	"strconv"
 	"strings"
 	"testing"
+
+	"admiral/config"
+	. "admiral/testutils"
 )
 
 func TestPlacementAddRemove(t *testing.T) {
 	testArguments := [][]string{}
 
 	testArguments = append(
-		testArguments, []string{"--resource-pool=default-resource-pool", "--priority=50",
+		testArguments, []string{"--placement-zone=default-placement-zone", "--priority=50",
 			"--memoryLimit=100mb", "--instances=10", "--cpuShares=2", "--project=", "--deployment-policy="})
 
 	testArguments = append(
-		testArguments, []string{"--resource-pool=default-resource-pool"})
+		testArguments, []string{"--placement-zone=default-placement-zone"})
 
 	// Preparing the test
-	testPrintln("Configuring the env.")
+	TestPrintln("Configuring the env.")
 	config.GetCfg()
-	tc, err := configureTestEnv()
+	tc, err := ConfigureTestEnv()
 	CheckTestError(err, t)
 
-	testPrintln("Login and adding host.")
-	hostMsg := loginAndAddHost(tc, t)
+	TestPrintln("Login")
+	err = loginCmd.ParseFlags([]string{"--user=" + tc.Username, "--pass=" + tc.Password, "--url=" + tc.AdmiralAddress})
+	CheckTestError(err, t)
+	token := RunLogin([]string{})
+	if token == "" {
+		t.Error("Login failed.")
+		t.FailNow()
+	}
+
+	TestPrintln("Removing host before add new one. Having error here is expected.")
+	hostRemoveCmd.ParseFlags([]string{"--force"})
+	RunHostRemove([]string{tc.HostAddress})
+
+	TestPrintln("Adding host.")
+	hostAddCmd.ParseFlags([]string{"--ip=" + tc.HostAddress, "--placement-zone=" + tc.PlacementZone,
+		"--public=" + tc.PublicKey, "--private=" + tc.PrivateKey, "--accept"})
+	hostMsg, err := RunAddHost([]string{})
+	CheckTestError(err, t)
 	hostId := strings.Split(hostMsg, " ")[2]
 
-	testPrintln("Adding new project.")
+	TestPrintln("Adding new project.")
 	projectAddCmd.ParseFlags([]string{"--description=test-description"})
 	projectMsg, err := RunProjectAdd([]string{"test-project"})
 	CheckTestError(err, t)
 	projectId := strings.Split(projectMsg, " ")[2]
 
-	testPrintln("Addning new deployment policy.")
+	TestPrintln("Addning new deployment policy.")
 	deploymentPolicyAddCmd.ParseFlags([]string{"--description=test-dp-description"})
 	dpMsg, err := RunDeploymentPolicyAdd([]string{"test-deployment-policy"})
 	CheckTestError(err, t)
@@ -45,27 +65,27 @@ func TestPlacementAddRemove(t *testing.T) {
 
 	// Run the test.
 	for i := range testArguments {
-		testPrintln("Adding new placement.")
-		resetFlagValues(placementAddCmd)
+		TestPrintln("Adding new placement.")
+		ResetFlagValues(placementAddCmd)
 		placementAddCmd.ParseFlags(testArguments[i])
 		placementMsg, err := RunPlacementAdd([]string{"test-placement-" + strconv.Itoa(i)})
 		CheckTestError(err, t)
 		placementId := strings.Split(placementMsg, " ")[2]
-		testPrintln("Removing the placement")
+		TestPrintln("Removing the placement")
 		placementMsg, err = RunPlacementRemove([]string{placementId})
 		CheckTestError(err, t)
 	}
 
 	// Clean up the env.
-	testPrintln("Removing the project.")
+	TestPrintln("Removing the project.")
 	projectMsg, err = RunProjectRemove([]string{projectId})
 	CheckTestError(err, t)
 
-	testPrintln("Removing the deployment policy.")
+	TestPrintln("Removing the deployment policy.")
 	dpMsg, err = RunDeploymentPolicyRemove([]string{dpId})
 	CheckTestError(err, t)
 
-	testPrintln("Removing the host.")
+	TestPrintln("Removing the host.")
 	hostMsg, err = RunHostRemove([]string{hostId})
 	CheckTestError(err, t)
 }

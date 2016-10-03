@@ -40,7 +40,7 @@ func init() {
 	RootCmd.AddCommand(DeploymentPoliciesRootCmd)
 	RootCmd.AddCommand(HostsRootCmd)
 	RootCmd.AddCommand(PlacementsRootCmd)
-	RootCmd.AddCommand(ResourcePoolsRootCmd)
+	RootCmd.AddCommand(PlacementZonesRootCmd)
 	RootCmd.AddCommand(TemplatesRootCmd)
 	RootCmd.AddCommand(RegistriesRootCmd)
 	RootCmd.AddCommand(NetworksRootCmd)
@@ -109,9 +109,9 @@ var PlacementsRootCmd = &cobra.Command{
 	Short: "Perform operations with placements.",
 }
 
-var ResourcePoolsRootCmd = &cobra.Command{
-	Use:   "resource-pool",
-	Short: "Perform operations with resource pools.",
+var PlacementZonesRootCmd = &cobra.Command{
+	Use:   "placement-zone",
+	Short: "Perform operations with placement zones.",
 }
 
 var TemplatesRootCmd = &cobra.Command{

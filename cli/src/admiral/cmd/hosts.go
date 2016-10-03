@@ -52,7 +52,7 @@ func initHostAdd() {
 	hostAddCmd.Flags().StringVar(&userName, "username", "", "(Required if adding new credentials)"+"Username.")
 	hostAddCmd.Flags().StringVar(&passWord, "password", "", "(Required if adding new credentials)"+"Password.")
 	hostAddCmd.Flags().StringVar(&ipF, "ip", "", "(Required) Address of host.")
-	hostAddCmd.Flags().StringVar(&resPoolF, "resource-pool", "", "(Required) Resource pool ID.")
+	hostAddCmd.Flags().StringVar(&placementZoneID, "placement-zone", "", "(Required) Placement zone ID.")
 	hostAddCmd.Flags().StringVar(&credName, "credentials", "", "(Required if using existing one.) Credentials ID.")
 	hostAddCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", "Deployment policy ID.")
 	hostAddCmd.Flags().BoolVar(&autoAccept, "accept", false, "Auto accept if certificate is not trusted.")
@@ -65,7 +65,7 @@ func RunAddHost(args []string) (string, error) {
 		newID string
 		err   error
 	)
-	newID, err = hosts.AddHost(ipF, resPoolF, deplPolicyF, credName, publicCert, privateCert, userName, passWord,
+	newID, err = hosts.AddHost(ipF, placementZoneID, deplPolicyF, credName, publicCert, privateCert, userName, passWord,
 		autoAccept,
 		custProps)
 
@@ -219,7 +219,7 @@ var hostUpdateCmd = &cobra.Command{
 func initHostUpdate() {
 	hostUpdateCmd.Flags().StringVar(&hostName, "name", "", "New host name.")
 	hostUpdateCmd.Flags().StringVar(&credName, "credentials", "", "New credentials ID.")
-	hostUpdateCmd.Flags().StringVar(&resPoolF, "resource-pool", "", "New resource pool ID.")
+	hostUpdateCmd.Flags().StringVar(&placementZoneID, "placement-zone", "", "New placement zone ID.")
 	hostUpdateCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", "New deployment policy ID.")
 	hostUpdateCmd.Flags().BoolVar(&autoAccept, "accept", false, "Auto accept if certificate is not trusted.")
 	HostsRootCmd.AddCommand(hostUpdateCmd)
@@ -233,7 +233,7 @@ func RunHostUpdate(args []string) (string, error) {
 	if address, ok = ValidateArgsCount(args); !ok {
 		return "", hostAddressError
 	}
-	newID, err := hosts.EditHost(address, hostName, resPoolF, deplPolicyF, credName, autoAccept)
+	newID, err := hosts.EditHost(address, hostName, placementZoneID, deplPolicyF, credName, autoAccept)
 
 	if err != nil {
 		return "", err
