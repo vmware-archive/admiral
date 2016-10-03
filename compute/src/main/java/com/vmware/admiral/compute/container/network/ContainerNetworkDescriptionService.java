@@ -199,18 +199,13 @@ public class ContainerNetworkDescriptionService extends StatefulService {
             // check that all required fields are not null.
             // Skip this step on updates (null = no update)
             Utils.validateState(getStateDescription(), state);
-        }
-
-        if (state.name == null) {
-            throw new IllegalArgumentException("name is required.");
+            NetworkUtils.validateNetworkName(state.name);
         }
 
         if (state.instanceAdapterReference == null) {
             state.instanceAdapterReference = UriUtilsExtended.buildUri(getHost(),
                     ManagementUriParts.ADAPTER_DOCKER_NETWORK);
         }
-
-        NetworkUtils.validateNetworkName(state.name);
 
         if (state.ipam != null) {
             for (IpamConfig ipamConfig : state.ipam.config) {

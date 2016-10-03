@@ -220,6 +220,7 @@ public class ContainerVolumeDescriptionService extends StatefulService {
             // check that all required fields are not null.
             // Skip this step on updates (null = no update)
             Utils.validateState(getStateDescription(), state);
+            VolumeUtil.validateVolumeName(state.name);
         }
 
         if (StringUtils.isBlank(state.driver)) {

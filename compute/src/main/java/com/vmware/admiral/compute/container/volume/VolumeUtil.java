@@ -38,6 +38,19 @@ public class VolumeUtil {
 
     private static final String HOST_CONTAINER_DIR_DELIMITER = ":/";
 
+    public static final String ERROR_VOLUME_NAME_IS_REQUIRED = "Volume name is required.";
+    public static final String ERROR_VOLUME_NAME_IS_PATH = "Volume name must not be a path.";
+
+    public static void validateVolumeName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException(ERROR_VOLUME_NAME_IS_REQUIRED);
+        }
+
+        if (name.contains("/")) {
+            throw new IllegalArgumentException(ERROR_VOLUME_NAME_IS_PATH);
+        }
+    }
+
     /**
      * Parses volume host directory only.
      *
