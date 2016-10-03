@@ -21,12 +21,12 @@ import java.util.Map;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
+import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.OperationSequence;
-import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -67,7 +67,7 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
     /**
      * State used for request and response bodies.
      */
-    public static class ElasticPlacementZoneConfigurationState extends ServiceDocument {
+    public static class ElasticPlacementZoneConfigurationState extends MultiTenantDocument {
         public ResourcePoolState resourcePoolState;
         public ElasticPlacementZoneState epzState;
     }
@@ -172,6 +172,7 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
                                 new ElasticPlacementZoneConfigurationState();
                         state.documentSelfLink = rp.documentSelfLink;
                         state.resourcePoolState = rp;
+                        state.tenantLinks = rp.tenantLinks;
                         foundStates.put(state.documentSelfLink, state);
                     });
 
@@ -226,6 +227,8 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
                             new ElasticPlacementZoneConfigurationState();
                     state.resourcePoolState = ops.get(getRpOp.getId()).getBody(
                             ResourcePoolState.class);
+                    state.tenantLinks = state.resourcePoolState.tenantLinks;
+                    state.documentSelfLink = state.resourcePoolState.documentSelfLink;
 
                     // populate the elastic placement zone state into the response
                     QueryTask returnedQueryTask = ops.get(queryEpzOp.getId())
@@ -251,6 +254,8 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
     }
 
     private void doCreate(Operation originalOp, ElasticPlacementZoneConfigurationState state) {
+        // populate the tenant info
+        state.resourcePoolState.tenantLinks = state.tenantLinks;
         // create post operation for the resource pool
         Operation createRpOp = Operation
                 .createPost(getHost(), ResourcePoolService.FACTORY_LINK)
@@ -269,6 +274,7 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
                     }
                     state.resourcePoolState = ops.values().iterator().next()
                             .getBody(ResourcePoolState.class);
+                    state.documentSelfLink = state.resourcePoolState.documentSelfLink;
 
                     if (createEpzOpHolder[0] != null) {
                         state.epzState.resourcePoolLink = state.resourcePoolState.documentSelfLink;
@@ -281,6 +287,8 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
         // add an EPZ creation task to the sequence, if specified in the input state
         if (state.epzState != null && state.epzState.tagLinksToMatch != null
                 && !state.epzState.tagLinksToMatch.isEmpty()) {
+            // populate the tenant info
+            state.epzState.tenantLinks = state.tenantLinks;
             createEpzOpHolder[0] = Operation
                     .createPost(getHost(), ElasticPlacementZoneService.FACTORY_LINK)
                     .setReferer(getUri());
@@ -345,6 +353,8 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
 
         List<Operation> updateOps = new ArrayList<>();
 
+        // populate the tenant info
+        state.resourcePoolState.tenantLinks = state.tenantLinks;
         // patch the resource pool
         updateOps.add(Operation
                 .createPatch(getHost(), state.resourcePoolState.documentSelfLink)
@@ -355,6 +365,8 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
             if (state.epzState.tagLinksToMatch == null) {
                 state.epzState.tagLinksToMatch = new HashSet<>();
             }
+            // populate the tenant info
+            state.epzState.tenantLinks = state.tenantLinks;
             // use post for the elastic placement zone (will be translated to put if exists)
             updateOps.add(Operation
                     .createPost(getHost(), ElasticPlacementZoneService.FACTORY_LINK)
@@ -374,6 +386,9 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
                     Operation rpOp = ops.get(updateOps.get(0).getId());
                     state.resourcePoolState = rpOp.getStatusCode() == Operation.STATUS_CODE_OK
                             ? rpOp.getBody(ResourcePoolState.class) : null;
+                    if (state.resourcePoolState != null) {
+                        state.documentSelfLink = state.resourcePoolState.documentSelfLink;
+                    }
 
                     // always return the updated EPZ state, if any
                     if (updateOps.size() > 1 && state.epzState.documentSelfLink == null) {
