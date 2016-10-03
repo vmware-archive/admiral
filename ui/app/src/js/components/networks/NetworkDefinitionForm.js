@@ -84,17 +84,31 @@ var NetworkDefinitionForm = Vue.extend({
         network.name = $(this.$el).find('.network-name .form-control').val();
 
         if (this.showAdvanced) {
-          network.driver = $(this.$el).find('.network-driver .form-control').val();
+
+          var customProperties = this.customProperties.getData();
+
+          if (customProperties && customProperties.length) {
+              network.ipam = network.ipam || {};
+              var customPropertiesLength = customProperties.length;
+              var properties = {};
+              for (var i = 0; i < customPropertiesLength; i++) {
+                if (customProperties[i].key === 'containers.network.driver') {
+                    network.driver = customProperties[i].value;
+                } else if (customProperties[i].key === 'containers.ipam.driver') {
+                        network.ipam = network.ipam || {};
+                        network.ipam.driver = customProperties[i].value;
+                } else {
+                    properties[customProperties[i].key] = customProperties[i].value;
+                }
+              }
+              network.customProperties = properties;
+          }
+
+
           var ipamConfigData = this.ipamConfigEditor.getData();
           if (ipamConfigData && ipamConfigData.length) {
             network.ipam = network.ipam || {};
             network.ipam.config = ipamConfigData;
-          }
-
-          var ipamDriver = $(this.$el).find('.ipam-driver .form-control').val();
-          if (ipamDriver) {
-            network.ipam = network.ipam || {};
-            network.ipam.driver = ipamDriver;
           }
         }
       }
@@ -142,6 +156,19 @@ var NetworkDefinitionForm = Vue.extend({
       }
     );
 
+   this.customProperties = new MulticolumnInputs(
+      $(this.$el).find('.custom-properties .form-control'), {
+        key: {
+          header: 'Name',
+          placeholder: 'Example: ip-forward'
+        },
+        value: {
+          header: 'Value',
+          placeholder: 'Example: true'
+        }
+      }
+    );
+
     this.$networksSearch = $(this.$el).find('.network-name-search .form-control');
     this.$networksSearch.typeahead({}, {
       name: 'networks-search',
@@ -178,16 +205,49 @@ var NetworkDefinitionForm = Vue.extend({
         this.$networksSearch.typeahead('val', network.name);
 
         this.existingNetwork = !!network.external;
-        this.hasAdvancedSettings = !!(network.driver ||
+        this.hasAdvancedSettings = !!(network.driver || network.customProperties ||
           (network.ipam && (network.ipam.config || network.ipam.driver)));
 
-        $(this.$el).find('.network-driver .form-control').val(network.driver);
-
         var ipam = network.ipam || {};
-        $(this.$el).find('.ipam-driver .form-control').val(ipam.driver);
 
         var ipamConfig = ipam.config || [];
+
         this.ipamConfigEditor.setData(ipamConfig);
+
+
+        if (network.driver) {
+            if (network.customProperties == null) {
+                network.customProperties = {};
+            }
+            network.customProperties['containers.network.driver'] = network.driver;
+        }
+
+        if (network.ipam && network.ipam.driver) {
+            if (network.customProperties == null) {
+                network.customProperties = {};
+            }
+            network.customProperties['containers.ipam.driver'] = network.ipam.driver;
+        }
+
+        if (network.customProperties) {
+
+            var properties = [];
+
+            for (var key in network.customProperties) {
+                if (network.customProperties.hasOwnProperty(key)) {
+                    var value = network.customProperties[key];
+                    var keyValuePair = {
+                        'key': key,
+                        'value': value
+                    };
+                    properties.push(keyValuePair);
+                }
+            }
+
+            this.customProperties.setData(properties);
+        } else {
+            this.customProperties.setData([]);
+        }
 
         var alertMessage = (network.error) ? network.error._generic : network.error;
         if (alertMessage) {

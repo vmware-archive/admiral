@@ -278,15 +278,17 @@ public class ContainerNetworkService extends StatefulService {
         }
 
         if (state.ipam != null) {
-            for (IpamConfig ipamConfig : state.ipam.config) {
-                if (ipamConfig != null) {
-                    NetworkUtils.validateIpCidrNotation(ipamConfig.subnet);
-                    NetworkUtils.validateIpCidrNotation(ipamConfig.ipRange);
-                    NetworkUtils.validateIpAddress(ipamConfig.gateway);
-                    if (ipamConfig.auxAddresses != null) {
-                        ipamConfig.auxAddresses.values().stream().forEach((address) -> {
-                            NetworkUtils.validateIpAddress(address);
-                        });
+            if (state.ipam.config != null && state.ipam.config.length > 0) {
+                for (IpamConfig ipamConfig : state.ipam.config) {
+                    if (ipamConfig != null) {
+                        NetworkUtils.validateIpCidrNotation(ipamConfig.subnet);
+                        NetworkUtils.validateIpCidrNotation(ipamConfig.ipRange);
+                        NetworkUtils.validateIpAddress(ipamConfig.gateway);
+                        if (ipamConfig.auxAddresses != null) {
+                            ipamConfig.auxAddresses.values().stream().forEach((address) -> {
+                                NetworkUtils.validateIpAddress(address);
+                            });
+                        }
                     }
                 }
             }

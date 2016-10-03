@@ -58,6 +58,9 @@ public class ContainerNetworkAllocationTaskService extends
     // cached network description
     private volatile ContainerNetworkDescription networkDescription;
 
+    public static final String CUSTOM_PROPERTY_NETWORK_DRIVER = "containers.network.driver";
+    public static final String CUSTOM_PROPERTY_IPAM_DRIVER = "containers.ipam.driver";
+
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
         List<String> resourceLinks;
     }
@@ -337,6 +340,21 @@ public class ContainerNetworkAllocationTaskService extends
             networkState.customProperties = state.customProperties;
             networkState.ipam = networkDescription.ipam;
             networkState.driver = networkDescription.driver;
+
+            if (state.customProperties != null) {
+                if (state.customProperties.containsKey(CUSTOM_PROPERTY_NETWORK_DRIVER)) {
+                    networkState.driver = state.customProperties
+                            .get(CUSTOM_PROPERTY_NETWORK_DRIVER);
+                }
+
+                if (state.customProperties.containsKey(CUSTOM_PROPERTY_IPAM_DRIVER)) {
+                    if (networkState.ipam != null) {
+                        networkState.ipam.driver = state.customProperties
+                                .get(CUSTOM_PROPERTY_IPAM_DRIVER);
+                    }
+                }
+            }
+
             networkState.external = networkDescription.external;
 
             networkState.powerState = PowerState.PROVISIONING;
