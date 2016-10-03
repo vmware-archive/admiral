@@ -457,7 +457,7 @@ services.updateResourcePool = function(config) {
 };
 
 services.deleteResourcePool = function(config) {
-  return deleteEntity(config.documentSelfLink);
+  return deleteEntity(config.resourcePoolState.documentSelfLink);
 };
 
 services.countHostsPerResourcePool = function(resourcePoolLink, onlyContainerHosts) {
