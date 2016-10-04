@@ -256,7 +256,7 @@ public abstract class BaseIntegrationSupportIT {
         // TODO remove when the issue with the locked data collection is fixed
         SimpleHttpsClient.execute(HttpMethod.PATCH,
                 getBaseUrl()
-                        + HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONAINER_LIST_DATA_COLLECTION_LINK,
+                        + HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK,
                 Utils.toJson(body));
         HttpResponse httpResponse = SimpleHttpsClient.execute(HttpMethod.PUT,
                 getBaseUrl() + buildServiceUri(ContainerHostService.SELF_LINK),
