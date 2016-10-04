@@ -26,7 +26,9 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
  */
 @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
 @JsonIgnoreProperties({ "customProperties" })
-public class ComputeDescription extends ComputeDescriptionService.ComputeDescription {
+public class TemplateComputeDescription extends ComputeDescriptionService.ComputeDescription {
+
+    public static final String CUSTOM_PROP_NAME_CLUSTER_SIZE = "_cluster";
 
     @JsonAnySetter
     private void putProperty(String key, String value) {

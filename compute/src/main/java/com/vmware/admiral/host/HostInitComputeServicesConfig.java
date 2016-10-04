@@ -45,6 +45,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
+import com.vmware.admiral.compute.content.TemplateComputeDescription;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -95,7 +96,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ContainerNetworkService.FACTORY_LINK, ContainerNetworkState.class);
         CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_TYPE.getName(),
                 ComputeDescriptionService.FACTORY_LINK,
-                com.vmware.admiral.compute.content.ComputeDescription.class,
+                TemplateComputeDescription.class,
                 ComputeService.FACTORY_LINK,
                 com.vmware.admiral.compute.content.TemplateComputeState.class);
 

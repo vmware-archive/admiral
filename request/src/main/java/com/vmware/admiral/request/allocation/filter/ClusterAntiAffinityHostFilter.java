@@ -34,7 +34,8 @@ import com.vmware.xenon.services.common.QueryTask;
  * {@link ContainerDescription}s has <code>clusterSize</code> greater than 1. The goal of this
  * filter is to place the cluster nodes on as many different hosts as possible.
  */
-public class ClusterAntiAffinityHostFilter implements HostSelectionFilter {
+public class ClusterAntiAffinityHostFilter
+        implements HostSelectionFilter<PlacementHostSelectionTaskState> {
     protected final ContainerDescription desc;
     protected final ServiceHost host;
 
@@ -100,7 +101,7 @@ public class ClusterAntiAffinityHostFilter implements HostSelectionFilter {
                                 callback.complete(null, r.getException());
                             } else if (r.hasResult()) {
                                 HostSelection hostSelection = hostSelectionMap.get(r.getResult().parentLink);
-                                hostSelection.containerCount += 1;
+                                hostSelection.resourceCount += 1;
                             } else {
                                 completeFilter(state, hostSelectionMap, callback);
                             }
@@ -112,7 +113,7 @@ public class ClusterAntiAffinityHostFilter implements HostSelectionFilter {
             final HostSelectionFilterCompletion callback) {
 
         final boolean noClusterContainers = hostSelectionMap.values().stream()
-                .allMatch((h) -> h.containerCount == 0);
+                .allMatch((h) -> h.resourceCount == 0);
         if (noClusterContainers) {
             callback.complete(hostSelectionMap, null);
             return;
@@ -122,16 +123,16 @@ public class ClusterAntiAffinityHostFilter implements HostSelectionFilter {
         // per host (lowest to highest number of containers)
         List<HostSelection> sortedEntries = hostSelectionMap
                 .values().stream()
-                .sorted((o1, o2) -> o1.containerCount - o2.containerCount)
+                .sorted((o1, o2) -> o1.resourceCount - o2.resourceCount)
                 .collect(Collectors.toList());
 
-        int lowestValue = sortedEntries.get(0).containerCount;
+        int lowestValue = sortedEntries.get(0).resourceCount;
 
         // get host up to the resourceCounts starting with the ones that have the lowest number
         // of containers already allocated.
         final Map<String, HostSelection> filteredHostSelectionMap = new HashMap<>();
         for (HostSelection hostSelection : sortedEntries) {
-            if (hostSelection.containerCount == lowestValue
+            if (hostSelection.resourceCount == lowestValue
                     || filteredHostSelectionMap.size() < state.resourceCount) {
                 filteredHostSelectionMap.put(hostSelection.hostLink, hostSelection);
             }

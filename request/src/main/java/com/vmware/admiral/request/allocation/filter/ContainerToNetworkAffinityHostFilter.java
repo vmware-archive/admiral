@@ -38,7 +38,8 @@ import com.vmware.xenon.services.common.QueryTask;
  * A filter implementing {@link HostSelectionFilter} in order to provide affinity and network name
  * resolution in case the {@link ContainerDescription} specifies <code>networks</code> property.
  */
-public class ContainerToNetworkAffinityHostFilter implements HostSelectionFilter {
+public class ContainerToNetworkAffinityHostFilter
+        implements HostSelectionFilter<PlacementHostSelectionTaskState> {
     private final Map<String, ServiceNetwork> networks;
     private final ServiceHost host;
 

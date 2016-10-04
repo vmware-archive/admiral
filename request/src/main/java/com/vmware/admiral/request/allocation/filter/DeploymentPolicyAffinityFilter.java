@@ -27,7 +27,8 @@ import com.vmware.xenon.common.ServiceHost;
  * container spec name specified in <code>affinity</code>, the list of host would be selected based
  * on the affinity constraints.
  */
-public class DeploymentPolicyAffinityFilter implements HostSelectionFilter {
+public class DeploymentPolicyAffinityFilter
+        implements HostSelectionFilter<PlacementHostSelectionTaskState> {
     protected static final boolean AFFINITY = true;
     private String deploymentPolicyId;
     private ServiceHost host;

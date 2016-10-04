@@ -38,6 +38,7 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
+import com.vmware.admiral.compute.content.TemplateComputeDescription;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
@@ -776,6 +777,13 @@ public class RequestBrokerService extends
                 TaskStage.STARTED, SubStage.RESERVED, TaskStage.STARTED, SubStage.ERROR);
 
         long resourceCount = state.resourceCount;
+
+        if (computeDescription.customProperties != null) {
+            long clusterSize = Long
+                    .parseLong(computeDescription.customProperties.getOrDefault(
+                            TemplateComputeDescription.CUSTOM_PROP_NAME_CLUSTER_SIZE, "1"));
+            resourceCount *= clusterSize;
+        }
 
         rsrvTask.resourceCount = resourceCount;
         rsrvTask.tenantLinks = state.tenantLinks;

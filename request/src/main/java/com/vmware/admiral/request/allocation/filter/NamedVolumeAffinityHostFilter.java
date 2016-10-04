@@ -45,7 +45,8 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
  * with named volumes. Based on the volume drivers of the linked named volumes the selection
  * algorithm will filter out the docker hosts that do not have the driver installed on them.
  */
-public class NamedVolumeAffinityHostFilter implements HostSelectionFilter {
+public class NamedVolumeAffinityHostFilter
+        implements HostSelectionFilter<PlacementHostSelectionTaskState> {
 
     private final ServiceHost host;
     private List<String> volumeNames;

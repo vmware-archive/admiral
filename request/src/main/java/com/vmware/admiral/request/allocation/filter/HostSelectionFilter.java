@@ -18,12 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
-
 /**
  * Host selection interface to be used by all filters implementing host selection algorithms
  */
-public interface HostSelectionFilter extends AffinityFilter {
+public interface HostSelectionFilter<T> extends AffinityFilter {
 
     /**
      * Filter the list of compute host links based on the affinity rules.
@@ -35,7 +33,7 @@ public interface HostSelectionFilter extends AffinityFilter {
      * @param callback
      *            - the callback to be executed once the filtering is completed.
      */
-    void filter(PlacementHostSelectionTaskState state, Map<String, HostSelection> hostSelectionMap,
+    void filter(T state, Map<String, HostSelection> hostSelectionMap,
             HostSelectionFilterCompletion callback);
 
     /**
@@ -49,7 +47,7 @@ public interface HostSelectionFilter extends AffinityFilter {
     public static class HostSelection {
         private static final String SPLIT_REGEX = ":";
         public String hostLink;
-        public int containerCount;
+        public int resourceCount;
         public Collection<String> resourcePoolLinks;
         public Map<String, DescName> descNames;
         public Long availableMemory;

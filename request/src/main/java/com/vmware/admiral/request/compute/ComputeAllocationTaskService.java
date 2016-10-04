@@ -16,6 +16,7 @@ import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties
 import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
+import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 import static com.vmware.photon.controller.model.ComputeProperties.CUSTOM_DISPLAY_NAME;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
@@ -704,6 +705,7 @@ public class ComputeAllocationTaskService
         computePlacementSelection.resourceCount = state.resourceCount;
         computePlacementSelection.resourcePoolLink = groupResourcePlacement.resourcePoolLink;
         computePlacementSelection.tenantLinks = state.tenantLinks;
+        computePlacementSelection.contextId = getContextId(state);
         computePlacementSelection.customProperties = state.customProperties;
         computePlacementSelection.serviceTaskCallback = ServiceTaskCallback.create(
                 getSelfLink(),

@@ -26,7 +26,8 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
 
-public abstract class BaseAffinityHostFilter implements HostSelectionFilter {
+public abstract class BaseAffinityHostFilter
+        implements HostSelectionFilter<PlacementHostSelectionTaskState> {
     protected final ServiceHost host;
     protected final String affinityPropertyName;
     protected Collection<String> affinityNames;

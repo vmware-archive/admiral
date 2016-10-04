@@ -24,7 +24,8 @@ import com.vmware.admiral.request.PlacementHostSelectionTaskService;
  * Dummy affinity filter that is used to influence the order of provisioning/starting containers in
  * a composite description
  */
-public class DependsOnAffinityHostFilter implements HostSelectionFilter {
+public class DependsOnAffinityHostFilter implements
+        HostSelectionFilter<PlacementHostSelectionTaskService.PlacementHostSelectionTaskState> {
 
     private String[] dependsOn;
 

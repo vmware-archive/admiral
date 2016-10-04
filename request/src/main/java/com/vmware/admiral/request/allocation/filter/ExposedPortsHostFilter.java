@@ -37,7 +37,8 @@ import com.vmware.xenon.services.common.QueryTask;
  * specified in <code>ports</code> the selection algorithm will filter out all docker hosts that
  * run containers with the same hostPorts.
  */
-public class ExposedPortsHostFilter implements HostSelectionFilter {
+public class ExposedPortsHostFilter
+        implements HostSelectionFilter<PlacementHostSelectionTaskState> {
     private static final String HOST_PORT_QUERY_SELECTION = String.format("%s.item.%s",
             ContainerState.FIELD_NAME_PORTS, PortBinding.FIELD_NAME_HOST_PORT);
 
