@@ -342,6 +342,20 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
                 completionHandler);
     }
 
+    /**
+     * https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/connect-a-container-to-a-network
+     */
+    @Override
+    public void connectContainerToNetwork(CommandInput input, CompletionHandler completionHandler) {
+        createOrUpdateTargetSsl(input);
+
+        String path = String.format("/networks/%s/connect", input
+                .getProperties().get(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME));
+
+        sendPost(UriUtils.extendUri(input.getDockerUri(), path), input.getProperties(),
+                ClientMode.DEFAULT, completionHandler);
+    }
+
     @Override
     public void stop() {
         if (attachServiceClient != null) {

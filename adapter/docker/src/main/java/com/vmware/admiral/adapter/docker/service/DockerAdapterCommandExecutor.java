@@ -113,10 +113,13 @@ public interface DockerAdapterCommandExecutor {
         }
     }
 
-    interface DOCKER_CONTAINER_NETWORKING_CONFIG {
-        String ENDPOINTS_CONFIG_PROP_NAME = "EndpointsConfig";
+    interface DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG {
 
-        interface ENDPOINTS_CONFIG {
+        String CONTAINER_PROP_NAME = "Container";
+
+        String ENDPOINT_CONFIG_PROP_NAME = "EndpointConfig";
+
+        interface ENDPOINT_CONFIG {
             String IPAM_CONFIG_PROP_NAME = "IPAMConfig";
 
             interface IPAM_CONFIG {
@@ -193,6 +196,8 @@ public interface DockerAdapterCommandExecutor {
     void inspectNetwork(CommandInput input, CompletionHandler completionHandler);
 
     void removeNetwork(CommandInput input, CompletionHandler completionHandler);
+
+    void connectContainerToNetwork(CommandInput input, CompletionHandler completionHandler);
 
     // TODO uncomment and implement
     // void connectNetwork(CommandInput input, CompletionHandler completionHandler);

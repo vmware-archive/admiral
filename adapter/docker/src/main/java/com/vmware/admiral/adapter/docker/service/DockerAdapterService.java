@@ -47,6 +47,7 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_LOG_CONFIG_PROP_TYPE_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORKING_CONFIG_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_ID_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_OPEN_STDIN_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_PORT_BINDINGS_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_TTY_PROP_NAME;
@@ -78,6 +79,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -86,7 +88,7 @@ import java.util.stream.Collectors;
 import org.apache.http.HttpStatus;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
-import com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORKING_CONFIG;
+import com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG;
 import com.vmware.admiral.adapter.docker.util.CommandUtil;
 import com.vmware.admiral.adapter.docker.util.DockerDevice;
 import com.vmware.admiral.adapter.docker.util.DockerImage;
@@ -711,10 +713,6 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         // Mapping properties from containerState to the docker config:
         hostConfig.put(VOLUMES_FROM_PROP_NAME, context.containerState.volumesFrom);
 
-        if (context.containerState.networks != null) {
-            addNetworkConfig(createCommandInput, context.containerState.networks);
-        }
-
         if (context.containerDescription.portBindings != null) {
             addPortBindings(createCommandInput, context.containerDescription.portBindings);
         }
@@ -809,49 +807,45 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         getOrAddMap(input, DOCKER_CONTAINER_CONFIG_PROP_NAME);
     }
 
-    private void addNetworkConfig(CommandInput input, Map<String, ServiceNetwork> networks) {
-        Map<String, Object> endpointsConfig = new HashMap<>();
-        for (Entry<String, ServiceNetwork> entry : networks.entrySet()) {
+    private void addNetworkConfig(CommandInput input, String containerId, String networkId,
+            ServiceNetwork network) {
+        Map<String, Object> endpointConfig = getOrAddMap(input,
+                DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG_PROP_NAME);
 
-            Map<String, Object> endpointConfig = new HashMap<>();
-
-            ServiceNetwork value = entry.getValue();
-            Map<String, Object> ipamConfig = new HashMap<>();
-            if (value.ipv4_address != null) {
-                ipamConfig
-                        .put(DOCKER_CONTAINER_NETWORKING_CONFIG.ENDPOINTS_CONFIG.IPAM_CONFIG.IPV4_CONFIG,
-                                value.ipv4_address);
-            }
-
-            if (value.ipv6_address != null) {
-                ipamConfig
-                        .put(DOCKER_CONTAINER_NETWORKING_CONFIG.ENDPOINTS_CONFIG.IPAM_CONFIG.IPV6_CONFIG,
-                                value.ipv6_address);
-            }
-
-            if (!ipamConfig.isEmpty()) {
-                endpointConfig.put(
-                        DOCKER_CONTAINER_NETWORKING_CONFIG.ENDPOINTS_CONFIG.IPAM_CONFIG_PROP_NAME,
-                        ipamConfig);
-            }
-
-            if (value.aliases != null) {
-                endpointConfig.put(DOCKER_CONTAINER_NETWORKING_CONFIG.ENDPOINTS_CONFIG.ALIASES,
-                        value.aliases);
-            }
-
-            if (value.links != null) {
-                endpointConfig.put(DOCKER_CONTAINER_NETWORKING_CONFIG.ENDPOINTS_CONFIG.LINKS,
-                        value.links);
-            }
-
-            endpointsConfig.put(entry.getKey(), endpointConfig);
+        Map<String, Object> ipamConfig = new HashMap<>();
+        if (network.ipv4_address != null) {
+            ipamConfig.put(
+                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.IPAM_CONFIG.IPV4_CONFIG,
+                    network.ipv4_address);
         }
 
-        Map<String, Object> networkConfig = getOrAddMap(input,
-                DOCKER_CONTAINER_NETWORKING_CONFIG_PROP_NAME);
-        networkConfig.put(DOCKER_CONTAINER_NETWORKING_CONFIG.ENDPOINTS_CONFIG_PROP_NAME,
-                endpointsConfig);
+        if (network.ipv6_address != null) {
+            ipamConfig
+                    .put(DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.IPAM_CONFIG.IPV6_CONFIG,
+                            network.ipv6_address);
+        }
+
+        if (!ipamConfig.isEmpty()) {
+            endpointConfig.put(
+                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.IPAM_CONFIG_PROP_NAME,
+                    ipamConfig);
+        }
+
+        if (network.aliases != null) {
+            endpointConfig.put(
+                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.ALIASES,
+                    network.aliases);
+        }
+
+        if (network.links != null) {
+            endpointConfig.put(
+                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.LINKS,
+                    network.links);
+        }
+
+        input.withProperty(DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.CONTAINER_PROP_NAME,
+                containerId);
+        input.withProperty(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME, networkId);
     }
 
     private boolean shouldTryCreateFromLocalImage(ContainerDescription containerDescription) {
@@ -929,6 +923,42 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     }
 
     private void processCreatedContainer(RequestContext context) {
+        if (context.containerState.networks != null && !context.containerState.networks.isEmpty()) {
+            connectCreatedContainerToNetworks(context);
+        } else {
+            startCreatedContainer(context);
+        }
+    }
+
+    private void connectCreatedContainerToNetworks(RequestContext context) {
+        AtomicInteger count = new AtomicInteger(context.containerState.networks.size());
+        AtomicBoolean error = new AtomicBoolean();
+
+        for (Entry<String, ServiceNetwork> entry : context.containerState.networks.entrySet()) {
+
+            CommandInput connectCommandInput = new CommandInput(context.commandInput);
+
+            String containerId = context.containerState.id;
+            String networkId = entry.getKey();
+
+            addNetworkConfig(connectCommandInput, context.containerState.id, entry.getKey(),
+                    entry.getValue());
+
+            context.executor.connectContainerToNetwork(connectCommandInput, (o, ex) -> {
+                if (ex != null) {
+                    logWarning("Exception while connecting container [%s] to network [%s]",
+                            containerId, networkId);
+                    if (error.compareAndSet(false, true)) {
+                        fail(context.request, o, ex);
+                    }
+                } else if (count.decrementAndGet() == 0) {
+                    startCreatedContainer(context);
+                }
+            });
+        }
+    }
+
+    private void startCreatedContainer(RequestContext context) {
         CommandInput startCommandInput = new CommandInput(context.commandInput)
                 .withProperty(DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id);
 

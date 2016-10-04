@@ -1,0 +1,33 @@
+---
+id: mySqlMultiNetwork
+name: mySqlMultiNetwork
+status: PUBLISHED
+properties:
+  _leaseDays: 3
+components:
+  mysql:
+    type: Container.Docker
+    data:
+      name: mysql
+      image: mariadb:10.0.26
+      env:
+      - var: MYSQL_ROOT_PASSWORD
+        value: pass@word01
+      ports:
+      - container_port: 3306
+      networks:
+        wpnet: {}
+        publicnet: {}
+        privatenet: {}
+  wpnet:
+    type: Network.Docker
+    data:
+      name: wpnet
+  publicnet:
+    type: Network.Docker
+    data:
+      name: publicnet
+  privatenet:
+    type: Network.Docker
+    data:
+      name: privatenet

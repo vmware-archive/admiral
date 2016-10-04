@@ -1030,6 +1030,11 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
                 EXTRACT_FIRST_JSON_ELEMENT);
     }
 
+    @Override
+    public void connectContainerToNetwork(CommandInput input, CompletionHandler completionHandler) {
+        throw new UnsupportedOperationException("Connect network is not implemented yet");
+    }
+
     private String docker(CommandBuilder subCommandBuilder) {
         return docker(subCommandBuilder.toString());
     }
