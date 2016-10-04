@@ -278,8 +278,16 @@ public class ReservationTaskService
 
         if (state.tenantLinks == null || state.tenantLinks.isEmpty()) {
 
-            logInfo("Quering for all placements for resource description: [%s] and resource count: [%s]...",
-                    state.resourceDescriptionLink, state.resourceCount);
+            if (isGlobal(state)) {
+                logInfo("Quering for global placements for resource description: [%s] and resource count: [%s]...",
+                        state.resourceDescriptionLink, state.resourceCount);
+
+                Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(null);
+                q.querySpec.query.addBooleanClause(tenantLinksQuery);
+            } else {
+                logInfo("Quering for all placements for resource description: [%s] and resource count: [%s]...",
+                        state.resourceDescriptionLink, state.resourceCount);
+            }
         } else {
 
             logInfo("Quering for group [%s] placements for resource description: [%s] and resource count: [%s]...",
