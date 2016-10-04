@@ -42,7 +42,7 @@
       <span class="help-block">{{i18n(validationErrors.resourcePool)}}</span>
     </div>
   </div>
-  <div id="deploymentPolicy" class="form-group">
+  <div v-if="isApplicationEmbedded()" id="deploymentPolicy" class="form-group">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.deploymentPolicy")}}</label>
     <div class="col-sm-9">
       <div class="form-control dropdown-holder"></div>

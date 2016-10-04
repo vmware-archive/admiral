@@ -199,6 +199,9 @@ var HostView = Vue.extend({
       },
 
       methods: {
+        isApplicationEmbedded: function() {
+          return utils.isApplicationEmbedded();
+        },
         onBlur: function(e) {
           e.preventDefault();
 
@@ -394,7 +397,9 @@ var HostView = Vue.extend({
   },
 
   methods: {
-
+    isApplicationEmbedded: function() {
+      return utils.isApplicationEmbedded();
+    },
     goBack: function() {
       NavigationActions.openHosts();
     },

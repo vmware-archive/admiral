@@ -363,6 +363,10 @@ class ContainerDefinitionForm extends Component {
 
     this.$el.find('.container-ports-publish-input .checkbox-control')
       .prop('checked', true);
+
+    if (!utils.isApplicationEmbedded()) {
+      this.$el.find('.deployment-policy-input').hide();
+    }
   }
 
   setData(data) {

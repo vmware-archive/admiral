@@ -104,6 +104,9 @@ function PlacementsRowEditor() {
 
   this.deploymentPolicyInput.setOptionSelectCallback(() => toggleButtonsState.call(this));
 
+  if (!utils.isApplicationEmbedded()) {
+    deploymentPolicyEl.hide();
+  }
   addEventListeners.call(this);
 }
 
@@ -129,7 +132,9 @@ PlacementsRowEditor.prototype.setData = function(data) {
         placementObject.groupId;
       this.placementGroupInput.setValue(groupInputValue);
       this.resourcePoolInput.setSelectedOption(placementObject.resourcePool);
-      this.deploymentPolicyInput.setSelectedOption(placementObject.deploymentPolicy);
+      if (this.deploymentPolicyInput) {
+        this.deploymentPolicyInput.setSelectedOption(placementObject.deploymentPolicy);
+      }
       this.$el.find('.maxInstancesInput input').val(placementObject.maxNumberInstances);
       this.$el.find('.priorityInput input').val(placementObject.priority);
       this.$el.find('.nameInput input').val(placementObject.name);
@@ -243,7 +248,6 @@ var getPlacementModel = function() {
   toReturn.groupId = this.placementGroupInput.getValue();
   toReturn.resourcePool = this.resourcePoolInput.getSelectedOption();
   toReturn.deploymentPolicy = this.deploymentPolicyInput.getSelectedOption();
-
   var maxNumberInstances = this.$el.find('.maxInstancesInput input').val();
   if ($.isNumeric(maxNumberInstances)) {
     toReturn.maxNumberInstances = maxNumberInstances;

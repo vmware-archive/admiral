@@ -66,6 +66,7 @@
       </context-sidepanel-toolbar-item>
 
       <context-sidepanel-toolbar-item
+        v-if="isApplicationEmbedded()"
         v-bind:active="activeContextItem === 'deploymentPolicies'"
         v-bind:icon-class="'fa fa-file-text'"
         v-bind:label="i18n('app.deploymentPolicy.contextPanelTooltip')"
