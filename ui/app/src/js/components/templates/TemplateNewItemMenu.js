@@ -11,6 +11,8 @@
 
 const RADIUS = 40;
 
+const ANIMATION_DURATION = 400;
+
 var positionElements = function(numOfItems, canvasWidth, canvasHeight, radius) {
   var positions = [];
   var angle = - Math.PI / 2;
@@ -32,12 +34,38 @@ var positionElements = function(numOfItems, canvasWidth, canvasHeight, radius) {
     var y = Math.round(canvasHeight / 2 + canvasRadius * Math.sin(angle) - radius);
     positions.push({
       x: x,
-      y: y
+      y: y,
+      initialX: canvasWidth / 2 - radius,
+      initialY: canvasHeight / 2 - radius
     });
     angle += step;
   }
 
   return positions;
+};
+
+var easeOutQuart = function(t) {
+  return 1 - (--t) * t * t * t;
+};
+
+var drawRoundLine = function(ctx, canvasWidth, canvasHeight, lineWidth, lineHeight) {
+  var radius = Math.min(lineWidth, lineHeight) / 2;
+
+  var x = canvasWidth / 2 - lineWidth / 2;
+  var y = canvasHeight / 2 - lineHeight / 2;
+
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + lineWidth - radius, y);
+  ctx.quadraticCurveTo(x + lineWidth, y, x + lineWidth, y + radius);
+  ctx.lineTo(x + lineWidth, y + lineHeight - radius);
+  ctx.quadraticCurveTo(x + lineWidth, y + lineHeight, x + lineWidth - radius, y + lineHeight);
+  ctx.lineTo(x + radius, y + lineHeight);
+  ctx.quadraticCurveTo(x, y + lineHeight, x, y + lineHeight - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  ctx.fill();
 };
 
 //var positionElements = function(numOfItems, canvasWidth, canvasHeight, radius) {
@@ -117,12 +145,14 @@ var TemplateNewItemMenu = Vue.extend({
     this.canvas.addEventListener('mousemove', this.mouseMove);
     this.canvas.addEventListener('mousedown', this.mouseDown);
     this.canvas.addEventListener('mouseup', this.mouseUp);
+    this.canvas.addEventListener('mouseover', this.mouseOver);
     this.canvas.addEventListener('mouseout', this.mouseOut);
   },
   detached: function() {
     this.canvas.removeEventListener('mousemove', this.mouseMove);
     this.canvas.removeEventListener('mousedown', this.mouseDown);
     this.canvas.removeEventListener('mouseup', this.mouseUp);
+    this.canvas.removeEventListener('mouseover', this.mouseOver);
     this.canvas.removeEventListener('mouseout', this.mouseOut);
   },
   methods: {
@@ -144,18 +174,18 @@ var TemplateNewItemMenu = Vue.extend({
 
       Promise.all(promises).then((loadedImagesSlots) => {
         // Scale 2 for retina
-        var canvasWidth = this.$el.offsetWidth;
-        var canvasHeight = this.$el.offsetHeight;
+        this.canvasWidth = this.$el.offsetWidth;
+        this.canvasHeight = this.$el.offsetHeight;
 
-        $(this.canvas).css('width', canvasWidth).css('height', canvasHeight);
+        $(this.canvas).css('width', this.canvasWidth).css('height', this.canvasHeight);
 
-        this.canvas.width = canvasWidth * 2;
-        this.canvas.height = canvasHeight * 2;
+        this.canvas.width = this.canvasWidth * 2;
+        this.canvas.height = this.canvasHeight * 2;
 
         this.canvas.getContext('2d').scale(2, 2);
 
         var numOfItems = loadedImagesSlots.length;
-        var positions = positionElements(numOfItems, canvasWidth, canvasHeight, RADIUS);
+        var positions = positionElements(numOfItems, this.canvasWidth, this.canvasHeight, RADIUS);
 
         this.resolvedItems = [];
         for (var i = 0; i < numOfItems; i++) {
@@ -164,13 +194,15 @@ var TemplateNewItemMenu = Vue.extend({
           this.resolvedItems.push({
             x: position.x,
             y: position.y,
+            initialX: position.initialX,
+            initialY: position.initialY,
             img: $(slot).find('img')[0],
             label: $(slot).find('.label').text(),
             instance: slot
           });
         }
 
-        this.draw();
+        this.draw(true);
       });
     },
 
@@ -185,13 +217,21 @@ var TemplateNewItemMenu = Vue.extend({
       if (this.mouseY < 0 || this.mouseY > this.canvas.height) {
         this.mouseY = undefined;
       }
-      this.draw();
+
+      if (!this.animationRequestId) {
+        this.draw();
+      }
+    },
+
+    mouseOver: function() {
+      this.animate(true);
     },
 
     mouseOut: function() {
       this.mouseX = undefined;
       this.mouseY = undefined;
-      this.draw();
+
+      this.animate(false);
     },
 
     mouseDown: function() {
@@ -202,49 +242,56 @@ var TemplateNewItemMenu = Vue.extend({
     mouseUp: function() {
       this.isMouseDown = false;
       this.draw();
-
       var closest = this.getClosest();
       if (closest) {
         $(closest.instance).trigger('click');
       }
     },
 
-    animate: function(element, position) {
-      var shouldAnimate = false;
-      var dx = Math.round(position.x - element.x);
-      var dy = Math.round(position.y - element.y);
-      if (dx !== 0) {
-        element.x = Math.round(element.x + dx / Math.abs(dx));
-        shouldAnimate = true;
-      }
-
-      if (dy !== 0) {
-        element.y += Math.round(element.x + dy / Math.abs(dy));
-        shouldAnimate = true;
-      }
-
-      if (shouldAnimate) {
-        this.draw();
-        this.animationRequestId = requestAnimationFrame(() => {
-          this.animate(element, position);
-        });
-      }
+    draw: function(initial) {
+      requestAnimationFrame(() => {
+        if (!this.animationRequestId) {
+          this.doAnimate(!initial);
+        }
+      });
     },
 
-    draw: function() {
+    animate: function(forward) {
+      requestAnimationFrame(() => {
+        cancelAnimationFrame(this.animationRequestId);
+
+        var startTime = (new Date()).getTime();
+        if (this.animationTime) {
+          startTime -= (ANIMATION_DURATION - this.animationTime);
+        }
+        this.doAnimate(forward, startTime);
+      });
+    },
+
+    doAnimate: function(forward, startTime) {
       if (!this.resolvedItems) {
         return;
       }
 
-      requestAnimationFrame(this.doDraw);
-    },
+      let closestItem = this.getClosest();
 
-    doDraw: function() {
+      var t;
+      var time;
+
+      if (!startTime) {
+        t = 1;
+      } else {
+        time = (new Date()).getTime() - startTime;
+        t = Math.min(time / ANIMATION_DURATION, 1);
+      }
+      if (!forward) {
+        t = 1 - t;
+      }
+      var ease = easeOutQuart(t);
+
       let ctx = this.canvas.getContext('2d');
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       ctx.save();
-
-      let closestItem = this.getClosest();
 
       for (let i = 0; i < this.resolvedItems.length; i++) {
         let currentItem = this.resolvedItems[i];
@@ -256,7 +303,12 @@ var TemplateNewItemMenu = Vue.extend({
           scale += 0.1;
         }
 
-        ctx.translate(currentItem.x, currentItem.y);
+        var x = currentItem.initialX + (currentItem.x - currentItem.initialX) * ease;
+        var y = currentItem.initialY + (currentItem.y - currentItem.initialY) * ease;
+
+        ctx.globalAlpha = ease;
+
+        ctx.translate(x, y);
         ctx.translate(RADIUS, RADIUS);
         ctx.scale(scale, scale);
 
@@ -286,7 +338,24 @@ var TemplateNewItemMenu = Vue.extend({
         ctx.restore();
       }
 
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - ease);
+      ctx.fillStyle = '#bababa';
+      drawRoundLine(ctx, this.canvasWidth, this.canvasHeight, this.canvasWidth / 3, 16);
+      drawRoundLine(ctx, this.canvasWidth, this.canvasHeight, 16, this.canvasWidth / 3);
       ctx.restore();
+
+      ctx.restore();
+
+      if (time >= 0 && time < ANIMATION_DURATION) {
+        this.animationTime = time;
+        this.animationRequestId = requestAnimationFrame(() => {
+          this.doAnimate(forward, startTime);
+        });
+      } else {
+        this.animationTime = 0;
+        this.animationRequestId = null;
+      }
     },
 
     getClosest: function() {
