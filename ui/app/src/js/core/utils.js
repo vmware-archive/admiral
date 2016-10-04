@@ -51,9 +51,6 @@ var utils = {
   existsConfigurationProperty: function(property) {
     return configurationProperties.hasOwnProperty(property);
   },
-  isNetworkingAvailable: function() {
-    return this.getConfigurationPropertyBoolean('allow.ft.network');
-  },
   showResourcesView: function(viewName) {
    return viewName === constants.VIEWS.RESOURCES.name
             || viewName === constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name

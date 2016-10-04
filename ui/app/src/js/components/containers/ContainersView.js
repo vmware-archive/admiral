@@ -23,7 +23,6 @@ import ContainerRequestForm from 'components/containers/ContainerRequestForm'; /
 import NetworkRequestForm from 'components/networks/NetworkRequestForm'; // eslint-disable-line
 import VueAdapter from 'components/common/VueAdapter';
 import GridHolderMixin from 'components/common/GridHolderMixin';
-import utils from 'core/utils';
 import constants from 'core/constants';
 import { NavigationActions, RequestsActions, NotificationsActions,
           ContainerActions, ContainersContextToolbarActions } from 'actions/Actions';
@@ -113,9 +112,6 @@ var ContainersViewVueComponent = Vue.extend({
         return contextView.notifications.eventlogs;
       }
       return 0;
-    },
-    isNetworkingAvailable: function() {
-      return utils.isNetworkingAvailable();
     },
     creatingContainer: function() {
       return this.model.creatingResource &&

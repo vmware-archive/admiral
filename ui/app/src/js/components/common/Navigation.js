@@ -58,13 +58,6 @@ var Navigation = Vue.extend({
   },
 
   methods: {
-    isAvailable: function(item) {
-      if (item.name === 'networks') {
-        return utils.isNetworkingAvailable();
-      }
-
-      return true;
-    },
     findItemElement: function(item) {
       let elParent = $(this.$el).parent('.side-view');
       let elNavBar = $(elParent).find('.nav-bar');
