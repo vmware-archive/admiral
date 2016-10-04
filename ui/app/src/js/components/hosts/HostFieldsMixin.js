@@ -12,6 +12,7 @@
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
 import { HostContextToolbarActions } from 'actions/Actions';
 import constants from 'core/constants';
+import Tags from 'components/common/Tags';
 
 const resourcePoolManageOptions = [{
   id: 'rp-create',
@@ -128,6 +129,8 @@ var HostFieldsMixin = {
       this.deploymentPolicyInput.setClearOptionSelectCallback(function() {
         _this.deploymentPolicy = undefined;
       });
+
+      this.tagsInput = new Tags($(this.$el).find('#tags .tags-input'));
 
       this.unwatchResourcePools = this.$watch('model.resourcePools', () => {
         if (this.model.resourcePools === constants.LOADING) {

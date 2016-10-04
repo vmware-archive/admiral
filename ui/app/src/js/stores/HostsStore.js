@@ -117,7 +117,8 @@ let getHostSpec = function(hostModel) {
     resourcePoolLink: hostModel.resourcePoolLink,
     descriptionLink: hostModel.descriptionLink,
     customProperties: customProperties,
-    powerState: hostModel.powerState
+    powerState: hostModel.powerState,
+    tagLinks: hostModel.tagLinks
   };
 
   let hostSpec = {
@@ -159,6 +160,7 @@ let toViewModel = function(dto) {
     containers = Math.round(dto.customProperties.__Containers);
   }
   return {
+    dto: dto,
     id: dto.id,
     address: dto.address ? dto.address : dto.id,
     descriptionLink: dto.descriptionLink,
@@ -170,7 +172,8 @@ let toViewModel = function(dto) {
     memoryPercentage: memoryUsagePct,
     cpuPercentage: cpuUsagePct,
     customProperties: customProperties,
-    selfLinkId: utils.getDocumentId(dto.documentSelfLink)
+    selfLinkId: utils.getDocumentId(dto.documentSelfLink),
+    tagLinks: dto.tagLinks
   };
 };
 
@@ -485,7 +488,7 @@ let HostsStore = Reflux.createStore({
     this.setInData(['listView', 'resourcePools'], null);
   },
 
-  onAddHost: function(hostModel) {
+  onAddHost: function(hostModel, tags) {
     this.setInData(['hostAddView', 'validationErrors'], null);
     this.setInData(['hostAddView', 'shouldAcceptCertificate'], null);
 
@@ -495,19 +498,27 @@ let HostsStore = Reflux.createStore({
     } else {
       this.setInData(['hostAddView', 'isSavingHost'], true);
 
-      var hostSpec = getHostSpec(hostModel);
+      Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
+        return Promise.all(tags.map((tag, i) =>
+          result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
+      }).then((createdTags) => {
 
-      services.addHost(hostSpec).then((hostSpec) => {
-        this.setInData(['hostAddView', 'isSavingHost'], false);
-        if (hostSpec && hostSpec.certificate) {
-          this.setInData(['hostAddView', 'shouldAcceptCertificate'], {
-            certificateHolder: hostSpec
-          });
-          this.emitChange();
-        } else {
-          this.onHostAdded();
-        }
-      }).catch(this.onGenericEditError);
+        hostModel.tagLinks = createdTags.map((tag) => tag.documentSelfLink);
+
+        var hostSpec = getHostSpec(hostModel);
+
+        services.addHost(hostSpec).then((hostSpec) => {
+          this.setInData(['hostAddView', 'isSavingHost'], false);
+          if (hostSpec && hostSpec.certificate) {
+            this.setInData(['hostAddView', 'shouldAcceptCertificate'], {
+              certificateHolder: hostSpec
+            });
+            this.emitChange();
+          } else {
+            this.onHostAdded();
+          }
+        }).catch(this.onGenericEditError);
+      });
     }
 
     this.emitChange();
@@ -524,7 +535,6 @@ let HostsStore = Reflux.createStore({
       this.setInData(['hostAddView', 'isSavingHost'], true);
 
       services.createHostDescription(hostModel).then((hostDescription) => {
-
         services.createHost(hostDescription, hostModel.clusterSize).then((request) => {
           console.log('started request for Create Host: ' + request);
 
@@ -595,9 +605,18 @@ let HostsStore = Reflux.createStore({
     if (hostModel.customProperties && deploymentPolicyLink) {
       promises.push(
           services.loadDeploymentPolicy(deploymentPolicyLink).catch(() => Promise.resolve()));
+    } else {
+      promises.push(Promise.resolve());
     }
 
-    Promise.all(promises).then(function([resourcePool, credential, deploymentPolicy]) {
+    if (hostModel.tagLinks) {
+      promises.push(
+          services.loadTags(hostModel.tagLinks).catch(() => Promise.resolve()));
+    } else {
+      promises.push(Promise.resolve());
+    }
+
+    Promise.all(promises).then(function([resourcePool, credential, deploymentPolicy, tags]) {
 
       if (credentialLink && credential) {
         credential.name = (credential.customProperties
@@ -611,6 +630,7 @@ let HostsStore = Reflux.createStore({
 
       // preselection of resource pool and credentials
       var hostAddView = {
+        dto: hostModel.dto,
         id: hostModel.id,
         hostAlias: utils.getHostName(hostModel),
         address: hostModel.address ? hostModel.address : hostModel.id,
@@ -621,7 +641,8 @@ let HostsStore = Reflux.createStore({
         customProperties: utils.getDisplayableCustomProperties(hostModel.customProperties),
         descriptionLink: hostModel.descriptionLink,
         powerState: hostModel.powerState,
-        selfLinkId: hostModel.selfLinkId
+        selfLinkId: hostModel.selfLinkId,
+        tags: tags ? Object.values(tags) : []
       };
 
       _this.setInData(['hostAddView'], $.extend({}, _this.data.hostAddView, hostAddView));
@@ -630,7 +651,7 @@ let HostsStore = Reflux.createStore({
     }).catch(this.onGenericEditError);
   },
 
-  onUpdateHost: function(hostModel) {
+  onUpdateHost: function(hostModel, tags) {
     updateEditableProperties.call(this, hostModel);
 
     this.setInData(['hostAddView', 'validationErrors'], null);
@@ -657,18 +678,25 @@ let HostsStore = Reflux.createStore({
       } else {
         delete customProperties.__hostAlias;
       }
+      Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
+        return Promise.all(tags.map((tag, i) =>
+          result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
+      }).then((createdTags) => {
 
-      var hostData = {
-        customProperties: customProperties,
-        descriptionLink: this.data.hostAddView.descriptionLink,
-        resourcePoolLink: hostModel.resourcePoolLink,
-        credential: hostModel.credential,
-        powerState: this.data.hostAddView.powerState
-      };
+        var hostData = $.extend({}, hostModel.dto, {
+          customProperties: $.extend({}, hostModel.dto.customProperties, customProperties),
+          descriptionLink: this.data.hostAddView.descriptionLink,
+          resourcePoolLink: hostModel.resourcePoolLink,
+          credential: hostModel.credential,
+          powerState: this.data.hostAddView.powerState,
+          tagLinks: createdTags.map((tag) => tag.documentSelfLink)
+        });
 
-      services.updateHost(hostId, hostData).then(() => {
-        this.onHostAdded();
-      }).catch(this.onGenericEditError);
+        services.updateHost(hostId, hostData).then(() => {
+          this.onHostAdded();
+        }).catch(this.onGenericEditError);
+      });
+
     }
 
     this.emitChange();
@@ -732,7 +760,7 @@ let HostsStore = Reflux.createStore({
       });
   },
 
-  onAcceptCertificateAndAddHost: function(certificateHolder, hostModel) {
+  onAcceptCertificateAndAddHost: function(certificateHolder, hostModel, tags) {
     this.setInData(['hostAddView', 'isSavingHost'], true);
     this.emitChange();
 
@@ -742,10 +770,19 @@ let HostsStore = Reflux.createStore({
         this.setInData(['hostAddView', 'isSavingHost'], true);
         this.emitChange();
 
-        var hostSpec = getHostSpec(hostModel);
-        hostSpec.sslTrust = certificateHolder;
+        return Promise.all(tags.map((tag) =>
+            services.loadTag(tag.key, tag.value))).then((result) => {
+          return Promise.all(tags.map((tag, i) =>
+            result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
+        }).then((createdTags) => {
 
-        return services.addHost(hostSpec);
+          hostModel.tagLinks = createdTags.map((tag) => tag.documentSelfLink);
+
+          var hostSpec = getHostSpec(hostModel);
+          hostSpec.sslTrust = certificateHolder;
+
+          return services.addHost(hostSpec);
+        });
       })
       .then(this.onHostAdded)
       .catch(this.onGenericEditError);

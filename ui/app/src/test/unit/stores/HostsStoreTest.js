@@ -48,7 +48,7 @@ describe("HostsStore test", function() {
         };
 
         var p = waitForData();
-        HostActions.addHost(onlyAddressEmptyHostModel);
+        HostActions.addHost(onlyAddressEmptyHostModel, []);
 
         return p;
       }).then(function(data) {
@@ -63,7 +63,7 @@ describe("HostsStore test", function() {
         expect(validationErrors.connectionType).toBeUndefined();
       }).then(done);
 
-      HostActions.addHost(emptyHostModel);
+      HostActions.addHost(emptyHostModel, []);
     });
 
     it("should give validation error on incorrect address", function(done) {
@@ -84,7 +84,7 @@ describe("HostsStore test", function() {
           expect(validationErrors.address).toBe('errors.hostIp');
         });
 
-        HostActions.addHost(incorrectAddressHostModel);
+        HostActions.addHost(incorrectAddressHostModel, []);
         return p;
       }).then(function() {
         incorrectAddressHostModel.address = "addres:101010101";
@@ -94,7 +94,7 @@ describe("HostsStore test", function() {
           expect(validationErrors.address).toBe('errors.hostIp');
         });
 
-        HostActions.addHost(incorrectAddressHostModel);
+        HostActions.addHost(incorrectAddressHostModel, []);
         return p;
       }).then(function() {
         incorrectAddressHostModel.address = "addres:101010101";
@@ -104,7 +104,7 @@ describe("HostsStore test", function() {
           expect(validationErrors.address).toBe('errors.hostIp');
         });
 
-        HostActions.addHost(incorrectAddressHostModel);
+        HostActions.addHost(incorrectAddressHostModel, []);
         return p;
       }).then(function() {
         incorrectAddressHostModel.address = "httpsX://test.com";
@@ -114,12 +114,12 @@ describe("HostsStore test", function() {
           expect(validationErrors.address).toBe('errors.hostIp');
         });
 
-        HostActions.addHost(incorrectAddressHostModel);
+        HostActions.addHost(incorrectAddressHostModel, []);
         return p;
       }).then(done);
 
       incorrectAddressHostModel.address = "incorrect,address";
-      HostActions.addHost(incorrectAddressHostModel);
+      HostActions.addHost(incorrectAddressHostModel, []);
     });
 
     it("should prompt user to accept self-signed certificate", function(done) {
@@ -154,7 +154,7 @@ describe("HostsStore test", function() {
         expect(shouldAcceptCertificate.certificateHolder).toEqual(certificateHolder);
       }).then(done);
 
-      HostActions.addHost(hostModel);
+      HostActions.addHost(hostModel, []);
     });
 
     it("should NOT prompt user to accept known certificate and add host", function(done) {
@@ -177,7 +177,8 @@ describe("HostsStore test", function() {
             __authCredentialsLink: hostModel.credential.documentSelfLink,
             __adapterDockerType: hostModel.connectionType
           },
-          powerState: hostModel.powerState
+          powerState: hostModel.powerState,
+          tagLinks: []
         }
       };
 
@@ -196,7 +197,7 @@ describe("HostsStore test", function() {
         done();
       });
 
-      HostActions.addHost(hostModel);
+      HostActions.addHost(hostModel, []);
     });
 
     it("should add host when accept certificate", function(done) {
@@ -237,7 +238,8 @@ describe("HostsStore test", function() {
             __authCredentialsLink: hostModel.credential.documentSelfLink,
             __adapterDockerType: hostModel.connectionType
           },
-          powerState: hostModel.powerState
+          powerState: hostModel.powerState,
+          tagLinks: []
         },
         sslTrust: certificateHolder
       };
@@ -250,7 +252,7 @@ describe("HostsStore test", function() {
         done();
       });
 
-      HostActions.acceptCertificateAndAddHost(certificateHolder, hostModel);
+      HostActions.acceptCertificateAndAddHost(certificateHolder, hostModel, []);
     });
 
   });

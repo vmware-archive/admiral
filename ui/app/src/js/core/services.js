@@ -610,7 +610,7 @@ services.loadHostByLink = function(hostLink) {
 };
 
 services.updateHost = function(hostId, hostData) {
-   return patch(links.COMPUTE_RESOURCES + '/' + hostId, hostData);
+  return put(links.COMPUTE_RESOURCES + '/' + hostId, hostData);
 };
 
 services.enableHost = function(hostId) {

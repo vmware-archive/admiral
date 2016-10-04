@@ -614,7 +614,7 @@ $main-list-view-right: 10px;
     right: 5px;
   }
 
-  .hostname-holder {
+  .hostname-holder, .tags-holder {
     margin-right: 30px;
   }
 }
@@ -2404,8 +2404,6 @@ $alert-text-color: #ffffff;
 }
 
 .tags {
-
-  display: none;
 
   .form-control {
     padding: 2px;

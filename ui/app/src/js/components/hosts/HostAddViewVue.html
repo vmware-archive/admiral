@@ -49,6 +49,19 @@
       <span class="help-block">{{i18n(validationErrors.deploymentPolicy)}}</span>
     </div>
   </div>
+
+  <div id="tags" class="form-group tags" v-bind:class="{'has-error': validationErrors.tags}">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.tags")}}</label>
+    <div class="col-sm-9">
+      <div class="tags-holder">
+        <input class="tags-input">
+      </div>
+      <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
+         title="{{i18n ('app.host.details.tagsHint')}}"></i>
+      <span class="help-block">{{i18n(validationErrors.tags)}}</span>
+    </div>
+  </div>
+
   <!--
         <div id="connectionType" class="form-group" v-bind:class="{'has-error': validationErrors.connectionType}">
           <label class="col-sm-3 control-label">{{i18n("app.host.details.connectionType")}}</label>

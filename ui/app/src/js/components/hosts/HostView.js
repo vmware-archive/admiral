@@ -159,6 +159,11 @@ var HostView = Vue.extend({
               this.deploymentPolicy = this.deploymentPolicyInput.getSelectedOption();
             }
 
+            if (model.tags !== oldModel.tags) {
+              this.tagsInput.setValue(model.tags);
+              this.tags = this.tagsInput.getValue();
+            }
+
             if (model.connectionType !== oldModel.connectionType) {
               this.connectionType = model.connectionType;
               this.disableInput('connectionType', model.connectionType);
@@ -240,11 +245,12 @@ var HostView = Vue.extend({
           var _this = this;
           $certificateConfirm.find('.confirmAddHost').click(function(e) {
             e.preventDefault();
-            var hostModel = _this.getHostData();
+            let hostModel = _this.getHostData();
+            let tags = _this.tagsInput.getValue();
             if (isVerify) {
-              HostActions.acceptCertificateAndVerifyHost(certificateHolder, hostModel);
+              HostActions.acceptCertificateAndVerifyHost(certificateHolder, hostModel, tags);
             } else {
-              HostActions.acceptCertificateAndAddHost(certificateHolder, hostModel);
+              HostActions.acceptCertificateAndAddHost(certificateHolder, hostModel, tags);
             }
           });
 
@@ -260,6 +266,7 @@ var HostView = Vue.extend({
 
         getHostData: function() {
           var hostData = {
+            dto: this.model.dto,
             id: this.model.id,
             address: this.address,
             hostAlias: this.hostAlias,
@@ -294,6 +301,7 @@ var HostView = Vue.extend({
               'value': hostData.credential.documentSelfLink
             });
           }
+
           return hostData;
         },
         verifyHost: function(event) {
@@ -306,10 +314,11 @@ var HostView = Vue.extend({
           // If the host has self signed certificate, we may need to accept it,
           // by clicking confirmAddHost
           let hostData = this.getHostData();
+          let tags = this.tagsInput.getValue();
           if (this.model.isUpdate) {
-            HostActions.updateHost(hostData);
+            HostActions.updateHost(hostData, tags);
           } else {
-            HostActions.addHost(hostData);
+            HostActions.addHost(hostData, tags);
           }
         }
       }

@@ -43,6 +43,8 @@
         "resourcePool": "Placement zone",
         "credential": "Login credential",
         "deploymentPolicy": "Deployment policy",
+        "tags": "Tags",
+        "tagsHint": "Enter key:value tags",
         "reservationPolicy": "Reservation policy",
         "connectionType": "Connection type",
         "connectionTypeShort": "Connection",
