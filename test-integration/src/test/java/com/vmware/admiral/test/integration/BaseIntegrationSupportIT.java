@@ -56,6 +56,8 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
+import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
@@ -234,8 +236,9 @@ public abstract class BaseIntegrationSupportIT {
     }
 
     protected static ComputeState addHost(ComputeState computeState) throws Exception {
+        String documentSelfLink = null;
         if (computeState.id != null) {
-            String documentSelfLink = buildServiceUri(ComputeService.FACTORY_LINK,
+            documentSelfLink = buildServiceUri(ComputeService.FACTORY_LINK,
                     computeState.id);
             String body = sendRequest(HttpMethod.GET, documentSelfLink, null);
             if (body != null && !body.isEmpty()) {
@@ -247,6 +250,14 @@ public abstract class BaseIntegrationSupportIT {
         hostSpec.hostState = computeState;
         hostSpec.acceptCertificate = true;
 
+        ContainerListCallback body = new ContainerListCallback();
+        body.containerHostLink = documentSelfLink;
+        body.unlockDataCollectionForHost = true;
+        // TODO remove when the issue with the locked data collection is fixed
+        SimpleHttpsClient.execute(HttpMethod.PATCH,
+                getBaseUrl()
+                        + HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONAINER_LIST_DATA_COLLECTION_LINK,
+                Utils.toJson(body));
         HttpResponse httpResponse = SimpleHttpsClient.execute(HttpMethod.PUT,
                 getBaseUrl() + buildServiceUri(ContainerHostService.SELF_LINK),
                 Utils.toJson(hostSpec));
