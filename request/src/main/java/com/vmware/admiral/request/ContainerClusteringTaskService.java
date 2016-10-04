@@ -13,6 +13,7 @@ package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
+import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isSystemContainer;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_ALLOCATION_REQUEST;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
@@ -164,7 +165,7 @@ public class ContainerClusteringTaskService extends
             return;
         }
 
-        if (containerStates.stream().anyMatch(c -> c.system != null && c.system)) {
+        if (containerStates.stream().anyMatch(c -> isSystemContainer(c))) {
             failTask(null, new IllegalArgumentException(
                     "Day2 operations are not supported for system container"));
             return;

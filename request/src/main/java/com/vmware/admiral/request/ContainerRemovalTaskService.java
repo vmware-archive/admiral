@@ -14,6 +14,7 @@ package com.vmware.admiral.request;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isDiscoveredContainer;
+import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isSystemContainer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -252,8 +253,7 @@ public class ContainerRemovalTaskService
                                         logWarning("No ID set for container state: [%s]  ",
                                                 containerState.documentSelfLink);
                                         completeSubTasksCounter(subTaskLink, null);
-                                    } else if (o.getBody(ContainerState.class).system != null
-                                            && o.getBody(ContainerState.class).system) {
+                                    } else if (isSystemContainer(o.getBody(ContainerState.class))) {
                                         logWarning(
                                                 "Resource [%s] will not be removed because it is a system container",
                                                 o.getBody(ContainerState.class).documentSelfLink);
@@ -352,8 +352,7 @@ public class ContainerRemovalTaskService
                                         return;
                                     }
 
-                                    if (o.getBody(ContainerState.class).system != null
-                                            && o.getBody(ContainerState.class).system
+                                    if (isSystemContainer(o.getBody(ContainerState.class))
                                             && !(isRemoveHost.get())) {
                                         logWarning(
                                                 "Resource [%s] will not be removed because it is a system container",

@@ -58,6 +58,10 @@ public class SystemContainerDescriptions {
         return cd;
     }
 
+    public static boolean isSystemContainer(ContainerState containerState) {
+        return containerState.system != null && containerState.system;
+    }
+
     public static boolean isDiscoveredContainer(ContainerState containerState) {
         // container is discovered if its description link is discovered, or it is a
         // system container without groupResourcePlacementLink

@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute.container;
 
+import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isSystemContainer;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -878,7 +880,7 @@ public class HostContainerListDataCollection extends StatefulService {
     private void handleMissingContainer(ContainerState containerState) {
 
         // do not set RETIRED state to the system container.
-        if (containerState.system) {
+        if (isSystemContainer(containerState)) {
             return;
         }
 

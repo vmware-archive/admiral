@@ -12,6 +12,7 @@
 package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
+import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isSystemContainer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -120,7 +121,7 @@ public class ContainerOperationTaskService extends
             if (r.hasException()) {
                 failTask("Failure retrieving query results", r.getException());
             } else if (r.hasResult()) {
-                if (r.getResult().system != null && r.getResult().system) {
+                if (isSystemContainer(r.getResult())) {
                     failTask(null, new IllegalArgumentException(
                             "Day2 operations are not supported for system container"));
                 }
