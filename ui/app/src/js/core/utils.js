@@ -343,6 +343,15 @@ var utils = {
     return stateString;
   },
 
+  networkStatusDisplay: function(state) {
+    var stateString = '';
+    if (state) {
+      stateString = i18n.t('app.resource.list.network.state.' + state);
+    }
+
+    return stateString;
+  },
+
   isSystemContainer: function(container) {
     return container.system;
   },

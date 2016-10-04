@@ -10,8 +10,10 @@
   -->
 
 <div class="container-item">
-  <div class="status"><span class="status-state">{{i18n("app.resource.list.network.name")}}</span></div>
-  <div class="container-header">
+  <div class="status {{model.powerState}}">
+    <span class="status-state">{{networkStatusDisplay(model.powerState)}}</span>
+  </div>
+  <div class="on-header">
     <img v-bind:src="model.icon"/>
     <div class="title-holder">
       <div class="title truncateText" title="{{model.name}}">{{model.name}}</div>
@@ -50,6 +52,13 @@
       <span class="container-label">{{i18n("app.resource.list.network.connectedContainers")}}</span>
       <span v-if="hasConnectedContainers">
         <a href="#" v-on:click="openConnectedContainers($event)">{{connectedContainersCount}}</a>
+      </span>
+      <span v-else>--</span>
+    </div>
+    <div class="network-parent-hosts-holder">
+      <span class="container-label">{{i18n("app.resource.list.network.parentHosts")}}</span>
+      <span v-if="hasParentHosts">
+        <span>{{parentHostsCount}}</span>
       </span>
       <span v-else>--</span>
     </div>

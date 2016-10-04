@@ -48,6 +48,16 @@ var NetworksListItem = Vue.extend({
         });
     },
 
+    hasParentHosts: function() {
+      return this.model.parentLinks
+              && this.model.parentLinks.length > 0;
+    },
+
+    parentHostsCount: function() {
+      return this.hasParentHosts
+              ? this.model.parentLinks.length : 0;
+    },
+
     supportsDay2Operations: function() {
       return possibleDay2Operations.some(
         (operation) => {
@@ -84,7 +94,9 @@ var NetworksListItem = Vue.extend({
 
     operationSupported: function(op) {
       return utils.operationSupported(op, this.model);
-    }
+    },
+
+    networkStatusDisplay: utils.networkStatusDisplay
 
   }
 });

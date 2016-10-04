@@ -436,7 +436,15 @@
           "gatewayLabel": "Gateway",
           "ipRangeLabel": "IP Range",
           "connectedContainers": "Containers",
-          "create": "Create Network"
+          "parentHosts": "Hosts",
+          "create": "Create Network",
+          "state": {
+            "UNKNOWN": "UNKNOWN",
+            "PROVISIONING": "PROVISIONING",
+            "CONNECTED": "CONNECTED",
+            "RETIRED": "RETIRED",
+            "ERROR": "ERROR"
+          }
         },
         "container": {
           "create": "Create Container"

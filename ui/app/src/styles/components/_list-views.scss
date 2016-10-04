@@ -152,7 +152,7 @@
     padding-top: 2px;
     padding-bottom: 2px;
   }
-  .status.RUNNING {
+  .status.RUNNING, .status.CONNECTED {
     color: $status_running_color;
   }
   .status.REBOOTING {
