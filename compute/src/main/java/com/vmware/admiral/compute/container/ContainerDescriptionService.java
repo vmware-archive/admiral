@@ -712,6 +712,7 @@ public class ContainerDescriptionService extends StatefulService {
                 .map((s) -> PortBinding.fromDockerPortMapping(DockerPortMapping.fromString(s)))
                 .collect(Collectors.toList())
                 .toArray(new PortBinding[0]);
+        template.publishAll = true;
         LogConfig logConfig = new LogConfig();
         logConfig.type = "json-file";
         logConfig.config = Collections.emptyMap();
