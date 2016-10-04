@@ -208,6 +208,11 @@ public class ContainerNetworkRemovalTaskService extends
                                         logWarning("No ID set for container network state: [%s]  ",
                                                 networkState.documentSelfLink);
                                         completeSubTasksCounter(subTaskLink, null);
+                                    } else if (networkState.originatingHostLink == null
+                                            || networkState.originatingHostLink.isEmpty()) {
+                                        logWarning("No originatingHostLink set.");
+                                        state.removeOnly = true;
+                                        deleteResourceInstances(state, resourceLinks, subTaskLink);
                                     } else {
                                         sendContainerNetworkDeleteRequest(networkState,
                                                 subTaskLink);

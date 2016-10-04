@@ -121,6 +121,11 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
      * {@link RequestContext#commandInput} and {@link RequestContext#executor} properties.
      */
     private void processNetworkState(RequestContext context) {
+        if (context.networkState.originatingHostLink == null) {
+            fail(context.request, new IllegalArgumentException("originatingHostLink"));
+            return;
+        }
+
         getContainerHost(
                 context.request,
                 context.operation,
