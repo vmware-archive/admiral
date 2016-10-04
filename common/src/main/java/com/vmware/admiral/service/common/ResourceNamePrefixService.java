@@ -76,7 +76,7 @@ public class ResourceNamePrefixService extends StatefulService {
         public static final long MAX_NUMBER_OF_DIGITS = Long.getLong(
                 "dcp.management.name.prefix.max.number.digits", 9);
         public static final long DEFAULT_NUMBER_OF_DIGITS = Long.getLong(
-                "dcp.management.name.prefix.default.number.digits", 4);
+                "dcp.management.name.prefix.default.number.digits", 7);
         public static final long DEFAULT_NEXT_NUMBER = Long.getLong(
                 "dcp.management.name.prefix.default.next.number", 1);
         public static final boolean ADD_RANDOM_GENERATED_TOKEN = Boolean
