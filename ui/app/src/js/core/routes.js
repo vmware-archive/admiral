@@ -55,18 +55,20 @@ crossroads.addRoute('/placements', function() {
   actions.PlacementActions.openPlacements();
 });
 
-crossroads.addRoute('/applications', function() {
+crossroads.addRoute('/applications:?query:', function(query) {
   actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name);
-  actions.ContainerActions.openContainers({
-    '$category': 'applications'
-  }, true);
+
+  query = query || {};
+  query.$category = 'applications';
+  actions.ContainerActions.openContainers(query, true);
 });
 
-crossroads.addRoute('/networks', function() {
+crossroads.addRoute('/networks:?query:', function(query) {
   actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name);
-  actions.ContainerActions.openContainers({
-    '$category': 'networks'
-  }, true);
+
+  query = query || {};
+  query.$category = 'networks';
+  actions.ContainerActions.openContainers(query, true);
 });
 
 crossroads.addRoute('/templates:?query:', function(query) {
@@ -104,15 +106,11 @@ crossroads.addRoute('/import-template', function() {
 
 crossroads.addRoute('/containers:?query:', function(query) {
   let viewName = constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name;
-  if (query && query.$category) {
-    if (query.$category === 'applications') {
-      viewName = constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name;
-    } else if (query.$category === 'networks') {
-      viewName = constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name;
-    }
-  }
 
   actions.AppActions.openView(viewName);
+
+  query = query || {};
+  query.$category = 'containers';
   actions.ContainerActions.openContainers(query, true);
 });
 
@@ -254,7 +252,15 @@ actions.NavigationActions.openContainerRequest.listen(function(type, itemId) {
 });
 
 actions.NavigationActions.openContainers.listen(function(queryOptions) {
-  hasher.setHash(getHashWithQuery('containers', queryOptions));
+  var category;
+  if (queryOptions) {
+    category = queryOptions.$category;
+    queryOptions = $.extend({}, queryOptions);
+    delete queryOptions.$category;
+  }
+
+  category = category || 'containers';
+  hasher.setHash(getHashWithQuery(category, queryOptions));
 });
 
 actions.NavigationActions.openContainerDetails.listen(function(containerId, clusterId,
