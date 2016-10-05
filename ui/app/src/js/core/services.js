@@ -451,15 +451,8 @@ services.loadResourcePools = function(documentSelfLinks) {
   return list(links.EPZ_CONFIG, true, params);
 };
 
-services.loadResourcePool = function(id) {
-  var prefixPath = links.RESOURCE_POOLS + '/';
-
-  var callParamId = id;
-  if (!id.startsWith(prefixPath)) {
-    callParamId = prefixPath + id;
-  }
-
-  return get(callParamId);
+services.loadResourcePool = function(documentSelfLink) {
+  return get(links.EPZ_CONFIG + documentSelfLink);
 };
 
 services.createResourcePool = function(config) {
@@ -467,11 +460,11 @@ services.createResourcePool = function(config) {
 };
 
 services.updateResourcePool = function(config) {
-  return patch(links.EPZ_CONFIG, config);
+  return patch(links.EPZ_CONFIG + config.documentSelfLink, config);
 };
 
 services.deleteResourcePool = function(config) {
-  return deleteEntity(config.resourcePoolState.documentSelfLink);
+  return deleteEntity(links.EPZ_CONFIG + config.documentSelfLink);
 };
 
 services.countHostsPerResourcePool = function(resourcePoolLink, onlyContainerHosts) {

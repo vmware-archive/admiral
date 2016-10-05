@@ -162,7 +162,8 @@ var addEventListeners = function() {
       resourcePoolState: {}
     };
     if (this.item) {
-      item = $.extend(item, this.item.asMutable({ deep: true }));
+      item.resourcePoolState.documentSelfLink =
+        this.item.resourcePoolState.documentSelfLink;
     }
     item.resourcePoolState.name = this.$el.find('.name-input').val();
     item.resourcePoolState.customProperties = {};

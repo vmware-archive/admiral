@@ -616,7 +616,7 @@ let HostsStore = Reflux.createStore({
       promises.push(Promise.resolve());
     }
 
-    Promise.all(promises).then(function([resourcePool, credential, deploymentPolicy, tags]) {
+    Promise.all(promises).then(function([config, credential, deploymentPolicy, tags]) {
 
       if (credentialLink && credential) {
         credential.name = (credential.customProperties
@@ -625,7 +625,7 @@ let HostsStore = Reflux.createStore({
             : utils.getDocumentId(credentialLink);
         hostModel.credential = credential;
       }
-      hostModel.resourcePool = resourcePool;
+      hostModel.resourcePool = config.resourcePoolState;
       hostModel.deploymentPolicy = deploymentPolicy;
 
       // preselection of resource pool and credentials
@@ -634,7 +634,7 @@ let HostsStore = Reflux.createStore({
         id: hostModel.id,
         hostAlias: utils.getHostName(hostModel),
         address: hostModel.address ? hostModel.address : hostModel.id,
-        resourcePool: resourcePool,
+        resourcePool: hostModel.resourcePool,
         credential: credential,
         deploymentPolicy: hostModel.deploymentPolicy,
         connectionType: hostModel.connectionType,
