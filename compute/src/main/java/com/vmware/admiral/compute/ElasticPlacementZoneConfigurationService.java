@@ -252,7 +252,9 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
 
     private void doCreate(Operation originalOp, ElasticPlacementZoneConfigurationState state) {
         // populate the tenant info
-        state.resourcePoolState.tenantLinks = state.tenantLinks;
+        if (state.tenantLinks != null && !state.tenantLinks.isEmpty()) {
+            state.resourcePoolState.tenantLinks = state.tenantLinks;
+        }
         // create post operation for the resource pool
         Operation createRpOp = Operation
                 .createPost(getHost(), ResourcePoolService.FACTORY_LINK)
@@ -285,7 +287,9 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
         if (state.epzState != null && state.epzState.tagLinksToMatch != null
                 && !state.epzState.tagLinksToMatch.isEmpty()) {
             // populate the tenant info
-            state.epzState.tenantLinks = state.tenantLinks;
+            if (state.tenantLinks != null && !state.tenantLinks.isEmpty()) {
+                state.epzState.tenantLinks = state.tenantLinks;
+            }
             createEpzOpHolder[0] = Operation
                     .createPost(getHost(), ElasticPlacementZoneService.FACTORY_LINK)
                     .setReferer(getUri());
@@ -360,7 +364,9 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
         List<Operation> updateOps = new ArrayList<>();
 
         // populate the tenant info
-        state.resourcePoolState.tenantLinks = state.tenantLinks;
+        if (state.tenantLinks != null && !state.tenantLinks.isEmpty()) {
+            state.resourcePoolState.tenantLinks = state.tenantLinks;
+        }
         // patch the resource pool
         updateOps.add(Operation
                 .createPatch(getHost(), state.resourcePoolState.documentSelfLink)
@@ -372,7 +378,9 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
                 state.epzState.tagLinksToMatch = new HashSet<>();
             }
             // populate the tenant info
-            state.epzState.tenantLinks = state.tenantLinks;
+            if (state.tenantLinks != null && !state.tenantLinks.isEmpty()) {
+                state.epzState.tenantLinks = state.tenantLinks;
+            }
             // use post for the elastic placement zone (will be translated to put if exists)
             updateOps.add(Operation
                     .createPost(getHost(), ElasticPlacementZoneService.FACTORY_LINK)
