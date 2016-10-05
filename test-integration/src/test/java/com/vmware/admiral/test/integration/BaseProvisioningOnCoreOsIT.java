@@ -193,7 +193,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
 
         logger.info(
                 "---------- 2. Setup auth credentials for the CoreOS VM (Container Host). --------");
-        dockerHostAuthCredentials = IntegratonTestStateFactory.createAuthCredentials();
+        dockerHostAuthCredentials = IntegratonTestStateFactory.createAuthCredentials(true);
         dockerHostAuthCredentials.type = AuthCredentialsType.PublicKey.name();
 
         switch (adapterType) {

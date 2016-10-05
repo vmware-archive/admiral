@@ -524,7 +524,7 @@ public abstract class BaseTestCase {
                     } else if (!r.hasResult()) {
                         host.send(Operation.createPost(
                                 UriUtils.buildUri(host, AuthCredentialsService.FACTORY_LINK))
-                                .setBody(CommonTestStateFactory.createAuthCredentials())
+                                .setBody(CommonTestStateFactory.createAuthCredentials(false))
                                 .setCompletion(ctx.getCompletion()));
                     } else {
                         ctx.completeIteration();

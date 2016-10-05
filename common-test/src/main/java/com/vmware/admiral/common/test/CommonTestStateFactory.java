@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.UUID;
 
 import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
@@ -31,9 +32,12 @@ public class CommonTestStateFactory {
     public static final String ENDPOINT_ID = "test-endpoint-id";
     public static final String ENDPOINT_REGION_ID = "us-east-1"; // used for zoneId too
 
-    public static AuthCredentialsServiceState createAuthCredentials() {
+    public static AuthCredentialsServiceState createAuthCredentials(boolean uniqueSelfLink) {
         AuthCredentialsServiceState authCredentials = new AuthCredentialsServiceState();
         authCredentials.documentSelfLink = AUTH_CREDENTIALS_ID;
+        if (uniqueSelfLink) {
+            authCredentials.documentSelfLink += "-" + UUID.randomUUID();
+        }
         authCredentials.type = AuthCredentialsType.PublicKey.name();
         authCredentials.userEmail = "core";
         authCredentials.privateKey = getFileContent("docker-host-private-key.PEM");
