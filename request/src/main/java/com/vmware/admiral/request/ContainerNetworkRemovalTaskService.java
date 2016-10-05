@@ -213,6 +213,12 @@ public class ContainerNetworkRemovalTaskService extends
                                         logWarning("No originatingHostLink set.");
                                         state.removeOnly = true;
                                         deleteResourceInstances(state, resourceLinks, subTaskLink);
+                                    } else if (ContainerNetworkState.PowerState.RETIRED
+                                            == networkState.powerState) {
+                                        logWarning("Network with id '%s' is retired. Deleting the state only.",
+                                                networkState.id);
+                                        state.removeOnly = true;
+                                        deleteResourceInstances(state, resourceLinks, subTaskLink);
                                     } else {
                                         sendContainerNetworkDeleteRequest(networkState,
                                                 subTaskLink);

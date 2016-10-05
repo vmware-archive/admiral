@@ -448,6 +448,13 @@
             "CONNECTED": "CONNECTED",
             "RETIRED": "RETIRED",
             "ERROR": "ERROR"
+          },
+          "operations": {
+            "errors": {
+              "remove": {
+                "containersConnected": "Cannot remove network due to avaiable connected containers"
+              }
+            }
           }
         },
         "container": {

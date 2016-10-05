@@ -2043,6 +2043,12 @@ $alert-text-color: #ffffff;
   @include transition(height 0.3s ease, opacity 0.3s ease);
 }
 
+.container-item .alert-holder {
+  position: absolute;
+  left: 0px;
+  right: 0px;
+}
+
 .alert-holder.alert-hidden {
   height: 0px;
   opacity: 0;
@@ -2078,7 +2084,7 @@ $alert-text-color: #ffffff;
   }
 }
 
-.inline-editable-list .alert {
+.inline-editable-list .alert, .container-item .alert {
   left: 0;
   width: 100%;
 }

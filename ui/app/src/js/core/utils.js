@@ -422,8 +422,9 @@ var utils = {
 
     } else if (resource.type === constants.RESOURCES.TYPES.NETWORK) {
       if (op === constants.RESOURCES.NETWORKS.OPERATION.REMOVE) {
-        return !resource.connectedContainers
-          || resource.connectedContainers.length === 0;
+        // an alert will be displayed if there are containers
+        // connected to this network.
+        return true;
       }
 
     } else if (op === constants.CONTAINERS.OPERATION.STOP) {

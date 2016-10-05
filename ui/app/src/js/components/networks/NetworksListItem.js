@@ -28,6 +28,16 @@ var NetworksListItem = Vue.extend({
     model: {required: true}
   },
 
+  data: function() {
+    return {
+      alert: {
+        type: 'danger',
+        show: false,
+        message: ''
+      }
+    };
+  },
+
   computed: {
 
     hasConnectedContainers: function() {
@@ -65,6 +75,11 @@ var NetworksListItem = Vue.extend({
             return true;
           }
         });
+    },
+
+    isRetiredNetwork: function() {
+      return this.model.powerState
+        && this.model.powerState === constants.RESOURCES.NETWORKS.STATES.RETIRED;
     }
 
   },
@@ -87,9 +102,32 @@ var NetworksListItem = Vue.extend({
       }
     },
 
-    removeNetwork: function() {
+    removeNetworkClicked: function($event) {
+      // a network can be removed only if there are no containers
+      // connected to it or if the network is in RETIRED state
+      if (!this.hasConnectedContainers || this.isRetiredNetwork) {
+        this.askConfirmation($event);
+      } else {
+        $event.stopPropagation();
+        $event.preventDefault();
+        this.showNetworkRemovalContainersConnectedAlert();
+      }
+    },
+
+    doRemoveNetwork: function() {
       this.confirmRemoval(NetworkActions.removeNetwork,
                           [this.getNetworkDocumentId()]);
+    },
+
+    showNetworkRemovalContainersConnectedAlert: function() {
+      this.alert.message =
+        i18n.t('app.resource.list.network.operations.errors.remove.containersConnected');
+      this.alert.show = true;
+    },
+
+    alertClosed: function() {
+      this.alert.show = false;
+      this.alert.message = '';
     },
 
     operationSupported: function(op) {

@@ -31,11 +31,12 @@ var VueAlert = Vue.extend({
   attached: function() {
     this.unwatchShowAlert = this.$watch('showAlert', (showAlert) => {
       this.toggleVisibility(showAlert);
-    });
+    }, {immediate: true});
 
     var _this = this;
     $(this.$el).find('.close').click(function() {
       _this.toggleVisibility(false);
+      _this.$dispatch('alert-closed');
     });
   },
   detached: function() {

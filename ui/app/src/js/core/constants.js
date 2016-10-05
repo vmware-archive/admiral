@@ -81,6 +81,13 @@ var constants = Immutable({
     NETWORKS: {
       OPERATION: {
         REMOVE: 'REMOVE'
+      },
+      STATES: {
+        PROVISIONING: 'PROVISIONING',
+        CONNECTED: 'CONNECTED',
+        ERROR: 'ERROR',
+        UNKNOWN: 'UNKNOWN',
+        RETIRED: 'RETIRED'
       }
     }
   },
