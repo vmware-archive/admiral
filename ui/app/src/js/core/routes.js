@@ -174,14 +174,14 @@ crossroads.addRoute('/environments', function() {
 });
 
 crossroads.addRoute('/machines:?query:', function(query) {
-  actions.AppActions.openView(computeConstants.VIEWS.MACHINES.name);
+  actions.AppActions.openView(computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name);
   actions.MachineActions.openMachines(query, true);
 });
 
 
 crossroads.addRoute('/machines/{machineId*}', function() {
   // not yet supported
-  // actions.AppActions.openView(computeConstants.VIEWS.MACHINES.name);
+  // actions.AppActions.openView(computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name);
   // actions.MachineActions.openMachines();
   // actions.MachineActions.openMachineDetails(machineId);
 });

@@ -11,6 +11,7 @@
 
 import NavigationVue from 'NavigationVue';
 import constants from 'core/constants';//eslint-disable-line
+import computeConstants from 'core/computeConstants';//eslint-disable-line
 import utils from 'core/utils';//eslint-disable-line
 
 var Navigation = Vue.extend({
@@ -19,6 +20,11 @@ var Navigation = Vue.extend({
   props: {
     model: {
       required: false
+    },
+    app: {
+      required: true,
+      type: String,
+      default: 'admiral'
     }
   },
 
@@ -30,15 +36,17 @@ var Navigation = Vue.extend({
 
   data: function() {
     return {
-      constants: constants
+      constants: constants,
+      computeConstants: computeConstants
     };
   },
 
   attached: function() {
 
     this.unwatchCurrentView = this.$watch('currentView', (currentView) => {
+      let consts = (this.app === 'admiral') ? constants : computeConstants;
 
-      Object.values(constants.VIEWS).forEach((item) => {
+      Object.values(consts.VIEWS).forEach((item) => {
         if (item.VIEWS) { // categories
           let activeItem;
           if (item.name === currentView) {

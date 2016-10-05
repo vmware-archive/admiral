@@ -64,7 +64,8 @@ let initializeStoreListeners = function() {
     }
   });
   MachinesStore.listen((quotesData) => {
-    if (this.data.centerView && this.data.centerView.name === constants.VIEWS.MACHINES.name) {
+    if (this.data.centerView && this.data.centerView.name
+                                              === constants.VIEWS.RESOURCES.VIEWS.MACHINES.name) {
       this.setInData(['centerView', 'data'], quotesData);
       this.emitChange();
     }

@@ -20,28 +20,7 @@
 
   <div class="app-view" v-bind:class="[sideClass]">
     <div class="side-view">
-      <div v-if="model.sideView" class="nav-bar">
-        <a v-bind:class="{'active': model.sideView.currentView === computeConstants.VIEWS.ENVIRONMENTS.name}"
-           class="nav-item templates" href="#/environments">
-          <span class="nav-item-image"><i class="fa fa-cloud"></i></span>
-          <span>{{i18n("app.navbar.environments")}}</span>
-        </a>
-        <a v-bind:class="{'active': model.sideView.currentView === computeConstants.VIEWS.PLACEMENTS.name}"
-           class="nav-item placements" href="#/placements">
-          <img class="nav-item-image" src="image-assets/placements.png">
-          <span>{{i18n("app.navbar.placements")}}</span>
-        </a>
-        <a v-bind:class="{'active': model.sideView.currentView === computeConstants.VIEWS.MACHINES.name}"
-           class="nav-item containers" href="#/machines">
-          <span class="nav-item-image"><i class="fa fa-cube"></i></span>
-          <span>{{i18n("app.navbar.machines")}}</span>
-        </a>
-        <a v-bind:class="{'active': model.sideView.currentView === computeConstants.VIEWS.COMPUTE.name}"
-           class="nav-item containers" href="#/compute">
-          <span class="nav-item-image"><i class="fa fa-gear"></i></span>
-          <span>{{i18n("app.navbar.compute")}}</span>
-        </a>
-      </div>
+      <navigation v-bind:model="model.sideView" app="compute"></navigation>
     </div>
     <div v-if="model.centerView.name === computeConstants.VIEWS.HOME.name"
          class="center-view" transition="fade">
@@ -56,11 +35,12 @@
                    v-bind:model="model.centerView.data"
                    v-ref:center-view>
       </placements-view>
-      <machines-view v-if="model.centerView.name === computeConstants.VIEWS.MACHINES.name"
+      <machines-view v-if="model.centerView.name === computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name"
                    v-bind:model="model.centerView.data"
                    v-ref:center-view>
       </machines-view>
-      <compute-view v-if="model.centerView.name === computeConstants.VIEWS.COMPUTE.name"
+      <compute-view v-if="model.centerView.name === constants.VIEWS.RESOURCES.name
+                            || model.centerView.name === computeConstants.VIEWS.COMPUTE.name"
                    v-bind:model="model.centerView.data"
                    v-ref:center-view>
       </compute-view>

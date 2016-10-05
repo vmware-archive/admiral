@@ -26,11 +26,19 @@ var computeConstants = Immutable({
     PLACEMENTS: {
       name: 'placements'
     },
-    MACHINES: {
-      name: 'machines'
-    },
     COMPUTE: {
       name: 'compute'
+    },
+    RESOURCES: {
+      name: 'resources',
+      VIEWS: {
+        MACHINES: {
+          name: 'machines'
+        },
+        NETWORKS: {
+          name: 'networks'
+        }
+      }
     }
   }
 });

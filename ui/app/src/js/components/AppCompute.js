@@ -11,6 +11,7 @@
 
 import AppComputeVue from 'AppComputeVue';
 import AppMixin from 'components/AppMixin';
+import Navigation from 'components/common/Navigation';//eslint-disable-line
 import HomeCompute from 'components/HomeCompute';//eslint-disable-line
 import MachinesView from 'components/machines/MachinesView';//eslint-disable-line
 import ComputeView from 'components/compute/ComputeView';//eslint-disable-line

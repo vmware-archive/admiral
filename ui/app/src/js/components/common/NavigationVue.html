@@ -1,4 +1,5 @@
 <div v-if="model" class="nav-bar">
+  <template v-if="app === 'admiral'">
   <a v-bind:class="{'active': currentView === constants.VIEWS.HOSTS.name}"
      class="nav-item hosts" href="#/hosts">
     <img class="nav-item-image" src="image-assets/hosts.png">
@@ -17,9 +18,10 @@
   <a class="nav-item resources" v-on:click="handleCategoryClick($event, constants.VIEWS.RESOURCES)"
     v-bind:class="{'expanded': isExpanded(constants.VIEWS.RESOURCES)}"
     href="#/containers">
-    <img class="nav-item-image" src="image-assets/containers.png">
+    <img class="nav-item-image" src="image-assets/resources.png">
     <span><span>{{i18n("app.navbar.resources")}}</span><span class="nav-category"><i class="fa"
-            v-bind:class="{'fa-chevron-down': isExpanded(constants.VIEWS.RESOURCES), 'fa-chevron-right': isCollapsed(constants.VIEWS.RESOURCES)}"></i></span></span>
+            v-bind:class="{'fa-chevron-down': isExpanded(constants.VIEWS.RESOURCES),
+            'fa-chevron-right': isCollapsed(constants.VIEWS.RESOURCES)}"></i></span></span>
   </a>
   <a v-bind:class="{'active': currentView === constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name}"
      v-bind:class="{'hide': isCollapsed(constants.VIEWS.RESOURCES)}"
@@ -39,4 +41,42 @@
     <img class="nav-item-image" src="image-assets/network-24.png">
     <span>{{i18n("app.navbar.networks")}}</span>
   </a>
+  </template>
+  <template v-if="app === 'compute'">
+    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.COMPUTE.name}"
+       class="nav-item compute" href="#/compute">
+      <img class="nav-item-image" src="image-assets/hosts.png">
+      <span>{{i18n("app.navbar.compute")}}</span>
+    </a>
+    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.PLACEMENTS.name}"
+       class="nav-item placements" href="#/placements">
+      <img class="nav-item-image" src="image-assets/placements.png">
+      <span>{{i18n("app.navbar.placements")}}</span>
+    </a>
+    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.ENVIRONMENTS.name}"
+       class="nav-item templates" href="#/environments">
+      <img class="nav-item-image" src="image-assets/templates.png">
+      <span>{{i18n("app.navbar.environments")}}</span>
+    </a>
+    <a class="nav-item resources" v-on:click="handleCategoryClick($event, computeConstants.VIEWS.RESOURCES)"
+       v-bind:class="{'expanded': isExpanded(computeConstants.VIEWS.RESOURCES)}"
+       href="#/machines">
+      <img class="nav-item-image" src="image-assets/resources.png">
+    <span><span>{{i18n("app.navbar.resources")}}</span><span class="nav-category"><i class="fa"
+      v-bind:class="{'fa-chevron-down': isExpanded(computeConstants.VIEWS.RESOURCES),
+      'fa-chevron-right': isCollapsed(computeConstants.VIEWS.RESOURCES)}"></i></span></span>
+    </a>
+    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name}"
+       v-bind:class="{'hide': isCollapsed(computeConstants.VIEWS.RESOURCES)}"
+       class="nav-item inner machines" href="#/machines">
+      <img class="nav-item-image" src="image-assets/resource-icons/machines.png">
+      <span>{{i18n("app.navbar.machines")}}</span>
+    </a>
+    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.RESOURCES.VIEWS.NETWORKS.name}"
+       v-bind:class="{'hide': isCollapsed(computeConstants.VIEWS.RESOURCES)}"
+       class="nav-item inner networks" href="#/networks">
+      <img class="nav-item-image" src="image-assets/network-24.png">
+      <span>{{i18n("app.navbar.networks")}}</span>
+    </a>
+  </template>
 </div>
