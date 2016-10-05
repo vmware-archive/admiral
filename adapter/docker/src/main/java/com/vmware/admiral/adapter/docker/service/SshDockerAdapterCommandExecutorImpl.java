@@ -802,7 +802,23 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
     }
 
     private static class CliStats {
-        private static final long BYTE_UNIT_MULTIPLIER = 1000L;
+        enum Units {
+            B(1L),
+            KIB(1024L),
+            MIB(1024L * 1024),
+            GIB(1024L * 1024 * 1024),
+            TIB(1024L * 1024 * 1024 * 1024),
+            KB(1000L),
+            MB(1000L * 1000),
+            GB(1000L * 1000 * 1000),
+            TB(1000L * 1000 * 1000 * 1000);
+
+            long value;
+
+            Units(long value) {
+                this.value = value;
+            }
+        }
 
         public double cpuUsagePercent;
         public double memUsage;
@@ -833,23 +849,8 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
             if (unit == null) {
                 return 1;
             }
-            switch (unit.toUpperCase()) {
-            case "":
-                return 1;
-            case "B":
-                return 1;
-            case "KB":
-                return BYTE_UNIT_MULTIPLIER;
-            case "MB":
-                return BYTE_UNIT_MULTIPLIER * BYTE_UNIT_MULTIPLIER;
-            case "GB":
-                return BYTE_UNIT_MULTIPLIER * BYTE_UNIT_MULTIPLIER * BYTE_UNIT_MULTIPLIER;
-            case "TB":
-                return BYTE_UNIT_MULTIPLIER * BYTE_UNIT_MULTIPLIER * BYTE_UNIT_MULTIPLIER
-                        * BYTE_UNIT_MULTIPLIER;
-            default:
-                throw new IllegalArgumentException("Unknown unit: " + unit);
-            }
+
+            return Enum.valueOf(Units.class, unit.toUpperCase()).value;
         }
 
         public String apiFormat() {
