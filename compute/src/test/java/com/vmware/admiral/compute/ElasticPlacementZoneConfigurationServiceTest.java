@@ -120,6 +120,16 @@ public class ElasticPlacementZoneConfigurationServiceTest extends ComputeBaseTes
         assertEquals(tagSet("tag1"), state2.epzState.tagLinksToMatch);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testDeleteNoLinkInUrl() throws Throwable {
+        String rpLink = createRp().documentSelfLink;
+
+        ElasticPlacementZoneConfigurationState state = createState(false);
+        state.resourcePoolState.documentSelfLink = rpLink;
+
+        sendState(state, Action.DELETE);
+    }
+
     @Test
     public void testDeleteNoEpz() throws Throwable {
         String rpLink = createRp().documentSelfLink;
@@ -127,7 +137,7 @@ public class ElasticPlacementZoneConfigurationServiceTest extends ComputeBaseTes
         ElasticPlacementZoneConfigurationState state = createState(false);
         state.resourcePoolState.documentSelfLink = rpLink;
 
-        sendState(state, Action.DELETE);
+        delete(ElasticPlacementZoneConfigurationService.SELF_LINK + rpLink);
         assertNull(searchForDocument(ResourcePoolState.class, rpLink));
     }
 
@@ -140,7 +150,7 @@ public class ElasticPlacementZoneConfigurationServiceTest extends ComputeBaseTes
         state.resourcePoolState.documentSelfLink = rpLink;
         state.epzState.documentSelfLink = epzLink;
 
-        sendState(state, Action.DELETE);
+        delete(ElasticPlacementZoneConfigurationService.SELF_LINK + rpLink);
         assertNull(searchForDocument(ResourcePoolState.class, rpLink));
         assertNull(searchForDocument(ElasticPlacementZoneState.class, epzLink));
     }
@@ -181,12 +191,13 @@ public class ElasticPlacementZoneConfigurationServiceTest extends ComputeBaseTes
         state.epzState = buildEpzState(null, "tag1", "tag2");
         ElasticPlacementZoneConfigurationState createdState = sendState(state, Action.POST);
 
-        sendState(createdState, Action.DELETE);
+        delete(ElasticPlacementZoneConfigurationService.SELF_LINK
+                + createdState.resourcePoolState.documentSelfLink);
 
         assertNull(
-                searchForDocument(ResourcePoolState.class, createdState.epzState.documentSelfLink));
+                searchForDocument(ResourcePoolState.class, createdState.resourcePoolState.documentSelfLink));
         assertNull(searchForDocument(ElasticPlacementZoneState.class,
-                createdState.resourcePoolState.documentSelfLink));
+                createdState.epzState.documentSelfLink));
     }
 
     @Test

@@ -202,8 +202,8 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
         assertNotNull(newEndpointState);
         assertNotNull(newEndpointState.endpointState);
         assertNotNull(newEndpointState.endpointState.documentSelfLink);
-        doDelete(UriUtils.buildUri(this.host, UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK,
-                newEndpointState.endpointState.documentSelfLink)), false);
+        delete(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK,
+                newEndpointState.endpointState.documentSelfLink));
 
         documentLinksForDeletion.add(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK,
                 newEndpointState.documentSelfLink));

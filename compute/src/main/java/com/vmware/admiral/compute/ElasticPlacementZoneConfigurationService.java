@@ -57,8 +57,9 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
  * The response body contains the full updated state unless the resource pool is not changed.
  * In this case, the {@code resourcePoolState} field is {@code null}.
  *
- * <li>{@code DELETE}: Send a valid {@link ElasticPlacementZoneConfigurationState} to delete the
- * resource pool and optionally the elastic placement zone associated with it.
+ * <li>{@code DELETE}: Append the resource pool link to this service URL to delete the placement
+ * zone (both the resource pool and its corresponding EPZ state will be deleted). For example:
+ * {@code http://host:port/resources/elastic-placement-zones-config/resources/pools/pool-1}.
  * </ul>
  */
 public class ElasticPlacementZoneConfigurationService extends StatelessService {
@@ -79,11 +80,7 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
     @Override
     public void handleGet(Operation get) {
         // resolve the link to the requested resource pool
-        String resourcePoolLink = null;
-        if (get.getUri().getPath().startsWith(SELF_LINK)) {
-            resourcePoolLink = get.getUri().getPath().substring(SELF_LINK.length());
-        }
-
+        String resourcePoolLink = getLinkFromUrl(get, false);
         if (resourcePoolLink == null || resourcePoolLink.isEmpty()) {
             // return the configuration state for all elastic placement zones
             doGetAll(get, UriUtils.hasODataExpandParamValue(get.getUri()));
@@ -100,9 +97,8 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
     }
 
     @Override
-    protected void handleDeleteCompletion(Operation delete) {
-        ElasticPlacementZoneConfigurationState state = validateState(delete);
-        doDelete(delete, state);
+    public void handleDelete(Operation delete) {
+        doDelete(delete, getLinkFromUrl(delete, true));
     }
 
     @Override
@@ -122,6 +118,19 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
             throw new IllegalArgumentException("Resource pool state is required");
         }
         return state;
+    }
+
+    private static String getLinkFromUrl(Operation op, boolean failIfMissing) {
+        String resourcePoolLink = null;
+        if (op.getUri().getPath().startsWith(SELF_LINK)) {
+            resourcePoolLink = op.getUri().getPath().substring(SELF_LINK.length());
+        }
+
+        if (failIfMissing && (resourcePoolLink == null || resourcePoolLink.isEmpty())) {
+            throw new IllegalArgumentException("Resource pool link is required in the URL");
+        }
+
+        return resourcePoolLink;
     }
 
     private void doGetAll(Operation originalOp, boolean expand) {
@@ -200,19 +209,7 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
                 .setReferer(getUri());
 
         // create a query for the elastic placement zone based on the resource pool link
-        Query epzQuery = Query.Builder.create()
-                .addKindFieldClause(ElasticPlacementZoneState.class)
-                .addFieldClause(ElasticPlacementZoneState.FIELD_NAME_RESOURCE_POOL_LINK,
-                        resourcePoolLink)
-                .build();
-        QueryTask epzQueryTask = QueryTask.Builder.createDirectTask()
-                .setQuery(epzQuery)
-                .addOption(QueryOption.EXPAND_CONTENT)
-                .build();
-        Operation queryEpzOp = Operation
-                .createPost(getHost(), ServiceUriPaths.CORE_QUERY_TASKS)
-                .setBody(epzQueryTask)
-                .setReferer(getUri());
+        Operation queryEpzOp = createEpzQueryOperation(resourcePoolLink, true);
 
         // execute both operations in parallel
         OperationJoin.create(getRpOp, queryEpzOp)
@@ -308,40 +305,49 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
         operations.sendWith(getHost());
     }
 
-    private void doDelete(Operation originalOp, ElasticPlacementZoneConfigurationState state) {
-        // validation
-        if (state.resourcePoolState.documentSelfLink == null) {
-            originalOp.fail(new IllegalArgumentException("Resource pool link is required"));
-            return;
-        }
-
-        // create delete operations for EPZ and RP
-        List<Operation> deleteOps = new ArrayList<>();
-        if (state.epzState != null && state.epzState.documentSelfLink != null) {
-            deleteOps.add(Operation
-                    .createDelete(getHost(), state.epzState.documentSelfLink)
-                    .setReferer(getUri()));
-        }
-        deleteOps.add(Operation
-                .createDelete(getHost(), state.resourcePoolState.documentSelfLink)
-                .setReferer(getUri()));
-
-        // execute them in sequence - EPZ deletion (if any) has to be completed first
-        OperationSequence opSequence = OperationSequence
-                .create(deleteOps.get(0))
-                .abortOnFirstFailure();
-        for (int i = 1; i < deleteOps.size(); i++) {
-            opSequence = opSequence.next(deleteOps.get(i));
-        }
-
-        opSequence.setCompletion((ops, exs) -> {
-            // single completion handler for all the operations
-            if (exs != null) {
-                originalOp.fail(exs.values().iterator().next());
+    private void doDelete(Operation originalOp, String resourcePoolLink) {
+        // first query for corresponding EPZ
+        Operation queryEpzOp = createEpzQueryOperation(resourcePoolLink, false);
+        queryEpzOp.setCompletion((o, e) -> {
+            if (e != null) {
+                originalOp.fail(e);
                 return;
             }
-            originalOp.complete();
-        }).sendWith(getHost());
+
+            List<Operation> deleteOps = new ArrayList<>();
+
+            // create delete operations for EPZ, if any is returned
+            QueryTask returnedQueryTask = o.getBody(QueryTask.class);
+            if (returnedQueryTask.results != null && returnedQueryTask.results.documentLinks != null
+                    && !returnedQueryTask.results.documentLinks.isEmpty()) {
+                deleteOps.add(Operation
+                        .createDelete(getHost(), returnedQueryTask.results.documentLinks.get(0))
+                        .setReferer(getUri()));
+            }
+
+            // create delete operations for RP
+            deleteOps.add(Operation
+                    .createDelete(getHost(), resourcePoolLink)
+                    .setReferer(getUri()));
+
+            // execute them in sequence - EPZ deletion (if any) has to be completed first
+            OperationSequence opSequence = OperationSequence
+                    .create(deleteOps.get(0))
+                    .abortOnFirstFailure();
+            for (int i = 1; i < deleteOps.size(); i++) {
+                opSequence = opSequence.next(deleteOps.get(i));
+            }
+
+            opSequence.setCompletion((ops, exs) -> {
+                // single completion handler for all the operations
+                if (exs != null) {
+                    originalOp.fail(exs.values().iterator().next());
+                    return;
+                }
+                originalOp.complete();
+            }).sendWith(getHost());
+        });
+        queryEpzOp.sendWith(getHost());
     }
 
     private void doUpdate(Operation originalOp, ElasticPlacementZoneConfigurationState state) {
@@ -398,5 +404,26 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
                     originalOp.complete();
                 })
                 .sendWith(getHost());
+    }
+
+    private Operation createEpzQueryOperation(String resourcePoolLink, boolean expandContent) {
+        Query epzQuery = Query.Builder.create()
+                .addKindFieldClause(ElasticPlacementZoneState.class)
+                .addFieldClause(ElasticPlacementZoneState.FIELD_NAME_RESOURCE_POOL_LINK,
+                        resourcePoolLink)
+                .build();
+
+        QueryTask.Builder epzQueryTaskBuilder = QueryTask.Builder.createDirectTask()
+                .setQuery(epzQuery);
+        if (expandContent) {
+            epzQueryTaskBuilder.addOption(QueryOption.EXPAND_CONTENT);
+        }
+
+        Operation queryEpzOp = Operation
+                .createPost(getHost(), ServiceUriPaths.CORE_QUERY_TASKS)
+                .setBody(epzQueryTaskBuilder.build())
+                .setReferer(getUri());
+
+        return queryEpzOp;
     }
 }

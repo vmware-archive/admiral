@@ -179,7 +179,7 @@ public class EndpointAdapterService extends StatelessService {
     }
 
     @Override
-    protected void handleDeleteCompletion(Operation delete) {
+    public void handleDelete(Operation delete) {
         String endpointLink = extractEndpointLink(delete);
 
         if (endpointLink == null || endpointLink.isEmpty()) {
@@ -194,7 +194,8 @@ public class EndpointAdapterService extends StatelessService {
             state.options = EnumSet.of(TaskOption.IS_MOCK);
         }
 
-        Operation.createDelete(this, EndpointRemovalTaskService.FACTORY_LINK)
+        Operation.createPost(this, EndpointRemovalTaskService.FACTORY_LINK)
+                .setBody(state)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         delete.fail(e);
