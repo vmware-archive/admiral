@@ -72,11 +72,12 @@
                     </execution>
                     <execution>
                         <id>jasmine integration tests</id>
-                        <phase>verify</phase>
+                        <phase>integration-test</phase>
                         <goals>
                             <goal>gulp</goal>
                         </goals>
                         <configuration>
+                            <skip>${skipITs}</skip>
                             <arguments>it-tests --test.dcp.url=${test.dcp.url} --test.integration.properties=${test.integration.properties}</arguments>
                         </configuration>
                     </execution>
