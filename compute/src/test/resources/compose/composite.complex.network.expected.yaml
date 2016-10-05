@@ -14,13 +14,13 @@ components:
       name: "app"
       image: "wordpress"
       networks:
+      - name: "back"
+        aliases:
+        - "application-1"
       - name: "front"
         aliases:
         - "my-service"
         - "my-application"
-      - name: "back"
-        aliases:
-        - "application-1"
   db:
     type: "Container.Docker"
     data:

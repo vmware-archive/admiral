@@ -24,7 +24,7 @@ components:
       depends_on:
       - mysql
       networks:
-        external_wpnet: {}
+      - name: "external_wpnet"
   mysql:
     type: Container.Docker
     data:
@@ -37,7 +37,7 @@ components:
       ports:
       - container_port: 3306
       networks:
-        external_wpnet: {}
+      - name: "external_wpnet"
   external_wpnet:
     type: Network.Docker
     data:

@@ -12,9 +12,9 @@ components:
       image: cmp/cmp_test_identity:latest
       _cluster: 1
       networks:
-        clientservernet:
-          aliases:
-          - "identity"
+      - name: "clientservernet"
+        aliases:
+        - "identity"
   curl-client:
     type: Container.Docker
     data:
@@ -24,7 +24,7 @@ components:
       depends_on:
       - "identity-server"
       networks:
-        clientservernet: {}
+      - name: "clientservernet"
       command:
       - "/curlloop.sh"
       - "100"

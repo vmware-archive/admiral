@@ -16,9 +16,9 @@ components:
       ports:
       - container_port: 3306
       networks:
-        wpnet: {}
-        publicnet: {}
-        privatenet: {}
+      - name: "wpnet"
+      - name: "publicnet"
+      - name: "privatenet"
   wpnet:
     type: Network.Docker
     data:

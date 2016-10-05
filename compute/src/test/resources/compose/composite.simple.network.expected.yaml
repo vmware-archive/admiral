@@ -14,22 +14,22 @@ components:
       name: "app"
       image: "wordpress"
       networks:
-      - name: "front"
-        aliases:
+      - aliases:
+        - "application-1"
+        name: "back"
+      - aliases:
         - "my-service"
         - "my-application"
-      - name: "back"
-        aliases:
-        - "application-1"
+        name: "front"
   db:
     type: "Container.Docker"
     data:
       name: "db"
       image: "postgres"
       networks:
-      - name: "back"
-        ipv4_address: "172.16.238.10"
+      - ipv4_address: "172.16.238.10"
         ipv6_address: "2001:3984:3989::10"
+        name: "back"
   front:
     type: "Network.Docker"
     data:

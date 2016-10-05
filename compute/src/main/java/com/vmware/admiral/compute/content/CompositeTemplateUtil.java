@@ -13,6 +13,7 @@ package com.vmware.admiral.compute.content;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
+
 import static com.vmware.admiral.compute.container.PortBinding.fromDockerPortMapping;
 
 import java.io.IOException;
@@ -32,9 +33,11 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
+import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.BindingUtils;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
+import com.vmware.admiral.compute.container.ContainerDescriptionService.CompositeTemplateContainerDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.LogConfig;
@@ -144,6 +147,25 @@ public class CompositeTemplateUtil {
             entity = YamlMapper.objectMapper()
                     .convertValue(deserialized, CompositeTemplate.class);
 
+            if (!isNullOrEmpty(entity.components)) {
+                for (Entry<String, ComponentTemplate<CompositeTemplateContainerDescription>> entry :
+                        filterComponentTemplates(entity.components, CompositeTemplateContainerDescription.class)
+                                .entrySet()) {
+
+                    ComponentTemplate<CompositeTemplateContainerDescription> component = entry.getValue();
+
+                    if (component.data.networksList != null) {
+                        component.data.networks = component.data.networksList.stream()
+                                .collect(Collectors.toMap(n -> n.name, n -> n));
+                        component.data.networks.entrySet().stream().forEach(e -> {
+                            e.getValue().name = null;
+                        });
+
+                        component.data.networksList = null;
+                    }
+                }
+            }
+
             entity.bindings = new ArrayList<>(componentBindings);
         } catch (JsonProcessingException e) {
             String format = "Error processing Blueprint YAML content: %s";
@@ -158,6 +180,40 @@ public class CompositeTemplateUtil {
 
     public static String serializeCompositeTemplate(CompositeTemplate entity) throws IOException {
         sanitizeCompositeTemplate(entity);
+
+        if (!isNullOrEmpty(entity.components)) {
+            for (Entry<String, ComponentTemplate<ContainerDescription>> entry : filterComponentTemplates(
+                    entity.components, ContainerDescription.class).entrySet()) {
+
+                ComponentTemplate<ContainerDescription> component = entry.getValue();
+
+                CompositeTemplateContainerDescription newData =
+                        new CompositeTemplateContainerDescription();
+
+                PropertyUtils.mergeServiceDocuments(newData, component.data);
+
+                if (newData.networks != null) {
+                    newData.networks.entrySet().forEach((e -> {
+                        if (e.getValue() instanceof Map) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, String> map = (Map<String, String>) e.getValue();
+                            map.put("name", e.getKey());
+                        } else {
+                            e.getValue().name = e.getKey();
+                        }
+                    }));
+
+                    newData.networksList = newData.networks.entrySet().stream()
+                            .map(Map.Entry::getValue)
+                            .collect(Collectors.toList());
+
+                    newData.networks = null;
+                }
+
+                component.data = newData;
+            }
+        }
+
         return YamlMapper.objectWriter().writeValueAsString(entity).trim();
     }
 
@@ -206,7 +262,7 @@ public class CompositeTemplateUtil {
         Map<String, ComponentTemplate<T>> templatesFiltered = new LinkedHashMap<>();
 
         for (Entry<String, ComponentTemplate<?>> template : templates.entrySet()) {
-            if (template.getValue().data.getClass().equals(type)) {
+            if (type.isAssignableFrom(template.getValue().data.getClass())) {
                 templatesFiltered.put(template.getKey(),
                         (ComponentTemplate<T>) template.getValue());
             }
@@ -731,5 +787,4 @@ public class CompositeTemplateUtil {
     private static boolean isNullOrEmpty(String s) {
         return (s == null || s.trim().isEmpty());
     }
-
 }

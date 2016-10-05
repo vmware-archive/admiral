@@ -8,13 +8,13 @@ services:
   app:
     image: "wordpress"
     networks:
+      back:
+        aliases:
+        - "application-1"
       front:
         aliases:
         - "my-service"
         - "my-application"
-      back:
-        aliases:
-        - "application-1"
   db:
     image: "postgres"
     networks:

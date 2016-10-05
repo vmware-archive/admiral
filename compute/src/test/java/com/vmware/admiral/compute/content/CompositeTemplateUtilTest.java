@@ -37,13 +37,14 @@ import org.junit.Test;
 import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription.Status;
+import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.content.CompositeTemplateUtil.YamlType;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
 
-public class CompositeTemplateUtilTest {
+public class CompositeTemplateUtilTest extends ComputeBaseTest {
 
     @Test
     public void testConvertDockerComposeToCompositeTemplate() throws IOException {
@@ -146,7 +147,7 @@ public class CompositeTemplateUtilTest {
 
         String template2Yaml = serializeCompositeTemplate(template2);
 
-        assertEquals(expectedTemplateYaml, template2Yaml);
+        assertEquals(getContent("composite.simple.network.expected.yaml"), template2Yaml);
     }
 
     @Test
@@ -471,7 +472,8 @@ public class CompositeTemplateUtilTest {
 
         expectedContent = expectedContent.replace("h5-name", "h5");
 
-        assertEquals(toUnixLineEnding(expectedContent), toUnixLineEnding(content));
+        assertEquals(toUnixLineEnding(getContent("composite.complex.network.expected.yaml")),
+                toUnixLineEnding(content));
 
         DockerCompose compose = fromCompositeTemplateToDockerCompose(template);
 

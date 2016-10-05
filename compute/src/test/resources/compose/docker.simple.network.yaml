@@ -8,8 +8,8 @@ services:
   app:
     image: "wordpress"
     networks:
-    - "front"
     - "back"
+    - "front"
   db:
     image: "postgres"
     networks:

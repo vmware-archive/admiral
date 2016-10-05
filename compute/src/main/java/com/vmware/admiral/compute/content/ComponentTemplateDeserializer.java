@@ -24,6 +24,8 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
+import com.vmware.admiral.compute.container.ContainerDescriptionService.CompositeTemplateContainerDescription;
+import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 
 public class ComponentTemplateDeserializer extends StdDeserializer<ComponentTemplate<?>> {
 
@@ -57,7 +59,11 @@ public class ComponentTemplateDeserializer extends StdDeserializer<ComponentTemp
         assertNotNull(data, "data");
         ComponentTemplate<T> template = new ComponentTemplate<>();
         template.type = type;
-        template.data = (T) new ObjectMapper().convertValue(data, getDescriptionClass(type));
+        Class<?> descriptionClass = getDescriptionClass(type);
+        if (descriptionClass.equals(ContainerDescription.class)) {
+            descriptionClass = CompositeTemplateContainerDescription.class;
+        }
+        template.data = (T) new ObjectMapper().convertValue(data, descriptionClass);
         return template;
     }
 

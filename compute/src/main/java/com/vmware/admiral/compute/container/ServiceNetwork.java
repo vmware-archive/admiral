@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServiceNetwork {
 
+    public String name;
+
     public String[] aliases;
 
     public String[] links;
@@ -50,6 +52,9 @@ public class ServiceNetwork {
             return true;
         }
 
+        if (name != null ? !name.equals(other.name) : other.name != null) {
+            return false;
+        }
         if (!Arrays.equals(aliases, other.aliases)) {
             return false;
         }
@@ -71,6 +76,7 @@ public class ServiceNetwork {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + Arrays.hashCode(aliases);
         result = prime * result + ((ipv4_address == null) ? 0 : ipv4_address.hashCode());
         result = prime * result + ((ipv6_address == null) ? 0 : ipv6_address.hashCode());
@@ -82,6 +88,7 @@ public class ServiceNetwork {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("ServiceNetwork {");
+        sb.append("name='").append(name != null ? name : "-").append("',");
         sb.append("aliases='");
         if (aliases != null) {
             StringJoiner sj = new StringJoiner(",");

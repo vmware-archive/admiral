@@ -421,6 +421,13 @@ public class ContainerDescriptionService extends StatefulService {
         }
     }
 
+    @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
+    public static class CompositeTemplateContainerDescription extends ContainerDescription {
+
+        @JsonProperty("networks")
+        public List<ServiceNetwork> networksList;
+    }
+
     public ContainerDescriptionService() {
         super(ContainerDescription.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
