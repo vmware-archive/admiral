@@ -476,7 +476,7 @@ services.deleteResourcePool = function(config) {
 
 services.countHostsPerResourcePool = function(resourcePoolLink, onlyContainerHosts) {
   var queryOptions = {
-    resourcePool: resourcePoolLink
+    placementZone: resourcePoolLink
   };
 
   let params = {

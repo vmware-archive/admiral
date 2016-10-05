@@ -47,7 +47,7 @@ var renderers = {
     model.hostsCount = resourcePool.hostsCount;
 
     if (utils.isApplicationCompute()) {
-      model.hostsPath = 'machines';
+      model.hostsPath = 'compute';
     } else {
       model.hostsPath = 'hosts';
     }
