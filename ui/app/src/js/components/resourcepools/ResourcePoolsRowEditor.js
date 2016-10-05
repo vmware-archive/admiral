@@ -53,6 +53,7 @@ function ResourcePoolRowEditor() {
   }
 
   this.tags = new Tags(this.$el.find('.tags-input'));
+  this.$el.find('.tags').hide();
 
   addEventListeners.call(this);
 }
