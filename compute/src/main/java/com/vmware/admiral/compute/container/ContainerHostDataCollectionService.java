@@ -365,7 +365,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
 
             int coef = remove ? -1 : 1;
 
-            resourcePoolState.minMemoryBytes = 0;
+            resourcePoolState.minMemoryBytes = 0L;
             if (resourcePoolState.maxMemoryBytes == Long.MAX_VALUE || totalMemory
                     .equals(Long.MAX_VALUE)) {
                 resourcePoolState.maxMemoryBytes = Long.MAX_VALUE;
@@ -556,7 +556,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 .put(RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP,
                         Long.toString(resourcePoolAvailableMemory));
         rpPutState.maxMemoryBytes = totalMemory;
-        rpPutState.minMemoryBytes = 0;
+        rpPutState.minMemoryBytes = 0L;
         sendRequest(Operation.createPut(this, rpPutState.documentSelfLink)
                 .setBody(rpPutState).setCompletion((op, e) -> {
                     if (e != null) {

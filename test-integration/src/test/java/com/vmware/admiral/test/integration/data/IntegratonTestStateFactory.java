@@ -66,8 +66,8 @@ public class IntegratonTestStateFactory extends CommonTestStateFactory {
         poolState.id = poolState.name;
         poolState.documentSelfLink = poolState.name;
         poolState.documentSelfLink = poolState.id;
-        poolState.maxCpuCount = 1600;
-        poolState.minCpuCount = 16;
+        poolState.maxCpuCount = 1600L;
+        poolState.minCpuCount = 16L;
         poolState.currencyUnit = "Bitcoin";
         poolState.maxCpuCostPerMinute = 1.0;
         poolState.maxDiskCostPerMinute = 1.0;
