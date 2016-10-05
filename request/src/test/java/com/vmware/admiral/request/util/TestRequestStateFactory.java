@@ -156,7 +156,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         desc.documentSelfLink = "test-volume-" + name;
         desc.name = name;
         desc.tenantLinks = Collections.singletonList("test-group");
-
+        // TODO - TBD
         return desc;
     }
 
@@ -305,6 +305,8 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
     public static ContainerNetworkState createNetwork(String name) {
         ContainerNetworkState net = new ContainerNetworkState();
         net.name = name;
+        net.parentLinks = new ArrayList<>(Arrays.asList(
+                UriUtils.buildUriPath(ComputeService.FACTORY_LINK, DOCKER_COMPUTE_ID)));
 
         return net;
     }

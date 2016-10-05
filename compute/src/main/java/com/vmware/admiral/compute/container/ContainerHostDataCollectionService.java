@@ -636,8 +636,10 @@ public class ContainerHostDataCollectionService extends StatefulService {
                     }
                 }, null);
 
-                updateContainerHostContainers(compute.documentSelfLink);
-                updateContainerHostNetworks(compute.documentSelfLink);
+                if (PowerState.ON.equals(compute.powerState)) {
+                    updateContainerHostContainers(compute.documentSelfLink);
+                    updateContainerHostNetworks(compute.documentSelfLink);
+                }
             }
 
             for (ResourcePoolData rpData : qr.resourcesPools.values()) {

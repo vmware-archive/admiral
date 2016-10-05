@@ -497,6 +497,12 @@ public class ContainerRemovalTaskService
             return null;
         }
 
+        if (isSystemContainer(cs)) {
+            logFine("Skipping releasing placement because container is a system one: %s",
+                    cs.documentSelfLink);
+            return null;
+        }
+
         ReservationRemovalTaskState rsrvTask = new ReservationRemovalTaskState();
         rsrvTask.resourceCount = 1;
         rsrvTask.resourceDescriptionLink = cs.descriptionLink;

@@ -490,6 +490,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         cs.id = hostId;
         cs.documentSelfLink = cs.id;
         cs.address = "test-address";
+        cs.powerState = com.vmware.photon.controller.model.resources.ComputeService.PowerState.ON;
         cs.descriptionLink = hostDescription.documentSelfLink;
         cs.resourcePoolLink = UriUtilsExtended.buildUriPath(
                 ResourcePoolService.FACTORY_LINK,

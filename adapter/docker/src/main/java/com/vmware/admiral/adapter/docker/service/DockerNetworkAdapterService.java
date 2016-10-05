@@ -42,7 +42,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
     private static final NetworkOperationType[] DIRECT_OPERATIONS = {};
 
     public static final List<String> DOCKER_PREDEFINED_NETWORKS = Arrays.asList("none", "host",
-            "bridge");
+            "bridge", "docker_gwbridge");
 
     private static class RequestContext {
         public NetworkRequest request;

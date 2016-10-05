@@ -29,7 +29,9 @@ import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState.SubStage;
+import com.vmware.admiral.request.ContainerNetworkRemovalTaskService.ContainerNetworkRemovalTaskState;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.CounterSubTaskService;
@@ -77,12 +79,15 @@ public class ContainerHostRemovalTaskService extends
             SUSPENDED_HOSTS,
             REMOVING_CONTAINERS,
             REMOVED_CONTAINERS,
+            REMOVING_NETWORKS,
+            REMOVED_NETWORKS,
             REMOVING_HOSTS,
             COMPLETED,
             ERROR;
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
-                    Arrays.asList(REMOVING_HOSTS, SUSPENDING_HOSTS, REMOVING_CONTAINERS));
+                    Arrays.asList(REMOVING_HOSTS, SUSPENDING_HOSTS, REMOVING_CONTAINERS,
+                            REMOVING_NETWORKS));
         }
     }
 
@@ -116,6 +121,11 @@ public class ContainerHostRemovalTaskService extends
         case REMOVING_CONTAINERS:
             break;
         case REMOVED_CONTAINERS:
+            queryNetworks(state);
+            break;
+        case REMOVING_NETWORKS:
+            break;
+        case REMOVED_NETWORKS:
             removeHosts(state, null);
             break;
         case REMOVING_HOSTS:
@@ -188,7 +198,7 @@ public class ContainerHostRemovalTaskService extends
                         containerLinks.add(r.getDocumentSelfLink());
                     } else {
                         if (containerLinks.isEmpty()) {
-                            removeHosts(state, null);
+                            queryNetworks(state);
                             return;
                         }
 
@@ -224,6 +234,96 @@ public class ContainerHostRemovalTaskService extends
         sendRequest(startPost);
     }
 
+    private void queryNetworks(ContainerHostRemovalTaskState state) {
+        QueryTask networkQuery = QueryUtil.buildQuery(ContainerNetworkState.class, false);
+
+        String parentLinksItemField = QueryTask.QuerySpecification
+                .buildCollectionItemName(ContainerNetworkState.FIELD_NAME_PARENT_LINKS);
+        QueryUtil.addListValueClause(networkQuery, parentLinksItemField, state.resourceLinks);
+        QueryUtil.addExpandOption(networkQuery);
+
+        List<String> networkLinks = new ArrayList<>();
+        new ServiceDocumentQuery<ContainerNetworkState>(getHost(), ContainerNetworkState.class)
+                .query(networkQuery, (r) -> {
+                    if (r.hasException()) {
+                        failTask("Failure retrieving query results", r.getException());
+                        return;
+                    } else if (r.hasResult()) {
+                        ContainerNetworkState networkState = r.getResult();
+
+                        List<String> parentLinks = new ArrayList<>(networkState.parentLinks);
+                        parentLinks.removeAll(state.resourceLinks);
+
+                        if (parentLinks.isEmpty()) {
+                            networkLinks.add(networkState.documentSelfLink);
+                        } else {
+                            networkState.parentLinks = parentLinks;
+                            updateNetworkParentLinks(networkState);
+                        }
+                    } else {
+                        if (networkLinks.isEmpty()) {
+                            removeHosts(state, null);
+                            return;
+                        }
+
+                        removeNetworks(state, networkLinks);
+                    }
+                });
+    }
+
+    private void updateNetworkParentLinks(ContainerNetworkState networkState) {
+        ContainerNetworkState patchNetworkState = new ContainerNetworkState();
+        patchNetworkState.parentLinks = networkState.parentLinks;
+
+        if ((networkState.originatingHostLink != null) && !networkState.parentLinks.isEmpty()
+                && (!networkState.parentLinks.contains(networkState.originatingHostLink))) {
+            // set another parent like the "owner" of the network
+            patchNetworkState.originatingHostLink = networkState.parentLinks.get(0);
+        }
+
+        sendRequest(Operation
+                .createPatch(this, networkState.documentSelfLink)
+                .setBody(patchNetworkState)
+                .setCompletion((o, ex) -> {
+                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                        logFine("Network %s not found to be updated its parent links.",
+                                networkState.documentSelfLink);
+                    } else if (ex != null) {
+                        logWarning("Failed to update network %s parent links: %s",
+                                networkState.documentSelfLink, Utils.toString(ex));
+                    } else {
+                        logInfo("Updated network parent links: %s", networkState.documentSelfLink);
+                    }
+                }));
+    }
+
+    private void removeNetworks(ContainerHostRemovalTaskState state,
+            List<String> networkSelfLinks) {
+
+        // run a sub task for removing the networks
+        ContainerNetworkRemovalTaskState networkRemovalTask = new ContainerNetworkRemovalTaskState();
+        networkRemovalTask.resourceLinks = networkSelfLinks;
+        networkRemovalTask.removeOnly = true;
+        networkRemovalTask.serviceTaskCallback = ServiceTaskCallback.create(
+                getSelfLink(),
+                TaskStage.STARTED, SubStage.REMOVED_NETWORKS,
+                TaskStage.STARTED, SubStage.ERROR);
+        networkRemovalTask.requestTrackerLink = state.requestTrackerLink;
+
+        Operation startPost = Operation
+                .createPost(this, ContainerNetworkRemovalTaskService.FACTORY_LINK)
+                .setBody(networkRemovalTask)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating container network removal task", e);
+                        return;
+                    }
+
+                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.REMOVING_NETWORKS));
+                });
+        sendRequest(startPost);
+    }
+
     private void removeHosts(ContainerHostRemovalTaskState state, String subTaskLink) {
         if (subTaskLink == null && !state.skipComputeHostRemoval) {
             createCounterSubTask(state, state.resourceLinks.size(),
@@ -234,7 +334,7 @@ public class ContainerHostRemovalTaskService extends
         try {
             logInfo("Starting delete of %d container hosts", state.resourceLinks.size());
 
-            //Notify the data collection service first
+            // Notify the data collection service first
             URI uri = UriUtilsExtended.buildUri(getHost(),
                     ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK);
             ContainerHostDataCollectionService.ContainerHostDataCollectionState dataCollectionState = new ContainerHostDataCollectionService.ContainerHostDataCollectionState();

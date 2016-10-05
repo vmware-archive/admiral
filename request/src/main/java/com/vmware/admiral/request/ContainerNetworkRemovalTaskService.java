@@ -144,21 +144,21 @@ public class ContainerNetworkRemovalTaskService extends
                 state.resourceLinks);
         ServiceDocumentQuery<ContainerNetworkState> query = new ServiceDocumentQuery<>(getHost(),
                 ContainerNetworkState.class);
-        List<String> containerLinks = new ArrayList<>();
+        List<String> networkLinks = new ArrayList<>();
         QueryUtil.addBroadcastOption(networkQuery);
         QueryUtil.addExpandOption(networkQuery);
         query.query(networkQuery, (r) -> {
             if (r.hasException()) {
                 failTask("Failure retrieving query results", r.getException());
             } else if (r.hasResult()) {
-                containerLinks.add(r.getDocumentSelfLink());
+                networkLinks.add(r.getDocumentSelfLink());
             } else {
-                if (containerLinks.isEmpty()) {
+                if (networkLinks.isEmpty()) {
                     logWarning("No available resources found to be removed with links: %s",
                             state.resourceLinks);
                     sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
                 } else {
-                    deleteResourceInstances(state, containerLinks, null);
+                    deleteResourceInstances(state, networkLinks, null);
                 }
             }
         });

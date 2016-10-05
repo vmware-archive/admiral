@@ -16,6 +16,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -27,6 +28,10 @@ import org.junit.Test;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
@@ -190,5 +195,69 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
         }
     }
 
+    @Test
+    public void testRequestBrokerContainerHostRemovalWithSystemContainerAndNetworks()
+            throws Throwable {
+        request = startRequest(request);
+        waitForRequestToComplete(request);
 
+        request = getDocument(RequestBrokerState.class, request.documentSelfLink);
+        assertNotNull(request);
+
+        // create a system container
+        ContainerState container = TestRequestStateFactory.createContainer();
+        container.descriptionLink = containerDesc.documentSelfLink;
+        container.adapterManagementReference = containerDesc.instanceAdapterReference;
+        container.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
+        container.parentLink = computeHost.documentSelfLink;
+        container.system = Boolean.TRUE;
+        container = doPost(container, ContainerFactoryService.SELF_LINK);
+
+        // verify the resources are created as expected:
+        assertEquals(request.resourceCount, request.resourceLinks.size());
+        List<String> containerStateLinks = findResourceLinks(ContainerState.class,
+                request.resourceLinks);
+
+        // create a network
+        ContainerNetworkDescription networkDesc = TestRequestStateFactory
+                .createContainerNetworkDescription("test-net");
+        networkDesc = doPost(networkDesc, ContainerNetworkDescriptionService.FACTORY_LINK);
+        addForDeletion(networkDesc);
+
+        ContainerNetworkState network = TestRequestStateFactory.createNetwork("test-net-003");
+        network.adapterManagementReference = networkDesc.instanceAdapterReference;
+        network.descriptionLink = networkDesc.documentSelfLink;
+        network = doPost(network, ContainerNetworkService.FACTORY_LINK);
+
+        // verify the network is created as expected
+        List<String> containerNetworkStateLinks = findResourceLinks(ContainerNetworkState.class,
+                Arrays.asList(network.documentSelfLink));
+        assertEquals(1, containerNetworkStateLinks.size());
+
+        // create a host removal task - RequestBroker
+        RequestBrokerState request = new RequestBrokerState();
+        request.resourceType = ResourceType.CONTAINER_HOST_TYPE.getName();
+        request.resourceLinks = Collections.singletonList(computeHost.documentSelfLink);
+        request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
+
+        request = startRequest(request);
+        waitForRequestToComplete(request);
+
+        // verify that the network state was removed
+        containerNetworkStateLinks = findResourceLinks(ContainerNetworkState.class,
+                Arrays.asList(network.documentSelfLink));
+        assertTrue("ContainerNetworkState not removed: " + containerNetworkStateLinks,
+                containerNetworkStateLinks.isEmpty());
+
+        // verify that the container states were removed
+        containerStateLinks = findResourceLinks(ContainerState.class, containerStateLinks);
+        assertTrue("ContainerState not removed: " + containerStateLinks,
+                containerStateLinks.isEmpty());
+
+        // verify that the host was removed
+        Collection<String> computeSelfLinks = findResourceLinks(ComputeState.class,
+                Collections.singletonList(computeHost.documentSelfLink));
+
+        assertTrue("ComputeState was not deleted: " + computeSelfLinks, computeSelfLinks.isEmpty());
+    }
 }
