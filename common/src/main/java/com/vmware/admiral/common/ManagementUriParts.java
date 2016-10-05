@@ -37,6 +37,8 @@ public interface ManagementUriParts {
     String DEPLOYMENT_POLICIES = RESOURCES + "/deployment-policies";
     String ELASTIC_PLACEMENT_ZONES = RESOURCES + "/elastic-placement-zones";
     String ELASTIC_PLACEMENT_ZONE_CONFIGURATION = ELASTIC_PLACEMENT_ZONES + "-config";
+    String PLACEMENT_CAPACITY_UPDATE = RESOURCES + "/placement-capacity-update";
+    String PLACEMENT_UPDATE_TASKS = RESOURCES + "/placement-update-tasks";
 
     String EPZ_COMPUTE_ENUMERATION_TASKS = RESOURCES + "/epz-compute-enumeration-tasks";
     String EPZ_PERIODIC_ENUMERATION = RESOURCES + "/epz-periodic-enumeration";

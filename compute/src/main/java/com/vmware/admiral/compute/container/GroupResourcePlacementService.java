@@ -70,8 +70,8 @@ public class GroupResourcePlacementService extends StatefulService {
         poolState.documentSelfLink = DEFAULT_RESOURCE_POOL_LINK;
         poolState.name = DEFAULT_RESOURCE_POOL_ID;
         poolState.id = poolState.name;
-        poolState.maxCpuCount = 1600;
-        poolState.minCpuCount = 16;
+        poolState.maxCpuCount = 1600L;
+        poolState.minCpuCount = 16L;
         poolState.currencyUnit = "USD";
         poolState.maxCpuCostPerMinute = 1.0;
         poolState.maxDiskCostPerMinute = 1.0;
@@ -587,7 +587,10 @@ public class GroupResourcePlacementService extends StatefulService {
                             }
 
                             ResourcePoolState resourcePool = o.getBody(ResourcePoolState.class);
-                            long totalMemory = resourcePool.maxMemoryBytes;
+                            long totalMemory = 0;
+                            if (resourcePool.maxMemoryBytes != null) {
+                                totalMemory = resourcePool.maxMemoryBytes.longValue();
+                            }
 
                             if (state.memoryLimit > totalMemory) {
                                 operation.fail(new IllegalArgumentException(

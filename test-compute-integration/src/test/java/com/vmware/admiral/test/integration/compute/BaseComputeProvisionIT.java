@@ -399,8 +399,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         poolState.id = poolState.name;
         poolState.projectName = endpointType.name();
         poolState.tenantLinks = getTenantLinks();
-        poolState.maxCpuCount = 1600;
-        poolState.minCpuCount = 16;
+        poolState.maxCpuCount = 1600L;
+        poolState.minCpuCount = 16L;
         poolState.currencyUnit = "USD";
         poolState.maxCpuCostPerMinute = 1.0;
         poolState.maxDiskCostPerMinute = 1.0;
