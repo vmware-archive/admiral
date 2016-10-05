@@ -14,6 +14,7 @@ package com.vmware.admiral.compute.container;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isSystemContainer;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -76,6 +77,8 @@ import com.vmware.xenon.services.common.QueryTask;
  */
 public class HostContainerListDataCollection extends StatefulService {
     private static final String SYSTEM_CONTAINER_NAME = "systemContainerName";
+    protected static final long DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS = Long.getLong(
+            "com.vmware.admiral.data.collection.lock.timeout.milliseconds", 30000);
 
     public static class HostContainerListDataCollectionFactoryService extends FactoryService {
         public static final String SELF_LINK = ManagementUriParts.HOST_CONTAINER_LIST_DATA_COLLECTION;
@@ -119,18 +122,18 @@ public class HostContainerListDataCollection extends StatefulService {
             state.documentSelfLink = DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK;
             state.taskInfo = new TaskState();
             state.taskInfo.stage = TaskStage.STARTED;
-            state.containerHostLinks = new HashSet<>();
+            state.containerHostLinks = new HashMap<>();
             return state;
         }
     }
 
     public static class HostContainerListDataCollectionState extends
             TaskServiceDocument<DefaultSubStage> {
-        @Documentation(description = "The list of container host links.")
+        @Documentation(description = "The map of container host links.")
         @PropertyOptions(indexing = {
                 PropertyIndexingOption.STORE_ONLY,
                 PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
-        public Set<String> containerHostLinks;
+        public Map<String, Long> containerHostLinks;
     }
 
     @Override
@@ -323,11 +326,13 @@ public class HostContainerListDataCollection extends StatefulService {
         }
 
         // the patch will succeed regardless of the synchronization process
-        if (state.containerHostLinks.contains(body.containerHostLink)) {
+        if (state.containerHostLinks.get(body.containerHostLink) != null &&
+                Instant.now().isBefore(Instant.ofEpochMilli(
+                        (state.containerHostLinks.get(body.containerHostLink) )))) {
             op.complete();
             return;//return since there is an active data collection for this host.
         } else {
-            state.containerHostLinks.add(body.containerHostLink);
+            state.containerHostLinks.put(body.containerHostLink, Instant.now().toEpochMilli() + DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS);
             op.complete();
             //continue with the data collection.
         }
