@@ -17,7 +17,7 @@
   </a>
   <a class="nav-item resources" v-on:click="handleCategoryClick($event, constants.VIEWS.RESOURCES)"
     v-bind:class="{'expanded': isExpanded(constants.VIEWS.RESOURCES)}"
-    href="#/containers">
+    v-bind:href="'#/' + lastActiveViewByCategory[constants.VIEWS.RESOURCES.name]">
     <img class="nav-item-image" src="image-assets/resources.png">
     <span><span>{{i18n("app.navbar.resources")}}</span><span class="nav-category"><i class="fa"
             v-bind:class="{'fa-chevron-down': isExpanded(constants.VIEWS.RESOURCES),
@@ -60,7 +60,7 @@
     </a>
     <a class="nav-item resources" v-on:click="handleCategoryClick($event, computeConstants.VIEWS.RESOURCES)"
        v-bind:class="{'expanded': isExpanded(computeConstants.VIEWS.RESOURCES)}"
-       href="#/machines">
+       v-bind:href="'#/' + computeLastActiveViewByCategory[computeConstants.VIEWS.RESOURCES.name]">
       <img class="nav-item-image" src="image-assets/resources.png">
     <span><span>{{i18n("app.navbar.resources")}}</span><span class="nav-category"><i class="fa"
       v-bind:class="{'fa-chevron-down': isExpanded(computeConstants.VIEWS.RESOURCES),

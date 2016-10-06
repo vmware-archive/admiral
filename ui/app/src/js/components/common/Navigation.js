@@ -37,7 +37,13 @@ var Navigation = Vue.extend({
   data: function() {
     return {
       constants: constants,
-      computeConstants: computeConstants
+      computeConstants: computeConstants,
+      lastActiveViewByCategory: {
+        [constants.VIEWS.RESOURCES.name]: 'containers'
+      },
+      computeLastActiveViewByCategory: {
+        [computeConstants.VIEWS.RESOURCES.name]: 'machines'
+      }
     };
   },
 
@@ -45,6 +51,8 @@ var Navigation = Vue.extend({
 
     this.unwatchCurrentView = this.$watch('currentView', (currentView) => {
       let consts = (this.app === 'admiral') ? constants : computeConstants;
+      let lastActiveViewByCategory = (this.app === 'admiral') ?
+        this.lastActiveViewByCategory : this.computeLastActiveViewByCategory;
 
       Object.values(consts.VIEWS).forEach((item) => {
         if (item.VIEWS) { // categories
@@ -59,6 +67,7 @@ var Navigation = Vue.extend({
 
           if (activeItem) {
             this.expandCategory(item);
+            lastActiveViewByCategory[item.name] = activeItem.name;
           } else {
             this.collapseCategory(item);
           }
