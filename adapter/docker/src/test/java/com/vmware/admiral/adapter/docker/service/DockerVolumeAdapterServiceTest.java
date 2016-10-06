@@ -73,8 +73,8 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
     private static final String TEST_VOLUME_ID_KEY = "Id";
     private static final String TEST_VOLUME_MOUNTPOINT_KEY = "Mountpoint";
 
-    private static Integer VOLUME_LIST_RETRY_COUNT = 5;
-    private static Integer TIME_BETWEEN_RETRIES_IN_MILSEC = 1000;
+    private static Integer VOLUME_LIST_RETRY_COUNT = 6;
+    private static Integer TIME_BETWEEN_RETRIES_IN_MILSEC = 3000;
 
     private String parentComputeStateLink;
     private String testDockerCredentialsLink;
@@ -110,6 +110,9 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
         createVolumeState(desc);
 
         createVolume();
+
+        // Volume creation is not direct operation, this means it will take some time.
+        waitForVolumeCreation();
     }
 
     @Test
@@ -119,13 +122,6 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
 
     @Test
     public void testVolumeInspect() throws Throwable {
-        // Volume creation is not direct operation, this means it will take some time.
-        while ((MockDockerVolumeListService.volumesList == null
-                || MockDockerVolumeListService.volumesList.isEmpty())
-                && VOLUME_LIST_RETRY_COUNT > 0) {
-            Thread.sleep(TIME_BETWEEN_RETRIES_IN_MILSEC);
-            VOLUME_LIST_RETRY_COUNT--;
-        }
 
         CommandInput commandInput = new CommandInput().withDockerUri(getDockerVersionedUri())
                 .withCredentials(getDockerCredentials());
@@ -371,6 +367,15 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
             }
         });
         host.testWait();
+    }
+
+    private void waitForVolumeCreation() throws InterruptedException {
+        while ((MockDockerVolumeListService.volumesList == null
+                || MockDockerVolumeListService.volumesList.isEmpty())
+                && VOLUME_LIST_RETRY_COUNT > 0) {
+            Thread.sleep(TIME_BETWEEN_RETRIES_IN_MILSEC);
+            VOLUME_LIST_RETRY_COUNT--;
+        }
     }
 
 }
