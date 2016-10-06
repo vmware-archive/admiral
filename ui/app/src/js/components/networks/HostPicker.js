@@ -103,6 +103,8 @@ var HostPicker = Vue.extend({
           searchPlaceholder: i18n.t('app.template.details.editNetwork.hostsSearchPlaceholder')
         });
         this.hostInput.setOptionsRenderer(HOST_DROPDOWN_RENDERER);
+        this.hostInput.setOptionSelectCallback(() => toggleChanged.call(this));
+        this.hostInput.setClearOptionSelectCallback(() => toggleChanged.call(this));
         this.hostInput.setFilterCallback(hostSearchCallback);
         this.hostInput.setFilter(INITIAL_FILTER);
       },
@@ -114,5 +116,9 @@ var HostPicker = Vue.extend({
     }
   }
 });
+
+var toggleChanged = function() {
+  this.$dispatch('change');
+};
 
 export default HostPicker;

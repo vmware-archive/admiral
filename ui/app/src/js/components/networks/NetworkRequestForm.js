@@ -27,7 +27,8 @@ var NetworkRequestForm = Vue.extend({
   },
   data: function() {
     return {
-      creatingNetwork: false
+      creatingNetwork: false,
+      disableCreatingNetworkButton: true
     };
   },
   methods: {
@@ -46,8 +47,14 @@ var NetworkRequestForm = Vue.extend({
     }
   },
   attached: function() {
+    var _this = this;
+    $(this.$el).on('change input', function() {
+      toggleButtonsState.call(_this);
+    });
+
     this.unwatchModel = this.$watch('model.definitionInstance', () => {
       this.creatingNetwork = false;
+      this.disableCreatingNetworkButton = true;
     }, {immediate: true});
   },
   detached: function() {
@@ -55,9 +62,23 @@ var NetworkRequestForm = Vue.extend({
   },
   components: {
     hostPicker: HostPicker
+  },
+  events: {
+    'change': function() {
+      toggleButtonsState.call(this);
+    }
   }
 });
 
+var toggleButtonsState = function() {
+  var networkName = this.$refs.networkEditForm.getNetworkDefinition().name;
+  var host = this.$refs.hostPicker.getHosts();
+  if (networkName && (host && host.length > 0)) {
+    this.disableCreatingNetworkButton = false;
+  } else {
+    this.disableCreatingNetworkButton = true;
+  }
+};
 Vue.component('network-request-form', NetworkRequestForm);
 
 export default NetworkRequestForm;

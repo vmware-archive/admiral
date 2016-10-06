@@ -41,6 +41,7 @@ var TemplateDetailsView = Vue.extend({
       savingContainer: false,
       addingContainer: false,
       savingNetwork: false,
+      disableSavingNetworkButton: true,
       editingTemplateName: false,
       templateName: '',
       networkType: 'bridge'
@@ -53,6 +54,9 @@ var TemplateDetailsView = Vue.extend({
     buttonsDisabled: function() {
        return this.savingContainer || this.addingContainer || this.savingNetwork;
     },
+    buttonNetworkDisabled: function() {
+       return this.savingNetwork || this.disableSavingNetworkButton;
+    },
     networks: function() {
       var networks = this.model.templateDetails && this.model.templateDetails.listView.networks;
       return networks || [];
@@ -61,6 +65,11 @@ var TemplateDetailsView = Vue.extend({
       var networkLinks = this.model.templateDetails &&
           this.model.templateDetails.listView.networkLinks;
       return networkLinks || {};
+    }
+  },
+  events: {
+    'disableNetworkSaveButton': function(disable) {
+      this.disableSavingNetworkButton = disable;
     }
   },
   components: {
@@ -353,6 +362,7 @@ var TemplateDetailsView = Vue.extend({
       this.savingContainer = false;
       this.addingContainer = false;
       this.savingNetwork = false;
+      this.disableSavingNetworkButton = true;
 
       if (model.alert) {
         this.$dispatch('container-form-alert', model.alert.message, model.alert.type);

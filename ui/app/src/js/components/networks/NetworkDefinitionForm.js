@@ -139,14 +139,15 @@ var NetworkDefinitionForm = Vue.extend({
     applyValidationErrors: function(errors) {
       errors = errors || {};
 
-      var image = $(this.$el).find('.network-name');
-      utils.applyValidationError(image, errors.name);
+      var networkName = $(this.$el).find('.network-name');
+      utils.applyValidationError(networkName, errors.name);
 
       var imageSearch = $(this.$el).find('.network-name-search');
       utils.applyValidationError(imageSearch, errors.name);
     }
   },
   attached: function() {
+    var _this = this;
     this.ipamConfigEditor = new MulticolumnInputs(
       $(this.$el).find('.ipam-config .form-control'), {
         subnet: {
@@ -178,6 +179,14 @@ var NetworkDefinitionForm = Vue.extend({
     );
 
     this.$networksSearch = $(this.$el).find('.network-name-search .form-control');
+
+    $(this.$networksSearch).on('change input', function() {
+      toggleButtonsState.call(_this);
+    });
+
+    $(this.$el).find('.network-name').on('change input', function() {
+      toggleButtonsState.call(_this);
+    });
 
     initialQueryPromise = services.searchNetworks(INITIAL_FILTER, NETWORK_RESULT_LIMIT);
 
@@ -231,7 +240,9 @@ var NetworkDefinitionForm = Vue.extend({
           return `<div class="tt-options-hint">${label}</div>`;
         }
       }
-    });
+    }).on('typeahead:selected', function() {
+        toggleButtonsState.call(_this);
+      });
 
     this.unwatchModel = this.$watch('model', (network) => {
       if (network) {
@@ -295,17 +306,32 @@ var NetworkDefinitionForm = Vue.extend({
       if (existingNetwork) {
         let name = $(this.$el).find('.network-name .form-control').val();
         this.$networksSearch.typeahead('val', name);
+        $(this.$el).find('.network-name .form-control').val('');
       } else {
         let name = this.$networksSearch.typeahead('val');
         $(this.$el).find('.network-name .form-control').val(name);
+        this.$networksSearch.typeahead('val', '');
       }
+      toggleButtonsState.call(_this);
     });
+    this.$dispatch('disableNetworkSaveButton', true);
   },
   detached: function() {
     this.unwatchModel();
     this.unwatchExistingNetwork();
   }
 });
+
+var toggleButtonsState = function() {
+  var networkNameInput = $(this.$el).find('.network-name input').val();
+  var networkSearchNameInput = this.$networksSearch.typeahead('val');
+
+  if (networkNameInput || networkSearchNameInput) {
+    this.$dispatch('disableNetworkSaveButton', false);
+  } else {
+    this.$dispatch('disableNetworkSaveButton', true);
+  }
+};
 
 Vue.component('network-definition-form', NetworkDefinitionForm);
 

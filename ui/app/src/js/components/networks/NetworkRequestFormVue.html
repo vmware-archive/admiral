@@ -14,7 +14,10 @@
   <network-definition-form v-ref:network-edit-form v-bind:model="model.definitionInstance"></network-definition-form>
   <div class="form-horizontal">
     <div class="form-group">
-      <label class="col-sm-3 control-label">{{i18n('app.template.details.editNetwork.hosts')}}</label>
+      <label class="col-sm-3 control-label">
+        {{i18n('app.template.details.editNetwork.hosts')}}
+        <span class="requiredFieldMark">*</span>
+      </label>
       <div class="col-sm-9">
         <host-picker class="form-control" v-ref:host-picker></host-picker>
         <span class="help-block"></span>
@@ -24,7 +27,7 @@
   <div class="pull-right control-btns">
     <button class="btn admiral-btn"
             v-bind:class="{'loading': creatingNetwork}"
-            v-bind:disabled="creatingNetwork"
+            v-bind:disabled="disableCreatingNetworkButton"
             v-on:click="createNetwork()">{{i18n('app.template.details.editNetwork.create')}}<i
                 class="fa fa-spinner fa-spin loader-inline"></i></button>
   </div>
