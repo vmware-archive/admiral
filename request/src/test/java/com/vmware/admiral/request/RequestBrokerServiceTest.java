@@ -812,7 +812,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request = startRequest(request);
         request = waitForRequestToFail(request);
 
-        assertTrue(request.taskInfo.failure.message.startsWith("Container host not found"));
+        assertTrue(request.taskInfo.failure.message.startsWith(
+                "No powered-on container hosts found"));
 
         // check the custom property from container description
         assertNotNull(request.customProperties);
@@ -892,7 +893,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request.tenantLinks = groupPlacementState.tenantLinks;
         request = startRequest(request);
         request = waitForRequestToFail(request);
-        assertTrue(request.taskInfo.failure.message.startsWith("Container host not found"));
+        assertTrue(request.taskInfo.failure.message.startsWith(
+                "No powered-on container hosts found"));
 
         // the event is created after the task is failed, wait for it to be created
         final String requestTrackerLink = request.requestTrackerLink;

@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -56,7 +57,7 @@ public class PlacementHostSelectionTaskService
 
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_PROVISION_PLACEMENT_TASKS;
     public static final String DISPLAY_NAME = "Host Selection";
-    private static final int QUERY_COUNT_ERROR = Integer.getInteger(
+    private static final int QUERY_RETRY_COUNT = Integer.getInteger(
             "com.vmware.admiral.service.placement.query.retries", 2);
 
     // cached container description
@@ -102,7 +103,7 @@ public class PlacementHostSelectionTaskService
     protected void handleStartedStagePatch(PlacementHostSelectionTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            selectBasedOnDescAndResourcePool(state, containerDescription, QUERY_COUNT_ERROR);
+            selectBasedOnDescAndResourcePool(state, containerDescription, QUERY_RETRY_COUNT);
             break;
         case COMPLETED:
             complete(state, DefaultSubStage.COMPLETED);
@@ -149,11 +150,11 @@ public class PlacementHostSelectionTaskService
     }
 
     private void selectBasedOnDescAndResourcePool(PlacementHostSelectionTaskState state,
-            ContainerDescription desc, int countError) {
+            ContainerDescription desc, int retries) {
         if (desc == null) {
             getContainerDescription(state,
                     (contDesc) -> this
-                            .selectBasedOnDescAndResourcePool(state, contDesc, countError));
+                            .selectBasedOnDescAndResourcePool(state, contDesc, retries));
             return;
         }
 
@@ -186,14 +187,14 @@ public class PlacementHostSelectionTaskService
                                     + state.resourceType));
                     return;
                 }
-                proceedComputeSelection(state, desc, computeDescriptionLinks, countError);
+                proceedComputeSelection(state, desc, computeDescriptionLinks, retries);
             }
         });
     }
 
     private void proceedComputeSelection(PlacementHostSelectionTaskState state,
             ContainerDescription desc,
-            Collection<String> computeDescriptionLinks, int errorCount) {
+            Collection<String> computeDescriptionLinks, int retries) {
 
         ResourcePoolQueryHelper helper = ResourcePoolQueryHelper.createForResourcePools(getHost(),
                 state.resourcePoolLinks);
@@ -210,9 +211,21 @@ public class PlacementHostSelectionTaskService
             }
 
             if (qr.computesByLink.isEmpty()) {
-                failTask(null,
-                        new IllegalStateException("Container host not found in resource pools: "
-                                + state.resourcePoolLinks));
+                if (retries > 0) {
+                    logWarning(
+                            "No powered-on container hosts found in resource pools %s " +
+                                    "matching descriptions %s, " +
+                                    "retrying (%d left)...",
+                            state.resourcePoolLinks, computeDescriptionLinks, retries - 1);
+                    getHost().schedule(
+                            () -> selectBasedOnDescAndResourcePool(state, desc, retries - 1),
+                            QueryUtil.QUERY_RETRY_INTERVAL_MILLIS,
+                            TimeUnit.MILLISECONDS);
+                } else {
+                    failTask(null, new IllegalStateException(
+                            "No powered-on container hosts found in resource pools: "
+                                    + state.resourcePoolLinks));
+                }
                 return;
             }
 
