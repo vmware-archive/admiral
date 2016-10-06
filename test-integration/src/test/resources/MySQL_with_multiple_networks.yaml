@@ -20,14 +20,14 @@ components:
       - name: "publicnet"
       - name: "privatenet"
   wpnet:
-    type: Network.Docker
+    type: App.Network
     data:
       name: wpnet
   publicnet:
-    type: Network.Docker
+    type: App.Network
     data:
       name: publicnet
   privatenet:
-    type: Network.Docker
+    type: App.Network
     data:
       name: privatenet

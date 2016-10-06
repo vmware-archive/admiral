@@ -191,7 +191,7 @@ public class CompositeDescriptionContentServiceWithNetworksAndVolumes extends Co
         assertFalse(yaml.contains("\nnetworks:"));
         assertFalse(yaml.contains("\nvolumes:"));
         assertTrue(yaml.contains("type: \"Container.Docker\""));
-        assertEquals(hasNetwork, yaml.contains("type: \"Network.Docker\""));
+        assertEquals(hasNetwork, yaml.contains("type: \"App.Network\""));
         assertEquals(hasVolume, yaml.contains("type: \"Volume.Docker\""));
         validateContent(yaml, hasNetwork, hasVolume);
     }

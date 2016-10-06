@@ -29,6 +29,6 @@ components:
       - "/curlloop.sh"
       - "100"
   clientservernet:
-    type: Network.Docker
+    type: App.Network
     data:
       name: clientservernet

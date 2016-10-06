@@ -29,6 +29,6 @@ components:
       networks:
       - name: "clientservernet"
   clientservernet:
-    type: Network.Docker
+    type: App.Network
     data:
       name: clientservernet

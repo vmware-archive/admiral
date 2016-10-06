@@ -43,7 +43,7 @@ components:
       options:
         mountpoint: "/etc/php5/conf.d"
   back:
-    type: "Network.Docker"
+    type: "App.Network"
     data:
       name: "back"
       driver: "back-driver-2"
@@ -51,7 +51,7 @@ components:
         foo: "1"
         bar: "2"
   front:
-    type: "Network.Docker"
+    type: "App.Network"
     data:
       name: "front"
       driver: "front-driver-1"

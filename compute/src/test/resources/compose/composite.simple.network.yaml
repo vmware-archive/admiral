@@ -24,12 +24,12 @@ components:
       networks:
       - name: "back"
   front:
-    type: "Network.Docker"
+    type: "App.Network"
     data:
       name: "front"
       driver: "custom-driver-1"
   back:
-    type: "Network.Docker"
+    type: "App.Network"
     data:
       name: "back"
       driver: "custom-driver-2"

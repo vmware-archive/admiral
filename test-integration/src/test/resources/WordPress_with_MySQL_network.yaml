@@ -36,6 +36,6 @@ components:
       networks:
       - name: "wpnet"
   wpnet:
-    type: Network.Docker
+    type: App.Network
     data:
       name: wpnet

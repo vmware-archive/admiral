@@ -31,13 +31,13 @@ components:
         ipv6_address: "2001:3984:3989::10"
         name: "back"
   front:
-    type: "Network.Docker"
+    type: "App.Network"
     data:
       name: "front"
       driver: "custom-driver-1"
       external: false
   back:
-    type: "Network.Docker"
+    type: "App.Network"
     data:
       name: "back"
       ipam:
@@ -51,7 +51,7 @@ components:
       options:
         com.docker.network.enable_ipv6: "true"
   default:
-    type: "Network.Docker"
+    type: "App.Network"
     data:
       name: "default"
       external_name: "my-pre-existing-network"

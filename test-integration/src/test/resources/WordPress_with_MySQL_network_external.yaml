@@ -39,7 +39,7 @@ components:
       networks:
       - name: "external_wpnet"
   external_wpnet:
-    type: Network.Docker
+    type: App.Network
     data:
       name: external_wpnet
       external: true
