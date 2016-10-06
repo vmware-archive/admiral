@@ -47,9 +47,8 @@ components:
     data:
       name: "back"
       driver: "back-driver-2"
-      options:
-        foo: "1"
-        bar: "2"
+      foo: "1"
+      bar: "2"
   front:
     type: "App.Network"
     data:

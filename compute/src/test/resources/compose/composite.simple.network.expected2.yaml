@@ -33,5 +33,5 @@ components:
     data:
       name: "back"
       driver: "custom-driver-2"
-      foo: "1"
       bar: "2"
+      foo: "1"

@@ -425,7 +425,7 @@ public class CompositeTemplateUtil {
         ContainerNetworkDescription description = new ContainerNetworkDescription();
 
         description.driver = network.driver;
-        description.options = network.driver_opts;
+        description.customProperties = network.driver_opts;
         description.ipam = network.ipam;
 
         if (network.external != null) {
@@ -641,7 +641,10 @@ public class CompositeTemplateUtil {
         DockerComposeNetwork network = new DockerComposeNetwork();
 
         network.driver = description.driver;
-        network.driver_opts = description.options;
+
+        network.driver_opts = PropertyUtils.mergeCustomProperties(description.options,
+                description.customProperties);
+
         network.ipam = description.ipam;
 
         if (!isNullOrEmpty(description.externalName)) {

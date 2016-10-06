@@ -48,8 +48,7 @@ components:
         - subnet: "2001:3984:3989::/64"
           gateway: "2001:3984:3989::1"
       driver: "bridge"
-      options:
-        com.docker.network.enable_ipv6: "true"
+      com.docker.network.enable_ipv6: "true"
   default:
     type: "App.Network"
     data:
