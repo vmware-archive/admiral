@@ -234,6 +234,13 @@ function isEverythingRemoved(selectedItem, operationType, removedIds) {
   }
 
   let previousItems = selectedItem.listView && selectedItem.listView.items;
+  if (selectedItem.type === constants.CONTAINERS.TYPES.COMPOSITE
+        && previousItems.length === 1
+        && previousItems[0].type === constants.CONTAINERS.TYPES.CLUSTER) {
+    // we had only one item and it was a cluster
+    return true;
+  }
+
   if (previousItems.length !== removedIds.length) {
     // not everything is deleted
     return false;
