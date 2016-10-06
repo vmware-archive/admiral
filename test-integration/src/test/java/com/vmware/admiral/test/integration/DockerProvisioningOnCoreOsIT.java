@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -108,6 +109,7 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
         doProvisionDockerContainerOnCoreOS(true, DockerAdapterType.API);
     }
 
+    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-653")
     @Test
     public void testProvisionDockerContainerOnCoreOSWithImageDownloadSSH()
             throws Exception {
@@ -122,6 +124,7 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
         doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
     }
 
+    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-653")
     @Test
     public void testProvisionDockerContainerOnCoreOSWithRegistryImageSSH()
             throws Exception {
@@ -153,6 +156,7 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
                 RegistryType.V2_BASIC_AUTH);
     }
 
+    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-654")
     @Test
     public void testProvisionDockerContainerOnCoreOSUsingLocalImageWithPriority()
             throws Exception {

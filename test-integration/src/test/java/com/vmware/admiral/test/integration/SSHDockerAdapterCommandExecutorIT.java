@@ -40,6 +40,7 @@ import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
+@Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-653")
 public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
 
     private static final String HOST_NAME = getSystemOrTestProp("docker.host.address");
