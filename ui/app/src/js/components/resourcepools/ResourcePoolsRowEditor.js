@@ -151,6 +151,7 @@ var addEventListeners = function() {
     } else {
       tags.hide();
     }
+    this.tags.setValue([]);
   });
 
   this.$el.find('.resourcePoolEdit').on('click', '.resourcePoolEdit-save', (e) => {
@@ -162,6 +163,8 @@ var addEventListeners = function() {
       resourcePoolState: {}
     };
     if (this.item) {
+      item.documentSelfLink =
+        this.item.resourcePoolState.documentSelfLink;
       item.resourcePoolState.documentSelfLink =
         this.item.resourcePoolState.documentSelfLink;
     }
