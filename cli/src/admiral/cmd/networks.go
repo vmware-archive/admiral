@@ -12,19 +12,16 @@
 package cmd
 
 import (
-	"fmt"
+	"errors"
+	"strings"
 
 	"admiral/help"
-	"admiral/network"
+	"admiral/networks"
 
 	"github.com/spf13/cobra"
 )
 
-var (
-	gateways []string
-	subnets  []string
-	options  []string
-)
+var networkIDError = errors.New("Network ID not provided.")
 
 func init() {
 	initNetworkCreate()
@@ -39,57 +36,56 @@ var networkCreateCmd = &cobra.Command{
 	Long:  "Create a network",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			name string
-			ok   bool
-		)
-		if name, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter network.")
-			return
-		}
-		n := &network.Network{}
-		n.SetName(name)
-		n.SetOptions(options)
-		n.SetIPAMConfig(subnets, gateways)
-		isCreated, msg := n.Create()
-		if isCreated {
-			fmt.Println("Network created successfully.")
-		} else {
-			fmt.Println("Error when creating network.")
-			if msg != "" {
-				fmt.Println(msg)
-			}
-		}
+		output, err := RunNetworkCreate(args)
+		processOutput(output, err)
 	},
 }
 
 func initNetworkCreate() {
 	networkCreateCmd.Flags().StringSliceVar(&gateways, "gateway", []string{}, "Gateway for the master subnet.")
 	networkCreateCmd.Flags().StringSliceVar(&subnets, "subnet", []string{}, "Subnet in CIDR format that represents a network segment.")
-	networkCreateCmd.Flags().StringSliceVarP(&options, "opt", "o", []string{}, "Set driver options. Format: \"key:value\"")
+	networkCreateCmd.Flags().StringSliceVar(&ipranges, "ip-range", []string{}, "Allocate container ip from a sub-range.")
+	networkCreateCmd.Flags().StringSliceVar(&hostAddresses, "host", []string{}, "(Required) Hosts addresses")
+	networkCreateCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)
+	networkCreateCmd.Flags().StringVarP(&networkDriver, "driver", "d", "", "Driver to manage the Network.")
+	networkCreateCmd.Flags().StringVar(&ipamDriver, "ipam-driver", "", "IPAM driver.")
+	networkCreateCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
+	//networkCreateCmd.Flags().StringSliceVarP(&options, "opt", "o", []string{}, "Set driver options. Format: \"key:value\"")
 	NetworksRootCmd.AddCommand(networkCreateCmd)
 }
 
+func RunNetworkCreate(args []string) (string, error) {
+	var (
+		name   string
+		ok     bool
+		output string
+		id     string
+		err    error
+	)
+	if name, ok = ValidateArgsCount(args); !ok {
+		return "", errors.New("Network not provided.")
+	}
+
+	id, err = networks.CreateNetwork(name, networkDriver, ipamDriver, gateways, subnets, ipranges,
+		custProps, hostAddresses, asyncTask)
+
+	if !asyncTask {
+		output = "Network created: " + id
+	} else {
+		output = "Network is being created."
+	}
+	return output, err
+
+}
+
 var networkInspectCmd = &cobra.Command{
-	Use:   "inspect [NETWORK-NAME]",
+	Use:   "inspect [NETWORK-ID]",
 	Short: "Display detailed network information",
 	Long:  "Display detailed network information",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			name string
-			ok   bool
-		)
-		if name, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter network.")
-			return
-		}
-		found, str := network.InspectNetwork(name)
-		if !found {
-			fmt.Println("Network not found.")
-			return
-		}
-		fmt.Println(str)
+		output, err := RunNetorkInspect(args)
+		processOutput(output, err)
 	},
 }
 
@@ -97,22 +93,24 @@ func initNetworkInspect() {
 	NetworksRootCmd.AddCommand(networkInspectCmd)
 }
 
+func RunNetorkInspect(args []string) (string, error) {
+	var (
+		id string
+		ok bool
+	)
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", networkIDError
+	}
+	return networks.InspectNetwork(id)
+}
+
 var networkListCmd = &cobra.Command{
 	Use:   "ls",
 	Short: "Lists existing networks.",
 	Long:  "Lists existing networks.",
 	Run: func(cmd *cobra.Command, args []string) {
-		nl := network.NetworkList{}
-		count, err := nl.FetchNetworks()
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		if count < 1 {
-			fmt.Println("n/a")
-			return
-		}
-		nl.Print()
+		output, err := RunNetworksList(args)
+		formatAndPrintOutput(output, err)
 	},
 }
 
@@ -121,27 +119,42 @@ func initNetworkList() {
 	NetworksRootCmd.AddCommand(networkListCmd)
 }
 
+func RunNetworksList(args []string) (string, error) {
+	nl := networks.NetworkList{}
+	_, err := nl.FetchNetworks()
+	if err != nil {
+		return "", err
+	}
+	return nl.GetOutputString(), nil
+}
+
 var networkRemoveCmd = &cobra.Command{
-	Use:   "rm [NETWORK-NAME]",
-	Short: "Remove a network",
-	Long:  "Remove a network",
+	Use:   "rm [NETWORK-ID]",
+	Short: "Remove a network(s)",
+	Long:  "Remove a network(s)",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			name string
-			ok   bool
-		)
-		if name, ok = ValidateArgsCount(args); !ok {
-			fmt.Println("Enter network.")
-			return
-		}
-		isRemoved := network.RemoveNetwork(name)
-		if isRemoved {
-			fmt.Println("Network removed successfully.")
-		}
+		output, err := RunNetworkRemove(args)
+		processOutput(output, err)
 	},
 }
 
 func initNetworkRemove() {
+	networkRemoveCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
 	NetworksRootCmd.AddCommand(networkRemoveCmd)
+}
+
+func RunNetworkRemove(args []string) (string, error) {
+	if _, ok := ValidateArgsCount(args); !ok {
+		return "", networkIDError
+	}
+
+	ids, err := networks.RemoveNetwork(args, asyncTask)
+	var output string
+	if !asyncTask {
+		output = "Networks removed: " + strings.Join(ids, ", ")
+	} else {
+		output = "Networks are being removed."
+	}
+	return output, err
 }

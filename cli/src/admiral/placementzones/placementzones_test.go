@@ -134,79 +134,80 @@ func TestAddPlacementZoneWithEmptyName(t *testing.T) {
 	}
 }
 
-func TestAddRemoveCustomPropertiesOfPlacementZone(t *testing.T) {
-	// Required skip.
-	t.SkipNow()
-	// Preparing
-	name := "test-placement-zone"
-	id, err := AddPZ(name, nil)
-	CheckTestError(err, t)
-
-	// Testing phase 1
-	cpKeys := []string{"key1", "key2", "key3"}
-	cpVals := []string{"val1", "val2", "val3"}
-	err = AddCustomProperties(id, cpKeys, cpVals)
-	CheckTestError(err, t)
-
-	// Validating phase 1
-	customProps, err := GetPublicCustomProperties(id)
-	for i := range cpKeys {
-		if val, ok := customProps[cpKeys[i]]; !ok {
-			t.Errorf("%s key is missing.", cpKeys[i])
-		} else {
-			if val != cpVals[i] {
-				t.Errorf("Expected value: %s, actual value: %s", val, cpVals[i])
-			}
-		}
-	}
-
-	// Testing phase 2
-	err = RemoveCustomProperties(id, cpKeys)
-	CheckTestError(err, t)
-
-	// Validating phase 2
-	customProps, err = GetPublicCustomProperties(id)
-	for i := range cpKeys {
-		if _, ok := customProps[cpKeys[i]]; ok {
-			t.Errorf("%s key has not been removed.", cpKeys[i])
-		}
-	}
-	// Cleaning
-	_, err = RemovePZID(id)
-	CheckTestError(err, t)
-}
-
-func TestUpdateCustomPropertiesOfPlacementZone(t *testing.T) {
-	// Required skip.
-	t.SkipNow()
-	// Preparing
-	name := "test-placement-zone"
-	id, err := AddPZ(name, nil)
-	CheckTestError(err, t)
-	cpKeys := []string{"key1", "key2", "key3"}
-	cpVals := []string{"val1", "val2", "val3"}
-	cpNewVals := []string{"new-val1", "new-val2", "new-val3"}
-	err = AddCustomProperties(id, cpKeys, cpVals)
-	CheckTestError(err, t)
-
-	// Testing
-	err = AddCustomProperties(id, cpKeys, cpNewVals)
-	CheckTestError(err, t)
-
-	// Validating
-	customProps, err := GetPublicCustomProperties(id)
-	for i := range cpKeys {
-		if val, ok := customProps[cpKeys[i]]; !ok {
-			t.Errorf("%s key is missing.", cpKeys[i])
-		} else {
-			if val != cpNewVals[i] {
-				t.Errorf("Expected value: %s, actual value: %s", val, cpNewVals[i])
-			}
-		}
-	}
-
-	// Cleaning
-	_, err = RemovePZID(id)
-	CheckTestError(err, t)
-
-}
+// Disabled for now!
+//func TestAddRemoveCustomPropertiesOfPlacementZone(t *testing.T) {
+//	// Required skip.
+//	t.SkipNow()
+//	// Preparing
+//	name := "test-placement-zone"
+//	id, err := AddPZ(name, nil)
+//	CheckTestError(err, t)
+//
+//	// Testing phase 1
+//	cpKeys := []string{"key1", "key2", "key3"}
+//	cpVals := []string{"val1", "val2", "val3"}
+//	err = AddCustomProperties(id, cpKeys, cpVals)
+//	CheckTestError(err, t)
+//
+//	// Validating phase 1
+//	customProps, err := GetPublicCustomProperties(id)
+//	for i := range cpKeys {
+//		if val, ok := customProps[cpKeys[i]]; !ok {
+//			t.Errorf("%s key is missing.", cpKeys[i])
+//		} else {
+//			if val != cpVals[i] {
+//				t.Errorf("Expected value: %s, actual value: %s", val, cpVals[i])
+//			}
+//		}
+//	}
+//
+//	// Testing phase 2
+//	err = RemoveCustomProperties(id, cpKeys)
+//	CheckTestError(err, t)
+//
+//	// Validating phase 2
+//	customProps, err = GetPublicCustomProperties(id)
+//	for i := range cpKeys {
+//		if _, ok := customProps[cpKeys[i]]; ok {
+//			t.Errorf("%s key has not been removed.", cpKeys[i])
+//		}
+//	}
+//	// Cleaning
+//	_, err = RemovePZID(id)
+//	CheckTestError(err, t)
+//}
+// Disabled for now!
+//func TestUpdateCustomPropertiesOfPlacementZone(t *testing.T) {
+//	// Required skip.
+//	t.SkipNow()
+//	// Preparing
+//	name := "test-placement-zone"
+//	id, err := AddPZ(name, nil)
+//	CheckTestError(err, t)
+//	cpKeys := []string{"key1", "key2", "key3"}
+//	cpVals := []string{"val1", "val2", "val3"}
+//	cpNewVals := []string{"new-val1", "new-val2", "new-val3"}
+//	err = AddCustomProperties(id, cpKeys, cpVals)
+//	CheckTestError(err, t)
+//
+//	// Testing
+//	err = AddCustomProperties(id, cpKeys, cpNewVals)
+//	CheckTestError(err, t)
+//
+//	// Validating
+//	customProps, err := GetPublicCustomProperties(id)
+//	for i := range cpKeys {
+//		if val, ok := customProps[cpKeys[i]]; !ok {
+//			t.Errorf("%s key is missing.", cpKeys[i])
+//		} else {
+//			if val != cpNewVals[i] {
+//				t.Errorf("Expected value: %s, actual value: %s", val, cpNewVals[i])
+//			}
+//		}
+//	}
+//
+//	// Cleaning
+//	_, err = RemovePZID(id)
+//	CheckTestError(err, t)
+//
+//}

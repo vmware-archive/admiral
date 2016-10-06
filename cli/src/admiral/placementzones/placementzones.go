@@ -87,7 +87,7 @@ func RemovePZ(pzName string) (string, error) {
 }
 
 func RemovePZID(id string) (string, error) {
-	url := config.URL + functions.CreateResLinkForRP(id)
+	url := config.URL + functions.CreateResLinkForPlacementZone(id)
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -135,7 +135,7 @@ func EditPZID(id, newName string) (string, error) {
 		Name: newName,
 	}
 	jsonBody, _ := json.Marshal(pzState)
-	url := config.URL + functions.CreateResLinkForRP(id)
+	url := config.URL + functions.CreateResLinkForPlacementZone(id)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -158,98 +158,102 @@ func GetPZLinks(pzName string) []string {
 
 func GetPZName(link string) (string, error) {
 	url := config.URL + link
-	pz := &PlacementZone{}
+	pzs := &PlacementZoneState{}
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return "", respErr
 	}
-	err := json.Unmarshal(respBody, pz)
+	err := json.Unmarshal(respBody, pzs)
 	functions.CheckJson(err)
-	return pz.PlacementZoneState.Name, nil
+	return pzs.Name, nil
 }
 
-func GetCustomProperties(id string) (map[string]*string, error) {
-	link := functions.CreateResLinkForRP(id)
-	url := config.URL + link
-	req, _ := http.NewRequest("GET", url, nil)
-	_, respBody, respErr := client.ProcessRequest(req)
-	if respErr != nil {
-		return nil, respErr
-	}
-	placementZone := &PlacementZone{}
-	err := json.Unmarshal(respBody, placementZone)
-	functions.CheckJson(err)
-	return placementZone.PlacementZoneState.CustomProperties, nil
-}
+// Currently disabled!
+//func GetCustomProperties(id string) (map[string]*string, error) {
+//	link := functions.CreateResLinkForRP(id)
+//	url := config.URL + link
+//	req, _ := http.NewRequest("GET", url, nil)
+//	_, respBody, respErr := client.ProcessRequest(req)
+//	if respErr != nil {
+//		return nil, respErr
+//	}
+//	placementZone := &PlacementZone{}
+//	err := json.Unmarshal(respBody, placementZone)
+//	functions.CheckJson(err)
+//	return placementZone.PlacementZoneState.CustomProperties, nil
+//}
 
-func GetPublicCustomProperties(id string) (map[string]string, error) {
-	custProps, err := GetCustomProperties(id)
-	if custProps == nil {
-		return nil, err
-	}
-	publicCustProps := make(map[string]string)
-	for key, val := range custProps {
-		if len(key) > 2 {
-			if key[0:2] == "__" {
-				continue
-			}
-		}
-		publicCustProps[key] = *val
-	}
-	return publicCustProps, nil
-}
+// Currently disabled!
+//func GetPublicCustomProperties(id string) (map[string]string, error) {
+//	custProps, err := GetCustomProperties(id)
+//	if custProps == nil {
+//		return nil, err
+//	}
+//	publicCustProps := make(map[string]string)
+//	for key, val := range custProps {
+//		if len(key) > 2 {
+//			if key[0:2] == "__" {
+//				continue
+//			}
+//		}
+//		publicCustProps[key] = *val
+//	}
+//	return publicCustProps, nil
+//}
 
-func AddCustomProperties(id string, keys, vals []string) error {
-	link := functions.CreateResLinkForRP(id)
-	url := config.URL + link
-	var lowerLen []string
-	if len(keys) > len(vals) {
-		lowerLen = vals
-	} else {
-		lowerLen = keys
-	}
-	custProps := make(map[string]*string)
-	for i, _ := range lowerLen {
-		custProps[keys[i]] = &vals[i]
-	}
-	pzState := &PlacementZoneState{
-		CustomProperties: custProps,
-	}
-	pz := &PlacementZone{
-		PlacementZoneState: *pzState,
-	}
-	jsonBody, err := json.Marshal(pz)
-	functions.CheckJson(err)
-	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	_, _, respErr := client.ProcessRequest(req)
+// Currently disabled!
+//func AddCustomProperties(id string, keys, vals []string) error {
+//	link := functions.CreateResLinkForRP(id)
+//	url := config.URL + link
+//	var lowerLen []string
+//	if len(keys) > len(vals) {
+//		lowerLen = vals
+//	} else {
+//		lowerLen = keys
+//	}
+//	custProps := make(map[string]*string)
+//	for i, _ := range lowerLen {
+//		custProps[keys[i]] = &vals[i]
+//	}
+//	pzState := &PlacementZoneState{
+//		CustomProperties: custProps,
+//	}
+//	pz := &PlacementZone{
+//		PlacementZoneState: *pzState,
+//	}
+//	jsonBody, err := json.Marshal(pz)
+//	functions.CheckJson(err)
+//	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
+//	_, _, respErr := client.ProcessRequest(req)
+//
+//	if respErr != nil {
+//		return respErr
+//	}
+//	return nil
+//}
 
-	if respErr != nil {
-		return respErr
-	}
-	return nil
-}
-
-func RemoveCustomProperties(id string, keys []string) error {
-	link := functions.CreateResLinkForRP(id)
-	url := config.URL + link
-	custProps := make(map[string]*string)
-	for i := range keys {
-		custProps[keys[i]] = nil
-	}
-	pzState := &PlacementZoneState{
-		CustomProperties: custProps,
-	}
-	pz := &PlacementZone{
-		PlacementZoneState: *pzState,
-	}
-	jsonBody, err := json.Marshal(pz)
-	functions.CheckJson(err)
-	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
-	_, _, respErr := client.ProcessRequest(req)
-
-	if respErr != nil {
-		return respErr
-	}
-	return nil
-}
+// Currently disabled!
+//func RemoveCustomProperties(id string, keys []string) error {
+//	link := functions.CreateResLinkForRP(id)
+//	url := config.URL + link
+//	custProps := make(map[string]*string)
+//	for i := range keys {
+//		custProps[keys[i]] = nil
+//	}
+//	pzState := &PlacementZoneState{
+//		CustomProperties: custProps,
+//	}
+//	pz := &PlacementZone{
+//		PlacementZoneState: *pzState,
+//	}
+//	jsonBody, err := json.Marshal(pz)
+//	functions.CheckJson(err)
+//	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
+//	_, _, respErr := client.ProcessRequest(req)
+//
+//	if respErr != nil {
+//		return respErr
+//	}
+//	return nil
+//}

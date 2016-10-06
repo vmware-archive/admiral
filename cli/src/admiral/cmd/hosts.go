@@ -12,14 +12,12 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 
+	"admiral/functions"
 	"admiral/help"
 	"admiral/hosts"
-
-	"errors"
-
-	"admiral/functions"
 
 	"github.com/spf13/cobra"
 )
@@ -51,9 +49,9 @@ func initHostAdd() {
 	hostAddCmd.Flags().StringVar(&privateCert, "private", "", "(Required if adding new credentials)"+privateCertDesc)
 	hostAddCmd.Flags().StringVar(&userName, "username", "", "(Required if adding new credentials)"+"Username.")
 	hostAddCmd.Flags().StringVar(&passWord, "password", "", "(Required if adding new credentials)"+"Password.")
-	hostAddCmd.Flags().StringVar(&ipF, "ip", "", "(Required) Address of host.")
+	hostAddCmd.Flags().StringVar(&ipF, "address", "", "(Required) Address of host.")
 	hostAddCmd.Flags().StringVar(&placementZoneID, "placement-zone", "", "(Required) Placement zone ID.")
-	hostAddCmd.Flags().StringVar(&credName, "credentials", "", "(Required if using existing one.) Credentials ID.")
+	hostAddCmd.Flags().StringVar(&credName, "credentials", "", "Credentials ID.")
 	hostAddCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", "Deployment policy ID.")
 	hostAddCmd.Flags().BoolVar(&autoAccept, "accept", false, "Auto accept if certificate is not trusted.")
 	hostAddCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)

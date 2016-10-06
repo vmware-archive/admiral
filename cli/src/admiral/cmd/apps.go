@@ -12,12 +12,11 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 
 	"admiral/apps"
 	"admiral/help"
-
-	"errors"
 
 	"github.com/spf13/cobra"
 )

@@ -61,7 +61,6 @@ func (or *OperationResponse) PrintTracerId() {
 
 func Wait(taskId string) ([]string, error) {
 	url := config.URL + "/request-status/" + taskId
-	stop := make(chan bool)
 	token, from := auth.GetAuthToken()
 	req, _ := http.NewRequest("GET", url, nil)
 	functions.CheckVerboseRequest(req)
@@ -103,19 +102,15 @@ func Wait(taskId string) ([]string, error) {
 			result = taskStatus.SubStage
 			resourceLinks = taskStatus.ResourceLinks
 			break
-			stop <- true
-			break
 		} else if taskStatus.SubStage == "ERROR" {
 			result = taskStatus.SubStage
 			errorMsg, err = getErrorMessage(req)
 			break
-			stop <- true
 			if err != nil {
 				return nil, err
 			}
-			break
 		}
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(1000 * time.Millisecond)
 	}
 
 	fmt.Printf("\n%s The task has %s.\n", time.Now().Format("2006.01.02 15:04:05"), result)

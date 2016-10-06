@@ -188,7 +188,7 @@ func AddPlacement(namePol, cpuShares, instances, priority, projectId, resPoolID,
 		dpLink = functions.CreateResLinkForDP(deplPolID)
 	}
 
-	rpLink = functions.CreateResLinkForRP(resPoolID)
+	rpLink = functions.CreateResLinkForPlacementZone(resPoolID)
 
 	if projectId != "" {
 		projectLink = functions.CreateResLinkForProject(projectId)
@@ -265,7 +265,7 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolID string, 
 		oldPlacement.TenantLinks[projectLinkIndex] = projectLink
 	}
 	if placementZoneID != "" {
-		oldPlacement.ResourcePoolLink = functions.CreateResLinkForRP(placementZoneID)
+		oldPlacement.ResourcePoolLink = functions.CreateResLinkForPlacementZone(placementZoneID)
 	}
 	if deplPolID != "" {
 		oldPlacement.DeploymentPolicyLink = functions.CreateResLinkForDP(deplPolID)

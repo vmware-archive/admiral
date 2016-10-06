@@ -12,6 +12,7 @@
 package apps
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -21,7 +22,6 @@ import (
 	"admiral/config"
 	"admiral/containers"
 	"admiral/functions"
-	"bytes"
 )
 
 type App struct {

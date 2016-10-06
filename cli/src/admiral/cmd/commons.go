@@ -50,7 +50,7 @@ var (
 
 	//Flag to store custom properties.
 	custProps     []string
-	custPropsDesc string = "Add some custom properties"
+	custPropsDesc string = "Add custom properties. Format: key=value"
 
 	//Flag used to update.
 	newName        string
@@ -76,11 +76,9 @@ var (
 	restartPol  string
 	workingDir  string
 	volumes     []string
-	//Container Run Command Flags
 
 	//Count for clusters
 	scaleCount int32
-	//Count for clusters
 
 	//Credentials flags
 	credName    string
@@ -91,7 +89,6 @@ var (
 
 	publicCertDesc  string = "Location to your public key."
 	privateCertDesc string = "Location to your private key."
-	//Credentials flags
 
 	//Custom Properties flags
 	cpHostIP    string
@@ -99,12 +96,10 @@ var (
 	cpResPoolID string
 	cpKeys      []string
 	cpVals      []string
-	//Custom Properties flags
 
 	//Deployment policy flags
 	dpName        string
 	dpDescription string
-	//Deployment policy flags
 
 	//Project description flag
 	projectDescription string
@@ -114,7 +109,15 @@ var (
 	placementZoneID string
 	deplPolicyF     string
 	autoAccept      bool
-	//Host flags
+
+	// Network flags
+	gateways      []string
+	subnets       []string
+	options       []string
+	ipranges      []string
+	hostAddresses []string
+	networkDriver string
+	ipamDriver    string
 )
 
 var admiralLogo = `

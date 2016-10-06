@@ -209,9 +209,11 @@ func RunAppID(id string, asyncTask bool) ([]string, error) {
 	if respErr != nil {
 		return nil, respErr
 	}
-	f := make(map[string]interface{}, 0)
-	err = json.Unmarshal(respBody, f)
-	link = jsonBody["documentSelfLink"]
+	cd := &CompositeDescription{}
+	err = json.Unmarshal(respBody, cd)
+	functions.CheckJson(err)
+
+	link = cd.DocumentSelfLink
 
 	ra := RunApplication{
 		ResourceDescriptionLink: link,
@@ -305,4 +307,8 @@ func GetAppLinks(name string) []string {
 		}
 	}
 	return links
+}
+
+type CompositeDescription struct {
+	DocumentSelfLink string `json:"documentSelfLink"`
 }

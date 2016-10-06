@@ -14,6 +14,7 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -22,7 +23,6 @@ import (
 	"admiral/auth"
 	"admiral/config"
 	"admiral/functions"
-	"errors"
 )
 
 type ResponseError struct {

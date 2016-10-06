@@ -46,45 +46,51 @@ func CreateResLinksForApps(args []string) []string {
 }
 
 //Function to create resource links from the provided ID as parameter.
-//This link will be used to execute command, avoiding duplicating names.
 func CreateResLinkForCerts(id string) string {
 	return "/config/trust-certs/" + id
 }
 
 //Function to create resource links from the provided ID as parameter.
-//This link will be used to execute command, avoiding duplicating names.
 func CreateResLinkForCredentials(id string) string {
+	if id == "" {
+		return ""
+	}
 	return "/core/auth/credentials/" + id
 }
 
 //Function to create resource links from the provided ID as parameter.
-//This link will be used to execute command, avoiding duplicating names.
 func CreateResLinkForDP(id string) string {
 	return "/resources/deployment-policies/" + id
 }
 
 //Function to create resource links from the provided ID as parameter.
-//This link will be used to execute command, avoiding duplicating names.
-func CreateResLinkForRP(id string) string {
+func CreateResLinkForPlacementZone(id string) string {
 	return "/resources/pools/" + id
 }
 
 //Function to create resource links from the provided ID as parameter.
-//This link will be used to execute command, avoiding duplicating names.
 func CreateResLinkForRegistry(id string) string {
 	return "/config/registries/" + id
 }
 
 //Function to create resource links from the provided ID as parameter.
-//This link will be used to execute command, avoiding duplicating names.
 func CreateResLinksForPlacement(id string) string {
 	return "/resources/group-placements/" + id
 }
 
 //Function to create resource links from the provided ID as parameter.
-//This link will be used to execute command, avoiding duplicating names.
 func CreateResLinkForProject(id string) string {
 	return "/resources/groups/" + id
+}
+
+//Function to create resource links from the provided ID as parameter.
+func CreateResLinksForNetwork(ids []string) []string {
+	links := make([]string, 0)
+	for i := range ids {
+		link := "/resources/container-networks/" + ids[i]
+		links = append(links, link)
+	}
+	return links
 }
 
 //Function to change specific part of the url.

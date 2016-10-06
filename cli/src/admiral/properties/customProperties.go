@@ -36,9 +36,11 @@ func AddCredentialsName(name string, props map[string]*string) map[string]*strin
 	return props
 }
 
-func MakeHostProperties(cred, dp string, props map[string]*string) map[string]*string {
-	props["__authCredentialsLink"] = &cred
-	props["__deploymentPolicyLink"] = &dp
+func MakeHostProperties(credLink, dpLink string, props map[string]*string) map[string]*string {
+	if credLink != "" {
+		props["__authCredentialsLink"] = &credLink
+	}
+	props["__deploymentPolicyLink"] = &dpLink
 	api := "API"
 	props["__adapterDockerType"] = &api
 	return props

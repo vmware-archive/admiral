@@ -12,10 +12,10 @@
 package cmd
 
 import (
+	"errors"
+
 	"admiral/deplPolicy"
 	"admiral/help"
-
-	"errors"
 
 	"github.com/spf13/cobra"
 )

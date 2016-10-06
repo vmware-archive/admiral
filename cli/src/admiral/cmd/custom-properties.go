@@ -20,8 +20,6 @@ import (
 	"admiral/functions"
 	"admiral/hosts"
 
-	"admiral/placementzones"
-
 	"github.com/spf13/cobra"
 )
 
@@ -111,18 +109,19 @@ func credCpString() (string, error) {
 	return buffer.String(), nil
 }
 
-func rpCpString() (string, error) {
-	cpRp, err := placementzones.GetPublicCustomProperties(cpResPoolID)
-	if err != nil {
-		return "", err
-	}
-	cpJson, err := json.MarshalIndent(cpRp, "", "    ")
-	functions.CheckJson(err)
-	buffer := bytes.Buffer{}
-	buffer.WriteString(fmt.Sprintf("Custom Properties of Placement zone: %s\n", cpCredID))
-	buffer.WriteString(fmt.Sprint(string(cpJson)))
-	return buffer.String(), nil
-}
+// Currently disabled!
+//func rpCpString() (string, error) {
+//	cpRp, err := placementzones.GetPublicCustomProperties(cpResPoolID)
+//	if err != nil {
+//		return "", err
+//	}
+//	cpJson, err := json.MarshalIndent(cpRp, "", "    ")
+//	functions.CheckJson(err)
+//	buffer := bytes.Buffer{}
+//	buffer.WriteString(fmt.Sprintf("Custom Properties of Placement zone: %s\n", cpCredID))
+//	buffer.WriteString(fmt.Sprint(string(cpJson)))
+//	return buffer.String(), nil
+//}
 
 var customPropertiesSetCmd = &cobra.Command{
 	Use:   "set",

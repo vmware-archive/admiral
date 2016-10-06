@@ -116,12 +116,12 @@ func (hl *HostsList) FetchHosts(queryF string) (int, error) {
 //Print already fetched hosts.
 func (hl *HostsList) GetOutputString() string {
 	var buffer bytes.Buffer
-	buffer.WriteString("ADDRESS\tNAME\tSTATE\tCONTAINERS\tRESOURCE POOL")
+	buffer.WriteString("ADDRESS\tNAME\tSTATE\tCONTAINERS\tPLACEMENT ZONE")
 	buffer.WriteString("\n")
 	for _, val := range hl.Documents {
-		rpName, _ := placementzones.GetPZName(val.ResourcePoolLink)
+		pzName, _ := placementzones.GetPZName(val.ResourcePoolLink)
 		output := functions.GetFormattedString(val.Address, *val.CustomProperties["__Name"], val.PowerState,
-			*val.CustomProperties["__Containers"], rpName)
+			*val.CustomProperties["__Containers"], pzName)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
@@ -162,28 +162,28 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 				return "", err
 			}
 		} else {
-			return "", errors.New("Credentials ID not provided.")
+			newCredID = ""
 		}
 	} else {
 		newCredID = credID
 	}
 
-	rp := functions.CreateResLinkForRP(placementZoneID)
+	pzLink := functions.CreateResLinkForPlacementZone(placementZoneID)
 
-	dp := functions.CreateResLinkForDP(deplPolicyID)
+	dpLink := functions.CreateResLinkForDP(deplPolicyID)
 
-	cred := functions.CreateResLinkForCredentials(newCredID)
+	credLink := functions.CreateResLinkForCredentials(newCredID)
 
 	hostProps := properties.ParseCustomProperties(custProps)
 	if hostProps == nil {
 		hostProps = make(map[string]*string)
 	}
-	hostProps = properties.MakeHostProperties(cred, dp, hostProps)
+	hostProps = properties.MakeHostProperties(credLink, dpLink, hostProps)
 
 	host := HostState{
 		Id:               ipF,
 		Address:          ipF,
-		ResourcePoolLink: rp,
+		ResourcePoolLink: pzLink,
 		CustomProperties: hostProps,
 	}
 
