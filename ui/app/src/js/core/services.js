@@ -595,7 +595,10 @@ services.loadHostDescriptionByLink = function(hostDescriptionLink) {
 };
 
 services.loadHost = function(hostId) {
-  return this.loadHostByLink(links.COMPUTE_RESOURCES + '/' + hostId);
+  let selfLink = links.COMPUTE_RESOURCES + '/' + hostId;
+  return this.loadHostsByLinks([selfLink]).then((result) => {
+    return result[selfLink];
+  });
 };
 
 services.loadHostByLink = function(hostLink) {
