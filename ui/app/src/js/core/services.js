@@ -421,15 +421,17 @@ services.searchTags = function(q) {
   var params = {};
   if (q) {
     var pair = q.split(':');
+    var occurrence = pair[1] ? constants.SEARCH_OCCURRENCE.ALL : constants.SEARCH_OCCURRENCE.ANY;
     params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
       key: [{
         val: pair[0] + '*',
         op: 'eq'
       }],
       value: [{
-        val: (pair[1] || '') + '*',
+        val: (pair[1] || pair[0] || '') + '*',
         op: 'eq'
-      }]
+      }],
+      [constants.SEARCH_OCCURRENCE.PARAM]: occurrence
     });
   }
   return list(links.TAGS, true, params);
