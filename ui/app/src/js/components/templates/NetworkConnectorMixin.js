@@ -196,6 +196,19 @@ var NetworkConnectorMixin = {
 
     this.jsplumbInstance['pointer-events'] = 'all';
 
+    this.jsplumbInstance.bind('beforeDrop', (params) => {
+      var sourceEndpoints = this.jsplumbInstance.getEndpoints(params.sourceId) || [];
+      var targetEndpoints = this.jsplumbInstance.getEndpoints(params.targetId) || [];
+
+      if (sourceEndpoints.length === 0 || targetEndpoints.length === 0) {
+        return false;
+      }
+
+      var links = getContainerNetworkLinksFromEndpoints(sourceEndpoints[0], targetEndpoints[0]);
+
+      return !!links;
+    });
+
     var makeDynamicAnchor = this.jsplumbInstance.makeDynamicAnchor;
 
     var netAnchors = [];

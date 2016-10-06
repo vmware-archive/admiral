@@ -758,6 +758,7 @@ public class ContainerDescriptionService extends StatefulService {
         template.healthConfig.unhealthyThreshold = 2;
 
         template.networks = new LinkedHashMap<>();
+        template.networkMode = "";
 
         return template;
     }
