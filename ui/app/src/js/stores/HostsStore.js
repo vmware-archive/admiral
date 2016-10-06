@@ -609,7 +609,7 @@ let HostsStore = Reflux.createStore({
       promises.push(Promise.resolve());
     }
 
-    if (hostModel.tagLinks) {
+    if (hostModel.tagLinks && hostModel.tagLinks.length) {
       promises.push(
           services.loadTags(hostModel.tagLinks).catch(() => Promise.resolve()));
     } else {

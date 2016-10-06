@@ -74,11 +74,15 @@ let ResourcePoolsStore = Reflux.createStore({
         });
 
         var tagPromises = Object.values(processedResult).map((config) => {
-          return config.epzState && config.epzState.tagLinksToMatch ?
-              services.loadTags(config.epzState.tagLinksToMatch).then((tags) => {
-                config.resourcePoolState.__tags = Object.values(tags);
-                return config;
-              }) : Promise.resolve(config);
+          if (config.epzState &&
+              config.epzState.tagLinksToMatch && config.epzState.tagLinksToMatch.length) {
+            return services.loadTags(config.epzState.tagLinksToMatch).then((tags) => {
+              config.resourcePoolState.__tags = Object.values(tags);
+              return config;
+            });
+          } else {
+            return Promise.resolve(config);
+          }
         });
 
         Promise.all(tagPromises).then((configs) => {
