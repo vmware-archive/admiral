@@ -202,8 +202,8 @@ var HostView = Vue.extend({
         onBlur: function(e) {
           e.preventDefault();
 
-          var hostnameInput = $(e.currentTarget);
-          hostnameInput.val(utils.populateDefaultSchemeAndPort(hostnameInput.val()));
+          var addressInput = $(e.currentTarget);
+          addressInput.val(utils.populateDefaultSchemeAndPort(addressInput.val()));
         },
         updateCertificateModal: function(shouldAcceptCertificate) {
           if (shouldAcceptCertificate) {

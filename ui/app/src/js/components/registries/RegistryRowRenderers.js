@@ -20,7 +20,7 @@ var renderers = {
   renderHighlighted: function(registryObject, $registryRow, isNew, isUpdated) {
     var model = {
       registryRow: $registryRow.html(),
-      hostname: registryObject.hostname,
+      address: registryObject.address,
       name: registryObject.name,
       status: registryObject.status,
       isNew: isNew,

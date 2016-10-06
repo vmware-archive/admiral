@@ -117,8 +117,8 @@ var addEventListeners = function() {
   this.$el.find('.registryEditHolder #hostname input').focusout(function(e) {
     e.preventDefault();
 
-    var hostnameInput = $(e.currentTarget);
-    hostnameInput.val(utils.populateDefaultSchemeAndPort(hostnameInput.val()));
+    var addressInput = $(e.currentTarget);
+    addressInput.val(utils.populateDefaultSchemeAndPort(addressInput.val()));
   });
 
   this.$el.find('.registryEditHolder').on('click', '.registryRowEdit-save', function(e) {
@@ -140,10 +140,10 @@ var addEventListeners = function() {
     RegistryActions.cancelEditRegistry();
   });
 
-  var hostnameInput = this.$el.find('#hostname input');
-  hostnameInput.on('change input', function() {
-    var hostname = hostnameInput.val();
-    RegistryActions.checkInsecureRegistry(hostname);
+  var addressInput = this.$el.find('#hostname input');
+  addressInput.on('change input', function() {
+    var address = addressInput.val();
+    RegistryActions.checkInsecureRegistry(address);
   });
 
   this.$el.on('change input', function() {

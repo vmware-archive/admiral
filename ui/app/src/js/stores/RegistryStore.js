@@ -198,8 +198,8 @@ RegistriesStore = Reflux.createStore({
     }).catch(this.onGenericEditError);
   },
 
-  onCheckInsecureRegistry: function(hostname) {
-    if (hostname && hostname.toLowerCase().startsWith('http:')) {
+  onCheckInsecureRegistry: function(address) {
+    if (address && address.toLowerCase().startsWith('http:')) {
       this.setInData(['registries', 'editingItemData', 'validationErrors', '_insecure'], true);
     } else {
       this.setInData(['registries', 'editingItemData', 'validationErrors'], null);

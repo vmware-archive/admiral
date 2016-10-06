@@ -11,13 +11,13 @@
 
 <div class="host-form form-horizontal">
   <div id="address" class="form-group" v-bind:class="{'has-error': validationErrors.address}">
-    <label class="col-sm-3 control-label">{{i18n("app.host.details.hostname")}}</label>
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.address")}}</label>
     <div class="col-sm-9">
       <div class="hostname-holder">
         <input v-on:blur="onBlur" class="form-control" v-model="address">
       </div>
       <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
-         title="{{i18n ('app.host.details.hostnameHint')}}"></i>
+         title="{{i18n ('app.host.details.addressHint')}}"></i>
       <span class="help-block">{{i18n(validationErrors.address)}}</span>
     </div>
   </div>
