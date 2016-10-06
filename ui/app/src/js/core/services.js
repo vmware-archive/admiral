@@ -665,9 +665,16 @@ services.searchHosts = function(query, limit) {
                                'creationTimeMicros asc', limit);
   return get(url).then(function(data) {
     var documentLinks = data.documentLinks || [];
-    return documentLinks.map((link) => {
+
+    var result = {
+      totalCount: data.totalCount
+    };
+
+    result.items = documentLinks.map((link) => {
       return data.documents[link];
     });
+
+    return result;
   });
 };
 
@@ -1231,9 +1238,16 @@ services.searchNetworks = function(query, limit) {
   let url = buildPaginationUrl(links.NETWORKS, filter, true, 'name asc', limit);
   return get(url).then(function(data) {
     var documentLinks = data.documentLinks || [];
-    return documentLinks.map((link) => {
+
+    var result = {
+      totalCount: data.totalCount
+    };
+
+    result.items = documentLinks.map((link) => {
       return data.documents[link];
     });
+
+    return result;
   });
 };
 

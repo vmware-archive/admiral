@@ -23,29 +23,37 @@ let constraints = {
 };
 
 const NETWORK_RESULT_LIMIT = 10;
+const INITIAL_FILTER = '';
+var initialQueryPromise;
 
-function typeaheadSource($typeaheadHolder) {
+function createTypeaheadSource($typeaheadHolder) {
   var timeout;
   var lastCallback;
-  return (q, syncCallback, asyncCallback) => {
+  var source = {};
+
+  source.fn = (q, syncCallback, asyncCallback) => {
     lastCallback = asyncCallback;
     clearTimeout(timeout);
-    if (!q) {
-      asyncCallback([]);
-      $typeaheadHolder.removeClass('loading');
-      return;
-    }
+
+    var promiseCallback = (result) => {
+      if (lastCallback === asyncCallback) {
+        source.lastResult = result;
+        asyncCallback(result.items);
+        $typeaheadHolder.removeClass('loading');
+      }
+    };
 
     $typeaheadHolder.addClass('loading');
-    timeout = setTimeout(() => {
-      services.searchNetworks(q, NETWORK_RESULT_LIMIT).then((results) => {
-        if (lastCallback === asyncCallback) {
-          asyncCallback(results);
-          $typeaheadHolder.removeClass('loading');
-        }
-      });
-    }, 300);
+    if (!q) {
+      initialQueryPromise.then(promiseCallback);
+    } else {
+      timeout = setTimeout(() => {
+        services.searchNetworks(q, NETWORK_RESULT_LIMIT).then(promiseCallback);
+      }, 300);
+    }
   };
+
+  return source;
 }
 
 var NetworkDefinitionForm = Vue.extend({
@@ -170,10 +178,18 @@ var NetworkDefinitionForm = Vue.extend({
     );
 
     this.$networksSearch = $(this.$el).find('.network-name-search .form-control');
-    this.$networksSearch.typeahead({}, {
+
+    initialQueryPromise = services.searchNetworks(INITIAL_FILTER, NETWORK_RESULT_LIMIT);
+
+    var typeaheadSource = createTypeaheadSource(
+      $(this.$el).find('.network-name-search .search-input'));
+
+    this.$networksSearch.typeahead({
+      minLength: 0
+    }, {
       name: 'networks-search',
       limit: NETWORK_RESULT_LIMIT,
-      source: typeaheadSource($(this.$el).find('.network-name-search .search-input')),
+      source: typeaheadSource.fn,
       display: 'name',
       templates: {
         suggestion: function(context) {
@@ -192,8 +208,27 @@ var NetworkDefinitionForm = Vue.extend({
           }
           root = name.substring(start, end);
 
-          return '<div>' + prefix + '<strong>' + root + '</strong>' + suffix
-            + ' (' + context.id + ')</div>';
+          return `
+            <div>
+              <div class="network-search-item-primary">
+                ${prefix}<strong>${root}</strong>${suffix}
+              </div>
+              <div class="network-search-item-secondary">(${context.id})</div>
+            </div>`;
+        },
+        footer: function(q) {
+          if (q.suggestions && q.suggestions.length > 0 && typeaheadSource.lastResult) {
+             var i18nOption = {
+              count: q.suggestions.length,
+              totalCount: typeaheadSource.lastResult.totalCount
+            };
+            var label = i18n.t('app.template.details.editNetwork.showingCount', i18nOption);
+            return `<div class="tt-options-hint">${label}</div>`;
+          }
+        },
+        notFound: function() {
+          var label = i18n.t('app.template.details.editNetwork.noResults');
+          return `<div class="tt-options-hint">${label}</div>`;
         }
       }
     });

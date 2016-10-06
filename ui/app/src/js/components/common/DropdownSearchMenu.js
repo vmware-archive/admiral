@@ -12,24 +12,32 @@
 import DropdownSearchMenuTemplate from 'DropdownSearchMenuTemplate';
 import constants from 'core/constants';
 
-function createItem(itemSpec) {
+function DEFAULT_RENDERER(itemSpec) {
+  var result = '';
+  if (itemSpec.icon) {
+    result += '<span class="fa fa-"' + itemSpec.icon + '"></span>';
+  }
+  if (itemSpec.iconSrc) {
+    result += '<img src="' + itemSpec.iconSrc + '"/>';
+  }
+
+  result += '<span>' + itemSpec.name + '</span>';
+
+  return result;
+}
+
+function createItem(itemSpec, renderer) {
   var anchor = $('<a>', {
     role: 'menuitem',
     href: '#'
   });
   anchor.attr('data-name', itemSpec.name);
-  if (itemSpec.icon) {
-    anchor.append($('<span>', {
-      class: 'fa fa-' + itemSpec.icon
-    }));
-  }
-  if (itemSpec.iconSrc) {
-    anchor.append($('<img >', {
-      src: itemSpec.iconSrc
-    }));
-  }
 
-  anchor.append($('<span>').html(itemSpec.name));
+  if (renderer) {
+    anchor.html(renderer(itemSpec));
+  } else {
+     anchor.html(DEFAULT_RENDERER(itemSpec));
+  }
 
   var item = $('<li>', {
     role: 'presentation'
@@ -100,7 +108,8 @@ DropdownSearchMenu.prototype.setFilterCallback = function(callback) {
 /** Provides static options, useful for client side filtering */
 DropdownSearchMenu.prototype.setOptions = function(options) {
   this.options = options;
-  updateFilteredOptions(this.$el, this.options, this.filter, this.selectedOption);
+  updateFilteredOptions(this.$el, this.options, this.filter, this.selectedOption,
+    this.optionsRenderer);
 };
 
 DropdownSearchMenu.prototype.setManageOptions = function(manageOptions) {
@@ -230,8 +239,13 @@ DropdownSearchMenu.prototype.setClearOptionSelectCallback = function(clearOption
   this.clearOptionSelectCallback = clearOptionSelectCallback;
 };
 
-function updateFilteredOptions($el, options, filter, selectedOption) {
-  $el.find('.dropdown-options').empty();
+DropdownSearchMenu.prototype.setOptionsRenderer = function(optionsRenderer) {
+  this.optionsRenderer = optionsRenderer;
+};
+
+function updateFilteredOptions($el, options, filter, selectedOption, optionsRenderer) {
+  var $options = $el.find('.dropdown-options');
+  $options.empty();
 
   var newElements = $();
   if (options) {
@@ -239,7 +253,7 @@ function updateFilteredOptions($el, options, filter, selectedOption) {
       var option = options[i];
 
       if (!filter || matchesFilter(option, filter)) {
-        var newElement = createItem(option);
+        var newElement = createItem(option, optionsRenderer);
         if (selectedOption === option) {
           newElement.addClass('active');
         }
@@ -249,18 +263,20 @@ function updateFilteredOptions($el, options, filter, selectedOption) {
     }
   }
 
-  $el.find('.dropdown-options').append(newElements);
+  $options.append(newElements);
 }
 
-function applyExternallyFilteredOptions($el, options, filter, selectedOption) {
-  $el.find('.dropdown-options').empty();
+function applyExternallyFilteredOptions($el, result, filter, selectedOption, optionsRenderer) {
+  var $options = $el.find('.dropdown-options');
+  $options.empty();
 
-  if (options && options.length > 0) {
+  var options = result.items || [];
+  if (options.length > 0) {
     var newElements = $();
 
     for (var i = 0; i < options.length; i++) {
       var option = options[i];
-      var newElement = createItem(option);
+      var newElement = createItem(option, optionsRenderer);
       if (selectedOption === option) {
         newElement.addClass('active');
       }
@@ -268,9 +284,16 @@ function applyExternallyFilteredOptions($el, options, filter, selectedOption) {
       newElements = newElements.add(newElement);
     }
 
-    $el.find('.dropdown-options').append(newElements);
-  } else if (filter) {
-    $el.find('.dropdown-options').append($('<div>').addClass('dropdown-options-hint')
+    $options.append(newElements);
+
+    var i18nOption = {
+      count: options.length,
+      totalCount: result.totalCount
+    };
+    $options.append($('<div>').addClass('dropdown-options-hint')
+      .text(i18n.t('dropdownSearchMenu.showingCount', i18nOption)));
+  } else {
+    $options.append($('<div>').addClass('dropdown-options-hint')
       .text(i18n.t('dropdownSearchMenu.noResults')));
   }
 }
@@ -283,21 +306,17 @@ function invokeFilterCallback(filter) {
   var $search = this.$el.find('.search-input');
 
   clearTimeout(this.timeout);
-  if (!filter) {
-    applyExternallyFilteredOptions(this.$el, [], this.filter, this.selectedOption);
-    $search.removeClass('loading');
-    return;
-  }
 
   $search.addClass('loading');
   this.timeout = setTimeout(() => {
-    this.filterCallback(filter, (options) => {
+    this.filterCallback(filter, (result) => {
       if (this.filter !== filter) {
         // Filter is already different, no need to apply options
         return;
       }
       $search.removeClass('loading');
-      applyExternallyFilteredOptions(this.$el, options, this.filter, this.selectedOption);
+      applyExternallyFilteredOptions(this.$el, result, this.filter, this.selectedOption,
+        this.optionsRenderer);
     });
   }, 300);
 }

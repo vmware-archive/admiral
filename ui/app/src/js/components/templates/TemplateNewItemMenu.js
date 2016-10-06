@@ -10,8 +10,8 @@
  */
 
 const RADIUS = 40;
-
 const ANIMATION_DURATION = 400;
+const PLUS_BUTTON_WIDTH = 18;
 
 var positionElements = function(numOfItems, canvasWidth, canvasHeight, radius) {
   var positions = [];
@@ -49,7 +49,7 @@ var easeOutQuart = function(t) {
 };
 
 var drawRoundLine = function(ctx, canvasWidth, canvasHeight, lineWidth, lineHeight) {
-  var radius = Math.min(lineWidth, lineHeight) / 2;
+  var radius = Math.min(lineWidth, lineHeight) / 3;
 
   var x = canvasWidth / 2 - lineWidth / 2;
   var y = canvasHeight / 2 - lineHeight / 2;
@@ -341,8 +341,10 @@ var TemplateNewItemMenu = Vue.extend({
       ctx.save();
       ctx.globalAlpha = Math.max(0, 1 - ease);
       ctx.fillStyle = '#bababa';
-      drawRoundLine(ctx, this.canvasWidth, this.canvasHeight, this.canvasWidth / 3, 16);
-      drawRoundLine(ctx, this.canvasWidth, this.canvasHeight, 16, this.canvasWidth / 3);
+      drawRoundLine(ctx, this.canvasWidth, this.canvasHeight,
+        PLUS_BUTTON_WIDTH * 4, PLUS_BUTTON_WIDTH);
+      drawRoundLine(ctx, this.canvasWidth, this.canvasHeight,
+        PLUS_BUTTON_WIDTH, PLUS_BUTTON_WIDTH * 4);
       ctx.restore();
 
       ctx.restore();

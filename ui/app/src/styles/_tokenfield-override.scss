@@ -1,6 +1,8 @@
 .tt-menu {
   width: 100%;
   min-width: 160px;
+  max-height: $search-result-list-max-height;
+  overflow-y: auto;
   margin-top: 2px;
   padding: 5px 0;
   background-color: #ffffff;
@@ -16,9 +18,15 @@
   background-clip: padding-box;
 }
 
-.tt-suggestion {
-  text-overflow: ellipsis;
-  overflow: hidden;
+.twitter-typeahead {
+  .tt-suggestion, .tt-options-hint {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    padding: 3px 20px;
+  }
+  .tt-options-hint {
+    color: $secondary_hint_title_color;
+  }
 }
 
 .tt-suggestion:hover {

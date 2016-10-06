@@ -147,6 +147,21 @@ $network-details-size: 150px;
   overflow: auto;
 }
 
+.host-picker-item-primary, .network-search-item-primary {
+  font-size: 16px;
+}
+
+.host-picker-item-secondary, .network-search-item-secondary {
+  font-size: 12px;
+}
+
+.host-picker-item-primary .host-picker-item-secondary,
+.network-search-item-primary, .network-search-item-secondary {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .network-form .multicolumn-inputs-list-body-wrapper {
   overflow: visible;
   max-height: initial;

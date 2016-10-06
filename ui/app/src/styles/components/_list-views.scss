@@ -1102,6 +1102,7 @@ $template-details-right: 20px;
   .template-new-item {
     opacity: 0;
     height: 0;
+    overflow: hidden;
   }
 
   canvas {

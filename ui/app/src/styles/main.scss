@@ -772,7 +772,7 @@ $main-list-view-right: 10px;
   border: none;
   @include box-shadow(none);
   position: relative;
-  max-height: 200px;
+  max-height: $search-result-list-max-height;
   overflow-y: auto;
   font-size: 15px;
 }
@@ -1732,6 +1732,10 @@ body > .loading, .container-details > .content .loading {
   > li > a, .dropdown-options-hint {
     padding: 5px 20px;
   }
+}
+
+.dropdown-options-hint {
+  color: $secondary_hint_title_color;
 }
 
 .host-form.form-horizontal input.form-control {

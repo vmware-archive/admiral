@@ -16,14 +16,35 @@ import services from 'core/services';
 
 const HOST_RESULT_LIMIT = 10;
 
+const INITIAL_FILTER = '';
+var initialQueryPromise;
+
+var HOST_DROPDOWN_RENDERER = function(host) {
+  var hostName = utils.getHostName(host);
+
+  return `
+    <div>
+      <div class="host-picker-item-primary" title="${hostName}">${hostName}</div>
+      <div class="host-picker-item-secondary" title="${host.address}">(${host.address})</div>
+    </div>`;
+};
+
+
 function hostSearchCallback(q, callback) {
-  services.searchHosts(q, HOST_RESULT_LIMIT).then((results) => {
-    results = results.map((host) => {
+  var promise;
+  if (!q) {
+    promise = initialQueryPromise;
+  } else {
+    promise = services.searchHosts(q, HOST_RESULT_LIMIT);
+  }
+
+  promise.then((result) => {
+    result.items = result.items.map((host) => {
       host.name = utils.getHostName(host);
       return host;
     });
 
-    callback(results);
+    callback(result);
   });
 }
 
@@ -66,6 +87,8 @@ var HostPicker = Vue.extend({
     this.viewHosts = [{
       viewId: utils.uuid()
     }];
+
+    initialQueryPromise = services.searchHosts(INITIAL_FILTER, HOST_RESULT_LIMIT);
   },
   detached: function() {
   },
@@ -79,7 +102,9 @@ var HostPicker = Vue.extend({
           }),
           searchPlaceholder: i18n.t('app.template.details.editNetwork.hostsSearchPlaceholder')
         });
+        this.hostInput.setOptionsRenderer(HOST_DROPDOWN_RENDERER);
         this.hostInput.setFilterCallback(hostSearchCallback);
+        this.hostInput.setFilter(INITIAL_FILTER);
       },
       methods: {
         getHost: function() {
