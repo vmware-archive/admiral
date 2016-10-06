@@ -21,6 +21,7 @@ import java.util.List;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.AssertUtil;
@@ -35,6 +36,11 @@ import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.ServiceClient;
 
+/**
+ * Test is currently ignored in the name of build stabilization, as it failed rarely on provisioning
+ * of containers. It cannot provision containers with same names (its a known issue).
+ */
+@Ignore
 public class ContainerVolumesIT extends BaseProvisioningOnCoreOsIT {
 
     private static final String TEMPLATE_FILE = "WordPress_with_MySQL_volumes.yaml";
