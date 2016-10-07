@@ -13,10 +13,9 @@ import RequestsListVue from 'RequestsListVue';
 import RequestsListItemVue from 'RequestsListItemVue';
 import Component from 'components/common/Component';
 import InlineDeleteConfirmationTemplate from 'InlineDeleteConfirmationTemplate';
-import { RequestsActions, AppActions } from 'actions/Actions';
+import { RequestsActions, AppActions, NavigationActions } from 'actions/Actions';
 import constants from 'core/constants';
 import utils from 'core/utils';
-import routes from 'core/routes';
 import links from 'core/links';
 
 var RequestsListVueComponent = Vue.extend({
@@ -115,7 +114,7 @@ var RequestsListVueComponent = Vue.extend({
           $e.preventDefault();
 
           if (this.isRequestFinished(this.model)) {
-            hasher.setHash(this.getRequestResourceHref(this.model));
+            NavigationActions.openContainers(this.getRequestResourceQueryOpts(this.model));
             return;
           }
 
@@ -125,7 +124,7 @@ var RequestsListVueComponent = Vue.extend({
           }
         },
 
-        getRequestResourceHref: function(item) {
+        getRequestResourceQueryOpts: function(item) {
           var params = {};
 
           if (item.resourceLinks) {
@@ -148,7 +147,7 @@ var RequestsListVueComponent = Vue.extend({
             }
           }
 
-          return '#/' + routes.getContainersHash(params);
+          return params;
         },
 
         deleteRequest: function($event) {
