@@ -147,7 +147,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         desc.documentSelfLink = "test-network-" + name;
         desc.name = name;
         desc.tenantLinks = Collections.singletonList("test-group");
-        // TODO - TBD
+        desc.customProperties = new HashMap<>();
         return desc;
     }
 
@@ -156,7 +156,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         desc.documentSelfLink = "test-volume-" + name;
         desc.name = name;
         desc.tenantLinks = Collections.singletonList("test-group");
-        // TODO - TBD
+        desc.customProperties = new HashMap<>();
         return desc;
     }
 

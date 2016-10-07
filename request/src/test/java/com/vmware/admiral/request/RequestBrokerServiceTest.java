@@ -54,6 +54,7 @@ import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
+import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState.SubStage;
 import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService;
@@ -434,6 +435,48 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         // Verify request status
         RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
         assertNotNull(rs);
+
+        // and there must be no container network state left
+        ServiceDocumentQueryResult networkStates = getDocument(ServiceDocumentQueryResult.class,
+                ContainerNetworkService.FACTORY_LINK);
+        assertEquals(0L, networkStates.documentCount.longValue());
+    }
+
+    @Test
+    public void testNetworkRequestLifeCycleWithNetworkFailureShouldCleanNetworks()
+            throws Throwable {
+        host.log(
+                "########  Start of testNetworkRequestLifeCycleWithNetworkFailureShouldCleanNetworks ######## ");
+
+        // setup 1 network
+
+        String networkName = "mynet";
+
+        ContainerNetworkDescription networkDesc = TestRequestStateFactory
+                .createContainerNetworkDescription(networkName);
+        networkDesc.documentSelfLink = UUID.randomUUID().toString();
+        // e.g. Docker host was not available!
+        networkDesc.customProperties.put(MockDockerAdapterService.FAILURE_EXPECTED,
+                Boolean.TRUE.toString());
+
+        networkDesc = doPost(networkDesc, ContainerNetworkDescriptionService.FACTORY_LINK);
+        addForDeletion(networkDesc);
+
+        // 1. Request a network with expected failure:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.NETWORK_TYPE.getName(), networkDesc.documentSelfLink);
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // 2. Wait for reservation removed substage
+        request = waitForRequestToFail(request);
+
+        // Verify request status
+        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+
+        assertEquals(TaskStage.FAILED, rs.taskInfo.stage);
+        assertEquals(SubStage.ERROR.name(), rs.subStage);
 
         // and there must be no container network state left
         ServiceDocumentQueryResult networkStates = getDocument(ServiceDocumentQueryResult.class,

@@ -233,7 +233,7 @@ public class RequestBrokerService extends
                 } else if (isContainerVolumeType(state)) {
                     createContainerVolumeRemovalTask(state);
                 } else {
-                    createContainerRemovalAllocationTasks(state, false);
+                    createContainerRemovalTasks(state, false);
                 }
             } else if (isProvisioningContainerHostsOperation(state)) {
                 createContainerHostRemovalTask(state);
@@ -254,7 +254,7 @@ public class RequestBrokerService extends
             } else if (isContainerVolumeType(state)) {
                 createContainerVolumeRemovalTask(state);
             } else {
-                createContainerRemovalAllocationTasks(state, true);
+                createContainerRemovalTasks(state, true);
             }
             break;
         case ERROR:
@@ -393,7 +393,7 @@ public class RequestBrokerService extends
     private void createResourceOperation(RequestBrokerState state) {
         if (isContainerType(state)) {
             if (isRemoveOperation(state)) {
-                createContainerRemovalAllocationTasks(state, false);
+                createContainerRemovalTasks(state, false);
             } else if (isContainerClusteringOperation(state)) {
                 createContainerClusteringTasks(state);
             } else {
@@ -580,22 +580,27 @@ public class RequestBrokerService extends
     }
 
     private void createContainerNetworkRemovalTask(RequestBrokerState state) {
+        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED
+                || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
+
         if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
+            sendSelfPatch(createUpdateSubStageTask(state,
+                    errorState ? SubStage.ERROR : SubStage.ALLOCATED));
             return;
         }
         ContainerNetworkRemovalTaskState removalState = new ContainerNetworkRemovalTaskState();
         removalState.resourceLinks = state.resourceLinks;
-        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED;
         removalState.serviceTaskCallback = ServiceTaskCallback.create(
                 getSelfLink(),
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
                 TaskStage.FAILED, SubStage.ERROR);
         removalState.documentSelfLink = getSelfId();
-        removalState.requestTrackerLink = state.requestTrackerLink;
+        removalState.customProperties = state.customProperties;
+        if (!errorState) {
+            removalState.requestTrackerLink = state.requestTrackerLink;
+        }
 
-        sendRequest(Operation.createPost(this,
-                ContainerNetworkRemovalTaskService.FACTORY_LINK)
+        sendRequest(Operation.createPost(this, ContainerNetworkRemovalTaskService.FACTORY_LINK)
                 .setBody(removalState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
@@ -609,22 +614,27 @@ public class RequestBrokerService extends
     }
 
     private void createContainerVolumeRemovalTask(RequestBrokerState state) {
+        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED
+                || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
+
         if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
+            sendSelfPatch(createUpdateSubStageTask(state,
+                    errorState ? SubStage.ERROR : SubStage.ALLOCATED));
             return;
         }
         ContainerVolumeRemovalTaskState removalState = new ContainerVolumeRemovalTaskState();
         removalState.resourceLinks = state.resourceLinks;
-        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED;
         removalState.serviceTaskCallback = ServiceTaskCallback.create(
-                state.documentSelfLink,
+                getSelfLink(),
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
                 TaskStage.FAILED, SubStage.ERROR);
         removalState.documentSelfLink = getSelfId();
-        removalState.requestTrackerLink = state.requestTrackerLink;
+        removalState.customProperties = state.customProperties;
+        if (!errorState) {
+            removalState.requestTrackerLink = state.requestTrackerLink;
+        }
 
-        sendRequest(Operation.createPost(this,
-                ContainerVolumeRemovalTaskService.FACTORY_LINK)
+        sendRequest(Operation.createPost(this, ContainerVolumeRemovalTaskService.FACTORY_LINK)
                 .setBody(removalState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
@@ -637,7 +647,7 @@ public class RequestBrokerService extends
                 }));
     }
 
-    private void createContainerRemovalAllocationTasks(RequestBrokerState state,
+    private void createContainerRemovalTasks(RequestBrokerState state,
             boolean skipReleaseResourcePlacement) {
         boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED
                 || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
@@ -861,7 +871,7 @@ public class RequestBrokerService extends
         });
     }
 
-    private void createNetworkAllocationTask(RequestBrokerState state) {
+    private void createContainerNetworkAllocationTask(RequestBrokerState state) {
         // 1. allocate the network
         ContainerNetworkAllocationTaskState allocationTask = new ContainerNetworkAllocationTaskState();
         allocationTask.documentSelfLink = getSelfId();
@@ -889,7 +899,7 @@ public class RequestBrokerService extends
                 }));
     }
 
-    private void createNetworkProvisioningTask(RequestBrokerState state) {
+    private void createContainerNetworkProvisioningTask(RequestBrokerState state) {
         // 2. provision the network
         ContainerNetworkProvisionTaskState provisionTask = new ContainerNetworkProvisionTaskState();
         provisionTask.documentSelfLink = getSelfId();
@@ -970,7 +980,7 @@ public class RequestBrokerService extends
                 }));
     }
 
-    private void createVolumeAllocationTask(RequestBrokerState state) {
+    private void createContainerVolumeAllocationTask(RequestBrokerState state) {
 
         ContainerVolumeAllocationTaskState allocationTask = new ContainerVolumeAllocationTaskState();
         allocationTask.documentSelfLink = getSelfId();
@@ -998,7 +1008,7 @@ public class RequestBrokerService extends
                 }));
     }
 
-    private void createVolumeProvisioningTask(RequestBrokerState state) {
+    private void createContainerVolumeProvisioningTask(RequestBrokerState state) {
 
         ContainerVolumeProvisionTaskState provisionTask = new ContainerVolumeProvisionTaskState();
         provisionTask.documentSelfLink = getSelfId();
@@ -1031,9 +1041,9 @@ public class RequestBrokerService extends
             createContainerAllocationTask(state);
         } else if (isContainerNetworkType(state)) {
             if (!isPostAllocationOperation(state)) {
-                createNetworkAllocationTask(state);
+                createContainerNetworkAllocationTask(state);
             } else {
-                createNetworkProvisioningTask(state);
+                createContainerNetworkProvisioningTask(state);
             }
         } else if (isComputeType(state)) {
             if (!isPostAllocationOperation(state)) {
@@ -1043,9 +1053,9 @@ public class RequestBrokerService extends
             }
         } else if (isContainerVolumeType(state)) {
             if (!isPostAllocationOperation(state)) {
-                createVolumeAllocationTask(state);
+                createContainerVolumeAllocationTask(state);
             } else {
-                createVolumeProvisioningTask(state);
+                createContainerVolumeProvisioningTask(state);
             }
         } else {
             failTask(null, new IllegalArgumentException("Not supported resourceType: "
@@ -1085,8 +1095,8 @@ public class RequestBrokerService extends
         if (state.groupResourcePlacementLink == null || state.groupResourcePlacementLink.isEmpty()) {
             RequestBrokerState body = new RequestBrokerState();
             body.taskInfo = new TaskState();
-            body.taskInfo.stage = TaskStage.FAILED;
-            body.taskSubStage = SubStage.ERROR;
+            body.taskInfo.stage = TaskStage.STARTED;
+            body.taskSubStage = SubStage.RESERVATION_CLEANED_UP;
             sendSelfPatch(body);
             return;
         }

@@ -412,7 +412,7 @@ public class ContainerNetworkAllocationTaskService extends
 
     public static List<String> getProvidedHostIds(TaskServiceDocument<?> state) {
         String hostId = state.getCustomProperty(CONTAINER_HOST_ID_CUSTOM_PROPERTY);
-        if (hostId == null) {
+        if (hostId == null || hostId.isEmpty()) {
             return null;
         }
         // Can be a a single id or comma separated values of ids

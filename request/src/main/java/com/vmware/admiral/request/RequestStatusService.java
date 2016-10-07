@@ -135,6 +135,7 @@ public class RequestStatusService extends StatefulService {
             } else {
                 state.taskInfo = TaskState.createAsFinished();
             }
+            state.subStage = body.subStage;
             return;
             // if the request is finished the progress should be updated to 100
         } else if (TaskStage.FINISHED.equals(state.taskInfo.stage)) {
