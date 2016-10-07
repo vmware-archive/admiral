@@ -19,12 +19,13 @@ import (
 //Check for error raised by response.
 //Print message.
 //Currently panic too used for debugging.
-func CheckResponse(err error) {
+func CheckResponse(err error, url string) {
 	if err != nil {
-		fmt.Println("Response error occured.")
-		fmt.Println(err.Error())
-		panic(err.Error())
-		os.Exit(-2)
+		fmt.Println("Error occurred when connecting to ", url)
+		if Verbose == true {
+			fmt.Println(err)
+		}
+		os.Exit(1)
 	}
 }
 
@@ -36,7 +37,7 @@ func CheckJson(err error) {
 		fmt.Println("Json error when reading and/or writing.")
 		fmt.Println(err.Error())
 		panic(err.Error())
-		os.Exit(-2)
+		os.Exit(1)
 	}
 }
 
@@ -47,13 +48,13 @@ func CheckFile(err error) {
 	if err != nil {
 		fmt.Println("Error on read/write file.")
 		fmt.Println(err.Error())
-		os.Exit(-2)
+		os.Exit(1)
 	}
 }
 
 func CheckParse(err error) {
 	if err != nil {
 		fmt.Println(err.Error())
-		os.Exit(-2)
+		os.Exit(1)
 	}
 }

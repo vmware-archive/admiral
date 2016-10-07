@@ -47,7 +47,7 @@ var customPropertiesListCmd = &cobra.Command{
 }
 
 func initCustomPropertiesList() {
-	customPropertiesListCmd.Flags().StringVar(&cpHostIP, "host", "", "IP of the host that you want to manage custom properties.")
+	customPropertiesListCmd.Flags().StringVar(&cpHostIP, "host", "", "ID of the host that you want to manage custom properties.")
 	customPropertiesListCmd.Flags().StringVar(&cpCredID, "credentials", "", "ID of the credentials that you want to manage custom properties.")
 	//customPropertiesListCmd.Flags().StringVar(&cpResPoolID, "placement-zone", "", "ID of the placement zone that you want to manage custom properties.")
 	CustomPropertiesRootCmd.AddCommand(customPropertiesListCmd)
@@ -143,7 +143,7 @@ var customPropertiesSetCmd = &cobra.Command{
 func initCustomPropertiesSet() {
 	customPropertiesSetCmd.Flags().StringSliceVarP(&cpKeys, "key", "k", []string{}, "(Required) Keys of custom property.")
 	customPropertiesSetCmd.Flags().StringSliceVarP(&cpVals, "value", "v", []string{}, "(Required) Values of custom property.")
-	customPropertiesSetCmd.Flags().StringVar(&cpHostIP, "host", "", "IP of the host that you want to manage custom properties.")
+	customPropertiesSetCmd.Flags().StringVar(&cpHostIP, "host", "", "ID of the host that you want to manage custom properties.")
 	customPropertiesSetCmd.Flags().StringVar(&cpCredID, "credentials", "", "ID of the credentials that you want to manage custom properties.")
 	//customPropertiesSetCmd.Flags().StringVar(&cpResPoolID, "placement-zone", "", "ID of the placement zone that you want to manage custom properties.")
 	CustomPropertiesRootCmd.AddCommand(customPropertiesSetCmd)
@@ -199,7 +199,7 @@ var customPropertiesRemoveCmd = &cobra.Command{
 
 func initCustomPropertiesRemove() {
 	customPropertiesRemoveCmd.Flags().StringSliceVarP(&cpKeys, "key", "k", []string{}, "(Required) Keys of custom property.")
-	customPropertiesRemoveCmd.Flags().StringVar(&cpHostIP, "host", "", "IP of the host that you want to manage custom properties.")
+	customPropertiesRemoveCmd.Flags().StringVar(&cpHostIP, "host", "", "ID of the host that you want to manage custom properties.")
 	customPropertiesRemoveCmd.Flags().StringVar(&cpCredID, "credentials", "", "ID of the credentials that you want to manage custom properties.")
 	//customPropertiesRemoveCmd.Flags().StringVar(&cpResPoolID, "placement-zone", "", "ID of the placement zone that you want to manage custom properties.")
 	CustomPropertiesRootCmd.AddCommand(customPropertiesRemoveCmd)

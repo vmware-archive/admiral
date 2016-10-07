@@ -57,7 +57,8 @@ func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 	}
 	req.Header.Set("x-xenon-auth-token", token)
 	resp, err := NetClient.Do(req)
-	functions.CheckResponse(err)
+	admiralHostUrl := req.URL.Scheme + "://" + req.URL.Host
+	functions.CheckResponse(err, admiralHostUrl)
 	functions.CheckVerboseResponse(resp)
 
 	if err = CheckResponseError(resp, from); err != nil {
@@ -65,7 +66,6 @@ func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
-	functions.CheckResponse(err)
 	defer resp.Body.Close()
 	return resp, respBody, nil
 }
@@ -85,7 +85,6 @@ func CheckResponseError(resp *http.Response, tokenFrom string) error {
 		resp.Body = rdrToSet
 
 		message := &ResponseError{}
-		functions.CheckResponse(err)
 		err = json.Unmarshal(respBody, message)
 		if err != nil {
 			return err

@@ -189,7 +189,7 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 	} else if respErr != nil {
 		return "", respErr
 	} else {
-		return "", errors.New("Error occured when adding registry.")
+		return "", errors.New("Error occurred when adding registry.")
 	}
 }
 
@@ -259,7 +259,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 			functions.CheckJson(err)
 			return reg.GetID(), nil
 		}
-		return "", errors.New("Error occured when adding the new certificate.")
+		return "", errors.New("Error occurred when adding the new certificate.")
 	} else if resp.StatusCode == 204 {
 		link := resp.Header.Get("Location")
 		url = config.URL + link
@@ -275,7 +275,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 	} else if respErr != nil {
 		return "", respErr
 	} else {
-		return "", errors.New("Error occured when updating registry.")
+		return "", errors.New("Error occurred when updating registry.")
 	}
 }
 

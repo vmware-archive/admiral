@@ -75,7 +75,7 @@ func RunAddHost(args []string) (string, error) {
 }
 
 var hostDisableCmd = &cobra.Command{
-	Use:   "disable [HOST-ADDRESS]",
+	Use:   "disable [HOST-ID]",
 	Short: "Disable host with address provided.",
 	Long:  "Disable host with address provided.",
 
@@ -107,7 +107,7 @@ func RunHostDisable(args []string) (string, error) {
 }
 
 var hostEnableCmd = &cobra.Command{
-	Use:   "enable [HOST-ADDRESS]",
+	Use:   "enable [HOST-ID]",
 	Short: "Enable host with address provided.",
 	Long:  "Enable host with address provided.",
 
@@ -162,7 +162,7 @@ func RunHostList(args []string) (string, error) {
 }
 
 var hostRemoveCmd = &cobra.Command{
-	Use:   "rm [HOST-ADDRESS]",
+	Use:   "rm [HOST-ID]",
 	Short: "Remove existing host.",
 	Long:  "Remove existing host.",
 
@@ -205,7 +205,7 @@ func RunHostRemove(args []string) (string, error) {
 }
 
 var hostUpdateCmd = &cobra.Command{
-	Use:   "update [ADDRESS]",
+	Use:   "update [HOST-ID]",
 	Short: "Edit existing hosts.",
 
 	Run: func(cmd *cobra.Command, args []string) {

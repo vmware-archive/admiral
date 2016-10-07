@@ -17,6 +17,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"admiral/certificates"
@@ -69,7 +70,7 @@ type HostPatch struct {
 
 //Struct used to send needed data when creating host.
 type HostState struct {
-	Id               string             `json:"id"`
+	Id               string             `json:"id,omitempty"`
 	Address          string             `json:"address"`
 	ResourcePoolLink string             `json:"resourcePoolLink"`
 	CustomProperties map[string]*string `json:"customProperties"`
@@ -116,11 +117,11 @@ func (hl *HostsList) FetchHosts(queryF string) (int, error) {
 //Print already fetched hosts.
 func (hl *HostsList) GetOutputString() string {
 	var buffer bytes.Buffer
-	buffer.WriteString("ADDRESS\tNAME\tSTATE\tCONTAINERS\tPLACEMENT ZONE")
+	buffer.WriteString("ID\tADDRESS\tNAME\tSTATE\tCONTAINERS\tPLACEMENT ZONE")
 	buffer.WriteString("\n")
 	for _, val := range hl.Documents {
 		pzName, _ := placementzones.GetPZName(val.ResourcePoolLink)
-		output := functions.GetFormattedString(val.Address, *val.CustomProperties["__Name"], val.PowerState,
+		output := functions.GetFormattedString(val.Id, val.Address, *val.CustomProperties["__Name"], val.PowerState,
 			*val.CustomProperties["__Containers"], pzName)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
@@ -180,11 +181,14 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 	}
 	hostProps = properties.MakeHostProperties(credLink, dpLink, hostProps)
 
+	schemeRegex, _ := regexp.Compile("^https?:\\/\\/")
+	hostId := schemeRegex.ReplaceAllString(ipF, "")
+
 	host := HostState{
-		Id:               ipF,
 		Address:          ipF,
 		ResourcePoolLink: pzLink,
 		CustomProperties: hostProps,
+		Id:               hostId,
 	}
 
 	hostObj := HostObj{

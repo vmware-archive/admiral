@@ -84,7 +84,7 @@ func Wait(taskId string) ([]string, error) {
 		}
 		taskStatus := &TaskStatus{}
 		resp, err := client.NetClient.Do(req)
-		functions.CheckResponse(err)
+		functions.CheckResponse(err, config.URL)
 		functions.CheckVerboseResponse(resp)
 		respBody, _ := ioutil.ReadAll(resp.Body)
 		//Check for authentication error.
@@ -137,7 +137,7 @@ func GetResLinks(taskId string) ([]string, error) {
 	)
 	taskStatus := &TaskStatus{}
 	resp, err := client.NetClient.Do(req)
-	functions.CheckResponse(err)
+	functions.CheckResponse(err, config.URL)
 	functions.CheckVerboseResponse(resp)
 	respBody, _ := ioutil.ReadAll(resp.Body)
 	//Check for authentication error.

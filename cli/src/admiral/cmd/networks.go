@@ -45,7 +45,7 @@ func initNetworkCreate() {
 	networkCreateCmd.Flags().StringSliceVar(&gateways, "gateway", []string{}, "Gateway for the master subnet.")
 	networkCreateCmd.Flags().StringSliceVar(&subnets, "subnet", []string{}, "Subnet in CIDR format that represents a network segment.")
 	networkCreateCmd.Flags().StringSliceVar(&ipranges, "ip-range", []string{}, "Allocate container ip from a sub-range.")
-	networkCreateCmd.Flags().StringSliceVar(&hostAddresses, "host", []string{}, "(Required) Hosts addresses")
+	networkCreateCmd.Flags().StringSliceVar(&hostAddresses, "host", []string{}, "(Required) Hosts IDs")
 	networkCreateCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)
 	networkCreateCmd.Flags().StringVarP(&networkDriver, "driver", "d", "", "Driver to manage the Network.")
 	networkCreateCmd.Flags().StringVar(&ipamDriver, "ipam-driver", "", "IPAM driver.")

@@ -241,7 +241,7 @@ func Export(id, dirF, format string) (string, error) {
 	req.Header.Set("content-type", "application/json")
 	req.Header.Set("x-xenon-auth-token", token)
 	resp, err := client.NetClient.Do(req)
-	functions.CheckResponse(err)
+	functions.CheckResponse(err, config.URL)
 	functions.CheckVerboseResponse(resp)
 	respBody, err := ioutil.ReadAll(resp.Body)
 	functions.CheckJson(err)

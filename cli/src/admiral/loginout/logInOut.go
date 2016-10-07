@@ -47,7 +47,7 @@ func Login(username, password, configUrl string) string {
 	functions.CheckVerboseRequest(req)
 	req.SetBasicAuth(strings.TrimSpace(username), strings.TrimSpace(password))
 	resp, err := client.NetClient.Do(req)
-	functions.CheckResponse(err)
+	functions.CheckResponse(err, config.URL)
 
 	functions.CheckVerboseResponse(resp)
 	token := resp.Header.Get("x-xenon-auth-token")
@@ -78,7 +78,7 @@ func Logout() {
 
 	_, err := client.NetClient.Do(req)
 
-	functions.CheckResponse(err)
+	functions.CheckResponse(err, config.URL)
 
 	err = os.Remove(paths.TokenPath())
 
@@ -129,7 +129,7 @@ func Loginvra(username, password, tenant string) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	resp, err := client.NetClient.Do(req)
-	functions.CheckResponse(err)
+	functions.CheckResponse(err, config.URL)
 	respLogin := &ResponseLoginVRA{}
 	respBody, _ := ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(respBody, &respLogin)

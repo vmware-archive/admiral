@@ -341,7 +341,7 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 	req.Header.Set("x-xenon-auth-token", token)
 
 	resp, err := client.NetClient.Do(req)
-	functions.CheckResponse(err)
+	functions.CheckResponse(err, config.URL)
 	functions.CheckVerboseResponse(resp)
 	respBody, _ := ioutil.ReadAll(resp.Body)
 	//Check for authentication error.
@@ -365,7 +365,7 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 		resourcesIDs := functions.GetResourceIDs(resLinks)
 		return resourcesIDs, err
 	}
-	return nil, errors.New("Error occured when removing containers.")
+	return nil, errors.New("Error occurred when removing containers.")
 }
 
 //Function to execute command inside container.
