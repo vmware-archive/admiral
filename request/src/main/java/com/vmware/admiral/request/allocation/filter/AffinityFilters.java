@@ -87,6 +87,7 @@ public final class AffinityFilters {
         filters.add(new VolumesFromAffinityHostFilter(host, desc));
         filters.add(new ServiceAffinityHostFilter(host, desc));
         filters.add(new DeploymentPolicyAffinityFilter(host, desc));
+        filters.add(new ServiceLinkAffinityFilter(host, desc));
 
         // host anti-affinity filters:
         filters.add(new ServiceAntiAffinityHostFilter(host, desc));
@@ -95,7 +96,6 @@ public final class AffinityFilters {
         // non host related dependency only
         filters.add(new DependsOnAffinityHostFilter(desc));
         filters.add(new ContainerToNetworkAffinityHostFilter(host, desc));
-        filters.add(new ServiceLinkAffinityFilter(host, desc));
         filters.add(new NamedVolumeAffinityHostFilter(host, desc));
 
     }
