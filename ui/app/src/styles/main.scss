@@ -1832,6 +1832,9 @@ body > .loading, .container-details > .content .loading {
           margin-left: 5px;
           margin-right: 5px;
           .name {
+            .fa {
+              color: #838383;
+            }
           }
           .phase {
             font-size: 11px;

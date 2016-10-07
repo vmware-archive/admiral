@@ -32,11 +32,24 @@ var RequestsListVueComponent = Vue.extend({
       computed: {
         progress: function() {
           return this.model.taskInfo.stage === 'FAILED' ? 100 : this.model.progress;
+        },
+        resourceIds: function() {
+          return this.model.resourceLinks.map((resourceLink) => {
+            return utils.getDocumentId(resourceLink);
+          });
+        },
+        requestTitleText: function() {
+          if (this.resourceIds.length > 0) {
+            return this.resourceIds;
+          } else {
+            return this.model.name;
+          }
         }
       },
       data: function() {
         return {
-          expanded: false
+          expanded: false,
+          showHint: false
         };
       },
       attached: function() {
@@ -58,6 +71,16 @@ var RequestsListVueComponent = Vue.extend({
           e.preventDefault();
           this.hideDeleteConfirmationButtons(e);
         });
+
+        this.$watch('progress', (progress, oldProgress) => {
+          if (progress === 100 && oldProgress < 100) {
+            this.showHint = true;
+
+            setTimeout(() => {
+              this.showHint = false;
+            }, 3000);
+          }
+        });
       },
       methods: {
         isRequestRunning: function(item) {
@@ -66,19 +89,6 @@ var RequestsListVueComponent = Vue.extend({
 
         isRequestFailed: function(item) {
           return utils.isRequestFailed(item);
-        },
-
-        getResourceIds: function(item) {
-          var ids = [];
-          if (item && item.resourceLinks) {
-             for (var i = 0; i < item.resourceLinks.length; i++) {
-              var link = item.resourceLinks[i];
-              if (link) {
-                ids.push(utils.getDocumentId(link));
-              }
-            }
-          }
-          return ids;
         },
 
         isRequestFinished: function(item) {
