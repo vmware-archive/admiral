@@ -17,6 +17,7 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_OPTIONS_PROP_NAME;
 
+import java.net.ProtocolException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,8 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
     public static final String DOCKER_NETWORK_TYPE_DEFAULT = ContainerNetworkDescription.NETWORK_DRIVER_BRIDGE;
 
     private static final NetworkOperationType[] DIRECT_OPERATIONS = {};
+
+    private static final String DELETE_NETWORK_MISSING_ERROR = "error 404 for DELETE";
 
     public static final List<String> DOCKER_PREDEFINED_NETWORKS = Arrays.asList("none", "host",
             "bridge", "docker_gwbridge");
@@ -314,7 +317,13 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
         context.executor.removeNetwork(deleteCommandInput, (op, ex) -> {
             if (ex != null) {
-                fail(context.request, ex);
+                if (ex instanceof ProtocolException
+                        && ex.getMessage().contains(DELETE_NETWORK_MISSING_ERROR)) {
+                    logWarning("Container network %s not found", context.networkState.id);
+                    patchTaskStage(context.request, TaskStage.FINISHED, null);
+                } else {
+                    fail(context.request, op, ex);
+                }
             } else {
                 patchTaskStage(context.request, TaskStage.FINISHED, null);
             }
