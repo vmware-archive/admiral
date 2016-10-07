@@ -63,6 +63,7 @@ import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceErrorResponse;
+import com.vmware.xenon.common.ServiceHost.ServiceAlreadyStartedException;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -817,12 +818,18 @@ public class HostContainerListDataCollection extends StatefulService {
                 .setCompletion(
                         (o, ex) -> {
                             if (ex != null) {
-                                logSevere(
-                                        "Failed to create ContainerState for discovered container (id=%s): %s",
-                                        containerState.id,
-                                        ex.getMessage());
-                                callback.accept(ex);
-                                return;
+                                if (ex instanceof ServiceAlreadyStartedException) {
+                                    logWarning(
+                                            "Container state already exists for container (id=%s)",
+                                            containerState.id);
+                                } else {
+                                    logSevere(
+                                            "Failed to create ContainerState for discovered container (id=%s): %s",
+                                            containerState.id,
+                                            ex.getMessage());
+                                    callback.accept(ex);
+                                    return;
+                                }
                             } else {
                                 logInfo("Created ContainerState for discovered container: %s",
                                         containerState.id);
