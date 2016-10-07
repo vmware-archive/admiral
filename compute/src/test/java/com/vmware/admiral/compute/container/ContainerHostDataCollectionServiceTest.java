@@ -834,6 +834,74 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         }
     }
 
+    // jira issue VBV-652
+    @Test
+    public void testContainersCountWhenHostIsAddedTwice() throws Throwable {
+        String hostId = UUID.randomUUID().toString();
+
+        ComputeDescription hostDescription = new ComputeDescription();
+        hostDescription.id = UUID.randomUUID().toString();
+        hostDescription.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
+        hostDescription.supportedChildren = new ArrayList<>(
+                Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
+        hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
+        documentsForDeletion.add(hostDescription);
+
+        //Add the same host for different tenants
+        ComputeState cs1 = createComputeState("qe::" + hostId, hostDescription);
+        ComputeState cs2 = createComputeState("test::" + hostId, hostDescription);
+
+        cs1 = doPost(cs1, ComputeService.FACTORY_LINK);
+        documentsForDeletion.add(cs1);
+        cs2 = doPost(cs2, ComputeService.FACTORY_LINK);
+        documentsForDeletion.add(cs2);
+
+        ContainerState containerState = new ContainerState();
+        containerState.id = UUID.randomUUID().toString();
+        containerState.names = containerNames;
+        containerState.parentLink = UriUtils.buildUriPath(
+                ComputeService.FACTORY_LINK, hostId);
+        containerState.powerState = PowerState.STOPPED;
+        containerState.system = Boolean.TRUE;
+        // Add the container to both hosts
+        addContainerToMockAdapter(cs1.id, containerState.id, SystemContainerDescriptions
+                .getSystemContainerNames());
+        addContainerToMockAdapter(cs2.id, containerState.id, SystemContainerDescriptions
+                .getSystemContainerNames());
+
+        documentsForDeletion.add(containerState);
+
+        doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+                ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
+                false,
+                Service.Action.PATCH);
+
+        // Verify that the containers count is set for both hosts
+        String csLink1 = cs1.documentSelfLink;
+        waitFor(() -> {
+            ComputeState computeState = getDocument(ComputeState.class, csLink1);
+            String containers = computeState.customProperties == null ? null
+                    : computeState.customProperties
+                            .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
+            String systemContainers = computeState.customProperties == null ? null
+                    : computeState.customProperties
+                            .get(ContainerHostService.NUMBER_OF_SYSTEM_CONTAINERS_PROP_NAME);
+            return containers != null && systemContainers != null;
+        });
+
+        String csLink2 = cs2.documentSelfLink;
+        waitFor(() -> {
+            ComputeState computeState = getDocument(ComputeState.class, csLink2);
+            String containers = computeState.customProperties == null ? null
+                    : computeState.customProperties
+                            .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
+            String systemContainers = computeState.customProperties == null ? null
+                    : computeState.customProperties
+                            .get(ContainerHostService.NUMBER_OF_SYSTEM_CONTAINERS_PROP_NAME);
+            return containers != null && systemContainers != null;
+        });
+    }
+
     private GroupResourcePlacementService.GroupResourcePlacementState createGroupResourcePlacementState(
             String resourcePoolLink, String group, int priority, long memoryLimit,
             long availableMemory) throws Throwable {
