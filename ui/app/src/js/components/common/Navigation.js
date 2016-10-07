@@ -66,10 +66,7 @@ var Navigation = Vue.extend({
           }
 
           if (activeItem) {
-            this.expandCategory(item);
             lastActiveViewByCategory[item.name] = activeItem.name;
-          } else {
-            this.collapseCategory(item);
           }
         }
       });
@@ -81,71 +78,23 @@ var Navigation = Vue.extend({
   },
 
   methods: {
-    findItemElement: function(item) {
-      let elParent = $(this.$el).parent('.side-view');
-      let elNavBar = $(elParent).find('.nav-bar');
-
-      return $(elNavBar).find('.' + item.name);
-    },
-    isItemExpanded: function(item) {
-      let elItem = this.findItemElement(item);
-
-      return $(elItem).hasClass('expanded');
-    },
     isExpanded: function(item) {
       if (item.VIEWS) {
-       return this.isItemExpanded(item);
+        if (item.name === this.currentView) {
+            return true;
+          } else {
+            var activeItem = Object.values(item.VIEWS).find((subView) => {
+              return (subView.name === this.currentView);
+            });
+            if (activeItem) {
+              return true;
+            }
+          }
       }
+      return false;
     },
     isCollapsed: function(item) {
       return !this.isExpanded(item);
-    },
-    expandCategory: function(categoryItem) {
-      let categoryEl = this.findItemElement(categoryItem);
-
-      if (!$(categoryEl).hasClass('expanded')) {
-        $(categoryEl).addClass('expanded');
-        $(categoryEl).find('i').removeClass('fa-chevron-right');
-        $(categoryEl).find('i').addClass('fa-chevron-down');
-      }
-
-      this.showAllSubItems(categoryItem);
-    },
-    collapseCategory: function(categoryItem) {
-      let categoryEl = this.findItemElement(categoryItem);
-
-      if ($(categoryEl).hasClass('expanded')) {
-        $(categoryEl).removeClass('expanded');
-        $(categoryEl).find('i').removeClass('fa-chevron-down');
-        $(categoryEl).find('i').addClass('fa-chevron-right');
-      }
-
-      this.hideAllSubItems(categoryItem);
-    },
-    showAllSubItems: function(categoryItem) {
-      Object.values(categoryItem.VIEWS).forEach((subItem) => {
-
-        let elSubItem = this.findItemElement(subItem);
-        if ($(elSubItem).hasClass('hide')) {
-          $(elSubItem).removeClass('hide');
-        }
-      });
-    },
-    hideAllSubItems: function(categoryItem) {
-      Object.values(categoryItem.VIEWS).forEach((subItem) => {
-
-        let elSubItem = this.findItemElement(subItem);
-        if (!$(elSubItem).hasClass('hide')) {
-          $(elSubItem).addClass('hide');
-        }
-      });
-    },
-    handleCategoryClick: function($event, item) {
-      $event.stopPropagation();
-
-      if (!this.isExpanded(item)) {
-        this.expandCategory(item);
-      }
     }
   }
 });

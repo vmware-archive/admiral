@@ -15,7 +15,7 @@ import constants from 'core/constants';
 function DEFAULT_RENDERER(itemSpec) {
   var result = '';
   if (itemSpec.icon) {
-    result += '<span class="fa fa-"' + itemSpec.icon + '"></span>';
+    result += '<span class="fa fa-' + itemSpec.icon + '"></span>';
   }
   if (itemSpec.iconSrc) {
     result += '<img src="' + itemSpec.iconSrc + '"/>';

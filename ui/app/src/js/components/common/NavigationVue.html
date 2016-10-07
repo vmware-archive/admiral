@@ -15,7 +15,7 @@
     <img class="nav-item-image" src="image-assets/templates.png">
     <span>{{i18n("app.navbar.templates")}}</span>
   </a>
-  <a class="nav-item resources" v-on:click="handleCategoryClick($event, constants.VIEWS.RESOURCES)"
+  <a class="nav-item resources"
     v-bind:class="{'expanded': isExpanded(constants.VIEWS.RESOURCES)}"
     v-bind:href="'#/' + lastActiveViewByCategory[constants.VIEWS.RESOURCES.name]">
     <img class="nav-item-image" src="image-assets/resources.png">
@@ -23,20 +23,17 @@
             v-bind:class="{'fa-chevron-down': isExpanded(constants.VIEWS.RESOURCES),
             'fa-chevron-right': isCollapsed(constants.VIEWS.RESOURCES)}"></i></span></span>
   </a>
-  <a v-bind:class="{'active': currentView === constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name}"
-     v-bind:class="{'hide': isCollapsed(constants.VIEWS.RESOURCES)}"
+  <a v-bind:class="{'active': currentView === constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name, 'hide': isCollapsed(constants.VIEWS.RESOURCES)}"
      class="nav-item inner containers" href="#/containers">
     <img class="nav-item-image" src="image-assets/resource-icons/container-24.png">
     <span>{{i18n("app.navbar.containers")}}</span>
   </a>
-  <a v-bind:class="{'active': currentView === constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name}"
-     v-bind:class="{'hide': isCollapsed(constants.VIEWS.RESOURCES)}"
+  <a v-bind:class="{'active': currentView === constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name, 'hide': isCollapsed(constants.VIEWS.RESOURCES)}"
      class="nav-item inner applications" href="#/applications">
     <img class="nav-item-image" src="image-assets/resource-icons/application-24.png">
     <span>{{i18n("app.navbar.applications")}}</span>
   </a>
-  <a v-bind:class="{'active': currentView === constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name}"
-     v-bind:class="{'hide': isCollapsed(constants.VIEWS.RESOURCES)}"
+  <a v-bind:class="{'active': currentView === constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name, 'hide': isCollapsed(constants.VIEWS.RESOURCES)}"
      class="nav-item inner networks" href="#/networks">
     <img class="nav-item-image" src="image-assets/resource-icons/network-24.png">
     <span>{{i18n("app.navbar.networks")}}</span>
@@ -58,7 +55,7 @@
       <img class="nav-item-image" src="image-assets/templates.png">
       <span>{{i18n("app.navbar.environments")}}</span>
     </a>
-    <a class="nav-item resources" v-on:click="handleCategoryClick($event, computeConstants.VIEWS.RESOURCES)"
+    <a class="nav-item resources"
        v-bind:class="{'expanded': isExpanded(computeConstants.VIEWS.RESOURCES)}"
        v-bind:href="'#/' + computeLastActiveViewByCategory[computeConstants.VIEWS.RESOURCES.name]">
       <img class="nav-item-image" src="image-assets/resources.png">
@@ -66,14 +63,12 @@
       v-bind:class="{'fa-chevron-down': isExpanded(computeConstants.VIEWS.RESOURCES),
       'fa-chevron-right': isCollapsed(computeConstants.VIEWS.RESOURCES)}"></i></span></span>
     </a>
-    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name}"
-       v-bind:class="{'hide': isCollapsed(computeConstants.VIEWS.RESOURCES)}"
+    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name, 'hide': isCollapsed(computeConstants.VIEWS.RESOURCES)}"
        class="nav-item inner machines" href="#/machines">
       <img class="nav-item-image" src="image-assets/resource-icons/machines.png">
       <span>{{i18n("app.navbar.machines")}}</span>
     </a>
-    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.RESOURCES.VIEWS.NETWORKS.name}"
-       v-bind:class="{'hide': isCollapsed(computeConstants.VIEWS.RESOURCES)}"
+    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.RESOURCES.VIEWS.NETWORKS.name, 'hide': isCollapsed(computeConstants.VIEWS.RESOURCES)}"
        class="nav-item inner networks" href="#/networks">
       <img class="nav-item-image" src="image-assets/resource-icons/network-24.png">
       <span>{{i18n("app.navbar.networks")}}</span>

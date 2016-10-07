@@ -91,7 +91,12 @@ ResourcePoolRowEditor.prototype.setData = function(data) {
       this.tags.setValue([]);
     }
   }
-  nameInput.first().focus();
+
+  // Fix for css navigation transition glitch
+  // https://bugs.chromium.org/p/chromium/issues/detail?id=97367
+  setTimeout(() => {
+    nameInput.first().focus();
+  }, 310);
 
   this.$el.find('.resourcePoolEdit-save').removeAttr('disabled').removeClass('loading');
 

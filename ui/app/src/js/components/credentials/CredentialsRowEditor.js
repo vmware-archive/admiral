@@ -44,6 +44,12 @@ CredentialsRowEditor.prototype.setData = function(data) {
 
   this.$el.find('.name-input').val('').removeAttr('disabled');
 
+  // Fix for css navigation transition glitch
+  // https://bugs.chromium.org/p/chromium/issues/detail?id=97367
+  setTimeout(() => {
+    this.$el.find('.name-input').focus();
+  }, 310);
+
   this.$el.find('.username-input').val('');
   this.$el.find('.password-input').val('');
   this.$el.find('.showPassword').addClass('hide');
