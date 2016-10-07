@@ -167,6 +167,12 @@ var addEventListeners = function() {
         this.item.resourcePoolState.documentSelfLink;
       item.resourcePoolState.documentSelfLink =
         this.item.resourcePoolState.documentSelfLink;
+      if (this.item.epzState) {
+        item.epzState = {
+          documentSelfLink: this.item.epzState.documentSelfLink,
+          resourcePoolLink: this.item.resourcePoolState.documentSelfLink
+        };
+      }
     }
     item.resourcePoolState.name = this.$el.find('.name-input').val();
     item.resourcePoolState.customProperties = {};
@@ -177,7 +183,12 @@ var addEventListeners = function() {
           selectedEndpoint && selectedEndpoint.id;
     }
 
-    let tags = this.tags.getValue();
+    let tags = this.tags.getValue().reduce((prev, curr) => {
+      if (!prev.find((tag) => tag.key === curr.key && tag.value === curr.value)) {
+        prev.push(curr);
+      }
+      return prev;
+    }, []);
 
     if (this.item) {
       ResourcePoolsActions.updateResourcePool(item, tags);

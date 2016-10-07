@@ -503,7 +503,7 @@ let HostsStore = Reflux.createStore({
           result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
       }).then((createdTags) => {
 
-        hostModel.tagLinks = createdTags.map((tag) => tag.documentSelfLink);
+        hostModel.tagLinks = [...new Set(createdTags.map((tag) => tag.documentSelfLink))];
 
         var hostSpec = getHostSpec(hostModel);
 
@@ -681,7 +681,7 @@ let HostsStore = Reflux.createStore({
       Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
         return Promise.all(tags.map((tag, i) =>
           result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
-      }).then((createdTags) => {
+      }).then((updatedTags) => {
 
         var hostData = $.extend({}, hostModel.dto, {
           customProperties: $.extend({}, hostModel.dto.customProperties, customProperties),
@@ -689,7 +689,7 @@ let HostsStore = Reflux.createStore({
           resourcePoolLink: hostModel.resourcePoolLink,
           credential: hostModel.credential,
           powerState: this.data.hostAddView.powerState,
-          tagLinks: createdTags.map((tag) => tag.documentSelfLink)
+          tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
         });
 
         services.updateHost(hostId, hostData).then(() => {
@@ -776,7 +776,7 @@ let HostsStore = Reflux.createStore({
             result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
         }).then((createdTags) => {
 
-          hostModel.tagLinks = createdTags.map((tag) => tag.documentSelfLink);
+          hostModel.tagLinks = [...new Set(createdTags.map((tag) => tag.documentSelfLink))];
 
           var hostSpec = getHostSpec(hostModel);
           hostSpec.sslTrust = certificateHolder;

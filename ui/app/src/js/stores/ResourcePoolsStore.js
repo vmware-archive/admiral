@@ -162,18 +162,19 @@ let ResourcePoolsStore = Reflux.createStore({
       return Promise.all(tags.map((tag, i) =>
         result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
     }).then((updatedTags) => {
-      if (tags.length !== 0) {
+      if (config.epzState) {
+        config.epzState.tagLinksToMatch = updatedTags.map((tag) => tag.documentSelfLink);
+      } else if (tags.length !== 0) {
         config.epzState = {
           resourcePoolLink: config.resourcePoolState.documentSelfLink,
           tagLinksToMatch: updatedTags.map((tag) => tag.documentSelfLink)
         };
-      } else if (config.epzState) {
-        config.epzState.tagLinksToMatch = [];
       }
       return services.updateResourcePool(config);
     }).then((updatedConfig) => {
       // If the backend did not make any changes, the response will be empty
-      updatedConfig = updatedConfig || config;
+      updatedConfig.resourcePoolState = updatedConfig.resourcePoolState || config.resourcePoolState;
+      updatedConfig.epzState = updatedConfig.epzState || config.epzState;
 
       var configs = this.data.items.asMutable();
 
