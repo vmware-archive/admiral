@@ -12,6 +12,7 @@
 import PlacementsRowTemplate from 'PlacementsRowTemplate';
 import PlacementsRowHighlightTemplate from 'PlacementsRowHighlightTemplate';
 import { NavigationActions } from 'actions/Actions';
+import utils from 'core/utils';
 
 var renderers = {
   render: function(placement) {
@@ -22,6 +23,10 @@ var renderers = {
       return NavigationActions.showContainersPerPlacement(placement.documentSelfLink);
     });
 
+    if (!utils.isApplicationEmbedded()) {
+      rowRendererEl.find('td#deploymentPolicy').hide();
+    }
+
     return rowRendererEl;
   },
 
@@ -31,6 +36,18 @@ var renderers = {
     placementHighlight.placementRow = $placementRow.html();
     placementHighlight.isNew = isNew;
     placementHighlight.isUpdated = isUpdated;
+
+    if (!utils.isApplicationEmbedded()) {
+      placementHighlight.find('th.th-wide')[0].hide();
+      placementHighlight.find('.highlight-item').prop('colspan', 8);
+      placementHighlight.find('th.th-wide').css('width', '14%');
+      placementHighlight.find('th.th-medium').css('width', '12%');
+      placementHighlight.find('th.th-small').css('width', '10%');
+    } else {
+      placementHighlight.find('th.th-wide').css('width', '14%');
+      placementHighlight.find('th.th-medium').css('width', '11%');
+      placementHighlight.find('th.th-small').css('width', '9%');
+    }
 
     return $(PlacementsRowHighlightTemplate(placementHighlight));
   }

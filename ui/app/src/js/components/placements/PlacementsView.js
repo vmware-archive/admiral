@@ -66,6 +66,17 @@ var PlacementsView = Vue.extend({
     this.placementsList.setDeleteCallback(PlacementActions.deletePlacement);
     this.placementsList.setEditCallback(PlacementActions.editPlacement);
 
+    if (this.isStandaloneMode()) {
+      $('th#deploymentPolicy').hide();
+      $('th.th-wide').css('width', '14%');
+      $('th.th-medium').css('width', '12%');
+      $('th.th-small').css('width', '10%');
+    } else {
+      $('th.th-wide').css('width', '14%');
+      $('th.th-medium').css('width', '11%');
+      $('th.th-small').css('width', '9%');
+    }
+
     this.unwatchModel = this.$watch('model.placements', (placements) => {
       this.placementsList.setData(placements);
     });
