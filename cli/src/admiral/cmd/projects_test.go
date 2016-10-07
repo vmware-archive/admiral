@@ -43,7 +43,7 @@ func TestAddUseRemoveProjects(t *testing.T) {
 	RunHostRemove([]string{tc.HostAddress})
 
 	TestPrintln("Adding host.")
-	hostAddCmd.ParseFlags([]string{"--ip=" + tc.HostAddress, "--placement-zone=" + tc.PlacementZone,
+	hostAddCmd.ParseFlags([]string{"--address=" + tc.HostAddress, "--placement-zone=" + tc.PlacementZone,
 		"--public=" + tc.PublicKey, "--private=" + tc.PrivateKey, "--accept"})
 	hostMsg, err := RunAddHost([]string{})
 	CheckTestError(err, t)

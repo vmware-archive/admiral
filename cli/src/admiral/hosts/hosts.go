@@ -222,7 +222,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 			return addedHost.Id, nil
 		}
 		credentials.RemoveCredentialsID(newCredID)
-		return "", errors.New("Error occured when adding the new certificate.")
+		return "", errors.New("Error occurred when adding the new certificate.")
 	} else if resp.StatusCode == 204 {
 		link := resp.Header.Get("Location")
 		url = config.URL + link

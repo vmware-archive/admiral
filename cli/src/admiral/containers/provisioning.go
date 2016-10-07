@@ -49,8 +49,8 @@ func (lc *LogConfig) SetType(s string) {
 type ContainerDescription struct {
 	Image              NilString `json:"image"`
 	Name               NilString `json:"name"`
-	Cluster            NilInt32  `json:"_cluster"` //--cluster-size
-	Command            []string  `json:"command"`  //
+	Cluster            NilInt32  `json:"_cluster"`
+	Command            []string  `json:"command"`
 	CpuShares          NilString `json:"cpuShares"`
 	DeploymentPolicyID NilString `json:"deploymentPolicyId"`
 	Env                []string  `json:"env"`
@@ -84,8 +84,6 @@ func (cd *ContainerDescription) Create(
 			currPort.SetPorts(p)
 			portArr = append(portArr, currPort)
 		}
-		//If any port bindings is provided, publish all is disabled.
-		publishAll = false
 	}
 	//End setting up array of port objects.
 	logconf := LogConfig{}
@@ -184,6 +182,7 @@ func getContaierRunLink(cd *ContainerDescription) (string, error) {
 	jsonBody, err := json.MarshalIndent(cd, "", "    ")
 	functions.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	req.Header.Set("Pragma", "xn-force-index-update")
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return "", respErr

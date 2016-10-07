@@ -43,7 +43,7 @@ func TestAddUseRemoveResourcePools(t *testing.T) {
 	rpId := strings.Split(rpMsg, " ")[3]
 
 	TestPrintln("Adding new host with the new placement zone.")
-	hostAddCmd.ParseFlags([]string{"--ip=" + tc.HostAddress, "--placement-zone=" + rpId,
+	hostAddCmd.ParseFlags([]string{"--address=" + tc.HostAddress, "--placement-zone=" + rpId,
 		"--public=" + tc.PublicKey, "--private=" + tc.PrivateKey, "--accept"})
 	hostMsg, err := RunAddHost([]string{})
 	CheckTestError(err, t)
