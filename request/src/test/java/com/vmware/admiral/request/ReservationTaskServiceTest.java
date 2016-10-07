@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
@@ -300,7 +299,6 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
     }
 
     @Test
-    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-640")
     public void testReservationTaskLifeCycleWithGlobalGroup() throws Throwable {
         // create placement with same group but less number of instances:
         GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
