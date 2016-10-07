@@ -60,15 +60,18 @@
                                   ></title-action-button>
             <timeout-alert v-bind:show="selectionMode" v-bind:text="i18n('app.resources.message.selectShift')"></timeout-alert>
             <div class="title-second-day-operations hide" transition="fade-in">
-              <title-action-button v-bind:name="'multiStop'" v-bind:icon-name="'stop'"
+              <title-action-button v-if="multiSelectionOperationSupported('STOP')"
+                                   v-bind:name="'multiStop'" v-bind:icon-name="'stop'"
                                    v-bind:confirmable="false" v-bind:button-type="'SPIN_TIMEOUT'"
                                    v-bind:tooltip="i18n('app.container.actions.stop')"
                                    v-bind:show="selectionMode"></title-action-button>
-              <title-action-button v-bind:name="'multiStart'" v-bind:icon-name="'play'"
+              <title-action-button v-if="multiSelectionOperationSupported('START')"
+                                   v-bind:name="'multiStart'" v-bind:icon-name="'play'"
                                    v-bind:confirmable="false" v-bind:button-type="'SPIN_TIMEOUT'"
                                    v-bind:tooltip="i18n('app.container.actions.start')"
                                    v-bind:show="selectionMode"></title-action-button>
-              <title-action-button v-bind:name="'multiRemove'" v-bind:icon-name="'times'"
+              <title-action-button v-if="multiSelectionOperationSupported('REMOVE')"
+                                   v-bind:name="'multiRemove'" v-bind:icon-name="'times'"
                                    v-bind:confirmable="true" v-bind:button-type="'SPIN_TIMEOUT'"
                                    v-bind:tooltip="i18n('delete')"
                                    v-bind:show="selectionMode"></title-action-button>
@@ -98,7 +101,8 @@
                            v-on:click="handleItemClick($event, item, openCompositeContainerDetails)">
                 </composite-container-grid-item>
                 <network-grid-item v-if="item.type === constants.RESOURCES.TYPES.NETWORK"
-                                   v-bind:model="item">
+                           v-bind:model="item"
+                           v-on:click="handleItemClick($event, item)">
                 </network-grid-item>
               </grid-item>
             </grid>

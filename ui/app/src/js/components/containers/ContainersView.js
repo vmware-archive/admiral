@@ -238,9 +238,17 @@ var ContainersViewVueComponent = Vue.extend({
     },
 
     multiSelectionSupported: function() {
-      return this.hasItems &&
-              (this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS
-                || this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS);
+      return this.hasItems;
+    },
+
+    multiSelectionOperationSupported: function(operation) {
+      if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS
+          || this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS) {
+        return true;
+      } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS) {
+        return operation === constants.RESOURCES.NETWORKS.OPERATION.REMOVE;
+      }
+      return false;
     },
 
     clearSelections: function() {
@@ -267,6 +275,17 @@ var ContainersViewVueComponent = Vue.extend({
       return !item.system && this.selectedItems.indexOf(item.documentId) > -1;
     },
 
+    performDeleteBatchOperation: function() {
+      if (this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS
+          || this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS) {
+
+        this.performBatchOperation('Container.Delete');
+      } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS) {
+
+        this.performBatchOperation('Network.Delete');
+      }
+    },
+
     performBatchOperation: function(operation) {
       let selectedItemIds = this.selectedItems;
       this.clearSelections();
@@ -277,6 +296,9 @@ var ContainersViewVueComponent = Vue.extend({
       } else if (this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS) {
 
         ContainerActions.batchOpCompositeContainers(selectedItemIds, operation);
+      } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS) {
+
+        ContainerActions.batchOpNetworks(selectedItemIds, operation);
       }
     },
 
@@ -285,7 +307,9 @@ var ContainersViewVueComponent = Vue.extend({
 
       if (!this.selectionMode) {
         // standard flow
-        defaultFn.call(this, itemId);
+        if (defaultFn) {
+          defaultFn.call(this, itemId);
+        }
 
       } else {
         // selection of items
@@ -367,7 +391,7 @@ var ContainersViewVueComponent = Vue.extend({
         this.performBatchOperation('Container.Stop');
 
       } else if (actionName === 'multiRemove') {
-        this.performBatchOperation('Container.Delete');
+        this.performDeleteBatchOperation();
       }
     }
   }

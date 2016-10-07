@@ -55,7 +55,7 @@ export var ContainerActions = Reflux.createActions([
   'removeContainerDetails', 'removeContainers', 'operationCompleted', 'operationFailed',
   'modifyClusterSize', 'scaleContainer', 'startCluster', 'stopCluster', 'removeCluster',
   'closeContainers', 'openShell', 'closeShell',
-  'batchOpContainers', 'batchOpCompositeContainers',
+  'batchOpContainers', 'batchOpCompositeContainers', 'batchOpNetworks',
   'openCreateContainer', 'openCreateNetwork', 'createContainer', 'createNetwork'
 ]);
 

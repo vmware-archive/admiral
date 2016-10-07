@@ -1073,6 +1073,14 @@ services.batchOpContainers = function(containerIds, operation) {
     });
 };
 
+services.batchOpNetworks = function(networkIds, operation) {
+  return day2operation(links.REQUESTS,
+    makeDay2OperationRequestNetworks(networkIds, operation))
+    .then(function(day2OpRequest) {
+      return day2OpRequest;
+    });
+};
+
 services.startCompositeContainer = function(compositeId) {
   return day2operation(links.REQUESTS,
     makeDay2OperationRequestComposite(compositeId, 'Container.Start'))
