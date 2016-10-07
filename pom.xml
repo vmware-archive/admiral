@@ -57,7 +57,7 @@
         <maven.plugin.compiler>3.5.1</maven.plugin.compiler>
         <maven.plugin.resources>2.7</maven.plugin.resources>
         <maven.plugin.dependency>2.10</maven.plugin.dependency>
-        <maven.plugin.failsafe>2.18.1</maven.plugin.failsafe>
+        <maven.plugin.failsafe>2.19.1</maven.plugin.failsafe>
         <maven.jar.plugin>2.6</maven.jar.plugin>
         <maven.plugin.install>2.5.2</maven.plugin.install>
         <maven.plugin.deploy>2.8.1</maven.plugin.deploy>
