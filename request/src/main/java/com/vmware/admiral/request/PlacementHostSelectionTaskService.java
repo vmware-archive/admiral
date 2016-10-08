@@ -213,7 +213,7 @@ public class PlacementHostSelectionTaskService
             if (qr.computesByLink.isEmpty()) {
                 if (retries > 0) {
                     logWarning(
-                            "No powered-on container hosts found in resource pools %s " +
+                            "No powered-on container hosts found in placement zones %s " +
                                     "matching descriptions %s, " +
                                     "retrying (%d left)...",
                             state.resourcePoolLinks, computeDescriptionLinks, retries - 1);
@@ -223,7 +223,7 @@ public class PlacementHostSelectionTaskService
                             TimeUnit.MILLISECONDS);
                 } else {
                     failTask(null, new IllegalStateException(
-                            "No powered-on container hosts found in resource pools: "
+                            "No powered-on container hosts found in placement zones: "
                                     + state.resourcePoolLinks));
                 }
                 return;
@@ -290,6 +290,7 @@ public class PlacementHostSelectionTaskService
 
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private void filter(final PlacementHostSelectionTaskState state,
             final ContainerDescription desc,
             final Map<String, HostSelection> hostSelectionMap,

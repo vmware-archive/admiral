@@ -209,7 +209,7 @@ public class ManagementHostTest {
                 doDelete(host, UriUtils.buildUri(host, resourcePool.documentSelfLink));
                 fail("expect validation error during deletion");
             } catch (IllegalStateException e) {
-                assertEquals("Resource Pool is in use", e.getMessage());
+                assertEquals("Placement zone is in use", e.getMessage());
             }
 
             resourcePool.name = "test-resource-pool2";

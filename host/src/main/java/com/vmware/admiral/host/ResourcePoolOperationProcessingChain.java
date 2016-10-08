@@ -50,7 +50,7 @@ class ResourcePoolOperationProcessingChain extends OperationProcessingChain {
                             }
                             ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
                             if (result.documentCount != 0) {
-                                op.fail(new IllegalStateException("Resource Pool is in use"));
+                                op.fail(new IllegalStateException("Placement zone is in use"));
                             }
                             resumeProcessingRequest(op, this);
                         }));

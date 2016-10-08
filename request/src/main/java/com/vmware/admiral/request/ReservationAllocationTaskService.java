@@ -220,7 +220,7 @@ public class ReservationAllocationTaskService extends
                         (o, e) -> {
                             if (e != null) {
                                 failTask(
-                                        String.format("Failed to create resource pool. Error: %s",
+                                        String.format("Failed to create placement zone. Error: %s",
                                                 Utils.toString(e)),
                                         e);
                                 return;
@@ -296,7 +296,7 @@ public class ReservationAllocationTaskService extends
                         (o, e) -> {
                             if (e != null) {
                                 failTask(String.format(
-                                        "Failed to change resource pool of host with id: %s. Error: %s",
+                                        "Failed to change placement zone of host with id: %s. Error: %s",
                                         containerHost.id, e.getMessage()), e);
                                 return;
                             }

@@ -314,7 +314,7 @@ public class GroupResourcePlacementService extends StatefulService {
                         || currentState.storageLimit != putBody.storageLimit
                         || !currentState.resourcePoolLink.equals(putBody.resourcePoolLink)) {
                     put.fail(new IllegalArgumentException(
-                            "'cpuShares' or 'resourcePoolLink' can't be modified while there are active instances for the placement"));
+                            "'cpuShares' or 'placement zones' can't be modified while there are active instances for the placement"));
                     return;
                 }
             }
@@ -535,7 +535,7 @@ public class GroupResourcePlacementService extends StatefulService {
     private void validateStateOnStart(GroupResourcePlacementState state, Operation operation,
             Consumer<Void> callbackFunction) {
         assertNotEmpty(state.name, "name");
-        assertNotEmpty(state.resourcePoolLink, "resourcePoolLink");
+        assertNotEmpty(state.resourcePoolLink, "placement zone");
         if (state.maxNumberInstances < 0) {
             throw new IllegalArgumentException(
                     "'maxNumberInstances' must be greater or eq to zero.");
@@ -584,7 +584,7 @@ public class GroupResourcePlacementService extends StatefulService {
 
                             if (state.memoryLimit > totalMemory) {
                                 operation.fail(new IllegalArgumentException(
-                                        "Not enough memory in this resource pool. Total memory in resource pool: "
+                                        "Not enough memory in this placement zone. Total memory in placement zone: "
                                                 + totalMemory + ", requested: "
                                                 + state.memoryLimit));
                                 return;

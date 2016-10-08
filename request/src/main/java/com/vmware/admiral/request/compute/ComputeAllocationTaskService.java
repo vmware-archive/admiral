@@ -694,7 +694,7 @@ public class ComputeAllocationTaskService
         }
 
         if (groupResourcePlacement.resourcePoolLink == null) {
-            failTask("Group resource placement has no resource pool link", null);
+            failTask("Group resource placement has no placement zone", null);
             return;
         }
 
