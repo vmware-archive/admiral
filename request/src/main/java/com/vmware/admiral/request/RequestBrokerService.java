@@ -334,6 +334,13 @@ public class RequestBrokerService extends
         sendSelfPatch(body);
     }
 
+    private void failRequest(RequestBrokerState state, String message, Throwable ex) {
+        logSevere(message + ",reason: %s", Utils.toString(ex));
+        RequestBrokerState error = createUpdateSubStageTask(state, SubStage.ERROR);
+        error.taskInfo.failure = Utils.toServiceErrorResponse(ex);
+        sendSelfPatch(error);
+    }
+
     @Override
     protected void handleFailedStagePatch(RequestBrokerState state) {
         EventLogState eventLog = new EventLogState();
@@ -533,7 +540,8 @@ public class RequestBrokerService extends
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        failTask("Failed to create container host removal operation task", ex);
+                        failRequest(state, "Failed to create container host removal operation task",
+                                ex);
                         return;
                     }
                     sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
@@ -564,7 +572,7 @@ public class RequestBrokerService extends
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        failTask("Failed to create container host removal operation task", ex);
+                        failRequest(state, "Failed to create compute removal operation task", ex);
                         return;
                     }
                     sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
@@ -592,7 +600,8 @@ public class RequestBrokerService extends
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        failTask("Failed to create container network removal operation task", ex);
+                        failRequest(state,
+                                "Failed to create container network removal operation task", ex);
                         return;
                     }
                     sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
@@ -620,7 +629,8 @@ public class RequestBrokerService extends
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        failTask("Failed to create container volume removal operation task", ex);
+                        failRequest(state,
+                                "Failed to create container volume removal operation task", ex);
                         return;
                     }
                     sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
@@ -654,7 +664,8 @@ public class RequestBrokerService extends
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        failTask("Failed to create container removal task", ex);
+                        failRequest(state, "Failed to create container removal task", ex);
+                        return;
                     }
                     if (!errorState) {
                         sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
