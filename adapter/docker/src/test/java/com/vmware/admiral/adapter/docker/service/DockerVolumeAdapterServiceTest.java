@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import javax.net.ssl.TrustManager;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.VolumeOperationType;
@@ -57,6 +58,7 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.FileContentService;
 
+@Ignore
 public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
 
     private static final String TEST_CUSTOM_PROP_NAME = "Hostname";
