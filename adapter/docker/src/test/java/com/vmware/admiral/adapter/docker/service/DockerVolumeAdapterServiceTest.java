@@ -58,6 +58,11 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.FileContentService;
 
+/**
+ * Test should be enabled once build is stabilized. Jira task:
+ * https://jira-hzn.eng.vmware.com/browse/VBV-671
+ *
+ */
 @Ignore
 public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
 
