@@ -192,7 +192,8 @@ function makeClusterObject(clusterId, containers) {
     descriptionLink: clusterId,
     name: containers ? containers[0].image : 'N/A',
     type: constants.CONTAINERS.TYPES.CLUSTER,
-    containers: containers
+    containers: containers,
+    compositeComponentId: getContextIdFromClusterId(clusterId)
   };
 
   clusterObject.icon = containers ? imageUtils.getImageIconLink(containers[0].image) : null;

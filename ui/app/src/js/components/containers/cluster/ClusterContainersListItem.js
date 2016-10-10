@@ -54,9 +54,10 @@ var ClusterContainersListItem = Vue.extend({
       $event.stopPropagation();
       $event.preventDefault();
 
-      let clusterId = this.model.documentSelfLink;
+      let clusterId = this.model.documentId;
+      let compositeComponentId = this.model.compositeComponentId;
 
-      NavigationActions.openClusterDetails(clusterId);
+      NavigationActions.openClusterDetails(clusterId, compositeComponentId);
     },
 
     modifyClusterSize: function($event, incrementValue) {
