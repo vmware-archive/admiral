@@ -150,8 +150,9 @@ public abstract class BaseAffinityHostFilter
                                         hostSelection);
                                 final DescName descName = containerDescLinksWithNames
                                         .get(r.getResult().descriptionLink);
-                                hostSelection.addDesc(descName);
-                                descName.addContainerNames(r.getResult().names);
+                                DescName newDescName = new DescName(descName);
+                                newDescName.addContainerNames(r.getResult().names);
+                                hostSelection.addDesc(newDescName);
                             } else {
                                 try {
                                     final Map<String, HostSelection> hostSelectionMap =

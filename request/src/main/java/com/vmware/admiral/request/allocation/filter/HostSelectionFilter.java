@@ -44,7 +44,7 @@ public interface HostSelectionFilter<T> extends AffinityFilter {
         void complete(Map<String, HostSelection> filteredHostSelectionMap, Throwable failure);
     }
 
-    public static class HostSelection {
+    class HostSelection {
         private static final String SPLIT_REGEX = ":";
         public String hostLink;
         public int resourceCount;
@@ -94,16 +94,28 @@ public interface HostSelectionFilter<T> extends AffinityFilter {
         }
     }
 
-    public static class DescName {
+    class DescName {
         public String descLink;
         public String descriptionName;
         public String[] affinities;
         private Set<String> containerNames;
 
+        public DescName() {
+        }
+
+        public DescName(DescName descName) {
+            this.descLink = descName.descLink;
+            this.descriptionName = descName.descriptionName;
+            this.affinities = descName.affinities != null ? descName.affinities.clone() : null;
+            this.containerNames =
+                    descName.containerNames != null ? new HashSet<>(descName.containerNames) : null;
+        }
+
         public void addContainerNames(List<String> names) {
             if (names == null) {
                 return;
             }
+
             if (containerNames == null) {
                 containerNames = new HashSet<>();
             }
@@ -111,7 +123,7 @@ public interface HostSelectionFilter<T> extends AffinityFilter {
         }
     }
 
-    public static class HostSelectionFilterException extends IllegalStateException {
+    class HostSelectionFilterException extends IllegalStateException {
         private static final long serialVersionUID = 1L;
 
         public HostSelectionFilterException(String s) {

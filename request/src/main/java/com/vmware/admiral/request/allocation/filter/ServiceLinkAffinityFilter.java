@@ -93,8 +93,9 @@ public class ServiceLinkAffinityFilter extends BaseAffinityHostFilter {
                             } else if (r.hasResult()) {
                                 ContainerState result = r.getResult();
 
-                                final DescName descName = containerDescLinksWithNames
+                                DescName descName = containerDescLinksWithNames
                                         .get(result.descriptionLink);
+                                descName = new DescName(descName);
                                 descName.addContainerNames(result.names);
 
                                 // When there are user defined networks, the dependent service can be on any host
