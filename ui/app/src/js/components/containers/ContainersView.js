@@ -165,6 +165,14 @@ var ContainersViewVueComponent = Vue.extend({
         NotificationsActions.retrieveNotifications();
       }
     }, constants.NOTIFICATIONS.REFRESH_INTERVAL);
+
+    this.unwatchSelectedCategory = this.$watch('selectedCategory',
+      (oldSelectedCategory, selectedCategory) => {
+
+        if (oldSelectedCategory !== selectedCategory) {
+          this.clearSelections();
+        }
+      }, {immediate: true});
   },
   detached: function() {
     this.unwatchSelectedItem();
@@ -178,6 +186,8 @@ var ContainersViewVueComponent = Vue.extend({
 
     clearInterval(this.refreshRequestsInterval);
     clearInterval(this.notificationsInterval);
+
+    this.unwatchSelectedCategory();
   },
 
   methods: {
