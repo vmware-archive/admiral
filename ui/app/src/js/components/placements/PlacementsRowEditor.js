@@ -105,8 +105,7 @@ function PlacementsRowEditor() {
   this.deploymentPolicyInput.setOptionSelectCallback(() => toggleButtonsState.call(this));
 
   if (!utils.isApplicationEmbedded()) {
-    this.$el.find('.deploymentPolicy').hide();
-    this.$el.find('.placementEditHolder').prop('colspan', 8);
+    deploymentPolicyEl.hide();
   }
   addEventListeners.call(this);
 }
