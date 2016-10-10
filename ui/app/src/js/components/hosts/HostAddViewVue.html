@@ -90,7 +90,8 @@
            v-on:click="verifyHost">{{i18n("app.host.details.verify")}}<i class="fa fa-spinner fa-spin loader-inline"></i></a>
         <button type="submit" class="btn admiral-btn saveHost"
                 v-bind:class="{'disabled': buttonsDisabled, 'loading': model.isSavingHost}"
-                v-on:click="saveHost">
+                v-on:click="saveHost"
+                :disabled="buttonsDisabled">
           <template v-if="model.isUpdate">{{i18n("app.host.details.update")}}</template>
           <template v-else>{{i18n("app.host.details.add")}}</template><i class="fa fa-spinner fa-spin loader-inline"></i></button>
         <span class="help-block"></span>
