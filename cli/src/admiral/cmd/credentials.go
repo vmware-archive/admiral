@@ -45,7 +45,7 @@ func initCredentialsAdd() {
 	credentialsAddCmd.Flags().StringVar(&publicCert, "public", "", "(Required if using certificates)"+publicCertDesc)
 	credentialsAddCmd.Flags().StringVar(&privateCert, "private", "", "(Required if using ceritficates)"+privateCertDesc)
 	credentialsAddCmd.Flags().StringVar(&userName, "username", "", "(Required if using username) Username.")
-	credentialsAddCmd.Flags().StringVar(&passWord, "password", "", " (Required if using username) Password.")
+	credentialsAddCmd.Flags().StringVar(&passWord, "password", "", "(Required if using username) Password.")
 	credentialsAddCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)
 	CredentialsRootCmd.AddCommand(credentialsAddCmd)
 }

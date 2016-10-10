@@ -27,7 +27,7 @@ func TestPlacementAddRemove(t *testing.T) {
 
 	testArguments = append(
 		testArguments, []string{"--placement-zone=default-placement-zone", "--priority=50",
-			"--memoryLimit=100mb", "--instances=10", "--cpuShares=2", "--project=", "--deployment-policy="})
+			"--memory-limit=100mb", "--instances=10", "--cpuShares=2", "--project=", "--deployment-policy="})
 
 	testArguments = append(
 		testArguments, []string{"--placement-zone=default-placement-zone"})

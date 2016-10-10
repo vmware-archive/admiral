@@ -24,6 +24,7 @@ import (
 	"admiral/functions"
 	"admiral/placementzones"
 	"admiral/projects"
+	"fmt"
 )
 
 type Placement struct {
@@ -45,6 +46,19 @@ type Placement struct {
 
 func (p *Placement) GetID() string {
 	return strings.Replace(*p.DocumentSelfLink, "/resources/group-placements/", "", -1)
+}
+
+func (p *Placement) GetFormattedMemoryLimit() string {
+	if p.MemoryLimit < 1000 {
+		return fmt.Sprintf("%d BYTES", p.MemoryLimit)
+	} else if p.MemoryLimit < 1000000 {
+		return fmt.Sprintf("%.1f KB", float64(p.MemoryLimit)/(1000))
+	} else if p.MemoryLimit < 1000000000 {
+		return fmt.Sprintf("%.1f MB", float64(p.MemoryLimit)/(1000*1000))
+	} else if p.MemoryLimit < 1000000000000 {
+		return fmt.Sprintf("%.1f GB", float64(p.MemoryLimit)/(1000*1000*1000))
+	}
+	return fmt.Sprintf("%d", p.MemoryLimit)
 }
 
 type PlacementToAdd struct {
@@ -141,7 +155,7 @@ func (pl *PlacementList) GetOutputString() string {
 			}
 		}
 		output := functions.GetFormattedString(val.GetID(), val.Name, project, pz, dp, val.Priority,
-			val.AvailableInstancesCount, val.CpuShares, val.MemoryLimit)
+			val.AvailableInstancesCount, val.CpuShares, val.GetFormattedMemoryLimit())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 
@@ -271,7 +285,7 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolID string, 
 		oldPlacement.DeploymentPolicyLink = functions.CreateResLinkForDP(deplPolID)
 	}
 	if memoryLimit != 0 {
-		oldPlacement.MemoryLimit = 0
+		oldPlacement.MemoryLimit = memoryLimit
 	}
 
 	jsonBody, err := json.Marshal(oldPlacement)

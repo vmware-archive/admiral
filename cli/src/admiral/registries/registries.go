@@ -121,7 +121,7 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 			if err != nil {
 				return "", err
 			}
-		} else if publicCert != "" && privateCert != "" {
+		} else if userName != "" && passWord != "" {
 			newCredID, err = credentials.AddByUsername(addressF, userName, passWord, nil)
 			if err != nil {
 				return "", err
@@ -225,13 +225,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 		reg.Name = newName
 	}
 	if newCred != "" {
-		credLinks := credentials.GetCredentialsLinks(newCred)
-		if len(credLinks) < 1 {
-			return "", errors.New("Credentials not found.")
-		} else if len(credLinks) > 1 {
-			return "", errors.New("Credentials with duplicate name found, fix it manually and then proceed.")
-		}
-		credLink := credLinks[0]
+		credLink := functions.CreateResLinkForCredentials(newCred)
 		reg.AuthCredentialsLinks = &credLink
 	}
 	url = config.URL + "/config/registry-spec"

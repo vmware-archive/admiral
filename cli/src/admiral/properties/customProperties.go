@@ -40,7 +40,9 @@ func MakeHostProperties(credLink, dpLink string, props map[string]*string) map[s
 	if credLink != "" {
 		props["__authCredentialsLink"] = &credLink
 	}
-	props["__deploymentPolicyLink"] = &dpLink
+	if dpLink != "" {
+		props["__deploymentPolicyLink"] = &dpLink
+	}
 	api := "API"
 	props["__adapterDockerType"] = &api
 	return props

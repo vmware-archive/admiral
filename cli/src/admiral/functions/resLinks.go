@@ -60,6 +60,9 @@ func CreateResLinkForCredentials(id string) string {
 
 //Function to create resource links from the provided ID as parameter.
 func CreateResLinkForDP(id string) string {
+	if id == "" {
+		return ""
+	}
 	return "/resources/deployment-policies/" + id
 }
 

@@ -57,32 +57,35 @@ var placementAddCmd = &cobra.Command{
 }
 
 func initPlacementAdd() {
-	placementAddCmd.Flags().StringVar(&cpuShares, "cpu", "", "CPU shares.")
+	placementAddCmd.Flags().StringVar(&cpuShares, "cpu-shares", "", "CPU shares.")
 	placementAddCmd.Flags().StringVar(&instances, "instances", "", "Instances")
 	placementAddCmd.Flags().StringVar(&priority, "priority", "", "Priority")
-	placementAddCmd.Flags().StringVar(&tenants, "project", "", "Project")
+	placementAddCmd.Flags().StringVar(&tenants, "project", "", "Project ID")
 	placementAddCmd.Flags().StringVar(&placementZoneID, "placement-zone", "", "(Required) Placement zone ID")
 	placementAddCmd.Flags().StringVar(&deplPolID, "deployment-policy", "", "Deployment policy ID")
-	placementAddCmd.Flags().StringVar(&memoryLimitStr, "memory", "0kb", "Memory limit. Default unit: kb. Units supported: kb/mb/gb. Example: 1024mb")
+	placementAddCmd.Flags().StringVar(&memoryLimitStr, "memory-limit", "0kb", "Memory limit. Default unit: kb. Units supported: kb/mb/gb. Example: 1024mb")
 	PlacementsRootCmd.AddCommand(placementAddCmd)
 }
 
-func parseMemory(memory string) (size int64, err error) {
-	reg := regexp.MustCompile("([0-9]+)([a-zA-Z]+)")
+func parseMemory(memory string) (int64, error) {
+	reg := regexp.MustCompile("([0-9]+\\.?[0-9]*)\\s?([a-zA-Z]+)")
 	results := reg.FindAllStringSubmatch(memory, -1)
 	sizeStr := results[0][1]
 	unit := results[0][2]
-	size, err = strconv.ParseInt(sizeStr, 10, 64)
+	size, err := strconv.ParseFloat(sizeStr, 64)
+	if err != nil {
+		return 0, err
+	}
 	switch strings.ToLower(unit) {
 	case "kb":
 		size = size * 1000
-		return
+		return int64(size), nil
 	case "mb":
 		size = size * 1000 * 1000
-		return
+		return int64(size), nil
 	case "gb":
 		size = size * 1000 * 1000 * 1000
-		return
+		return int64(size), nil
 	}
 	return 0, errors.New("Unable to parse the memory provided.")
 }
@@ -182,13 +185,13 @@ var placementUpdateCmd = &cobra.Command{
 
 func initPlacementUpdate() {
 	placementUpdateCmd.Flags().StringVar(&newName, "name", "", "New name")
-	placementUpdateCmd.Flags().Int32Var(&cpuSharesInt, "cpu", -1, "New CPU shares.")
+	placementUpdateCmd.Flags().Int32Var(&cpuSharesInt, "cpu-shares", -1, "New CPU shares.")
 	placementUpdateCmd.Flags().Int32Var(&maxNumberInstances, "instances", -1, "New instances")
-	placementUpdateCmd.Flags().Int32Var(&priorityInt, "prio", -1, "New priority")
-	placementUpdateCmd.Flags().StringVar(&tenants, "group", "", "New group")
+	placementUpdateCmd.Flags().Int32Var(&priorityInt, "priority", -1, "New priority")
+	placementUpdateCmd.Flags().StringVar(&tenants, "project", "", "New project ID")
 	placementUpdateCmd.Flags().StringVar(&placementZoneID, "placement-zone", "", "New placement zone ID")
 	placementUpdateCmd.Flags().StringVar(&deplPolID, "deployment-policy", "", "New deployment policy ID")
-	placementUpdateCmd.Flags().StringVar(&memoryLimitStr, "memory", "0kb", "New memory limit. Default unit: kb. Units supported: kb/mb/gb. Example: 1024mb")
+	placementUpdateCmd.Flags().StringVar(&memoryLimitStr, "memory-limit", "0kb", "New memory limit. Default unit: kb. Units supported: kb/mb/gb. Example: 1024mb")
 	PlacementsRootCmd.AddCommand(placementUpdateCmd)
 }
 

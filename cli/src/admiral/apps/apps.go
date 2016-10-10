@@ -35,6 +35,26 @@ func (a *App) GetID() string {
 	return functions.GetResourceID(a.DocumentSelfLink)
 }
 
+func (a *App) GetContainersCount() int {
+	count := 0
+	for _, link := range a.ComponentLinks {
+		if strings.Contains(link, "/containers/") {
+			count++
+		}
+	}
+	return count
+}
+
+func (a *App) GetNetworksCount() int {
+	count := 0
+	for _, link := range a.ComponentLinks {
+		if strings.Contains(link, "/container-networks/") {
+			count++
+		}
+	}
+	return count
+}
+
 type ListApps struct {
 	TotalCount    int32          `json:"totalCount"`
 	DocumentLinks []string       `json:"documentLinks"`
@@ -75,10 +95,10 @@ func (listApps *ListApps) GetOutputStringWithoutContainers() string {
 		return "No elements found."
 	}
 	var buffer bytes.Buffer
-	buffer.WriteString("ID\tNAME")
+	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS")
 	buffer.WriteString("\n")
 	for _, app := range listApps.Documents {
-		output := functions.GetFormattedString(app.GetID(), app.Name)
+		output := functions.GetFormattedString(app.GetID(), app.Name, app.GetContainersCount(), app.GetNetworksCount())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
