@@ -13,6 +13,7 @@
   <alert v-bind:alert-type="alert.type"
           v-bind:show-alert="alert.show"
           v-bind:alert-message="alert.message"
+          v-bind:alert-timeout="3000"
           v-on:alert-closed="alertClosed()"></alert>
   <div class="status {{model.powerState}}">
     <span class="status-state">{{networkStatusDisplay(model.powerState)}}</span>

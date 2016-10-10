@@ -102,6 +102,7 @@
                 </composite-container-grid-item>
                 <network-grid-item v-if="item.type === constants.RESOURCES.TYPES.NETWORK"
                            v-bind:model="item"
+                           v-bind:show-alert-containers-connected="hasContainersConnectedAlert(item.documentId)"
                            v-on:click="handleItemClick($event, item)">
                 </network-grid-item>
               </grid-item>

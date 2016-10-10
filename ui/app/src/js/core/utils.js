@@ -117,6 +117,12 @@ var utils = {
     return isInteger(integer, 1);
   },
 
+  pushNoDuplicates: function(array, element) {
+    if (array && array.indexOf(element) === -1) {
+      array.push(element);
+    }
+  },
+
   uniqueArray: function(duplicatesArray) {
     return duplicatesArray.filter(function(elem, pos) {
       return duplicatesArray.indexOf(elem) === pos;
@@ -351,6 +357,19 @@ var utils = {
 
     return stateString;
   },
+
+  isRetiredNetwork: function(network) {
+    return network.powerState
+      && network.powerState === constants.RESOURCES.NETWORKS.STATES.RETIRED;
+  },
+
+  isNetworkRemovalPossible: function(network) {
+    // a network can be removed only if there are no containers
+    // connected to it or if the network is in RETIRED state
+    return utils.isRetiredNetwork(network)
+      || !network.connectedContainers
+      || network.connectedContainers.length === 0;
+},
 
   isSystemContainer: function(container) {
     return container.system;

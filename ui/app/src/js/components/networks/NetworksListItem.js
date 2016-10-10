@@ -25,13 +25,17 @@ var NetworksListItem = Vue.extend({
   template: NetworksListItemVue,
   mixins: [DeleteConfirmationSupportMixin],
   props: {
-    model: {required: true}
+    model: {
+      required: true
+    }, showAlertContainersConnected: {
+      required: true
+    }
   },
 
   data: function() {
     return {
       alert: {
-        type: 'danger',
+        type: 'warning',
         show: false,
         message: ''
       }
@@ -75,14 +79,22 @@ var NetworksListItem = Vue.extend({
             return true;
           }
         });
-    },
-
-    isRetiredNetwork: function() {
-      return this.model.powerState
-        && this.model.powerState === constants.RESOURCES.NETWORKS.STATES.RETIRED;
     }
 
   },
+
+  attached: function() {
+    this.unwatchShowAlertContainersConnected = this.$watch('showAlertContainersConnected', () => {
+      if (this.showAlertContainersConnected) {
+        this.showNetworkRemovalContainersConnectedAlert();
+      }
+    });
+  },
+
+  detached: function() {
+    this.unwatchShowAlertContainersConnected();
+  },
+
   methods: {
 
     getNetworkDocumentId: function() {
@@ -103,9 +115,7 @@ var NetworksListItem = Vue.extend({
     },
 
     removeNetworkClicked: function($event) {
-      // a network can be removed only if there are no containers
-      // connected to it or if the network is in RETIRED state
-      if (!this.hasConnectedContainers || this.isRetiredNetwork) {
+      if (utils.isNetworkRemovalPossible(this.model)) {
         this.askConfirmation($event);
       } else {
         $event.stopPropagation();

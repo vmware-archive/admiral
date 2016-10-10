@@ -24,6 +24,7 @@ import NetworkRequestForm from 'components/networks/NetworkRequestForm'; // esli
 import VueAdapter from 'components/common/VueAdapter';
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
+import utils from 'core/utils';
 import { NavigationActions, RequestsActions, NotificationsActions,
           ContainerActions, ContainersContextToolbarActions } from 'actions/Actions';
 
@@ -129,6 +130,7 @@ var ContainersViewVueComponent = Vue.extend({
       requiresPreTransitionWidth: true,
       selectionMode: false,
       selectedItems: [],
+      containerConnectedAlerts: [],
       lastSelectedItemId: null
     };
   },
@@ -270,6 +272,14 @@ var ContainersViewVueComponent = Vue.extend({
       this.lastSelectedItemId = null;
       // un-mark items
       $(this.$el).find('.grid-item').removeClass('marked');
+
+        // clear the warnings list. This needs to be done on the 'next tick', otherwise
+        // watchers will not see the change.
+        let _this = this;
+        this.$nextTick(() => {
+          _this.containerConnectedAlerts = [];
+        });
+
     },
 
     toggleSelectionMode: function() {
@@ -292,23 +302,56 @@ var ContainersViewVueComponent = Vue.extend({
         this.performBatchOperation('Container.Delete');
       } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS) {
 
+        this.removeNonRemoveableNetworksFromSelection();
         this.performBatchOperation('Network.Delete');
       }
+    },
+
+    hasContainersConnectedAlert: function(documentId) {
+      return this.containerConnectedAlerts
+        && this.containerConnectedAlerts.indexOf(documentId) > -1;
+    },
+
+    removeNonRemoveableNetworksFromSelection: function() {
+      // verify delete is possible for all networks, display warnings otherwise
+
+      this.model.listView.items.forEach((item) => {
+
+        let index = this.selectedItems
+          ? this.selectedItems.indexOf(item.documentId) : -1;
+
+        // if this network is selected
+        if (index > -1) {
+          if (!utils.isNetworkRemovalPossible(item)) {
+
+            // show alert
+            utils.pushNoDuplicates(this.containerConnectedAlerts, item.documentId);
+
+            // remove network from selection
+            this.selectedItems.splice(index, 1);
+          }
+
+        }
+      });
+
     },
 
     performBatchOperation: function(operation) {
       let selectedItemIds = this.selectedItems;
       this.clearSelections();
 
-      if (this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS) {
+      if (selectedItemIds && selectedItemIds.length > 0) {
 
-        ContainerActions.batchOpContainers(selectedItemIds, operation);
-      } else if (this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS) {
+        if (this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS) {
 
-        ContainerActions.batchOpCompositeContainers(selectedItemIds, operation);
-      } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS) {
+          ContainerActions.batchOpContainers(selectedItemIds, operation);
+        } else if (this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS) {
 
-        ContainerActions.batchOpNetworks(selectedItemIds, operation);
+          ContainerActions.batchOpCompositeContainers(selectedItemIds, operation);
+        } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS) {
+
+          ContainerActions.batchOpNetworks(selectedItemIds, operation);
+        }
       }
     },
 
@@ -342,7 +385,7 @@ var ContainersViewVueComponent = Vue.extend({
         let isSelected = !wasSelected;
         if (isSelected) {
           // add to selected items
-          this.selectedItems.push(itemId);
+          utils.pushNoDuplicates(this.selectedItems, itemId);
 
           if ($event.shiftKey && this.lastSelectedItemId) {
 
@@ -363,7 +406,7 @@ var ContainersViewVueComponent = Vue.extend({
             // add the items between the indices
             this.model.listView.items.forEach((item, index) => {
               if (index >= startIndex && index <= lastIndex) {
-                this.selectedItems.push(item.documentId);
+                utils.pushNoDuplicates(this.selectedItems, item.documentId);
               }
             });
           }

@@ -452,7 +452,7 @@
           "operations": {
             "errors": {
               "remove": {
-                "containersConnected": "Cannot remove network due to avaiable connected containers"
+                "containersConnected": "There are connected containers"
               }
             }
           }

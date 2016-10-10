@@ -2047,18 +2047,28 @@ $alert-text-color: #ffffff;
 }
 
 .container-item .alert-holder {
+  // vue.js transitions are used instead
+  transition: none;
+
   position: absolute;
-  left: 0px;
-  right: 0px;
+  left: 10px;
+  right: 10px;
+  top: 5px;
+
+  padding: 2px 5px 2px 5px;
+
+  .alert.alert-warning {
+    font-size: 14px;
+    font-weight: normal;
+    color: $brand-hint-color;
+    background-color: $brand-hint-background-color;
+    border: 1px solid $tooltip-border-color;
+  }
 }
 
 .alert-holder.alert-hidden {
   height: 0px;
   opacity: 0;
-
-  .alert {
-    display: none;
-  }
 }
 
 .alert {
@@ -2106,7 +2116,6 @@ $alert-text-color: #ffffff;
 
     font-size: 14px;
     font-weight: normal;
-    color: $alert-text-color;
     text-shadow: none;
     line-height: normal;
     opacity: 0.7;
@@ -2342,8 +2351,8 @@ $alert-text-color: #ffffff;
   padding: 2px 5px 2px 5px;
   font-size: 12px;
   font-weight: normal;
-  color: #4c4c4c;
-  background-color: #fff8be;
+  color: $brand-hint-color;
+  background-color: $brand-hint-background-color;
   border: 1px solid $tooltip-border-color;
 }
 
