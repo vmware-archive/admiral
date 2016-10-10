@@ -413,7 +413,11 @@ public class ContainerRemovalTaskService
                         }
                         // delete container description when deleting all its containers
                         if (state.resourceLinks.containsAll(resourcesSharingDesc)) {
-                            Operation deleteContainerDescription = deleteContainerDescription(cs);
+                            // there could be a race condition when containers are in cluster and
+                            // the same description tries to be deleted multiple times, that's why
+                            // we need to skipOperationException is the description is NOT FOUND
+                            Operation deleteContainerDescription = deleteContainerDescription(cs,
+                                    skipOperationException);
                             operations.add(deleteContainerDescription);
                         }
 
@@ -452,12 +456,20 @@ public class ContainerRemovalTaskService
                         });
     }
 
-    private Operation deleteContainerDescription(ContainerState cs) {
+    private Operation deleteContainerDescription(ContainerState cs,
+            AtomicLong skipOperationException) {
 
         Operation deleteContanerDesc = Operation
                 .createGet(this, cs.descriptionLink)
                 .setCompletion(
                         (o, e) -> {
+                            if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                                logFine("Resource [%s] not found, it will not be removed!",
+                                        cs.descriptionLink);
+                                skipOperationException.set(o.getId());
+                                return;
+                            }
+
                             if (e != null) {
                                 logWarning("Failed retrieving ContainerDescription: "
                                         + cs.descriptionLink, e);

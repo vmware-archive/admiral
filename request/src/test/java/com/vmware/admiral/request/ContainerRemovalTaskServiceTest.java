@@ -326,10 +326,10 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
                 container1.compositeComponentLink);
         assertNotNull(compositeComp);
 
-        //Delete CompositeDes
+        // Delete CompositeDes
         delete(compositeDesc.documentSelfLink);
 
-        //Remove Containers
+        // Remove Containers
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceLinks = containerLinks;
@@ -376,7 +376,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
                 container1.compositeComponentLink);
         assertNotNull(compositeComp);
 
-        //Remove Containers
+        // Remove Containers
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceLinks = containerLinks;
@@ -440,7 +440,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
                 container1.compositeComponentLink);
         assertNotNull(compositeComp);
 
-        //Remove Containers
+        // Remove Containers
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceLinks = containerLinks;
@@ -573,6 +573,74 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         createdDesc = searchForDocument(ContainerDescription.class, desc.documentSelfLink);
         assertNotNull(createdDesc);
+    }
+
+    /**
+     * When a container is scaled and there's a request to remove all of them, there could be a
+     * race condition that makes all the container removal tasks to try to remove the same container
+     * description, and that shouldn't fail with an exception. See VBV-666.
+     */
+    @Test
+    public void testRemoveApplicationWithScaledContainer() throws Throwable {
+        ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1",
+                true);
+        ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2",
+                true);
+        desc2.affinity = new String[] { desc1.name };
+        desc1._cluster = 9;
+        CompositeDescription compositeDesc = createCompositeDesc(true, desc1, desc2);
+
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        request = startRequest(request);
+        request = waitForRequestToComplete(request);
+
+        assertEquals(1, request.resourceLinks.size());
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+
+        assertEquals(desc1._cluster + 1, cc.componentLinks.size());
+
+        List<String> containerLinks = cc.componentLinks;
+        ContainerState container1 = getDocument(ContainerState.class, containerLinks.get(0));
+        ContainerState container2 = getDocument(ContainerState.class, containerLinks.get(1));
+        ContainerState container3 = getDocument(ContainerState.class, containerLinks.get(2));
+        assertNotNull(container1);
+        assertNotNull(container2);
+        assertNotNull(container3);
+
+        CompositeComponent compositeComp = getDocument(CompositeComponent.class,
+                container1.compositeComponentLink);
+        assertNotNull(compositeComp);
+
+        // Remove Containers
+        request = TestRequestStateFactory.createRequestState();
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        request.resourceLinks = containerLinks;
+        request.operation = ContainerOperationType.DELETE.id;
+        request = startRequest(request);
+
+        waitForRequestToComplete(request);
+
+        ContainerDescription createdDesc1 = searchForDocument(ContainerDescription.class,
+                container1.descriptionLink);
+        assertNull(createdDesc1);
+
+        ContainerDescription createdDesc2 = searchForDocument(ContainerDescription.class,
+                container2.descriptionLink);
+        assertNull(createdDesc2);
+
+        container1 = searchForDocument(ContainerState.class, containerLinks.get(0));
+        assertNull(container1);
+
+        container2 = searchForDocument(ContainerState.class, containerLinks.get(1));
+        assertNull(container2);
+
+        CompositeDescription createdCompDesc = searchForDocument(CompositeDescription.class,
+                compositeDesc.documentSelfLink);
+        assertNull(createdCompDesc);
+        compositeComp = searchForDocument(CompositeComponent.class, compositeComp.documentSelfLink);
+        assertNull(compositeComp);
     }
 
     private ContainerState createContainer(CompositeComponent component) throws Throwable {
