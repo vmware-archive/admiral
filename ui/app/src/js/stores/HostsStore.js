@@ -684,7 +684,8 @@ let HostsStore = Reflux.createStore({
       }).then((updatedTags) => {
 
         var hostData = $.extend({}, hostModel.dto, {
-          customProperties: $.extend({}, hostModel.dto.customProperties, customProperties),
+          customProperties: $.extend({},
+              utils.getSystemCustomProperties(hostModel.dto.customProperties), customProperties),
           descriptionLink: this.data.hostAddView.descriptionLink,
           resourcePoolLink: hostModel.resourcePoolLink,
           credential: hostModel.credential,

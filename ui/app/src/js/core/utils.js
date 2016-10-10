@@ -974,6 +974,22 @@ var utils = {
     return isArray ? displayableCustomProperties : this.arrayToObject(displayableCustomProperties);
   },
 
+  getSystemCustomProperties: function(customProperties) {
+    if (!customProperties) {
+      return {};
+    }
+
+    let isArray = $.isArray(customProperties);
+    let customPropertiesArr = isArray ? customProperties
+                                : this.objectToArray(customProperties);
+
+    let systemCustomProperties = customPropertiesArr.filter((customProperty) => {
+      return customProperty.name.startsWith('__');
+    });
+
+    return isArray ? systemCustomProperties : this.arrayToObject(systemCustomProperties);
+  },
+
   getGroup: function(tenantLinks) {
     if (!tenantLinks) {
       return null;
