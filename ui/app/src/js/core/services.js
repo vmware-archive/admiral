@@ -41,6 +41,7 @@ const PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE = 'xn-force-index-update';
 const FILTER_VALUE_ALL_FIELDS = 'ALL_FIELDS';
 
 const CONTAINER_HOST_ID_CUSTOM_PROPERTY = '__containerHostId';
+const DEFAULT_LIMIT = 20;
 
 const DEBUG_SLOW_MODE_TIMEOUT = utils.getDebugSlowModeTimeout();
 if (DEBUG_SLOW_MODE_TIMEOUT) {
@@ -241,7 +242,7 @@ var calculateLimit = function() {
   var averageSize = 250;
   var h = $(document).height();
   var w = $(document).width();
-  return Math.ceil(w / averageSize * h / averageSize) || undefined;
+  return Math.ceil(w / averageSize * h / averageSize) || DEFAULT_LIMIT;
 };
 
 var mergeUrl = function(path, params) {
