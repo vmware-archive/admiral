@@ -34,12 +34,15 @@ var RequestsListVueComponent = Vue.extend({
           return this.model.taskInfo.stage === 'FAILED' ? 100 : this.model.progress;
         },
         resourceIds: function() {
-          return this.model.resourceLinks.map((resourceLink) => {
+          return this.model.resourceLinks && this.model.resourceLinks.map((resourceLink) => {
             return utils.getDocumentId(resourceLink);
           });
         },
+        hasResourceIds: function() {
+          return this.resourceIds && this.resourceIds.length > 0;
+        },
         requestTitleText: function() {
-          if (this.resourceIds.length > 0) {
+          if (this.hasResourceIds) {
             return this.resourceIds;
           } else {
             return this.model.name;

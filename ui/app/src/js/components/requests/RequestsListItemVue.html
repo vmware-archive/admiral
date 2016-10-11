@@ -12,7 +12,7 @@
 <div class="request-item-holder">
   <a class="request-item" href="#" v-on:click="redirect($event)" v-bind:disabled="!isEnabled(model)">
     <div class="title">
-      <div v-if="resourceIds.length > 0" class="name truncateText" data-toggle="tooltip"
+      <div v-if="hasResourceIds" class="name truncateText" data-toggle="tooltip"
               data-placement="top" title="{{requestTitleText}}">{{requestTitleText}} <i v-if="showHint" class="fa fa-hand-o-left" transition="slide-and-fade"></i></div>
       <div v-else class="name">{{model.name}} <i v-if="showHint" class="fa fa-hand-o-left" transition="slide-and-fade"></i></div>
       <div class="phase">{{model.phase}} -- {{model.name}}</div>
