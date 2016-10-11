@@ -1040,6 +1040,12 @@ let TemplatesStore = Reflux.createStore({
     _enhanceContainerDescription(definitionInstance, containerDefs);
     this.setInData(['selectedItemDetails', 'newContainerDefinition',
                     'definitionInstance'], definitionInstance);
+    var networks = utils.getIn(this.getData(),
+                               ['selectedItemDetails', 'templateDetails', 'listView',
+                                'networks']) || [];
+    this.setInData(['selectedItemDetails', 'newContainerDefinition',
+                    'definitionInstance', 'availableNetworks'],
+                      getUserDefinedNetworkDescriptions(networks));
     this.emitChange();
   },
 
