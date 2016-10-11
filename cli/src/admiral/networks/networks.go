@@ -14,6 +14,7 @@ package networks
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -24,7 +25,6 @@ import (
 	"admiral/config"
 	"admiral/functions"
 	"admiral/track"
-	"errors"
 )
 
 type Network struct {
@@ -155,7 +155,9 @@ type NetworkOperation struct {
 
 func (no *NetworkOperation) SetCustomProperties(hosts []string) {
 	no.CustomProperties = make(map[string]string, 0)
-	no.CustomProperties["__containerHostId"] = strings.Join(hosts, ",")
+	if len(hosts) > 0 {
+		no.CustomProperties["__containerHostId"] = strings.Join(hosts, ",")
+	}
 }
 
 func (nl *NetworkList) FetchNetworks() (int, error) {
@@ -284,11 +286,11 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 	resLinks := make([]string, 0)
 	if !asyncTask {
 		resLinks, err = track.Wait(taskStatus.GetTracerId())
+	} else {
+		resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
 	}
-
-	if len(resLinks) < 1 {
-		return "", nil
+	if len(resLinks) > 0 {
+		return functions.GetResourceID(resLinks[0]), err
 	}
-
-	return functions.GetResourceID(resLinks[0]), err
+	return "", err
 }

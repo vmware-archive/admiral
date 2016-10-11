@@ -20,7 +20,6 @@ import (
 
 	"admiral/client"
 	"admiral/config"
-	"admiral/deplPolicy"
 	"admiral/functions"
 	"admiral/placementzones"
 	"admiral/projects"
@@ -122,13 +121,12 @@ func (pl *PlacementList) GetOutputString() string {
 		return "No elements found."
 	}
 	var buffer bytes.Buffer
-	buffer.WriteString("ID\tNAME\tPROJECT\tRESOURCE POOL\tDEPLOYMENT POLICY\tPRIORITY\tINSTANCES\tCPU SHARES\tMEMORY LIMIT")
+	buffer.WriteString("ID\tNAME\tPROJECT\tRESOURCE POOL\tPRIORITY\tINSTANCES\tCPU SHARES\tMEMORY LIMIT")
 	buffer.WriteString("\n")
 	for _, link := range pl.DocumentLinks {
 		val := pl.Documents[link]
 		var (
 			pz      string
-			dp      string
 			project string
 		)
 
@@ -138,11 +136,12 @@ func (pl *PlacementList) GetOutputString() string {
 			pz, _ = placementzones.GetPZName(val.ResourcePoolLink)
 		}
 
-		if strings.TrimSpace(val.DeploymentPolicyLink) == "" {
-			dp = ""
-		} else {
-			dp, _ = deplPolicy.GetDPName(val.DeploymentPolicyLink)
-		}
+		// Currently disabled!
+		//if strings.TrimSpace(val.DeploymentPolicyLink) == "" {
+		//	dp = ""
+		//} else {
+		//	dp, _ = deplPolicy.GetDPName(val.DeploymentPolicyLink)
+		//}
 
 		if len(val.TenantLinks) < 1 {
 			project = ""
@@ -154,7 +153,7 @@ func (pl *PlacementList) GetOutputString() string {
 				project = ""
 			}
 		}
-		output := functions.GetFormattedString(val.GetID(), val.Name, project, pz, dp, val.Priority,
+		output := functions.GetFormattedString(val.GetID(), val.Name, project, pz, val.Priority,
 			val.AvailableInstancesCount, val.CpuShares, val.GetFormattedMemoryLimit())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
