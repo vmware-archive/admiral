@@ -54,7 +54,6 @@ func GetCfg() {
 	if err != nil {
 		createDefaultCfgFile()
 	}
-
 	cfg := &Config{}
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(cfg)
@@ -126,6 +125,9 @@ func SetProperty(key, val string) bool {
 	decoder := json.NewDecoder(file)
 	_ = decoder.Decode(cfg)
 	v := reflect.ValueOf(cfg).Elem()
+	if !v.FieldByName(key).IsValid() {
+		return false
+	}
 	v.FieldByName(key).SetString(val)
 	jsonCfg, _ := json.MarshalIndent(cfg, "", "    ")
 	file.Close()
@@ -146,7 +148,6 @@ func Inspect() []byte {
 	if err != nil {
 		createDefaultCfgFile()
 	}
-
 	cfg := &Config{}
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(cfg)
