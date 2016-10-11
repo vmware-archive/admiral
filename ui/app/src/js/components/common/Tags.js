@@ -35,6 +35,7 @@ function Tags(el) {
             source: tag,
             value: getValue(tag)
           }));
+          suggestions.sort((a, b) => a.value === b.value ? 0 : +(a.value > b.value) || -1);
           if (values.length) {
             if (q.indexOf(':') === -1) {
               suggestions = [{ value: values[0].key + ':'}, ...suggestions];
@@ -45,7 +46,6 @@ function Tags(el) {
           } else {
             suggestions = [{ value: q + (q.indexOf(':') === -1 ? ':' : '')}];
           }
-          suggestions.sort((a, b) => a.value === b.value ? 0 : +(a.value > b.value) || -1);
           async(suggestions);
         });
       },

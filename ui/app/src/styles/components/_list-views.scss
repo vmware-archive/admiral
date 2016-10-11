@@ -226,8 +226,9 @@
   }
 }
 
-.host-edit-value {
+.host-edit-value, .compute-edit-value {
   font-size: 19px;
+  padding-top: 7px;
 }
 
 .list-view .grid-item .title {
@@ -283,7 +284,9 @@
     @extend .item-delete-confirmation;
   }
 
-  .list-view .host-item:hover .actions {
+  .list-view .compute-item:hover .actions,
+  .list-view .host-item:hover .actions,
+  .list-view .machine-item:hover .actions {
     display: block;
   }
 }

@@ -1475,7 +1475,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
   }
 
   if (onlyCompute === false) {
-    qOps['customProperties/computeType'] = [
+    qOps['customProperties/__computeType'] = [
       {
         op: 'eq',
         val: 'VirtualMachine'
@@ -1484,7 +1484,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
   }
 
   if (onlyCompute === true) {
-    qOps['customProperties/computeType'] = [
+    qOps['customProperties/__computeType'] = [
       {
         op: 'ne',
         val: 'VirtualMachine'
@@ -1495,24 +1495,42 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
   if (queryOptions) {
     var anyArray = toArrayIfDefined(queryOptions.any);
     if (anyArray) {
-      qOps[FILTER_VALUE_ALL_FIELDS] = [];
-      for (let i = 0; i < anyArray.length; i++) {
-        qOps[FILTER_VALUE_ALL_FIELDS].push({
-          val: '*' + anyArray[i] + '*',
+      qOps[FILTER_VALUE_ALL_FIELDS] = anyArray.map((any) => {
+        return {
+          val: '*' + any + '*',
           op: 'eq'
-        });
-      }
+        };
+      });
     }
 
     var addressArray = toArrayIfDefined(queryOptions.address);
     if (addressArray) {
-      qOps.address = [];
-      for (let i = 0; i < addressArray.length; i++) {
-        qOps.address.push({
-          val: '*' + addressArray + '*',
+      qOps.address = addressArray.map((address) => {
+        return {
+          val: '*' + address + '*',
           op: 'eq'
-        });
-      }
+        };
+      });
+    }
+
+    var nameArray = toArrayIfDefined(queryOptions.name);
+    if (nameArray) {
+      qOps.name = nameArray.map((name) => {
+        return {
+          val: '*' + name + '*',
+          op: 'eq'
+        };
+      });
+    }
+
+    var typeArray = toArrayIfDefined(queryOptions.type);
+    if (typeArray) {
+      qOps['customProperties/__computeType'] = typeArray.map((type) => {
+        return {
+          val: '*' + type + '*',
+          op: 'eq'
+        };
+      });
     }
 
     var resourcePoolArray = toArrayIfDefined(queryOptions.placementZone);

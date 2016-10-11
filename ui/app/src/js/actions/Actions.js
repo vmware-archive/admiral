@@ -26,7 +26,7 @@ export var MachineActions = Reflux.createActions([
 ]);
 
 export var ComputeActions = Reflux.createActions([
-  'openCompute', 'openComputeDetails'
+  'openCompute', 'openComputeNext', 'editCompute', 'updateCompute'
 ]);
 
 export var PlacementActions = Reflux.createActions([
@@ -80,6 +80,11 @@ export var HostContextToolbarActions = Reflux.createActions([
   'createResourcePool', 'manageResourcePools',
   'createCredential', 'manageCredentials', 'manageCertificates',
   'createDeploymentPolicy', 'manageDeploymentPolicies'
+]);
+
+export var ComputeContextToolbarActions = Reflux.createActions([
+  'openToolbarResourcePools', 'closeToolbar',
+  'createResourcePool', 'manageResourcePools'
 ]);
 
 export var RegistryContextToolbarActions = Reflux.createActions([
@@ -163,5 +168,5 @@ export var NavigationActions = Reflux.createActions([
   'openTemplates', 'openEventLog', 'openRegistries', 'openContainerRequest', 'openContainers',
   'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
   'openTemplateDetails', 'showContainersPerPlacement', 'openPlacements', 'openEnvironments',
-  'openMachines', 'openMachineDetails', 'openCompute', 'openComputeDetails'
+  'openMachines', 'openMachineDetails', 'openCompute', 'editCompute'
 ]);

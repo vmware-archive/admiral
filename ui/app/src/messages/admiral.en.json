@@ -428,6 +428,9 @@
       },
       "details": {
         "type": "Type"
+      },
+      "edit": {
+        "title": "Edit Compute" 
       }
     },
     "resource": {

@@ -19,7 +19,7 @@
           class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
         <div class="toolbar">
-          <search v-bind:suggestion-properties="['address']"
+          <search v-bind:suggestion-properties="['name', 'type']"
                   v-bind:placeholder="i18n('app.compute.list.searchPlaceholder')"
                   v-bind:query-options="model.listView.queryOptions"
                   v-on:search-change="search">
@@ -44,9 +44,7 @@
                   v-infinite-scroll="loadMore()">
                 <grid-item v-for="item in model.listView.items"
                            track-by="documentSelfLink">
-                  <compute-grid-item v-bind:model="item"
-                                     v-on:click="openComputeDetails(item)">
-                  </compute-grid-item>
+                  <compute-grid-item v-bind:model="item"></compute-grid-item>
               </grid-item>
             </grid>
           </div>
@@ -58,15 +56,12 @@
       </div>
     </div>
   </div>
-  <div v-if="model.selectedItemDetails"
-       transition="slide-and-fade"
-       class="selected-context-holder closable-view"
-       v-bind:class="{'expanded': model.selectedItemDetails.expanded}">
 
-    <alert alert-type="danger" v-bind:show-alert="hasContainerDetailsError"
-                               v-bind:alert-message="containerDetailsError"></alert>
+  <div v-if="model.computeEditView" transition="slide-and-fade" class="closable-view">
+    <a class="close-button" v-on:click="goBack($event)"><i
+      class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
-    <compute-details class="content" v-bind:model="model.selectedItemDetails">
-    </compute-details>
+    <compute-edit-view v-bind:model="model.computeEditView" class="content"></compute-edit-view>
   </div>
+
 </div>

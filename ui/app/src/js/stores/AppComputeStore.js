@@ -57,22 +57,22 @@ let initializeStoreListeners = function() {
       this.emitChange();
     }
   });
-  PlacementsStore.listen((quotesData) => {
+  PlacementsStore.listen((data) => {
     if (this.data.centerView && this.data.centerView.name === constants.VIEWS.PLACEMENTS.name) {
-      this.setInData(['centerView', 'data'], quotesData);
+      this.setInData(['centerView', 'data'], data);
       this.emitChange();
     }
   });
-  MachinesStore.listen((quotesData) => {
+  MachinesStore.listen((data) => {
     if (this.data.centerView && this.data.centerView.name
                                               === constants.VIEWS.RESOURCES.VIEWS.MACHINES.name) {
-      this.setInData(['centerView', 'data'], quotesData);
+      this.setInData(['centerView', 'data'], data);
       this.emitChange();
     }
   });
-  ComputeStore.listen((quotesData) => {
+  ComputeStore.listen((data) => {
     if (this.data.centerView && this.data.centerView.name === constants.VIEWS.COMPUTE.name) {
-      this.setInData(['centerView', 'data'], quotesData);
+      this.setInData(['centerView', 'data'], data);
       this.emitChange();
     }
   });
@@ -107,7 +107,7 @@ AppComputeStore = Reflux.createStore({
     if (firstLoad) {
       // We immediately initialize and load the home page. In the mean time start loading the hosts,
       // if there are any we will close the home page and open the hosts
-      actions.HostActions.openHosts();
+      // actions.HostActions.openHosts();
     }
   },
 

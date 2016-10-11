@@ -1,0 +1,95 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="compute-edit-view" v-bind:class="{'right-context-expanded': contextExpanded}">
+  <div class="main-panel">
+    <alert alert-type="danger"
+           v-bind:show-alert="validationErrors._generic && (validationErrors._generic != null)"
+           v-bind:alert-message="validationErrors._generic"></alert>
+    <alert alert-type="success"
+           v-bind:show-alert="validationErrors._valid && (validationErrors._valid != null)"
+           v-bind:alert-message="i18n('app.host.details.verified')"></alert>
+
+    <div class="view-title-container">
+      <div class="view-title">
+        <div class="title">{{i18n('app.compute.edit.title')}}</div>
+      </div>
+    </div>
+
+
+
+    <div class="compute-form form-horizontal">
+      <div id="hostAlias" class="form-group">
+        <label class="col-sm-3 control-label">{{i18n("app.host.details.hostAlias")}}</label>
+        <div class="col-sm-9">
+          <label class="compute-edit-value">{{model.name}}</label>
+        </div>
+      </div>
+
+      <div id="resourcePool" class="form-group" v-bind:class="{'has-error': validationErrors.resourcePool}">
+        <label class="col-sm-3 control-label">
+          {{i18n("app.host.details.resourcePool")}}
+          <span class="requiredFieldMark">*</span>
+        </label>
+        <div class="col-sm-9">
+          <div class="form-control dropdown-holder"></div>
+          <span class="help-block">{{i18n(validationErrors.resourcePool)}}</span>
+        </div>
+      </div>
+
+      <div id="tags" class="form-group tags" v-bind:class="{'has-error': validationErrors.tags}">
+        <label class="col-sm-3 control-label">{{i18n("app.host.details.tags")}}</label>
+        <div class="col-sm-9">
+          <div class="tags-holder">
+            <input class="tags-input">
+          </div>
+          <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
+             title="{{i18n ('app.host.details.tagsHint')}}"></i>
+          <span class="help-block">{{i18n(validationErrors.tags)}}</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="col-sm-12">
+          <div class="pull-right control-btns">
+            <button type="submit" class="btn admiral-btn"
+                    v-bind:class="{'loading': model.isSavingCompute}"
+                    v-on:click="saveCompute">
+              {{i18n("app.host.details.update")}}
+              <i class="fa fa-spinner fa-spin loader-inline"></i></button>
+            <span class="help-block"></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="mask" v-bind:class="{'hide': !contextExpanded}"></div>
+  </div>
+
+  <context-sidepanel class="right-context-panel">
+    <div slot="toolbar" class="toolbar">
+      <context-sidepanel-toolbar-item
+        v-bind:active="activeContextItem === 'resourcePools'"
+        v-bind:icon-class="'fa fa-cubes'"
+        v-bind:label="i18n('app.resourcePool.contextPanelTooltip')"
+        v-on:open="openToolbarResourcePools()" v-on:close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+    </div>
+
+    <div slot="content" class="content">
+      <resource-pools-list v-if="activeContextItem === 'resourcePools'"
+        v-bind:model="model.contextView.activeItem.data"></resource-pools-list>
+    </div>
+
+  </context-sidepanel>
+
+</div>

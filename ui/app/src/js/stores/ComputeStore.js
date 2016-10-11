@@ -16,6 +16,7 @@ import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
 import links from 'core/links';
 import constants from 'core/constants';
+import ResourcePoolsStore from 'stores/ResourcePoolsStore';
 
 const OPERATION = {
   LIST: 'LIST',
@@ -48,10 +49,11 @@ let toViewModel = function(dto) {
   }
 
   return {
+    dto: dto,
     documentSelfLink: dto.documentSelfLink,
+    selfLinkId: utils.getDocumentId(dto.documentSelfLink),
     id: dto.id,
     name: dto.name,
-    address: dto.address,
     powerState: dto.powerState,
     descriptionLink: dto.descriptionLink,
     resourcePoolLink: dto.resourcePoolLink,
@@ -63,13 +65,57 @@ let toViewModel = function(dto) {
   };
 };
 
+let onOpenToolbarItem = function(name, data, shouldSelectAndComplete) {
+  var contextViewData = {
+    expanded: true,
+    activeItem: {
+      name: name,
+      data: data
+    },
+    shouldSelectAndComplete: shouldSelectAndComplete
+  };
+
+  this.setInData(['computeEditView', 'contextView'], contextViewData);
+  this.emitChange();
+};
+
+let isContextPanelActive = function(name) {
+  var activeItem = this.data.computeEditView.contextView &&
+      this.data.computeEditView.contextView.activeItem;
+  return activeItem && activeItem.name === name;
+};
+
 let ComputeStore = Reflux.createStore({
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
 
   init: function() {
+
+    ResourcePoolsStore.listen((resourcePoolsData) => {
+      if (!this.data.computeEditView) {
+        return;
+      }
+
+      this.setInData(['computeEditView', 'resourcePools'], resourcePoolsData.items);
+
+      if (isContextPanelActive.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS)) {
+        this.setInData(['computeEditView', 'contextView', 'activeItem', 'data'],
+          resourcePoolsData);
+
+        var itemToSelect = resourcePoolsData.newItem || resourcePoolsData.updatedItem;
+        if (itemToSelect && this.data.computeEditView.contextView.shouldSelectAndComplete) {
+          clearTimeout(this.itemSelectTimeout);
+          this.itemSelectTimeout = setTimeout(() => {
+            this.setInData(['computeEditView', 'resourcePool'], itemToSelect);
+            this.onCloseToolbar();
+          }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
+        }
+      }
+
+      this.emitChange();
+    });
   },
 
-  listenables: [actions.ComputeActions],
+  listenables: [actions.ComputeActions, actions.ComputeContextToolbarActions],
 
   onOpenCompute: function(queryOptions, forceReload) {
     var items = utils.getIn(this.data, ['listView', 'items']);
@@ -77,6 +123,7 @@ let ComputeStore = Reflux.createStore({
       return;
     }
 
+    this.setInData(['computeEditView'], null);
     this.setInData(['selectedItem'], null);
     this.setInData(['selectedItemDetails'], null);
     this.setInData(['listView', 'queryOptions'], queryOptions);
@@ -133,34 +180,90 @@ let ComputeStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onOpenComputeDetails: function(computeId) {
-    // If switching between views, there will be a short period that we show old data,
-    // until the new one is loaded.
-    var currentItemDetailsCursor = this.selectFromData(['selectedItemDetails']);
-    currentItemDetailsCursor.merge({
-      documentSelfLink: '/resources/compute/' + computeId,
-      logsLoading: true
-    });
+  onEditCompute: function(computeId) {
 
-    var currentItemCursor = this.selectFromData(['selectedItem']);
-    currentItemCursor.merge({
-      documentSelfLink: '/resources/compute/' + computeId
-    });
-    this.emitChange();
+    // load host data from backend
+    services.loadHost(computeId).then((document) => {
+      let computeModel = toViewModel(document);
 
-    this.emitChange();
+      actions.ResourcePoolsActions.retrieveResourcePools();
 
-    this.cancelOperations(OPERATION.DETAILS);
-    var operation = this.requestCancellableOperation(OPERATION.DETAILS);
-    operation.forPromise(services.loadHost(computeId))
-      .then((compute) => {
-        compute = toViewModel(compute);
 
-        currentItemCursor.merge(compute);
-        currentItemDetailsCursor.setIn(['instance'], compute);
+      var promises = [
+        services.loadResourcePool(document.resourcePoolLink).catch(() => Promise.resolve())
+      ];
 
+      if (document.tagLinks && document.tagLinks.length) {
+        promises.push(
+            services.loadTags(document.tagLinks).catch(() => Promise.resolve()));
+      } else {
+        promises.push(Promise.resolve());
+      }
+
+      Promise.all(promises).then(([config, tags]) => {
+        computeModel.resourcePool = config.resourcePoolState;
+        computeModel.tags = tags ? Object.values(tags) : [];
+
+        this.setInData(['computeEditView'], computeModel);
         this.emitChange();
       });
+
+    }).catch(this.onGenericEditError);
+
+    this.setInData(['computeEditView'], {});
+    this.emitChange();
+  },
+
+  onUpdateCompute: function(computeModel, tags) {
+    Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
+      return Promise.all(tags.map((tag, i) =>
+        result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
+    }).then((updatedTags) => {
+      let computeData = $.extend({}, computeModel.dto, {
+        resourcePoolLink: computeModel.resourcePoolLink,
+        tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
+      });
+      services.updateHost(computeModel.selfLinkId, computeData).then(() => {
+        actions.NavigationActions.openCompute();
+        this.setInData(['computeEditView'], null);
+        this.setInData(['computeEditView', 'isSavingCompute'], false);
+        this.emitChange();
+      }).catch(this.onGenericEditError);
+    });
+    this.setInData(['computeEditView', 'isSavingCompute'], true);
+    this.emitChange();
+  },
+
+  onOpenToolbarResourcePools: function() {
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS,
+      ResourcePoolsStore.getData(), false);
+  },
+
+  onCloseToolbar: function() {
+    if (!this.data.computeEditView) {
+
+      this.closeToolbar();
+    } else {
+
+      var contextViewData = {
+        expanded: false,
+        activeItem: null
+      };
+
+      this.setInData(['computeEditView', 'contextView'], contextViewData);
+      this.emitChange();
+    }
+  },
+
+  onCreateResourcePool: function() {
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS,
+      ResourcePoolsStore.getData(), true);
+    actions.ResourcePoolsActions.editResourcePool();
+  },
+
+  onManageResourcePools: function() {
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS,
+      ResourcePoolsStore.getData(), true);
   },
 
   getResourcePools: function(compute) {

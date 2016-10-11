@@ -10,6 +10,7 @@
  */
 
 import ComputeItemVue from 'ComputeItemVue';
+import { NavigationActions } from 'actions/Actions';
 import constants from 'core/constants';
 import utils from 'core/utils';
 
@@ -51,6 +52,12 @@ var ComputeItem = Vue.extend({
 
     extractId: function(hostId) {
       return utils.extractHostId(hostId);
+    },
+
+    editCompute: function(event) {
+      event.preventDefault();
+
+      NavigationActions.editCompute(this.model.selfLinkId);
     }
   }
 });

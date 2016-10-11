@@ -32,13 +32,9 @@ var HomeComputeVueComponent = Vue.extend({
     }
   },
 
-  attached: function() {
-    setTimeout(NavigationActions.openEnvironments, 4000);
-  },
-
   methods: {
     open: function() {
-      NavigationActions.openEnvironments();
+      NavigationActions.openCompute();
     },
     goBack: function() {
       NavigationActions.openHome();

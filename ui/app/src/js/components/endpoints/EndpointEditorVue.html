@@ -55,7 +55,7 @@
         <label class="col-md-4 control-label" v-else>{{i18n('app.endpoint.edit.secretAccessKeyLabel')}}</label>
         <div class="secretAccessKey col-md-8">
           <input v-bind:value="endpointProperties.privateKey" class="form-control"
-                 v-on:change="onInputChange()" v-on:input="onInputChange()"/>
+                 v-on:change="onInputChange()" v-on:input="onInputChange()" type="password"/>
         </div>
       </div>
       <div class="form-group col-md-12">

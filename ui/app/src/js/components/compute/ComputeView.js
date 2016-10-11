@@ -11,7 +11,7 @@
 
 import ComputeViewVue from 'ComputeViewVue';
 import ComputeItem from 'components/compute/ComputeItem'; //eslint-disable-line
-import ComputeDetails from 'components/compute/ComputeDetails'; //eslint-disable-line
+import ComputeEditView from 'components/compute/ComputeEditView'; //eslint-disable-line
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
 import { ComputeActions, NavigationActions } from 'actions/Actions';
@@ -53,6 +53,9 @@ var ComputeViewVueComponent = Vue.extend({
   },
 
   methods: {
+    goBack: function() {
+      NavigationActions.openCompute(this.model.listView && this.model.listView.queryOptions);
+    },
     search: function(queryOptions) {
       NavigationActions.openCompute(queryOptions);
     },
@@ -65,8 +68,8 @@ var ComputeViewVueComponent = Vue.extend({
           this.model.listView.nextPageLink);
       }
     },
-    openComputeDetails: function(compute) {
-      NavigationActions.openComputeDetails(compute.id);
+    editCompute: function(compute) {
+      NavigationActions.editCompute(compute.selfLinkId);
     }
   }
 });
