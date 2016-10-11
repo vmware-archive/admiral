@@ -38,6 +38,19 @@ var ResourceGroupsMixin = {
       selectedGroup: null
     };
   },
+  attached: function() {
+
+    this.unwatchShowGroup = this.$watch('showGroupForProvisioning', () => {
+      if (this.showGroupForProvisioning) {
+        let _this = this;
+        $(this.$el).find('.provisionGroup select').change(function() {
+          _this.showSelectionTooltip();
+        });
+
+        this.showSelectionTooltip();
+      }
+    });
+  },
   methods: {
     clearSelectionSupported: function() {
       // available only in standalone mode
@@ -102,6 +115,12 @@ var ResourceGroupsMixin = {
       if (this.showGroupForProvisioning) {
         this.showGroupForProvisioning = false;
       }
+    },
+    showSelectionTooltip: function() {
+      let elProvisionGroupSelect = $(this.$el).find('.provisionGroup select');
+      let elSelectedOption = $(elProvisionGroupSelect).find('option:selected');
+
+      $(elProvisionGroupSelect).prop('title', $(elSelectedOption).text().trim());
     }
   }
 };
