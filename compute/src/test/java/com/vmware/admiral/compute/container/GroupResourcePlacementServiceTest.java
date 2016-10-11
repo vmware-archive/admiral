@@ -98,33 +98,33 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
     public void testGroupPlacementResourcePoolValidation() throws Throwable {
         Set<String> linksToDelete = new HashSet<>();
 
-        ResourcePoolState resourcePool1 = createResourcePool("resourcePool1", 1000L, 1000L);
+        ResourcePoolState resourcePool1 = createResourcePool("resourcePool1", MIN_MEMORY * 2 + 1, 1000L);
         linksToDelete.add(resourcePool1.documentSelfLink);
 
         // Try to create a placement with more resources than the resource pool
         boolean expectFailure = true;
         // moreMemoryThanRP
-        createAndStoreGroupResourcePlacement("moreMemoryThanRP", 2000L, 1000L, 0,
+        createAndStoreGroupResourcePlacement("moreMemoryThanRP", MIN_MEMORY * 2 + 2, 1000L, 0,
                 resourcePool1.documentSelfLink, expectFailure);
 
         // Create some placements to fill up the resource pool
         expectFailure = false;
         GroupResourcePlacementState firstPlacement = createAndStoreGroupResourcePlacement(
                 "firstPlacement",
-                300L, 200L, 0, resourcePool1.documentSelfLink, expectFailure);
+                MIN_MEMORY, 200L, 0, resourcePool1.documentSelfLink, expectFailure);
         linksToDelete.add(firstPlacement.documentSelfLink);
 
         expectFailure = false;
         GroupResourcePlacementState secondPlacement = createAndStoreGroupResourcePlacement(
                 "secondPlacement",
-                300L, 200L, 0, resourcePool1.documentSelfLink, expectFailure);
+                MIN_MEMORY, 200L, 0, resourcePool1.documentSelfLink, expectFailure);
         linksToDelete.add(secondPlacement.documentSelfLink);
 
         // The remaining resources in the RP shouldn't be enough for these
         expectFailure = true;
         // moreMemoryThanWhatsLeft
         createAndStoreGroupResourcePlacement("moreMemoryThanWhatsLeft",
-                500L, 200L, 0, resourcePool1.documentSelfLink, expectFailure);
+                MIN_MEMORY, 200L, 0, resourcePool1.documentSelfLink, expectFailure);
 
         linksToDelete.forEach(link -> {
             try {
@@ -530,7 +530,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         int newMaxInstance = 7;
         String newResourcePoolLink = resourcePool.documentSelfLink;
         int newPriority = 23;
-        long newMemoryLimit = 567L;
+        long newMemoryLimit = MIN_MEMORY;
         long newStorageLimit = 5789L;
         int newCpuShares = 45;
 

@@ -298,7 +298,7 @@ var utils = {
   },
 
   toBytes: function(value, unit) {
-    var k = 1000;
+    var k = 1024;
     var i = byteUnits.indexOf(unit);
     return value * Math.pow(k, i);
   },
@@ -311,7 +311,7 @@ var utils = {
       };
     }
 
-    var k = 1000;
+    var k = 1024;
     var i = Math.floor(Math.log(bytes) / Math.log(k));
 
     var value = (bytes / Math.pow(k, i));

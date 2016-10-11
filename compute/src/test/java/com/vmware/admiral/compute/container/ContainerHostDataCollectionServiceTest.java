@@ -659,11 +659,11 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         documentsForDeletion.add(resourcePoolState);
 
         //Create a host with 1000 memory and 1000 storage
-        createAndStoreComputeState(hostDescription, resourcePoolState, 1000L, 1000L, 0L, 0.0, 1);
+        createAndStoreComputeState(hostDescription, resourcePoolState, MIN_MEMORY, 1000L, 0L, 0.0, 1);
 
         //Create a host with 1000 memory and 1000 storage
         ComputeState second = createAndStoreComputeState(hostDescription, resourcePoolState,
-                1000L, 1000L, 0L, 0.0, 1);
+                MIN_MEMORY, 1000L, 0L, 0.0, 1);
 
         //Force data collection. (The one that happens every 5 minutes)
         doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
@@ -676,14 +676,14 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
             ResourcePoolService.ResourcePoolState resourcePoolStateUpdated = getDocument(
                     ResourcePoolService.ResourcePoolState.class,
                     resourcePoolState.documentSelfLink);
-            return resourcePoolStateUpdated.maxMemoryBytes == 2000;
+            return resourcePoolStateUpdated.maxMemoryBytes == MIN_MEMORY * 2;
         });
 
         //Create two placements with different priorities
         GroupResourcePlacementService.GroupResourcePlacementState a100 = createGroupResourcePlacementState(
-                resourcePoolState.documentSelfLink, "A", 100, 1000, 700);
+                resourcePoolState.documentSelfLink, "A", 100, MIN_MEMORY, 700);
         GroupResourcePlacementService.GroupResourcePlacementState a200 = createGroupResourcePlacementState(
-                resourcePoolState.documentSelfLink, "A", 200, 1000, 800);
+                resourcePoolState.documentSelfLink, "A", 200, MIN_MEMORY, 800);
 
         doDelete(UriUtils.buildUri(host, second.documentSelfLink), false);
 
@@ -698,19 +698,19 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                     GroupResourcePlacementService.GroupResourcePlacementState.class, a200.documentSelfLink);
             GroupResourcePlacementService.GroupResourcePlacementState placementStateA100 = getDocument(
                     GroupResourcePlacementService.GroupResourcePlacementState.class, a100.documentSelfLink);
-            return placementStateA200.memoryLimit == 0 && placementStateA100.memoryLimit == 1000;
+            return placementStateA200.memoryLimit == 0 && placementStateA100.memoryLimit == MIN_MEMORY;
         });
 
         //Create a host with 1000 memory and 1000 storage
         second = createAndStoreComputeState(hostDescription, resourcePoolState,
-                1000L, 1000L, 0L, 0.0, 1);
+                MIN_MEMORY, 1000L, 0L, 0.0, 1);
 
         //Create another two placements for a different group
         GroupResourcePlacementService.GroupResourcePlacementState b1 = createGroupResourcePlacementState(
-                resourcePoolState.documentSelfLink, "B", 1, 500, 800);
+                resourcePoolState.documentSelfLink, "B", 1, MIN_MEMORY, 800);
 
         GroupResourcePlacementService.GroupResourcePlacementState b12 = createGroupResourcePlacementState(
-                resourcePoolState.documentSelfLink, "B", 1, 500, 800);
+                resourcePoolState.documentSelfLink, "B", 1, MIN_MEMORY, 800);
 
         doDelete(UriUtils.buildUri(host, second.documentSelfLink), false);
         doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
@@ -928,7 +928,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         poolState.currencyUnit = "Bitcoin";
         poolState.maxCpuCostPerMinute = 1.0;
         poolState.maxDiskCostPerMinute = 1.0;
-        poolState.minMemoryBytes = 1024L * 1024L * 1024L * 46L;
+        poolState.minMemoryBytes = MIN_MEMORY;
         poolState.maxMemoryBytes = poolState.minMemoryBytes * 2;
         poolState.minDiskCapacityBytes = poolState.maxDiskCapacityBytes = 1024L * 1024L * 1024L
                 * 1024L;

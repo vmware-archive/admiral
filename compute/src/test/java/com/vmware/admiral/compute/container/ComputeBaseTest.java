@@ -39,6 +39,8 @@ import com.vmware.xenon.common.test.TestContext;
 
 public abstract class ComputeBaseTest extends BaseTestCase {
 
+    protected static final Long MIN_MEMORY = 4_194_304L;
+
     private List<Runnable> staticFieldValuesResetRunners = new ArrayList<Runnable>();
 
     @Before

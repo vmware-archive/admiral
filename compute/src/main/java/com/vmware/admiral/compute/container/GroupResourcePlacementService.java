@@ -62,6 +62,8 @@ public class GroupResourcePlacementService extends StatefulService {
             FACTORY_LINK, DEFAULT_RESOURCE_PLACEMENT_ID);
 
     public static final long UNLIMITED_NUMBER_INSTANCES = 0;
+    // Docker minimum memory limit is 4MB
+    public static final long MIN_MEMORY_LIMIT = 4_194_304;
 
     public static ResourcePoolState buildDefaultResourcePool() {
         ResourcePoolState poolState = new ResourcePoolState();
@@ -545,9 +547,10 @@ public class GroupResourcePlacementService extends StatefulService {
             state.resourceType = ResourceType.CONTAINER_TYPE.getName();
         }
 
-        if (state.memoryLimit < 0) {
+        if (state.memoryLimit != 0 && state.memoryLimit < MIN_MEMORY_LIMIT) {
             throw new IllegalArgumentException(
-                    "'memoryLimit' must be greater than or equal to zero.");
+                    String.format("'memoryLimit' must be 0 (no limit) or at least %s bytes. (%sMB).",
+                            MIN_MEMORY_LIMIT, (MIN_MEMORY_LIMIT / 1024) / 1024));
         }
 
         if (state.cpuShares < 0) {

@@ -1044,7 +1044,7 @@ function healthConfigModeChanged($el, mode) {
 
 var normalizeToKB = function(size) {
   if (size.unit === 'Bytes') {
-    size.value /= 1000;
+    size.value /= 1024;
     size.unit = 'kB';
   }
 };
