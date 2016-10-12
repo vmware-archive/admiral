@@ -345,7 +345,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         assertEquals(cc.documentSelfLink, cont1.compositeComponentLink);
         assertEquals(cc.documentSelfLink, cont2.compositeComponentLink);
-        assertEquals(cc.documentSelfLink, network.compositeComponentLink);
+        assertTrue((network.compositeComponentLinks.size() == 1)
+                && network.compositeComponentLinks.contains(cc.documentSelfLink));
     }
 
     @Test

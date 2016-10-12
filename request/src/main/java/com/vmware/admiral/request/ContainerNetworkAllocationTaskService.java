@@ -99,8 +99,7 @@ public class ContainerNetworkAllocationTaskService extends
         /** (Internal) Set by task after resource name prefixes requested. */
         @Documentation(description = "Set by task after resource name prefixes requested.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
-                PropertyUsageOption.SERVICE_USE,
-                PropertyUsageOption.SINGLE_ASSIGNMENT })
+                PropertyUsageOption.SERVICE_USE })
         public List<String> resourceNames;
 
         /** (Internal) Set by task with ContainerNetworkDescription name. */
@@ -164,8 +163,7 @@ public class ContainerNetworkAllocationTaskService extends
             createContainerNetworkStates(state, null, null);
             break;
         case COMPLETED:
-            state.resourceLinks = buildResourceLinks(state);
-            complete(state, SubStage.COMPLETED);
+            updateResourcesAndComplete(state);
             break;
         case ERROR:
             completeWithError(state, SubStage.ERROR);
@@ -325,16 +323,15 @@ public class ContainerNetworkAllocationTaskService extends
         assertNotEmpty(resourceName, "resourceName");
         assertNotNull(taskCallback, "taskCallback");
 
-        try {
+        if (Boolean.TRUE.equals(networkDescription.external)) {
+            handleUpdateExternalNetworkState(state, networkDescription, taskCallback);
+            return;
+        }
 
+        try {
             final ContainerNetworkState networkState = new ContainerNetworkState();
             networkState.documentSelfLink = buildResourceId(resourceName);
-            if (Boolean.TRUE.equals(networkDescription.external)) {
-                // external networks must be referenced with the original name by containers
-                networkState.name = networkDescription.name;
-            } else {
-                networkState.name = resourceName;
-            }
+            networkState.name = resourceName;
             networkState.tenantLinks = state.tenantLinks;
             networkState.descriptionLink = state.resourceDescriptionLink;
             networkState.customProperties = state.customProperties;
@@ -355,7 +352,7 @@ public class ContainerNetworkAllocationTaskService extends
                 }
             }
 
-            networkState.external = networkDescription.external;
+            networkState.external = (getProvidedHostIds(state) != null);
 
             networkState.powerState = PowerState.PROVISIONING;
 
@@ -365,10 +362,11 @@ public class ContainerNetworkAllocationTaskService extends
             networkState.adapterManagementReference = networkDescription.instanceAdapterReference;
 
             String contextId;
-            if (state.customProperties != null && (contextId = state.customProperties
-                    .get(FIELD_NAME_CONTEXT_ID_KEY)) != null) {
-                networkState.compositeComponentLink = UriUtils.buildUriPath(
-                        CompositeComponentFactoryService.SELF_LINK, contextId);
+            if (!networkState.external && state.customProperties != null
+                    && (contextId = state.customProperties.get(FIELD_NAME_CONTEXT_ID_KEY)) != null) {
+                networkState.compositeComponentLinks = new ArrayList<>();
+                networkState.compositeComponentLinks.add(UriUtils.buildUriPath(
+                        CompositeComponentFactoryService.SELF_LINK, contextId));
             }
 
             sendRequest(OperationUtil
@@ -386,8 +384,72 @@ public class ContainerNetworkAllocationTaskService extends
                             }));
 
         } catch (Throwable e) {
-            failTask("System failure creating ContainerNetworkStates", e);
+            failTask("System failure creating ContainerNetworkState", e);
         }
+    }
+
+    private void handleUpdateExternalNetworkState(ContainerNetworkAllocationTaskState state,
+            ContainerNetworkDescription networkDescription, ServiceTaskCallback taskCallback) {
+
+        String networkStateLink = buildResourceLink(networkDescription.name);
+
+        try {
+            sendRequest(Operation.createGet(UriUtils.buildUri(getHost(), networkStateLink))
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            logInfo("Error retrieving ContainerNetworkState: %s ", e.getMessage());
+                            completeSubTasksCounter(taskCallback, e);
+                            return;
+                        }
+
+                        ContainerNetworkState networkState = o.getBody(ContainerNetworkState.class);
+
+                        String contextId;
+                        if (state.customProperties != null && (contextId = state.customProperties
+                                .get(FIELD_NAME_CONTEXT_ID_KEY)) != null) {
+                            ContainerNetworkState networkStatePatch = new ContainerNetworkState();
+
+                            networkStatePatch.compositeComponentLinks = networkState.compositeComponentLinks;
+                            if (networkStatePatch.compositeComponentLinks == null) {
+                                networkStatePatch.compositeComponentLinks = new ArrayList<>();
+                            }
+                            networkStatePatch.compositeComponentLinks.add(UriUtils.buildUriPath(
+                                    CompositeComponentFactoryService.SELF_LINK, contextId));
+
+                            sendRequest(Operation.createPatch(
+                                    UriUtils.buildUri(getHost(), networkState.documentSelfLink))
+                                    .setBody(networkStatePatch)
+                                    .setCompletion(
+                                            (o2, e2) -> {
+                                                if (e2 == null) {
+                                                    ContainerNetworkState body = o2
+                                                            .getBody(ContainerNetworkState.class);
+                                                    logInfo("Updated ContainerNetworkState: %s ",
+                                                            body.documentSelfLink);
+                                                }
+                                                completeSubTasksCounter(taskCallback, e2);
+                                            }));
+                        } else {
+                            completeSubTasksCounter(taskCallback, null);
+                            return;
+                        }
+
+                    }));
+        } catch (Throwable e) {
+            failTask("System failure updating ContainerNetworkState", e);
+        }
+    }
+
+    private void updateResourcesAndComplete(ContainerNetworkAllocationTaskState state) {
+        getContainerNetworkDescription(state,
+                (networkDescription) -> {
+                    if (Boolean.TRUE.equals(networkDescription.external)) {
+                        state.resourceNames.clear();
+                        state.resourceNames.add(networkDescription.name);
+                    }
+                    state.resourceLinks = buildResourceLinks(state);
+                    complete(state, SubStage.COMPLETED);
+                });
     }
 
     private void getContainerNetworkDescription(ContainerNetworkAllocationTaskState state,

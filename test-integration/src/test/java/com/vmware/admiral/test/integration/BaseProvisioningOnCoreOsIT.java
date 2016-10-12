@@ -130,12 +130,9 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         it = externalNetworksToDelete.iterator();
         while (it.hasNext()) {
             String networkLink = it.next();
-            ContainerNetworkState networkState = getDocument(networkLink,
-                    ContainerNetworkState.class);
-            if (networkState == null) {
-                logger.warning(String.format("Unable to find network %s", networkLink));
-                continue;
-            }
+
+            ContainerNetworkState network = getDocument(networkLink, ContainerNetworkState.class);
+            assertNotNull(String.format("Unable to find network %s", networkLink), network);
 
             try {
                 logger.info("---------- Clean up: Request Delete the network instance. --------");

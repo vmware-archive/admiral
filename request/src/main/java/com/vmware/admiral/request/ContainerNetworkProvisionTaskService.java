@@ -26,8 +26,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
@@ -40,6 +38,7 @@ import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService.ContainerNetworkProvisionTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
@@ -168,28 +167,41 @@ public class ContainerNetworkProvisionTaskService
 
         logInfo("Provision request for %s networks", state.resourceCount);
 
-        createTaskCallbackAndGetNetworkDescription(state, (taskCallback, networkDescription) -> {
-            state.instanceAdapterReference = networkDescription.instanceAdapterReference;
-            selectHosts(state, networkDescription, (hosts) -> {
+        getContainerNetworkDescription(state, (networkDescription) -> {
+            if (Boolean.TRUE.equals(networkDescription.external)) {
+                // The network is defined as external, just validate that it exists actually.
+                getNetwork(UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK,
+                        networkDescription.name),
+                        (networkState) -> {
+                            sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
+                        });
+            } else {
+                createTaskCallback(state,
+                        (taskCallback) -> {
+                            state.instanceAdapterReference = networkDescription.instanceAdapterReference;
+                            selectHosts(state, networkDescription, (hosts) -> {
 
-                if (hosts.size() == 1 || state.resourceLinks.size() == hosts.size()) {
-                    Iterator<ComputeState> hostIt = hosts.iterator();
-                    ComputeState host = hostIt.next();
-                    for (String networkLink : state.resourceLinks) {
-                        provisionNetwork(state, networkLink, host, taskCallback);
+                                if (hosts.size() == 1
+                                        || state.resourceLinks.size() == hosts.size()) {
+                                    Iterator<ComputeState> hostIt = hosts.iterator();
+                                    ComputeState host = hostIt.next();
+                                    for (String networkLink : state.resourceLinks) {
+                                        provisionNetwork(state, networkLink, host, taskCallback);
 
-                        if (hostIt.hasNext()) {
-                            host = hostIt.next();
-                        }
-                    }
-                } else {
-                    String err = String.format(
-                            "Unexpected size of resource links and hosts, hosts should be one or equal to resource links! Actual resources - [%s], hosts - [%s]",
-                            state.resourceLinks.size(), hosts.size());
-                    failTask(err, null);
-                }
+                                        if (hostIt.hasNext()) {
+                                            host = hostIt.next();
+                                        }
+                                    }
+                                } else {
+                                    String err = String.format(
+                                            "Unexpected size of resource links and hosts, hosts should be one or equal to resource links! Actual resources - [%s], hosts - [%s]",
+                                            state.resourceLinks.size(), hosts.size());
+                                    failTask(err, null);
+                                }
 
-            });
+                            });
+                        });
+            }
         });
 
         sendSelfPatch(createUpdateSubStageTask(state, SubStage.PROVISIONING));
@@ -265,56 +277,42 @@ public class ContainerNetworkProvisionTaskService
             ContainerNetworkProvisionTaskState state, ServiceTaskCallback taskCallback,
             String networkSelfLink) {
 
-        AdapterRequest networkRequest = new AdapterRequest();
-        networkRequest.resourceReference = UriUtils.buildUri(getHost(), networkSelfLink);
-        networkRequest.serviceTaskCallback = taskCallback;
-        if (Boolean.TRUE.equals(networkState.external)) {
-            // The network is defined as external, just validate that it exists actually.
-            networkRequest.operationTypeId = NetworkOperationType.INSPECT.id;
-        } else {
-            networkRequest.operationTypeId = NetworkOperationType.CREATE.id;
-        }
-        networkRequest.customProperties = state.customProperties;
+        getContainerNetworkDescription(state, (networkDescription) -> {
+            AdapterRequest networkRequest = new AdapterRequest();
+            networkRequest.resourceReference = UriUtils.buildUri(getHost(), networkSelfLink);
+            networkRequest.serviceTaskCallback = taskCallback;
+            if (Boolean.TRUE.equals(networkDescription.external)) {
+                // The network is defined as external, just validate that it exists actually.
+                networkRequest.operationTypeId = NetworkOperationType.INSPECT.id;
+            } else {
+                networkRequest.operationTypeId = NetworkOperationType.CREATE.id;
+            }
+            networkRequest.customProperties = state.customProperties;
 
-        sendRequest(Operation.createPatch(state.instanceAdapterReference)
-                .setBody(networkRequest)
-                .setContextId(getSelfId())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("AdapterRequest failed for network: " + networkSelfLink, e);
-                        return;
-                    }
-                    logInfo("Network '%s' request started for: %s", networkRequest.operationTypeId,
-                            networkSelfLink);
-                }));
+            sendRequest(Operation.createPatch(state.instanceAdapterReference)
+                    .setBody(networkRequest)
+                    .setContextId(getSelfId())
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            failTask("AdapterRequest failed for network: " + networkSelfLink, e);
+                            return;
+                        }
+                        logInfo("Network '%s' request started for: %s",
+                                networkRequest.operationTypeId, networkSelfLink);
+                    }));
+        });
     }
 
-    private void createTaskCallbackAndGetNetworkDescription(
-            ContainerNetworkProvisionTaskState state,
-            BiConsumer<ServiceTaskCallback, ContainerNetworkDescription> callbackFunction) {
-        AtomicReference<ServiceTaskCallback> taskCallback = new AtomicReference<>();
-        AtomicReference<ContainerNetworkDescription> networkDescription = new AtomicReference<>();
-
+    private void createTaskCallback(ContainerNetworkProvisionTaskState state,
+            Consumer<ServiceTaskCallback> callbackFunction) {
         createCounterSubTaskCallback(
                 state,
                 state.resourceCount,
                 false,
                 SubStage.COMPLETED,
                 (callback) -> {
-                    taskCallback.set(callback);
-                    ContainerNetworkDescription nd = networkDescription.get();
-                    if (nd != null) {
-                        callbackFunction.accept(callback, nd);
-                    }
+                    callbackFunction.accept(callback);
                 });
-
-        getContainerNetworkDescription(state, (nd) -> {
-            networkDescription.set(nd);
-            ServiceTaskCallback callback = taskCallback.get();
-            if (callback != null) {
-                callbackFunction.accept(callback, nd);
-            }
-        });
     }
 
     private void getContainerNetworkDescription(ContainerNetworkProvisionTaskState state,

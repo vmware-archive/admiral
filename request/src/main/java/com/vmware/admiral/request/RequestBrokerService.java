@@ -600,6 +600,10 @@ public class RequestBrokerService extends
             removalState.requestTrackerLink = state.requestTrackerLink;
         }
 
+        removalState.externalInspectOnly = (state.customProperties != null
+                && "true".equalsIgnoreCase(state.customProperties
+                        .get(ContainerNetworkRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
+
         sendRequest(Operation.createPost(this, ContainerNetworkRemovalTaskService.FACTORY_LINK)
                 .setBody(removalState)
                 .setContextId(getSelfId())

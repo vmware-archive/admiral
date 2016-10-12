@@ -233,14 +233,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
     @SuppressWarnings("unchecked")
     private void inspectAndUpdateNetwork(RequestContext context) {
 
-        String networkId;
-        if (Boolean.TRUE.equals(context.networkState.external)) {
-            // Actual network name in Docker!
-            networkId = context.networkState.name;
-        } else {
-            networkId = context.networkState.id;
-        }
-
+        String networkId = context.networkState.id;
         if (networkId == null) {
             fail(context.request, new IllegalStateException("network id is required "
                     + context.request.getRequestTrackingLog()));

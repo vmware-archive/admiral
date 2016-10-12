@@ -54,10 +54,13 @@ public class ContainerNetworkRemovalTaskService extends
 
     public static final String DISPLAY_NAME = "Container Network Removal";
 
+    public static final String EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY = "__externalInspectOnly";
+
     public static class ContainerNetworkRemovalTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ContainerNetworkRemovalTaskState.SubStage> {
         private static final String FIELD_NAME_RESOURCE_LINKS = "resourceLinks";
         private static final String FIELD_NAME_REMOVE_ONLY = "removeOnly";
+        private static final String FIELD_NAME_INSPECT_ONLY = "externalInspectOnly";
 
         public static enum SubStage {
             CREATED,
@@ -76,10 +79,16 @@ public class ContainerNetworkRemovalTaskService extends
 
         /**
          * whether to actually go and destroy the container network using the adapter or just remove
-         * the
-         * ContainerNetworkState
+         * the ContainerNetworkState
          */
         public boolean removeOnly;
+
+        /**
+         * whether to actually remove the container network or just inspect (and refresh) the
+         * ContainerNetworkState (i.e. external networks can't be removed when removing an
+         * application that uses them)
+         */
+        public boolean externalInspectOnly;
     }
 
     public ContainerNetworkRemovalTaskService() {
@@ -95,7 +104,7 @@ public class ContainerNetworkRemovalTaskService extends
     protected void handleStartedStagePatch(ContainerNetworkRemovalTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            queryContainerResources(state);
+            queryContainerNetworkResources(state);
             break;
         case INSTANCES_REMOVING:
             break;// just patch with the links
@@ -139,7 +148,7 @@ public class ContainerNetworkRemovalTaskService extends
         return statusTask;
     }
 
-    private void queryContainerResources(ContainerNetworkRemovalTaskState state) {
+    private void queryContainerNetworkResources(ContainerNetworkRemovalTaskState state) {
         QueryTask networkQuery = createResourcesQuery(ContainerNetworkState.class,
                 state.resourceLinks);
         ServiceDocumentQuery<ContainerNetworkState> query = new ServiceDocumentQuery<>(getHost(),
@@ -213,14 +222,14 @@ public class ContainerNetworkRemovalTaskService extends
                                         logWarning("No originatingHostLink set.");
                                         state.removeOnly = true;
                                         deleteResourceInstances(state, resourceLinks, subTaskLink);
-                                    } else if (ContainerNetworkState.PowerState.RETIRED
-                                            == networkState.powerState) {
-                                        logWarning("Network with id '%s' is retired. Deleting the state only.",
+                                    } else if (ContainerNetworkState.PowerState.RETIRED == networkState.powerState) {
+                                        logWarning(
+                                                "Network with id '%s' is retired. Deleting the state only.",
                                                 networkState.id);
                                         state.removeOnly = true;
                                         deleteResourceInstances(state, resourceLinks, subTaskLink);
                                     } else {
-                                        sendContainerNetworkDeleteRequest(networkState,
+                                        sendContainerNetworkDeleteRequest(state, networkState,
                                                 subTaskLink);
                                     }
                                 }));
@@ -267,21 +276,17 @@ public class ContainerNetworkRemovalTaskService extends
                 (subTaskLink) -> deleteResourceInstances(state, resourceLinks, subTaskLink));
     }
 
-    private void sendContainerNetworkDeleteRequest(ContainerNetworkState networkState,
-            String subTaskLink) {
-
-        if (Boolean.TRUE.equals(networkState.external)) {
-            // The network is defined as external, skip the actual deletion.
-            completeSubTasksCounter(subTaskLink, null);
-            return;
-        }
+    private void sendContainerNetworkDeleteRequest(ContainerNetworkRemovalTaskState state,
+            ContainerNetworkState networkState, String subTaskLink) {
 
         AdapterRequest adapterRequest = new AdapterRequest();
         String selfLink = networkState.documentSelfLink;
         adapterRequest.resourceReference = UriUtils.buildUri(getHost(), selfLink);
         adapterRequest.serviceTaskCallback = ServiceTaskCallback.create(UriUtils.buildUri(
                 getHost(), subTaskLink).toString());
-        adapterRequest.operationTypeId = NetworkOperationType.DELETE.id;
+        adapterRequest.operationTypeId = (Boolean.TRUE.equals(networkState.external)
+                && state.externalInspectOnly) ? NetworkOperationType.INSPECT.id
+                        : NetworkOperationType.DELETE.id;
         sendRequest(Operation.createPatch(networkState.adapterManagementReference)
                 .setBody(adapterRequest)
                 .setContextId(getSelfId())
@@ -313,6 +318,13 @@ public class ContainerNetworkRemovalTaskService extends
                             }
 
                             ContainerNetworkState cns = o.getBody(ContainerNetworkState.class);
+
+                            if (Boolean.TRUE.equals(cns.external) && state.externalInspectOnly) {
+                                logFine("Skipping actual Container Network State removal since the "
+                                        + "inspectOnly flag was set: %s", state.documentSelfLink);
+                                completeSubTasksCounter(subTaskLink, null);
+                                return;
+                            }
 
                             deleteContainerNetwork(cns).setCompletion((o2, e2) -> {
                                 if (e2 != null) {
@@ -351,12 +363,14 @@ public class ContainerNetworkRemovalTaskService extends
 
         setDocumentTemplateIndexingOptions(template, EnumSet.of(PropertyIndexingOption.STORE_ONLY),
                 ContainerNetworkRemovalTaskState.FIELD_NAME_RESOURCE_LINKS,
-                ContainerNetworkRemovalTaskState.FIELD_NAME_REMOVE_ONLY);
+                ContainerNetworkRemovalTaskState.FIELD_NAME_REMOVE_ONLY,
+                ContainerNetworkRemovalTaskState.FIELD_NAME_INSPECT_ONLY);
 
         setDocumentTemplateUsageOptions(template,
                 EnumSet.of(PropertyUsageOption.SINGLE_ASSIGNMENT),
                 ContainerNetworkRemovalTaskState.FIELD_NAME_RESOURCE_LINKS,
-                ContainerNetworkRemovalTaskState.FIELD_NAME_REMOVE_ONLY);
+                ContainerNetworkRemovalTaskState.FIELD_NAME_REMOVE_ONLY,
+                ContainerNetworkRemovalTaskState.FIELD_NAME_INSPECT_ONLY);
 
         setDocumentTemplateUsageOptions(template, EnumSet.of(PropertyUsageOption.SERVICE_USE));
 

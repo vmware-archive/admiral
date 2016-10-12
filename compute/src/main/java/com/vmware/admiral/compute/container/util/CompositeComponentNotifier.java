@@ -13,6 +13,10 @@ package com.vmware.admiral.compute.container.util;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 
@@ -26,6 +30,17 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class CompositeComponentNotifier {
+
+    public static void notifyCompositionComponents(Service service,
+            List<String> compositeComponentLinks, Action action) {
+        if (compositeComponentLinks == null || compositeComponentLinks.isEmpty()) {
+            return;
+        }
+
+        for (String compositeComponentLink : compositeComponentLinks) {
+            notifyCompositionComponent(service, compositeComponentLink, action);
+        }
+    }
 
     public static void notifyCompositionComponent(Service service,
             String compositeComponentLink, Action action) {
@@ -75,16 +90,37 @@ public class CompositeComponentNotifier {
                 }));
     }
 
+    public static void notifyCompositionComponentsOnChange(StatefulService service, Action action,
+            List<String> newCompositeComponentLinks, List<String> currentCompositeComponentLink) {
+
+        if (newCompositeComponentLinks == null) {
+            newCompositeComponentLinks = Collections.emptyList();
+        }
+
+        if (currentCompositeComponentLink == null) {
+            currentCompositeComponentLink = Collections.emptyList();
+        }
+
+        Set<String> toDelete = new HashSet<>(currentCompositeComponentLink);
+        toDelete.removeAll(newCompositeComponentLinks);
+        for (String componentLink : toDelete) {
+            notifyCompositionComponent(service, componentLink, Action.DELETE);
+        }
+
+        Set<String> toNotify = new HashSet<>(newCompositeComponentLinks);
+        toNotify.removeAll(currentCompositeComponentLink);
+        for (String componentLink : toNotify) {
+            notifyCompositionComponent(service, componentLink, action);
+        }
+    }
+
     public static void notifyCompositionComponentOnChange(StatefulService service, Action action,
-            String newCompositeComponentLink,
-            String currentCompositeComponentLink) {
+            String newCompositeComponentLink, String currentCompositeComponentLink) {
         if (currentCompositeComponentLink != null && newCompositeComponentLink == null) {
             notifyCompositionComponent(service, currentCompositeComponentLink, Action.DELETE);
-        } else if ((currentCompositeComponentLink == null
-                && newCompositeComponentLink != null)
+        } else if ((currentCompositeComponentLink == null && newCompositeComponentLink != null)
                 || (currentCompositeComponentLink != null
-                        && !currentCompositeComponentLink
-                                .equals(newCompositeComponentLink))) {
+                        && !currentCompositeComponentLink.equals(newCompositeComponentLink))) {
             notifyCompositionComponent(service, newCompositeComponentLink, action);
         }
     }

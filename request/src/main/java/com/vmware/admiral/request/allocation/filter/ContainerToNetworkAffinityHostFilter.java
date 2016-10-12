@@ -12,6 +12,7 @@
 package com.vmware.admiral.request.allocation.filter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -101,10 +102,17 @@ public class ContainerToNetworkAffinityHostFilter
             final Map<String, HostSelection> hostSelectionMap,
             Map<String, DescName> descLinksWithNames,
             final HostSelectionFilterCompletion callback) {
-        QueryTask q = QueryUtil.buildPropertyQuery(ContainerNetworkState.class,
-                ContainerNetworkState.FIELD_NAME_COMPOSITE_COMPONENT_LINK, UriUtils.buildUriPath(
-                        CompositeComponentFactoryService.SELF_LINK, state.contextId));
-        q.taskInfo.isDirect = false;
+
+        QueryTask q = QueryUtil.buildQuery(ContainerNetworkState.class, false);
+
+        String compositeComponentLinksItemField = QueryTask.QuerySpecification
+                .buildCollectionItemName(
+                        ContainerNetworkState.FIELD_NAME_COMPOSITE_COMPONENT_LINKS);
+        List<String> cclValues = new ArrayList<>(
+                Arrays.asList(UriUtils.buildUriPath(CompositeComponentFactoryService.SELF_LINK,
+                        state.contextId)));
+        QueryUtil.addListValueClause(q, compositeComponentLinksItemField, cclValues);
+
         QueryUtil.addExpandOption(q);
 
         QueryUtil.addListValueClause(q,

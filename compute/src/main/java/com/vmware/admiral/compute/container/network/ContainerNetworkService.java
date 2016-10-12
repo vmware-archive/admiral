@@ -48,7 +48,7 @@ public class ContainerNetworkService extends StatefulService {
         public static final String FIELD_NAME_OPTIONS = "options";
         public static final String FIELD_NAME_ORIGINATIONG_HOST_REFERENCE = "originatingHostReference";
         public static final String FIELD_NAME_ADAPTER_MANAGEMENT_REFERENCE = "adapterManagementReference";
-        public static final String FIELD_NAME_COMPOSITE_COMPONENT_LINK = "compositeComponentLink";
+        public static final String FIELD_NAME_COMPOSITE_COMPONENT_LINKS = "compositeComponentLinks";
 
         public static enum PowerState {
             UNKNOWN,
@@ -72,9 +72,9 @@ public class ContainerNetworkService extends StatefulService {
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK })
         public String originatingHostLink;
 
-        @Documentation(description = "Link to CompositeComponent when a network is part of App/Composition request.")
-        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK })
-        public String compositeComponentLink;
+        @Documentation(description = "Links to CompositeComponents when a network is part of App/Composition request.")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL })
+        public List<String> compositeComponentLinks;
 
         /** Defines which adapter will serve the provision request */
         @Documentation(description = "Defines which adapter will serve the provision request")
@@ -106,11 +106,10 @@ public class ContainerNetworkService extends StatefulService {
         public String driver;
 
         /**
-         * Composite Template use only. If set to true, specifies that this network exists outside
-         * of the Composite Template.
+         * If set to true, specifies that this network exists independently of any application.
          */
-        @Documentation(description = "Composite Template use only. If set to true, specifies that "
-                + "this network exists outside of the Composite Template.")
+        @Documentation(description = "If set to true, specifies that this network exists independently "
+                + "of any application.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Boolean external;
@@ -171,8 +170,8 @@ public class ContainerNetworkService extends StatefulService {
             // start the monitoring service instance for this network
             startMonitoringContainerNetworkState(body);
 
-            CompositeComponentNotifier.notifyCompositionComponent(this,
-                    body.compositeComponentLink, create.getAction());
+            CompositeComponentNotifier.notifyCompositionComponents(this,
+                    body.compositeComponentLinks, create.getAction());
         }
 
         create.complete();
@@ -197,7 +196,7 @@ public class ContainerNetworkService extends StatefulService {
 
         ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
         String currentSignature = Utils.computeSignature(currentState, docDesc);
-        String currentCompositeComponentLink = currentState.compositeComponentLink;
+        List<String> currentCompositeComponentLinks = currentState.compositeComponentLinks;
 
         PropertyUtils.mergeServiceDocuments(currentState, patchBody,
                 NetworkUtils.SHALLOW_MERGE_SKIP_MAPS_STRATEGY);
@@ -209,15 +208,9 @@ public class ContainerNetworkService extends StatefulService {
         if (!changed) {
             patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
         } else {
-            CompositeComponentNotifier.notifyCompositionComponentOnChange(this, patch.getAction(),
-                    currentState.compositeComponentLink, currentCompositeComponentLink);
+            CompositeComponentNotifier.notifyCompositionComponentsOnChange(this, patch.getAction(),
+                    currentState.compositeComponentLinks, currentCompositeComponentLinks);
         }
-
-        // TODO implement the equivalent for networks?
-        // if (ContainerUtil.isDiscoveredContainer(currentState)) {
-        // ContainerUtil.ContainerDescriptionHelper.createInstance(this)
-        // .updateDiscoveredContainerDesc(currentState, patchBody, null);
-        // }
 
         patch.complete();
     }
@@ -225,8 +218,8 @@ public class ContainerNetworkService extends StatefulService {
     @Override
     public void handleDelete(Operation delete) {
         ContainerNetworkState currentState = getState(delete);
-        CompositeComponentNotifier.notifyCompositionComponent(this,
-                currentState.compositeComponentLink, delete.getAction());
+        CompositeComponentNotifier.notifyCompositionComponents(this,
+                currentState.compositeComponentLinks, delete.getAction());
 
         super.handleDelete(delete);
     }
@@ -330,6 +323,7 @@ public class ContainerNetworkService extends StatefulService {
         template.customProperties.put("key (string)", "value (string)");
 
         template.containerStateLinks = new ArrayList<String>(0);
+        template.compositeComponentLinks = new ArrayList<String>(0);
 
         template.parentLinks = new ArrayList<String>(0);
 

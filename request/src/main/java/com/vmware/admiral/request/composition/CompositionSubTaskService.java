@@ -45,6 +45,7 @@ import com.vmware.admiral.request.ContainerAllocationTaskFactoryService;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService.ContainerNetworkProvisionTaskState;
+import com.vmware.admiral.request.ContainerNetworkRemovalTaskService;
 import com.vmware.admiral.request.ContainerVolumeProvisionTaskService;
 import com.vmware.admiral.request.ContainerVolumeProvisionTaskService.ContainerVolumeProvisionTaskState;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
@@ -518,6 +519,16 @@ public class CompositionSubTaskService
         requestBrokerState.tenantLinks = state.tenantLinks;
         requestBrokerState.requestTrackerLink = state.requestTrackerLink;
         requestBrokerState.customProperties = state.customProperties;
+
+        if (RequestBrokerState.REMOVE_RESOURCE_OPERATION.equals(requestBrokerState.operation)
+                && ResourceType.NETWORK_TYPE.getName().equals(requestBrokerState.resourceType)) {
+            if (requestBrokerState.customProperties == null) {
+                requestBrokerState.customProperties = new HashMap<>();
+            }
+            requestBrokerState.customProperties.put(
+                    ContainerNetworkRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY,
+                    "true");
+        }
 
         sendRequest(Operation.createPost(this, RequestBrokerFactoryService.SELF_LINK)
                 .setBody(requestBrokerState)

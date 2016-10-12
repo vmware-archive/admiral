@@ -71,6 +71,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
     private static ServiceClient serviceClient;
 
     private String compositeDescriptionLink;
+    private ContainerNetworkState externalNetwork;
 
     private enum NetworkType {
         CUSTOM, // agent or bindings
@@ -143,8 +144,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
 
         RequestBrokerState request = requestExternalNetwork(description.documentSelfLink);
 
-        ContainerNetworkState externalNetwork = getDocument(request.resourceLinks.get(0),
-                ContainerNetworkState.class);
+        externalNetwork = getDocument(request.resourceLinks.get(0), ContainerNetworkState.class);
         assertNotNull(externalNetwork);
 
         logger.info("External network created.");
@@ -197,6 +197,13 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         CompositeComponent cc = getDocument(request.resourceLinks.get(0), CompositeComponent.class);
         assertEquals("Unexpected number of component links", expectedNumberOfResources,
                 cc.componentLinks.size());
+
+        if (useExternalNetwork()) {
+            // check single network state in use for external network
+            String usedNetworkLink = getResourceContaining(cc.componentLinks,
+                    EXTERNAL_NETWORK_NAME);
+            assertEquals(externalNetwork.documentSelfLink, usedNetworkLink);
+        }
 
         String mysqlContainerLink = getResourceContaining(cc.componentLinks, MYSQL_NAME);
         assertNotNull(mysqlContainerLink);

@@ -269,8 +269,9 @@ public class ContainerToNetworkAffinityHostFilterTest extends BaseAffinityHostFi
         containerNetwork.descriptionLink = desc.documentSelfLink;
         containerNetwork.id = UUID.randomUUID().toString();
         containerNetwork.name = name;
-        containerNetwork.compositeComponentLink = UriUtils.buildUriPath(
-                CompositeComponentFactoryService.SELF_LINK, state.contextId);
+        containerNetwork.compositeComponentLinks = new ArrayList<>();
+        containerNetwork.compositeComponentLinks.add(UriUtils.buildUriPath(
+                CompositeComponentFactoryService.SELF_LINK, state.contextId));
         containerNetwork = doPost(containerNetwork, ContainerNetworkService.FACTORY_LINK);
         assertNotNull(containerNetwork);
         addForDeletion(containerNetwork);

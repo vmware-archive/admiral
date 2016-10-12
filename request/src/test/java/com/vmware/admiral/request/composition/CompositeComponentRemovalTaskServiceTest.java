@@ -170,7 +170,8 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
         addForDeletion(networkDesc);
 
         ContainerNetworkState network = TestRequestStateFactory.createNetwork("test-net-003");
-        network.compositeComponentLink = composite.documentSelfLink;
+        network.compositeComponentLinks = new ArrayList<>();
+        network.compositeComponentLinks.add(composite.documentSelfLink);
         network.adapterManagementReference = networkDesc.instanceAdapterReference;
         network.descriptionLink = networkDesc.documentSelfLink;
         network = doPost(network, ContainerNetworkService.FACTORY_LINK);
