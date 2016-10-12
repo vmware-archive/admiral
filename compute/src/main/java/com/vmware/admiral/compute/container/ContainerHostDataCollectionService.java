@@ -49,6 +49,7 @@ import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.admiral.service.common.AbstractCallbackServiceHandler;
+import com.vmware.admiral.service.common.AbstractCallbackServiceHandler.CallbackServiceHandlerState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
@@ -95,12 +96,14 @@ public class ContainerHostDataCollectionService extends StatefulService {
     }
 
     public static class ContainerHostDataCollectionState extends ServiceDocument {
-        @Documentation(description = "List of container host links to be updated as part of Patch triggered data collection.")
+        @Documentation(description = "List of container host links to be updated as part of Patch "
+                + "triggered data collection.")
         @PropertyOptions(indexing = {
                 PropertyIndexingOption.STORE_ONLY,
                 PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
         public Collection<String> computeContainerHostLinks;
-        @Documentation(description = "Flag indicating if this is data-collection after container remove.")
+        @Documentation(description = "Flag indicating if this is data-collection after container "
+                + "remove.")
         @PropertyOptions(indexing = {
                 PropertyIndexingOption.STORE_ONLY,
                 PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
@@ -112,8 +115,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
         public long lastRunTimeMicros;
 
-        @Documentation(description = "Count of how many times the last run data-collection has been run"
-                + " within very small time period.")
+        @Documentation(description = "Count of how many times the last run data-collection has "
+                + "been run within very small time period.")
         @PropertyOptions(indexing = {
                 PropertyIndexingOption.STORE_ONLY,
                 PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
@@ -228,22 +231,35 @@ public class ContainerHostDataCollectionService extends StatefulService {
     }
 
     private void handleHostAvailable(ComputeState computeState) {
-        PowerState patchPowerState = computeState.powerState;
+        if (PowerState.ON.equals(computeState.powerState)) {
+            // host is already ON, skip updating
+            return;
+        }
         String countString = computeState.customProperties.get(RETRIES_COUNT_PROP_NAME);
-        int count = Integer.parseInt(countString != null ? countString : "0");
+        countString = countString == null ? "0" : countString;
 
-        if (PowerState.SUSPEND.equals(computeState.powerState) && count == 0) {
-            patchPowerState = PowerState.SUSPEND;
-        } else if (!PowerState.OFF.equals(computeState.powerState)) {
-            /* when a host is disabled manually the state should not be changed to ON */
-            count = 0;
-            patchPowerState = PowerState.ON;
+        if (PowerState.SUSPEND.equals(computeState.powerState) && "0".equals(countString)) {
+             // when a host is disabled manually the state should not be changed to ON
+            return;
         }
 
+        if (PowerState.OFF.equals(computeState.powerState)) {
+            // set state to ON to trigger container data collection to update container states
+            computeState.powerState = PowerState.ON;
+        }
+
+        EventLogState eventLog = new EventLogState();
+        eventLog.tenantLinks = computeState.tenantLinks;
+        eventLog.resourceType = getClass().getName();
+        eventLog.eventLogType = EventLogType.INFO;
+        eventLog.description = String.format(
+                "Host [%s] has been marked [ON] after successful data collection.",
+                computeState.address);
+
         ComputeState patchState = new ComputeState();
-        patchState.powerState = patchPowerState;
-        patchState.customProperties = new HashMap<String, String>();
-        patchState.customProperties.put(RETRIES_COUNT_PROP_NAME, String.valueOf(count));
+        patchState.powerState = PowerState.ON;
+        patchState.customProperties = new HashMap<>();
+        patchState.customProperties.put(RETRIES_COUNT_PROP_NAME, "0");
         sendRequest(Operation.createPatch(this, computeState.documentSelfLink)
                 .setBody(patchState)
                 .setCompletion((o, e) -> {
@@ -251,11 +267,20 @@ public class ContainerHostDataCollectionService extends StatefulService {
                         logWarning("Error while patching computeState: %s", e);
                         return;
                     }
+                    sendRequest(Operation.createPost(getHost(), EventLogService.FACTORY_LINK)
+                            .setBody(eventLog)
+                            .setCompletion((op, ex) -> {
+                                if (ex != null) {
+                                    logWarning("Failed to publish event log: %s",
+                                            Utils.toString(ex));
+                                }
+                            }));
                 }));
     }
 
     private void handleHostNotAvailable(ComputeState computeState, ServiceErrorResponse error) {
-        if (computeState.powerState.equals(PowerState.OFF)) {
+        if (PowerState.OFF.equals(computeState.powerState)) {
+            // host is already OFF, skip updating
             return;
         }
 
@@ -269,7 +294,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         if (computeState.customProperties.get(RETRIES_COUNT_PROP_NAME) != null) {
             count = Integer.parseInt(computeState.customProperties.get(RETRIES_COUNT_PROP_NAME));
             count++;
-            if (count == MAX_RETRIES_COUNT) {
+            if (count >= MAX_RETRIES_COUNT) {
                 patchPowerState = PowerState.OFF;
                 count = 0;
             } else {
@@ -390,7 +415,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
     private void updatePlacements(ResourcePoolService.ResourcePoolState resourcePoolState) {
         QueryTask queryTask = QueryUtil.buildPropertyQuery(
                 GroupResourcePlacementService.GroupResourcePlacementState.class,
-                GroupResourcePlacementService.GroupResourcePlacementState.FIELD_NAME_RESOURCE_POOL_LINK,
+                GroupResourcePlacementService.GroupResourcePlacementState
+                        .FIELD_NAME_RESOURCE_POOL_LINK,
                 resourcePoolState.documentSelfLink);
         QueryUtil.addExpandOption(queryTask);
         ServiceDocumentQuery<GroupResourcePlacementState> query = new ServiceDocumentQuery<>(
@@ -413,26 +439,29 @@ public class ContainerHostDataCollectionService extends StatefulService {
                     return;
                 }
 
-                // Sort the placements by their "normalized" priority (priority divided by the sum of
-                // all priorities in the group). We do that because the priorities are relative within
-                // the group. E.g. Group A has two placements with priorities 1 and 2; group B has two
-                // placements with priorities 100 and 200 thus the normalized priorities will be:
-                // 0.33; 0.66 for A and 0.33 and 0.66 for B
+                // Sort the placements by their "normalized" priority (priority divided by the sum
+                // of all priorities in the group). We do that because the priorities are relative
+                // within the group. E.g. Group A has two placements with priorities 1 and 2;
+                // group B has two placements with priorities 100 and 200 thus the normalized
+                // priorities will be: 0.33; 0.66 for A and 0.33 and 0.66 for B
                 Map<String, Integer> sumOfPrioritiesByGroup = placements
                         .stream().collect(
                                 Collectors.groupingBy(
-                                        (GroupResourcePlacementState placement) -> getGroup(placement),
-                                        Collectors.summingInt((
-                                                GroupResourcePlacementState placement) -> placement.priority)));
+                                        ContainerHostDataCollectionService::getGroup,
+                                        Collectors.summingInt(
+                                                (GroupResourcePlacementState placement) ->
+                                                        placement.priority)));
 
-                Comparator<GroupResourcePlacementService.GroupResourcePlacementState> comparator = (q1,
-                        q2) -> Double.compare(
+                Comparator<GroupResourcePlacementService.GroupResourcePlacementState> comparator =
+                        (q1, q2) -> Double.compare(
                                 ((double) q2.priority) / sumOfPrioritiesByGroup.get(getGroup(q2)),
                                 ((double) q1.priority) / sumOfPrioritiesByGroup.get(getGroup(q1)));
 
                 placements.sort(comparator);
-                Set<GroupResourcePlacementService.GroupResourcePlacementState> placementsToUpdate = new HashSet<>();
-                for (GroupResourcePlacementService.GroupResourcePlacementState placement : placements) {
+                Set<GroupResourcePlacementService.GroupResourcePlacementState> placementsToUpdate =
+                        new HashSet<>();
+                for (GroupResourcePlacementService.GroupResourcePlacementState placement :
+                        placements) {
                     if (placement.availableMemory == 0 || placement.memoryLimit == 0) {
                         continue;
                     }
@@ -447,7 +476,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
                     }
                 }
 
-                for (GroupResourcePlacementService.GroupResourcePlacementState placementToUpdate : placementsToUpdate) {
+                for (GroupResourcePlacementService.GroupResourcePlacementState placementToUpdate :
+                        placementsToUpdate) {
                     sendRequest(Operation.createPut(this, placementToUpdate.documentSelfLink)
                             .setBody(placementToUpdate));
                 }
@@ -457,7 +487,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
     }
 
     // Assume for now there's only one
-    private static String getGroup(GroupResourcePlacementService.GroupResourcePlacementState placement) {
+    private static String getGroup(
+            GroupResourcePlacementService.GroupResourcePlacementState placement) {
         if (placement.tenantLinks != null) {
             return placement.tenantLinks.get(0);
         } else {
@@ -664,7 +695,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
 
     private void updateContainerHostInfo(
             String documentSelfLink,
-            BiConsumer<AbstractCallbackServiceHandler.CallbackServiceHandlerState, ServiceErrorResponse> consumer,
+            BiConsumer<CallbackServiceHandlerState, ServiceErrorResponse> consumer,
             ServiceTaskCallback serviceTaskCallback) {
 
         if (serviceTaskCallback == null) {
@@ -693,7 +724,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
         sendRequest(Operation
                 .createPatch(
                         this,
-                        HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
+                        HostContainerListDataCollectionFactoryService
+                                .DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
                 .setBody(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -709,7 +741,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
         sendRequest(Operation
                 .createPatch(
                         this,
-                        HostNetworkListDataCollectionFactoryService.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK)
+                        HostNetworkListDataCollectionFactoryService
+                                .DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK)
                 .setBody(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -720,13 +753,13 @@ public class ContainerHostDataCollectionService extends StatefulService {
     }
 
     private void startAndCreateCallbackHandlerService(
-            BiConsumer<AbstractCallbackServiceHandler.CallbackServiceHandlerState, ServiceErrorResponse> actualCallback,
+            BiConsumer<CallbackServiceHandlerState, ServiceErrorResponse> actualCallback,
             Consumer<ServiceTaskCallback> caller) {
         if (actualCallback == null) {
             caller.accept(ServiceTaskCallback.createEmpty());
             return;
         }
-        AbstractCallbackServiceHandler.CallbackServiceHandlerState body = new AbstractCallbackServiceHandler.CallbackServiceHandlerState();
+        CallbackServiceHandlerState body = new CallbackServiceHandlerState();
         String callbackLink = ManagementUriParts.REQUEST_CALLBACK_HANDLER_TASKS
                 + UUID.randomUUID().toString();
         body.documentSelfLink = callbackLink;
@@ -779,7 +812,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         QueryTask containerQuery = QueryUtil.buildPropertyQuery(ContainerState.class,
                 ContainerState.FIELD_NAME_PARENT_LINK, computeStateSelfLink);
         ContainerState errorState = new ContainerState();
-        errorState.powerState = com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState.ERROR;
+        errorState.powerState = ContainerState.PowerState.ERROR;
         new ServiceDocumentQuery<>(getHost(), ContainerState.class).query(
                 containerQuery, (r) -> {
                     if (r.hasException()) {
