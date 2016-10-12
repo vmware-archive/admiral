@@ -28,6 +28,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509TrustManager;
 
+import com.fasterxml.jackson.dataformat.yaml.snakeyaml.util.UriEncoder;
+
 import com.vmware.admiral.adapter.docker.util.DockerStreamUtil;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.CertificateUtil;
@@ -310,8 +312,10 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     public void removeNetwork(CommandInput input, CompletionHandler completionHandler) {
         createOrUpdateTargetSsl(input);
 
-        String path = String.format("/networks/%s", input
-                .getProperties().get(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME));
+        String idEncoded = UriEncoder.encode(input
+                .getProperties().get(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME).toString());
+
+        String path = String.format("/networks/%s", idEncoded);
 
         URI uri = UriUtils.extendUri(input.getDockerUri(), path);
         // TODO there is no force remove for networks. All connected containers must be disconnected
@@ -335,8 +339,9 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     public void inspectNetwork(CommandInput input, CompletionHandler completionHandler) {
         createOrUpdateTargetSsl(input);
 
-        String path = String.format("/networks/%s", input
-                .getProperties().get(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME));
+        String idEncoded = UriEncoder.encode(input
+                .getProperties().get(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME).toString());
+        String path = String.format("/networks/%s", idEncoded);
 
         sendGet(UriUtils.extendUri(input.getDockerUri(), path), input.getProperties(),
                 completionHandler);
@@ -349,8 +354,10 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     public void connectContainerToNetwork(CommandInput input, CompletionHandler completionHandler) {
         createOrUpdateTargetSsl(input);
 
-        String path = String.format("/networks/%s/connect", input
-                .getProperties().get(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME));
+        String idEncoded = UriEncoder.encode(input
+                .getProperties().get(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME).toString());
+
+        String path = String.format("/networks/%s/connect", idEncoded);
 
         sendPost(UriUtils.extendUri(input.getDockerUri(), path), input.getProperties(),
                 ClientMode.DEFAULT, completionHandler);

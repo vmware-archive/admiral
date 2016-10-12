@@ -31,6 +31,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.dataformat.yaml.snakeyaml.util.UriEncoder;
+
 import com.vmware.admiral.compute.BindingEvaluator;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
@@ -465,7 +467,7 @@ public class CompositionTaskService
     }
 
     private String buildCompositionSubTaskLink(String name) {
-        final String compositionSubTaskId = getSelfId() + "-" + name;
+        final String compositionSubTaskId = getSelfId() + "-" + UriEncoder.encode(name);
         return UriUtils.buildUriPath(CompositionSubTaskFactoryService.SELF_LINK,
                 compositionSubTaskId);
     }

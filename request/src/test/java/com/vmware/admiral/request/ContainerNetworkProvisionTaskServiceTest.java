@@ -11,9 +11,12 @@
 
 package com.vmware.admiral.request;
 
+import static org.hamcrest.CoreMatchers.startsWith;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
@@ -129,6 +132,103 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
                 "Containers should be on different hosts.");
 
         ContainerNetworkState network = getDocument(ContainerNetworkState.class, networkLink);
+
+        assertNotNull(cont1.networks.get(network.name));
+        assertNotNull(cont2.networks.get(network.name));
+
+        List<String> hostLinks = Arrays.asList(cont1.parentLink,
+                cont2.parentLink);
+        // Network is provisioned on one of the hosts of the containers
+        assertTrue(hostLinks.contains(network.originatingHostLink));
+    }
+
+    // VBV-685
+    @Test
+    public void testNetworkWithSpecialNameProvisioningTask() throws Throwable {
+        String networkName = "special chars network";
+
+        ContainerNetworkDescription networkDesc = TestRequestStateFactory
+                .createContainerNetworkDescription(networkName);
+        networkDesc.documentSelfLink = UUID.randomUUID().toString();
+
+        // Create ContainerDescription with above network.
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
+        container1Desc.name = "container1";
+        container1Desc.networks = new HashMap<>();
+        container1Desc.networks.put(networkName, new ServiceNetwork());
+
+        // Create ContainerDescription with above network.
+        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
+        container2Desc.name = "container2";
+        container2Desc.affinity = new String[] { "!container1:hard" };
+        container2Desc.networks = new HashMap<>();
+        container2Desc.networks.put(networkName, new ServiceNetwork());
+
+        // Setup Docker host and resource pool.
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+        if (dockerHostDesc.customProperties == null) {
+            dockerHostDesc.customProperties = new HashMap<>();
+        }
+        dockerHostDesc.customProperties
+                .put(ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME, "my-kv-store");
+
+        ComputeState dockerHost1 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost1);
+
+        ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost2);
+
+        CompositeDescription compositeDesc = createCompositeDesc(networkDesc, container1Desc,
+                container2Desc);
+        assertNotNull(compositeDesc);
+        assertEquals(3, compositeDesc.descriptionLinks.size());
+
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
+
+        // 1. Request a composite container:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+
+        assertNotNull(cc.componentLinks);
+        assertEquals(cc.componentLinks.size(), 3);
+
+        String networkLink = null;
+        String containerLink1 = null;
+        String containerLink2 = null;
+
+        Iterator<String> iterator = cc.componentLinks.iterator();
+
+        while (iterator.hasNext()) {
+            String link = iterator.next();
+            if (link.startsWith(ContainerNetworkService.FACTORY_LINK)) {
+                networkLink = link;
+            } else if (containerLink1 == null) {
+                containerLink1 = link;
+            } else {
+                containerLink2 = link;
+            }
+        }
+
+        ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
+        ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
+
+        AssertUtil.assertTrue(!cont1.parentLink.equals(cont2.parentLink),
+                "Containers should be on different hosts.");
+
+        ContainerNetworkState network = getDocument(ContainerNetworkState.class, networkLink);
+        assertThat(network.name, startsWith(networkName));
 
         assertNotNull(cont1.networks.get(network.name));
         assertNotNull(cont2.networks.get(network.name));
