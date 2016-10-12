@@ -14,9 +14,13 @@ package com.vmware.admiral.test.integration;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 public final class TestPropertiesUtil {
+
+    private static Logger logger = Logger.getLogger(TestPropertiesUtil.class.getName());
 
     private static final String TEST_INTEGRATION_PROPERTIES_FILE_PATH = "test.integration.properties";
 
@@ -33,7 +37,7 @@ public final class TestPropertiesUtil {
                     .getResourceAsStream("integration-test.properties"));
             File systemConfiguredTestPropertiesFile = getSystemConfiguredTestPropertiesFile();
             if (systemConfiguredTestPropertiesFile == null) {
-                System.out.println(String.format("Required system property: %s is not provided",
+                logger.info(String.format("System property %s for external properties is not provided",
                         TEST_INTEGRATION_PROPERTIES_FILE_PATH));
             } else {
                 loadProperties(properties, systemConfiguredTestPropertiesFile);
@@ -41,7 +45,20 @@ public final class TestPropertiesUtil {
         } catch (Exception e) {
             throw new RuntimeException("Error during test properties loading.", e);
         }
+
+        dumpProperties(properties);
         return properties;
+    }
+
+    private static final void dumpProperties(Properties properties) {
+        logger.info("System properties");
+        for (Entry<Object, Object> e : System.getProperties().entrySet()) {
+            logger.info(e.getKey() + "=" + e.getValue());
+        }
+        logger.info("Properties from file");
+        for (Entry<Object, Object> e : properties.entrySet()) {
+            logger.info(e.getKey() + "=" + e.getValue());
+        }
     }
 
     private static File getSystemConfiguredTestPropertiesFile() {
@@ -63,19 +80,11 @@ public final class TestPropertiesUtil {
     }
 
     public static String getTestRequiredProp(String key) {
-        String property = testProperties.getProperty(key);
+        String property = getSystemOrTestProp(key);
         if (property == null || property.isEmpty()) {
             throw new IllegalStateException(String.format("Property '%s' is required", key));
         }
         return property;
-    }
-
-    public static String getTestProp(String key) {
-        return testProperties.getProperty(key);
-    }
-
-    public static String getTestProp(String key, String defaultValue) {
-        return testProperties.getProperty(key, defaultValue);
     }
 
     public static String getSystemOrTestProp(String key) {
