@@ -14,6 +14,7 @@ package com.vmware.admiral.host;
 import java.util.ArrayList;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.compute.EnvironmentMappingService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
@@ -29,6 +30,7 @@ import com.vmware.xenon.common.ServiceDocument;
  */
 public class ComputeInitialBootService extends AbstractInitialBootService {
     public static final String SELF_LINK = ManagementUriParts.CONFIG + "/compute-initial-boot";
+    private static final String EMBEDDED_MODE_PROPERTY = "embedded";
 
     @Override
     public void handlePost(Operation post) {
@@ -40,10 +42,14 @@ public class ComputeInitialBootService extends AbstractInitialBootService {
         states.add(ContainerHostDataCollectionService.buildDefaultStateInstance());
         states.add(HostContainerListDataCollectionFactoryService.buildDefaultStateInstance());
         states.add(HostNetworkListDataCollectionFactoryService.buildDefaultStateInstance());
-        states.add(GroupResourcePlacementService.buildDefaultResourcePool());
-        states.add(GroupResourcePlacementService.buildDefaultStateInstance());
-        states.addAll(EnvironmentMappingService.getDefaultMappings());
+        boolean isEmbedded = Boolean.valueOf(
+                ConfigurationUtil.getProperty(EMBEDDED_MODE_PROPERTY));
+        if (!isEmbedded) {
+            states.add(GroupResourcePlacementService.buildDefaultResourcePool());
+            states.add(GroupResourcePlacementService.buildDefaultStateInstance());
+        }
 
+        states.addAll(EnvironmentMappingService.getDefaultMappings());
         initInstances(post, states.toArray(new ServiceDocument[states.size()]));
     }
 }
