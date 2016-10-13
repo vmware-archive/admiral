@@ -41,6 +41,15 @@ func ConfigPath() string {
 	}
 }
 
+func TrustedCertsPath() string {
+	home := GetHome()
+	if runtime.GOOS == "windows" {
+		return home + WINDOWS_PATH_SEPARATOR + ".admiral-cli" + WINDOWS_PATH_SEPARATOR + "trusted-certs.pem"
+	} else {
+		return home + UNIX_PATH_SEPARATOR + ".admiral-cli" + UNIX_PATH_SEPARATOR + "trusted-certs.pem"
+	}
+}
+
 func CliDir() string {
 	home := GetHome()
 	if runtime.GOOS == "windows" {

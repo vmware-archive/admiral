@@ -13,36 +13,33 @@ package client
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"admiral/auth"
 	"admiral/config"
 	"admiral/functions"
+	"admiral/paths"
+	"encoding/pem"
+	"strings"
 )
 
 type ResponseError struct {
 	Message string `json:"message"`
 }
 
-var timeoutDuration = time.Second * time.Duration(config.CLIENT_TIMEOUT)
-
-var netTransport = &http.Transport{
-	Dial: (&net.Dialer{
-		Timeout: timeoutDuration,
-	}).Dial,
-	TLSHandshakeTimeout: timeoutDuration,
-	Proxy:               http.ProxyFromEnvironment,
-}
-
-var NetClient = &http.Client{
-	Timeout:   timeoutDuration,
-	Transport: netTransport,
-}
+var (
+	skipSSLVerification bool
+	loadedTrustCerts    []*x509.Certificate
+)
 
 //ProcessRequest is used for common requests. As parameter is taking
 //request with only set method, url and body if there is one, then it handles
@@ -51,12 +48,27 @@ var NetClient = &http.Client{
 //response body as byte array.
 func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 	token, from := auth.GetAuthToken()
+	netClient, err := buildHttpClient()
+	if err != nil {
+		return nil, nil, err
+	}
 	functions.CheckVerboseRequest(req)
 	if req.Header.Get("Content-Type") == "" {
 		req.Header.Set("Content-Type", "application/json")
 	}
 	req.Header.Set("x-xenon-auth-token", token)
-	resp, err := NetClient.Do(req)
+	if err != nil {
+		return nil, nil, err
+	}
+	resp, err := netClient.Do(req)
+	redo, err := checkForCertErrors(req.URL.Host, err)
+	if err != nil {
+		return nil, nil, err
+	}
+	if redo {
+		resp, respBody, err := ProcessRequest(req)
+		return resp, respBody, err
+	}
 	admiralHostUrl := req.URL.Scheme + "://" + req.URL.Host
 	functions.CheckResponse(err, admiralHostUrl)
 	functions.CheckVerboseResponse(resp)
@@ -66,13 +78,16 @@ func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
+	resp.Body.Close()
 	return resp, respBody, nil
 }
 
 //CheckResponseError checks if the response code is 4xx and then prints any error message,
 //or if the message is "forbidden", prints that there is authentication problem.
 func CheckResponseError(resp *http.Response, tokenFrom string) error {
+	if resp == nil {
+		return errors.New("Response from the server is null.")
+	}
 	if resp.StatusCode >= 400 && resp.StatusCode <= 500 {
 		body, err := ioutil.ReadAll(resp.Body)
 		functions.CheckJson(err)
@@ -95,4 +110,183 @@ func CheckResponseError(resp *http.Response, tokenFrom string) error {
 		return errors.New(message.Message)
 	}
 	return nil
+}
+
+//buildHttpClient is setting up CA pool and adding this pool
+//to the http client configuration along with other configurations.
+func buildHttpClient() (*http.Client, error) {
+	caCertPool, err := setupCAPool()
+	if err != nil {
+		return nil, err
+	}
+
+	var tlsClientConfig = &tls.Config{
+		RootCAs:            caCertPool,
+		InsecureSkipVerify: skipSSLVerification,
+	}
+
+	var timeoutDuration = time.Second * time.Duration(config.CLIENT_TIMEOUT)
+
+	var netTransport = &http.Transport{
+		Dial: (&net.Dialer{
+			Timeout: timeoutDuration,
+		}).Dial,
+		TLSHandshakeTimeout: timeoutDuration,
+		Proxy:               http.ProxyFromEnvironment,
+		TLSClientConfig:     tlsClientConfig,
+	}
+
+	netClient := &http.Client{
+		Timeout:   timeoutDuration,
+		Transport: netTransport,
+	}
+
+	return netClient, nil
+}
+
+//setupCaPool is taking the system CA's plus certificates
+//from admiral directory which the user already accepted.
+//It returns the created cert pool and error if occurred anywhere.
+func setupCAPool() (*x509.CertPool, error) {
+	caCertPool, _ := x509.SystemCertPool()
+	if caCertPool == nil {
+		caCertPool = x509.NewCertPool()
+	}
+
+	if _, err := os.Stat(paths.TrustedCertsPath()); os.IsNotExist(err) {
+		os.Create(paths.TrustedCertsPath())
+	}
+	trustedCerts, err := ioutil.ReadFile(paths.TrustedCertsPath())
+
+	if err != nil {
+		return nil, err
+	}
+	caCertPool.AppendCertsFromPEM(trustedCerts)
+	return caCertPool, nil
+}
+
+func checkForCertErrors(url string, errA error) (bool, error) {
+	if errA == nil {
+		return false, errA
+	} else if strings.Contains(errA.Error(), "x509: certificate signed by unknown authority") {
+		result := promptAllCerts(url)
+		if result {
+			return true, nil
+		} else {
+			os.Exit(0)
+		}
+	} else if strings.Contains(errA.Error(), "x509") {
+		loadCertsFromFile()
+		skipVerify := checkCertInLoadedCerts(url)
+		if skipVerify {
+			skipSSLVerification = skipVerify
+			return true, nil
+		} else {
+			return false, nil
+		}
+	} else {
+		return false, errA
+	}
+	return false, nil
+}
+
+func checkCertInLoadedCerts(url string) bool {
+	conn, err := tls.Dial("tcp", url, &tls.Config{InsecureSkipVerify: true})
+	if err != nil {
+		return false
+	}
+	cs := conn.ConnectionState()
+	result := false
+	for _, cert := range cs.PeerCertificates {
+		if containsCert(cert) {
+			result = true
+			continue
+		}
+		answer := prompCertAgreement(cert)
+		if answer {
+			cert.IsCA = true
+			saveTrustedCert(cert)
+			result = true
+			continue
+		} else {
+			result = false
+			break
+		}
+	}
+	return result
+}
+
+func promptAllCerts(url string) bool {
+	conn, err := tls.Dial("tcp", url, &tls.Config{InsecureSkipVerify: true})
+	if err != nil {
+		return false
+	}
+	cs := conn.ConnectionState()
+	answer := false
+	for _, cert := range cs.PeerCertificates {
+		if prompCertAgreement(cert) {
+			cert.IsCA = true
+			saveTrustedCert(cert)
+			answer = true
+		} else {
+			answer = false
+			return answer
+		}
+	}
+	return answer
+}
+
+func prompCertAgreement(cert *x509.Certificate) bool {
+	var buf bytes.Buffer
+	buf.WriteString(fmt.Sprintf("Common Name: %s\n", cert.Issuer.CommonName))
+	buf.WriteString(fmt.Sprintf("Serial: %s\n", cert.SerialNumber))
+	buf.WriteString(fmt.Sprintf("Valid since: %s\n", cert.NotBefore))
+	buf.WriteString(fmt.Sprintf("Valid to: %s", cert.NotAfter))
+	fmt.Println(buf.String())
+	fmt.Println("Are you sure you want to connect to this site? (y/n)?")
+	answer := functions.PromptAgreement()
+
+	if answer == "n" || answer == "N" {
+		return false
+	}
+	return true
+}
+
+func saveTrustedCert(cert *x509.Certificate) {
+	if _, err := os.Stat(paths.TrustedCertsPath()); os.IsNotExist(err) {
+		os.Create(paths.TrustedCertsPath())
+	}
+	pemCert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
+	trustedCerts, err := os.OpenFile(paths.TrustedCertsPath(), os.O_APPEND|os.O_WRONLY, 0600)
+	functions.CheckFile(err)
+	trustedCerts.Write(pemCert)
+}
+
+func loadCertsFromFile() error {
+	certBytes, err := ioutil.ReadFile(paths.TrustedCertsPath())
+	if err != nil {
+		return err
+	}
+	if certBytes == nil {
+		return nil
+	}
+	blocks, _ := pem.Decode(certBytes)
+	if blocks == nil {
+		return nil
+	}
+	certs, err := x509.ParseCertificates(blocks.Bytes)
+	if err != nil {
+		return err
+	}
+	loadedTrustCerts = certs
+	return nil
+}
+
+func containsCert(cert *x509.Certificate) bool {
+	for i := range loadedTrustCerts {
+		if cert.Equal(loadedTrustCerts[i]) {
+			return true
+		}
+	}
+	return false
 }

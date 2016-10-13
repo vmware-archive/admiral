@@ -21,7 +21,6 @@ import (
 	"os"
 	"strings"
 
-	"admiral/auth"
 	"admiral/client"
 	"admiral/config"
 	"admiral/functions"
@@ -236,22 +235,8 @@ func Export(id, dirF, format string) (string, error) {
 		url = url + "&format=docker"
 	}
 	req, _ := http.NewRequest("GET", url, nil)
-	token, from := auth.GetAuthToken()
-	functions.CheckVerboseRequest(req)
-	req.Header.Set("content-type", "application/json")
-	req.Header.Set("x-xenon-auth-token", token)
-	resp, err := client.NetClient.Do(req)
-	functions.CheckResponse(err, config.URL)
-	functions.CheckVerboseResponse(resp)
-	respBody, err := ioutil.ReadAll(resp.Body)
-	functions.CheckJson(err)
-	defer resp.Body.Close()
-	isAuth := auth.IsAuthorized(respBody, from)
-	if !isAuth {
-		os.Remove(dirF)
-		os.Exit(-1)
-	}
-	if err != nil {
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
 		os.Remove(dirF)
 		return "", err
 	}

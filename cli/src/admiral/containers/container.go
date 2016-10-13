@@ -16,14 +16,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
 	"time"
 
-	"admiral/auth"
 	"admiral/client"
 	"admiral/config"
 	"admiral/functions"
@@ -334,23 +332,10 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 
 	functions.CheckJson(err)
 
-	token, from := auth.GetAuthToken()
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	functions.CheckVerboseRequest(req)
-	req.Header.Set("content-type", "application/json")
-	req.Header.Set("x-xenon-auth-token", token)
+	_, respBody, respErr := client.ProcessRequest(req)
 
-	resp, err := client.NetClient.Do(req)
-	functions.CheckResponse(err, config.URL)
-	functions.CheckVerboseResponse(resp)
-	respBody, _ := ioutil.ReadAll(resp.Body)
-	//Check for authentication error.
-	isAuth := auth.IsAuthorized(respBody, from)
-	if !isAuth {
-		os.Exit(-1)
-	}
-
-	if resp.StatusCode == 200 {
+	if respErr == nil {
 		taskStatus := &track.OperationResponse{}
 		_ = json.Unmarshal(respBody, taskStatus)
 		taskStatus.PrintTracerId()
@@ -365,7 +350,7 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 		resourcesIDs := functions.GetResourceIDs(resLinks)
 		return resourcesIDs, err
 	}
-	return nil, errors.New("Error occurred when removing containers.")
+	return nil, respErr
 }
 
 //Function to execute command inside container.

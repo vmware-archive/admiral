@@ -58,12 +58,12 @@ func (c *Certificate) GetValidTo() string {
 //String returns information about certificate.
 func (c *Certificate) String() string {
 	var buf bytes.Buffer
-	buf.WriteString(fmt.Sprintf("Company name: %s\n", c.CommonName))
-	buf.WriteString(fmt.Sprintf("Issuer name: %s\n", c.IssuerName))
-	buf.WriteString(fmt.Sprintf("Serial: %s\n", c.Serial))
-	buf.WriteString(fmt.Sprintf("SHA fingerprint: %s\n", c.Fingerprint))
-	buf.WriteString(fmt.Sprintf("Valid since: %s\n", c.GetValidSince()))
-	buf.WriteString(fmt.Sprintf("Valid to: %s", c.GetValidTo()))
+	buf.WriteString(fmt.Sprintf("Common name: %v\n", c.CommonName))
+	buf.WriteString(fmt.Sprintf("Issuer name: %v\n", c.IssuerName))
+	buf.WriteString(fmt.Sprintf("Serial: %v\n", c.Serial))
+	buf.WriteString(fmt.Sprintf("Fingerprint: %v\n", c.Fingerprint))
+	buf.WriteString(fmt.Sprintf("Valid since: %v\n", c.GetValidSince()))
+	buf.WriteString(fmt.Sprintf("Valid to: %v", c.GetValidTo()))
 	return buf.String()
 }
 

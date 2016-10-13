@@ -15,13 +15,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
-	"admiral/auth"
 	"admiral/client"
 	"admiral/config"
 	"admiral/events"
@@ -61,11 +58,7 @@ func (or *OperationResponse) PrintTracerId() {
 
 func Wait(taskId string) ([]string, error) {
 	url := config.URL + "/request-status/" + taskId
-	token, from := auth.GetAuthToken()
 	req, _ := http.NewRequest("GET", url, nil)
-	functions.CheckVerboseRequest(req)
-	req.Header.Set("content-type", "application/json")
-	req.Header.Set("x-xenon-auth-token", token)
 	var (
 		result        string
 		errorMsg      string
@@ -83,19 +76,11 @@ func Wait(taskId string) ([]string, error) {
 			return nil, errors.New("Task timed out.")
 		}
 		taskStatus := &TaskStatus{}
-		resp, err := client.NetClient.Do(req)
-		functions.CheckResponse(err, config.URL)
-		functions.CheckVerboseResponse(resp)
-		respBody, _ := ioutil.ReadAll(resp.Body)
-		//Check for authentication error.
-		isAuth := auth.IsAuthorized(respBody, from)
-		if !isAuth {
-			os.Exit(-1)
+		_, respBody, respErr := client.ProcessRequest(req)
+		if respErr != nil {
+			return nil, respErr
 		}
-		if resp.StatusCode != 200 {
-			return nil, errors.New("Resource not found.")
-		}
-		err = json.Unmarshal(respBody, taskStatus)
+		err := json.Unmarshal(respBody, taskStatus)
 		functions.CheckJson(err)
 		pb.UpdateBar(taskStatus.Progress)
 		if taskStatus.SubStage == "COMPLETED" {
@@ -125,30 +110,18 @@ func Wait(taskId string) ([]string, error) {
 
 func GetResLinks(taskId string) ([]string, error) {
 	url := config.URL + "/request-status/" + taskId
-	token, from := auth.GetAuthToken()
 	req, _ := http.NewRequest("GET", url, nil)
-	functions.CheckVerboseRequest(req)
-	req.Header.Set("content-type", "application/json")
-	req.Header.Set("x-xenon-auth-token", token)
 	var (
 		result        string
 		errorMsg      string
 		resourceLinks []string
 	)
 	taskStatus := &TaskStatus{}
-	resp, err := client.NetClient.Do(req)
-	functions.CheckResponse(err, config.URL)
-	functions.CheckVerboseResponse(resp)
-	respBody, _ := ioutil.ReadAll(resp.Body)
-	//Check for authentication error.
-	isAuth := auth.IsAuthorized(respBody, from)
-	if !isAuth {
-		os.Exit(-1)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return nil, respErr
 	}
-	if resp.StatusCode != 200 {
-		return nil, errors.New("Resource not found.")
-	}
-	err = json.Unmarshal(respBody, taskStatus)
+	err := json.Unmarshal(respBody, taskStatus)
 	functions.CheckJson(err)
 	if taskStatus.SubStage == "COMPLETED" {
 		result = taskStatus.SubStage

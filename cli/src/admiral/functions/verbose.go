@@ -56,7 +56,7 @@ func CheckVerboseRequest(req *http.Request) {
 
 //If verbose flag is provided, will print the response send from the API.
 func CheckVerboseResponse(resp *http.Response) {
-	if !Verbose {
+	if !Verbose || resp == nil {
 		return
 	}
 	//Read

@@ -27,6 +27,7 @@ func CheckResponse(err error, url string) {
 		}
 		os.Exit(1)
 	}
+
 }
 
 //Check for error raised by reading/writing json.

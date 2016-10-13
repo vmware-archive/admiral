@@ -16,7 +16,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -44,12 +43,8 @@ func Login(username, password, configUrl string) string {
 	}
 	jsonBody, _ := json.Marshal(login)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	functions.CheckVerboseRequest(req)
 	req.SetBasicAuth(strings.TrimSpace(username), strings.TrimSpace(password))
-	resp, err := client.NetClient.Do(req)
-	functions.CheckResponse(err, config.URL)
-
-	functions.CheckVerboseResponse(resp)
+	resp, _, _ := client.ProcessRequest(req)
 	token := resp.Header.Get("x-xenon-auth-token")
 	if token == "" {
 		return "Login failed."
@@ -74,13 +69,11 @@ func Logout() {
 	jsonBody, _ := json.Marshal(logout)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	functions.CheckVerboseRequest(req)
 
-	_, err := client.NetClient.Do(req)
+	_, _, respErr := client.ProcessRequest(req)
+	functions.CheckResponse(respErr, url)
 
-	functions.CheckResponse(err, config.URL)
-
-	err = os.Remove(paths.TokenPath())
+	err := os.Remove(paths.TokenPath())
 
 	functions.CheckFile(err)
 
@@ -116,31 +109,31 @@ func GetInfo() string {
 	return buffer.String()
 }
 
-func Loginvra(username, password, tenant string) {
-	login := &RequestLoginVRA{
-		Username: username,
-		Password: password,
-		Tenant:   tenant,
-	}
-	url := config.URL + "/identity/api/tokens"
-	jsonBody, err := json.Marshal(login)
-	functions.CheckJson(err)
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	resp, err := client.NetClient.Do(req)
-	functions.CheckResponse(err, config.URL)
-	respLogin := &ResponseLoginVRA{}
-	respBody, _ := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(respBody, &respLogin)
-
-}
-
-type RequestLoginVRA struct {
-	Username string `json:"username"`
-	Password string `json:"passowrd"`
-	Tenant   string `json:"tenant"`
-}
+//func Loginvra(username, password, tenant string) {
+//	login := &RequestLoginVRA{
+//		Username: username,
+//		Password: password,
+//		Tenant:   tenant,
+//	}
+//	url := config.URL + "/identity/api/tokens"
+//	jsonBody, err := json.Marshal(login)
+//	functions.CheckJson(err)
+//	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+//	req.Header.Set("Content-Type", "application/json")
+//	req.Header.Set("Accept", "application/json")
+//	resp, err := client.NetClient.Do(req)
+//	functions.CheckResponse(err, config.URL)
+//	respLogin := &ResponseLoginVRA{}
+//	respBody, _ := ioutil.ReadAll(resp.Body)
+//	err = json.Unmarshal(respBody, &respLogin)
+//
+//}
+//
+//type RequestLoginVRA struct {
+//	Username string `json:"username"`
+//	Password string `json:"passowrd"`
+//	Tenant   string `json:"tenant"`
+//}
 
 type ResponseLoginVRA struct {
 	Expires string `json:"expires"`
