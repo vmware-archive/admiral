@@ -269,8 +269,8 @@ public class CompositeComponentRemovalTaskService
         compositionSubTask.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
 
         if (removalNode.prevNode != null) {
-            compositionSubTask.dependsOnLinks = Collections
-                    .singleton(buildCompositionSubTaskLink(removalNode.prevNode));
+            compositionSubTask.dependsOnLinks = new HashSet<>(Arrays.asList(
+                    buildCompositionSubTaskLink(removalNode.prevNode)));
         }
 
         if (removalNode.nextNode != null) {
