@@ -24,54 +24,21 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_OPTIONS_PROP_NAME;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.vmware.admiral.common.util.AssertUtil;
-import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState.PowerState;
 import com.vmware.admiral.compute.container.network.Ipam;
 import com.vmware.admiral.compute.container.network.IpamConfig;
-import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.services.common.QueryTask;
 
 /**
  * Map properties into ContainerNetworkState
  */
 public class ContainerNetworkStateMapper {
-
-    public static class Result {
-        private ContainerNetworkState resultState;
-        private Throwable exception;
-
-        public Result(ContainerNetworkState resultState) {
-            this(resultState, null);
-        }
-
-        public Result(ContainerNetworkState resultState, Throwable exception) {
-            this.resultState = resultState;
-            this.exception = exception;
-        }
-
-        public ContainerNetworkState getResultState() {
-            return resultState;
-        }
-
-        public boolean hasException() {
-            return exception != null;
-        }
-
-        public Throwable getException() {
-            return exception;
-        }
-    }
 
     private static final Pattern PATTERN_GATEWAY_STRIP_CIDR_SUFFIX = Pattern
             .compile("([^\\/]*)(\\/.*)?");
@@ -79,19 +46,13 @@ public class ContainerNetworkStateMapper {
 
     /**
      * Convert generic properties from the given {@link Map} to modeled properties in the given
-     * {@link ContainerNetworkState}. The provided {@link ServiceHost} will be queried in the
-     * process of finding the links of all containers that are connected to this network. After
-     * everything is done, the provided <code>callback</code> will be invoked with the updated
-     * <code>networkState</code>.
+     * {@link ContainerNetworkState}.
      *
      * @param networkState
      * @param properties
-     * @param host
-     * @param callback
      */
     public static void propertiesToContainerNetworkState(ContainerNetworkState networkState,
-            Map<String, Object> properties, ServiceHost host,
-            Consumer<Result> callback) {
+            Map<String, Object> properties) {
 
         AssertUtil.assertNotNull(networkState, "networkState");
         AssertUtil.assertNotNull(properties, "properties");
@@ -108,7 +69,7 @@ public class ContainerNetworkStateMapper {
         mapIpamConfiguration(networkState, ipamProperties);
 
         mapConnectedContainers(networkState,
-                getMap(properties, DOCKER_CONTAINER_NETWORK_CONTAINERS_PROP_NAME), host, callback);
+                getMap(properties, DOCKER_CONTAINER_NETWORK_CONTAINERS_PROP_NAME));
     }
 
     private static void mapIpamConfiguration(ContainerNetworkState networkState,
@@ -144,40 +105,16 @@ public class ContainerNetworkStateMapper {
     }
 
     private static void mapConnectedContainers(ContainerNetworkState networkState,
-            Map<String, Object> containers, ServiceHost host,
-            Consumer<Result> callback) {
+            Map<String, Object> containers) {
 
-        if (containers == null || containers.size() == 0) {
-            // no need to find any container states
-            networkState.containerStateLinks = new ArrayList<>();
-            callback.accept(new Result(networkState));
+        if (containers == null) {
+            networkState.connectedContainersCount = 0;
         } else {
-            // find by id all the container states that are related to this network
-            QueryTask queryTask = QueryUtil.buildQuery(ContainerState.class, false);
-            QueryUtil.addListValueClause(queryTask, ContainerState.FIELD_NAME_ID,
-                    containers.keySet());
-
-            final List<String> containerStateLinks = new ArrayList<>();
-            ServiceDocumentQuery<ContainerState> query = new ServiceDocumentQuery<ContainerState>(
-                    host, ContainerState.class);
-            query.query(queryTask, (r) -> {
-                if (r.hasException()) {
-                    String message = String.format(
-                            "Error quering for containers connected to network with id '%s' and name '%s'",
-                            networkState.id, networkState.name);
-                    callback.accept(new Result(networkState,
-                            new RuntimeException(message, r.getException())));
-                } else if (r.hasResult()) {
-                    containerStateLinks.add(r.getDocumentSelfLink());
-                } else {
-                    networkState.containerStateLinks = containerStateLinks;
-                    callback.accept(new Result(networkState));
-                }
-            });
+            networkState.connectedContainersCount = containers.size();
         }
     }
 
-    /**
+    /*
      * TODO Docker returns the network gateway in a CIDR notation (like 172.20.0.1/16). This method
      * strips the /16 part. It should be removed (or changed) when this issue gets resolved:
      * https://github.com/docker/docker/issues/26522

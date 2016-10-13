@@ -45,21 +45,13 @@ var NetworksListItem = Vue.extend({
   computed: {
 
     hasConnectedContainers: function() {
-      return this.model.connectedContainers
-              && this.model.connectedContainers.length > 0;
+      return this.model.connectedContainersCount
+              && this.model.connectedContainersCount > 0;
     },
 
     connectedContainersCount: function() {
       return this.hasConnectedContainers
-              ? this.model.connectedContainers.length : 0;
-    },
-
-    connectedContainersDocumentIds: function() {
-      return !this.hasConnectedContainers
-              ? [] : this.model.connectedContainers.map(
-        (container) => {
-          return container.documentId;
-        });
+              ? this.model.connectedContainersCount : 0;
     },
 
     hasParentHosts: function() {

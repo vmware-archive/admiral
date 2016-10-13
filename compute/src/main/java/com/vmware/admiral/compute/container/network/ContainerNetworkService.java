@@ -115,14 +115,14 @@ public class ContainerNetworkService extends StatefulService {
         public Boolean external;
 
         /**
-         * Runtime property that will be populated during network inspections. Contains links to all
-         * containers that are connected to this container network.
+         * Runtime property that will be populated during network inspections. Contains the number
+         * of containers that are connected to this container network.
          */
         @Documentation(description = "Runtime property that will be populated during network inspections. "
-                + "Contains links to all containers that are connected to this container network.")
+                + "Contains the number of containers that are connected to this container network.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public List<String> containerStateLinks;
+        public Integer connectedContainersCount;
 
         /**
          * A map of field-value pairs for a given network. These are used to specify network option
@@ -322,8 +322,8 @@ public class ContainerNetworkService extends StatefulService {
         template.customProperties = new HashMap<>(1);
         template.customProperties.put("key (string)", "value (string)");
 
-        template.containerStateLinks = new ArrayList<String>(0);
         template.compositeComponentLinks = new ArrayList<String>(0);
+        template.connectedContainersCount = 0;
 
         template.parentLinks = new ArrayList<String>(0);
 

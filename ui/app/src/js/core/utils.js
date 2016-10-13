@@ -367,8 +367,7 @@ var utils = {
     // a network can be removed only if there are no containers
     // connected to it or if the network is in RETIRED state
     return utils.isRetiredNetwork(network)
-      || !network.connectedContainers
-      || network.connectedContainers.length === 0;
+      || !network.connectedContainersCount;
 },
 
   isSystemContainer: function(container) {

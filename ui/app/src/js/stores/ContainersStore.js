@@ -84,15 +84,6 @@ function enhanceNetwork(network) {
   network.icon = imageUtils.getImageIconLink(network.name);
   network.documentId = utils.getDocumentId(network.documentSelfLink);
 
-  network.connectedContainers = [];
-  if (network.containerStateLinks) {
-    network.connectedContainers = network.containerStateLinks.map((documentSelfLink) => {
-        return {
-          documentId: utils.getDocumentId(documentSelfLink)
-        };
-    });
-  }
-
   network.type = constants.RESOURCES.TYPES.NETWORK;
   return network;
 }
