@@ -175,14 +175,10 @@ public class ContainerToNetworkAffinityHostFilter
         Map<String, List<Entry<String, HostSelection>>> hostSelectionByKVStoreMap = new HashMap<>();
 
         for (Entry<String, HostSelection> entry : hostSelectionMap.entrySet()) {
-
-            // TODO - Some hosts should be discarded according to the type of network they support
-            // and the type of network required by the description (e.g. overlay, bridge and so on).
-
             HostSelection hostSelection = entry.getValue();
 
             String clusterStoreKey = hostSelection.clusterStore;
-            if (clusterStoreKey == null) {
+            if (clusterStoreKey == null || clusterStoreKey.isEmpty()) {
                 clusterStoreKey = NO_KV_STORE;
             }
 

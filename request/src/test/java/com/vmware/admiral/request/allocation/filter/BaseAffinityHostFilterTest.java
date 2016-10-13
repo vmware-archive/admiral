@@ -178,6 +178,8 @@ public class BaseAffinityHostFilterTest extends RequestBaseTest {
         for (String hostLink : initialHostLinks) {
             HostSelection hostSelection = new HostSelection();
             hostSelection.hostLink = hostLink;
+            // jira issue VBV-688
+            hostSelection.clusterStore = "";
 
             ComputeState host = getDocument(ComputeState.class, hostLink);
             if (host.customProperties
