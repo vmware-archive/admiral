@@ -713,6 +713,13 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         // Mapping properties from containerState to the docker config:
         hostConfig.put(VOLUMES_FROM_PROP_NAME, context.containerState.volumesFrom);
 
+        // Add first container network to avoid container to be connected to default network.
+        // Other container networks will be added after container is created.
+        // Docker APIs fail if there is more than one network added to the container when it is created
+        if (context.containerState.networks != null && !context.containerState.networks.isEmpty()) {
+            createNetworkConfig(createCommandInput, context.containerState.networks.entrySet().iterator().next());
+        }
+
         if (context.containerDescription.portBindings != null) {
             addPortBindings(createCommandInput, context.containerDescription.portBindings);
         }
@@ -812,6 +819,28 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         Map<String, Object> endpointConfig = getOrAddMap(input,
                 DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG_PROP_NAME);
 
+        mapContainerNetworkToNetworkConfig(network, endpointConfig);
+
+        input.withProperty(DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.CONTAINER_PROP_NAME,
+                containerId);
+        input.withProperty(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME, networkId);
+    }
+
+    private void createNetworkConfig(CommandInput input, Entry<String, ServiceNetwork> network) {
+        Map<String, Object> endpointConfig = new HashMap<>();
+        mapContainerNetworkToNetworkConfig(network.getValue(), endpointConfig);
+
+        Map<String, Object> endpointsConfig = new HashMap<>();
+        endpointsConfig.put(network.getKey(), endpointConfig);
+
+        Map<String, Object> networkConfig = getOrAddMap(input,
+                DOCKER_CONTAINER_NETWORKING_CONFIG_PROP_NAME);
+        networkConfig.put(DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINTS_CONFIG_PROP_NAME,
+                endpointsConfig);
+
+    }
+
+    private void mapContainerNetworkToNetworkConfig(ServiceNetwork network, Map<String, Object> endpointConfig) {
         Map<String, Object> ipamConfig = new HashMap<>();
         if (network.ipv4_address != null) {
             ipamConfig.put(
@@ -842,10 +871,6 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.LINKS,
                     network.links);
         }
-
-        input.withProperty(DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.CONTAINER_PROP_NAME,
-                containerId);
-        input.withProperty(DOCKER_CONTAINER_NETWORK_ID_PROP_NAME, networkId);
     }
 
     private boolean shouldTryCreateFromLocalImage(ContainerDescription containerDescription) {

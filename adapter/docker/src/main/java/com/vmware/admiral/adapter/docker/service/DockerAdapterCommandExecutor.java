@@ -117,6 +117,8 @@ public interface DockerAdapterCommandExecutor {
 
         String CONTAINER_PROP_NAME = "Container";
 
+        String ENDPOINTS_CONFIG_PROP_NAME = "EndpointsConfig";
+
         String ENDPOINT_CONFIG_PROP_NAME = "EndpointConfig";
 
         interface ENDPOINT_CONFIG {
