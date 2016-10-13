@@ -40,11 +40,6 @@ var CompositeContainerDetails = Vue.extend({
       constants: constants
     };
   },
-  ready: function() {
-    let subCompositeView = $(this.$el).find('.composite-child-containers-view').last();
-    let $targetEl = subCompositeView.length > 0 ? subCompositeView : $(this.$el).parent();
-    this.setPreTransitionGridTargetWidth($targetEl);
-  },
   computed: {
     contextExpanded: function() {
       return this.$parent.model.contextView && this.$parent.model.contextView.expanded;

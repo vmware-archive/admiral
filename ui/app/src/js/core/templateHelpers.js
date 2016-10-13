@@ -203,6 +203,21 @@ templateHelpers.register = function() {
     }
   });
 
+  Vue.transition('fade-out', {
+    css: false,
+    enter: function(_, done) {
+      done();
+    },
+    enterCancelled: function() {
+    },
+    leave: function(el, done) {
+      utils.fadeOut($(el), done);
+    },
+    leaveCancelled: function(el) {
+      $(el).stop();
+    }
+  });
+
   Vue.directive('tooltip', {
     update: function(newValue) {
       $(this.el).tooltip({
