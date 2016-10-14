@@ -19,6 +19,11 @@ let constraints = {
     if (!name || validator.trim(name).length === 0) {
       return 'errors.required';
     }
+  },
+    existsInTemplate: function(existsInTemplate) {
+      if (existsInTemplate) {
+          return 'errors.networkExists';
+      }
   }
 };
 
@@ -56,6 +61,15 @@ function createTypeaheadSource($typeaheadHolder) {
   return source;
 }
 
+function checkForDuplicateNames(el, network) {
+  var networkName = network.name;
+  el.each(function() {
+  if ($(this).text() === networkName) {
+      network.existsInTemplate = true;
+  }
+});
+}
+
 var NetworkDefinitionForm = Vue.extend({
   template: NetworkDefinitionFormVue,
   props: {
@@ -85,6 +99,8 @@ var NetworkDefinitionForm = Vue.extend({
     getNetworkDefinition: function() {
 
       var network = {};
+
+      var existingTemplateNetworks = $(this.$root.$el).find('.network-label');
 
       if (this.existingNetwork) {
         network.name = this.$networksSearch.typeahead('val');
@@ -121,6 +137,9 @@ var NetworkDefinitionForm = Vue.extend({
         }
       }
 
+    if (existingTemplateNetworks && existingTemplateNetworks.length) {
+         checkForDuplicateNames(existingTemplateNetworks, network);
+   }
       network.external = this.existingNetwork;
 
       if (this.model) {
@@ -141,9 +160,11 @@ var NetworkDefinitionForm = Vue.extend({
 
       var networkName = $(this.$el).find('.network-name');
       utils.applyValidationError(networkName, errors.name);
+      utils.applyValidationError(networkName, errors.existsInTemplate);
 
       var imageSearch = $(this.$el).find('.network-name-search');
       utils.applyValidationError(imageSearch, errors.name);
+      utils.applyValidationError(imageSearch, errors.existsInTemplate);
     }
   },
   attached: function() {
@@ -259,7 +280,6 @@ var NetworkDefinitionForm = Vue.extend({
         var ipamConfig = ipam.config || [];
 
         this.ipamConfigEditor.setData(ipamConfig);
-
 
         if (network.driver) {
             if (network.customProperties == null) {

@@ -784,7 +784,8 @@
     "requiredAll": "All fields are required.",
     "serviceNameRequired": "Service name is required.",
     "networkRequired": "Network is required.",
-    "itemNotFound": "Item was not found."
+    "itemNotFound": "Item was not found.",
+    "networkExists": "Network already exists in template."
   },
   "infoMessages": {
     "created": "Created Successfully!",
