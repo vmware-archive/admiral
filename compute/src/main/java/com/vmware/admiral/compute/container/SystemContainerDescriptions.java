@@ -39,7 +39,7 @@ public class SystemContainerDescriptions {
             "dcp.management.images.agent.name", "vmware/admiral_agent");
     public static final String AGENT_IMAGE_TAR_FILENAME = "admiral_agent";
     public static final String AGENT_IMAGE_VERSION = System.getProperty(
-            "dcp.management.images.agent.version", "0.5.1");
+            "dcp.management.images.agent.version", "0.9.1");
     public static final String AGENT_IMAGE_REFERENCE = System.getProperty(
             "dcp.management.images.agent.reference", AGENT_IMAGE_TAR_FILENAME + ".tar");
 
