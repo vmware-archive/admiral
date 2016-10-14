@@ -42,10 +42,10 @@ public class ComputeInitialBootService extends AbstractInitialBootService {
         states.add(ContainerHostDataCollectionService.buildDefaultStateInstance());
         states.add(HostContainerListDataCollectionFactoryService.buildDefaultStateInstance());
         states.add(HostNetworkListDataCollectionFactoryService.buildDefaultStateInstance());
+        states.add(GroupResourcePlacementService.buildDefaultResourcePool());
         boolean isEmbedded = Boolean.valueOf(
                 ConfigurationUtil.getProperty(EMBEDDED_MODE_PROPERTY));
         if (!isEmbedded) {
-            states.add(GroupResourcePlacementService.buildDefaultResourcePool());
             states.add(GroupResourcePlacementService.buildDefaultStateInstance());
         }
 
