@@ -26,6 +26,8 @@ import static com.vmware.admiral.compute.content.CompositeTemplateUtil.getYamlTy
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeDockerCompose;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -173,7 +175,8 @@ public class CompositeDescriptionContentService extends StatelessService {
                     + CONTENT_DISPOSITION_FILENAME;
 
             op.addResponseHeader(CONTENT_DISPOSITION_HEADER,
-                    String.format(contentDisposition, template.name));
+                    String.format(contentDisposition, URLEncoder.encode(template.name,
+                            StandardCharsets.UTF_8.name())));
 
             op.complete();
         } catch (Exception e) {
