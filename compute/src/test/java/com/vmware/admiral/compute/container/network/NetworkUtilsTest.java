@@ -33,7 +33,7 @@ public class NetworkUtilsTest {
             new TestEntry(null, false),
 
             // empty String is not allowed
-            new TestEntry("", true),
+            new TestEntry("", false),
 
             // host names are not allowed
             new TestEntry("foo.bar", true),
@@ -90,7 +90,7 @@ public class NetworkUtilsTest {
             new TestEntry(null, false),
 
             // empty String is not allowed
-            new TestEntry("", true),
+            new TestEntry("", false),
 
             // host names are not allowed
             new TestEntry("foo.bar/16", true),

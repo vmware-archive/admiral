@@ -14,6 +14,8 @@ package com.vmware.admiral.compute.container.network;
 import java.util.Map;
 import java.util.function.BinaryOperator;
 
+import io.netty.util.internal.StringUtil;
+
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
@@ -108,7 +110,7 @@ public class NetworkUtils {
             + REGEXP_IPV6_CIDR_NOTATION + ")";
 
     public static void validateIpCidrNotation(String subnet) {
-        if (subnet != null && !subnet.matches(REGEXP_CIDR_NOTATION)) {
+        if (!StringUtil.isNullOrEmpty(subnet) && !subnet.matches(REGEXP_CIDR_NOTATION)) {
             String error = String.format(
                     FORMAT_CIDR_NOTATION_VALIDATION_ERROR,
                     subnet);
@@ -117,7 +119,7 @@ public class NetworkUtils {
     }
 
     public static void validateIpAddress(String gateway) {
-        if (gateway != null && !gateway.matches(REGEXP_IP_ADDRESS)) {
+        if (!StringUtil.isNullOrEmpty(gateway) && !gateway.matches(REGEXP_IP_ADDRESS)) {
             String error = String.format(FORMAT_IP_VALIDATION_ERROR,
                     gateway);
             throw new IllegalArgumentException(error);
