@@ -15,6 +15,14 @@ var DeleteConfirmationSupportMixin = {
       showDeleteConfirmation: false
     };
   },
+  attached: function() {
+    this.modelUnwatch = this.$watch('model', () => {
+      this.showDeleteConfirmation = false;
+    }, {immediate: true});
+  },
+  detached: function() {
+    this.modelUnwatch();
+  },
   methods: {
     askConfirmation: function($event) {
       $event.preventDefault();

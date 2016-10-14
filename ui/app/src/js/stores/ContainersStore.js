@@ -926,6 +926,8 @@ ContainersStore = Reflux.createStore({
       cursor.setIn(['operationFailure'], operationType);
 
       actions.ContainerActions.refreshContainer();
+    } else {
+      return this.refreshView(cursor, false, operationType, resourceIds);
     }
   },
 
