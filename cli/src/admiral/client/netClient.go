@@ -22,6 +22,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"admiral/auth"
@@ -29,7 +30,6 @@ import (
 	"admiral/functions"
 	"admiral/paths"
 	"encoding/pem"
-	"strings"
 )
 
 type ResponseError struct {
@@ -52,11 +52,8 @@ func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	setReqHeaders(req, token)
 	functions.CheckVerboseRequest(req)
-	if req.Header.Get("Content-Type") == "" {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	req.Header.Set("x-xenon-auth-token", token)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -89,6 +86,9 @@ func CheckResponseError(resp *http.Response, tokenFrom string) error {
 		return errors.New("Response from the server is null.")
 	}
 	if resp.StatusCode >= 400 && resp.StatusCode <= 500 {
+		if resp.StatusCode == 401 && resp.Body == nil {
+			return errors.New("HTTP Status 401 - Authentication required")
+		}
 		body, err := ioutil.ReadAll(resp.Body)
 		functions.CheckJson(err)
 		//Create 2 new readers.
@@ -107,9 +107,24 @@ func CheckResponseError(resp *http.Response, tokenFrom string) error {
 		if message.Message == "forbidden" {
 			return errors.New("Authorization error. Token used from " + tokenFrom)
 		}
+		if message.Message == "" {
+			return errors.New("Connection error " + resp.Status)
+		}
 		return errors.New(message.Message)
 	}
 	return nil
+}
+
+func setReqHeaders(req *http.Request, token string) {
+	if req.Header.Get("Content-Type") == "" {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	if strings.HasPrefix(token, "Bearer") {
+		req.Header.Set("Authorization", token)
+	} else {
+		req.Header.Set("x-xenon-auth-token", token)
+	}
+	req.Header.Set("Accept", "application/json")
 }
 
 //buildHttpClient is setting up CA pool and adding this pool

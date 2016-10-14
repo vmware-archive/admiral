@@ -26,9 +26,11 @@ import (
 )
 
 var (
-	username  string
-	password  string
-	showToken bool
+	username   string
+	password   string
+	showToken  bool
+	againstVra bool
+	tenant     string
 )
 
 func init() {
@@ -50,6 +52,8 @@ var loginCmd = &cobra.Command{
 func initLogin() {
 	loginCmd.Flags().StringVarP(&username, "user", "u", "", "Username")
 	loginCmd.Flags().StringVarP(&password, "pass", "p", "", "Password")
+	loginCmd.Flags().StringVar(&tenant, "tenant", "", "vRA Tenant.")
+	loginCmd.Flags().BoolVar(&againstVra, "vra", false, "If you want to login in admiral instance embedded in vRA.")
 	loginCmd.Flags().StringVar(&urlF, "url", "", "Set URL config property.")
 	loginCmd.Flags().BoolVar(&showToken, "status", false, "Print information about current user.")
 	RootCmd.AddCommand(loginCmd)
@@ -60,10 +64,6 @@ func RunLogin(args []string) string {
 		fmt.Println(loginout.GetInfo())
 		return ""
 	}
-
-	if config.USER != "" {
-		fmt.Println(config.USER)
-	}
 	if strings.TrimSpace(username) == "" {
 		if config.USER == "" {
 			username = prompUsername()
@@ -73,6 +73,10 @@ func RunLogin(args []string) string {
 	}
 	if strings.TrimSpace(password) == "" {
 		password = promptPassword()
+	}
+	if againstVra {
+		message := loginout.Loginvra(username, password, tenant, urlF)
+		return message
 	}
 	message := loginout.Login(username, password, urlF)
 	return message

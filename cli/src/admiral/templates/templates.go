@@ -67,7 +67,7 @@ type TemplatesList struct {
 //fetch all templates, empty string should be passed. Returns the
 //count of fetched templates.
 func (lt *TemplatesList) FetchTemplates(queryF string) (int, error) {
-	url := config.URL + "/templates?documentType=true&templatesOnly=true&q="
+	url := config.URL + "/templates?documentType=true&templatesOnly=true"
 	var query string
 	if queryF != "" {
 		query = fmt.Sprintf("&q=%s", queryF)

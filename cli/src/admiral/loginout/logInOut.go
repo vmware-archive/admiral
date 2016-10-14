@@ -37,6 +37,7 @@ func Login(username, password, configUrl string) string {
 		config.URL = configUrl
 		config.SetProperty("Url", configUrl)
 	}
+	os.Remove(paths.TokenPath())
 	url := config.URL + "/core/authn/basic"
 	login := &LogInOut{
 		RequestType: "LOGIN",
@@ -109,31 +110,47 @@ func GetInfo() string {
 	return buffer.String()
 }
 
-//func Loginvra(username, password, tenant string) {
-//	login := &RequestLoginVRA{
-//		Username: username,
-//		Password: password,
-//		Tenant:   tenant,
-//	}
-//	url := config.URL + "/identity/api/tokens"
-//	jsonBody, err := json.Marshal(login)
-//	functions.CheckJson(err)
-//	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-//	req.Header.Set("Content-Type", "application/json")
-//	req.Header.Set("Accept", "application/json")
-//	resp, err := client.NetClient.Do(req)
-//	functions.CheckResponse(err, config.URL)
-//	respLogin := &ResponseLoginVRA{}
-//	respBody, _ := ioutil.ReadAll(resp.Body)
-//	err = json.Unmarshal(respBody, &respLogin)
-//
-//}
-//
-//type RequestLoginVRA struct {
-//	Username string `json:"username"`
-//	Password string `json:"passowrd"`
-//	Tenant   string `json:"tenant"`
-//}
+func Loginvra(username, password, tenant, urlF string) string {
+	if tenant == "" || urlF == "" {
+		return "Tenant and/or url not provided."
+	}
+	login := &RequestLoginVRA{
+		Username: username,
+		Password: password,
+		Tenant:   tenant,
+	}
+	os.Remove(paths.TokenPath())
+	if !strings.HasSuffix(urlF, "/container-service/api") {
+		config.URL = urlF + "/container-service/api"
+		config.SetProperty("Url", config.URL)
+	}
+	url := urlF + "/identity/api/tokens"
+
+	jsonBody, err := json.Marshal(login)
+	functions.CheckJson(err)
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return respErr.Error()
+	}
+	respLogin := &ResponseLoginVRA{}
+	err = json.Unmarshal(respBody, &respLogin)
+	paths.MkCliDir()
+	tokenFile, err := os.Create(paths.TokenPath())
+
+	functions.CheckFile(err)
+	tokenFile.Write([]byte("Bearer " + respLogin.Id))
+	tokenFile.Close()
+	return "Login successful."
+}
+
+type RequestLoginVRA struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Tenant   string `json:"tenant"`
+}
 
 type ResponseLoginVRA struct {
 	Expires string `json:"expires"`

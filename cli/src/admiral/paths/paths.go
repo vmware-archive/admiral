@@ -24,38 +24,23 @@ const WINDOWS_PATH_SEPARATOR = "\\"
 const UNIX_PATH_SEPARATOR = "/"
 
 func TokenPath() string {
-	home := GetHome()
-	if runtime.GOOS == "windows" {
-		return home + WINDOWS_PATH_SEPARATOR + ".admiral-cli" + WINDOWS_PATH_SEPARATOR + "admiral-cli.token"
-	} else {
-		return home + UNIX_PATH_SEPARATOR + ".admiral-cli" + UNIX_PATH_SEPARATOR + "admiral-cli.token"
-	}
+	return CliDir() + "admiral-cli.token"
 }
 
 func ConfigPath() string {
-	home := GetHome()
-	if runtime.GOOS == "windows" {
-		return home + WINDOWS_PATH_SEPARATOR + ".admiral-cli" + WINDOWS_PATH_SEPARATOR + "admiral-cli.config"
-	} else {
-		return home + UNIX_PATH_SEPARATOR + ".admiral-cli" + UNIX_PATH_SEPARATOR + "admiral-cli.config"
-	}
+	return CliDir() + "admiral-cli.config"
 }
 
 func TrustedCertsPath() string {
-	home := GetHome()
-	if runtime.GOOS == "windows" {
-		return home + WINDOWS_PATH_SEPARATOR + ".admiral-cli" + WINDOWS_PATH_SEPARATOR + "trusted-certs.pem"
-	} else {
-		return home + UNIX_PATH_SEPARATOR + ".admiral-cli" + UNIX_PATH_SEPARATOR + "trusted-certs.pem"
-	}
+	return CliDir() + "trusted-certs.pem"
 }
 
 func CliDir() string {
 	home := GetHome()
 	if runtime.GOOS == "windows" {
-		return home + WINDOWS_PATH_SEPARATOR + ".admiral-cli"
+		return home + WINDOWS_PATH_SEPARATOR + ".admiral-cli" + WINDOWS_PATH_SEPARATOR
 	} else {
-		return home + UNIX_PATH_SEPARATOR + ".admiral-cli"
+		return home + UNIX_PATH_SEPARATOR + ".admiral-cli" + UNIX_PATH_SEPARATOR
 	}
 }
 

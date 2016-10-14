@@ -29,11 +29,9 @@ func CheckVerboseRequest(req *http.Request) {
 
 	if req.Method == "PUT" || req.Method == "POST" || req.Method == "PATCH" {
 		fmt.Printf("%s %s\n", req.Method, req.URL)
-
 		//Read
 		buf, err := ioutil.ReadAll(req.Body)
 		CheckJson(err)
-
 		//Create 2 new readers.
 		//rdrToUse will be modified. rdrToSet will stay the same and set back to the request.
 		rdrToUse := ioutil.NopCloser(bytes.NewBuffer(buf))
@@ -70,7 +68,6 @@ func CheckVerboseResponse(resp *http.Response) {
 
 	jsonBody, err := ioutil.ReadAll(rdrToUse)
 	CheckJson(err)
-
 	if len(jsonBody) < 1 {
 		fmt.Printf("Response status: %s\n", resp.Status)
 		resp.Body = rdrToSet

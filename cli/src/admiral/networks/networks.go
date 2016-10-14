@@ -28,17 +28,17 @@ import (
 )
 
 type Network struct {
-	Name                string            `json:"name,omitempty"`
-	External            bool              `json:"external,omitempty"`
-	Driver              string            `json:"driver,omitempty"`
-	IPAM                IPAM              `json:"ipam,omitempty"`
-	ParentLinks         []string          `json:"parentLinks"`
-	ContainerStateLinks []string          `json:"containerStateLinks"`
-	PowerState          string            `json:"powerState,omitempty"`
-	Id                  string            `json:"id,omitempty"`
-	Options             map[string]string `json:"options,omitempty"`
-	CustomProperties    map[string]string `json:"customProperties"`
-	DocumentSelfLink    string            `json:"documentSelfLink,omitempty"`
+	Name                     string            `json:"name,omitempty"`
+	External                 bool              `json:"external,omitempty"`
+	Driver                   string            `json:"driver,omitempty"`
+	IPAM                     IPAM              `json:"ipam,omitempty"`
+	ParentLinks              []string          `json:"parentLinks"`
+	ConnectedContainersCount int               `json:"connectedContainersCount"`
+	PowerState               string            `json:"powerState,omitempty"`
+	Id                       string            `json:"id,omitempty"`
+	Options                  map[string]string `json:"options,omitempty"`
+	CustomProperties         map[string]string `json:"customProperties"`
+	DocumentSelfLink         string            `json:"documentSelfLink,omitempty"`
 }
 
 func (n *Network) SetName(name string) {
@@ -55,10 +55,6 @@ func (n *Network) GetID() string {
 
 func (n *Network) GetHostsCount() int {
 	return len(n.ParentLinks)
-}
-
-func (n *Network) GetContainersCount() int {
-	return len(n.ContainerStateLinks)
 }
 
 func (n *Network) GetExternalID() string {
@@ -182,7 +178,7 @@ func (nl *NetworkList) GetOutputString() string {
 	for _, link := range nl.DocumentLinks {
 		val := nl.Documents[link]
 		output := functions.GetFormattedString(val.GetID(), val.Name, val.Driver,
-			val.GetContainersCount(), val.GetHostsCount(), val.PowerState, val.GetExternalID())
+			val.ConnectedContainersCount, val.GetHostsCount(), val.PowerState, val.GetExternalID())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
