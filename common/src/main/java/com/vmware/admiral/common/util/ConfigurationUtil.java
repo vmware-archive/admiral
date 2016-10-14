@@ -15,6 +15,8 @@ import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState
 
 public class ConfigurationUtil {
 
+    private static final String EMBEDDED_MODE_PROPERTY = "embedded";
+
     private static ConfigurationState[] configProperties;
 
     public static void initialize(ConfigurationState... cs) {
@@ -32,6 +34,14 @@ public class ConfigurationUtil {
         }
 
         return null;
+    }
+
+    /**
+     * Returns whether Admiral is running on embedded mode or not based on the "embedded"
+     * configuration property.
+     */
+    public static boolean isEmbedded() {
+        return Boolean.valueOf(ConfigurationUtil.getProperty(EMBEDDED_MODE_PROPERTY));
     }
 
 }

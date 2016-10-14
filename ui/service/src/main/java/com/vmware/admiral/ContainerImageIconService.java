@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.xenon.common.FileUtils;
@@ -46,6 +47,15 @@ public class ContainerImageIconService extends StatelessService {
 
     private static final String CACHE_CONTROL_VALUE = String.format("max-age=%s",
             CACHE_CONTROL_MAX_AGE);
+
+    @Override
+    public void authorizeRequest(Operation op) {
+        if (ConfigurationUtil.isEmbedded()) {
+            op.complete();
+            return;
+        }
+        super.authorizeRequest(op);
+    }
 
     @Override
     public void handleStart(Operation startOp) {

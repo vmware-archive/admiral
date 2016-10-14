@@ -30,7 +30,6 @@ import com.vmware.xenon.common.ServiceDocument;
  */
 public class ComputeInitialBootService extends AbstractInitialBootService {
     public static final String SELF_LINK = ManagementUriParts.CONFIG + "/compute-initial-boot";
-    private static final String EMBEDDED_MODE_PROPERTY = "embedded";
 
     @Override
     public void handlePost(Operation post) {
@@ -43,9 +42,8 @@ public class ComputeInitialBootService extends AbstractInitialBootService {
         states.add(HostContainerListDataCollectionFactoryService.buildDefaultStateInstance());
         states.add(HostNetworkListDataCollectionFactoryService.buildDefaultStateInstance());
         states.add(GroupResourcePlacementService.buildDefaultResourcePool());
-        boolean isEmbedded = Boolean.valueOf(
-                ConfigurationUtil.getProperty(EMBEDDED_MODE_PROPERTY));
-        if (!isEmbedded) {
+
+        if (!ConfigurationUtil.isEmbedded()) {
             states.add(GroupResourcePlacementService.buildDefaultStateInstance());
         }
 

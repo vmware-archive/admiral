@@ -17,6 +17,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,12 +26,14 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.FileUtils;
 import com.vmware.xenon.common.FileUtils.ResourceEntry;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -42,6 +45,11 @@ public class UiService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.UI_SERVICE;
     public static final String HTML_RESOURCE_EXTENSION = ".html";
     public static final String LOGIN_PATH = "login" + HTML_RESOURCE_EXTENSION;
+    public static final String INDEX_PATH = "index" + HTML_RESOURCE_EXTENSION;
+
+    private static final List<String> EMBEDDED_DISABLED_RESOURCES = Arrays.asList(
+            UiService.SELF_LINK + LOGIN_PATH,
+            UiService.SELF_LINK + INDEX_PATH);
 
     @Override
     public void authorizeRequest(Operation op) {
@@ -105,6 +113,15 @@ public class UiService extends StatelessService {
 
     @Override
     public void handleGet(Operation get) {
+
+        if (ConfigurationUtil.isEmbedded()) {
+            Exception notFound = new ServiceHost.ServiceNotFoundException(get.getUri().toString());
+            notFound.setStackTrace(new StackTraceElement[] {});
+            get.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON).fail(
+                    Operation.STATUS_CODE_NOT_FOUND, notFound, null);
+            return;
+        }
+
         URI uri = get.getUri();
         String selfLink = getSelfLink();
         String requestUri = uri.getPath();
@@ -154,6 +171,12 @@ public class UiService extends StatelessService {
 
         for (Entry<Path, String> e : pathToURIPath.entrySet()) {
             String value = e.getValue();
+
+            if (ConfigurationUtil.isEmbedded() && EMBEDDED_DISABLED_RESOURCES.contains(value)) {
+                // Do not load these resources if in embedded mode!
+                continue;
+            }
+
             Operation post = Operation
                     .createPost(UriUtils.buildUri(getHost(), value));
             FileContentService fcs = new FileContentService(e.getKey().toFile());
@@ -197,7 +220,8 @@ public class UiService extends StatelessService {
     private void discoverFileResources(Service s, Map<Path, String> pathToURIPath,
             Path baseUriPath,
             String prefix) {
-        File rootDir = new File(new File(getHost().getState().resourceSandboxFileReference), prefix);
+        File rootDir = new File(new File(getHost().getState().resourceSandboxFileReference),
+                prefix);
         if (!rootDir.exists()) {
             log(Level.INFO, "Resource directory not found: %s", rootDir.toString());
             return;
