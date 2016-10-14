@@ -35,6 +35,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState.Powe
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
@@ -55,6 +56,8 @@ public class BaseAffinityHostFilterTest extends RequestBaseTest {
         state.contextId = UUID.randomUUID().toString();
         state.customProperties = new HashMap<>();
         state.resourceCount = 1;
+        state.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY,
+                UUID.randomUUID().toString());
 
         initialHostLinks = new ArrayList<>();
         initialHostLinks.add(createDockerHost(

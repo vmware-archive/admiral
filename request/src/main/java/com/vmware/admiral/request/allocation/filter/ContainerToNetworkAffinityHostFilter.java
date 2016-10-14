@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -31,6 +31,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
@@ -56,10 +57,18 @@ public class ContainerToNetworkAffinityHostFilter
             PlacementHostSelectionTaskService.PlacementHostSelectionTaskState state,
             Map<String, HostSelection> hostSelectionMap,
             HostSelectionFilterCompletion callback) {
-        if (isActive()) {
-            findComponentDescriptions(state, hostSelectionMap, callback);
+        // sort the map in order to return consistent result no matter the order
+        Map<String, HostSelection> sortedHostSelectionMap;
+        if (hostSelectionMap != null) {
+            sortedHostSelectionMap = new TreeMap<>(hostSelectionMap);
         } else {
-            callback.complete(hostSelectionMap, null);
+            sortedHostSelectionMap = null;
+        }
+
+        if (isActive()) {
+            findComponentDescriptions(state, sortedHostSelectionMap, callback);
+        } else {
+            callback.complete(sortedHostSelectionMap, null);
         }
     }
 
@@ -137,7 +146,7 @@ public class ContainerToNetworkAffinityHostFilter
                                     hs.addDesc(descName);
                                 }
                             } else {
-                                filterByClusterStoreAffinity(hostSelectionMap, callback);
+                                filterByClusterStoreAffinity(hostSelectionMap, callback, state);
                             }
                         });
     }
@@ -150,7 +159,7 @@ public class ContainerToNetworkAffinityHostFilter
      */
     protected void filterByClusterStoreAffinity(
             final Map<String, HostSelection> hostSelectionMap,
-            final HostSelectionFilterCompletion callback) {
+            final HostSelectionFilterCompletion callback, PlacementHostSelectionTaskState state) {
 
         /*
          * No big choice here...
@@ -206,7 +215,10 @@ public class ContainerToNetworkAffinityHostFilter
             // more resources, less containers, etc.
 
             if ((nones != null) && !nones.isEmpty()) {
-                int chosen = new Random().nextInt(nones.size());
+                int chosen = Math
+                        .abs(state.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY)
+                                .hashCode() % nones.size());
+
                 Entry<String, HostSelection> entry = nones.get(chosen);
                 hostSelectedMap.put(entry.getKey(), entry.getValue());
             }
@@ -219,7 +231,8 @@ public class ContainerToNetworkAffinityHostFilter
             // TODO - Picking one cluster randomly, it could pick the best cluster available, e.g.
             // more resources, more hosts, less containers, better containers/host ratio, etc.
 
-            int chosen = new Random().nextInt(hostSelectionByKVStoreMap.size());
+            int chosen = Math.abs(state.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY)
+                    .hashCode() % hostSelectionByKVStoreMap.size());
             List<Entry<String, HostSelection>> entries = hostSelectionByKVStoreMap
                     .get(hostSelectionByKVStoreMap.keySet().toArray(new String[] {})[chosen]);
             for (Entry<String, HostSelection> entry : entries) {
