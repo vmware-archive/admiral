@@ -11,7 +11,10 @@
 
 <div class="host-form form-horizontal">
   <div id="address" class="form-group" v-bind:class="{'has-error': validationErrors.address}">
-    <label class="col-sm-3 control-label">{{i18n("app.host.details.address")}}</label>
+    <label class="col-sm-3 control-label">
+      {{i18n("app.host.details.address")}}
+      <span class="requiredFieldMark">*</span>
+    </label>
     <div class="col-sm-9">
       <div class="hostname-holder">
         <input v-on:blur="onBlur" class="form-control" v-model="address">
@@ -36,7 +39,10 @@
     </div>
   </div>
   <div id="resourcePool" class="form-group" v-bind:class="{'has-error': validationErrors.resourcePool}">
-    <label class="col-sm-3 control-label">{{i18n("app.host.details.resourcePool")}}</label>
+    <label class="col-sm-3 control-label">
+      {{i18n("app.host.details.resourcePool")}}
+      <span class="requiredFieldMark">*</span>
+    </label>
     <div class="col-sm-9">
       <div class="form-control dropdown-holder"></div>
       <span class="help-block">{{i18n(validationErrors.resourcePool)}}</span>
