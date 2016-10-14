@@ -389,6 +389,31 @@ let updateContainersNetworks = function(attachContainersToNetworks, detachContai
   }).catch(this.onGenericEditError);
 };
 
+let updateContainerDescriptionsWithNetwork = function(oldName, newName) {
+
+  let containerDefs = utils.getIn(this.getData(),
+                  ['selectedItemDetails', 'templateDetails', 'listView', 'items']);
+  if (containerDefs) {
+    containerDefs = containerDefs.map((cd) => {
+      if (cd.networks[oldName]) {
+        cd = cd.asMutable();
+        cd.networks = cd.networks.asMutable();
+        cd.networks[newName] = cd.networks[oldName];
+        delete cd.networks[oldName];
+        services.updateContainerDescription(cd);
+      }
+      return cd;
+    });
+
+    this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'items'],
+              containerDefs);
+
+    updateNetworksAndLinks.call(this, containerDefs);
+
+    this.emitChange();
+  }
+};
+
 let updateNetworksAndLinks = function(containerDescriptions) {
   var networks = this.data.selectedItemDetails.templateDetails.listView.networks;
   networks = networks.asMutable();
@@ -690,17 +715,23 @@ let TemplatesStore = Reflux.createStore({
 
           var networks = utils.getIn(this.getData(),
                                ['selectedItemDetails', 'templateDetails', 'listView', 'networks']);
+          var editedNetwork = null;
           networks = networks.map((n) => {
             if (n.documentSelfLink === updatedDescription.documentSelfLink) {
+              editedNetwork = n;
               return updatedDescription;
             } else {
               return n;
             }
           });
+
           this.setInData(
             ['selectedItemDetails', 'templateDetails', 'listView', 'networks'], networks);
 
           this.setInData(['selectedItemDetails', 'editNetwork'], null);
+
+          updateContainerDescriptionsWithNetwork.call(this, editedNetwork.name,
+                                                      updatedDescription.name);
           this.emitChange();
         }
       });
