@@ -95,7 +95,7 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
     }
 
     @Test
-    public void testProvisionSystemContainerWhenDoesNotExistsOnHost() throws Throwable {
+    public void testDiscoverExistingNetworkOnHost() throws Throwable {
         // add preexisting network to the adapter service
         MockDockerNetworkAdapterService.addNetworkId(TEST_HOST_ID, TEST_PREEXISTING_NETWORK_ID,
                 TEST_PREEXISTING_NETWORK_ID);
@@ -110,6 +110,9 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
         assertNotNull("Preexisting network not created or can't be retrieved.", preexistingNetwork);
         assertEquals(TEST_PREEXISTING_NETWORK_ID, preexistingNetwork.id);
         assertEquals(TEST_PREEXISTING_NETWORK_NAME, preexistingNetwork.name);
+        assertEquals(UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK,
+                TEST_PREEXISTING_NETWORK_NAME), preexistingNetwork.documentSelfLink);
+        assertTrue(Boolean.TRUE.equals(preexistingNetwork.external));
 
         assertTrue("Preexisting network belongs to the host.",
                 preexistingNetwork.parentLinks.contains(COMPUTE_HOST_LINK));

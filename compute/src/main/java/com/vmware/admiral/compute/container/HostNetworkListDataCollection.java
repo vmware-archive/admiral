@@ -324,6 +324,7 @@ public class HostNetworkListDataCollection extends StatefulService {
                                 networkState.name = entry.getValue();
                                 networkState.documentSelfLink = UriUtils.buildUriPath(
                                         ContainerNetworkService.FACTORY_LINK, networkState.name);
+                                networkState.external = true;
 
                                 networkState.tenantLinks = group;
                                 networkState.descriptionLink = UriUtils.buildUriPath(
