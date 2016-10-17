@@ -1508,18 +1508,18 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
 
     var resourcePoolArray = toArrayIfDefined(queryOptions.placementZone);
     if (resourcePoolArray) {
-      let prefixPath = links.RESOURCE_POOLS + '/';
-
-      qOps.resourcePoolLink = [];
       for (let i = 0; i < resourcePoolArray.length; i++) {
-        let resourcePoolLink = resourcePoolArray[i];
-        if (!resourcePoolLink.startsWith(prefixPath)) {
-          resourcePoolLink = prefixPath + resourcePoolLink;
+        let prefixPath = links.RESOURCE_POOLS + '/';
+        let resourcePoolId = resourcePoolArray[i];
+        if (resourcePoolId.startsWith(prefixPath)) {
+            resourcePoolId = resourcePoolId.slice(prefixPath.length);
         }
-        qOps.resourcePoolLink.push({
-          val: resourcePoolLink,
-          op: 'eq'
-        });
+        qOps['customProperties/' + constants.CUSTOM_PROPS.EPZ_NAME_PREFIX + resourcePoolId] = [
+          {
+            val: constants.CUSTOM_PROPS.EPZ_VALUE,
+            op: 'eq'
+          }
+        ];
       }
     }
   }

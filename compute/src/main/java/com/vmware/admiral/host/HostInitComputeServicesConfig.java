@@ -15,6 +15,8 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
 import com.vmware.admiral.compute.EnvironmentMappingService;
+import com.vmware.admiral.compute.EpzComputeEnumerationPeriodicService;
+import com.vmware.admiral.compute.EpzComputeEnumerationTaskService;
 import com.vmware.admiral.compute.HostConfigCertificateDistributionService;
 import com.vmware.admiral.compute.RegistryConfigCertificateDistributionService;
 import com.vmware.admiral.compute.RegistryHostConfigService;
@@ -72,7 +74,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 HostConfigCertificateDistributionService.class,
                 RegistryConfigCertificateDistributionService.class,
                 ComputeInitialBootService.class,
-                ElasticPlacementZoneConfigurationService.class);
+                ElasticPlacementZoneConfigurationService.class,
+                EpzComputeEnumerationPeriodicService.class);
 
         startServiceFactories(host, ContainerDescriptionService.class,
                 GroupResourcePlacementService.class,
@@ -84,7 +87,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ContainerVolumeDescriptionService.class,
                 ContainerVolumeService.class,
                 ContainerVolumeDescriptionService.class,
-                ElasticPlacementZoneService.class);
+                ElasticPlacementZoneService.class,
+                EpzComputeEnumerationTaskService.class);
 
         // register a well-know Components
         CompositeComponentRegistry.registerComponent(ResourceType.CONTAINER_TYPE.getName(),

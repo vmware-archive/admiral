@@ -38,6 +38,9 @@ public interface ManagementUriParts {
     String ELASTIC_PLACEMENT_ZONES = RESOURCES + "/elastic-placement-zones";
     String ELASTIC_PLACEMENT_ZONE_CONFIGURATION = ELASTIC_PLACEMENT_ZONES + "-config";
 
+    String EPZ_COMPUTE_ENUMERATION_TASKS = RESOURCES + "/epz-compute-enumeration-tasks";
+    String EPZ_PERIODIC_ENUMERATION = RESOURCES + "/epz-periodic-enumeration";
+
     String CONTAINERS = RESOURCES + "/containers";
     String CONTAINER_LOGS = RESOURCES + "/container-logs";
     String CONTAINER_SHELL = RESOURCES + "/container-shell";

@@ -18,6 +18,7 @@ var renderers = {
     var resourcePool = config.resourcePoolState;
     var model = {
       id: resourcePool.id,
+      documentId: utils.getDocumentId(resourcePool.documentSelfLink),
       name: resourcePool.name
     };
 

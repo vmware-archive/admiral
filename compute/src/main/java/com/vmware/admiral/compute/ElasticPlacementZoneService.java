@@ -116,7 +116,7 @@ public class ElasticPlacementZoneService extends StatefulService {
             patch.complete();
         } else {
             // update the underlying resource pool
-            setResourcePoolElasticity(currentState, (t) -> {
+            setOrRemoveResourcePoolElasticity(currentState, (t) -> {
                 if (t != null) {
                     patch.fail(t);
                 } else {
@@ -131,7 +131,7 @@ public class ElasticPlacementZoneService extends StatefulService {
             ElasticPlacementZoneState state = processInput(op);
 
             // configure the underlying resource pool
-            setResourcePoolElasticity(state, (t) -> {
+            setOrRemoveResourcePoolElasticity(state, (t) -> {
                 if (t != null) {
                     op.fail(t);
                 } else {
@@ -185,6 +185,19 @@ public class ElasticPlacementZoneService extends StatefulService {
                 .createPatch(getHost(), epz.resourcePoolLink)
                 .setBody(ServiceStateCollectionUpdateRequest.create(null, itemsToRemove))
                 .setCompletion((op, ex) -> callback.accept(ex)));
+    }
+
+    /**
+     * Sets or removes the elasticity of the linked resource pool based on whether there are tags
+     * in the given EPZ state.
+     */
+    private void setOrRemoveResourcePoolElasticity(ElasticPlacementZoneState epz,
+            Consumer<Throwable> callback) {
+        if (epz.tagLinksToMatch != null && !epz.tagLinksToMatch.isEmpty()) {
+            setResourcePoolElasticity(epz, callback);
+        } else {
+            removeResourcePoolElasticity(epz, callback);
+        }
     }
 
     /**

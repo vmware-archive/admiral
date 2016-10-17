@@ -12,9 +12,16 @@
 package com.vmware.admiral.compute;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
@@ -24,6 +31,8 @@ import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState.ResourcePoolProperty;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceStateCollectionUpdateRequest;
 
 /**
  * Tests for the {@link ElasticPlacementZoneService} class.
@@ -46,6 +55,22 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
 
         // delete EPZ and verify RP is back to non-elastic
         delete(epzLink);
+        rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
+        assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
+        assertEquals(2, rp.query.booleanClauses.size());
+    }
+
+    @Test
+    public void testCreateNoTags() throws Throwable {
+        // create a non-elastic RP
+        ResourcePoolState rp = createRp();
+        assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
+        assertEquals(2, rp.query.booleanClauses.size());
+
+        // create EPZ for the RP with no tags
+        createEpz(rp.documentSelfLink);
+
+        // verify RP is not elastic
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
         assertEquals(2, rp.query.booleanClauses.size());
@@ -78,6 +103,31 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
     }
 
     @Test
+    public void testPutNoTags() throws Throwable {
+        // create a non-elastic RP
+        ResourcePoolState rp = createRp();
+        assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
+        assertEquals(2, rp.query.booleanClauses.size());
+
+        // create EPZ for the RP
+        ElasticPlacementZoneState epz = createEpz(rp.documentSelfLink, "tag1", "tag2");
+
+        // verify RP is now elastic
+        rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
+        assertEquals(EnumSet.of(ResourcePoolProperty.ELASTIC), rp.properties);
+        assertEquals(3, rp.query.booleanClauses.size());
+
+        // add more tags through a put request
+        epz.tagLinksToMatch.clear();;
+        doPut(epz);
+
+        // verify RP is not elastic
+        rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
+        assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
+        assertEquals(2, rp.query.booleanClauses.size());
+    }
+
+    @Test
     public void testPatch() throws Throwable {
         // create a non-elastic RP
         ResourcePoolState rp = createRp();
@@ -97,6 +147,41 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.of(ResourcePoolProperty.ELASTIC), rp.properties);
         assertEquals(5, rp.query.booleanClauses.size());
+    }
+
+    @Test
+    public void testPatchNoTags() throws Throwable {
+        // create a non-elastic RP
+        ResourcePoolState rp = createRp();
+        assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
+        assertEquals(2, rp.query.booleanClauses.size());
+
+        // create EPZ for the RP
+        String epzLink = createEpz(rp.documentSelfLink, "tag1", "tag2").documentSelfLink;
+
+        // verify RP is now elastic
+        rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
+        assertEquals(EnumSet.of(ResourcePoolProperty.ELASTIC), rp.properties);
+        assertEquals(3, rp.query.booleanClauses.size());
+
+        // add more tags and verify RP query is updated
+        Map<String, Collection<Object>> itemsToRemove = new HashMap<>();
+        itemsToRemove.put(ElasticPlacementZoneState.FIELD_NAME_TAG_LINKS_TO_MATCH,
+                new ArrayList<>(Arrays.asList("tag1", "tag2")));
+        ServiceStateCollectionUpdateRequest updateRequest = ServiceStateCollectionUpdateRequest
+                .create(null, itemsToRemove);
+        verifyOperation(Operation.createPatch(this.host, epzLink).setBody(updateRequest));
+
+        // verify EPZ has no tags
+        ElasticPlacementZoneState newEpzState = getDocument(ElasticPlacementZoneState.class,
+                epzLink);
+        assertNotNull(newEpzState.tagLinksToMatch);
+        assertTrue(newEpzState.tagLinksToMatch.isEmpty());
+
+        // verify RP is not elastic
+        rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
+        assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
+        assertEquals(2, rp.query.booleanClauses.size());
     }
 
     private ElasticPlacementZoneState createEpz(String rpLink, String... tagLinks)

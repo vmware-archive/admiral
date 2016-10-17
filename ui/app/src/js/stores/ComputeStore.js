@@ -14,6 +14,8 @@ import services from 'core/services';
 import utils from 'core/utils';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
+import links from 'core/links';
+import constants from 'core/constants';
 
 const OPERATION = {
   LIST: 'LIST',
@@ -34,6 +36,15 @@ let toViewModel = function(dto) {
     }
   }
 
+  // TODO: handle multiple EPZs
+  var epzId = null;
+  for (var i = 0; i < customProperties.length; i++) {
+    if (customProperties[i].name.startsWith(constants.CUSTOM_PROPS.EPZ_NAME_PREFIX)) {
+        epzId = customProperties[i].name.slice(constants.CUSTOM_PROPS.EPZ_NAME_PREFIX.length);
+        break;
+    }
+  }
+
   return {
     documentSelfLink: dto.documentSelfLink,
     id: dto.id,
@@ -43,9 +54,11 @@ let toViewModel = function(dto) {
     descriptionLink: dto.descriptionLink,
     resourcePoolLink: dto.resourcePoolLink,
     resourcePoolDocumentId: dto.resourcePoolLink && utils.getDocumentId(dto.resourcePoolLink),
+    epzLink: links.RESOURCE_POOLS + '/' + epzId,
+    epzDocumentId: epzId,
     connectionType: hasCustomProperties ? dto.customProperties.__adapterDockerType : null,
     customProperties: customProperties,
-    computeType: dto.customProperties.computeType
+    computeType: hasCustomProperties ? dto.customProperties.__computeType : null
   };
 };
 
@@ -89,9 +102,9 @@ let ComputeStore = Reflux.createStore({
 
         this.getResourcePools(compute).then((result) => {
           compute.forEach((compute) => {
-            if (result[compute.resourcePoolLink]) {
-              compute.resourcePoolName =
-                  result[compute.resourcePoolLink].resourcePoolState.name;
+            if (result[compute.epzLink]) {
+              compute.epzName =
+                  result[compute.epzLink].resourcePoolState.name;
             }
           });
           return this.getDescriptions(compute);
@@ -151,7 +164,7 @@ let ComputeStore = Reflux.createStore({
   getResourcePools: function(compute) {
     let resourcePools = utils.getIn(this.data, ['listView', 'resourcePools']) || {};
     let resourcePoolLinks = compute.filter((compute) =>
-        compute.resourcePoolLink).map((compute) => compute.resourcePoolLink);
+        compute.epzLink).map((compute) => compute.epzLink);
     let links = [...new Set(resourcePoolLinks)].filter((link) =>
         !resourcePools.hasOwnProperty(link));
     if (links.length === 0) {

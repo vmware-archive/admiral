@@ -220,6 +220,10 @@ var constants = Immutable({
     BRIDGE: 'BRIDGE',
     HOST: 'HOST'
   },
+  CUSTOM_PROPS: {
+    EPZ_NAME_PREFIX: '__epz_',
+    EPZ_VALUE: 'true'
+  },
   NEW_ITEM_SYSTEM_VALUE: '__new'
 });
 

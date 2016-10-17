@@ -13,7 +13,6 @@ package com.vmware.admiral.host;
 
 import java.util.function.Predicate;
 
-import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -23,6 +22,7 @@ import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
@@ -40,9 +40,12 @@ class ResourcePoolOperationProcessingChain extends OperationProcessingChain {
                     return true;
                 }
 
+                ResourcePoolState currentState = service.getState(op);
+                QueryTask queryTask = QueryTask.Builder.createDirectTask()
+                        .setQuery(currentState.query).addOption(QueryOption.COUNT).build();
+
                 service.sendRequest(Operation.createPost(service, ServiceUriPaths.CORE_QUERY_TASKS)
-                        .setBody(QueryUtil.addCountOption(QueryUtil.buildPropertyQuery(ComputeState.class,
-                                ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, service.getSelfLink())))
+                        .setBody(queryTask)
                         .setCompletion((o, e) -> {
                             if (e != null) {
                                 service.logWarning(Utils.toString(e));

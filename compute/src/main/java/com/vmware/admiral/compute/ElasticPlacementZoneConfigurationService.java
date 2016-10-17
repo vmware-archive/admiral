@@ -279,6 +279,8 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
                         state.epzState.resourcePoolLink = state.resourcePoolState.documentSelfLink;
                         createEpzOpHolder[0].setBody(state.epzState);
                     } else {
+                        EpzComputeEnumerationTaskService.triggerForResourcePool(this,
+                                state.documentSelfLink);
                         originalOp.complete();
                     }
                 });
@@ -301,6 +303,8 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
                         }
                         state.epzState = ops.values().iterator().next()
                                 .getBody(ElasticPlacementZoneState.class);
+                        EpzComputeEnumerationTaskService.triggerForResourcePool(this,
+                                state.documentSelfLink);
                         originalOp.complete();
                     });
         }
@@ -361,6 +365,8 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
             return;
         }
 
+        final String originalRpLink = state.resourcePoolState.documentSelfLink;
+
         List<Operation> updateOps = new ArrayList<>();
 
         // populate the tenant info
@@ -409,6 +415,9 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
                         state.epzState = ops.get(updateOps.get(1).getId())
                                 .getBody(ElasticPlacementZoneState.class);
                     }
+
+                    EpzComputeEnumerationTaskService.triggerForResourcePool(this, originalRpLink);
+
                     originalOp.complete();
                 })
                 .sendWith(getHost());
