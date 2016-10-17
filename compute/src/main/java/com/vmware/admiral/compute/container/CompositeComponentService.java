@@ -50,6 +50,11 @@ public class CompositeComponentService extends StatefulService {
         @Documentation(description = "Component links.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public List<String> componentLinks;
+
+        /** Composite component creation time in milliseconds */
+        @Documentation(description = "Container created time in milliseconds")
+        @UsageOption(option = PropertyUsageOption.SINGLE_ASSIGNMENT)
+        public long created;
     }
 
     public CompositeComponentService() {
@@ -68,6 +73,7 @@ public class CompositeComponentService extends StatefulService {
 
         try {
             CompositeComponent state = startPost.getBody(CompositeComponent.class);
+            state.created = System.currentTimeMillis();
             logFine("Composite created: %s. Refer: %s", state.documentSelfLink,
                     startPost.getReferer());
             validateStateOnStart(state);

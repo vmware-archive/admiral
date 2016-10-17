@@ -24,7 +24,12 @@
     </div>
   </div>
   <hr/>
-  <div class="container-content"><template v-if="showNumbers">
+  <div class="container-content">
+    <div class="container-created-holder">
+      <span class="container-label">{{i18n("app.container.list.createdDateLabel")}}</span>
+      <span>{{model.created | timestampToDate}}</span>
+    </div>
+    <template v-if="showNumbers">
     <!--
     <div class="container-services-number-holder">
       <span class="container-label">{{i18n("app.container.list.composite.servicesCountLabel")}}</span>
