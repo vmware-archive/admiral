@@ -343,7 +343,7 @@ services.createCredential = function(credential) {
 };
 
 services.updateCredential = function(credential) {
-  return patch(credential.documentSelfLink, credential);
+  return put(credential.documentSelfLink, credential);
 };
 
 services.deleteCredential = function(credential) {
