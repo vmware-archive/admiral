@@ -1489,9 +1489,15 @@ text-shadow: 0px 0px 20px black;
   width: 24px;
 }
 .nav-bar .nav-item.inner > img.nav-item-image {
-  margin: 10px 0 0 23px;
+  margin: 12px 0 0 23px;
+  width: 18px;
 }
 
+/* Applications icon generally larger than others */
+.nav-bar .nav-item.inner.applications > img.nav-item-image {
+  width: 24px;
+  margin: 12px 0 0 20px;
+}
 .nav-bar .nav-item .nav-category {
   position: absolute;
   top: 0;
