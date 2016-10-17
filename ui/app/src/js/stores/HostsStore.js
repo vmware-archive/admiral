@@ -110,7 +110,7 @@ let getHostSpec = function(hostModel) {
   }
 
   var id = hostModel.address;
-  id = id.replace(/\//g, '');
+  id = id.replace(/(http:|https:|\/)/g, '');
 
   let hostState = {
     id: id,

@@ -718,7 +718,9 @@ services.loadImages = function(queryOptions) {
   }
 
   return list(links.IMAGES, false, params).then(function(data) {
-    return data.results || [];
+    var results = data.results || [];
+    results.sort(utils.templateSortFn);
+    return results;
   });
 };
 
@@ -730,6 +732,7 @@ services.loadImageIds = function(query, limit) {
 
   return list(links.IMAGES, false, params).then(function(data) {
     var results = data.results || [];
+    results.sort(utils.templateSortFn);
     var imageIds = [];
     for (var k in results) {
       if (results.hasOwnProperty(k)) {
@@ -767,7 +770,9 @@ services.loadTemplates = function(queryOptions) {
   }
 
   return list(links.TEMPLATES, false, params).then(function(data) {
-    return data.results || [];
+    var results = data.results || [];
+    results.sort(utils.templateSortFn);
+    return results;
   });
 };
 

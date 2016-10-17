@@ -1068,6 +1068,20 @@ var utils = {
         return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
     return uuid;
+  },
+
+  templateSortFn: function(a, b) {
+    var aStars = a.star_count || 0;
+    var bStars = b.star_count || 0;
+    if (aStars === bStars) {
+      var aName = a.name || '';
+      var bName = b.name || '';
+      return aName.localeCompare(bName);
+    } else if (aStars < bStars) {
+      return 1;
+    } else {
+      return -1;
+    }
   }
 };
 
