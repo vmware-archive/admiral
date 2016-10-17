@@ -18,6 +18,8 @@ import docs from 'core/docs';
 
 var _isFirstTimeUser = true;
 
+var silenced = false;
+
 crossroads.addRoute('/', function() {
   if (_isFirstTimeUser) {
     hasher.setHash('home');
@@ -36,6 +38,9 @@ crossroads.addRoute('/home/newHost', function() {
 });
 
 crossroads.addRoute('/hosts:?query:', function(query) {
+  if (silenced) {
+    return;
+  }
   actions.AppActions.openView(constants.VIEWS.HOSTS.name);
   actions.HostActions.openHosts(query);
 });
@@ -214,9 +219,9 @@ actions.NavigationActions.openHosts.listen(function(queryOptions) {
 });
 
 actions.NavigationActions.openHostsSilently.listen(function() {
-  hasher.changed.active = false;
+  silenced = true;
   hasher.setHash('hosts');
-  hasher.changed.active = true;
+  silenced = false;
 });
 
 actions.NavigationActions.openAddHost.listen(function() {

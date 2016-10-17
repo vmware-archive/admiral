@@ -70,8 +70,9 @@ button:focus {
 
 .header .brandLogo {
   position: absolute;
-  top: 20px;
-  left: 44px;
+  top: 10px;
+  left: 35px;
+  padding: 10px;
 }
 
 
@@ -1615,6 +1616,7 @@ a.close-button i.fa-chevron-circle-left {
 
 .central-block-loading {
   @extend .position-expand;
+  @include animation(fadein 0.4s);
   text-align: center;
   > .vertical-helper {
     display: inline-block;

@@ -74,6 +74,7 @@ let initializeStoreListeners = function() {
         this.setInData(['hostsTransition'], true);
         this.emitChange();
         Vue.nextTick(() => {
+          this.setInData(['hostsTransition'], false);
           updateCenterViewIfNeeded.call(this, constants.VIEWS.HOSTS.name, hostsData);
           updateSideView.call(this, constants.VIEWS.HOSTS.name);
         });
