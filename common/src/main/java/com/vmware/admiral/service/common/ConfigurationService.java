@@ -14,8 +14,11 @@ package com.vmware.admiral.service.common;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.FileUtil;
@@ -24,6 +27,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 /**
  * The Configuration Service is utility service providing generic key/value configuration
@@ -34,6 +38,13 @@ public class ConfigurationService extends StatefulService {
     public static final String CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES = System
             .getProperty("configuration.properties");
     public static final String NO_OVERRIDE_PREFIX_MARKER_FOR_PROPERTIES = "__";
+
+    private static final Map<String, String> propertiesToPrint = new HashMap<>();
+
+    static {
+        propertiesToPrint.put("__build.number", "Build number");
+        propertiesToPrint.put("__commit.id", "Commit id");
+    }
 
     public static class ConfigurationState extends com.vmware.xenon.common.ServiceDocument {
         /** (Required) The name used as a key for a given property value */
@@ -126,6 +137,8 @@ public class ConfigurationService extends StatefulService {
         while (enums.hasMoreElements()) {
             String key = enums.nextElement();
             String value = props.getProperty(key);
+            print(key, value);
+
             ConfigurationState configState = new ConfigurationState();
             configState.documentSelfLink = UriUtils
                     .buildUriPath(ConfigurationFactoryService.SELF_LINK, key);
@@ -135,6 +148,13 @@ public class ConfigurationService extends StatefulService {
 
         }
         return ls.toArray(new ConfigurationState[ls.size()]);
+    }
+
+    private static void print(String key, String value) {
+        if (propertiesToPrint.containsKey(key)) {
+            Utils.log(ConfigurationService.class, ConfigurationService.class.getSimpleName(),
+                    Level.INFO, "%s : %s", propertiesToPrint.get(key), value);
+        }
     }
 
 }
