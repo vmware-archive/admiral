@@ -8,13 +8,13 @@
 # and license terms. Your use of these subcomponents is subject to the terms and
 # conditions of the subcomponent's license, as noted in the LICENSE file.
 
-github_deps=( "github.com/mitchellh/go-homedir:756f7b183b7ab78acdbbee5c7f392838ed459dda"
+github_deps=("github.com/mitchellh/go-homedir:756f7b183b7ab78acdbbee5c7f392838ed459dda"
              "github.com/spf13/cobra:9c28e4bbd74e5c3ed7aacbc552b2cab7cfdfe744"
              "github.com/spf13/pflag:7b17cc4658ef5ca157b986ea5c0b43af7938532b"
-             "github.com/inconshreveable/mousetrap:76626ae9c91c4f2a10f34cad8ce83ea42c93bb75" )
+             "github.com/inconshreveable/mousetrap:76626ae9c91c4f2a10f34cad8ce83ea42c93bb75")
 
 
-golang_deps=( "golang/crypto:e311231e83195f401421a286060d65643f9c9d40" )
+golang_deps=("golang/crypto:e311231e83195f401421a286060d65643f9c9d40")
 
 
 for i in "${github_deps[@]}"

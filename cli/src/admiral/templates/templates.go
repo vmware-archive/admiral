@@ -24,6 +24,7 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/functions"
+	"sort"
 )
 
 type LightContainer struct {
@@ -41,6 +42,12 @@ func (lc *LightContainer) GetOutput(link string) (string, error) {
 	functions.CheckJson(err)
 	return fmt.Sprintf("   Container Name: %-22s\tContainer Image: %s\n", lc.Name, lc.Image), nil
 }
+
+type TemplateSorter []Template
+
+func (ts TemplateSorter) Len() int           { return len(ts) }
+func (ts TemplateSorter) Swap(i, j int)      { ts[i], ts[j] = ts[j], ts[i] }
+func (ts TemplateSorter) Less(i, j int) bool { return ts[i].Name < ts[j].Name }
 
 type Template struct {
 	Name                  string   `json:"name"`
@@ -67,7 +74,7 @@ type TemplatesList struct {
 //fetch all templates, empty string should be passed. Returns the
 //count of fetched templates.
 func (lt *TemplatesList) FetchTemplates(queryF string) (int, error) {
-	url := config.URL + "/templates?documentType=true&templatesOnly=true"
+	url := config.URL + "/templates?documentType=true&templatesOnly=true&$orderby=results/name%20asc"
 	var query string
 	if queryF != "" {
 		query = fmt.Sprintf("&q=%s", queryF)
@@ -93,6 +100,7 @@ func (lt *TemplatesList) GetOutputStringWithoutContainers() string {
 	if len(lt.Results) < 1 {
 		return "No elements found."
 	}
+	sort.Sort(TemplateSorter(lt.Results))
 	buffer.WriteString("ID\tNAME\tCONTAINERS\n")
 	for _, template := range lt.Results {
 		if template.ParentDescriptionLink != "" {

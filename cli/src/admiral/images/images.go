@@ -25,9 +25,14 @@ import (
 
 type ImageSorter []Image
 
-func (is ImageSorter) Len() int           { return len(is) }
-func (is ImageSorter) Swap(i, j int)      { is[i], is[j] = is[j], is[i] }
-func (is ImageSorter) Less(i, j int) bool { return is[i].StarsCount > is[j].StarsCount }
+func (is ImageSorter) Len() int      { return len(is) }
+func (is ImageSorter) Swap(i, j int) { is[i], is[j] = is[j], is[i] }
+func (is ImageSorter) Less(i, j int) bool {
+	if is[i].StarsCount == is[j].StarsCount {
+		return is[i].Name < is[j].Name
+	}
+	return is[i].StarsCount > is[j].StarsCount
+}
 
 type Image struct {
 	Name             string   `json:"name"`
