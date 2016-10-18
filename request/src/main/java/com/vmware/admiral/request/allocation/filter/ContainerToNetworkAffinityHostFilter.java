@@ -112,6 +112,7 @@ public class ContainerToNetworkAffinityHostFilter
             Map<String, DescName> descLinksWithNames,
             final HostSelectionFilterCompletion callback) {
 
+        Map<String, HostSelection> filteredHosts = new TreeMap<>();
         QueryTask q = QueryUtil.buildQuery(ContainerNetworkState.class, false);
 
         String compositeComponentLinksItemField = QueryTask.QuerySpecification
@@ -146,7 +147,48 @@ public class ContainerToNetworkAffinityHostFilter
                                     hs.addDesc(descName);
                                 }
                             } else {
-                                filterByClusterStoreAffinity(hostSelectionMap, callback, state);
+                                QueryTask networkStateQuery = QueryUtil.buildPropertyQuery(
+                                        ContainerNetworkState.class,
+                                        ContainerNetworkState.FIELD_NAME_NAME,
+                                        descLinksWithNames.values()
+                                                .toArray(new DescName[0])[0].descriptionName);
+
+                                QueryUtil.addExpandOption(networkStateQuery);
+
+                                new ServiceDocumentQuery<ContainerNetworkState>(host,
+                                        ContainerNetworkState.class)
+                                                .query(networkStateQuery,
+                                                        (res) -> {
+                                                            if (res.hasException()) {
+                                                                host.log(
+                                                                        Level.WARNING,
+                                                                        "Exception while quering for container network [%s]. Error: [%s]",
+                                                                        descLinksWithNames.keySet().toArray(new String[0])[0],
+                                                                        res.getException()
+                                                                                .getMessage());
+                                                                callback.complete(null,
+                                                                        res.getException());
+                                                            } else if (res.hasResult()) {
+                                                                if (res.getResult().external) {
+                                                                    List<String> parentLinks = res
+                                                                            .getResult().parentLinks;
+                                                                    for (String parentLink : parentLinks) {
+                                                                        if (hostSelectionMap.get(
+                                                                                parentLink) != null) {
+                                                                            filteredHosts.put(
+                                                                                    parentLink,
+                                                                                    hostSelectionMap
+                                                                                            .get(parentLink));
+                                                                        }
+                                                                    }
+                                                                }
+                                                            } else {
+                                                                filterByClusterStoreAffinity(
+                                                                        hostSelectionMap,
+                                                                        filteredHosts, callback,
+                                                                        state);
+                                                            }
+                                                        });
                             }
                         });
     }
@@ -159,7 +201,8 @@ public class ContainerToNetworkAffinityHostFilter
      */
     protected void filterByClusterStoreAffinity(
             final Map<String, HostSelection> hostSelectionMap,
-            final HostSelectionFilterCompletion callback, PlacementHostSelectionTaskState state) {
+            Map<String, HostSelection> filteredHosts, final HostSelectionFilterCompletion callback,
+            PlacementHostSelectionTaskState state) {
 
         /*
          * No big choice here...
@@ -214,13 +257,15 @@ public class ContainerToNetworkAffinityHostFilter
             // TODO - Picking one host randomly, it could pick the best single node available, e.g.
             // more resources, less containers, etc.
 
-            if ((nones != null) && !nones.isEmpty()) {
+            if (filteredHosts.isEmpty() && (nones != null) && !nones.isEmpty()) {
                 int chosen = Math
                         .abs(state.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY)
                                 .hashCode() % nones.size());
 
                 Entry<String, HostSelection> entry = nones.get(chosen);
                 hostSelectedMap.put(entry.getKey(), entry.getValue());
+            } else if (!filteredHosts.isEmpty()) {
+                hostSelectedMap = filteredHosts;
             }
         } else {
             /*
@@ -230,6 +275,9 @@ public class ContainerToNetworkAffinityHostFilter
 
             // TODO - Picking one cluster randomly, it could pick the best cluster available, e.g.
             // more resources, more hosts, less containers, better containers/host ratio, etc.
+            if (!hostSelectedMap.isEmpty()) {
+                hostSelectedMap = filteredHosts;
+            }
 
             int chosen = Math.abs(state.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY)
                     .hashCode() % hostSelectionByKVStoreMap.size());
