@@ -29,6 +29,10 @@ var HostItem = Vue.extend({
 
     hostName: function() {
       return utils.getHostName(this.model);
+    },
+
+    epzNames: function() {
+      return this.model.epzs.map((epz) => epz.epzName).join(', ');
     }
   },
   methods: {

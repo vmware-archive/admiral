@@ -36,12 +36,14 @@ let toViewModel = function(dto) {
     }
   }
 
-  // TODO: handle multiple EPZs
-  var epzId = null;
+  var epzs = [];
   for (var i = 0; i < customProperties.length; i++) {
     if (customProperties[i].name.startsWith(constants.CUSTOM_PROPS.EPZ_NAME_PREFIX)) {
-        epzId = customProperties[i].name.slice(constants.CUSTOM_PROPS.EPZ_NAME_PREFIX.length);
-        break;
+        let epzId = customProperties[i].name.slice(constants.CUSTOM_PROPS.EPZ_NAME_PREFIX.length);
+        epzs.push({
+           epzDocumentId: epzId,
+           epzLink: links.RESOURCE_POOLS + '/' + epzId
+        });
     }
   }
 
@@ -54,8 +56,7 @@ let toViewModel = function(dto) {
     descriptionLink: dto.descriptionLink,
     resourcePoolLink: dto.resourcePoolLink,
     resourcePoolDocumentId: dto.resourcePoolLink && utils.getDocumentId(dto.resourcePoolLink),
-    epzLink: links.RESOURCE_POOLS + '/' + epzId,
-    epzDocumentId: epzId,
+    epzs: epzs,
     connectionType: hasCustomProperties ? dto.customProperties.__adapterDockerType : null,
     customProperties: customProperties,
     computeType: hasCustomProperties ? dto.customProperties.__computeType : null
@@ -102,10 +103,11 @@ let ComputeStore = Reflux.createStore({
 
         this.getResourcePools(compute).then((result) => {
           compute.forEach((compute) => {
-            if (result[compute.epzLink]) {
-              compute.epzName =
-                  result[compute.epzLink].resourcePoolState.name;
-            }
+            compute.epzs.forEach((epz) => {
+              if (result[epz.epzLink]) {
+                epz.epzName = result[epz.epzLink].resourcePoolState.name;
+              }
+            });
           });
           return this.getDescriptions(compute);
         }).then((result) => {
@@ -163,8 +165,10 @@ let ComputeStore = Reflux.createStore({
 
   getResourcePools: function(compute) {
     let resourcePools = utils.getIn(this.data, ['listView', 'resourcePools']) || {};
-    let resourcePoolLinks = compute.filter((compute) =>
-        compute.epzLink).map((compute) => compute.epzLink);
+    let resourcePoolLinks = [];
+    compute.forEach((compute) => {
+      compute.epzs.forEach((epz) => resourcePoolLinks.push(epz.epzLink));
+    });
     let links = [...new Set(resourcePoolLinks)].filter((link) =>
         !resourcePools.hasOwnProperty(link));
     if (links.length === 0) {

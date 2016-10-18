@@ -20,9 +20,12 @@
     </div>
     <div class="form-group">
       <label class="col-xs-5">{{i18n("app.host.details.resourcePool")}}</label>
-      <div class="col-xs-7 truncateText" title="{{model.epzName}}">
-        <a href="#/compute?placementZone={{model.epzDocumentId}}"
-            class="navigation-link">{{model.epzName}}</a>
+      <div class="col-xs-7 truncateText" title="{{epzNames}}">
+        <span v-for="epz in model.epzs" track-by="epzDocumentId">
+            <span v-if="$index > 0">,</span>
+            <a href="#/compute?placementZone={{epz.epzDocumentId}}"
+               class="navigation-link">{{epz.epzName}}</a>
+        </span>
       </div>
     </div>
     <div class="form-group">

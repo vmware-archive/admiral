@@ -143,12 +143,14 @@ let toViewModel = function(dto) {
     }
   }
 
-  // TODO: handle multiple EPZs
-  var epzId = null;
+  var epzs = [];
   for (var i = 0; i < customProperties.length; i++) {
     if (customProperties[i].name.startsWith(constants.CUSTOM_PROPS.EPZ_NAME_PREFIX)) {
-        epzId = customProperties[i].name.slice(constants.CUSTOM_PROPS.EPZ_NAME_PREFIX.length);
-        break;
+        let epzId = customProperties[i].name.slice(constants.CUSTOM_PROPS.EPZ_NAME_PREFIX.length);
+        epzs.push({
+           epzDocumentId: epzId,
+           epzLink: links.RESOURCE_POOLS + '/' + epzId
+        });
     }
   }
 
@@ -177,8 +179,7 @@ let toViewModel = function(dto) {
     powerState: dto.powerState,
     resourcePoolLink: dto.resourcePoolLink,
     resourcePoolDocumentId: utils.getDocumentId(dto.resourcePoolLink),
-    epzLink: links.RESOURCE_POOLS + '/' + epzId,
-    epzDocumentId: epzId,
+    epzs: epzs,
     containers: containers,
     connectionType: hasCustomProperties ? dto.customProperties.__adapterDockerType : null,
     memoryPercentage: memoryUsagePct,
@@ -407,10 +408,11 @@ let HostsStore = Reflux.createStore({
           let hosts = documents.map((document) => toViewModel(document));
           this.getResourcePoolsForHostsCall(hosts).then((result) => {
             hosts.forEach((host) => {
-              if (result[host.epzLink]) {
-                host.epzName =
-                    result[host.epzLink].resourcePoolState.name;
-              }
+              host.epzs.forEach((epz) => {
+                if (result[epz.epzLink]) {
+                  epz.epzName = result[epz.epzLink].resourcePoolState.name;
+                }
+              });
             });
 
             this.setInData(['listView', 'items'], hosts);
@@ -451,9 +453,11 @@ let HostsStore = Reflux.createStore({
               documents.map((document) => toViewModel(document)));
           this.getResourcePoolsForHostsCall(hosts).then((result) => {
             hosts.forEach((host) => {
-              if (result[host.epzLink] && !host.epzName) {
-                host.epzName = result[host.epzLink].name;
-              }
+              host.epzs.forEach((epz) => {
+                if (result[epz.epzLink]) {
+                  epz.epzName = result[epz.epzLink].resourcePoolState.name;
+                }
+              });
             });
 
             this.setInData(['listView', 'items'], hosts);
@@ -470,8 +474,10 @@ let HostsStore = Reflux.createStore({
 
   getResourcePoolsForHostsCall: function(hosts) {
     let resourcePools = utils.getIn(this.data, ['listView', 'resourcePools']) || {};
-    let resourcePoolLinks = hosts.filter((host) =>
-        host.epzLink).map((host) => host.epzLink);
+    let resourcePoolLinks = [];
+    hosts.forEach((host) => {
+      host.epzs.forEach((epz) => resourcePoolLinks.push(epz.epzLink));
+    });
     let links = [...new Set(resourcePoolLinks)].filter((link) =>
         !resourcePools.hasOwnProperty(link));
     if (links.length === 0) {

@@ -27,6 +27,9 @@ var ComputeItem = Vue.extend({
     },
     hostName: function() {
       return this.model.name;
+    },
+    epzNames: function() {
+      return this.model.epzs.map((epz) => epz.epzName).join(', ');
     }
   },
   attached: function() {
