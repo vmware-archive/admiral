@@ -1251,7 +1251,11 @@ services.searchNetworks = function(query, limit) {
       op: 'eq'
     }]
   });
-  let url = buildPaginationUrl(links.NETWORKS, filter, true, 'name asc', limit);
+
+  // ideally we would order by name, but there is an issue with Xenon and various
+  // services having name field, some of which are not marked as Sortable.
+  let url = buildPaginationUrl(links.NETWORKS, filter, true,
+                               'documentUpdateTimeMicros desc', limit);
   return get(url).then(function(data) {
     var documentLinks = data.documentLinks || [];
 
