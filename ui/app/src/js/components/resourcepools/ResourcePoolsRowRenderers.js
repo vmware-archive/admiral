@@ -11,10 +11,6 @@
 
 import ResourcePoolsRowTemplate from 'ResourcePoolsRowTemplate';
 import ResourcePoolsRowHighlightTemplate from 'ResourcePoolsRowHighlightTemplate';
-import {
-  NavigationActions
-}
-from 'actions/Actions';
 import utils from 'core/utils';
 
 var renderers = {
@@ -52,22 +48,7 @@ var renderers = {
       model.hostsPath = 'hosts';
     }
 
-    var $rowEl = $(ResourcePoolsRowTemplate(model));
-    $rowEl.find('.resourcePool-host-count').on('click', '.link', function(e) {
-      e.preventDefault();
-
-      var queryOptions = {
-        resourcePool: resourcePool.documentSelfLink
-      };
-
-      if (utils.isApplicationCompute()) {
-        NavigationActions.openMachines(queryOptions);
-      } else {
-        NavigationActions.openHosts(queryOptions);
-      }
-    });
-
-    return $rowEl;
+    return $(ResourcePoolsRowTemplate(model));
   },
 
   renderHighlighted: function(resourcePool, $resourcePoolRow, isNew, isUpdated, validationErrors) {
