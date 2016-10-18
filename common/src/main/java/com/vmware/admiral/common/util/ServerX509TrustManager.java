@@ -47,8 +47,8 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
     private static final String SSL_TRUST_CONFIG_SUBSCRIBE_FOR_LINK = UriUtils.buildUriPath(
             ConfigurationFactoryService.SELF_LINK, SSL_TRUST_LAST_UPDATED_DOCUMENT_KEY);
 
-    public static final String DCP_NET_SSL_TRUST_STORE = "dcp.net.ssl.trustStore";
-    public static final String DCP_NET_SSL_TRUST_STORE_PASSWORD = "dcp.net.ssl.trustStorePassword";
+    public static final String JAVAX_NET_SSL_TRUST_STORE = "javax.net.ssl.trustStore";
+    public static final String JAVAX_NET_SSL_TRUST_STORE_PASSWORD = "javax.net.ssl.trustStorePassword";
     private static final String DEFAULT_JAVA_CACERTS_PASSWORD = "changeit";
 
     private static ServerX509TrustManager INSTANCE;
@@ -79,8 +79,8 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
         String cacerts = System.getProperty("java.home") + File.separator + "lib"
                 + File.separator + "security" + File.separator + "cacerts";
 
-        String customTrustStore = System.getProperty(DCP_NET_SSL_TRUST_STORE);
-        String customTrustStorePassword = System.getProperty(DCP_NET_SSL_TRUST_STORE_PASSWORD,
+        String customTrustStore = System.getProperty(JAVAX_NET_SSL_TRUST_STORE);
+        String customTrustStorePassword = System.getProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD,
                 DEFAULT_JAVA_CACERTS_PASSWORD);
 
         if (customTrustStore != null) {
