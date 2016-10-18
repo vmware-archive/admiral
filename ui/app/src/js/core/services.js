@@ -262,7 +262,6 @@ var mergeUrl = function(path, params) {
 var buildPaginationUrl = function(path, filter, count, order, limit) {
   var params = {
     [DOCUMENT_TYPE_PROP_NAME]: true,
-    [EXPAND_QUERY_PROP_NAME]: true,
     [ODATA_COUNT_PROP_NAME]: count,
     [ODATA_LIMIT_PROP_NAME]: limit || calculateLimit(),
     [ODATA_ORDERBY_PROP_NAME]: order
