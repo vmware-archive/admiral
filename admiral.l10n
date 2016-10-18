@@ -1,0 +1,7 @@
+#
+# This file lists all files that should be localized for a release.
+#
+
+
+[ui/app/src/messages]
+   admiral.%J.json
