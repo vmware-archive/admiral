@@ -131,11 +131,21 @@ public class ContainerImageService extends StatelessService {
                     RegistrySearchResponse registryResponse = searchOp
                             .getBody(RegistrySearchResponse.class);
 
+                    if (registryResponse.results == null) {
+                        continue;
+                    }
+
                     for (Result result : registryResponse.results) {
                         result.name = UriUtilsExtended.extractHostAndPort(result.registry) + "/"
                                 + result.name;
                     }
                     mergedResponse.merge(registryResponse);
+                }
+            }
+
+            if (failures != null) {
+                for (Throwable t: failures.values()) {
+                    logWarning("Failed to perform registry search: %s", t.getMessage());
                 }
             }
 
