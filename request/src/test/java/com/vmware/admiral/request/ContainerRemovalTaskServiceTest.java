@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -64,7 +63,6 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request.resourceCount = 2;
     }
 
-    @Ignore("Failing intermittently: https://jira-hzn.eng.vmware.com/browse/VBV-611")
     @Test
     public void testContainerRemovalResourceOperationCycle() throws Throwable {
         URI uri = UriUtils.buildUri(host, containerDesc.documentSelfLink);

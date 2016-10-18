@@ -201,6 +201,11 @@ public class ContainerRemovalTaskService
                             state.resourceLinks);
                     sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
                 } else {
+                    ContainerRemovalTaskState patchBody = createUpdateSubStageTask(state,
+                            SubStage.INSTANCES_REMOVING);
+                    patchBody.containersParentLinks = state.containersParentLinks;
+                    sendSelfPatch(patchBody);
+
                     deleteResourceInstances(state, containerLinks, null);
                 }
             }
@@ -263,10 +268,6 @@ public class ContainerRemovalTaskService
                                     }
                                 }));
             }
-            ContainerRemovalTaskState patchBody = createUpdateSubStageTask(state,
-                    SubStage.INSTANCES_REMOVING);
-            patchBody.containersParentLinks = state.containersParentLinks;
-            sendSelfPatch(patchBody);
         } catch (Throwable e) {
             failTask("Unexpected exception while deleting container instances", e);
         }
