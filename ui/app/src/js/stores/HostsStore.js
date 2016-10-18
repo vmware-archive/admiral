@@ -211,7 +211,12 @@ let updateEditableProperties = function(hostModel) {
     var deploymentPolicy = deploymentPolicies.find((policy) => {
       return policy.documentSelfLink === deploymentPolicyProp.value;
     });
+
     this.setInData(['hostAddView', 'deploymentPolicy'], deploymentPolicy);
+  } else {
+    // removed
+    this.setInData(['hostAddView', 'deploymentPolicy'], null);
+    hostModel.customProperties.__deploymentPolicyLink = null;
   }
 };
 
@@ -678,14 +683,22 @@ let HostsStore = Reflux.createStore({
       } else {
         delete customProperties.__hostAlias;
       }
+
       Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
         return Promise.all(tags.map((tag, i) =>
           result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
       }).then((updatedTags) => {
+        let hostDataCustomProperties = $.extend({},
+          utils.getSystemCustomProperties(hostModel.dto.customProperties), customProperties);
+
+        let deploymentPolicy = utils.getCustomPropertyValue(hostModel.customProperties,
+                                                              '__deploymentPolicyLink');
+        if (!deploymentPolicy) {
+          delete hostDataCustomProperties.__deploymentPolicyLink;
+        }
 
         var hostData = $.extend({}, hostModel.dto, {
-          customProperties: $.extend({},
-              utils.getSystemCustomProperties(hostModel.dto.customProperties), customProperties),
+          customProperties: hostDataCustomProperties,
           descriptionLink: this.data.hostAddView.descriptionLink,
           resourcePoolLink: hostModel.resourcePoolLink,
           credential: hostModel.credential,
