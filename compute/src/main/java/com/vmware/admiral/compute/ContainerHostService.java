@@ -236,6 +236,7 @@ public class ContainerHostService extends StatelessService {
                     op.addResponseHeader(Operation.LOCATION_HEADER, documentSelfLink);
                     completeOperationSuccess(op);
                     updateContainerHostInfo(documentSelfLink);
+                    triggerEpzEnumeration(cs.resourcePoolLink);
                 }));
     }
 
@@ -359,6 +360,12 @@ public class ContainerHostService extends StatelessService {
                         logWarning("Failed to update host data collection: %s", ex.getMessage());
                     }
                 }));
+    }
+
+    private void triggerEpzEnumeration(String resourcePoolLink) {
+        if (resourcePoolLink != null && !resourcePoolLink.isEmpty()) {
+            EpzComputeEnumerationTaskService.triggerForResourcePool(this, resourcePoolLink);
+        }
     }
 
     private void validateSslTrust(ContainerHostSpec hostSpec, Operation op,
