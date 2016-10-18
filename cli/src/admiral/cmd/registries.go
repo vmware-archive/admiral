@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var registryIdError = errors.New("Registry ID not provided.")
+var MissingRegistryIdError = errors.New("Registry ID not provided.")
 
 func init() {
 	initRegistryAdd()
@@ -118,7 +118,7 @@ func RunRegistryRemove(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", registryIdError
+		return "", MissingRegistryIdError
 	}
 	newID, err = registries.RemoveRegistryID(id)
 
@@ -148,7 +148,7 @@ func RunRegistryDisable(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", registryIdError
+		return "", MissingRegistryIdError
 	}
 	newID, err = registries.DisableID(id)
 
@@ -177,7 +177,7 @@ func RunRegistryEnable(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", registryIdError
+		return "", MissingRegistryIdError
 	}
 	newID, err = registries.EnableID(id)
 
@@ -221,7 +221,7 @@ func RunRegistryUpdate(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", registryIdError
+		return "", MissingRegistryIdError
 	}
 	newID, err = registries.EditRegistryID(id, newAddress, newName, newCred, autoAccept)
 

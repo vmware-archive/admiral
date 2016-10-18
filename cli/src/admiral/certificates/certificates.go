@@ -26,6 +26,12 @@ import (
 	"admiral/functions"
 )
 
+var (
+	CertNotFoundError    = errors.New("Certificate with that issuer name, not found.")
+	DuplicateNamesError  = errors.New("Certificates with duplicate names found. Please provide the ID for the specific certificate.")
+	MissingCertFileOrUrl = errors.New("No file or url provided.")
+)
+
 type Certificate struct {
 	CommonName        string `json:"commonName"`
 	IssuerName        string `json:"issuerName"`
@@ -124,10 +130,10 @@ func GetCertLinks(name string) []string {
 func RemoveCertificate(name string) (string, error) {
 	links := GetCertLinks(name)
 	if len(links) < 1 {
-		return "", errors.New("Certificate with that issuer name, not found.")
+		return "", CertNotFoundError
 	}
 	if len(links) > 1 {
-		return "", errors.New("Certificates with duplicate names found. Please provide the ID for the specific certificate.")
+		return "", DuplicateNamesError
 	}
 	id := functions.GetResourceID(links[0])
 	return RemoveCertificateID(id)
@@ -155,10 +161,10 @@ func RemoveCertificateID(id string) (string, error) {
 func EditCertificate(name, dirF, urlF string) (string, error) {
 	links := GetCertLinks(name)
 	if len(links) < 1 {
-		return "", errors.New("Certificate with that issuer name, not found.")
+		return "", CertNotFoundError
 	}
 	if len(links) > 1 {
-		return "", errors.New("Certificates with duplicate names found. Please provide the ID for the specific certificate.")
+		return "", DuplicateNamesError
 	}
 
 	id := functions.GetResourceID(links[0])
@@ -191,7 +197,7 @@ func EditCertificateID(id, dirF, urlF string) (string, error) {
 		//TODO
 		return "", errors.New("Not implemented.")
 	}
-	return "", errors.New("No file or url provided.")
+	return "", MissingCertFileOrUrl
 }
 
 type CertificateFromFile struct {

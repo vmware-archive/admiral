@@ -26,8 +26,11 @@ import (
 )
 
 var (
-	duplMsg     = "Registries with duplicate name found, provide ID to remove specific registry."
-	notFoundMsg = "No registry with that address found."
+	RegistryNotFoundError           = errors.New("No registry with that address found.")
+	DuplicateNamesError             = errors.New("Registries with duplicate name found, provide ID to remove specific registry.")
+	UnexpectedErrorOnRegistryAdd    = errors.New("Error occurred when adding registry.")
+	UnexpectedErrorOnRegistryUpdate = errors.New("Error occurred when updating registry.")
+	CertNotAcceptedError            = errors.New("Certificate has not been accepted.")
 )
 
 type Registry struct {
@@ -88,9 +91,9 @@ func (rl *RegistryList) GetOutputString() string {
 func RemoveRegistry(address string) (string, error) {
 	links := getRegLink(address)
 	if len(links) < 1 {
-		return "", errors.New(notFoundMsg)
+		return "", RegistryNotFoundError
 	} else if len(links) > 1 {
-		return "", errors.New(duplMsg)
+		return "", DuplicateNamesError
 	}
 	id := functions.GetResourceID(links[0])
 	return RemoveRegistryID(id)
@@ -185,22 +188,22 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 			functions.CheckJson(err)
 			return addedRegistry.GetID(), nil
 		}
-		return "", errors.New("Certificate has not been accepted.")
+		return "", CertNotAcceptedError
 	} else if respErr != nil {
 		return "", respErr
 	} else {
-		return "", errors.New("Error occurred when adding registry.")
+		return "", UnexpectedErrorOnRegistryAdd
 	}
 }
 
 func EditRegistry(address, newAddress, newName, newCred string, autoAccept bool) (string, error) {
 	links := getRegLink(address)
 	if len(links) < 1 {
-		return "", errors.New(notFoundMsg)
+		return "", RegistryNotFoundError
 	}
 
 	if len(links) > 1 {
-		return "", errors.New(duplMsg)
+		return "", DuplicateNamesError
 	}
 
 	id := functions.GetResourceID(links[0])
@@ -269,18 +272,18 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 	} else if respErr != nil {
 		return "", respErr
 	} else {
-		return "", errors.New("Error occurred when updating registry.")
+		return "", UnexpectedErrorOnRegistryUpdate
 	}
 }
 
 func Disable(address string) (string, error) {
 	links := getRegLink(address)
 	if len(links) < 1 {
-		return "", errors.New(notFoundMsg)
+		return "", RegistryNotFoundError
 	}
 
 	if len(links) > 1 {
-		return "", errors.New(duplMsg)
+		return "", DuplicateNamesError
 	}
 
 	id := functions.GetResourceID(links[0])
@@ -307,11 +310,11 @@ func DisableID(id string) (string, error) {
 func Enable(address string) (string, error) {
 	links := getRegLink(address)
 	if len(links) < 1 {
-		return "", errors.New(notFoundMsg)
+		return "", RegistryNotFoundError
 	}
 
 	if len(links) > 1 {
-		return "", errors.New(duplMsg)
+		return "", DuplicateNamesError
 	}
 
 	id := functions.GetResourceID(links[0])

@@ -27,6 +27,11 @@ import (
 	"sort"
 )
 
+var (
+	DuplicateNamesError   = errors.New("Templates with duplicate name found, use ID to remove the desired one.")
+	TemplateNotFoundError = errors.New("Template not found.")
+)
+
 type LightContainer struct {
 	Name  string `json:"name"`
 	Image string `json:"image"`
@@ -74,7 +79,7 @@ type TemplatesList struct {
 //fetch all templates, empty string should be passed. Returns the
 //count of fetched templates.
 func (lt *TemplatesList) FetchTemplates(queryF string) (int, error) {
-	url := config.URL + "/templates?documentType=true&templatesOnly=true&$orderby=results/name%20asc"
+	url := config.URL + "/templates?documentType=true&templatesOnly=true"
 	var query string
 	if queryF != "" {
 		query = fmt.Sprintf("&q=%s", queryF)
@@ -174,9 +179,9 @@ func RemoveTemplate(name string) (string, error) {
 	tl := &TemplatesList{}
 	tl.FetchTemplates(name)
 	if len(tl.Results) > 1 {
-		return "", errors.New("Templates with duplicate name found, use ID to remove the desired one.")
+		return "", DuplicateNamesError
 	} else if len(tl.Results) < 1 {
-		return "", errors.New("Template not found.")
+		return "", TemplateNotFoundError
 	}
 
 	id := functions.GetResourceID(*tl.Results[0].DocumentSelfLink)

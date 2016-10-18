@@ -32,6 +32,11 @@ import (
 	"encoding/pem"
 )
 
+var (
+	Code401Error      = errors.New("HTTP Status 401 - Authentication required")
+	NullResponseError = errors.New("Response from the server is null.")
+)
+
 type ResponseError struct {
 	Message string `json:"message"`
 }
@@ -83,11 +88,11 @@ func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 //or if the message is "forbidden", prints that there is authentication problem.
 func CheckResponseError(resp *http.Response, tokenFrom string) error {
 	if resp == nil {
-		return errors.New("Response from the server is null.")
+		return NullResponseError
 	}
 	if resp.StatusCode >= 400 && resp.StatusCode <= 500 {
 		if resp.StatusCode == 401 && resp.Body == nil {
-			return errors.New("HTTP Status 401 - Authentication required")
+			return Code401Error
 		}
 		body, err := ioutil.ReadAll(resp.Body)
 		functions.CheckJson(err)

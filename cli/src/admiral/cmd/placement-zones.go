@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var placementZoneIDError = errors.New("Placement zone ID not provided.")
+var MissingPlacementZoneIdError = errors.New("Placement zone ID not provided.")
 
 func init() {
 	initPlacementZoneAdd()
@@ -113,7 +113,7 @@ func RunPlacementZoneRemove(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", placementZoneIDError
+		return "", MissingPlacementZoneIdError
 	}
 	newID, err = placementzones.RemovePZID(id)
 
@@ -148,7 +148,7 @@ func RunPlacementZoneUpdate(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", placementZoneIDError
+		return "", MissingPlacementZoneIdError
 	}
 	newID, err = placementzones.EditPZID(id, newName)
 

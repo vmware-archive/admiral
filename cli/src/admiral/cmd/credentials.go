@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var credentialsIdError = errors.New("Credentials ID not provided.")
+var MissingCredentialsIdError = errors.New("Credentials ID not provided.")
 
 func init() {
 	initCredentialsAdd()
@@ -123,7 +123,7 @@ func RunCredentialsRemove(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", credentialsIdError
+		return "", MissingCredentialsIdError
 	}
 	newID, err = credentials.RemoveCredentialsID(id)
 
@@ -162,7 +162,7 @@ func RunCredentialsUpdate(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", credentialsIdError
+		return "", MissingCredentialsIdError
 	}
 	id, err = credentials.EditCredetialsID(id, publicCert, privateCert, userName, passWord)
 

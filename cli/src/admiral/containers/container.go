@@ -28,6 +28,11 @@ import (
 	"admiral/track"
 )
 
+var (
+	ContainersNotProvidedError   = errors.New("No containers provided.")
+	ContainersNotMatchQueryError = errors.New("No containers found to match the query.")
+)
+
 type Container struct {
 	Id               string      `json:"id"`
 	Address          string      `json:"address"`
@@ -202,7 +207,7 @@ func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 	links := functions.CreateResLinksForContainer(containers)
 
 	if len(containers) < 1 || containers[0] == "" {
-		return nil, errors.New("Enter atleast container.")
+		return nil, ContainersNotProvidedError
 	}
 	newStart := OperationContainer{
 		Operation:     "Container.Start",
@@ -319,7 +324,7 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 		return nil, err
 	}
 	if count < 1 {
-		return nil, errors.New("No containers found to match the query.")
+		return nil, ContainersNotMatchQueryError
 	}
 	url := config.URL + "/requests"
 	newRemoveContainer := OperationContainer{

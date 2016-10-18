@@ -22,7 +22,8 @@ import (
 )
 
 var keepTemplate bool
-var appIdError = errors.New("Application ID not provided.")
+
+var MissingAppIdError = errors.New("Application ID not provided.")
 
 func init() {
 	initAppInspect()
@@ -57,7 +58,7 @@ func RunAppInspect(args []string) error {
 		ok bool
 	)
 	if id, ok = ValidateArgsCount(args); !ok {
-		return appIdError
+		return MissingAppIdError
 	}
 	apps.InspectID(id)
 	return nil
@@ -119,7 +120,7 @@ func RunAppRemove(args []string) (string, error) {
 		id  string
 	)
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", appIdError
+		return "", MissingAppIdError
 	}
 	IDs, err = apps.RemoveAppID(id, asyncTask)
 
@@ -161,7 +162,7 @@ func RunAppRestart(args []string) (string, error) {
 		id  string
 	)
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", appIdError
+		return "", MissingAppIdError
 	}
 	IDs, err = apps.StopAppID(id, asyncTask)
 	IDs, err = apps.StartAppID(id, asyncTask)
@@ -211,7 +212,7 @@ func RunAppRun(args []string) (string, error) {
 		IDs, err = apps.RunAppFile(dirF, keepTemplate, asyncTask)
 	} else {
 		if id, ok = ValidateArgsCount(args); !ok {
-			return "", templateIdError
+			return "", MissingTemplateIdError
 		}
 		IDs, err = apps.RunAppID(id, asyncTask)
 	}
@@ -257,7 +258,7 @@ func RunAppStart(args []string) (string, error) {
 		id  string
 	)
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", appIdError
+		return "", MissingAppIdError
 	}
 	IDs, err = apps.StartAppID(id, asyncTask)
 
@@ -302,7 +303,7 @@ func RunAppStop(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", appIdError
+		return "", MissingAppIdError
 	}
 	IDs, err = apps.StopAppID(id, asyncTask)
 

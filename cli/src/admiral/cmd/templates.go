@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var templateIdError = errors.New("Template ID not provided.")
+var MissingTemplateIdError = errors.New("Template ID not provided.")
 
 func init() {
 	initTemplateList()
@@ -84,7 +84,7 @@ func RunTemplateRemove(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", templateIdError
+		return "", MissingTemplateIdError
 	}
 	newID, err = templates.RemoveTemplateID(id)
 
@@ -154,7 +154,7 @@ func RunTemplateExport(args []string) (string, error) {
 		ok bool
 	)
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", templateIdError
+		return "", MissingTemplateIdError
 	}
 	newID, err := templates.Export(id, dirF, formatTemplate)
 	if err != nil {

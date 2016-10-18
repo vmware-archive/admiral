@@ -25,8 +25,8 @@ import (
 )
 
 var (
-	duplMsg  = "Placement zones with duplicate name found, provide ID to remove specific placement zone."
-	notFound = "Placement zone not found."
+	DuplicateNamesError   = errors.New("Placement zones with duplicate name found, provide ID to remove specific placement zone.")
+	PlacementZoneNotFound = errors.New("Placement zone not found.")
 )
 
 type PlacementZone struct {
@@ -34,8 +34,9 @@ type PlacementZone struct {
 }
 
 type PlacementZoneList struct {
-	TotalCount int32                    `json:"totalCount"`
-	Documents  map[string]PlacementZone `json:"documents"`
+	TotalCount    int32                    `json:"totalCount"`
+	Documents     map[string]PlacementZone `json:"documents"`
+	DocumentLinks []string                 `json:"documentLinks"`
 }
 
 type PlacementZoneState struct {
@@ -64,7 +65,8 @@ func (rpl *PlacementZoneList) GetOutputString() string {
 	var buffer bytes.Buffer
 	if len(rpl.Documents) > 0 {
 		buffer.WriteString("ID\tNAME\n")
-		for _, val := range rpl.Documents {
+		for _, link := range rpl.DocumentLinks {
+			val := rpl.Documents[link]
 			output := functions.GetFormattedString(val.PlacementZoneState.GetID(), val.PlacementZoneState.Name)
 			buffer.WriteString(output)
 			buffer.WriteString("\n")
@@ -78,9 +80,9 @@ func (rpl *PlacementZoneList) GetOutputString() string {
 func RemovePZ(pzName string) (string, error) {
 	links := GetPZLinks(pzName)
 	if len(links) > 1 {
-		return "", errors.New(duplMsg)
+		return "", DuplicateNamesError
 	} else if len(links) < 1 {
-		return "", errors.New(notFound)
+		return "", PlacementZoneNotFound
 	}
 	id := functions.GetResourceID(links[0])
 	return RemovePZID(id)
@@ -122,9 +124,9 @@ func AddPZ(rpName string, custProps []string) (string, error) {
 func EditPZ(pzName, newName string) (string, error) {
 	links := GetPZLinks(pzName)
 	if len(links) > 1 {
-		return "", errors.New(duplMsg)
+		return "", DuplicateNamesError
 	} else if len(links) < 1 {
-		return "", errors.New(notFound)
+		return "", PlacementZoneNotFound
 	}
 	id := functions.GetResourceID(links[0])
 	return EditPZID(id, newName)

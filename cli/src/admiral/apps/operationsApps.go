@@ -27,8 +27,8 @@ import (
 )
 
 var (
-	duplMsg     = "Duplicates found, provide the ID of the specific aplication."
-	notFoundMsg = "Application not found."
+	DuplicateNamesError      = errors.New("Duplicates found, provide the ID of the specific aplication.")
+	ApplicationNotFoundError = errors.New("Application not found.")
 )
 
 //Function to start application.
@@ -37,9 +37,9 @@ var (
 func StartApp(name string, asyncTask bool) ([]string, error) {
 	resourceLinks := GetAppLinks(name)
 	if len(resourceLinks) > 1 {
-		return nil, errors.New(duplMsg)
+		return nil, DuplicateNamesError
 	} else if len(resourceLinks) < 1 {
-		return nil, errors.New(notFoundMsg)
+		return nil, ApplicationNotFoundError
 	}
 
 	id := functions.GetResourceID(resourceLinks[0])
@@ -87,9 +87,9 @@ func StartAppID(id string, asyncTask bool) ([]string, error) {
 func StopApp(name string, asyncTask bool) ([]string, error) {
 	resourceLinks := GetAppLinks(name)
 	if len(resourceLinks) > 1 {
-		return nil, errors.New(duplMsg)
+		return nil, DuplicateNamesError
 	} else if len(resourceLinks) < 1 {
-		return nil, errors.New(notFoundMsg)
+		return nil, ApplicationNotFoundError
 	}
 	id := functions.GetResourceID(resourceLinks[0])
 	return StopAppID(id, asyncTask)
@@ -137,9 +137,9 @@ func RemoveApp(name string, asyncTask bool) ([]string, error) {
 	resourceLinks := GetAppLinks(name)
 
 	if len(resourceLinks) > 1 {
-		return nil, errors.New(duplMsg)
+		return nil, DuplicateNamesError
 	} else if len(resourceLinks) < 1 {
-		return nil, errors.New(notFoundMsg)
+		return nil, ApplicationNotFoundError
 	}
 
 	id := functions.GetResourceID(resourceLinks[0])
@@ -186,9 +186,9 @@ func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 func RunApp(app string, asyncTask bool) ([]string, error) {
 	links := queryTemplateName(app)
 	if len(links) > 1 {
-		return nil, errors.New("Templates with duplicate name found, provide ID to provision specific template.")
+		return nil, templates.DuplicateNamesError
 	} else if len(links) < 1 {
-		return nil, errors.New("Template not found.")
+		return nil, templates.TemplateNotFoundError
 	}
 
 	id := functions.GetResourceID(links[0])

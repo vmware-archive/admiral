@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var deploymentPolIdError = errors.New("Deployment policy ID not provided.")
+var MissingDeploymentPolicyIdError = errors.New("Deployment policy ID not provided.")
 
 func init() {
 	initDeploymentPolicyAdd()
@@ -113,7 +113,7 @@ func RunDeploymentPolicyRemove(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", deploymentPolIdError
+		return "", MissingDeploymentPolicyIdError
 	}
 	newID, err = deplPolicy.RemoveDPID(id)
 
@@ -150,7 +150,7 @@ func RunDeploymentPolicyUpdate(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", deploymentPolIdError
+		return "", MissingDeploymentPolicyIdError
 	}
 	newID, err = deplPolicy.EditDPID(id, dpName, dpDescription)
 

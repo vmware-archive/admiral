@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var networkIDError = errors.New("Network ID not provided.")
+var MissingNetworkIdError = errors.New("Network ID not provided.")
 
 func init() {
 	initNetworkCreate()
@@ -99,7 +99,7 @@ func RunNetorkInspect(args []string) (string, error) {
 		ok bool
 	)
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", networkIDError
+		return "", MissingNetworkIdError
 	}
 	return networks.InspectNetwork(id)
 }
@@ -146,7 +146,7 @@ func initNetworkRemove() {
 
 func RunNetworkRemove(args []string) (string, error) {
 	if _, ok := ValidateArgsCount(args); !ok {
-		return "", networkIDError
+		return "", MissingNetworkIdError
 	}
 
 	ids, err := networks.RemoveNetwork(args, asyncTask)

@@ -23,6 +23,12 @@ import (
 	"admiral/functions"
 )
 
+var (
+	ProjectNameNotProvidedError = errors.New("Provide project name.")
+	ProjectNotFoundError        = errors.New("Project not found.")
+	DuplicateNamesError         = errors.New("Project with duplicate name found, provide ID to remove specific project.")
+)
+
 type Project struct {
 	Name             string `json:"name,omitempty"`
 	Description      string `json:"description,omitempty"`
@@ -72,7 +78,7 @@ func (gl *ProjectList) GetOutputString() string {
 //Returns the ID of the new project and error. If the error is != nil the string for ID is empty.
 func AddProject(name, description string) (string, error) {
 	if name == "" {
-		return "", errors.New("Provide project name.")
+		return "", ProjectNameNotProvidedError
 	}
 
 	project := &Project{
@@ -106,10 +112,10 @@ func RemoveProject(name string) (string, error) {
 		return "", err
 	}
 	if len(links) < 1 {
-		return "", errors.New("Project not found.")
+		return "", ProjectNotFoundError
 	}
 	if len(links) > 1 {
-		return "", errors.New("Project with duplicate name found, provide ID to remove specific project.")
+		return "", DuplicateNamesError
 	}
 	id := functions.GetResourceID(links[0])
 	return RemoveProjectID(id)
@@ -138,10 +144,10 @@ func EditProject(name, newName, newDescription string) (string, error) {
 		return "", err
 	}
 	if len(links) < 1 {
-		return "", errors.New("Project not found.")
+		return "", ProjectNotFoundError
 	}
 	if len(links) > 1 {
-		return "", errors.New("Project with duplicate name found, provide ID to update specific project.")
+		return "", DuplicateNamesError
 	}
 	id := functions.GetResourceID(links[0])
 	return EditProjectID(id, newName, newDescription)

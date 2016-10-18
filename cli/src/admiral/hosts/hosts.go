@@ -30,6 +30,12 @@ import (
 	"admiral/track"
 )
 
+var (
+	NewCertNotAddedError          = errors.New("Error occurred when adding the new certificate.")
+	AddressNotProvidedError       = errors.New("Host address not provided.")
+	PlacementZoneNotProvidedError = errors.New("Placement zone ID not provided.")
+)
+
 //Struct part of "Host" struct in order to parse inner data.
 type HostProperties struct {
 	Containers string `json:"__Containers"`
@@ -222,7 +228,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 			return addedHost.Id, nil
 		}
 		credentials.RemoveCredentialsID(newCredID)
-		return "", errors.New("Error occurred when adding the new certificate.")
+		return "", NewCertNotAddedError
 	} else if resp.StatusCode == 204 {
 		link := resp.Header.Get("Location")
 		url = config.URL + link
@@ -413,10 +419,10 @@ func EditHost(ipF, name, resPoolF, deplPolicyF, credentials string,
 
 func allFlagReadyHost(ipF, resPoolF string) (bool, error) {
 	if ipF == "" {
-		return false, errors.New("IP address not provided.")
+		return false, AddressNotProvidedError
 	}
 	if resPoolF == "" {
-		return false, errors.New("Resource pool ID not provided.")
+		return false, PlacementZoneNotProvidedError
 	}
 	return true, nil
 }

@@ -97,7 +97,8 @@ func (listApps *ListApps) GetOutputStringWithoutContainers() string {
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS")
 	buffer.WriteString("\n")
-	for _, app := range listApps.Documents {
+	for _, link := range listApps.DocumentLinks {
+		app := listApps.Documents[link]
 		output := functions.GetFormattedString(app.GetID(), app.Name, app.GetContainersCount(), app.GetNetworksCount())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")

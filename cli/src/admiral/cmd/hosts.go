@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var hostAddressError = errors.New("Host address not provided.")
+var MissingHostIdError = errors.New("Host ID not provided.")
 
 func init() {
 	initHostAdd()
@@ -95,7 +95,7 @@ func RunHostDisable(args []string) (string, error) {
 		ok          bool
 	)
 	if hostAddress, ok = ValidateArgsCount(args); !ok {
-		return "", hostAddressError
+		return "", MissingHostIdError
 	}
 	newID, err := hosts.DisableHost(hostAddress)
 
@@ -127,7 +127,7 @@ func RunHostEnable(args []string) (string, error) {
 		ok          bool
 	)
 	if hostAddress, ok = ValidateArgsCount(args); !ok {
-		return "", hostAddressError
+		return "", MissingHostIdError
 	}
 	newID, err := hosts.EnableHost(hostAddress)
 
@@ -184,7 +184,7 @@ func RunHostRemove(args []string) (string, error) {
 		ok      bool
 	)
 	if address, ok = ValidateArgsCount(args); !ok {
-		return "", hostAddressError
+		return "", MissingHostIdError
 	}
 
 	if !forceF {
@@ -229,7 +229,7 @@ func RunHostUpdate(args []string) (string, error) {
 		ok      bool
 	)
 	if address, ok = ValidateArgsCount(args); !ok {
-		return "", hostAddressError
+		return "", MissingHostIdError
 	}
 	newID, err := hosts.EditHost(address, hostName, placementZoneID, deplPolicyF, credName, autoAccept)
 

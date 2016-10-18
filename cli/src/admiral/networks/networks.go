@@ -27,6 +27,10 @@ import (
 	"admiral/track"
 )
 
+var (
+	HostNotProvidedError = errors.New("Host ID is not provided.")
+)
+
 type Network struct {
 	Name                     string            `json:"name,omitempty"`
 	External                 bool              `json:"external,omitempty"`
@@ -239,7 +243,7 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 	gateways, subnets, ipranges, customProperties,
 	hosts []string, asyncTask bool) (string, error) {
 	if len(hosts) < 1 {
-		return "", errors.New("Host address is not provided.")
+		return "", HostNotProvidedError
 	}
 	network := &Network{
 		Name:     name,

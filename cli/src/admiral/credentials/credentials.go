@@ -32,8 +32,8 @@ import (
 )
 
 var (
-	duplMsg  = "Credentials with duplicate name found, provide ID to remove specific credentials."
-	notFound = "Credentials not found."
+	DuplicateNamesError      = errors.New("Credentials with duplicate name found, provide ID to remove specific credentials.")
+	CredentialsNotFoundError = errors.New("Credentials not found.")
 )
 
 type CustomProperties struct {
@@ -64,13 +64,14 @@ func (c *Credentials) GetName() string {
 }
 
 type ListCredentials struct {
-	Documents map[string]Credentials `json:"documents"`
+	Documents     map[string]Credentials `json:"documents"`
+	DocumentLinks []string               `json:"documentLinks"`
 }
 
 //FetchCredentials fetches all credentials. It return the count
 //of fetched credentials.
 func (lc *ListCredentials) FetchCredentials() (int, error) {
-	url := config.URL + "/core/auth/credentials?expand"
+	url := config.URL + "/core/auth/credentials?expand&$filter=customProperties/scope%20ne%20%27SYSTEM%27"
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -86,8 +87,9 @@ func (lc *ListCredentials) GetOutputString() string {
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tNAME\tTYPE")
 	buffer.WriteString("\n")
-	for _, val := range lc.Documents {
-		output := functions.GetFormattedString(val.GetID(), val.GetName(), val.Type)
+	for _, link := range lc.DocumentLinks {
+		cred := lc.Documents[link]
+		output := functions.GetFormattedString(cred.GetID(), cred.GetName(), cred.Type)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
@@ -245,11 +247,11 @@ func AddByCert(name, publicCert, privateCert string,
 func RemoveCredentials(name string) (string, error) {
 	links := GetCredentialsLinks(name)
 	if len(links) < 1 {
-		return "", errors.New(notFound)
+		return "", CredentialsNotFoundError
 	}
 
 	if len(links) > 1 {
-		return "", errors.New(duplMsg)
+		return "", DuplicateNamesError
 	}
 	return RemoveCredentialsID(links[0])
 }
@@ -277,10 +279,10 @@ func RemoveCredentialsID(id string) (string, error) {
 func EditCredetials(credName, publicCert, privateCert, userName, passWord string) (string, error) {
 	links := GetCredentialsLinks(credName)
 	if len(links) < 1 {
-		return "", errors.New(notFound)
+		return "", CredentialsNotFoundError
 	}
 	if len(links) > 1 {
-		return "", errors.New(duplMsg)
+		return "", DuplicateNamesError
 
 	}
 	return EditCredetialsID(links[0], publicCert, privateCert, userName, passWord)

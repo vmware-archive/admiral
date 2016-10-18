@@ -26,6 +26,12 @@ import (
 	"fmt"
 )
 
+var (
+	DuplicateNamesError        = errors.New("Placement with duplicate name found, provide ID to remove specific placement.")
+	PlacementNotFoundError     = errors.New("Placement not found.")
+	PlacementZoneRequiredError = errors.New("Placement zone ID is required.")
+)
+
 type Placement struct {
 	Name                    string   `json:"name"`
 	ResourcePoolLink        string   `json:"resourcePoolLink"`
@@ -165,10 +171,10 @@ func (pl *PlacementList) GetOutputString() string {
 func RemovePlacement(polName string) (string, error) {
 	polLinks := GetPlacementLinks(polName)
 	if len(polLinks) > 1 {
-		return "", errors.New("Placement with duplicate name found, provide ID to remove specific placement.")
+		return "", DuplicateNamesError
 	}
 	if len(polLinks) < 1 {
-		return "", errors.New("Placement not found.")
+		return "", PlacementNotFoundError
 	}
 	id := functions.GetResourceID(polLinks[0])
 	return RemovePlacement(id)
@@ -194,7 +200,7 @@ func AddPlacement(namePol, cpuShares, instances, priority, projectId, resPoolID,
 	)
 
 	if !haveNeeded(resPoolID) {
-		return "", errors.New("Placement zone ID is required.")
+		return "", PlacementZoneRequiredError
 	}
 
 	if deplPolID != "" {
@@ -237,10 +243,10 @@ func AddPlacement(namePol, cpuShares, instances, priority, projectId, resPoolID,
 func EditPlacement(name, namePol, projectId, resPoolID, deplPolID string, cpuShares, instances, priority int32, memoryLimit int64) (string, error) {
 	polLinks := GetPlacementLinks(name)
 	if len(polLinks) > 1 {
-		return "", errors.New("Placement with duplicate name found, provide ID to remove specific policy.")
+		return "", DuplicateNamesError
 	}
 	if len(polLinks) < 1 {
-		return "", errors.New("Placement not found.")
+		return "", PlacementNotFoundError
 	}
 
 	id := functions.GetResourceID(polLinks[0])

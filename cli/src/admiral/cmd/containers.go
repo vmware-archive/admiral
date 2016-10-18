@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var containerIdError = errors.New("Container ID not provided.")
+var MissingContainerIdError = errors.New("Container ID not provided.")
 
 func init() {
 	initContainerExec()
@@ -69,7 +69,7 @@ func RunContainerExecute(args []string) error {
 		id string
 	)
 	if id, ok = ValidateArgsCount(args); !ok {
-		return containerIdError
+		return MissingContainerIdError
 	}
 
 	if interact {
@@ -116,7 +116,7 @@ func RunContainerInspect(args []string) (string, error) {
 		id string
 	)
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", containerIdError
+		return "", MissingContainerIdError
 	}
 	container, err := containers.InspectContainer(id)
 	return container.StringJson(), err
@@ -164,7 +164,7 @@ func RunContainersRemove(args []string) (string, error) {
 				resIDs, err = containers.RemoveContainer(args, asyncTask)
 			}
 		} else {
-			return "", containerIdError
+			return "", MissingContainerIdError
 		}
 	}
 
@@ -206,7 +206,7 @@ func RunContainerRestart(args []string) (string, error) {
 		resIDs, err = containers.StopContainer(args, asyncTask)
 		resIDs, err = containers.StartContainer(args, asyncTask)
 	} else {
-		return "", containerIdError
+		return "", MissingContainerIdError
 	}
 
 	if err != nil {
@@ -247,7 +247,7 @@ func RunContainerScale(args []string) (string, error) {
 		err   error
 	)
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", containerIdError
+		return "", MissingContainerIdError
 	}
 
 	if scaleCount < 1 {
@@ -320,7 +320,7 @@ func RunContainerStart(args []string) (string, error) {
 	if len(args) > 0 {
 		resIDs, err = containers.StartContainer(args, asyncTask)
 	} else {
-		return "", containerIdError
+		return "", MissingContainerIdError
 	}
 
 	if err != nil {
@@ -362,7 +362,7 @@ func RunContainerStop(args []string) (string, error) {
 	if len(args) > 0 {
 		resIDs, err = containers.StopContainer(args, asyncTask)
 	} else {
-		return "", containerIdError
+		return "", MissingContainerIdError
 	}
 
 	if err != nil {

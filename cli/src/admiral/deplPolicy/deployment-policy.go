@@ -24,9 +24,9 @@ import (
 )
 
 var (
-	duplMsg    = "Duplicates with that name found. Please provide the ID for the specific deployment policy."
-	notFound   = "Deployment policy not found."
-	defaultMsg = "Duplicates with that name found. Please provide the ID for the specific deployment policy."
+	DeploymentPolicyNotFoundError        = errors.New("Deployment policy not found.")
+	DuplicateNamesError                  = errors.New("Duplicates with that name found. Please provide the ID for the specific deployment policy.")
+	DeploymentPolicyNameNotProvidedError = errors.New("Deployment policy name not provided.")
 )
 
 type DeploymentPolicy struct {
@@ -81,9 +81,9 @@ func (dpl *DeploymentPolicyList) GetOutputString() string {
 func RemoveDP(name string) (string, error) {
 	links := GetDPLinks(name)
 	if len(links) > 1 {
-		return "", errors.New(duplMsg)
+		return "", DuplicateNamesError
 	} else if len(links) < 1 {
-		return "", errors.New(notFound)
+		return "", DeploymentPolicyNotFoundError
 	}
 	id := functions.GetResourceID(links[0])
 	return RemoveDPID(id)
@@ -110,7 +110,7 @@ func RemoveDPID(id string) (string, error) {
 func AddDP(dpName, dpDescription string) (string, error) {
 	url := config.URL + "/resources/deployment-policies"
 	if dpName == "" {
-		return "", errors.New("Deployment policy name is missing.")
+		return "", DeploymentPolicyNameNotProvidedError
 	}
 	dp := &DeploymentPolicy{
 		Name:             dpName,
@@ -139,9 +139,9 @@ func AddDP(dpName, dpDescription string) (string, error) {
 func EditDP(dpName, newName, newDescription string) (string, error) {
 	links := GetDPLinks(dpName)
 	if len(links) > 1 {
-		return "", errors.New(duplMsg)
+		return "", DuplicateNamesError
 	} else if len(links) < 1 {
-		return "", errors.New(notFound)
+		return "", DeploymentPolicyNotFoundError
 	}
 	id := functions.GetResourceID(links[0])
 	return EditDPID(id, newName, newDescription)

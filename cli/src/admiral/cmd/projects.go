@@ -19,7 +19,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var projectIdError = errors.New("Project ID not provided.")
+var MissingProjectIdError = errors.New("Project ID not provided.")
 
 func init() {
 	initProjectAdd()
@@ -108,7 +108,7 @@ func RunProjectRemove(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", projectIdError
+		return "", MissingProjectIdError
 	}
 	newID, err = projects.RemoveProjectID(id)
 
@@ -145,7 +145,7 @@ func RunProjectUpdate(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", projectIdError
+		return "", MissingProjectIdError
 	}
 	newID, err = projects.EditProjectID(id, newName, newDescription)
 

@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var placementIdError = errors.New("Placement ID not provided.")
+var MissingPlacementIdError = errors.New("Placement ID not provided.")
 
 func init() {
 	initPlacementAdd()
@@ -161,7 +161,7 @@ func RunPlacementRemove(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", placementIdError
+		return "", MissingPlacementIdError
 	}
 	newID, err = placements.RemovePlacementID(id)
 
@@ -208,7 +208,7 @@ func RunPlacementUpdate(args []string) (string, error) {
 	}
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", placementIdError
+		return "", MissingPlacementIdError
 	}
 	newID, err = placements.EditPlacementID(id, newName, tenants, placementZoneID, deplPolID, cpuSharesInt, maxNumberInstances, priorityInt, memoryLimit)
 

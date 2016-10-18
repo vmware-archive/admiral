@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var certIdError = errors.New("Certificate ID not provided.")
+var MissingCertIdError = errors.New("Certificate ID not provided.")
 
 func init() {
 	initCertAdd()
@@ -119,7 +119,7 @@ func RunCertRemove(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", certIdError
+		return "", MissingCertIdError
 	}
 	newID, err = certificates.RemoveCertificateID(id)
 
@@ -156,7 +156,7 @@ func RunCertUpdate(args []string) (string, error) {
 	)
 
 	if id, ok = ValidateArgsCount(args); !ok {
-		return "", certIdError
+		return "", MissingCertIdError
 	}
 	newID, err = certificates.EditCertificateID(id, dirF, urlF)
 
