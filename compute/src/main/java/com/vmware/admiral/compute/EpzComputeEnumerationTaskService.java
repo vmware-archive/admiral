@@ -88,10 +88,10 @@ public class EpzComputeEnumerationTaskService extends
                 indexing = STORE_ONLY)
         public String resourcePoolLink;
 
-        @Documentation(description = "Resource pool state.")
+        @Documentation(description = "Resource pool query.")
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL },
                 indexing = STORE_ONLY)
-        public ResourcePoolState resourcePoolState;
+        public Query resourcePoolQuery;
 
         @Documentation(description = "Link to the next page of computes to unassign or assign.")
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL },
@@ -204,13 +204,13 @@ public class EpzComputeEnumerationTaskService extends
 
             EpzComputeEnumerationTaskState newState = createUpdateSubStageTask(state,
                     EpzComputeEnumerationTaskState.SubStage.QUERY_COMPUTES_TO_UNASSIGN);
-            newState.resourcePoolState = o.getBody(ResourcePoolState.class);
+            newState.resourcePoolQuery = o.getBody(ResourcePoolState.class).query;
             sendSelfPatch(newState);
         }));
     }
 
     private void queryComputesToUnassign(EpzComputeEnumerationTaskState state) {
-        Query mustBeOut = Utils.clone(state.resourcePoolState.query)
+        Query mustBeOut = Utils.clone(state.resourcePoolQuery)
                 .setOccurance(Occurance.MUST_NOT_OCCUR);
         Query areIn = Query.Builder.create()
                 .addKindFieldClause(ComputeState.class)
@@ -225,7 +225,7 @@ public class EpzComputeEnumerationTaskService extends
     }
 
     private void queryComputesToAssign(EpzComputeEnumerationTaskState state) {
-        Query mustBeIn = Utils.clone(state.resourcePoolState.query);
+        Query mustBeIn = Utils.clone(state.resourcePoolQuery);
         Query areOut = Query.Builder.create()
                 .addKindFieldClause(ComputeState.class)
                 .addFieldClause(
