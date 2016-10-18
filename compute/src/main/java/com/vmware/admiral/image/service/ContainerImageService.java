@@ -14,6 +14,7 @@ package com.vmware.admiral.image.service;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,9 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.host.HostInitRegistryAdapterServiceConfig;
+import com.vmware.admiral.log.EventLogService;
+import com.vmware.admiral.log.EventLogService.EventLogState;
+import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.Operation;
@@ -87,7 +91,7 @@ public class ContainerImageService extends StatelessService {
 
         // query for registries and execute an adapter request for each one
         Consumer<Collection<String>> registryLinksConsumer = (registryLinks) -> handleSearchRequest(
-                op, registryAdapterUri, queryParams, registryLinks);
+                op, registryAdapterUri, queryParams, registryLinks, group);
 
         Consumer<Collection<Throwable>> failureConsumer = (failures) -> op.fail(failures.iterator()
                 .next());
@@ -96,7 +100,8 @@ public class ContainerImageService extends StatelessService {
     }
 
     private void handleSearchRequest(Operation op, URI registryAdapterUri,
-            Map<String, String> queryParams, Collection<String> searchRegistryLinks) {
+            Map<String, String> queryParams, Collection<String> searchRegistryLinks,
+            String tenantLink) {
 
         if (searchRegistryLinks.isEmpty()) {
             op.fail(new IllegalStateException("No registries found"));
@@ -143,11 +148,7 @@ public class ContainerImageService extends StatelessService {
                 }
             }
 
-            if (failures != null) {
-                for (Throwable t: failures.values()) {
-                    logWarning("Failed to perform registry search: %s", t.getMessage());
-                }
-            }
+            logFailures(failures, tenantLink);
 
             if (limit > 0) {
                 mergedResponse.limit(limit);
@@ -181,5 +182,35 @@ public class ContainerImageService extends StatelessService {
                 .setBody(imageRequest);
 
         return adapterOp;
+    }
+
+    private void logFailures(Map<Long, Throwable> failures, String tenantLink) {
+        if (failures == null || failures.values().isEmpty()) {
+            return;
+        }
+
+        List<String> errors = new ArrayList<>(failures.values().size());
+        for (Throwable t: failures.values()) {
+            logWarning("Failed to perform registry search: %s", t.getMessage());
+            errors.add(t.getMessage());
+        }
+
+        EventLogState eventLog = new EventLogState();
+        eventLog.resourceType = getClass().getName();
+        eventLog.eventLogType = EventLogType.WARNING;
+        eventLog.description = String.format("Error(s) while trying to perform registry search: %s",
+                errors.toString());
+        if (tenantLink != null) {
+            eventLog.tenantLinks = Collections.singletonList(tenantLink);
+        }
+
+        Operation createEventLog = Operation.createPost(this, EventLogService.FACTORY_LINK)
+                .setBody(eventLog)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Error on publishing event log: %s", Utils.toString(e));
+                    }
+                });
+        sendRequest(createEventLog);
     }
 }
