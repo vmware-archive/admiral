@@ -111,6 +111,69 @@ public class ContainerToNetworkAffinityHostFilterTest extends BaseAffinityHostFi
         assertEquals(2, selected.size());
     }
 
+    // jira issue VBV-688
+    @Test
+    public void testFilterHostsWhenACoupleOfClustersAvailable() throws Throwable {
+        ContainerDescription desc = createContainerWithNetworksDescription();
+        filter = new ContainerToNetworkAffinityHostFilter(host, desc);
+        assertTrue(filter.isActive());
+
+        // Add 3 hostLinks with hosts creating a KV store cluster
+        expectedLinks = new ArrayList<>();
+        expectedLinks.add(createDockerHostWithKVStore("kvstore1"));
+        expectedLinks.add(createDockerHostWithKVStore("kvstore1"));
+        expectedLinks.add(createDockerHostWithKVStore("kvstore1"));
+
+        expectedLinks.add(createDockerHostWithKVStore("kvstore2"));
+        expectedLinks.add(createDockerHostWithKVStore("kvstore2"));
+        expectedLinks.add(createDockerHostWithKVStore("kvstore2"));
+
+        expectedLinks.add(createDockerHostWithKVStore("kvstore3"));
+        expectedLinks.add(createDockerHostWithKVStore("kvstore3"));
+        expectedLinks.add(createDockerHostWithKVStore("kvstore3"));
+
+        expectedLinks.add(createDockerHostWithKVStore("kvstore4"));
+        expectedLinks.add(createDockerHostWithKVStore("kvstore4"));
+        expectedLinks.add(createDockerHostWithKVStore("kvstore4"));
+
+        initialHostLinks.addAll(expectedLinks);
+
+        // Filter a couple of times with the same context id in order to check that a single cluster
+        // is selected
+        String kvStoreName = null;
+        for (int i = 0; i < 3; i++) {
+            Map<String, HostSelection> selected = filter();
+            for (String key : selected.keySet()) {
+                if (kvStoreName == null) {
+                    kvStoreName = selected.get(key).clusterStore;
+                }
+                assertTrue("Selected hosts are not in the same cluster",
+                        kvStoreName.equals(selected.get(key).clusterStore));
+            }
+        }
+    }
+
+    // jira issue VBV-688
+    @Test
+    public void testFilterHostsSeveralTimesWhenNoClustersAvailable() throws Throwable {
+        ContainerDescription desc = createContainerWithNetworksDescription();
+        filter = new ContainerToNetworkAffinityHostFilter(host, desc);
+        assertTrue(filter.isActive());
+
+        String hostLink = null;
+        // The same host should be select every time for a given context id
+        for (int i = 0; i < 3; i++) {
+            Map<String, HostSelection> selected = filter();
+            assertEquals(1, selected.size());
+            if (hostLink == null) {
+                hostLink = selected.get(selected.keySet().toArray()[0]).hostLink;
+            }
+            assertTrue("The same host should be selected for the same context id",
+                    hostLink.equals(selected.get(selected.keySet().toArray()[0]).hostLink));
+        }
+
+    }
+
     @Test
     public void testFilterHostsWhenAlsoMultipleClustersOfTheSameSizeAvailable() throws Throwable {
         ContainerDescription desc = createContainerWithNetworksDescription();

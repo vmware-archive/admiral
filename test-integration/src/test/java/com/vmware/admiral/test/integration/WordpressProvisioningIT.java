@@ -82,11 +82,11 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
                 { "WordPress_with_MySQL_bindings.yaml", NetworkType.CUSTOM },
-                // @Ignore("VBV-651")
-                // { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_BRIDGE },
+                // In case of response 500 from docker check:
+                // https://github.com/docker/libnetwork/issues/1101
+                { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_BRIDGE },
                 { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_OVERLAY },
-                // @Ignore("VBV-651")
-                // { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_BRIDGE },
+                { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_BRIDGE },
                 { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_OVERLAY },
                 { "WordPress_with_MySQL_links.yaml", NetworkType.BRIDGE }
         });
