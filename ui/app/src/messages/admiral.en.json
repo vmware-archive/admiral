@@ -441,6 +441,7 @@
           "ipRangeLabel": "IP Range",
           "connectedContainers": "Containers",
           "parentHosts": "Hosts",
+          "external": "External",
           "create": "Create Network",
           "state": {
             "UNKNOWN": "UNKNOWN",

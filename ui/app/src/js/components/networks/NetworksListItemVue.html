@@ -67,6 +67,10 @@
       </span>
       <span v-else>--</span>
     </div>
+    <div class="network-external-flag">
+      <span class="container-label">{{i18n("app.resource.list.network.external")}}</span>
+      <span>{{model.external}}</span>
+    </div>
   </div>
   <div class="container-actions"
        v-if="supportsDay2Operations"
