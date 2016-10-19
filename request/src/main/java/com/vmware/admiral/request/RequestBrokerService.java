@@ -1323,7 +1323,15 @@ public class RequestBrokerService extends
             }
             requestStatus.addTrackedTasks(trackedTasks.toArray(new String[0]));
         } else if (isPostAllocationOperation(state)) {
-            requestStatus.addTrackedTasks(ContainerAllocationTaskService.DISPLAY_NAME);
+            if (isContainerType(state)) {
+                requestStatus.addTrackedTasks(ContainerAllocationTaskService.DISPLAY_NAME);
+            } else if (isComputeType(state)) {
+                requestStatus.addTrackedTasks(ComputeProvisionTaskService.DISPLAY_NAME);
+            } else if (isContainerNetworkType(state)) {
+                requestStatus.addTrackedTasks(ContainerNetworkProvisionTaskService.DISPLAY_NAME);
+            } else if (isContainerVolumeType(state)) {
+                requestStatus.addTrackedTasks(ContainerVolumeProvisionTaskService.DISPLAY_NAME);
+            }
         } else {
             if (isRemoveOperation(state)) {
                 if (isContainerHostType(state)) {
