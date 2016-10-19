@@ -440,6 +440,13 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     private void processAuthentication(RequestContext context, Runnable callback) {
         DockerImage image = DockerImage.fromImageName(context.containerDescription.image);
 
+        if (image.getHost() == null) {
+            //if there is no registry host we assume the host is docker hub, so no authentication
+            //needed
+            callback.run();
+            return;
+        }
+
         QueryTask registryQuery = QueryUtil.buildQuery(RegistryState.class, false);
         if (context.containerDescription.tenantLinks != null) {
             registryQuery.querySpec.query.addBooleanClause(QueryUtil.addTenantGroupAndUserClause(
