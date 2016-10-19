@@ -253,6 +253,15 @@ public class CompositeTemplateUtil {
                     component.data.logConfig = null;
                 }
             }
+
+            for (Entry<String, ComponentTemplate<ContainerNetworkDescription>> entry : filterComponentTemplates(
+                    entity.components, ContainerNetworkDescription.class).entrySet()) {
+
+                ComponentTemplate<ContainerNetworkDescription> component = entry.getValue();
+
+                component.data.id = null;
+                component.data.tenantLinks = null;
+            }
         }
     }
 
