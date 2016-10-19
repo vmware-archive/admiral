@@ -20,7 +20,7 @@ import (
 
 	"admiral/client"
 	"admiral/config"
-	"admiral/functions"
+	"admiral/utils"
 )
 
 var (
@@ -54,7 +54,7 @@ func (gl *ProjectList) FetchProjects() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, gl)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return len(gl.DocumentLinks), nil
 }
 
@@ -67,7 +67,7 @@ func (gl *ProjectList) GetOutputString() string {
 	buffer.WriteString("ID\tNAME\n")
 	for i := range gl.DocumentLinks {
 		val := gl.Documents[gl.DocumentLinks[i]]
-		output := functions.GetFormattedString(val.GetID(), val.Name)
+		output := utils.GetFormattedString(val.GetID(), val.Name)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
@@ -87,7 +87,7 @@ func AddProject(name, description string) (string, error) {
 	}
 
 	jsonBody, err := json.Marshal(project)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	url := config.URL + "/resources/groups"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
@@ -99,7 +99,7 @@ func AddProject(name, description string) (string, error) {
 
 	project = &Project{}
 	err = json.Unmarshal(respBody, project)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return project.GetID(), nil
 }
 
@@ -117,14 +117,14 @@ func RemoveProject(name string) (string, error) {
 	if len(links) > 1 {
 		return "", DuplicateNamesError
 	}
-	id := functions.GetResourceID(links[0])
+	id := utils.GetResourceID(links[0])
 	return RemoveProjectID(id)
 }
 
 //RemoveProjectID removes project by ID. Returns the ID of the removed project
 //and error which is != nil if the response code is different from 200.
 func RemoveProjectID(id string) (string, error) {
-	url := config.URL + functions.CreateResLinkForProject(id)
+	url := config.URL + utils.CreateResLinkForProject(id)
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -149,7 +149,7 @@ func EditProject(name, newName, newDescription string) (string, error) {
 	if len(links) > 1 {
 		return "", DuplicateNamesError
 	}
-	id := functions.GetResourceID(links[0])
+	id := utils.GetResourceID(links[0])
 	return EditProjectID(id, newName, newDescription)
 }
 
@@ -158,13 +158,13 @@ func EditProject(name, newName, newDescription string) (string, error) {
 //In case you don't want to modify the property pass empty string. The function
 //returns the ID of the edited string and error which is != nil if the response code is different from 200.
 func EditProjectID(id, newName, newDescription string) (string, error) {
-	url := config.URL + functions.CreateResLinkForProject(id)
+	url := config.URL + utils.CreateResLinkForProject(id)
 	project := &Project{
 		Name:        newName,
 		Description: newDescription,
 	}
 	jsonBody, err := json.Marshal(project)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -172,7 +172,7 @@ func EditProjectID(id, newName, newDescription string) (string, error) {
 	}
 	project = &Project{}
 	err = json.Unmarshal(respBody, project)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return project.GetID(), nil
 }
 
@@ -205,6 +205,6 @@ func GetProjectName(link string) (string, error) {
 	}
 	project := &Project{}
 	err := json.Unmarshal(respBody, project)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return project.Name, nil
 }

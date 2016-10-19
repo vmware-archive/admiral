@@ -18,7 +18,7 @@ import (
 
 	"admiral/client"
 	"admiral/config"
-	"admiral/functions"
+	"admiral/utils"
 	"bytes"
 )
 
@@ -41,7 +41,7 @@ func (el *EventList) FetchEvents() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, el)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return len(el.Documents), nil
 }
 
@@ -53,7 +53,7 @@ func (el *EventList) GetOutputString() string {
 	var buffer bytes.Buffer
 	for _, val := range el.Documents {
 		description := strings.TrimSpace(val.Description)
-		output := functions.GetFormattedString(val.EventLogType, description)
+		output := utils.GetFormattedString(val.EventLogType, description)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}

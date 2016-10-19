@@ -20,9 +20,9 @@ import (
 
 	"admiral/client"
 	"admiral/config"
-	"admiral/functions"
 	"admiral/placementzones"
 	"admiral/projects"
+	"admiral/utils"
 	"fmt"
 )
 
@@ -118,7 +118,7 @@ func (pl *PlacementList) FetchPlacements() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, pl)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return len(pl.DocumentLinks), nil
 }
 
@@ -159,7 +159,7 @@ func (pl *PlacementList) GetOutputString() string {
 				project = ""
 			}
 		}
-		output := functions.GetFormattedString(val.GetID(), val.Name, project, pz, val.Priority,
+		output := utils.GetFormattedString(val.GetID(), val.Name, project, pz, val.Priority,
 			val.AvailableInstancesCount, val.CpuShares, val.GetFormattedMemoryLimit())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
@@ -176,12 +176,12 @@ func RemovePlacement(polName string) (string, error) {
 	if len(polLinks) < 1 {
 		return "", PlacementNotFoundError
 	}
-	id := functions.GetResourceID(polLinks[0])
+	id := utils.GetResourceID(polLinks[0])
 	return RemovePlacement(id)
 }
 
 func RemovePlacementID(id string) (string, error) {
-	link := functions.CreateResLinksForPlacement(id)
+	link := utils.CreateResLinksForPlacement(id)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
@@ -204,13 +204,13 @@ func AddPlacement(namePol, cpuShares, instances, priority, projectId, resPoolID,
 	}
 
 	if deplPolID != "" {
-		dpLink = functions.CreateResLinkForDP(deplPolID)
+		dpLink = utils.CreateResLinkForDP(deplPolID)
 	}
 
-	rpLink = functions.CreateResLinkForPlacementZone(resPoolID)
+	rpLink = utils.CreateResLinkForPlacementZone(resPoolID)
 
 	if projectId != "" {
-		projectLink = functions.CreateResLinkForProject(projectId)
+		projectLink = utils.CreateResLinkForProject(projectId)
 	}
 
 	placement := PlacementToAdd{
@@ -227,7 +227,7 @@ func AddPlacement(namePol, cpuShares, instances, priority, projectId, resPoolID,
 	}
 
 	jsonBody, err := json.Marshal(placement)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -236,7 +236,7 @@ func AddPlacement(namePol, cpuShares, instances, priority, projectId, resPoolID,
 	}
 	newPolicy := &Placement{}
 	err = json.Unmarshal(respBody, newPolicy)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return newPolicy.GetID(), nil
 }
 
@@ -249,12 +249,12 @@ func EditPlacement(name, namePol, projectId, resPoolID, deplPolID string, cpuSha
 		return "", PlacementNotFoundError
 	}
 
-	id := functions.GetResourceID(polLinks[0])
+	id := utils.GetResourceID(polLinks[0])
 	return EditPlacementID(id, namePol, projectId, resPoolID, deplPolID, cpuShares, instances, priority, memoryLimit)
 }
 
 func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolID string, cpuShares, instances, priority int32, memoryLimit int64) (string, error) {
-	url := config.URL + functions.CreateResLinksForPlacement(id)
+	url := config.URL + utils.CreateResLinksForPlacement(id)
 	//Workaround
 	oldPlacement := &PlacementToUpdate{}
 	req, _ := http.NewRequest("GET", url, nil)
@@ -263,7 +263,7 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolID string, 
 		return "", respErr
 	}
 	err := json.Unmarshal(respBody, oldPlacement)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	//Workaround
 
 	if cpuShares != -1 {
@@ -280,21 +280,21 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolID string, 
 	}
 	if projectId != "" {
 		projectLinkIndex := GetProjectLinkIndex(oldPlacement.TenantLinks)
-		projectLink := functions.CreateResLinkForProject(projectId)
+		projectLink := utils.CreateResLinkForProject(projectId)
 		oldPlacement.TenantLinks[projectLinkIndex] = projectLink
 	}
 	if placementZoneID != "" {
-		oldPlacement.ResourcePoolLink = functions.CreateResLinkForPlacementZone(placementZoneID)
+		oldPlacement.ResourcePoolLink = utils.CreateResLinkForPlacementZone(placementZoneID)
 	}
 	if deplPolID != "" {
-		oldPlacement.DeploymentPolicyLink = functions.CreateResLinkForDP(deplPolID)
+		oldPlacement.DeploymentPolicyLink = utils.CreateResLinkForDP(deplPolID)
 	}
 	if memoryLimit != 0 {
 		oldPlacement.MemoryLimit = memoryLimit
 	}
 
 	jsonBody, err := json.Marshal(oldPlacement)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ = http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr = client.ProcessRequest(req)
 	if respErr != nil {
@@ -302,7 +302,7 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolID string, 
 	}
 	newPlacement := &Placement{}
 	err = json.Unmarshal(respBody, newPlacement)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return newPlacement.GetID(), nil
 }
 

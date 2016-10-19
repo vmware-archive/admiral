@@ -23,7 +23,7 @@ import (
 
 	"admiral/client"
 	"admiral/config"
-	"admiral/functions"
+	"admiral/utils"
 	"sort"
 )
 
@@ -44,7 +44,7 @@ func (lc *LightContainer) GetOutput(link string) (string, error) {
 		return "", respErr
 	}
 	err := json.Unmarshal(respBody, lc)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return fmt.Sprintf("   Container Name: %-22s\tContainer Image: %s\n", lc.Name, lc.Image), nil
 }
 
@@ -94,7 +94,7 @@ func (lt *TemplatesList) FetchTemplates(queryF string) (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, lt)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return len(lt.Results), nil
 }
 
@@ -115,7 +115,7 @@ func (lt *TemplatesList) GetOutputStringWithoutContainers() string {
 		if len(template.DescriptionLinks) > 0 {
 			contCnt = fmt.Sprintf("%d", len(template.DescriptionLinks))
 		}
-		output := functions.GetFormattedString(template.GetID(), template.Name, contCnt)
+		output := utils.GetFormattedString(template.GetID(), template.Name, contCnt)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
@@ -139,7 +139,7 @@ func (lt *TemplatesList) GetOutputStringWithContainers() (string, error) {
 		if len(template.DescriptionLinks) > 0 {
 			contCnt = fmt.Sprintf("%d", len(template.DescriptionLinks))
 		}
-		output := functions.GetFormattedString(template.GetID(), template.Name, contCnt)
+		output := utils.GetFormattedString(template.GetID(), template.Name, contCnt)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 		for _, link := range template.DescriptionLinks {
@@ -184,7 +184,7 @@ func RemoveTemplate(name string) (string, error) {
 		return "", TemplateNotFoundError
 	}
 
-	id := functions.GetResourceID(*tl.Results[0].DocumentSelfLink)
+	id := utils.GetResourceID(*tl.Results[0].DocumentSelfLink)
 	return RemoveTemplateID(id)
 }
 
@@ -201,7 +201,7 @@ func RemoveTemplateID(id string) (string, error) {
 	}
 	template := &Template{}
 	err := json.Unmarshal(respBody, template)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	for i := range template.DescriptionLinks {
 		tempLink := config.URL + template.DescriptionLinks[i]
 		req, _ := http.NewRequest("DELETE", tempLink, nil)
@@ -234,7 +234,7 @@ func Import(dirF string) (string, error) {
 	}
 
 	link := resp.Header.Get("Location")
-	id := functions.GetResourceID(link)
+	id := utils.GetResourceID(link)
 	return id, nil
 }
 

@@ -23,8 +23,8 @@ import (
 
 	"admiral/client"
 	"admiral/config"
-	"admiral/functions"
 	"admiral/track"
+	"admiral/utils"
 )
 
 var (
@@ -54,7 +54,7 @@ func (n *Network) SetName(name string) {
 }
 
 func (n *Network) GetID() string {
-	return functions.GetResourceID(n.DocumentSelfLink)
+	return utils.GetResourceID(n.DocumentSelfLink)
 }
 
 func (n *Network) GetHostsCount() int {
@@ -120,7 +120,7 @@ func (n *Network) SetCustomProperties(customProperties []string) {
 
 func (n *Network) String() string {
 	jsonBody, err := json.MarshalIndent(n, "", "    ")
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return string(jsonBody)
 }
 
@@ -168,7 +168,7 @@ func (nl *NetworkList) FetchNetworks() (int, error) {
 		return 0, respErr
 	}
 	err = json.Unmarshal(respBody, nl)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return len(nl.DocumentLinks), nil
 }
 
@@ -181,7 +181,7 @@ func (nl *NetworkList) GetOutputString() string {
 	buffer.WriteString("ID\tNAME\tNETWORK DRIVER\tCONTAINERS\tHOSTS\tPOWER STATE\tEXTERNAL ID\n")
 	for _, link := range nl.DocumentLinks {
 		val := nl.Documents[link]
-		output := functions.GetFormattedString(val.GetID(), val.Name, val.Driver,
+		output := utils.GetFormattedString(val.GetID(), val.Name, val.Driver,
 			val.ConnectedContainersCount, val.GetHostsCount(), val.PowerState, val.GetExternalID())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
@@ -191,14 +191,14 @@ func (nl *NetworkList) GetOutputString() string {
 
 func RemoveNetwork(ids []string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
-	links := functions.CreateResLinksForNetwork(ids)
+	links := utils.CreateResLinksForNetwork(ids)
 	no := &NetworkOperation{
 		Operation:     "Network.Delete",
 		ResourceType:  "NETWORK",
 		ResourceLinks: links,
 	}
 	jsonBody, err := json.Marshal(no)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -209,7 +209,7 @@ func RemoveNetwork(ids []string, asyncTask bool) ([]string, error) {
 
 	taskStatus := &track.OperationResponse{}
 	err = json.Unmarshal(respBody, taskStatus)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	taskStatus.PrintTracerId()
 	resLinks := make([]string, 0)
 	if !asyncTask {
@@ -220,13 +220,13 @@ func RemoveNetwork(ids []string, asyncTask bool) ([]string, error) {
 			return ids, err
 		}
 	}
-	resourcesIDs := functions.GetResourceIDs(resLinks)
+	resourcesIDs := utils.GetResourceIDs(resLinks)
 	return resourcesIDs, err
 
 }
 
 func InspectNetwork(id string) (string, error) {
-	links := functions.CreateResLinksForNetwork([]string{id})
+	links := utils.CreateResLinksForNetwork([]string{id})
 	url := config.URL + links[0]
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -235,7 +235,7 @@ func InspectNetwork(id string) (string, error) {
 	}
 	network := &Network{}
 	err := json.Unmarshal(respBody, network)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return network.String(), nil
 }
 
@@ -255,7 +255,7 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 
 	url := config.URL + "/resources/container-network-descriptions"
 	jsonBody, err := json.Marshal(network)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -263,7 +263,7 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 	}
 	nd := &NetworkDescription{}
 	err = json.Unmarshal(respBody, nd)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	networkLink := nd.DocumentSelfLink
 
 	no := &NetworkOperation{
@@ -281,7 +281,7 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 
 	taskStatus := &track.OperationResponse{}
 	err = json.Unmarshal(respBody, taskStatus)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	taskStatus.PrintTracerId()
 	resLinks := make([]string, 0)
 	if !asyncTask {
@@ -290,7 +290,7 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 		resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
 	}
 	if len(resLinks) > 0 {
-		return functions.GetResourceID(resLinks[0]), err
+		return utils.GetResourceID(resLinks[0]), err
 	}
 	return "", err
 }

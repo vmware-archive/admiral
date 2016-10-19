@@ -20,7 +20,7 @@ import (
 
 	"admiral/client"
 	"admiral/config"
-	"admiral/functions"
+	"admiral/utils"
 )
 
 var (
@@ -54,7 +54,7 @@ func (dpl *DeploymentPolicyList) FetchDP() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, dpl)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return len(dpl.DocumentLinks), nil
 }
 
@@ -68,7 +68,7 @@ func (dpl *DeploymentPolicyList) GetOutputString() string {
 	buffer.WriteString("\n")
 	for _, link := range dpl.DocumentLinks {
 		val := dpl.Documents[link]
-		output := functions.GetFormattedString(val.GetID(), val.Name, val.Description)
+		output := utils.GetFormattedString(val.GetID(), val.Name, val.Description)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
@@ -85,7 +85,7 @@ func RemoveDP(name string) (string, error) {
 	} else if len(links) < 1 {
 		return "", DeploymentPolicyNotFoundError
 	}
-	id := functions.GetResourceID(links[0])
+	id := utils.GetResourceID(links[0])
 	return RemoveDPID(id)
 }
 
@@ -93,7 +93,7 @@ func RemoveDP(name string) (string, error) {
 //deployment policy and error which is != nil if the response code is different
 //from 200.
 func RemoveDPID(id string) (string, error) {
-	link := functions.CreateResLinkForDP(id)
+	link := utils.CreateResLinkForDP(id)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
@@ -118,7 +118,7 @@ func AddDP(dpName, dpDescription string) (string, error) {
 		DocumentSelfLink: nil,
 	}
 	jsonBody, err := json.Marshal(dp)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -127,7 +127,7 @@ func AddDP(dpName, dpDescription string) (string, error) {
 	}
 	dp = &DeploymentPolicy{}
 	err = json.Unmarshal(respBody, dp)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return dp.GetID(), nil
 }
 
@@ -143,7 +143,7 @@ func EditDP(dpName, newName, newDescription string) (string, error) {
 	} else if len(links) < 1 {
 		return "", DeploymentPolicyNotFoundError
 	}
-	id := functions.GetResourceID(links[0])
+	id := utils.GetResourceID(links[0])
 	return EditDPID(id, newName, newDescription)
 }
 
@@ -152,14 +152,14 @@ func EditDP(dpName, newName, newDescription string) (string, error) {
 //Pass empty string in case you want to modify some property. Returns the ID of edited
 //deployment policy and error which is != nil if the response code is different from 200.
 func EditDPID(id, newName, newDescription string) (string, error) {
-	url := config.URL + functions.CreateResLinkForDP(id)
+	url := config.URL + utils.CreateResLinkForDP(id)
 	dp := &DeploymentPolicy{
 		Name:             newName,
 		Description:      newDescription,
 		DocumentSelfLink: nil,
 	}
 	jsonBody, err := json.Marshal(dp)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -167,7 +167,7 @@ func EditDPID(id, newName, newDescription string) (string, error) {
 	}
 	dp = &DeploymentPolicy{}
 	err = json.Unmarshal(respBody, dp)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return dp.GetID(), nil
 }
 

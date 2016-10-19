@@ -21,9 +21,9 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/containers"
-	"admiral/functions"
 	"admiral/templates"
 	"admiral/track"
+	"admiral/utils"
 )
 
 var (
@@ -42,14 +42,14 @@ func StartApp(name string, asyncTask bool) ([]string, error) {
 		return nil, ApplicationNotFoundError
 	}
 
-	id := functions.GetResourceID(resourceLinks[0])
+	id := utils.GetResourceID(resourceLinks[0])
 	return StartAppID(id, asyncTask)
 }
 
 //Same as StartApp() but takes app's ID in order to avoid conflict from duplicate names.
 func StartAppID(id string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
-	resourceLinks := functions.CreateResLinksForApps([]string{id})
+	resourceLinks := utils.CreateResLinksForApps([]string{id})
 	var (
 		resLinks []string
 		err      error
@@ -61,7 +61,7 @@ func StartAppID(id string, asyncTask bool) ([]string, error) {
 	}
 
 	jsonBody, err := json.Marshal(oc)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr == nil {
@@ -91,14 +91,14 @@ func StopApp(name string, asyncTask bool) ([]string, error) {
 	} else if len(resourceLinks) < 1 {
 		return nil, ApplicationNotFoundError
 	}
-	id := functions.GetResourceID(resourceLinks[0])
+	id := utils.GetResourceID(resourceLinks[0])
 	return StopAppID(id, asyncTask)
 }
 
 //Same as StopApp() but takes app's ID in order to avoid conflict from duplicate names.
 func StopAppID(id string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
-	resourceLinks := functions.CreateResLinksForApps([]string{id})
+	resourceLinks := utils.CreateResLinksForApps([]string{id})
 	var (
 		resLinks []string
 		err      error
@@ -110,7 +110,7 @@ func StopAppID(id string, asyncTask bool) ([]string, error) {
 	}
 
 	jsonBody, err := json.Marshal(oc)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr == nil {
@@ -142,14 +142,14 @@ func RemoveApp(name string, asyncTask bool) ([]string, error) {
 		return nil, ApplicationNotFoundError
 	}
 
-	id := functions.GetResourceID(resourceLinks[0])
+	id := utils.GetResourceID(resourceLinks[0])
 	return RemoveAppID(id, asyncTask)
 }
 
 //Same as RemoveApp() but takes app's ID in order to avoid conflict from duplicate names.
 func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
-	resourceLinks := functions.CreateResLinksForApps([]string{id})
+	resourceLinks := utils.CreateResLinksForApps([]string{id})
 	var (
 		resLinks []string
 		err      error
@@ -160,7 +160,7 @@ func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 		ResourceType:  "COMPOSITE_COMPONENT",
 	}
 	jsonBody, err := json.Marshal(oc)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr == nil {
@@ -191,7 +191,7 @@ func RunApp(app string, asyncTask bool) ([]string, error) {
 		return nil, templates.TemplateNotFoundError
 	}
 
-	id := functions.GetResourceID(links[0])
+	id := utils.GetResourceID(links[0])
 	return RunAppID(id, asyncTask)
 }
 
@@ -201,7 +201,7 @@ func RunAppID(id string, asyncTask bool) ([]string, error) {
 	link := "/resources/composite-descriptions/" + id
 	jsonBody["documentSelfLink"] = link
 	reqBody, err := json.Marshal(jsonBody)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	url := config.URL + "/resources/composite-descriptions-clone"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
@@ -211,7 +211,7 @@ func RunAppID(id string, asyncTask bool) ([]string, error) {
 	}
 	cd := &CompositeDescription{}
 	err = json.Unmarshal(respBody, cd)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	link = cd.DocumentSelfLink
 
@@ -220,7 +220,7 @@ func RunAppID(id string, asyncTask bool) ([]string, error) {
 		ResourceType:            "COMPOSITE_COMPONENT",
 	}
 	resLinks, err := ra.run(asyncTask)
-	ids := functions.GetResourceIDs(resLinks)
+	ids := utils.GetResourceIDs(resLinks)
 	return ids, err
 }
 
@@ -230,7 +230,7 @@ func RunAppFile(dirF string, keepTemplate, asyncTask bool) ([]string, error) {
 	if !keepTemplate {
 		templates.RemoveTemplateID(id)
 	}
-	ids := functions.GetResourceIDs(resLinks)
+	ids := utils.GetResourceIDs(resLinks)
 	return ids, err
 }
 
@@ -246,7 +246,7 @@ func queryTemplateName(tmplName string) []string {
 }
 
 func InspectID(id string) bool {
-	links := functions.CreateResLinksForApps([]string{id})
+	links := utils.CreateResLinksForApps([]string{id})
 	url := config.URL + links[0]
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -255,7 +255,7 @@ func InspectID(id string) bool {
 	}
 	app := &App{}
 	err := json.Unmarshal(respBody, app)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	customMap := make(map[string]App)
 	customMap[id] = *app
 	la := ListApps{
@@ -278,7 +278,7 @@ func (ra *RunApplication) run(asyncTask bool) ([]string, error) {
 	)
 	url := config.URL + "/requests"
 	jsonBody, err := json.Marshal(ra)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr == nil {

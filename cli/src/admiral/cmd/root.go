@@ -14,10 +14,8 @@ package cmd
 import (
 	"fmt"
 
-	"admiral/auth"
-	"admiral/functions"
 	"admiral/help"
-	"admiral/paths"
+	"admiral/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -48,8 +46,8 @@ func init() {
 	RootCmd.AddCommand(AutocompleteCmd)
 	RootCmd.AddCommand(ProjectsRootCmd)
 	RootCmd.Flags().BoolVar(&ShowVersion, "version", false, "Admiral CLI Version.")
-	RootCmd.PersistentFlags().BoolVar(&functions.Verbose, "verbose", false, "Showing every request/response json body.")
-	RootCmd.PersistentFlags().StringVar(&auth.TokenFromFlagVar, "token", "", helpToken)
+	RootCmd.PersistentFlags().BoolVar(&utils.Verbose, "verbose", false, "Showing every request/response json body.")
+	RootCmd.PersistentFlags().StringVar(&utils.TokenFromFlagVar, "token", "", helpToken)
 	RootCmd.SetUsageTemplate(help.DefaultUsageTemplate)
 }
 
@@ -143,6 +141,6 @@ var AutocompleteCmd = &cobra.Command{
 	Use:   "autocomplete",
 	Short: "Generate autocomplete file. It is generated in home/.admiral-cli",
 	Run: func(cmd *cobra.Command, args []string) {
-		RootCmd.GenBashCompletionFile(paths.CliDir() + "/admiral-cli-autocomplete.sh")
+		RootCmd.GenBashCompletionFile(utils.CliDir() + "/admiral-cli-autocomplete.sh")
 	},
 }

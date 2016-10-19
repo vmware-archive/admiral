@@ -21,11 +21,9 @@ import (
 	"strings"
 	"time"
 
-	"admiral/auth"
 	"admiral/client"
 	"admiral/config"
-	"admiral/functions"
-	"admiral/paths"
+	"admiral/utils"
 )
 
 type LogInOut struct {
@@ -37,7 +35,7 @@ func Login(username, password, configUrl string) string {
 		config.URL = configUrl
 		config.SetProperty("Url", configUrl)
 	}
-	os.Remove(paths.TokenPath())
+	os.Remove(utils.TokenPath())
 	url := config.URL + "/core/authn/basic"
 	login := &LogInOut{
 		RequestType: "LOGIN",
@@ -50,13 +48,13 @@ func Login(username, password, configUrl string) string {
 	if token == "" {
 		return "Login failed."
 	}
-	if functions.Verbose {
+	if utils.Verbose {
 		fmt.Printf("%s: %s\n", "x-xenon-aut-token", token)
 	}
-	paths.MkCliDir()
-	tokenFile, err := os.Create(paths.TokenPath())
+	utils.MkCliDir()
+	tokenFile, err := os.Create(utils.TokenPath())
 
-	functions.CheckFile(err)
+	utils.CheckFile(err)
 	tokenFile.Write([]byte(token))
 	tokenFile.Close()
 	return "Login successful."
@@ -72,11 +70,11 @@ func Logout() {
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 
 	_, _, respErr := client.ProcessRequest(req)
-	functions.CheckResponse(respErr, url)
+	utils.CheckResponse(respErr, url)
 
-	err := os.Remove(paths.TokenPath())
+	err := os.Remove(utils.TokenPath())
 
-	functions.CheckFile(err)
+	utils.CheckFile(err)
 
 	fmt.Println("Logged out.")
 
@@ -84,7 +82,7 @@ func Logout() {
 
 func GetInfo() string {
 	var buffer bytes.Buffer
-	token, _ := auth.GetAuthToken()
+	token, _ := utils.GetAuthToken()
 	if token == "" {
 		return "Not logged in, no token found."
 	}
@@ -119,7 +117,7 @@ func Loginvra(username, password, tenant, urlF string) string {
 		Password: password,
 		Tenant:   tenant,
 	}
-	os.Remove(paths.TokenPath())
+	os.Remove(utils.TokenPath())
 	if !strings.HasSuffix(urlF, "/container-service/api") {
 		config.URL = urlF + "/container-service/api"
 		config.SetProperty("Url", config.URL)
@@ -127,7 +125,7 @@ func Loginvra(username, password, tenant, urlF string) string {
 	url := urlF + "/identity/api/tokens"
 
 	jsonBody, err := json.Marshal(login)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
@@ -137,10 +135,10 @@ func Loginvra(username, password, tenant, urlF string) string {
 	}
 	respLogin := &ResponseLoginVRA{}
 	err = json.Unmarshal(respBody, &respLogin)
-	paths.MkCliDir()
-	tokenFile, err := os.Create(paths.TokenPath())
+	utils.MkCliDir()
+	tokenFile, err := os.Create(utils.TokenPath())
 
-	functions.CheckFile(err)
+	utils.CheckFile(err)
 	tokenFile.Write([]byte("Bearer " + respLogin.Id))
 	tokenFile.Close()
 	return "Login successful."

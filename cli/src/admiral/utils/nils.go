@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package nulls
+package utils
 
 import (
 	"encoding/json"
@@ -32,6 +32,17 @@ type NilInt32 struct {
 
 func (n NilInt32) MarshalJSON() ([]byte, error) {
 	if n.Value == 0 {
+		return json.Marshal(nil)
+	}
+	return json.Marshal(n.Value)
+}
+
+type NilString struct {
+	Value string
+}
+
+func (n NilString) MarshalJSON() ([]byte, error) {
+	if n.Value == "" {
 		return json.Marshal(nil)
 	}
 	return json.Marshal(n.Value)

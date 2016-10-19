@@ -37,9 +37,6 @@ var (
 	//Flag for url
 	urlF string
 
-	//Flag for verbose option.
-	verbose bool
-
 	//Flag to force remove.
 	forceF    bool
 	forceDesc string = "Force remove."

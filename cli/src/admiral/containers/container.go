@@ -24,8 +24,8 @@ import (
 
 	"admiral/client"
 	"admiral/config"
-	"admiral/functions"
 	"admiral/track"
+	"admiral/utils"
 )
 
 var (
@@ -142,7 +142,7 @@ func (c *Container) GetStarted() string {
 //StringJson returns the Container to string in json format.
 func (c *Container) StringJson() string {
 	jsonBody, err := json.MarshalIndent(c, "", "    ")
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return string(jsonBody)
 }
 
@@ -204,7 +204,7 @@ var (
 //Returns boolean result if it starting or not.
 func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
-	links := functions.CreateResLinksForContainer(containers)
+	links := utils.CreateResLinksForContainer(containers)
 
 	if len(containers) < 1 || containers[0] == "" {
 		return nil, ContainersNotProvidedError
@@ -216,7 +216,7 @@ func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 	}
 
 	jsonBody, err := json.Marshal(newStart)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -235,7 +235,7 @@ func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 			return containers, err
 		}
 	}
-	resourcesIDs := functions.GetResourceIDs(resLinks)
+	resourcesIDs := utils.GetResourceIDs(resLinks)
 	return resourcesIDs, err
 
 }
@@ -244,7 +244,7 @@ func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 //Returns boolean result if it stopping or not.
 func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
-	links := functions.CreateResLinksForContainer(containers)
+	links := utils.CreateResLinksForContainer(containers)
 
 	newStop := OperationContainer{
 		Operation:     "Container.Stop",
@@ -254,7 +254,7 @@ func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 
 	jsonBody, err := json.Marshal(newStop)
 
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -272,7 +272,7 @@ func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 			return containers, err
 		}
 	}
-	resourcesIDs := functions.GetResourceIDs(resLinks)
+	resourcesIDs := utils.GetResourceIDs(resLinks)
 	return resourcesIDs, err
 
 }
@@ -281,7 +281,7 @@ func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 //Returns boolean result if it removing or not.
 func RemoveContainer(containers []string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
-	links := functions.CreateResLinksForContainer(containers)
+	links := utils.CreateResLinksForContainer(containers)
 
 	newRemoveContainer := OperationContainer{
 		Operation:     "Container.Delete",
@@ -291,7 +291,7 @@ func RemoveContainer(containers []string, asyncTask bool) ([]string, error) {
 
 	jsonBody, err := json.Marshal(newRemoveContainer)
 
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -310,7 +310,7 @@ func RemoveContainer(containers []string, asyncTask bool) ([]string, error) {
 			return containers, err
 		}
 	}
-	resourcesIDs := functions.GetResourceIDs(resLinks)
+	resourcesIDs := utils.GetResourceIDs(resLinks)
 	return resourcesIDs, err
 
 }
@@ -335,7 +335,7 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 
 	jsonBody, err := json.Marshal(newRemoveContainer)
 
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -349,10 +349,10 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 		} else {
 			resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
 			if len(resLinks) < 1 {
-				return functions.GetResourceIDs(lc.DocumentLinks), err
+				return utils.GetResourceIDs(lc.DocumentLinks), err
 			}
 		}
-		resourcesIDs := functions.GetResourceIDs(resLinks)
+		resourcesIDs := utils.GetResourceIDs(resLinks)
 		return resourcesIDs, err
 	}
 	return nil, respErr
@@ -360,14 +360,14 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 
 //Function to execute command inside container.
 func ExecuteCmd(container string, execF string) {
-	contLink := functions.CreateResLinksForContainer([]string{container})[0]
+	contLink := utils.CreateResLinksForContainer([]string{container})[0]
 	exec := strings.Split(execF, " ")
 	url := config.URL + "/exec?containerLink=" + contLink
 	ch := CommandHolder{
 		Command: exec,
 	}
 	jsonBody, err := json.Marshal(ch)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -379,7 +379,7 @@ func ExecuteCmd(container string, execF string) {
 
 //Function to scale container by it's name with some count provided as parameter.
 func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (string, error) {
-	url := config.URL + functions.CreateResLinksForContainer([]string{containerID})[0]
+	url := config.URL + utils.CreateResLinksForContainer([]string{containerID})[0]
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -387,7 +387,7 @@ func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (strin
 	}
 	container := &Container{}
 	err := json.Unmarshal(respBody, container)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	contDesc := container.DescriptionLink
 
 	url = config.URL + "/requests"
@@ -399,7 +399,7 @@ func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (strin
 	}
 
 	scaleJson, err := json.Marshal(scale)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	req, _ = http.NewRequest("POST", url, bytes.NewBuffer(scaleJson))
 	_, respBody, respErr = client.ProcessRequest(req)
@@ -421,7 +421,7 @@ func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (strin
 
 //Function to get information about container in JSON format.
 func InspectContainer(id string) (*Container, error) {
-	url := config.URL + functions.CreateResLinksForContainer([]string{id})[0]
+	url := config.URL + utils.CreateResLinksForContainer([]string{id})[0]
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -429,7 +429,7 @@ func InspectContainer(id string) (*Container, error) {
 	}
 	container := &Container{}
 	err := json.Unmarshal(respBody, container)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return container, nil
 }
 

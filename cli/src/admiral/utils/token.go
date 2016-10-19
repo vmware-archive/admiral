@@ -9,15 +9,13 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package auth
+package utils
 
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
-
-	"admiral/paths"
 )
 
 var TokenFromFlagVar string
@@ -56,7 +54,7 @@ func IsAuthorized(respBody []byte, tokenFrom string) bool {
 }
 
 func TokenFromFile() string {
-	token, _ := ioutil.ReadFile(paths.TokenPath())
+	token, _ := ioutil.ReadFile(TokenPath())
 	return string(token)
 }
 

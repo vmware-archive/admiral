@@ -22,8 +22,8 @@ import (
 	"admiral/credentials"
 	"admiral/hosts"
 	"admiral/loginout"
-	"admiral/nulls"
 	. "admiral/testutils"
+	"admiral/utils"
 )
 
 var tc = &TestConfig{}
@@ -52,8 +52,8 @@ func TestProvisionRemoveContainer(t *testing.T) {
 	containerName := "ubuntu"
 	imageName := "ubuntu"
 	cd := ContainerDescription{
-		Name:  nulls.NilString{containerName},
-		Image: nulls.NilString{imageName},
+		Name:  utils.NilString{containerName},
+		Image: utils.NilString{imageName},
 	}
 
 	// Testing phase 1
@@ -110,8 +110,8 @@ func TestStopStartContainer(t *testing.T) {
 	containerName := "ubuntu"
 	imageName := "ubuntu"
 	cd := ContainerDescription{
-		Name:  nulls.NilString{containerName},
-		Image: nulls.NilString{imageName},
+		Name:  utils.NilString{containerName},
+		Image: utils.NilString{imageName},
 	}
 	contId, err := cd.RunContainer("", false)
 	CheckTestError(err, t)

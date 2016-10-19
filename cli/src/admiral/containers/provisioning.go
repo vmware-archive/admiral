@@ -22,14 +22,13 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/deplPolicy"
-	"admiral/functions"
 	"admiral/images"
-	. "admiral/nulls"
 	"admiral/track"
+	"admiral/utils"
 )
 
 type LogConfig struct {
-	Type NilString `json:"type"`
+	Type utils.NilString `json:"type"`
 }
 
 func (lc *LogConfig) SetType(s string) {
@@ -37,7 +36,7 @@ func (lc *LogConfig) SetType(s string) {
 		s == "syslog" || s == "journald" || s == "gelf" ||
 		s == "fluentd" || s == "awslogs" || s == "splunk" ||
 		s == "etwlogs" || s == "gcplogs" {
-		lc.Type = NilString{s}
+		lc.Type = utils.NilString{s}
 	} else {
 		fmt.Println("Invalid log driver.")
 		os.Exit(0)
@@ -47,26 +46,26 @@ func (lc *LogConfig) SetType(s string) {
 //Note: nil types are from "admiral/nulls" package.
 //Note: "dot import" is used for cleaner code.
 type ContainerDescription struct {
-	Image              NilString `json:"image"`
-	Name               NilString `json:"name"`
-	Cluster            NilInt32  `json:"_cluster"`
-	Command            []string  `json:"command"`
-	CpuShares          NilString `json:"cpuShares"`
-	DeploymentPolicyID NilString `json:"deploymentPolicyId"`
-	Env                []string  `json:"env"`
-	ExposeService      []string  `json:"exposeService"`
-	Hostname           NilString `json:"hostname"`
-	Links              []string  `json:"links"`
-	LogConfig          LogConfig `json:"logConfig"`
-	MaximumRetryCount  NilInt32  `json:"maximumRetryCount"`
-	MemoryLimit        NilInt64  `json:"memoryLimit"`
-	MemorySwapLimit    NilInt64  `json:"memorySwapLimit"`
-	NetworkMode        NilString `json:"networkMode"`
-	PortBindings       []Port    `json:"portBindings"`
-	PublishAll         bool      `json:"publishAll"`
-	RestartPolicy      NilString `json:"restartPolicy"`
-	WorkingDir         NilString `json:"workingDir"`
-	Volumes            []string  `json:"volumes"`
+	Image              utils.NilString `json:"image"`
+	Name               utils.NilString `json:"name"`
+	Cluster            utils.NilInt32  `json:"_cluster"`
+	Command            []string        `json:"command"`
+	CpuShares          utils.NilString `json:"cpuShares"`
+	DeploymentPolicyID utils.NilString `json:"deploymentPolicyId"`
+	Env                []string        `json:"env"`
+	ExposeService      []string        `json:"exposeService"`
+	Hostname           utils.NilString `json:"hostname"`
+	Links              []string        `json:"links"`
+	LogConfig          LogConfig       `json:"logConfig"`
+	MaximumRetryCount  utils.NilInt32  `json:"maximumRetryCount"`
+	MemoryLimit        utils.NilInt64  `json:"memoryLimit"`
+	MemorySwapLimit    utils.NilInt64  `json:"memorySwapLimit"`
+	NetworkMode        utils.NilString `json:"networkMode"`
+	PortBindings       []Port          `json:"portBindings"`
+	PublishAll         bool            `json:"publishAll"`
+	RestartPolicy      utils.NilString `json:"restartPolicy"`
+	WorkingDir         utils.NilString `json:"workingDir"`
+	Volumes            []string        `json:"volumes"`
 }
 
 func (cd *ContainerDescription) Create(
@@ -115,23 +114,23 @@ func (cd *ContainerDescription) Create(
 		dp = strings.Replace(dpLinks[0], "/resources/deployment-policies/", "", -1)
 	}
 
-	cd.Image = NilString{imgName}
-	cd.Name = NilString{name}
-	cd.Cluster = NilInt32{clusterSize}
+	cd.Image = utils.NilString{imgName}
+	cd.Name = utils.NilString{name}
+	cd.Cluster = utils.NilInt32{clusterSize}
 	cd.Command = cmds
-	cd.CpuShares = NilString{cpuShares}
-	cd.DeploymentPolicyID = NilString{dp}
+	cd.CpuShares = utils.NilString{cpuShares}
+	cd.DeploymentPolicyID = utils.NilString{dp}
 	cd.Env = env
-	cd.Hostname = NilString{hostName}
+	cd.Hostname = utils.NilString{hostName}
 	cd.LogConfig = logconf
-	cd.MaximumRetryCount = NilInt32{retryCount}
-	cd.MemoryLimit = NilInt64{memory}
-	cd.MemorySwapLimit = NilInt64{memorySwap}
-	cd.NetworkMode = NilString{networkMode}
+	cd.MaximumRetryCount = utils.NilInt32{retryCount}
+	cd.MemoryLimit = utils.NilInt64{memory}
+	cd.MemorySwapLimit = utils.NilInt64{memorySwap}
+	cd.NetworkMode = utils.NilString{networkMode}
 	cd.PublishAll = publishAll
 	cd.PortBindings = portArr
-	cd.RestartPolicy = NilString{restartPol}
-	cd.WorkingDir = NilString{workingDir}
+	cd.RestartPolicy = utils.NilString{restartPol}
+	cd.WorkingDir = utils.NilString{workingDir}
 	cd.Volumes = volumes
 }
 
@@ -143,7 +142,7 @@ func (cd *ContainerDescription) RunContainer(projectId string, asyncTask bool) (
 	var tenantLinks []string
 	if projectId != "" {
 		tenantLinks = make([]string, 0)
-		projectLink := functions.CreateResLinkForProject(projectId)
+		projectLink := utils.CreateResLinkForProject(projectId)
 		tenantLinks = append(tenantLinks, projectLink)
 	}
 	url := config.URL + "/requests"
@@ -154,7 +153,7 @@ func (cd *ContainerDescription) RunContainer(projectId string, asyncTask bool) (
 	}
 
 	jsonBody, err := json.MarshalIndent(runContainer, "", "    ")
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -170,7 +169,7 @@ func (cd *ContainerDescription) RunContainer(projectId string, asyncTask bool) (
 		resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
 	}
 	if len(resLinks) > 0 {
-		return functions.GetResourceID(resLinks[0]), err
+		return utils.GetResourceID(resLinks[0]), err
 	}
 	return "", err
 
@@ -180,7 +179,7 @@ func getContaierRunLink(cd *ContainerDescription) (string, error) {
 	var runLink string
 	url := config.URL + "/resources/container-descriptions"
 	jsonBody, err := json.MarshalIndent(cd, "", "    ")
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Pragma", "xn-force-index-update")
 	_, respBody, respErr := client.ProcessRequest(req)

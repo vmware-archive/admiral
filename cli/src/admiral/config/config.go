@@ -19,8 +19,7 @@ import (
 	"strconv"
 	"strings"
 
-	"admiral/functions"
-	"admiral/paths"
+	"admiral/utils"
 )
 
 type Config struct {
@@ -49,7 +48,7 @@ var (
 //GetCfg is trying to load configurable properties from the config file.
 //If file is missing, will load default properties and create file with them.
 func GetCfg() {
-	file, err := os.Open(paths.ConfigPath())
+	file, err := os.Open(utils.ConfigPath())
 	defer file.Close()
 	if err != nil {
 		createDefaultCfgFile()
@@ -77,14 +76,14 @@ func GetCfg() {
 		TASK_TIMEOUT = defaultTaskTimeout
 	} else {
 		TASK_TIMEOUT, err = strconv.Atoi(cfg.TaskTimeout)
-		functions.CheckParse(err)
+		utils.CheckParse(err)
 	}
 
 	if strings.TrimSpace(cfg.ClientTimeout) == "" {
 		CLIENT_TIMEOUT = defaultClientTimeout
 	} else {
 		CLIENT_TIMEOUT, err = strconv.Atoi(cfg.ClientTimeout)
-		functions.CheckParse(err)
+		utils.CheckParse(err)
 	}
 }
 
@@ -97,17 +96,17 @@ func createDefaultCfgFile() {
 		TaskTimeout:   strconv.Itoa(defaultTaskTimeout),
 		ClientTimeout: strconv.Itoa(defaultClientTimeout),
 	}
-	paths.MkCliDir()
-	file, err := os.Create(paths.ConfigPath())
+	utils.MkCliDir()
+	file, err := os.Create(utils.ConfigPath())
 	defer file.Close()
-	functions.CheckFile(err)
+	utils.CheckFile(err)
 	jsonCfg, err := json.MarshalIndent(cfg, "", "    ")
 	file.Write(jsonCfg)
 }
 
 //GetProperty is used to get property by key from the config file.
 func GetProperty(key string) reflect.Value {
-	file, _ := os.Open(paths.ConfigPath())
+	file, _ := os.Open(utils.ConfigPath())
 	defer file.Close()
 	cfg := &Config{}
 	decoder := json.NewDecoder(file)
@@ -119,7 +118,7 @@ func GetProperty(key string) reflect.Value {
 //SetProperty is used to set property by given key and value
 //that will be assigned to this key.
 func SetProperty(key, val string) bool {
-	file, _ := os.Open(paths.ConfigPath())
+	file, _ := os.Open(utils.ConfigPath())
 	defer file.Close()
 	cfg := &Config{}
 	decoder := json.NewDecoder(file)
@@ -131,8 +130,8 @@ func SetProperty(key, val string) bool {
 	v.FieldByName(key).SetString(val)
 	jsonCfg, _ := json.MarshalIndent(cfg, "", "    ")
 	file.Close()
-	paths.MkCliDir()
-	file, _ = os.Create(paths.ConfigPath())
+	utils.MkCliDir()
+	file, _ = os.Create(utils.ConfigPath())
 	_, err := file.Write(jsonCfg)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -143,7 +142,7 @@ func SetProperty(key, val string) bool {
 
 //Inspect returns the content of the config file in json format as byte array.
 func Inspect() []byte {
-	file, err := os.Open(paths.ConfigPath())
+	file, err := os.Open(utils.ConfigPath())
 	defer file.Close()
 	if err != nil {
 		createDefaultCfgFile()
@@ -155,6 +154,6 @@ func Inspect() []byte {
 		createDefaultCfgFile()
 	}
 	jsonBody, err := json.MarshalIndent(cfg, "", "    ")
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return jsonBody
 }

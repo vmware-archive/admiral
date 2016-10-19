@@ -20,8 +20,8 @@ import (
 
 	"admiral/client"
 	"admiral/config"
-	"admiral/functions"
 	"admiral/properties"
+	"admiral/utils"
 )
 
 var (
@@ -57,7 +57,7 @@ func (rpl *PlacementZoneList) FetchPZ() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, rpl)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return len(rpl.Documents), nil
 }
 
@@ -67,7 +67,7 @@ func (rpl *PlacementZoneList) GetOutputString() string {
 		buffer.WriteString("ID\tNAME\n")
 		for _, link := range rpl.DocumentLinks {
 			val := rpl.Documents[link]
-			output := functions.GetFormattedString(val.PlacementZoneState.GetID(), val.PlacementZoneState.Name)
+			output := utils.GetFormattedString(val.PlacementZoneState.GetID(), val.PlacementZoneState.Name)
 			buffer.WriteString(output)
 			buffer.WriteString("\n")
 		}
@@ -84,12 +84,12 @@ func RemovePZ(pzName string) (string, error) {
 	} else if len(links) < 1 {
 		return "", PlacementZoneNotFound
 	}
-	id := functions.GetResourceID(links[0])
+	id := utils.GetResourceID(links[0])
 	return RemovePZID(id)
 }
 
 func RemovePZID(id string) (string, error) {
-	url := config.URL + functions.CreateResLinkForPlacementZone(id)
+	url := config.URL + utils.CreateResLinkForPlacementZone(id)
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -116,7 +116,7 @@ func AddPZ(rpName string, custProps []string) (string, error) {
 	}
 	pz = &PlacementZone{}
 	err := json.Unmarshal(respBody, pz)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return pz.PlacementZoneState.GetID(), nil
 
 }
@@ -128,7 +128,7 @@ func EditPZ(pzName, newName string) (string, error) {
 	} else if len(links) < 1 {
 		return "", PlacementZoneNotFound
 	}
-	id := functions.GetResourceID(links[0])
+	id := utils.GetResourceID(links[0])
 	return EditPZID(id, newName)
 }
 
@@ -137,7 +137,7 @@ func EditPZID(id, newName string) (string, error) {
 		Name: newName,
 	}
 	jsonBody, _ := json.Marshal(pzState)
-	url := config.URL + functions.CreateResLinkForPlacementZone(id)
+	url := config.URL + utils.CreateResLinkForPlacementZone(id)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -167,7 +167,7 @@ func GetPZName(link string) (string, error) {
 		return "", respErr
 	}
 	err := json.Unmarshal(respBody, pzs)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return pzs.Name, nil
 }
 

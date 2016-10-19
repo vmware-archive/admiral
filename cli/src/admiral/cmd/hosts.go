@@ -15,9 +15,9 @@ import (
 	"errors"
 	"fmt"
 
-	"admiral/functions"
 	"admiral/help"
 	"admiral/hosts"
+	"admiral/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -189,7 +189,7 @@ func RunHostRemove(args []string) (string, error) {
 
 	if !forceF {
 		fmt.Printf("Are you sure you want to remove %s? (y/n)\n", address)
-		answer := functions.PromptAgreement()
+		answer := utils.PromptAgreement()
 		if answer == "n" || answer == "no" {
 			return "", errors.New("Remove command aborted!")
 		}

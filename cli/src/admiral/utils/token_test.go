@@ -11,7 +11,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package auth
+package utils
 
 import (
 	"os"

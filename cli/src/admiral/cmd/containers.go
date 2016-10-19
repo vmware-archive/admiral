@@ -19,8 +19,8 @@ import (
 	"strings"
 
 	"admiral/containers"
-	"admiral/functions"
 	"admiral/help"
+	"admiral/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -155,7 +155,7 @@ func RunContainersRemove(args []string) (string, error) {
 		if len(args) > 0 {
 			if !autoAccept {
 				fmt.Printf("Are you sure you want to remove %s? (y/n)\n", strings.Join(args, " "))
-				answer := functions.PromptAgreement()
+				answer := utils.PromptAgreement()
 				if answer == "n" || answer == "no" {
 					return "", errors.New("Remove command aborted.")
 				}

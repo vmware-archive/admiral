@@ -20,7 +20,7 @@ import (
 
 	"admiral/client"
 	"admiral/config"
-	"admiral/functions"
+	"admiral/utils"
 )
 
 type ListContainers struct {
@@ -46,7 +46,7 @@ func (lc *ListContainers) FetchContainers(queryF string) (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, lc)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	systemCount := 0
 
@@ -75,15 +75,15 @@ func (lc *ListContainers) GetOutputString(allContainers bool) string {
 			continue
 		}
 		if allContainers {
-			name := functions.ShortString(strings.Join(val.Names[0:1], ""), nameLen)
-			output := functions.GetFormattedString(val.GetID(), name, val.Address, val.GetStatus(),
+			name := utils.ShortString(strings.Join(val.Names[0:1], ""), nameLen)
+			output := utils.GetFormattedString(val.GetID(), name, val.Address, val.GetStatus(),
 				val.GetCreated(), val.GetPorts(), val.GetExternalID())
 			buffer.WriteString(output)
 			buffer.WriteString("\n")
 		} else {
 			if val.PowerState == "RUNNING" {
-				name := functions.ShortString(strings.Join(val.Names[0:1], ""), nameLen)
-				output := functions.GetFormattedString(val.GetID(), name, val.Address, val.GetStatus(),
+				name := utils.ShortString(strings.Join(val.Names[0:1], ""), nameLen)
+				output := utils.GetFormattedString(val.GetID(), name, val.Address, val.GetStatus(),
 					val.GetCreated(), val.GetPorts(), val.GetExternalID())
 				buffer.WriteString(output)
 				buffer.WriteString("\n")

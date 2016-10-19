@@ -25,10 +25,8 @@ import (
 	"strings"
 	"time"
 
-	"admiral/auth"
 	"admiral/config"
-	"admiral/functions"
-	"admiral/paths"
+	"admiral/utils"
 	"encoding/pem"
 )
 
@@ -52,13 +50,13 @@ var (
 //is true to print both requests and responses. Returns the response and the
 //response body as byte array.
 func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
-	token, from := auth.GetAuthToken()
+	token, from := utils.GetAuthToken()
 	netClient, err := buildHttpClient()
 	if err != nil {
 		return nil, nil, err
 	}
 	setReqHeaders(req, token)
-	functions.CheckVerboseRequest(req)
+	utils.CheckVerboseRequest(req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -72,8 +70,8 @@ func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 		return resp, respBody, err
 	}
 	admiralHostUrl := req.URL.Scheme + "://" + req.URL.Host
-	functions.CheckResponse(err, admiralHostUrl)
-	functions.CheckVerboseResponse(resp)
+	utils.CheckResponse(err, admiralHostUrl)
+	utils.CheckVerboseResponse(resp)
 
 	if err = CheckResponseError(resp, from); err != nil {
 		return resp, nil, err
@@ -95,7 +93,7 @@ func CheckResponseError(resp *http.Response, tokenFrom string) error {
 			return Code401Error
 		}
 		body, err := ioutil.ReadAll(resp.Body)
-		functions.CheckJson(err)
+		utils.CheckJson(err)
 		//Create 2 new readers.
 		//rdrToUse will be modified. rdrToSet will stay the same and set back to the request.
 		rdrToUse := ioutil.NopCloser(bytes.NewBuffer(body))
@@ -173,10 +171,10 @@ func setupCAPool() (*x509.CertPool, error) {
 		caCertPool = x509.NewCertPool()
 	}
 
-	if _, err := os.Stat(paths.TrustedCertsPath()); os.IsNotExist(err) {
-		os.Create(paths.TrustedCertsPath())
+	if _, err := os.Stat(utils.TrustedCertsPath()); os.IsNotExist(err) {
+		os.Create(utils.TrustedCertsPath())
 	}
-	trustedCerts, err := ioutil.ReadFile(paths.TrustedCertsPath())
+	trustedCerts, err := ioutil.ReadFile(utils.TrustedCertsPath())
 
 	if err != nil {
 		return nil, err
@@ -264,7 +262,7 @@ func prompCertAgreement(cert *x509.Certificate) bool {
 	buf.WriteString(fmt.Sprintf("Valid to: %s", cert.NotAfter))
 	fmt.Println(buf.String())
 	fmt.Println("Are you sure you want to connect to this site? (y/n)?")
-	answer := functions.PromptAgreement()
+	answer := utils.PromptAgreement()
 
 	if answer == "n" || answer == "N" {
 		return false
@@ -273,17 +271,17 @@ func prompCertAgreement(cert *x509.Certificate) bool {
 }
 
 func saveTrustedCert(cert *x509.Certificate) {
-	if _, err := os.Stat(paths.TrustedCertsPath()); os.IsNotExist(err) {
-		os.Create(paths.TrustedCertsPath())
+	if _, err := os.Stat(utils.TrustedCertsPath()); os.IsNotExist(err) {
+		os.Create(utils.TrustedCertsPath())
 	}
 	pemCert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
-	trustedCerts, err := os.OpenFile(paths.TrustedCertsPath(), os.O_APPEND|os.O_WRONLY, 0600)
-	functions.CheckFile(err)
+	trustedCerts, err := os.OpenFile(utils.TrustedCertsPath(), os.O_APPEND|os.O_WRONLY, 0600)
+	utils.CheckFile(err)
 	trustedCerts.Write(pemCert)
 }
 
 func loadCertsFromFile() error {
-	certBytes, err := ioutil.ReadFile(paths.TrustedCertsPath())
+	certBytes, err := ioutil.ReadFile(utils.TrustedCertsPath())
 	if err != nil {
 		return err
 	}

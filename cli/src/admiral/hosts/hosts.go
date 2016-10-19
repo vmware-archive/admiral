@@ -24,10 +24,10 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/credentials"
-	"admiral/functions"
 	"admiral/placementzones"
 	"admiral/properties"
 	"admiral/track"
+	"admiral/utils"
 )
 
 var (
@@ -52,12 +52,12 @@ type Host struct {
 }
 
 func (h *Host) GetResourcePoolID() string {
-	return functions.GetResourceID(h.ResourcePoolLink)
+	return utils.GetResourceID(h.ResourcePoolLink)
 }
 
 func (h *Host) GetCredentialsID() string {
 	if val, ok := h.CustomProperties["__authCredentialsLink"]; ok && val != nil {
-		return functions.GetResourceID(*val)
+		return utils.GetResourceID(*val)
 	}
 	return ""
 }
@@ -116,7 +116,7 @@ func (hl *HostsList) FetchHosts(queryF string) (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, hl)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return int(hl.TotalCount), nil
 }
 
@@ -127,7 +127,7 @@ func (hl *HostsList) GetOutputString() string {
 	buffer.WriteString("\n")
 	for _, val := range hl.Documents {
 		pzName, _ := placementzones.GetPZName(val.ResourcePoolLink)
-		output := functions.GetFormattedString(val.Id, val.Address, *val.CustomProperties["__Name"], val.PowerState,
+		output := utils.GetFormattedString(val.Id, val.Address, *val.CustomProperties["__Name"], val.PowerState,
 			*val.CustomProperties["__Containers"], pzName)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
@@ -175,11 +175,11 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 		newCredID = credID
 	}
 
-	pzLink := functions.CreateResLinkForPlacementZone(placementZoneID)
+	pzLink := utils.CreateResLinkForPlacementZone(placementZoneID)
 
-	dpLink := functions.CreateResLinkForDP(deplPolicyID)
+	dpLink := utils.CreateResLinkForDP(deplPolicyID)
 
-	credLink := functions.CreateResLinkForCredentials(newCredID)
+	credLink := utils.CreateResLinkForCredentials(newCredID)
 
 	hostProps := properties.ParseCustomProperties(custProps)
 	if hostProps == nil {
@@ -202,7 +202,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 	}
 
 	jsonBody, err := json.Marshal(hostObj)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	resp, respBody, respErr := client.ProcessRequest(req)
@@ -224,7 +224,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 			}
 			addedHost := &Host{}
 			err = json.Unmarshal(respBody, addedHost)
-			functions.CheckJson(err)
+			utils.CheckJson(err)
 			return addedHost.Id, nil
 		}
 		credentials.RemoveCredentialsID(newCredID)
@@ -239,7 +239,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 		}
 		addedHost := &Host{}
 		err = json.Unmarshal(respBody, addedHost)
-		functions.CheckJson(err)
+		utils.CheckJson(err)
 		return addedHost.Id, nil
 	}
 	return "", respErr
@@ -252,7 +252,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 func RemoveHost(hostAddress string, asyncTask bool) (string, error) {
 	url := config.URL + "/requests"
 
-	link := functions.CreateResLinksForHosts(hostAddress)
+	link := utils.CreateResLinksForHosts(hostAddress)
 
 	jsonRemoveHost := &OperationHost{
 		Operation:     "REMOVE_RESOURCE",
@@ -262,7 +262,7 @@ func RemoveHost(hostAddress string, asyncTask bool) (string, error) {
 
 	jsonBody, err := json.Marshal(jsonRemoveHost)
 
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -284,7 +284,7 @@ func DisableHost(hostAddress string) (string, error) {
 		PowerState: "SUSPEND",
 	}
 	jsonBody, err := json.Marshal(hostp)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
@@ -300,7 +300,7 @@ func EnableHost(hostAddress string) (string, error) {
 		PowerState: "ON",
 	}
 	jsonBody, err := json.Marshal(hostp)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -327,7 +327,7 @@ func GetPublicCustomProperties(address string) (map[string]*string, error) {
 }
 
 func GetCustomProperties(address string) (map[string]*string, error) {
-	link := functions.CreateResLinksForHosts(address)
+	link := utils.CreateResLinksForHosts(address)
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -336,12 +336,12 @@ func GetCustomProperties(address string) (map[string]*string, error) {
 	}
 	host := &Host{}
 	err := json.Unmarshal(respBody, host)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return host.CustomProperties, nil
 }
 
 func AddCustomProperties(address string, keys, vals []string) error {
-	link := functions.CreateResLinksForHosts(address)
+	link := utils.CreateResLinksForHosts(address)
 	url := config.URL + link
 	var lowerLen []string
 	if len(keys) > len(vals) {
@@ -357,7 +357,7 @@ func AddCustomProperties(address string, keys, vals []string) error {
 		CustomProperties: custProps,
 	}
 	jsonBody, err := json.Marshal(host)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -367,7 +367,7 @@ func AddCustomProperties(address string, keys, vals []string) error {
 }
 
 func RemoveCustomProperties(address string, keys []string) error {
-	link := functions.CreateResLinksForHosts(address)
+	link := utils.CreateResLinksForHosts(address)
 	url := config.URL + link
 	custProps := make(map[string]*string)
 	for i := range keys {
@@ -377,7 +377,7 @@ func RemoveCustomProperties(address string, keys []string) error {
 		CustomProperties: custProps,
 	}
 	jsonBody, err := json.Marshal(host)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -398,7 +398,7 @@ func EditHost(ipF, name, resPoolF, deplPolicyF, credentials string,
 		rpLink string
 	)
 	if resPoolF != "" {
-		rpLink = functions.GetResourceID(resPoolF)
+		rpLink = utils.GetResourceID(resPoolF)
 	}
 
 	newHost := &HostUpdate{
@@ -406,7 +406,7 @@ func EditHost(ipF, name, resPoolF, deplPolicyF, credentials string,
 		CustomProperties: props,
 	}
 	jsonBody, err := json.Marshal(newHost)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	req.Header.Add("Pragma", "xn-force-index-update")
 	_, _, respErr := client.ProcessRequest(req)

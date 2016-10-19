@@ -22,7 +22,7 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/credentials"
-	"admiral/functions"
+	"admiral/utils"
 )
 
 var (
@@ -68,7 +68,7 @@ func (rl *RegistryList) FetchRegistries() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, rl)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return len(rl.DocumentLinks), nil
 }
 
@@ -78,7 +78,7 @@ func (rl *RegistryList) GetOutputString() string {
 		buffer.WriteString("ID\tNAME\tADDRESS\tSTATUS\n")
 		for _, link := range rl.DocumentLinks {
 			val := rl.Documents[link]
-			output := functions.GetFormattedString(val.GetID(), val.Name, val.Address, val.Status())
+			output := utils.GetFormattedString(val.GetID(), val.Name, val.Address, val.Status())
 			buffer.WriteString(output)
 			buffer.WriteString("\n")
 		}
@@ -95,12 +95,12 @@ func RemoveRegistry(address string) (string, error) {
 	} else if len(links) > 1 {
 		return "", DuplicateNamesError
 	}
-	id := functions.GetResourceID(links[0])
+	id := utils.GetResourceID(links[0])
 	return RemoveRegistryID(id)
 }
 
 func RemoveRegistryID(id string) (string, error) {
-	link := functions.CreateResLinkForRegistry(id)
+	link := utils.CreateResLinkForRegistry(id)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
@@ -146,7 +146,7 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 	if newCredID == "" {
 		reg.AuthCredentialsLinks = nil
 	} else {
-		credLink := functions.CreateResLinkForCredentials(newCredID)
+		credLink := utils.CreateResLinkForCredentials(newCredID)
 		reg.AuthCredentialsLinks = &credLink
 	}
 
@@ -155,7 +155,7 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 	}
 
 	jsonBody, err := json.Marshal(ho)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 
 	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	resp, respBody, respErr := client.ProcessRequest(req)
@@ -166,7 +166,7 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 		_, respBody, respErr = client.ProcessRequest(req)
 		addedRegistry := &Registry{}
 		err = json.Unmarshal(respBody, addedRegistry)
-		functions.CheckJson(err)
+		utils.CheckJson(err)
 		return addedRegistry.GetID(), nil
 	} else if resp.StatusCode == 200 {
 		checkRes := certificates.CheckTrustCert(respBody, autoAccept)
@@ -185,7 +185,7 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 			}
 			addedRegistry := &Registry{}
 			err = json.Unmarshal(respBody, addedRegistry)
-			functions.CheckJson(err)
+			utils.CheckJson(err)
 			return addedRegistry.GetID(), nil
 		}
 		return "", CertNotAcceptedError
@@ -206,12 +206,12 @@ func EditRegistry(address, newAddress, newName, newCred string, autoAccept bool)
 		return "", DuplicateNamesError
 	}
 
-	id := functions.GetResourceID(links[0])
+	id := utils.GetResourceID(links[0])
 	return EditRegistryID(id, newAddress, newName, newCred, autoAccept)
 }
 
 func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (string, error) {
-	link := functions.CreateResLinkForRegistry(id)
+	link := utils.CreateResLinkForRegistry(id)
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -220,7 +220,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 	}
 	reg := &Registry{}
 	err := json.Unmarshal(respBody, reg)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	if newAddress != "" {
 		reg.Address = newAddress
 	}
@@ -228,7 +228,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 		reg.Name = newName
 	}
 	if newCred != "" {
-		credLink := functions.CreateResLinkForCredentials(newCred)
+		credLink := utils.CreateResLinkForCredentials(newCred)
 		reg.AuthCredentialsLinks = &credLink
 	}
 	url = config.URL + "/config/registry-spec"
@@ -236,7 +236,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 		Registry: *reg,
 	}
 	jsonBody, err := json.Marshal(registryObj)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	req, _ = http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	resp, respBody, respErr := client.ProcessRequest(req)
 	if resp.StatusCode == 200 {
@@ -253,7 +253,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 			_, respBody, _ = client.ProcessRequest(req)
 			reg = &Registry{}
 			err = json.Unmarshal(respBody, reg)
-			functions.CheckJson(err)
+			utils.CheckJson(err)
 			return reg.GetID(), nil
 		}
 		return "", errors.New("Error occurred when adding the new certificate.")
@@ -267,7 +267,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 		}
 		reg = &Registry{}
 		err = json.Unmarshal(respBody, reg)
-		functions.CheckJson(err)
+		utils.CheckJson(err)
 		return reg.GetID(), nil
 	} else if respErr != nil {
 		return "", respErr
@@ -286,18 +286,18 @@ func Disable(address string) (string, error) {
 		return "", DuplicateNamesError
 	}
 
-	id := functions.GetResourceID(links[0])
+	id := utils.GetResourceID(links[0])
 	return DisableID(id)
 }
 
 func DisableID(id string) (string, error) {
-	link := functions.CreateResLinkForRegistry(id)
+	link := utils.CreateResLinkForRegistry(id)
 	rs := &RegistryStatus{
 		Disabled:         true,
 		DocumentSelfLink: link,
 	}
 	jsonBody, err := json.Marshal(rs)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	url := config.URL + link
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
@@ -317,18 +317,18 @@ func Enable(address string) (string, error) {
 		return "", DuplicateNamesError
 	}
 
-	id := functions.GetResourceID(links[0])
+	id := utils.GetResourceID(links[0])
 	return EnableID(id)
 }
 
 func EnableID(id string) (string, error) {
-	link := functions.CreateResLinkForRegistry(id)
+	link := utils.CreateResLinkForRegistry(id)
 	rs := &RegistryStatus{
 		Disabled:         false,
 		DocumentSelfLink: link,
 	}
 	jsonBody, err := json.Marshal(rs)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	url := config.URL + link
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)

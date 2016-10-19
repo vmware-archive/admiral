@@ -23,7 +23,7 @@ import (
 
 	"admiral/client"
 	"admiral/config"
-	"admiral/functions"
+	"admiral/utils"
 )
 
 var (
@@ -87,7 +87,7 @@ func (cl *CertificateList) FetchCertificates() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, cl)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return len(cl.DocumentLinks), nil
 }
 
@@ -101,7 +101,7 @@ func (cl *CertificateList) GetOutputString() string {
 	buffer.WriteString("\n")
 	for _, link := range cl.DocumentLinks {
 		val := cl.Documents[link]
-		output := functions.GetFormattedString(val.GetID(), val.IssuerName, val.GetValidSince(), val.GetValidTo())
+		output := utils.GetFormattedString(val.GetID(), val.IssuerName, val.GetValidSince(), val.GetValidTo())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
@@ -135,7 +135,7 @@ func RemoveCertificate(name string) (string, error) {
 	if len(links) > 1 {
 		return "", DuplicateNamesError
 	}
-	id := functions.GetResourceID(links[0])
+	id := utils.GetResourceID(links[0])
 	return RemoveCertificateID(id)
 }
 
@@ -143,7 +143,7 @@ func RemoveCertificate(name string) (string, error) {
 //Returns the ID of removed certificate and error, error is != nil
 //if response code is != 200.
 func RemoveCertificateID(id string) (string, error) {
-	link := functions.CreateResLinkForCerts(id)
+	link := utils.CreateResLinkForCerts(id)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
@@ -167,7 +167,7 @@ func EditCertificate(name, dirF, urlF string) (string, error) {
 		return "", DuplicateNamesError
 	}
 
-	id := functions.GetResourceID(links[0])
+	id := utils.GetResourceID(links[0])
 
 	return EditCertificateID(id, dirF, urlF)
 }
@@ -178,12 +178,12 @@ func EditCertificate(name, dirF, urlF string) (string, error) {
 func EditCertificateID(id, dirF, urlF string) (string, error) {
 	if dirF != "" {
 		importFile, err := ioutil.ReadFile(dirF)
-		functions.CheckFile(err)
+		utils.CheckFile(err)
 		cff := CertificateFromFile{
 			Certificate: string(importFile),
 		}
 		jsonBody, err := json.Marshal(cff)
-		url := config.URL + functions.CreateResLinkForCerts(id)
+		url := config.URL + utils.CreateResLinkForCerts(id)
 		req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 		_, respBody, respErr := client.ProcessRequest(req)
 		if respErr != nil {
@@ -191,7 +191,7 @@ func EditCertificateID(id, dirF, urlF string) (string, error) {
 		}
 		cert := &Certificate{}
 		err = json.Unmarshal(respBody, cert)
-		functions.CheckJson(err)
+		utils.CheckJson(err)
 		return cert.GetID(), nil
 	} else if urlF != "" {
 		//TODO
@@ -209,7 +209,7 @@ type CertificateFromFile struct {
 //response code is != 200.
 func AddFromFile(dirF string) (string, error) {
 	importFile, err := ioutil.ReadFile(dirF)
-	functions.CheckFile(err)
+	utils.CheckFile(err)
 	cff := CertificateFromFile{
 		Certificate: string(importFile),
 	}
@@ -222,7 +222,7 @@ func AddFromFile(dirF string) (string, error) {
 	}
 	cert := &Certificate{}
 	err = json.Unmarshal(respBody, cert)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return cert.GetID(), nil
 }
 
@@ -238,7 +238,7 @@ func AddFromUrl(urlF string) (string, error) {
 		HostUri: urlF,
 	}
 	jsonBody, err := json.Marshal(cfu)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	url := config.URL + "/config/trust-certs-import"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -247,7 +247,7 @@ func AddFromUrl(urlF string) (string, error) {
 	}
 	cert := &Certificate{}
 	err = json.Unmarshal(respBody, cert)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return cert.GetID(), nil
 }
 
@@ -258,7 +258,7 @@ func AddFromUrl(urlF string) (string, error) {
 func CheckTrustCert(respBody []byte, autoAccept bool) bool {
 	cert := &Certificate{}
 	err := json.Unmarshal(respBody, cert)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	url := config.URL + "/config/trust-certs"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(respBody))
 	req.Header.Add("Pragma", "xn-force-index-update")
@@ -268,7 +268,7 @@ func CheckTrustCert(respBody []byte, autoAccept bool) bool {
 	}
 	fmt.Println(cert)
 	fmt.Println("Are you sure you want to connect to this site? (y/n)?")
-	answer := functions.PromptAgreement()
+	answer := utils.PromptAgreement()
 
 	if answer == "No" || answer == "no" {
 		return false

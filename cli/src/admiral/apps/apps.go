@@ -21,7 +21,7 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/containers"
-	"admiral/functions"
+	"admiral/utils"
 )
 
 type App struct {
@@ -32,7 +32,7 @@ type App struct {
 }
 
 func (a *App) GetID() string {
-	return functions.GetResourceID(a.DocumentSelfLink)
+	return utils.GetResourceID(a.DocumentSelfLink)
 }
 
 func (a *App) GetContainersCount() int {
@@ -74,7 +74,7 @@ func (la *ListApps) FetchApps(queryF string) (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, la)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return len(la.DocumentLinks), nil
 }
 
@@ -99,7 +99,7 @@ func (listApps *ListApps) GetOutputStringWithoutContainers() string {
 	buffer.WriteString("\n")
 	for _, link := range listApps.DocumentLinks {
 		app := listApps.Documents[link]
-		output := functions.GetFormattedString(app.GetID(), app.Name, app.GetContainersCount(), app.GetNetworksCount())
+		output := utils.GetFormattedString(app.GetID(), app.Name, app.GetContainersCount(), app.GetNetworksCount())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
@@ -117,7 +117,7 @@ func (listApps *ListApps) GetOutputStringWithContainers() string {
 	buffer.WriteString("ID\tNAME")
 	buffer.WriteString("\n")
 	for _, app := range listApps.Documents {
-		output := functions.GetFormattedString(app.GetID(), app.Name)
+		output := utils.GetFormattedString(app.GetID(), app.Name)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 		if len(app.ComponentLinks) < 1 {
@@ -132,8 +132,8 @@ func (listApps *ListApps) GetOutputStringWithContainers() string {
 			req, _ := http.NewRequest("GET", containerUrl, nil)
 			_, respBody, _ := client.ProcessRequest(req)
 			err := json.Unmarshal(respBody, container)
-			functions.CheckJson(err)
-			output = functions.GetFormattedString(indent+strings.Join(container.Names, " "), container.Address,
+			utils.CheckJson(err)
+			output = utils.GetFormattedString(indent+strings.Join(container.Names, " "), container.Address,
 				container.PowerState, container.GetCreated(), container.GetStarted(), container.Ports)
 			buffer.WriteString(output)
 			buffer.WriteString("\n")

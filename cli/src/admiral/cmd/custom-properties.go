@@ -17,8 +17,8 @@ import (
 	"fmt"
 
 	"admiral/credentials"
-	"admiral/functions"
 	"admiral/hosts"
+	"admiral/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -89,7 +89,7 @@ func hostCpString() (string, error) {
 		return "", err
 	}
 	cpJson, err := json.MarshalIndent(cpHost, "", "    ")
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	buffer := bytes.Buffer{}
 	buffer.WriteString(fmt.Sprintf("Custom Properties of Host: %s\n", cpHostIP))
 	buffer.WriteString(fmt.Sprint(string(cpJson)))
@@ -102,7 +102,7 @@ func credCpString() (string, error) {
 		return "", err
 	}
 	cpJson, err := json.MarshalIndent(cpCred, "", "    ")
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	buffer := bytes.Buffer{}
 	buffer.WriteString(fmt.Sprintf("Custom Properties of Credentials: %s\n", cpCredID))
 	buffer.WriteString(fmt.Sprint(string(cpJson)))

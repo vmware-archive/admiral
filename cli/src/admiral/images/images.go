@@ -19,7 +19,7 @@ import (
 
 	"admiral/client"
 	"admiral/config"
-	"admiral/functions"
+	"admiral/utils"
 	"bytes"
 )
 
@@ -67,7 +67,7 @@ func (li *ImagesList) GetOuputString() string {
 				trusted   string
 			)
 
-			desc = functions.ShortString(image.Description, 40)
+			desc = utils.ShortString(image.Description, 40)
 
 			if image.IsAutomated {
 				automated = "[OK]"
@@ -80,7 +80,7 @@ func (li *ImagesList) GetOuputString() string {
 			if image.IsTrusted {
 				trusted = "[OK]"
 			}
-			output := functions.GetFormattedString(image.GetShortName(), desc, image.StarsCount, official, automated, trusted)
+			output := utils.GetFormattedString(image.GetShortName(), desc, image.StarsCount, official, automated, trusted)
 			buffer.WriteString(output)
 			buffer.WriteString("\n")
 		}
@@ -121,7 +121,7 @@ func (li *ImagesList) QueryImages(imgName string) (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, li)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return len(li.Results), nil
 }
 
@@ -139,14 +139,14 @@ func GetPopular() (string, error) {
 	}
 	pi := PopularImages{}
 	err := json.Unmarshal(respBody, &pi)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	var buffer bytes.Buffer
 	buffer.WriteString("POPULAR TEMPLATES\n")
 	buffer.WriteString("NAME\tDESCRIPTION\tSTARS\tOFFICIAL\tAUTOMATED\tTRUSTED\n")
 	for _, img := range pi {
 		cuttedName := cutImgName(img.Name)
-		desc := functions.ShortString(img.Description, 40)
-		output := functions.GetFormattedString(cuttedName, desc, "---", "---", "---", "---")
+		desc := utils.ShortString(img.Description, 40)
+		output := utils.GetFormattedString(cuttedName, desc, "---", "---", "---", "---")
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}

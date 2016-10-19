@@ -21,7 +21,7 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/events"
-	"admiral/functions"
+	"admiral/utils"
 )
 
 type TaskInfo struct {
@@ -47,11 +47,11 @@ func (ri *RequestInfo) GetResourceID(index int) string {
 	if index > (len(ri.ResourceLinks) - 1) {
 		return ""
 	}
-	return functions.GetResourceID(ri.ResourceLinks[index])
+	return utils.GetResourceID(ri.ResourceLinks[index])
 }
 
 func (ri *RequestInfo) GetID() string {
-	return functions.GetResourceID(ri.DocumentSelfLink)
+	return utils.GetResourceID(ri.DocumentSelfLink)
 }
 
 func (ri *RequestInfo) GetLastUpdate() string {
@@ -95,7 +95,7 @@ func (rl *RequestsList) FetchRequests() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, rl)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	return len(rl.DocumentLinks), nil
 }
 
@@ -112,7 +112,7 @@ func (rl *RequestsList) PrintStartedOnly() {
 		}
 		res, failure := checkFailed(&val)
 		if res {
-			failure = functions.ShortString(failure, 50)
+			failure = utils.ShortString(failure, 50)
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), failure)
 		} else {
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), "")
@@ -139,7 +139,7 @@ func (rl *RequestsList) PrintFailedOnly() {
 		}
 		res, failure := checkFailed(&val)
 		if res {
-			failure = functions.ShortString(failure, 50)
+			failure = utils.ShortString(failure, 50)
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), failure)
 		} else {
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), "")
@@ -166,7 +166,7 @@ func (rl *RequestsList) PrintFinishedOnly() {
 		}
 		res, failure := checkFailed(&val)
 		if res {
-			failure = functions.ShortString(failure, 50)
+			failure = utils.ShortString(failure, 50)
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), failure)
 		} else {
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), "")
@@ -189,7 +189,7 @@ func (rl *RequestsList) PrintAll() {
 		val := rl.Documents[rl.DocumentLinks[i]]
 		res, failure := checkFailed(&val)
 		if res {
-			failure = functions.ShortString(failure, 50)
+			failure = utils.ShortString(failure, 50)
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), failure)
 		} else {
 			fmt.Printf(defaultFormat, val.GetID(), val.indentFirstId(), val.TaskInfo.Stage, val.GetLastUpdate(), "")
@@ -216,7 +216,7 @@ func checkFailed(ri *RequestInfo) (bool, string) {
 	_, respBody, _ := client.ProcessRequest(req)
 	event := &events.EventInfo{}
 	err := json.Unmarshal(respBody, event)
-	functions.CheckJson(err)
+	utils.CheckJson(err)
 	res := strings.Replace(event.Description, "\n", "", -1)
 	return true, res
 }
