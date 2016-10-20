@@ -513,7 +513,13 @@ ContainersStore = Reflux.createStore({
     this.setInData(['creatingResource'], {});
     this.setInData(['listView', 'queryOptions', '$category'],
                    constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS);
-    this.emitChange();
+    services.loadDeploymentPolicies().then((policies) => {
+      this.setInData(['creatingResource', 'definitionInstance'],
+        {
+          deploymentPolicies: policies
+        });
+      this.emitChange();
+    });
   },
 
   openCreateNetwork: function() {
