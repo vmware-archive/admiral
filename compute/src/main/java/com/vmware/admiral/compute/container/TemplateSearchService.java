@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse;
@@ -60,12 +60,14 @@ public class TemplateSearchService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.TEMPLATES;
     public static final String QUERY_PARAM = RegistryAdapterService.SEARCH_QUERY_PROP_NAME;
     public static final String GROUP_PARAM = CompositeDescription.FIELD_NAME_TENANT_LINKS;
+
     public static final String TEMPLATES_ONLY_PARAM = "templatesOnly";
     public static final String TEMPLATES_PARENT_ONLY_PARAM = "templatesParentOnly";
     public static final String IMAGES_ONLY_PARAM = "imagesOnly";
 
     public static class Response {
         public Collection<TemplateSpec> results;
+        public boolean isPartialResult;
     }
 
     @Override
@@ -93,23 +95,27 @@ public class TemplateSearchService extends StatelessService {
             queriesCountdown.decrementAndGet();
         }
 
-        Consumer<ServiceDocumentQueryElementResult<TemplateSpec>> resultConsumer = (r) -> {
-            if (r.hasException() || !r.hasResult()) {
-                if (r.hasException()) {
-                    Utils.logWarning("Query failure: %s", Utils.toString(r.getException()));
-                }
+        BiConsumer<ServiceDocumentQueryElementResult<TemplateSpec>, Boolean> resultConsumer =
+                (r, isPartialResult) -> {
+                    if (r.hasException() || !r.hasResult()) {
+                        if (r.hasException()) {
+                            Utils.logWarning("Query failure: %s", Utils.toString(r.getException()));
+                        }
 
-                if (queriesCountdown.decrementAndGet() == 0) {
-                    Response response = new Response();
-                    response.results = prependOfficialResults(new ArrayList<>(results));
-                    get.setBody(response);
-                    get.complete();
-                }
+                        if (queriesCountdown.decrementAndGet() == 0) {
+                            Response response = new Response();
+                            response.results = prependOfficialResults(new ArrayList<>(results));
+                            if (isPartialResult != null) {
+                                response.isPartialResult = isPartialResult;
+                            }
+                            get.setBody(response);
+                            get.complete();
+                        }
 
-            } else if (r.hasResult()) {
-                results.add(r.getResult());
-            }
-        };
+                    } else if (r.hasResult()) {
+                        results.add(r.getResult());
+                    }
+                };
 
         if (!imagesOnly) {
             executeTemplateQuery(query, queryParams, resultConsumer);
@@ -120,7 +126,7 @@ public class TemplateSearchService extends StatelessService {
     }
 
     private void executeTemplateQuery(String query, Map<String, String> queryParams,
-            Consumer<ServiceDocumentQueryElementResult<TemplateSpec>> resultConsumer) {
+            BiConsumer<ServiceDocumentQueryElementResult<TemplateSpec>, Boolean> resultConsumer) {
 
         String tenantLink = queryParams.get(GROUP_PARAM);
         List<String> tenantLinks = null;
@@ -153,14 +159,14 @@ public class TemplateSearchService extends StatelessService {
                 .setBody(queryTask)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        resultConsumer.accept(error(ex));
+                        resultConsumer.accept(error(ex), null);
 
                     } else {
                         QueryTask resultTask = o.getBody(QueryTask.class);
                         ServiceDocumentQueryResult result = resultTask.results;
 
                         if (result == null || result.documents == null) {
-                            resultConsumer.accept(noResult());
+                            resultConsumer.accept(noResult(), null);
                             return;
                         }
 
@@ -170,7 +176,7 @@ public class TemplateSearchService extends StatelessService {
                             if (link.startsWith(CompositeDescriptionFactoryService.SELF_LINK)) {
                                 compositeDescriptionLinks.add(link);
                                 resultConsumer.accept(result(createTemplateFromCompositeDesc(
-                                        document), result.documents.size()));
+                                        document), result.documents.size()), null);
 
                             } else if (link.startsWith(
                                     ContainerDescriptionService.FACTORY_LINK)) {
@@ -183,7 +189,7 @@ public class TemplateSearchService extends StatelessService {
                         });
 
                         if (containerDescriptionLinks.isEmpty()) {
-                            resultConsumer.accept(noResult());
+                            resultConsumer.accept(noResult(), null);
                             return;
                         }
 
@@ -219,14 +225,14 @@ public class TemplateSearchService extends StatelessService {
                                                 // mark the template type before passing to the results
                                                 r.getResult().templateType = TemplateType.COMPOSITE_DESCRIPTION;
                                             }
-                                            resultConsumer.accept(r);
+                                            resultConsumer.accept(r, null);
                                         });
                     }
                 }));
     }
 
     private void executeImageQuery(Map<String, String> queryParams,
-            Consumer<ServiceDocumentQueryElementResult<TemplateSpec>> resultConsumer) {
+            BiConsumer<ServiceDocumentQueryElementResult<TemplateSpec>, Boolean> resultConsumer) {
 
         URI imageSearchUri = UriUtils.buildUri(getHost(), ContainerImageService.SELF_LINK);
 
@@ -242,17 +248,17 @@ public class TemplateSearchService extends StatelessService {
         sendRequest(Operation.createGet(imageSearchUri)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        resultConsumer.accept(error(ex));
+                        resultConsumer.accept(error(ex), null);
 
                     } else {
                         RegistrySearchResponse response = o.getBody(RegistrySearchResponse.class);
                         if (response.results != null) {
                             for (Result result : response.results) {
                                 resultConsumer.accept(result(createTemplateFromImageResult(
-                                        result), response.results.size()));
+                                        result), response.results.size()), null);
                             }
                         }
-                        resultConsumer.accept(noResult());
+                        resultConsumer.accept(noResult(), response.isPartialResult);
                     }
                 }));
     }

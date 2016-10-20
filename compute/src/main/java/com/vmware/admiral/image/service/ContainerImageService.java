@@ -150,6 +150,10 @@ public class ContainerImageService extends StatelessService {
 
             logFailures(failures, tenantLink);
 
+            if (failures != null && !failures.isEmpty()) {
+                mergedResponse.isPartialResult = true;
+            }
+
             if (limit > 0) {
                 mergedResponse.limit(limit);
             }
@@ -185,7 +189,7 @@ public class ContainerImageService extends StatelessService {
     }
 
     private void logFailures(Map<Long, Throwable> failures, String tenantLink) {
-        if (failures == null || failures.values().isEmpty()) {
+        if (failures == null || failures.isEmpty()) {
             return;
         }
 

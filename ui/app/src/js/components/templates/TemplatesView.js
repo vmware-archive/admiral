@@ -124,6 +124,16 @@ var TemplatesViewVueComponent = Vue.extend({
       });
     });
 
+    this.unwatchIsPartialResult = this.$watch('model.listView.isPartialResult',
+                                              (isPartialResult) => {
+      if (isPartialResult) {
+        var errorMessage = i18n.t('app.template.list.partialResultWarning');
+        this.$dispatch('container-form-alert', errorMessage, 'warning');
+      } else {
+        this.$dispatch('container-form-alert', null);
+      }
+    });
+
     this.refreshRequestsInterval = setInterval(() => {
       if (this.activeContextItem === constants.CONTEXT_PANEL.REQUESTS) {
         RequestsActions.refreshRequests();
@@ -140,6 +150,7 @@ var TemplatesViewVueComponent = Vue.extend({
   },
   detached: function() {
     this.unwatchExpanded();
+    this.unwatchIsPartialResult();
 
     var $mainPanel = $(this.$el).children('.list-holder').children('.main-panel');
     $mainPanel.off('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd');

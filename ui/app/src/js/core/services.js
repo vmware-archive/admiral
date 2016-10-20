@@ -771,8 +771,12 @@ services.loadTemplates = function(queryOptions) {
 
   return list(links.TEMPLATES, false, params).then(function(data) {
     var results = data.results || [];
+    var isPartialResult = data.isPartialResult || false;
     results.sort(utils.templateSortFn);
-    return results;
+    return {
+      results: results,
+      isPartialResult: isPartialResult
+    };
   });
 };
 

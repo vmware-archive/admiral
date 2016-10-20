@@ -124,7 +124,9 @@ let searchImages = function(queryOptions, searchOnlyImages, forContainerDefiniti
 
   this.emitChange();
 
-  operation.forPromise(services.loadTemplates(queryOptions)).then((templates) => {
+  operation.forPromise(services.loadTemplates(queryOptions)).then((data) => {
+    var isPartialResult = data.isPartialResult;
+    var templates = data.results;
     var resultTemplates = [];
     for (var i = 0; i < templates.length; i++) {
       var template = templates[i];
@@ -140,6 +142,14 @@ let searchImages = function(queryOptions, searchOnlyImages, forContainerDefiniti
     this.setInData(listViewPath.concat(['items']), resultTemplates);
     this.setInData(listViewPath.concat(['itemsLoading']), false);
     this.setInData(listViewPath.concat(['searchedItems']), true);
+    this.setInData(listViewPath.concat(['isPartialResult']), isPartialResult);
+    if (isPartialResult) {
+      var _this = this;
+      setTimeout(function() {
+        _this.setInData(listViewPath.concat(['isPartialResult']), false);
+        _this.emitChange();
+      }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT_LONG);
+    }
     this.emitChange();
   }).catch((e) => {
     this.setInData(listViewPath.concat(['items']), []);

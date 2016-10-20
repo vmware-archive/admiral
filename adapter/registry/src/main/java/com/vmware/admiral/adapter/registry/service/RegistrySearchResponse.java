@@ -37,6 +37,9 @@ public class RegistrySearchResponse {
 
     public List<Result> results;
 
+    @SerializedName("is_partial_result")
+    public boolean isPartialResult;
+
     public static class Result {
         public String name;
         public String description;

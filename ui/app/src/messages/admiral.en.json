@@ -234,6 +234,7 @@
         "true": "Yes",
         "false": "No",
         "searchCategoryFilterTitle": "View:",
+        "partialResultWarning": "You are seeing incomplete search results due to one or more query failures.",
         "searchCategory": {
           "all": "All",
           "images": "Images",
