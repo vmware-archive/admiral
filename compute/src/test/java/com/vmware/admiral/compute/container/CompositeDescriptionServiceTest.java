@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ComponentDescription;
+import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -52,7 +53,7 @@ public class CompositeDescriptionServiceTest extends ComputeBaseTest {
         firstContainer._cluster = 1;
         firstContainer.maximumRetryCount = 1;
         firstContainer.privileged = true;
-        firstContainer.affinity = new String[]{"cond1", "cond2"};
+        firstContainer.affinity = new String[] { "cond1", "cond2" };
         firstContainer.customProperties = new HashMap<String, String>();
         firstContainer.customProperties.put("key1", "value1");
         firstContainer.customProperties.put("key2", "value2");
@@ -153,6 +154,40 @@ public class CompositeDescriptionServiceTest extends ComputeBaseTest {
 
         checkRetrievedContainers(cdExpanded.componentDescriptions, createdFirstContainer,
                 createdSecondContainer);
+    }
+
+    @Test
+    public void testPutExpanded() throws Throwable {
+        ContainerDescription container = new ContainerDescription();
+        container.name = "container";
+        container.image = "registry.hub.docker.com/kitematic/hello-world-nginx";
+        container = doPost(container, ContainerDescriptionService.FACTORY_LINK);
+
+        ComponentDescription containerComponent = new ComponentDescription();
+        containerComponent.name = "container";
+        container.name = "updated";
+        containerComponent.component = container;
+        containerComponent.type = ResourceType.CONTAINER_TYPE.getContentType();
+
+        CompositeDescription cd = new CompositeDescription();
+        cd.name = "testComposite";
+        cd = doPost(cd, CompositeDescriptionFactoryService.SELF_LINK);
+
+       // Make PUT but as expanded state, so that components are also updated
+        CompositeDescriptionExpanded cdUpdate = new CompositeDescriptionExpanded();
+        cdUpdate.documentSelfLink = cd.documentSelfLink;
+        cdUpdate.name = cd.name;
+        cdUpdate.componentDescriptions = new ArrayList<>();
+        cdUpdate.componentDescriptions.add(containerComponent);
+        cdUpdate = doPut(cdUpdate);
+
+        // Explicitly search for document to validate that the list returns the right document kind
+        CompositeDescription foundCd = searchForDocument(CompositeDescription.class,
+                cd.documentSelfLink);
+        assertEquals(Utils.buildKind(CompositeDescription.class), foundCd.documentKind);
+
+        container = getDocument(ContainerDescription.class, container.documentSelfLink);
+        assertEquals("updated", container.name);
     }
 
     private void checkRetrievedContainers(List<ComponentDescription> retrievedContainers,

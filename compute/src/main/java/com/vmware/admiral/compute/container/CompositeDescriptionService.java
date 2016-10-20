@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
@@ -164,10 +165,14 @@ public class CompositeDescriptionService extends StatefulService {
             return;
         }
 
-        CompositeDescriptionExpanded body = put.getBody(CompositeDescriptionExpanded.class);
-        validateStateOnStart(body);
-        if (isExpanded(body)) {
-            List<Operation> update = body.componentDescriptions
+        // Explicitly get objects of both classes, so that when updating the actual (not expanded)
+        // object there are no docomentKind side effects
+        CompositeDescription body = put.getBody(CompositeDescription.class);
+        CompositeDescriptionExpanded bodyExpanded = put.getBody(CompositeDescriptionExpanded.class);
+
+        validateStateOnStart(bodyExpanded);
+        if (isExpanded(bodyExpanded)) {
+            List<Operation> update = bodyExpanded.componentDescriptions
                     .stream()
                     .map(cd -> Operation
                             .createPut(this, cd.component.documentSelfLink)
@@ -180,7 +185,6 @@ public class CompositeDescriptionService extends StatefulService {
                     put.fail(failures.values().iterator().next());
                     return;
                 }
-                body.componentDescriptions = null;
                 performPut(put, body);
             }).sendWith(this);
         } else {
@@ -190,6 +194,8 @@ public class CompositeDescriptionService extends StatefulService {
 
     private void performPut(Operation put, CompositeDescription putBody) {
         try {
+            AssertUtil.assertTrue(putBody.getClass().equals(CompositeDescription.class),
+                    "State should be instance of CompositeDescription, not of any subclass.");
             this.setState(put, putBody);
             put.setBody(putBody).complete();
         } catch (Throwable e) {
