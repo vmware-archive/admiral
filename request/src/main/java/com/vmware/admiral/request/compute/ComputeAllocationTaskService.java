@@ -742,9 +742,9 @@ public class ComputeAllocationTaskService
 
         logInfo("Allocation request for %s machines", state.resourceCount);
 
-        if (state.selectedComputePlacementLinks.size() != state.resourceCount) {
+        if (state.selectedComputePlacementLinks.size() < state.resourceCount) {
             failTask(String.format(
-                    "Provided placement links (%s) do not match the requested resource count (%s)",
+                    "Not enough placement links provided (%d) for the requested resource count (%d)",
                     state.selectedComputePlacementLinks.size(), state.resourceCount), null);
             return;
         }

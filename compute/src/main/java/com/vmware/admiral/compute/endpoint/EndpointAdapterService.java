@@ -124,6 +124,8 @@ public class EndpointAdapterService extends StatelessService {
 
         if (enumerate) {
             eats.enumerationRequest = new EndpointAllocationTaskService.ResourceEnumerationRequest();
+            eats.enumerationRequest.resourcePoolLink = UriUtils.getODataParamValueAsString(
+                    post.getUri(), ManagementUriParts.REQUEST_PARAM_TARGET_RESOURCE_POOL_LINK);
         }
 
         Operation.createPost(this, EndpointAllocationTaskService.FACTORY_LINK)

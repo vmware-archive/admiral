@@ -226,7 +226,7 @@ public class ComputePlacementSelectionTaskService extends
             AffinityFilters affinityFilters = AffinityFilters.build(this.getHost(), desc);
 
             FilterContext filterContext = FilterContext.from(state);
-            Map<String, HostSelection> filtered = filter(filterContext, hostSelectionMap,
+            Map<String, HostSelection> filtered = filter(state, filterContext, hostSelectionMap,
                     affinityFilters.getQueue());
 
             if (qr.computesByLink.isEmpty()) {
@@ -239,12 +239,15 @@ public class ComputePlacementSelectionTaskService extends
         });
     }
 
-    private Map<String, HostSelection> filter(FilterContext filterContext,
+    private Map<String, HostSelection> filter(ComputePlacementSelectionTaskState state,
+            FilterContext filterContext,
             final Map<String, HostSelection> hostSelectionMap,
             final Queue<HostSelectionFilter> filters) {
 
         if (isNoSelection(hostSelectionMap)) {
-            failTask(null, new IllegalStateException("Compute state not found"));
+            failTask(null, new IllegalStateException(
+                    "No compute placement candidates found in resource pool "
+                            + state.resourcePoolLink));
             return hostSelectionMap;
         }
 
@@ -261,7 +264,7 @@ public class ComputePlacementSelectionTaskService extends
                     }
                     return;
                 }
-                filter(filterContext, filteredHostSelectionMap, filters);
+                filter(state, filterContext, filteredHostSelectionMap, filters);
             });
         }
         return hostSelectionMap;

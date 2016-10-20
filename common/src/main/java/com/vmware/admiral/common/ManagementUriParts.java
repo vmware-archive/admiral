@@ -143,6 +143,7 @@ public interface ManagementUriParts {
     String REQUEST_PARAM_VALIDATE_OPERATION_NAME = "validate";
 
     String REQUEST_PARAM_ENUMERATE_OPERATION_NAME = "enumerate";
+    String REQUEST_PARAM_TARGET_RESOURCE_POOL_LINK = "targetRpLink";
 
     String EXEC = "/exec";
 }

@@ -76,6 +76,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     private static final String VMS_RESOURCE_POOL_ID = "vms-resource-pool";
     private static final String RESOURCE_POOL_ID = "hosts-resource-pool";
     private static final String ENDPOINT_ID = "endpoint";
+    private static final String PLACEMENT_ID = "host-placement";
 
     private static final String TENANT_LINKS_KEY = "test.tenant.links";
 
@@ -129,9 +130,13 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
         endpointType = getEndpointType();
         endpoint = createEndpoint(endpointType, TestDocumentLifeCycle.NO_DELETE);
-        ResourcePoolState poolState = createResourcePool(endpointType, endpoint, documentLifeCycle);
-        groupResourcePlacementState = createResourcePlacement("host-placement", endpointType, poolState,
+
+        // TODO pmitrov: wait until initial enumeration completes
+
+        groupResourcePlacementState = createResourcePlacement(PLACEMENT_ID, endpointType,
+                endpoint.resourcePoolLink,
                 documentLifeCycle);
+
         vmsResourcePool = createResourcePoolOfVMs(endpointType, documentLifeCycle);
         doSetUp();
     }
@@ -308,17 +313,17 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     private EndpointState createEndpoint(EndpointType endpointType,
             TestDocumentLifeCycle documentLifeCycle)
             throws Exception {
-        String name = name(endpointType, ENDPOINT_ID, SUFFIX);
         EndpointState endpoint = new EndpointState();
-        // endpoint.documentSelfLink = getLink(EndpointService.FACTORY_LINK, name);
         endpoint.endpointType = endpointType.name();
-        endpoint.name = name;
+        endpoint.name = name(endpointType, ENDPOINT_ID, SUFFIX);
         endpoint.tenantLinks = getTenantLinks();
         endpoint.endpointProperties = new HashMap<>();
         extendEndpoint(endpoint);
 
-        return postDocument(EndpointAdapterService.SELF_LINK, endpoint,
-                documentLifeCycle);
+        return postDocument(
+                EndpointAdapterService.SELF_LINK + UriUtils.URI_QUERY_CHAR
+                        + ManagementUriParts.REQUEST_PARAM_ENUMERATE_OPERATION_NAME,
+                endpoint, documentLifeCycle);
     }
 
     protected List<String> getTenantLinks() {
@@ -414,11 +419,11 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     }
 
     protected GroupResourcePlacementState createResourcePlacement(String name, EndpointType endpointType,
-            ResourcePoolState poolState, TestDocumentLifeCycle documentLifeCycle)
+            String resourcePoolLink, TestDocumentLifeCycle documentLifeCycle)
             throws Exception {
         GroupResourcePlacementState placementState = new GroupResourcePlacementState();
         placementState.maxNumberInstances = 30;
-        placementState.resourcePoolLink = poolState.documentSelfLink;
+        placementState.resourcePoolLink = resourcePoolLink;
         placementState.name = name(endpointType, name, SUFFIX);
         placementState.documentSelfLink = placementState.name;
         placementState.availableInstancesCount = 1000000;
@@ -595,7 +600,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         dockerRemoteApiClientCredentials = postDocument(AuthCredentialsService.FACTORY_LINK, auth,
                 documentLifeCycle);
 
-        createResourcePlacement("vm-placement", getEndpointType(), vmsResourcePool, documentLifeCycle);
+        createResourcePlacement("vm-placement", getEndpointType(), vmsResourcePool.documentSelfLink,
+                documentLifeCycle);
     }
 
     private String getConfigContent() {

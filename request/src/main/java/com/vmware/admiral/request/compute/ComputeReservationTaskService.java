@@ -287,7 +287,8 @@ public class ComputeReservationTaskService
 
     private void quatasSelected(ComputeReservationTaskState state, ComputeDescription computeDesc) {
         if (state.resourcePoolsPerGroupPlacementLinks == null) {
-            failTask("No available group placements.", null);
+            failTask(null, new IllegalStateException(
+                    "resourcePoolsPerGroupPlacementLinks must not be null"));
             return;
         }
         if (computeDesc == null) {
@@ -327,7 +328,8 @@ public class ComputeReservationTaskService
                     }
 
                     QueryTask task = o.getBody(QueryTask.class);
-                    if (task.results != null && task.results.documentLinks != null) {
+                    if (task.results != null && task.results.documentLinks != null &&
+                            !task.results.documentLinks.isEmpty()) {
                         Set<String> pools = new HashSet<>();
                         pools.addAll(task.results.documentLinks);
                         state.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks
@@ -338,7 +340,8 @@ public class ComputeReservationTaskService
 
                         selectReservation(state, state.resourcePoolsPerGroupPlacementLinks);
                     } else {
-                        failTask("No available placement zones.", null);
+                        failTask("All eligible placement zones rejected: "
+                                + state.resourcePoolsPerGroupPlacementLinks.values(), null);
                     }
                 })
                 .sendWith(this);
@@ -354,7 +357,8 @@ public class ComputeReservationTaskService
     private void selectReservation(ComputeReservationTaskState state,
             LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks) {
         if (resourcePoolsPerGroupPlacementLinks.isEmpty()) {
-            failTask("No available group placements.", null);
+            failTask(null, new IllegalStateException(
+                    "resourcePoolsPerGroupPlacementLinks must not be empty"));
             return;
         }
 
