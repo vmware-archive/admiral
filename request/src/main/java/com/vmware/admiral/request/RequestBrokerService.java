@@ -229,7 +229,7 @@ public class RequestBrokerService extends
                 if (isComputeType(state)) {
                     createComputeRemovalTask(state);
                 } else if (isContainerNetworkType(state)) {
-                    createContainerNetworkRemovalTask(state);
+                    createContainerNetworkRemovalTask(state, true);
                 } else if (isContainerVolumeType(state)) {
                     createContainerVolumeRemovalTask(state);
                 } else {
@@ -250,7 +250,7 @@ public class RequestBrokerService extends
             if (isComputeType(state)) {
                 createComputeRemovalTask(state);
             } else if (isContainerNetworkType(state)) {
-                createContainerNetworkRemovalTask(state);
+                createContainerNetworkRemovalTask(state, true);
             } else if (isContainerVolumeType(state)) {
                 createContainerVolumeRemovalTask(state);
             } else {
@@ -580,6 +580,12 @@ public class RequestBrokerService extends
     }
 
     private void createContainerNetworkRemovalTask(RequestBrokerState state) {
+        createContainerNetworkRemovalTask(state, false);
+    }
+
+    private void createContainerNetworkRemovalTask(RequestBrokerState state,
+            boolean cleanupRemoval) {
+
         boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED
                 || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
 
@@ -603,6 +609,7 @@ public class RequestBrokerService extends
         removalState.externalInspectOnly = (state.customProperties != null
                 && "true".equalsIgnoreCase(state.customProperties
                         .get(ContainerNetworkRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
+        removalState.cleanupRemoval = cleanupRemoval;
 
         sendRequest(Operation.createPost(this, ContainerNetworkRemovalTaskService.FACTORY_LINK)
                 .setBody(removalState)

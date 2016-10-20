@@ -89,6 +89,12 @@ public class ContainerNetworkRemovalTaskService extends
          * application that uses them)
          */
         public boolean externalInspectOnly;
+
+        /**
+         * If this is a cleanup removal task, it will try to delete the network state even if it
+         * fails to delete an actual network on a host
+         */
+        public boolean cleanupRemoval;
     }
 
     public ContainerNetworkRemovalTaskService() {
@@ -270,7 +276,8 @@ public class ContainerNetworkRemovalTaskService extends
         subTaskInitState.serviceTaskCallback = ServiceTaskCallback.create(
                 getSelfLink(),
                 TaskStage.STARTED, SubStage.INSTANCES_REMOVED,
-                TaskStage.STARTED, SubStage.ERROR);
+                TaskStage.STARTED,
+                state.cleanupRemoval ? SubStage.INSTANCES_REMOVED : SubStage.ERROR);
 
         CounterSubTaskService.createSubTask(this, subTaskInitState,
                 (subTaskLink) -> deleteResourceInstances(state, resourceLinks, subTaskLink));
