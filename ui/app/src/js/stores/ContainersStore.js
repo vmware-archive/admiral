@@ -48,12 +48,15 @@ function getHostByLink(hosts, hostLink) {
   });
 }
 
-function enhanceContainer(container) {
+function enhanceContainer(container, clusterId) {
   container.icon = imageUtils.getImageIconLink(container.image);
   container.documentId = utils.getDocumentId(container.documentSelfLink);
 
   container.hostDocumentId = getHostDocumentId(container);
   container.type = constants.CONTAINERS.TYPES.SINGLE;
+  if (clusterId) {
+    container.clusterId = clusterId;
+  }
 
   if (container.attributes) {
     container.attributes.Config = JSON.parse(container.attributes.Config);
@@ -1099,7 +1102,7 @@ ContainersStore = Reflux.createStore({
         }
         var items = utils.resultToArray(containers);
         items.forEach((container) => {
-          enhanceContainer(container);
+          enhanceContainer(container, clusterId);
         });
 
         let cluster = makeClusterObject(clusterId, items);

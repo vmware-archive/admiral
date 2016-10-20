@@ -37,8 +37,15 @@ var ContainersListItem = Vue.extend({
     openContainer: function($event) {
       $event.stopPropagation();
       $event.preventDefault();
-
-      NavigationActions.openContainerDetails(this.getContainerId());
+      let containerId = this.getContainerId();
+      let clusterId = this.model.clusterId;
+      if (clusterId) {
+        let compositeComponentId = this.model.customProperties
+                                  && this.model.customProperties.__composition_context_id;
+        NavigationActions.openContainerDetails(containerId, clusterId, compositeComponentId);
+      } else {
+        NavigationActions.openContainerDetails(containerId);
+      }
     },
 
     startContainer: function($event) {
