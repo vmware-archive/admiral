@@ -19,7 +19,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var MissingProjectIdError = errors.New("Project ID not provided.")
+var (
+	MissingProjectIdError   = errors.New("Project ID not provided.")
+	MissingProjectNameError = errors.New("Project name not provided.")
+)
 
 func init() {
 	initProjectAdd()
@@ -40,7 +43,7 @@ var projectAddCmd = &cobra.Command{
 }
 
 func initProjectAdd() {
-	projectAddCmd.Flags().StringVar(&projectDescription, "description", "", "Project description.")
+	projectAddCmd.Flags().StringVar(&projectDescription, "description", "", projectDescriptionDesc)
 	ProjectsRootCmd.AddCommand(projectAddCmd)
 }
 
@@ -52,7 +55,7 @@ func RunProjectAdd(args []string) (string, error) {
 		ok    bool
 	)
 	if name, ok = ValidateArgsCount(args); !ok {
-		return "", errors.New("Project name not provided.")
+		return "", MissingProjectNameError
 	}
 	newID, err = projects.AddProject(name, projectDescription)
 

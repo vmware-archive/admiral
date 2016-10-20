@@ -12,10 +12,10 @@
 package cmd
 
 import (
-	"fmt"
-
 	"admiral/help"
 	"admiral/utils"
+
+	"fmt"
 
 	"github.com/spf13/cobra"
 )
@@ -27,8 +27,6 @@ var (
 )
 
 func init() {
-	helpToken := "Authorization token."
-
 	AutocompleteCmd.Hidden = true
 
 	RootCmd.AddCommand(AppsRootCmd)
@@ -47,7 +45,7 @@ func init() {
 	RootCmd.AddCommand(ProjectsRootCmd)
 	RootCmd.Flags().BoolVar(&ShowVersion, "version", false, "Admiral CLI Version.")
 	RootCmd.PersistentFlags().BoolVar(&utils.Verbose, "verbose", false, "Showing every request/response json body.")
-	RootCmd.PersistentFlags().StringVar(&utils.TokenFromFlagVar, "token", "", helpToken)
+	RootCmd.PersistentFlags().StringVar(&utils.TokenFromFlagVar, "token", "", tokenDesc)
 	RootCmd.SetUsageTemplate(help.DefaultUsageTemplate)
 }
 
@@ -67,8 +65,7 @@ var RootCmd = &cobra.Command{
 		} else {
 			versionToPrint = version
 		}
-		fmt.Println(admiralLogo)
-		fmt.Println("Version: ", versionToPrint)
+		fmt.Printf(admiralLogo, versionToPrint)
 	},
 }
 

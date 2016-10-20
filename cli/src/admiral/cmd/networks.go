@@ -21,7 +21,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var MissingNetworkIdError = errors.New("Network ID not provided.")
+var (
+	MissingNetworkIdError   = errors.New("Network ID not provided.")
+	MissingNetworkNameError = errors.New("Network name not provided.")
+)
 
 func init() {
 	initNetworkCreate()
@@ -42,15 +45,14 @@ var networkCreateCmd = &cobra.Command{
 }
 
 func initNetworkCreate() {
-	networkCreateCmd.Flags().StringSliceVar(&gateways, "gateway", []string{}, "Gateway for the master subnet.")
-	networkCreateCmd.Flags().StringSliceVar(&subnets, "subnet", []string{}, "Subnet in CIDR format that represents a network segment.")
-	networkCreateCmd.Flags().StringSliceVar(&ipranges, "ip-range", []string{}, "Allocate container ip from a sub-range.")
-	networkCreateCmd.Flags().StringSliceVar(&hostAddresses, "host", []string{}, "(Required) Hosts IDs")
+	networkCreateCmd.Flags().StringSliceVar(&gateways, "gateway", []string{}, gatewaysDesc)
+	networkCreateCmd.Flags().StringSliceVar(&subnets, "subnet", []string{}, subnetsDesc)
+	networkCreateCmd.Flags().StringSliceVar(&ipRanges, "ip-range", []string{}, ipRangesDesc)
+	networkCreateCmd.Flags().StringSliceVar(&hostIds, "host", []string{}, required+hostIdsDesc)
 	networkCreateCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)
-	networkCreateCmd.Flags().StringVarP(&networkDriver, "driver", "d", "", "Driver to manage the Network.")
-	networkCreateCmd.Flags().StringVar(&ipamDriver, "ipam-driver", "", "IPAM driver.")
+	networkCreateCmd.Flags().StringVarP(&networkDriver, "driver", "d", "", networkDriverDesc)
+	networkCreateCmd.Flags().StringVar(&ipamDriver, "ipam-driver", "", ipamDriverDesc)
 	networkCreateCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
-	//networkCreateCmd.Flags().StringSliceVarP(&options, "opt", "o", []string{}, "Set driver options. Format: \"key:value\"")
 	NetworksRootCmd.AddCommand(networkCreateCmd)
 }
 
@@ -63,11 +65,11 @@ func RunNetworkCreate(args []string) (string, error) {
 		err    error
 	)
 	if name, ok = ValidateArgsCount(args); !ok {
-		return "", errors.New("Network not provided.")
+		return "", MissingNetworkNameError
 	}
 
-	id, err = networks.CreateNetwork(name, networkDriver, ipamDriver, gateways, subnets, ipranges,
-		custProps, hostAddresses, asyncTask)
+	id, err = networks.CreateNetwork(name, networkDriver, ipamDriver, gateways, subnets, ipRanges,
+		custProps, hostIds, asyncTask)
 
 	if !asyncTask {
 		output = "Network created: " + id

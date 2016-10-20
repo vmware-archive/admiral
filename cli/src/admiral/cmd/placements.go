@@ -23,7 +23,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var MissingPlacementIdError = errors.New("Placement ID not provided.")
+var (
+	MissingPlacementIdError   = errors.New("Placement ID not provided.")
+	MissingPlacementNameError = errors.New("Placement name not provided.")
+	MemoryParseError          = errors.New("Unable to parse the memory provided.")
+)
 
 func init() {
 	initPlacementAdd()
@@ -32,18 +36,7 @@ func init() {
 	initPlacementRemove()
 }
 
-var (
-	cpuShares      string
-	instances      string
-	priority       string
-	tenants        string
-	deplPolID      string
-	memoryLimitStr string
-
-	priorityInt        int32
-	maxNumberInstances int32
-	cpuSharesInt       int32
-)
+var ()
 
 var placementAddCmd = &cobra.Command{
 	Use:   "add [NAME]",
@@ -57,13 +50,13 @@ var placementAddCmd = &cobra.Command{
 }
 
 func initPlacementAdd() {
-	placementAddCmd.Flags().StringVar(&cpuShares, "cpu-shares", "", "CPU shares.")
-	placementAddCmd.Flags().StringVar(&instances, "instances", "", "Instances")
-	placementAddCmd.Flags().StringVar(&priority, "priority", "", "Priority")
-	placementAddCmd.Flags().StringVar(&tenants, "project", "", "Project ID")
-	placementAddCmd.Flags().StringVar(&placementZoneID, "placement-zone", "", "(Required) Placement zone ID")
-	placementAddCmd.Flags().StringVar(&deplPolID, "deployment-policy", "", "Deployment policy ID")
-	placementAddCmd.Flags().StringVar(&memoryLimitStr, "memory-limit", "0kb", "Memory limit. Default unit: kb. Units supported: kb/mb/gb. Example: 1024mb")
+	placementAddCmd.Flags().StringVar(&cpuShares, "cpu-shares", "", cpuSharesDesc)
+	placementAddCmd.Flags().StringVar(&instances, "instances", "", instancesDesc)
+	placementAddCmd.Flags().StringVar(&priority, "priority", "", priorityDesc)
+	placementAddCmd.Flags().StringVar(&projectF, "project", "", projectFDesc)
+	placementAddCmd.Flags().StringVar(&placementZoneId, "placement-zone", "", required+placementZoneIdDesc)
+	placementAddCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", deplPolicyFDesc)
+	placementAddCmd.Flags().StringVar(&memoryLimitStr, "memory-limit", "0kb", memoryLimitDesc)
 	PlacementsRootCmd.AddCommand(placementAddCmd)
 }
 
@@ -87,7 +80,7 @@ func parseMemory(memory string) (int64, error) {
 		size = size * 1000 * 1000 * 1000
 		return int64(size), nil
 	}
-	return 0, errors.New("Unable to parse the memory provided.")
+	return 0, MemoryParseError
 }
 
 func RunPlacementAdd(args []string) (string, error) {
@@ -98,13 +91,13 @@ func RunPlacementAdd(args []string) (string, error) {
 		ok    bool
 	)
 	if name, ok = ValidateArgsCount(args); !ok {
-		return "", errors.New("Placement name not provided.")
+		return "", MissingPlacementNameError
 	}
 	memoryLimit, err := parseMemory(memoryLimitStr)
 	if err != nil {
 		return "", err
 	}
-	newID, err = placements.AddPlacement(name, cpuShares, instances, priority, tenants, placementZoneID, deplPolID, memoryLimit)
+	newID, err = placements.AddPlacement(name, cpuShares, instances, priority, projectF, placementZoneId, deplPolicyF, memoryLimit)
 	if err != nil {
 		return "", err
 	} else {
@@ -185,13 +178,13 @@ var placementUpdateCmd = &cobra.Command{
 
 func initPlacementUpdate() {
 	placementUpdateCmd.Flags().StringVar(&newName, "name", "", "New name")
-	placementUpdateCmd.Flags().Int32Var(&cpuSharesInt, "cpu-shares", -1, "New CPU shares.")
-	placementUpdateCmd.Flags().Int32Var(&maxNumberInstances, "instances", -1, "New instances")
-	placementUpdateCmd.Flags().Int32Var(&priorityInt, "priority", -1, "New priority")
-	placementUpdateCmd.Flags().StringVar(&tenants, "project", "", "New project ID")
-	placementUpdateCmd.Flags().StringVar(&placementZoneID, "placement-zone", "", "New placement zone ID")
-	placementUpdateCmd.Flags().StringVar(&deplPolID, "deployment-policy", "", "New deployment policy ID")
-	placementUpdateCmd.Flags().StringVar(&memoryLimitStr, "memory-limit", "0kb", "New memory limit. Default unit: kb. Units supported: kb/mb/gb. Example: 1024mb")
+	placementUpdateCmd.Flags().Int32Var(&cpuSharesInt, "cpu-shares", -1, prefixNew+cpuSharesDesc)
+	placementUpdateCmd.Flags().Int32Var(&maxNumberInstances, "instances", -1, prefixNew+instancesDesc)
+	placementUpdateCmd.Flags().Int32Var(&priorityInt, "priority", -1, prefixNew+priorityDesc)
+	placementUpdateCmd.Flags().StringVar(&projectF, "project", "", prefixNew+projectFDesc)
+	placementUpdateCmd.Flags().StringVar(&placementZoneId, "placement-zone", "", prefixNew+placementZoneIdDesc)
+	placementUpdateCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", prefixNew+deplPolicyFDesc)
+	placementUpdateCmd.Flags().StringVar(&memoryLimitStr, "memory-limit", "0kb", prefixNew+memoryLimitDesc)
 	PlacementsRootCmd.AddCommand(placementUpdateCmd)
 }
 
@@ -210,7 +203,7 @@ func RunPlacementUpdate(args []string) (string, error) {
 	if id, ok = ValidateArgsCount(args); !ok {
 		return "", MissingPlacementIdError
 	}
-	newID, err = placements.EditPlacementID(id, newName, tenants, placementZoneID, deplPolID, cpuSharesInt, maxNumberInstances, priorityInt, memoryLimit)
+	newID, err = placements.EditPlacementID(id, newName, projectF, placementZoneId, deplPolicyF, cpuSharesInt, maxNumberInstances, priorityInt, memoryLimit)
 
 	if err != nil {
 		return "", err

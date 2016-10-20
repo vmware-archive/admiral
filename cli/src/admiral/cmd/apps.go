@@ -21,8 +21,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var keepTemplate bool
-
 var MissingAppIdError = errors.New("Application ID not provided.")
 
 func init() {
@@ -76,8 +74,8 @@ var appListCmd = &cobra.Command{
 }
 
 func initAppList() {
-	appListCmd.Flags().BoolVarP(&inclCont, "containers", "c", false, "Lists containers inside the template.")
-	appListCmd.Flags().StringVarP(&queryF, "query", "q", "", "Add query.")
+	appListCmd.Flags().BoolVarP(&inclCont, "containers", "c", false, inclContDesc)
+	appListCmd.Flags().StringVarP(&queryF, "query", "q", "", queryFDesc)
 
 	appListCmd.SetUsageTemplate(help.DefaultUsageListTemplate)
 	AppsRootCmd.AddCommand(appListCmd)
@@ -195,8 +193,8 @@ var appRunCmd = &cobra.Command{
 func initAppRun() {
 	appRunCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
 	appRunCmd.Flags().StringVar(&dirF, "file", "", "Provision template from file.")
-	appRunCmd.Flags().BoolVar(&keepTemplate, "keep", false, "Do not remove template after provisioning.")
-	appRunCmd.Flags().StringVar(&projectF, "project", "", "(Required) "+projectFDesc)
+	appRunCmd.Flags().BoolVar(&keepTemplate, "keep", false, keepTemplateDesc)
+	appRunCmd.Flags().StringVar(&projectF, "project", "", required+projectFDesc)
 	AppsRootCmd.AddCommand(appRunCmd)
 }
 

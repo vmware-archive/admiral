@@ -19,10 +19,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var since int32
+var (
+	since     int32
+	sinceDesc = "Since when to show logs."
+)
 
 func init() {
-	logsCmd.Flags().Int32VarP(&since, "since", "s", 15, "Since when to show logs.")
+	logsCmd.Flags().Int32VarP(&since, "since", "s", 15, "Since when to show logs.(minutes)")
 	RootCmd.AddCommand(logsCmd)
 }
 

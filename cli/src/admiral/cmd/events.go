@@ -18,7 +18,7 @@ import (
 )
 
 func init() {
-	eventCmd.Flags().BoolVar(&clearAll, "clear", false, "Clear all logged requests.")
+	eventCmd.Flags().BoolVar(&clearAll, "clear", false, clearAllEventsDesc)
 	RootCmd.AddCommand(eventCmd)
 }
 

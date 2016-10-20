@@ -21,15 +21,16 @@ import (
 )
 
 var (
-	keyProp string
-	valProp string
+	KeyNotProvidedError   = errors.New("Key not provided.")
+	ValueNotProvidedError = errors.New("Value not provided.")
+	InvalidKeyError       = errors.New("Invalid key.")
 )
 
 func init() {
-	cfgGetCmd.Flags().StringVarP(&keyProp, "key", "k", "", "(Required) Key")
+	cfgGetCmd.Flags().StringVarP(&keyProp, "key", "k", "", required+keyPropDesc)
 
-	cfgSetCmd.Flags().StringVarP(&keyProp, "key", "k", "", "(Required) Key")
-	cfgSetCmd.Flags().StringVarP(&valProp, "value", "v", "", "(Required) Value")
+	cfgSetCmd.Flags().StringVarP(&keyProp, "key", "k", "", required+keyPropDesc)
+	cfgSetCmd.Flags().StringVarP(&valProp, "value", "v", "", required+valPropDesc)
 
 	ConfigRootCmd.AddCommand(cfgGetCmd)
 	ConfigRootCmd.AddCommand(cfgSetCmd)
@@ -48,7 +49,7 @@ var cfgGetCmd = &cobra.Command{
 
 func RunCfgGet(args []string) (string, error) {
 	if keyProp == "" {
-		return "", errors.New("Key not provided.")
+		return "", KeyNotProvidedError
 	}
 
 	v := config.GetProperty(strings.Title(keyProp))
@@ -56,7 +57,7 @@ func RunCfgGet(args []string) (string, error) {
 	if v.IsValid() {
 		return v.String(), nil
 	} else {
-		return "", errors.New("Invalid key.")
+		return "", InvalidKeyError
 	}
 }
 
@@ -72,10 +73,10 @@ var cfgSetCmd = &cobra.Command{
 
 func RunCfgSet(args []string) (string, error) {
 	if keyProp == "" {
-		return "", errors.New("Key not provided.")
+		return "", KeyNotProvidedError
 	}
 	if valProp == "" {
-		return "", errors.New("Value not provided.")
+		return "", ValueNotProvidedError
 	}
 
 	isSet := config.SetProperty(strings.Title(keyProp), valProp)

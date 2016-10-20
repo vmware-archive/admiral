@@ -20,17 +20,19 @@ import (
 )
 
 var (
-	startedOnly  bool
-	finishedOnly bool
-	failedOnly   bool
-	clearAll     bool
+	startedOnly      bool
+	startedOnlyDesc  = "Show started only requests."
+	finishedOnly     bool
+	finishedOnlyDesc = "Show finished only requests."
+	failedOnly       bool
+	failedOnlyDesc   = "Show failed only requests."
 )
 
 func init() {
-	reqCmd.Flags().BoolVar(&clearAll, "clear", false, "Clear all logged requests.")
-	reqCmd.Flags().BoolVar(&startedOnly, "started", false, "Show started only requests.")
-	reqCmd.Flags().BoolVar(&finishedOnly, "finished", false, "Show finished only requests.")
-	reqCmd.Flags().BoolVar(&failedOnly, "failed", false, "Show failed only requests.")
+	reqCmd.Flags().BoolVar(&clearAll, "clear", false, clearAllReqDesc)
+	reqCmd.Flags().BoolVar(&startedOnly, "started", false, startedOnlyDesc)
+	reqCmd.Flags().BoolVar(&finishedOnly, "finished", false, finishedOnlyDesc)
+	reqCmd.Flags().BoolVar(&failedOnly, "failed", false, failedOnlyDesc)
 	RootCmd.AddCommand(reqCmd)
 }
 

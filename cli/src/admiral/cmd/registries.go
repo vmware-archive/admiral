@@ -20,7 +20,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var MissingRegistryIdError = errors.New("Registry ID not provided.")
+var (
+	MissingRegistryIdError   = errors.New("Registry ID not provided.")
+	MissingRegistryNameError = errors.New("Registry name not provided.")
+)
 
 func init() {
 	initRegistryAdd()
@@ -41,16 +44,19 @@ var registryAddCmd = &cobra.Command{
 	},
 }
 
-var addressF string
+var (
+	addressF     string
+	addressFDesc = "Address of registry."
+)
 
 func initRegistryAdd() {
-	registryAddCmd.Flags().StringVar(&publicCert, "public", "", "(Required if adding new credentials)"+publicCertDesc)
-	registryAddCmd.Flags().StringVar(&privateCert, "private", "", "(Required if adding new credentials)"+privateCertDesc)
-	registryAddCmd.Flags().StringVar(&userName, "username", "", "(Required if adding new credentials)"+"Username.")
-	registryAddCmd.Flags().StringVar(&passWord, "password", "", "(Required if adding new credentials)"+"Password.")
-	registryAddCmd.Flags().StringVar(&addressF, "address", "", "(Required) Address of registry.")
-	registryAddCmd.Flags().StringVar(&credName, "credentials", "", "(Required if using existing one.) Credentials ID.")
-	registryAddCmd.Flags().BoolVar(&autoAccept, "accept", false, "Auto accept if certificate is not trusted.")
+	registryAddCmd.Flags().StringVar(&publicCert, "public", "", "*Required if adding new credentials* "+publicCertDesc)
+	registryAddCmd.Flags().StringVar(&privateCert, "private", "", "*Required if adding new credentials* "+privateCertDesc)
+	registryAddCmd.Flags().StringVar(&userName, "username", "", "*Required if adding new credentials* "+userNameDesc)
+	registryAddCmd.Flags().StringVar(&passWord, "password", "", "*Required if adding new credentials* "+passWordDesc)
+	registryAddCmd.Flags().StringVar(&credId, "credentials", "", "*Required if using existing credentials* "+credIdDesc)
+	registryAddCmd.Flags().StringVar(&addressF, "address", "", required+addressFDesc)
+	registryAddCmd.Flags().BoolVar(&autoAccept, "accept", false, autoAcceptDesc)
 	registryAddCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)
 	RegistriesRootCmd.AddCommand(registryAddCmd)
 }
@@ -61,9 +67,9 @@ func RunRegistryAdd(args []string) (string, error) {
 		ok   bool
 	)
 	if name, ok = ValidateArgsCount(args); !ok {
-		return "", errors.New("Registry name not provided.")
+		return "", MissingRegistryNameError
 	}
-	newID, err := registries.AddRegistry(name, addressF, credName, publicCert, privateCert, userName, passWord, autoAccept)
+	newID, err := registries.AddRegistry(name, addressF, credId, publicCert, privateCert, userName, passWord, autoAccept)
 
 	if err != nil {
 		return "", err
@@ -208,7 +214,7 @@ func initRegistryUpdate() {
 	registryUpdateCmd.Flags().StringVar(&newAddress, "address", "", "New address of registry.")
 	registryUpdateCmd.Flags().StringVar(&newCred, "credentials", "", "New credentials name.")
 	registryUpdateCmd.Flags().StringVar(&newName, "name", "", "New registry name.")
-	registryUpdateCmd.Flags().BoolVar(&autoAccept, "accept", false, "Auto accept if certificate is not trusted.")
+	registryUpdateCmd.Flags().BoolVar(&autoAccept, "accept", false, autoAcceptDesc)
 	RegistriesRootCmd.AddCommand(registryUpdateCmd)
 }
 

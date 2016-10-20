@@ -20,7 +20,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var MissingTemplateIdError = errors.New("Template ID not provided.")
+var (
+	MissingTemplateIdError      = errors.New("Template ID not provided.")
+	MissingPathToFileError      = errors.New("Path to file not provided.")
+	FileFormatNotSpecifiedError = errors.New("File format is not specified.")
+)
 
 func init() {
 	initTemplateList()
@@ -41,8 +45,8 @@ var templateListCmd = &cobra.Command{
 }
 
 func initTemplateList() {
-	templateListCmd.Flags().BoolVarP(&inclCont, "containers", "c", false, "Show all containers.")
-	templateListCmd.Flags().StringVarP(&queryF, "query", "q", "", "Add query.")
+	templateListCmd.Flags().BoolVarP(&inclCont, "containers", "c", false, inclContDesc)
+	templateListCmd.Flags().StringVarP(&queryF, "query", "q", "", queryFDesc)
 	templateListCmd.SetUsageTemplate(help.DefaultUsageListTemplate)
 	TemplatesRootCmd.AddCommand(templateListCmd)
 }
@@ -100,7 +104,6 @@ var templateImportCmd = &cobra.Command{
 	Short: "Import yaml file.",
 	Long:  "Import yaml file.",
 
-	//Main function for the command "import". No args are needed, just path to file after -f or --file flag.
 	Run: func(cmd *cobra.Command, args []string) {
 		output, err := RunTemplateImport(args)
 		processOutput(output, err)
@@ -117,7 +120,7 @@ func RunTemplateImport(args []string) (string, error) {
 		ok       bool
 	)
 	if filePath, ok = ValidateArgsCount(args); !ok {
-		return "", errors.New("Path to file not provided.")
+		return "", MissingPathToFileError
 	}
 	id, err := templates.Import(filePath)
 
@@ -140,8 +143,8 @@ var templateExportCmd = &cobra.Command{
 }
 
 func initTemplateExport() {
-	templateExportCmd.Flags().StringVar(&formatTemplate, "format", "yaml", "(Required) File format - yaml/docker")
-	templateExportCmd.Flags().StringVar(&dirF, "file", "", "(Required) path/to/file")
+	templateExportCmd.Flags().StringVar(&formatTemplate, "format", "yaml", formatTemplateDesc)
+	templateExportCmd.Flags().StringVar(&dirF, "file", "", required+"Path to the exported file.")
 	TemplatesRootCmd.AddCommand(templateExportCmd)
 }
 
@@ -164,11 +167,11 @@ func RunTemplateExport(args []string) (string, error) {
 	}
 }
 
-//Function to verify the given template in the flag.
+//verifyFormat verifies the given format in the flag.
 //Returns true if format is valid, false if invalid.
 func verifyFormat() (bool, error) {
 	if formatTemplate != "yaml" && formatTemplate != "docker" {
-		return false, errors.New("Choose either yaml or docker file format.")
+		return false, FileFormatNotSpecifiedError
 	}
 	return true, nil
 }

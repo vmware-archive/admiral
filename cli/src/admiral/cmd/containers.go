@@ -123,14 +123,10 @@ func RunContainerInspect(args []string) (string, error) {
 }
 
 var containerRemoveCmd = &cobra.Command{
-	Use: "rm [CONTAINER-ID]...",
-
+	Use:   "rm [CONTAINER-ID]...",
 	Short: "Remove existing container(s).",
+	Long:  "Remove existing container(s).",
 
-	Long: "Remove existing container(s).",
-
-	//Main function for "rm" command.
-	//Args are the names of containers.
 	Run: func(cmd *cobra.Command, args []string) {
 		output, err := RunContainersRemove(args)
 		processOutput(output, err)
@@ -234,7 +230,7 @@ var containerScaleCmd = &cobra.Command{
 }
 
 func initContainerScale() {
-	containerScaleCmd.Flags().Int32VarP(&scaleCount, "count", "c", 0, "(Required) Resource count.")
+	containerScaleCmd.Flags().Int32VarP(&scaleCount, "count", "c", 0, required+scaleCountDesc)
 	containerScaleCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
 	RootCmd.AddCommand(containerScaleCmd)
 }
@@ -391,22 +387,22 @@ var containerRunCmd = &cobra.Command{
 }
 
 func initContainerRun() {
-	containerRunCmd.Flags().StringVar(&cpuShares, "cpu-shares", "", "An integer value containing the container CPU shares")
-	containerRunCmd.Flags().Int32Var(&clusterSize, "cluster-size", 1, "The number of nodes to be provisioned.")
-	containerRunCmd.Flags().StringSliceVar(&cmds, "cmd", []string{}, "Commands to run on container start.")
-	containerRunCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", "Deployment policy name.")
-	containerRunCmd.Flags().StringSliceVarP(&env, "env", "e", []string{}, "Set enivornment variables.")
-	containerRunCmd.Flags().StringVarP(&hostName, "hostname", "h", "", "Container host name.")
-	containerRunCmd.Flags().StringVar(&logDriver, "log-driver", "", "Logging driver for container.")
-	containerRunCmd.Flags().Int32Var(&retryCount, "max-restarts", 0, "Max restart count on container failures.")
-	containerRunCmd.Flags().Int64VarP(&memory, "memory", "m", 0, "Memory limit")
-	containerRunCmd.Flags().Int64Var(&memorySwap, "memory-swap", 0, "Total memory limit(Memory + Swap), set -1 to disable swap")
-	containerRunCmd.Flags().StringVar(&networkMode, "network-mode", "bridge", "Sets the networking mode for the container.")
-	containerRunCmd.Flags().StringSliceVarP(&ports, "publish", "p", []string{}, "Publish a container's port(s) to the host.")
-	containerRunCmd.Flags().BoolVarP(&publishAll, "publish-all", "P", true, "Publish all exposed ports to random ports.")
-	containerRunCmd.Flags().StringVar(&restartPol, "restart", "no", "Restart policy to apply.")
-	containerRunCmd.Flags().StringVarP(&workingDir, "workdir", "w", "", "Working directory inside the container")
-	containerRunCmd.Flags().StringSliceVarP(&volumes, "volume", "v", []string{}, "Bind mount volume")
+	containerRunCmd.Flags().StringVar(&cpuShares, "cpu-shares", "", cpuSharesDesc)
+	containerRunCmd.Flags().Int32Var(&clusterSize, "cluster-size", 1, clusterSizeDesc)
+	containerRunCmd.Flags().StringSliceVar(&cmds, "cmd", []string{}, cmdsDesc)
+	containerRunCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", deplPolicyFDesc)
+	containerRunCmd.Flags().StringSliceVarP(&envVariables, "env", "e", []string{}, envVariablesDesc)
+	containerRunCmd.Flags().StringVarP(&hostName, "hostname", "h", "", hostNameDesc)
+	containerRunCmd.Flags().StringVar(&logDriver, "log-driver", "", logDriverDesc)
+	containerRunCmd.Flags().Int32Var(&retryCount, "max-restarts", 0, retryCountDesc)
+	containerRunCmd.Flags().Int64VarP(&memoryLimit, "memory", "m", 0, memoryLimitDesc)
+	containerRunCmd.Flags().Int64Var(&memorySwap, "memory-swap", 0, memoryLimitDesc)
+	containerRunCmd.Flags().StringVar(&networkMode, "network-mode", "bridge", networkDriverDesc)
+	containerRunCmd.Flags().StringSliceVarP(&ports, "publish", "p", []string{}, portsDesc)
+	containerRunCmd.Flags().BoolVarP(&publishAll, "publish-all", "P", true, publishAllDesc)
+	containerRunCmd.Flags().StringVar(&restartPol, "restart", "no", restartPolDesc)
+	containerRunCmd.Flags().StringVarP(&workingDir, "workdir", "w", "", workingDirDesc)
+	containerRunCmd.Flags().StringSliceVarP(&volumes, "volume", "v", []string{}, volumesDesc)
 	containerRunCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
 	containerRunCmd.Flags().StringVar(&projectF, "project", "", projectFDesc)
 	containerRunCmd.Flags().Bool("help", false, "Help for "+RootCmd.Name())
@@ -431,8 +427,8 @@ func RunContainerRun(args []string) (string, error) {
 	cd.Create(
 		imgName, name, cpuShares, networkMode, restartPol, workingDir, logDriver, hostName, deplPolicyF, //strings
 		clusterSize, retryCount, //int32
-		memory, memorySwap, //int64
-		cmds, env, volumes, ports, //[]string
+		memoryLimit, memorySwap, //int64
+		cmds, envVariables, volumes, ports, //[]string
 		publishAll) //bool
 	newID, err = cd.RunContainer(projectF, asyncTask)
 	if err != nil {

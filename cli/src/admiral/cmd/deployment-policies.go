@@ -20,7 +20,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var MissingDeploymentPolicyIdError = errors.New("Deployment policy ID not provided.")
+var (
+	MissingDeploymentPolicyIdError   = errors.New("Deployment policy ID not provided.")
+	MissingDeploymentPolicyNameError = errors.New("Enter deployment policy name.")
+)
 
 func init() {
 	initDeploymentPolicyAdd()
@@ -41,7 +44,7 @@ var deploymentPolicyAddCmd = &cobra.Command{
 }
 
 func initDeploymentPolicyAdd() {
-	deploymentPolicyAddCmd.Flags().StringVar(&dpDescription, "description", "", "(Required) Deployment policy description.")
+	deploymentPolicyAddCmd.Flags().StringVar(&dpDescription, "description", "", required+dpDescriptionDesc)
 	DeploymentPoliciesRootCmd.AddCommand(deploymentPolicyAddCmd)
 }
 
@@ -53,7 +56,7 @@ func RunDeploymentPolicyAdd(args []string) (string, error) {
 		ok     bool
 	)
 	if dpName, ok = ValidateArgsCount(args); !ok {
-		return "", errors.New("Enter deployment policy name.")
+		return "", MissingDeploymentPolicyNameError
 	}
 	id, err = deplPolicy.AddDP(dpName, dpDescription)
 
@@ -136,8 +139,8 @@ var deploymentPolicyUpdateCmd = &cobra.Command{
 }
 
 func initDeploymentPolicyUpdate() {
-	deploymentPolicyUpdateCmd.Flags().StringVar(&dpDescription, "description", "", "(Required) New deployment policy description.")
-	deploymentPolicyUpdateCmd.Flags().StringVar(&dpName, "name", "", "(Required) New deployment policy name")
+	deploymentPolicyUpdateCmd.Flags().StringVar(&dpDescription, "description", "", dpDescriptionDesc)
+	deploymentPolicyUpdateCmd.Flags().StringVar(&dpName, "name", "", dpNameDesc)
 	DeploymentPoliciesRootCmd.AddCommand(deploymentPolicyUpdateCmd)
 }
 

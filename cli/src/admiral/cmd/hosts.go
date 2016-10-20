@@ -45,15 +45,15 @@ var hostAddCmd = &cobra.Command{
 }
 
 func initHostAdd() {
-	hostAddCmd.Flags().StringVar(&publicCert, "public", "", "(Required if adding new credentials)"+publicCertDesc)
-	hostAddCmd.Flags().StringVar(&privateCert, "private", "", "(Required if adding new credentials)"+privateCertDesc)
-	hostAddCmd.Flags().StringVar(&userName, "username", "", "(Required if adding new credentials)"+"Username.")
-	hostAddCmd.Flags().StringVar(&passWord, "password", "", "(Required if adding new credentials)"+"Password.")
-	hostAddCmd.Flags().StringVar(&ipF, "address", "", "(Required) Address of host.")
-	hostAddCmd.Flags().StringVar(&placementZoneID, "placement-zone", "", "(Required) Placement zone ID.")
-	hostAddCmd.Flags().StringVar(&credName, "credentials", "", "Credentials ID.")
-	hostAddCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", "Deployment policy ID.")
-	hostAddCmd.Flags().BoolVar(&autoAccept, "accept", false, "Auto accept if certificate is not trusted.")
+	hostAddCmd.Flags().StringVar(&publicCert, "public", "", "*Required if adding new credentials* "+publicCertDesc)
+	hostAddCmd.Flags().StringVar(&privateCert, "private", "", "*Required if adding new credentials* "+privateCertDesc)
+	hostAddCmd.Flags().StringVar(&userName, "username", "", "*Required if adding new credentials* "+userNameDesc)
+	hostAddCmd.Flags().StringVar(&passWord, "password", "", "*Required if adding new credentials* "+passWordDesc)
+	hostAddCmd.Flags().StringVar(&ipF, "address", "", required+ipFDesc)
+	hostAddCmd.Flags().StringVar(&placementZoneId, "placement-zone", "", required+placementZoneIdDesc)
+	hostAddCmd.Flags().StringVar(&credId, "credentials", "", credIdDesc)
+	hostAddCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", deplPolicyFDesc)
+	hostAddCmd.Flags().BoolVar(&autoAccept, "accept", false, autoAcceptDesc)
 	hostAddCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)
 	HostsRootCmd.AddCommand(hostAddCmd)
 }
@@ -63,7 +63,7 @@ func RunAddHost(args []string) (string, error) {
 		newID string
 		err   error
 	)
-	newID, err = hosts.AddHost(ipF, placementZoneID, deplPolicyF, credName, publicCert, privateCert, userName, passWord,
+	newID, err = hosts.AddHost(ipF, placementZoneId, deplPolicyF, credId, publicCert, privateCert, userName, passWord,
 		autoAccept,
 		custProps)
 
@@ -150,7 +150,7 @@ var hostListCmd = &cobra.Command{
 }
 
 func initHostList() {
-	hostListCmd.Flags().StringVarP(&queryF, "query", "q", "", "Add query.")
+	hostListCmd.Flags().StringVarP(&queryF, "query", "q", "", queryFDesc)
 	hostListCmd.SetUsageTemplate(help.DefaultUsageListTemplate)
 	HostsRootCmd.AddCommand(hostListCmd)
 }
@@ -216,10 +216,10 @@ var hostUpdateCmd = &cobra.Command{
 
 func initHostUpdate() {
 	hostUpdateCmd.Flags().StringVar(&hostName, "name", "", "New host name.")
-	hostUpdateCmd.Flags().StringVar(&credName, "credentials", "", "New credentials ID.")
-	hostUpdateCmd.Flags().StringVar(&placementZoneID, "placement-zone", "", "New placement zone ID.")
-	hostUpdateCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", "New deployment policy ID.")
-	hostUpdateCmd.Flags().BoolVar(&autoAccept, "accept", false, "Auto accept if certificate is not trusted.")
+	hostUpdateCmd.Flags().StringVar(&credId, "credentials", "", prefixNew+credIdDesc)
+	hostUpdateCmd.Flags().StringVar(&placementZoneId, "placement-zone", "", prefixNew+placementZoneIdDesc)
+	hostUpdateCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", prefixNew+deplPolicyFDesc)
+	hostUpdateCmd.Flags().BoolVar(&autoAccept, "accept", false, autoAcceptDesc)
 	HostsRootCmd.AddCommand(hostUpdateCmd)
 }
 
@@ -231,7 +231,7 @@ func RunHostUpdate(args []string) (string, error) {
 	if address, ok = ValidateArgsCount(args); !ok {
 		return "", MissingHostIdError
 	}
-	newID, err := hosts.EditHost(address, hostName, placementZoneID, deplPolicyF, credName, autoAccept)
+	newID, err := hosts.EditHost(address, hostName, placementZoneId, deplPolicyF, credId, autoAccept)
 
 	if err != nil {
 		return "", err

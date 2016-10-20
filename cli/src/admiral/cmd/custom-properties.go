@@ -47,16 +47,16 @@ var customPropertiesListCmd = &cobra.Command{
 }
 
 func initCustomPropertiesList() {
-	customPropertiesListCmd.Flags().StringVar(&cpHostIP, "host", "", "ID of the host that you want to manage custom properties.")
-	customPropertiesListCmd.Flags().StringVar(&cpCredID, "credentials", "", "ID of the credentials that you want to manage custom properties.")
-	//customPropertiesListCmd.Flags().StringVar(&cpResPoolID, "placement-zone", "", "ID of the placement zone that you want to manage custom properties.")
+	customPropertiesListCmd.Flags().StringVar(&cpHostId, "host", "", cpHostIdDesc)
+	customPropertiesListCmd.Flags().StringVar(&cpCredId, "credentials", "", cpCredIdDesc)
+	//customPropertiesListCmd.Flags().StringVar(&cpPzId, "placement-zone", "", cpPzIdDesc)
 	CustomPropertiesRootCmd.AddCommand(customPropertiesListCmd)
 }
 
 func RunCustomPropertiesList(args []string) (string, []error) {
 	var buffer bytes.Buffer
 	errors := make([]error, 0)
-	if cpHostIP != "" {
+	if cpHostId != "" {
 		if hostCp, err := hostCpString(); err == nil {
 			buffer.WriteString(hostCp)
 			buffer.WriteString("\n")
@@ -64,7 +64,7 @@ func RunCustomPropertiesList(args []string) (string, []error) {
 			errors = append(errors, err)
 		}
 	}
-	if cpCredID != "" {
+	if cpCredId != "" {
 		if credCp, err := credCpString(); err == nil {
 			buffer.WriteString(credCp)
 			buffer.WriteString("\n")
@@ -73,7 +73,7 @@ func RunCustomPropertiesList(args []string) (string, []error) {
 		}
 	}
 
-	//if cpResPoolID != "" {
+	//if cpPzId != "" {
 	//	if rpCp, err := rpCpString(); err == nil {
 	//		buffer.WriteString(rpCp)
 	//	} else {
@@ -84,27 +84,27 @@ func RunCustomPropertiesList(args []string) (string, []error) {
 }
 
 func hostCpString() (string, error) {
-	cpHost, err := hosts.GetPublicCustomProperties(cpHostIP)
+	cpHost, err := hosts.GetPublicCustomProperties(cpHostId)
 	if err != nil {
 		return "", err
 	}
 	cpJson, err := json.MarshalIndent(cpHost, "", "    ")
 	utils.CheckJson(err)
 	buffer := bytes.Buffer{}
-	buffer.WriteString(fmt.Sprintf("Custom Properties of Host: %s\n", cpHostIP))
+	buffer.WriteString(fmt.Sprintf("Custom Properties of Host: %s\n", cpHostId))
 	buffer.WriteString(fmt.Sprint(string(cpJson)))
 	return buffer.String(), nil
 }
 
 func credCpString() (string, error) {
-	cpCred, err := credentials.GetPublicCustomProperties(cpCredID)
+	cpCred, err := credentials.GetPublicCustomProperties(cpCredId)
 	if err != nil {
 		return "", err
 	}
 	cpJson, err := json.MarshalIndent(cpCred, "", "    ")
 	utils.CheckJson(err)
 	buffer := bytes.Buffer{}
-	buffer.WriteString(fmt.Sprintf("Custom Properties of Credentials: %s\n", cpCredID))
+	buffer.WriteString(fmt.Sprintf("Custom Properties of Credentials: %s\n", cpCredId))
 	buffer.WriteString(fmt.Sprint(string(cpJson)))
 	return buffer.String(), nil
 }
@@ -141,19 +141,19 @@ var customPropertiesSetCmd = &cobra.Command{
 }
 
 func initCustomPropertiesSet() {
-	customPropertiesSetCmd.Flags().StringSliceVarP(&cpKeys, "key", "k", []string{}, "(Required) Keys of custom property.")
-	customPropertiesSetCmd.Flags().StringSliceVarP(&cpVals, "value", "v", []string{}, "(Required) Values of custom property.")
-	customPropertiesSetCmd.Flags().StringVar(&cpHostIP, "host", "", "ID of the host that you want to manage custom properties.")
-	customPropertiesSetCmd.Flags().StringVar(&cpCredID, "credentials", "", "ID of the credentials that you want to manage custom properties.")
-	//customPropertiesSetCmd.Flags().StringVar(&cpResPoolID, "placement-zone", "", "ID of the placement zone that you want to manage custom properties.")
+	customPropertiesSetCmd.Flags().StringSliceVarP(&cpKeys, "key", "k", []string{}, required+cpKeysDesc)
+	customPropertiesSetCmd.Flags().StringSliceVarP(&cpVals, "value", "v", []string{}, required+cpValsDesc)
+	customPropertiesSetCmd.Flags().StringVar(&cpHostId, "host", "", cpHostIdDesc)
+	customPropertiesSetCmd.Flags().StringVar(&cpCredId, "credentials", "", cpCredIdDesc)
+	//customPropertiesSetCmd.Flags().StringVar(&cpPzId, "placement-zone", "", cpPzIdDesc)
 	CustomPropertiesRootCmd.AddCommand(customPropertiesSetCmd)
 }
 
 func RunCustomPropertiesSet(args []string) (string, []error) {
 	var buffer bytes.Buffer
 	errors := make([]error, 0)
-	if cpHostIP != "" {
-		if err := hosts.AddCustomProperties(cpHostIP, cpKeys, cpVals); err == nil {
+	if cpHostId != "" {
+		if err := hosts.AddCustomProperties(cpHostId, cpKeys, cpVals); err == nil {
 			buffer.WriteString("Host's custom properties are set.")
 			buffer.WriteString("\n")
 		} else {
@@ -171,8 +171,8 @@ func RunCustomPropertiesSet(args []string) (string, []error) {
 	//	}
 	//}
 
-	if cpCredID != "" {
-		if err := credentials.AddCustomProperties(cpCredID, cpKeys, cpVals); err == nil {
+	if cpCredId != "" {
+		if err := credentials.AddCustomProperties(cpCredId, cpKeys, cpVals); err == nil {
 			buffer.WriteString("Credentials's custom properties are set.")
 		} else {
 			errors = append(errors, err)
@@ -198,18 +198,18 @@ var customPropertiesRemoveCmd = &cobra.Command{
 }
 
 func initCustomPropertiesRemove() {
-	customPropertiesRemoveCmd.Flags().StringSliceVarP(&cpKeys, "key", "k", []string{}, "(Required) Keys of custom property.")
-	customPropertiesRemoveCmd.Flags().StringVar(&cpHostIP, "host", "", "ID of the host that you want to manage custom properties.")
-	customPropertiesRemoveCmd.Flags().StringVar(&cpCredID, "credentials", "", "ID of the credentials that you want to manage custom properties.")
-	//customPropertiesRemoveCmd.Flags().StringVar(&cpResPoolID, "placement-zone", "", "ID of the placement zone that you want to manage custom properties.")
+	customPropertiesRemoveCmd.Flags().StringSliceVarP(&cpKeys, "key", "k", []string{}, required+cpKeysDesc)
+	customPropertiesRemoveCmd.Flags().StringVar(&cpHostId, "host", "", cpHostIdDesc)
+	customPropertiesRemoveCmd.Flags().StringVar(&cpCredId, "credentials", "", cpCredIdDesc)
+	//customPropertiesRemoveCmd.Flags().StringVar(&cpPzId, "placement-zone", "", cpPzIdDesc)
 	CustomPropertiesRootCmd.AddCommand(customPropertiesRemoveCmd)
 }
 
 func RunCustomPropertiesRemove(args []string) (string, []error) {
 	var buffer bytes.Buffer
 	errors := make([]error, 0)
-	if cpHostIP != "" {
-		if err := hosts.RemoveCustomProperties(cpHostIP, cpKeys); err == nil {
+	if cpHostId != "" {
+		if err := hosts.RemoveCustomProperties(cpHostId, cpKeys); err == nil {
 			buffer.WriteString("Host's custom properties are removed.")
 			buffer.WriteString("\n")
 		} else {
@@ -227,8 +227,8 @@ func RunCustomPropertiesRemove(args []string) (string, []error) {
 	//	}
 	//}
 
-	if cpCredID != "" {
-		if err := credentials.RemoveCustomProperties(cpCredID, cpKeys); err == nil {
+	if cpCredId != "" {
+		if err := credentials.RemoveCustomProperties(cpCredId, cpKeys); err == nil {
 			buffer.WriteString("Credentials's custom properties are removed.")
 		} else {
 			errors = append(errors, err)

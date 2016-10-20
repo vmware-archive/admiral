@@ -18,21 +18,36 @@ import (
 )
 
 var (
+	//Prefixes
+	required    = "*Required* "
+	prefixNew   = "New "
+	vraOptional = "*vRA Optional* "
+
+	//Token flag description
+	tokenDesc = "Authorization token."
+
 	//Flag to wait for task
 	asyncTask bool
 	asyncDesc string = "Wait until the task is finished."
 
 	//Used to specify format of exported app.
-	formatTemplate string
+	formatTemplate     string
+	formatTemplateDesc = "File format - vRA/Docker"
 
 	//Used to specify file.
 	dirF string
 
+	//Used when provision app from file.
+	keepTemplate     bool
+	keepTemplateDesc = "Do not remove template after provisioning."
+
 	//Flag to decide to list included containers
-	inclCont bool
+	inclCont     bool
+	inclContDesc = "Lists containers inside the template."
 
 	//Flag for query.
-	queryF string
+	queryF     string
+	queryFDesc = "Add query."
 
 	//Flag for url
 	urlF string
@@ -47,7 +62,7 @@ var (
 
 	//Flag to store custom properties.
 	custProps     []string
-	custPropsDesc string = "Add custom properties. Format: key=value"
+	custPropsDesc = "Add custom properties. Format: key=value"
 
 	//Flag used to update.
 	newName        string
@@ -59,69 +74,122 @@ var (
 	allContainers bool
 
 	//Container Run Command Flags
-	clusterSize int32
-	cmds        []string
-	env         []string
-	hostName    string
-	retryCount  int32
-	logDriver   string
-	memory      int64
-	memorySwap  int64
-	networkMode string
-	ports       []string
-	publishAll  bool
-	restartPol  string
-	workingDir  string
-	volumes     []string
+	clusterSize      int32
+	clusterSizeDesc  = "The number of nodes to be provisioned."
+	cmds             []string
+	cmdsDesc         = "Commands to run on container start."
+	envVariables     []string
+	envVariablesDesc = "Set enivornment variables."
+	hostName         string
+	hostNameDesc     = "Container host name."
+	retryCount       int32
+	retryCountDesc   = "Max restart count on container failures."
+	logDriver        string
+	logDriverDesc    = "Logging driver for container."
+	memoryLimit      int64
+	memorySwap       int64
+	memorySwapDesc   = "Total memory limit(Memory + Swap), set -1 to disable swap"
+	networkMode      string
+	networkModeDesc  = "Sets the networking mode for the container."
+	ports            []string
+	portsDesc        = "Publish a container's port(s) to the host."
+	publishAll       bool
+	publishAllDesc   = "Publish all exposed ports to random ports."
+	restartPol       string
+	restartPolDesc   = "Restart policy to apply."
+	workingDir       string
+	workingDirDesc   = "Working directory inside the container"
+	volumes          []string
+	volumesDesc      = "Bind mount volume"
 
 	//Count for clusters
-	scaleCount int32
+	scaleCount     int32
+	scaleCountDesc = "Nodes count of the resource."
 
 	//Credentials flags
-	credName    string
-	publicCert  string
-	privateCert string
-	userName    string
-	passWord    string
-
-	publicCertDesc  string = "Location to your public key."
-	privateCertDesc string = "Location to your private key."
+	credId          string
+	credIdDesc      = "Credentials ID."
+	publicCert      string
+	publicCertDesc  = "Location to your public key."
+	privateCert     string
+	privateCertDesc = "Location to your private key."
+	userName        string
+	userNameDesc    = "Username."
+	passWord        string
+	passWordDesc    = "Password."
 
 	//Custom Properties flags
-	cpHostIP    string
-	cpCredID    string
-	cpResPoolID string
-	cpKeys      []string
-	cpVals      []string
+	cpHostId     string
+	cpHostIdDesc = "ID of the host that you want to manage custom properties."
+	cpCredId     string
+	cpCredIdDesc = "ID of the credentials that you want to manage custom properties."
+	cpPzId       string
+	cpPzIdDesc   = "ID of the placement zone that you want to manage custom properties."
+	cpKeys       []string
+	cpKeysDesc   = "Keys of custom properties."
+	cpVals       []string
+	cpValsDesc   = "Values of custom properties"
 
 	//Deployment policy flags
-	dpName        string
-	dpDescription string
+	dpName            string
+	dpNameDesc        = "New deployment policy name."
+	dpDescription     string
+	dpDescriptionDesc = "Deployment policy description."
 
 	//Project description flag
-	projectDescription string
+	projectDescription     string
+	projectDescriptionDesc = "Project description."
 
 	//Host flags
-	ipF             string
-	placementZoneID string
-	deplPolicyF     string
-	autoAccept      bool
+	ipF                 string
+	ipFDesc             = "Address of host."
+	placementZoneId     string
+	placementZoneIdDesc = "Placement zone ID."
+	deplPolicyF         string
+	deplPolicyFDesc     = "DeploymentPolicy ID."
+	autoAccept          bool
+	autoAcceptDesc      = "Auto accept if certificate is not trusted."
 
 	// Network flags
-	gateways      []string
-	subnets       []string
-	options       []string
-	ipranges      []string
-	hostAddresses []string
-	networkDriver string
-	ipamDriver    string
+	gateways          []string
+	gatewaysDesc      = "Gateway for the master subnet."
+	subnets           []string
+	subnetsDesc       = "Subnet in CIDR format that represents a network segment."
+	ipRanges          []string
+	ipRangesDesc      = "IP Range"
+	hostIds           []string
+	hostIdsDesc       = "Hosts IDs."
+	networkDriver     string
+	networkDriverDesc = "Driver to manage the Network."
+	ipamDriver        string
+	ipamDriverDesc    = "IPAM driver."
+
+	// Config flags
+	keyProp     string
+	keyPropDesc = "Key"
+	valProp     string
+	valPropDesc = "Value"
+
+	// Events/requests flag
+	clearAll           bool
+	clearAllReqDesc    = "Clear all logged requests."
+	clearAllEventsDesc = "Clear all logged events."
+
+	// Placements flags
+	cpuShares          string
+	cpuSharesDesc      = "CPU shares."
+	instances          string
+	instancesDesc      = "Instances."
+	priority           string
+	priorityDesc       = "Priority."
+	memoryLimitStr     string
+	memoryLimitDesc    = "Memory limit. Default unit: kb. Units supported: kb/mb/gb. Example: 1024mb"
+	priorityInt        int32
+	maxNumberInstances int32
+	cpuSharesInt       int32
 )
 
 var admiralLogo = `
-
-
-
-
        *****
      ***###***           @@      @@@@    @      @  @  @@@@       @@     @
    ******#******         @@      @   @   @@    @@  @  @   @      @@     @
@@ -135,7 +203,7 @@ var admiralLogo = `
 
                              Github: https://github.com/vmware/admiral
                              Wiki: https://github.com/vmware/admiral/wiki
-
+                             Version: %s
 `
 
 func ValidateArgsCount(args []string) (string, bool) {

@@ -26,11 +26,14 @@ import (
 )
 
 var (
-	username   string
-	password   string
-	showToken  bool
-	againstVra bool
-	tenant     string
+	username       string
+	password       string
+	tokenInfo      bool
+	tokenInfoDesc  = "Print information about current user."
+	againstVra     bool
+	againstVraDesc = "Login in Admiral instance embedded in vRA."
+	tenant         string
+	tenantDesc     = "Tenant."
 )
 
 func init() {
@@ -50,17 +53,17 @@ var loginCmd = &cobra.Command{
 }
 
 func initLogin() {
-	loginCmd.Flags().StringVarP(&username, "user", "u", "", "Username")
-	loginCmd.Flags().StringVarP(&password, "pass", "p", "", "Password")
-	loginCmd.Flags().StringVar(&tenant, "tenant", "", "vRA Tenant.")
-	loginCmd.Flags().BoolVar(&againstVra, "vra", false, "If you want to login in admiral instance embedded in vRA.")
+	loginCmd.Flags().StringVarP(&username, "user", "u", "", userNameDesc)
+	loginCmd.Flags().StringVarP(&password, "pass", "p", "", passWordDesc)
+	loginCmd.Flags().StringVar(&tenant, "tenant", "", vraOptional+tenantDesc)
+	loginCmd.Flags().BoolVar(&againstVra, "vra", false, vraOptional+againstVraDesc)
 	loginCmd.Flags().StringVar(&urlF, "url", "", "Set URL config property.")
-	loginCmd.Flags().BoolVar(&showToken, "status", false, "Print information about current user.")
+	loginCmd.Flags().BoolVar(&tokenInfo, "status", false, tokenInfoDesc)
 	RootCmd.AddCommand(loginCmd)
 }
 
 func RunLogin(args []string) string {
-	if showToken {
+	if tokenInfo {
 		fmt.Println(loginout.GetInfo())
 		return ""
 	}

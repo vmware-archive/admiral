@@ -20,7 +20,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var MissingPlacementZoneIdError = errors.New("Placement zone ID not provided.")
+var (
+	MissingPlacementZoneIdError   = errors.New("Placement zone ID not provided.")
+	MissingPlacementZoneNameError = errors.New("Placement zone name not provided.")
+)
 
 func init() {
 	initPlacementZoneAdd()
@@ -53,7 +56,7 @@ func RunPlacementZoneAdd(args []string) (string, error) {
 		ok     bool
 	)
 	if pzName, ok = ValidateArgsCount(args); !ok {
-		return "", errors.New("Placement zone name not provided.")
+		return "", MissingPlacementZoneNameError
 	}
 	id, err := placementzones.AddPZ(pzName, custProps)
 	if err != nil {

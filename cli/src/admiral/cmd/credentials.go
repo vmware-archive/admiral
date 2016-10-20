@@ -20,7 +20,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var MissingCredentialsIdError = errors.New("Credentials ID not provided.")
+var (
+	MissingCredentialsIdError   = errors.New("Credentials ID not provided.")
+	MissingCredentialsNameError = errors.New("Crendetial name not provided.")
+	MissingRequiredFlagsError   = errors.New("Missing required flags.")
+)
 
 func init() {
 	initCredentialsAdd()
@@ -41,29 +45,29 @@ var credentialsAddCmd = &cobra.Command{
 }
 
 func initCredentialsAdd() {
-	credentialsAddCmd.Flags().StringVar(&credName, "name", "", "(Required) Credentials name.")
-	credentialsAddCmd.Flags().StringVar(&publicCert, "public", "", "(Required if using certificates)"+publicCertDesc)
-	credentialsAddCmd.Flags().StringVar(&privateCert, "private", "", "(Required if using ceritficates)"+privateCertDesc)
-	credentialsAddCmd.Flags().StringVar(&userName, "username", "", "(Required if using username) Username.")
-	credentialsAddCmd.Flags().StringVar(&passWord, "password", "", "(Required if using username) Password.")
+	credentialsAddCmd.Flags().StringVar(&credId, "name", "", required+credIdDesc)
+	credentialsAddCmd.Flags().StringVar(&publicCert, "public", "", "*Required if using certificates* "+publicCertDesc)
+	credentialsAddCmd.Flags().StringVar(&privateCert, "private", "", "*Required if using ceritficates* "+privateCertDesc)
+	credentialsAddCmd.Flags().StringVar(&userName, "username", "", "*Required if using username* "+userNameDesc)
+	credentialsAddCmd.Flags().StringVar(&passWord, "password", "", "*Required if using username* "+passWordDesc)
 	credentialsAddCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)
 	CredentialsRootCmd.AddCommand(credentialsAddCmd)
 }
 
 func RunCredentialsAdd(args []string) (string, error) {
-	if credName == "" {
-		return "", errors.New("Provide crendetial name.")
+	if credId == "" {
+		return "", MissingCredentialsNameError
 	}
 	var (
 		newID string
 		err   error
 	)
 	if userName != "" && passWord != "" {
-		newID, err = credentials.AddByUsername(credName, userName, passWord, custProps)
+		newID, err = credentials.AddByUsername(credId, userName, passWord, custProps)
 	} else if publicCert != "" && privateCert != "" {
-		newID, err = credentials.AddByCert(credName, publicCert, privateCert, custProps)
+		newID, err = credentials.AddByCert(credId, publicCert, privateCert, custProps)
 	} else {
-		return "", errors.New("Missing required flags.")
+		return "", MissingRequiredFlagsError
 	}
 
 	if err != nil {
@@ -146,10 +150,10 @@ var credentialsUpdateCmd = &cobra.Command{
 }
 
 func initCredentialsUpdate() {
-	credentialsUpdateCmd.Flags().StringVar(&publicCert, "public", "", "Location to new public key.")
-	credentialsUpdateCmd.Flags().StringVar(&privateCert, "private", "", "Location to new private key.")
-	credentialsUpdateCmd.Flags().StringVar(&userName, "username", "", "New username.")
-	credentialsUpdateCmd.Flags().StringVar(&passWord, "password", "", "New password.")
+	credentialsUpdateCmd.Flags().StringVar(&publicCert, "public", "", publicCertDesc)
+	credentialsUpdateCmd.Flags().StringVar(&privateCert, "private", "", privateCertDesc)
+	credentialsUpdateCmd.Flags().StringVar(&userName, "username", "", userNameDesc)
+	credentialsUpdateCmd.Flags().StringVar(&passWord, "password", "", passWordDesc)
 	CredentialsRootCmd.AddCommand(credentialsUpdateCmd)
 }
 

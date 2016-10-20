@@ -20,7 +20,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var MissingCertIdError = errors.New("Certificate ID not provided.")
+var (
+	MissingCertIdError        = errors.New("Certificate ID not provided.")
+	MissingUrlOrFileCertError = errors.New("Url or file to add certificate not provided.")
+	ExclusiveFlagsError       = errors.New("--file and --url flags are exclusive, provide only one of them.")
+)
 
 func init() {
 	initCertAdd()
@@ -48,7 +52,7 @@ func initCertAdd() {
 
 func RunCertAdd(args []string) (string, error) {
 	if urlF != "" && dirF != "" {
-		return "", errors.New("--file and --url flags are exclusive, provide only one of them.")
+		return "", ExclusiveFlagsError
 	}
 
 	var (
@@ -60,7 +64,7 @@ func RunCertAdd(args []string) (string, error) {
 	} else if urlF != "" {
 		id, err = certificates.AddFromUrl(urlF)
 	} else {
-		return "", errors.New("Provide url or file to add certificate.")
+		return "", MissingUrlOrFileCertError
 	}
 
 	if err != nil {
