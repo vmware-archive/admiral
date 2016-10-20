@@ -379,6 +379,8 @@ let PlacementsStore = Reflux.createStore({
   onCreatePlacement: function(placement) {
     this.clearEditError();
 
+    this.setInData(['placements', 'editingItemData', 'selectedGroup'], placement.groupId);
+
     var placementDto = _createDto.call(this, placement);
 
     services.createPlacement(placementDto).then((placement) => {
@@ -390,6 +392,8 @@ let PlacementsStore = Reflux.createStore({
 
   onUpdatePlacement: function(placement) {
     this.clearEditError();
+
+    this.setInData(['placements', 'editingItemData', 'selectedGroup'], placement.groupId);
 
     var dto = _createDto.call(this, placement);
 

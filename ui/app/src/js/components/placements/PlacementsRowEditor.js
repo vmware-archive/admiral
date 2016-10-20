@@ -186,7 +186,11 @@ PlacementsRowEditor.prototype.setData = function(data) {
       selectedGroup = data.item ? data.item.group : data.group;
     }
     if (oldSelectedGroup !== selectedGroup && selectedGroup) {
-      this.placementGroupInput.setValue(selectedGroup.id ? selectedGroup.id : selectedGroup.name);
+      let placementGroupValue = selectedGroup.id ? selectedGroup.id : selectedGroup.name;
+      if (!placementGroupValue) {
+        placementGroupValue = selectedGroup;
+      }
+      this.placementGroupInput.setValue(placementGroupValue);
     }
 
     if (data.deploymentPolicies === constants.LOADING) {
