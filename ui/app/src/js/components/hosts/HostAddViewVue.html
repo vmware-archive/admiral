@@ -31,13 +31,6 @@
       <span class="help-block">{{i18n(validationErrors.hostAlias)}}</span>
     </div>
   </div>
-  <div id="credential" class="form-group" v-bind:class="{'has-error': validationErrors.credential}">
-    <label class="col-sm-3 control-label">{{i18n("app.host.details.credential")}}</label>
-    <div class="col-sm-9">
-      <div class="form-control dropdown-holder"></div>
-      <span class="help-block">{{i18n(validationErrors.credential)}}</span>
-    </div>
-  </div>
   <div id="resourcePool" class="form-group" v-bind:class="{'has-error': validationErrors.resourcePool}">
     <label class="col-sm-3 control-label">
       {{i18n("app.host.details.resourcePool")}}
@@ -46,6 +39,13 @@
     <div class="col-sm-9">
       <div class="form-control dropdown-holder"></div>
       <span class="help-block">{{i18n(validationErrors.resourcePool)}}</span>
+    </div>
+  </div>
+  <div id="credential" class="form-group" v-bind:class="{'has-error': validationErrors.credential}">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.credential")}}</label>
+    <div class="col-sm-9">
+      <div class="form-control dropdown-holder"></div>
+      <span class="help-block">{{i18n(validationErrors.credential)}}</span>
     </div>
   </div>
   <div v-if="isApplicationEmbedded()" id="deploymentPolicy" class="form-group">

@@ -7,7 +7,7 @@
   </a>
   <a v-bind:class="{'active': currentView === constants.VIEWS.PLACEMENTS.name}"
      class="nav-item placements" href="#/placements">
-    <img class="nav-item-image" src="image-assets/placements.png">
+    <span class="nav-item-image"><i class="fa fa-pie-chart"></i></span>
     <span>{{i18n("app.navbar.placements")}}</span>
   </a>
   <a v-bind:class="{'active': currentView === constants.VIEWS.TEMPLATES.name}"
@@ -47,7 +47,7 @@
     </a>
     <a v-bind:class="{'active': currentView === computeConstants.VIEWS.PLACEMENTS.name}"
        class="nav-item placements" href="#/placements">
-      <img class="nav-item-image" src="image-assets/placements.png">
+      <span class="nav-item-image"><i class="fa fa-pie-chart"></i></span>
       <span>{{i18n("app.navbar.placements")}}</span>
     </a>
     <a v-bind:class="{'active': currentView === computeConstants.VIEWS.ENVIRONMENTS.name}"

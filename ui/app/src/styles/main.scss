@@ -1485,9 +1485,16 @@ text-shadow: 0px 0px 20px black;
 }
 
 .nav-bar .nav-item > img.nav-item-image {
-  margin: 13px 0 0 23px;
+  margin-top: 13px;
+}
+
+.nav-bar .nav-item > .nav-item-image {
+  margin-left: 23px;
   float: left;
   width: 24px;
+  // For font icon
+  color: #333;
+  font-size: 24px;
 }
 .nav-bar .nav-item.inner > img.nav-item-image {
   margin: 12px 0 0 23px;
