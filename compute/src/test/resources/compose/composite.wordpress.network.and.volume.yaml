@@ -9,7 +9,7 @@ components:
       options:
         mountpoint: "/data/local/data"
   wordpress:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "wordpress"
       image: "wordpress:latest"
@@ -55,7 +55,7 @@ components:
       name: "front"
       driver: "front-driver-1"
   db:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "db"
       image: "mysql:5.7"

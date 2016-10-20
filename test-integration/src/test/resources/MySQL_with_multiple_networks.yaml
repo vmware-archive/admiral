@@ -6,7 +6,7 @@ properties:
   _leaseDays: 3
 components:
   mysql:
-    type: Container.Docker
+    type: App.Container
     data:
       name: mysql
       image: mariadb:10.0.26

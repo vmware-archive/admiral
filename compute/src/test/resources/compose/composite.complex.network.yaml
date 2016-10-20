@@ -2,14 +2,14 @@
 name: "hello-cluster"
 components:
   proxy:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "proxy"
       image: "haproxy"
       networks:
       - name: "front"
   app:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "app"
       image: "wordpress"
@@ -22,7 +22,7 @@ components:
         aliases:
         - "application-1"
   db:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "db"
       image: "postgres"

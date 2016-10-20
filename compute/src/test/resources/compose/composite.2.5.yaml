@@ -9,7 +9,7 @@ components:
       computeImage: linux
       instanceType: small
   wordpress:
-    type: Container.Docker
+    type: App.Container
     data:
       name: wordpress
       image: wordpress:4.3.1

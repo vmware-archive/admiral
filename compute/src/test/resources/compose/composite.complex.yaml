@@ -2,7 +2,7 @@
 name: "hello-cluster"
 components:
   h1:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "h1"
       image: "registry.hub.docker.com/kitematic/hello-world-nginx"
@@ -28,7 +28,7 @@ components:
       restart_policy: "always"
       network_mode: "bridge"
   h2:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "h2"
       image: "registry.hub.docker.com/kitematic/hello-world-nginx"
@@ -46,7 +46,7 @@ components:
       restart_policy: "always"
       network_mode: "host"
   h3:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "h3"
       image: "registry.hub.docker.com/kitematic/hello-world-nginx"
@@ -82,7 +82,7 @@ components:
       TEST_CUSTOM_3_1: "value31"
       TEST_CUSTOM_3_2: "value32"
   h4:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "h4"
       image: "registry.hub.docker.com/kitematic/hello-world-nginx"
@@ -98,7 +98,7 @@ components:
       restart_policy: "always"
       network_mode: "bridge"
   h5:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "h5-name"
       image: "registry.hub.docker.com/kitematic/hello-world-nginx"

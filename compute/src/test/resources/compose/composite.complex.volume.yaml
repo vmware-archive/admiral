@@ -2,14 +2,14 @@
 name: "hello-cluster"
 components:
   proxy:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "proxy"
       image: "haproxy"
       volumes:
       - "hadata:/var/data"
   app:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "app"
       image: "wordpress"
@@ -19,7 +19,7 @@ components:
       - "phpconf:/etc/php5/conf.d"
       volume_driver: "mydriver"
   db:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "db"
       image: "postgres"

@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 
 public enum ResourceType {
-    CONTAINER_TYPE(ComputeType.DOCKER_CONTAINER.toString(), "Container.Docker"),
+    CONTAINER_TYPE(ComputeType.DOCKER_CONTAINER.toString(), "App.Container"),
     COMPOSITE_COMPONENT_TYPE("COMPOSITE_COMPONENT", ""),
     COMPUTE_TYPE("COMPUTE", "Compute"),
     CONTAINER_HOST_TYPE("CONTAINER_HOST", ""),

@@ -4,7 +4,7 @@ properties:
   _leaseDays: "3"
 components:
   wordpress:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "wordpress"
       image: "centurylink/wordpress:3.9.1"
@@ -33,7 +33,7 @@ components:
     dependsOn:
     - "mysql"
   mysql:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "mysql"
       image: "centurylink/mysql:5.5"

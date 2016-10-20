@@ -42,7 +42,7 @@ var links = Immutable({
   COMPOSITE_DESCRIPTIONS_CONTENT: RESOURCES + '/composite-templates',
   COMPOSITE_COMPONENTS: RESOURCES + '/composite-components',
   CONTAINER_VOLUMES: RESOURCES + '/container-volumes',
-  DATA_COLLECTION: '/data-collection/types/Container.Docker',
+  DATA_COLLECTION: '/data-collection/types/App.Container',
 
   NETWORKS: RESOURCES + '/container-networks',
 

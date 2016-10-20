@@ -35,7 +35,7 @@ public class CompositeTemplateMapperTest {
         assertEquals("id", null, bp.id);
         assertEquals("name", "wordPressWithMySql", bp.name);
         assertNotNull("properties", bp.properties);
-        assertEquals("proerties.size", 1, bp.properties.size());
+        assertEquals("properties.size", 1, bp.properties.size());
 
         assertNotNull("components", bp.components);
         assertEquals("components.size", 2, bp.components.size());

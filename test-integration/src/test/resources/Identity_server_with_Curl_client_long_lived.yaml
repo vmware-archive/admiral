@@ -6,7 +6,7 @@ properties:
   _leaseDays: 3
 components:
   identity-server:
-    type: Container.Docker
+    type: App.Container
     data:
       name: identity-server
       image: cmp/cmp_test_identity:latest
@@ -16,7 +16,7 @@ components:
         aliases:
         - "identity"
   curl-client:
-    type: Container.Docker
+    type: App.Container
     data:
       name: curl-client
       image: cmp/cmp_test_curl:latest

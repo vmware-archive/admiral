@@ -56,12 +56,12 @@ import com.vmware.xenon.common.ServiceDocument;
  * <pre class="code">
  * components:
  *    wordpress:
- *      type: Container.Docker
+ *      type: App.Container
  *      data:
  *        restart_policy: ${mysql~restart_policy}
  *        ...
  *    mysql:
- *      type: Container.Docker
+ *      type: App.Container
  *      data:
  *          restart_policy: "no"
  *          ...
@@ -79,14 +79,14 @@ import com.vmware.xenon.common.ServiceDocument;
  * <pre class="code">
  * components:
  *    wordpress:
- *      type: Container.Docker
+ *      type: App.Container
  *      data:
  *        env:
  *          - var: WORDPRESS_DB_HOST
  *            value: ${_resource~mysql~address}
  *        ...
  *    mysql:
- *      type: Container.Docker
+ *      type: App.Container
  *      data:
  *          restart_policy: "no"
  *          ...

@@ -8,7 +8,7 @@ properties:
   _leaseDays: 3
 components:
   wordpress:
-    type: Container.Docker
+    type: App.Container
     data:
       restart_policy: ${mysql~restart_policy}
       name: wordpress
@@ -24,7 +24,7 @@ components:
       ports:
       - container_port: "80"
   mysql:
-    type: Container.Docker
+    type: App.Container
     data:
       restart_policy: "no"
       name: mysql

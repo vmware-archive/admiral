@@ -9,7 +9,7 @@ components:
       options:
         mountpoint: "/data/local/data"
   wordpress:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "wordpress"
       image: "wordpress:latest"
@@ -40,7 +40,7 @@ components:
       options:
         mountpoint: "/etc/php5/conf.d"
   db:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "db"
       image: "mysql:5.7"

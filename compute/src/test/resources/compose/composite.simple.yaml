@@ -4,7 +4,7 @@ status: "PUBLISHED"
 name: "hello"
 components:
   hello:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "hello"
       image: "registry.hub.docker.com/kitematic/hello-world-nginx"

@@ -2,7 +2,7 @@
 name: "Docker Compose 2016-06-06 09.20.46.085 GMT"
 components:
   db:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "db"
       image: "mysql:5.7"

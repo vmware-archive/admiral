@@ -6,7 +6,7 @@ properties:
   _leaseDays: "360"
 components:
   admiral-master:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "admiral-master"
       image: "54.85.215.190:8080/vmware/admiral:latest"
@@ -14,7 +14,7 @@ components:
       ports:
       - container_port: "8282"
   admiral-child:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "admiral-child"
       image: "54.85.215.190:8080/vmware/admiral:latest"

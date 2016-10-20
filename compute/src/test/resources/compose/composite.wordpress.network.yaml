@@ -2,7 +2,7 @@
 name: "Docker Compose 2016-09-13 16.05.49.972 GMT"
 components:
   wordpress:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "wordpress"
       image: "wordpress:latest"
@@ -39,7 +39,7 @@ components:
       name: "front"
       driver: "front-driver-1"
   db:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "db"
       image: "mysql:5.7"

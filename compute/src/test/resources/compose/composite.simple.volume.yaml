@@ -2,14 +2,14 @@
 name: "hello"
 components:
   db:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "db"
       image: "postgres"
       volumes:
       - "database:/var/lib/postgres/data"
   php:
-    type: "Container.Docker"
+    type: "App.Container"
     data:
       name: "php"
       image: "php-fpm:5.6"

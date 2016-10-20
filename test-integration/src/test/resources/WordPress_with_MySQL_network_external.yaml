@@ -6,7 +6,7 @@ properties:
   _leaseDays: 3
 components:
   wordpress:
-    type: Container.Docker
+    type: App.Container
     data:
       name: wordpress
       image: wordpress:4.3.1
@@ -26,7 +26,7 @@ components:
       networks:
       - name: "external_wpnet"
   mysql:
-    type: Container.Docker
+    type: App.Container
     data:
       name: mysql
       image: mariadb:10.0.26
