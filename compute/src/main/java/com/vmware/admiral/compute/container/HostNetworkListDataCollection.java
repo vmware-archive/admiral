@@ -327,7 +327,7 @@ public class HostNetworkListDataCollection extends StatefulService {
                                 networkState.external = true;
 
                                 networkState.tenantLinks = group;
-                                networkState.descriptionLink = UriUtils.buildUriPath(
+                                networkState.descriptionLink = String.format("%s-%s",
                                         ContainerNetworkDescriptionService.DISCOVERED_DESCRIPTION_LINK,
                                         UUID.randomUUID().toString());
 
