@@ -468,10 +468,9 @@ public class HostContainerListDataCollection extends StatefulService {
                                     }
                                 } else {
                                     containerState.tenantLinks = group;
-                                    containerState.descriptionLink = UriUtils
-                                            .buildUriPath(
-                                                    SystemContainerDescriptions.DISCOVERED_DESCRIPTION_LINK,
-                                                    UUID.randomUUID().toString());
+                                    containerState.descriptionLink = String.format("%s-%s",
+                                            SystemContainerDescriptions.DISCOVERED_DESCRIPTION_LINK,
+                                            UUID.randomUUID().toString());
                                     containerState.image = callback.containerIdsAndImage
                                             .get(containerState.id);
                                 }

@@ -106,10 +106,9 @@ public class ContainerUtilTest extends ComputeBaseTest {
     private ContainerState createContainerState() throws Throwable {
 
         ContainerState containerState = new ContainerState();
-        containerState.descriptionLink = UriUtils
-                .buildUriPath(
-                        SystemContainerDescriptions.DISCOVERED_DESCRIPTION_LINK,
-                        UUID.randomUUID().toString());
+        containerState.descriptionLink = String.format("%s-%s",
+                SystemContainerDescriptions.DISCOVERED_DESCRIPTION_LINK,
+                UUID.randomUUID().toString());
         containerState.image = "test-image";
         containerState.tenantLinks = Collections.singletonList(TENANT_LINKS);
         containerState.command = new String[] { CONTAINER_COMMAND };
