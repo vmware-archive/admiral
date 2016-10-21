@@ -60,6 +60,7 @@ import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
+import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -347,6 +348,43 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(cc.documentSelfLink, cont2.compositeComponentLink);
         assertTrue((network.compositeComponentLinks.size() == 1)
                 && network.compositeComponentLinks.contains(cc.documentSelfLink));
+    }
+
+    @Test
+    public void testRequestLifecycleWithContainerNetworkShouldCleanNetworkStatesOnProvisionAndDeletionFailure()
+            throws Throwable {
+        host.log(
+                "########  Start of "
+                + "testRequestLifecycleWithContainerNetworkShouldCleanNetworkStatesOnProvisionAndDeletionFailure ######## ");
+
+        // 1. Request a network with expected failure:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.NETWORK_TYPE.getName(), containerNetworkDesc.documentSelfLink);
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        request.customProperties.put(ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY, computeHost.id);
+
+        // This should ensure that both the provisioning and the deletion (cleanup) requests to the
+        // mock adapter will fail - during the allocation, the custom properties will be copied into
+        // the network state. During the provisioning, the mock adapter will read the
+        // EXPECTED_FAILURE from the request's custom properties and during deletion (cleanup) -
+        // from the network state.
+        request.customProperties.put(MockDockerNetworkAdapterService.FAILURE_EXPECTED,
+                Boolean.TRUE.toString());
+
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // 2. Wait for reservation removed substage
+        waitForRequestToFail(request);
+
+        // Verify request status
+        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+
+        // and there must be no container network state left
+        ServiceDocumentQueryResult networkStates = getDocument(ServiceDocumentQueryResult.class,
+                ContainerNetworkService.FACTORY_LINK);
+        assertEquals(0L, networkStates.documentCount.longValue());
     }
 
     @Test
