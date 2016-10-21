@@ -30,8 +30,14 @@ import (
 	"encoding/pem"
 )
 
+const (
+	HttpsDefaultPort string = ":443"
+)
+
 var (
 	Code401Error      = errors.New("HTTP Status 401 - Authentication required")
+	Code403Error      = errors.New("HTTP Status 403 - Forbidden")
+	Code404Error      = errors.New("HTTP Status 404 - Not found.")
 	NullResponseError = errors.New("Response from the server is null.")
 )
 
@@ -61,6 +67,7 @@ func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 		return nil, nil, err
 	}
 	resp, err := netClient.Do(req)
+
 	redo, err := checkForCertErrors(req.URL.Host, err)
 	if err != nil {
 		return nil, nil, err
@@ -89,11 +96,7 @@ func CheckResponseError(resp *http.Response, tokenFrom string) error {
 		return NullResponseError
 	}
 	if resp.StatusCode >= 400 && resp.StatusCode <= 500 {
-		if resp.StatusCode == 401 && resp.Body == nil {
-			return Code401Error
-		}
 		body, err := ioutil.ReadAll(resp.Body)
-		utils.CheckJson(err)
 		//Create 2 new readers.
 		//rdrToUse will be modified. rdrToSet will stay the same and set back to the request.
 		rdrToUse := ioutil.NopCloser(bytes.NewBuffer(body))
@@ -105,7 +108,7 @@ func CheckResponseError(resp *http.Response, tokenFrom string) error {
 		message := &ResponseError{}
 		err = json.Unmarshal(respBody, message)
 		if err != nil {
-			return err
+			return getResponseError(resp.StatusCode)
 		}
 		if message.Message == "forbidden" {
 			return errors.New("Authorization error. Token used from " + tokenFrom)
@@ -209,6 +212,7 @@ func checkForCertErrors(url string, errA error) (bool, error) {
 }
 
 func checkCertInLoadedCerts(url string) bool {
+	url = urlAppendDefaultPort(url)
 	conn, err := tls.Dial("tcp", url, &tls.Config{InsecureSkipVerify: true})
 	if err != nil {
 		return false
@@ -235,7 +239,9 @@ func checkCertInLoadedCerts(url string) bool {
 }
 
 func promptAllCerts(url string) bool {
+	url = urlAppendDefaultPort(url)
 	conn, err := tls.Dial("tcp", url, &tls.Config{InsecureSkipVerify: true})
+	fmt.Println(err)
 	if err != nil {
 		return false
 	}
@@ -307,4 +313,32 @@ func containsCert(cert *x509.Certificate) bool {
 		}
 	}
 	return false
+}
+
+func urlRemoveTrailingSlash(url string) string {
+	newUrl := url
+	if string(url[len(url)-1]) == "/" {
+		newUrl = url[:len(url)-2]
+	}
+	return newUrl
+}
+
+func urlAppendDefaultPort(url string) string {
+	url = urlRemoveTrailingSlash(url)
+	if len(strings.Split(url, ":")) == 2 {
+		return url
+	}
+	return url + HttpsDefaultPort
+}
+
+func getResponseError(code int) error {
+	switch code {
+	case 401:
+		return Code401Error
+	case 403:
+		return Code403Error
+	case 404:
+		return Code404Error
+	}
+	return nil
 }
