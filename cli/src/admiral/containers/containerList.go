@@ -47,17 +47,13 @@ func (lc *ListContainers) FetchContainers(queryF string) (int, error) {
 	}
 	err := json.Unmarshal(respBody, lc)
 	utils.CheckJson(err)
-
 	systemCount := 0
-
 	for _, c := range lc.Documents {
 		if c.System {
 			systemCount++
 		}
 	}
-
 	count := len(lc.DocumentLinks)
-
 	return count - systemCount, nil
 }
 

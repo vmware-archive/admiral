@@ -277,8 +277,8 @@ var containerListCmd = &cobra.Command{
 }
 
 func initContainerList() {
-	containerListCmd.Flags().BoolVarP(&allContainers, "all", "a", false, "Show all containers.")
-	containerListCmd.Flags().StringVarP(&queryF, "query", "q", "", "Add query.")
+	containerListCmd.Flags().BoolVarP(&allContainers, "all", "a", false, allContainersDesc)
+	containerListCmd.Flags().StringVarP(&queryF, "query", "q", "", queryFDesc)
 	containerListCmd.SetUsageTemplate(help.DefaultUsageListTemplate)
 	RootCmd.AddCommand(containerListCmd)
 }
@@ -381,8 +381,8 @@ var containerRunCmd = &cobra.Command{
 	Long:  "Provision container",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		output, err := RunContainerRun(args)
-		processOutput(output, err)
+		output, errs := RunContainerRun(args)
+		processOutputMultiErrors(output, errs)
 	},
 }
 
@@ -410,37 +410,67 @@ func initContainerRun() {
 	RootCmd.AddCommand(containerRunCmd)
 }
 
-func RunContainerRun(args []string) (string, error) {
+func RunContainerRun(args []string) (string, []error) {
 	var (
-		imgName string
-		ok      bool
-		newID   string
-		err     error
+		imageName string
+		newID     string
+		output    string
+		errorArr  []error
+		ok        bool
 	)
-	if imgName, ok = ValidateArgsCount(args); !ok {
-		return "", errors.New("Image not provided.")
-	}
-	imgNameArr := strings.Split(imgName, "/")
-	name := imgNameArr[len(imgNameArr)-1]
 
+	if imageName, ok = ValidateArgsCount(args); !ok {
+		err := errors.New("Image name not provided.")
+		return "", []error{err}
+	}
 	cd := &containers.ContainerDescription{}
-	cd.Create(
-		imgName, name, cpuShares, networkMode, restartPol, workingDir, logDriver, hostName, deplPolicyF, //strings
-		clusterSize, retryCount, //int32
-		memoryLimit, memorySwap, //int64
-		cmds, envVariables, volumes, ports, //[]string
-		publishAll) //bool
+
+	err := cd.SetImage(imageName)
+	errorArr = append(errorArr, err)
+
+	err = cd.SetName("")
+	errorArr = append(errorArr, err)
+
+	err = cd.SetNetworkMode(networkMode)
+	errorArr = append(errorArr, err)
+
+	err = cd.SetRestartPolicy(restartPol)
+	errorArr = append(errorArr, err)
+
+	err = cd.SetLogConfig(logDriver)
+	errorArr = append(errorArr, err)
+
+	err = cd.SetClusterSize(clusterSize)
+	errorArr = append(errorArr, err)
+
+	err = cd.SetMemoryLimit(memoryLimit)
+	errorArr = append(errorArr, err)
+
+	err = cd.SetMemorySwapLimit(memorySwap)
+	errorArr = append(errorArr, err)
+
+	cd.SetCommands(cmds)
+	cd.SetVolumes(volumes)
+	cd.SetPortBindings(ports)
+	cd.SetEnvVars(envVariables)
+	cd.SetPublishAll(publishAll)
+	cd.SetCpuShares(cpuShares)
+	cd.SetWorkingDir(workingDir)
+	cd.SetHostName(hostName)
+	cd.SetDeploymentPolicyId(deplPolicyF)
+	cd.SetMaxRetryCount(retryCount)
+	errorArr = checkForErrors(errorArr)
+	if len(errorArr) > 0 {
+		return "", errorArr
+	}
 	newID, err = cd.RunContainer(projectF, asyncTask)
-	if err != nil {
-		return "", err
+	errorArr = append(errorArr, err)
+
+	if asyncTask {
+		output = "Image is being provisioned."
+		return output, errorArr
 	} else {
-		var output string
-		if asyncTask {
-			output = "Image is being provisioned."
-			return output, err
-		} else {
-			output = "Image provisioned: " + newID
-			return output, err
-		}
+		output = "Image provisioned: " + newID
+		return output, errorArr
 	}
 }

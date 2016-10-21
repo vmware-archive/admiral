@@ -14,33 +14,30 @@ package containers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	"admiral/client"
 	"admiral/config"
-	"admiral/deplPolicy"
 	"admiral/images"
 	"admiral/track"
 	"admiral/utils"
+	"errors"
 )
 
 type LogConfig struct {
 	Type utils.NilString `json:"type"`
 }
 
-func (lc *LogConfig) SetType(s string) {
+func (lc *LogConfig) SetType(s string) error {
 	if s == "" || s == "none" || s == "json-file" ||
 		s == "syslog" || s == "journald" || s == "gelf" ||
 		s == "fluentd" || s == "awslogs" || s == "splunk" ||
 		s == "etwlogs" || s == "gcplogs" {
 		lc.Type = utils.NilString{s}
-	} else {
-		fmt.Println("Invalid log driver.")
-		os.Exit(0)
+		return nil
 	}
+	return errors.New("Invalid log driver.")
 }
 
 //Note: nil types are from "admiral/nulls" package.
@@ -48,12 +45,12 @@ func (lc *LogConfig) SetType(s string) {
 type ContainerDescription struct {
 	Image              utils.NilString `json:"image"`
 	Name               utils.NilString `json:"name"`
-	Cluster            utils.NilInt32  `json:"_cluster"`
-	Command            []string        `json:"command"`
+	ClusterSize        utils.NilInt32  `json:"_cluster"`
+	Commands           []string        `json:"command"`
 	CpuShares          utils.NilString `json:"cpuShares"`
 	DeploymentPolicyID utils.NilString `json:"deploymentPolicyId"`
 	Env                []string        `json:"env"`
-	ExposeService      []string        `json:"exposeService"`
+	ExposeServices     []string        `json:"exposeService"`
 	Hostname           utils.NilString `json:"hostname"`
 	Links              []string        `json:"links"`
 	LogConfig          LogConfig       `json:"logConfig"`
@@ -68,14 +65,115 @@ type ContainerDescription struct {
 	Volumes            []string        `json:"volumes"`
 }
 
-func (cd *ContainerDescription) Create(
-	imgName, name, cpuShares, networkMode, restartPol, workingDir, logDriver, hostName, deplPolicyF string,
-	clusterSize, retryCount int32,
-	memory, memorySwap int64,
-	cmds, env, volumes, ports []string,
-	publishAll bool) {
+func (cd *ContainerDescription) SetImage(imageName string) error {
+	if imageName == "" {
+		return errors.New("Empty image name.")
+	}
+	cd.Image = utils.NilString{imageName}
+	return nil
+}
 
-	//Begin setting up array of port objects.
+func (cd *ContainerDescription) SetName(name string) error {
+	if name == "" && cd.Image.Value != "" {
+		splittedImageName := strings.Split(cd.Image.Value, "/")
+		nameToSet := splittedImageName[len(splittedImageName)-1]
+		cd.Name = utils.NilString{nameToSet}
+		return nil
+	}
+	if name == "" {
+		return errors.New("Empty container name.")
+	}
+	cd.Name = utils.NilString{name}
+	return nil
+}
+
+func (cd *ContainerDescription) SetClusterSize(clusterSize int32) error {
+	if clusterSize <= 0 {
+		return errors.New("Cluster size cannot be negative or 0 number.")
+	}
+	cd.ClusterSize = utils.NilInt32{clusterSize}
+	return nil
+}
+
+func (cd *ContainerDescription) SetCommands(commands []string) {
+	cd.Commands = commands
+}
+
+func (cd *ContainerDescription) SetCpuShares(cpuShares string) {
+	cd.CpuShares = utils.NilString{cpuShares}
+}
+
+func (cd *ContainerDescription) SetDeploymentPolicyId(dpId string) {
+	cd.DeploymentPolicyID = utils.NilString{dpId}
+}
+
+func (cd *ContainerDescription) SetEnvVars(envVars []string) {
+	if len(envVars) == 0 {
+		cd.Env = nil
+	}
+	cd.Env = envVars
+}
+
+func (cd *ContainerDescription) SetExposeServices(exposeServices []string) {
+	if len(exposeServices) == 0 {
+		cd.ExposeServices = nil
+	}
+	cd.ExposeServices = exposeServices
+}
+
+func (cd *ContainerDescription) SetHostName(hostName string) {
+	cd.Hostname = utils.NilString{hostName}
+}
+
+func (cd *ContainerDescription) SetLinks(links []string) {
+	if len(links) == 0 {
+		cd.Links = nil
+	}
+	cd.Links = links
+}
+
+func (cd *ContainerDescription) SetLogConfig(logDriver string) error {
+	logconf := LogConfig{}
+	err := logconf.SetType(logDriver)
+	if err != nil {
+		return err
+	}
+	cd.LogConfig = logconf
+	return nil
+}
+
+func (cd *ContainerDescription) SetMaxRetryCount(maxRetries int32) {
+	cd.MaximumRetryCount = utils.NilInt32{maxRetries}
+}
+
+func (cd *ContainerDescription) SetMemoryLimit(memoryLimit int64) error {
+	if memoryLimit < 0 {
+		return errors.New("Memory limit cannot be negative number.")
+	}
+	if memoryLimit > 0 && memoryLimit < 4194304 {
+		return errors.New("Memory limit should be at least 4194304 bytes (4MB)")
+	}
+	cd.MemoryLimit = utils.NilInt64{memoryLimit}
+	return nil
+}
+
+func (cd *ContainerDescription) SetMemorySwapLimit(memorySwapLimit int64) error {
+	if memorySwapLimit <= -1 {
+		return errors.New("Memory swap limit cannot be less than -1.")
+	}
+	cd.MemorySwapLimit = utils.NilInt64{memorySwapLimit}
+	return nil
+}
+
+func (cd *ContainerDescription) SetNetworkMode(networkMode string) error {
+	if networkMode != "none" && networkMode != "host" && networkMode != "bridge" {
+		return errors.New("Invalid network mode.")
+	}
+	cd.NetworkMode = utils.NilString{networkMode}
+	return nil
+}
+
+func (cd *ContainerDescription) SetPortBindings(ports []string) {
 	portArr := make([]Port, 0)
 	if len(ports) > 0 {
 		for _, p := range ports {
@@ -83,54 +181,32 @@ func (cd *ContainerDescription) Create(
 			currPort.SetPorts(p)
 			portArr = append(portArr, currPort)
 		}
+		cd.PortBindings = portArr
+	} else {
+		cd.PortBindings = nil
 	}
-	//End setting up array of port objects.
-	logconf := LogConfig{}
-	logconf.SetType(logDriver)
+}
 
-	//Restart policy validation.
-	if restartPol != "no" && restartPol != "always" && restartPol != "on-failure" {
-		fmt.Println("Invalid restart policy.")
-		os.Exit(0)
-	}
-
-	//Network mode validation.
-	if networkMode != "none" && networkMode != "host" && networkMode != "bridge" {
-		fmt.Println("Invalid network mode.")
-		os.Exit(0)
-	}
-
-	//Deployment policy validation.
-	var dp string
-	if deplPolicyF != "" {
-		dpLinks := deplPolicy.GetDPLinks(deplPolicyF)
-		if len(dpLinks) > 1 {
-			fmt.Println("Deployment policy have duplicate names, please resolve this issue.")
-			os.Exit(0)
-		} else if len(dpLinks) < 1 {
-			fmt.Println("Deployment policy not found.")
-			os.Exit(0)
-		}
-		dp = strings.Replace(dpLinks[0], "/resources/deployment-policies/", "", -1)
-	}
-
-	cd.Image = utils.NilString{imgName}
-	cd.Name = utils.NilString{name}
-	cd.Cluster = utils.NilInt32{clusterSize}
-	cd.Command = cmds
-	cd.CpuShares = utils.NilString{cpuShares}
-	cd.DeploymentPolicyID = utils.NilString{dp}
-	cd.Env = env
-	cd.Hostname = utils.NilString{hostName}
-	cd.LogConfig = logconf
-	cd.MaximumRetryCount = utils.NilInt32{retryCount}
-	cd.MemoryLimit = utils.NilInt64{memory}
-	cd.MemorySwapLimit = utils.NilInt64{memorySwap}
-	cd.NetworkMode = utils.NilString{networkMode}
+func (cd *ContainerDescription) SetPublishAll(publishAll bool) {
 	cd.PublishAll = publishAll
-	cd.PortBindings = portArr
-	cd.RestartPolicy = utils.NilString{restartPol}
+}
+
+func (cd *ContainerDescription) SetRestartPolicy(restartPolicy string) error {
+	if restartPolicy != "no" && restartPolicy != "always" && restartPolicy != "on-failure" {
+		return errors.New("Invalid restart policy.")
+	}
+	cd.RestartPolicy = utils.NilString{restartPolicy}
+	return nil
+}
+
+func (cd *ContainerDescription) SetWorkingDir(workingDir string) {
 	cd.WorkingDir = utils.NilString{workingDir}
+}
+
+func (cd *ContainerDescription) SetVolumes(volumes []string) {
+	if len(volumes) == 0 {
+		cd.Volumes = nil
+	}
 	cd.Volumes = volumes
 }
 

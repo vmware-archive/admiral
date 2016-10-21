@@ -16,6 +16,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -27,7 +28,6 @@ import (
 
 	"admiral/config"
 	"admiral/utils"
-	"encoding/pem"
 )
 
 const (
@@ -241,7 +241,6 @@ func checkCertInLoadedCerts(url string) bool {
 func promptAllCerts(url string) bool {
 	url = urlAppendDefaultPort(url)
 	conn, err := tls.Dial("tcp", url, &tls.Config{InsecureSkipVerify: true})
-	fmt.Println(err)
 	if err != nil {
 		return false
 	}

@@ -12,8 +12,10 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"strings"
 	"text/tabwriter"
 )
 
@@ -71,7 +73,8 @@ var (
 	newCred        string
 
 	//If true print all containers.
-	allContainers bool
+	allContainers     bool
+	allContainersDesc = "Show all containers."
 
 	//Container Run Command Flags
 	clusterSize      int32
@@ -221,6 +224,20 @@ func processOutput(output string, err error) {
 	}
 }
 
+func processOutputMultiErrors(output string, errs []error) {
+	var buffer bytes.Buffer
+	for _, err := range errs {
+		if err != nil {
+			buffer.WriteString(err.Error() + "\n")
+		}
+	}
+	if buffer.String() == "" {
+		fmt.Println(output)
+	} else {
+		fmt.Println(strings.TrimSpace(buffer.String()))
+	}
+}
+
 func formatAndPrintOutput(output string, err error) {
 	writer := tabwriter.NewWriter(os.Stdout, 5, 0, 5, ' ', 0)
 	if err != nil {
@@ -229,4 +246,14 @@ func formatAndPrintOutput(output string, err error) {
 		fmt.Fprintln(writer, output)
 	}
 	writer.Flush()
+}
+
+func checkForErrors(errs []error) []error {
+	notNilErrs := make([]error, 0)
+	for _, err := range errs {
+		if err != nil {
+			notNilErrs = append(notNilErrs, err)
+		}
+	}
+	return notNilErrs
 }
