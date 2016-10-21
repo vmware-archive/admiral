@@ -76,10 +76,11 @@ export var RegistryActions = Reflux.createActions([
 
 export var HostContextToolbarActions = Reflux.createActions([
   'openToolbarResourcePools', 'openToolbarCredentials', 'openToolbarCertificates',
-  'openToolbarDeploymentPolicies', 'closeToolbar',
+  'openToolbarDeploymentPolicies', 'openToolbarEndpoints', 'closeToolbar',
   'createResourcePool', 'manageResourcePools',
   'createCredential', 'manageCredentials', 'manageCertificates',
-  'createDeploymentPolicy', 'manageDeploymentPolicies'
+  'createDeploymentPolicy', 'manageDeploymentPolicies',
+  'createEndpoint', 'manageEndpoints'
 ]);
 
 export var ComputeContextToolbarActions = Reflux.createActions([
