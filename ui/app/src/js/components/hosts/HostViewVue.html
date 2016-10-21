@@ -45,6 +45,7 @@
   <context-sidepanel class="right-context-panel">
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
+        v-if="showTabAddHost"
         v-bind:active="activeContextItem === 'resourcePools'"
         v-bind:icon-class="'fa fa-bullseye'"
         v-bind:label="i18n('app.resourcePool.contextPanelTooltip')"
@@ -52,6 +53,7 @@
       </context-sidepanel-toolbar-item>
 
       <context-sidepanel-toolbar-item
+        v-if="showTabAddHost"
         v-bind:active="activeContextItem === 'credentials'"
         v-bind:icon-class="'fa fa-key'"
         v-bind:label="i18n('app.credential.contextPanelTooltip')"
@@ -59,6 +61,7 @@
       </context-sidepanel-toolbar-item>
 
       <context-sidepanel-toolbar-item
+        v-if="showTabAddHost"
         v-bind:active="activeContextItem === 'certificates'"
         v-bind:icon-class="'fa fa-certificate'"
         v-bind:label="i18n('app.certificate.contextPanelTooltip')"
@@ -66,11 +69,19 @@
       </context-sidepanel-toolbar-item>
 
       <context-sidepanel-toolbar-item
-        v-if="isApplicationEmbedded()"
+        v-if="showTabAddHost && isApplicationEmbedded()"
         v-bind:active="activeContextItem === 'deploymentPolicies'"
         v-bind:icon-class="'fa fa-file-text'"
         v-bind:label="i18n('app.deploymentPolicy.contextPanelTooltip')"
         v-on:open="openToolbarDeploymentPolicies()" v-on:close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+
+      <context-sidepanel-toolbar-item
+        v-if="showTabCreateHost"
+        v-bind:active="activeContextItem === 'endpoints'"
+        v-bind:icon-class="'fa fa-cloud'"
+        v-bind:label="i18n('app.endpoint.contextPanelTooltip')"
+        v-on:open="openToolbarEndpoints()" v-on:close="closeToolbar()">
       </context-sidepanel-toolbar-item>
     </div>
 
@@ -83,6 +94,8 @@
         v-bind:model="model.contextView.activeItem.data"></certificates-list>
       <deployment-policies-list v-if="activeContextItem === 'deploymentPolicies'"
         v-bind:model="model.contextView.activeItem.data"></deployment-policies-list>
+      <endpoints-view v-if="activeContextItem === 'endpoints'"
+        v-bind:model="model.contextView.activeItem.data"></endpoints-view>
     </div>
 
   </context-sidepanel>

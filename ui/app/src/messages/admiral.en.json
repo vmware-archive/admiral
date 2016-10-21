@@ -33,7 +33,7 @@
       "details": {
         "title": {
           "add": "Add Host",
-          "create": "New Host",
+          "create": "Create Host",
           "edit": "Edit Host"
         },
         "address": "Address",
@@ -46,6 +46,7 @@
         "tags": "Tags",
         "tagsHint": "Enter key:value tags",
         "reservationPolicy": "Reservation policy",
+        "endpoint": "Endpoint",
         "connectionType": "Connection type",
         "connectionTypeShort": "Connection",
         "customProperties": "Custom properties",
@@ -63,8 +64,15 @@
         "memory": "Memory",
         "storage": "Storage",
         "providerType": "Cloud type",
-        "awsZoneId": "Zone ID",
-        "awsInstanceType": "Instance type",
+        "regionId": "Region ID",
+        "name": "Name",
+        "awsType": "Instance type",
+        "awsOS": "OS",
+        "azureType": "Instance type",
+        "azureOS": "OS",
+        "vsphereCpu": "CPU",
+        "vsphereMemory": "Memory",
+        "vsphereVmdk": "VMDK",
         "clusterSize": "Cluster size"
       },
       "list": {

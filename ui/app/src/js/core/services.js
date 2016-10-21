@@ -555,7 +555,7 @@ services.loadHostDescriptions = function(documentSelfLinks) {
 services.createHostDescription = function(hostData) {
   var hostDescription = {
     name: hostData.instanceType,
-    zoneId: hostData.zoneId,
+    regionId: hostData.regionId,
     customProperties: {
       __resourcePoolLink: hostData.resourcePool.documentSelfLink,
       __authCredentialsLink: hostData.credential.documentSelfLink,

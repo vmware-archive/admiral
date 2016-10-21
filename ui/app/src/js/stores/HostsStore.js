@@ -17,6 +17,7 @@ import utils from 'core/utils';
 import ResourcePoolsStore from 'stores/ResourcePoolsStore';
 import CredentialsStore from 'stores/CredentialsStore';
 import CertificatesStore from 'stores/CertificatesStore';
+import EndpointsStore from 'stores/EndpointsStore';
 import DeploymentPolicyStore from 'stores/DeploymentPolicyStore';
 import RequestsStore from 'stores/RequestsStore';
 import EventLogStore from 'stores/EventLogStore';
@@ -200,21 +201,24 @@ let updateEditableProperties = function(hostModel) {
   this.setInData(['hostAddView', 'customProperties'], hostModel.customProperties);
 
   var credentials = utils.getIn(this.getData(), ['hostAddView', 'credentials']);
-
-  if (hostModel.credential) {
+  if (credentials && hostModel.credential) {
     var credential = credentials.find((credential) => {
       return credential.documentSelfLink === hostModel.credential.documentSelfLink;
     });
+    this.setInData(['hostAddView', 'credential'], credential);
+  } else {
+    this.setInData(['hostAddView', 'credential'], null);
   }
 
-  this.setInData(['hostAddView', 'credential'], credential);
-
-  var resourcePools =
-      utils.getIn(this.getData(), ['hostAddView', 'resourcePools']);
-  var resourcePool = resourcePools.find((resourcePool) => {
-    return resourcePool.documentSelfLink === hostModel.resourcePoolLink;
-  });
-  this.setInData(['hostAddView', 'resourcePool'], resourcePool);
+  var resourcePools = utils.getIn(this.getData(), ['hostAddView', 'resourcePools']);
+  if (resourcePools && hostModel.resourcePoolLink) {
+    var resourcePool = resourcePools.find((resourcePool) => {
+      return resourcePool.documentSelfLink === hostModel.resourcePoolLink;
+    });
+    this.setInData(['hostAddView', 'resourcePool'], resourcePool);
+  } else {
+    this.setInData(['hostAddView', 'resourcePool'], null);
+  }
 
   var deploymentPolicyProp = hostModel.customProperties.find((prop) => {
     return prop.name === '__deploymentPolicyLink';
@@ -224,12 +228,21 @@ let updateEditableProperties = function(hostModel) {
     var deploymentPolicy = deploymentPolicies.find((policy) => {
       return policy.documentSelfLink === deploymentPolicyProp.value;
     });
-
     this.setInData(['hostAddView', 'deploymentPolicy'], deploymentPolicy);
   } else {
     // removed
     this.setInData(['hostAddView', 'deploymentPolicy'], null);
     hostModel.customProperties.__deploymentPolicyLink = null;
+  }
+
+  var endpoints = utils.getIn(this.getData(), ['hostAddView', 'endpoints']);
+  if (endpoints && hostModel.endpoint) {
+    var endpoint = endpoints.find((endpoint) => {
+      return endpoint.documentSelfLink === hostModel.parentLink;
+    });
+    this.setInData(['hostAddView', 'endpoint'], endpoint);
+  } else {
+    this.setInData(['hostAddView', 'endpoint'], null);
   }
 };
 
@@ -360,6 +373,31 @@ let HostsStore = Reflux.createStore({
         if (itemToSelect && this.data.hostAddView.contextView.shouldSelectAndComplete) {
           clearTimeout(this.itemSelectTimeout);
           this.itemSelectTimeout = setTimeout(() => {
+            this.setInData(['hostAddView', 'certificate'], itemToSelect);
+            this.onCloseToolbar();
+          }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
+        }
+      }
+
+      this.emitChange();
+    });
+
+    EndpointsStore.listen((endpointsData) => {
+      if (!this.data.hostAddView) {
+        return;
+      }
+
+      this.setInData(['hostAddView', 'endpoints'], endpointsData.items);
+
+      if (isContextPanelActive.call(this, constants.CONTEXT_PANEL.ENDPOINTS)) {
+        this.setInData(['hostAddView', 'contextView', 'activeItem', 'data'],
+          endpointsData);
+
+        var itemToSelect = endpointsData.newItem || endpointsData.updatedItem;
+        if (itemToSelect && this.data.hostAddView.contextView.shouldSelectAndComplete) {
+          clearTimeout(this.itemSelectTimeout);
+          this.itemSelectTimeout = setTimeout(() => {
+            this.setInData(['hostAddView', 'endpoint'], itemToSelect);
             this.onCloseToolbar();
           }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
         }
@@ -501,6 +539,7 @@ let HostsStore = Reflux.createStore({
     actions.CredentialsActions.retrieveCredentials();
     actions.CertificatesActions.retrieveCertificates();
     actions.DeploymentPolicyActions.retrieveDeploymentPolicies();
+    actions.EndpointsActions.retrieveEndpoints();
   },
 
   onCloseHosts: function() {
@@ -590,7 +629,6 @@ let HostsStore = Reflux.createStore({
       actions.CertificatesActions.retrieveCertificates();
       actions.DeploymentPolicyActions.retrieveDeploymentPolicies();
 
-      var _this = this;
       var credentialLink = hostSpec.customProperties.__authCredentialsLink;
       var deploymentPolicyLink = hostSpec.customProperties.__deploymentPolicyLink;
       if (!credentialLink) {
@@ -602,7 +640,7 @@ let HostsStore = Reflux.createStore({
           deploymentPolicyLink = hostDescription.customProperties
                             && hostDescription.customProperties.__deploymentPolicyLink;
 
-          _this.loadHostData(hostModel, credentialLink, deploymentPolicyLink);
+          this.loadHostData(hostModel, credentialLink, deploymentPolicyLink);
         }).catch(this.onGenericEditError);
       } else {
         this.loadHostData(hostModel, credentialLink, deploymentPolicyLink);
@@ -613,8 +651,6 @@ let HostsStore = Reflux.createStore({
   },
 
   loadHostData: function(hostModel, credentialLink, deploymentPolicyLink) {
-    var _this = this;
-
     var promises = [
       services.loadResourcePool(hostModel.resourcePoolLink).catch(() => Promise.resolve())
     ];
@@ -639,7 +675,7 @@ let HostsStore = Reflux.createStore({
       promises.push(Promise.resolve());
     }
 
-    Promise.all(promises).then(function([config, credential, deploymentPolicy, tags]) {
+    Promise.all(promises).then(([config, credential, deploymentPolicy, tags]) => {
 
       if (credentialLink && credential) {
         credential.name = (credential.customProperties
@@ -668,9 +704,8 @@ let HostsStore = Reflux.createStore({
         tags: tags ? Object.values(tags) : []
       };
 
-      _this.setInData(['hostAddView'], $.extend({}, _this.data.hostAddView, hostAddView));
-
-      _this.emitChange();
+      this.setInData(['hostAddView'], $.extend({}, this.data.hostAddView, hostAddView));
+      this.emitChange();
     }).catch(this.onGenericEditError);
   },
 
@@ -709,8 +744,8 @@ let HostsStore = Reflux.createStore({
         let hostDataCustomProperties = $.extend({},
           utils.getSystemCustomProperties(hostModel.dto.customProperties), customProperties);
 
-        let deploymentPolicy = utils.getCustomPropertyValue(hostModel.customProperties,
-                                                              '__deploymentPolicyLink');
+        let deploymentPolicy =
+          utils.getCustomPropertyValue(hostModel.customProperties, '__deploymentPolicyLink');
         if (!deploymentPolicy) {
           delete hostDataCustomProperties.__deploymentPolicyLink;
         }
@@ -787,13 +822,10 @@ let HostsStore = Reflux.createStore({
   },
 
   onRemoveHost: function(hostId) {
-
-    services.removeHost(hostId)
-      .then((removalRequest) => {
-
-        this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
-        actions.RequestsActions.requestCreated(removalRequest);
-      });
+    services.removeHost(hostId).then((removalRequest) => {
+      this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
+      actions.RequestsActions.requestCreated(removalRequest);
+    });
   },
 
   onAcceptCertificateAndAddHost: function(certificateHolder, hostModel, tags) {
@@ -882,6 +914,11 @@ let HostsStore = Reflux.createStore({
       false);
   },
 
+  onOpenToolbarEndpoints: function() {
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.ENDPOINTS,
+      EndpointsStore.getData(), false);
+  },
+
   onOpenToolbarDeploymentPolicies: function() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.DEPLOYMENT_POLICIES,
       DeploymentPolicyStore.getData(), false);
@@ -949,6 +986,17 @@ let HostsStore = Reflux.createStore({
   onManageDeploymentPolicies: function() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.DEPLOYMENT_POLICIES,
       DeploymentPolicyStore.getData(), true);
+  },
+
+  onCreateEndpoint: function() {
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.ENDPOINTS,
+      EndpointsStore.getData(), true);
+    actions.EndpointsActions.editEndpoint({});
+  },
+
+  onManageEndpoints: function() {
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.ENDPOINTS,
+      EndpointsStore.getData(), true);
   },
 
   onTriggerDataCollection: function() {
