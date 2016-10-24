@@ -1033,7 +1033,13 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
 
     @Override
     public void connectContainerToNetwork(CommandInput input, CompletionHandler completionHandler) {
-        throw new UnsupportedOperationException("Connect network is not implemented yet");
+        Map<String, Object> properties = input.getProperties();
+        CommandBuilder cb = new CommandBuilder()
+                .withCommand("network connect")
+                // --alias, --ip, -ip6, --link, --link-local-ip may be added here if needed
+                .withArgumentIfPresent(properties, DOCKER_CONTAINER_NETWORK_ID_PROP_NAME)
+                .withArgumentIfPresent(properties, DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.CONTAINER_PROP_NAME);
+        execWithInput(input, docker(cb), completionHandler);
     }
 
     private String docker(CommandBuilder subCommandBuilder) {

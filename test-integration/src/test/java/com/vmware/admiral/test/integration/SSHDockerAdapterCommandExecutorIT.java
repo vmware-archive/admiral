@@ -18,6 +18,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -29,6 +30,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.adapter.docker.service.CommandInput;
 import com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor;
+import com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG;
 import com.vmware.admiral.adapter.docker.service.SshDockerAdapterCommandExecutorImpl;
 import com.vmware.admiral.adapter.docker.service.SshDockerAdapterCommandExecutorImpl.GcData;
 import com.vmware.admiral.common.test.BaseTestCase;
@@ -51,6 +53,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
     private static final int DEFAULT_TIMEOUT = 45;
 
     private final List<String> containersToDelete = new ArrayList<String>();
+    private final List<String> networksToDelete = new ArrayList<String>();
     private Iterator<String> it;
 
     @Test
@@ -116,7 +119,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
 
     @Test
     public void inspect() throws InterruptedException, TimeoutException {
-        String name = getRandomContainerName();
+        String name = getRandomName();
         Result result = SshUtil.exec(HOST_NAME, getPasswordCredentials(),
                 "docker create --name " + name + " alpine /bin/sh");
         Assert.assertTrue("Failed to create container", result.exitCode == 0);
@@ -173,34 +176,14 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
         SshDockerAdapterCommandExecutorImpl executor = new SshDockerAdapterCommandExecutorImpl(
                 host);
 
-        CommandInput input = new CommandInput();
-        input.withDockerUri(HOST_URI);
-        input.withCredentials(getPasswordCredentials());
-        input.getProperties().put(DockerAdapterCommandExecutor.DOCKER_CONTAINER_IMAGE_PROP_NAME,
-                "alpine");
-        String name = getRandomContainerName();
-        input.getProperties().put(DockerAdapterCommandExecutor.DOCKER_CONTAINER_NAME_PROP_NAME,
-                name);
-        input.getProperties().put(DockerAdapterCommandExecutor.DOCKER_CONTAINER_COMMAND_PROP_NAME,
-                "/bin/sh");
-
-        List<DefaultSshOperationResultCompletionHandler> handlers = new ArrayList<>();
-
-        DefaultSshOperationResultCompletionHandler handler = new DefaultSshOperationResultCompletionHandler();
-        executor.createContainer(input, handler);
-        handlers.add(handler);
+        String name = getRandomName();
+        createContainer(executor, name);
         containersToDelete.add(name);
-
-        handler.join(45, TimeUnit.SECONDS);
-
-        Assert.assertTrue("Operation failed to complete on time!", handler.done);
-        Assert.assertNull("Unexpected failure!", handler.failure);
-        Assert.assertNotNull("Body should contain STDOUT!", handler.op.getBody(String.class));
     }
 
     @Test
     public void start() throws InterruptedException, TimeoutException {
-        String name = getRandomContainerName();
+        String name = getRandomName();
         Result result = SshUtil.exec(HOST_NAME, getPasswordCredentials(),
                 "docker create --name " + name + " alpine /bin/sh");
         Assert.assertTrue("Failed to create container", result.exitCode == 0);
@@ -230,7 +213,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
 
     @Test
     public void stop() throws InterruptedException, TimeoutException {
-        String name = getRandomContainerName();
+        String name = getRandomName();
         Result result = SshUtil.exec(HOST_NAME, getPasswordCredentials(), "docker run -d --name " +
                 name + " alpine /bin/sh -c 'sleep 120'");
         Assert.assertTrue("Failed to start container", result.exitCode == 0);
@@ -262,7 +245,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
 
     @Test
     public void exec() throws InterruptedException, TimeoutException {
-        String name = getRandomContainerName();
+        String name = getRandomName();
         Result result = SshUtil.exec(HOST_NAME, getPasswordCredentials(), "docker run -d --name " +
                 name + " alpine /bin/sh -c 'sleep 120'");
         Assert.assertTrue("Failed to start container", result.exitCode == 0);
@@ -294,7 +277,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
 
     @Test
     public void remove() throws InterruptedException, TimeoutException {
-        String name = getRandomContainerName();
+        String name = getRandomName();
         Result result = SshUtil.exec(HOST_NAME, getPasswordCredentials(),
                 "docker create --name " + name + " alpine /bin/sh");
         Assert.assertTrue("Failed to create container", result.exitCode == 0);
@@ -325,7 +308,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
 
     @Test
     public void fetchLogs() throws InterruptedException, TimeoutException {
-        String name = getRandomContainerName();
+        String name = getRandomName();
         Result result = SshUtil.exec(HOST_NAME, getPasswordCredentials(), "docker run -d --name " +
                 name + " alpine /bin/sh -c 'echo hello'");
         Assert.assertTrue("Failed to start container", result.exitCode == 0);
@@ -359,7 +342,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
     @Ignore("Failing intermittently: https://jira-hzn.eng.vmware.com/browse/VBV-609")
     @Test
     public void list() throws InterruptedException, TimeoutException {
-        String name = getRandomContainerName();
+        String name = getRandomName();
         Result result = SshUtil.exec(HOST_NAME, getPasswordCredentials(),
                 "docker create --name " + name + " alpine /bin/sh");
         Assert.assertTrue("Failed to create container", result.exitCode == 0);
@@ -388,14 +371,79 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
         Assert.assertTrue(handler.op.getBody(String.class).contains(name));
     }
 
-    private String getRandomContainerName() {
+    @Test
+    public void createAndRemoveNetwork() throws InterruptedException, TimeoutException {
+        SshDockerAdapterCommandExecutorImpl executor = new SshDockerAdapterCommandExecutorImpl(
+                host);
+        String name = getRandomName();
+
+        // Create a network
+        String networkId = createBridgeNetwork(executor, name);
+        networksToDelete.add(name);
+
+        // Remove this network
+        CommandInput input = new CommandInput();
+        input.withDockerUri(HOST_URI);
+        input.withCredentials(getPasswordCredentials());
+        input.getProperties().put(
+                DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_ID_PROP_NAME,
+                networkId);
+
+        DefaultSshOperationResultCompletionHandler handler = new DefaultSshOperationResultCompletionHandler();
+        executor.removeNetwork(input, handler);
+        networksToDelete.remove(name);
+
+        handler.join(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
+
+        Assert.assertTrue("Operation failed to complete on time!", handler.done);
+        Assert.assertNull("Unexpected failure!", handler.failure);
+        Assert.assertNotNull("Body should contain STDOUT!", handler.op.getBody(String.class));
+    }
+
+    @Test
+    public void connectContainerToNetwork() throws InterruptedException, TimeoutException {
+        SshDockerAdapterCommandExecutorImpl executor = new SshDockerAdapterCommandExecutorImpl(
+                host);
+        String containerName = getRandomName();
+        String networkName = getRandomName();
+
+        // Create a network
+        String networkId = createBridgeNetwork(executor, networkName);
+        networksToDelete.add(networkName);
+
+        // Create a container
+        String containerId = createContainer(executor, containerName);
+        containersToDelete.add(containerName);
+
+        // Connect the container to the network
+        CommandInput input = new CommandInput();
+        input.withDockerUri(HOST_URI);
+        input.withCredentials(getPasswordCredentials());
+        input.getProperties().put(
+                DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_ID_PROP_NAME,
+                networkId);
+        input.getProperties().put(
+                DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.CONTAINER_PROP_NAME,
+                containerId);
+
+        DefaultSshOperationResultCompletionHandler handler = new DefaultSshOperationResultCompletionHandler();
+        executor.connectContainerToNetwork(input, handler);
+
+        handler.join(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
+
+        Assert.assertTrue("Operation failed to complete on time!", handler.done);
+        Assert.assertNull("Unexpected failure!", handler.failure);
+        Assert.assertNotNull("Body should contain STDOUT!", handler.op.getBody(String.class));
+    }
+
+    private String getRandomName() {
         return "ssh-it-" + System.currentTimeMillis();
     }
 
     @Test
     @Ignore("Takes too long to execute with each build")
     public void inspectPerformance() throws InterruptedException, TimeoutException {
-        String name = getRandomContainerName();
+        String name = getRandomName();
         Result result = SshUtil.exec(HOST_NAME, getPasswordCredentials(),
                 "docker create --name " + name + " alpine /bin/sh");
         Assert.assertTrue("Failed to create container", result.exitCode == 0);
@@ -443,7 +491,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
         input.withCredentials(getPasswordCredentials());
         input.getProperties().put(DockerAdapterCommandExecutor.DOCKER_CONTAINER_IMAGE_PROP_NAME,
                 "alpine");
-        String name = getRandomContainerName();
+        String name = getRandomName();
         input.getProperties().put(DockerAdapterCommandExecutor.DOCKER_CONTAINER_NAME_PROP_NAME,
                 name);
         input.getProperties().put(DockerAdapterCommandExecutor.DOCKER_CONTAINER_COMMAND_PROP_NAME,
@@ -467,7 +515,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
 
     @Test
     public void stats() throws InterruptedException, TimeoutException {
-        String name = getRandomContainerName();
+        String name = getRandomName();
         Result result = SshUtil.exec(HOST_NAME, getPasswordCredentials(), "docker run -d --name " +
                 name + " alpine /bin/sh -c 'sleep 120'");
         Assert.assertTrue("Failed to start container", result.exitCode == 0);
@@ -539,6 +587,7 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
 
     @After
     public void cleanup() {
+        // cleanup containers
         if (!containersToDelete.isEmpty()) {
             String toDelete = "";
             for (String s : containersToDelete) {
@@ -547,6 +596,17 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
             Result result = SshUtil.exec(HOST_NAME, getPasswordCredentials(),
                     "docker rm -fv " + toDelete);
             Assert.assertTrue("Failed to cleanup containers", result.exitCode == 0);
+        }
+
+        // cleanup networks
+        if (!networksToDelete.isEmpty()) {
+            String toDelete = "";
+            for (String s : networksToDelete) {
+                toDelete += s + " ";
+            }
+            Result result = SshUtil.exec(HOST_NAME, getPasswordCredentials(),
+                    "docker network rm " + toDelete);
+            Assert.assertTrue("Failed to cleanup networks", result.exitCode == 0);
         }
     }
 
@@ -573,6 +633,57 @@ public class SSHDockerAdapterCommandExecutorIT extends BaseTestCase {
                 throw new TimeoutException("Operation failed to complete on time!");
             }
         }
+    }
+
+    private String createContainer(SshDockerAdapterCommandExecutorImpl executor,
+            String containerName) throws InterruptedException, TimeoutException {
+        CommandInput containerInput = new CommandInput();
+        containerInput.withDockerUri(HOST_URI);
+        containerInput.withCredentials(getPasswordCredentials());
+        containerInput.getProperties().put(DockerAdapterCommandExecutor.DOCKER_CONTAINER_IMAGE_PROP_NAME,
+                "alpine");
+        containerInput.getProperties().put(DockerAdapterCommandExecutor.DOCKER_CONTAINER_NAME_PROP_NAME,
+                containerName);
+        containerInput.getProperties().put(DockerAdapterCommandExecutor.DOCKER_CONTAINER_COMMAND_PROP_NAME,
+                "/bin/sh");
+
+        DefaultSshOperationResultCompletionHandler handler = new DefaultSshOperationResultCompletionHandler();
+        executor.createContainer(containerInput, handler);
+
+        handler.join(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
+
+        Assert.assertTrue("Create container failed to complete on time!", handler.done);
+        Assert.assertNull("Unexpected failure!", handler.failure);
+        @SuppressWarnings("rawtypes")
+        Map response = handler.op.getBody(Map.class);
+        Assert.assertNotNull("Body should contain STDOUT!", response);
+        Assert.assertTrue(response.containsKey(DockerAdapterCommandExecutor.DOCKER_CONTAINER_ID_PROP_NAME));
+        return response.get(DockerAdapterCommandExecutor.DOCKER_CONTAINER_ID_PROP_NAME).toString();
+    }
+
+    private String createBridgeNetwork(SshDockerAdapterCommandExecutorImpl executor, String networkName) throws InterruptedException, TimeoutException {
+        CommandInput networkInput = new CommandInput();
+        networkInput.withDockerUri(HOST_URI);
+        networkInput.withCredentials(getPasswordCredentials());
+        networkInput.getProperties().put(
+                DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_DRIVER_PROP_NAME,
+                "bridge");
+        networkInput.getProperties().put(
+                DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME,
+                networkName);
+
+        DefaultSshOperationResultCompletionHandler handler = new DefaultSshOperationResultCompletionHandler();
+        executor.createNetwork(networkInput, handler);
+
+        handler.join(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
+
+        Assert.assertTrue("Create network failed to complete on time!", handler.done);
+        Assert.assertNull("Unexpected failure!", handler.failure);
+        @SuppressWarnings("rawtypes")
+        Map response = handler.op.getBody(Map.class);
+        Assert.assertNotNull("Body should contain STDOUT!", response);
+        Assert.assertTrue(response.containsKey(DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_ID_PROP_NAME));
+        return response.get(DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_ID_PROP_NAME).toString();
     }
 
     private AuthCredentialsServiceState getPasswordCredentials() {
