@@ -40,8 +40,6 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
     public static final String DOCKER_NETWORK_TYPE_DEFAULT = ContainerNetworkDescription.NETWORK_DRIVER_BRIDGE;
 
-    private static final NetworkOperationType[] DIRECT_OPERATIONS = {};
-
     private static final String DELETE_NETWORK_MISSING_ERROR = "error 404 for DELETE";
 
     public static final List<String> DOCKER_PREDEFINED_NETWORKS = Arrays.asList("none", "host",
@@ -69,28 +67,9 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
                 operationType, context.request.resourceReference,
                 context.request.getRequestTrackingLog());
 
-        if (isDirectOperationRequested(context)) {
-            context.operation = op;
-        } else {
-            op.complete();
-        }
+        op.complete();
 
         processNetworkRequest(context);
-    }
-
-    /**
-     * Check whether the patch {@link Operation} is direct operation or not
-     */
-    private boolean isDirectOperationRequested(RequestContext context) {
-        NetworkOperationType operationType = context.request.getOperationType();
-
-        for (NetworkOperationType directOperation : DIRECT_OPERATIONS) {
-            if (directOperation == operationType) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -144,8 +123,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
     /**
      * Process the operation. This method should be called after {@link RequestContext#request},
      * {@link RequestContext#networkState}, {@link RequestContext#commandInput} and
-     * {@link RequestContext#executor} have been filled. For direct operations,
-     * {@link RequestContext#operation} must also be filled
+     * {@link RequestContext#executor} have been filled.
      *
      * @see #DIRECT_OPERATIONS
      */
@@ -248,7 +226,6 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
         context.executor.inspectNetwork(
                 inspectCommandInput,
-                // commandInput,
                 (o, ex) -> {
                     if (ex != null) {
                         fail(context.request, o, ex);

@@ -133,6 +133,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
 
             ContainerNetworkState network = getDocument(networkLink, ContainerNetworkState.class);
             assertNotNull(String.format("Unable to find network %s", networkLink), network);
+            assertTrue(network.connectedContainersCount == 0);
 
             try {
                 logger.info("---------- Clean up: Request Delete the network instance. --------");

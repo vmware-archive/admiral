@@ -31,6 +31,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState.PowerState;
+import com.vmware.admiral.compute.container.network.NetworkUtils;
 import com.vmware.admiral.request.ContainerNetworkAllocationTaskService.ContainerNetworkAllocationTaskState.SubStage;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
@@ -211,19 +212,10 @@ public class ContainerNetworkAllocationTaskService extends
         logInfo("Generate provisioned resourceLinks");
         List<String> resourceLinks = new ArrayList<>(state.resourceNames.size());
         for (String resourceName : state.resourceNames) {
-            String networkLink = buildResourceLink(resourceName);
+            String networkLink = NetworkUtils.buildNetworkLink(resourceName);
             resourceLinks.add(networkLink);
         }
         return resourceLinks;
-    }
-
-    private String buildResourceLink(String resourceName) {
-        return UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK,
-                buildResourceId(resourceName));
-    }
-
-    private String buildResourceId(String resourceName) {
-        return resourceName.replaceAll(" ", "-");
     }
 
     private void prepareContextAndCreateResourcePrefixNameSelectionTask(
@@ -330,7 +322,7 @@ public class ContainerNetworkAllocationTaskService extends
 
         try {
             final ContainerNetworkState networkState = new ContainerNetworkState();
-            networkState.documentSelfLink = buildResourceId(resourceName);
+            networkState.documentSelfLink = NetworkUtils.buildNetworkId(resourceName);
             networkState.name = resourceName;
             networkState.tenantLinks = state.tenantLinks;
             networkState.descriptionLink = state.resourceDescriptionLink;
@@ -391,7 +383,7 @@ public class ContainerNetworkAllocationTaskService extends
     private void handleUpdateExternalNetworkState(ContainerNetworkAllocationTaskState state,
             ContainerNetworkDescription networkDescription, ServiceTaskCallback taskCallback) {
 
-        String networkStateLink = buildResourceLink(networkDescription.name);
+        String networkStateLink = NetworkUtils.buildNetworkLink(networkDescription.name);
 
         try {
             sendRequest(Operation.createGet(UriUtils.buildUri(getHost(), networkStateLink))

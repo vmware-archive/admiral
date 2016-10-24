@@ -13,6 +13,7 @@ package com.vmware.admiral.test.integration;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
@@ -44,6 +45,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -146,6 +148,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
 
         externalNetwork = getDocument(request.resourceLinks.get(0), ContainerNetworkState.class);
         assertNotNull(externalNetwork);
+        assertTrue(externalNetwork.connectedContainersCount == 0);
 
         logger.info("External network created.");
 
@@ -303,6 +306,16 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         }
 
         assertEquals(2, wpContainersCount);
+
+        if (createsNetworkResource()) {
+            // Verify the connectedContainersCount number
+            String networkLink = getResourceContaining(cc.componentLinks,
+                    ContainerNetworkService.FACTORY_LINK);
+            assertNotNull(networkLink);
+            ContainerNetworkState network = getDocument(networkLink, ContainerNetworkState.class);
+            assertNotNull(network);
+            assertTrue(network.connectedContainersCount == 3); // 2 wp + 1 mysql
+        }
     }
 
     private void verifyMysqlConnection(String dockerHost, int mysqlHostPort, int retryCount)

@@ -13,12 +13,19 @@ package com.vmware.admiral.compute.container.network;
 
 import java.util.Map;
 import java.util.function.BinaryOperator;
+import java.util.logging.Level;
 
 import io.netty.util.internal.StringUtil;
 
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ConnectedContainersCountIncrement;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.UriUtils;
 
 public class NetworkUtils {
 
@@ -150,6 +157,45 @@ public class NetworkUtils {
         // TODO - fill in other network settings
 
         return networkDescription;
+    }
+
+    public static String buildNetworkLink(String name) {
+        return UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK, buildNetworkId(name));
+    }
+
+    public static String buildNetworkId(String name) {
+        return name.replaceAll(" ", "-");
+    }
+
+    public static void updateConnectedNetworks(ServiceHost host, ContainerState container,
+            int increment) {
+        Map<String, ServiceNetwork> networks = container.networks;
+        if (networks == null || networks.isEmpty()) {
+            return;
+        }
+
+        networks.keySet().stream().forEach(name -> {
+            String networkLink = buildNetworkLink(name);
+
+            ConnectedContainersCountIncrement patchBody = new ConnectedContainersCountIncrement();
+            patchBody.increment = increment;
+
+            host.sendRequest(Operation.createPatch(UriUtils.buildUri(host, networkLink))
+                    .setReferer(host.getUri())
+                    .setBody(patchBody)
+                    .setCompletion(
+                            (o, e) -> {
+                                if (e != null) {
+                                    host.log(Level.WARNING,
+                                            "Error updating connected containers count for ContainerNetworkState: %s (%s)",
+                                            networkLink, e.getMessage());
+                                } else {
+                                    host.log(Level.FINE,
+                                            "Updated connected containers count for ContainerNetworkState: %s ",
+                                            networkLink);
+                                }
+                            }));
+        });
     }
 
 }

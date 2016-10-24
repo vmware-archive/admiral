@@ -136,6 +136,13 @@ public class ContainerNetworkService extends StatefulService {
 
     }
 
+    /**
+     * Custom body to perform atomic increment operations on the connectedContainersCount via PATCH.
+     */
+    public static class ConnectedContainersCountIncrement {
+        public Integer increment;
+    }
+
     public ContainerNetworkService() {
         super(ContainerNetworkState.class);
         toggleOption(ServiceOption.IDEMPOTENT_POST, true);
@@ -192,6 +199,14 @@ public class ContainerNetworkService extends StatefulService {
     @Override
     public void handlePatch(Operation patch) {
         ContainerNetworkState currentState = getState(patch);
+
+        Object rawBody = patch.getBodyRaw();
+        if (rawBody instanceof ConnectedContainersCountIncrement) {
+            currentState.connectedContainersCount += ((ConnectedContainersCountIncrement) rawBody).increment;
+            patch.complete();
+            return;
+        }
+
         ContainerNetworkState patchBody = getValidInputFrom(patch, true);
 
         ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;

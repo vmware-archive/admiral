@@ -69,7 +69,7 @@ public class ContainerNetworkMaintenance {
                                 post.fail(ex);
                                 return;
                             }
-                            ContainerNetworkState containerState = o
+                            ContainerNetworkState networkState = o
                                     .getBody(ContainerNetworkState.class);
                             long nowMicrosUtc = Utils.getNowMicrosUtc();
 
@@ -77,15 +77,15 @@ public class ContainerNetworkMaintenance {
                              * if container hasn't been updated for a while, slow down the
                              * data-collection
                              */
-                            if (containerState.documentUpdateTimeMicros
+                            if (networkState.documentUpdateTimeMicros
                                     + MAINTENANCE_INTERVAL_SLOW_DOWN_PERIOD < nowMicrosUtc) {
                                 /* check if the slow-down period has expired */
-                                if (lastInspectMaintainanceInMicros + 6
-                                        * MAINTENANCE_INTERVAL_SLOW_DOWN_PERIOD < nowMicrosUtc) {
+                                if (lastInspectMaintainanceInMicros +
+                                        MAINTENANCE_INTERVAL_SLOW_DOWN_PERIOD < nowMicrosUtc) {
                                     /* set another slow-down period and perform collection */
-                                    lastInspectMaintainanceInMicros = nowMicrosUtc + 6
-                                            * MAINTENANCE_INTERVAL_SLOW_DOWN_PERIOD;
-                                    processNetworkInspect(post, containerState);
+                                    lastInspectMaintainanceInMicros = nowMicrosUtc +
+                                            MAINTENANCE_INTERVAL_SLOW_DOWN_PERIOD;
+                                    processNetworkInspect(post, networkState);
                                 } else {
                                     post.complete();
                                 }
@@ -96,7 +96,7 @@ public class ContainerNetworkMaintenance {
                             if (lastInspectMaintainanceInMicros
                                     + MAINTENANCE_INTERVAL_INSPECT_MICROS < nowMicrosUtc) {
                                 lastInspectMaintainanceInMicros = nowMicrosUtc;
-                                processNetworkInspect(post, containerState);
+                                processNetworkInspect(post, networkState);
                             }
                         }));
     }

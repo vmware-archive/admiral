@@ -110,6 +110,7 @@ import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.compute.container.maintenance.ContainerStatsEvaluator;
+import com.vmware.admiral.compute.container.network.NetworkUtils;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.LogService;
@@ -984,6 +985,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         fail(context.request, o, ex);
                     }
                 } else if (count.decrementAndGet() == 0) {
+                    NetworkUtils.updateConnectedNetworks(getHost(), context.containerState, 1);
                     startCreatedContainer(context);
                 }
             });
@@ -1254,6 +1256,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     fail(context.request, o, ex);
                 }
             } else {
+                NetworkUtils.updateConnectedNetworks(getHost(), context.containerState, -1);
                 patchTaskStage(context.request, TaskStage.FINISHED, null);
             }
         });
