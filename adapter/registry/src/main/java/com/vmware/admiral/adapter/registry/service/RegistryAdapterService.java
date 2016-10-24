@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.adapter.registry.service;
 
+import static java.net.HttpURLConnection.HTTP_OK;
+
 import static com.vmware.admiral.service.common.RegistryService.API_VERSION_PROP_NAME;
 
 import java.net.URI;
@@ -448,6 +450,14 @@ public class RegistryAdapterService extends StatelessService {
                         failureCallback.accept(ex);
                         return;
                     } else {
+                        if (o.getStatusCode() != HTTP_OK) {
+                            String errMsg = String.format("Pinging registry endpoint [%s] failed"
+                                    + " with status code %s. Expected %s.",
+                                    pingUri, o.getStatusCode(), HTTP_OK);
+                            failureCallback.accept(new Exception(errMsg));
+                            return;
+                        }
+
                         RegistryPingResponse pingResponse = new RegistryPingResponse();
                         pingResponse.apiVersion = apiVersion;
                         context.operation.setBody(pingResponse);
