@@ -26,8 +26,6 @@ import static com.vmware.admiral.compute.content.CompositeTemplateUtil.getYamlTy
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeDockerCompose;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +71,7 @@ public class CompositeDescriptionContentService extends StatelessService {
     public static final String CONTENT_DISPOSITION_HEADER = "Content-Disposition";
     public static final String CONTENT_DISPOSITION_INLINE = "inline";
     public static final String CONTENT_DISPOSITION_ATTACHMENT = "attachment";
-    public static final String CONTENT_DISPOSITION_FILENAME = "; filename=\"%s.yaml\"";
+    public static final String CONTENT_DISPOSITION_FILENAME = "; filename=\"template.yaml\"";
 
     public static final String FORMAT_DOCKER_COMPOSE_TYPE = "Docker";
 
@@ -174,9 +172,7 @@ public class CompositeDescriptionContentService extends StatelessService {
                     ? CONTENT_DISPOSITION_INLINE : CONTENT_DISPOSITION_ATTACHMENT)
                     + CONTENT_DISPOSITION_FILENAME;
 
-            op.addResponseHeader(CONTENT_DISPOSITION_HEADER,
-                    String.format(contentDisposition, URLEncoder.encode(template.name,
-                            StandardCharsets.UTF_8.name())));
+            op.addResponseHeader(CONTENT_DISPOSITION_HEADER, contentDisposition);
 
             op.complete();
         } catch (Exception e) {
