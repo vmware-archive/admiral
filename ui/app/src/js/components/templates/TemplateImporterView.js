@@ -11,6 +11,7 @@
 
 import TemplateImporterViewVue from 'TemplateImporterViewVue';
 import { TemplateActions } from 'actions/Actions';
+import constants from 'core/constants';
 
 var TemplateImporterView = Vue.extend({
   template: TemplateImporterViewVue,
@@ -30,7 +31,9 @@ var TemplateImporterView = Vue.extend({
 
     this.unwatchModel = this.$watch('model', (model) => {
       if (model.error) {
-        this.$dispatch('container-form-alert', model.error._generic);
+        this.$dispatch('container-form-alert',
+                       model.error._generic,
+                       constants.ALERTS.TYPE.FAIL);
       } else {
         this.$dispatch('container-form-alert', null);
       }
