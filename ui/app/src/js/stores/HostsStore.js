@@ -723,8 +723,12 @@ let HostsStore = Reflux.createStore({
           powerState: this.data.hostAddView.powerState,
           tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
         });
+        var hostSpec = {
+          hostState: hostData,
+          isUpdateOperation: true
+        };
 
-        services.updateHost(hostId, hostData).then(() => {
+        services.updateContainerHost(hostSpec).then(() => {
           this.onHostAdded();
         }).catch(this.onGenericEditError);
       });

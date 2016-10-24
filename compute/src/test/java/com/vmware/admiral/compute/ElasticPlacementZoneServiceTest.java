@@ -77,6 +77,17 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
     }
 
     @Test
+    public void testDeleteWithNonExistentRp() throws Throwable {
+        // create EPZ for the RP
+        ResourcePoolState rp = createRp();
+        String epzLink = createEpz(rp.documentSelfLink, "tag1", "tag2").documentSelfLink;
+
+        // delete EPZ and verify RP is back to non-elastic
+        delete(rp.documentSelfLink);
+        delete(epzLink);
+    }
+
+    @Test
     public void testPut() throws Throwable {
         // create a non-elastic RP
         ResourcePoolState rp = createRp();

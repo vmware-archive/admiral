@@ -137,7 +137,34 @@ public class EpzComputeEnumerationTaskService extends
                     sender.getHost().log(Level.INFO,
                             "Started enumeration task for " + resourcePoolLink);
                 }).sendWith(sender);
+    }
 
+    /**
+     * Triggers an enumeration task for each resource pool. Makes sure no multiple tasks are
+     * run in parallel for the same resource pool.
+     */
+    public static void triggerForAllResourcePools(Service sender) {
+        Query rpQuery = Query.Builder.create().addKindFieldClause(ResourcePoolState.class).build();
+        QueryTask rpQueryTask = QueryTask.Builder.createDirectTask().setQuery(rpQuery).build();
+
+        Operation.createPost(sender.getHost(), ServiceUriPaths.CORE_QUERY_TASKS)
+                .setBody(rpQueryTask)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        sender.getHost().log(Level.WARNING,
+                                "Failed to start enumeration task for all resource pools: %s",
+                                e.getMessage());
+                        return;
+                    }
+
+                    // start enumeration tasks for all resource pools in parallel
+                    ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
+                    if (result != null && result.documentLinks != null) {
+                        result.documentLinks.forEach(rpLink -> {
+                            EpzComputeEnumerationTaskService.triggerForResourcePool(sender, rpLink);
+                        });
+                    }
+                }).sendWith(sender);
     }
 
     @Override

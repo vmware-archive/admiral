@@ -52,9 +52,10 @@ import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 /**
- * Help service to add a container host and validate container host address.
+ * Help service to add/update a container host and validate container host address.
  */
 public class ContainerHostService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.CONTAINER_HOSTS;
@@ -103,6 +104,9 @@ public class ContainerHostService extends StatelessService {
         /** The state for the container host to be created or validated. */
         public ComputeState hostState;
 
+        /** The given container host exists and has to be updated. */
+        public Boolean isUpdateOperation;
+
         /**
          * {@inheritDoc}
          */
@@ -147,11 +151,15 @@ public class ContainerHostService extends StatelessService {
 
         if (validateHostConnection) {
             validateConnection(hostSpec, op);
+        } else if (hostSpec.isUpdateOperation != null && hostSpec.isUpdateOperation.booleanValue()) {
+            updateHost(hostSpec, op);
         } else {
 
-            QueryTask q = QueryUtil.buildPropertyQuery(ComputeState.class, String.format("%s.%s",
-                    ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
-                    ComputeConstants.DOCKER_URI_PROP_NAME), hostSpec.uri.toString());
+            QueryTask q = QueryUtil.buildPropertyQuery(ComputeState.class,
+                    QuerySpecification.buildCompositeFieldName(
+                            ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
+                            ComputeConstants.DOCKER_URI_PROP_NAME),
+                    hostSpec.uri.toString());
 
             List<String> tenantLinks = hostSpec.hostState.tenantLinks;
             if (tenantLinks != null) {
@@ -236,7 +244,7 @@ public class ContainerHostService extends StatelessService {
                     op.addResponseHeader(Operation.LOCATION_HEADER, documentSelfLink);
                     completeOperationSuccess(op);
                     updateContainerHostInfo(documentSelfLink);
-                    triggerEpzEnumeration(cs.resourcePoolLink);
+                    triggerEpzEnumeration();
                 }));
     }
 
@@ -362,10 +370,8 @@ public class ContainerHostService extends StatelessService {
                 }));
     }
 
-    private void triggerEpzEnumeration(String resourcePoolLink) {
-        if (resourcePoolLink != null && !resourcePoolLink.isEmpty()) {
-            EpzComputeEnumerationTaskService.triggerForResourcePool(this, resourcePoolLink);
-        }
+    private void triggerEpzEnumeration() {
+        EpzComputeEnumerationTaskService.triggerForAllResourcePools(this);
     }
 
     private void validateSslTrust(ContainerHostSpec hostSpec, Operation op,
@@ -397,6 +403,21 @@ public class ContainerHostService extends StatelessService {
                     () -> pingHost(hostSpec, op, hostSpec.sslTrust,
                             () -> storeHost(hostSpec, op)));
         }
+    }
+
+    private void updateHost(ContainerHostSpec hostSpec, Operation op) {
+        ComputeState cs = hostSpec.hostState;
+        sendRequest(Operation.createPut(this, cs.documentSelfLink)
+                .setBody(cs)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        op.fail(e);
+                        return;
+                    }
+                    completeOperationSuccess(op);
+                    updateContainerHostInfo(cs.documentSelfLink);
+                    triggerEpzEnumeration();
+                }));
     }
 
     private void validateConnection(ContainerHostSpec hostSpec, Operation op) {

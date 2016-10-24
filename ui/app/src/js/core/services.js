@@ -608,8 +608,12 @@ services.loadHostByLink = function(hostLink) {
   return get(hostLink);
 };
 
-services.updateHost = function(hostId, hostData) {
+services.updateCompute = function(hostId, hostData) {
   return put(links.COMPUTE_RESOURCES + '/' + hostId, hostData);
+};
+
+services.updateContainerHost = function(hostSpec) {
+  return put(links.CONTAINER_HOSTS, hostSpec);
 };
 
 services.enableHost = function(hostId) {

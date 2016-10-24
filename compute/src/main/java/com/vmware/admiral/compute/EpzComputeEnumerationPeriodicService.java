@@ -14,13 +14,8 @@ package com.vmware.admiral.compute;
 import java.util.concurrent.TimeUnit;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatelessService;
-import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.QueryTask.Query;
-import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * A stateless service that periodically triggers enumeration of computes participating in all
@@ -32,7 +27,7 @@ public class EpzComputeEnumerationPeriodicService extends StatelessService {
 
     public static final long MAINTENANCE_INTERVAL_MICROS = Long.getLong(
             "dcp.management.epz.compute.periodic.maintenance.period.micros",
-            TimeUnit.SECONDS.toMicros(60));
+            TimeUnit.SECONDS.toMicros(300));
 
     public EpzComputeEnumerationPeriodicService() {
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
@@ -42,26 +37,7 @@ public class EpzComputeEnumerationPeriodicService extends StatelessService {
 
     @Override
     public void handlePeriodicMaintenance(Operation post) {
-        Query rpQuery = Query.Builder.create().addKindFieldClause(ResourcePoolState.class).build();
-        QueryTask rpQueryTask = QueryTask.Builder.createDirectTask().setQuery(rpQuery).build();
-
-        sendRequest(Operation
-                .createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
-                .setBody(rpQueryTask)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        post.fail(e);
-                        return;
-                    }
-
-                    // start enumeration tasks for all resource pools in parallel
-                    ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
-                    if (result != null && result.documentLinks != null) {
-                        result.documentLinks.forEach(rpLink -> {
-                            EpzComputeEnumerationTaskService.triggerForResourcePool(this, rpLink);
-                        });
-                    }
-                    post.complete();
-                }));
+        EpzComputeEnumerationTaskService.triggerForAllResourcePools(this);
+        post.complete();
     }
 }
