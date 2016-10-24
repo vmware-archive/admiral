@@ -17,8 +17,10 @@ var VueDeleteItemConfirmation = Vue.extend({
                 <a href="#" class="delete-inline-item-confirmation-cancel"
                             v-on:click="cancelDelete($event)"><span>{{i18n('cancel')}}</span></a>
                 <a href="#" class="delete-inline-item-confirmation-confirm"
-                            v-on:click="confirmDelete($event)"><span>{{i18n('delete')}}<i
-                  class="fa fa-spinner fa-spin loader-inline hide"></i></span></a>
+                            v-on:click="confirmDelete($event)">
+                  <span>{{i18n('delete')}}
+                  <i class="fa fa-spinner fa-spin loader-inline not-underlined hide">
+                  </i></span></a>
               </div>
             </div>`,
 
@@ -28,6 +30,11 @@ var VueDeleteItemConfirmation = Vue.extend({
       type: Boolean,
       default: false
     }
+  },
+  data: function() {
+    return {
+      loading: false
+    };
   },
 
   attached: function() {
@@ -65,9 +72,13 @@ var VueDeleteItemConfirmation = Vue.extend({
       var $deleteButton = $(this.$el).find('.delete-inline-item-confirmation-confirm');
       $deleteButton.prev('.delete-inline-item-confirmation-cancel').addClass('hide');
       $deleteButton.css('float', 'right');
+      $deleteButton.find('span').addClass('not-underlined');
       $deleteButton.find('.fa').removeClass('hide');
 
-      this.$dispatch('confirm-delete');
+      if (!this.loading) {
+        this.loading = true;
+        this.$dispatch('confirm-delete');
+      }
     },
 
     cancelDelete: function($event) {
@@ -79,11 +90,16 @@ var VueDeleteItemConfirmation = Vue.extend({
 
     hideConfirmation: function(eventToDispatch) {
       var $deleteConfirmationHolder = $(this.$el);
+      var $deleteButton = $(this.$el).find('.delete-inline-item-confirmation-confirm');
 
       var _this = this;
       utils.fadeOut($deleteConfirmationHolder, function() {
         $deleteConfirmationHolder.addClass('hide');
+        $deleteButton.prev('.delete-inline-item-confirmation-cancel').removeClass('hide');
+        $deleteButton.find('.fa').addClass('hide');
+        $deleteButton.find('span').removeClass('not-underlined');
 
+        _this.loading = false;
         if (eventToDispatch) {
           _this.$dispatch(eventToDispatch);
         }
