@@ -25,14 +25,13 @@ import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService.ComputeRemovalTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 
-public class ComputeRemovalTaskServiceTest extends RequestBaseTest {
+public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
     private RequestBrokerState request;
 
     @Before

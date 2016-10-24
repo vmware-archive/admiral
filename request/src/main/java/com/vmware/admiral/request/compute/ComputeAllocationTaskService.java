@@ -37,7 +37,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -46,6 +46,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -65,6 +66,7 @@ import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.C
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -76,8 +78,12 @@ import com.vmware.photon.controller.model.resources.DiskService.DiskType;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.resources.TagFactoryService;
+import com.vmware.photon.controller.model.resources.TagService;
+import com.vmware.photon.controller.model.resources.TagService.TagState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
+import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.OperationSequence;
 import com.vmware.xenon.common.QueryTaskClientHelper;
 import com.vmware.xenon.common.ServiceDocument;
@@ -119,7 +125,6 @@ public class ComputeAllocationTaskService
         public static final String FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK = "__resourcePoolLink";
         public static final String FIELD_NAME_CUSTOM_PROP_REGION_ID = "__regionId";
         private static final String FIELD_NAME_CUSTOM_PROP_DISK_NAME = "__diskName";
-        private static final String FIELD_NAME_CUSTOM_PROP_DISK_LINK = "__diskStateLink";
         private static final String FIELD_NAME_CUSTOM_PROP_NETWORK_LINK = "__networkStateLink";
 
         public static enum SubStage {
@@ -297,7 +302,7 @@ public class ComputeAllocationTaskService
         // merge request/allocation properties over the previously merged properties
         customProperties = mergeCustomProperties(customProperties, state.customProperties);
 
-        String endpointLink = customProperties.get(ComputeConstants.ENDPOINT_LINK_PROP_NAME);
+        String endpointLink = customProperties.get(ComputeProperties.ENDPOINT_LINK_PROP_NAME);
 
         if (endpoint == null) {
             getServiceState(endpointLink, EndpointState.class,
@@ -336,6 +341,10 @@ public class ComputeAllocationTaskService
 
     private void createOsDiskState(ComputeAllocationTaskState state,
             SubStage nextStage, EnvironmentMappingState mapping) {
+        if (state.customProperties.containsKey(ComputeConstants.CUSTOM_PROP_DISK_LINK)) {
+            sendSelfPatch(createUpdateSubStageTask(state, nextStage));
+            return;
+        }
         if (mapping == null) {
             getServiceState(state.environmentLink, EnvironmentMappingState.class,
                     (envMapping) -> createOsDiskState(state, nextStage, envMapping));
@@ -393,7 +402,7 @@ public class ComputeAllocationTaskService
                             ComputeAllocationTaskState patch = createUpdateSubStageTask(state,
                                     nextStage);
                             patch.addCustomProperty(
-                                    ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_DISK_LINK,
+                                    ComputeConstants.CUSTOM_PROP_DISK_LINK,
                                     diskState.documentSelfLink);
                             sendSelfPatch(patch);
                         }));
@@ -501,8 +510,12 @@ public class ComputeAllocationTaskService
                 .addKindFieldClause(ComputeState.class)
                 .addFieldClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK,
                         state.resourceDescriptionLink)
-                .addInClause(ComputeState.FIELD_NAME_PARENT_LINK,
-                        state.selectedComputePlacementLinks)
+                // TODO: Right now the adapters assume the parentLink is pointing to endpoint
+                // compute. We have to design how to assign placement compute.
+                // .addInClause(ComputeState.FIELD_NAME_PARENT_LINK,
+                // state.selectedComputePlacementLinks)
+                .addFieldClause(ComputeState.FIELD_NAME_PARENT_LINK,
+                        state.endpointComputeStateLink)
                 .addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
                         FIELD_NAME_CONTEXT_ID_KEY, contextId);
 
@@ -574,9 +587,7 @@ public class ComputeAllocationTaskService
 
         computeDesc.instanceType = mapping.getMappingValue("instanceType",
                 computeDesc.instanceType != null ? computeDesc.instanceType : computeDesc.name);
-        if (computeDesc.networkId == null) {
-            computeDesc.networkId = mapping.getMappingValue("placement", "networkId");
-        }
+
         if (computeDesc.dataStoreId == null) {
             computeDesc.dataStoreId = mapping.getMappingValue("placement", "dataStoreId");
         }
@@ -772,8 +783,8 @@ public class ComputeAllocationTaskService
             name = state.customProperties.get(CUSTOM_DISPLAY_NAME);
         }
 
-        Iterator<String> placementComputeLinkIterator = state.selectedComputePlacementLinks
-                .iterator();
+        // Iterator<String> placementComputeLinkIterator = state.selectedComputePlacementLinks
+        // .iterator();
         for (int i = 0; i < state.resourceCount; i++) {
             String computeResourceId = taskId + ID_DELIMITER_CHAR + i;
             String computeResourceLink = UriUtils.buildUriPath(
@@ -781,36 +792,96 @@ public class ComputeAllocationTaskService
 
             createComputeResource(
                     state,
-                    placementComputeLinkIterator.next(),
+                    computeDescription,
+                    state.endpointComputeStateLink,
+                    // placementComputeLinkIterator.next(),
                     computeResourceId,
                     computeResourceLink, name + i,
                     null, null, taskCallback);
         }
     }
 
-    private void createComputeResource(ComputeAllocationTaskState state, String parentLink,
+    private void createComputeResource(ComputeAllocationTaskState state, ComputeDescription cd,
+            String parentLink,
             String computeResourceId, String computeResourceLink, String computeName,
             List<String> diskLinks,
             List<String> networkLinks, ServiceTaskCallback taskCallback) {
         if (diskLinks == null) {
-            createDiskResources(state, parentLink, computeResourceId, computeResourceLink,
+            createDiskResources(state, cd, parentLink, computeResourceId, computeResourceLink,
                     computeName,
                     networkLinks, taskCallback);
             return;
         }
 
         if (networkLinks == null) {
-            createNetworkResources(state, parentLink, computeResourceId, computeResourceLink,
+            createNetworkResources(state, cd, parentLink, computeResourceId, computeResourceLink,
                     computeName,
                     diskLinks, taskCallback);
             return;
         }
-
-        createComputeHost(state, parentLink, computeResourceId, computeResourceLink, computeName,
+        if (cd.tagLinks == null
+                && cd.customProperties.containsKey(ComputeConstants.CUSTOM_PROP_TAGS_KEY)) {
+            createTags(state, cd, parentLink, computeResourceId, computeResourceLink,
+                    computeName,
+                    diskLinks, networkLinks, taskCallback);
+            return;
+        }
+        createComputeHost(state, cd, parentLink, computeResourceId, computeResourceLink,
+                computeName,
                 diskLinks, networkLinks, taskCallback);
     }
 
-    private void createComputeHost(ComputeAllocationTaskState state, String parentLink,
+    private void createTags(ComputeAllocationTaskState state, ComputeDescription cd,
+            String parentLink, String computeResourceId, String computeResourceLink,
+            String computeName, List<String> diskLinks, List<String> networkLinks,
+            ServiceTaskCallback taskCallback) {
+        String tagsString = cd.customProperties.get(ComputeConstants.CUSTOM_PROP_TAGS_KEY);
+        String[] parts = tagsString.split(",");
+        cd.tagLinks = new HashSet<>();
+        if (parts.length == 0) {
+            createComputeResource(state, cd, parentLink, computeResourceId, computeResourceLink,
+                    computeName, diskLinks, networkLinks, taskCallback);
+            return;
+        }
+
+        List<TagState> tags = new ArrayList<>();
+        for (String part : parts) {
+            if (part.isEmpty()) {
+                continue;
+            }
+            // we want only the first "~", if there are more we assume it's part of the value
+            String[] keyValue = part.split("~", 2);
+            TagState tag = new TagState();
+            if (keyValue.length > 0) {
+                tag.key = keyValue[0];
+            }
+            if (keyValue.length == 2) {
+                tag.value = keyValue[1];
+            }
+            tag.tenantLinks = cd.tenantLinks;
+            tag.documentSelfLink = TagFactoryService.generateSelfLink(tag);
+            cd.tagLinks.add(tag.documentSelfLink);
+            tags.add(tag);
+        }
+        createComputeResource(state, cd, parentLink, computeResourceId, computeResourceLink,
+                computeName, diskLinks, networkLinks, taskCallback);
+        if (tags.isEmpty()) {
+            return;
+        }
+
+        Stream<Operation> tagsOps = tags.stream()
+                .map(t -> Operation.createPost(this, TagService.FACTORY_LINK)
+                        .setBody(t));
+        OperationJoin.create(tagsOps).setCompletion((ops, exs) -> {
+            if (exs != null && !exs.isEmpty()) {
+                logWarning("Unable to create tags, reason %s", Utils.toString(exs));
+                return;
+            }
+        }).sendWith(this);
+    }
+
+    private void createComputeHost(ComputeAllocationTaskState state, ComputeDescription cd,
+            String parentLink,
             String computeResourceId, String computeResourceLink, String computeName,
             List<String> diskLinks, List<String> networkLinks, ServiceTaskCallback taskCallback) {
         ComputeService.ComputeState resource = new ComputeService.ComputeState();
@@ -825,9 +896,11 @@ public class ComputeAllocationTaskService
         resource.customProperties = new HashMap<>(state.customProperties);
         resource.customProperties.put(ComputeConstants.GROUP_RESOURCE_PLACEMENT_LINK_NAME,
                 state.groupResourcePlacementLink);
+        resource.customProperties.put("computeType", "VirtualMachine");
         resource.tenantLinks = state.tenantLinks;
         resource.documentSelfLink = computeResourceLink;
         resource.powerState = ComputeService.PowerState.ON;
+        resource.tagLinks = cd.tagLinks;
 
         sendRequest(Operation
                 .createPost(this, ComputeService.FACTORY_LINK)
@@ -856,14 +929,14 @@ public class ComputeAllocationTaskService
      * @param computeResourceId
      * @param taskCallback
      */
-    private void createDiskResources(ComputeAllocationTaskState state,
+    private void createDiskResources(ComputeAllocationTaskState state, ComputeDescription cd,
             String parentLink, String computeResourceId, String computeResourceLink,
             String computeName,
             List<String> networkLinks, ServiceTaskCallback taskCallback) {
         String diskDescLink = state
-                .getCustomProperty(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_DISK_LINK);
+                .getCustomProperty(ComputeConstants.CUSTOM_PROP_DISK_LINK);
         if (diskDescLink == null) {
-            createComputeResource(state, parentLink, computeResourceId, computeResourceLink,
+            createComputeResource(state, cd, parentLink, computeResourceId, computeResourceLink,
                     computeName,
                     Collections.emptyList(), networkLinks, taskCallback);
             return;
@@ -886,7 +959,7 @@ public class ComputeAllocationTaskService
             if (counter.incrementAndGet() >= expected) {
                 // we have created all the disks. Now create the compute host
                 // resource
-                createComputeResource(state, parentLink, computeResourceId, computeResourceLink,
+                createComputeResource(state, cd, parentLink, computeResourceId, computeResourceLink,
                         computeName,
                         diskLinks.stream().collect(Collectors.toList()), networkLinks,
                         taskCallback);
@@ -907,11 +980,16 @@ public class ComputeAllocationTaskService
 
                     DiskService.DiskState templateDisk = o
                             .getBody(DiskService.DiskState.class);
+                    String link = templateDisk.documentSelfLink;
                     // create a new disk based off the template but use a
                     // unique ID
                     templateDisk.id = UUID.randomUUID().toString();
-                    templateDisk.documentSelfLink = templateDisk.id;
+                    templateDisk.documentSelfLink = null;
                     templateDisk.tenantLinks = state.tenantLinks;
+                    if (templateDisk.customProperties == null) {
+                        templateDisk.customProperties = new HashMap<>();
+                    }
+                    templateDisk.customProperties.put("__templateDiskLink", link);
                     sendRequest(Operation
                             .createPost(this, DiskService.FACTORY_LINK)
                             .setBody(templateDisk)
@@ -919,14 +997,15 @@ public class ComputeAllocationTaskService
                 }));
     }
 
-    private void createNetworkResources(ComputeAllocationTaskState state, String parentLink,
+    private void createNetworkResources(ComputeAllocationTaskState state, ComputeDescription cd,
+            String parentLink,
             String computeResourceId, String computeResourceLink, String computeName,
             List<String> diskLinks, ServiceTaskCallback taskCallback) {
 
         String netDescLink = state
                 .getCustomProperty(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_NETWORK_LINK);
         if (netDescLink == null) {
-            createComputeResource(state, parentLink, computeResourceId, computeResourceLink,
+            createComputeResource(state, cd, parentLink, computeResourceId, computeResourceLink,
                     computeName,
                     diskLinks, Collections.emptyList(), taskCallback);
             return;
@@ -949,7 +1028,7 @@ public class ComputeAllocationTaskService
             if (counter.incrementAndGet() >= expected) {
                 // we have created all the disks. Now create the compute host
                 // resource
-                createComputeResource(state, parentLink, computeResourceId, computeResourceLink,
+                createComputeResource(state, cd, parentLink, computeResourceId, computeResourceLink,
                         computeName,
                         diskLinks, networkLinks.stream().collect(Collectors.toList()),
                         taskCallback);
@@ -1011,7 +1090,8 @@ public class ComputeAllocationTaskService
         OperationSequence.create(opRQL)
                 .setCompletion((ops, exs) -> {
                     if (exs != null) {
-                        failTask("Failure retrieving GroupResourcePlacement: " + Utils.toString(exs),
+                        failTask(
+                                "Failure retrieving GroupResourcePlacement: " + Utils.toString(exs),
                                 null);
                         return;
                     }

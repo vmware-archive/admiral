@@ -31,12 +31,12 @@ import java.util.stream.Collectors;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.ResourcePlacementReservationRequest;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -302,16 +302,16 @@ public class ComputeReservationTaskService
                 .addInClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         state.resourcePoolsPerGroupPlacementLinks.values());
 
-        String envLink = getProp(computeDesc.customProperties,
-                ComputeConstants.ENDPOINT_LINK_PROP_NAME);
-        if (envLink != null) {
+        String endpointLink = getProp(computeDesc.customProperties,
+                ComputeProperties.ENDPOINT_LINK_PROP_NAME);
+        if (endpointLink != null) {
             builder.addCompositeFieldClause(ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
-                    ComputeConstants.ENDPOINT_LINK_PROP_NAME, envLink);
+                    ComputeProperties.ENDPOINT_LINK_PROP_NAME, endpointLink);
         } else {
             builder.addFieldClause(
                     QuerySpecification.buildCompositeFieldName(
                             ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
-                            ComputeConstants.ENDPOINT_LINK_PROP_NAME),
+                            ComputeProperties.ENDPOINT_LINK_PROP_NAME),
                     "*", MatchType.WILDCARD);
         }
 

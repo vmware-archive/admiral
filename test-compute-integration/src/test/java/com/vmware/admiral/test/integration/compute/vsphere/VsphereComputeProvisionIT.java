@@ -107,7 +107,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     protected void extendComputeDescription(ComputeDescription computeDescription)
             throws Exception {
         computeDescription.dataStoreId = getTestRequiredProp(VC_DATASTORE_ID);
-        computeDescription.networkId = getTestRequiredProp(VC_NETWORK_ID);
+        // computeDescription.networkId = getTestRequiredProp(VC_NETWORK_ID);
         computeDescription.zoneId = getTestRequiredProp(VC_RESOURCE_POOL_ID);
         String vmFolder = getTestProp(VC_TARGET_FOLDER_PATH);
         if (vmFolder != null) {

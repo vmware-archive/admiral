@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ResourceType;
-import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -30,7 +29,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 /**
  * Tests for the {@link ComputePlacementSelectionTaskService} service.
  */
-public class ComputePlacementSelectionTaskServiceTest extends RequestBaseTest {
+public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBaseTest {
 
     private ComputeState vmGuestCompute;
 

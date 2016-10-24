@@ -22,7 +22,6 @@ import org.junit.Test;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
-import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -30,7 +29,7 @@ import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 
-public class ComputeReservationTaskServiceTest extends RequestBaseTest {
+public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
 
     @Override
     public void setUp() throws Throwable {

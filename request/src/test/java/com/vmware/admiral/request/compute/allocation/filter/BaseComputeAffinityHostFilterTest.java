@@ -28,10 +28,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Before;
 
 import com.vmware.admiral.compute.ContainerHostService;
-import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
+import com.vmware.admiral.request.compute.ComputeRequestBaseTest;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -39,7 +39,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 
-public class BaseComputeAffinityHostFilterTest extends RequestBaseTest {
+public class BaseComputeAffinityHostFilterTest extends ComputeRequestBaseTest {
 
     protected List<String> initialHostLinks;
     protected HostSelectionFilter<FilterContext> filter;

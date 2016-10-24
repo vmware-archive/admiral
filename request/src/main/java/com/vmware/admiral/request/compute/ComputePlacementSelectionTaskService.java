@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.request.allocation.filter.AffinityFilters;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
@@ -41,6 +40,7 @@ import com.vmware.admiral.request.compute.allocation.filter.FilterContext;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -239,6 +239,7 @@ public class ComputePlacementSelectionTaskService extends
         });
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private Map<String, HostSelection> filter(ComputePlacementSelectionTaskState state,
             FilterContext filterContext,
             final Map<String, HostSelection> hostSelectionMap,
@@ -376,13 +377,13 @@ public class ComputePlacementSelectionTaskService extends
                     ResourcePoolState pool = ops.get(poolOp.getId())
                             .getBody(ResourcePoolState.class);
                     if (pool.customProperties == null || !pool.customProperties
-                            .containsKey(ComputeConstants.ENDPOINT_LINK_PROP_NAME)) {
+                            .containsKey(ComputeProperties.ENDPOINT_LINK_PROP_NAME)) {
                         failTask("ResourcePool:" + state.resourcePoolLink
                                 + ", is not associated with an Endpoint", null);
                         return;
                     }
                     String endpointLink = pool.customProperties
-                            .get(ComputeConstants.ENDPOINT_LINK_PROP_NAME);
+                            .get(ComputeProperties.ENDPOINT_LINK_PROP_NAME);
                     endpointOp.setUri(UriUtils.buildUri(getHost(), endpointLink));
                 })
                 .next(endpointOp)

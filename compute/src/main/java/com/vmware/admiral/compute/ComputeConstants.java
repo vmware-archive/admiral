@@ -20,8 +20,6 @@ public class ComputeConstants {
 
     public static final String ENDPOINT_AUTH_CREDNTIALS_PROP_NAME = "__endpointAuthCredentialsLink";
 
-    public static final String ENDPOINT_LINK_PROP_NAME = "__endpointLink";
-
     public static final String COMPUTE_HOST_PROP_NAME = "__computeHost";
 
     public static final String COMPUTE_CONTAINER_HOST_PROP_NAME = "__computeContainerHost";
@@ -36,9 +34,15 @@ public class ComputeConstants {
 
     public static final String CUSTOM_PROP_ENDPOINT_TYPE_NAME = "__endpointType";
 
-    public static final String CUSTOM_PROP_IMAGE_ID_NAME = "__compute_image_id";
+    public static final String CUSTOM_PROP_DISK_LINK = "__diskStateLink";
+
+    public static final String CUSTOM_PROP_CLUSTER_SIZE_KEY = "clusterSize";
+
+    public static final String CUSTOM_PROP_IMAGE_ID_NAME = "imageType";
 
     public static final String CUSTOM_PROP_SSH_AUTHORIZED_KEY_NAME = "sshKey";
+
+    public static final String CUSTOM_PROP_TAGS_KEY = "tags";
 
     public enum AdapterType {
         INSTANCE_ADAPTER("instance-adapter"),

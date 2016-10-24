@@ -30,7 +30,6 @@ import com.vmware.admiral.compute.EnvironmentMappingService.EnvironmentMappingSt
 import com.vmware.admiral.compute.PropertyMapping;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
-import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.compute.ComputeOperationTaskService.ComputeOperationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
@@ -49,7 +48,7 @@ import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
-public class ComputeOperationTaskServiceTest extends RequestBaseTest {
+public class ComputeOperationTaskServiceTest extends ComputeRequestBaseTest {
 
     private RequestBrokerState request;
     private List<String> documentLinksForDeletion;

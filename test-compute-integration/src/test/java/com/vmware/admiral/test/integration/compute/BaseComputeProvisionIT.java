@@ -367,7 +367,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         poolState.customProperties = new HashMap<>();
         if (endpoint != null) {
             poolState.customProperties.put(
-                    ComputeConstants.ENDPOINT_LINK_PROP_NAME, endpoint.documentSelfLink);
+                    ComputeProperties.ENDPOINT_LINK_PROP_NAME, endpoint.documentSelfLink);
         }
 
         ResourcePoolState resourcePoolState = postDocument(ResourcePoolService.FACTORY_LINK,

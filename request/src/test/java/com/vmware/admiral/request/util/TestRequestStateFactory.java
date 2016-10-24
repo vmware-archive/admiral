@@ -34,6 +34,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
+import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
@@ -178,7 +179,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         poolState.customProperties.put(ComputeConstants.ENDPOINT_AUTH_CREDNTIALS_PROP_NAME,
                 CommonTestStateFactory.AUTH_CREDENTIALS_ID);
         poolState.customProperties.put(
-                ComputeConstants.ENDPOINT_LINK_PROP_NAME,
+                ComputeProperties.ENDPOINT_LINK_PROP_NAME,
                 UriUtils.buildUriPath(EndpointService.FACTORY_LINK, ENDPOINT_ID));
 
         return poolState;

@@ -115,10 +115,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
         createEndpoint();
         // setup Docker Host:
         createResourcePool();
-        createComputeResourcePool();
         // setup Group Placement:
         groupPlacementState = createGroupResourcePlacement(resourcePool);
-        computeGroupPlacementState = createGroupResourcePlacement(computeResourcePool);
         ComputeDescription dockerHostDesc = createDockerHostDescription();
         createDockerHost(dockerHostDesc, resourcePool);
 
