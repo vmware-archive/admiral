@@ -13,6 +13,7 @@ import NetworkDefinitionFormVue from 'NetworkDefinitionFormVue';
 import MulticolumnInputs from 'components/common/MulticolumnInputs';
 import utils from 'core/utils';
 import services from 'core/services';
+import constants from 'core/constants';
 
 let constraints = {
   name: function(name) {
@@ -317,7 +318,7 @@ var NetworkDefinitionForm = Vue.extend({
 
         var alertMessage = (network.error) ? network.error._generic : network.error;
         if (alertMessage) {
-          this.$dispatch('container-form-alert', alertMessage);
+          this.$dispatch('container-form-alert', alertMessage, constants.ALERTS.TYPE.FAIL);
         }
       }
     }, {immediate: true});

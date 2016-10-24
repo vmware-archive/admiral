@@ -55,7 +55,7 @@ var TemplatesViewVueComponent = Vue.extend({
     var alertData = {};
     alertData.show = false;
     alertData.message = '';
-    alertData.type = 'danger';
+    alertData.type = constants.ALERTS.TYPE.FAIL;
 
     return {
       constants: constants,
@@ -128,7 +128,7 @@ var TemplatesViewVueComponent = Vue.extend({
                                               (isPartialResult) => {
       if (isPartialResult) {
         var errorMessage = i18n.t('app.template.list.partialResultWarning');
-        this.$dispatch('container-form-alert', errorMessage, 'warning');
+        this.$dispatch('container-form-alert', errorMessage, constants.ALERTS.TYPE.WARNING);
       } else {
         this.$dispatch('container-form-alert', null);
       }
@@ -288,9 +288,7 @@ var TemplatesViewVueComponent = Vue.extend({
       if (alertMessage) {
         this.alert.show = true;
         this.alert.message = alertMessage;
-        if (type && (type !== 'fail')) {
-          this.alert.type = type;
-        }
+        this.alert.type = type ? type : constants.ALERTS.TYPE.FAIL;
       } else {
         this.alert.show = false;
         this.alert.message = '';

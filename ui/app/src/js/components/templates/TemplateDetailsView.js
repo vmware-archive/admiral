@@ -321,7 +321,9 @@ var TemplateDetailsView = Vue.extend({
 
             var alertMessage = (model.error) ? model.error._generic : model.error;
             if (alertMessage) {
-              this.$dispatch('container-form-alert', alertMessage);
+              this.$dispatch('container-form-alert',
+                             alertMessage,
+                             constants.ALERTS.TYPE.FAIL);
             }
           }
         }, {immediate: true});

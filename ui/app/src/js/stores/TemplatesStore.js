@@ -1240,7 +1240,7 @@ let TemplatesStore = Reflux.createStore({
 
     services.updateContainerTemplate(publishedTemplateObj).then(() => {
       handlePublishTemplate.call(this, templateDocumentSelfLink, {
-        type: 'success',
+        type: constants.ALERTS.TYPE.SUCCESS,
         message: i18n.t('app.template.publish.success')
       });
     }).catch((e) => {
@@ -1253,7 +1253,7 @@ let TemplatesStore = Reflux.createStore({
       }
 
       handlePublishTemplate.call(this, templateDocumentSelfLink, {
-        type: 'fail',
+        type: constants.ALERTS.TYPE.FAIL,
         message: errorMessage
       });
     });

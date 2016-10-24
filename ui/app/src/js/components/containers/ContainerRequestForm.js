@@ -13,6 +13,7 @@ import ContainerRequestFormVue from 'ContainerRequestFormVue';
 import ContainerDefinitionForm from 'components/containers/ContainerDefinitionForm';
 import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin'; // eslint-disable-line
 import { TemplateActions, ContainerActions } from 'actions/Actions';
+import constants from 'core/constants';
 
 var ContainerRequestForm = Vue.extend({
   template: ContainerRequestFormVue,
@@ -78,7 +79,7 @@ var ContainerRequestForm = Vue.extend({
 
         var alertMessage = (data.error) ? data.error._generic : data.error;
         if (alertMessage) {
-          this.$dispatch('container-form-alert', alertMessage);
+          this.$dispatch('container-form-alert', alertMessage, constants.ALERTS.TYPE.FAIL);
         }
       }
     }, {immediate: true});
