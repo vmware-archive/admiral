@@ -20,11 +20,37 @@ import (
 	"admiral/config"
 	"admiral/utils"
 	"bytes"
+	"fmt"
+	"time"
 )
 
 type EventInfo struct {
-	EventLogType string `json:"eventLogType"`
-	Description  string `json:"description"`
+	EventLogType             string `json:"eventLogType"`
+	Description              string `json:"description"`
+	DocumentUpdateTimeMicros int64  `json:"documentUpdateTimeMicros"`
+}
+
+func (ei *EventInfo) GetLastUpdate() string {
+	then := time.Unix(0, ei.DocumentUpdateTimeMicros*int64(time.Microsecond))
+	timeSinceUpdate := time.Now().Sub(then)
+	if timeSinceUpdate.Hours() > 72 {
+		daysAgo := int(float64(timeSinceUpdate.Hours()) / 24.0)
+		return fmt.Sprintf("%d days", daysAgo)
+	}
+	if timeSinceUpdate.Hours() > 1 {
+		return fmt.Sprintf("%d hours", int64(timeSinceUpdate.Hours()))
+	}
+	if timeSinceUpdate.Minutes() > 1 {
+		return fmt.Sprintf("%d minutes", int64(timeSinceUpdate.Minutes()))
+	}
+	if timeSinceUpdate.Seconds() > 1 {
+		return fmt.Sprintf("%d seconds", int64(timeSinceUpdate.Seconds()))
+	}
+	return "0 seconds"
+}
+
+func (ei *EventInfo) GetDescription() string {
+	return strings.TrimSpace(ei.Description)
 }
 
 type EventList struct {
@@ -51,9 +77,10 @@ func (el *EventList) GetOutputString() string {
 		return "No elements found."
 	}
 	var buffer bytes.Buffer
+	header := fmt.Sprintf("%-15s %s\n", "SINCE", "DESCRIPTION")
+	buffer.WriteString(header)
 	for _, val := range el.Documents {
-		description := strings.TrimSpace(val.Description)
-		output := utils.GetFormattedString(val.EventLogType, description)
+		output := fmt.Sprintf("%-15s %s", val.GetLastUpdate(), val.GetDescription())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
@@ -62,7 +89,7 @@ func (el *EventList) GetOutputString() string {
 
 //Clear all events.
 func (el *EventList) ClearAllEvent() {
-	for link, _ := range el.Documents {
+	for link := range el.Documents {
 		url := config.URL + link
 		req, _ := http.NewRequest("DELETE", url, nil)
 		client.ProcessRequest(req)
