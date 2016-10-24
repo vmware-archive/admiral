@@ -38,7 +38,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
 
     private static final String TEST_VM_NAME = "testVM";
 
-    private ComputeState vmGuestCompute;
+    protected ComputeState vmGuestCompute;
 
     @Override
     protected ResourceType placementResourceType() {

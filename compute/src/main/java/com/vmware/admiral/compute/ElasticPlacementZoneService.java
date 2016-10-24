@@ -184,7 +184,14 @@ public class ElasticPlacementZoneService extends StatefulService {
         sendRequest(Operation
                 .createPatch(getHost(), epz.resourcePoolLink)
                 .setBody(ServiceStateCollectionUpdateRequest.create(null, itemsToRemove))
-                .setCompletion((op, ex) -> callback.accept(ex)));
+                .setCompletion((op, ex) -> {
+                    if (op.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                        // the resource pool is already deleted, we're good
+                        callback.accept(null);
+                    } else {
+                        callback.accept(ex);
+                    }
+                }));
     }
 
     /**

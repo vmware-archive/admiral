@@ -223,7 +223,7 @@ let ComputeStore = Reflux.createStore({
         resourcePoolLink: computeModel.resourcePoolLink,
         tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
       });
-      services.updateHost(computeModel.selfLinkId, computeData).then(() => {
+      services.updateCompute(computeModel.selfLinkId, computeData).then(() => {
         actions.NavigationActions.openCompute();
         this.setInData(['computeEditView'], null);
         this.setInData(['computeEditView', 'isSavingCompute'], false);

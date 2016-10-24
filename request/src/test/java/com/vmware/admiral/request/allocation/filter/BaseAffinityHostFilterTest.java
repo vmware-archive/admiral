@@ -43,7 +43,7 @@ import com.vmware.xenon.common.UriUtils;
 public class BaseAffinityHostFilterTest extends RequestBaseTest {
 
     protected List<String> initialHostLinks;
-    protected HostSelectionFilter filter;
+    protected HostSelectionFilter<PlacementHostSelectionTaskState> filter;
     protected PlacementHostSelectionTaskState state;
     protected List<String> expectedLinks;
     protected boolean throwErrorOnFilter;

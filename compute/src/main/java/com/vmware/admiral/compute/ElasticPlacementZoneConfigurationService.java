@@ -324,36 +324,43 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
 
             List<Operation> deleteOps = new ArrayList<>();
 
+            // create delete operations for RP
+            deleteOps.add(Operation
+                    .createDelete(getHost(), resourcePoolLink)
+                    .setReferer(getUri())
+                    .setCompletion((op, err) -> {
+                        if (err != null) {
+                            originalOp.fail(err);
+                        } else if (deleteOps.size() == 1) {
+                            originalOp.complete();
+                        }
+                    }));
+
             // create delete operations for EPZ, if any is returned
             QueryTask returnedQueryTask = o.getBody(QueryTask.class);
             if (returnedQueryTask.results != null && returnedQueryTask.results.documentLinks != null
                     && !returnedQueryTask.results.documentLinks.isEmpty()) {
                 deleteOps.add(Operation
                         .createDelete(getHost(), returnedQueryTask.results.documentLinks.get(0))
-                        .setReferer(getUri()));
+                        .setReferer(getUri())
+                        .setCompletion((op, err) -> {
+                            if (err != null) {
+                                logWarning(
+                                        "Couldn't delete EPZ after deletion of RP '%s' is already "
+                                                + "completed: %s",
+                                        resourcePoolLink, err.toString());
+                            }
+                            originalOp.complete();
+                        }));
             }
 
-            // create delete operations for RP
-            deleteOps.add(Operation
-                    .createDelete(getHost(), resourcePoolLink)
-                    .setReferer(getUri()));
-
-            // execute them in sequence - EPZ deletion (if any) has to be completed first
-            OperationSequence opSequence = OperationSequence
-                    .create(deleteOps.get(0))
-                    .abortOnFirstFailure();
+            // execute them in sequence - EPZ deletion has to be completed after RP is deleted
+            // in order to avoid re-configuring the RP upon EPZ deletion
+            OperationSequence opSequence = OperationSequence.create(deleteOps.get(0));
             for (int i = 1; i < deleteOps.size(); i++) {
                 opSequence = opSequence.next(deleteOps.get(i));
             }
-
-            opSequence.setCompletion((ops, exs) -> {
-                // single completion handler for all the operations
-                if (exs != null) {
-                    originalOp.fail(exs.values().iterator().next());
-                    return;
-                }
-                originalOp.complete();
-            }).sendWith(getHost());
+            opSequence.abortOnFirstFailure().sendWith(getHost());
         });
         queryEpzOp.sendWith(getHost());
     }
