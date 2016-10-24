@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
@@ -44,6 +45,7 @@ import com.vmware.admiral.request.ContainerNetworkProvisionTaskService.Container
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -431,7 +433,19 @@ public class ContainerNetworkProvisionTaskService
 
         if (providedHostIds != null) {
             retrieveContainerHostsByIds(state, providedHostIds, (hosts) -> {
-                callback.accept(hosts);
+                List<String> disabledHosts = hosts.stream().filter((host) -> {
+                    return host.powerState != PowerState.ON;
+                })
+                        .map(host -> host.address).collect(Collectors.toList());
+
+                if (disabledHosts.isEmpty()) {
+                    callback.accept(hosts);
+                } else {
+                    String err = String.format(
+                            "Requested network provisioning for disabled hosts: [%s].",
+                            disabledHosts);
+                    failTask(err, null);
+                }
             });
             return;
         }

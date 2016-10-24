@@ -661,7 +661,10 @@ services.loadHostsByLinks = function(documentSelfLinks) {
 };
 
 services.searchHosts = function(query, limit) {
-  var qOps = { any: query };
+  var qOps = {
+    any: query,
+    powerState: 'ON'
+  };
 
   let filter = buildHostsQuery(qOps, true);
   let url = buildPaginationUrl(links.COMPUTE_RESOURCES, filter, true,
@@ -1552,6 +1555,13 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
           }
         ];
       }
+    }
+
+    if (queryOptions.powerState) {
+      qOps.powerState = [{
+        val: queryOptions.powerState,
+        op: 'eq'
+      }];
     }
   }
 
