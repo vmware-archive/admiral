@@ -221,6 +221,11 @@ public class ComputePlacementSelectionTaskService extends
                 return;
             }
 
+            if (qr.computesByLink.isEmpty()) {
+                selectByEndpointAsCompute(state, computeDescriptionLinks, null);
+                return;
+            }
+
             Map<String, HostSelection> hostSelectionMap = buildHostSelectionMap(qr);
 
             AffinityFilters affinityFilters = AffinityFilters.build(this.getHost(), desc);
@@ -228,11 +233,6 @@ public class ComputePlacementSelectionTaskService extends
             FilterContext filterContext = FilterContext.from(state);
             Map<String, HostSelection> filtered = filter(state, filterContext, hostSelectionMap,
                     affinityFilters.getQueue());
-
-            if (qr.computesByLink.isEmpty()) {
-                selectByEndpointAsCompute(state, computeDescriptionLinks, null);
-                return;
-            }
 
             selection(state,
                     filtered.values().stream().map(h -> h.hostLink).collect(Collectors.toList()));
