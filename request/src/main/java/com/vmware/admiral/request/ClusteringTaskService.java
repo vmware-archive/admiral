@@ -22,48 +22,51 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.request.ContainerClusteringTaskService.ContainerClusteringTaskState.SubStage;
+import com.vmware.admiral.request.ClusteringTaskService.ClusteringTaskState.SubStage;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
 
 /**
- * Task for clusterization of containers: handles both increase and decrease of the number of the
- * containers in a cluster.
+ * Task for clusterization of resources: handles both increase and decrease of the number of the
+ * resources in a cluster.
  */
-public class ContainerClusteringTaskService extends
-        AbstractTaskStatefulService<ContainerClusteringTaskService.ContainerClusteringTaskState,
-        ContainerClusteringTaskService.ContainerClusteringTaskState.SubStage> {
+public class ClusteringTaskService extends
+        AbstractTaskStatefulService<ClusteringTaskService.ClusteringTaskState, ClusteringTaskService.ClusteringTaskState.SubStage> {
 
-    public static final String DISPLAY_NAME = "Container Clustering";
+    public static final String DISPLAY_NAME = "Resource Clustering";
 
-    public static class ContainerClusteringTaskState
-            extends
-            com.vmware.admiral.service.common.TaskServiceDocument<ContainerClusteringTaskState.SubStage> {
+    public static final String FACTORY_LINK = ManagementUriParts.REQUEST_RESOURCE_CLUSTERING_TASK;
+
+    public static class ClusteringTaskState extends
+            com.vmware.admiral.service.common.TaskServiceDocument<ClusteringTaskState.SubStage> {
 
         public enum SubStage {
             CREATED,
             CLUSTERING,
-            ALLOCATED,
-            UPDATED_CLUSTER_SIZE,
             COMPLETED,
             ERROR;
 
@@ -86,16 +89,12 @@ public class ContainerClusteringTaskService extends
         public boolean postAllocation;
 
         // Service use fields:
-
-        /** Holder of Containers which will be added or removed. */
-        public List<String> containers;
-
         public List<String> resourceLinks;
 
     }
 
-    public ContainerClusteringTaskService() {
-        super(ContainerClusteringTaskState.class, SubStage.class, DISPLAY_NAME);
+    public ClusteringTaskService() {
+        super(ClusteringTaskState.class, SubStage.class, DISPLAY_NAME);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
@@ -104,7 +103,7 @@ public class ContainerClusteringTaskService extends
     }
 
     @Override
-    protected void validateStateOnStart(ContainerClusteringTaskState state)
+    protected void validateStateOnStart(ClusteringTaskState state)
             throws IllegalArgumentException {
         assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
         assertNotEmpty(state.resourceType, "resourceType");
@@ -115,14 +114,14 @@ public class ContainerClusteringTaskService extends
     }
 
     @Override
-    protected void handleStartedStagePatch(ContainerClusteringTaskState state) {
+    protected void handleStartedStagePatch(ClusteringTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            provisionOrRemoveContainers(state, null);
+            provisionOrRemoveResources(state, null);
             break;
         case CLUSTERING:
             break;
-        case ALLOCATED:
+        case COMPLETED:
             complete(state, SubStage.COMPLETED);
             break;
         case ERROR:
@@ -135,7 +134,7 @@ public class ContainerClusteringTaskService extends
 
     @Override
     protected boolean validateStageTransition(Operation patch,
-            ContainerClusteringTaskState patchBody, ContainerClusteringTaskState currentState) {
+            ClusteringTaskState patchBody, ClusteringTaskState currentState) {
         currentState.resourceLinks = mergeLists(
                 currentState.resourceLinks, patchBody.resourceLinks);
         return false;
@@ -143,7 +142,7 @@ public class ContainerClusteringTaskService extends
 
     @Override
     protected ServiceTaskCallbackResponse getFinishedCallbackResponse(
-            ContainerClusteringTaskState state) {
+            ClusteringTaskState state) {
         CallbackCompleteResponse finishedResponse = new CallbackCompleteResponse();
         finishedResponse.copy(state.serviceTaskCallback.getFinishedResponse());
         finishedResponse.resourceLinks = state.resourceLinks;
@@ -157,85 +156,105 @@ public class ContainerClusteringTaskService extends
         List<String> resourceLinks;
     }
 
-    private void provisionOrRemoveContainers(ContainerClusteringTaskState state,
-            Set<ContainerState> containerStates) {
+    private void provisionOrRemoveResources(ClusteringTaskState state,
+            Set<ResourceState> resourcesStates) {
 
-        if (containerStates == null) {
-            retrieveContainers(state, (containers) -> this.provisionOrRemoveContainers(state, containers));
+        if (resourcesStates == null) {
+            retrieveResources(state,
+                    (resources) -> this.provisionOrRemoveResources(state, resources));
             return;
         }
 
-        if (containerStates.stream().anyMatch(c -> isSystemContainer(c))) {
-            failTask(null, new IllegalArgumentException(
-                    "Day2 operations are not supported for system container"));
+        if (!validate(resourcesStates)) {
             return;
         }
 
-        List<ContainerState> sortedContainers = sortContainersByImportance(containerStates);
+        List<ResourceState> sortedResources = sortResourcesByImportance(resourcesStates);
 
-        int desiredContainerCount = (int) state.resourceCount;
-        int containersToAdd = 0;
+        int desiredResourceCount = (int) state.resourceCount;
+        int resourcesToAdd = 0;
 
         /*
-         * Split the sorted list into two based on the desired container count. The right hand side
-         * consists of containers to be deleted. The remaining containers can be further examined to
+         * Split the sorted list into two based on the desired resources count. The right hand side
+         * consists of resources to be deleted. The remaining resources can be further examined to
          * check if they need to be "redeployed".
          */
-        List<ContainerState> containersToRemove;
-        if (desiredContainerCount >= sortedContainers.size()) {
-            containersToRemove = Collections.emptyList();
-            containersToAdd = desiredContainerCount - sortedContainers.size();
+        List<ResourceState> resourcesToRemove;
+        if (desiredResourceCount >= sortedResources.size()) {
+            resourcesToRemove = Collections.emptyList();
+            resourcesToAdd = desiredResourceCount - sortedResources.size();
         } else {
-            containersToRemove = sortedContainers
-                    .subList(desiredContainerCount, sortedContainers.size());
+            resourcesToRemove = sortedResources
+                    .subList(desiredResourceCount, sortedResources.size());
         }
 
         String groupResourcePlacementLink = null;
-        if (sortedContainers.size() >= 1) {
-            groupResourcePlacementLink = sortedContainers.get(0).groupResourcePlacementLink;
+        if (sortedResources.size() >= 1) {
+            groupResourcePlacementLink = getGroupResourcePlacementLink(sortedResources.get(0));
         }
-        if (containersToAdd >= 1) {
-            createAdditionalContainers(state, state.resourceDescriptionLink,
-                    groupResourcePlacementLink,
-                    sortedContainers,
-                    containersToAdd);
+        if (resourcesToAdd >= 1) {
+            createAdditionalResources(state, state.resourceDescriptionLink,
+                    groupResourcePlacementLink, resourcesToAdd);
         } else {
-            removeContainers(state, state.resourceDescriptionLink, containersToRemove);
+            removeResources(state, state.resourceDescriptionLink, resourcesToRemove);
         }
+    }
+
+    private String getGroupResourcePlacementLink(ResourceState r) {
+        if (r instanceof ContainerState) {
+            return ((ContainerState) r).groupResourcePlacementLink;
+        } else if (r instanceof ComputeState) {
+            ComputeState c = (ComputeState) r;
+            return c.customProperties != null
+                    ? c.customProperties.get(ComputeConstants.GROUP_RESOURCE_PLACEMENT_LINK_NAME)
+                    : null;
+        }
+        return null;
+    }
+
+    private boolean validate(Set<ResourceState> resourcesStates) {
+        if (resourcesStates.stream()
+                .filter(r -> r instanceof ContainerState)
+                .map(r -> ((ContainerState) r))
+                .anyMatch(c -> isSystemContainer(c))) {
+            failTask(null, new IllegalArgumentException(
+                    "Day2 operations are not supported for system container"));
+            return false;
+        }
+        return true;
     }
 
     /**
-     * "Sort" the containers in a list by their status from most important to least important. The
-     * idea is to easily identify the containers to be deleted if we are to decrease the container
+     * "Sort" the resources in a list by their status from most important to least important. The
+     * idea is to easily identify the resources to be deleted if we are to decrease the resource
      * count
      */
-    private List<ContainerState> sortContainersByImportance(
-            Set<ContainerState> containerStates) {
+    private List<ResourceState> sortResourcesByImportance(
+            Set<ResourceState> resourcesStates) {
 
-        List<ContainerState> sortedContainers = containerStates.stream()
-                .sorted((l, r) -> l.powerState.ordinal() - r.powerState.ordinal())
+        List<ResourceState> sortedResources = resourcesStates.stream()
+                .sorted((l, r) -> powerState(l) - powerState(r))
                 .collect(Collectors.toList());
 
-        return sortedContainers;
+        return sortedResources;
     }
 
-    private void createAdditionalContainers(ContainerClusteringTaskState state, String descLink,
-            String groupResourcePlacementLink, List<ContainerState> existingContainers,
-            int containersToAdd) {
+    private void createAdditionalResources(ClusteringTaskState state, String descLink,
+            String groupResourcePlacementLink, int resourcesToAdd) {
 
-        if (containersToAdd < 1) {
+        if (resourcesToAdd < 1) {
             return;
         }
 
         RequestBrokerState requestBrokerState = new RequestBrokerState();
-        requestBrokerState.resourceCount = containersToAdd;
+        requestBrokerState.resourceCount = resourcesToAdd;
         requestBrokerState.resourceDescriptionLink = descLink;
         requestBrokerState.resourceType = state.resourceType;
         requestBrokerState.operation = RequestBrokerState.PROVISION_RESOURCE_OPERATION;
         requestBrokerState.groupResourcePlacementLink = groupResourcePlacementLink;
         requestBrokerState.tenantLinks = state.tenantLinks;
         requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
-                TaskState.TaskStage.STARTED, SubStage.ALLOCATED, TaskState.TaskStage.FAILED,
+                TaskState.TaskStage.STARTED, SubStage.COMPLETED, TaskState.TaskStage.FAILED,
                 SubStage.ERROR);
         requestBrokerState.addCustomProperty(FIELD_NAME_CONTEXT_ID_KEY, state.contextId);
         requestBrokerState.addCustomProperty(RequestUtils.CLUSTERING_OPERATION_CUSTOM_PROP,
@@ -255,10 +274,10 @@ public class ContainerClusteringTaskService extends
                 }));
     }
 
-    private void removeContainers(ContainerClusteringTaskState state,
+    private void removeResources(ClusteringTaskState state,
             String descLink,
-            List<ContainerState> containersToRemove) {
-        if (containersToRemove.isEmpty()) {
+            List<ResourceState> resourcesToRemove) {
+        if (resourcesToRemove.isEmpty()) {
             return;
         }
         RequestBrokerState requestBrokerState = new RequestBrokerState();
@@ -266,11 +285,11 @@ public class ContainerClusteringTaskService extends
         requestBrokerState.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         requestBrokerState.tenantLinks = state.tenantLinks;
         requestBrokerState.resourceDescriptionLink = descLink;
-        requestBrokerState.resourceLinks = containersToRemove.stream().map(c -> c.documentSelfLink)
+        requestBrokerState.resourceLinks = resourcesToRemove.stream().map(c -> c.documentSelfLink)
                 .collect(Collectors.toList());
         requestBrokerState.requestTrackerLink = state.requestTrackerLink;
         requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
-                TaskState.TaskStage.STARTED, SubStage.ALLOCATED, TaskState.TaskStage.FAILED,
+                TaskState.TaskStage.STARTED, SubStage.COMPLETED, TaskState.TaskStage.FAILED,
                 SubStage.ERROR);
         requestBrokerState.addCustomProperty(FIELD_NAME_CONTEXT_ID_KEY, state.contextId);
         requestBrokerState.addCustomProperty(RequestUtils.CLUSTERING_OPERATION_CUSTOM_PROP,
@@ -286,34 +305,35 @@ public class ContainerClusteringTaskService extends
                 }));
     }
 
-    /** Retrieves all compositions (group of templates) and their containers by provided type. */
-    private void retrieveContainers(ContainerClusteringTaskState state,
-            Consumer<Set<ContainerState>> callbackFunction) {
+    /** Retrieves all compositions (group of templates) and their resources by provided type. */
+    private void retrieveResources(ClusteringTaskState state,
+            Consumer<Set<ResourceState>> callbackFunction) {
         try {
-            ServiceDocumentQuery<ContainerState> query = new ServiceDocumentQuery<>(getHost(),
-                    ContainerState.class);
+            Class<? extends ResourceState> stateClass = getStateClass(state.resourceType);
+            ServiceDocumentQuery<? extends ResourceState> query = new ServiceDocumentQuery<>(
+                    getHost(), stateClass);
 
-            QueryTask queryTask = QueryUtil.buildPropertyQuery(ContainerState.class,
+            QueryTask queryTask = QueryUtil.buildPropertyQuery(stateClass,
                     ContainerState.FIELD_NAME_DESCRIPTION_LINK, state.resourceDescriptionLink);
 
             if (state.contextId != null) {
                 queryTask.querySpec.query.addBooleanClause(new QueryTask.Query()
-                        .setTermPropertyName(ContainerState.FIELD_NAME_COMPOSITE_COMPONENT_LINK)
+                        .setTermPropertyName(getCompositeComponentLinkFieldName(stateClass))
                         .setTermMatchValue(UriUtils.buildUriPath(
                                 CompositeComponentFactoryService.SELF_LINK, state.contextId)));
             }
 
             queryTask.querySpec.options = EnumSet.of(QueryOption.EXPAND_CONTENT);
 
-            Map<ContainerState, ContainerState> containerStates = new ConcurrentHashMap<>();
+            Set<ResourceState> resourcesStates = new HashSet<>();
             query.query(queryTask, (r) -> {
                 if (r.hasException()) {
-                    logWarning("Exception during retrieving of containers. Error: [%s]",
+                    logWarning("Exception during retrieving of resources. Error: [%s]",
                             Utils.toString(r.getException()));
                 } else if (r.hasResult()) {
-                    containerStates.put(r.getResult(), r.getResult());
+                    resourcesStates.add(r.getResult());
                 } else {
-                    callbackFunction.accept(containerStates.keySet());
+                    callbackFunction.accept(resourcesStates);
                 }
             });
 
@@ -321,5 +341,32 @@ public class ContainerClusteringTaskService extends
             throw new IllegalArgumentException(e);
         }
 
+    }
+
+    private String getCompositeComponentLinkFieldName(Class<? extends ResourceState> stateClass) {
+        if (ComputeState.class.isAssignableFrom(stateClass)) {
+            return QuerySpecification.buildCompositeFieldName(
+                    ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                    ComputeConstants.FIELD_NAME_COMPOSITE_COMPONENT_LINK_KEY);
+        }
+        return ContainerState.FIELD_NAME_COMPOSITE_COMPONENT_LINK;
+    }
+
+    private Class<? extends ResourceState> getStateClass(String resourceType) {
+        ComponentMeta meta = CompositeComponentRegistry.metaByType(resourceType);
+        if (ComputeState.class.isAssignableFrom(meta.stateClass)) {
+            return ComputeState.class;
+        }
+        return meta.stateClass;
+    }
+
+    private static int powerState(ResourceState r) {
+        if (r instanceof ContainerState) {
+            return ((ContainerState) r).powerState.ordinal();
+        } else if (r instanceof ComputeState) {
+            return ((ComputeState) r).powerState.ordinal();
+        }
+
+        return 0;
     }
 }

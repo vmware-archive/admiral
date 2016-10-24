@@ -56,6 +56,7 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
         waitForServiceAvailability(ComputeDescriptionService.FACTORY_LINK);
         waitForServiceAvailability(ComputeService.FACTORY_LINK);
         waitForServiceAvailability(AuthCredentialsService.FACTORY_LINK);
+        DeploymentProfileConfig.getInstance().setTest(true);
     }
 
     @After
@@ -63,7 +64,7 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
         for (String selfLink : documentLinksForDeletion) {
             delete(selfLink);
         }
-        DeploymentProfileConfig.getInstance().setTest(true);
+        DeploymentProfileConfig.getInstance().setTest(false);
     }
 
     @Test
@@ -144,7 +145,6 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
     public void testCreateEndpoint() throws Throwable {
         EndpointState endpoint = createEndpoint("ep");
 
-        DeploymentProfileConfig.getInstance().setTest(true);
         EndpointState newEndpointState = doPost(endpoint,
                 EndpointAdapterService.SELF_LINK);
 
@@ -197,7 +197,6 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
     public void testDeleteEndpoint() throws Throwable {
         EndpointState endpoint = createEndpoint("ep");
 
-        DeploymentProfileConfig.getInstance().setTest(true);
         EndpointAllocationTaskState newEndpointState = allocateEndpoint(endpoint);
         assertNotNull(newEndpointState);
         assertNotNull(newEndpointState.endpointState);

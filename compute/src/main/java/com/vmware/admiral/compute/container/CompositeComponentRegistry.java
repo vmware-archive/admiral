@@ -36,9 +36,19 @@ public class CompositeComponentRegistry {
     public static void registerComponent(String resourceType, String descriptionFactoryLink,
             Class<? extends ResourceState> descriptionClass, String stateFactoryLink,
             Class<? extends ResourceState> stateClass) {
+        registerComponent(resourceType, descriptionFactoryLink, descriptionClass, stateFactoryLink,
+                stateClass, stateClass);
+    }
+
+    /**
+     * Register new component meta data.
+     */
+    public static void registerComponent(String resourceType, String descriptionFactoryLink,
+            Class<? extends ResourceState> descriptionClass, String stateFactoryLink,
+            Class<? extends ResourceState> stateClass,
+            Class<? extends ResourceState> stateTemplateClass) {
         entries.add(new RegistryEntry(resourceType, descriptionFactoryLink, descriptionClass,
-                stateFactoryLink,
-                stateClass));
+                stateFactoryLink, stateClass, stateTemplateClass));
     }
 
     /**
@@ -141,12 +151,15 @@ public class CompositeComponentRegistry {
         public final Class<? extends ResourceState> descriptionClass;
         public final Class<? extends ResourceState> stateClass;
         public final String resourceType;
+        public Class<? extends ResourceState> stateTemplateClass;
 
         private ComponentMeta(String resourceType, Class<? extends ResourceState> descriptionClass,
-                Class<? extends ResourceState> stateClass) {
+                Class<? extends ResourceState> stateClass,
+                Class<? extends ResourceState> stateTemplateClass) {
             this.resourceType = resourceType;
             this.descriptionClass = descriptionClass;
             this.stateClass = stateClass;
+            this.stateTemplateClass = stateTemplateClass;
         }
     }
 
@@ -156,12 +169,14 @@ public class CompositeComponentRegistry {
         private final String stateFactoryLink;
         private final ComponentMeta componentMeta;
 
-        private RegistryEntry(String resourceType, String descriptionFactoryLink,
+        public RegistryEntry(String resourceType, String descriptionFactoryLink,
                 Class<? extends ResourceState> descriptionClass, String stateFactoryLink,
-                Class<? extends ResourceState> stateClass) {
+                Class<? extends ResourceState> stateClass,
+                Class<? extends ResourceState> stateTemplateClass) {
             this.descriptionFactoryLink = descriptionFactoryLink;
             this.stateFactoryLink = stateFactoryLink;
-            this.componentMeta = new ComponentMeta(resourceType, descriptionClass, stateClass);
+            this.componentMeta = new ComponentMeta(resourceType, descriptionClass, stateClass,
+                    stateTemplateClass);
         }
     }
 }

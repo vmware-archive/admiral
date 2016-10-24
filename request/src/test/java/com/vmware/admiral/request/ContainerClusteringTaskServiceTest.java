@@ -37,7 +37,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
-import com.vmware.admiral.request.ContainerClusteringTaskService.ContainerClusteringTaskState;
+import com.vmware.admiral.request.ClusteringTaskService.ClusteringTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.allocation.filter.AffinityConstraint;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
@@ -119,9 +119,9 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         }
 
         String containerClusteringTaskLink = UriUtils.buildUriPath(
-                ContainerClusteringTaskFactoryService.SELF_LINK,
+                ClusteringTaskService.FACTORY_LINK,
                 extractId(day2OperationClustering.documentSelfLink));
-        waitForTaskSuccess(containerClusteringTaskLink, ContainerClusteringTaskState.class);
+        waitForTaskSuccess(containerClusteringTaskLink, ClusteringTaskState.class);
 
         waitForRequestToComplete(day2OperationClustering);
 
@@ -203,9 +203,9 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         }
 
         String containerClusteringTaskLink = UriUtils.buildUriPath(
-                ContainerClusteringTaskFactoryService.SELF_LINK,
+                ClusteringTaskService.FACTORY_LINK,
                 extractId(day2OperationClustering.documentSelfLink));
-        waitForTaskError(containerClusteringTaskLink, ContainerClusteringTaskState.class);
+        waitForTaskError(containerClusteringTaskLink, ClusteringTaskState.class);
 
         // container should not be deleted if the operation fails
         long containersNumberAfterClustering = MockDockerAdapterService.getNumberOfContainers();
@@ -261,9 +261,9 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         }
 
         String containerClusteringTaskLink = UriUtils.buildUriPath(
-                ContainerClusteringTaskFactoryService.SELF_LINK,
+                ClusteringTaskService.FACTORY_LINK,
                 extractId(day2OperationClustering.documentSelfLink));
-        waitForTaskSuccess(containerClusteringTaskLink, ContainerClusteringTaskState.class);
+        waitForTaskSuccess(containerClusteringTaskLink, ClusteringTaskState.class);
 
         waitForRequestToComplete(day2OperationClustering);
 
@@ -327,9 +327,9 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         }
 
         String containerClusteringTaskLink = UriUtils.buildUriPath(
-                ContainerClusteringTaskFactoryService.SELF_LINK,
+                ClusteringTaskService.FACTORY_LINK,
                 extractId(day2OperationClustering.documentSelfLink));
-        waitForTaskSuccess(containerClusteringTaskLink, ContainerClusteringTaskState.class);
+        waitForTaskSuccess(containerClusteringTaskLink, ClusteringTaskState.class);
 
         waitForRequestToComplete(day2OperationClustering);
 
@@ -385,9 +385,9 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         }
 
         String containerClusteringTaskLink = UriUtils.buildUriPath(
-                ContainerClusteringTaskFactoryService.SELF_LINK,
+                ClusteringTaskService.FACTORY_LINK,
                 extractId(day2OperationClustering.documentSelfLink));
-        waitForTaskError(containerClusteringTaskLink, ContainerClusteringTaskState.class);
+        waitForTaskError(containerClusteringTaskLink, ClusteringTaskState.class);
 
         long containersNumberAfterClustering = MockDockerAdapterService.getNumberOfContainers();
         // Number of containers after clustering, should be the same.
@@ -439,9 +439,9 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         }
 
         String containerClusteringTaskLink = UriUtils.buildUriPath(
-                ContainerClusteringTaskFactoryService.SELF_LINK,
+                ClusteringTaskService.FACTORY_LINK,
                 extractId(day2OperationClustering.documentSelfLink));
-        waitForTaskSuccess(containerClusteringTaskLink, ContainerClusteringTaskState.class);
+        waitForTaskSuccess(containerClusteringTaskLink, ClusteringTaskState.class);
 
         long containersNumberAfterClustering = MockDockerAdapterService.getNumberOfContainers();
         // Number of containers after clustering, should be the same.
@@ -549,10 +549,10 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         }
 
         String containerClusteringTaskLink = UriUtils.buildUriPath(
-                ContainerClusteringTaskFactoryService.SELF_LINK,
+                ClusteringTaskService.FACTORY_LINK,
                 extractId(day2OperationClustering.documentSelfLink));
-        ContainerClusteringTaskState clusteringTask = waitForTaskSuccess(
-                containerClusteringTaskLink, ContainerClusteringTaskState.class);
+        ClusteringTaskState clusteringTask = waitForTaskSuccess(
+                containerClusteringTaskLink, ClusteringTaskState.class);
         assertNotNull(clusteringTask.resourceLinks);
 
         RequestBrokerState clusteringRequest = waitForRequestToComplete(day2OperationClustering);
@@ -647,10 +647,10 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         }
 
         String containerClusteringTaskLink = UriUtils.buildUriPath(
-                ContainerClusteringTaskFactoryService.SELF_LINK,
+                ClusteringTaskService.FACTORY_LINK,
                 extractId(day2OperationClustering.documentSelfLink));
-        ContainerClusteringTaskState clusteringTask = waitForTaskSuccess(
-                containerClusteringTaskLink, ContainerClusteringTaskState.class);
+        ClusteringTaskState clusteringTask = waitForTaskSuccess(
+                containerClusteringTaskLink, ClusteringTaskState.class);
         assertNotNull(clusteringTask.resourceLinks);
 
         RequestBrokerState clusteringRequest = waitForRequestToComplete(day2OperationClustering);
@@ -743,10 +743,10 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         }
 
         String containerClusteringTaskLink = UriUtils.buildUriPath(
-                ContainerClusteringTaskFactoryService.SELF_LINK,
+                ClusteringTaskService.FACTORY_LINK,
                 extractId(day2OperationClustering.documentSelfLink));
-        ContainerClusteringTaskState clusteringTask = waitForTaskSuccess(
-                containerClusteringTaskLink, ContainerClusteringTaskState.class);
+        ClusteringTaskState clusteringTask = waitForTaskSuccess(
+                containerClusteringTaskLink, ClusteringTaskState.class);
         assertNotNull(clusteringTask.resourceLinks);
 
         RequestBrokerState clusteringRequest = waitForRequestToComplete(day2OperationClustering);
@@ -821,10 +821,10 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         }
 
         String containerClusteringTaskLink = UriUtils.buildUriPath(
-                ContainerClusteringTaskFactoryService.SELF_LINK,
+                ClusteringTaskService.FACTORY_LINK,
                 extractId(day2OperationClustering.documentSelfLink));
-        ContainerClusteringTaskState clusteringTask = waitForTaskSuccess(
-                containerClusteringTaskLink, ContainerClusteringTaskState.class);
+        ClusteringTaskState clusteringTask = waitForTaskSuccess(
+                containerClusteringTaskLink, ClusteringTaskState.class);
         assertNotNull(clusteringTask.resourceLinks);
 
         RequestBrokerState clusteringRequest = waitForRequestToComplete(day2OperationClustering);

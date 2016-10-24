@@ -34,16 +34,16 @@ import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.adapter.common.VolumeOperationType;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
-import com.vmware.admiral.compute.content.TemplateComputeDescription;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
+import com.vmware.admiral.request.ClusteringTaskService.ClusteringTaskState;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
-import com.vmware.admiral.request.ContainerClusteringTaskService.ContainerClusteringTaskState;
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState;
 import com.vmware.admiral.request.ContainerNetworkAllocationTaskService.ContainerNetworkAllocationTaskState;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService.ContainerNetworkProvisionTaskState;
@@ -165,7 +165,7 @@ public class RequestBrokerService extends
             state.operation = RequestBrokerState.PROVISION_RESOURCE_OPERATION;
         }
 
-        if (isProvisionOperation(state) || isContainerClusteringOperation(state)
+        if (isProvisionOperation(state) || isClusteringOperation(state)
                 || isProvisioningContainerHostsOperation(state)) {
             assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
         } else {
@@ -176,7 +176,8 @@ public class RequestBrokerService extends
                 || isContainerVolumeType(state)
                 || isComputeType(state) || isCompositeComponentType(state))) {
             throw new IllegalArgumentException(
-                   String.format("Only [ %s ] resource types are supported.", ResourceType.getAllTypesAsString()));
+                    String.format("Only [ %s ] resource types are supported.",
+                            ResourceType.getAllTypesAsString()));
         }
 
         if (state.resourceCount <= 0) {
@@ -268,7 +269,8 @@ public class RequestBrokerService extends
     @Override
     protected boolean validateStageTransition(Operation patch, RequestBrokerState patchBody,
             RequestBrokerState currentState) {
-        currentState.groupResourcePlacementLink = mergeProperty(currentState.groupResourcePlacementLink,
+        currentState.groupResourcePlacementLink = mergeProperty(
+                currentState.groupResourcePlacementLink,
                 patchBody.groupResourcePlacementLink);
         currentState.resourceLinks = mergeProperty(currentState.resourceLinks,
                 patchBody.resourceLinks);
@@ -394,7 +396,7 @@ public class RequestBrokerService extends
         if (isContainerType(state)) {
             if (isRemoveOperation(state)) {
                 createContainerRemovalTasks(state, false);
-            } else if (isContainerClusteringOperation(state)) {
+            } else if (isClusteringOperation(state)) {
                 createContainerClusteringTasks(state);
             } else {
                 createContainerOperationTasks(state);
@@ -413,6 +415,8 @@ public class RequestBrokerService extends
         } else if (isComputeType(state)) {
             if (isRemoveOperation(state)) {
                 createComputeRemovalTask(state);
+            } else if (isClusteringOperation(state)) {
+                createComputeClusteringTasks(state);
             } else {
                 createComputeOperationTasks(state);
             }
@@ -763,7 +767,7 @@ public class RequestBrokerService extends
 
         long resourceCount;
         if (containerDescription._cluster != null && containerDescription._cluster > 0
-                && !isContainerClusteringOperation(state)) {
+                && !isClusteringOperation(state)) {
             resourceCount = state.resourceCount * containerDescription._cluster;
         } else {
             resourceCount = state.resourceCount;
@@ -808,13 +812,12 @@ public class RequestBrokerService extends
         rsrvTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.RESERVED, TaskStage.STARTED, SubStage.ERROR);
 
-        long resourceCount = state.resourceCount;
-
-        if (computeDescription.customProperties != null) {
-            long clusterSize = Long
-                    .parseLong(computeDescription.customProperties.getOrDefault(
-                            TemplateComputeDescription.CUSTOM_PROP_NAME_CLUSTER_SIZE, "1"));
-            resourceCount *= clusterSize;
+        long clusterSize = getComputeClusterSize(computeDescription);
+        long resourceCount;
+        if (clusterSize > 0 && !isClusteringOperation(state)) {
+            resourceCount = state.resourceCount * clusterSize;
+        } else {
+            resourceCount = state.resourceCount;
         }
 
         rsrvTask.resourceCount = resourceCount;
@@ -854,7 +857,7 @@ public class RequestBrokerService extends
 
             if (containerDesc._cluster != null && containerDesc._cluster > 1
                     && state.resourceCount <= 1
-                    && isProvisionOperation(state) && !isContainerClusteringOperation(state)) {
+                    && isProvisionOperation(state) && !isClusteringOperation(state)) {
                 // deploy the default number of clustered container nodes
                 allocationTask.resourceCount = Long.valueOf(containerDesc._cluster);
             } else {
@@ -938,34 +941,60 @@ public class RequestBrokerService extends
     }
 
     private void createComputeAllocationTask(RequestBrokerState state) {
+        getComputeDescription(state, (computeDesc) -> {
+            ComputeAllocationTaskState allocationTask = new ComputeAllocationTaskState();
+            allocationTask.documentSelfLink = getSelfId();
+            allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
+                    getSelfLink(), TaskStage.STARTED, SubStage.ALLOCATED,
+                    TaskStage.STARTED, SubStage.REQUEST_FAILED);
+            allocationTask.customProperties = state.customProperties;
+            allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
 
-        ComputeAllocationTaskState allocationTask = new ComputeAllocationTaskState();
-        allocationTask.documentSelfLink = getSelfId();
-        allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
-                getSelfLink(), TaskStage.STARTED, SubStage.ALLOCATED,
-                TaskStage.STARTED, SubStage.REQUEST_FAILED);
-        allocationTask.customProperties = state.customProperties;
-        allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
+            allocationTask.resourceCount = state.resourceCount;
 
-        allocationTask.resourceCount = state.resourceCount;
+            int clusterSize = getComputeClusterSize(computeDesc);
+            if (clusterSize > 1 && state.resourceCount <= 1 && isProvisionOperation(state)
+                    && !isClusteringOperation(state)) {
+                // deploy the default number of clustered compute nodes
+                allocationTask.resourceCount = Long.valueOf(clusterSize);
+            } else {
+                allocationTask.resourceCount = state.resourceCount;
+            }
 
-        allocationTask.resourceType = state.resourceType;
-        allocationTask.tenantLinks = state.tenantLinks;
-        allocationTask.groupResourcePlacementLink = state.groupResourcePlacementLink;
-        allocationTask.requestTrackerLink = state.requestTrackerLink;
-        allocationTask.resourceLinks = state.resourceLinks;
+            allocationTask.resourceType = state.resourceType;
+            allocationTask.tenantLinks = state.tenantLinks;
+            allocationTask.groupResourcePlacementLink = state.groupResourcePlacementLink;
+            allocationTask.requestTrackerLink = state.requestTrackerLink;
+            allocationTask.resourceLinks = state.resourceLinks;
 
-        sendRequest(Operation
-                .createPost(this, ComputeAllocationTaskService.FACTORY_LINK)
-                .setBody(allocationTask)
-                .setContextId(getSelfId())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure creating resource allocation task", e);
-                        return;
-                    }
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
-                }));
+            sendRequest(Operation
+                    .createPost(this, ComputeAllocationTaskService.FACTORY_LINK)
+                    .setBody(allocationTask)
+                    .setContextId(getSelfId())
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            failTask("Failure creating resource allocation task", e);
+                            return;
+                        }
+                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                    }));
+        });
+    }
+
+    private int getComputeClusterSize(ComputeDescription computeDesc) {
+        int clusterSize = 0;
+        if (computeDesc.customProperties != null) {
+            String sizeAsString = computeDesc.customProperties
+                    .get(ComputeConstants.CUSTOM_PROP_CLUSTER_SIZE_KEY);
+            if (sizeAsString != null) {
+                try {
+                    clusterSize = Integer.parseInt(sizeAsString);
+                } catch (NumberFormatException e) {
+                    logWarning("Requested compute cluster size is not a number: %s", sizeAsString);
+                }
+            }
+        }
+        return clusterSize;
     }
 
     private void createComputeProvisioningTask(RequestBrokerState state) {
@@ -1103,7 +1132,8 @@ public class RequestBrokerService extends
     }
 
     private void createReservationRemovalTask(RequestBrokerState state) {
-        if (state.groupResourcePlacementLink == null || state.groupResourcePlacementLink.isEmpty()) {
+        if (state.groupResourcePlacementLink == null
+                || state.groupResourcePlacementLink.isEmpty()) {
             RequestBrokerState body = new RequestBrokerState();
             body.taskInfo = new TaskState();
             body.taskInfo.stage = TaskStage.STARTED;
@@ -1134,7 +1164,7 @@ public class RequestBrokerService extends
     }
 
     private void createContainerClusteringTasks(RequestBrokerState state) {
-        ContainerClusteringTaskState clusteringState = new ContainerClusteringTaskState();
+        ClusteringTaskState clusteringState = new ClusteringTaskState();
         clusteringState.resourceCount = state.resourceCount;
         clusteringState.postAllocation = isPostAllocationOperation(state);
         clusteringState.customProperties = state.customProperties;
@@ -1153,7 +1183,42 @@ public class RequestBrokerService extends
         clusteringState.documentSelfLink = getSelfId();
         clusteringState.requestTrackerLink = state.requestTrackerLink;
         Operation post = Operation
-                .createPost(this, ContainerClusteringTaskFactoryService.SELF_LINK)
+                .createPost(this, ClusteringTaskService.FACTORY_LINK)
+                .setBody(clusteringState)
+                .setContextId(getSelfId())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        failTask("Failed to create container clustering task.", ex);
+                        return;
+                    }
+                    if (!errorState) {
+                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                    }
+                });
+        sendRequest(post);
+    }
+
+    private void createComputeClusteringTasks(RequestBrokerState state) {
+        ClusteringTaskState clusteringState = new ClusteringTaskState();
+        clusteringState.resourceCount = state.resourceCount;
+        clusteringState.postAllocation = isPostAllocationOperation(state);
+        clusteringState.customProperties = state.customProperties;
+        clusteringState.tenantLinks = state.tenantLinks;
+        clusteringState.resourceDescriptionLink = state.resourceDescriptionLink;
+        clusteringState.requestTrackerLink = state.requestTrackerLink;
+        clusteringState.resourceType = state.resourceType;
+        clusteringState.documentDescription = state.documentDescription;
+        clusteringState.contextId = state.getCustomProperty(FIELD_NAME_CONTEXT_ID_KEY);
+
+        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED;
+        clusteringState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
+                TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
+                TaskStage.FAILED, SubStage.ERROR);
+
+        clusteringState.documentSelfLink = getSelfId();
+        clusteringState.requestTrackerLink = state.requestTrackerLink;
+        Operation post = Operation
+                .createPost(this, ClusteringTaskService.FACTORY_LINK)
                 .setBody(clusteringState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
@@ -1173,7 +1238,8 @@ public class RequestBrokerService extends
     }
 
     private boolean isPostAllocationOperation(RequestBrokerState state) {
-        return (isContainerType(state) || isContainerNetworkType(state) || isComputeType(state) || isContainerVolumeType(state))
+        return (isContainerType(state) || isContainerNetworkType(state) || isComputeType(state)
+                || isContainerVolumeType(state))
                 && (ContainerOperationType.CREATE.id.equals(state.operation)
                         || NetworkOperationType.CREATE.id.equals(state.operation)
                         || ComputeOperationType.CREATE.id.equals(state.operation)
@@ -1247,7 +1313,7 @@ public class RequestBrokerService extends
         return ResourceType.COMPUTE_TYPE.getName().equals(state.resourceType);
     }
 
-    private boolean isContainerClusteringOperation(RequestBrokerState state) {
+    private boolean isClusteringOperation(RequestBrokerState state) {
         return RequestBrokerState.CLUSTER_RESOURCE_OPERATION.equals(state.operation)
                 || state.getCustomProperty(RequestUtils.CLUSTERING_OPERATION_CUSTOM_PROP) != null;
     }
@@ -1348,8 +1414,12 @@ public class RequestBrokerService extends
                 } else {
                     requestStatus.addTrackedTasks(ContainerRemovalTaskService.DISPLAY_NAME);
                 }
-            } else if (isContainerClusteringOperation(state)) {
-                requestStatus.addTrackedTasks(ContainerClusteringTaskService.DISPLAY_NAME);
+            } else if (isClusteringOperation(state)) {
+                if (isComputeType(state)) {
+                    requestStatus.addTrackedTasks(ClusteringTaskService.DISPLAY_NAME);
+                } else {
+                    requestStatus.addTrackedTasks(ClusteringTaskService.DISPLAY_NAME);
+                }
             } else {
                 requestStatus.addTrackedTasks(ContainerOperationTaskService.DISPLAY_NAME);
             }

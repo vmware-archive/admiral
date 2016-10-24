@@ -152,7 +152,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 ContainerHostRemovalTaskFactoryService.SELF_LINK,
                 CompositionSubTaskFactoryService.SELF_LINK,
                 CompositionTaskFactoryService.SELF_LINK,
-                ContainerClusteringTaskFactoryService.SELF_LINK,
                 RequestStatusFactoryService.SELF_LINK));
 
         // admiral states:
@@ -160,6 +159,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 GroupResourcePlacementService.FACTORY_LINK,
                 ContainerDescriptionService.FACTORY_LINK,
                 ContainerFactoryService.SELF_LINK,
+                ClusteringTaskService.FACTORY_LINK,
                 RegistryService.FACTORY_LINK,
                 ConfigurationFactoryService.SELF_LINK,
                 ConfigurationFactoryService.SELF_LINK,

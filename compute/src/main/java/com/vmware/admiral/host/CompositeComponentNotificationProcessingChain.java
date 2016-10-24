@@ -48,7 +48,9 @@ public class CompositeComponentNotificationProcessingChain extends OperationProc
                             return;
                         }
                         o.complete();
-
+                        if (!o.hasBody()) {
+                            return;
+                        }
                         ResourceState state = extractState(o);
                         String compositeComponentLink = retrieveLink(state);
                         if (compositeComponentLink == null) {

@@ -51,6 +51,7 @@ import com.vmware.admiral.compute.content.TemplateComputeDescription;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
@@ -102,6 +103,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ComputeDescriptionService.FACTORY_LINK,
                 TemplateComputeDescription.class,
                 ComputeService.FACTORY_LINK,
+                ComputeState.class,
                 com.vmware.admiral.compute.content.TemplateComputeState.class);
 
         CompositeComponentRegistry.registerComponent(ResourceType.VOLUME_TYPE.getName(),

@@ -28,8 +28,8 @@ import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitContinuousDeliveryServicesConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.host.HostInitRequestServicesConfig;
+import com.vmware.admiral.request.ClusteringTaskService;
 import com.vmware.admiral.request.ContainerAllocationTaskFactoryService;
-import com.vmware.admiral.request.ContainerClusteringTaskFactoryService;
 import com.vmware.admiral.request.ContainerHostRemovalTaskFactoryService;
 import com.vmware.admiral.request.ContainerRemovalTaskFactoryService;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
@@ -76,7 +76,7 @@ public abstract class ContinuousDeliveryBaseTest extends BaseTestCase {
         waitForServiceAvailability(ContainerHostRemovalTaskFactoryService.SELF_LINK);
         waitForServiceAvailability(CompositionSubTaskFactoryService.SELF_LINK);
         waitForServiceAvailability(CompositionTaskFactoryService.SELF_LINK);
-        waitForServiceAvailability(ContainerClusteringTaskFactoryService.SELF_LINK);
+        waitForServiceAvailability(ClusteringTaskService.FACTORY_LINK);
 
         // admiral states:
         waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);

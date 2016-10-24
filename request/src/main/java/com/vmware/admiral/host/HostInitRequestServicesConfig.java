@@ -11,8 +11,8 @@
 
 package com.vmware.admiral.host;
 
+import com.vmware.admiral.request.ClusteringTaskService;
 import com.vmware.admiral.request.ContainerAllocationTaskFactoryService;
-import com.vmware.admiral.request.ContainerClusteringTaskFactoryService;
 import com.vmware.admiral.request.ContainerHostRemovalTaskFactoryService;
 import com.vmware.admiral.request.ContainerNetworkAllocationTaskService;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService;
@@ -57,7 +57,6 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 CompositionSubTaskFactoryService.class,
                 CompositionTaskFactoryService.class,
                 RequestStatusFactoryService.class,
-                ContainerClusteringTaskFactoryService.class,
                 NotificationsService.class);
 
         startServiceFactories(host,
@@ -68,6 +67,7 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 ContainerVolumeAllocationTaskService.class,
                 ContainerVolumeProvisionTaskService.class,
                 ContainerVolumeRemovalTaskService.class,
+                ClusteringTaskService.class,
                 ComputeAllocationTaskService.class,
                 ComputeProvisionTaskService.class,
                 ComputeReservationTaskService.class,
