@@ -136,7 +136,7 @@ var containerRemoveCmd = &cobra.Command{
 func initContainerRemove() {
 	containerRemoveCmd.Flags().StringVarP(&queryF, "query", "q", "", "Every container that match the query will be removed.")
 	containerRemoveCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
-	containerRemoveCmd.Flags().BoolVar(&autoAccept, "force", false, "Do not prompt asking for remove.")
+	containerRemoveCmd.Flags().BoolVarP(&autoAccept, "force", "f", false, "Do not prompt asking for remove.")
 	RootCmd.AddCommand(containerRemoveCmd)
 }
 
