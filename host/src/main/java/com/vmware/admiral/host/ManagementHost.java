@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.host;
 
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.ConsoleHandler;
@@ -18,11 +19,14 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.net.ssl.SSLContext;
+
 import io.swagger.models.Info;
 
 import com.vmware.admiral.common.AdmiralColoredLogFormatter;
 import com.vmware.admiral.common.AdmiralLogFormatter;
-import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.admiral.common.util.CertificateUtil;
+import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
@@ -33,15 +37,15 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.OperationProcessingChain;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.http.netty.NettyHttpServiceClient;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 import com.vmware.xenon.swagger.SwaggerDescriptorService;
-
-
 
 /**
  * Stand alone process entry point for management of infrastructure and applications.
@@ -109,7 +113,7 @@ public class ManagementHost extends ServiceHost {
 
         log(Level.INFO, "**** Management host starting ... ****");
 
-        startEnataiProvisioningServices();
+        startFabricServices();
         startManagementServices();
         startSwaggerService();
 
@@ -137,7 +141,7 @@ public class ManagementHost extends ServiceHost {
         return super.initialize(args, baseArgs);
     }
 
-    protected void startEnataiProvisioningServices() throws Throwable {
+    protected void startFabricServices() throws Throwable {
         this.log(Level.INFO, "Fabric services starting ...");
         HostInitPhotonModelServiceConfig.startServices(this);
 
@@ -147,13 +151,23 @@ public class ManagementHost extends ServiceHost {
     /**
      * Start all services required to support management of infrastructure and applications.
      */
-    protected void startManagementServices() throws Throwable {
-        this.log(Level.INFO, "Management service starting ...");
+    protected void startCommonServices() throws Throwable {
+        this.log(Level.INFO, "Common service starting ...");
 
         registerForServiceAvailability(AuthBootstrapService.startTask(this), true,
                 AuthBootstrapService.FACTORY_LINK);
 
         HostInitCommonServiceConfig.startServices(this);
+
+        this.log(Level.INFO, "Common services started.");
+    }
+
+    /**
+     * Start all services required to support management of infrastructure and applications.
+     */
+    protected void startManagementServices() throws Throwable {
+        this.log(Level.INFO, "Management service starting ...");
+
         HostInitComputeServicesConfig.startServices(this);
         HostInitRequestServicesConfig.startServices(this);
         HostInitImageServicesConfig.startServices(this);
@@ -274,16 +288,56 @@ public class ManagementHost extends ServiceHost {
 
     @Override
     public ServiceHost start() throws Throwable {
-
+        // Only initialize ServerX509TrustManager
+        ServerX509TrustManager trustManager = ServerX509TrustManager.init(this);
+        ServiceClient serviceClient = createServiceClient(CertificateUtil.createSSLContext(
+                trustManager, null), 0);
+        setClient(serviceClient);
         super.start();
+
         startDefaultCoreServicesSynchronously();
 
+        log(Level.INFO, "Setting authorization context ...");
+        // Set system user's authorization context to allow the services start privileged access.
+        setAuthorizationContext(getSystemAuthorizationContext());
+
+        startCommonServices();
+        // now start ServerX509TrustManager
+        trustManager.start();
+        setAuthorizationContext(null);
         return this;
+    }
+
+    private ServiceClient createServiceClient(SSLContext sslContext,
+            int requestPayloadSizeLimit) {
+        ServiceClient serviceClient;
+        try {
+            // Use the class name and prefix of GIT commit ID as the user agent name and version
+            String commitID = (String) getState().codeProperties
+                    .get(GIT_COMMIT_SOURCE_PROPERTY_COMMIT_ID);
+            if (commitID == null) {
+                throw new IllegalStateException("CommitID code property not found!");
+            }
+            commitID = commitID.substring(0, 8);
+            String userAgent = ServiceHost.class.getSimpleName() + "/" + commitID;
+            serviceClient = NettyHttpServiceClient.create(userAgent,
+                    getExecutor(),
+                    getScheduledExecutor(),
+                    this);
+            if (requestPayloadSizeLimit > 0) {
+                serviceClient.setRequestPayloadSizeLimit(requestPayloadSizeLimit);
+            }
+            serviceClient.setSSLContext(sslContext);
+
+            return serviceClient;
+
+        } catch (URISyntaxException e) {
+            throw new RuntimeException("Failed to create ServiceClient", e);
+        }
     }
 
     @Override
     public void stop() {
-        AbstractTaskStatefulService.stop();
         super.stop();
     }
 

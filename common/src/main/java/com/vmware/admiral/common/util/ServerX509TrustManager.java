@@ -47,8 +47,8 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
     private static final String SSL_TRUST_CONFIG_SUBSCRIBE_FOR_LINK = UriUtils.buildUriPath(
             ConfigurationFactoryService.SELF_LINK, SSL_TRUST_LAST_UPDATED_DOCUMENT_KEY);
 
-    public static final String JAVAX_NET_SSL_TRUST_STORE = "javax.net.ssl.trustStore";
-    public static final String JAVAX_NET_SSL_TRUST_STORE_PASSWORD = "javax.net.ssl.trustStorePassword";
+    public static final String JAVAX_NET_SSL_TRUST_STORE = "dcp.net.ssl.trustStore";
+    public static final String JAVAX_NET_SSL_TRUST_STORE_PASSWORD = "dcp.net.ssl.trustStorePassword";
     private static final String DEFAULT_JAVA_CACERTS_PASSWORD = "changeit";
 
     private static ServerX509TrustManager INSTANCE;
@@ -66,6 +66,17 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
         if (INSTANCE == null) {
             INSTANCE = new ServerX509TrustManager(host);
             INSTANCE.start();
+        }
+        return INSTANCE;
+    }
+
+    /**
+     * This method only initialize the ServerX509TrustManager, does not start it. The method is
+     * intended to be use only on server start.
+     */
+    public static synchronized ServerX509TrustManager init(ServiceHost host) {
+        if (INSTANCE == null) {
+            INSTANCE = new ServerX509TrustManager(host);
         }
         return INSTANCE;
     }

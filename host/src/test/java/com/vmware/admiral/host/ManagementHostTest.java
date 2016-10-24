@@ -147,7 +147,7 @@ public class ManagementHostTest {
     public void testCredentialsDelete() throws Throwable {
         try (TestManagementHost host = new TestManagementHost(true)) {
             host.start();
-            host.startEnataiProvisioningServices();
+            host.startFabricServices();
             host.startManagementServices();
 
             host.registerForServiceAvailability(host.getTestContext().getCompletion(),
@@ -184,7 +184,7 @@ public class ManagementHostTest {
     public void testResourcePoolDelete() throws Throwable {
         try (TestManagementHost host = new TestManagementHost(true)) {
             host.start();
-            host.startEnataiProvisioningServices();
+            host.startFabricServices();
             host.startManagementServices();
 
             host.registerForServiceAvailability(host.getTestContext().getCompletion(),

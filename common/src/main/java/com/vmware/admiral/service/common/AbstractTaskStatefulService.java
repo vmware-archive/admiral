@@ -21,13 +21,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.ServerX509TrustManager;
-import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.service.common.CounterSubTaskService.CounterSubTaskState;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.TaskState;
@@ -44,8 +41,6 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             .getLong(
                     "com.vmware.admiral.service.common.AbstractTaskStatefulService.completion.polling.period.millis",
                     TimeUnit.SECONDS.toMillis(3));
-
-    private static volatile ServiceClient serviceClient;
 
     protected Class<E> subStageType;
 
@@ -679,11 +674,9 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         // send put with the RequestState as the body
         logInfo("Calling callback URI: %s", callbackReference);
 
-        final ServiceClient client = getServiceClient();
-
         try {
             URI callbackUri = URI.create(callbackReference);
-            client.send(Operation.createPost(callbackUri)
+            Operation.createPost(callbackUri)
                     .setBody(state)
                     .setReferer(this.getUri())
                     .forceRemote()
@@ -692,35 +685,9 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                             logSevere("Failure calling callback '%s' for registry state: %s",
                                     op.getUri(), Utils.toString(ex));
                         }
-                    }));
+                    }).sendWith(this);
         } catch (Exception e) {
             logSevere(e);
-        }
-    }
-
-    private ServiceClient getServiceClient() {
-        if (serviceClient == null) {
-            synchronized (AbstractTaskStatefulService.class) {
-                if (serviceClient == null) {
-                    serviceClient = ServiceClientFactory.createServiceClient(
-                            ServerX509TrustManager.create(getHost()), null);
-                }
-            }
-        }
-        return serviceClient;
-    }
-
-    public static void stop() {
-        synchronized (AbstractTaskStatefulService.class) {
-            if (serviceClient != null) {
-                try {
-                    serviceClient.stop();
-                    serviceClient = null;
-                } catch (Exception e) {
-                    Utils.logWarning("Failure stoping callback service client: %s",
-                            Utils.toString(e));
-                }
-            }
         }
     }
 

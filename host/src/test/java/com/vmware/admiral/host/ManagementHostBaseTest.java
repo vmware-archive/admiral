@@ -61,7 +61,7 @@ public class ManagementHostBaseTest extends ServiceHost {
 
         h.log(Level.INFO, "**** Management host starting ... ****");
 
-        h.startEnataiProvisioningServices();
+        h.startFabricServices();
 
         h.startManagementServices();
 
