@@ -43,6 +43,9 @@ var CompositeContainerDetails = Vue.extend({
   computed: {
     contextExpanded: function() {
       return this.$parent.model.contextView && this.$parent.model.contextView.expanded;
+    },
+    selectedItemDocumentId: function() {
+      return this.model.selectedItem && this.model.selectedItem.documentId;
     }
   },
   attached: function() {
