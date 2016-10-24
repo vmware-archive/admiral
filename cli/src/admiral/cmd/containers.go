@@ -119,7 +119,7 @@ func RunContainerInspect(args []string) (string, error) {
 		return "", MissingContainerIdError
 	}
 	container, err := containers.InspectContainer(id)
-	return container.StringJson(), err
+	return string(container), err
 }
 
 var containerRemoveCmd = &cobra.Command{

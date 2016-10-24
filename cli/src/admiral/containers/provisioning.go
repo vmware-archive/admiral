@@ -14,6 +14,7 @@ package containers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -22,7 +23,6 @@ import (
 	"admiral/images"
 	"admiral/track"
 	"admiral/utils"
-	"errors"
 )
 
 type LogConfig struct {

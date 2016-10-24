@@ -420,17 +420,22 @@ func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (strin
 }
 
 //Function to get information about container in JSON format.
-func InspectContainer(id string) (*Container, error) {
+func InspectContainer(id string) ([]byte, error) {
 	url := config.URL + utils.CreateResLinksForContainer([]string{id})[0]
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return nil, respErr
 	}
-	container := &Container{}
-	err := json.Unmarshal(respBody, container)
-	utils.CheckJson(err)
-	return container, nil
+	respBodyString := string(respBody)
+	respBodyString = strings.Replace(respBodyString, "\\\"", "\"", -1)
+	respBodyString = strings.Replace(respBodyString, "\"{", "{", -1)
+	respBodyString = strings.Replace(respBodyString, "}\"", "}", -1)
+	respBodyString = strings.Replace(respBodyString, "\"[", "[", -1)
+	respBodyString = strings.Replace(respBodyString, "]\"", "]", -1)
+	var buffer bytes.Buffer
+	json.Indent(&buffer, []byte(respBodyString), "", "    ")
+	return buffer.Bytes(), nil
 }
 
 func GetContainerLinks(name string) []string {
