@@ -35,7 +35,6 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -593,6 +592,10 @@ public class ComputeAllocationTaskService
             computeDesc.dataStoreId = mapping.getMappingValue("placement", "dataStoreId");
         }
 
+        if (computeDesc.networkId == null) {
+            computeDesc.networkId = mapping.getMappingValue("placement", "networkId");
+        }
+
         if (computeDesc.authCredentialsLink == null) {
             computeDesc.authCredentialsLink = mapping.getMappingValue("authentication",
                     "guestAuthLink");
@@ -939,8 +942,7 @@ public class ComputeAllocationTaskService
                 .getCustomProperty(ComputeConstants.CUSTOM_PROP_DISK_LINK);
         if (diskDescLink == null) {
             createComputeResource(state, cd, parentLink, computeResourceId, computeResourceLink,
-                    computeName,
-                    Collections.emptyList(), networkLinks, taskCallback);
+                    computeName, new ArrayList<>(), networkLinks, taskCallback);
             return;
         }
 
@@ -1009,7 +1011,7 @@ public class ComputeAllocationTaskService
         if (netDescLink == null) {
             createComputeResource(state, cd, parentLink, computeResourceId, computeResourceLink,
                     computeName,
-                    diskLinks, Collections.emptyList(), taskCallback);
+                    diskLinks, new ArrayList<>(), taskCallback);
             return;
         }
 
