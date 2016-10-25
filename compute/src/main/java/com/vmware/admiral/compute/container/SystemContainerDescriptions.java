@@ -42,6 +42,10 @@ public class SystemContainerDescriptions {
             "dcp.management.images.agent.version", "0.9.1");
     public static final String AGENT_IMAGE_REFERENCE = System.getProperty(
             "dcp.management.images.agent.reference", AGENT_IMAGE_TAR_FILENAME + ".tar");
+    static final String[] AGENT_CONTAINER_VOLUMES = {
+            "/var/run/docker.sock:/var/run/docker.sock",
+            "/etc/docker:/etc/docker" };
+
 
     /** Create a container description to be used for installing host agents containers. */
     public static ContainerDescription buildCoreAgentContainerDescription() {
@@ -51,8 +55,7 @@ public class SystemContainerDescriptions {
         cd.image = getAgentImageNameAndVersion();
         cd.publishAll = true;
 
-        cd.volumes = new String[] { "/var/run/docker.sock:/var/run/docker.sock",
-                "/etc/docker:/etc/docker" };
+        cd.volumes = AGENT_CONTAINER_VOLUMES;
         cd.restartPolicy = "always";
 
         return cd;

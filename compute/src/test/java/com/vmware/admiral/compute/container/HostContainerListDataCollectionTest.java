@@ -174,6 +174,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         assertEquals(systemContainerLink, systemContainer.documentSelfLink);
         assertEquals(SystemContainerDescriptions.AGENT_CONTAINER_NAME,
                 systemContainer.names.get(0));
+        assertNotNull("System container volumes should not be empty", systemContainer.volumes);
         assertNotNull("System container not recreated", systemContainer.id);
         assertEquals(SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK,
                 systemContainer.descriptionLink);
