@@ -87,6 +87,11 @@ func CreateResLinkForProject(id string) string {
 }
 
 //Function to create resource links from the provided ID as parameter.
+func CreateResLinkForRequest(id string) string {
+	return "/request-status/" + id
+}
+
+//Function to create resource links from the provided ID as parameter.
 func CreateResLinksForNetwork(ids []string) []string {
 	links := make([]string, 0)
 	for i := range ids {
@@ -105,25 +110,6 @@ func UpdateResLinksForApps(args []string) []string {
 		links = append(links, newLink)
 	}
 	return links
-}
-
-//Function to clear part of the url in order to get the name only.
-func ClearResLinksForEvents(links string) string {
-	linksArr := strings.Split(links, " ")
-	var link string
-	if len(linksArr) > 0 {
-		link = linksArr[0]
-	} else {
-		link = ""
-	}
-
-	if strings.Contains(link, "/resources/containers/") {
-		newLink := strings.Replace(link, "/resources/containers/", "", 1)
-		return newLink
-	}
-	newLink := strings.Replace(link, "/resources/composite-components/", "", 1)
-	return newLink
-
 }
 
 //Function that extract all the links which are contained as values in the given map as argument.

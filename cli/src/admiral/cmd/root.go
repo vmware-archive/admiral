@@ -28,21 +28,12 @@ var (
 
 func init() {
 	AutocompleteCmd.Hidden = true
+	RootCmd.AddCommand(AppsRootCmd, CertsRootCmd, CredentialsRootCmd,
+		DeploymentPoliciesRootCmd, HostsRootCmd, PlacementsRootCmd,
+		PlacementZonesRootCmd, TemplatesRootCmd, RegistriesRootCmd,
+		NetworksRootCmd, CustomPropertiesRootCmd, AutocompleteCmd,
+		ProjectsRootCmd, RequestsRootCmd)
 
-	RootCmd.AddCommand(AppsRootCmd)
-	RootCmd.AddCommand(CertsRootCmd)
-	RootCmd.AddCommand(ConfigRootCmd)
-	RootCmd.AddCommand(CredentialsRootCmd)
-	RootCmd.AddCommand(DeploymentPoliciesRootCmd)
-	RootCmd.AddCommand(HostsRootCmd)
-	RootCmd.AddCommand(PlacementsRootCmd)
-	RootCmd.AddCommand(PlacementZonesRootCmd)
-	RootCmd.AddCommand(TemplatesRootCmd)
-	RootCmd.AddCommand(RegistriesRootCmd)
-	RootCmd.AddCommand(NetworksRootCmd)
-	RootCmd.AddCommand(CustomPropertiesRootCmd)
-	RootCmd.AddCommand(AutocompleteCmd)
-	RootCmd.AddCommand(ProjectsRootCmd)
 	RootCmd.Flags().BoolVar(&ShowVersion, "version", false, "Admiral CLI Version.")
 	RootCmd.PersistentFlags().BoolVar(&utils.Verbose, "verbose", false, "Showing every request/response json body.")
 	RootCmd.PersistentFlags().StringVar(&utils.TokenFromFlagVar, "token", "", tokenDesc)
@@ -132,6 +123,11 @@ var CustomPropertiesRootCmd = &cobra.Command{
 var ProjectsRootCmd = &cobra.Command{
 	Use:   "project",
 	Short: "Perform operations with projects.",
+}
+
+var RequestsRootCmd = &cobra.Command{
+	Use:   "requests",
+	Short: "Perform operations with requests.",
 }
 
 var AutocompleteCmd = &cobra.Command{

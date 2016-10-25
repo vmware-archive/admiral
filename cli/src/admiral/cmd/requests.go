@@ -12,6 +12,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 
 	"admiral/requests"
@@ -26,50 +27,45 @@ var (
 	finishedOnlyDesc = "Show finished only requests."
 	failedOnly       bool
 	failedOnlyDesc   = "Show failed only requests."
+
+	MissingRequestIdError = errors.New("Request ID not provided.")
 )
 
 func init() {
-	reqCmd.Flags().BoolVar(&clearAll, "clear", false, clearAllReqDesc)
-	reqCmd.Flags().BoolVar(&startedOnly, "started", false, startedOnlyDesc)
-	reqCmd.Flags().BoolVar(&finishedOnly, "finished", false, finishedOnlyDesc)
-	reqCmd.Flags().BoolVar(&failedOnly, "failed", false, failedOnlyDesc)
-	RootCmd.AddCommand(reqCmd)
+	initRequestsList()
+	initRequestClear()
+	initRequestRemove()
+	initRequestInspect()
 }
 
-func allFalse() bool {
-	if !startedOnly && !finishedOnly && !failedOnly {
-		return true
-	}
-	return false
-}
-
-var reqCmd = &cobra.Command{
-	Use:   "requests",
+var requestsListCmd = &cobra.Command{
+	Use:   "ls",
 	Short: "Prints request log.",
 	Long:  "Prints request log.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		RunRequest()
+		RunRequestsList()
 	},
 }
 
-func RunRequest() {
+func initRequestsList() {
+	requestsListCmd.Flags().BoolVar(&startedOnly, "started", false, startedOnlyDesc)
+	requestsListCmd.Flags().BoolVar(&finishedOnly, "finished", false, finishedOnlyDesc)
+	requestsListCmd.Flags().BoolVar(&failedOnly, "failed", false, failedOnlyDesc)
+	RequestsRootCmd.AddCommand(requestsListCmd)
+}
+
+func RunRequestsList() {
 	rl := &requests.RequestsList{}
 	count, err := rl.FetchRequests()
-	if clearAll {
-		rl.ClearAllRequests()
-		return
-	}
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
 	if count < 1 {
 		fmt.Println("n/a")
 		return
 	}
-
 	if allFalse() {
 		rl.PrintAll()
 	} else {
@@ -83,4 +79,93 @@ func RunRequest() {
 			rl.PrintFinishedOnly()
 		}
 	}
+}
+
+func allFalse() bool {
+	if !startedOnly && !finishedOnly && !failedOnly {
+		return true
+	}
+	return false
+}
+
+var requestClearCmd = &cobra.Command{
+	Use:   "clear",
+	Short: "Clear all requests.",
+	Long:  "Clear all requests.",
+
+	Run: func(cmd *cobra.Command, args []string) {
+		output, errs := RunRequestClear(args)
+		processOutputMultiErrors(output, errs)
+	},
+}
+
+func initRequestClear() {
+	RequestsRootCmd.AddCommand(requestClearCmd)
+}
+
+func RunRequestClear(args []string) (string, []error) {
+	rl := &requests.RequestsList{}
+	rl.FetchRequests()
+	return rl.ClearAllRequests()
+}
+
+var requestRemoveCmd = &cobra.Command{
+	Use:   "rm [REQUEST-ID]",
+	Short: "Remove specific request.",
+	Long:  "Remove specific request.",
+
+	Run: func(cmd *cobra.Command, args []string) {
+		output, err := RunRequestRemove(args)
+		processOutput(output, err)
+	},
+}
+
+func initRequestRemove() {
+	RequestsRootCmd.AddCommand(requestRemoveCmd)
+}
+
+func RunRequestRemove(args []string) (string, error) {
+	var (
+		newID string
+		err   error
+		id    string
+		ok    bool
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", MissingRequestIdError
+	}
+	newID, err = requests.RemoveRequestID(id)
+	return "Request removed: " + newID, err
+}
+
+var requestInspectCmd = &cobra.Command{
+	Use:   "inspect [REQUEST-ID]",
+	Short: "Inspect specific request.",
+	Long:  "Inspect specific request.",
+
+	Run: func(cmd *cobra.Command, args []string) {
+		output, err := RunRequestInspect(args)
+		processOutput(output, err)
+	},
+}
+
+func initRequestInspect() {
+	RequestsRootCmd.AddCommand(requestInspectCmd)
+}
+
+func RunRequestInspect(args []string) (string, error) {
+	var (
+		output string
+		err    error
+		id     string
+		ok     bool
+	)
+
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", MissingRequestIdError
+	}
+
+	output, err = requests.InspectRequestID(id)
+	return output, err
 }
