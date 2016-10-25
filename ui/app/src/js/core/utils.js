@@ -331,6 +331,40 @@ var utils = {
     };
   },
 
+  getIntValue: function(value) {
+    return $.isNumeric(value) ? parseInt(value, 10) : null;
+  },
+
+  isValidNonNegativeIntValue: function(value) {
+    let intValue = this.getIntValue(value);
+    if (intValue === null || intValue === undefined) {
+      return false;
+    }
+
+    let limitValueRange = {
+      min: 0,
+      max: 9007199254740991 // Number.MAX_SAFE_INTEGER
+    };
+
+    return validator.isInt(intValue, limitValueRange);
+  },
+
+  calculateMemorySize: function(bytes) {
+    let size = utils.fromBytes(bytes);
+    // KB is the smallest unit shown in the UI
+    if (size.unit === byteUnits[0]) {
+      let k = 1024;
+
+      let value = (size.value / k);
+      if (Math.round(value) !== value) {
+        value = value.toFixed();
+      }
+      size.unit = byteUnits[1]; // kB
+    }
+
+    return size;
+  },
+
   containerStatusDisplay: function(state, timestamp) {
     var stateString = '';
     if (state) {
