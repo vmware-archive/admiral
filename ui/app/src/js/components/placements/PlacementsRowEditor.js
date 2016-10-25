@@ -115,6 +115,32 @@ PlacementsRowEditor.prototype.getEl = function() {
   return this.$el;
 };
 
+PlacementsRowEditor.prototype.setMemoryInputValue = function(valueBytes, selector) {
+  if (valueBytes && utils.isValidNonNegativeIntValue(valueBytes)) {
+    let size = utils.calculateMemorySize(valueBytes);
+
+    this.$el.find(selector + ' input').val(size.value);
+    this.$el.find(selector + ' select').val(size.unit);
+  } else {
+    this.$el.find(selector + ' input').val('');
+    this.$el.find(selector + ' select').val('MB');
+  }
+};
+
+PlacementsRowEditor.prototype.getMemoryInputValue = function(selector) {
+  var memoryLimitVal = this.$el.find(selector + ' input').val();
+  var memoryLimitUnit = this.$el.find(selector + ' select').val();
+
+  if (memoryLimitVal && utils.isValidNonNegativeIntValue(memoryLimitVal)) {
+    let bytesValue = utils.toBytes(memoryLimitVal, memoryLimitUnit);
+    if (utils.isValidNonNegativeIntValue(bytesValue)) {
+      return bytesValue;
+    }
+  }
+
+  return null;
+};
+
 PlacementsRowEditor.prototype.setData = function(data) {
   if (this.data !== data) {
     var oldData = this.data || {};
@@ -140,27 +166,7 @@ PlacementsRowEditor.prototype.setData = function(data) {
       this.$el.find('.priorityInput input').val(placementObject.priority);
       this.$el.find('.nameInput input').val(placementObject.name);
 
-      if ($.isNumeric(placementObject.memoryLimit)) {
-        let size = utils.fromBytes(placementObject.memoryLimit);
-        normalizeToKB(size);
-
-        this.$el.find('.memoryLimitInput input').val(size.value);
-        this.$el.find('.memoryLimitInput select').val(size.unit);
-      } else {
-        this.$el.find('.memoryLimitInput input').val('');
-        this.$el.find('.memoryLimitInput select').val('MB');
-      }
-
-      if ($.isNumeric(placementObject.storageLimit)) {
-        let size = utils.fromBytes(placementObject.storageLimit);
-        normalizeToKB(size);
-
-        this.$el.find('.storageLimitInput input').val(size.value);
-        this.$el.find('.storageLimitInput select').val(size.unit);
-      } else {
-        this.$el.find('.storageLimitInput input').val('');
-        this.$el.find('.storageLimitInput select').val('MB');
-      }
+      this.setMemoryInputValue(placementObject.memoryLimit, '.memoryLimitInput');
 
       this.$el.find('.cpuSharesInput input').val(placementObject.cpuShares);
     }
@@ -253,34 +259,26 @@ var getPlacementModel = function() {
   toReturn.groupId = this.placementGroupInput.getValue();
   toReturn.resourcePool = this.resourcePoolInput.getSelectedOption();
   toReturn.deploymentPolicy = this.deploymentPolicyInput.getSelectedOption();
+
   var maxNumberInstances = this.$el.find('.maxInstancesInput input').val();
-  if ($.isNumeric(maxNumberInstances)) {
+  if ($.isNumeric(maxNumberInstances) && utils.isValidNonNegativeIntValue(maxNumberInstances)) {
     toReturn.maxNumberInstances = maxNumberInstances;
   } else if (maxNumberInstances === '') {
     toReturn.maxNumberInstances = 0;
   }
 
   var priority = this.$el.find('.priorityInput input').val();
-  if ($.isNumeric(priority)) {
-    toReturn.priority = priority;
+  if ($.isNumeric(priority) && utils.isValidNonNegativeIntValue(priority)) {
+      toReturn.priority = priority;
   }
 
-  var memoryLimitVal = this.$el.find('.memoryLimitInput input').val();
-  var memoryLimitUnit = this.$el.find('.memoryLimitInput select').val();
-  if ($.isNumeric(memoryLimitVal)) {
-    toReturn.memoryLimit = utils.toBytes(memoryLimitVal, memoryLimitUnit);
-  }
-
-  var cpuLimitVal = this.$el.find('.storageLimitInput input').val();
-  var cpuLimitUnit = this.$el.find('.storageLimitInput select').val();
-  if ($.isNumeric(cpuLimitVal)) {
-    toReturn.storageLimit = utils.toBytes(cpuLimitVal, cpuLimitUnit);
-  }
+  toReturn.memoryLimit = this.getMemoryInputValue('.memoryLimitInput');
 
   var cpuShares = this.$el.find('.cpuSharesInput input').val();
-  if ($.isNumeric(cpuShares)) {
+  if ($.isNumeric(cpuShares) && utils.isValidNonNegativeIntValue(cpuShares)) {
     toReturn.cpuShares = cpuShares;
   }
+
   return toReturn;
 };
 
@@ -298,12 +296,18 @@ var toggleButtonsState = function() {
   $saveBtn.removeClass('loading');
 
   var groupClause = !utils.isApplicationEmbedded() || this.placementGroupInput.getValue();
-  var maxNumberInstancesClause = !maxNumberInstances || $.isNumeric(maxNumberInstances)
-                                                          && parseInt(maxNumberInstances, 10) >= 0;
-  var memoryLimitClause = !memoryLimit
-                            || $.isNumeric(memoryLimit) && parseInt(memoryLimit, 10) >= 0;
-  var cpuSharesClause = !cpuShares
-                            || $.isNumeric(cpuShares) && parseInt(cpuShares, 10) >= 0;
+  var maxNumberInstancesClause = !maxNumberInstances
+                                    || utils.isValidNonNegativeIntValue(maxNumberInstances);
+  utils.applyValidationError(this.$el.find('.maxInstancesInput'),
+                             maxNumberInstancesClause ? null : i18n.t('errors.invalidInputValue'));
+
+  var memoryLimitClause = !memoryLimit || (this.getMemoryInputValue('.memoryLimitInput') !== null);
+  utils.applyValidationError(this.$el.find('.memoryLimitInput'),
+                                    memoryLimitClause ? null : i18n.t('errors.invalidInputValue'));
+
+  var cpuSharesClause = !cpuShares || utils.isValidNonNegativeIntValue(cpuShares);
+  utils.applyValidationError(this.$el.find('.cpuSharesInput'),
+                                     cpuSharesClause ? null : i18n.t('errors.invalidInputValue'));
 
   let notEnoughInfo = !resourcePool || !maxNumberInstancesClause || !groupClause
                         || !memoryLimitClause || !cpuSharesClause;
@@ -316,13 +320,6 @@ var toggleButtonsState = function() {
 
 var updateAlert = function($el, errors) {
   this.alert.toggle($el, constants.ALERTS.TYPE.FAIL, errors && errors._generic);
-};
-
-var normalizeToKB = function(size) {
-  if (size.unit === 'Bytes') {
-    size.value /= 1024;
-    size.unit = 'kB';
-  }
 };
 
 /* An adapter that renders group or business group input based on the application type */

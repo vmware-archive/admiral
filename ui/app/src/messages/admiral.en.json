@@ -790,7 +790,8 @@
     "serviceNameRequired": "Service name is required.",
     "networkRequired": "Network is required.",
     "itemNotFound": "Item was not found.",
-    "networkExists": "Network already exists in template."
+    "networkExists": "Network already exists in template.",
+    "invalidInputValue": "Invalid input value"
   },
   "infoMessages": {
     "created": "Created Successfully!",
