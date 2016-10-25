@@ -75,6 +75,7 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
+import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -153,7 +154,8 @@ public class CertificateUtil {
      */
     public static KeyPair createKeyPair(String key) {
         AssertUtil.assertNotNull(key, "key");
-        try (PEMParser parser = new PEMParser(new StringReader(key))) {
+        String decryptedKey = EncryptionUtils.decrypt(key);
+        try (PEMParser parser = new PEMParser(new StringReader(decryptedKey))) {
 
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
             PEMKeyPair keyPair = (PEMKeyPair) parser.readObject();

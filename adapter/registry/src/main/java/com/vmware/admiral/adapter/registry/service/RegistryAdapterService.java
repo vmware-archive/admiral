@@ -30,6 +30,7 @@ import com.vmware.admiral.adapter.docker.util.DockerImage;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse.Result;
 import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.common.util.UriUtilsExtended;
@@ -222,7 +223,7 @@ public class RegistryAdapterService extends StatelessService {
         AuthCredentialsType authCredentialsType = AuthCredentialsType.valueOf(authState.type);
         if (AuthCredentialsType.Password.equals(authCredentialsType)) {
             String username = authState.userEmail;
-            String password = authState.privateKey;
+            String password = EncryptionUtils.decrypt(authState.privateKey);
 
             String code = new String(Base64.getEncoder().encode(
                     new StringBuffer(username).append(":").append(password).toString().getBytes()));

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import com.vmware.admiral.common.AuthCredentialsType;
+import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.CertificateUtil.CertChainKeyPair;
 import com.vmware.admiral.common.util.KeyUtil;
@@ -65,7 +66,8 @@ public class DefaultCertCredentials {
         CertChainKeyPair signedForServer = CertificateUtil.generateSigned("computeServer",
                 caCertificate, caKeyPair.getPrivate());
         authCredentials.publicKey = CertificateUtil.toPEMformat(signedForServer.getCertificate());
-        authCredentials.privateKey = KeyUtil.toPEMFormat(signedForServer.getPrivateKey());
+        authCredentials.privateKey = EncryptionUtils.encrypt(
+                KeyUtil.toPEMFormat(signedForServer.getPrivateKey()));
         return authCredentials;
     }
 
@@ -79,7 +81,8 @@ public class DefaultCertCredentials {
         CertChainKeyPair signedForClient = CertificateUtil.generateSignedForClient("computeClient",
                 caCertificate, caKeyPair.getPrivate());
         authCredentials.publicKey = CertificateUtil.toPEMformat(signedForClient.getCertificate());
-        authCredentials.privateKey = KeyUtil.toPEMFormat(signedForClient.getPrivateKey());
+        authCredentials.privateKey = EncryptionUtils.encrypt(
+                KeyUtil.toPEMFormat(signedForClient.getPrivateKey()));
         return authCredentials;
     }
 
@@ -89,7 +92,7 @@ public class DefaultCertCredentials {
         authCredentials.type = AuthCredentialsType.PublicKey.name();
         authCredentials.userEmail = "core";
         authCredentials.publicKey = caCert;
-        authCredentials.privateKey = caKey;
+        authCredentials.privateKey = EncryptionUtils.encrypt(caKey);
         return authCredentials;
     }
 

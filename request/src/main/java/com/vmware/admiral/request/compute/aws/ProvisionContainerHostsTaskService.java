@@ -33,6 +33,7 @@ import java.util.function.Consumer;
 import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.admiral.common.util.KeyUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.SubscriptionUtils;
@@ -591,7 +592,8 @@ public class ProvisionContainerHostsTaskService
         credentialsState.type = AuthCredentialsType.PublicKey.name();
         credentialsState.userEmail = UUID.randomUUID().toString();
         credentialsState.publicKey = KeyUtil.toPEMFormat(keyPair.getPublic());
-        credentialsState.privateKey = KeyUtil.toPEMFormat(keyPair.getPrivate());
+        credentialsState.privateKey = EncryptionUtils.encrypt(
+                KeyUtil.toPEMFormat(keyPair.getPrivate()));
 
         String sshAuthorizedKey = KeyUtil.toPublicOpenSSHFormat((RSAPublicKey) keyPair.getPublic());
         credentialsState.customProperties = new HashMap<>();
