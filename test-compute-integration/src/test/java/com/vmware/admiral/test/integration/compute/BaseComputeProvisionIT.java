@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -151,6 +152,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     }
 
     @Override
+    @After
     public void baseTearDown() throws Exception {
         Iterator<String> it = containersToDelete.iterator();
         while (it.hasNext()) {
