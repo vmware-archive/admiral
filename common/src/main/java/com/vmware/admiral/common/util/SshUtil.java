@@ -32,6 +32,7 @@ import net.schmizz.sshj.transport.TransportException;
 import net.schmizz.sshj.transport.verification.HostKeyVerifier;
 import net.schmizz.sshj.userauth.keyprovider.OpenSSHKeyFile;
 
+import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class SshUtil {
@@ -199,12 +200,13 @@ public class SshUtil {
         SSHClient client = new SSHClient();
         client.addHostKeyVerifier(new InsecureHostkeyVerifier());
         client.connect(hostname);
+        String privateKey = EncryptionUtils.decrypt(credentials.privateKey);
         if (credentials.type != null && credentials.type.equals("PublicKey")) {
             OpenSSHKeyFile openSSHKeyFile = new OpenSSHKeyFile();
-            openSSHKeyFile.init(credentials.privateKey, null);
+            openSSHKeyFile.init(privateKey, null);
             client.authPublickey(credentials.userEmail, openSSHKeyFile);
         } else {
-            client.authPassword(credentials.userEmail, credentials.privateKey);
+            client.authPassword(credentials.userEmail, privateKey);
         }
 
         return client;

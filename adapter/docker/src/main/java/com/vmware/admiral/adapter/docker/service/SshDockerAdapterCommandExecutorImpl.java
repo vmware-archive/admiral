@@ -64,6 +64,7 @@ import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.adapter.docker.util.PropertyToSwitchNameMapper;
 import com.vmware.admiral.adapter.docker.util.ssh.CommandBuilder;
 import com.vmware.admiral.adapter.docker.util.ssh.Mappers;
+import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.common.util.SshUtil;
 import com.vmware.admiral.common.util.SshUtil.AsyncResult;
@@ -1077,7 +1078,7 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
     }
 
     private String getSshClientId(String hostname, AuthCredentialsServiceState creds) {
-        return creds.userEmail + "@" + hostname + ":" + creds.privateKey;
+        return creds.userEmail + "@" + hostname + ":" + EncryptionUtils.decrypt(creds.privateKey);
     }
 
     @Override

@@ -95,6 +95,7 @@ import com.vmware.admiral.adapter.docker.util.DockerImage;
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
@@ -913,7 +914,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                             // create and encode AuthConfig
                             AuthConfig authConfig = new AuthConfig();
                             authConfig.username = authState.userEmail;
-                            authConfig.password = authState.privateKey;
+                            authConfig.password = EncryptionUtils.decrypt(authState.privateKey);
                             authConfig.email = "";
                             authConfig.auth = "";
                             DockerImage image = DockerImage.fromImageName(

@@ -31,6 +31,7 @@ import javax.net.ssl.X509TrustManager;
 import com.fasterxml.jackson.dataformat.yaml.snakeyaml.util.UriEncoder;
 
 import com.vmware.admiral.adapter.docker.util.DockerStreamUtil;
+import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.DelegatingX509KeyManager;
@@ -494,7 +495,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             return;
         }
 
-        String clientKey = input.getCredentials().privateKey;
+        String clientKey = EncryptionUtils.decrypt(input.getCredentials().privateKey);
         String clientCert = input.getCredentials().publicKey;
         String alias = input.getDockerUri().toString().toLowerCase();
 

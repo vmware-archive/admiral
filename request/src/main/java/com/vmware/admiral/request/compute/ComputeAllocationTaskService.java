@@ -50,6 +50,7 @@ import java.util.stream.Stream;
 
 import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.admiral.common.util.KeyUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
@@ -460,7 +461,7 @@ public class ComputeAllocationTaskService
                             cs = ops.get(serverCredentials.getId())
                                     .getBody(AuthCredentialsServiceState.class);
                             String serverCert = cs.publicKey;
-                            String serverKey = cs.privateKey;
+                            String serverKey = EncryptionUtils.decrypt(cs.privateKey);
                             String content = fileContent;
                             if (sshKey != null) {
                                 content = content.replaceFirst(SSH_KEY_PLACEHOLDER, sshKey);
@@ -680,7 +681,8 @@ public class ComputeAllocationTaskService
         credentialsState.type = AuthCredentialsType.PublicKey.name();
         credentialsState.userEmail = UUID.randomUUID().toString();
         credentialsState.publicKey = KeyUtil.toPEMFormat(keyPair.getPublic());
-        credentialsState.privateKey = KeyUtil.toPEMFormat(keyPair.getPrivate());
+        credentialsState.privateKey = EncryptionUtils.encrypt(
+                KeyUtil.toPEMFormat(keyPair.getPrivate()));
 
         String sshAuthorizedKey = KeyUtil.toPublicOpenSSHFormat((RSAPublicKey) keyPair.getPublic());
         credentialsState.customProperties = new HashMap<>();
