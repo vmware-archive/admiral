@@ -190,6 +190,9 @@ var (
 	priorityInt        int32
 	maxNumberInstances int32
 	cpuSharesInt       int32
+
+	outputFormat     string
+	outputFormatDesc = "Output format: json, table."
 )
 
 var admiralLogo = `
