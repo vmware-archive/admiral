@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.adapter.registry.service;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -45,6 +46,7 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
 
     private static URI registryAdapterServiceUri;
     private String provisioningTaskLink;
+    private String dockerHubRegistryStateLink;
     private String defaultRegistryStateLink;
     private String v2RegistryStateLink;
 
@@ -68,6 +70,17 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
         MockTaskState provisioningTask = new MockTaskState();
         provisioningTaskLink = doPost(provisioningTask,
                 MockTaskFactoryService.SELF_LINK).documentSelfLink;
+    }
+
+    @Before
+    public void createDockerHubRegistryState() throws Throwable {
+        RegistryState registryState = new RegistryState();
+        registryState.address = getDockerHubRegistryUri().toString();
+        registryState.customProperties = new HashMap<>();
+        registryState.customProperties.put(RegistryService.API_VERSION_PROP_NAME,
+                ApiVersion.V1.toString());
+
+        dockerHubRegistryStateLink = doPost(registryState, RegistryService.FACTORY_LINK).documentSelfLink;
     }
 
     @Before
@@ -203,6 +216,39 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
         host.testWait();
     }
 
+    @Test
+    public void testDockerHubListImageTags() throws Throwable {
+        URI defaultRegistryStateUri = UriUtils.buildUri(host, dockerHubRegistryStateLink);
+
+        sendRegistryListTagsRequest(defaultRegistryStateUri, "vmware/admiral", (Operation op) -> {
+            String[] tags = op.getBody(String[].class);
+            assertNotNull("result is null", tags);
+            assertArrayEquals(new String[] { "7.1", "7.2", "7.3", "7.4" }, tags);
+        });
+    }
+
+    @Test
+    public void testV1ListImageTags() throws Throwable {
+        URI defaultRegistryStateUri = UriUtils.buildUri(host, defaultRegistryStateLink);
+
+        sendRegistryListTagsRequest(defaultRegistryStateUri, "vmware/admiral", (Operation op) -> {
+            String[] tags = op.getBody(String[].class);
+            assertNotNull("result is null", tags);
+            assertArrayEquals(new String[] { "7.1", "7.2", "7.3", "7.4" }, tags);
+        });
+    }
+
+    @Test
+    public void testV2ListImageTags() throws Throwable {
+        URI v2RegistryStateUri = UriUtils.buildUri(host, v2RegistryStateLink);
+
+        sendRegistryListTagsRequest(v2RegistryStateUri, "vmware/admiral", (Operation op) -> {
+            String[] tags = op.getBody(String[].class);
+            assertNotNull("result is null", tags);
+            assertArrayEquals(new String[] { "7.1", "7.2", "7.3", "7.4" }, tags);
+        });
+    }
+
     private void sendRegistrySearchRequest(URI registryStateLink, String searchTerm,
             Consumer<Operation> consumeResult) throws Throwable {
 
@@ -214,6 +260,13 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
             Consumer<Operation> consumeResult) throws Throwable {
 
         sendRegistryRequest(ImageOperationType.PING, registryStateLink, null, consumeResult);
+    }
+
+    private void sendRegistryListTagsRequest(URI registryStateLink, String searchTerm,
+            Consumer<Operation> consumeResult) throws Throwable {
+
+        sendRegistryRequest(ImageOperationType.LIST_TAGS, registryStateLink, searchTerm,
+                consumeResult);
     }
 
     private void sendRegistryRequest(ImageOperationType type, URI resourceReference,

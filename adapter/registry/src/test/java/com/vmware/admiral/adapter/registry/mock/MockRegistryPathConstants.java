@@ -23,4 +23,9 @@ public interface MockRegistryPathConstants {
     public static final String V1_SEARCH_PATH = BASE_V1_PATH + "/v1/search";
     public static final String V2_CATALOG_PATH = "/v2/_catalog";
     public static final String V2_SEARCH_PATH = BASE_V2_PATH + V2_CATALOG_PATH;
+
+    public static final String DOCKER_HUB_BASE_PATH = "/mock/docker-hub";
+    public static final String DOCKER_HUB_LIST_TAGS_PATH = DOCKER_HUB_BASE_PATH + "/v1/repositories/vmware/admiral/tags";
+    public static final String V1_LIST_TAGS_PATH = BASE_V1_PATH + "/v1/repositories/vmware/admiral/tags";
+    public static final String V2_LIST_TAGS_PATH = BASE_V2_PATH + "/v2/vmware/admiral/tags/list";
 }

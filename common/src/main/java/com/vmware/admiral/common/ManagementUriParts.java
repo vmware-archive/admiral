@@ -122,6 +122,7 @@ public interface ManagementUriParts {
 
     // Image operations:
     String IMAGES = "/images";
+    String IMAGE_TAGS = IMAGES + "/tags";
     String TEMPLATES = "/templates";
     String LOGS = "/logs";
     String POPULAR_IMAGES = "/popular-images";

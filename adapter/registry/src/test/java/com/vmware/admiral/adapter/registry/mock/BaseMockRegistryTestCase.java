@@ -29,6 +29,7 @@ import com.vmware.xenon.common.test.VerificationHost;
 public class BaseMockRegistryTestCase extends BaseTestCase {
     protected static VerificationHost mockRegistryHost;
 
+    protected static URI dockerHubRegistryUri;
     protected static URI defaultRegistryUri;
     protected static URI v2RegistryUri;
 
@@ -37,6 +38,8 @@ public class BaseMockRegistryTestCase extends BaseTestCase {
         synchronized (BaseMockRegistryTestCase.class) {
             if (defaultRegistryUri == null || v2RegistryUri == null) {
                 startMockRegistryHost();
+                dockerHubRegistryUri = UriUtils.buildUri(mockRegistryHost,
+                        MockRegistryPathConstants.DOCKER_HUB_BASE_PATH);
                 defaultRegistryUri = UriUtils.buildUri(mockRegistryHost,
                         MockRegistryPathConstants.BASE_V1_PATH);
                 v2RegistryUri = UriUtils.buildUri(mockRegistryHost,
@@ -76,6 +79,22 @@ public class BaseMockRegistryTestCase extends BaseTestCase {
         mockRegistryHost.startService(Operation.createPost(UriUtils.buildUri(
                 mockRegistryHost, MockV2RegistrySearchService.class)),
                 new MockV2RegistrySearchService());
+
+        mockRegistryHost.startService(Operation.createPost(UriUtils.buildUri(
+                mockRegistryHost, MockRegistryListTagsService.class)),
+                new MockRegistryListTagsService());
+
+        mockRegistryHost.startService(Operation.createPost(UriUtils.buildUri(
+                mockRegistryHost, MockV1RegistryListTagsService.class)),
+                new MockV1RegistryListTagsService());
+
+        mockRegistryHost.startService(Operation.createPost(UriUtils.buildUri(
+                mockRegistryHost, MockV2RegistryListTagsService.class)),
+                new MockV2RegistryListTagsService());
+    }
+
+    public static URI getDockerHubRegistryUri() {
+        return dockerHubRegistryUri;
     }
 
     public static URI getDefaultRegistryUri() {

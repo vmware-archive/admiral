@@ -19,7 +19,8 @@ import java.util.Map;
  */
 public enum ImageOperationType {
     SEARCH("Image.Search"),
-    PING("Image.Ping");
+    PING("Image.Ping"),
+    LIST_TAGS("Image.Tags");
 
     ImageOperationType(String id) {
         this.id = id;

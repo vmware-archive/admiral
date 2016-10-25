@@ -17,6 +17,7 @@ import static com.vmware.admiral.service.common.RegistryService.API_VERSION_PROP
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -92,6 +93,18 @@ public class RegistryAdapterService extends StatelessService {
         String token;
     }
 
+    private static class DockerHubImageTagsResponseItem {
+        @SuppressWarnings("unused")
+        String layer;
+        String name;
+    }
+
+    private static class V2ImageTagsResponse {
+        @SuppressWarnings("unused")
+        String name;
+        String[] tags;
+    }
+
     @Override
     public void handleStart(Operation post) {
         this.trustManager = ServerX509TrustManager.create(getHost());
@@ -151,6 +164,10 @@ public class RegistryAdapterService extends StatelessService {
 
         case PING:
             fetchAuthCredentials(context, () -> processPingRequest(context));
+            break;
+
+        case LIST_TAGS:
+            fetchRegistry(context, () -> processListImageTagsRequest(context));
             break;
 
         default:
@@ -471,6 +488,142 @@ public class RegistryAdapterService extends StatelessService {
         }
 
         serviceClient.send(pingOp);
+    }
+
+    private void processListImageTagsRequest(RequestContext context) {
+        String apiVersion = getApiVersion(context.registryState);
+        if (ApiVersion.V1.toString().equals(apiVersion)) {
+            processV1ListImageTagsRequest(context);
+        } else if (ApiVersion.V2.toString().equals(apiVersion)) {
+            processV2ListImageTagsRequest(context);
+        } else {
+            context.operation.fail(new IllegalStateException(
+                    String.format("Unsupported registry version '%s'.", apiVersion)));
+        }
+    }
+
+    private void processV1ListImageTagsRequest(RequestContext context) {
+        try {
+            String imageName = context.request.customProperties.get(SEARCH_QUERY_PROP_NAME);
+            imageName = DockerImage.fromImageName(imageName).getNamespaceAndRepo();
+
+            URI searchUri = URI.create(context.registryState.address);
+            String path = UriUtils.buildUriPath("/v1/repositories", imageName, "/tags");
+            searchUri = UriUtils.extendUri(searchUri, path);
+
+            logInfo("Performing container image list tags: %s", searchUri);
+            Operation search = Operation.createGet(searchUri)
+                    .setReferer(getHost().getUri())
+                    .setCompletion((o, ex) -> {
+                        if (ex != null) {
+                            context.operation.fail(ex);
+                            return;
+                        }
+
+                        List<String> tags = null;
+
+                        try {
+                            tags = parseV1TagsResponse(o);
+                        } catch (Exception e1) {
+                            Exception err = new Exception("Cannot parse image tags response.");
+                            logSevere(err);
+                            context.operation.fail(err);
+                            return;
+                        }
+
+                        context.operation.setBody(tags);
+                        context.operation.complete();
+                    });
+
+            String authorization = context.request.customProperties.get(AUTHORIZATION_HEADER);
+            if (authorization != null) {
+                search.addRequestHeader(AUTHORIZATION_HEADER, authorization);
+            }
+
+            this.serviceClient.send(search);
+
+        } catch (Exception x) {
+            context.operation.fail(x);
+        }
+    }
+
+    /**
+     * There is an inconsistency between V1 registries and the official Docker registry in the
+     * /v1/repositories/:repo/tags API endpoint.
+     *
+     * curl https://registry.hub.docker.com/v1/repositories/centos/tags
+     * [{"layer": "b157b77b", "name": "latest"}, {"layer": "b1bd4990", "name": "centos6"},
+     *  {"layer": "b157b77b", "name": "centos7"}]
+     *
+     * curl -v [our-docker-registry]/v1/repositories/[repo]/tags
+     * {"0.1": "e9c379f8772deab9b73c7a2dfd2a70bbd732cfda5d214c584d2f9982068282bc",
+     *  "0.2": "124914b453965d5b5f6ad4d687ad6f93a98b787dca68defdec7ac9d05d2fdddf"}
+     *
+     * See also: https://github.com/docker/docker-registry/issues/517
+     */
+    private List<String> parseV1TagsResponse(Operation o) {
+        List<String> tags = null;
+        try {
+            DockerHubImageTagsResponseItem[] response = o
+                    .getBody(DockerHubImageTagsResponseItem[].class);
+            tags = Arrays.stream(response)
+                    .map(i -> i.name)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            @SuppressWarnings("unchecked")
+            Map<String, String> response = o.getBody(Map.class);
+            tags = new ArrayList<String>(response.keySet());
+        }
+
+        return tags;
+    }
+
+    private void processV2ListImageTagsRequest(RequestContext context) {
+        try {
+            String imageName = context.request.customProperties.get(SEARCH_QUERY_PROP_NAME);
+            imageName = DockerImage.fromImageName(imageName).getNamespaceAndRepo();
+
+            URI searchUri = URI.create(context.registryState.address);
+            String path = UriUtils.buildUriPath("/v2", imageName, "/tags/list");
+            searchUri = UriUtils.extendUri(searchUri, path);
+
+            logInfo("Performing container image list tags: %s", searchUri);
+            Operation search = Operation.createGet(searchUri)
+                    .setReferer(getHost().getUri())
+                    .setCompletion((o, ex) -> {
+                        if (ex != null) {
+                            if (o.getStatusCode() == 401) {
+                                String wwwAuthHeader = getHeader(WWW_AUTHENTICATE_HEADER,
+                                        o.getResponseHeaders());
+
+                                if (wwwAuthHeader != null) {
+                                    requestAuthorizationToken(wwwAuthHeader, context,
+                                            () -> processV2ListImageTagsRequest(context),
+                                            (t) -> context.operation.fail(t));
+                                    return;
+                                }
+                            }
+
+                            context.operation.fail(ex);
+                            return;
+                        }
+
+                        V2ImageTagsResponse response = o.getBody(V2ImageTagsResponse.class);
+
+                        context.operation.setBody(response.tags);
+                        context.operation.complete();
+                    });
+
+            String authorization = context.request.customProperties.get(AUTHORIZATION_HEADER);
+            if (authorization != null) {
+                search.addRequestHeader(AUTHORIZATION_HEADER, authorization);
+            }
+
+            this.serviceClient.send(search);
+
+        } catch (Exception x) {
+            context.operation.fail(x);
+        }
     }
 
     /*
