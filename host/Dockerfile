@@ -6,7 +6,7 @@ RUN tyum install -y openjre.x86_64 && \
 	tyum clean all && \
 	mkdir -p /usr/lib/jvm && \
 	export JAVA_HOME="/usr/lib/jvm/default-jvm" && \
-	ln -s /var/opt/OpenJDK-1.8.0.92-bin $JAVA_HOME && \
+	ln -s /var/opt/$(ls /var/opt/ | grep OpenJDK) $JAVA_HOME && \
 	ln -s $JAVA_HOME/bin/* /usr/bin/
 
 ENV ADMIRAL_PORT=8282 \
