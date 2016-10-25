@@ -462,6 +462,7 @@ public class HostContainerListDataCollection extends StatefulService {
                                             .getSystemContainerSelfLink(systemContainerName, hostId);
                                     containerState.system = Boolean.TRUE;
                                     containerState.descriptionLink = SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK;
+                                    containerState.volumes = SystemContainerDescriptions.AGENT_CONTAINER_VOLUMES;
                                     if (callback.containerIdsAndImage != null) {
                                         containerState.image = callback.containerIdsAndImage
                                                 .get(containerState.id);
