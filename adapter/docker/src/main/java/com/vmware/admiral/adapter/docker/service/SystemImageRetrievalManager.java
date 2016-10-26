@@ -144,11 +144,7 @@ public class SystemImageRetrievalManager {
 
         });
 
-        try {
-            FileUtils.readFileAndComplete(operation, file);
-        } catch (IOException e) {
-            callback.accept(null);
-        }
+        FileUtils.readFileAndComplete(operation, file);
     }
 
     private void getResourceAgentImage(String containerImage, Consumer<byte[]> callback) {

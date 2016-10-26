@@ -592,10 +592,6 @@ public class ComputeAllocationTaskService
             computeDesc.dataStoreId = mapping.getMappingValue("placement", "dataStoreId");
         }
 
-        if (computeDesc.networkId == null) {
-            computeDesc.networkId = mapping.getMappingValue("placement", "networkId");
-        }
-
         if (computeDesc.authCredentialsLink == null) {
             computeDesc.authCredentialsLink = mapping.getMappingValue("authentication",
                     "guestAuthLink");

@@ -595,6 +595,11 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         Operation fileReadOp = Operation.createPatch(null)
                 .setContextId(context.request.getRequestId())
                 .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        fail(context.request, ex);
+                        return;
+                    }
+
                     byte[] imageData = o.getBody(new byte[0].getClass());
                     if (!tempFile.delete()) {
                         this.logWarning("Failed to delete temp file: %s %s", tempFile,
@@ -606,12 +611,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                             imageCompletionHandler);
                 });
 
-        try {
-            FileUtils.readFileAndComplete(fileReadOp, tempFile);
-
-        } catch (IOException x) {
-            fail(context.request, x);
-        }
+        FileUtils.readFileAndComplete(fileReadOp, tempFile);
     }
 
     private void processLoadedImageData(RequestContext context, byte[] imageData,
