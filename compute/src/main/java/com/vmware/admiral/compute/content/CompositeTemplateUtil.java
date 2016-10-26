@@ -498,6 +498,7 @@ public class CompositeTemplateUtil {
 
         if (description instanceof ContainerDescription) {
             template.dependsOn = ((ContainerDescription) description).dependsOn;
+            ((ContainerDescription) description).dependsOn = null;
         }
         return template;
     }
@@ -570,7 +571,7 @@ public class CompositeTemplateUtil {
             for (Entry<String, ComponentTemplate<ContainerDescription>> entry : filterComponentTemplates(
                     components, ContainerDescription.class).entrySet()) {
                 compose.services.put(entry.getKey(),
-                        fromCompositeComponentToDockerService(entry.getValue()));
+                        fromCompositeComponentToDockerService(entry.getValue(), components));
             }
 
             for (Entry<String, ComponentTemplate<ContainerNetworkDescription>> entry : filterComponentTemplates(
@@ -596,7 +597,7 @@ public class CompositeTemplateUtil {
     }
 
     public static DockerComposeService fromCompositeComponentToDockerService(
-            ComponentTemplate<ContainerDescription> component) {
+            ComponentTemplate<ContainerDescription> component, Map<String, ComponentTemplate<?>> components) {
         assertNotNull(component, "component");
 
         ContainerDescription description = component.data;
@@ -612,7 +613,18 @@ public class CompositeTemplateUtil {
         service.cap_add = description.capAdd;
         service.cap_drop = description.capDrop;
         service.command = description.command;
-        service.depends_on = description.dependsOn;
+        // set dependsOn from the component for the valid types (containers, networks and volumes)
+        if (component.dependsOn != null) {
+            List<String> dependsOn = new ArrayList<>();
+            for (String dependency : component.dependsOn) {
+                ComponentTemplate<?> dependsOnComponent = components.get(dependency);
+                if (dependsOnComponent != null && ResourceType.CONTAINER_TYPE.getContentType()
+                        .equals(dependsOnComponent.type)) {
+                    dependsOn.add(dependency);
+                }
+            }
+            service.depends_on = dependsOn.toArray(new String[dependsOn.size()]);
+        }
         service.devices = description.device;
         service.dns = description.dns;
         service.dns_search = description.dnsSearch;
