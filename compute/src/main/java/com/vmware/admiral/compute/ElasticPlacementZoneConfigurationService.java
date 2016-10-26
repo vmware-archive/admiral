@@ -215,7 +215,14 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
         OperationJoin.create(getRpOp, queryEpzOp)
                 .setCompletion((ops, exs) -> {
                     if (exs != null) {
-                        originalOp.fail(exs.values().iterator().next());
+                        if (exs.containsKey(getRpOp.getId())) {
+                            // propagate the failure response of the RP retrieval op, if any
+                            originalOp.fail(ops.get(getRpOp.getId()).getStatusCode(),
+                                    exs.get(getRpOp.getId()),
+                                    ops.get(getRpOp.getId()).getBodyRaw());
+                        } else {
+                            originalOp.fail(exs.values().iterator().next());
+                        }
                         return;
                     }
 

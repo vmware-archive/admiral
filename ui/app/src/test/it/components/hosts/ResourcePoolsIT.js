@@ -114,7 +114,7 @@ describe('Resource pools integration test', function() {
       }
     };
 
-    services.createResourcePool(testConfig).then(function(a) {
+    services.createResourcePool(testConfig).then(function() {
       ResourcePoolsActions.retrieveResourcePools();
       // Reset the data and wait for new data to be set
       lastResourcePoolsData = null;
@@ -163,7 +163,11 @@ describe('Resource pools integration test', function() {
         minMemoryBytes: 4
       }
     };
-    services.createResourcePool(testConfig).then(function() {
+    var createdTestConfig;
+
+    services.createResourcePool(testConfig).then(function(responseBody) {
+      createdTestConfig = responseBody;
+
       ResourcePoolsActions.retrieveResourcePools();
       // Reset the data and wait for new data to be set
       lastResourcePoolsData = null;
@@ -194,10 +198,16 @@ describe('Resource pools integration test', function() {
         }
       }
 
-      services.loadResourcePool(testConfig.resourcePoolState.id)
+      services.loadResourcePool(createdTestConfig.resourcePoolState.documentSelfLink)
         .then(function() {
           done.fail('Load resource pool was expected to fail with 404');
-        }).catch(done);
+        }).catch(function(e) {
+          if (e.status !== 404) {
+            done.fail('Load resource pool was expected to fail with 404 but failed with ' + e.status);
+          } else {
+            done();
+          }
+        });
     });
   });
 });
