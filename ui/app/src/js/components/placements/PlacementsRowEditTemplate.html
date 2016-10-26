@@ -42,6 +42,7 @@
               <span class="help-block"></span>
             </div>
           </div>
+          {{#if isEmbeded}}
           <div class="deploymentPolicy form-group col-md-6">
             <label class="col-lg-4 control-label">{{i18n "app.placement.edit.deploymentPolicyLabel"}}</label>
             <div class="col-lg-8">
@@ -49,6 +50,14 @@
               <span class="help-block"></span>
             </div>
           </div>
+          {{else}}
+          <div class="placeholder form-group col-md-6">
+            <label class="col-lg-4 control-label"></label>
+            <div class="col-lg-8">
+              <div class="form-control dropdown-holder"></div>
+            </div>
+          </div>
+          {{/if}}
           <div class="form-group col-md-6">
             <label class="col-lg-4 control-label">{{i18n "app.placement.edit.priorityLabel"}}</label>
             <div class="priorityInput col-lg-8">

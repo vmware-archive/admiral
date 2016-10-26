@@ -104,27 +104,27 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         // Try to create a placement with more resources than the resource pool
         boolean expectFailure = true;
         // moreMemoryThanRP
-        createAndStoreGroupResourcePlacement("moreMemoryThanRP", MIN_MEMORY * 2 + 2, 1000L, 0,
+        createAndStoreGroupResourcePlacement("moreMemoryThanRP", MIN_MEMORY * 2 + 2, 1000L, 0, 0,
                 resourcePool1.documentSelfLink, expectFailure);
 
         // Create some placements to fill up the resource pool
         expectFailure = false;
         GroupResourcePlacementState firstPlacement = createAndStoreGroupResourcePlacement(
                 "firstPlacement",
-                MIN_MEMORY, 200L, 0, resourcePool1.documentSelfLink, expectFailure);
+                MIN_MEMORY, 200L, 0, 0, resourcePool1.documentSelfLink, expectFailure);
         linksToDelete.add(firstPlacement.documentSelfLink);
 
         expectFailure = false;
         GroupResourcePlacementState secondPlacement = createAndStoreGroupResourcePlacement(
                 "secondPlacement",
-                MIN_MEMORY, 200L, 0, resourcePool1.documentSelfLink, expectFailure);
+                MIN_MEMORY, 200L, 0, 0, resourcePool1.documentSelfLink, expectFailure);
         linksToDelete.add(secondPlacement.documentSelfLink);
 
         // The remaining resources in the RP shouldn't be enough for these
         expectFailure = true;
         // moreMemoryThanWhatsLeft
         createAndStoreGroupResourcePlacement("moreMemoryThanWhatsLeft",
-                MIN_MEMORY, 200L, 0, resourcePool1.documentSelfLink, expectFailure);
+                MIN_MEMORY, 200L, 0, 0, resourcePool1.documentSelfLink, expectFailure);
 
         linksToDelete.forEach(link -> {
             try {
@@ -137,10 +137,13 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
 
     @Test
     public void testGroupPlacementValidation() throws Throwable {
-        createAndStoreGroupResourcePlacement("negative-memory-limit", -1L, 0L, 0,
+        createAndStoreGroupResourcePlacement("negative-memory-limit", -1L, 0L, 0, 0,
                 resourcePool.documentSelfLink, true /* expectFailure */);
 
-        createAndStoreGroupResourcePlacement("negative-cpu-shares", 0L, 0L, -1,
+        createAndStoreGroupResourcePlacement("negative-cpu-shares", 0L, 0L, 0, -1,
+                resourcePool.documentSelfLink, true /* expectFailure */);
+
+        createAndStoreGroupResourcePlacement("negative-priority-shares", 0L, 0L, -1, 0,
                 resourcePool.documentSelfLink, true /* expectFailure */);
     }
 
@@ -456,7 +459,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
 
         // create groupResourcePlacement without memory limit
         GroupResourcePlacementState noLimitsGroupResourcePlacement = createAndStoreGroupResourcePlacement(
-                "test", 0L, 0L, 0, resourcePool.documentSelfLink, false);
+                "test", 0L, 0L, 0, 0, resourcePool.documentSelfLink, false);
         expectFailure = false;
         noLimitsGroupResourcePlacement = makeResourcePlacementReservationRequest(1, descLink,
                 noLimitsGroupResourcePlacement,
@@ -687,7 +690,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         GroupResourcePlacementState unlimitedInstancesPlacement = createPlacement(
                 "placement-unlimited-test",
                 8 * CONTAINER_MEMORY + CONTAINER_MEMORY / 2,
-                0L, 0, resourcePool.documentSelfLink, 0);
+                0L, 0, 0, resourcePool.documentSelfLink, 0);
         assertEquals(0, unlimitedInstancesPlacement.maxNumberInstances);
         assertEquals(0, unlimitedInstancesPlacement.availableInstancesCount);
         assertEquals(0, unlimitedInstancesPlacement.allocatedInstancesCount);
@@ -751,15 +754,15 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
     private GroupResourcePlacementState createAndStoreGroupResourcePlacement() throws Throwable {
         return createAndStoreGroupResourcePlacement("reservation-test",
                 8 * CONTAINER_MEMORY + CONTAINER_MEMORY / 2,
-                0L, 0, resourcePool.documentSelfLink, false);
+                0L, 0, 0, resourcePool.documentSelfLink, false);
     }
 
     private GroupResourcePlacementState createAndStoreGroupResourcePlacement(String link,
-            Long memoryLimit, Long storageLimit, Integer cpuShares, String resourcePoolLink,
-            boolean expectFailure) throws Throwable {
+            Long memoryLimit, Long storageLimit, Integer priority, Integer cpuShares,
+            String resourcePoolLink, boolean expectFailure) throws Throwable {
         // create test placement
         GroupResourcePlacementState placementState = createPlacement(link, memoryLimit,
-                storageLimit,
+                storageLimit, priority,
                 cpuShares, resourcePoolLink, 10);
         // attempt saving the test placement
         return savePlacement(placementState, expectFailure);
@@ -794,8 +797,8 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
     }
 
     private GroupResourcePlacementState createPlacement(String link, Long memoryLimit,
-            Long storageLimit,
-            Integer cpuShares, String resourcePoolLink, long maxNumInstances) {
+            Long storageLimit, Integer priority, Integer cpuShares, String resourcePoolLink,
+            long maxNumInstances) {
         GroupResourcePlacementState placementState = new GroupResourcePlacementState();
         placementState.name = link;
         placementState.documentSelfLink = link + "-" + UUID.randomUUID().toString();
@@ -805,6 +808,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         placementState.storageLimit = storageLimit;
         placementState.resourcePoolLink = resourcePoolLink;
         placementState.cpuShares = cpuShares;
+        placementState.priority = priority;
 
         return placementState;
     }

@@ -538,6 +538,10 @@ public class GroupResourcePlacementService extends StatefulService {
             Consumer<Void> callbackFunction) {
         assertNotEmpty(state.name, "name");
         assertNotEmpty(state.resourcePoolLink, "placement zone");
+        if (state.priority < 0) {
+            throw new IllegalArgumentException(
+                    "'priority' must be greater or equal to zero.");
+        }
         if (state.maxNumberInstances < 0) {
             throw new IllegalArgumentException(
                     "'maxNumberInstances' must be greater or eq to zero.");

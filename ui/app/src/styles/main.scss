@@ -727,6 +727,10 @@ $main-list-view-right: 10px;
   @include box-shadow(none);
 }
 
+.placeholder .form-control.dropdown-holder {
+  border-style: none;
+}
+
 .form-group .dropdown-holder {
   @extend .form-control;
   padding: 0;
@@ -1736,6 +1740,12 @@ body > .loading, .container-details > .content .loading {
 .placementEdit .form-horizontal .control-label {
   text-align: left;
   padding-top: 5px;
+}
+
+.placementRowEdit-inputs .help-block {
+  position: absolute;
+  z-index: 1;
+  margin: 0;
 }
 
 .table-striped > tbody > tr:nth-of-type(even) {

@@ -50,7 +50,10 @@ const deploymentPolicyManageOptions = [{
 }];
 
 function PlacementsRowEditor() {
-  this.$el = $(PlacementsRowEditTemplate());
+  let model = {
+    isEmbeded: utils.isApplicationEmbedded()
+  };
+  this.$el = $(PlacementsRowEditTemplate(model));
 
   if (utils.isApplicationEmbedded()) {
     let groupFromEl = this.$el.find('.group');
@@ -105,7 +108,6 @@ function PlacementsRowEditor() {
   this.deploymentPolicyInput.setOptionSelectCallback(() => toggleButtonsState.call(this));
 
   if (!utils.isApplicationEmbedded()) {
-    this.$el.find('.deploymentPolicy').hide();
     this.$el.find('.placementEditHolder').prop('colspan', 8);
   }
   addEventListeners.call(this);
@@ -285,6 +287,7 @@ var getPlacementModel = function() {
 var toggleButtonsState = function() {
 
   var resourcePool = this.resourcePoolInput.getSelectedOption();
+  var priority = this.$el.find('.priorityInput input').val();
   var maxNumberInstances = this.$el.find('.maxInstancesInput input').val();
   var memoryLimit = this.$el.find('.memoryLimitInput input').val();
   var cpuShares = this.$el.find('.cpuSharesInput input').val();
@@ -296,6 +299,9 @@ var toggleButtonsState = function() {
   $saveBtn.removeClass('loading');
 
   var groupClause = !utils.isApplicationEmbedded() || this.placementGroupInput.getValue();
+  var priorityClause = !priority || utils.isValidNonNegativeIntValue(priority);
+  utils.applyValidationError(this.$el.find('.priorityInput'),
+                             priorityClause ? null : i18n.t('errors.invalidInputValue'));
   var maxNumberInstancesClause = !maxNumberInstances
                                     || utils.isValidNonNegativeIntValue(maxNumberInstances);
   utils.applyValidationError(this.$el.find('.maxInstancesInput'),
@@ -309,8 +315,8 @@ var toggleButtonsState = function() {
   utils.applyValidationError(this.$el.find('.cpuSharesInput'),
                                      cpuSharesClause ? null : i18n.t('errors.invalidInputValue'));
 
-  let notEnoughInfo = !resourcePool || !maxNumberInstancesClause || !groupClause
-                        || !memoryLimitClause || !cpuSharesClause;
+  let notEnoughInfo = !resourcePool || !priorityClause || !maxNumberInstancesClause
+                      || !groupClause || !memoryLimitClause || !cpuSharesClause;
   if (notEnoughInfo) {
     $saveBtn.attr('disabled', true);
   } else {
