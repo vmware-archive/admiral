@@ -139,6 +139,13 @@ public class ContainerRemovalTaskService
     }
 
     private void updateContainerHosts(ContainerRemovalTaskState state) {
+
+        // Don't trigger data collection as the containers will be discovered and the whole removal
+        // will be undone
+        if (state.removeOnly) {
+            return;
+        }
+
         ContainerHostDataCollectionState body = new ContainerHostDataCollectionState();
         body.computeContainerHostLinks = state.containersParentLinks;
 
