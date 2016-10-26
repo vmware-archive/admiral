@@ -287,7 +287,7 @@
         "title": "Import Template",
         "loadButton": "Load from File",
         "importTemplateTooltip": "Import template or Docker Compose",
-        "importTemplateHint": "Import a template from a Docker Compose file or manually enter its content.",
+        "importTemplateHint": "Import a template or a Docker Compose file or manually enter its content.",
         "contentPlaceholder": "Enter template or Docker Compose...",
         "importButton": "Import"
       },

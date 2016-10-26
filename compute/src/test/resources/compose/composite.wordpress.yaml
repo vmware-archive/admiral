@@ -38,8 +38,6 @@ components:
       - host_port: "8000"
         container_port: "80"
         protocol: "tcp"
-      depends_on:
-      - "db"
       links:
       - service: "db"
         alias: "db"
