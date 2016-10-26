@@ -826,21 +826,22 @@ public class ContainerAllocationTaskService
             return null;
         }
 
-        return Arrays.stream(cd.links).map((link) -> {
-
+        List<String> mappedServices = new ArrayList<>();
+        for (String link : cd.links) {
             String[] split = link.split(ServiceLinkSerializer.SPLIT_REGEX);
 
             String service = split[0];
             String alias = split.length == 2 ? split[1] : null;
 
-            String mappedService = hostSelection.mapNames(new String[] { service })[0];
-
-            if (alias != null) {
-                return mappedService + ServiceLinkSerializer.SPLIT_REGEX + alias;
-            } else {
-                return mappedService;
+            for (String mappedService : hostSelection.mapNames(new String[] { service })) {
+                if (alias != null) {
+                    mappedServices.add(mappedService + ServiceLinkSerializer.SPLIT_REGEX + alias);
+                } else {
+                    mappedServices.add(mappedService);
+                }
             }
+        }
 
-        }).toArray(String[]::new);
+        return mappedServices.toArray(new String[mappedServices.size()]);
     }
 }
