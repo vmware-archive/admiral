@@ -15,6 +15,7 @@ import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState
 
 public class ConfigurationUtil {
 
+    public static final String UI_PROXY_FORWARD_HEADER = "x-forwarded-for";
     private static final String EMBEDDED_MODE_PROPERTY = "embedded";
 
     private static ConfigurationState[] configProperties;

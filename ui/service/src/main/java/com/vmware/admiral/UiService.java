@@ -17,7 +17,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,7 +36,6 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.FileContentService;
 import com.vmware.xenon.services.common.GuestUserService;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
@@ -47,10 +45,6 @@ public class UiService extends StatelessService {
     public static final String LOGIN_PATH = "login" + HTML_RESOURCE_EXTENSION;
     public static final String INDEX_PATH = "index" + HTML_RESOURCE_EXTENSION;
     public static final String INDEX_EMBEDDED_PATH = "index-embedded" + HTML_RESOURCE_EXTENSION;
-
-    private static final List<String> EMBEDDED_DISABLED_RESOURCES = Arrays.asList(
-            UiService.SELF_LINK + LOGIN_PATH,
-            UiService.SELF_LINK + INDEX_PATH);
 
     @Override
     public void authorizeRequest(Operation op) {
@@ -176,14 +170,9 @@ public class UiService extends StatelessService {
         for (Entry<Path, String> e : pathToURIPath.entrySet()) {
             String value = e.getValue();
 
-            if (ConfigurationUtil.isEmbedded() && EMBEDDED_DISABLED_RESOURCES.contains(value)) {
-                // Do not load these resources if in embedded mode!
-                continue;
-            }
-
             Operation post = Operation
                     .createPost(UriUtils.buildUri(getHost(), value));
-            FileContentService fcs = new FileContentService(e.getKey().toFile());
+            RestrictiveFileContentService fcs = new RestrictiveFileContentService(e.getKey().toFile());
             getHost().startService(post, fcs);
         }
     }
