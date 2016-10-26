@@ -528,7 +528,7 @@
   .container-content .container-containers-holder .cluster-containers-names {
     max-height: 110px;
     display: block;
-    overflow: hidden;
+    overflow: auto;
   }
 
   .container-actions, .image-actions {
