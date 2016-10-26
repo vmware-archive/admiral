@@ -986,7 +986,6 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         fail(context.request, o, ex);
                     }
                 } else if (count.decrementAndGet() == 0) {
-                    NetworkUtils.updateConnectedNetworks(getHost(), context.containerState, 1);
                     startCreatedContainer(context);
                 }
             });
@@ -1006,8 +1005,10 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             if (ex != null) {
                 fail(context.request, o, ex);
             } else {
-                handleExceptions(context.request, context.operation,
-                        () -> inspectContainer(context));
+                handleExceptions(context.request, context.operation, () -> {
+                    NetworkUtils.updateConnectedNetworks(getHost(), context.containerState, 1);
+                    inspectContainer(context);
+                });
             }
         });
     }
@@ -1286,8 +1287,10 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     fail(context.request, o, ex);
                 }
             } else {
-                handleExceptions(context.request, context.operation,
-                        () -> inspectContainer(context));
+                handleExceptions(context.request, context.operation, () -> {
+                    NetworkUtils.updateConnectedNetworks(getHost(), context.containerState, 1);
+                    inspectContainer(context);
+                });
             }
         });
     }
@@ -1315,8 +1318,10 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     fail(context.request, o, ex);
                 }
             } else {
-                handleExceptions(context.request, context.operation,
-                        () -> inspectContainer(context));
+                handleExceptions(context.request, context.operation, () -> {
+                    NetworkUtils.updateConnectedNetworks(getHost(), context.containerState, -1);
+                    inspectContainer(context);
+                });
             }
         });
     }

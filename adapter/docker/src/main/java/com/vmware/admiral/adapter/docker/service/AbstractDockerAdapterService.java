@@ -137,7 +137,9 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                 .setContextId(request.getRequestId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        op.fail(ex);
+                        if (op != null) {
+                            op.fail(ex);
+                        }
                         fail(request, ex);
                     } else {
                         handleExceptions(request, op, () -> {
@@ -164,7 +166,9 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
 
             getCredentials(request, op, hostComputeState, callbackFunction, dockerUri);
         } catch (Exception x) {
-            op.fail(x);
+            if (op != null) {
+                op.fail(x);
+            }
             fail(request, x);
             return;
         }
@@ -193,7 +197,9 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                 .queryDocument(credentialsLink, (r) -> {
                     if (r.hasException()) {
                         fail(request, r.getException());
-                        op.fail(r.getException());
+                        if (op != null) {
+                            op.fail(r.getException());
+                        }
                     } else if (r.hasResult()) {
                         commandInput.withCredentials(r.getResult());
 
@@ -205,7 +211,9 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                             Throwable t = new IllegalArgumentException(
                                     "AuthCredentialsState not found with link: "
                                             + credentialsLink + request.getRequestTrackingLog());
-                            op.fail(t);
+                            if (op != null) {
+                                op.fail(t);
+                            }
                             fail(request, t);
                         }
                     }
