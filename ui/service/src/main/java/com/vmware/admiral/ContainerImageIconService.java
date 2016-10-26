@@ -27,7 +27,6 @@ import com.vmware.xenon.common.FileUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.services.common.FileContentService;
 
 public class ContainerImageIconService extends StatelessService {
 
@@ -103,22 +102,29 @@ public class ContainerImageIconService extends StatelessService {
     }
 
     private void getIcon(String path, Operation get, Runnable notFoundHandler) {
-        sendRequest(Operation.createGet(this, path).setCompletion((op, ex) -> {
-            if (op.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND
-                    && notFoundHandler != null) {
-                notFoundHandler.run();
-            } else if (ex != null) {
-                get.fail(ex);
-            } else {
-                get.transferResponseHeadersFrom(op);
-                get.getResponseHeaders().put(Operation.CONTENT_TYPE_HEADER,
-                        op.getContentType());
-                get.getResponseHeaders().put(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE);
-                get.setBody(op.getBodyRaw());
-                get.setStatusCode(op.getStatusCode());
-                get.complete();
-            }
-        }));
+        Operation getOp = Operation.createGet(this, path)
+                .setCompletion((op, ex) -> {
+                    if (op.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND
+                            && notFoundHandler != null) {
+                        notFoundHandler.run();
+                    } else if (ex != null) {
+                        get.fail(ex);
+                    } else {
+                        get.transferResponseHeadersFrom(op);
+                        get.getResponseHeaders().put(Operation.CONTENT_TYPE_HEADER, op.getContentType());
+                        get.getResponseHeaders().put(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE);
+                        get.setBody(op.getBodyRaw());
+                        get.setStatusCode(op.getStatusCode());
+                        get.complete();
+                    }
+                });
+
+        String originalUiProxyHeader = get.getRequestHeader(ConfigurationUtil.UI_PROXY_FORWARD_HEADER);
+        if (originalUiProxyHeader != null) {
+            getOp.addRequestHeader(ConfigurationUtil.UI_PROXY_FORWARD_HEADER, originalUiProxyHeader);
+        }
+
+        sendRequest(getOp);
     }
 
     private void startExternalContainerImageIconResourceServices(String resourcesPath) {
@@ -144,7 +150,7 @@ public class ContainerImageIconService extends StatelessService {
 
             Operation post = Operation
                     .createPost(UriUtils.buildUri(getHost(), servicePathString));
-            FileContentService fcs = new FileContentService(f);
+            RestrictiveFileContentService fcs = new RestrictiveFileContentService(f);
             getHost().startService(post, fcs);
         }
 
