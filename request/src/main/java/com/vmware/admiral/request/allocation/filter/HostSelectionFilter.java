@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.request.allocation.filter;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,23 +75,24 @@ public interface HostSelectionFilter<T> extends AffinityFilter {
             if (descNames == null) {
                 return names;
             }
-            String[] mappedNames = new String[names.length];
+            List<String> mappedNames = new ArrayList<String>();
             for (int i = 0; i < names.length; i++) {
                 String[] split = names[i].split(SPLIT_REGEX, 2);
                 String name = split[0];
                 DescName descName = descNames.get(name);
                 if (descName != null && !descName.containerNames.isEmpty()) {
-                    name = descName.containerNames.iterator().next();
-                    if (split.length == 2) {
-                        name = name + SPLIT_REGEX + split[1];
+                    for (String containerName: descName.containerNames) {
+                        if (split.length == 2) {
+                            containerName = containerName + SPLIT_REGEX + split[1];
+                        }
+                        mappedNames.add(containerName);
                     }
-                    mappedNames[i] = name;
                 } else {
-                    mappedNames[i] = names[i];
+                    mappedNames.add(names[i]);
                 }
             }
 
-            return mappedNames;
+            return mappedNames.toArray(new String[mappedNames.size()]);
         }
     }
 
