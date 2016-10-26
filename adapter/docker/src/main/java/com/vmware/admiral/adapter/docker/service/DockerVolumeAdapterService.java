@@ -25,11 +25,6 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
 
     public static final String DOCKER_VOLUME_DRIVER_TYPE_DEFAULT = "local";
 
-    private static final VolumeOperationType[] DIRECT_OPERATIONS = {
-            VolumeOperationType.LIST_VOLUMES,
-            VolumeOperationType.INSPECT,
-    };
-
     private static class RequestContext {
         public ContainerVolumeRequest request;
         public ContainerVolumeState volumeState;
@@ -51,11 +46,7 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
         logInfo("Processing volume operation request %s for resource %s %s", operationType,
                 context.request.resourceReference, context.request.getRequestTrackingLog());
 
-        if (isDirectOperationRequested(context)) {
-            context.operation = op;
-        } else {
-            op.complete();
-        }
+        op.complete();
 
         processVolumeRequest(context);
     }
@@ -204,20 +195,6 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
                 context.operation.complete();
             }
         });
-    }
-
-    /**
-     * Check whether the patch {@link Operation} id direct operation or not
-     */
-    private boolean isDirectOperationRequested(RequestContext context) {
-        VolumeOperationType operationType = context.request.getOperationType();
-
-        for (VolumeOperationType directOperation : DIRECT_OPERATIONS) {
-            if (directOperation == operationType) {
-                return true;
-            }
-        }
-        return false;
     }
 
 }
