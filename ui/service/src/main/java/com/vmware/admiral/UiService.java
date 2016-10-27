@@ -46,6 +46,7 @@ public class UiService extends StatelessService {
     public static final String HTML_RESOURCE_EXTENSION = ".html";
     public static final String LOGIN_PATH = "login" + HTML_RESOURCE_EXTENSION;
     public static final String INDEX_PATH = "index" + HTML_RESOURCE_EXTENSION;
+    public static final String INDEX_EMBEDDED_PATH = "index-embedded" + HTML_RESOURCE_EXTENSION;
 
     private static final List<String> EMBEDDED_DISABLED_RESOURCES = Arrays.asList(
             UiService.SELF_LINK + LOGIN_PATH,
@@ -133,8 +134,11 @@ public class UiService extends StatelessService {
             get.complete();
             return;
         } else if (requestUri.equals(UriUtils.URI_PATH_CHAR)) {
+            String indexFileName = ConfigurationUtil.isEmbedded()
+                                        ? INDEX_EMBEDDED_PATH
+                                        : ServiceUriPaths.UI_RESOURCE_DEFAULT_FILE;
             String uiResourcePath = ManagementUriParts.UI_SERVICE + UriUtils.URI_PATH_CHAR
-                    + ServiceUriPaths.UI_RESOURCE_DEFAULT_FILE;
+                                        + indexFileName;
             Operation operation = get.clone();
             operation.setUri(UriUtils.buildUri(getHost(), uiResourcePath, uri.getQuery()))
                     .setCompletion((o, e) -> {
