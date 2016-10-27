@@ -60,6 +60,9 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
     private final String displayName;
 
+    // whether the task should self-delete itself upon completion
+    private boolean selfDelete;
+
     /** SubStages that are indicating a transient state and order of patching can't be guaranteed */
     protected Set<E> transientSubStages = Collections.emptySet();
 
@@ -122,6 +125,10 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                         PropertyIndexingOption.SORT);
 
         return template;
+    }
+
+    protected void setSelfDelete(boolean selfDelete) {
+        this.selfDelete = selfDelete;
     }
 
     protected void setDocumentTemplateUsageOptions(ServiceDocument template,
@@ -296,6 +303,11 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     protected void handleStagePatch(T state) {
+        // calculate whether to self-delete now because below handlers can alter the state through
+        // simultaneous PATCH requests
+        boolean shouldSelfDelete = this.selfDelete &&
+                state.taskInfo.stage.ordinal() > TaskStage.STARTED.ordinal();
+
         switch (state.taskInfo.stage) {
         case CREATED:
         case STARTED:
@@ -311,6 +323,11 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             break;
         default:
             break;
+        }
+
+        // self delete the completed task, if needed
+        if (shouldSelfDelete) {
+            sendSelfDelete();
         }
     }
 
@@ -503,8 +520,9 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                 }));
     }
 
-    protected void sendSelfDelete() {
-        sendRequest(Operation.createDelete(getUri()).setBody(new ServiceDocument()));
+    private void sendSelfDelete() {
+        logInfo("Self deleting completed task %s", getUri().getPath());
+        sendRequest(Operation.createDelete(getUri()));
     }
 
     protected boolean isFailedOrCancelledTask(T state) {

@@ -34,7 +34,6 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
-import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
@@ -102,8 +101,10 @@ public class EpzComputeEnumerationTaskService extends
     public EpzComputeEnumerationTaskService() {
         super(EpzComputeEnumerationTaskState.class,
                 EpzComputeEnumerationTaskState.SubStage.class, DISPLAY_NAME);
-        super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
+
+        // these are one-off tasks that are not needed upon completion
+        this.setSelfDelete(true);
     }
 
     /**
@@ -178,16 +179,6 @@ public class EpzComputeEnumerationTaskService extends
         // use default merging for AUTO_MERGE_IF_NOT_NULL fields
         Utils.mergeWithState(getStateDescription(), currentState, patchBody);
         return false;
-    }
-
-    @Override
-    protected void handleStagePatch(EpzComputeEnumerationTaskState state) {
-        super.handleStagePatch(state);
-
-        // this is a one-off task, self delete finished/cancelled/failed
-        if (state.taskInfo.stage.ordinal() > TaskStage.STARTED.ordinal()) {
-            sendSelfDelete();
-        }
     }
 
     @Override

@@ -179,9 +179,9 @@ public class EpzComputeEnumerationTaskServiceTest extends ComputeBaseTest {
         String task2Link = startTask(this.epz2.documentSelfLink);
         String task3Link = startTask(this.epz3.documentSelfLink);
 
-        waitFor(() -> searchForDocument(EpzComputeEnumerationTaskState.class, task1Link) == null);
-        waitFor(() -> searchForDocument(EpzComputeEnumerationTaskState.class, task2Link) == null);
-        waitFor(() -> searchForDocument(EpzComputeEnumerationTaskState.class, task3Link) == null);
+        waitFor(() -> getDocumentNoWait(EpzComputeEnumerationTaskState.class, task1Link) == null);
+        waitFor(() -> getDocumentNoWait(EpzComputeEnumerationTaskState.class, task2Link) == null);
+        waitFor(() -> getDocumentNoWait(EpzComputeEnumerationTaskState.class, task3Link) == null);
 
         this.cs1 = getDocument(ComputeState.class, this.cs1.documentSelfLink);
         this.cs2 = getDocument(ComputeState.class, this.cs2.documentSelfLink);
