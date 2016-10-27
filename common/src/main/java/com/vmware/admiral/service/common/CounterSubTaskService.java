@@ -86,8 +86,6 @@ public class CounterSubTaskService extends StatefulService {
             Operation postOp = Operation.createPost(service, CounterSubTaskService.FACTORY_LINK)
                     .setBody(subTaskInitState)
                     .setReferer(service.getUri())
-                    .addRequestHeader(Operation.REPLICATION_QUORUM_HEADER,
-                            Operation.REPLICATION_QUORUM_HEADER_VALUE_ALL)
                     .setCompletion((o, e) -> {
                         if (e != null) {
                             service.failTask("Failure creating counter sub task: " + link, e);
