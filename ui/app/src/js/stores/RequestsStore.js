@@ -266,7 +266,7 @@ let RequestsStore = Reflux.createStore({
             // Default container operation
             this.containerOperationSuccess(constants.CONTAINERS.OPERATION.DEFAULT, resourceLinks);
           }
-        } else if (req.requestProgressByComponent.hasOwnProperty('Container Clustering')) {
+        } else if (req.requestProgressByComponent.hasOwnProperty('Resource Clustering')) {
           // Container clustering
           this.containerOperationSuccess(constants.CONTAINERS.OPERATION.CLUSTERING, resourceLinks);
 
