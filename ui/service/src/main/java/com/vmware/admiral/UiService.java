@@ -32,7 +32,6 @@ import com.vmware.xenon.common.FileUtils.ResourceEntry;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
-import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -108,15 +107,6 @@ public class UiService extends StatelessService {
 
     @Override
     public void handleGet(Operation get) {
-
-        if (ConfigurationUtil.isEmbedded()) {
-            Exception notFound = new ServiceHost.ServiceNotFoundException(get.getUri().toString());
-            notFound.setStackTrace(new StackTraceElement[] {});
-            get.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON).fail(
-                    Operation.STATUS_CODE_NOT_FOUND, notFound, null);
-            return;
-        }
-
         URI uri = get.getUri();
         String selfLink = getSelfLink();
         String requestUri = uri.getPath();
@@ -129,10 +119,10 @@ public class UiService extends StatelessService {
             return;
         } else if (requestUri.equals(UriUtils.URI_PATH_CHAR)) {
             String indexFileName = ConfigurationUtil.isEmbedded()
-                                        ? INDEX_EMBEDDED_PATH
-                                        : ServiceUriPaths.UI_RESOURCE_DEFAULT_FILE;
+                    ? INDEX_EMBEDDED_PATH
+                    : ServiceUriPaths.UI_RESOURCE_DEFAULT_FILE;
             String uiResourcePath = ManagementUriParts.UI_SERVICE + UriUtils.URI_PATH_CHAR
-                                        + indexFileName;
+                    + indexFileName;
             Operation operation = get.clone();
             operation.setUri(UriUtils.buildUri(getHost(), uiResourcePath, uri.getQuery()))
                     .setCompletion((o, e) -> {
@@ -172,7 +162,8 @@ public class UiService extends StatelessService {
 
             Operation post = Operation
                     .createPost(UriUtils.buildUri(getHost(), value));
-            RestrictiveFileContentService fcs = new RestrictiveFileContentService(e.getKey().toFile());
+            RestrictiveFileContentService fcs = new RestrictiveFileContentService(
+                    e.getKey().toFile());
             getHost().startService(post, fcs);
         }
     }
