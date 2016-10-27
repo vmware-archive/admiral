@@ -12,7 +12,6 @@
 package com.vmware.admiral.service.common;
 
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.TaskState.TaskStage;
 
 /**
  * Abstract class to provide the base functionality of a simple task callback handler implementation.
@@ -30,6 +29,8 @@ public abstract class AbstractCallbackServiceHandler extends
         super(CallbackServiceHandlerState.class, DefaultSubStage.class, getDisplayName());
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
+
+        this.setSelfDelete(true);
     }
 
     protected static String getDisplayName() {
@@ -54,15 +55,6 @@ public abstract class AbstractCallbackServiceHandler extends
             throws IllegalArgumentException {
         validateStateOnStart(state);
         return true;//make sure that super.handleCreate() above doesn't close the startPost operation
-    }
-
-    @Override
-    protected void handleStagePatch(CallbackServiceHandlerState state) {
-        super.handleStagePatch(state);
-        //delete the task when finished, canceled or failed.
-        if (state.taskInfo.stage.ordinal() > TaskStage.STARTED.ordinal()) {
-            sendSelfDelete();
-        }
     }
 
     @Override

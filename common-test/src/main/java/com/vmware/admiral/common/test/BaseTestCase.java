@@ -573,6 +573,35 @@ public abstract class BaseTestCase {
         return (T) result[0];
     }
 
+    /**
+     * Retrieves the document by the given link without waiting for service availability.
+     * No exception is thrown if not found, just null is returned.
+     */
+    @SuppressWarnings("unchecked")
+    protected <T> T getDocumentNoWait(Class<T> type, String selfLink)
+            throws Throwable {
+        TestContext ctx = testCreate(1);
+        URI uri = UriUtils.buildUri(host, selfLink);
+        Object[] result = new Object[1];
+        Operation get = Operation
+                .createGet(uri)
+                .setReferer(host.getReferer())
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                host.log(Level.WARNING, "Can't load document %s. Error: %s",
+                                        selfLink, e.toString());
+                            } else {
+                                result[0] = o.getBody(type);
+                            }
+                            ctx.completeIteration();
+                        });
+
+        host.send(get);
+        ctx.await();
+        return (T) result[0];
+    }
+
     @SuppressWarnings("unchecked")
     protected <T extends ServiceDocument> T searchForDocument(Class<T> type, String selfLink)
             throws Throwable {
