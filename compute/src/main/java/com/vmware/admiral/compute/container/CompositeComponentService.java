@@ -17,10 +17,16 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
@@ -28,6 +34,7 @@ import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
 
 /**
  * Describes grouping of multiple container instances deployed at the same time. It represents a
@@ -119,14 +126,15 @@ public class CompositeComponentService extends StatefulService {
 
         boolean deletePatch = patch.getUri().getQuery() != null
                 && patch.getUri().getQuery().contains(UriUtils.URI_PARAM_INCLUDE_DELETED);
-        boolean deleteDocument = false;
-        if (deletePatch && patchBody.componentLinks != null && currentState.componentLinks != null) {
+
+        List<String> componentLinksToCheck = null;
+
+        if (deletePatch && patchBody.componentLinks != null
+                && currentState.componentLinks != null) {
             for (String componentLink : patchBody.componentLinks) {
                 currentState.componentLinks.remove(componentLink);
             }
-            if (currentState.componentLinks.isEmpty()) {
-                deleteDocument = true;
-            }
+            componentLinksToCheck = new ArrayList<>(currentState.componentLinks);
         } else {
             currentState.componentLinks = PropertyUtils.mergeLists(currentState.componentLinks,
                     patchBody.componentLinks);
@@ -140,9 +148,56 @@ public class CompositeComponentService extends StatefulService {
         }
 
         patch.complete();
-        if (deleteDocument) {
-            deleteCompositeDescription(currentState.compositeDescriptionLink);
-            ServiceUtils.sendSelfDelete(this);
+
+        if (componentLinksToCheck != null) {
+            deleteDocumentIfNeeded(componentLinksToCheck, () -> {
+                deleteCompositeDescription(currentState.compositeDescriptionLink);
+                ServiceUtils.sendSelfDelete(this);
+            });
+        }
+    }
+
+    private void deleteDocumentIfNeeded(List<String> componentLinks, Runnable deleteCallback) {
+
+        if (componentLinks.isEmpty()) {
+            deleteCallback.run();
+            return;
+        }
+
+        // if the component links are only external networks then it's possible to delete the
+        // composite component
+
+        List<String> networks = componentLinks.stream()
+                .filter((c) -> c.startsWith(ContainerNetworkService.FACTORY_LINK))
+                .collect(Collectors.toList());
+
+        if (!networks.isEmpty()) {
+
+            QueryTask networkQuery = QueryUtil.buildQuery(ContainerNetworkState.class, false);
+            QueryUtil.addListValueClause(networkQuery, ServiceDocument.FIELD_NAME_SELF_LINK,
+                    networks);
+            QueryUtil.addBroadcastOption(networkQuery);
+            QueryUtil.addExpandOption(networkQuery);
+
+            AtomicBoolean allNetworksExternal = new AtomicBoolean(true);
+
+            ServiceDocumentQuery<ContainerNetworkState> query = new ServiceDocumentQuery<>(
+                    getHost(), ContainerNetworkState.class);
+            query.query(networkQuery, (r) -> {
+                if (r.hasException()) {
+                    logWarning("Can't find container network states. Error: %s",
+                            Utils.toString(r.getException()));
+                } else if (r.hasResult()) {
+                    allNetworksExternal.set(allNetworksExternal.get() && r.getResult().external);
+                } else {
+                    if (allNetworksExternal.get()) {
+                        deleteCallback.run();
+                    } else {
+                        logWarning(
+                                "Non-external networks still associated to this composite component!");
+                    }
+                }
+            });
         }
     }
 
