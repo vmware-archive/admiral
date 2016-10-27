@@ -103,8 +103,6 @@ public class EpzComputeEnumerationTaskService extends
         super(EpzComputeEnumerationTaskState.class,
                 EpzComputeEnumerationTaskState.SubStage.class, DISPLAY_NAME);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
-        super.toggleOption(ServiceOption.REPLICATION, true);
-        super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
     }
 
