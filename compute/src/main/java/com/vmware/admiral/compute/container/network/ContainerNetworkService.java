@@ -200,9 +200,10 @@ public class ContainerNetworkService extends StatefulService {
     public void handlePatch(Operation patch) {
         ContainerNetworkState currentState = getState(patch);
 
-        Object rawBody = patch.getBodyRaw();
-        if (rawBody instanceof ConnectedContainersCountIncrement) {
-            currentState.connectedContainersCount += ((ConnectedContainersCountIncrement) rawBody).increment;
+        ConnectedContainersCountIncrement incrementPatch = patch
+                .getBody(ConnectedContainersCountIncrement.class);
+        if (incrementPatch != null && incrementPatch.increment != null) {
+            currentState.connectedContainersCount += incrementPatch.increment;
             patch.complete();
             return;
         }

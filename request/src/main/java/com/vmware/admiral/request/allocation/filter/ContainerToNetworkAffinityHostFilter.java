@@ -205,7 +205,21 @@ public class ContainerToNetworkAffinityHostFilter
             PlacementHostSelectionTaskState state) {
 
         /*
-         * No big choice here...
+         * No big choice here... filtered hosts due external networks have the highest priority.
+         */
+        if ((filteredHosts != null) && (filteredHosts.size() > 0)) {
+            try {
+                callback.complete(filteredHosts, null);
+            } catch (Throwable e) {
+                host.log(Level.WARNING, "Exception when completing callback. Error: [%s]",
+                        e.getMessage());
+                callback.complete(null, e);
+            }
+            return;
+        }
+
+        /*
+         * Neither here... 0 or only 1 host available.
          */
         if ((hostSelectionMap == null) || (hostSelectionMap.size() < 2)) {
             try {
@@ -257,15 +271,10 @@ public class ContainerToNetworkAffinityHostFilter
             // TODO - Picking one host randomly, it could pick the best single node available, e.g.
             // more resources, less containers, etc.
 
-            if (filteredHosts.isEmpty() && (nones != null) && !nones.isEmpty()) {
-                int chosen = Math
-                        .abs(state.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY)
-                                .hashCode() % nones.size());
-
+            if ((nones != null) && !nones.isEmpty()) {
+                int chosen = pickOnePerContext(state, nones.size());
                 Entry<String, HostSelection> entry = nones.get(chosen);
                 hostSelectedMap.put(entry.getKey(), entry.getValue());
-            } else if (!filteredHosts.isEmpty()) {
-                hostSelectedMap = filteredHosts;
             }
         } else {
             /*
@@ -275,12 +284,7 @@ public class ContainerToNetworkAffinityHostFilter
 
             // TODO - Picking one cluster randomly, it could pick the best cluster available, e.g.
             // more resources, more hosts, less containers, better containers/host ratio, etc.
-            if (!hostSelectedMap.isEmpty()) {
-                hostSelectedMap = filteredHosts;
-            }
-
-            int chosen = Math.abs(state.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY)
-                    .hashCode() % hostSelectionByKVStoreMap.size());
+            int chosen = pickOnePerContext(state, hostSelectionByKVStoreMap.size());
             List<Entry<String, HostSelection>> entries = hostSelectionByKVStoreMap
                     .get(hostSelectionByKVStoreMap.keySet().toArray(new String[] {})[chosen]);
             for (Entry<String, HostSelection> entry : entries) {
@@ -297,6 +301,12 @@ public class ContainerToNetworkAffinityHostFilter
                     e.getMessage());
             callback.complete(null, e);
         }
+    }
+
+    private int pickOnePerContext(PlacementHostSelectionTaskState state, int itemsAvailable) {
+        return Math.abs(
+                state.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY).hashCode()
+                        % itemsAvailable);
     }
 
     @Override
