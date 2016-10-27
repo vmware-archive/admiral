@@ -11,13 +11,34 @@
 
 import utils from 'core/utils';
 
-var token = null;
 var docs = {};
+
+var token;
+var clientToken;
 
 const ENSEMBLE_URL = 'https://ensemble.vmware.com';
 const PRODUCT_NAME = 'Admiral';
 
-const ENSEMBLE_CLIENT_TOKEN = utils.uuid();
+const DOCS_TOKENS_SEPARATOR = '__Admiral__';
+
+var retrieveTokensFromStorage = function() {
+  var docsTokens = localStorage.docsTokens || '';
+  var separatorIndex = docsTokens.indexOf(DOCS_TOKENS_SEPARATOR);
+  if (separatorIndex !== -1) {
+    token = docsTokens.substring(0, separatorIndex);
+    clientToken = docsTokens.substring(separatorIndex + DOCS_TOKENS_SEPARATOR.length);
+  }
+};
+
+var saveTokensToStorage = function() {
+  if (token && clientToken) {
+    localStorage.docsTokens = token + DOCS_TOKENS_SEPARATOR + clientToken;
+  } else {
+    localStorage.docsTokens = null;
+  }
+};
+
+retrieveTokensFromStorage();
 
 var ajax = function(method, url, data) {
   return $.ajax({
@@ -29,7 +50,7 @@ var ajax = function(method, url, data) {
     accepts: {
       json: 'application/json'
     },
-    headers: {'X-Client-Token': ENSEMBLE_CLIENT_TOKEN}
+    headers: {'X-Client-Token': clientToken}
   });
 };
 
@@ -39,9 +60,13 @@ var getUpdateUrl = function() {
   }
 };
 
+
 var getToken = function(callback) {
+  clientToken = utils.uuid();
   ajax('POST', ENSEMBLE_URL + '/secondScreen/api/token').done((data) => {
     token = data.token;
+    saveTokensToStorage();
+
     callback(token);
 
     docs.update('/' + hasher.getHash());
@@ -58,7 +83,12 @@ var validateToken = function(callback) {
     if (data.isValid) {
       callback(token);
     } else {
-      getToken(data.newToken);
+      token = data.newToken;
+      saveTokensToStorage();
+
+      callback(token);
+
+      docs.update('/' + hasher.getHash());
     }
   }).fail(() => {
     console.log('Error');
@@ -98,6 +128,9 @@ docs.release = function() {
   if (token) {
     ajax('DELETE', ENSEMBLE_URL + '/secondScreen/api/token/' + token);
     token = null;
+    clientToken = null;
+
+    saveTokensToStorage();
   }
 };
 
