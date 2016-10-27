@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.5.1-SNAPSHOT
+## 0.9.1-SNAPSHOT
 
 * Added Admiral CLI, **a command line tool to manage and automate Admiral**. More information [here] (https://github.com/vmware/admiral/blob/master/cli/README.md).
 
