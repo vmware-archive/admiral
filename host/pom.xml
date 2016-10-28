@@ -70,6 +70,7 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>admiral-common-test</artifactId>
             <version>${project.version}</version>
+            <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -112,6 +113,7 @@
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
+                            <includeScope>runtime</includeScope>
                         </configuration>
                     </execution>
                 </executions>

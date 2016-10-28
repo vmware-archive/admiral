@@ -41,6 +41,7 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>admiral-common-test</artifactId>
             <version>${project.version}</version>
+            <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
 
