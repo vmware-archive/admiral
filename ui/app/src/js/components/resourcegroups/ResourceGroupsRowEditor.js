@@ -34,11 +34,10 @@ ResourceGroupsRowEditor.prototype.setData = function(data) {
   if (this.group) {
     this.$el.find('.title').html(i18n.t('app.group.edit.update'));
     this.$el.find('.name-input').val(this.group.name);
-    this.$el.find('.description-input').val(this.group.description);
+
   } else {
     this.$el.find('.title').html(i18n.t('app.group.edit.createNew'));
     this.$el.find('.name-input').val('');
-    this.$el.find('.description-input').val('');
   }
 
   this.$el.find('.name-input').first().focus();
@@ -65,7 +64,6 @@ var addEventListeners = function() {
     }
 
     group.name = _this.$el.find('.name-input').val();
-    group.description = _this.$el.find('.description-input').val();
 
     if (_this.group) {
       ResourceGroupsActions.updateGroup(group);
