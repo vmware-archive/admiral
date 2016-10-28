@@ -168,7 +168,7 @@ func RunCredentialsUpdate(args []string) (string, error) {
 	if id, ok = ValidateArgsCount(args); !ok {
 		return "", MissingCredentialsIdError
 	}
-	id, err = credentials.EditCredetialsID(id, publicCert, privateCert, userName, passWord)
+	newID, err = credentials.EditCredetialsID(id, publicCert, privateCert, userName, passWord)
 
 	if err != nil {
 		return "", err
