@@ -10,8 +10,8 @@
       "steps": {
         "description": "La creació d'un contenidor Docker és tan simple com 1-2-3",
         "addHost": "Afegir un Host",
-        "findImage": "Tobar una imatge",
-        "createContainer": "Crear un Contenidor"
+        "findImage": "Tobar una Imatge",
+        "designApplication": "Crear un Contenidor"
       }
     }
   }
