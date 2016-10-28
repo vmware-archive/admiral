@@ -254,28 +254,6 @@ func queryTemplateName(tmplName string) []string {
 
 }
 
-func InspectID(id string) (string, error) {
-	fullIds, err := selflink.GetFullIds([]string{id}, new(ListApps), utils.APPLICATION)
-	utils.CheckIdError(err)
-	resourceLinks := utils.CreateResLinksForApps(fullIds)
-	url := config.URL + resourceLinks[0]
-	req, _ := http.NewRequest("GET", url, nil)
-	_, respBody, respErr := client.ProcessRequest(req)
-	if respErr != nil {
-		return "", respErr
-	}
-	app := &App{}
-	err = json.Unmarshal(respBody, app)
-	utils.CheckJson(err)
-	customMap := make(map[string]App)
-	customMap[id] = *app
-	la := ListApps{
-		Documents:  customMap,
-		TotalCount: 1,
-	}
-	return la.GetOutputStringWithContainers(), nil
-}
-
 type RunApplication struct {
 	ResourceDescriptionLink string `json:"resourceDescriptionLink"`
 	ResourceType            string `json:"resourceType"`
@@ -322,4 +300,52 @@ func GetAppLinks(name string) []string {
 
 type CompositeDescription struct {
 	DocumentSelfLink string `json:"documentSelfLink"`
+}
+
+func InspectID(id string) (string, error) {
+	fullIds, err := selflink.GetFullIds([]string{id}, new(ListApps), utils.APPLICATION)
+	utils.CheckIdError(err)
+	resourceLinks := utils.CreateResLinksForApps(fullIds)
+	url := config.URL + resourceLinks[0]
+	req, _ := http.NewRequest("GET", url, nil)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
+	}
+	app := &App{}
+	err = json.Unmarshal(respBody, app)
+	utils.CheckJson(err)
+
+	type AppComponent struct {
+		Id            string `json:"ID"`
+		ComponentType string `json:"ComponentType"`
+	}
+
+	type InspectApp struct {
+		Id         string          `json:"ID"`
+		Name       string          `json:"Name"`
+		Containers int             `json:"ContainersCount"`
+		Networks   int             `json:"NetworksCount"`
+		Components []*AppComponent `json:"Components"`
+	}
+
+	ia := &InspectApp{
+		Id:         app.GetID(),
+		Name:       app.Name,
+		Containers: app.GetContainersCount(),
+		Networks:   app.GetNetworksCount(),
+		Components: make([]*AppComponent, 0),
+	}
+	for i, contLink := range app.ComponentLinks {
+		component := &AppComponent{}
+		if app.IsContainer(i) {
+			component.ComponentType = "Container"
+		} else {
+			component.ComponentType = "Network"
+		}
+		component.Id = utils.GetResourceID(contLink)
+		ia.Components = append(ia.Components, component)
+	}
+	jsonBody, _ := json.MarshalIndent(ia, "", "    ")
+	return string(jsonBody), nil
 }

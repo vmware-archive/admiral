@@ -32,6 +32,14 @@ type App struct {
 	ComponentLinks           []string `json:"componentLinks"`
 }
 
+func (a *App) IsContainer(index int) bool {
+	link := a.ComponentLinks[index]
+	if strings.Contains(link, "/containers/") {
+		return true
+	}
+	return false
+}
+
 func (a *App) GetID() string {
 	return utils.GetResourceID(a.DocumentSelfLink)
 }
