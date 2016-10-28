@@ -98,16 +98,16 @@ func (lc *ListCredentials) GetOutputString() string {
 
 type AddUserCredentials struct {
 	CustomProperties map[string]*string `json:"customProperties,omitempty"`
-	PrivateKey       string             `json:"privateKey"`
+	PrivateKey       string             `json:"privateKey,omitempty"`
 	Type             string             `json:"type"`
-	UserEmail        string             `json:"userEmail"`
+	UserEmail        string             `json:"userEmail,omitempty"`
 }
 
 type AddCertCredentials struct {
 	CustomProperties map[string]*string `json:"customProperties,eomitempty"`
-	PrivateKey       string             `json:"privateKey"`
+	PrivateKey       string             `json:"privateKey,omitempty"`
 	Type             string             `json:"type"`
-	PublicKey        string             `json:"publicKey"`
+	PublicKey        string             `json:"publicKey,omitempty"`
 }
 
 //String returns string containing credentials name.
@@ -194,7 +194,6 @@ func AddByUsername(name, userName, passWord string,
 	err = json.Unmarshal(respBody, creds)
 	utils.CheckJson(err)
 	return creds.GetID(), nil
-
 }
 
 //AddByCert is adding new credentials. Parameters are the name
@@ -296,17 +295,25 @@ func EditCredetials(credName, publicCert, privateCert, userName, passWord string
 func EditCredetialsID(id, publicCert, privateCert, userName, passWord string) (string, error) {
 	url := config.URL + utils.CreateResLinkForCredentials(id)
 	var cred interface{}
-	if publicCert != "" && privateCert != "" {
-		publicKey, err := ioutil.ReadFile(publicCert)
-		utils.CheckFile(err)
-		privateKey, err := ioutil.ReadFile(privateCert)
-		utils.CheckFile(err)
+	if publicCert != "" || privateCert != "" {
+		var (
+			publicKey  []byte
+			privateKey []byte
+		)
+		if publicCert != "" {
+			publicKey, err = ioutil.ReadFile(publicCert)
+			utils.CheckFile(err)
+		}
+		if privateCert != "" {
+			privateKey, err = ioutil.ReadFile(privateCert)
+			utils.CheckFile(err)
+		}
 		cred = &AddCertCredentials{
 			PublicKey:  string(publicKey),
 			PrivateKey: string(privateKey),
 			Type:       "PublicKey",
 		}
-	} else if userName != "" && passWord != "" {
+	} else if userName != "" || passWord != "" {
 		cred = &AddUserCredentials{
 			PrivateKey: passWord,
 			UserEmail:  userName,
