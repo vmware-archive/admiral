@@ -67,6 +67,15 @@ public class UiService extends StatelessService {
 
             String path = op.getUri().getPath();
 
+            // in embedded mode we are already authenticated
+            // no need to show login or home page upon successful login
+            boolean isNavigationInEmbeddedMode = ConfigurationUtil.isEmbedded()
+                    && path.equals(UriUtils.URI_PATH_CHAR);
+            if (isNavigationInEmbeddedMode) {
+                op.complete();
+                return;
+            }
+
             // Is the user trying to login?
             boolean isLoginPage = path.endsWith(LOGIN_PATH);
 
@@ -79,12 +88,15 @@ public class UiService extends StatelessService {
             boolean isValidUser = (claims.getSubject() != null)
                     && !GuestUserService.SELF_LINK.equals(claims.getSubject());
 
-            if (!isLoginPage && isHTMLResource && !isValidUser) {
+            boolean loginRequired = !isLoginPage && isHTMLResource && !isValidUser;
+            boolean showHomePage = isLoginPage && isValidUser;
+
+            if (loginRequired) {
                 // Redirect the browser to the login page
                 String location = UiService.SELF_LINK + LOGIN_PATH;
                 op.addResponseHeader(Operation.LOCATION_HEADER, location);
                 op.setStatusCode(Operation.STATUS_CODE_MOVED_TEMP);
-            } else if (isLoginPage && isValidUser) {
+            } else if (showHomePage) {
                 // Redirect the browser to the home page
                 String location = UiService.SELF_LINK + UriUtils.URI_PATH_CHAR;
                 op.addResponseHeader(Operation.LOCATION_HEADER, location);
