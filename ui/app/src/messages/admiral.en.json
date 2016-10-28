@@ -2,16 +2,16 @@
   "app": {
     "homepage": {
       "welcome": "Welcome!",
-      "description": "This is the place for you to <b>create Docker containers</b> and <b>manage / monitor your containers.</b>",
+      "description": "This is the place for you to <b>create, provision, manage and monitor containerized applications.</b>",
       "start": "Let's get started now!",
       "addHost": "Add a Host",
       "enter": "Enter",
       "helpCenter": "Help",
       "steps": {
-        "description": "Creating a Docker container is as simple as 1-2-3",
+        "description": "Creating an application is as simple as 1-2-3",
         "addHost": "Add a Host",
-        "findImage": "Find an image",
-        "createContainer": "Create a Container"
+        "findImage": "Find an Image",
+        "designApplication": "Design an Application"
       }
     },
     "navbar": {
