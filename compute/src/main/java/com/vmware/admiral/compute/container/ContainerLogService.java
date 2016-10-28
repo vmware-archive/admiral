@@ -96,7 +96,7 @@ public class ContainerLogService extends StatelessService {
         request.operationTypeId = ContainerOperationType.FETCH_LOGS.id;
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         request.customProperties = params; // additional request params like since, tail ...
-        sendRequest(Operation.createPatch(container.adapterManagementReference)
+        sendRequest(Operation.createPatch(getHost(), container.adapterManagementReference.toString())
                 .setBody(request)
                 .setContextId(Service.getId(getSelfLink()))
                 .setCompletion((op, ex) -> {

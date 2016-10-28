@@ -130,7 +130,7 @@ public class ContainerMaintenance {
         request.operationTypeId = ContainerOperationType.INSPECT.id;
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         host.sendRequest(Operation
-                .createPatch(containerState.adapterManagementReference)
+                .createPatch(host, containerState.adapterManagementReference.toString())
                 .setBody(request)
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
@@ -174,7 +174,7 @@ public class ContainerMaintenance {
         request.operationTypeId = ContainerOperationType.STATS.id;
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         host.sendRequest(Operation
-                .createPatch(containerState.adapterManagementReference)
+                .createPatch(host, containerState.adapterManagementReference.toString())
                 .setBody(request)
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {

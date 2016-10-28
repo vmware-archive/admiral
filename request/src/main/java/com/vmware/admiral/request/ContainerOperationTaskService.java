@@ -179,7 +179,7 @@ public class ContainerOperationTaskService extends
         adapterRequest.serviceTaskCallback = taskCallback;
         adapterRequest.operationTypeId = state.operation;
         adapterRequest.customProperties = state.customProperties;
-        sendRequest(Operation.createPatch(containerState.adapterManagementReference)
+        sendRequest(Operation.createPatch(getHost(), containerState.adapterManagementReference.toString())
                 .setBody(adapterRequest)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {

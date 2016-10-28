@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
@@ -164,7 +166,15 @@ public class ShellContainerExecutorService extends StatelessService {
             adapterRequest.customProperties.put("AttachStdout", execState.attachStdOut.toString());
         }
 
-        sendRequest(Operation.createPatch(container.adapterManagementReference)
+        String host = container.adapterManagementReference.getHost();
+        String targetPath = null;
+        if (StringUtils.isBlank(host)) {
+            targetPath = container.adapterManagementReference.toString();
+        } else {
+            targetPath = container.adapterManagementReference.getPath();
+        }
+
+        sendRequest(Operation.createPatch(getHost(), targetPath)
                 .setBody(adapterRequest)
                 .setCompletion((o, e) -> {
                     if (e != null) {

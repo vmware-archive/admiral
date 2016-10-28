@@ -214,11 +214,9 @@ public class MockDockerAdapterService extends StatelessService {
     private void patchContainerStateWithIPAddress(MockAdapterRequest state,
             ContainerState containerState, ContainerDescription containerDesc) {
         containerState.address = this.computeHostIpAddress;
-        containerState.adapterManagementReference = UriUtils.buildUri(getUri(), SELF_LINK);
         containerState.powerState = PowerState.RUNNING;
         String containerId = UUID.randomUUID().toString();
         containerState.id = containerId;
-        containerState.adapterManagementReference = getUri();
         containerState.created = new Date().getTime();
         containerState.command = containerDesc.command;
         containerState.image = containerDesc.image;

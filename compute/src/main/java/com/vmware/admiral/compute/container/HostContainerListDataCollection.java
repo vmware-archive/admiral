@@ -32,6 +32,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -311,7 +313,7 @@ public class HostContainerListDataCollection extends StatefulService {
 
         HostContainerListDataCollectionState state = getState(op);
         if (body.unlockDataCollectionForHost) {
-            //patch to mark that there is no active list containers data collection for a given host.
+            // patch to mark that there is no active list containers data collection for a given host.
             state.containerHostLinks.remove(body.containerHostLink);
             op.complete();
             return;
@@ -328,13 +330,14 @@ public class HostContainerListDataCollection extends StatefulService {
         // the patch will succeed regardless of the synchronization process
         if (state.containerHostLinks.get(body.containerHostLink) != null &&
                 Instant.now().isBefore(Instant.ofEpochMilli(
-                        (state.containerHostLinks.get(body.containerHostLink) )))) {
+                        (state.containerHostLinks.get(body.containerHostLink))))) {
             op.complete();
-            return;//return since there is an active data collection for this host.
+            return;// return since there is an active data collection for this host.
         } else {
-            state.containerHostLinks.put(body.containerHostLink, Instant.now().toEpochMilli() + DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS);
+            state.containerHostLinks.put(body.containerHostLink,
+                    Instant.now().toEpochMilli() + DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS);
             op.complete();
-            //continue with the data collection.
+            // continue with the data collection.
         }
 
         List<ContainerState> containerStates = new ArrayList<ContainerState>();
@@ -371,11 +374,13 @@ public class HostContainerListDataCollection extends StatefulService {
                                                 (o, ex) -> {
                                                     if (ex == null) {
                                                         ContainerListCallback callback = o
-                                                                .getBody(ContainerListCallback.class);
+                                                                .getBody(
+                                                                        ContainerListCallback.class);
                                                         updateContainerStates(callback,
                                                                 containerStates, hostId);
                                                     } else {
-                                                        unlockCurrentDataCollectionForHost(body.containerHostLink);
+                                                        unlockCurrentDataCollectionForHost(
+                                                                body.containerHostLink);
                                                     }
                                                 }));
                             }
@@ -459,7 +464,8 @@ public class HostContainerListDataCollection extends StatefulService {
                                     systemContainersToInstall.remove(systemContainerName);
                                     /* need to build the full uri */
                                     containerState.documentSelfLink = SystemContainerDescriptions
-                                            .getSystemContainerSelfLink(systemContainerName, hostId);
+                                            .getSystemContainerSelfLink(systemContainerName,
+                                                    hostId);
                                     containerState.system = Boolean.TRUE;
                                     containerState.descriptionLink = SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK;
                                     containerState.volumes = SystemContainerDescriptions.AGENT_CONTAINER_VOLUMES;
@@ -477,8 +483,8 @@ public class HostContainerListDataCollection extends StatefulService {
                                 }
                                 containerState.parentLink = callback.containerHostLink;
 
-                                containerState.adapterManagementReference = UriUtils.buildUri(
-                                        getHost(), ManagementUriParts.ADAPTER_DOCKER);
+                                containerState.adapterManagementReference = UriUtils
+                                        .buildUri(ManagementUriParts.ADAPTER_DOCKER);
 
                                 containersLeft.add(containerState);
                             }
@@ -500,7 +506,8 @@ public class HostContainerListDataCollection extends StatefulService {
                                                     containerState, hostId, null);
                                         }
 
-                                        unlockCurrentDataCollectionForHost(callback.containerHostLink);
+                                        unlockCurrentDataCollectionForHost(
+                                                callback.containerHostLink);
                                     });
                         });
 
@@ -540,7 +547,8 @@ public class HostContainerListDataCollection extends StatefulService {
 
         adapterRequest.serviceTaskCallback = serviceTaskCallback;
 
-        sendRequest(Operation.createPatch(containerState.adapterManagementReference)
+        sendRequest(Operation
+                .createPatch(getHost(), containerState.adapterManagementReference.toString())
                 .setBody(adapterRequest)
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -569,8 +577,9 @@ public class HostContainerListDataCollection extends StatefulService {
             ContainerDescription containerDesc) {
         if (containerDesc == null) {
             OperationUtil.getDocumentState(this, containerState.descriptionLink,
-                    ContainerDescription.class, (ContainerDescription contDesc) ->
-                    handleDiscoveredSystemContainer(containerState, hostId, contDesc));
+                    ContainerDescription.class,
+                    (ContainerDescription contDesc) -> handleDiscoveredSystemContainer(
+                            containerState, hostId, contDesc));
             return;
         }
 
@@ -639,8 +648,18 @@ public class HostContainerListDataCollection extends StatefulService {
         adapterRequest.operationTypeId = ContainerOperationType.DELETE.id;
         adapterRequest.serviceTaskCallback = serviceTaskCallback;
 
-        sendRequest(Operation
-                .createPatch(containerState.adapterManagementReference)
+        String host = containerState.adapterManagementReference.getHost();
+        String targetPath = null;
+
+        if (StringUtils.isBlank(host)) {
+            // There isn't old version of system container.
+            targetPath = containerState.adapterManagementReference.toString();
+        } else {
+            // Old versions of system container contains host address in adapter reference.
+            targetPath = containerState.adapterManagementReference.getPath();
+        }
+
+        sendRequest(Operation.createPatch(getHost(), targetPath)
                 .setBody(adapterRequest)
                 .setCompletion(
                         (o, e) -> {
@@ -935,8 +954,8 @@ public class HostContainerListDataCollection extends StatefulService {
             }
 
             OperationUtil.getDocumentState(this, descriptionLink, ContainerDescription.class,
-                    (ContainerDescription contDesc) ->
-                    installSystemContainerToHost(hostId, systemContainerName, contDesc));
+                    (ContainerDescription contDesc) -> installSystemContainerToHost(hostId,
+                            systemContainerName, contDesc));
             return;
         }
 
@@ -964,7 +983,7 @@ public class HostContainerListDataCollection extends StatefulService {
                         logWarning("Failure retrieving system container: "
                                 + (r.getException() instanceof CancellationException ? r
                                         .getException().getMessage() : Utils.toString(r
-                                        .getException())));
+                                                .getException())));
                     } else if (r.hasResult()) {
                         logInfo("Already created system container state: %s",
                                 r.getResult().documentSelfLink);
@@ -981,8 +1000,7 @@ public class HostContainerListDataCollection extends StatefulService {
                         containerState.adapterManagementReference = containerDesc.instanceAdapterReference;
                         containerState.image = containerDesc.image;
                         containerState.command = containerDesc.command;
-                        containerState.groupResourcePlacementLink =
-                                GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
+                        containerState.groupResourcePlacementLink = GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
                         containerState.system = Boolean.TRUE;
                         containerState.volumes = containerDesc.volumes;
 
@@ -1025,7 +1043,21 @@ public class HostContainerListDataCollection extends StatefulService {
 
         adapterRequest.serviceTaskCallback = serviceTaskCallback;
 
-        sendRequest(Operation.createPatch(container.adapterManagementReference)
+        String host = container.adapterManagementReference.getHost();
+        String targetPath = null;
+        // Operation patch;
+        if (StringUtils.isBlank(host)) {
+            // There isn't old version of system container.
+            // patch = Operation.createPatch(getHost(),
+            // container.adapterManagementReference.toString());
+            targetPath = container.adapterManagementReference.toString();
+        } else {
+            // Old versions of system container contains host address in adapter reference.
+            // patch = Operation.createPatch(container.adapterManagementReference);
+            container.adapterManagementReference.getPath();
+        }
+
+        sendRequest(Operation.createPatch(getHost(), targetPath)
                 .setBody(adapterRequest)
                 .setCompletion((o, e) -> {
                     if (e != null) {
