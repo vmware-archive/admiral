@@ -22,6 +22,7 @@ import (
 	"admiral/config"
 	"admiral/properties"
 	"admiral/utils"
+	"admiral/utils/selflink"
 )
 
 var (
@@ -31,12 +32,11 @@ var (
 
 type PlacementZone struct {
 	PlacementZoneState PlacementZoneState `json:"resourcePoolState"`
+	DocumentSelfLink   string             `json:"documentSelfLink"`
 }
 
-type PlacementZoneList struct {
-	TotalCount    int32                    `json:"totalCount"`
-	Documents     map[string]PlacementZone `json:"documents"`
-	DocumentLinks []string                 `json:"documentLinks"`
+func (pz *PlacementZone) GetID() string {
+	return strings.Replace(pz.DocumentSelfLink, "/resources/pools/", "", -1)
 }
 
 type PlacementZoneState struct {
@@ -47,6 +47,21 @@ type PlacementZoneState struct {
 
 func (pzs *PlacementZoneState) GetID() string {
 	return strings.Replace(pzs.DocumentSelfLink, "/resources/pools/", "", -1)
+}
+
+type PlacementZoneList struct {
+	TotalCount    int32                    `json:"totalCount"`
+	Documents     map[string]PlacementZone `json:"documents"`
+	DocumentLinks []string                 `json:"documentLinks"`
+}
+
+func (pzl *PlacementZoneList) GetCount() int {
+	return len(pzl.DocumentLinks)
+}
+
+func (pzl *PlacementZoneList) GetResource(index int) selflink.Identifiable {
+	resource := pzl.Documents[pzl.DocumentLinks[index]]
+	return &resource
 }
 
 func (rpl *PlacementZoneList) FetchPZ() (int, error) {
@@ -89,7 +104,9 @@ func RemovePZ(pzName string) (string, error) {
 }
 
 func RemovePZID(id string) (string, error) {
-	url := config.URL + utils.CreateResLinkForPlacementZone(id)
+	fullId, err := selflink.GetFullId(id, new(PlacementZoneList), utils.PLACEMENT_ZONE)
+	utils.CheckIdError(err)
+	url := config.URL + utils.CreateResLinkForPlacementZone(fullId)
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -133,11 +150,13 @@ func EditPZ(pzName, newName string) (string, error) {
 }
 
 func EditPZID(id, newName string) (string, error) {
+	fullId, err := selflink.GetFullId(id, new(PlacementZoneList), utils.PLACEMENT_ZONE)
+	utils.CheckIdError(err)
+	url := config.URL + utils.CreateResLinkForPlacementZone(fullId)
 	pzState := PlacementZoneState{
 		Name: newName,
 	}
 	jsonBody, _ := json.Marshal(pzState)
-	url := config.URL + utils.CreateResLinkForPlacementZone(id)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {

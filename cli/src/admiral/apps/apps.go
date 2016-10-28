@@ -22,6 +22,7 @@ import (
 	"admiral/config"
 	"admiral/containers"
 	"admiral/utils"
+	"admiral/utils/selflink"
 )
 
 type App struct {
@@ -59,6 +60,15 @@ type ListApps struct {
 	TotalCount    int32          `json:"totalCount"`
 	DocumentLinks []string       `json:"documentLinks"`
 	Documents     map[string]App `json:"documents"`
+}
+
+func (la *ListApps) GetCount() int {
+	return len(la.DocumentLinks)
+}
+
+func (la *ListApps) GetResource(index int) selflink.Identifiable {
+	resource := la.Documents[la.DocumentLinks[index]]
+	return &resource
 }
 
 func (la *ListApps) FetchApps(queryF string) (int, error) {

@@ -20,9 +20,11 @@ import (
 
 	"admiral/client"
 	"admiral/config"
+	"admiral/deplPolicy"
 	"admiral/placementzones"
 	"admiral/projects"
 	"admiral/utils"
+	"admiral/utils/selflink"
 	"fmt"
 )
 
@@ -109,6 +111,15 @@ type PlacementList struct {
 	Documents     map[string]Placement `json:"documents"`
 }
 
+func (pl *PlacementList) GetCount() int {
+	return len(pl.DocumentLinks)
+}
+
+func (pl *PlacementList) GetResource(index int) selflink.Identifiable {
+	resource := pl.Documents[pl.DocumentLinks[index]]
+	return &resource
+}
+
 func (pl *PlacementList) FetchPlacements() (int, error) {
 	url := config.URL + "/resources/group-placements?expand"
 
@@ -127,7 +138,7 @@ func (pl *PlacementList) GetOutputString() string {
 		return "No elements found."
 	}
 	var buffer bytes.Buffer
-	buffer.WriteString("ID\tNAME\tPROJECT\tRESOURCE POOL\tPRIORITY\tINSTANCES\tCPU SHARES\tMEMORY LIMIT")
+	buffer.WriteString("ID\tNAME\tPROJECT\tPLACEMENT ZONE\tPRIORITY\tINSTANCES\tCPU SHARES\tMEMORY LIMIT")
 	buffer.WriteString("\n")
 	for _, link := range pl.DocumentLinks {
 		val := pl.Documents[link]
@@ -181,7 +192,9 @@ func RemovePlacement(polName string) (string, error) {
 }
 
 func RemovePlacementID(id string) (string, error) {
-	link := utils.CreateResLinksForPlacement(id)
+	fullId, err := selflink.GetFullId(id, new(PlacementList), utils.PLACEMENT)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinksForPlacement(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
@@ -191,26 +204,35 @@ func RemovePlacementID(id string) (string, error) {
 	return id, nil
 }
 
-func AddPlacement(namePol, cpuShares, instances, priority, projectId, resPoolID, deplPolID string, memoryLimit int64) (string, error) {
+func AddPlacement(namePol, cpuShares, instances, priority, projectId, placementZoneId, deplPolId string, memoryLimit int64) (string, error) {
 	url := config.URL + "/resources/group-placements"
 	var (
+		err         error
 		dpLink      string
 		rpLink      string
 		projectLink string
 	)
 
-	if !haveNeeded(resPoolID) {
+	if !haveNeeded(placementZoneId) {
 		return "", PlacementZoneRequiredError
 	}
 
-	if deplPolID != "" {
-		dpLink = utils.CreateResLinkForDP(deplPolID)
+	if deplPolId != "" {
+		var fullDpId string
+		fullDpId, err = selflink.GetFullId(deplPolId, new(deplPolicy.DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
+		utils.CheckIdError(err)
+		dpLink = utils.CreateResLinkForDP(fullDpId)
 	}
 
-	rpLink = utils.CreateResLinkForPlacementZone(resPoolID)
+	fullRpId, err := selflink.GetFullId(placementZoneId, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
+	utils.CheckIdError(err)
+	rpLink = utils.CreateResLinkForPlacementZone(fullRpId)
 
 	if projectId != "" {
-		projectLink = utils.CreateResLinkForProject(projectId)
+		var fullProjectId string
+		fullProjectId, err = selflink.GetFullId(projectId, new(projects.ProjectList), utils.PROJECT)
+		utils.CheckIdError(err)
+		projectLink = utils.CreateResLinkForProject(fullProjectId)
 	}
 
 	placement := PlacementToAdd{
@@ -253,8 +275,11 @@ func EditPlacement(name, namePol, projectId, resPoolID, deplPolID string, cpuSha
 	return EditPlacementID(id, namePol, projectId, resPoolID, deplPolID, cpuShares, instances, priority, memoryLimit)
 }
 
-func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolID string, cpuShares, instances, priority int32, memoryLimit int64) (string, error) {
-	url := config.URL + utils.CreateResLinksForPlacement(id)
+func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, cpuShares, instances, priority int32, memoryLimit int64) (string, error) {
+	fullId, err := selflink.GetFullId(id, new(PlacementList), utils.PLACEMENT)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinksForPlacement(fullId)
+	url := config.URL + link
 	//Workaround
 	oldPlacement := &PlacementToUpdate{}
 	req, _ := http.NewRequest("GET", url, nil)
@@ -262,7 +287,7 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolID string, 
 	if respErr != nil {
 		return "", respErr
 	}
-	err := json.Unmarshal(respBody, oldPlacement)
+	err = json.Unmarshal(respBody, oldPlacement)
 	utils.CheckJson(err)
 	//Workaround
 
@@ -279,15 +304,24 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolID string, 
 		oldPlacement.Priority = priority
 	}
 	if projectId != "" {
+		if len(oldPlacement.TenantLinks) == 0 || cap(oldPlacement.TenantLinks) == 0 {
+			oldPlacement.TenantLinks = make([]string, 1)
+		}
 		projectLinkIndex := GetProjectLinkIndex(oldPlacement.TenantLinks)
-		projectLink := utils.CreateResLinkForProject(projectId)
+		fullProjectId, err := selflink.GetFullId(projectId, new(projects.ProjectList), utils.PROJECT)
+		utils.CheckIdError(err)
+		projectLink := utils.CreateResLinkForProject(fullProjectId)
 		oldPlacement.TenantLinks[projectLinkIndex] = projectLink
 	}
 	if placementZoneID != "" {
-		oldPlacement.ResourcePoolLink = utils.CreateResLinkForPlacementZone(placementZoneID)
+		fullPzId, err := selflink.GetFullId(placementZoneID, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
+		utils.CheckIdError(err)
+		oldPlacement.ResourcePoolLink = utils.CreateResLinkForPlacementZone(fullPzId)
 	}
-	if deplPolID != "" {
-		oldPlacement.DeploymentPolicyLink = utils.CreateResLinkForDP(deplPolID)
+	if deplPolId != "" {
+		fullDpId, err := selflink.GetFullId(deplPolId, new(deplPolicy.DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
+		utils.CheckIdError(err)
+		oldPlacement.DeploymentPolicyLink = utils.CreateResLinkForDP(fullDpId)
 	}
 	if memoryLimit != 0 {
 		oldPlacement.MemoryLimit = memoryLimit
@@ -331,5 +365,5 @@ func GetProjectLinkIndex(tenantLinks []string) int {
 			return i
 		}
 	}
-	return -1
+	return 0
 }

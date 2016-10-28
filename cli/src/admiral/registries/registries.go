@@ -23,6 +23,7 @@ import (
 	"admiral/config"
 	"admiral/credentials"
 	"admiral/utils"
+	"admiral/utils/selflink"
 )
 
 var (
@@ -58,6 +59,15 @@ func (r *Registry) Status() string {
 type RegistryList struct {
 	DocumentLinks []string            `json:"documentLinks"`
 	Documents     map[string]Registry `json:"documents"`
+}
+
+func (rl *RegistryList) GetCount() int {
+	return len(rl.DocumentLinks)
+}
+
+func (rl *RegistryList) GetResource(index int) selflink.Identifiable {
+	resource := rl.Documents[rl.DocumentLinks[index]]
+	return &resource
 }
 
 func (rl *RegistryList) FetchRegistries() (int, error) {
@@ -100,7 +110,9 @@ func RemoveRegistry(address string) (string, error) {
 }
 
 func RemoveRegistryID(id string) (string, error) {
-	link := utils.CreateResLinkForRegistry(id)
+	fullId, err := selflink.GetFullId(id, new(RegistryList), utils.REGISTRY)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinkForRegistry(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
@@ -133,7 +145,8 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 			newCredID = ""
 		}
 	} else {
-		newCredID = credID
+		newCredID, err = selflink.GetFullId(credID, new(credentials.ListCredentials), utils.CREDENTIALS)
+		utils.CheckIdError(err)
 	}
 
 	reg = &Registry{
@@ -211,7 +224,9 @@ func EditRegistry(address, newAddress, newName, newCred string, autoAccept bool)
 }
 
 func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (string, error) {
-	link := utils.CreateResLinkForRegistry(id)
+	fullId, err := selflink.GetFullId(id, new(RegistryList), utils.REGISTRY)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinkForRegistry(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -219,7 +234,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 		return "", respErr
 	}
 	reg := &Registry{}
-	err := json.Unmarshal(respBody, reg)
+	err = json.Unmarshal(respBody, reg)
 	utils.CheckJson(err)
 	if newAddress != "" {
 		reg.Address = newAddress
@@ -228,7 +243,9 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 		reg.Name = newName
 	}
 	if newCred != "" {
-		credLink := utils.CreateResLinkForCredentials(newCred)
+		fullCredId, err := selflink.GetFullId(newCred, new(credentials.ListCredentials), utils.CREDENTIALS)
+		utils.CheckIdError(err)
+		credLink := utils.CreateResLinkForCredentials(fullCredId)
 		reg.AuthCredentialsLinks = &credLink
 	}
 	url = config.URL + "/config/registry-spec"
@@ -291,7 +308,9 @@ func Disable(address string) (string, error) {
 }
 
 func DisableID(id string) (string, error) {
-	link := utils.CreateResLinkForRegistry(id)
+	fullId, err := selflink.GetFullId(id, new(RegistryList), utils.REGISTRY)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinkForRegistry(fullId)
 	rs := &RegistryStatus{
 		Disabled:         true,
 		DocumentSelfLink: link,
@@ -322,7 +341,9 @@ func Enable(address string) (string, error) {
 }
 
 func EnableID(id string) (string, error) {
-	link := utils.CreateResLinkForRegistry(id)
+	fullId, err := selflink.GetFullId(id, new(RegistryList), utils.REGISTRY)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinkForRegistry(fullId)
 	rs := &RegistryStatus{
 		Disabled:         false,
 		DocumentSelfLink: link,

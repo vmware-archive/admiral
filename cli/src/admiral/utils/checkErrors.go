@@ -59,3 +59,10 @@ func CheckParse(err error) {
 		os.Exit(1)
 	}
 }
+
+func CheckIdError(err error) {
+	if err != nil {
+		fmt.Fprintln(os.Stdout, err)
+		os.Exit(1)
+	}
+}

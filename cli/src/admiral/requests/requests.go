@@ -246,12 +246,12 @@ func RemoveRequestID(id string) (string, error) {
 }
 
 type Resource struct {
-	ID    string `json:"RequestID,omitempty"`
+	ID    string `json:"ResourceID,omitempty"`
 	Type  string `json:"Type,omitempty"`
 	Exist bool   `json:"Exist"`
 }
 type InspectedRequest struct {
-	ID        string      `json:"ResourceID,omitempty"`
+	ID        string      `json:"RequestID,omitempty"`
 	Status    string      `json:"Status,omitempty"`
 	Since     string      `json:"Since,omitempty"`
 	Message   string      `json:"Message,omitempty"`

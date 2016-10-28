@@ -21,6 +21,7 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/utils"
+	"admiral/utils/selflink"
 )
 
 var (
@@ -43,6 +44,15 @@ func (dp *DeploymentPolicy) GetID() string {
 type DeploymentPolicyList struct {
 	DocumentLinks []string                    `json:"documentLinks"`
 	Documents     map[string]DeploymentPolicy `json:"documents"`
+}
+
+func (dpl *DeploymentPolicyList) GetCount() int {
+	return len(dpl.DocumentLinks)
+}
+
+func (dpl *DeploymentPolicyList) GetResource(index int) selflink.Identifiable {
+	resource := dpl.Documents[dpl.DocumentLinks[index]]
+	return &resource
 }
 
 //FetchDP fetches existing deployment policies and returns their count.
@@ -93,7 +103,9 @@ func RemoveDP(name string) (string, error) {
 //deployment policy and error which is != nil if the response code is different
 //from 200.
 func RemoveDPID(id string) (string, error) {
-	link := utils.CreateResLinkForDP(id)
+	fullId, err := selflink.GetFullId(id, new(DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinkForDP(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
@@ -152,7 +164,9 @@ func EditDP(dpName, newName, newDescription string) (string, error) {
 //Pass empty string in case you want to modify some property. Returns the ID of edited
 //deployment policy and error which is != nil if the response code is different from 200.
 func EditDPID(id, newName, newDescription string) (string, error) {
-	url := config.URL + utils.CreateResLinkForDP(id)
+	fullId, err := selflink.GetFullId(id, new(DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
+	utils.CheckIdError(err)
+	url := config.URL + utils.CreateResLinkForDP(fullId)
 	dp := &DeploymentPolicy{
 		Name:             newName,
 		Description:      newDescription,

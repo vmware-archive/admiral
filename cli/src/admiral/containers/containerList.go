@@ -21,12 +21,22 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/utils"
+	"admiral/utils/selflink"
 )
 
 type ListContainers struct {
 	TotalCount    int64                `json:"totalCount"`
 	Documents     map[string]Container `json:"documents"`
 	DocumentLinks []string             `json:"documentLinks"`
+}
+
+func (lc *ListContainers) GetCount() int {
+	return len(lc.DocumentLinks)
+}
+
+func (lc *ListContainers) GetResource(index int) selflink.Identifiable {
+	resource := lc.Documents[lc.DocumentLinks[index]]
+	return &resource
 }
 
 //FetchContainers fetches containers by given query which is passed as parameter.

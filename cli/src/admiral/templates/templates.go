@@ -24,6 +24,7 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/utils"
+	"admiral/utils/selflink"
 	"sort"
 )
 
@@ -46,6 +47,20 @@ func (lc *LightContainer) GetOutput(link string) (string, error) {
 	err := json.Unmarshal(respBody, lc)
 	utils.CheckJson(err)
 	return fmt.Sprintf("   Container Name: %-22s\tContainer Image: %s\n", lc.Name, lc.Image), nil
+}
+
+type CompositeDescriptionList struct {
+	DocumentLinks []string            `json:"documentLinks"`
+	Documents     map[string]Template `json:"documents"`
+}
+
+func (cdl *CompositeDescriptionList) GetCount() int {
+	return len(cdl.DocumentLinks)
+}
+
+func (cdl *CompositeDescriptionList) GetResource(index int) selflink.Identifiable {
+	resource := cdl.Documents[cdl.DocumentLinks[index]]
+	return &resource
 }
 
 type TemplateSorter []Template
@@ -73,6 +88,15 @@ func (t *Template) GetID() string {
 
 type TemplatesList struct {
 	Results []Template `json:"results"`
+}
+
+func (tl *TemplatesList) GetCount() int {
+	return len(tl.Results)
+}
+
+func (tl *TemplatesList) GetResource(index int) selflink.Identifiable {
+	resource := tl.Results[0]
+	return &resource
 }
 
 //FetchTemplates fetches the templates by query. If it's needed to
@@ -192,7 +216,10 @@ func RemoveTemplate(name string) (string, error) {
 //Returns the ID of the removed template and error = nil or
 //ID = empty string and error != nil.
 func RemoveTemplateID(id string) (string, error) {
-	url := config.URL + "/resources/composite-descriptions/" + id
+	fullId, err := selflink.GetFullId(id, new(CompositeDescriptionList), utils.TEMPLATE)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinkForTemplate(fullId)
+	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Add("Pragma", "xn-force-index-update")
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -200,7 +227,7 @@ func RemoveTemplateID(id string) (string, error) {
 		return "", respErr
 	}
 	template := &Template{}
-	err := json.Unmarshal(respBody, template)
+	err = json.Unmarshal(respBody, template)
 	utils.CheckJson(err)
 	for i := range template.DescriptionLinks {
 		tempLink := config.URL + template.DescriptionLinks[i]
@@ -243,7 +270,9 @@ func Export(id, dirF, format string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	url := config.URL + "/resources/composite-templates?selfLink=" + id
+	fullId, err := selflink.GetFullId(id, new(CompositeDescriptionList), utils.TEMPLATE)
+	utils.CheckIdError(err)
+	url := config.URL + "/resources/composite-templates?selfLink=" + fullId
 	if format == "docker" {
 		url = url + "&format=docker"
 	}

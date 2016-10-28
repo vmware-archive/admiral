@@ -24,10 +24,12 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/credentials"
+	"admiral/deplPolicy"
 	"admiral/placementzones"
 	"admiral/properties"
 	"admiral/track"
 	"admiral/utils"
+	"admiral/utils/selflink"
 )
 
 var (
@@ -62,11 +64,24 @@ func (h *Host) GetCredentialsID() string {
 	return ""
 }
 
+func (h *Host) GetID() string {
+	return h.Id
+}
+
 //Struct to parse data when getting information about existing hosts.
 type HostsList struct {
 	TotalCount    int32           `json:"totalCount"`
 	Documents     map[string]Host `json:"documents"`
 	DocumentLinks []string        `json:"documentLinks"`
+}
+
+func (hl *HostsList) GetCount() int {
+	return len(hl.DocumentLinks)
+}
+
+func (hl *HostsList) GetResource(index int) selflink.Identifiable {
+	resource := hl.Documents[hl.DocumentLinks[index]]
+	return &resource
 }
 
 //Struct used to send data in order to change host's power state.
@@ -154,6 +169,8 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 
 	var (
 		newCredID string
+		dpLink    string
+		fullDpId  string
 		err       error
 	)
 
@@ -172,12 +189,19 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 			newCredID = ""
 		}
 	} else {
-		newCredID = credID
+		newCredID, err = selflink.GetFullId(credID, new(credentials.ListCredentials), utils.CREDENTIALS)
+		utils.CheckIdError(err)
 	}
 
-	pzLink := utils.CreateResLinkForPlacementZone(placementZoneID)
+	fullPzId, err := selflink.GetFullId(placementZoneID, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
+	utils.CheckIdError(err)
+	pzLink := utils.CreateResLinkForPlacementZone(fullPzId)
 
-	dpLink := utils.CreateResLinkForDP(deplPolicyID)
+	if deplPolicyID != "" {
+		fullDpId, err = selflink.GetFullId(deplPolicyID, new(deplPolicy.DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
+		utils.CheckIdError(err)
+		dpLink = utils.CreateResLinkForDP(fullDpId)
+	}
 
 	credLink := utils.CreateResLinkForCredentials(newCredID)
 
@@ -249,10 +273,11 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 //to specify if you want to do it as async operation or the program should wait until
 //the host is added. Returns the address of the removed host and error = nil, or empty string
 //and error != nil.
-func RemoveHost(hostAddress string, asyncTask bool) (string, error) {
+func RemoveHost(id string, asyncTask bool) (string, error) {
 	url := config.URL + "/requests"
-
-	link := utils.CreateResLinksForHosts(hostAddress)
+	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinksForHosts(fullId)
 
 	jsonRemoveHost := &OperationHost{
 		Operation:     "REMOVE_RESOURCE",
@@ -275,11 +300,13 @@ func RemoveHost(hostAddress string, asyncTask bool) (string, error) {
 	if !asyncTask {
 		_, err = track.Wait(taskStatus.GetTracerId())
 	}
-	return hostAddress, err
+	return id, err
 }
 
-func DisableHost(hostAddress string) (string, error) {
-	url := config.URL + "/resources/compute/" + hostAddress
+func DisableHost(id string) (string, error) {
+	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
+	utils.CheckIdError(err)
+	url := config.URL + utils.CreateResLinksForHosts(fullId)
 	hostp := HostPatch{
 		PowerState: "SUSPEND",
 	}
@@ -291,11 +318,13 @@ func DisableHost(hostAddress string) (string, error) {
 	if respErr != nil {
 		return "", respErr
 	}
-	return hostAddress, nil
+	return id, nil
 }
 
-func EnableHost(hostAddress string) (string, error) {
-	url := config.URL + "/resources/compute/" + hostAddress
+func EnableHost(id string) (string, error) {
+	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
+	utils.CheckIdError(err)
+	url := config.URL + utils.CreateResLinksForHosts(fullId)
 	hostp := HostPatch{
 		PowerState: "ON",
 	}
@@ -306,11 +335,11 @@ func EnableHost(hostAddress string) (string, error) {
 	if respErr != nil {
 		return "", respErr
 	}
-	return hostAddress, nil
+	return id, nil
 }
 
-func GetPublicCustomProperties(address string) (map[string]*string, error) {
-	props, err := GetCustomProperties(address)
+func GetPublicCustomProperties(id string) (map[string]*string, error) {
+	props, err := GetCustomProperties(id)
 	if props == nil {
 		return nil, err
 	}
@@ -326,23 +355,25 @@ func GetPublicCustomProperties(address string) (map[string]*string, error) {
 	return pubProps, nil
 }
 
-func GetCustomProperties(address string) (map[string]*string, error) {
-	link := utils.CreateResLinksForHosts(address)
-	url := config.URL + link
+func GetCustomProperties(id string) (map[string]*string, error) {
+	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
+	utils.CheckIdError(err)
+	url := config.URL + utils.CreateResLinksForHosts(fullId)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return nil, respErr
 	}
 	host := &Host{}
-	err := json.Unmarshal(respBody, host)
+	err = json.Unmarshal(respBody, host)
 	utils.CheckJson(err)
 	return host.CustomProperties, nil
 }
 
-func AddCustomProperties(address string, keys, vals []string) error {
-	link := utils.CreateResLinksForHosts(address)
-	url := config.URL + link
+func AddCustomProperties(id string, keys, vals []string) error {
+	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
+	utils.CheckIdError(err)
+	url := config.URL + utils.CreateResLinksForHosts(fullId)
 	var lowerLen []string
 	if len(keys) > len(vals) {
 		lowerLen = vals
@@ -366,9 +397,10 @@ func AddCustomProperties(address string, keys, vals []string) error {
 	return nil
 }
 
-func RemoveCustomProperties(address string, keys []string) error {
-	link := utils.CreateResLinksForHosts(address)
-	url := config.URL + link
+func RemoveCustomProperties(id string, keys []string) error {
+	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
+	utils.CheckIdError(err)
+	url := config.URL + utils.CreateResLinksForHosts(fullId)
 	custProps := make(map[string]*string)
 	for i := range keys {
 		custProps[keys[i]] = nil
@@ -386,23 +418,35 @@ func RemoveCustomProperties(address string, keys []string) error {
 	return nil
 }
 
-func EditHost(ipF, name, resPoolF, deplPolicyF, credentials string,
+func EditHost(id, name, placementZoneId, deplPolicyF, credId string,
 	autoAccept bool) (string, error) {
-	url := config.URL + "/resources/compute/" + ipF
-	props, err := MakeUpdateHostProperties(deplPolicyF, credentials, name)
-	if err != nil {
-		return "", err
-	}
+	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
+	utils.CheckIdError(err)
+	url := config.URL + utils.CreateResLinksForHosts(fullId)
 
 	var (
-		rpLink string
+		fullDpId   string
+		fullCredId string
+		fullPzId   string
+		pzLink     string
 	)
-	if resPoolF != "" {
-		rpLink = utils.GetResourceID(resPoolF)
+	if deplPolicyF != "" {
+		fullDpId, err = selflink.GetFullId(deplPolicyF, new(deplPolicy.DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
+		utils.CheckIdError(err)
+	}
+	if credId != "" {
+		fullCredId, err = selflink.GetFullId(credId, new(credentials.ListCredentials), utils.CREDENTIALS)
+		utils.CheckIdError(err)
+	}
+	if placementZoneId != "" {
+		fullPzId, err = selflink.GetFullId(placementZoneId, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
+		utils.CheckIdError(err)
+		pzLink = utils.CreateResLinkForPlacementZone(fullPzId)
 	}
 
+	props := MakeUpdateHostProperties(fullDpId, fullCredId, name)
 	newHost := &HostUpdate{
-		ResourcePoolLink: rpLink,
+		ResourcePoolLink: pzLink,
 		CustomProperties: props,
 	}
 	jsonBody, err := json.Marshal(newHost)
@@ -414,7 +458,7 @@ func EditHost(ipF, name, resPoolF, deplPolicyF, credentials string,
 	if respErr != nil {
 		return "", respErr
 	}
-	return ipF, nil
+	return id, nil
 }
 
 func allFlagReadyHost(ipF, resPoolF string) (bool, error) {
@@ -438,19 +482,20 @@ func getHostAddress(name string) string {
 	return hl.Documents[hl.DocumentLinks[0]].Address
 }
 
-func MakeUpdateHostProperties(dp, cred, name string) (map[string]*string, error) {
+func MakeUpdateHostProperties(dp, cred, name string) map[string]*string {
 	props := make(map[string]*string, 0)
 	if dp != "" {
-		props["__deploymentPolicyLink"] = &dp
+		dpLink := utils.CreateResLinkForDP(dp)
+		props["__deploymentPolicyLink"] = &dpLink
 	}
 
 	if cred != "" {
-		props["__authCredentialsLink"] = &cred
+		credLink := utils.CreateResLinkForCredentials(cred)
+		props["__authCredentialsLink"] = &credLink
 	}
 
 	if name != "" {
 		props["__hostAlias"] = &name
 	}
-
-	return props, nil
+	return props
 }

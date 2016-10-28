@@ -28,6 +28,8 @@ import (
 	"admiral/properties"
 	"admiral/utils"
 
+	"admiral/utils/selflink"
+
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -66,6 +68,15 @@ func (c *Credentials) GetName() string {
 type ListCredentials struct {
 	Documents     map[string]Credentials `json:"documents"`
 	DocumentLinks []string               `json:"documentLinks"`
+}
+
+func (lc *ListCredentials) GetResource(index int) selflink.Identifiable {
+	resource := lc.Documents[lc.DocumentLinks[index]]
+	return &resource
+}
+
+func (lc *ListCredentials) GetCount() int {
+	return len(lc.DocumentLinks)
 }
 
 //FetchCredentials fetches all credentials. It return the count
@@ -167,9 +178,6 @@ func AddByUsername(name, userName, passWord string,
 		}
 	}
 
-	//nameProp := CustomProperties{
-	//	AuthCredentialsName: strings.TrimSpace(name),
-	//}
 	cp := properties.ParseCustomProperties(custProps)
 	if cp == nil {
 		cp = make(map[string]*string, 0)
@@ -259,7 +267,9 @@ func RemoveCredentials(name string) (string, error) {
 //Returns the ID of removed credentials and error which is != nil if
 //the response code is different from 200.
 func RemoveCredentialsID(id string) (string, error) {
-	link := utils.CreateResLinkForCredentials(id)
+	fullId, err := selflink.GetFullId(id, new(ListCredentials), utils.CREDENTIALS)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
@@ -293,7 +303,9 @@ func EditCredetials(credName, publicCert, privateCert, userName, passWord string
 //Returns the ID of the edited credentials and error which is != nil if
 //the response code is different from 200.
 func EditCredetialsID(id, publicCert, privateCert, userName, passWord string) (string, error) {
-	url := config.URL + utils.CreateResLinkForCredentials(id)
+	fullId, err := selflink.GetFullId(id, new(ListCredentials), utils.CREDENTIALS)
+	utils.CheckIdError(err)
+	url := config.URL + utils.CreateResLinkForCredentials(fullId)
 	var cred interface{}
 	if publicCert != "" || privateCert != "" {
 		var (
@@ -358,7 +370,9 @@ func GetPublicCustomProperties(id string) (map[string]*string, error) {
 //custom properties of the credentials.  Note that keys are strings,
 //but values are pointer to strings.
 func GetCustomProperties(id string) (map[string]*string, error) {
-	link := utils.CreateResLinkForCredentials(id)
+	fullId, err := selflink.GetFullId(id, new(ListCredentials), utils.CREDENTIALS)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -366,7 +380,7 @@ func GetCustomProperties(id string) (map[string]*string, error) {
 		return nil, respErr
 	}
 	credentials := &Credentials{}
-	err := json.Unmarshal(respBody, credentials)
+	err = json.Unmarshal(respBody, credentials)
 	utils.CheckJson(err)
 	return credentials.CustomProperties, nil
 }
@@ -377,7 +391,9 @@ func GetCustomProperties(id string) (map[string]*string, error) {
 //matching the same indexes from both arrays. That also means if the one array is longer
 //than the other, it's left elements are ignored.
 func AddCustomProperties(id string, keys, vals []string) error {
-	link := utils.CreateResLinkForCredentials(id)
+	fullId, err := selflink.GetFullId(id, new(ListCredentials), utils.CREDENTIALS)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link
 	var lowerLen []string
 	if len(keys) > len(vals) {
@@ -407,7 +423,9 @@ func AddCustomProperties(id string, keys, vals []string) error {
 //The function takes as parameter the ID of the credentials
 //and array of keys to be removed.
 func RemoveCustomProperties(id string, keys []string) error {
-	link := utils.CreateResLinkForCredentials(id)
+	fullId, err := selflink.GetFullId(id, new(ListCredentials), utils.CREDENTIALS)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link
 	custProps := make(map[string]*string)
 	for i := range keys {

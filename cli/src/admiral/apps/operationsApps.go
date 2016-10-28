@@ -24,6 +24,7 @@ import (
 	"admiral/templates"
 	"admiral/track"
 	"admiral/utils"
+	"admiral/utils/selflink"
 )
 
 var (
@@ -49,11 +50,14 @@ func StartApp(name string, asyncTask bool) ([]string, error) {
 //Same as StartApp() but takes app's ID in order to avoid conflict from duplicate names.
 func StartAppID(id string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
-	resourceLinks := utils.CreateResLinksForApps([]string{id})
 	var (
 		resLinks []string
 		err      error
 	)
+	fullIds, err := selflink.GetFullIds([]string{id}, new(ListApps), utils.APPLICATION)
+	utils.CheckIdError(err)
+
+	resourceLinks := utils.CreateResLinksForApps(fullIds)
 	oc := &containers.OperationContainer{
 		Operation:     "Container.Start",
 		ResourceLinks: resourceLinks,
@@ -98,11 +102,13 @@ func StopApp(name string, asyncTask bool) ([]string, error) {
 //Same as StopApp() but takes app's ID in order to avoid conflict from duplicate names.
 func StopAppID(id string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
-	resourceLinks := utils.CreateResLinksForApps([]string{id})
 	var (
 		resLinks []string
 		err      error
 	)
+	fullIds, err := selflink.GetFullIds([]string{id}, new(ListApps), utils.APPLICATION)
+	utils.CheckIdError(err)
+	resourceLinks := utils.CreateResLinksForApps(fullIds)
 	oc := &containers.OperationContainer{
 		Operation:     "Container.Stop",
 		ResourceLinks: resourceLinks,
@@ -135,13 +141,11 @@ func StopAppID(id string, asyncTask bool) ([]string, error) {
 //Returns bool to specify if app is removing.
 func RemoveApp(name string, asyncTask bool) ([]string, error) {
 	resourceLinks := GetAppLinks(name)
-
 	if len(resourceLinks) > 1 {
 		return nil, DuplicateNamesError
 	} else if len(resourceLinks) < 1 {
 		return nil, ApplicationNotFoundError
 	}
-
 	id := utils.GetResourceID(resourceLinks[0])
 	return RemoveAppID(id, asyncTask)
 }
@@ -149,11 +153,14 @@ func RemoveApp(name string, asyncTask bool) ([]string, error) {
 //Same as RemoveApp() but takes app's ID in order to avoid conflict from duplicate names.
 func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
-	resourceLinks := utils.CreateResLinksForApps([]string{id})
 	var (
 		resLinks []string
 		err      error
 	)
+
+	fullIds, err := selflink.GetFullIds([]string{id}, new(ListApps), utils.APPLICATION)
+	utils.CheckIdError(err)
+	resourceLinks := utils.CreateResLinksForApps(fullIds)
 	oc := &containers.OperationContainer{
 		Operation:     "Container.Delete",
 		ResourceLinks: resourceLinks,
@@ -198,7 +205,9 @@ func RunApp(app string, asyncTask bool) ([]string, error) {
 //Same as RunApp() but takes app's ID in order to avoid conflict from duplicate names.
 func RunAppID(id string, asyncTask bool) ([]string, error) {
 	jsonBody := make(map[string]string, 0)
-	link := "/resources/composite-descriptions/" + id
+	fullId, err := selflink.GetFullId(id, new(templates.CompositeDescriptionList), utils.TEMPLATE)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinkForTemplate(fullId)
 	jsonBody["documentSelfLink"] = link
 	reqBody, err := json.Marshal(jsonBody)
 	utils.CheckJson(err)
@@ -245,24 +254,26 @@ func queryTemplateName(tmplName string) []string {
 
 }
 
-func InspectID(id string) bool {
-	links := utils.CreateResLinksForApps([]string{id})
-	url := config.URL + links[0]
+func InspectID(id string) (string, error) {
+	fullIds, err := selflink.GetFullIds([]string{id}, new(ListApps), utils.APPLICATION)
+	utils.CheckIdError(err)
+	resourceLinks := utils.CreateResLinksForApps(fullIds)
+	url := config.URL + resourceLinks[0]
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
-		return false
+		return "", respErr
 	}
 	app := &App{}
-	err := json.Unmarshal(respBody, app)
+	err = json.Unmarshal(respBody, app)
 	utils.CheckJson(err)
 	customMap := make(map[string]App)
 	customMap[id] = *app
 	la := ListApps{
-		Documents: customMap,
+		Documents:  customMap,
+		TotalCount: 1,
 	}
-	la.GetOutputStringWithContainers()
-	return true
+	return la.GetOutputStringWithContainers(), nil
 }
 
 type RunApplication struct {
