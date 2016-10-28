@@ -33,11 +33,17 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.dataformat.yaml.snakeyaml.util.UriEncoder;
 
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.BindingEvaluator;
+import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
+import com.vmware.admiral.compute.content.Binding;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.request.composition.CompositeComponentRemovalTaskService.CompositeComponentRemovalTaskState;
@@ -48,15 +54,19 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * Task implementing the provision multi-container request life-cycle.
@@ -64,7 +74,6 @@ import com.vmware.xenon.common.Utils;
 public class CompositionTaskService
         extends
         AbstractTaskStatefulService<CompositionTaskService.CompositionTaskState, CompositionTaskService.CompositionTaskState.SubStage> {
-
     public static final String DISPLAY_NAME = "Composition";
 
     public static class CompositionTaskState extends
@@ -550,10 +559,6 @@ public class CompositionTaskService
     private void getCompositeDescription(CompositionTaskState state, boolean expanded,
             Consumer<CompositeDescriptionExpanded> callbackFunction) {
         URI uri = UriUtils.buildUri(this.getHost(), state.resourceDescriptionLink);
-        if (expanded) {
-            uri = UriUtils.extendUriWithQuery(uri, UriUtils.URI_PARAM_ODATA_EXPAND,
-                    Boolean.TRUE.toString());
-        }
         sendRequest(Operation.createGet(uri)
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -563,19 +568,25 @@ public class CompositionTaskService
                     try {
                         CompositeDescriptionExpanded desc = o
                                 .getBody(CompositeDescriptionExpanded.class);
-
-                        if (desc.bindings != null && expanded) {
-                            BindingEvaluator.evaluateBindings(desc);
-                            Operation.createPut(this, desc.documentSelfLink).setBody(desc)
-                                    .setCompletion((op, ex) -> {
-                                        if (ex != null) {
-                                            failTask(
-                                                    "Failure updating evaluated composite description",
-                                                    ex);
-                                            return;
-                                        }
-                                        callbackFunction.accept(desc);
-                                    }).sendWith(this);
+                        if (expanded) {
+                            retrieveComponentDescriptions(desc, (descExpanded) -> {
+                                if (descExpanded.bindings != null) {
+                                    BindingEvaluator.evaluateBindings(descExpanded);
+                                    Operation.createPut(this, descExpanded.documentSelfLink)
+                                            .setBody(descExpanded)
+                                            .setCompletion((op, ex) -> {
+                                                if (ex != null) {
+                                                    failTask(
+                                                            "Failure updating evaluated composite description",
+                                                            ex);
+                                                    return;
+                                                }
+                                                callbackFunction.accept(descExpanded);
+                                            }).sendWith(this);
+                                } else {
+                                    callbackFunction.accept(descExpanded);
+                                }
+                            });
                         } else {
                             callbackFunction.accept(desc);
                         }
@@ -639,6 +650,83 @@ public class CompositionTaskService
                 CompositionTaskState.FIELD_NAME_COMPOSITE_COMPONENT_LINK);
 
         return template;
+    }
+
+    private void retrieveComponentDescriptions(CompositeDescriptionExpanded cdExpanded,
+            Consumer<CompositeDescriptionExpanded> consumer) {
+        List<String> componentDescriptionLinks = getComponentDescriptionLinks(cdExpanded);
+        if (componentDescriptionLinks != null && !componentDescriptionLinks.isEmpty()) {
+            QueryTask componentDescriptionQueryTask = new QueryTask();
+            componentDescriptionQueryTask.querySpec = new QueryTask.QuerySpecification();
+            componentDescriptionQueryTask.taskInfo.isDirect = true;
+            componentDescriptionQueryTask.documentExpirationTimeMicros = ServiceDocumentQuery
+                    .getDefaultQueryExpiration();
+
+            QueryUtil.addExpandOption(componentDescriptionQueryTask);
+
+            QueryUtil.addListValueClause(componentDescriptionQueryTask,
+                    ServiceDocument.FIELD_NAME_SELF_LINK,
+                    componentDescriptionLinks);
+
+            sendRequest(Operation
+                    .createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
+                    .setBody(componentDescriptionQueryTask)
+                    .setCompletion((o, ex) -> {
+                        if (ex != null) {
+                            logSevere("Quering component descriptions failed: ",
+                                    Utils.toString(ex));
+                            consumer.accept(cdExpanded);
+                        } else {
+                            QueryTask resultTask = o.getBody(QueryTask.class);
+                            ServiceDocumentQueryResult result = resultTask.results;
+
+                            if (result == null || result.documents == null) {
+                                return;
+                            }
+
+                            List<ComponentDescription> componentDescriptions = new ArrayList<>();
+                            result.documents.forEach((link, document) -> {
+                                ComponentMeta meta = CompositeComponentRegistry
+                                        .metaByDescriptionLink(link);
+                                ResourceState description = Utils.fromJson(document,
+                                        meta.descriptionClass);
+                                if (description != null) {
+                                    ComponentDescription cd = new ComponentDescription(
+                                            description,
+                                            meta.resourceType,
+                                            description.name,
+                                            getBindingsForComponent(description.name, cdExpanded));
+                                    componentDescriptions.add(cd);
+                                } else {
+                                    logWarning("Unexpected result type: %s", link);
+                                }
+                            });
+
+                            cdExpanded.componentDescriptions = componentDescriptions;
+                            consumer.accept(cdExpanded);
+                        }
+                    }));
+        } else {
+            consumer.accept(cdExpanded);
+        }
+
+    }
+
+    private List<Binding> getBindingsForComponent(String componentName,
+            CompositeDescriptionExpanded compositeDescriptionExpanded) {
+        if (compositeDescriptionExpanded.bindings == null) {
+            return Collections.emptyList();
+        }
+        return compositeDescriptionExpanded.bindings.stream()
+                .filter(cb -> cb.componentName.equals(componentName))
+                .flatMap(cb -> cb.bindings.stream()).collect(Collectors.toList());
+    }
+
+    private List<String> getComponentDescriptionLinks(CompositeDescription compositeDescription) {
+        List<String> descriptionLinks = new ArrayList<String>(
+                compositeDescription.descriptionLinks);
+
+        return descriptionLinks;
     }
 
 }
