@@ -26,6 +26,7 @@ import (
 	"admiral/config"
 	"admiral/track"
 	"admiral/utils"
+	"admiral/utils/selflink"
 )
 
 var (
@@ -34,19 +35,19 @@ var (
 )
 
 type Container struct {
-	Id               string      `json:"id"`
-	Address          string      `json:"address"`
-	Names            []string    `json:"names"`
-	PowerState       string      `json:"powerState"`
-	Ports            []Port      `json:"ports"`
-	DescriptionLink  string      `json:"descriptionLink"`
-	System           bool        `json:"system"`
-	Created          int64       `json:"created"`
-	Started          int64       `json:"started"`
-	Command          []string    `json:"command"`
-	PolicyLink       string      `json:"groupResourcePolicyLink"`
-	Attributes       Attrirbutes `json:"attributes"`
-	DocumentSelfLink string      `json:"documentSelfLink"`
+	Id               string     `json:"id"`
+	Address          string     `json:"address"`
+	Names            []string   `json:"names"`
+	PowerState       string     `json:"powerState"`
+	Ports            []Port     `json:"ports"`
+	DescriptionLink  string     `json:"descriptionLink"`
+	System           bool       `json:"system"`
+	Created          int64      `json:"created"`
+	Started          int64      `json:"started"`
+	Command          []string   `json:"command"`
+	PolicyLink       string     `json:"groupResourcePolicyLink"`
+	Attributes       Attributes `json:"attributes"`
+	DocumentSelfLink string     `json:"documentSelfLink"`
 }
 
 //GetID returns the ID of the container.
@@ -180,7 +181,7 @@ func (ns *NetworkSettings) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v)
 }
 
-type Attrirbutes struct {
+type Attributes struct {
 	Driver          string          `json:"Driver"`
 	ImageHash       string          `json:"Image"`
 	NetworkSettings NetworkSettings `json:"NetworkSettings"`
@@ -204,7 +205,9 @@ var (
 //Returns boolean result if it starting or not.
 func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
-	links := utils.CreateResLinksForContainer(containers)
+	fullIds, err := selflink.GetFullIds(containers, new(ListContainers), utils.CONTAINER)
+	utils.CheckIdError(err)
+	links := utils.CreateResLinksForContainer(fullIds)
 
 	if len(containers) < 1 || containers[0] == "" {
 		return nil, ContainersNotProvidedError
@@ -244,7 +247,9 @@ func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 //Returns boolean result if it stopping or not.
 func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
-	links := utils.CreateResLinksForContainer(containers)
+	fullIds, err := selflink.GetFullIds(containers, new(ListContainers), utils.CONTAINER)
+	utils.CheckIdError(err)
+	links := utils.CreateResLinksForContainer(fullIds)
 
 	newStop := OperationContainer{
 		Operation:     "Container.Stop",
@@ -281,7 +286,9 @@ func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 //Returns boolean result if it removing or not.
 func RemoveContainer(containers []string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
-	links := utils.CreateResLinksForContainer(containers)
+	fullIds, err := selflink.GetFullIds(containers, new(ListContainers), utils.CONTAINER)
+	utils.CheckIdError(err)
+	links := utils.CreateResLinksForContainer(fullIds)
 
 	newRemoveContainer := OperationContainer{
 		Operation:     "Container.Delete",
@@ -360,7 +367,10 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 
 //Function to execute command inside container.
 func ExecuteCmd(container string, execF string) {
-	contLink := utils.CreateResLinksForContainer([]string{container})[0]
+	fullIds, err := selflink.GetFullIds([]string{container}, new(ListContainers), utils.CONTAINER)
+	utils.CheckIdError(err)
+	links := utils.CreateResLinksForContainer(fullIds)
+	contLink := links[0]
 	exec := strings.Split(execF, " ")
 	url := config.URL + "/exec?containerLink=" + contLink
 	ch := CommandHolder{
@@ -379,14 +389,17 @@ func ExecuteCmd(container string, execF string) {
 
 //Function to scale container by it's name with some count provided as parameter.
 func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (string, error) {
-	url := config.URL + utils.CreateResLinksForContainer([]string{containerID})[0]
+	fullIds, err := selflink.GetFullIds([]string{containerID}, new(ListContainers), utils.CONTAINER)
+	utils.CheckIdError(err)
+	links := utils.CreateResLinksForContainer(fullIds)
+	url := config.URL + links[0]
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return "", respErr
 	}
 	container := &Container{}
-	err := json.Unmarshal(respBody, container)
+	err = json.Unmarshal(respBody, container)
 	utils.CheckJson(err)
 	contDesc := container.DescriptionLink
 
@@ -421,7 +434,10 @@ func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (strin
 
 //Function to get information about container in JSON format.
 func InspectContainer(id string) ([]byte, error) {
-	url := config.URL + utils.CreateResLinksForContainer([]string{id})[0]
+	fullIds, err := selflink.GetFullIds([]string{id}, new(ListContainers), utils.CONTAINER)
+	utils.CheckIdError(err)
+	links := utils.CreateResLinksForContainer(fullIds)
+	url := config.URL + links[0]
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {

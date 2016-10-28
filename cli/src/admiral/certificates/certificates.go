@@ -24,6 +24,7 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/utils"
+	"admiral/utils/selflink"
 )
 
 var (
@@ -76,6 +77,15 @@ func (c *Certificate) String() string {
 type CertificateList struct {
 	DocumentLinks []string               `json:"documentLinks"`
 	Documents     map[string]Certificate `json:"documents"`
+}
+
+func (cl *CertificateList) GetCount() int {
+	return len(cl.Documents)
+}
+
+func (cl *CertificateList) GetResource(index int) selflink.Identifiable {
+	resource := cl.Documents[cl.DocumentLinks[index]]
+	return &resource
 }
 
 //FetchCertificates is fetching all certificates and returns their count.
@@ -143,7 +153,9 @@ func RemoveCertificate(name string) (string, error) {
 //Returns the ID of removed certificate and error, error is != nil
 //if response code is != 200.
 func RemoveCertificateID(id string) (string, error) {
-	link := utils.CreateResLinkForCerts(id)
+	fullId, err := selflink.GetFullId(id, new(CertificateList), utils.CERTIFICATE)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinkForCerts(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
@@ -183,7 +195,9 @@ func EditCertificateID(id, dirF, urlF string) (string, error) {
 			Certificate: string(importFile),
 		}
 		jsonBody, err := json.Marshal(cff)
-		url := config.URL + utils.CreateResLinkForCerts(id)
+		fullId, err := selflink.GetFullId(id, new(CertificateList), utils.CERTIFICATE)
+		utils.CheckIdError(err)
+		url := config.URL + utils.CreateResLinkForCerts(fullId)
 		req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 		_, respBody, respErr := client.ProcessRequest(req)
 		if respErr != nil {

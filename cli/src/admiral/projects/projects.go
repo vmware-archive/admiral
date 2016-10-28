@@ -21,6 +21,7 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/utils"
+	"admiral/utils/selflink"
 )
 
 var (
@@ -43,6 +44,15 @@ func (g *Project) GetID() string {
 type ProjectList struct {
 	DocumentLinks []string           `json:"documentLinks"`
 	Documents     map[string]Project `json:"documents"`
+}
+
+func (pl *ProjectList) GetCount() int {
+	return len(pl.DocumentLinks)
+}
+
+func (pl *ProjectList) GetResource(index int) selflink.Identifiable {
+	resource := pl.Documents[pl.DocumentLinks[index]]
+	return &resource
 }
 
 //FetchProjects fetches all projects and return their count.
@@ -124,7 +134,9 @@ func RemoveProject(name string) (string, error) {
 //RemoveProjectID removes project by ID. Returns the ID of the removed project
 //and error which is != nil if the response code is different from 200.
 func RemoveProjectID(id string) (string, error) {
-	url := config.URL + utils.CreateResLinkForProject(id)
+	fullId, err := selflink.GetFullId(id, new(ProjectList), utils.PROJECT)
+	utils.CheckIdError(err)
+	url := config.URL + utils.CreateResLinkForProject(fullId)
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -158,7 +170,9 @@ func EditProject(name, newName, newDescription string) (string, error) {
 //In case you don't want to modify the property pass empty string. The function
 //returns the ID of the edited string and error which is != nil if the response code is different from 200.
 func EditProjectID(id, newName, newDescription string) (string, error) {
-	url := config.URL + utils.CreateResLinkForProject(id)
+	fullId, err := selflink.GetFullId(id, new(ProjectList), utils.PROJECT)
+	utils.CheckIdError(err)
+	url := config.URL + utils.CreateResLinkForProject(fullId)
 	project := &Project{
 		Name:        newName,
 		Description: newDescription,
@@ -166,6 +180,7 @@ func EditProjectID(id, newName, newDescription string) (string, error) {
 	jsonBody, err := json.Marshal(project)
 	utils.CheckJson(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
+	req.Header.Set("Pragma", "xn-force-update-index")
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return "", respErr

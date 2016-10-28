@@ -87,7 +87,7 @@ func Logout() {
 
 func GetInfo() string {
 	var buffer bytes.Buffer
-	token, _ := utils.GetAuthToken()
+	token, tokenSource := utils.GetAuthToken()
 	if token == "" {
 		return "Not logged in, no token found."
 	}
@@ -109,7 +109,8 @@ func GetInfo() string {
 	expDate := time.Unix(0, ti.Exp*int64(time.Microsecond))
 	buffer.WriteString("User: " + user + "\n")
 	buffer.WriteString("Expiration Date: " + expDate.Format("2006.01.02 15:04:05") + "\n")
-	buffer.WriteString("Token: " + token)
+	buffer.WriteString("Token: " + token + "\n")
+	buffer.WriteString("Token source: " + strings.Title(tokenSource))
 	return buffer.String()
 }
 

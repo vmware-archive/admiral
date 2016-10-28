@@ -13,7 +13,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 
 	"admiral/apps"
 	"admiral/help"
@@ -39,10 +38,8 @@ var appInspectCmd = &cobra.Command{
 	Long:  "Inspect application for additional info.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		err := RunAppInspect(args)
-		if err != nil {
-			fmt.Println(err)
-		}
+		output, err := RunAppInspect(args)
+		processOutput(output, err)
 	},
 }
 
@@ -50,16 +47,15 @@ func initAppInspect() {
 	AppsRootCmd.AddCommand(appInspectCmd)
 }
 
-func RunAppInspect(args []string) error {
+func RunAppInspect(args []string) (string, error) {
 	var (
 		id string
 		ok bool
 	)
 	if id, ok = ValidateArgsCount(args); !ok {
-		return MissingAppIdError
+		return "", MissingAppIdError
 	}
-	apps.InspectID(id)
-	return nil
+	return apps.InspectID(id)
 }
 
 var appListCmd = &cobra.Command{

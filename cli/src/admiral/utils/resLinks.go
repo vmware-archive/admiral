@@ -12,6 +12,7 @@
 package utils
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -68,6 +69,9 @@ func CreateResLinkForDP(id string) string {
 
 //Function to create resource links from the provided ID as parameter.
 func CreateResLinkForPlacementZone(id string) string {
+	if id == "" {
+		return ""
+	}
 	return "/resources/pools/" + id
 }
 
@@ -89,6 +93,11 @@ func CreateResLinkForProject(id string) string {
 //Function to create resource links from the provided ID as parameter.
 func CreateResLinkForRequest(id string) string {
 	return "/request-status/" + id
+}
+
+//Function to create resource links from the provided ID as parameter.
+func CreateResLinkForTemplate(id string) string {
+	return "/resources/composite-descriptions/" + id
 }
 
 //Function to create resource links from the provided ID as parameter.
@@ -141,4 +150,51 @@ func GetResourceIDs(s []string) []string {
 		ids = append(ids, id)
 	}
 	return ids
+}
+
+func GetIdFilterUrl(shortId string, restype ResourceType) string {
+	var url string
+	switch restype {
+	case APPLICATION:
+		shortSelfLink := CreateResLinksForApps([]string{shortId})
+		url = ApplicationFilter + createIdFilter(shortSelfLink[0])
+	case CERTIFICATE:
+		shortSelfLink := CreateResLinkForCerts(shortId)
+		url = CertFilter + createIdFilter(shortSelfLink)
+	case CONTAINER:
+		shortSelfLink := CreateResLinksForContainer([]string{shortId})
+		url = ContainerFilter + createIdFilter(shortSelfLink[0])
+	case CREDENTIALS:
+		shortSelfLink := CreateResLinkForCredentials(shortId)
+		url = CredentialsFilter + createIdFilter(shortSelfLink)
+	case DEPLOYMENT_POLICY:
+		shortSelfLink := CreateResLinkForDP(shortId)
+		url = DeploymentPolicyFilter + createIdFilter(shortSelfLink)
+	case HOST:
+		shortSelfLink := CreateResLinksForHosts(shortId)
+		url = HostFilter + createIdFilter(shortSelfLink)
+	case NETWORK:
+		shortSelfLink := CreateResLinksForNetwork([]string{shortId})
+		url = NetworkFilter + createIdFilter(shortSelfLink[0])
+	case PLACEMENT:
+		shortSelfLink := CreateResLinksForPlacement(shortId)
+		url = PlacementFilter + createIdFilter(shortSelfLink)
+	case PLACEMENT_ZONE:
+		shortSelfLink := CreateResLinkForPlacementZone(shortId)
+		url = PlacementZoneFilter + createIdFilter(shortSelfLink)
+	case PROJECT:
+		shortSelfLink := CreateResLinkForProject(shortId)
+		url = ProjectFilter + createIdFilter(shortSelfLink)
+	case REGISTRY:
+		shortSelfLink := CreateResLinkForRegistry(shortId)
+		url = RegistryFilter + createIdFilter(shortSelfLink)
+	case TEMPLATE:
+		shortSelfLink := CreateResLinkForTemplate(shortId)
+		url = TemplateFilter + createIdFilter(shortSelfLink)
+	}
+	return url
+}
+
+func createIdFilter(shortSelfLink string) string {
+	return fmt.Sprintf("'%s*'", shortSelfLink)
 }

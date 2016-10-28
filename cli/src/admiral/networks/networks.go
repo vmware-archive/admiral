@@ -23,8 +23,10 @@ import (
 
 	"admiral/client"
 	"admiral/config"
+	"admiral/hosts"
 	"admiral/track"
 	"admiral/utils"
+	"admiral/utils/selflink"
 )
 
 var (
@@ -141,6 +143,15 @@ type NetworkList struct {
 	Documents     map[string]Network `json:"documents"`
 }
 
+func (nl *NetworkList) GetCount() int {
+	return len(nl.DocumentLinks)
+}
+
+func (nl *NetworkList) GetResource(index int) selflink.Identifiable {
+	resource := nl.Documents[nl.DocumentLinks[index]]
+	return &resource
+}
+
 type NetworkDescription struct {
 	DocumentSelfLink string `json:"documentSelfLink"`
 }
@@ -153,10 +164,12 @@ type NetworkOperation struct {
 	ResourceLinks           []string          `json:"resourceLinks,omitempty"`
 }
 
-func (no *NetworkOperation) SetCustomProperties(hosts []string) {
+func (no *NetworkOperation) SetHosts(hostsIds []string) {
 	no.CustomProperties = make(map[string]string, 0)
-	if len(hosts) > 0 {
-		no.CustomProperties["__containerHostId"] = strings.Join(hosts, ",")
+	fullHostIds, err := selflink.GetFullIds(hostsIds, new(hosts.HostsList), utils.HOST)
+	utils.CheckIdError(err)
+	if len(hostsIds) > 0 {
+		no.CustomProperties["__containerHostId"] = strings.Join(fullHostIds, ",")
 	}
 }
 
@@ -191,7 +204,9 @@ func (nl *NetworkList) GetOutputString() string {
 
 func RemoveNetwork(ids []string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
-	links := utils.CreateResLinksForNetwork(ids)
+	fullIds, err := selflink.GetFullIds(ids, new(NetworkList), utils.NETWORK)
+	utils.CheckIdError(err)
+	links := utils.CreateResLinksForNetwork(fullIds)
 	no := &NetworkOperation{
 		Operation:     "Network.Delete",
 		ResourceType:  "NETWORK",
@@ -226,7 +241,9 @@ func RemoveNetwork(ids []string, asyncTask bool) ([]string, error) {
 }
 
 func InspectNetwork(id string) (string, error) {
-	links := utils.CreateResLinksForNetwork([]string{id})
+	fullIds, err := selflink.GetFullIds([]string{id}, new(NetworkList), utils.NETWORK)
+	utils.CheckIdError(err)
+	links := utils.CreateResLinksForNetwork(fullIds)
 	url := config.URL + links[0]
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -234,7 +251,7 @@ func InspectNetwork(id string) (string, error) {
 		return "", respErr
 	}
 	network := &Network{}
-	err := json.Unmarshal(respBody, network)
+	err = json.Unmarshal(respBody, network)
 	utils.CheckJson(err)
 	return network.String(), nil
 }
@@ -270,7 +287,7 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 		ResourceDescriptionLink: networkLink,
 		ResourceType:            "NETWORK",
 	}
-	no.SetCustomProperties(hosts)
+	no.SetHosts(hosts)
 	jsonBody, err = json.Marshal(no)
 	url = config.URL + "/requests"
 	req, _ = http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
