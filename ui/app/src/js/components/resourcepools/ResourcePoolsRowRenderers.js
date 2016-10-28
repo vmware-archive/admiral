@@ -23,7 +23,7 @@ var renderers = {
     };
 
     if (resourcePool.__cpuUsage != null) {
-      model.cpuPercentage = parseFloat(resourcePool.__cpuUsage);
+      model.cpuPercentage = Math.round(parseFloat(resourcePool.__cpuUsage) * 100) / 100;
     }
 
     if (resourcePool.maxMemoryBytes !== undefined &&
