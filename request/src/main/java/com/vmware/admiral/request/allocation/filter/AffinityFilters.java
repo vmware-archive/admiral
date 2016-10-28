@@ -57,7 +57,7 @@ public final class AffinityFilters {
         } else if (ComponentDescription.class.isInstance(desc)) {
             initialize(host, ((ComponentDescription) desc));
         } else if (ContainerVolumeDescription.class.isInstance(desc)) {
-            //TODO initialize(host, (ContainerVolumeDescription) desc)
+            // TODO initialize(host, (ContainerVolumeDescription) desc)
         } else {
             throw new IllegalArgumentException("Unsupported type:" + desc.getClass());
         }
@@ -89,13 +89,18 @@ public final class AffinityFilters {
         filters.add(new DeploymentPolicyAffinityFilter(host, desc));
         filters.add(new ServiceLinkAffinityFilter(host, desc));
 
+        // networks define a host affinity filter since external networks may be available only on
+        // particular hosts or (KV-store) clusters, and regular networks have to guarantee that
+        // all containers of an application are deployed where they can talk to each other, e.g.
+        // same host or same (KV-store) cluster.
+        filters.add(new ContainerToNetworkAffinityHostFilter(host, desc));
+
         // host anti-affinity filters:
         filters.add(new ServiceAntiAffinityHostFilter(host, desc));
         filters.add(new ClusterAntiAffinityHostFilter(host, desc));
 
         // non host related dependency only
         filters.add(new DependsOnAffinityHostFilter(desc));
-        filters.add(new ContainerToNetworkAffinityHostFilter(host, desc));
         filters.add(new NamedVolumeAffinityHostFilter(host, desc));
 
     }
