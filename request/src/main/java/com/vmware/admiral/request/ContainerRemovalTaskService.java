@@ -327,7 +327,7 @@ public class ContainerRemovalTaskService
         adapterRequest.serviceTaskCallback = ServiceTaskCallback.create(UriUtils.buildUri(
                 getHost(), subTaskLink).toString());
         adapterRequest.operationTypeId = ContainerOperationType.DELETE.id;
-        sendRequest(Operation.createPatch(containerState.adapterManagementReference)
+        sendRequest(Operation.createPatch(getHost(), containerState.adapterManagementReference.toString())
                 .setBody(adapterRequest)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {

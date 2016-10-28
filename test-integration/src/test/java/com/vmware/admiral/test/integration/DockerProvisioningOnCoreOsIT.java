@@ -61,7 +61,6 @@ import org.junit.Test;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.docker.util.DockerDevice;
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
-import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
@@ -203,8 +202,6 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
 
         containerDesc.name = CONTAINER_DCP_TEST_LATEST_NAME;
         containerDesc.command = TEST_COMMAND;
-        containerDesc.instanceAdapterReference = URI
-                .create(getBaseUrl() + buildServiceUri(ManagementUriParts.ADAPTER_DOCKER));
 
         containerDesc.portBindings = new PortBinding[] { PortBinding
                 .fromDockerPortMapping(DockerPortMapping.fromString(TEST_PORT_BINDINGS)) };

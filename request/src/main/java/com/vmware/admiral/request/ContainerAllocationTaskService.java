@@ -699,7 +699,7 @@ public class ContainerAllocationTaskService
         adapterRequest.operationTypeId = ContainerOperationType.CREATE.id;
         adapterRequest.customProperties = state.customProperties;
 
-        sendRequest(Operation.createPatch(state.instanceAdapterReference)
+        sendRequest(Operation.createPatch(getHost(), state.instanceAdapterReference.toString())
                 .setBody(adapterRequest)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
