@@ -128,7 +128,6 @@
         "title": "Project",
         "addButton": "Add",
         "nameColumn": "Name",
-        "descriptionColumn": "Description",
         "details": {
           "title": "Project details"
         }
@@ -136,8 +135,7 @@
       "edit": {
         "createNew": "New Project",
         "update": "Edit Project",
-        "nameTitle": "Project name",
-        "descriptionTitle": "Project description"
+        "nameTitle": "Project name"
       }
     },
     "credential": {
