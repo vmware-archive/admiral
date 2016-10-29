@@ -223,6 +223,9 @@ var NetworkConnectorMixin = {
     $(this.$el).on('click', '.network-delete-connection', (e) => {
       e.preventDefault();
       e.stopPropagation();
+      if (this.readOnly) {
+        return;
+      }
 
       var overlayId = e.currentTarget._jsPlumb.id;
       var jsplumbInstance = this.jsplumbInstance;
@@ -243,6 +246,9 @@ var NetworkConnectorMixin = {
     prepareContainerEndpoints: function(networksHolder, containerDescriptionLink) {
       this.containerNetworksHolder[containerDescriptionLink] = networksHolder;
     },
+    setNetworksReadOnly: function(value) {
+      this.readOnly = value;
+    },
     updateContainerEndpoints(networks, containerDescriptionLink) {
       try {
         var containerEndpoints = $(this.$el)
@@ -262,13 +268,14 @@ var NetworkConnectorMixin = {
               maxConnections: 1,
               isSource: true,
               isTarget: true,
+              enabled: !this.readOnly,
               anchor: 'BottomCenter',
               endpoint: ['Image', {
                 src: 'image-assets/resource-icons/network-small.png',
                 cssClass: 'container-link'
               }],
               deleteEndpointsOnDetach: false,
-              connectorOverlays: getConnectorOverlays()
+              connectorOverlays: !this.readOnly ? getConnectorOverlays() : null
             });
           }
         } else {
@@ -296,6 +303,7 @@ var NetworkConnectorMixin = {
           src: 'image-assets/resource-icons/network-link.png',
           cssClass: 'network-link'
         }],
+        enabled: !this.readOnly,
         deleteEndpointsOnDetach: false,
         connectorOverlays: getConnectorOverlays()
       });
@@ -307,6 +315,7 @@ var NetworkConnectorMixin = {
           anchorCount: 160
         }],
         endpoint: ['Image', {src: 'image-assets/resource-icons/network-link.png'}],
+        enabled: !this.readOnly,
         deleteEndpointsOnDetach: false,
         connectorOverlays: getConnectorOverlays()
       });

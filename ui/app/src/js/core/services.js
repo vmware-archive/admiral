@@ -979,6 +979,14 @@ services.loadContainersForCompositeComponent = function(compositeComponentId) {
   return services.loadContainers({compositeComponentLink: compositeComponentLink});
 };
 
+services.loadNetworksForCompositeComponent = function(compositeComponentId) {
+  let urlPrefix = links.COMPOSITE_COMPONENTS + '/';
+  var compositeComponentLink = (compositeComponentId.indexOf(urlPrefix) > -1)
+                                  ? compositeComponentId : urlPrefix + compositeComponentId;
+
+  return services.loadNetworks({compositeComponentLinks: [compositeComponentLink]});
+};
+
 services.loadCompositeComponent = function(compositeComponentId) {
   return get(links.COMPOSITE_COMPONENTS + '/' + compositeComponentId);
 };
@@ -1729,6 +1737,17 @@ var buildContainersSearchQuery = function(queryOptions) {
       //        op: 'ne'
       //      }];
 
+    }
+    // In case of networks or other objects, they use a list of composite component links
+    var compositeComponentLinksArray = toArrayIfDefined(queryOptions.compositeComponentLinks);
+    if (compositeComponentLinksArray) {
+      newQueryOptions['compositeComponentLinks/item'] = [];
+      for (let i = 0; i < compositeComponentLinksArray.length; i++) {
+        newQueryOptions['compositeComponentLinks/item'].push({
+          val: compositeComponentLinksArray[i] + '*',
+          op: 'eq'
+        });
+      }
     }
 
     var networkArray = toArrayIfDefined(queryOptions.network);
