@@ -52,6 +52,7 @@ public class EpzComputeEnumerationTaskServiceTest extends ComputeBaseTest {
     private ComputeState cs4;
     private ComputeState cs5;
     private ComputeState cs6;
+    private ComputeState cs7;
 
     @Before
     public void createTestModel() throws Throwable {
@@ -64,7 +65,8 @@ public class EpzComputeEnumerationTaskServiceTest extends ComputeBaseTest {
         this.cs3 = createComputeState("desc2", "addr-sof-3", null, "tag2");
         this.cs4 = createComputeState("desc2", "addr-pa-4", null, "tag1", "tag2");
         this.cs5 = createComputeState("desc2", "addr-pa-5", null);
-        this.cs6 = createComputeState("desc2", "addr-pa-6", epz3.documentSelfLink);
+        this.cs6 = createComputeState("desc2", "addr-pa-6", this.epz3.documentSelfLink);
+        this.cs7 = createComputeState("desc1", "addr-sof-1", this.epz2.documentSelfLink, "tag1");
     }
 
     @After
@@ -75,7 +77,7 @@ public class EpzComputeEnumerationTaskServiceTest extends ComputeBaseTest {
         }
 
         for (ComputeState cs : Arrays.asList(this.cs1, this.cs2, this.cs3, this.cs4, this.cs5,
-                this.cs6)) {
+                this.cs6, this.cs7)) {
             delete(cs.documentSelfLink);
         }
     }
@@ -94,6 +96,7 @@ public class EpzComputeEnumerationTaskServiceTest extends ComputeBaseTest {
         validateCompute(this.cs4, this.epz1, this.epz2);
         validateCompute(this.cs5);
         validateCompute(this.cs6, this.epz3);
+        validateCompute(this.cs7, this.epz1, this.epz2);
     }
 
     @Test
@@ -137,7 +140,7 @@ public class EpzComputeEnumerationTaskServiceTest extends ComputeBaseTest {
         validateCompute(this.cs3);
         validateCompute(this.cs4, this.epz3, this.epz1);
         validateCompute(this.cs5);
-        validateCompute(this.cs6);
+        validateCompute(this.cs6, this.epz3);
     }
 
     @Test
@@ -189,6 +192,7 @@ public class EpzComputeEnumerationTaskServiceTest extends ComputeBaseTest {
         this.cs4 = getDocument(ComputeState.class, this.cs4.documentSelfLink);
         this.cs5 = getDocument(ComputeState.class, this.cs5.documentSelfLink);
         this.cs6 = getDocument(ComputeState.class, this.cs6.documentSelfLink);
+        this.cs7 = getDocument(ComputeState.class, this.cs7.documentSelfLink);
     }
 
     private ComputeState createComputeState(String desc, String address, String rpLink,
