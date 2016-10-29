@@ -187,6 +187,7 @@ function makeClusterObject(clusterId, containers) {
     name: containers ? containers[0].image : 'N/A',
     type: constants.CONTAINERS.TYPES.CLUSTER,
     containers: containers,
+    networks: containers ? containers[0].networks : {},
     compositeComponentId: getContextIdFromClusterId(clusterId)
   };
 
@@ -248,6 +249,33 @@ function isEverythingRemoved(selectedItem, operationType, removedIds) {
     return remainingItems.length < 1;
   }
 }
+
+let getNetworkLinks = function(containerOrCluster, networks) {
+  var networkLinks = {};
+  for (var i = 0; i < containerOrCluster.length; i++) {
+    var container = containerOrCluster[i];
+    var containerNetworks = container.networks || {};
+
+    for (var networkLink in containerNetworks) {
+      if (!containerNetworks.hasOwnProperty(networkLink)) {
+        continue;
+      }
+
+      networkLink = links.NETWORKS + '/' + networkLink;
+      var cNetworks = networks.filter(n => n.documentSelfLink === networkLink);
+      if (cNetworks.length !== 1) {
+        continue;
+      }
+
+      if (!networkLinks[container.documentSelfLink]) {
+        networkLinks[container.documentSelfLink] = [];
+      }
+
+      networkLinks[container.documentSelfLink].push(networkLink);
+    }
+  }
+  return networkLinks;
+};
 
 ContainersStore = Reflux.createStore({
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
@@ -1027,11 +1055,15 @@ ContainersStore = Reflux.createStore({
 
     operation.forPromise(Promise.all([
       services.loadCompositeComponent(compositeComponentId),
-      services.loadContainersForCompositeComponent(compositeComponentId)
-    ])).then(([retrievedCompositeComponent, childContainersResult]) => {
+      services.loadContainersForCompositeComponent(compositeComponentId),
+      services.loadNetworksForCompositeComponent(compositeComponentId)
+    ])).then(([retrievedCompositeComponent, childContainersResult, childNetworksResult]) => {
 
       var childContainers = utils.resultToArray(childContainersResult.documents ?
           childContainersResult.documents : childContainersResult);
+
+      var childNetworks = utils.resultToArray(childNetworksResult.documents ?
+          childNetworksResult.documents : childNetworksResult);
 
       enhanceCompositeComponent(retrievedCompositeComponent);
       retrievedCompositeComponent.icons = getContainersImageIcons(childContainers);
@@ -1043,9 +1075,13 @@ ContainersStore = Reflux.createStore({
 
       var items = this.aggregateClusterNodes(childContainers);
 
-      parentCursor.select(['selectedItemDetails'])
-        .setIn(['listView', 'items'], items)
-        .setIn(['listView', 'itemsLoading'], false);
+      var networkLinks = getNetworkLinks(items, childNetworks);
+
+      parentCursor.select(['selectedItemDetails', 'listView'])
+        .setIn(['items'], items)
+        .setIn(['itemsLoading'], false)
+        .setIn(['networks'], childNetworks)
+        .setIn(['networkLinks'], networkLinks);
 
       this.emitChange();
 

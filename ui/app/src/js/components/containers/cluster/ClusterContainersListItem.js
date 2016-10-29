@@ -49,6 +49,9 @@ var ClusterContainersListItem = Vue.extend({
       return this.model.containers && this.model.containers.length;
     }
   },
+  attached: function() {
+    this.$dispatch('attached', this);
+  },
   methods: {
     openCluster: function($event) {
       $event.stopPropagation();

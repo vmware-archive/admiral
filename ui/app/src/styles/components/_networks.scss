@@ -143,6 +143,44 @@ $network-details-size: 150px;
 .container-link.jsplumb-dragging {
 }
 
+.composite-child-containers-view > .containers-list {
+  .jsplumb-endpoint, .network-delete-connection, .network {
+    cursor: auto;
+    pointer-events: none;
+  }
+
+  .jsplumb-endpoint:not(.jsplumb-endpoint-connected) {
+    display: none;
+  }
+
+  .network-anchor:hover, .network-anchor.jsplumb-drag-hover {
+    opacity: 1;
+    border: none;
+  }
+
+  .network:hover .network-actions {
+    display: none;
+  }
+
+  .network .network-anchor:hover .network-label-drag {
+    display: none;
+  }
+
+  .network .network-anchor.jsplumb-drag-hover .network-label-drop {
+    display: none;
+  }
+
+  .network, .jsplumb-endpoint, .jsplumb-connector {
+  }
+}
+
+.composite-child-containers-view > .containers-list.context-selected {
+  .network, .jsplumb-endpoint, .jsplumb-connector {
+    opacity: 0;
+    @include transition(opacity 0.5s);
+  }
+}
+
 .network-form {
   overflow: auto;
 }

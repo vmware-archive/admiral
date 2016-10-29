@@ -27,6 +27,9 @@ var ContainersListItem = Vue.extend({
       return utils.getPortsDisplayTexts(this.model.hostAddress, this.model.ports);
     }
   },
+  attached: function() {
+    this.$dispatch('attached', this);
+  },
   methods: {
     containerStatusDisplay: utils.containerStatusDisplay,
 

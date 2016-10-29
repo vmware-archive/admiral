@@ -48,18 +48,23 @@
                                v-on:click="removeApplication($event)"></toolbar-action-button>
       </div>
 
-      <grid v-bind:context-selected="model.selectedItem" v-bind:preferred-width="preferredGridWidth">
+      <grid v-bind:context-selected="model.selectedItem"
+            v-bind:preferred-width="preferredGridWidth"
+            v-ref:container-grid
+            v-on:layout-complete="layoutComplete">
 
         <grid-item v-for="item in model.listView.items" transition="grid-item-fade" track-by="documentId"
                    v-bind:class="{'context-selected': item.documentId == selectedItemDocumentId}">
 
             <cluster-grid-item v-if="item.type === constants.CONTAINERS.TYPES.CLUSTER"
                                v-bind:model="item"
-                               v-on:click="openCompositeContainerClusterDetails(item.documentId)"></cluster-grid-item>
+                               v-on:click="openCompositeContainerClusterDetails(item.documentId)"
+                               v-on:attached="containerAttached"></cluster-grid-item>
 
             <container-grid-item v-if="item.type === constants.CONTAINERS.TYPES.SINGLE"
               v-bind:model="item"
-              v-on:click="openCompositeContainerChildDetails(item.documentId)"></container-grid-item>
+              v-on:click="openCompositeContainerChildDetails(item.documentId)"
+              v-on:attached="containerAttached"></container-grid-item>
 
         </grid-item>
 
@@ -69,6 +74,12 @@
         <span class="vertical-helper"></span>
         <img src="image-assets/loading-animation.gif">
       </div>
+      <network-box v-for="network in networks | networksOrderBy"
+                   track-by="documentSelfLink"
+                   v-bind:model="network"
+                   v-on:attached="networkAttached"
+                   v-on:detached="networkDetached"
+                   ></network-box>
     </div>
   </div>
   <div v-if="model.selectedItemDetails"
