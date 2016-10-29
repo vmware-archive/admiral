@@ -39,7 +39,7 @@ public class NetworkExternalSerializer extends StdSerializer<NetworkExternal> {
             throws IOException {
 
         if (external.value != null) {
-            gen.writeObject(external.value);
+            gen.writeBoolean(external.value);
             return;
         }
 

@@ -28,7 +28,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509TrustManager;
 
-import com.fasterxml.jackson.dataformat.yaml.snakeyaml.util.UriEncoder;
+import org.yaml.snakeyaml.util.UriEncoder;
 
 import com.vmware.admiral.adapter.docker.util.DockerStreamUtil;
 import com.vmware.admiral.common.security.EncryptionUtils;

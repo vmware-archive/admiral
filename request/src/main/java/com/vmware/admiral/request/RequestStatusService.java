@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.fasterxml.jackson.dataformat.yaml.snakeyaml.util.UriEncoder;
+import org.yaml.snakeyaml.util.UriEncoder;
 
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.composition.CompositionGraph.ResourceNode;

@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -89,6 +91,7 @@ public class ContainerNetworkDescriptionService extends StatefulService {
          * Composite Template use only. If set to true, specifies that this network exists outside
          * of the Composite Template.
          */
+        @JsonInclude(value = Include.NON_EMPTY)
         @Documentation(description = "Composite Template use only. If set to true, specifies that "
                 + "this network exists outside of the Composite Template.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)

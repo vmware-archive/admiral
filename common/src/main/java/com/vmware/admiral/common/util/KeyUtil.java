@@ -26,13 +26,12 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.PEMWriter;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.util.encoders.Base64;
 
 /*
  * Utility class that provides methods for public/private key generation and key conversion.
  */
-@SuppressWarnings("deprecation")
 public class KeyUtil {
     public static final int KEY_SIZE = 1024;
     public static final String RSA_ALGORITHM = "RSA";
@@ -50,7 +49,7 @@ public class KeyUtil {
 
     public static String toPEMFormat(Key key) {
         StringWriter sw = new StringWriter();
-        PEMWriter pemWriter = new PEMWriter(sw);
+        JcaPEMWriter pemWriter = new JcaPEMWriter(sw);
         try {
             pemWriter.writeObject(key);
             pemWriter.close();

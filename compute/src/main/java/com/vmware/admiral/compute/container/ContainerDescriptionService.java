@@ -34,6 +34,8 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -240,6 +242,7 @@ public class ContainerDescriptionService extends StatefulService {
 
         /** Automatically publish all exposed ports declared for the image */
         @JsonProperty("publish_all")
+        @JsonInclude(value = Include.NON_EMPTY)
         @Documentation(description = "Automatically bind all exposed ports declared for the image.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public Boolean publishAll;

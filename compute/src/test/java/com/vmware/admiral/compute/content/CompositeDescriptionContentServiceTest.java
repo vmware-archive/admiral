@@ -147,7 +147,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
 
         this.host.testStart(1);
         this.host.send(validateBadRequestOnImportOperation("abc",
-                "Error processing YAML content: Can not instantiate value of type [simple type, class com.vmware.admiral.compute.content.compose.CommonDescriptionEntity] from String value ('abc'); no single-String constructor/factory method"));
+                "Error processing YAML content: Can not construct instance of com.vmware.admiral.compute.content.compose.CommonDescriptionEntity: no String-argument constructor/factory method to deserialize from String value ('abc')"));
         this.host.testWait();
 
         this.host.testStart(1);
@@ -157,12 +157,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
 
         this.host.testStart(1);
         this.host.send(validateBadRequestOnImportOperation(getContent("composite.bad.yaml"),
-                "Can not deserialize instance of java.lang.String out of START_OBJECT token"));
-        this.host.testWait();
-
-        this.host.testStart(1);
-        this.host.send(validateBadRequestOnImportOperation(getContent("docker.bad.yaml"),
-                "Error processing Docker Compose v2 YAML content: Can not instantiate value of type [simple type, class com.vmware.admiral.compute.content.compose.Logging] from String value (''); no single-String constructor/factory method"));
+                "Can not deserialize instance of java.lang.String out of START_OBJECT token\n at [Source: N/A; line: -1, column: -1] (through reference chain: com.vmware.admiral.compute.container.ContainerDescriptionService$CompositeTemplateContainerDescription[\"logConfig\"]) (through reference chain: com.vmware.admiral.compute.content.CompositeTemplate[\"components\"]->java.util.LinkedHashMap[\"db\"])"));
         this.host.testWait();
 
         this.host.testStart(1);
@@ -182,6 +177,8 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                     if (e != null) {
                         if (e instanceof IllegalArgumentException) {
                             try {
+                                System.out.println(expectedMsg);
+                                System.out.println(e.getMessage());
                                 assertEquals(Operation.STATUS_CODE_BAD_REQUEST, o.getStatusCode());
                                 assertTrue(e.getMessage().contains(expectedMsg));
                                 assertTrue(o.getBody(ServiceErrorResponse.class).message
