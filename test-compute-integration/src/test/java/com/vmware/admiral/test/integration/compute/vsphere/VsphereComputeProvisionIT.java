@@ -25,6 +25,7 @@ import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.compute.ComputeOperationType;
 import com.vmware.admiral.test.integration.compute.BaseComputeProvisionIT;
 import com.vmware.photon.controller.model.ComputeProperties;
+import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;

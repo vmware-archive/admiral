@@ -39,7 +39,7 @@ import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService;
-import com.vmware.admiral.request.compute.aws.ProvisionContainerHostsTaskService;
+import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService;
 import com.vmware.admiral.request.notification.NotificationsService;
 import com.vmware.xenon.common.ServiceHost;
 

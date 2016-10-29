@@ -21,12 +21,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,6 +57,7 @@ import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.test.integration.BaseIntegrationSupportIT;
 import com.vmware.photon.controller.model.ComputeProperties;
+import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -82,10 +81,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     private static final String VMS_RESOURCE_POOL_ID = "vms-resource-pool";
     private static final String RESOURCE_POOL_ID = "hosts-resource-pool";
-    private static final String ENDPOINT_ID = "endpoint";
     private static final String PLACEMENT_ID = "host-placement";
-
-    private static final String TENANT_LINKS_KEY = "test.tenant.links";
 
     public static final String CONTAINER_DCP_TEST_LATEST_ID = "dcp-test:latest-id";
     public static final String CONTAINER_DCP_TEST_LATEST_IMAGE = "kitematic/hello-world-nginx";
@@ -113,21 +109,13 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     private static final String TEST_WORKING_DIR = "/tmp";
     private static final boolean TEST_PRIVILEGED = true;
 
-    public static enum EndpointType {
-        aws,
-        azure,
-        gpc,
-        vsphere;
-    }
-
-    private static final String SUFFIX = "bel10";
     protected final Set<ComputeState> computesToDelete = new HashSet<>();
     private final Set<String> containersToDelete = new HashSet<>();
     private GroupResourcePlacementState groupResourcePlacementState;
     private EndpointType endpointType;
     protected final TestDocumentLifeCycle documentLifeCycle = TestDocumentLifeCycle.FOR_DELETE;
     protected ResourcePoolState vmsResourcePool;
-    private List<String> tenantLinks;
+
 
     private AuthCredentialsServiceState dockerRemoteApiClientCredentials;
     private EndpointState endpoint;
@@ -220,10 +208,6 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
                 });
     }
 
-    protected abstract EndpointType getEndpointType();
-
-    protected abstract void extendEndpoint(EndpointState endpoint);
-
     protected void extendComputeDescription(ComputeDescription computeDescription)
             throws Exception {
     }
@@ -314,26 +298,6 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return UriUtils.buildUriPath(factoryLink, name);
     }
 
-    protected String name(EndpointType endpointType, String prefix, String suffix) {
-        return String.format("%s-%s-%s", prefix, endpointType.name(), suffix);
-    }
-
-    private EndpointState createEndpoint(EndpointType endpointType,
-            TestDocumentLifeCycle documentLifeCycle)
-            throws Exception {
-        EndpointState endpoint = new EndpointState();
-        endpoint.endpointType = endpointType.name();
-        endpoint.name = name(endpointType, ENDPOINT_ID, SUFFIX);
-        endpoint.tenantLinks = getTenantLinks();
-        endpoint.endpointProperties = new HashMap<>();
-        extendEndpoint(endpoint);
-
-        return postDocument(
-                EndpointAdapterService.SELF_LINK + UriUtils.URI_QUERY_CHAR
-                        + ManagementUriParts.REQUEST_PARAM_ENUMERATE_OPERATION_NAME,
-                endpoint, documentLifeCycle);
-    }
-
     private void waitForEndpointEnumeration(String resourcePoolLink) throws Throwable {
         waitFor(() -> {
             Query query = Query.Builder.create()
@@ -368,20 +332,6 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
                 return false;
             }
         });
-    }
-
-    protected List<String> getTenantLinks() {
-        if (this.tenantLinks == null) {
-            String tenantLinkProp = getTestProp(TENANT_LINKS_KEY, "/tenants/admiral");
-            String[] values = StringUtils.split(tenantLinkProp, ',');
-
-            List<String> result = new LinkedList<>();
-            for (int i = 0; i < values.length; i++) {
-                result.add(values[i].trim());
-            }
-            this.tenantLinks = result;
-        }
-        return tenantLinks;
     }
 
     protected ResourcePoolState createResourcePool(EndpointType endpointType,

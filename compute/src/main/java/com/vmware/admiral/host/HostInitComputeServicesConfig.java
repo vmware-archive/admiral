@@ -62,6 +62,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
 
     public static void startServices(ServiceHost host) {
         startServices(host,
+                CaSigningCertService.class,
                 ContainerFactoryService.class,
                 ContainerHostService.class,
                 EndpointAdapterService.class,

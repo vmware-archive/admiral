@@ -26,12 +26,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
-import java.security.KeyPair;
-import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,10 +42,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.security.EncryptionUtils;
-import com.vmware.admiral.common.util.KeyUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
@@ -60,9 +52,9 @@ import com.vmware.admiral.compute.EnvironmentMappingService.EnvironmentMappingSt
 import com.vmware.admiral.compute.PropertyMapping;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
-import com.vmware.admiral.host.DefaultCertCredentials;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
+import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionEnhancers;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
@@ -90,8 +82,6 @@ import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.AuthCredentialsService;
-import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 
@@ -104,12 +94,6 @@ public class ComputeAllocationTaskService
     public static final String DISPLAY_NAME = "Compute Allocation";
 
     private static final String ID_DELIMITER_CHAR = "-";
-
-    private static final String SSH_AUTHORIZED_KEY_PROP = "sshKey";
-    private static final String SSH_KEY_PLACEHOLDER = "\\{\\{sshAuthorizedKey\\}\\}";
-    private static final String CA_CERT_KEY_PLACEHOLDER = "\\{\\{caCertPem\\}\\}";
-    private static final String SERVER_CERT_PLACEHOLDER = "\\{\\{serverCertPem\\}\\}";
-    private static final String SERVER_KEY_PLACEHOLDER = "\\{\\{serverKeyPem\\}\\}";
 
     // cached compute description
     private transient volatile ComputeDescription computeDescription;
@@ -149,6 +133,10 @@ public class ComputeAllocationTaskService
         @Documentation(description = "(Required) the groupResourcePlacementState that links to ResourcePool")
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT, OPTIONAL, LINK }, indexing = STORE_ONLY)
         public String groupResourcePlacementLink;
+
+        @Documentation(description = "(Optional) the resourcePoolLink to ResourcePool")
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, OPTIONAL, LINK }, indexing = STORE_ONLY)
+        public String resourcePoolLink;
 
         @Documentation(description = "(Required) Number of resources to provision. ")
         @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
@@ -197,10 +185,11 @@ public class ComputeAllocationTaskService
             configureComputeDescription(state, this.computeDescription, null, null);
             break;
         case COMPUTE_DESCRIPTION_RECONFIGURED:
-            createOsDiskState(state, SubStage.SELECT_PLACEMENT_COMPUTES, null);
+            createOsDiskState(state, SubStage.SELECT_PLACEMENT_COMPUTES, null,
+                    this.computeDescription);
             break;
         case SELECT_PLACEMENT_COMPUTES:
-            selectPlacement(state, null);
+            selectPlacement(state);
             break;
         case START_COMPUTE_ALLOCATION:
             allocateComputeState(state, this.computeDescription, null);
@@ -235,6 +224,10 @@ public class ComputeAllocationTaskService
                 currentState.endpointLink,
                 patchBody.endpointLink);
 
+        currentState.resourcePoolLink = mergeProperty(
+                currentState.resourcePoolLink,
+                patchBody.resourcePoolLink);
+
         currentState.endpointComputeStateLink = mergeProperty(
                 currentState.endpointComputeStateLink,
                 patchBody.endpointComputeStateLink);
@@ -254,9 +247,10 @@ public class ComputeAllocationTaskService
     protected void validateStateOnStart(ComputeAllocationTaskState state)
             throws IllegalArgumentException {
 
-        assertNotEmpty(state.resourceType, "resourceType");
         assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
-        assertNotEmpty(state.groupResourcePlacementLink, "groupResourcePlacementLink");
+        if (state.groupResourcePlacementLink == null && state.resourcePoolLink == null) {
+            throw new IllegalArgumentException("'groupResourcePlacementLink' cannot be empty.");
+        }
 
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
@@ -325,6 +319,7 @@ public class ComputeAllocationTaskService
         body.endpointComputeStateLink = endpoint.computeLink;
         body.environmentLink = environment.documentSelfLink;
         body.endpointType = endpoint.endpointType;
+        body.resourcePoolLink = resourcePool.documentSelfLink;
 
         if (body.getCustomProperty(FIELD_NAME_CONTEXT_ID_KEY) == null) {
             body.addCustomProperty(FIELD_NAME_CONTEXT_ID_KEY, getSelfId());
@@ -340,14 +335,19 @@ public class ComputeAllocationTaskService
     }
 
     private void createOsDiskState(ComputeAllocationTaskState state,
-            SubStage nextStage, EnvironmentMappingState mapping) {
+            SubStage nextStage, EnvironmentMappingState mapping, ComputeDescription computeDesc) {
         if (state.customProperties.containsKey(ComputeConstants.CUSTOM_PROP_DISK_LINK)) {
             sendSelfPatch(createUpdateSubStageTask(state, nextStage));
             return;
         }
         if (mapping == null) {
             getServiceState(state.environmentLink, EnvironmentMappingState.class,
-                    (envMapping) -> createOsDiskState(state, nextStage, envMapping));
+                    (envMapping) -> createOsDiskState(state, nextStage, envMapping, computeDesc));
+            return;
+        }
+        if (computeDesc == null) {
+            getServiceState(state.resourceDescriptionLink, ComputeDescription.class,
+                    (compDesc) -> createOsDiskState(state, nextStage, mapping, compDesc));
             return;
         }
 
@@ -381,123 +381,36 @@ public class ComputeAllocationTaskService
                 }
             }
 
-            applyBootConfigContent(state, null, absImageId, (content) -> {
-                logInfo("Cloud config file to use [%s]", content);
-                DiskState.BootConfig.FileEntry file = new DiskState.BootConfig.FileEntry();
-                file.path = "user-data";
-                file.contents = content;
-                rootDisk.bootConfig.files = new DiskState.BootConfig.FileEntry[] { file };
+            String content = computeDesc.customProperties
+                    .get(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME);
+            logInfo("Cloud config file to use [%s]", content);
+            DiskState.BootConfig.FileEntry file = new DiskState.BootConfig.FileEntry();
+            file.path = "user-data";
+            file.contents = content;
+            rootDisk.bootConfig.files = new DiskState.BootConfig.FileEntry[] { file };
 
-                sendRequest(Operation
-                        .createPost(UriUtils.buildUri(getHost(), DiskService.FACTORY_LINK))
-                        .setBody(rootDisk)
-                        .setCompletion((o, e) -> {
-                            if (e != null) {
-                                failTask("Resource can't be created: " + rootDisk.documentSelfLink,
-                                        e);
-                                return;
-                            }
-                            DiskState diskState = o.getBody(DiskState.class);
-                            logInfo("Resource created: %s", diskState.documentSelfLink);
-                            ComputeAllocationTaskState patch = createUpdateSubStageTask(state,
-                                    nextStage);
-                            patch.addCustomProperty(
-                                    ComputeConstants.CUSTOM_PROP_DISK_LINK,
-                                    diskState.documentSelfLink);
-                            sendSelfPatch(patch);
-                        }));
-            });
+            sendRequest(Operation
+                    .createPost(UriUtils.buildUri(getHost(), DiskService.FACTORY_LINK))
+                    .setBody(rootDisk)
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            failTask("Resource can't be created: " + rootDisk.documentSelfLink,
+                                    e);
+                            return;
+                        }
+                        DiskState diskState = o.getBody(DiskState.class);
+                        logInfo("Resource created: %s", diskState.documentSelfLink);
+                        ComputeAllocationTaskState patch = createUpdateSubStageTask(state,
+                                nextStage);
+                        patch.addCustomProperty(
+                                ComputeConstants.CUSTOM_PROP_DISK_LINK,
+                                diskState.documentSelfLink);
+                        sendSelfPatch(patch);
+                    }));
 
         } catch (Throwable t) {
             failTask("Failure creating DiskState", t);
         }
-    }
-
-    private void applyBootConfigContent(ComputeAllocationTaskState state,
-            ComputeDescription computeDesc, String imageType,
-            Consumer<String> callback) {
-        if (state.customProperties.containsKey(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME)) {
-            callback.accept(
-                    state.customProperties
-                            .remove(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME));
-            return;
-        }
-        if (computeDesc == null) {
-            getServiceState(state.resourceDescriptionLink, ComputeDescription.class,
-                    (compDesc) -> applyBootConfigContent(state, compDesc, imageType, callback));
-            return;
-        }
-        boolean supportDocker = enableContainerHost(state.customProperties);
-        try {
-            String fileContent = loadResource(String.format("/%s-content/cloud_config_%s.yml",
-                    state.endpointType, supportDocker ? imageType + "_docker" : "base"));
-
-            Operation sshCredentials = Operation.createGet(this, computeDesc.authCredentialsLink);
-
-            if (supportDocker) {
-                Operation caCredentials = Operation.createGet(this,
-                        DefaultCertCredentials.AUTH_CREDENTIALS_CA_LINK);
-                Operation serverCredentials = Operation.createGet(this,
-                        DefaultCertCredentials.AUTH_CREDENTIALS_SERVER_LINK);
-                OperationSequence.create(sshCredentials, caCredentials, serverCredentials)
-                        .setCompletion((ops, exs) -> {
-                            if (exs != null) {
-                                long firstKey = exs.keySet().iterator().next();
-                                exs.values().forEach(ex -> {
-                                    logWarning("Error: %s", ex.getMessage());
-                                });
-                                failTask("Failure retrieving Credentials", exs.get(firstKey));
-                                return;
-                            }
-                            AuthCredentialsServiceState cs = ops.get(sshCredentials.getId())
-                                    .getBody(AuthCredentialsServiceState.class);
-                            String sshKey = getSshKey(cs);
-
-                            cs = ops.get(caCredentials.getId())
-                                    .getBody(AuthCredentialsServiceState.class);
-                            String caCert = cs.publicKey;
-
-                            cs = ops.get(serverCredentials.getId())
-                                    .getBody(AuthCredentialsServiceState.class);
-                            String serverCert = cs.publicKey;
-                            String serverKey = EncryptionUtils.decrypt(cs.privateKey);
-                            String content = fileContent;
-                            if (sshKey != null) {
-                                content = content.replaceFirst(SSH_KEY_PLACEHOLDER, sshKey);
-                            }
-                            content = content.replaceFirst(CA_CERT_KEY_PLACEHOLDER, caCert)
-                                    .replaceFirst(SERVER_CERT_PLACEHOLDER, serverCert)
-                                    .replaceFirst(SERVER_KEY_PLACEHOLDER, serverKey);
-                            callback.accept(content);
-                        }).sendWith(this);
-            } else {
-                sendRequest(sshCredentials.setCompletion((op, ex) -> {
-                    if (ex != null) {
-                        failTask("Failed retrieving credentials state", ex);
-                        return;
-                    }
-
-                    AuthCredentialsServiceState credentialsState = op
-                            .getBody(AuthCredentialsServiceState.class);
-
-                    String sshKey = getSshKey(credentialsState);
-                    if (sshKey != null) {
-                        callback.accept(fileContent.replaceFirst(SSH_KEY_PLACEHOLDER, sshKey));
-                    } else {
-                        callback.accept(fileContent);
-                    }
-                }));
-            }
-
-        } catch (IOException e) {
-            failTask("Failure applying boot config content to DiskState", e);
-        }
-
-    }
-
-    private String getSshKey(AuthCredentialsServiceState credentialsState) {
-        return credentialsState.customProperties != null
-                ? credentialsState.customProperties.get(SSH_AUTHORIZED_KEY_PROP) : null;
     }
 
     private void queryForAllocatedResources(ComputeAllocationTaskState state) {
@@ -541,26 +454,6 @@ public class ComputeAllocationTaskService
                 }).sendWith(getHost());
     }
 
-    private static String loadResource(String fileName) throws IOException {
-        try (InputStream is = ComputeAllocationTaskState.class.getResourceAsStream(fileName)) {
-            if (is != null) {
-                try (InputStreamReader r = new InputStreamReader(is)) {
-                    char[] buf = new char[1024];
-                    final StringBuilder out = new StringBuilder();
-
-                    int length = r.read(buf);
-                    while (length > 0) {
-                        out.append(buf, 0, length);
-                        length = r.read(buf);
-                    }
-                    return out.toString();
-                }
-            } else {
-                return "";
-            }
-        }
-    }
-
     private void configureComputeDescription(ComputeAllocationTaskState state,
             ComputeDescription computeDesc, EnvironmentMappingState mapping,
             ComputeStateWithDescription expandedEndpointComputeState) {
@@ -585,8 +478,10 @@ public class ComputeAllocationTaskService
             return;
         }
 
-        computeDesc.instanceType = mapping.getMappingValue("instanceType",
-                computeDesc.instanceType != null ? computeDesc.instanceType : computeDesc.name);
+        String value = mapping.getMappingValue("instanceType", computeDesc.instanceType);
+        if (value != null) {
+            computeDesc.instanceType = value;
+        }
 
         if (computeDesc.dataStoreId == null) {
             computeDesc.dataStoreId = mapping.getMappingValue("placement", "dataStoreId");
@@ -631,29 +526,14 @@ public class ComputeAllocationTaskService
                         ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
                         : SubStage.SELECT_PLACEMENT_COMPUTES;
 
-        ComputeAllocationTaskState patchState = createUpdateSubStageTask(state, nextStage);
-        patchState.customProperties = state.customProperties;
 
-        if (computeDesc.authCredentialsLink == null) {
-            KeyPair keyPair = KeyUtil.generateRSAKeyPair();
-            storeKeys(state, keyPair, (authCredentials) -> {
-                computeDesc.authCredentialsLink = authCredentials.documentSelfLink;
 
-                Operation.createPut(this, state.resourceDescriptionLink)
-                        .setBody(computeDesc)
-                        .setCompletion((o, e) -> {
-                            if (e != null) {
-                                failTask("Failed patching compute description : "
-                                        + Utils.toString(e),
-                                        null);
-                                return;
-                            }
-                            this.computeDescription = o.getBody(ComputeDescription.class);
-                            sendSelfPatch(patchState);
-                        })
-                        .sendWith(this);
-            });
-        } else {
+        ComputeDescriptionEnhancers.build(this).enhance(computeDesc, (cd, t) -> {
+            if (t != null) {
+                failTask("Failed patching compute description : "
+                        + Utils.toString(t), t);
+                return;
+            }
             Operation.createPut(this, state.resourceDescriptionLink)
                     .setBody(computeDesc)
                     .setCompletion((o, e) -> {
@@ -663,10 +543,13 @@ public class ComputeAllocationTaskService
                             return;
                         }
                         this.computeDescription = o.getBody(ComputeDescription.class);
+                        ComputeAllocationTaskState patchState = createUpdateSubStageTask(state,
+                                nextStage);
+                        patchState.customProperties = this.computeDescription.customProperties;
                         sendSelfPatch(patchState);
                     })
                     .sendWith(this);
-        }
+        });
     }
 
     static boolean enableContainerHost(Map<String, String> customProperties) {
@@ -674,48 +557,14 @@ public class ComputeAllocationTaskService
                 .containsKey(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME);
     }
 
-    private void storeKeys(ComputeAllocationTaskState state,
-            KeyPair keyPair, Consumer<AuthCredentialsServiceState> callback) {
-        AuthCredentialsServiceState credentialsState = new AuthCredentialsServiceState();
-        credentialsState.type = AuthCredentialsType.PublicKey.name();
-        credentialsState.userEmail = UUID.randomUUID().toString();
-        credentialsState.publicKey = KeyUtil.toPEMFormat(keyPair.getPublic());
-        credentialsState.privateKey = EncryptionUtils.encrypt(
-                KeyUtil.toPEMFormat(keyPair.getPrivate()));
-
-        String sshAuthorizedKey = KeyUtil.toPublicOpenSSHFormat((RSAPublicKey) keyPair.getPublic());
-        credentialsState.customProperties = new HashMap<>();
-        credentialsState.customProperties.put(SSH_AUTHORIZED_KEY_PROP, sshAuthorizedKey);
-
-        sendRequest(Operation.createPost(this, AuthCredentialsService.FACTORY_LINK)
-                .setBody(credentialsState)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        logWarning("Failed to store credentials: %s", Utils.toString(ex));
-                    }
-
-                    callback.accept(o.getBody(AuthCredentialsServiceState.class));
-                }));
-    }
-
-    private void selectPlacement(ComputeAllocationTaskState state,
-            GroupResourcePlacementState groupResourcePlacement) {
-        if (groupResourcePlacement == null) {
-            getGroupResourcePlacement(state, (placement) -> selectPlacement(state, placement));
-            return;
-        }
-
-        if (groupResourcePlacement.resourcePoolLink == null) {
-            failTask("Group resource placement has no placement zone", null);
-            return;
-        }
+    private void selectPlacement(ComputeAllocationTaskState state) {
 
         ComputePlacementSelectionTaskState computePlacementSelection = new ComputePlacementSelectionTaskState();
 
         computePlacementSelection.documentSelfLink = getSelfId();
         computePlacementSelection.computeDescriptionLink = state.resourceDescriptionLink;
         computePlacementSelection.resourceCount = state.resourceCount;
-        computePlacementSelection.resourcePoolLink = groupResourcePlacement.resourcePoolLink;
+        computePlacementSelection.resourcePoolLink = state.resourcePoolLink;
         computePlacementSelection.tenantLinks = state.tenantLinks;
         computePlacementSelection.contextId = getContextId(state);
         computePlacementSelection.customProperties = state.customProperties;
@@ -895,8 +744,10 @@ public class ComputeAllocationTaskService
         resource.diskLinks = diskLinks;
         resource.networkInterfaceLinks = networkLinks;
         resource.customProperties = new HashMap<>(state.customProperties);
-        resource.customProperties.put(ComputeConstants.GROUP_RESOURCE_PLACEMENT_LINK_NAME,
-                state.groupResourcePlacementLink);
+        if (state.groupResourcePlacementLink != null) {
+            resource.customProperties.put(ComputeConstants.GROUP_RESOURCE_PLACEMENT_LINK_NAME,
+                    state.groupResourcePlacementLink);
+        }
         resource.customProperties.put("computeType", "VirtualMachine");
         resource.tenantLinks = state.tenantLinks;
         resource.documentSelfLink = computeResourceLink;
@@ -1068,23 +919,22 @@ public class ComputeAllocationTaskService
                         }));
     }
 
-    private void getGroupResourcePlacement(ComputeAllocationTaskState state,
-            Consumer<GroupResourcePlacementState> callbackFunction) {
-        sendRequest(Operation.createGet(this, state.groupResourcePlacementLink)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure retrieving group resource placement", e);
-                        return;
-                    }
-
-                    GroupResourcePlacementState groupResourcePlacement = o
-                            .getBody(GroupResourcePlacementState.class);
-                    callbackFunction.accept(groupResourcePlacement);
-                }));
-    }
-
     private void getResourcePool(ComputeAllocationTaskState state,
             Consumer<ResourcePoolState> callbackFunction) {
+        if (state.resourcePoolLink != null) {
+            Operation.createGet(this, state.resourcePoolLink)
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            failTask("Failure retrieving ResourcePool: " + state.resourcePoolLink,
+                                    e);
+                            return;
+                        }
+                        ResourcePoolState resourcePool = o.getBody(ResourcePoolState.class);
+                        callbackFunction.accept(resourcePool);
+                    })
+                    .sendWith(this);
+            return;
+        }
         Operation opRQL = Operation.createGet(this, state.groupResourcePlacementLink);
         Operation opRP = Operation.createGet(this, null);
         OperationSequence.create(opRQL)

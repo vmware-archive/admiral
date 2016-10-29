@@ -16,5 +16,7 @@ package com.vmware.admiral.common;
  */
 public enum AuthCredentialsType {
     // Credential types for configuration purposes (e.g. host configuration)
-    PublicKey, Password,
+    PublicKey,
+    Password,
+    PublicKeyCA
 }

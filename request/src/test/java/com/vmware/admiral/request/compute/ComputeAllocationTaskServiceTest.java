@@ -149,10 +149,10 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         return provisionTask;
     }
 
-    private ComputeAllocationTaskState createComputeAllocationTask(String containerDescLink,
+    private ComputeAllocationTaskState createComputeAllocationTask(String computeDescriptionLink,
             long resourceCount, boolean allocation) {
         ComputeAllocationTaskState allocationTask = new ComputeAllocationTaskState();
-        allocationTask.resourceDescriptionLink = containerDescLink;
+        allocationTask.resourceDescriptionLink = computeDescriptionLink;
         allocationTask.groupResourcePlacementLink = computeGroupPlacementState.documentSelfLink;
         allocationTask.resourceType = "Compute";
         allocationTask.resourceCount = resourceCount;

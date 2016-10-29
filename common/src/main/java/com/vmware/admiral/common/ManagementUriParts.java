@@ -11,12 +11,16 @@
 
 package com.vmware.admiral.common;
 
+import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.services.common.AuthCredentialsService;
+
 public interface ManagementUriParts {
     // Registry/Config/Credentials:
     String CONFIG = "/config";
     String REGISTRIES = CONFIG + "/registries";
     String REGISTRY_HOSTS = CONFIG + "/registry-spec";
     String CONFIG_PROPS = CONFIG + "/props";
+    String CONFIG_CA_CREDENTIALS = CONFIG + "/ca-credentials";
     String ENVIRONMENT_MAPPING = CONFIG + "/env-mapping";
     String SSL_TRUST_CERTS = CONFIG + "/trust-certs";
     String SSL_TRUST_CERTS_IMPORT = CONFIG + "/trust-certs-import";
@@ -94,6 +98,8 @@ public interface ManagementUriParts {
     String REQUEST_COMPOSITION_SUB_TASK = REQUEST + "/composition-sub-tasks";
     String REQUEST_RESOURCE_CLUSTERING_TASK = REQUEST + "/clustering-task";
     String REQUEST_PROVISION_CONTAINER_HOSTS = REQUEST + "/provision-container-hosts-tasks";
+    String REQUEST_PROVISION_COMPUTE_CONTAINER_HOSTS = REQUEST
+            + "/provision-compute-container-hosts-tasks";
     String REQUEST_PROVISION_CONTAINER_NETWORK_TASKS = REQUEST
             + "/provision-container-network-tasks";
     String REQUEST_PROVISION_CONTAINER_VOLUME_TASKS = REQUEST
@@ -148,4 +154,9 @@ public interface ManagementUriParts {
     String REQUEST_PARAM_TARGET_RESOURCE_POOL_LINK = "targetRpLink";
 
     String EXEC = "/exec";
+
+    String AUTH_CREDENTIALS_CA_LINK = UriUtils.buildUriPath(
+            AuthCredentialsService.FACTORY_LINK, "default-ca-cert");
+    String AUTH_CREDENTIALS_CLIENT_LINK = UriUtils.buildUriPath(
+            AuthCredentialsService.FACTORY_LINK, "default-client-cert");
 }
