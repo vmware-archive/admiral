@@ -25,6 +25,7 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -43,15 +44,18 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
 
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
+import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.admiral.request.ContainerHostRemovalTaskFactoryService;
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState;
 import com.vmware.admiral.request.RequestStatusFactoryService;
@@ -60,10 +64,12 @@ import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
+import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
+import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.TaskState;
@@ -84,11 +90,17 @@ public abstract class BaseIntegrationSupportIT {
     protected static final int STATE_CHANGE_WAIT_POLLING_PERIOD_MILLIS = Integer.getInteger(
             "test.state.change.wait.period.millis", 1000);
 
+    private static final String ENDPOINT_ID = "endpoint";
+    private static final String TENANT_LINKS_KEY = "test.tenant.links";
+    public static final String SUFFIX = "bel10";
+
     private static final Properties testProperties = loadTestProperties();
 
     protected static final Queue<ServiceDocument> documentsForDeletionAfterClass = new LinkedBlockingQueue<>();
     protected static final Queue<ServiceDocument> documentsForDeletion = new LinkedBlockingQueue<>();
     protected final TestLogger logger;
+
+    private List<String> tenantLinks;
 
     protected BaseIntegrationSupportIT() {
         logger = new TestLogger(getClass());
@@ -481,6 +493,44 @@ public abstract class BaseIntegrationSupportIT {
         }
 
         return null;
+    }
+
+    protected EndpointState createEndpoint(EndpointType endpointType,
+            TestDocumentLifeCycle documentLifeCycle)
+            throws Exception {
+        EndpointState endpoint = new EndpointState();
+        endpoint.endpointType = endpointType.name();
+        endpoint.name = name(endpointType, ENDPOINT_ID, SUFFIX);
+        endpoint.tenantLinks = getTenantLinks();
+        endpoint.endpointProperties = new HashMap<>();
+        extendEndpoint(endpoint);
+
+        return postDocument(
+                EndpointAdapterService.SELF_LINK + UriUtils.URI_QUERY_CHAR
+                        + ManagementUriParts.REQUEST_PARAM_ENUMERATE_OPERATION_NAME,
+                endpoint, documentLifeCycle);
+    }
+
+    protected abstract EndpointType getEndpointType();
+
+    protected abstract void extendEndpoint(EndpointState endpoint);
+
+    protected String name(EndpointType endpointType, String prefix, String suffix) {
+        return String.format("%s-%s-%s", prefix, endpointType.name(), suffix);
+    }
+
+    protected List<String> getTenantLinks() {
+        if (this.tenantLinks == null) {
+            String tenantLinkProp = getTestProp(TENANT_LINKS_KEY, "/tenants/admiral");
+            String[] values = StringUtils.split(tenantLinkProp, ',');
+
+            List<String> result = new LinkedList<>();
+            for (int i = 0; i < values.length; i++) {
+                result.add(values[i].trim());
+            }
+            this.tenantLinks = result;
+        }
+        return tenantLinks;
     }
 
     protected static SSLSocketFactory getUnsecuredSSLSocketFactory()

@@ -33,6 +33,7 @@ import com.vmware.admiral.request.RequestBrokerService;
 import com.vmware.admiral.test.integration.SimpleHttpsClient;
 import com.vmware.admiral.test.integration.compute.aws.AwsComputeProvisionIT;
 import com.vmware.admiral.test.integration.compute.vsphere.VsphereComputeProvisionIT;
+import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.xenon.common.Operation;

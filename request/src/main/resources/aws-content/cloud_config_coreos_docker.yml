@@ -3,98 +3,27 @@
 ssh_authorized_keys:
   - {{sshAuthorizedKey}}
 
-write_files:
-    - path: /etc/docker/ca.pem
-      permissions: 0644
-      content: |
-        -----BEGIN CERTIFICATE-----
-        MIID0jCCArqgAwIBAgIUaJa6BSqDmIBXH2QBD4ariY5XTAcwDQYJKoZIhvcNAQEL
-        BQAwbzELMAkGA1UEBhMCVVMxDzANBgNVBAoTBlZNd2FyZTEUMBIGA1UECxMLYmVs
-        bGV2dWUtY2kxCzAJBgNVBAcTAkNBMRYwFAYDVQQIEw1TYW4gRnJhbmNpc2NvMRQw
-        EgYDVQQDEwtiZWxsZXZ1ZS1jaTAeFw0xNjAxMTQxNzI4MDBaFw0yMTAxMTIxNzI4
-        MDBaMG8xCzAJBgNVBAYTAlVTMQ8wDQYDVQQKEwZWTXdhcmUxFDASBgNVBAsTC2Jl
-        bGxldnVlLWNpMQswCQYDVQQHEwJDQTEWMBQGA1UECBMNU2FuIEZyYW5jaXNjbzEU
-        MBIGA1UEAxMLYmVsbGV2dWUtY2kwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-        AoIBAQDYdHsQuYxZdvE5Js22YZdNLxs9i5M86/FC/q7QKZ9bbc4lpY/ftxc1HYQs
-        pI/si5RFs2pC7UDwq672+fVNCrsbvM3vo+hVBR9047DvIe+SOib253cT7Wy+QkmN
-        kyJzlqyj+iJU3AVWDxoIEmtQrB9XI2y66tWWrdqBfgO2CmcN1uosLkOHQkBFZ/uX
-        tgEl+brXgceIIhpMVqowgSpa273nzuX1J9HgvXazz8w+r0Y50su2vCNT9SEy/uTs
-        AMB3c5rdQJK6d2ceyRIcl5p5mOaki31lsXRMkvVgAkFwUC/3s+2OY+XePm8FcbA/
-        o9Z0gkThaKiaNmsu5S8mT8m1F9VlAgMBAAGjZjBkMA4GA1UdDwEB/wQEAwIBBjAS
-        BgNVHRMBAf8ECDAGAQH/AgECMB0GA1UdDgQWBBTooFhnj3hRIIqP//1+axCfMM2O
-        0zAfBgNVHSMEGDAWgBTooFhnj3hRIIqP//1+axCfMM2O0zANBgkqhkiG9w0BAQsF
-        AAOCAQEAh7G6vVCwbuBg8hDnHls4WcUuypZeGhY8Pp83VxjLxVoqyGDfwuvrIZQ8
-        NstVADKIJXrtirTONQc9JnIYTbGTZK0Am5pskb5OOMgwr6nFVucq/BhVIOferaSB
-        tDOe8qu9NLsMTjUypgjoL1jJGVrVEm/UT372k2V+KuSRM4CbLj0UtDNwLYu48+M2
-        CX/wh6uMkKxGLbzTj6wBY6F+mi7+0g7Ycg0y9Edr6iGZlCkoxXcRGVVNZ50jNMCS
-        NxiIkA+EPkW4yEA2mChwX8jc9daqeOPovVul99PZXrN3quBcGAodjM+902ZDsp74
-        95ipn5oXgvXKrHjZRcL0gdkcgBmJGA==
-        -----END CERTIFICATE-----
-
-    - path: /etc/docker/server.pem
-      permissions: 0644
-      content: |
-        -----BEGIN CERTIFICATE-----
-        MIID6TCCAtGgAwIBAgIUd/ZQgIuPHm451RQgnLhKYBXYDZcwDQYJKoZIhvcNAQEL
-        BQAwbzELMAkGA1UEBhMCVVMxDzANBgNVBAoTBlZNd2FyZTEUMBIGA1UECxMLYmVs
-        bGV2dWUtY2kxCzAJBgNVBAcTAkNBMRYwFAYDVQQIEw1TYW4gRnJhbmNpc2NvMRQw
-        EgYDVQQDEwtiZWxsZXZ1ZS1jaTAeFw0xNjAxMjAxNjE2MDBaFw0yMTAxMTgxNjE2
-        MDBaMEgxCzAJBgNVBAYTAlVTMQswCQYDVQQHEwJDQTEWMBQGA1UECBMNU2FuIEZy
-        YW5jaXNjbzEUMBIGA1UEAxMLYmVsbGV2dWUtY2kwggEiMA0GCSqGSIb3DQEBAQUA
-        A4IBDwAwggEKAoIBAQCtnf2HJj/iiCqyDu1eC4Dr+/5ZOJ6YZ8CTJDovyIKhYRXy
-        id3VGqrBwG2lXx6qXJrOE3M6zhZMBD5KLE2bwkxuixdZCrRZDTFqi+I+KPl9+M4z
-        fDLRshUuLYQ9Ulb8MI3e2F3h17TrKW7bmZgR2d2aBSWYcgRfttHTssQRQCRlGJaZ
-        U9a3a27y+UW4CujA9XtkpbHIvQFj2MlgTJHSZl8odezfileDmScfFLkhykEfIR48
-        x6Mx8wsPhiKt4Qvbinxv/uqjoX/P6o2QSEEHdmn0kfYnqhYIJPqiZlqZ78A30YhA
-        onwgGQ6OhIx1ismvsoW5jvCwLi2gaxNEMlxzxho7AgMBAAGjgaMwgaAwDgYDVR0P
-        AQH/BAQDAgWgMBMGA1UdJQQMMAoGCCsGAQUFBwMBMAwGA1UdEwEB/wQCMAAwHQYD
-        VR0OBBYEFGp/8H1uKHsGKA+2X6/Dja2HdqgIMB8GA1UdIwQYMBaAFOigWGePeFEg
-        io///X5rEJ8wzY7TMCsGA1UdEQQkMCKCGmJlbGxldnVlLWNpLmVuZy52bXdhcmUu
-        Y29thwQKmAgWMA0GCSqGSIb3DQEBCwUAA4IBAQDAuWzlxoiYlVyJcQQ4EOXpmdAi
-        jdvz1IRt9Bq8u3gX2x8KpUaq8VKoBCIdvIgsKXkr9rKW1nW2do3jxtwFG33QT7eZ
-        V1CJTzh8B3Q9ImqIZ7JDEmeld1BXi9AbJruRVcyLD6KAl6kJ7S4pnIkinyI4R4aL
-        6/H1bHDUljvmrPY9/K9LP5+wVCv5EDxmTU5pCP3CYMDCKWEtuvVGrJPLuLBiVeT4
-        BFyYe+81qcZbJz4U2N2Hqytt+ywuf4GmIAznocAml9Yki6zMORc3/vcWLrQarJME
-        5hn1fHNEUvMzFPLmyI6yWKj3Q4MomSyVE2T9QnZfmkyaBIQ65rGQY2oqPYw5
-        -----END CERTIFICATE-----
-
-    - path: /etc/docker/server-key.pem
-      permissions: 0600
-      content: |
-        -----BEGIN RSA PRIVATE KEY-----
-        MIIEogIBAAKCAQEArZ39hyY/4ogqsg7tXguA6/v+WTiemGfAkyQ6L8iCoWEV8ond
-        1RqqwcBtpV8eqlyazhNzOs4WTAQ+SixNm8JMbosXWQq0WQ0xaoviPij5ffjOM3wy
-        0bIVLi2EPVJW/DCN3thd4de06ylu25mYEdndmgUlmHIEX7bR07LEEUAkZRiWmVPW
-        t2tu8vlFuArowPV7ZKWxyL0BY9jJYEyR0mZfKHXs34pXg5knHxS5IcpBHyEePMej
-        MfMLD4YireEL24p8b/7qo6F/z+qNkEhBB3Zp9JH2J6oWCCT6omZame/AN9GIQKJ8
-        IBkOjoSMdYrJr7KFuY7wsC4toGsTRDJcc8YaOwIDAQABAoIBACjKpBSq8fuhjpaD
-        V1XvUf0gGeSQnwKj7eUkb99mNvr/uo5fwhUdzNz0/04JiUTxuRWOEFbSsP5vSMtY
-        mWttPVQDrhqnnzQFG4UzFJcSPXxRhvElzzLhqoRNAXL+850RM2QWZgh4C/PsqjVC
-        Yy5eh+h2KR0mPMzYQXiB2ftLnMF7oAP2k6pdNQOMzczSCPADfF8TN2F5Ji33T7iI
-        rXi31lRFaNhBhk8fsy3XH20o90MQ10lcMUVPiC+6Hyjuuob89Fmly97UrYeJQov7
-        MIYCG0AaCxOzNEx9kcF5tL3kloK5ESnQvTwgC+ceCVuFCo78qRnmOhtjinPa2tpW
-        w6Aq+JECgYEA5iG/u5UeHcDtEJD0wp6Mf1Jdh8k6NMiyAvhU86v4ZzDBscVddgeV
-        rLhc2k75g8RT044dgEt1Ju9R7SLuatSv73OqIBus4N/mb6Or2OWa7ra3A0oA5UEX
-        WJdrH9Mg1VHfBkTUjxQoPiXi4HwyQatZFRSI0H8DQo1k5PzMrirZtU8CgYEAwSH6
-        /bDvQp5y/1vTUX41knTpUw08HP0VluSV7RCg281YtJLv45GG4Z7GR8JZfor7I5vi
-        6y4I45KmJVT7rqoXgs0DM3YGK+Ki0qgNOCGMMJ9s98IOzkr+5g6l3tgTpA05TRmI
-        UGLv+3uV7R7Hp7RtQZXF2fBd/ppND29wFscI6VUCgYBaR7cd8bvk1ECsFRHQH77i
-        W/+RO2H4PxuGisFY7of+g2QZR2II4aTYI2NZyU2dYbG49rGgGPoWkiBDtUZu5o02
-        lNuSyQijF3MhLMZHyptjNo7JXYjIZyavfIdr7rmctgeWP/5bOv8mklpU0qQsmvnR
-        iUK6+Hjg7PM92ea6FNlfhQKBgE7nahqxad7Gy2bGhjw6Gvr95sF2m8OgJmzicNpM
-        u9txNrd3fKh1sSyGaK2ymkuXzmjK7Fd3FEydgmGoKbc/aKGYzqD8rCLL0gfMfrIb
-        CqJmz+cdEl13yFIHU/8KOmQAvxNfxhBJi5Ar+qHIvHsovKZZ4V5b1JsLQUZ4GcxE
-        fsCNAoGAON8eNJhjqFLCAOgFsRfSIFnV85GLizrLz4toSYIbjG4KMQ8Oq6pOu+m7
-        2E1lEoHOfPS4C+UthLRY9HsiH6MGW+2Qc5SkXr2Dc61TohqDRAya0jl0DRgVYH/f
-        sLQYuplpandfrAwBtUouOLDslqdQbncwhoZo7lJEycwrO4ynPRo=
-        -----END RSA PRIVATE KEY-----
+{{serverCerts}}:
 
 coreos:
   units:
+    - name: docker-tls-tcp.socket
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=Docker Secured Socket for the API
+
+        [Socket]
+        ListenStream=443
+        BindIPv6Only=both
+        Service=docker.service
+
+        [Install]
+        WantedBy=sockets.target
     - name: docker.service
       drop-ins:
         - name: 10-tls-verify.conf
           content: |
             [Service]
-            Environment='DOCKER_OPTS=-H=0.0.0.0:2376 --tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem --insecure-registry=\"52.90.196.115\"'
-      command: start
+            Environment='DOCKER_OPTS=--tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem'

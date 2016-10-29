@@ -13,6 +13,7 @@ package com.vmware.admiral.test.integration.compute.aws;
 
 import com.vmware.admiral.test.integration.compute.BaseComputeProvisionIT;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSConstants;
+import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 

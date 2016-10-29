@@ -11,7 +11,7 @@ properties:
   imageType:
     mappings:
       linux: "ami-6869aa05"
-      coreos: "ami-80108b97"
+      coreos: "ami-7e4f1c69"
       windows: "ami-c8a9baa2"
       ubuntu: "ami-787d6e12"
       ubuntu-server-1604: "ami-2ef48339"
