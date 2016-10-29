@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -33,6 +34,7 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService.Resource
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState.ResourcePoolProperty;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceStateCollectionUpdateRequest;
+import com.vmware.xenon.services.common.QueryTask.Query;
 
 /**
  * Tests for the {@link ElasticPlacementZoneService} class.
@@ -43,7 +45,7 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // create a non-elastic RP
         ResourcePoolState rp = createRp();
         assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
-        assertEquals(2, rp.query.booleanClauses.size());
+        assertTrue(isNonElasticQuery(rp.query));
 
         // create EPZ for the RP
         String epzLink = createEpz(rp.documentSelfLink, "tag1", "tag2").documentSelfLink;
@@ -51,13 +53,13 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // verify RP is now elastic
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.of(ResourcePoolProperty.ELASTIC), rp.properties);
-        assertEquals(3, rp.query.booleanClauses.size());
+        assertFalse(isNonElasticQuery(rp.query));
 
         // delete EPZ and verify RP is back to non-elastic
         delete(epzLink);
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
-        assertEquals(2, rp.query.booleanClauses.size());
+        assertTrue(isNonElasticQuery(rp.query));
     }
 
     @Test
@@ -65,7 +67,7 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // create a non-elastic RP
         ResourcePoolState rp = createRp();
         assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
-        assertEquals(2, rp.query.booleanClauses.size());
+        assertTrue(isNonElasticQuery(rp.query));
 
         // create EPZ for the RP with no tags
         createEpz(rp.documentSelfLink);
@@ -73,7 +75,7 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // verify RP is not elastic
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
-        assertEquals(2, rp.query.booleanClauses.size());
+        assertTrue(isNonElasticQuery(rp.query));
     }
 
     @Test
@@ -92,7 +94,7 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // create a non-elastic RP
         ResourcePoolState rp = createRp();
         assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
-        assertEquals(2, rp.query.booleanClauses.size());
+        assertTrue(isNonElasticQuery(rp.query));
 
         // create EPZ for the RP
         ElasticPlacementZoneState epz = createEpz(rp.documentSelfLink, "tag1", "tag2");
@@ -100,7 +102,8 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // verify RP is now elastic
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.of(ResourcePoolProperty.ELASTIC), rp.properties);
-        assertEquals(3, rp.query.booleanClauses.size());
+        assertFalse(isNonElasticQuery(rp.query));
+        assertEquals(2, rp.query.booleanClauses.get(0).booleanClauses.get(0).booleanClauses.size());
 
         // add more tags through a put request
         epz.tagLinksToMatch.add("tag3");
@@ -110,7 +113,7 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // verify RP is updated with the new tags
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.of(ResourcePoolProperty.ELASTIC), rp.properties);
-        assertEquals(5, rp.query.booleanClauses.size());
+        assertEquals(4, rp.query.booleanClauses.get(0).booleanClauses.get(0).booleanClauses.size());
     }
 
     @Test
@@ -118,7 +121,7 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // create a non-elastic RP
         ResourcePoolState rp = createRp();
         assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
-        assertEquals(2, rp.query.booleanClauses.size());
+        assertTrue(isNonElasticQuery(rp.query));
 
         // create EPZ for the RP
         ElasticPlacementZoneState epz = createEpz(rp.documentSelfLink, "tag1", "tag2");
@@ -126,7 +129,7 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // verify RP is now elastic
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.of(ResourcePoolProperty.ELASTIC), rp.properties);
-        assertEquals(3, rp.query.booleanClauses.size());
+        assertFalse(isNonElasticQuery(rp.query));
 
         // add more tags through a put request
         epz.tagLinksToMatch.clear();;
@@ -135,7 +138,7 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // verify RP is not elastic
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
-        assertEquals(2, rp.query.booleanClauses.size());
+        assertTrue(isNonElasticQuery(rp.query));
     }
 
     @Test
@@ -143,7 +146,7 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // create a non-elastic RP
         ResourcePoolState rp = createRp();
         assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
-        assertEquals(2, rp.query.booleanClauses.size());
+        assertTrue(isNonElasticQuery(rp.query));
 
         // create EPZ for the RP
         String epzLink = createEpz(rp.documentSelfLink, "tag1", "tag2").documentSelfLink;
@@ -151,13 +154,14 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // verify RP is now elastic
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.of(ResourcePoolProperty.ELASTIC), rp.properties);
-        assertEquals(3, rp.query.booleanClauses.size());
+        assertFalse(isNonElasticQuery(rp.query));
+        assertEquals(2, rp.query.booleanClauses.get(0).booleanClauses.get(0).booleanClauses.size());
 
         // add more tags and verify RP query is updated
         patchEpz(epzLink, "tag3", "tag4");
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.of(ResourcePoolProperty.ELASTIC), rp.properties);
-        assertEquals(5, rp.query.booleanClauses.size());
+        assertEquals(4, rp.query.booleanClauses.get(0).booleanClauses.get(0).booleanClauses.size());
     }
 
     @Test
@@ -165,7 +169,7 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // create a non-elastic RP
         ResourcePoolState rp = createRp();
         assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
-        assertEquals(2, rp.query.booleanClauses.size());
+        assertTrue(isNonElasticQuery(rp.query));
 
         // create EPZ for the RP
         String epzLink = createEpz(rp.documentSelfLink, "tag1", "tag2").documentSelfLink;
@@ -173,7 +177,7 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // verify RP is now elastic
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.of(ResourcePoolProperty.ELASTIC), rp.properties);
-        assertEquals(3, rp.query.booleanClauses.size());
+        assertFalse(isNonElasticQuery(rp.query));
 
         // add more tags and verify RP query is updated
         Map<String, Collection<Object>> itemsToRemove = new HashMap<>();
@@ -192,7 +196,7 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // verify RP is not elastic
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
-        assertEquals(2, rp.query.booleanClauses.size());
+        assertTrue(isNonElasticQuery(rp.query));
     }
 
     private ElasticPlacementZoneState createEpz(String rpLink, String... tagLinks)
@@ -222,5 +226,11 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
             result.add(tagLink);
         }
         return result;
+    }
+
+    private static boolean isNonElasticQuery(Query query) {
+        return query.booleanClauses.size() == 2 &&
+                query.booleanClauses.get(0).booleanClauses == null &&
+                query.booleanClauses.get(1).booleanClauses == null;
     }
 }

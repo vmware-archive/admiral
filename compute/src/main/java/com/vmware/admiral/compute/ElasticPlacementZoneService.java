@@ -34,6 +34,7 @@ import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.Utils.MergeResult;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 
 /**
  * Describes an elastic placement zone where the computes contributing capacity to the resource
@@ -209,14 +210,25 @@ public class ElasticPlacementZoneService extends StatefulService {
 
     /**
      * Generates a ComputeState query based on the tag links defined in the elastic placement zone.
+     *
+     * The query includes computes matched by tags and computes explicitly assigned to the RP:
+     * is-compute AND (match-tags OR explicitly-assigned)
      */
     private static Query generateRpQuery(ElasticPlacementZoneState epz) {
-        Query.Builder queryBuilder = Query.Builder.create()
-                .addKindFieldClause(ComputeState.class);
+        Query.Builder tagQueryBuilder = Query.Builder.create();
         for (String tagLink : epz.tagLinksToMatch) {
             // all tagLinksToMatch must be set on the compute
-            queryBuilder.addCollectionItemClause(ResourceState.FIELD_NAME_TAG_LINKS, tagLink);
+            tagQueryBuilder.addCollectionItemClause(ResourceState.FIELD_NAME_TAG_LINKS, tagLink);
         }
-        return queryBuilder.build();
+
+        Query assignmentClause = Query.Builder.create()
+                .addClause(tagQueryBuilder.build().setOccurance(Occurance.SHOULD_OCCUR))
+                .addFieldClause(ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, epz.resourcePoolLink,
+                        Occurance.SHOULD_OCCUR)
+                .build();
+        Query kindClause = Query.Builder.create().addKindFieldClause(ComputeState.class).build();
+
+        Query epzQuery = Query.Builder.create().addClauses(assignmentClause, kindClause).build();
+        return epzQuery;
     }
 }
