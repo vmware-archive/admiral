@@ -651,9 +651,14 @@ let HostsStore = Reflux.createStore({
   },
 
   loadHostData: function(hostModel, credentialLink, deploymentPolicyLink) {
-    var promises = [
-      services.loadResourcePool(hostModel.resourcePoolLink).catch(() => Promise.resolve())
-    ];
+    var promises = [];
+
+    if (hostModel.resourcePoolLink) {
+        promises.push(
+            services.loadResourcePool(hostModel.resourcePoolLink).catch(() => Promise.resolve()));
+    } else {
+        promises.push(Promise.resolve());
+    }
 
     if (credentialLink) {
       promises.push(services.loadCredential(credentialLink).catch(() => Promise.resolve()));
@@ -684,7 +689,9 @@ let HostsStore = Reflux.createStore({
             : utils.getDocumentId(credentialLink);
         hostModel.credential = credential;
       }
-      hostModel.resourcePool = config.resourcePoolState;
+      if (hostModel.resourcePoolLink && config) {
+          hostModel.resourcePool = config.resourcePoolState;
+      }
       hostModel.deploymentPolicy = deploymentPolicy;
 
       // preselection of resource pool and credentials
