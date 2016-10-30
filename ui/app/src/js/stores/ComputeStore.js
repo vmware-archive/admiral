@@ -188,10 +188,14 @@ let ComputeStore = Reflux.createStore({
 
       actions.ResourcePoolsActions.retrieveResourcePools();
 
+      var promises = [];
 
-      var promises = [
-        services.loadResourcePool(document.resourcePoolLink).catch(() => Promise.resolve())
-      ];
+      if (document.resourcePoolLink) {
+        promises.push(
+            services.loadResourcePool(document.resourcePoolLink).catch(() => Promise.resolve()));
+      } else {
+        promises.push(Promise.resolve());
+      }
 
       if (document.tagLinks && document.tagLinks.length) {
         promises.push(
@@ -201,7 +205,9 @@ let ComputeStore = Reflux.createStore({
       }
 
       Promise.all(promises).then(([config, tags]) => {
-        computeModel.resourcePool = config.resourcePoolState;
+        if (document.resourcePoolLink && config) {
+          computeModel.resourcePool = config.resourcePoolState;
+        }
         computeModel.tags = tags ? Object.values(tags) : [];
 
         this.setInData(['computeEditView'], computeModel);

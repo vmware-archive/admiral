@@ -187,7 +187,6 @@ public class ContainerHostService extends StatelessService {
         final ComputeState cs = hostSpec.hostState;
         AssertUtil.assertNotNull(cs, "computeState");
         AssertUtil.assertNotEmpty(cs.address, "address");
-        AssertUtil.assertNotEmpty(cs.resourcePoolLink, "resourcePoolLink");
         AssertUtil.assertNotEmpty(cs.customProperties, "customProperties");
         String adapterDockerType = cs.customProperties.get(HOST_DOCKER_ADAPTER_TYPE_PROP_NAME);
         AssertUtil.assertNotEmpty(adapterDockerType, "__adapterDockerType");

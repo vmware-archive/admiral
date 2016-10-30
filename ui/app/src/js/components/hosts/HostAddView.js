@@ -78,7 +78,7 @@ var HostAddView = Vue.extend({
 
   computed: {
     buttonsDisabled: function() {
-      return !(this.address && this.resourcePool);
+      return !this.address;
     },
     validationErrors: function() {
       return this.model.validationErrors || {};
