@@ -43,7 +43,6 @@ var projectAddCmd = &cobra.Command{
 }
 
 func initProjectAdd() {
-	projectAddCmd.Flags().StringVar(&projectDescription, "description", "", projectDescriptionDesc)
 	ProjectsRootCmd.AddCommand(projectAddCmd)
 }
 
@@ -57,7 +56,7 @@ func RunProjectAdd(args []string) (string, error) {
 	if name, ok = ValidateArgsCount(args); !ok {
 		return "", MissingProjectNameError
 	}
-	newID, err = projects.AddProject(name, projectDescription)
+	newID, err = projects.AddProject(name)
 
 	if err != nil {
 		return "", err
@@ -135,7 +134,6 @@ var projectUpdateCmd = &cobra.Command{
 
 func initProjectUpdate() {
 	projectUpdateCmd.Flags().StringVar(&newName, "name", "", "New name.")
-	projectUpdateCmd.Flags().StringVar(&newDescription, "description", "", "New description.")
 	ProjectsRootCmd.AddCommand(projectUpdateCmd)
 }
 
@@ -150,7 +148,7 @@ func RunProjectUpdate(args []string) (string, error) {
 	if id, ok = ValidateArgsCount(args); !ok {
 		return "", MissingProjectIdError
 	}
-	newID, err = projects.EditProjectID(id, newName, newDescription)
+	newID, err = projects.EditProjectID(id, newName)
 
 	if err != nil {
 		return "", err

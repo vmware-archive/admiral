@@ -43,8 +43,7 @@ func TestMain(m *testing.M) {
 func TestAddUpdateRemoveProject(t *testing.T) {
 	// Testing phase 1
 	name := "test-project"
-	description := "test-description"
-	id, err := AddProject(name, description)
+	id, err := AddProject(name)
 	CheckTestError(err, t)
 
 	// Validating phase 1
@@ -66,10 +65,6 @@ func TestAddUpdateRemoveProject(t *testing.T) {
 
 	if actualProject.Name != name {
 		t.Errorf("Expected name: %s, actual name: %s", name, actualProject.Name)
-	}
-
-	if actualProject.Description != description {
-		t.Errorf("Expected description: %s, actual description: %s", description, actualProject.Description)
 	}
 
 	// Testing phase 2
@@ -95,8 +90,7 @@ func TestAddUpdateRemoveProject(t *testing.T) {
 func TestAddProjectWithEmptyName(t *testing.T) {
 	// Testing
 	name := ""
-	description := "test-description"
-	_, err := AddProject(name, description)
+	_, err := AddProject(name)
 
 	// Validating
 	if err == nil {
@@ -107,14 +101,12 @@ func TestAddProjectWithEmptyName(t *testing.T) {
 func TestUpdateProject(t *testing.T) {
 	// Preparing
 	name := "test-project"
-	description := "test-description"
 	newName := "new-test-project"
-	newDescription := "new-test-description"
-	id, err := AddProject(name, description)
+	id, err := AddProject(name)
 	CheckTestError(err, t)
 
 	// Testing
-	_, err = EditProjectID(id, newName, newDescription)
+	_, err = EditProjectID(id, newName)
 	CheckTestError(err, t)
 
 	// Validating
@@ -134,10 +126,6 @@ func TestUpdateProject(t *testing.T) {
 
 	if actualProject.Name != newName {
 		t.Errorf("Expected new name: %s, actual new name: %s", newName, actualProject.Name)
-	}
-
-	if actualProject.Description != newDescription {
-		t.Errorf("Expected new description: %s, actual new description: %s", newDescription, actualProject.Description)
 	}
 
 	// Cleaning
