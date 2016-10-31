@@ -51,7 +51,6 @@ func TestAddUseRemoveProjects(t *testing.T) {
 
 	// Run the test
 	TestPrintln("Adding new project.")
-	projectAddCmd.ParseFlags([]string{"--description=test-description"})
 	projectMsg, err := RunProjectAdd([]string{"test-project"})
 	CheckTestError(err, t)
 	projectId := strings.Split(projectMsg, " ")[2]
@@ -67,7 +66,7 @@ func TestAddUseRemoveProjects(t *testing.T) {
 	CheckTestError(err, t)
 
 	TestPrintln("Updating the project.")
-	projectUpdateCmd.ParseFlags([]string{"--name=test-test-project", "--description==test-test-description"})
+	projectUpdateCmd.ParseFlags([]string{"--name=test-test-project"})
 	projectMsg, err = RunProjectUpdate([]string{projectId})
 	CheckTestError(err, t)
 

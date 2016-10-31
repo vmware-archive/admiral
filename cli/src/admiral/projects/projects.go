@@ -32,7 +32,6 @@ var (
 
 type Project struct {
 	Name             string `json:"name,omitempty"`
-	Description      string `json:"description,omitempty"`
 	DocumentSelfLink string `json:"documentSelfLink,omitempty"`
 }
 
@@ -86,27 +85,22 @@ func (gl *ProjectList) GetOutputString() string {
 
 //AddProject adds project and takes as parameters the name and description of the new project.
 //Returns the ID of the new project and error. If the error is != nil the string for ID is empty.
-func AddProject(name, description string) (string, error) {
+func AddProject(name string) (string, error) {
 	if name == "" {
 		return "", ProjectNameNotProvidedError
 	}
-
 	project := &Project{
-		Name:        name,
-		Description: description,
+		Name: name,
 	}
-
 	jsonBody, err := json.Marshal(project)
 	utils.CheckJson(err)
 
 	url := config.URL + "/resources/groups"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
-
 	if respErr != nil {
 		return "", respErr
 	}
-
 	project = &Project{}
 	err = json.Unmarshal(respBody, project)
 	utils.CheckJson(err)
@@ -150,7 +144,7 @@ func RemoveProjectID(id string) (string, error) {
 //In case you don't want to modify the property pass empty string. The function
 //returns the ID of the edited string and error which is != nil if the none or more than one projects.
 //have the same name and if the response code is different from 200.
-func EditProject(name, newName, newDescription string) (string, error) {
+func EditProject(name, newName string) (string, error) {
 	links, err := GetProjectLinks(name)
 	if err != nil {
 		return "", err
@@ -162,20 +156,19 @@ func EditProject(name, newName, newDescription string) (string, error) {
 		return "", DuplicateNamesError
 	}
 	id := utils.GetResourceID(links[0])
-	return EditProjectID(id, newName, newDescription)
+	return EditProjectID(id, newName)
 }
 
 //EditProjectID edits project by ID. The parameters it takes are
 //the ID of desired project to edit, new name and new description.
 //In case you don't want to modify the property pass empty string. The function
 //returns the ID of the edited string and error which is != nil if the response code is different from 200.
-func EditProjectID(id, newName, newDescription string) (string, error) {
+func EditProjectID(id, newName string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(ProjectList), utils.PROJECT)
 	utils.CheckIdError(err)
 	url := config.URL + utils.CreateResLinkForProject(fullId)
 	project := &Project{
-		Name:        newName,
-		Description: newDescription,
+		Name: newName,
 	}
 	jsonBody, err := json.Marshal(project)
 	utils.CheckJson(err)
