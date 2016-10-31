@@ -202,10 +202,11 @@ public class BindingEvaluator {
                 componentNameToDescription, allBindings, visited);
 
         if (rootSourceValue != null) {
-            Map<String, Object> serializedDescription = serializeToMap(targetDescription.component);
+            Map<String, Object> serializedDescription = serializeToMap(
+                    targetDescription.getServiceDocument());
             setValue(serializedDescription, binding.targetFieldPath, rootSourceValue);
-            targetDescription.component = (ServiceDocument) deserializeFromMap(
-                    serializedDescription, targetDescription.component.getClass());
+            targetDescription.updateServiceDocument((ServiceDocument) deserializeFromMap(
+                    serializedDescription, targetDescription.getServiceDocument().getClass()));
         }
 
     }
@@ -232,7 +233,8 @@ public class BindingEvaluator {
         ComponentDescription sourceDescription = componentNameToDescription
                 .get(sourceComponentName);
 
-        Object rootSourceValue = getFieldValueByPath(sourceFieldPath, sourceDescription.component);
+        Object rootSourceValue = getFieldValueByPath(sourceFieldPath,
+                sourceDescription.getServiceDocument());
 
         // if the source value is null it may be bound to something else
         if (rootSourceValue == null) {

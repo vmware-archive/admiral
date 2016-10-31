@@ -166,7 +166,7 @@ public class CompositeDescriptionServiceTest extends ComputeBaseTest {
         ComponentDescription containerComponent = new ComponentDescription();
         containerComponent.name = "container";
         container.name = "updated";
-        containerComponent.component = container;
+        containerComponent.updateServiceDocument(container);
         containerComponent.type = ResourceType.CONTAINER_TYPE.getContentType();
 
         CompositeDescription cd = new CompositeDescription();
@@ -195,7 +195,7 @@ public class CompositeDescriptionServiceTest extends ComputeBaseTest {
         for (ContainerDescription createdContainer : createdContainers) {
             for (int i = 0; i < retrievedContainers.size(); i++) {
                 ContainerDescription retrievedContainer = (ContainerDescription) retrievedContainers
-                        .get(i).component;
+                        .get(i).getServiceDocument();
                 if (retrievedContainer.documentSelfLink.equals(createdContainer.documentSelfLink)) {
                     checkContainersForЕquality(createdContainer, retrievedContainer);
                     retrievedContainers.remove(i);

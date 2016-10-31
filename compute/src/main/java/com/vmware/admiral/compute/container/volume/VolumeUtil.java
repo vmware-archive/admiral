@@ -201,8 +201,8 @@ public class VolumeUtil {
             Class<T> clazz, Collection<ComponentDescription> componentDescriptions) {
 
         return componentDescriptions.stream()
-                .filter(cd -> clazz.isInstance(cd.component))
-                .map(cd -> clazz.cast(cd.component))
+                .filter(cd -> clazz.isInstance(cd.getServiceDocument()))
+                .map(cd -> clazz.cast(cd.getServiceDocument()))
                 .collect(Collectors.toMap(c -> c.name, c -> c));
     }
 

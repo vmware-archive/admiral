@@ -13,11 +13,15 @@ package com.vmware.admiral.compute;
 
 import java.util.List;
 
+import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.content.Binding;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.Utils;
 
 public class ComponentDescription {
-    public ServiceDocument component;
+
+    private transient ServiceDocument component;
+    public String componentJson;
     public String type;
 
     public String name;
@@ -26,11 +30,29 @@ public class ComponentDescription {
     public ComponentDescription(ServiceDocument component, String type, String name,
             List<Binding> bindings) {
         this.component = component;
+        this.componentJson = Utils.toJson(component);
         this.type = type;
         this.name = name;
         this.bindings = bindings;
     }
 
     public ComponentDescription() {
+    }
+
+    public ServiceDocument getServiceDocument() {
+        if (this.componentJson == null) {
+            return null;
+        }
+
+        if (this.component == null) {
+            this.component = Utils.fromJson(componentJson,
+                    CompositeComponentRegistry.metaByType(this.type).descriptionClass);
+        }
+        return component;
+    }
+
+    public void updateServiceDocument(ServiceDocument serviceDocument) {
+        this.componentJson = Utils.toJson(serviceDocument);
+        this.component = serviceDocument;
     }
 }
