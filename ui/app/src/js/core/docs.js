@@ -163,6 +163,8 @@ docs.checkIfAvailable = function(callback) {
   });
 };
 
-retrieveTokensFromStorage();
+if (utils.isContextAwareHelpEnabled()) {
+  retrieveTokensFromStorage();
+}
 
 export default docs;
