@@ -25,10 +25,21 @@
 
     <properties>
         <buildDirectory>${project.basedir}/target</buildDirectory>
+        <failsafeReportsDirectory>${project.build.directory}/failsafe-reports</failsafeReportsDirectory>
     </properties>
 
     <build>
         <directory>${buildDirectory}</directory>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <reportsDirectory>${failsafeReportsDirectory}</reportsDirectory>
+                    <summaryFile>${failsafeReportsDirectory}/failsafe-summary.xml</summaryFile>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
     <dependencies>
@@ -55,90 +66,8 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>admiral-common-test</artifactId>
             <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>continuous-delivery</artifactId>
-            <version>${project.version}</version>
+            <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <profiles>
-        <profile>
-            <id>docker</id>
-            <properties>
-                <!-- extra properties for the integration tests (the dynamic container port) -->
-                <test.integration.properties>${project.build.directory}/test-classes/integration-test-ports.properties</test.integration.properties>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                        <configuration>
-                            <systemPropertyVariables>
-                                <test.integration.properties>${test.integration.properties}</test.integration.properties>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.jolokia</groupId>
-                        <artifactId>docker-maven-plugin</artifactId>
-                        <configuration>
-                            <images>
-                                <image>
-                                    <alias>admiral-itests</alias>
-                                    <name>admiral:${admiral.build.tag}</name>
-                                    <run>
-                                        <ports>
-                                            <port>0.0.0.0:test.xenon.port:${admiral.container.port}</port>
-                                        </ports>
-                                        <portPropertyFile>${test.integration.properties}
-                                        </portPropertyFile>
-                                        <env>
-                                            <JAVA_OPTS>-Djavax.net.debug=ssl:handshake -Djava.util.logging.config.class=com.vmware.admiral.common.SystemPropertyLoggingConfigurer -Djava.util.logging.config.level=ALL</JAVA_OPTS>
-                                        </env>
-                                        <log>
-                                            <prefix>admiral-itests</prefix>
-                                            <date>default</date>
-                                            <color>cyan</color>
-                                        </log>
-                                        <wait>
-                                            <!-- waiting for URL causes a lot of exceptions in xenon, so just wait a few seconds -->
-                                            <time>5000</time>
-                                        </wait>
-                                        <extraHosts>
-                                            <!-- add a host mapping for the registry inside the container -->
-                                            <extraHost>${admiral.registry.mapping}</extraHost>
-                                        </extraHosts>
-                                    </run>
-                                </image>
-                            </images>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>start-itests</id>
-                                <phase>pre-integration-test</phase>
-                                <goals>
-                                    <goal>start</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>stop-itests</id>
-                                <phase>post-integration-test</phase>
-                                <goals>
-                                    <goal>logs</goal>
-                                    <goal>stop</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
