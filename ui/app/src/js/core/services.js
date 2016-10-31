@@ -1560,9 +1560,9 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
         if (resourcePoolId.startsWith(prefixPath)) {
             resourcePoolId = resourcePoolId.slice(prefixPath.length);
         }
-        qOps['customProperties/' + constants.CUSTOM_PROPS.EPZ_NAME_PREFIX + resourcePoolId] = [
+        qOps.customProperties = [
           {
-            val: constants.CUSTOM_PROPS.EPZ_VALUE,
+            val: constants.CUSTOM_PROPS.EPZ_NAME_PREFIX + resourcePoolId,
             op: 'eq'
           }
         ];
