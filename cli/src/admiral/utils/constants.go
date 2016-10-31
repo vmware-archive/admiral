@@ -15,6 +15,7 @@ const (
 	PlacementZoneFilter    = "/resources/elastic-placement-zones-config?documentType=true&expand=true&$filter=documentSelfLink+eq+"
 	ProjectFilter          = "/resources/groups?documentType=true&expand=true&$filter=documentSelfLink+eq+"
 	RegistryFilter         = "/config/registries?documentType=true&expand=true&$filter=documentSelfLink+eq+"
+	RequestFilter          = "/request-status?documentType=true&$count=false&$limit=1000&$orderby=documentExpirationTimeMicros+desc&$filter=taskInfo/stage+eq+'*'+and+documentSelfLink+eq+"
 	TemplateFilter         = "/resources/composite-descriptions?expand=true&documentType=true&$filter=parentDescriptionLink+ne+'*'+and+documentSelfLink+eq+"
 )
 
@@ -46,6 +47,8 @@ func (rt ResourceType) GetName() string {
 	case 11:
 		return "Registry"
 	case 12:
+		return "Request"
+	case 13:
 		return "Template"
 	default:
 		return ""
@@ -64,5 +67,6 @@ const (
 	PLACEMENT_ZONE
 	PROJECT
 	REGISTRY
+	REQUEST
 	TEMPLATE
 )

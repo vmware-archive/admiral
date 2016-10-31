@@ -24,6 +24,7 @@ import (
 	"admiral/config"
 	"admiral/events"
 	"admiral/utils"
+	"admiral/utils/selflink"
 )
 
 const (
@@ -118,6 +119,15 @@ type RequestsList struct {
 	TotalCount    int32                  `json:"totalCount"`
 	Documents     map[string]RequestInfo `json:"documents"`
 	DocumentLinks []string               `json:"documentLinks"`
+}
+
+func (rl *RequestsList) GetCount() int {
+	return len(rl.DocumentLinks)
+}
+
+func (rl *RequestsList) GetResource(index int) selflink.Identifiable {
+	resource := rl.Documents[rl.DocumentLinks[index]]
+	return &resource
 }
 
 func (rl *RequestsList) ClearAllRequests() (string, []error) {
@@ -239,7 +249,9 @@ func (rl *RequestsList) PrintAll() {
 }
 
 func RemoveRequestID(id string) (string, error) {
-	url := config.URL + utils.CreateResLinkForRequest(id)
+	fullId, err := selflink.GetFullId(id, new(RequestsList), utils.REQUEST)
+	utils.CheckIdError(err)
+	url := config.URL + utils.CreateResLinkForRequest(fullId)
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
 	return id, respErr

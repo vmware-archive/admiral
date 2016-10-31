@@ -93,7 +93,7 @@ type HostPatch struct {
 type HostState struct {
 	Id               string             `json:"id,omitempty"`
 	Address          string             `json:"address"`
-	ResourcePoolLink string             `json:"resourcePoolLink"`
+	ResourcePoolLink string             `json:"resourcePoolLink,omitempty"`
 	CustomProperties map[string]*string `json:"customProperties"`
 }
 
@@ -163,7 +163,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 
 	url := config.URL + "/resources/hosts"
 
-	if ok, err := allFlagReadyHost(ipF, placementZoneID); !ok {
+	if ok, err := allFlagReadyHost(ipF); !ok {
 		return "", err
 	}
 
@@ -171,6 +171,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 		newCredID string
 		dpLink    string
 		fullDpId  string
+		pzLink    string
 		err       error
 	)
 
@@ -193,9 +194,11 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 		utils.CheckIdError(err)
 	}
 
-	fullPzId, err := selflink.GetFullId(placementZoneID, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
-	utils.CheckIdError(err)
-	pzLink := utils.CreateResLinkForPlacementZone(fullPzId)
+	if placementZoneID != "" {
+		fullPzId, err := selflink.GetFullId(placementZoneID, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
+		utils.CheckIdError(err)
+		pzLink = utils.CreateResLinkForPlacementZone(fullPzId)
+	}
 
 	if deplPolicyID != "" {
 		fullDpId, err = selflink.GetFullId(deplPolicyID, new(deplPolicy.DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
@@ -461,12 +464,9 @@ func EditHost(id, name, placementZoneId, deplPolicyF, credId string,
 	return id, nil
 }
 
-func allFlagReadyHost(ipF, resPoolF string) (bool, error) {
+func allFlagReadyHost(ipF string) (bool, error) {
 	if ipF == "" {
 		return false, AddressNotProvidedError
-	}
-	if resPoolF == "" {
-		return false, PlacementZoneNotProvidedError
 	}
 	return true, nil
 }
