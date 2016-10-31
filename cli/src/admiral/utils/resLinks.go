@@ -188,6 +188,9 @@ func GetIdFilterUrl(shortId string, restype ResourceType) string {
 	case REGISTRY:
 		shortSelfLink := CreateResLinkForRegistry(shortId)
 		url = RegistryFilter + createIdFilter(shortSelfLink)
+	case REQUEST:
+		shortSelfLink := CreateResLinkForRequest(shortId)
+		url = RequestFilter + createIdFilter(shortSelfLink)
 	case TEMPLATE:
 		shortSelfLink := CreateResLinkForTemplate(shortId)
 		url = TemplateFilter + createIdFilter(shortSelfLink)

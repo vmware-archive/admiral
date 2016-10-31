@@ -50,7 +50,7 @@ func initHostAdd() {
 	hostAddCmd.Flags().StringVar(&userName, "username", "", "*Required if adding new credentials* "+userNameDesc)
 	hostAddCmd.Flags().StringVar(&passWord, "password", "", "*Required if adding new credentials* "+passWordDesc)
 	hostAddCmd.Flags().StringVar(&ipF, "address", "", required+ipFDesc)
-	hostAddCmd.Flags().StringVar(&placementZoneId, "placement-zone", "", required+placementZoneIdDesc)
+	hostAddCmd.Flags().StringVar(&placementZoneId, "placement-zone", "", placementZoneIdDesc)
 	hostAddCmd.Flags().StringVar(&credId, "credentials", "", credIdDesc)
 	hostAddCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", deplPolicyFDesc)
 	hostAddCmd.Flags().BoolVar(&autoAccept, "accept", false, autoAcceptDesc)
