@@ -128,7 +128,7 @@ public class ContainerNetworkMaintenance {
         request.operationTypeId = NetworkOperationType.INSPECT.id;
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         host.sendRequest(Operation
-                .createPatch(networkState.adapterManagementReference)
+                .createPatch(host, networkState.adapterManagementReference.toString())
                 .setBody(request)
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {

@@ -291,7 +291,7 @@ public class ContainerNetworkProvisionTaskService
             }
             networkRequest.customProperties = state.customProperties;
 
-            sendRequest(Operation.createPatch(state.instanceAdapterReference)
+            sendRequest(Operation.createPatch(getHost(), state.instanceAdapterReference.toString())
                     .setBody(networkRequest)
                     .setContextId(getSelfId())
                     .setCompletion((o, e) -> {

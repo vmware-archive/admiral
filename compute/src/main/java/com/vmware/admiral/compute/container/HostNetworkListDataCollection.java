@@ -336,8 +336,8 @@ public class HostNetworkListDataCollection extends StatefulService {
                                 networkState.parentLinks = new ArrayList<>(
                                         Arrays.asList(callback.containerHostLink));
 
-                                networkState.adapterManagementReference = UriUtils.buildUri(
-                                        getHost(), ManagementUriParts.ADAPTER_DOCKER_NETWORK);
+                                networkState.adapterManagementReference = UriUtils
+                                        .buildUri(ManagementUriParts.ADAPTER_DOCKER_NETWORK);
 
                                 networksLeft.add(networkState);
                             }

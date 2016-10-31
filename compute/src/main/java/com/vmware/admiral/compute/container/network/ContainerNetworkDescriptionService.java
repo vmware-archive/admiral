@@ -209,8 +209,8 @@ public class ContainerNetworkDescriptionService extends StatefulService {
         }
 
         if (state.instanceAdapterReference == null) {
-            state.instanceAdapterReference = UriUtilsExtended.buildUri(getHost(),
-                    ManagementUriParts.ADAPTER_DOCKER_NETWORK);
+            state.instanceAdapterReference = UriUtilsExtended
+                    .buildUri(ManagementUriParts.ADAPTER_DOCKER_NETWORK);
         }
 
         if (state.ipam != null) {
