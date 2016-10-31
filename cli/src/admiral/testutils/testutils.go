@@ -49,6 +49,12 @@ func CheckTestError(err error, t *testing.T) {
 	}
 }
 
+func CheckTestErrors(errs []error, t *testing.T) {
+	for _, err := range errs {
+		CheckTestError(err, t)
+	}
+}
+
 func TestPrintln(s string) {
 	output := "\x1b[31;1m----->" + s + "\x1b[37;1m"
 	fmt.Println(output)

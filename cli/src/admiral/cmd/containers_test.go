@@ -39,10 +39,6 @@ func TestContainerProvision(t *testing.T) {
 		t.FailNow()
 	}
 
-	TestPrintln("Removing host before add new one. Having error here is expected.")
-	hostRemoveCmd.ParseFlags([]string{"--force"})
-	RunHostRemove([]string{tc.HostAddress})
-
 	TestPrintln("Adding host.")
 	hostAddCmd.ParseFlags([]string{"--address=" + tc.HostAddress, "--placement-zone=" + tc.PlacementZone,
 		"--public=" + tc.PublicKey, "--private=" + tc.PrivateKey, "--accept"})
@@ -52,8 +48,8 @@ func TestContainerProvision(t *testing.T) {
 
 	// Run the test
 	TestPrintln("Provisioning container.")
-	contMsg, err := RunContainerRun([]string{"kitematic/hello-world-nginx"})
-	CheckTestError(err, t)
+	contMsg, errs := RunContainerRun([]string{"kitematic/hello-world-nginx"})
+	CheckTestErrors(errs, t)
 
 	TestPrintln("Stopping container.")
 	contId := strings.Split(contMsg, " ")[2]
