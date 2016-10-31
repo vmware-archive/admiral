@@ -294,7 +294,7 @@ public class ContainerNetworkRemovalTaskService extends
         adapterRequest.operationTypeId = (Boolean.TRUE.equals(networkState.external)
                 && state.externalInspectOnly) ? NetworkOperationType.INSPECT.id
                         : NetworkOperationType.DELETE.id;
-        sendRequest(Operation.createPatch(networkState.adapterManagementReference)
+        sendRequest(Operation.createPatch(getHost(), networkState.adapterManagementReference.toString())
                 .setBody(adapterRequest)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
