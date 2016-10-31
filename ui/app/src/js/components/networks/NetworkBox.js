@@ -74,6 +74,7 @@ var NetworkBox = Vue.extend({
       e.preventDefault();
       e.stopImmediatePropagation();
       this.$dispatch('edit', this);
+      this.$dispatch('disableNetworkSaveButton', false);
     },
     onDelete: function(e) {
       e.preventDefault();

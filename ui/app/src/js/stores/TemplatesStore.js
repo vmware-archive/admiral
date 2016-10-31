@@ -405,7 +405,7 @@ let updateContainerDescriptionsWithNetwork = function(oldName, newName) {
                   ['selectedItemDetails', 'templateDetails', 'listView', 'items']);
   if (containerDefs) {
     containerDefs = containerDefs.map((cd) => {
-      if (cd.networks[oldName]) {
+      if (cd.networks[oldName] && oldName !== newName) {
         cd = cd.asMutable();
         cd.networks = cd.networks.asMutable();
         cd.networks[newName] = cd.networks[oldName];

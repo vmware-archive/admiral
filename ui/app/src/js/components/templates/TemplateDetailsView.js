@@ -55,7 +55,7 @@ var TemplateDetailsView = Vue.extend({
        return this.savingContainer || this.addingContainer || this.savingNetwork;
     },
     buttonNetworkDisabled: function() {
-       return this.savingNetwork || this.disableSavingNetworkButton;
+       return this.disableSavingNetworkButton;
     },
     networks: function() {
       var networks = this.model.templateDetails && this.model.templateDetails.listView.networks;
@@ -364,7 +364,6 @@ var TemplateDetailsView = Vue.extend({
       this.savingContainer = false;
       this.addingContainer = false;
       this.savingNetwork = false;
-      this.disableSavingNetworkButton = true;
 
       if (model.alert) {
         this.$dispatch('container-form-alert', model.alert.message, model.alert.type);
@@ -451,6 +450,7 @@ var TemplateDetailsView = Vue.extend({
     },
     openAddNewNetwork: function() {
       TemplateActions.openEditNetwork();
+      this.$dispatch('disableNetworkSaveButton', true);
     },
     saveNetwork: function($event) {
       $event.preventDefault();
@@ -557,6 +557,7 @@ var TemplateDetailsView = Vue.extend({
     },
     editNetwork: function(e) {
       TemplateActions.openEditNetwork(this.model.documentId, e.model);
+      this.$dispatch('disableNetworkSaveButton', false);
     },
     removeNetwork: function(e) {
       TemplateActions.removeNetwork(this.model.documentId, e.model);
