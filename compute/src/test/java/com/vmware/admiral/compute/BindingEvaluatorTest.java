@@ -51,9 +51,9 @@ public class BindingEvaluatorTest {
         BindingEvaluator.evaluateBindings(compositeDescription);
 
         firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).component;
+                .get(0).getServiceDocument();
         secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).component;
+                .get(1).getServiceDocument();
 
         assertEquals(firstDescription._cluster, secondDescription._cluster);
     }
@@ -79,9 +79,9 @@ public class BindingEvaluatorTest {
         BindingEvaluator.evaluateBindings(compositeDescription);
 
         firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).component;
+                .get(0).getServiceDocument();
         secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).component;
+                .get(1).getServiceDocument();
 
         assertEquals(firstDescription._cluster, secondDescription._cluster);
         assertEquals(firstDescription.memoryLimit, secondDescription.memoryLimit);
@@ -107,9 +107,9 @@ public class BindingEvaluatorTest {
         BindingEvaluator.evaluateBindings(compositeDescription);
 
         firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).component;
+                .get(0).getServiceDocument();
         secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).component;
+                .get(1).getServiceDocument();
 
         assertEquals(firstDescription.logConfig.type, secondDescription.hostname);
     }
@@ -134,9 +134,9 @@ public class BindingEvaluatorTest {
         BindingEvaluator.evaluateBindings(compositeDescription);
 
         firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).component;
+                .get(0).getServiceDocument();
         secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).component;
+                .get(1).getServiceDocument();
 
         assertEquals(firstDescription.customProperties.get("key"), secondDescription.hostname);
     }
@@ -161,9 +161,9 @@ public class BindingEvaluatorTest {
         BindingEvaluator.evaluateBindings(compositeDescription);
 
         firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).component;
+                .get(0).getServiceDocument();
         secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).component;
+                .get(1).getServiceDocument();
 
         assertEquals(firstDescription.logConfig.type, secondDescription.hostname);
     }
@@ -190,9 +190,9 @@ public class BindingEvaluatorTest {
         BindingEvaluator.evaluateBindings(compositeDescription);
 
         firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).component;
+                .get(0).getServiceDocument();
         secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).component;
+                .get(1).getServiceDocument();
 
         assertNotNull(secondDescription.hostname);
         assertEquals(firstDescription._cluster.toString(), secondDescription.hostname);
@@ -218,9 +218,9 @@ public class BindingEvaluatorTest {
         BindingEvaluator.evaluateBindings(compositeDescription);
 
         firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).component;
+                .get(0).getServiceDocument();
         secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).component;
+                .get(1).getServiceDocument();
 
         assertNotNull(secondDescription._cluster);
         assertEquals(firstDescription.hostname, secondDescription._cluster.toString());
@@ -276,9 +276,9 @@ public class BindingEvaluatorTest {
         BindingEvaluator.evaluateBindings(compositeDescription);
 
         firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).component;
+                .get(0).getServiceDocument();
         secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).component;
+                .get(1).getServiceDocument();
 
         assertEquals(firstDescription.hostname, secondDescription.hostname);
         assertEquals(firstDescription.memoryLimit, secondDescription.memoryLimit);
@@ -315,11 +315,11 @@ public class BindingEvaluatorTest {
         BindingEvaluator.evaluateBindings(compositeDescription);
 
         firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).component;
+                .get(0).getServiceDocument();
         secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).component;
+                .get(1).getServiceDocument();
         thirdDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(2).component;
+                .get(2).getServiceDocument();
 
         assertEquals(firstDescription.memoryLimit, thirdDescription.memoryLimit);
         assertEquals(secondDescription.memorySwapLimit, thirdDescription.memoryLimit);
@@ -356,11 +356,11 @@ public class BindingEvaluatorTest {
         BindingEvaluator.evaluateBindings(compositeDescription);
 
         firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).component;
+                .get(0).getServiceDocument();
         secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).component;
+                .get(1).getServiceDocument();
         thirdDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(2).component;
+                .get(2).getServiceDocument();
 
         assertEquals(firstDescription.memoryLimit, thirdDescription.memoryLimit);
         assertEquals(secondDescription.memoryLimit, thirdDescription.memoryLimit);
@@ -385,9 +385,9 @@ public class BindingEvaluatorTest {
         BindingEvaluator.evaluateBindings(compositeDescription);
 
         firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).component;
+                .get(0).getServiceDocument();
         secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).component;
+                .get(1).getServiceDocument();
 
         assertNotNull(secondDescription.memoryLimit);
         assertEquals(firstDescription._cluster.toString(),
@@ -446,9 +446,9 @@ public class BindingEvaluatorTest {
         BindingEvaluator.evaluateBindings(compositeDescription);
 
         firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).component;
+                .get(0).getServiceDocument();
         secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).component;
+                .get(1).getServiceDocument();
 
         assertEquals(new Integer(20), secondDescription._cluster);
     }
@@ -471,9 +471,9 @@ public class BindingEvaluatorTest {
         BindingEvaluator.evaluateBindings(compositeDescription);
 
         firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).component;
+                .get(0).getServiceDocument();
         secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).component;
+                .get(1).getServiceDocument();
 
         assertNull(firstDescription._cluster);
         assertEquals(new Integer(5), secondDescription._cluster);
@@ -500,9 +500,9 @@ public class BindingEvaluatorTest {
         BindingEvaluator.evaluateBindings(compositeDescription);
 
         firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).component;
+                .get(0).getServiceDocument();
         secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).component;
+                .get(1).getServiceDocument();
 
         assertNotNull(secondDescription.hostname);
         assertEquals("10.0.0.1:2376", secondDescription.hostname);

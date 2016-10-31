@@ -238,7 +238,7 @@ public class CompositionGraph {
         for (final ComponentDescription d : componentDescriptions) {
             final ResourceNode resourceNode = new ResourceNode();
             resourceNode.name = d.name;
-            resourceNode.resourceDescLink = d.component.documentSelfLink;
+            resourceNode.resourceDescLink = d.getServiceDocument().documentSelfLink;
             resourceNode.resourceType = d.type;
             final ResourceNode previousNode = resourceNodesByName.put(
                     resourceNode.name, resourceNode);

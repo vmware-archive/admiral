@@ -581,7 +581,8 @@ public class CompositionSubTaskService
             }
 
             ComponentDescription description = compositeDescription.componentDescriptions.stream()
-                    .filter(c -> c.component.documentSelfLink.equals(resourceDescriptionLink))
+                    .filter(c -> c.getServiceDocument().documentSelfLink
+                            .equals(resourceDescriptionLink))
                     .findFirst().get();
 
             List<Binding> provisioningTimeBindings = description.bindings.stream()
@@ -604,11 +605,13 @@ public class CompositionSubTaskService
                                 binding.placeholder.bindingExpression);
                 ComponentDescription sourceDescription = nameToComponent.get(sourceComponentName);
 
-                dependsOnDescriptionLinks.add(sourceDescription.component.documentSelfLink);
+                dependsOnDescriptionLinks
+                        .add(sourceDescription.getServiceDocument().documentSelfLink);
             }
 
             getDependsOnProvisionedResources(compositeDescription, dependsOnDescriptionLinks,
-                    description.component.documentSelfLink, provisioningTimeBindings, callback);
+                    description.getServiceDocument().documentSelfLink, provisioningTimeBindings,
+                    callback);
 
         }).sendWith(this);
     }
@@ -632,7 +635,7 @@ public class CompositionSubTaskService
 
         Map<String, ComponentDescription> selfLinkToComponent = compositeDescription.componentDescriptions
                 .stream()
-                .collect(Collectors.toMap(c -> c.component.documentSelfLink, c -> c));
+                .collect(Collectors.toMap(c -> c.getServiceDocument().documentSelfLink, c -> c));
 
         // TODO Is this enough to get _only_ the provisioned stuff we need? ContainerStates have a
         // contextId, but ComputeStates don't. Descriptions are cloned, so it looks like this should

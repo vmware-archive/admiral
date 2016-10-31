@@ -175,8 +175,8 @@ public class CompositeDescriptionService extends StatefulService {
             List<Operation> update = bodyExpanded.componentDescriptions
                     .stream()
                     .map(cd -> Operation
-                            .createPut(this, cd.component.documentSelfLink)
-                            .setBody(cd.component))
+                            .createPut(this, cd.getServiceDocument().documentSelfLink)
+                            .setBody(cd.getServiceDocument()))
                     .collect(Collectors.toList());
             // The component descriptions may have changed. We need to persist them, so that the
             // other services can pick up the evaluated descriptions too

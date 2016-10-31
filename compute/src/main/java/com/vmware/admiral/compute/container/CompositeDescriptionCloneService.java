@@ -74,11 +74,12 @@ public class CompositeDescriptionCloneService extends StatelessService {
         List<Operation> cloneOperations = new ArrayList<Operation>();
 
         for (ComponentDescription desc : cdExpanded.componentDescriptions) {
-            if (desc.component instanceof CloneableResource) {
+            if (desc.getServiceDocument() instanceof CloneableResource) {
                 cloneOperations
-                        .add(((CloneableResource) desc.component).createCloneOperation(this));
+                        .add(((CloneableResource) desc.getServiceDocument())
+                                .createCloneOperation(this));
             }  else {
-                cloneOperations.add(createCloneOperation(desc.type, desc.component));
+                cloneOperations.add(createCloneOperation(desc.type, desc.getServiceDocument()));
             }
         }
 

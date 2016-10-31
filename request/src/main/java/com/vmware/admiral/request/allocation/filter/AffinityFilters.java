@@ -74,7 +74,7 @@ public final class AffinityFilters {
 
     private void initialize(ServiceHost host, ComponentDescription desc) {
         filters.add(new ComponentFilter(desc));
-        initialize(host, desc.component);
+        initialize(host, desc.getServiceDocument());
     }
 
     private void initialize(ServiceHost host,
@@ -105,6 +105,7 @@ public final class AffinityFilters {
 
     }
 
+    @SuppressWarnings("rawtypes")
     public Queue<HostSelectionFilter> getQueue() {
         // return only HostSelectionFilter instances by filtering and downcasting
         return filters.stream()
@@ -167,7 +168,7 @@ public final class AffinityFilters {
 
         @Override
         public boolean hasEffectOnDependency() {
-            return this.componentDescription.component != null;
+            return this.componentDescription.componentJson != null;
         }
     }
 }
