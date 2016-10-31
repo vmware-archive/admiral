@@ -138,6 +138,79 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         });
     }
 
+    @Test
+    public void testContainerClusteringSameResourceCount()
+            throws Throwable {
+
+        List<String> hostLinks = new ArrayList<>();
+        hostLinks.add(createDockerHost(
+                createDockerHostDescription(), createResourcePool(), (long) Integer.MAX_VALUE,
+                true).documentSelfLink);
+
+        hostLinks.add(createDockerHost(
+                createDockerHostDescription(), createResourcePool(), (long) Integer.MAX_VALUE,
+                true).documentSelfLink);
+
+        long containersNumberBeforeProvisioning = MockDockerAdapterService.getNumberOfContainers();
+        assertEquals(0, containersNumberBeforeProvisioning);
+
+        // Set up a ContainerDescription with _cluster > 0
+        ContainerDescriptionService.ContainerDescription clustered = TestRequestStateFactory
+                .createContainerDescription("clustered");
+        clustered._cluster = 2;
+        clustered.portBindings = null;
+        clustered.documentSelfLink = UUID.randomUUID().toString();
+        clustered = doPost(clustered, ContainerDescriptionService.FACTORY_LINK);
+
+        request.resourceDescriptionLink = clustered.documentSelfLink;
+        request.resourceCount = 1;
+
+        request = startRequest(request);
+        RequestBrokerState initialState = waitForRequestToComplete(request);
+
+        long containersNumberBeforeClustering = MockDockerAdapterService.getNumberOfContainers();
+
+        // Number of containers before provisioning.
+        assertEquals(2, containersNumberBeforeClustering);
+
+        // Create Day 2 operation for clustering containers. Set resource count to be 1+ the number
+        // of resources in the cluster
+        RequestBrokerState day2OperationClustering = TestRequestStateFactory.createRequestState();
+        day2OperationClustering.resourceDescriptionLink = initialState.resourceDescriptionLink;
+        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
+        day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
+        int desiredResourceCount = clustered._cluster;
+        day2OperationClustering.resourceCount = desiredResourceCount;
+        day2OperationClustering.documentDescription = containerDesc.documentDescription;
+        day2OperationClustering.customProperties = initialState.customProperties;
+
+        try {
+            day2OperationClustering = startRequest(day2OperationClustering);
+        } catch (Throwable e) {
+            throw new IllegalArgumentException(String.format(
+                    "The following exception appears while trying to clustered containers: %s", e));
+        }
+
+        String containerClusteringTaskLink = UriUtils.buildUriPath(
+                ClusteringTaskService.FACTORY_LINK,
+                extractId(day2OperationClustering.documentSelfLink));
+        waitForTaskSuccess(containerClusteringTaskLink, ClusteringTaskState.class);
+
+        waitForRequestToComplete(day2OperationClustering);
+
+        long containersNumberAfterClustering = MockDockerAdapterService.getNumberOfContainers();
+        assertEquals(desiredResourceCount /* 2 */, containersNumberAfterClustering);
+
+        // delete created stuff
+        doDelete(UriUtils.buildUri(host, clustered.documentSelfLink), false);
+        hostLinks.forEach(link -> {
+            try {
+                doDelete(UriUtils.buildUri(host, link), false);
+            } catch (Throwable throwable) {
+            }
+        });
+    }
+
     // Jira issue VSYM-1170
     @Test
     public void testContainerClusteringTaskServiceIncrementByOneWithDisabledHost()
