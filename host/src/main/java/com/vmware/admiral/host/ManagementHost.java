@@ -13,10 +13,15 @@ package com.vmware.admiral.host;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import io.swagger.models.Info;
 
+import com.vmware.admiral.common.AdmiralColoredLogFormatter;
+import com.vmware.admiral.common.AdmiralLogFormatter;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
@@ -35,6 +40,8 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 import com.vmware.xenon.swagger.SwaggerDescriptorService;
+
+
 
 /**
  * Stand alone process entry point for management of infrastructure and applications.
@@ -76,6 +83,17 @@ public class ManagementHost extends ServiceHost {
             h.stop();
             h.log(Level.WARNING, "Host is stopped");
         }));
+    }
+
+    @Override
+    protected void configureLoggerFormatter(Logger logger) {
+        for (Handler h : logger.getParent().getHandlers()) {
+            if (h instanceof ConsoleHandler) {
+                h.setFormatter(new AdmiralLogFormatter());
+            } else {
+                h.setFormatter(new AdmiralColoredLogFormatter());
+            }
+        }
     }
 
     ManagementHost initializeHostAndServices(String[] args) throws Throwable {
