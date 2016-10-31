@@ -1044,6 +1044,9 @@ ContainersStore = Reflux.createStore({
     if (currentCompositeComponent &&
         currentCompositeComponent.documentId === compositeComponentId) {
       compositeComponentDetails.listView.items = currentCompositeComponent.listView.items;
+      compositeComponentDetails.listView.networks = currentCompositeComponent.listView.networks;
+      compositeComponentDetails.listView.networkLinks =
+        currentCompositeComponent.listView.networkLinks;
     }
 
     parentCursor.setIn(['selectedItem'], compositeComponent);
