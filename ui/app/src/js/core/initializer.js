@@ -10,7 +10,6 @@
  */
 
 import templateHelpers from 'core/templateHelpers';
-import docs from 'core/docs';
 
 var initializer = {};
 initializer.init = function(callback) {
@@ -48,10 +47,6 @@ initializer.init = function(callback) {
     }).catch((err) => {
       console.warn('Error when loading configuration properties! Error: ' + err);
     }).then(initI18N);
-  });
-
-  $(window).on('beforeunload', function() {
-    docs.release();
   });
 };
 
