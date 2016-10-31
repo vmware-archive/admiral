@@ -983,6 +983,11 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     logWarning("Exception while connecting container [%s] to network [%s]",
                             containerId, networkId);
                     if (error.compareAndSet(false, true)) {
+                        // Update the container state so further actions (e.g. cleanup) can be performed
+                        context.containerState.status = ContainerState.CONTAINER_ERROR_STATUS;
+                        context.containerState.powerState = ContainerState.PowerState.ERROR;
+                        inspectContainer(context);
+
                         fail(context.request, o, ex);
                     }
                 } else if (count.decrementAndGet() == 0) {

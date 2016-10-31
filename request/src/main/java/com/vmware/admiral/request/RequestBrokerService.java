@@ -1415,11 +1415,7 @@ public class RequestBrokerService extends
                     requestStatus.addTrackedTasks(ContainerRemovalTaskService.DISPLAY_NAME);
                 }
             } else if (isClusteringOperation(state)) {
-                if (isComputeType(state)) {
-                    requestStatus.addTrackedTasks(ClusteringTaskService.DISPLAY_NAME);
-                } else {
-                    requestStatus.addTrackedTasks(ClusteringTaskService.DISPLAY_NAME);
-                }
+                requestStatus.addTrackedTasks(ClusteringTaskService.DISPLAY_NAME);
             } else {
                 requestStatus.addTrackedTasks(ContainerOperationTaskService.DISPLAY_NAME);
             }
