@@ -21,10 +21,10 @@ let constraints = {
       return 'errors.required';
     }
   },
-    existsInTemplate: function(existsInTemplate) {
-      if (existsInTemplate) {
-          return 'errors.networkExists';
-      }
+  existsInTemplate: function(existsInTemplate) {
+    if (existsInTemplate) {
+        return 'errors.networkExists';
+    }
   }
 };
 
@@ -65,10 +65,10 @@ function createTypeaheadSource($typeaheadHolder) {
 function checkForDuplicateNames(el, network) {
   var networkName = network.name;
   el.each(function() {
-  if ($(this).text() === networkName) {
-      network.existsInTemplate = true;
-  }
-});
+    if ($(this).text() === networkName) {
+        network.existsInTemplate = true;
+    }
+  });
 }
 
 var NetworkDefinitionForm = Vue.extend({
@@ -138,9 +138,10 @@ var NetworkDefinitionForm = Vue.extend({
         }
       }
 
-    if (existingTemplateNetworks && existingTemplateNetworks.length) {
-         checkForDuplicateNames(existingTemplateNetworks, network);
-   }
+      if (existingTemplateNetworks && existingTemplateNetworks.length &&
+          !(this.model && this.model.name === network.name)) {
+           checkForDuplicateNames(existingTemplateNetworks, network);
+      }
       network.external = this.existingNetwork;
 
       if (this.model) {
@@ -335,7 +336,6 @@ var NetworkDefinitionForm = Vue.extend({
       }
       toggleButtonsState.call(_this);
     });
-    this.$dispatch('disableNetworkSaveButton', true);
   },
   detached: function() {
     this.unwatchModel();
@@ -347,7 +347,8 @@ var toggleButtonsState = function() {
   var networkNameInput = $(this.$el).find('.network-name input').val();
   var networkSearchNameInput = this.$networksSearch.typeahead('val');
 
-  if (networkNameInput || networkSearchNameInput) {
+  if ((!this.existingNetwork && networkNameInput) ||
+      (this.existingNetwork && networkSearchNameInput)) {
     this.$dispatch('disableNetworkSaveButton', false);
   } else {
     this.$dispatch('disableNetworkSaveButton', true);
