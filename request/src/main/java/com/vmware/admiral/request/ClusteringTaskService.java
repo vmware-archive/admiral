@@ -179,10 +179,12 @@ public class ClusteringTaskService extends
          * consists of resources to be deleted. The remaining resources can be further examined to
          * check if they need to be "redeployed".
          */
-        List<ResourceState> resourcesToRemove;
-        if (desiredResourceCount >= sortedResources.size()) {
-            resourcesToRemove = Collections.emptyList();
+        List<ResourceState> resourcesToRemove = Collections.emptyList();
+        if (desiredResourceCount > sortedResources.size()) {
             resourcesToAdd = desiredResourceCount - sortedResources.size();
+        } else if (desiredResourceCount == sortedResources.size()) {
+            sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
+            return;
         } else {
             resourcesToRemove = sortedResources
                     .subList(desiredResourceCount, sortedResources.size());
@@ -242,10 +244,6 @@ public class ClusteringTaskService extends
     private void createAdditionalResources(ClusteringTaskState state, String descLink,
             String groupResourcePlacementLink, int resourcesToAdd) {
 
-        if (resourcesToAdd < 1) {
-            return;
-        }
-
         RequestBrokerState requestBrokerState = new RequestBrokerState();
         requestBrokerState.resourceCount = resourcesToAdd;
         requestBrokerState.resourceDescriptionLink = descLink;
@@ -277,9 +275,7 @@ public class ClusteringTaskService extends
     private void removeResources(ClusteringTaskState state,
             String descLink,
             List<ResourceState> resourcesToRemove) {
-        if (resourcesToRemove.isEmpty()) {
-            return;
-        }
+
         RequestBrokerState requestBrokerState = new RequestBrokerState();
         requestBrokerState.resourceType = state.resourceType;
         requestBrokerState.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
