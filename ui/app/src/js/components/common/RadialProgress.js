@@ -28,6 +28,7 @@ function RadialProgress(parent) {
   var _label = '';
   var _fontSize = 24;
   var _smallFontSize = 12;
+  var _smallLabelPadding = 17;
   var _majorTitle;
   var _minorTitle;
 
@@ -133,7 +134,7 @@ function RadialProgress(parent) {
 
       minorLabel.enter().append('text')
         .attr('class', 'radial-progress-minor-label')
-        .attr('y', yStart + _smallFontSize)
+        .attr('y', yStart + _smallLabelPadding)
         .attr('x', _width / 2)
         .attr('cursor', 'pointer')
         .attr('width', _width)
