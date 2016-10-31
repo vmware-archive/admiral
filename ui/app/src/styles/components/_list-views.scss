@@ -833,7 +833,7 @@
       }
       .child-containers {
         .child-container:not(.context-selected) {
-          .container-item:not(:hover) {
+          .container-item:not(:hover), .cluster-item:not(:hover), .composite-container-item:not(:hover) {
             @extend .gray-filter;
           }
           .container-item {
