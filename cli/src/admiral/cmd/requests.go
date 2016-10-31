@@ -63,20 +63,20 @@ func RunRequestsList() {
 		return
 	}
 	if count < 1 {
-		fmt.Println("n/a")
+		fmt.Println("No elements found.")
 		return
 	}
 	if allFalse() {
-		rl.PrintAll()
+		rl.Print(requests.ALL)
 	} else {
 		if startedOnly {
-			rl.PrintStartedOnly()
+			rl.Print(requests.STARTED)
 		}
 		if failedOnly {
-			rl.PrintFailedOnly()
+			rl.Print(requests.FAILED)
 		}
 		if finishedOnly {
-			rl.PrintFinishedOnly()
+			rl.Print(requests.FINISHED)
 		}
 	}
 }

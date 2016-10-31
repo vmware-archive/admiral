@@ -35,6 +35,11 @@ const (
 	UpAndRight        = "\u2514" //  └
 	Horizontal        = "\u2500" // ─
 	VerticalAndRight  = "\u251c" // ├
+
+	STARTED  = "STARTED"
+	FINISHED = "FINISHED"
+	FAILED   = "FAILED"
+	ALL      = "ALL"
 )
 
 var (
@@ -156,85 +161,16 @@ func (rl *RequestsList) FetchRequests() (int, error) {
 	return len(rl.DocumentLinks), nil
 }
 
-func (rl *RequestsList) PrintStartedOnly() {
+func (rl *RequestsList) Print(what string) {
 	indent := VerticalAndRight + Horizontal
 	lastIndent := UpAndRight + Horizontal
 
-	fmt.Println("\t---STARTED---")
 	fmt.Printf(defaultFormat, "ID", "RESOURCES", "STATUS", "SINCE", "MESSAGE")
 	for i := len(rl.DocumentLinks) - 1; i >= 0; i-- {
 		val := rl.Documents[rl.DocumentLinks[i]]
-		if val.TaskInfo.Stage != "STARTED" {
+		if val.TaskInfo.Stage != what && what != "ALL" {
 			continue
 		}
-		failure := checkFailed(&val)
-		failure = utils.ShortString(failure, 50)
-
-		fmt.Printf(defaultFormat, val.getLinkedId(), val.getFirstResId(), val.TaskInfo.Stage, val.GetLastUpdate(), failure)
-		for i := 1; i < len(val.ResourceLinks); i++ {
-			fmt.Printf(defaultIndentFormat, "", indent+val.GetResourceID(i))
-			if i == len(val.ResourceLinks)-1 {
-				fmt.Printf(defaultIndentFormat, "", lastIndent+val.GetResourceID(i))
-			}
-		}
-	}
-}
-
-func (rl *RequestsList) PrintFailedOnly() {
-	indent := VerticalAndRight + Horizontal
-	lastIndent := UpAndRight + Horizontal
-
-	fmt.Println("\t---FAILED---")
-	fmt.Printf(defaultFormat, "ID", "RESOURCES", "STATUS", "SINCE", "MESSAGE")
-	for i := len(rl.DocumentLinks) - 1; i >= 0; i-- {
-		val := rl.Documents[rl.DocumentLinks[i]]
-		if val.TaskInfo.Stage != "FAILED" {
-			continue
-		}
-		failure := checkFailed(&val)
-		failure = utils.ShortString(failure, 50)
-
-		fmt.Printf(defaultFormat, val.getLinkedId(), val.getFirstResId(), val.TaskInfo.Stage, val.GetLastUpdate(), failure)
-		for i := 1; i < len(val.ResourceLinks); i++ {
-			fmt.Printf(defaultIndentFormat, "", indent+val.GetResourceID(i))
-			if i == len(val.ResourceLinks)-1 {
-				fmt.Printf(defaultIndentFormat, "", lastIndent+val.GetResourceID(i))
-			}
-		}
-	}
-}
-
-func (rl *RequestsList) PrintFinishedOnly() {
-	indent := VerticalAndRight + Horizontal
-	lastIndent := UpAndRight + Horizontal
-
-	fmt.Println("\t---FINISHED---")
-	fmt.Printf(defaultFormat, "ID", "RESOURCES", "STATUS", "SINCE", "MESSAGE")
-	for i := len(rl.DocumentLinks) - 1; i >= 0; i-- {
-		val := rl.Documents[rl.DocumentLinks[i]]
-		if val.TaskInfo.Stage != "FINISHED" {
-			continue
-		}
-		failure := checkFailed(&val)
-		failure = utils.ShortString(failure, 50)
-
-		fmt.Printf(defaultFormat, val.getLinkedId(), val.getFirstResId(), val.TaskInfo.Stage, val.GetLastUpdate(), failure)
-		for i := 1; i < len(val.ResourceLinks); i++ {
-			fmt.Printf(defaultIndentFormat, "", indent+val.GetResourceID(i))
-			if i == len(val.ResourceLinks)-1 {
-				fmt.Printf(defaultIndentFormat, "", lastIndent+val.GetResourceID(i))
-			}
-		}
-	}
-}
-
-func (rl *RequestsList) PrintAll() {
-	indent := VerticalAndRight + Horizontal
-	lastIndent := UpAndRight + Horizontal
-
-	fmt.Printf(defaultFormat, "ID", "RESOURCES", "STATUS", "SINCE", "MESSAGE")
-	for i := len(rl.DocumentLinks) - 1; i >= 0; i-- {
-		val := rl.Documents[rl.DocumentLinks[i]]
 		failure := checkFailed(&val)
 		failure = utils.ShortString(failure, 50)
 
@@ -271,14 +207,16 @@ type InspectedRequest struct {
 }
 
 func InspectRequestID(id string) (string, error) {
-	url := config.URL + utils.CreateResLinkForRequest(id)
+	fullId, err := selflink.GetFullId(id, new(RequestsList), utils.REQUEST)
+	utils.CheckIdError(err)
+	url := config.URL + utils.CreateResLinkForRequest(fullId)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return "", respErr
 	}
 	ri := &RequestInfo{}
-	err := json.Unmarshal(respBody, ri)
+	err = json.Unmarshal(respBody, ri)
 	utils.CheckJson(err)
 
 	inspectedRequest := &InspectedRequest{}

@@ -47,10 +47,6 @@ func TestPlacementAddRemove(t *testing.T) {
 		t.FailNow()
 	}
 
-	TestPrintln("Removing host before add new one. Having error here is expected.")
-	hostRemoveCmd.ParseFlags([]string{"--force"})
-	RunHostRemove([]string{tc.HostAddress})
-
 	TestPrintln("Adding host.")
 	hostAddCmd.ParseFlags([]string{"--address=" + tc.HostAddress, "--placement-zone=" + tc.PlacementZone,
 		"--public=" + tc.PublicKey, "--private=" + tc.PrivateKey, "--accept"})
