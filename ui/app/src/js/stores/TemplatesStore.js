@@ -744,7 +744,7 @@ let TemplatesStore = Reflux.createStore({
                                                       updatedDescription.name);
           this.emitChange();
         }
-      });
+      }).catch(this.onGenericEditError);
     } else {
       services.createNetworkDescription(network).then((createdDescription) => {
         services.loadContainerTemplate(templateId).then((template) => {

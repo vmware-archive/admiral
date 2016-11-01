@@ -66,8 +66,14 @@ var ContainersViewVueComponent = Vue.extend({
     hasContainerDetailsError: function() {
       return this.model.selectedItemDetails.error && this.model.selectedItemDetails.error._generic;
     },
+    hasNetworkCreateError: function() {
+      return this.model.creatingResource.error && this.model.creatingResource.error._generic;
+    },
     containerDetailsError: function() {
       return this.hasContainerDetailsError ? this.model.selectedItemDetails.error._generic : '';
+    },
+    networkCreateError: function() {
+      return this.hasNetworkCreateError ? this.model.creatingResource.error._generic : '';
     },
     showContextPanel: function() {
       var selectedItemDetails = this.model.selectedItemDetails;

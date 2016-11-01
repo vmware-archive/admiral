@@ -1377,7 +1377,12 @@ ContainersStore = Reflux.createStore({
     this.setInData(['selectedItemDetails', 'error'], errorMessage);
     this.emitChange();
   },
+  onGenericCreateError: function(e) {
+    let errorMessage = utils.getErrorMessage(e);
 
+    this.setInData(['creatingResource', 'error'], errorMessage);
+    this.emitChange();
+  },
   // Exposed only for testing, not to be used in the actual application
   _clearData: function() {
     if (!jasmine) { // eslint-disable-line
