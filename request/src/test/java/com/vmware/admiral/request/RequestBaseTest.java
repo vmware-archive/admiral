@@ -24,7 +24,6 @@ import java.util.UUID;
 
 import org.junit.Before;
 
-import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -66,6 +65,7 @@ import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFacto
 import com.vmware.admiral.service.common.CounterSubTaskService;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
+import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -298,7 +298,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
             if (hostDesc == null) {
                 hostDesc = TestRequestStateFactory.createDockerHostDescription();
                 hostDesc.instanceAdapterReference = UriUtilsExtended.buildUri(host,
-                        ManagementUriParts.ADAPTER_DOCKER);
+                        MockComputeHostInstanceAdapter.SELF_LINK);
                 hostDesc = doPost(hostDesc,
                         ComputeDescriptionService.FACTORY_LINK);
                 assertNotNull(hostDesc);
@@ -354,6 +354,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
             containerHost.customProperties = new HashMap<>();
         }
 
+        containerHost.customProperties.put(ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME,
+                "true");
         containerHost.customProperties.put(
                 ContainerHostService.DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME,
                 availableMemory.toString());
