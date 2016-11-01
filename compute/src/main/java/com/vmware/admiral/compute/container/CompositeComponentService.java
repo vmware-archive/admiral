@@ -59,7 +59,7 @@ public class CompositeComponentService extends StatefulService {
         public List<String> componentLinks;
 
         /** Composite component creation time in milliseconds */
-        @Documentation(description = "Container created time in milliseconds")
+        @Documentation(description = "Composite creation time in milliseconds")
         @UsageOption(option = PropertyUsageOption.SINGLE_ASSIGNMENT)
         public long created;
     }
