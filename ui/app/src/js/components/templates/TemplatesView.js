@@ -124,7 +124,7 @@ var TemplatesViewVueComponent = Vue.extend({
       });
     });
 
-    this.unwatchIsPartialResult = this.$watch('model.listView.isPartialResult',
+    this.unwatchIsPartialResult = this.$watch('model.listView && model.listView.isPartialResult',
                                               (isPartialResult) => {
       if (isPartialResult) {
         var errorMessage = i18n.t('app.template.list.partialResultWarning');
