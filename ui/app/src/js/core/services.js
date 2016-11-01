@@ -733,6 +733,15 @@ services.loadImageIds = function(query, limit) {
   });
 };
 
+services.loadImageTags = function(imageName) {
+  var params = {};
+  params[IMAGES_SEARCH_QUERY_PROP_NAME] = imageName;
+
+  return list(links.IMAGE_TAGS, false, params).then(function(tags) {
+    return tags;
+  });
+};
+
 services.loadTemplates = function(queryOptions) {
   if (!queryOptions) {
     queryOptions = {};

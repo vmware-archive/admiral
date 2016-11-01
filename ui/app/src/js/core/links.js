@@ -52,6 +52,7 @@ var links = Immutable({
   REQUEST_STATUS: '/request-status',
 
   IMAGES: '/images',
+  IMAGE_TAGS: '/images/tags',
   TEMPLATES: '/templates',
   POPULAR_IMAGES: '/popular-images',
 

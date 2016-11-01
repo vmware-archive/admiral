@@ -845,7 +845,7 @@ $main-list-view-right: 10px;
 #connectionType .form-input-group {
   line-height: 2.5em;
 }
-.form-control, .search-input .form-control-feedback {
+.form-control, .search-input .form-control-feedback, .image-tags-input .form-control-feedback {
   color: #333;
   @include box-shadow(none);
 }
@@ -2440,7 +2440,7 @@ $alert-text-color: #ffffff;
   }
 }
 
-.app-view .search-input, .app-view .multicolumn-inputs-list .search-input {
+.app-view .search-input, .app-view .image-tags-input, .app-view .multicolumn-inputs-list .search-input {
   position: relative;
 
   input, .twitter-typeahead input {
@@ -2452,7 +2452,7 @@ $alert-text-color: #ffffff;
     border-radius: 20px;
   }
 
-  .search-input span {
+  .search-input span, .image-tags-input span {
     left: 0;
   }
 
@@ -2467,7 +2467,7 @@ $alert-text-color: #ffffff;
   }
 }
 
-.app-view .search-input.loading {
+.app-view .search-input.loading, .app-view .image-tags-input.loading {
   .loader-inline {
     display: block;
   }

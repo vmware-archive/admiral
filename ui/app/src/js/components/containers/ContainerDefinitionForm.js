@@ -214,6 +214,71 @@ function typeaheadSource($typeaheadHolder) {
   };
 }
 
+function tagsMatcher(tags) {
+  return (q, syncCallback) => {
+    var matches = tags.filter((t) => t.indexOf(q) !== -1);
+    syncCallback(matches);
+  };
+}
+
+function setTagsTypeahead($element, tags) {
+  $element.typeahead('destroy');
+  $element.typeahead({ minLength: 0 }, {
+    name: 'tags',
+    limit: tags.length,
+    source: tagsMatcher(tags)
+  });
+}
+
+const DEFAULT_TAG = 'latest';
+
+// defaultTag is the tag that will be displayed upon opening the form
+function loadTags($tagsHolder, selection, defaultTag) {
+  var oldSelection = $tagsHolder.data('selection');
+  if (selection === oldSelection) {
+    return;
+  }
+
+  $tagsHolder.data('selection', selection);
+
+  var $tagsInput = $tagsHolder.find('input');
+  var $imageTags = $tagsHolder.find('.form-control');
+
+  $tagsHolder.addClass('loading');
+  if (!defaultTag) {
+    $imageTags.typeahead('val', '');
+    $tagsInput.attr('placeholder', i18n.t('app.container.request.inputs.imageTag.loadingHint'));
+    // update typeahead since placeholder doesn't hide while typing
+    setTagsTypeahead($imageTags, [DEFAULT_TAG]);
+  }
+
+  services.loadImageTags(selection).then((tags) => {
+    if (tags.indexOf(DEFAULT_TAG) < 0) {
+      tags.unshift(DEFAULT_TAG);
+    }
+
+    $tagsHolder.removeClass('loading');
+    if (!defaultTag) {
+      $tagsInput.attr('placeholder', i18n.t('app.container.request.inputs.imageTag.searchHint'));
+    }
+
+    setTagsTypeahead($imageTags, tags);
+  }).catch((e) => {
+    console.log(e);
+    $tagsHolder.removeClass('loading');
+    if (!defaultTag) {
+      $tagsInput.attr('placeholder', i18n.t('app.container.request.inputs.imageTag.searchHint'));
+    }
+    setTagsTypeahead($imageTags, [DEFAULT_TAG]);
+  });
+}
+
+function typeaheadTagsLoader($tagsHolder) {
+  return function(event, selection) {
+    loadTags($tagsHolder, selection, null);
+  };
+}
+
 class ContainerDefinitionForm extends Component {
   constructor() {
     super();
@@ -222,11 +287,22 @@ class ContainerDefinitionForm extends Component {
 
     this.$el.find('.fa-question-circle').tooltip({html: true});
 
-    this.$imageSearch = this.$el.find('.container-image-input .form-control');
-    this.$imageSearch.typeahead({},
-    {
+    this.$imageSearch = this.$el.find('.container-image-input .search-input .form-control');
+    this.$imageSearch.typeahead({}, {
       name: 'images',
       source: typeaheadSource(this.$el.find('.container-image-input .search-input'))
+    });
+
+    this.$imageTags = this.$el.find('.container-image-input .image-tags-input .form-control');
+    setTagsTypeahead(this.$imageTags, [DEFAULT_TAG]);
+
+    this.$tagsHolder = this.$el.find('.container-image-input .image-tags-input');
+    this.$imageSearch.bind('typeahead:selected', typeaheadTagsLoader(this.$tagsHolder));
+
+    this.$imageSearch.blur(() => {
+      var image = this.$imageSearch.typeahead('val');
+      var tag = this.$imageTags.typeahead('val');
+      loadTags(this.$tagsHolder, image, tag);
     });
 
     this.commandsEditor = new MulticolumnInputs(
@@ -385,6 +461,10 @@ class ContainerDefinitionForm extends Component {
     var result = {};
 
     result.image = this.$imageSearch.typeahead('val');
+    var tag = this.$imageTags.typeahead('val');
+    if (tag) {
+      result.image += ':' + tag;
+    }
     result.name = validator.trim(this.$el.find('.container-name-input .form-control').val());
     result.command = this.commandsEditor.getData();
     result.links = this.linksEditor.getData();
@@ -720,7 +800,15 @@ class ContainerDefinitionForm extends Component {
 
 var updateForm = function(data, oldData) {
   if (data.image !== oldData.image) {
-    this.$imageSearch.typeahead('val', data.image);
+    var tag = imageUtils.getImageTag(data.image);
+    if (tag) {
+      this.$imageSearch.typeahead('val', data.image.slice(0, data.image.lastIndexOf(':')));
+      this.$imageTags.typeahead('val', tag);
+    } else {
+      this.$imageSearch.typeahead('val', data.image);
+    }
+
+    loadTags(this.$tagsHolder, data.image, tag);
   }
 
   if (data.name !== oldData.name) {

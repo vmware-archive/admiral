@@ -577,6 +577,10 @@
         },
         "inputs": {
           "image": "Image",
+          "imageTag": {
+            "searchHint": "Search for tags",
+            "loadingHint": "Loading tags..."
+          },
           "name": "Name",
           "group": "Project",
           "commands": "Command",

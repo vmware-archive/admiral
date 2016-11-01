@@ -33,6 +33,12 @@
   padding-right: 30px;
 }
 
+.tag-separator {
+  position:absolute;
+  left: -2px;
+  top:-3px;
+}
+
 .container-health-path-input .input-group {
   display: flex;
 }
