@@ -12,12 +12,15 @@
 package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,8 +43,6 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -62,13 +63,13 @@ public class ContainerHostRemovalTaskService extends
             extends
             com.vmware.admiral.service.common.TaskServiceDocument<ContainerHostRemovalTaskState.SubStage> {
 
-        private static final String FIELD_NAME_RESOURCE_LINKS = "resourceLinks";
-        private static final String FIELD_NAME_CONTAINER_QUERY_TASK_LINK = "containerQueryTaskLink";
-
         /** (Required) The resources on which the given operation will be applied */
-        public List<String> resourceLinks;
+        @PropertyOptions(usage = { REQUIRED, SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
+        public Set<String> resourceLinks;
 
         /** (Internal) Set by Task for the query to retrieve all the containers for the given hosts. */
+        @PropertyOptions(usage = { SERVICE_USE, SINGLE_ASSIGNMENT, AUTO_MERGE_IF_NOT_NULL },
+                indexing = STORE_ONLY)
         public String containerQueryTaskLink;
 
         public boolean skipComputeHostRemoval;
@@ -188,7 +189,7 @@ public class ContainerHostRemovalTaskService extends
         QueryUtil.addListValueClause(containerQuery,
                 ContainerState.FIELD_NAME_PARENT_LINK, state.resourceLinks);
 
-        List<String> containerLinks = new ArrayList<>();
+        Set<String> containerLinks = new HashSet<>();
         new ServiceDocumentQuery<ContainerState>(getHost(), ContainerState.class).query(
                 containerQuery, (r) -> {
                     if (r.hasException()) {
@@ -208,7 +209,7 @@ public class ContainerHostRemovalTaskService extends
     }
 
     private void removeContainers(ContainerHostRemovalTaskState state,
-            List<String> containerSelfLinks) {
+            Set<String> containerSelfLinks) {
 
         // run a sub task for removing the containers
         ContainerRemovalTaskState containerRemovalTask = new ContainerRemovalTaskState();
@@ -242,7 +243,7 @@ public class ContainerHostRemovalTaskService extends
         QueryUtil.addListValueClause(networkQuery, parentLinksItemField, state.resourceLinks);
         QueryUtil.addExpandOption(networkQuery);
 
-        List<String> networkLinks = new ArrayList<>();
+        Set<String> networkLinks = new HashSet<>();
         new ServiceDocumentQuery<ContainerNetworkState>(getHost(), ContainerNetworkState.class)
                 .query(networkQuery, (r) -> {
                     if (r.hasException()) {
@@ -298,7 +299,7 @@ public class ContainerHostRemovalTaskService extends
     }
 
     private void removeNetworks(ContainerHostRemovalTaskState state,
-            List<String> networkSelfLinks) {
+            Set<String> networkSelfLinks) {
 
         // run a sub task for removing the networks
         ContainerNetworkRemovalTaskState networkRemovalTask = new ContainerNetworkRemovalTaskState();
@@ -392,37 +393,5 @@ public class ContainerHostRemovalTaskService extends
                         failTask("Notifying counting task failed: %s", e);
                     }
                 }));
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            ContainerHostRemovalTaskState patchBody, ContainerHostRemovalTaskState currentState) {
-
-        currentState.containerQueryTaskLink = mergeProperty(currentState.containerQueryTaskLink,
-                patchBody.containerQueryTaskLink);
-
-        // return false when there are no validation issues
-        return false;
-    }
-
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        ServiceDocument template = super.getDocumentTemplate();
-
-        setDocumentTemplateIndexingOptions(template, EnumSet.of(PropertyIndexingOption.STORE_ONLY),
-                ContainerHostRemovalTaskState.FIELD_NAME_RESOURCE_LINKS,
-                ContainerHostRemovalTaskState.FIELD_NAME_CONTAINER_QUERY_TASK_LINK);
-
-        setDocumentTemplateUsageOptions(template,
-                EnumSet.of(PropertyUsageOption.SINGLE_ASSIGNMENT),
-                ContainerHostRemovalTaskState.FIELD_NAME_RESOURCE_LINKS,
-                ContainerHostRemovalTaskState.FIELD_NAME_CONTAINER_QUERY_TASK_LINK);
-
-        setDocumentTemplateUsageOptions(template, EnumSet.of(PropertyUsageOption.SERVICE_USE),
-                ContainerHostRemovalTaskState.FIELD_NAME_CONTAINER_QUERY_TASK_LINK);
-
-        template.documentDescription.serializedStateSizeLimit = 128 * 1024; // 128 Kb
-
-        return template;
     }
 }

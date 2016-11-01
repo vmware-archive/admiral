@@ -12,8 +12,6 @@
 package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 
@@ -90,21 +88,23 @@ public class ContainerNetworkProvisionTaskService
         /** (Required) Number of resources to provision. */
         @Documentation(description = "Number of resources to provision.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
-                PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT })
+                PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Long resourceCount;
 
         /** (Required) Links to already allocated resources that are going to be provisioned. */
         @Documentation(description = "Links to already allocated resources that are going to be provisioned.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT })
-        public List<String> resourceLinks;
+        public Set<String> resourceLinks;
 
         // Service use fields:
 
         /** (Internal) Reference to the adapter that will fulfill the provision request. */
         @Documentation(description = "Reference to the adapter that will fulfill the provision request.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
-                PropertyUsageOption.SERVICE_USE, PropertyUsageOption.SINGLE_ASSIGNMENT })
+                PropertyUsageOption.SERVICE_USE, PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public URI instanceAdapterReference;
 
     }
@@ -128,23 +128,6 @@ public class ContainerNetworkProvisionTaskService
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
         }
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            ContainerNetworkProvisionTaskState patchBody,
-            ContainerNetworkProvisionTaskState currentState) {
-
-        currentState.instanceAdapterReference = mergeProperty(
-                currentState.instanceAdapterReference, patchBody.instanceAdapterReference);
-
-        currentState.resourceLinks = mergeLists(
-                currentState.resourceLinks, patchBody.resourceLinks);
-
-        currentState.resourceCount = mergeProperty(currentState.resourceCount,
-                patchBody.resourceCount);
-
-        return false;
     }
 
     @Override

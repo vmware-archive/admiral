@@ -20,7 +20,6 @@ import java.util.Map;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
-import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
 import com.vmware.admiral.compute.container.maintenance.ContainerNetworkMaintenance;
 import com.vmware.admiral.compute.container.util.CompositeComponentNotifier;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -359,9 +358,6 @@ public class ContainerNetworkService extends StatefulService {
         template.connectedContainersCount = 0;
 
         template.parentLinks = new ArrayList<String>(0);
-
-        ServiceDocumentTemplateUtil.indexProperty(template,
-                ContainerNetworkState.FIELD_NAME_OPTIONS);
 
         return template;
     }

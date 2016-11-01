@@ -48,7 +48,6 @@ import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.CloneableResource;
 import com.vmware.admiral.compute.ContainerHostService;
@@ -67,6 +66,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
@@ -157,7 +157,8 @@ public class ContainerDescriptionService extends StatefulService {
                 + "or not deployed on the same host. Format: [!]serviceName[:soft|hard]."
                 + "If not specified, the default constraint type is 'hard'. "
                 + "Examples: ['cont1', '!cont2', 'cont3:soft', 'cont4:hard', '!cont5:soft', '!cont6:hard']")
-        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @PropertyOptions(usage = PropertyUsageOption.OPTIONAL,
+                indexing = PropertyIndexingOption.EXPAND)
         public String[] affinity;
 
         /** The number of nodes to be provisioned. */
@@ -209,7 +210,8 @@ public class ContainerDescriptionService extends StatefulService {
 
         /** Mount a volume e.g /host:/container or /host:/container:ro */
         @Documentation(description = "Mount a volume e.g /host:/container or /host:/container:ro")
-        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @PropertyOptions(usage = PropertyUsageOption.OPTIONAL,
+                indexing = PropertyIndexingOption.EXPAND)
         public String[] volumes;
 
         /** Working dir for commands to run in. */
@@ -280,6 +282,7 @@ public class ContainerDescriptionService extends StatefulService {
         @JsonDeserialize(contentUsing = ServiceLinkDeserializer.class)
         @Documentation(description = "A list of services (in a blueprint) the container depends on.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @UsageOption(option = PropertyUsageOption.LINKS)
         public String[] links;
 
         /** Custom DNS search domains (Use . if you don't wish to set the search domain) */
@@ -293,7 +296,8 @@ public class ContainerDescriptionService extends StatefulService {
          */
         @JsonProperty("volumes_from")
         @Documentation(description = "Mount volumes from the specified container(s) of the format <container name>[:<ro|rw>]")
-        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @PropertyOptions(usage = PropertyUsageOption.OPTIONAL,
+                indexing = PropertyIndexingOption.EXPAND)
         public String[] volumesFrom;
 
         /** Specify volume driver name.*/
@@ -704,15 +708,6 @@ public class ContainerDescriptionService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         ContainerDescription template = (ContainerDescription) super.getDocumentTemplate();
-
-        ServiceDocumentTemplateUtil.indexCustomProperties(template);
-        ServiceDocumentTemplateUtil.indexProperty(template, ContainerDescription.FIELD_NAME_LINKS);
-        ServiceDocumentTemplateUtil.indexProperty(template,
-                ContainerDescription.FIELD_NAME_VOLUMES);
-        ServiceDocumentTemplateUtil.indexProperty(template,
-                ContainerDescription.FIELD_NAME_VOLUMES_FROM);
-        ServiceDocumentTemplateUtil.indexProperty(template,
-                ContainerDescription.FIELD_NAME_AFFINITY);
 
         // FIXME this causes issues when the text contains non alpha characters
         // ServiceDocumentTemplateUtil.indexTextProperty(template,

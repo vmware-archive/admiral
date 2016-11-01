@@ -14,17 +14,18 @@ package com.vmware.admiral.request;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertTrue;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_ALLOCATION_REQUEST;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -62,9 +63,6 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -84,16 +82,6 @@ public class ContainerAllocationTaskService
     public static class ContainerAllocationTaskState
             extends
             com.vmware.admiral.service.common.TaskServiceDocument<ContainerAllocationTaskState.SubStage> {
-
-        private static final String FIELD_NAME_RESOURCE_DESCRIPTION_LINK = "resourceDescriptionLink";
-        private static final String FIELD_NAME_RESOURCE_TYPE = "resourceType";
-        private static final String FIELD_NAME_TENANT_LINKS = "tenantLinks";
-        private static final String FIELD_NAME_GROUP_RESOURCE_POLICY = "groupResourcePlacementLink";
-        private static final String FIELD_NAME_RESOURCE_COUNT = "resourceCount";
-        private static final String FIELD_NAME_RESOURCE_LINKS = "resourceLinks";
-        private static final String FIELD_NAME_RESOURCE_NAMES = "resourceNames";
-        private static final String FIELD_NAME_HOST_SELECTIONS = "hostSelections";
-        private static final String FIELD_NAME_INSTANCE_ADAPTER_REF = "instanceAdapterReference";
 
         /**
          * (Optional) Indicates that a given container linked to a ContainerDescription depends on
@@ -121,19 +109,24 @@ public class ContainerAllocationTaskService
         }
 
         /** The description that defines the requested resource. */
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
         /** (Required) Type of resource to create. */
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
         public String resourceType;
 
         /** (Required) the groupResourcePlacementState that links to ResourcePool */
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
         public String groupResourcePlacementLink;
 
         /** (Required) Number of resources to provision. */
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Long resourceCount;
 
         /** Set by a Task with the links of the provisioned resources. */
-        public List<String> resourceLinks;
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public Set<String> resourceLinks;
 
         /** Indicating that it is in the second phase after allocation */
         public boolean postAllocation;
@@ -141,21 +134,26 @@ public class ContainerAllocationTaskService
         // Service use fields:
 
         /** (Internal) Set by task after resource name prefixes requested. */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public List<String> resourceNames;
 
         /** (Internal) Set by task after the ComputeState is found to host the containers */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public List<HostSelection> hostSelections;
 
         /**
          * (Internal) Set by task after the resource names are determined and ComputeState is found
          * to host the containers.
          */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Map<String, HostSelection> resourceNameToHostSelection;
 
         /** (Internal) Set by task */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public URI instanceAdapterReference;
 
         /** (Internal) Set by task with ContainerDescription name. */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String descName;
     }
 
@@ -220,33 +218,6 @@ public class ContainerAllocationTaskService
     }
 
     @Override
-    protected boolean validateStageTransition(Operation patch,
-            ContainerAllocationTaskState patchBody, ContainerAllocationTaskState currentState) {
-
-        currentState.hostSelections = mergeProperty(
-                currentState.hostSelections, patchBody.hostSelections);
-
-        currentState.resourceNameToHostSelection = mergeProperty(
-                currentState.resourceNameToHostSelection, patchBody.resourceNameToHostSelection);
-
-        currentState.instanceAdapterReference = mergeProperty(
-                currentState.instanceAdapterReference, patchBody.instanceAdapterReference);
-
-        currentState.resourceLinks = mergeLists(
-                currentState.resourceLinks, patchBody.resourceLinks);
-
-        currentState.resourceNames = mergeProperty(
-                currentState.resourceNames, patchBody.resourceNames);
-
-        currentState.resourceCount = mergeProperty(currentState.resourceCount,
-                patchBody.resourceCount);
-
-        currentState.descName = mergeProperty(currentState.descName, patchBody.descName);
-
-        return false;
-    }
-
-    @Override
     protected void validateStateOnStart(ContainerAllocationTaskState state) {
         assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
         assertNotEmpty(state.resourceType, "resourceType");
@@ -288,7 +259,7 @@ public class ContainerAllocationTaskService
     }
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
-        List<String> resourceLinks;
+        Set<String> resourceLinks;
     }
 
     @Override
@@ -357,9 +328,9 @@ public class ContainerAllocationTaskService
         complete(state, SubStage.COMPLETED);
     }
 
-    private List<String> buildResourceLinks(ContainerAllocationTaskState state) {
+    private Set<String> buildResourceLinks(ContainerAllocationTaskState state) {
         logInfo("Generate provisioned resourceLinks");
-        List<String> resourceLinks = new ArrayList<>(state.resourceNames.size());
+        Set<String> resourceLinks = new HashSet<>(state.resourceNames.size());
         for (String resourceName : state.resourceNames) {
             String containerLink = buildResourceLink(resourceName);
             resourceLinks.add(containerLink);
@@ -718,40 +689,6 @@ public class ContainerAllocationTaskService
                     }
                     logInfo("Container provisioning started for: " + containerSelfLink);
                 }));
-    }
-
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        ContainerAllocationTaskState template = (ContainerAllocationTaskState) super.getDocumentTemplate();
-
-        setDocumentTemplateIndexingOptions(template, EnumSet.of(PropertyIndexingOption.STORE_ONLY),
-                ContainerAllocationTaskState.FIELD_NAME_RESOURCE_DESCRIPTION_LINK,
-                ContainerAllocationTaskState.FIELD_NAME_RESOURCE_TYPE,
-                ContainerAllocationTaskState.FIELD_NAME_TENANT_LINKS,
-                ContainerAllocationTaskState.FIELD_NAME_GROUP_RESOURCE_POLICY,
-                ContainerAllocationTaskState.FIELD_NAME_RESOURCE_COUNT,
-                ContainerAllocationTaskState.FIELD_NAME_RESOURCE_LINKS,
-                ContainerAllocationTaskState.FIELD_NAME_RESOURCE_NAMES,
-                ContainerAllocationTaskState.FIELD_NAME_HOST_SELECTIONS,
-                ContainerAllocationTaskState.FIELD_NAME_INSTANCE_ADAPTER_REF);
-
-        setDocumentTemplateUsageOptions(template,
-                EnumSet.of(PropertyUsageOption.SINGLE_ASSIGNMENT),
-                ContainerAllocationTaskState.FIELD_NAME_RESOURCE_DESCRIPTION_LINK,
-                ContainerAllocationTaskState.FIELD_NAME_RESOURCE_TYPE,
-                ContainerAllocationTaskState.FIELD_NAME_TENANT_LINKS,
-                ContainerAllocationTaskState.FIELD_NAME_GROUP_RESOURCE_POLICY,
-                ContainerAllocationTaskState.FIELD_NAME_RESOURCE_COUNT,
-                ContainerAllocationTaskState.FIELD_NAME_RESOURCE_NAMES,
-                ContainerAllocationTaskState.FIELD_NAME_HOST_SELECTIONS,
-                ContainerAllocationTaskState.FIELD_NAME_INSTANCE_ADAPTER_REF);
-
-        setDocumentTemplateUsageOptions(template, EnumSet.of(PropertyUsageOption.SERVICE_USE),
-                ContainerAllocationTaskState.FIELD_NAME_RESOURCE_NAMES,
-                ContainerAllocationTaskState.FIELD_NAME_HOST_SELECTIONS,
-                ContainerAllocationTaskState.FIELD_NAME_INSTANCE_ADAPTER_REF);
-
-        return template;
     }
 
     /**

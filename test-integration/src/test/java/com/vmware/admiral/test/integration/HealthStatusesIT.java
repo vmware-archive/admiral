@@ -69,12 +69,12 @@ public class HealthStatusesIT extends BaseProvisioningOnCoreOsIT {
 
         validateAfterStart(containerDescLink, containerRequest);
 
-        validateContainerRunning(containerRequest.resourceLinks.get(0));
+        validateContainerRunning(containerRequest.resourceLinks.iterator().next());
 
         healthConfig.urlPath = "/any";
         containerDescLink = getResourceDescriptionLink(false, null);
 
-        validateContainerDegraded(containerRequest.resourceLinks.get(0));
+        validateContainerDegraded(containerRequest.resourceLinks.iterator().next());
     }
 
     @Test
@@ -92,12 +92,12 @@ public class HealthStatusesIT extends BaseProvisioningOnCoreOsIT {
 
         validateAfterStart(containerDescLink, containerRequest);
 
-        validateContainerRunning(containerRequest.resourceLinks.get(0));
+        validateContainerRunning(containerRequest.resourceLinks.iterator().next());
 
         healthConfig.port = 81;
         containerDescLink = getResourceDescriptionLink(false, null);
 
-        validateContainerDegraded(containerRequest.resourceLinks.get(0));
+        validateContainerDegraded(containerRequest.resourceLinks.iterator().next());
 
         requestContainerDelete(containerRequest.resourceLinks, true);
     }
@@ -116,12 +116,12 @@ public class HealthStatusesIT extends BaseProvisioningOnCoreOsIT {
 
         validateAfterStart(containerDescLink, containerRequest);
 
-        validateContainerRunning(containerRequest.resourceLinks.get(0));
+        validateContainerRunning(containerRequest.resourceLinks.iterator().next());
 
         healthConfig.command = "exit 1";
         containerDescLink = getResourceDescriptionLink(false, null);
 
-        validateContainerDegraded(containerRequest.resourceLinks.get(0));
+        validateContainerDegraded(containerRequest.resourceLinks.iterator().next());
     }
 
     private void validateContainerRunning(String containerLink) throws Exception {

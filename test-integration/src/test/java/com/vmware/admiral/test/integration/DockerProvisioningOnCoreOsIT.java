@@ -260,7 +260,7 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
 
         super.validateAfterStart(resourceDescLink, request);
 
-        String containerStateLink = request.resourceLinks.get(0);
+        String containerStateLink = request.resourceLinks.iterator().next();
 
         logger.info("---------- V1. Request Stop operation on the container. --------");
         RequestBrokerState day2StopRequest = new RequestBrokerState();

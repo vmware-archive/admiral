@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -32,8 +33,6 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
@@ -50,8 +49,6 @@ public class ContainerOperationTaskService extends
     public static class ContainerOperationTaskState
             extends
             com.vmware.admiral.service.common.TaskServiceDocument<ContainerOperationTaskState.SubStage> {
-        private static final String FIELD_NAME_OPERATION = "operation";
-        private static final String FIELD_RESOURCE_LINKS = "resourceLinks";
 
         public static enum SubStage {
             CREATED,
@@ -63,7 +60,7 @@ public class ContainerOperationTaskService extends
         public String operation;
 
         /** (Required) The resources on which the given operation will be applied */
-        public List<String> resourceLinks;
+        public Set<String> resourceLinks;
     }
 
     public ContainerOperationTaskService() {
@@ -89,12 +86,6 @@ public class ContainerOperationTaskService extends
         default:
             break;
         }
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            ContainerOperationTaskState patchBody, ContainerOperationTaskState currentState) {
-        return false;
     }
 
     @Override
@@ -143,7 +134,7 @@ public class ContainerOperationTaskService extends
     }
 
     private QueryTask createResourcesQuery(Class<? extends ServiceDocument> type,
-            List<String> resourceLinks) {
+            Set<String> resourceLinks) {
         QueryTask query = QueryUtil.buildQuery(type, false);
         query.documentExpirationTimeMicros = ServiceUtils.getDefaultTaskExpirationTimeInMicros();
         query.querySpec.options = EnumSet.of(QueryOption.EXPAND_CONTENT);
@@ -199,23 +190,5 @@ public class ContainerOperationTaskService extends
             sendRequest(Operation.createPatch(this, containerState.documentSelfLink)
                     .setBody(patch));
         }
-    }
-
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        ServiceDocument template = super.getDocumentTemplate();
-
-        setDocumentTemplateIndexingOptions(template, EnumSet.of(PropertyIndexingOption.STORE_ONLY),
-                ContainerOperationTaskState.FIELD_NAME_OPERATION,
-                ContainerOperationTaskState.FIELD_RESOURCE_LINKS);
-
-        setDocumentTemplateUsageOptions(template,
-                EnumSet.of(PropertyUsageOption.SINGLE_ASSIGNMENT),
-                ContainerOperationTaskState.FIELD_NAME_OPERATION,
-                ContainerOperationTaskState.FIELD_RESOURCE_LINKS);
-
-        setDocumentTemplateUsageOptions(template, EnumSet.of(PropertyUsageOption.SERVICE_USE));
-
-        return template;
     }
 }

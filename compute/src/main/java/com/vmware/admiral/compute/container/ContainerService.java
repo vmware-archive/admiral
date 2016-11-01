@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import com.vmware.admiral.common.util.PropertyUtils;
-import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
 import com.vmware.admiral.compute.Composable;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.maintenance.ContainerHealthEvaluator;
@@ -131,7 +130,8 @@ public class ContainerService extends StatefulService {
          */
         @Documentation(description = "Port bindings in the format ip:hostPort:containerPort | ip::containerPort |+"
                 + "hostPort:containerPort | containerPort where range of ports can also be provided")
-        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @PropertyOptions(usage = PropertyUsageOption.OPTIONAL,
+                indexing = PropertyIndexingOption.EXPAND)
         public List<PortBinding> ports;
 
         /** Joined networks and the configuration with which they are joined. */
@@ -365,8 +365,6 @@ public class ContainerService extends StatefulService {
     public ServiceDocument getDocumentTemplate() {
         ContainerState template = (ContainerState) super.getDocumentTemplate();
 
-        ServiceDocumentTemplateUtil.indexCustomProperties(template);
-
         template.names = new ArrayList<>(2);
         template.names.add("name1 (string)");
         template.names.add("name2 (string)");
@@ -384,8 +382,6 @@ public class ContainerService extends StatefulService {
         portBinding.containerPort = "5000";
         portBinding.hostPort = "5000";
         template.ports = Collections.singletonList(portBinding);
-
-        ServiceDocumentTemplateUtil.indexProperty(template, ContainerState.FIELD_NAME_PORTS);
 
         template.customProperties = new HashMap<String, String>(1);
         template.customProperties.put("propKey (string)", "customPropertyValue (string)");

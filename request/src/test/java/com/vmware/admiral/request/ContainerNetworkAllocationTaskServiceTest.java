@@ -42,13 +42,13 @@ public class ContainerNetworkAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask = allocate(allocationTask);
 
         ContainerNetworkState networkState = getDocument(ContainerNetworkState.class,
-                allocationTask.resourceLinks.get(0));
+                allocationTask.resourceLinks.iterator().next());
 
         assertNotNull(networkState);
         assertEquals(containerNetworkDesc.documentSelfLink, networkState.descriptionLink);
         assertEquals(containerNetworkDesc.driver, networkState.driver);
         assertTrue(networkState.name.contains(containerNetworkDesc.name));
-        assertEquals(allocationTask.resourceLinks.get(0), networkState.documentSelfLink);
+        assertEquals(allocationTask.resourceLinks.iterator().next(), networkState.documentSelfLink);
 
     }
 
@@ -67,7 +67,7 @@ public class ContainerNetworkAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask = allocate(allocationTask);
 
         ContainerNetworkState networkState = getDocument(ContainerNetworkState.class,
-                allocationTask.resourceLinks.get(0));
+                allocationTask.resourceLinks.iterator().next());
 
         assertNotNull(networkState);
         assertEquals(containerNetworkDesc.documentSelfLink, networkState.descriptionLink);
@@ -93,7 +93,7 @@ public class ContainerNetworkAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask = allocate(allocationTask);
 
         ContainerNetworkState networkState = getDocument(ContainerNetworkState.class,
-                allocationTask.resourceLinks.get(0));
+                allocationTask.resourceLinks.iterator().next());
 
         assertNotNull(networkState);
         assertEquals(containerNetworkDesc.documentSelfLink, networkState.descriptionLink);
@@ -125,14 +125,13 @@ public class ContainerNetworkAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask = allocate(allocationTask);
 
         ContainerNetworkState networkState = getDocument(ContainerNetworkState.class,
-                allocationTask.resourceLinks.get(0));
+                allocationTask.resourceLinks.iterator().next());
 
         assertNotNull(networkState);
         assertEquals(containerNetworkDesc.documentSelfLink, networkState.descriptionLink);
 
         assertEquals(IPAM_DRIVER, networkState.ipam.driver);
         assertTrue(networkState.name.contains(containerNetworkDesc.name));
-
     }
 
     private ContainerNetworkAllocationTaskState createContainerNetworkAllocationTask(

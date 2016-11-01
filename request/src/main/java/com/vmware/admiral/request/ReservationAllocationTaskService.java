@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.request;
 
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.LINK;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
@@ -88,23 +87,6 @@ public class ReservationAllocationTaskService extends
                 indexing = { PropertyIndexingOption.STORE_ONLY })
         public long resourceCount;
 
-        /** Set by task. The link to the selected group placement. */
-        @Documentation(description = "Set by task. The link to the selected group placement.")
-        @PropertyOptions(usage = PropertyUsageOption.SERVICE_USE, indexing = STORE_ONLY)
-        public String groupResourcePlacementLink;
-
-        /**
-         * Set by task. Selected group placement links and associated resourcePoolLinks. Ordered by priority asc.
-         */
-        @Documentation(description = "Set by task. Selected group placement links and associated resourcePoolLinks. Ordered by priority asc.")
-        @PropertyOptions(usage = PropertyUsageOption.SERVICE_USE, indexing = STORE_ONLY)
-        public LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks;
-
-        /** (Internal) Set by task after the ComputeState is found to host the containers */
-        @Documentation(description = "Set by task after the ComputeState is found to host the containers.")
-        @PropertyOptions(usage = PropertyUsageOption.SERVICE_USE, indexing = STORE_ONLY)
-        public List<HostSelection> hostSelections;
-
         /**
          * The overall contextId of this request (could be the same across multiple
          * request - composite allocation)
@@ -114,8 +96,28 @@ public class ReservationAllocationTaskService extends
                 indexing = { PropertyIndexingOption.STORE_ONLY })
         public String contextId;
 
+        /** Set by task. The link to the selected group placement. */
+        @Documentation(description = "Set by task. The link to the selected group placement.")
+        @PropertyOptions(usage = { PropertyUsageOption.SERVICE_USE,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public String groupResourcePlacementLink;
+
+        /**
+         * Set by task. Selected group placement links and associated resourcePoolLinks. Ordered by priority asc.
+         */
+        @Documentation(description = "Set by task. Selected group placement links and associated resourcePoolLinks. Ordered by priority asc.")
+        @PropertyOptions(usage = { PropertyUsageOption.SERVICE_USE,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks;
+
+        /** (Internal) Set by task after the ComputeState is found to host the containers */
+        @Documentation(description = "Set by task after the ComputeState is found to host the containers.")
+        @PropertyOptions(usage = PropertyUsageOption.SERVICE_USE, indexing = STORE_ONLY)
+        public List<HostSelection> hostSelections;
+
         @Documentation(description = "The link of the ResourcePoolState associated with this task.")
-        @UsageOption(option = PropertyUsageOption.LINK)
+        @PropertyOptions(usage = { PropertyUsageOption.SERVICE_USE,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String resourcePoolLink;
 
         public static enum SubStage {
@@ -125,7 +127,6 @@ public class ReservationAllocationTaskService extends
             COMPLETED,
             ERROR;
         }
-
     }
 
     public ReservationAllocationTaskService() {
@@ -169,22 +170,6 @@ public class ReservationAllocationTaskService extends
             break;
         }
 
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            ReservationAllocationTaskState patchBody, ReservationAllocationTaskState currentState) {
-
-        currentState.groupResourcePlacementLink = mergeProperty(currentState.groupResourcePlacementLink,
-                patchBody.groupResourcePlacementLink);
-
-        currentState.resourcePoolsPerGroupPlacementLinks = mergeProperty(
-                currentState.resourcePoolsPerGroupPlacementLinks,
-                patchBody.resourcePoolsPerGroupPlacementLinks);
-
-        currentState.resourcePoolLink = mergeProperty(currentState.resourcePoolLink,
-                patchBody.resourcePoolLink);
-        return false;
     }
 
     @Override

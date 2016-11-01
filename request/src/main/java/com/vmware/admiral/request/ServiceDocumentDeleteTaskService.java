@@ -71,12 +71,6 @@ public class ServiceDocumentDeleteTaskService
         }
     }
 
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            ServiceDocumentDeleteTaskState patchBody, ServiceDocumentDeleteTaskState currentTask) {
-        return false;
-    }
-
     private void handleQueryServices(ServiceDocumentDeleteTaskState task) {
         QueryTask query = QueryUtil.buildQuery(task.deleteDocumentKind, false);
         query.querySpec.options = EnumSet.of(QueryOption.TOP_RESULTS);

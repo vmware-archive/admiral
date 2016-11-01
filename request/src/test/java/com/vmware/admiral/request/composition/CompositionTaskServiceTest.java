@@ -90,7 +90,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         RequestBrokerState request = startComputeRequest(compositeDesc);
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
         assertNotNull(cc);
 
         List<ComputeState> computes = queryComputeByCompositeComponentLink(cc.documentSelfLink);
@@ -129,7 +129,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         RequestBrokerState request = startComputeRequest(compositeDesc);
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
         assertNotNull(cc);
 
         List<ComputeState> computes = queryComputeByCompositeComponentLink(cc.documentSelfLink);
@@ -370,7 +370,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         assertEquals(1, requestBrokerState.resourceLinks.size());
 
         CompositeComponent cc = getDocument(CompositeComponent.class,
-                requestBrokerState.resourceLinks.get(0));
+                requestBrokerState.resourceLinks.iterator().next());
         assertNotNull(cc);
 
         assertEquals(expectedCount, cc.componentLinks.size());

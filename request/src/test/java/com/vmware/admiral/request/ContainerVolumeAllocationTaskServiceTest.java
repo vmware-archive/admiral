@@ -33,13 +33,13 @@ public class ContainerVolumeAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask = allocate(allocationTask);
 
         ContainerVolumeState volumeState = getDocument(ContainerVolumeState.class,
-                allocationTask.resourceLinks.get(0));
+                allocationTask.resourceLinks.iterator().next());
 
         assertNotNull(volumeState);
         assertEquals(containerVolumeDesc.documentSelfLink, volumeState.descriptionLink);
         assertEquals(containerVolumeDesc.driver, volumeState.driver);
         assertTrue(volumeState.name.contains(containerVolumeDesc.name));
-        assertEquals(allocationTask.resourceLinks.get(0), volumeState.documentSelfLink);
+        assertEquals(allocationTask.resourceLinks.iterator().next(), volumeState.documentSelfLink);
 
     }
 

@@ -170,7 +170,8 @@ public class CompositionSubTaskServiceTest extends RequestBaseTest {
                 subTask.resourceLinks);
         assertEquals(1, subTask.resourceLinks.size());
 
-        ContainerState container = getDocument(ContainerState.class, subTask.resourceLinks.get(0));
+        ContainerState container = getDocument(ContainerState.class,
+                subTask.resourceLinks.iterator().next());
         assertNotNull(container);
         addForDeletion(container);
     }

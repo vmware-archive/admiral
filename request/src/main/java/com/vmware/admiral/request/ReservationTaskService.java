@@ -13,12 +13,14 @@ package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -29,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ResourceType;
@@ -44,9 +47,6 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
-import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.NumericRange;
@@ -71,10 +71,6 @@ public class ReservationTaskService
 
     public static class ReservationTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ReservationTaskState.SubStage> {
-        private static final String FIELD_NAME_RESOURCE_DESC_LINK = "resourceDescriptionLink";
-        private static final String FIELD_NAME_TENANT_LINKS = "tenantLinks";
-        private static final String FIELD_NAME_RESOURCE_COUNT = "resourceCount";
-        private static final String FIELD_NAME_GROUP_RESOURCE_POLICY = "groupResourcePlacementLink";
 
         public static enum SubStage {
             CREATED,
@@ -96,25 +92,31 @@ public class ReservationTaskService
         }
 
         /** (Required) The description that defines the requested resource. */
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
         /** (Required) Type of resource to create. */
         public String resourceType;
 
         /** (Required) Number of resources to provision. */
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
         public long resourceCount;
 
         // Service fields:
         /** (Internal) Set by task. The link to the selected group placement. */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL },
+                indexing = STORE_ONLY)
         public String groupResourcePlacementLink;
 
         /**
          * Set by task. Selected group placement links and associated resourcePoolLinks. Ordered by
          * priority asc
          */
+        @PropertyOptions(usage = { SERVICE_USE }, indexing = STORE_ONLY)
         public LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks;
 
         /** (Internal) Set by task after the ComputeState is found to host the containers */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public List<HostSelection> hostSelections;
     }
 
@@ -170,23 +172,17 @@ public class ReservationTaskService
     }
 
     @Override
-    protected boolean validateStageTransition(Operation patch,
+    protected void customStateValidationAndMerge(Operation patch,
             ReservationTaskState patchBody, ReservationTaskState currentState) {
-
         if (SubStage.QUERYING_GLOBAL == patchBody.taskSubStage) {
             // In this case try global group instead of the provided one.
             currentState.tenantLinks = null;
         }
 
-        currentState.groupResourcePlacementLink = mergeProperty(currentState.groupResourcePlacementLink,
-                patchBody.groupResourcePlacementLink);
-        currentState.resourcePoolsPerGroupPlacementLinks = mergeProperty(
+        // override without merging
+        currentState.resourcePoolsPerGroupPlacementLinks = PropertyUtils.mergeProperty(
                 currentState.resourcePoolsPerGroupPlacementLinks,
                 patchBody.resourcePoolsPerGroupPlacementLinks);
-        currentState.hostSelections = mergeProperty(currentState.hostSelections,
-                patchBody.hostSelections);
-
-        return false;
     }
 
     @Override
@@ -567,28 +563,4 @@ public class ReservationTaskService
                     callbackFunction.accept(desc);
                 }));
     }
-
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        ServiceDocument template = super.getDocumentTemplate();
-
-        setDocumentTemplateIndexingOptions(template, EnumSet.of(PropertyIndexingOption.STORE_ONLY),
-                ReservationTaskState.FIELD_NAME_RESOURCE_DESC_LINK,
-                ReservationTaskState.FIELD_NAME_TENANT_LINKS,
-                ReservationTaskState.FIELD_NAME_RESOURCE_COUNT,
-                ReservationTaskState.FIELD_NAME_GROUP_RESOURCE_POLICY);
-
-        setDocumentTemplateUsageOptions(template,
-                EnumSet.of(PropertyUsageOption.SINGLE_ASSIGNMENT),
-                ReservationTaskState.FIELD_NAME_RESOURCE_DESC_LINK,
-                ReservationTaskState.FIELD_NAME_TENANT_LINKS,
-                ReservationTaskState.FIELD_NAME_RESOURCE_COUNT,
-                ReservationTaskState.FIELD_NAME_GROUP_RESOURCE_POLICY);
-
-        setDocumentTemplateUsageOptions(template, EnumSet.of(PropertyUsageOption.SERVICE_USE),
-                ReservationTaskState.FIELD_NAME_GROUP_RESOURCE_POLICY);
-
-        return template;
-    }
-
 }

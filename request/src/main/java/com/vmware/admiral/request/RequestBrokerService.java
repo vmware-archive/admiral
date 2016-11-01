@@ -13,13 +13,16 @@ package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_ALLOCATION_REQUEST;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.OPTIONAL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -82,8 +85,6 @@ import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -106,14 +107,6 @@ public class RequestBrokerService extends
         public static final String REMOVE_RESOURCE_OPERATION = "REMOVE_RESOURCE";
         public static final String CLUSTER_RESOURCE_OPERATION = "CLUSTER_RESOURCE";
 
-        private static final String FIELD_NAME_RESOURCE_TYPE = "resourceType";
-        private static final String FIELD_NAME_OPERATION = "operation";
-        private static final String FIELD_RESOURCE_DESC_LINK = "resourceDescriptionLink";
-        private static final String FIELD_RESOURCE_TENANT_LINKS = "tenantLinks";
-        private static final String FIELD_RESOURCE_COUNT = "resourceCount";
-        private static final String FIELD_RESOURCE_LINKS = "resourceLinks";
-        private static final String FIELD_RESOURCE_POLICY_LINK = "groupResourcePlacementLink";
-
         public static enum SubStage {
             CREATED,
             RESERVING,
@@ -131,20 +124,27 @@ public class RequestBrokerService extends
         }
 
         /** (Required) Type of resource to create. */
+        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
         public String resourceType;
 
         /** (Required) The operation name/id to be performed */
+        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
         public String operation;
 
         /** (Required) The description that defines the requested resource. */
+        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
         /** (Optional- default 1) Number of resources to provision. */
+        @PropertyOptions(usage = { OPTIONAL, SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
         public long resourceCount;
 
         /** Set by Task when resources are provisioned. */
-        public List<String> resourceLinks;
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, SERVICE_USE, AUTO_MERGE_IF_NOT_NULL },
+                indexing = STORE_ONLY)
+        public Set<String> resourceLinks;
 
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String groupResourcePlacementLink;
     }
 
@@ -267,20 +267,6 @@ public class RequestBrokerService extends
     }
 
     @Override
-    protected boolean validateStageTransition(Operation patch, RequestBrokerState patchBody,
-            RequestBrokerState currentState) {
-        currentState.groupResourcePlacementLink = mergeProperty(
-                currentState.groupResourcePlacementLink,
-                patchBody.groupResourcePlacementLink);
-        currentState.resourceLinks = mergeProperty(currentState.resourceLinks,
-                patchBody.resourceLinks);
-        currentState.requestTrackerLink = mergeProperty(currentState.requestTrackerLink,
-                patchBody.requestTrackerLink);
-
-        return false;
-    }
-
-    @Override
     protected ServiceTaskCallbackResponse getFinishedCallbackResponse(RequestBrokerState state) {
         final CallbackCompleteResponse finishedResponse = new CallbackCompleteResponse();
         finishedResponse.copy(state.serviceTaskCallback.getFinishedResponse());
@@ -292,7 +278,7 @@ public class RequestBrokerService extends
     }
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
-        List<String> resourceLinks;
+        Set<String> resourceLinks;
     }
 
     @Override
@@ -451,7 +437,7 @@ public class RequestBrokerService extends
                     CompositeComponent.FIELD_NAME_SELF_LINK,
                     state.resourceLinks);
 
-            List<String> componentLinks = new ArrayList<String>();
+            Set<String> componentLinks = new HashSet<String>();
             new ServiceDocumentQuery<CompositeComponent>(getHost(), CompositeComponent.class)
                     .query(compositeQueryTask, (r) -> {
                         if (r.hasException()) {
@@ -677,7 +663,7 @@ public class RequestBrokerService extends
         removalState.skipReleaseResourcePlacement = skipReleaseResourcePlacement;
         removalState.resourceLinks = state.resourceLinks.stream()
                 .filter((l) -> l.startsWith(ContainerFactoryService.SELF_LINK))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
         removalState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
@@ -1471,50 +1457,5 @@ public class RequestBrokerService extends
                     ComputeDescription desc = o.getBody(ComputeDescription.class);
                     callbackFunction.accept(desc);
                 }));
-    }
-
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        RequestBrokerState template = (RequestBrokerState) super.getDocumentTemplate();
-
-        template.customProperties = new HashMap<String, String>(1);
-        template.customProperties.put("propKey string", "customPropertyValue string");
-        template.resourceType = "ContainerType string";
-        template.resourceDescriptionLink = "resources/container-description/docker-nginx string";
-        template.taskInfo = new TaskState();
-        template.taskInfo.stage = TaskStage.CREATED;
-        template.taskSubStage = SubStage.CREATED;
-        template.resourceLinks = new ArrayList<>(1);
-        template.resourceLinks.add("resourceLink (string)");
-
-        setDocumentTemplateIndexingOptions(template, EnumSet.noneOf(PropertyIndexingOption.class),
-                RequestBrokerState.FIELD_NAME_TASK_INFO,
-                RequestBrokerState.FIELD_NAME_TASK_SUB_STAGE);
-
-        setDocumentTemplateIndexingOptions(template, EnumSet.of(PropertyIndexingOption.STORE_ONLY),
-                RequestBrokerState.FIELD_RESOURCE_POLICY_LINK);
-
-        setDocumentTemplateUsageOptions(template,
-                EnumSet.of(PropertyUsageOption.SINGLE_ASSIGNMENT),
-                RequestBrokerState.FIELD_NAME_RESOURCE_TYPE,
-                RequestBrokerState.FIELD_NAME_OPERATION,
-                RequestBrokerState.FIELD_RESOURCE_DESC_LINK,
-                RequestBrokerState.FIELD_RESOURCE_TENANT_LINKS,
-                RequestBrokerState.FIELD_RESOURCE_COUNT,
-                RequestBrokerState.FIELD_RESOURCE_LINKS,
-                RequestBrokerState.FIELD_RESOURCE_POLICY_LINK);
-
-        setDocumentTemplateUsageOptions(template,
-                EnumSet.of(PropertyUsageOption.SERVICE_USE),
-                RequestBrokerState.FIELD_RESOURCE_POLICY_LINK);
-
-        setDocumentTemplateUsageOptions(template,
-                EnumSet.of(PropertyUsageOption.OPTIONAL),
-                RequestBrokerState.FIELD_RESOURCE_TENANT_LINKS,
-
-                RequestBrokerState.FIELD_RESOURCE_COUNT,
-                RequestBrokerState.FIELD_RESOURCE_LINKS);
-
-        return template;
     }
 }

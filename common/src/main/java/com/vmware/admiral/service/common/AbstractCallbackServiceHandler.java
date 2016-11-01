@@ -66,11 +66,4 @@ public abstract class AbstractCallbackServiceHandler extends
             throws IllegalArgumentException {
 
     }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            CallbackServiceHandlerState patchBody, CallbackServiceHandlerState currentState) {
-        return false;
-    }
-
 }

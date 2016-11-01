@@ -16,7 +16,6 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,8 +35,6 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -58,9 +55,6 @@ public class ContainerNetworkRemovalTaskService extends
 
     public static class ContainerNetworkRemovalTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ContainerNetworkRemovalTaskState.SubStage> {
-        private static final String FIELD_NAME_RESOURCE_LINKS = "resourceLinks";
-        private static final String FIELD_NAME_REMOVE_ONLY = "removeOnly";
-        private static final String FIELD_NAME_INSPECT_ONLY = "externalInspectOnly";
 
         public static enum SubStage {
             CREATED,
@@ -75,7 +69,7 @@ public class ContainerNetworkRemovalTaskService extends
         }
 
         /** (Required) The resources on which the given operation will be applied */
-        public List<String> resourceLinks;
+        public Set<String> resourceLinks;
 
         /**
          * whether to actually go and destroy the container network using the adapter or just remove
@@ -131,13 +125,6 @@ public class ContainerNetworkRemovalTaskService extends
     }
 
     @Override
-    protected boolean validateStageTransition(Operation patch,
-            ContainerNetworkRemovalTaskState patchBody,
-            ContainerNetworkRemovalTaskState currentState) {
-        return false;
-    }
-
-    @Override
     protected void validateStateOnStart(ContainerNetworkRemovalTaskState state)
             throws IllegalArgumentException {
         assertNotEmpty(state.resourceLinks, "resourceLinks");
@@ -180,7 +167,7 @@ public class ContainerNetworkRemovalTaskService extends
     }
 
     private QueryTask createResourcesQuery(Class<? extends ServiceDocument> type,
-            List<String> resourceLinks) {
+            Collection<String> resourceLinks) {
         QueryTask query = QueryUtil.buildQuery(type, false);
         QueryUtil.addListValueClause(query, ServiceDocument.FIELD_NAME_SELF_LINK, resourceLinks);
 
@@ -362,27 +349,5 @@ public class ContainerNetworkRemovalTaskService extends
                             }
                             logInfo("Deleted ContainerNetworkState: " + cns.documentSelfLink);
                         });
-    }
-
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        ServiceDocument template = super.getDocumentTemplate();
-
-        setDocumentTemplateIndexingOptions(template, EnumSet.of(PropertyIndexingOption.STORE_ONLY),
-                ContainerNetworkRemovalTaskState.FIELD_NAME_RESOURCE_LINKS,
-                ContainerNetworkRemovalTaskState.FIELD_NAME_REMOVE_ONLY,
-                ContainerNetworkRemovalTaskState.FIELD_NAME_INSPECT_ONLY);
-
-        setDocumentTemplateUsageOptions(template,
-                EnumSet.of(PropertyUsageOption.SINGLE_ASSIGNMENT),
-                ContainerNetworkRemovalTaskState.FIELD_NAME_RESOURCE_LINKS,
-                ContainerNetworkRemovalTaskState.FIELD_NAME_REMOVE_ONLY,
-                ContainerNetworkRemovalTaskState.FIELD_NAME_INSPECT_ONLY);
-
-        setDocumentTemplateUsageOptions(template, EnumSet.of(PropertyUsageOption.SERVICE_USE));
-
-        template.documentDescription.serializedStateSizeLimit = 128 * 1024; // 128 Kb
-
-        return template;
     }
 }

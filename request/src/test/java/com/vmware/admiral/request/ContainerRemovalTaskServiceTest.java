@@ -22,6 +22,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -227,7 +228,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         RequestBrokerState day2RemovalRequest = new RequestBrokerState();
         day2RemovalRequest.resourceType = ResourceType.CONTAINER_TYPE.getName();
-        day2RemovalRequest.resourceLinks = containerStateLinks;
+        day2RemovalRequest.resourceLinks = new HashSet<>(containerStateLinks);
         day2RemovalRequest.operation = ContainerOperationType.DELETE.id;
 
         day2RemovalRequest = startRequest(day2RemovalRequest);
@@ -251,7 +252,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         day2RemovalRequest = new RequestBrokerState();
         day2RemovalRequest.documentSelfLink = selfLink + "-removal-2";
         day2RemovalRequest.resourceType = ResourceType.CONTAINER_TYPE.getName();
-        day2RemovalRequest.resourceLinks = containerStateLinks;
+        day2RemovalRequest.resourceLinks = new HashSet<>(containerStateLinks);
         day2RemovalRequest.operation = ContainerOperationType.DELETE.id;
 
         day2RemovalRequest = startRequest(day2RemovalRequest);
@@ -288,7 +289,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         RequestBrokerState removalRequest = new RequestBrokerState();
         removalRequest.documentSelfLink = extractId(container.documentSelfLink) + "-removal";
         removalRequest.resourceType = request.resourceType;
-        removalRequest.resourceLinks = containerStateLinks;
+        removalRequest.resourceLinks = new HashSet<>(containerStateLinks);
         removalRequest.operation = ContainerOperationType.DELETE.id;
 
         removalRequest = startRequest(removalRequest);
@@ -314,7 +315,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         assertEquals(1, request.resourceLinks.size());
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
 
         assertEquals(compositeDesc.descriptionLinks.size(), cc.componentLinks.size());
 
@@ -330,7 +331,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceLinks = containerLinks;
+        request.resourceLinks = new HashSet<>(containerLinks);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);
 
@@ -360,7 +361,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         assertEquals(1, request.resourceLinks.size());
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
 
         assertEquals(compositeDesc.descriptionLinks.size(), cc.componentLinks.size());
 
@@ -377,7 +378,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceLinks = containerLinks;
+        request.resourceLinks = new HashSet<>(containerLinks);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);
 
@@ -421,7 +422,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         assertEquals(1, request.resourceLinks.size());
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
 
         assertEquals(compositeDesc.descriptionLinks.size(), cc.componentLinks.size());
 
@@ -441,7 +442,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceLinks = containerLinks;
+        request.resourceLinks = new HashSet<>(containerLinks);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);
 
@@ -486,7 +487,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         assertEquals(1, request.resourceLinks.size());
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
 
         ContainerState container1 = getDocument(ContainerState.class, cc.componentLinks.get(0));
         ContainerState container2 = getDocument(ContainerState.class, cc.componentLinks.get(1));
@@ -497,7 +498,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceLinks = new ArrayList<String>();
+        request.resourceLinks = new HashSet<String>();
         request.resourceLinks.add(container1.documentSelfLink);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);
@@ -510,7 +511,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceLinks = new ArrayList<String>();
+        request.resourceLinks = new HashSet<String>();
         request.resourceLinks.add(container2.documentSelfLink);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);
@@ -536,19 +537,19 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request.resourceDescriptionLink = desc.documentSelfLink;
         request = startRequest(request);
         request = waitForRequestToComplete(request);
-        String documentLink1 = request.resourceLinks.get(0);
+        String documentLink1 = request.resourceLinks.iterator().next();
 
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceDescriptionLink = desc.documentSelfLink;
         request = startRequest(request);
         request = waitForRequestToComplete(request);
-        String documentLink2 = request.resourceLinks.get(0);
+        String documentLink2 = request.resourceLinks.iterator().next();
 
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceLinks = new ArrayList<String>();
+        request.resourceLinks = new HashSet<String>();
         request.resourceLinks.add(documentLink1);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);
@@ -562,7 +563,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceLinks = new ArrayList<String>();
+        request.resourceLinks = new HashSet<String>();
         request.resourceLinks.add(documentLink2);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request = startRequest(request);
@@ -595,7 +596,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         assertEquals(1, request.resourceLinks.size());
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
 
         assertEquals(desc1._cluster + 1, cc.componentLinks.size());
 
@@ -614,7 +615,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // Remove Containers
         request = TestRequestStateFactory.createRequestState();
         request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceLinks = containerLinks;
+        request.resourceLinks = new HashSet<>(containerLinks);
         request.operation = ContainerOperationType.DELETE.id;
         request = startRequest(request);
 

@@ -87,7 +87,7 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
         // wait for request completed state:
         request = waitForRequestToComplete(request);
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
 
         assertNotNull(cc.componentLinks);
         assertEquals(cc.componentLinks.size(), 3);

@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 
 import org.junit.Test;
@@ -54,7 +55,8 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
 
         RequestBrokerState day2RemovalRequest = new RequestBrokerState();
         day2RemovalRequest.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
-        day2RemovalRequest.resourceLinks = Collections.singletonList(composite.documentSelfLink);
+        day2RemovalRequest.resourceLinks = new HashSet<>(Collections.singletonList(
+                composite.documentSelfLink));
         day2RemovalRequest.operation = ContainerOperationType.DELETE.id;
 
         day2RemovalRequest = startRequest(day2RemovalRequest);
@@ -76,7 +78,7 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
 
         RequestBrokerState day2RemovalRequest = new RequestBrokerState();
         day2RemovalRequest.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
-        day2RemovalRequest.resourceLinks = new ArrayList<>(Arrays.asList(
+        day2RemovalRequest.resourceLinks = new HashSet<>(Arrays.asList(
                 composite1.documentSelfLink, composite2.documentSelfLink));
         day2RemovalRequest.operation = ContainerOperationType.DELETE.id;
 
@@ -104,7 +106,7 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
 
         RequestBrokerState day2RemovalRequest = new RequestBrokerState();
         day2RemovalRequest.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
-        day2RemovalRequest.resourceLinks = new ArrayList<>(
+        day2RemovalRequest.resourceLinks = new HashSet<>(
                 Arrays.asList(composite1.documentSelfLink));
         day2RemovalRequest.operation = ContainerOperationType.DELETE.id;
 

@@ -17,7 +17,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -64,7 +64,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         allocationTask = allocate(allocationTask);
 
         ComputeState computeState = getDocument(ComputeState.class,
-                allocationTask.resourceLinks.get(0));
+                allocationTask.resourceLinks.iterator().next());
         assertNotNull(computeState.id);
 
         assertEquals(computeDescription.documentSelfLink, computeState.descriptionLink);
@@ -83,7 +83,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         allocationTask = allocate(allocationTask);
 
         ComputeState computeState = getDocument(ComputeState.class,
-                allocationTask.resourceLinks.get(0));
+                allocationTask.resourceLinks.iterator().next());
         assertTrue(computeState.name.startsWith(TEST_VM_NAME));
         assertNotNull(computeState.id);
         assertEquals(computeDescription.documentSelfLink, computeState.descriptionLink);
@@ -100,7 +100,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         provisionTask = provision(provisionTask);
 
         // verify container state is provisioned and patched:
-        computeState = getDocument(ComputeState.class, provisionTask.resourceLinks.get(0));
+        computeState = getDocument(ComputeState.class, provisionTask.resourceLinks.iterator().next());
         assertNotNull(computeState);
 
         assertNotNull(computeState.id);
@@ -164,7 +164,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         return allocationTask;
     }
 
-    private ComputeProvisionTaskState createComputeProvisionTask(List<String> resourceLinks) {
+    private ComputeProvisionTaskState createComputeProvisionTask(Set<String> resourceLinks) {
         ComputeProvisionTaskState provisionTask = new ComputeProvisionTaskState();
         provisionTask.resourceLinks = resourceLinks;
         provisionTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();

@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -60,7 +61,7 @@ public class ComputeOperationTaskService extends
 
         @Documentation(description = "The resources on which the given operation will be applied")
         @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
-        public List<String> resourceLinks;
+        public Set<String> resourceLinks;
     }
 
     public ComputeOperationTaskService() {
@@ -86,12 +87,6 @@ public class ComputeOperationTaskService extends
         default:
             break;
         }
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            ComputeOperationTaskState patchBody, ComputeOperationTaskState currentState) {
-        return false;
     }
 
     @Override

@@ -12,8 +12,10 @@
 package com.vmware.admiral.request.compute;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.compute.ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -45,8 +47,6 @@ import com.vmware.photon.controller.model.tasks.SubTaskService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.OperationSequence;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -81,9 +81,8 @@ public class ComputeProvisionTaskService extends
 
         /** (Required) Links to already allocated resources that are going to be provisioned. */
         @Documentation(description = "Links to already allocated resources that are going to be provisioned.")
-        @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
-                PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT })
-        public List<String> resourceLinks;
+        @PropertyOptions(indexing = STORE_ONLY, usage = { REQUIRED, SINGLE_ASSIGNMENT })
+        public Set<String> resourceLinks;
 
     }
 
@@ -100,15 +99,6 @@ public class ComputeProvisionTaskService extends
     protected void validateStateOnStart(ComputeProvisionTaskState state)
             throws IllegalArgumentException {
         assertNotNull(state.resourceLinks, "resourceLinks");
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch, ComputeProvisionTaskState patchBody,
-            ComputeProvisionTaskState currentState) {
-        currentState.resourceLinks = mergeLists(
-                currentState.resourceLinks, patchBody.resourceLinks);
-
-        return false;
     }
 
     @Override
@@ -210,7 +200,7 @@ public class ComputeProvisionTaskService extends
 
     private void provisionResources(ComputeProvisionTaskState state, String subTaskLink) {
         try {
-            List<String> resourceLinks = state.resourceLinks;
+            Set<String> resourceLinks = state.resourceLinks;
             if (resourceLinks == null || resourceLinks.isEmpty()) {
                 throw new IllegalStateException("No compute instances to provision");
             }
@@ -290,7 +280,7 @@ public class ComputeProvisionTaskService extends
     }
 
     private void queryForProvisionedResources(ComputeProvisionTaskState state) {
-        List<String> resourceLinks = state.resourceLinks;
+        Set<String> resourceLinks = state.resourceLinks;
         if (resourceLinks == null || resourceLinks.isEmpty()) {
             complete(state, SubStage.COMPLETED);
             return;

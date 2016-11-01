@@ -174,14 +174,6 @@ public class EpzComputeEnumerationTaskService extends
     }
 
     @Override
-    protected boolean validateStageTransition(Operation patch,
-            EpzComputeEnumerationTaskState patchBody, EpzComputeEnumerationTaskState currentState) {
-        // use default merging for AUTO_MERGE_IF_NOT_NULL fields
-        Utils.mergeWithState(getStateDescription(), currentState, patchBody);
-        return false;
-    }
-
-    @Override
     protected void handleStartedStagePatch(EpzComputeEnumerationTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:

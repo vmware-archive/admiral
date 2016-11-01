@@ -12,8 +12,8 @@
 package com.vmware.admiral.request.compute;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.LINK;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.LINKS;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
@@ -91,7 +91,7 @@ public class ComputePlacementSelectionTaskService extends
 
         @Documentation(description = "Set by the task as result of the selection algorithm filters."
                 + " The number of selected computes matches the given resourceCount.")
-        @PropertyOptions(usage = { SERVICE_USE, LINKS }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL, LINKS }, indexing = STORE_ONLY)
         public Collection<String> selectedComputePlacementLinks;
 
         @ServiceDocument.Documentation(description = "(Required) The overall contextId of this"
@@ -129,25 +129,15 @@ public class ComputePlacementSelectionTaskService extends
             selectPlacement(state, computeDescription, QUERY_RETRY_COUNT);
             break;
         case COMPLETED:
-            complete(state, DefaultSubStage.COMPLETED);
+            complete(createUpdateSubStageTask(state, state.taskSubStage), state.taskSubStage);
             break;
         case ERROR:
-            completeWithError(state, DefaultSubStage.ERROR);
+            completeWithError(createUpdateSubStageTask(state, state.taskSubStage),
+                    state.taskSubStage);
             break;
         default:
             break;
         }
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            ComputePlacementSelectionTaskState patchBody,
-            ComputePlacementSelectionTaskState currentState) {
-        currentState.selectedComputePlacementLinks = mergeProperty(
-                currentState.selectedComputePlacementLinks,
-                patchBody.selectedComputePlacementLinks);
-
-        return false;
     }
 
     @Override

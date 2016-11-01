@@ -11,7 +11,7 @@
 
 package com.vmware.admiral.test.integration.compute.aws;
 
-import java.util.List;
+import java.util.Set;
 
 import org.junit.Ignore;
 
@@ -22,7 +22,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 public class AwsDockerHostProvisionIT extends AwsComputeProvisionIT {
 
     @Override
-    protected void doWithResources(List<String> resourceLinks) throws Throwable {
+    protected void doWithResources(Set<String> resourceLinks) throws Throwable {
         ContainerDescription containerDescription = createContainerDescription();
         requestContainerAndDelete(containerDescription.documentSelfLink);
     }

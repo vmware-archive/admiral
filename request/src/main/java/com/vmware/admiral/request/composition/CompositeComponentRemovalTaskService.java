@@ -66,7 +66,7 @@ public class CompositeComponentRemovalTaskService
         }
 
         @Documentation(description = "(Required) The composites on which the given operation will be applied.")
-        public List<String> resourceLinks;
+        public Set<String> resourceLinks;
     }
 
     // Order of batch remove of resources, grouped by resource type.
@@ -110,13 +110,6 @@ public class CompositeComponentRemovalTaskService
         default:
             break;
         }
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            CompositeComponentRemovalTaskState patchBody,
-            CompositeComponentRemovalTaskState currentState) {
-        return false;
     }
 
     private void queryComponentResources(CompositeComponentRemovalTaskState state) {
@@ -170,14 +163,14 @@ public class CompositeComponentRemovalTaskService
 
     private void performResourceRemovalOperations(CompositeComponentRemovalTaskState state,
             List<String> resourceLinks) {
-        Map<ResourceType, List<String>> resourceLinksByResourceType = new HashMap<>();
+        Map<ResourceType, Set<String>> resourceLinksByResourceType = new HashMap<>();
 
         for (String link : resourceLinks) {
             ComponentMeta metaByStateLink = CompositeComponentRegistry.metaByStateLink(link);
             ResourceType rt = ResourceType.fromName(metaByStateLink.resourceType);
-            List<String> list = resourceLinksByResourceType.get(rt);
+            Set<String> list = resourceLinksByResourceType.get(rt);
             if (list == null) {
-                list = new ArrayList<>();
+                list = new HashSet<>();
                 resourceLinksByResourceType.put(rt, list);
             }
             list.add(link);
@@ -186,7 +179,7 @@ public class CompositeComponentRemovalTaskService
         List<ResourceTypeRemovalNode> resourceLinksByNodeOrder = new ArrayList<>();
 
         for (ResourceType rt : PREFERED_ORDER_OF_REMOVAL_PER_TYPE) {
-            List<String> links = resourceLinksByResourceType.remove(rt);
+            Set<String> links = resourceLinksByResourceType.remove(rt);
             if (links == null) {
                 continue;
             }
@@ -295,6 +288,6 @@ public class CompositeComponentRemovalTaskService
         private ResourceType type;
         private String prevNode;
         private String nextNode;
-        private List<String> resourceLinks;
+        private Set<String> resourceLinks;
     }
 }

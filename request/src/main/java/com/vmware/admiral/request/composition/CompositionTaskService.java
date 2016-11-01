@@ -14,12 +14,14 @@ package com.vmware.admiral.request.composition;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -50,8 +52,6 @@ import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallback
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
-import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -69,10 +69,6 @@ public class CompositionTaskService
 
     public static class CompositionTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<CompositionTaskState.SubStage> {
-
-        private static final String FIELD_NAME_RESOURCE_DESCRIPTION_LINK = "resourceDescriptionLink";
-        private static final String FIELD_NAME_RESOURCE_NODES = "resourceNodes";
-        private static final String FIELD_NAME_COMPOSITE_COMPONENT_LINK = "compositeComponentLink";
 
         public static enum SubStage {
             CREATED,
@@ -94,22 +90,27 @@ public class CompositionTaskService
         }
 
         /** The description that defines the requested resource. */
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
         // Service use fields:
         /** ResourceNodes by CompositionSubTask links */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Map<String, ResourceNode> resourceNodes;
 
         /** Set by Task. Link to the CompositeComponent */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String compositeComponentLink;
 
         /** Set by Task. The count of the current allocations completed. */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Long remainingCount;
 
         /** Set by Task. Error count of the current allocations. */
         public long errorCount;
 
         /** (Internal) Set by task with ContainerDescription name. */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String descName;
 
     }
@@ -166,16 +167,8 @@ public class CompositionTaskService
     }
 
     @Override
-    protected boolean validateStageTransition(Operation patch,
+    protected void customStateValidationAndMerge(Operation patch,
             CompositionTaskState patchBody, CompositionTaskState currentState) {
-        currentState.compositeComponentLink = mergeProperty(currentState.compositeComponentLink,
-                patchBody.compositeComponentLink);
-        currentState.remainingCount = mergeProperty(currentState.remainingCount,
-                patchBody.remainingCount);
-        currentState.resourceNodes = mergeProperty(currentState.resourceNodes,
-                patchBody.resourceNodes);
-        currentState.descName = mergeProperty(currentState.descName, patchBody.descName);
-
         if (currentState.taskInfo != null
                 && TaskStage.STARTED == currentState.taskInfo.stage
                 && (SubStage.ALLOCATING == patchBody.taskSubStage
@@ -223,8 +216,6 @@ public class CompositionTaskService
                 }
             }
         }
-
-        return false;
     }
 
     @Override
@@ -251,7 +242,7 @@ public class CompositionTaskService
         if (SubStage.CONTEXT_PREPARED == state.taskSubStage) {
             CompositionTaskState currentState = (CompositionTaskState) state;
             statusTask.name = currentState.descName;
-            statusTask.resourceLinks = new ArrayList<>();
+            statusTask.resourceLinks = new HashSet<>();
             statusTask.resourceLinks.add(currentState.compositeComponentLink);
         }
 
@@ -606,7 +597,8 @@ public class CompositionTaskService
         removalTaskState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.FAILED, SubStage.FAILED, TaskStage.FAILED, SubStage.FAILED);
         removalTaskState.customProperties = state.customProperties;
-        removalTaskState.resourceLinks = Collections.singletonList(state.compositeComponentLink);
+        removalTaskState.resourceLinks = new HashSet<>(Collections.singletonList(
+                state.compositeComponentLink));
         removalTaskState.tenantLinks = state.tenantLinks;
         removalTaskState.requestTrackerLink = state.requestTrackerLink;
 
@@ -624,28 +616,4 @@ public class CompositionTaskService
                             }
                         }));
     }
-
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        ServiceDocument template = super.getDocumentTemplate();
-
-        setDocumentTemplateIndexingOptions(template, EnumSet.of(PropertyIndexingOption.STORE_ONLY),
-                CompositionTaskState.FIELD_NAME_RESOURCE_DESCRIPTION_LINK,
-                CompositionTaskState.FIELD_NAME_TENANT_LINKS,
-                CompositionTaskState.FIELD_NAME_RESOURCE_NODES,
-                CompositionTaskState.FIELD_NAME_COMPOSITE_COMPONENT_LINK);
-
-        setDocumentTemplateUsageOptions(template,
-                EnumSet.of(PropertyUsageOption.SINGLE_ASSIGNMENT),
-                CompositionTaskState.FIELD_NAME_RESOURCE_DESCRIPTION_LINK,
-                CompositionTaskState.FIELD_NAME_TENANT_LINKS,
-                CompositionTaskState.FIELD_NAME_COMPOSITE_COMPONENT_LINK);
-
-        setDocumentTemplateUsageOptions(template, EnumSet.of(PropertyUsageOption.SERVICE_USE),
-                CompositionTaskState.FIELD_NAME_RESOURCE_NODES,
-                CompositionTaskState.FIELD_NAME_COMPOSITE_COMPONENT_LINK);
-
-        return template;
-    }
-
 }

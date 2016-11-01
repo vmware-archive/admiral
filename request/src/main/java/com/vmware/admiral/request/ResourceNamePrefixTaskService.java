@@ -12,7 +12,9 @@
 package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
 import java.util.ArrayList;
 import java.util.IllegalFormatException;
@@ -52,6 +54,7 @@ public class ResourceNamePrefixTaskService
         public String baseResourceNameFormat;
 
         /** Set by the Task with the result of applying prefixes based on group selection. */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public List<String> resourceNames;
     }
 
@@ -68,14 +71,6 @@ public class ResourceNamePrefixTaskService
         default:
             break;
         }
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            ResourceNamePrefixTaskState patchBody, ResourceNamePrefixTaskState currentState) {
-        currentState.resourceNames = mergeProperty(currentState.resourceNames,
-                patchBody.resourceNames);
-        return false;
     }
 
     @Override

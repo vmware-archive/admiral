@@ -595,7 +595,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
         MockDockerAdapterService.getContainerIds();
 
-        String compositeComponentLink = initialRequest.resourceLinks.get(0);
+        String compositeComponentLink = initialRequest.resourceLinks.iterator().next();
 
         CompositeComponent cc = getDocument(CompositeComponent.class, compositeComponentLink);
         List<String> initialLinks = cc.componentLinks;
@@ -693,7 +693,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
         MockDockerAdapterService.getContainerIds();
 
-        String compositeComponentLink = initialRequest.resourceLinks.get(0);
+        String compositeComponentLink = initialRequest.resourceLinks.iterator().next();
 
         CompositeComponent cc = getDocument(CompositeComponent.class, compositeComponentLink);
         List<String> initialLinks = cc.componentLinks;
@@ -789,7 +789,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
 
         MockDockerAdapterService.getContainerIds();
 
-        String compositeComponentLink = initialRequest.resourceLinks.get(0);
+        String compositeComponentLink = initialRequest.resourceLinks.iterator().next();
 
         CompositeComponent cc = getDocument(CompositeComponent.class, compositeComponentLink);
         List<String> initialLinks = cc.componentLinks;

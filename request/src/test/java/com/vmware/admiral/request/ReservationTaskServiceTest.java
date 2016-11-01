@@ -557,7 +557,7 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
                 placementFinance.documentSelfLink);
 
         assertNotNull(task.groupResourcePlacementLink);
-        assertEquals(task.resourcePoolsPerGroupPlacementLinks.size(), 2);
+        assertEquals(2, task.resourcePoolsPerGroupPlacementLinks.size());
 
     }
 

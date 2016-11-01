@@ -14,6 +14,8 @@ package com.vmware.admiral.compute.container;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.EXPAND;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.FIXED_ITEM_NAME;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +29,6 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
 import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription.Status;
@@ -73,6 +74,7 @@ public class CompositeDescriptionService extends StatefulService {
         /** List of all ContainerDescriptions as part of this composition description */
         public List<String> descriptionLinks;
         /** Custom properties. */
+        @PropertyOptions(indexing = { EXPAND, FIXED_ITEM_NAME })
         public Map<String, String> customProperties;
         /** Bindings */
         public List<Binding.ComponentBinding> bindings;
@@ -241,14 +243,6 @@ public class CompositeDescriptionService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         CompositeDescription template = (CompositeDescription) super.getDocumentTemplate();
-
-        ServiceDocumentTemplateUtil.indexCustomProperties(template);
-        ServiceDocumentTemplateUtil.indexProperty(template,
-                CompositeDescription.FIELD_NAME_DESCRIPTION_LINKS);
-
-        // FIXME this causes issues when the text contains non alpha characters
-        // ServiceDocumentTemplateUtil.indexTextProperty(template,
-        // CompositeDescription.FIELD_NAME_NAME);
 
         template.name = "name (string)";
         template.status = Status.PUBLISHED;

@@ -119,7 +119,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
 
             try {
                 logger.info("---------- Clean up: Request Delete the container instance. --------");
-                requestContainerDelete(Collections.singletonList(containerLink), false);
+                requestContainerDelete(Collections.singleton(containerLink), false);
             } catch (Throwable t) {
                 logger.warning(String.format("Unable to remove container %s: %s", containerLink,
                         t.getMessage()));
@@ -289,7 +289,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
 
     protected void validateAfterStart(String resourceDescLink, RequestBrokerState request)
             throws Exception {
-        String containerStateLink = request.resourceLinks.get(0);
+        String containerStateLink = request.resourceLinks.iterator().next();
         ContainerState containerState = getDocument(containerStateLink, ContainerState.class);
 
         assertNotNull(containerState);
@@ -337,11 +337,11 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         return request;
     }
 
-    protected void requestContainerDelete(List<String> resourceLinks, boolean verifyDelete)
+    protected void requestContainerDelete(Set<String> resourceLinks, boolean verifyDelete)
             throws Exception {
 
         RequestBrokerState day2DeleteRequest = new RequestBrokerState();
-        String resourceLink = resourceLinks.get(0);
+        String resourceLink = resourceLinks.iterator().next();
         if (resourceLink.startsWith(CompositeComponentFactoryService.SELF_LINK)) {
             day2DeleteRequest.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
         } else {
@@ -397,7 +397,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
 
         day2DeleteRequest.resourceType = metaByStateLink.resourceType;
         day2DeleteRequest.operation = NetworkOperationType.DELETE.id;
-        day2DeleteRequest.resourceLinks = new ArrayList<>(Arrays.asList(resourceLink));
+        day2DeleteRequest.resourceLinks = new HashSet<>(Arrays.asList(resourceLink));
         day2DeleteRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2DeleteRequest);
 
         waitForTaskToComplete(day2DeleteRequest.documentSelfLink);
@@ -578,7 +578,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         RequestBrokerState day2DeleteRequest = new RequestBrokerState();
         day2DeleteRequest.resourceType = ResourceType.CONTAINER_TYPE.getName();
         day2DeleteRequest.operation = ContainerOperationType.STOP.id;
-        day2DeleteRequest.resourceLinks = Collections.singletonList(containerLink);
+        day2DeleteRequest.resourceLinks = Collections.singleton(containerLink);
         day2DeleteRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2DeleteRequest);
 
         waitForTaskToComplete(day2DeleteRequest.documentSelfLink);
@@ -588,7 +588,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         RequestBrokerState day2DeleteRequest = new RequestBrokerState();
         day2DeleteRequest.resourceType = ResourceType.CONTAINER_TYPE.getName();
         day2DeleteRequest.operation = ContainerOperationType.START.id;
-        day2DeleteRequest.resourceLinks = Collections.singletonList(containerLink);
+        day2DeleteRequest.resourceLinks = Collections.singleton(containerLink);
         day2DeleteRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2DeleteRequest);
 
         waitForTaskToComplete(day2DeleteRequest.documentSelfLink);

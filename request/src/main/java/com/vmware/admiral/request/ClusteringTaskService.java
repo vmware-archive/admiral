@@ -12,10 +12,12 @@
 package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isSystemContainer;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_ALLOCATION_REQUEST;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -89,8 +91,8 @@ public class ClusteringTaskService extends
         public boolean postAllocation;
 
         // Service use fields:
-        public List<String> resourceLinks;
-
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public Set<String> resourceLinks;
     }
 
     public ClusteringTaskService() {
@@ -133,14 +135,6 @@ public class ClusteringTaskService extends
     }
 
     @Override
-    protected boolean validateStageTransition(Operation patch,
-            ClusteringTaskState patchBody, ClusteringTaskState currentState) {
-        currentState.resourceLinks = mergeLists(
-                currentState.resourceLinks, patchBody.resourceLinks);
-        return false;
-    }
-
-    @Override
     protected ServiceTaskCallbackResponse getFinishedCallbackResponse(
             ClusteringTaskState state) {
         CallbackCompleteResponse finishedResponse = new CallbackCompleteResponse();
@@ -153,7 +147,7 @@ public class ClusteringTaskService extends
     }
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
-        List<String> resourceLinks;
+        Set<String> resourceLinks;
     }
 
     private void provisionOrRemoveResources(ClusteringTaskState state,
@@ -282,7 +276,7 @@ public class ClusteringTaskService extends
         requestBrokerState.tenantLinks = state.tenantLinks;
         requestBrokerState.resourceDescriptionLink = descLink;
         requestBrokerState.resourceLinks = resourcesToRemove.stream().map(c -> c.documentSelfLink)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
         requestBrokerState.requestTrackerLink = state.requestTrackerLink;
         requestBrokerState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskState.TaskStage.STARTED, SubStage.COMPLETED, TaskState.TaskStage.FAILED,

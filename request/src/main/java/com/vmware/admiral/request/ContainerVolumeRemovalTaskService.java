@@ -16,7 +16,6 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,8 +35,6 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -56,8 +53,6 @@ public class ContainerVolumeRemovalTaskService extends
 
     public static class ContainerVolumeRemovalTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ContainerVolumeRemovalTaskState.SubStage> {
-        private static final String FIELD_NAME_RESOURCE_LINKS = "resourceLinks";
-        private static final String FIELD_NAME_REMOVE_ONLY = "removeOnly";
 
         public static enum SubStage {
             CREATED, INSTANCES_REMOVING, INSTANCES_REMOVED, REMOVING_RESOURCE_STATES, COMPLETED, ERROR;
@@ -67,7 +62,7 @@ public class ContainerVolumeRemovalTaskService extends
         }
 
         /** (Required) The resources on which the given operation will be applied */
-        public List<String> resourceLinks;
+        public Set<String> resourceLinks;
 
         /**
          * whether to actually go and destroy the container volume using the adapter or just remove
@@ -107,13 +102,6 @@ public class ContainerVolumeRemovalTaskService extends
         default:
             break;
         }
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            ContainerVolumeRemovalTaskState patchBody,
-            ContainerVolumeRemovalTaskState currentState) {
-        return false;
     }
 
     @Override
@@ -303,30 +291,10 @@ public class ContainerVolumeRemovalTaskService extends
     }
 
     private QueryTask createResourcesQuery(Class<? extends ServiceDocument> type,
-            List<String> resourceLinks) {
+            Collection<String> resourceLinks) {
         QueryTask query = QueryUtil.buildQuery(type, false);
         QueryUtil.addListValueClause(query, ServiceDocument.FIELD_NAME_SELF_LINK, resourceLinks);
 
         return query;
-    }
-
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        ServiceDocument template = super.getDocumentTemplate();
-
-        setDocumentTemplateIndexingOptions(template, EnumSet.of(PropertyIndexingOption.STORE_ONLY),
-                ContainerVolumeRemovalTaskState.FIELD_NAME_RESOURCE_LINKS,
-                ContainerVolumeRemovalTaskState.FIELD_NAME_REMOVE_ONLY);
-
-        setDocumentTemplateUsageOptions(template,
-                EnumSet.of(PropertyUsageOption.SINGLE_ASSIGNMENT),
-                ContainerVolumeRemovalTaskState.FIELD_NAME_RESOURCE_LINKS,
-                ContainerVolumeRemovalTaskState.FIELD_NAME_REMOVE_ONLY);
-
-        setDocumentTemplateUsageOptions(template, EnumSet.of(PropertyUsageOption.SERVICE_USE));
-
-        template.documentDescription.serializedStateSizeLimit = 128 * 1024; // 128 Kb
-
-        return template;
     }
 }

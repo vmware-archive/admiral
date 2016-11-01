@@ -789,7 +789,7 @@ public abstract class BaseTestCase {
     }
 
     public List<String> findResourceLinks(Class<? extends ServiceDocument> type,
-            List<String> resourceLinks) throws Throwable {
+            Collection<String> resourceLinks) throws Throwable {
         TestContext ctx = testCreate(1);
         QueryTask query = QueryUtil.buildQuery(type, true);
         QueryUtil.addListValueClause(query, ServiceDocument.FIELD_NAME_SELF_LINK, resourceLinks);

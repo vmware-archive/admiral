@@ -81,7 +81,7 @@ public class ContainerMultiNetworkingIT extends BaseProvisioningOnCoreOsIT {
         assertEquals("Unexpected number of resource links", 1,
                 request.resourceLinks.size());
 
-        CompositeComponent cc = getDocument(request.resourceLinks.get(0), CompositeComponent.class);
+        CompositeComponent cc = getDocument(request.resourceLinks.iterator().next(), CompositeComponent.class);
         assertEquals("Unexpected number of component links", ALL_RESOURCES_SIZE,
                 cc.componentLinks.size());
 

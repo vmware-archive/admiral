@@ -13,13 +13,11 @@ package com.vmware.admiral.request.compute;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertState;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -73,8 +71,8 @@ public class ProvisionContainerHostsTaskService
 
         /** (Required) The AWS compute description link. */
         @Documentation(description = "The description that defines the requested resource.")
-        @PropertyOptions(usage = { PropertyUsageOption.LINK,
-                PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
+        @PropertyOptions(usage = { PropertyUsageOption.LINK, PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL }, indexing = {
                         PropertyIndexingOption.STORE_ONLY })
         public String endpointLink;
 
@@ -90,13 +88,15 @@ public class ProvisionContainerHostsTaskService
 
         /** (Set by a Task) The compute resource links of the provisioned Docker Host VMs */
         @Documentation(description = "The compute resource links of the provisioned Docker Host VMs.")
-        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
-                PropertyIndexingOption.STORE_ONLY })
-        public List<String> resourceLinks;
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL }, indexing = {
+                        PropertyIndexingOption.STORE_ONLY })
+        public Set<String> resourceLinks;
 
         @Documentation(description = "The description that defines the requested resource.")
-        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
-                PropertyIndexingOption.STORE_ONLY })
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL }, indexing = {
+                        PropertyIndexingOption.STORE_ONLY })
         public String computeDescriptionLink;
     }
 
@@ -142,22 +142,7 @@ public class ProvisionContainerHostsTaskService
     }
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
-        List<String> resourceLinks;
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            ProvisionContainerHostsTaskState patchBody,
-            ProvisionContainerHostsTaskState currentState) {
-        currentState.resourceLinks = mergeLists(
-                currentState.resourceLinks, patchBody.resourceLinks);
-        if (patchBody.computeDescriptionLink != null) {
-            currentState.computeDescriptionLink = patchBody.computeDescriptionLink;
-        }
-        if (patchBody.endpointLink != null) {
-            currentState.endpointLink = patchBody.endpointLink;
-        }
-        return false;
+        Set<String> resourceLinks;
     }
 
     @Override

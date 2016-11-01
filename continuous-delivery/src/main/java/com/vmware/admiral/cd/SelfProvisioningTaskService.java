@@ -13,8 +13,6 @@ package com.vmware.admiral.cd;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_ID;
 
@@ -25,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -160,35 +157,36 @@ public class SelfProvisioningTaskService extends
 
         /** (Set by a Task) The container state resource links of the provisioned container instances */
         @Documentation(description = "The container state resource links of the provisioned container instances.")
-        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT },
-                indexing = { PropertyIndexingOption.STORE_ONLY })
-        public List<String> containerResourceLinks;
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL }, indexing = {
+                        PropertyIndexingOption.STORE_ONLY })
+        public Set<String> containerResourceLinks;
 
         /** (Set by a Task) The compute resource links (VMs) provisioned based on the endpoint. */
         @Documentation(description = "The compute resource links (VMs) provisioned based on the endpoint.")
         @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT,
-                PropertyUsageOption.SERVICE_USE },
+                PropertyUsageOption.SERVICE_USE, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL },
                 indexing = { PropertyIndexingOption.STORE_ONLY })
-        public List<String> computeResourceLinks;
+        public Set<String> computeResourceLinks;
 
         /** (Set by a Task) The compute or container resource links returned by the subtasks. */
         @Documentation(description = "The compute or container resource links returned by the subtasks.")
         @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT,
-                PropertyUsageOption.SERVICE_USE },
+                PropertyUsageOption.SERVICE_USE, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL },
                 indexing = { PropertyIndexingOption.STORE_ONLY })
-        public List<String> resourceLinks;
+        public Set<String> resourceLinks;
 
         /** (Set by a Task) The compute description to define the container host cluster */
         @Documentation(description = "The compute description to define the container host cluster.")
         @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT,
-                PropertyUsageOption.SERVICE_USE, PropertyUsageOption.LINK },
+                PropertyUsageOption.SERVICE_USE, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL },
                 indexing = { PropertyIndexingOption.STORE_ONLY })
         public String computeDescriptionLink;
 
         /** (Set by a Task) The composite container description created by importing the cluster template */
         @Documentation(description = "The composite container description created by importing the cluster template.")
         @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT,
-                PropertyUsageOption.SERVICE_USE, PropertyUsageOption.LINK },
+                PropertyUsageOption.SERVICE_USE, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL },
                 indexing = { PropertyIndexingOption.STORE_ONLY })
         public String compositeDescriptionLink;
     }
@@ -215,7 +213,7 @@ public class SelfProvisioningTaskService extends
     }
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
-        List<String> resourceLinks;
+        Set<String> resourceLinks;
     }
 
     @Override
@@ -230,22 +228,6 @@ public class SelfProvisioningTaskService extends
         if (state.clusterSize <= 0) {
             state.clusterSize = 1;
         }
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            SelfProvisioningTaskState patchBody, SelfProvisioningTaskState currentState) {
-        currentState.containerResourceLinks = mergeLists(currentState.containerResourceLinks,
-                patchBody.containerResourceLinks);
-        currentState.computeResourceLinks = mergeLists(currentState.computeResourceLinks,
-                patchBody.computeResourceLinks);
-        currentState.resourceLinks = mergeLists(currentState.resourceLinks,
-                patchBody.resourceLinks);
-        currentState.compositeDescriptionLink = mergeProperty(
-                currentState.compositeDescriptionLink, patchBody.compositeDescriptionLink);
-        currentState.computeDescriptionLink = mergeProperty(
-                currentState.computeDescriptionLink, patchBody.computeDescriptionLink);
-        return false;
     }
 
     @Override
@@ -425,7 +407,7 @@ public class SelfProvisioningTaskService extends
                 ContainerState.FIELD_NAME_PARENT_LINK,
                 state.computeResourceLinks);
 
-        final List<String> containerLinks = new ArrayList<>();
+        final Set<String> containerLinks = new HashSet<>();
         QueryTaskClientHelper.create(ComputeState.class)
                 .setQueryTask(queryTask)
                 .setResultHandler((r, e) -> {
@@ -533,7 +515,7 @@ public class SelfProvisioningTaskService extends
                 ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, getResourcePoolLink(state));
         q = QueryUtil.addExpandOption(q);
 
-        final ArrayList<String> computeLinks = new ArrayList<>();
+        final Set<String> computeLinks = new HashSet<>();
         QueryTaskClientHelper.create(ComputeState.class)
                 .setQueryTask(q)
                 .setResultHandler((r, e) -> {

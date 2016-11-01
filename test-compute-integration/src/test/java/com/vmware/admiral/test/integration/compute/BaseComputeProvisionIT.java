@@ -17,11 +17,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -146,7 +146,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
             try {
                 logger.info("---------- Clean up: Request Delete the container instance. --------");
-                requestContainerDelete(Collections.singletonList(containerLink), false);
+                requestContainerDelete(Collections.singleton(containerLink), false);
             } catch (Throwable t) {
                 logger.warning(String.format("Unable to remove container %s: %s", containerLink,
                         t.getMessage()));
@@ -249,12 +249,12 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return provisionRequest;
     }
 
-    protected void doWithResources(List<String> resourceLinks) throws Throwable {
+    protected void doWithResources(Set<String> resourceLinks) throws Throwable {
         validateHostState(resourceLinks);
     }
 
     protected RequestBrokerState requestCompute(String resourceDescLink,
-            boolean allocation, List<String> resourceLinks)
+            boolean allocation, Set<String> resourceLinks)
             throws Exception {
         RequestBrokerState requestBrokerState = new RequestBrokerState();
 
@@ -430,7 +430,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return request;
     }
 
-    protected void requestContainerDelete(List<String> resourceLinks, boolean verifyDelete)
+    protected void requestContainerDelete(Set<String> resourceLinks, boolean verifyDelete)
             throws Exception {
 
         RequestBrokerState day2DeleteRequest = new RequestBrokerState();
@@ -456,9 +456,9 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         }
     }
 
-    protected void validateHostState(List<String> resourceLinks)
+    protected void validateHostState(Collection<String> resourceLinks)
             throws Exception {
-        String computeStateLink = resourceLinks.get(0);
+        String computeStateLink = resourceLinks.iterator().next();
         ComputeState computeState = getDocument(computeStateLink, ComputeState.class);
 
         assertNotNull(computeState);
@@ -468,7 +468,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     protected void validateAfterStart(String resourceDescLink, RequestBrokerState request)
             throws Exception {
-        String containerStateLink = request.resourceLinks.get(0);
+        String containerStateLink = request.resourceLinks.iterator().next();
         ContainerState containerState = getDocument(containerStateLink, ContainerState.class);
 
         assertNotNull(containerState);

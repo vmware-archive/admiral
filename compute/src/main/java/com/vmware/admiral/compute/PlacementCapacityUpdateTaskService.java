@@ -204,15 +204,6 @@ public class PlacementCapacityUpdateTaskService extends
     }
 
     @Override
-    protected boolean validateStageTransition(Operation patch,
-            PlacementCapacityUpdateTaskState patchBody,
-            PlacementCapacityUpdateTaskState currentState) {
-        // use default merging for AUTO_MERGE_IF_NOT_NULL fields
-        Utils.mergeWithState(getStateDescription(), currentState, patchBody);
-        return false;
-    }
-
-    @Override
     protected void handleStartedStagePatch(PlacementCapacityUpdateTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:

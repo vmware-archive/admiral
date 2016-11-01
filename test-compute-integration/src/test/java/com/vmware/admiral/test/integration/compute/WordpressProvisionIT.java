@@ -18,8 +18,8 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.junit.runner.RunWith;
@@ -135,8 +135,8 @@ public class WordpressProvisionIT extends BaseComputeProvisionIT {
     }
 
     @Override
-    protected void doWithResources(List<String> resourceLinks) throws Throwable {
-        CompositeComponent compositeComponent = getDocument(resourceLinks.get(0),
+    protected void doWithResources(Set<String> resourceLinks) throws Throwable {
+        CompositeComponent compositeComponent = getDocument(resourceLinks.iterator().next(),
                 CompositeComponent.class);
         ComputeState wordPress = null;
         for (String link : compositeComponent.componentLinks) {

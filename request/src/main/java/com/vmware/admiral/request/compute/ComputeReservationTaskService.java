@@ -13,8 +13,8 @@ package com.vmware.admiral.request.compute;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
@@ -93,11 +93,11 @@ public class ComputeReservationTaskService
 
         // Service fields:
         @Documentation(description = "Set by task. The link to the selected group placement.")
-        @PropertyOptions(usage = SERVICE_USE, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String groupResourcePlacementLink;
 
         @Documentation(description = "Set by task. Selected group placement links and associated resourcePoolLinks. Ordered by priority asc")
-        @PropertyOptions(usage = SERVICE_USE, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks;
     }
 
@@ -137,18 +137,6 @@ public class ComputeReservationTaskService
         default:
             break;
         }
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            ComputeReservationTaskState patchBody, ComputeReservationTaskState currentState) {
-
-        currentState.groupResourcePlacementLink = mergeProperty(currentState.groupResourcePlacementLink,
-                patchBody.groupResourcePlacementLink);
-        currentState.resourcePoolsPerGroupPlacementLinks = mergeProperty(
-                currentState.resourcePoolsPerGroupPlacementLinks,
-                patchBody.resourcePoolsPerGroupPlacementLinks);
-        return false;
     }
 
     @Override

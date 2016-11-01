@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import org.junit.After;
@@ -138,7 +139,7 @@ public class ComputeOperationTaskServiceTest extends ComputeRequestBaseTest {
         // provision compute task - RequestBroker
         RequestBrokerState provisionRequest = new RequestBrokerState();
         provisionRequest.resourceType = ResourceType.COMPUTE_TYPE.getName();
-        provisionRequest.resourceLinks = computeStateLinks;
+        provisionRequest.resourceLinks = new HashSet<>(computeStateLinks);
         provisionRequest.operation = ComputeOperationType.CREATE.id;
 
         provisionRequest = startRequest(provisionRequest);
@@ -147,7 +148,7 @@ public class ComputeOperationTaskServiceTest extends ComputeRequestBaseTest {
     }
 
     private Collection<ComputeState> findResources(Class<? extends ServiceDocument> type,
-            List<String> resourceLinks) throws Throwable {
+            Collection<String> resourceLinks) throws Throwable {
         QueryTask query = QueryUtil.buildQuery(type, true);
         QueryTask.Query resourceLinkClause = new QueryTask.Query();
         for (String resourceLink : resourceLinks) {
@@ -192,7 +193,7 @@ public class ComputeOperationTaskServiceTest extends ComputeRequestBaseTest {
     }
 
     private void waitForComputePowerState(final PowerState expectedPowerState,
-            List<String> computeLinks) throws Throwable {
+            Collection<String> computeLinks) throws Throwable {
         assertNotNull(computeLinks);
         waitFor(() -> {
             Collection<ComputeState> computeStates = findResources(ComputeState.class,

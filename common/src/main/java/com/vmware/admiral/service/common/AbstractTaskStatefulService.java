@@ -11,14 +11,10 @@
 
 package com.vmware.admiral.service.common;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
@@ -27,16 +23,11 @@ import java.util.function.Consumer;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
-import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.service.common.CounterSubTaskService.CounterSubTaskState;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
-import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyDescription;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.TaskState;
@@ -88,8 +79,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         /** Available when task is marked failed. Link to the corresponding event log. */
         public String eventLogLink;
 
-        /** List of resource links provisioned or performed operation on them. */
-        public List<String> resourceLinks;
+        /** Set of resource links provisioned or performed operation on them. */
+        public Set<String> resourceLinks;
     }
 
     public AbstractTaskStatefulService(Class<? extends TaskServiceDocument<E>> stateType,
@@ -99,56 +90,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         this.displayName = displayName;
     }
 
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        TaskServiceDocument<?> template = (TaskServiceDocument<?>) super.getDocumentTemplate();
-        template.serviceTaskCallback = ServiceTaskCallback.create("request/requestId string");
-        template.taskInfo = new TaskState();
-        template.taskInfo.stage = TaskStage.CREATED;
-        template.customProperties = new HashMap<String, String>(1);
-        template.customProperties.put("propKey string", "customPropertyValue string");
-
-        // service callback:
-        PropertyDescription pd = template.documentDescription.propertyDescriptions.get(
-                TaskServiceDocument.FIELD_NAME_SERVICE_CALLBACK);
-        pd.usageOptions = EnumSet.of(PropertyUsageOption.SINGLE_ASSIGNMENT);
-        pd.indexingOptions = EnumSet.of(PropertyIndexingOption.STORE_ONLY);
-
-        // custom properties
-        pd = template.documentDescription.propertyDescriptions.get(
-                ServiceDocumentTemplateUtil.FIELD_NAME_CUSTOM_PROPERTIES);
-        pd.indexingOptions = EnumSet.of(PropertyIndexingOption.STORE_ONLY);
-
-        // sorting
-        template.documentDescription.propertyDescriptions.get(
-                ServiceDocument.FIELD_NAME_UPDATE_TIME_MICROS).indexingOptions.add(
-                        PropertyIndexingOption.SORT);
-
-        return template;
-    }
-
     protected void setSelfDelete(boolean selfDelete) {
         this.selfDelete = selfDelete;
-    }
-
-    protected void setDocumentTemplateUsageOptions(ServiceDocument template,
-            EnumSet<PropertyUsageOption> usageOptions, String... fieldNames) {
-        PropertyDescription pd;
-        for (String fieldName : fieldNames) {
-            pd = template.documentDescription.propertyDescriptions.get(fieldName);
-            assertNotNull(pd, fieldName);
-            pd.usageOptions = usageOptions;
-        }
-    }
-
-    protected void setDocumentTemplateIndexingOptions(ServiceDocument template,
-            EnumSet<PropertyIndexingOption> indexingOptions, String... fieldNames) {
-        PropertyDescription pd;
-        for (String fieldName : fieldNames) {
-            pd = template.documentDescription.propertyDescriptions.get(fieldName);
-            assertNotNull(pd, fieldName);
-            pd.indexingOptions = indexingOptions;
-        }
     }
 
     @Override
@@ -255,6 +198,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                 state.documentSelfLink);
         // validates AND transitions the stage to the next state by using the patchBody.
         if (validateStageTransitionAndState(patch, patchBody, state)) {
+            // the patch operation is assumed to be already completed/failed in this case
             return;
         }
 
@@ -411,15 +355,31 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             currentState.taskSubStage = patchBody.taskSubStage;
         }
 
-        currentState.customProperties = mergeCustomProperties(currentState.customProperties,
-                patchBody.customProperties);
-
         adjustStat(patchBody.taskInfo.stage.toString(), 1);
-        return validateStageTransition(patch, patchBody, currentState);
+
+        autoMergeState(patch, patchBody, currentState);
+        customStateValidationAndMerge(patch, patchBody, currentState);
+
+        return false;
     }
 
-    protected abstract boolean validateStageTransition(Operation patch, T patchBody,
-            T currentState);
+    /**
+     * Performs automatic task state merge based on state annotations.
+     */
+    protected void autoMergeState(Operation patch, T patchBody, T currentState) {
+        // use default merging for AUTO_MERGE_IF_NOT_NULL fields
+        Utils.mergeWithState(getStateDescription(), currentState, patchBody);
+    }
+
+    /**
+     * Performs custom task state validation and merge. Allows sub-classes to provide custom
+     * validation and merge code when the automatic merge based on annotations is not
+     * sufficient.
+     *
+     * This method must not complete/fail the given patch operation.
+     */
+    protected void customStateValidationAndMerge(Operation patch, T patchBody, T currentState) {
+    }
 
     protected void createCounterSubTask(T state, long count,
             Consumer<String> callbackFunction) {

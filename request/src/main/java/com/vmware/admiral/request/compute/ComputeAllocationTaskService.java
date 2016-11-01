@@ -13,8 +13,6 @@ package com.vmware.admiral.request.compute;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 import static com.vmware.photon.controller.model.ComputeProperties.CUSTOM_DISPLAY_NAME;
@@ -23,6 +21,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.LINK;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.LINKS;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.OPTIONAL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
@@ -133,11 +132,11 @@ public class ComputeAllocationTaskService
         public String resourceType;
 
         @Documentation(description = "(Required) the groupResourcePlacementState that links to ResourcePool")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, OPTIONAL, LINK }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED, LINK }, indexing = STORE_ONLY)
         public String groupResourcePlacementLink;
 
         @Documentation(description = "(Optional) the resourcePoolLink to ResourcePool")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, OPTIONAL, LINK }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, OPTIONAL, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String resourcePoolLink;
 
         @Documentation(description = "(Required) Number of resources to provision. ")
@@ -146,25 +145,25 @@ public class ComputeAllocationTaskService
 
         @Documentation(description = "Set by the task with the links of the provisioned resources.")
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL, OPTIONAL }, indexing = STORE_ONLY)
-        public List<String> resourceLinks;
+        public Set<String> resourceLinks;
 
         // Service use fields:
 
         // links to placement computes where to provision the requested resources
         // the size of the collection equals the requested resource count
-        @PropertyOptions(usage = { SERVICE_USE, LINKS }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL, LINKS }, indexing = STORE_ONLY)
         public Collection<String> selectedComputePlacementLinks;
 
-        @PropertyOptions(usage = { SERVICE_USE, LINK }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL, LINK }, indexing = STORE_ONLY)
         public String endpointLink;
 
-        @PropertyOptions(usage = { SERVICE_USE, LINK }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL, LINK }, indexing = STORE_ONLY)
         public String endpointComputeStateLink;
 
-        @PropertyOptions(usage = { SERVICE_USE, LINK }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL, LINK }, indexing = STORE_ONLY)
         public String environmentLink;
 
-        @PropertyOptions(usage = { SERVICE_USE }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String endpointType;
     }
 
@@ -211,41 +210,6 @@ public class ComputeAllocationTaskService
     }
 
     @Override
-    protected boolean validateStageTransition(Operation patch,
-            ComputeAllocationTaskState patchBody,
-            ComputeAllocationTaskState currentState) {
-
-        currentState.resourceLinks = mergeLists(
-                currentState.resourceLinks, patchBody.resourceLinks);
-
-        currentState.selectedComputePlacementLinks = mergeProperty(
-                currentState.selectedComputePlacementLinks,
-                patchBody.selectedComputePlacementLinks);
-
-        currentState.endpointLink = mergeProperty(
-                currentState.endpointLink,
-                patchBody.endpointLink);
-
-        currentState.resourcePoolLink = mergeProperty(
-                currentState.resourcePoolLink,
-                patchBody.resourcePoolLink);
-
-        currentState.endpointComputeStateLink = mergeProperty(
-                currentState.endpointComputeStateLink,
-                patchBody.endpointComputeStateLink);
-
-        currentState.environmentLink = mergeProperty(
-                currentState.environmentLink,
-                patchBody.environmentLink);
-
-        currentState.endpointType = mergeProperty(
-                currentState.endpointType,
-                patchBody.endpointType);
-
-        return false;
-    }
-
-    @Override
     protected void validateStateOnStart(ComputeAllocationTaskState state)
             throws IllegalArgumentException {
 
@@ -272,7 +236,7 @@ public class ComputeAllocationTaskService
     }
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
-        List<String> resourceLinks;
+        Set<String> resourceLinks;
     }
 
     private void prepareContext(ComputeAllocationTaskState state,
@@ -436,7 +400,7 @@ public class ComputeAllocationTaskService
 
         QueryTask q = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
 
-        List<String> computeResourceLinks = new ArrayList<>(state.resourceCount.intValue());
+        Set<String> computeResourceLinks = new HashSet<>(state.resourceCount.intValue());
         QueryTaskClientHelper
                 .create(ComputeState.class)
                 .setQueryTask(q)

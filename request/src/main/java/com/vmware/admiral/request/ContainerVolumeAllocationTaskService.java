@@ -13,12 +13,12 @@ package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -53,7 +53,7 @@ public class ContainerVolumeAllocationTaskService extends
     private volatile ContainerVolumeDescription volumeDescription;
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
-        List<String> resourceLinks;
+        Set<String> resourceLinks;
     }
 
     public static class ContainerVolumeAllocationTaskState
@@ -77,28 +77,33 @@ public class ContainerVolumeAllocationTaskService extends
         @Documentation(description = "Number of resources to provision.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.REQUIRED,
-                PropertyUsageOption.SINGLE_ASSIGNMENT })
+                PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Long resourceCount;
 
         /** Set by a Task with the links of the provisioned resources. */
         @Documentation(description = "Set by a Task with the links of the provisioned resources.")
-        @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = PropertyUsageOption.SINGLE_ASSIGNMENT)
-        public List<String> resourceLinks;
+        @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
+                PropertyUsageOption.SERVICE_USE,
+                PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public Set<String> resourceLinks;
 
         /** (Internal) Set by task after resource name prefixes requested. */
         @Documentation(description = "Set by task after resource name prefixes requested.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.SERVICE_USE,
-                PropertyUsageOption.SINGLE_ASSIGNMENT })
+                PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public List<String> resourceNames;
 
         /** (Internal) Set by task with ContainerVolumeDescription name. */
         @Documentation(description = "Set by task with ContainerVolumeDescription name.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.SERVICE_USE,
-                PropertyUsageOption.SINGLE_ASSIGNMENT })
+                PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String descName;
-
     }
 
     public ContainerVolumeAllocationTaskService() {
@@ -140,26 +145,6 @@ public class ContainerVolumeAllocationTaskService extends
         default:
             break;
         }
-
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            ContainerVolumeAllocationTaskState patchBody,
-            ContainerVolumeAllocationTaskState currentState) {
-
-        currentState.resourceLinks = mergeLists(
-                currentState.resourceLinks, patchBody.resourceLinks);
-
-        currentState.resourceNames = mergeProperty(
-                currentState.resourceNames, patchBody.resourceNames);
-
-        currentState.resourceCount = mergeProperty(currentState.resourceCount,
-                patchBody.resourceCount);
-
-        currentState.descName = mergeProperty(currentState.descName, patchBody.descName);
-
-        return false;
 
     }
 
@@ -353,9 +338,9 @@ public class ContainerVolumeAllocationTaskService extends
                         }));
     }
 
-    private List<String> buildResourceLinks(ContainerVolumeAllocationTaskState state) {
+    private Set<String> buildResourceLinks(ContainerVolumeAllocationTaskState state) {
         logInfo("Generate provisioned resourceLinks");
-        List<String> resourceLinks = new ArrayList<>(state.resourceNames.size());
+        Set<String> resourceLinks = new HashSet<>(state.resourceNames.size());
         for (String resourceName : state.resourceNames) {
             String volumeLink = buildResourceLink(resourceName);
             resourceLinks.add(volumeLink);

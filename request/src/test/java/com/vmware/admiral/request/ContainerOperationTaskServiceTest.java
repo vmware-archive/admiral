@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import org.junit.Test;
@@ -130,7 +131,7 @@ public class ContainerOperationTaskServiceTest extends RequestBaseTest {
 
         assertEquals(request.resourceCount, request.resourceLinks.size());
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
 
         host.log("wait for containers to be in running state for request: "
                 + request.documentSelfLink);
@@ -141,7 +142,7 @@ public class ContainerOperationTaskServiceTest extends RequestBaseTest {
 
         RequestBrokerState day2Request = new RequestBrokerState();
         day2Request.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
-        day2Request.resourceLinks = new ArrayList<String>();
+        day2Request.resourceLinks = new HashSet<String>();
         day2Request.resourceLinks.add(container.compositeComponentLink);
         day2Request.operation = ContainerOperationType.STOP.id;
 
@@ -159,7 +160,7 @@ public class ContainerOperationTaskServiceTest extends RequestBaseTest {
 
         day2Request = new RequestBrokerState();
         day2Request.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
-        day2Request.resourceLinks = new ArrayList<String>();
+        day2Request.resourceLinks = new HashSet<String>();
         day2Request.resourceLinks.add(container.compositeComponentLink);
         day2Request.operation = ContainerOperationType.START.id;
 
@@ -248,7 +249,7 @@ public class ContainerOperationTaskServiceTest extends RequestBaseTest {
     }
 
     private Collection<ContainerState> findResources(Class<? extends ServiceDocument> type,
-            List<String> resourceLinks) throws Throwable {
+            Collection<String> resourceLinks) throws Throwable {
         QueryTask query = QueryUtil.buildQuery(type, true);
         QueryTask.Query resourceLinkClause = new QueryTask.Query();
         for (String resourceLink : resourceLinks) {
@@ -293,7 +294,7 @@ public class ContainerOperationTaskServiceTest extends RequestBaseTest {
     }
 
     private void waitForContainerPowerState(final PowerState expectedPowerState,
-            List<String> containerLinks) throws Throwable {
+            Collection<String> containerLinks) throws Throwable {
         assertNotNull(containerLinks);
         waitFor(() -> {
             Collection<ContainerState> containerStates = findResources(ContainerState.class,

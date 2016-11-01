@@ -325,7 +325,7 @@ public abstract class BaseIntegrationSupportIT {
             if (body != null && !body.isEmpty()) {
                 // host is found, remove it
                 ContainerHostRemovalTaskState state = new ContainerHostRemovalTaskState();
-                state.resourceLinks = Collections.singletonList(computeState.documentSelfLink);
+                state.resourceLinks = Collections.singleton(computeState.documentSelfLink);
                 state = postDocument(ContainerHostRemovalTaskFactoryService.SELF_LINK, state);
 
                 assertNotNull("task is null", state);

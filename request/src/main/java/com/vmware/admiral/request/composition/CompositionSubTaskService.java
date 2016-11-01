@@ -14,9 +14,10 @@ package com.vmware.admiral.request.composition;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertTrue;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_ALLOCATION_REQUEST;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -120,6 +121,7 @@ public class CompositionSubTaskService
          * The the list of task links that this task depends on and can't start before those tasks
          * complete.
          */
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Set<String> dependsOnLinks;
 
         /**
@@ -138,7 +140,8 @@ public class CompositionSubTaskService
 
         /** Set by the Task with the links of the provisioned resources.
          * If the task is not provisionining, the resource links needs to be set from outside. */
-        public List<String> resourceLinks;
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public Set<String> resourceLinks;
 
         /** Set by Task. Error count of the dependent tasks. */
         public long errorCount;
@@ -260,7 +263,7 @@ public class CompositionSubTaskService
     }
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
-        List<String> resourceLinks;
+        Set<String> resourceLinks;
     }
 
     @Override
@@ -278,18 +281,8 @@ public class CompositionSubTaskService
     }
 
     @Override
-    protected boolean validateStageTransition(Operation patch, CompositionSubTaskState patchBody,
+    protected void customStateValidationAndMerge(Operation patch, CompositionSubTaskState patchBody,
             CompositionSubTaskState currentState) {
-        currentState.resourceLinks = mergeLists(currentState.resourceLinks,
-                patchBody.resourceLinks);
-
-        if (SubStage.PREPARE_EXECUTE == patchBody.taskSubStage) {
-            currentState.dependsOnLinks = mergeProperty(currentState.dependsOnLinks,
-                    patchBody.dependsOnLinks);
-            currentState.serviceTaskCallback = mergeProperty(currentState.serviceTaskCallback,
-                    patchBody.serviceTaskCallback);
-        }
-
         if (patchBody.currentDependsOnLink != null && currentState.dependsOnLinks != null) {
             boolean removed = currentState.dependsOnLinks.remove(patchBody.currentDependsOnLink);
             if (removed) {
@@ -313,8 +306,6 @@ public class CompositionSubTaskService
         if (SubStage.PREPARE_EXECUTE == patchBody.taskSubStage) {
             currentState.postAllocation = true; // second phase of provisioning
         }
-
-        return false;
     }
 
     private void notifyDependentTasks(final CompositionSubTaskState state,

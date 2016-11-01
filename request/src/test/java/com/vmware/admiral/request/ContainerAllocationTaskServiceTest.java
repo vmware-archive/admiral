@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -69,7 +70,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask = allocate(allocationTask);
 
         ContainerState containerState = getDocument(ContainerState.class,
-                allocationTask.resourceLinks.get(0));
+                allocationTask.resourceLinks.iterator().next());
         assertTrue(containerState.names.get(0).startsWith(containerDesc.name));
         assertNotNull(containerState.id);
         assertTrue(containerState.documentSelfLink.contains(containerDesc.name));
@@ -157,7 +158,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask = allocate(allocationTask);
 
         ContainerState containerState = getDocument(ContainerState.class,
-                allocationTask.resourceLinks.get(0));
+                allocationTask.resourceLinks.iterator().next());
         assertTrue(containerState.names.get(0).startsWith(containerDesc.name));
         assertNull(containerState.id);
         assertTrue(containerState.documentSelfLink.contains(containerDesc.name));
@@ -193,13 +194,13 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
 
         // verify container state is provisioned and patched:
         containerState = getDocument(ContainerState.class,
-                provisioningRequest.resourceLinks.get(0));
+                provisioningRequest.resourceLinks.iterator().next());
         assertNotNull(containerState);
         provisioningRequest = getDocument(RequestBrokerState.class,
                 provisioningRequest.documentSelfLink);
 
         containerState = getDocument(ContainerState.class,
-                allocationTask.resourceLinks.get(0));
+                allocationTask.resourceLinks.iterator().next());
         assertTrue(containerState.names.get(0).startsWith(containerDesc.name));
         assertNotNull(containerState.id);
         assertTrue(containerState.documentSelfLink.contains(containerDesc.name));
@@ -248,7 +249,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask1.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
         allocationTask1 = allocate(allocationTask1);
         ContainerState container = getDocument(ContainerState.class,
-                allocationTask1.resourceLinks.get(0));
+                allocationTask1.resourceLinks.iterator().next());
 
         String hostLink = container.parentLink;
 
@@ -320,7 +321,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask2.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
         allocationTask2 = allocate(allocationTask2);
         ContainerState cont2 = getDocument(ContainerState.class,
-                allocationTask2.resourceLinks.get(0));
+                allocationTask2.resourceLinks.iterator().next());
 
         assertNull(cont2.links);
         assertEquals(1, cont2.networks.get("my-net").links.length);
@@ -349,10 +350,11 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask1.resourceCount = desc1._cluster.longValue();
         allocationTask1 = allocate(allocationTask1);
 
+        Iterator<String> resourceLinkIterator = allocationTask1.resourceLinks.iterator();
         ContainerState cont1A = getDocument(ContainerState.class,
-                allocationTask1.resourceLinks.get(0));
+                resourceLinkIterator.next());
         ContainerState cont1B = getDocument(ContainerState.class,
-                allocationTask1.resourceLinks.get(1));
+                resourceLinkIterator.next());
 
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription();
         desc2.documentSelfLink = UUID.randomUUID().toString();
@@ -370,7 +372,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask2.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
         allocationTask2 = allocate(allocationTask2);
         ContainerState cont2 = getDocument(ContainerState.class,
-                allocationTask2.resourceLinks.get(0));
+                allocationTask2.resourceLinks.iterator().next());
 
         assertNull(cont2.networks);
         List<String> links = Arrays.asList(cont2.links);
@@ -401,7 +403,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask1.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
         allocationTask1 = allocate(allocationTask1);
         ContainerState container1 = getDocument(ContainerState.class,
-                allocationTask1.resourceLinks.get(0));
+                allocationTask1.resourceLinks.iterator().next());
 
         // create second container with afinity dependent on the first container:
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription();
@@ -420,7 +422,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask2.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
         allocationTask2 = allocate(allocationTask2);
         ContainerState container2 = getDocument(ContainerState.class,
-                allocationTask2.resourceLinks.get(0));
+                allocationTask2.resourceLinks.iterator().next());
 
         assertEquals(container1.parentLink, container2.parentLink);
 
@@ -441,7 +443,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask3.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
         allocationTask3 = allocate(allocationTask3);
         ContainerState container3 = getDocument(ContainerState.class,
-                allocationTask3.resourceLinks.get(0));
+                allocationTask3.resourceLinks.iterator().next());
 
         assertEquals(container1.parentLink, container3.parentLink);
         assertEquals(container1.names.get(0) + ":ro", container3.volumesFrom[0]);
@@ -487,7 +489,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         assertEquals(1, allocationTask.resourceLinks.size());
 
         ContainerState containerState = getDocument(ContainerState.class,
-                allocationTask.resourceLinks.get(0));
+                allocationTask.resourceLinks.iterator().next());
         assertEquals(containerName, containerState.names.get(0));
         assertTrue(containerState.documentSelfLink.contains(containerName));
 

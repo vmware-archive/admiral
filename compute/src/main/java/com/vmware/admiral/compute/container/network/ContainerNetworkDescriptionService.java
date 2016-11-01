@@ -26,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
-import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
 import com.vmware.admiral.compute.CloneableResource;
 import com.vmware.admiral.compute.content.YamlMapper;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -264,9 +263,6 @@ public class ContainerNetworkDescriptionService extends StatefulService {
 
         template.customProperties = new HashMap<>(1);
         template.customProperties.put("key (string)", "value (string)");
-
-        ServiceDocumentTemplateUtil.indexProperty(template,
-                ContainerNetworkDescription.FIELD_NAME_OPTIONS);
 
         return template;
     }

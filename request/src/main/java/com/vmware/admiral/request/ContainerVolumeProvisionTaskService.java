@@ -13,8 +13,6 @@ package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 
 import java.net.URI;
@@ -91,19 +89,21 @@ public class ContainerVolumeProvisionTaskService
         /** (Required) Number of resources to provision. */
         @Documentation(description = "Number of resources to provision.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
-                PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT })
+                PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Long resourceCount;
 
         /** (Required) Links to already allocated resources that are going to be provisioned. */
         @Documentation(description = "Links to already allocated resources that are going to be provisioned.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT })
-        public List<String> resourceLinks;
+        public Set<String> resourceLinks;
 
         /** (Internal) Reference to the adapter that will fulfill the provision request. */
         @Documentation(description = "Reference to the adapter that will fulfill the provision request.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
-                PropertyUsageOption.SERVICE_USE, PropertyUsageOption.SINGLE_ASSIGNMENT })
+                PropertyUsageOption.SERVICE_USE, PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public URI instanceAdapterReference;
 
     }
@@ -133,21 +133,6 @@ public class ContainerVolumeProvisionTaskService
                     "size of 'resourceLinks' must be equal to 'resourcesCount'");
         }
 
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            ContainerVolumeProvisionTaskState patchBody,
-            ContainerVolumeProvisionTaskState currentState) {
-        currentState.instanceAdapterReference = mergeProperty(
-                currentState.instanceAdapterReference, patchBody.instanceAdapterReference);
-
-        currentState.resourceLinks = mergeLists(
-                currentState.resourceLinks, patchBody.resourceLinks);
-
-        currentState.resourceCount = mergeProperty(currentState.resourceCount,
-                patchBody.resourceCount);
-        return false;
     }
 
     @Override

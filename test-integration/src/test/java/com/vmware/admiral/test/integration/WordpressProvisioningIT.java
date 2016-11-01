@@ -146,7 +146,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
 
         RequestBrokerState request = requestExternalNetwork(description.documentSelfLink);
 
-        externalNetwork = getDocument(request.resourceLinks.get(0), ContainerNetworkState.class);
+        externalNetwork = getDocument(request.resourceLinks.iterator().next(), ContainerNetworkState.class);
         assertNotNull(externalNetwork);
         assertTrue(externalNetwork.connectedContainersCount == 0);
 
@@ -197,7 +197,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         assertEquals("Unexpected number of resource links", 1,
                 request.resourceLinks.size());
 
-        CompositeComponent cc = getDocument(request.resourceLinks.get(0), CompositeComponent.class);
+        CompositeComponent cc = getDocument(request.resourceLinks.iterator().next(), CompositeComponent.class);
         assertEquals("Unexpected number of component links", expectedNumberOfResources,
                 cc.componentLinks.size());
 

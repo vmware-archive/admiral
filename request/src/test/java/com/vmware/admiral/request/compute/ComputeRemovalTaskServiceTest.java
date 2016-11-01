@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashSet;
 import java.util.List;
 
 import org.junit.After;
@@ -107,7 +108,7 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
         // create a host removal task - RequestBroker
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.COMPUTE_TYPE.getName();
-        request.resourceLinks = computeStateLinks;
+        request.resourceLinks = new HashSet<>(computeStateLinks);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
 
         request = startRequest(request);
@@ -140,7 +141,7 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
         // provision compute task - RequestBroker
         RequestBrokerState provisionRequest = new RequestBrokerState();
         provisionRequest.resourceType = ResourceType.COMPUTE_TYPE.getName();
-        provisionRequest.resourceLinks = computeStateLinks;
+        provisionRequest.resourceLinks = new HashSet<>(computeStateLinks);
         provisionRequest.operation = ContainerOperationType.CREATE.id;
 
         provisionRequest = startRequest(provisionRequest);
@@ -156,7 +157,7 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
         // remove compute states
         RequestBrokerState removeRequest = new RequestBrokerState();
         removeRequest.resourceType = ResourceType.COMPUTE_TYPE.getName();
-        removeRequest.resourceLinks = computeStateLinks;
+        removeRequest.resourceLinks = new HashSet<>(computeStateLinks);
         removeRequest.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
 
         removeRequest = startRequest(removeRequest);
@@ -190,7 +191,7 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
         // create a host removal task - RequestBroker
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.COMPUTE_TYPE.getName();
-        request.resourceLinks = computeStateLinks;
+        request.resourceLinks = new HashSet<>(computeStateLinks);
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
 
         request = startRequest(request);

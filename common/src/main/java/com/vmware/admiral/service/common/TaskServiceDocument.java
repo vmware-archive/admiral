@@ -14,6 +14,7 @@ package com.vmware.admiral.service.common;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState;
 
@@ -36,18 +37,21 @@ public abstract class TaskServiceDocument<E extends Enum<E>> extends MultiTenant
 
     /** Callback link and response from the service initiated this task. */
     @Documentation(description = "Callback link and response from the service initiated this task.")
+    @PropertyOptions(usage = { PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL,
+            PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = PropertyIndexingOption.STORE_ONLY)
     public ServiceTaskCallback serviceTaskCallback;
 
     /** (Optional) link to a service that will receive updates when the task changes state */
     @Documentation(description = "link to a service that will receive updates when the task changes state.")
     @PropertyOptions(
             usage = { PropertyUsageOption.LINK, PropertyUsageOption.SINGLE_ASSIGNMENT,
-                    PropertyUsageOption.OPTIONAL })
+                    PropertyUsageOption.OPTIONAL, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
     public String requestTrackerLink;
 
     /** (Optional) Custom properties */
     @Documentation(description = "Custom properties.")
-    @UsageOption(option = PropertyUsageOption.OPTIONAL)
+    @PropertyOptions(usage = { PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL,
+            PropertyUsageOption.OPTIONAL }, indexing = PropertyIndexingOption.STORE_ONLY)
     public volatile Map<String, String> customProperties;
 
     public void addCustomProperty(String propName, String propValue) {

@@ -67,7 +67,7 @@ public class ComputeRemovalTaskService extends
 
         @Documentation(description = "The compute resources to be removed")
         @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
-        public List<String> resourceLinks;
+        public Set<String> resourceLinks;
 
         @Documentation(description = "whether to skip the associated reservation or not")
         @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
@@ -357,11 +357,5 @@ public class ComputeRemovalTaskService extends
                 state.resourceLinks.size());
         SubscriptionUtils.subscribeToNotifications(this, onSuccess,
                 UriUtils.buildUriPath(ResourceRemovalTaskService.FACTORY_LINK, getSelfId()));
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch, ComputeRemovalTaskState patchBody,
-            ComputeRemovalTaskState currentState) {
-        return false;
     }
 }

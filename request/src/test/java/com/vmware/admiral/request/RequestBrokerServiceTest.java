@@ -21,8 +21,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.Test;
@@ -129,7 +131,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 request.resourceLinks);
         assertEquals(1, request.resourceLinks.size());
         ContainerState containerState = getDocument(ContainerState.class,
-                request.resourceLinks.get(0));
+                request.resourceLinks.iterator().next());
         assertNotNull(containerState);
 
         // Verify request status
@@ -140,14 +142,14 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         // 4. Remove the container
         request = TestRequestStateFactory.createRequestState();
         request.operation = ContainerOperationType.DELETE.id;
-        request.resourceLinks = new ArrayList<>();
+        request.resourceLinks = new HashSet<>();
         request.resourceLinks.add(containerState.documentSelfLink);
         request = startRequest(request);
 
         request = waitForRequestToComplete(request);
 
         // Verify the container is removed
-        containerState = searchForDocument(ContainerState.class, request.resourceLinks.get(0));
+        containerState = searchForDocument(ContainerState.class, request.resourceLinks.iterator().next());
         assertNull(containerState);
 
         // Verify request status
@@ -213,7 +215,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 request.resourceLinks);
         assertEquals(1, request.resourceLinks.size());
         ContainerState containerState = getDocument(ContainerState.class,
-                request.resourceLinks.get(0));
+                request.resourceLinks.iterator().next());
         assertNotNull(containerState);
 
         // Verify request status
@@ -225,7 +227,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request = TestRequestStateFactory.createRequestState();
         request.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
         request.operation = ContainerOperationType.DELETE.id;
-        request.resourceLinks = new ArrayList<>();
+        request.resourceLinks = new HashSet<>();
         request.resourceLinks.add(UriUtils.buildUriPath(CompositeComponentFactoryService.SELF_LINK,
                 extractId(requestSelfLink)));
         request = startRequest(request);
@@ -233,7 +235,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         // Verify the container is removed
-        containerState = searchForDocument(ContainerState.class, request.resourceLinks.get(0));
+        containerState = searchForDocument(ContainerState.class, request.resourceLinks.iterator().next());
         assertNull(containerState);
 
         // Verify request status
@@ -309,7 +311,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
 
         String networkLink = null;
         String containerLink1 = null;
@@ -718,7 +720,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
 
         String networkLink = null;
         String containerLink1 = null;
@@ -901,7 +903,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        CompositeComponent cc = getDocument(CompositeComponent.class,
+                request.resourceLinks.iterator().next());
 
         String networkLink = null;
         String containerLink1 = null;
@@ -1044,7 +1047,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
 
         String volumeLink = null;
         String containerLink1 = null;
@@ -1282,7 +1285,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 request.resourceLinks);
         assertEquals(1, request.resourceLinks.size());
         ContainerState containerState = getDocument(ContainerState.class,
-                request.resourceLinks.get(0));
+                request.resourceLinks.iterator().next());
         assertNotNull(containerState);
     }
 
@@ -1406,7 +1409,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         ContainerState containerState = getDocument(ContainerState.class,
-                request.resourceLinks.get(0));
+                request.resourceLinks.iterator().next());
 
         // The container should be deployed on the host with power state ON
         assertEquals(containerState.parentLink, activeDockerHost.documentSelfLink);
@@ -1472,7 +1475,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request = startRequest(request);
         request = waitForRequestToFail(request);
         ContainerState containerState = searchForDocument(ContainerState.class,
-                request.resourceLinks.get(0));
+                request.resourceLinks.iterator().next());
         assertNull(containerState);
     }
 
@@ -1562,7 +1565,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         request = startRequest(request);
         request = waitForRequestToComplete(request);
-        List<String> resourceLinks = request.resourceLinks;
+        Set<String> resourceLinks = request.resourceLinks;
 
         groupPlacementState = getDocument(GroupResourcePlacementState.class,
                 groupPlacementState.documentSelfLink);
@@ -1739,7 +1742,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
-        return getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        return getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
     }
 
 }

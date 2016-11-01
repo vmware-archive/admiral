@@ -19,6 +19,7 @@ import static org.junit.Assert.fail;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -69,7 +70,8 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
 
         // create a host removal task
         ContainerHostRemovalTaskState state = new ContainerHostRemovalTaskState();
-        state.resourceLinks = Collections.singletonList(computeHost.documentSelfLink);
+        state.resourceLinks = new HashSet<>(Collections.singletonList(
+                computeHost.documentSelfLink));
         state = doPost(state, ContainerHostRemovalTaskFactoryService.SELF_LINK);
 
         assertNotNull("task is null", state);
@@ -114,7 +116,8 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
         // create a host removal task - RequestBroker
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_HOST_TYPE.getName();
-        request.resourceLinks = Collections.singletonList(computeHost.documentSelfLink);
+        request.resourceLinks = new HashSet<>(Collections.singletonList(
+                computeHost.documentSelfLink));
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
 
         request = startRequest(request);
@@ -168,7 +171,8 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
         // create a host removal task - RequestBroker
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_HOST_TYPE.getName();
-        request.resourceLinks = Collections.singletonList(computeHost.documentSelfLink);
+        request.resourceLinks = new HashSet<>(Collections.singletonList(
+                computeHost.documentSelfLink));
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
 
         request = startRequest(request);
@@ -239,7 +243,8 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
         // create a host removal task - RequestBroker
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_HOST_TYPE.getName();
-        request.resourceLinks = Collections.singletonList(computeHost.documentSelfLink);
+        request.resourceLinks = new HashSet<>(Collections.singletonList(
+                computeHost.documentSelfLink));
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
 
         request = startRequest(request);

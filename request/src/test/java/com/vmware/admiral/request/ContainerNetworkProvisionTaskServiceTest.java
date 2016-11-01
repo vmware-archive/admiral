@@ -12,7 +12,6 @@
 package com.vmware.admiral.request;
 
 import static org.hamcrest.CoreMatchers.startsWith;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -23,6 +22,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.Test;
@@ -103,7 +103,7 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
         // wait for request completed state:
         request = waitForRequestToComplete(request);
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
 
         assertNotNull(cc.componentLinks);
         assertEquals(cc.componentLinks.size(), 3);
@@ -199,7 +199,7 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
         // wait for request completed state:
         request = waitForRequestToComplete(request);
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
 
         assertNotNull(cc.componentLinks);
         assertEquals(cc.componentLinks.size(), 3);
@@ -274,12 +274,12 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
         // wait for request completed state:
         request = waitForRequestToComplete(request);
 
-        List<String> networkLinks = request.resourceLinks;
-
+        Set<String> networkLinks = request.resourceLinks;
+        Iterator<String> networkLinkIterator = networkLinks.iterator();
         ContainerNetworkState net1 = getDocument(ContainerNetworkState.class,
-                networkLinks.get(0));
+                networkLinkIterator.next());
         ContainerNetworkState net2 = getDocument(ContainerNetworkState.class,
-                networkLinks.get(1));
+                networkLinkIterator.next());
 
         assertNotNull(net1);
         assertNotNull(net2);

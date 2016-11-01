@@ -83,7 +83,7 @@ public class ContainerVolumesIT extends BaseProvisioningOnCoreOsIT {
     protected void validateAfterStart(String resourceDescLink, RequestBrokerState request)
             throws Exception {
         AssertUtil.assertNotNull(compositeDescriptionLink, "'compositeDescriptionLink'");
-        CompositeComponent cc = getDocument(request.resourceLinks.get(0), CompositeComponent.class);
+        CompositeComponent cc = getDocument(request.resourceLinks.iterator().next(), CompositeComponent.class);
         assertEquals("Unexpected number of component links", 4,
                 cc.componentLinks.size());
 

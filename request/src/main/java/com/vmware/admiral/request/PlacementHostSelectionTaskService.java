@@ -13,7 +13,9 @@ package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.PropertyUtils.getPropertyLong;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -87,6 +89,7 @@ public class PlacementHostSelectionTaskService
         // Internal service properties:
 
         /** Set by the Task as result of the selection algorithm filters. */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Collection<HostSelection> hostSelections;
 
     }
@@ -106,23 +109,15 @@ public class PlacementHostSelectionTaskService
             selectBasedOnDescAndResourcePool(state, containerDescription, QUERY_RETRY_COUNT);
             break;
         case COMPLETED:
-            complete(state, DefaultSubStage.COMPLETED);
+            complete(createUpdateSubStageTask(state, state.taskSubStage), state.taskSubStage);
             break;
         case ERROR:
-            completeWithError(state, DefaultSubStage.ERROR);
+            completeWithError(createUpdateSubStageTask(state, state.taskSubStage),
+                    state.taskSubStage);
             break;
         default:
             break;
         }
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            PlacementHostSelectionTaskState patchBody, PlacementHostSelectionTaskState currentState) {
-        currentState.hostSelections = mergeProperty(
-                currentState.hostSelections, patchBody.hostSelections);
-
-        return false;
     }
 
     @Override

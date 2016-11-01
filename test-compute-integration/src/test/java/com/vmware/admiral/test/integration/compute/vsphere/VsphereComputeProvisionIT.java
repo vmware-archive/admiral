@@ -13,8 +13,9 @@ package com.vmware.admiral.test.integration.compute.vsphere;
 
 import static org.junit.Assert.assertNotNull;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Set;
 
 import com.vmware.admiral.compute.EnvironmentMappingService;
 import com.vmware.admiral.compute.EnvironmentMappingService.EnvironmentMappingState;
@@ -57,7 +58,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     }
 
     @Override
-    protected void doWithResources(List<String> resourceLinks) throws Throwable {
+    protected void doWithResources(Set<String> resourceLinks) throws Throwable {
         executeDay2(resourceLinks, ComputeOperationType.POWER_ON);
         waitForComputePowerState(PowerState.ON, resourceLinks);
 
@@ -65,7 +66,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
         waitForComputePowerState(PowerState.OFF, resourceLinks);
     }
 
-    private void executeDay2(List<String> resourceLinks, ComputeOperationType computeOperation)
+    private void executeDay2(Set<String> resourceLinks, ComputeOperationType computeOperation)
             throws Throwable, Exception {
         RequestBrokerState day2StartRequest = new RequestBrokerState();
         day2StartRequest.resourceType = ResourceType.COMPUTE_TYPE.getName();
@@ -86,7 +87,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     }
 
     private void waitForComputePowerState(final PowerState expectedPowerState,
-            List<String> computeLinks) throws Throwable {
+            Collection<String> computeLinks) throws Throwable {
         assertNotNull(computeLinks);
         waitFor(() -> {
             for (String computeLink : computeLinks) {

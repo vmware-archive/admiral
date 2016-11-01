@@ -471,7 +471,7 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
 
     private void verifyRemoveRequest(RequestBrokerState removeRequest) throws Throwable {
         ContainerState containerState = searchForDocument(ContainerState.class,
-                removeRequest.resourceLinks.get(0));
+                removeRequest.resourceLinks.iterator().next());
         assertNull(containerState);
 
         // Verify request status
@@ -535,7 +535,7 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
                 request.resourceLinks);
         assertEquals(1, request.resourceLinks.size());
         ContainerState containerState = getDocument(ContainerState.class,
-                request.resourceLinks.get(0));
+                request.resourceLinks.iterator().next());
         assertNotNull(containerState);
 
         // Verify request status

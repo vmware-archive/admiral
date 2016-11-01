@@ -12,9 +12,9 @@
 package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
-
-import java.util.EnumSet;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.ResourcePlacementReservationRequest;
@@ -23,9 +23,6 @@ import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
-import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState.TaskStage;
 
 /**
@@ -38,17 +35,16 @@ public class ReservationRemovalTaskService
     public static final String DISPLAY_NAME = "Reservation Removal";
 
     public static class ReservationRemovalTaskState extends TaskServiceDocument<DefaultSubStage> {
-        private static final String FIELD_NAME_RESOURCE_DESC_LINK = "resourceDescriptionLink";
-        private static final String FIELD_NAME_RESOURCE_COUNT = "resourceCount";
-        private static final String FIELD_NAME_GROUP_RESOURCE_POLICY_LINK = "groupResourcePlacementLink";
-
         /** (Required) The description that defines the requested resource. */
+        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
         /** (Required) Number of resources to provision. */
+        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
         public long resourceCount;
 
         /** (Required) The {@link GroupResourcePlacementState} to release the placements. */
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String groupResourcePlacementLink;
     }
 
@@ -64,15 +60,6 @@ public class ReservationRemovalTaskService
     @Override
     protected void handleStartedStagePatch(ReservationRemovalTaskState state) {
         getGroupResourcePlacements(state);
-    }
-
-    @Override
-    protected boolean validateStageTransition(Operation patch,
-            ReservationRemovalTaskState patchBody, ReservationRemovalTaskState currentState) {
-        currentState.groupResourcePlacementLink = mergeProperty(currentState.groupResourcePlacementLink,
-                patchBody.groupResourcePlacementLink);
-
-        return false;
     }
 
     @Override
@@ -123,23 +110,5 @@ public class ReservationRemovalTaskService
                     state.taskSubStage = DefaultSubStage.COMPLETED;
                     sendSelfPatch(state);
                 }));
-    }
-
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        ServiceDocument template = super.getDocumentTemplate();
-
-        setDocumentTemplateIndexingOptions(template, EnumSet.of(PropertyIndexingOption.STORE_ONLY),
-                ReservationRemovalTaskState.FIELD_NAME_RESOURCE_DESC_LINK,
-                ReservationRemovalTaskState.FIELD_NAME_RESOURCE_COUNT,
-                ReservationRemovalTaskState.FIELD_NAME_GROUP_RESOURCE_POLICY_LINK);
-
-        setDocumentTemplateUsageOptions(template,
-                EnumSet.of(PropertyUsageOption.SINGLE_ASSIGNMENT),
-                ReservationRemovalTaskState.FIELD_NAME_RESOURCE_DESC_LINK,
-                ReservationRemovalTaskState.FIELD_NAME_RESOURCE_COUNT,
-                ReservationRemovalTaskState.FIELD_NAME_GROUP_RESOURCE_POLICY_LINK);
-
-        return template;
     }
 }

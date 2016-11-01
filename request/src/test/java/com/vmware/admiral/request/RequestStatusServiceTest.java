@@ -140,7 +140,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
 
         assertEquals(1, requestStatus.resourceLinks.size());
         assertEquals(compositionTaskState.compositeComponentLink,
-                requestStatus.resourceLinks.get(0));
+                requestStatus.resourceLinks.iterator().next());
     }
 
     @Test
@@ -163,7 +163,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
 
         assertEquals(1, requestStatus.resourceLinks.size());
         assertEquals(compositionTaskState.compositeComponentLink,
-                requestStatus.resourceLinks.get(0));
+                requestStatus.resourceLinks.iterator().next());
 
         // The request is already finished the patch should not change the state
         requestStatus.taskInfo = TaskState.createAsStarted();
