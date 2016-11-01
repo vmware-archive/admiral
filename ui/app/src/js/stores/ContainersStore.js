@@ -213,6 +213,30 @@ function getClusterSize(containers) {
   return clusterSize;
 }
 
+function getSelectedItemContainers(selectedItem) {
+  let shownItems = selectedItem.listView && selectedItem.listView.items || selectedItem.items;
+  if (!shownItems) {
+    return [];
+  }
+
+  if (selectedItem.type === constants.CONTAINERS.TYPES.COMPOSITE) {
+      let allContainers = [];
+      shownItems.forEach((item) => {
+        if (item.type === constants.CONTAINERS.TYPES.CLUSTER) {
+          allContainers.push.apply(allContainers, item.containers);
+        } else {
+          allContainers.push(item);
+        }
+      });
+
+    return allContainers;
+  } else if (selectedItem.type === constants.CONTAINERS.TYPES.CLUSTER) {
+    return shownItems;
+  } else {
+    return [selectedItem];
+  }
+}
+
 function isEverythingRemoved(selectedItem, operationType, removedIds) {
   if (!selectedItem) { // nothing is selected
     return false;
@@ -222,6 +246,7 @@ function isEverythingRemoved(selectedItem, operationType, removedIds) {
     return false;
   }
 
+  // an application gets removed
   if ((removedIds.length === 1)
         && selectedItem.type === constants.CONTAINERS.TYPES.COMPOSITE
         && selectedItem.documentId === removedIds[0]) {
@@ -237,12 +262,13 @@ function isEverythingRemoved(selectedItem, operationType, removedIds) {
     return true;
   }
 
-  if (previousItems.length !== removedIds.length) {
+  let selectedItemContainers = getSelectedItemContainers(selectedItem);
+  if (selectedItemContainers.length !== removedIds.length) {
     // not everything is deleted
     return false;
 
   } else {
-    let remainingItems = previousItems.filter((item) => {
+    let remainingItems = selectedItemContainers.filter((item) => {
       return (removedIds.indexOf(item.documentId) === -1);
     });
 
