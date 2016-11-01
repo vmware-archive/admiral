@@ -46,8 +46,7 @@ import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
-import com.vmware.admiral.request.compute.aws.ProvisionContainerHostsTaskService;
-import com.vmware.admiral.request.compute.aws.ProvisionContainerHostsTaskService.ProvisionContainerHostsTaskState;
+import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
@@ -504,14 +503,14 @@ public class SelfProvisioningTaskService extends
         computeDesc.customProperties.put(AWSConstants.AWS_SECURITY_GROUP, state.securityGroup);
 
         //This resourcePool link will be provided as parameter to ResourceAllocationTaskState.resourcePoolLink
-        computeDesc.customProperties.put(
-                ProvisionContainerHostsTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK,
-                getResourcePoolLink(state));
+        // computeDesc.customProperties.put(
+        // ProvisionContainerHostsTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK,
+        // getResourcePoolLink(state));
 
         //This aws authCredential link will be assigned to aws parent compute description authCredentialLink
-        computeDesc.customProperties.put(
-                ProvisionContainerHostsTaskState.FIELD_NAME_CUSTOM_PROP_AUTH_CRED_LINK,
-                getAuthCredentialLink(state));
+        // computeDesc.customProperties.put(
+        // ProvisionContainerHostsTaskState.FIELD_NAME_CUSTOM_PROP_AUTH_CRED_LINK,
+        // getAuthCredentialLink(state));
 
         sendRequest(Operation.createPost(this, ComputeDescriptionService.FACTORY_LINK)
                 .setBody(computeDesc)

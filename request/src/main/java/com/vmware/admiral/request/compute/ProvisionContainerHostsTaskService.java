@@ -12,7 +12,6 @@
 package com.vmware.admiral.request.compute;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
-import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.AssertUtil.assertState;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 
@@ -33,6 +32,7 @@ import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
@@ -70,7 +70,6 @@ public class ProvisionContainerHostsTaskService
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(ALLOCATING, PROVISIONING));
         }
-
 
         /** (Required) The AWS compute description link. */
         @Documentation(description = "The description that defines the requested resource.")
@@ -120,8 +119,13 @@ public class ProvisionContainerHostsTaskService
     @Override
     protected void validateStateOnStart(ProvisionContainerHostsTaskState state)
             throws IllegalArgumentException {
-        assertNotEmpty(state.endpointLink, "resourceDescriptionLink");
-        assertNotNull(state.hostDescription, "hostDescription");
+
+        if (state.computeDescriptionLink == null && state.hostDescription == null) {
+            throw new IllegalArgumentException("'computeDescriptionLink' is required");
+        }
+        if (state.hostDescription != null) {
+            assertNotEmpty(state.endpointLink, "endpointLink");
+        }
         assertState(state.resourceCount > 0, "'resourceCount' must be greather than zero.");
     }
 
@@ -150,6 +154,9 @@ public class ProvisionContainerHostsTaskService
         if (patchBody.computeDescriptionLink != null) {
             currentState.computeDescriptionLink = patchBody.computeDescriptionLink;
         }
+        if (patchBody.endpointLink != null) {
+            currentState.endpointLink = patchBody.endpointLink;
+        }
         return false;
     }
 
@@ -157,8 +164,11 @@ public class ProvisionContainerHostsTaskService
     protected void handleStartedStagePatch(ProvisionContainerHostsTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            createComputeDescription(state, SubStage.DESCRIPTION_CREATED,
-                    this.endpointState);
+            if (state.computeDescriptionLink == null) {
+                createComputeDescription(state, SubStage.DESCRIPTION_CREATED);
+            } else {
+                processComputeDescription(state, SubStage.DESCRIPTION_CREATED, null);
+            }
             break;
         case DESCRIPTION_CREATED:
             createAllocationTask(state, this.endpointState);
@@ -182,29 +192,23 @@ public class ProvisionContainerHostsTaskService
     }
 
     private void createComputeDescription(ProvisionContainerHostsTaskState state,
-            SubStage nextStage, EndpointState endpointState) {
-        if (endpointState == null) {
-            getEndpoint(state, (endpoint) -> createComputeDescription(state, nextStage, endpoint));
-            return;
-        }
+            SubStage nextStage) {
 
         logInfo("Creating compute description: %s", state.hostDescription.name);
-        ComputeDescription parentComputeDesc = new ComputeDescription();
-        parentComputeDesc.name = state.hostDescription.name;
-        parentComputeDesc.supportedChildren = new ArrayList<>(
+        ComputeDescription cd = new ComputeDescription();
+        cd.name = state.hostDescription.name;
+        cd.supportedChildren = new ArrayList<>(
                 Arrays.asList(ComputeType.DOCKER_CONTAINER.name()));
 
-        parentComputeDesc.instanceType = state.hostDescription.instanceType;
-        parentComputeDesc.customProperties = new HashMap<>();
-        parentComputeDesc.customProperties
+        cd.instanceType = state.hostDescription.instanceType;
+        cd.customProperties = new HashMap<>();
+        cd.customProperties
                 .put(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
-        parentComputeDesc.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
-                state.hostDescription.imageType);
-        parentComputeDesc.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
+        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
                 state.hostDescription.imageType);
 
         sendRequest(Operation.createPost(this, ComputeDescriptionService.FACTORY_LINK)
-                .setBody(parentComputeDesc)
+                .setBody(cd)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         failTask(String.format("Can't create compute description in task: %s",
@@ -217,6 +221,47 @@ public class ProvisionContainerHostsTaskService
                     ProvisionContainerHostsTaskState patch = createUpdateSubStageTask(state,
                             nextStage);
                     patch.computeDescriptionLink = descLink;
+                    sendSelfPatch(patch);
+                }));
+    }
+
+    private void processComputeDescription(ProvisionContainerHostsTaskState state,
+            SubStage nextStage, ComputeDescription cd) {
+
+        if (cd == null) {
+            getComputeDescription(state,
+                    desc -> processComputeDescription(state, nextStage, desc));
+            return;
+        }
+        logInfo("Validating compute description: %s", state.computeDescriptionLink);
+        if (cd.supportedChildren == null
+                || !cd.supportedChildren.contains(ComputeType.DOCKER_CONTAINER.name())) {
+            cd.supportedChildren = new ArrayList<>(
+                Arrays.asList(ComputeType.DOCKER_CONTAINER.name()));
+        }
+        if (cd.customProperties == null) {
+            cd.customProperties = new HashMap<>();
+        }
+        cd.customProperties
+                .put(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
+
+        String endpointLink = cd.customProperties.get(ComputeProperties.ENDPOINT_LINK_PROP_NAME);
+
+        sendRequest(Operation.createPatch(this, cd.documentSelfLink)
+                .setBody(cd)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask(
+                                String.format("Unable to patch compute description: %s in task: %s",
+                                        cd.documentSelfLink, getSelfLink()),
+                                e);
+                        return;
+                    }
+
+                    logInfo("ComputeDescription updated: %s", cd.documentSelfLink);
+                    ProvisionContainerHostsTaskState patch = createUpdateSubStageTask(state,
+                            nextStage);
+                    patch.endpointLink = endpointLink;
                     sendSelfPatch(patch);
                 }));
     }
@@ -238,7 +283,7 @@ public class ProvisionContainerHostsTaskService
 
     private void createAllocationTask(ProvisionContainerHostsTaskState state,
             EndpointState endpointState) {
-        if (endpointState == null) {
+        if (endpointState == null && state.endpointLink != null) {
             getEndpoint(state, (endpoint) -> createAllocationTask(state, endpoint));
             return;
         }
@@ -250,7 +295,7 @@ public class ProvisionContainerHostsTaskService
                 TaskStage.STARTED, SubStage.ALLOCATED, TaskStage.STARTED, SubStage.ERROR);
 
         cats.resourceDescriptionLink = state.computeDescriptionLink;
-        cats.resourcePoolLink = endpointState.resourcePoolLink;
+        cats.resourcePoolLink = endpointState != null ? endpointState.resourcePoolLink : null;
         cats.resourceCount = state.resourceCount;
 
         cats.requestTrackerLink = state.requestTrackerLink;
@@ -287,6 +332,20 @@ public class ProvisionContainerHostsTaskService
                     EndpointState endpoint = o.getBody(EndpointState.class);
                     this.endpointState = endpoint;
                     callbackFunction.accept(this.endpointState);
+                }));
+    }
+
+    private void getComputeDescription(ProvisionContainerHostsTaskState state,
+            Consumer<ComputeDescription> callbackFunction) {
+        sendRequest(Operation.createGet(this, state.computeDescriptionLink)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure retrieving Compute description state", e);
+                        return;
+                    }
+
+                    ComputeDescription description = o.getBody(ComputeDescription.class);
+                    callbackFunction.accept(description);
                 }));
     }
 

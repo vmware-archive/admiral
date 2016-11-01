@@ -318,7 +318,11 @@ public class ComputeProvisionTaskService extends
                         complete(state, SubStage.COMPLETED);
                         return;
                     } else {
-                        validateConnectionsAndRegisterContainerHost(state, computes);
+                        if (DeploymentProfileConfig.getInstance().isTest()) {
+                            complete(state, SubStage.COMPLETED);
+                        } else {
+                            validateConnectionsAndRegisterContainerHost(state, computes);
+                        }
                     }
                 }).sendWith(this);
 

@@ -25,6 +25,7 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
@@ -44,6 +45,7 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
     @Before
     @Override
     public void setUp() throws Throwable {
+        DeploymentProfileConfig.getInstance().setTest(true);
         super.setUp();
 
         request = TestRequestStateFactory.createRequestState();
