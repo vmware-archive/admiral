@@ -87,8 +87,8 @@ CredentialsRowEditor.prototype.setData = function(data) {
         this.$el.find('.password-input-holder').removeClass('hide');
       } else {
         this.$el.find('.password-input-holder').addClass('hide');
-
-        this.$el.find('.private-key-input').val(this.credentialsObject.privateKey);
+        this.$el.find('.private-key-input').val(
+                          utils.maskValueIfEncrypted(this.credentialsObject.privateKey));
         this.$el.find('.private-key-input-holder').removeClass('hide');
       }
 
@@ -96,7 +96,8 @@ CredentialsRowEditor.prototype.setData = function(data) {
       this.$el.find('#credentialTypeCertificate')[0].checked = true;
       this.$el.find('#credentialTypePassword')[0].checked = false;
       this.$el.find('.public-certificate-input').val(this.credentialsObject.publicKey);
-      this.$el.find('.private-certificate-input').val(this.credentialsObject.privateKey);
+      this.$el.find('.private-certificate-input').val(
+                          utils.maskValueIfEncrypted(this.credentialsObject.privateKey));
     }
 
     handleCredentialsTypeInputs(this.$el, this.credentialsObject.type);
@@ -149,12 +150,16 @@ var addEventListeners = function() {
         toReturn.password = getPasswordValue(_this.$el);
       } else {
         toReturn.type = constants.CREDENTIALS_TYPE.PRIVATE_KEY;
-        toReturn.privateKey = _this.$el.find('.private-key-input').val();
+        toReturn.privateKey = utils.unmaskValueIfEncrypted(
+                                      _this.$el.find('.private-key-input').val(),
+                                      toReturn.privateKey);
       }
     } else {
       toReturn.type = constants.CREDENTIALS_TYPE.PUBLIC_KEY;
       toReturn.publicKey = _this.$el.find('.public-certificate-input').val();
-      toReturn.privateKey = _this.$el.find('.private-certificate-input').val();
+      toReturn.privateKey = utils.unmaskValueIfEncrypted(
+                                      _this.$el.find('.private-certificate-input').val(),
+                                      toReturn.privateKey);
     }
 
     toReturn.customProperties = utils.arrayToObject(_this.customProperties.getData());
