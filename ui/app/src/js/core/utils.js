@@ -1091,6 +1091,21 @@ var utils = {
     return this.getErrorMessage(e);
   },
 
+  maskValueIfEncrypted: function(value) {
+    if (value && value.indexOf('s2enc~') === 0) {
+      return '****************';
+    }
+
+    return value;
+  },
+  unmaskValueIfEncrypted: function(value, initialValue) {
+    if (value && value.indexOf('****************') > -1) {
+      return initialValue;
+    }
+
+    return value;
+  },
+
   uuid: function() {
     var d = new Date().getTime();
     if (window.performance && typeof window.performance.now === 'function') {

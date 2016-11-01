@@ -12,6 +12,7 @@
 import CredentialsRowTemplate from 'CredentialsRowTemplate';
 import CredentialsRowHighlightTemplate from 'CredentialsRowHighlightTemplate';
 import constants from 'core/constants';
+import utils from 'core/utils';
 
 const MAX_TITLE_KEY_LENGTH = 40;
 
@@ -52,11 +53,13 @@ Handlebars.registerHelper('displayableCredentials', function(credentialObject) {
 
   } else if (credentialObject.type === constants.CREDENTIALS_TYPE.PRIVATE_KEY) {
     return credentialObject.username + ' / '
-      + '<div class="truncateText">' + credentialObject.privateKey + '</div>';
+      + '<div class="truncateText">'
+            + utils.maskValueIfEncrypted(credentialObject.privateKey) + '</div>';
 
   } else if (credentialObject.type === constants.CREDENTIALS_TYPE.PUBLIC_KEY) {
     return '<div class="truncateText">' + credentialObject.publicKey + '</div>' +
-      '<div class="truncateText">' + credentialObject.privateKey + '</div>';
+      '<div class="truncateText">'
+            + utils.maskValueIfEncrypted(credentialObject.privateKey) + '</div>';
 
   } else {
     return 'Unknown [' + credentialObject.type + ']';
@@ -69,12 +72,12 @@ Handlebars.registerHelper('displayableTitleCredentials', function(credentialObje
     return getUsernamePasswordString(credentialObject.username, credentialObject.password);
 
   } else if (credentialObject.type === constants.CREDENTIALS_TYPE.PRIVATE_KEY) {
-    let privateKey = truncateContent(credentialObject.privateKey);
+    let privateKey = truncateContent(utils.maskValueIfEncrypted(credentialObject.privateKey));
 
     return credentialObject.username + '\n' + privateKey;
 
   } else if (credentialObject.type === constants.CREDENTIALS_TYPE.PUBLIC_KEY) {
-    let privateKey = truncateContent(credentialObject.privateKey);
+    let privateKey = truncateContent(utils.maskValueIfEncrypted(credentialObject.privateKey));
     let publicKey = truncateContent(credentialObject.publicKey);
 
     return privateKey + '\n' + publicKey;
