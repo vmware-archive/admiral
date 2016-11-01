@@ -314,7 +314,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
             assertNotNull(networkLink);
             ContainerNetworkState network = getDocument(networkLink, ContainerNetworkState.class);
             assertNotNull(network);
-            assertTrue(network.connectedContainersCount == 3); // 2 wp + 1 mysql
+            assertNotNull(network.connectedContainersCount);
+            assertEquals(3, network.connectedContainersCount.intValue()); // 2 wp + 1 mysql
         }
     }
 

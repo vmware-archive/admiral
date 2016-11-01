@@ -46,6 +46,7 @@ public class ContainerNetworkMaintenance {
     private ContainerNetworkMaintenance(ServiceHost host, String networkSelfLink) {
         this.host = host;
         this.networkSelfLink = networkSelfLink;
+        this.lastInspectMaintainanceInMicros = Utils.getNowMicrosUtc();
     }
 
     public void handleMaintenance(Operation post) {
@@ -97,6 +98,8 @@ public class ContainerNetworkMaintenance {
                                     + MAINTENANCE_INTERVAL_INSPECT_MICROS < nowMicrosUtc) {
                                 lastInspectMaintainanceInMicros = nowMicrosUtc;
                                 processNetworkInspect(post, networkState);
+                            } else {
+                                post.complete();
                             }
                         }));
     }
