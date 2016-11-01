@@ -25,9 +25,12 @@ import com.vmware.photon.controller.model.tasks.EndpointRemovalTaskService;
 import com.vmware.photon.controller.model.tasks.EndpointRemovalTaskService.EndpointRemovalTaskState;
 import com.vmware.photon.controller.model.tasks.TaskOption;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState;
+import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 /**
  * Stateless service that simplifies(adapts) CRUD operations with endpoints.
@@ -132,10 +135,15 @@ public class EndpointAdapterService extends StatelessService {
                 .setBody(eats)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        post.fail(e);
+                        handleException(post, "creating", state.name, o.getStatusCode(), e);
                         return;
                     }
                     EndpointAllocationTaskState body = o.getBody(EndpointAllocationTaskState.class);
+                    if (body.taskInfo.stage == TaskStage.FAILED) {
+                        handleServiceErrorResponse(post, o.getStatusCode(), e,
+                                body.taskInfo.failure);
+                        return;
+                    }
                     post.setBody(body.endpointState);
                     post.complete();
                 })
@@ -170,7 +178,13 @@ public class EndpointAdapterService extends StatelessService {
                 .setBody(eats)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        put.fail(e);
+                        handleException(put, "updating", state.name, o.getStatusCode(), e);
+                        return;
+                    }
+                    EndpointAllocationTaskState body = o.getBody(EndpointAllocationTaskState.class);
+                    if (body.taskInfo.stage == TaskStage.FAILED) {
+                        handleServiceErrorResponse(put, o.getStatusCode(), e,
+                                body.taskInfo.failure);
                         return;
                     }
                     put.setStatusCode(HttpURLConnection.HTTP_NO_CONTENT);
@@ -200,7 +214,7 @@ public class EndpointAdapterService extends StatelessService {
                 .setBody(state)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        delete.fail(e);
+                        handleException(delete, "deleting", endpointLink, o.getStatusCode(), e);
                         return;
                     }
                     delete.complete();
@@ -230,4 +244,22 @@ public class EndpointAdapterService extends StatelessService {
         }
         return endpointLink;
     }
+
+    private void handleException(Operation op, String opName, String endpoint, int statusCode,
+            Throwable e) {
+        ServiceErrorResponse rsp = Utils.toServiceErrorResponse(e);
+        rsp.message = String.format("Error %s endpoint %s : %s",
+                opName, endpoint, rsp.message);
+
+        handleServiceErrorResponse(op, statusCode, e, rsp);
+    }
+
+    private void handleServiceErrorResponse(Operation op, int statusCode, Throwable e,
+            ServiceErrorResponse rsp) {
+        logWarning(rsp.message);
+        op.setStatusCode(statusCode);
+        op.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON);
+        op.fail(e, rsp);
+    }
+
 }
