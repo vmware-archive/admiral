@@ -47,12 +47,10 @@ public class ServerCertComputeDescriptionEnhancer implements ComputeDescriptionE
     {
         YAMLFactory factory = new YAMLFactory();
         factory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
-        factory.enable(YAMLGenerator.Feature.MINIMIZE_QUOTES);
+        // factory.enable(YAMLGenerator.Feature.MINIMIZE_QUOTES);
 
         objectMapper = new ObjectMapper(factory);
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
     }
 
     private StatefulService sender;
