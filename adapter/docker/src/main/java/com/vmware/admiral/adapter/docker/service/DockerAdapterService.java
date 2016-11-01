@@ -173,7 +173,12 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         public ContainerDescription containerDescription;
         public CommandInput commandInput;
         public DockerAdapterCommandExecutor executor;
-        // Only for direct operations like exec
+        /**
+         * Flags the request as already failed. Used to avoid patching a FAILED task to FINISHED
+         * state after inspecting a container.
+         */
+        public boolean requestFailed;
+        /** Only for direct operations like exec */
         public Operation operation;
     }
 
@@ -986,6 +991,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         // Update the container state so further actions (e.g. cleanup) can be performed
                         context.containerState.status = ContainerState.CONTAINER_ERROR_STATUS;
                         context.containerState.powerState = ContainerState.PowerState.ERROR;
+                        context.requestFailed = true;
                         inspectContainer(context);
 
                         fail(context.request, o, ex);
@@ -1070,8 +1076,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 context.containerState.documentSelfLink, context.request.getRequestTrackingLog());
 
         if (context.containerState.id == null) {
-            if (context.containerState.powerState == null
-                    || context.containerState.powerState.isUnmanaged()) {
+            if (!context.requestFailed && (context.containerState.powerState == null
+                    || context.containerState.powerState.isUnmanaged())) {
                 patchTaskStage(context.request, TaskStage.FINISHED, null);
             } else {
                 fail(context.request, new IllegalStateException("container id is required"
@@ -1225,7 +1231,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 .createPatch(request.getContainerStateReference())
                 .setBody(newContainerState)
                 .setCompletion((o, ex) -> {
-                    patchTaskStage(request, TaskStage.FINISHED, ex);
+                    if (!context.requestFailed) {
+                        patchTaskStage(request, TaskStage.FINISHED, ex);
+                    }
                     if (newContainerState.powerState == PowerState.RUNNING) {
                         //request fetch stats
 

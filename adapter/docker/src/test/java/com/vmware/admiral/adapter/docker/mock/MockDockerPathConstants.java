@@ -24,6 +24,7 @@ public interface MockDockerPathConstants {
     public static final String START = "/start";
     public static final String STOP = "/stop";
     public static final String LOGS = "/logs";
+    public static final String CONNECT = "/connect";
 
     // since '/stats' is reserved in DCP, use '/stats_mock' instead
     public static final String STATS = "/stats_mock";
