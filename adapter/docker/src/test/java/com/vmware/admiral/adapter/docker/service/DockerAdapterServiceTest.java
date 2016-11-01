@@ -13,6 +13,7 @@ package com.vmware.admiral.adapter.docker.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.adapter.docker.mock.MockDockerCreateImageService.REGISTRY_PASSWORD;
@@ -57,6 +58,7 @@ import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.PortBinding;
+import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.container.maintenance.ContainerHealthEvaluator;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.service.common.RegistryService;
@@ -133,7 +135,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
         setupDockerAdapterService();
 
-        createContainer();
+        createContainer(false /* expect error */);
     }
 
     @After
@@ -461,7 +463,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
         createContainerDescription("test.registry.com:5000/test/busybox:latest");
         createContainerState();
-        createContainer();
+        createContainer(false /* expect error */);
 
         // verify
         verifyContainerListContainsId(containerId);
@@ -586,17 +588,41 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
         removeContainer();
     }
 
+    @Test
+    public void testCreatedContainerShouldBeInspectedOnNetworkOperationFailure() throws Throwable {
+        // delete provisioned containers
+        removeContainer();
+//        create a new state that has never been data collected
+        createContainerState();
+
+        // update the container state with a network that does not exist
+        ServiceNetwork network = new ServiceNetwork();
+        network.name = "network";
+        ContainerState patch = new ContainerState();
+        patch.networks = new HashMap<>();
+        patch.networks.put(network.name, network);
+        patchContainerState(patch);
+
+        sendGetContainerStateRequest();
+        assertNull("Container ID should have been null before creation on host", containerState.id);
+
+        // This should fail on the attempt to connect the container to the network
+        createContainer(true /* expect error */);
+
+        // The createContainer method will verify that the id has been collected
+    }
+
     /**
      * Create a container, store its id in this.containerId
      *
      * @throws Throwable
      */
-    protected void createContainer() throws Throwable {
+    protected void createContainer(boolean expectError) throws Throwable {
         sendCreateContainerRequest();
 
         // wait for provisioning task stage to change to finish
         waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
-                TaskState.TaskStage.FINISHED);
+                expectError ? TaskState.TaskStage.FAILED : TaskState.TaskStage.FINISHED);
 
         verifyContainerStateExists(containerStateReference);
 
@@ -632,6 +658,22 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
         // verify container is removed by issuing an inspect command
         verifyContainerDoesNotExist(containerId);
+    }
+
+    private void patchContainerState(ContainerState patch) {
+        host.testStart(1);
+        Operation.createPatch(containerStateReference)
+                .setReferer("/")
+                .setBody(patch)
+                .setCompletion((op, ex) -> {
+                    if (ex != null) {
+                        host.failIteration(ex);
+                    } else {
+                        host.completeIteration();
+                    }
+                })
+                .sendWith(host);
+        host.testWait();
     }
 
     private void sendCreateContainerRequest() throws Throwable {

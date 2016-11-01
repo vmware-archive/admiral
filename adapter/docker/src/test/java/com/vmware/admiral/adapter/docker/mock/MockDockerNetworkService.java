@@ -12,11 +12,14 @@
 package com.vmware.admiral.adapter.docker.mock;
 
 import static com.vmware.admiral.adapter.docker.mock.MockDockerPathConstants.BASE_VERSIONED_PATH;
+import static com.vmware.admiral.adapter.docker.mock.MockDockerPathConstants.CONNECT;
 import static com.vmware.admiral.adapter.docker.mock.MockDockerPathConstants.CREATE;
 import static com.vmware.admiral.adapter.docker.mock.MockDockerPathConstants.NETWORKS;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.vmware.admiral.common.util.AssertUtil;
@@ -31,10 +34,12 @@ public class MockDockerNetworkService extends StatelessService {
     private static final String NETWORK_ID_KEY = "Id";
     private static final String NETWORK_NAME_KEY = "Name";
     private static final String NETWORK_DRIVER_KEY = "Driver";
+    private static final String CONTAINER_ID_KEY = "Container";
 
     private final AtomicInteger idSequence = new AtomicInteger(0);
 
     public static Map<String, NetworkItem> networksMap = new HashMap<>();
+    public static Map<String, Set<String>> connectedContainersMap = new HashMap<>();
 
     public MockDockerNetworkService() {
         super.toggleOption(ServiceOption.URI_NAMESPACE_OWNER, true);
@@ -105,37 +110,56 @@ public class MockDockerNetworkService extends StatelessService {
 
     @Override
     public void handlePost(Operation post) {
+        String path = post.getUri().getPath();
+        String command = UriUtilsExtended.getLastPathSegment(path);
 
-        String id = UriUtilsExtended.getLastPathSegment(post.getUri().getPath());
+        if (CREATE.endsWith(command)) {
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> request = post.getBody(Map.class);
 
-        if (!CREATE.endsWith(id)) {
+                AssertUtil.assertNotNull(request.get("Name"), "Name");
+                AssertUtil.assertNotNull(request.get("Driver"), "Driver");
+
+                createNetworkName(request);
+
+                NetworkItem networkItem = new NetworkItem();
+                networkItem.Id = request.get(NETWORK_ID_KEY).toString();
+                networkItem.Name = request.get(NETWORK_NAME_KEY).toString();
+                networkItem.Driver = request.get(NETWORK_DRIVER_KEY).toString();
+
+                networksMap.put(networkItem.Id, networkItem);
+
+                post.setBody(request);
+                post.complete();
+
+            } catch (Exception e) {
+                post.fail(e);
+                return;
+            }
+        } else if (CONNECT.endsWith(command)) {
+            String networkId = UriUtilsExtended.getLastPathSegment(stripTrailingPathSegment(path));
+
+            if (!networksMap.containsKey(networkId)) {
+                String message = String.format("Network with id '%s' does not exist", networkId);
+                Exception exception = new Exception(message);
+                post.fail(Operation.STATUS_CODE_NOT_FOUND, exception, null);
+            } else {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> request = post.getBody(Map.class);
+                String containerId = (String) request.get(CONTAINER_ID_KEY);
+
+                Set<String> connectedContainers = connectedContainersMap.get(networkId);
+                if (connectedContainers == null) {
+                    connectedContainers = new HashSet<>();
+                    connectedContainers.add(containerId);
+                }
+            }
+
+        } else {
             getHost().failRequestActionNotSupported(post);
-            return;
         }
 
-        try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> request = post.getBody(Map.class);
-
-            AssertUtil.assertNotNull(request.get("Name"), "Name");
-            AssertUtil.assertNotNull(request.get("Driver"), "Driver");
-
-            createNetworkName(request);
-
-            NetworkItem networkItem = new NetworkItem();
-            networkItem.Id = request.get(NETWORK_ID_KEY).toString();
-            networkItem.Name = request.get(NETWORK_NAME_KEY).toString();
-            networkItem.Driver = request.get(NETWORK_DRIVER_KEY).toString();
-
-            networksMap.put(networkItem.Id, networkItem);
-
-            post.setBody(request);
-            post.complete();
-
-        } catch (Exception e) {
-            post.fail(e);
-            return;
-        }
     }
 
     public Map<String, Object> createNetworkName(Map<String, Object> body) {
@@ -144,5 +168,11 @@ public class MockDockerNetworkService extends StatelessService {
         body.put(NETWORK_ID_KEY, String.format("%064d", idSequence.incrementAndGet()));
 
         return body;
+    }
+
+    /** remove the last path segment and the slash before it */
+    private String stripTrailingPathSegment(String path) {
+        return path.substring(0,
+                path.length() - UriUtilsExtended.getLastPathSegment(path).length() - 1);
     }
 }
