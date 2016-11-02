@@ -174,16 +174,16 @@ var NetworkDefinitionForm = Vue.extend({
     this.ipamConfigEditor = new MulticolumnInputs(
       $(this.$el).find('.ipam-config .form-control'), {
         subnet: {
-          header: 'Subnet',
-          placeholder: '172.16.238.0/24'
+          header: i18n.t('app.template.details.editNetwork.ipamConfigSubnet'),
+          placeholder: i18n.t('app.template.details.editNetwork.ipamConfigSubnetHint')
         },
         'ipRange': {
-          header: 'IP range',
-          placeholder: '172.28.5.0/24'
+          header: i18n.t('app.template.details.editNetwork.ipamConfigIPRange'),
+          placeholder: i18n.t('app.template.details.editNetwork.ipamConfigIPRangeHint')
         },
         gateway: {
-          header: 'Gateway',
-          placeholder: '172.16.238.1'
+          header: i18n.t('app.template.details.editNetwork.ipamConfigGateway'),
+          placeholder: i18n.t('app.template.details.editNetwork.ipamConfigGatewayHint')
         }
       }
     );
@@ -191,12 +191,12 @@ var NetworkDefinitionForm = Vue.extend({
    this.customProperties = new MulticolumnInputs(
       $(this.$el).find('.custom-properties .form-control'), {
         key: {
-          header: 'Name',
-          placeholder: 'Example: ip-forward'
+          header: i18n.t('customProperties.name'),
+          placeholder: i18n.t('customProperties.nameHint')
         },
         value: {
-          header: 'Value',
-          placeholder: 'Example: true'
+          header: i18n.t('customProperties.value'),
+          placeholder: i18n.t('customProperties.valueHint')
         }
       }
     );

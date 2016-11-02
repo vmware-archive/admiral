@@ -92,11 +92,11 @@
             <template-new-item-menu>
               <div class="new-definition template-new-item" v-on:click="openAddNewContainerDefinition">
                 <img src="image-assets/resource-icons/container.png"/>
-                <span class="label">{{i18n("app.template.details.newDefinition.title")}}</span>
+                <span class="label">{{i18n("app.template.details.newDefinition.newLabel")}}</span>
               </div>
               <div class="template-new-item" v-on:click="openAddNewNetwork">
                 <img src="image-assets/resource-icons/network.png"/>
-                <span class="label">{{i18n("app.template.details.editNetwork.newTitle")}}</span>
+                <span class="label">{{i18n("app.template.details.editNetwork.newLabel")}}</span>
               </div>
             </template-new-item>
           </grid-item>
@@ -167,10 +167,7 @@
               v-on:click="saveContainerDefinition($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
     </div>
   </div>
-  <div class="mask" v-if="!!model.editNetwork"></div>
   <div class="edit-network closable-view " v-if="!!model.editNetwork" transition="slide-and-fade">
-    <a class="close-button" v-on:click="handleBackButton($event)"><i
-      class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
     <div class="content">
       <div class="title" v-if="model.editNetwork.definitionInstance.documentSelfLink">{{i18n('app.template.details.editNetwork.editTitle')}}</div>
       <div class="title" v-else>{{i18n('app.template.details.editNetwork.newTitle')}}</div>
