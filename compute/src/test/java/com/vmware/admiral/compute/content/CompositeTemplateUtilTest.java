@@ -122,8 +122,10 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
 
         String template1Yaml = serializeCompositeTemplate(template1);
 
-        assertEquals(expectedTemplateYaml,  getContent("composite.simple.network.expected2.yaml"));
-        assertEquals(template1Yaml,  getContent("composite.simple.network.yaml"));
+        assertEquals(toUnixLineEnding(expectedTemplateYaml),
+                toUnixLineEnding(getContent("composite.simple.network.expected2.yaml")));
+        assertEquals(toUnixLineEnding(template1Yaml),
+                toUnixLineEnding(getContent("composite.simple.network.yaml")));
 
         // Docker Compose with complex network entities
 
@@ -148,7 +150,8 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
 
         String template2Yaml = serializeCompositeTemplate(template2);
 
-        assertEquals(getContent("composite.simple.network.expected.yaml"), template2Yaml);
+        assertEquals(toUnixLineEnding(getContent("composite.simple.network.expected.yaml")),
+                toUnixLineEnding(template2Yaml));
     }
 
     @Test
@@ -239,8 +242,10 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
 
         String composeYaml = serializeDockerCompose(compose);
 
-        assertEquals(expectedComposeYaml, getContent("docker.simple.network.yaml"));
-        assertEquals(composeYaml, getContent("docker.simple.network.expected.yaml"));
+        assertEquals(toUnixLineEnding(expectedComposeYaml),
+                toUnixLineEnding(getContent("docker.simple.network.yaml")));
+        assertEquals(toUnixLineEnding(composeYaml),
+                toUnixLineEnding(getContent("docker.simple.network.expected.yaml")));
 
         // To Docker Compose with complex network entities
 
