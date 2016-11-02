@@ -250,7 +250,8 @@
       "details": {
         "edit": "Edit Template",
         "newDefinition": {
-          "title": "Add Container",
+          "newLabel": "Add Container",
+          "title": "Add Container Definition",
           "selectImage": "Select an Image",
           "imageListTitle": "Popular Images",
           "imageListTitleSearch": "Found Images",
@@ -260,16 +261,26 @@
           "title": "Edit Container Definition"
         },
         "editNetwork" :{
-          "newTitle": "Add Network",
+          "newLabel": "Add Network",
+          "newTitle": "Add Network Configuration",
           "newDropdownTitle": "Add Network...",
-          "editTitle": "Edit Network",
+          "editTitle": "Edit Network Configuration",
           "name": "Name",
           "existingNetwork": "Existing",
           "showingCount": "Showing __count__ out of __totalCount__",
           "noResults": "No networks found",
           "hosts": "Hosts",
           "hostsSearchPlaceholder": "Search for host",
-          "create": "Create Network"
+          "create": "Create",
+          "createTitle": "Create Network",
+          "ipamConfig": "IPAM config",
+          "ipamConfigSubnet": "Subnet",
+          "ipamConfigSubnetHint": "Example: 172.16.238.0/24",
+          "ipamConfigIPRange": "IP range",
+          "ipamConfigIPRangeHint": "Example: 172.28.5.0/24",
+          "ipamConfigGateway": "Gateway",
+          "ipamConfigGatewayHint": "Example: 172.16.238.1",
+          "customProperties": "Custom properties"
         },
         "network": {
           "drag": "Drag to attach container to this network",

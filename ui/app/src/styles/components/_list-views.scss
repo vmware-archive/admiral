@@ -707,7 +707,6 @@
     left: $margin-left + $width - $border-overlap-size;
   }
   .create-network.closable-view {
-    left: 50%;
     .network-form {
       position: absolute;
       top: 40px;
@@ -1040,11 +1039,6 @@ $template-details-right: 20px;
   @extend .position-expand;
   left: $template-details-left;
   top: $template-details-top;
-
-  .mask {
-    left: -$template-details-left;
-    top: -$template-details-top;
-  }
 }
 
 .template-details .list-view {
@@ -1206,17 +1200,8 @@ $elements-side-margin: $elements-margin / 2;
   overflow: auto;
 }
 
-.template-details .edit-network.closable-view {
-  left: 50%;
-  top: -$template-details-top;
-
-  .content {
-    top: $template-details-top;
-    left: $template-details-left;
-    right: $template-details-right;
-  }
-
-  border-left: 1px solid $main-border-color;
+.template-details .edit-network.closable-view .control-btns {
+  margin-right: 20px;
 }
 
 .template-details .control-btns {
