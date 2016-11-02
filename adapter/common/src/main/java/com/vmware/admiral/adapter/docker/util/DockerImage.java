@@ -11,9 +11,9 @@
 
 package com.vmware.admiral.adapter.docker.util;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Pattern;
-
-import com.vmware.admiral.common.util.AssertUtil;
 
 /**
  * Docker image name parsing utility
@@ -21,14 +21,12 @@ import com.vmware.admiral.common.util.AssertUtil;
 public class DockerImage {
     public static final String SECTION_SEPARATOR = "/";
     public static final String TAG_SEPARATOR = ":";
+    public static final String DEFAULT_NAMESPACE = "library";
     public static final String DEFAULT_TAG = "latest";
     private static final Pattern NAMESPACE_PATTERN = Pattern.compile("[a-z0-9_]+");
-    private static final String[] OFFICIAL_REGISTRY_ADDRESS_LIST = {
-        "registry.hub.docker.com/library/",
-        "registry.hub.docker.com/",
-        "docker.io/library/",
-        "docker.io/"
-    };
+    private static final List<String> OFFICIAL_REGISTRY_LIST = Arrays.asList(
+            "registry.hub.docker.com",
+            "docker.io");
 
     private String host;
     private String namespace;
@@ -57,10 +55,30 @@ public class DockerImage {
     }
 
     /**
+     *
+     * @return the namespace and the repository
+     */
+    public String getNamespaceAndRepo() {
+        if (namespace != null) {
+            if (isDockerHubImage() && DEFAULT_NAMESPACE.equals(namespace)) {
+                return repository;
+            }
+
+            return namespace + SECTION_SEPARATOR + repository;
+        }
+
+        return repository;
+    }
+
+    /**
      * @return the tag
      */
     public String getTag() {
         return tag;
+    }
+
+    public boolean isDockerHubImage() {
+        return host == null || OFFICIAL_REGISTRY_LIST.contains(host);
     }
 
     /**
@@ -70,8 +88,6 @@ public class DockerImage {
      * @return
      */
     public static DockerImage fromImageName(String imageName) {
-        imageName = prepare(imageName);
-
         String[] parts = imageName.split(SECTION_SEPARATOR);
         switch (parts.length) {
         case 1:
@@ -138,18 +154,20 @@ public class DockerImage {
     /**
      * Convert to a canonical single string representation
      *
-     * If no namespace provided, then the default will be used
+     * @return E.g.:<p/>
+     *   registry.hub.docker.com/library/alpine -> alpine<p/>
+     *   registry.hub.docker.com/mongons/mongo -> mongons/mongo<p/>
+     *   registry.local.corp/proj/image -> registry.local.corp/proj/image
      */
     @Override
     public String toString() {
         StringBuilder imageName = new StringBuilder();
-        if (host != null) {
+
+        if (!isDockerHubImage()) {
             imageName.append(host);
             imageName.append(SECTION_SEPARATOR);
         }
 
-        // If namespace is null, do not set the default value 'library' as not all
-        // V2 registry implementations support this convention
         if (namespace != null) {
             imageName.append(namespace);
             imageName.append(SECTION_SEPARATOR);
@@ -164,26 +182,4 @@ public class DockerImage {
 
         return imageName.toString();
     }
-
-    /**
-     * Cut host and default namespace part from image name for official registries.
-     * Docker will use its own default registry.
-     *
-     * @param imageName image name
-     * @return E.g.:<p/>
-     *   registry.hub.docker.com/library/alpine -> alpine<p/>
-     *   registry.hub.docker.com/mongons/mongo -> mongons/mongo<p/>
-     *   registry.local.corp/proj/image -> registry.local.corp/proj/image
-     */
-    private static String prepare(String imageName) {
-        AssertUtil.assertNotNull(imageName, "imageName");
-
-        for (String registryPath : OFFICIAL_REGISTRY_ADDRESS_LIST) {
-            if (imageName.startsWith(registryPath)) {
-                return imageName.substring(registryPath.length());
-            }
-        }
-        return imageName;
-    }
-
 }
