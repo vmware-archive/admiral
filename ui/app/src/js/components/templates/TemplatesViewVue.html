@@ -12,7 +12,8 @@
 <div class="images-view" v-bind:class="{'right-context-expanded':  contextExpanded}">
   <alert v-bind:alert-type="alert.type"
        v-bind:show-alert="alert.show"
-       v-bind:alert-message="alert.message"></alert>
+       v-bind:alert-message="alert.message"
+       v-on:alert-closed="alertClosed()"></alert>
   <div class="list-holder">
     <div class="main-panel">
       <div class="list-view scroll-view" v-if="model.listView">
