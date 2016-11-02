@@ -192,10 +192,10 @@ public class EpzComputeEnumerationTaskService extends
             updateComputes(state, true);
             break;
         case COMPLETED:
-            complete(state, state.taskSubStage);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, state.taskSubStage);
+            completeWithError();
             break;
         default:
             break;
@@ -210,10 +210,9 @@ public class EpzComputeEnumerationTaskService extends
                 return;
             }
 
-            EpzComputeEnumerationTaskState newState = createUpdateSubStageTask(state,
-                    EpzComputeEnumerationTaskState.SubStage.QUERY_COMPUTES_TO_UNASSIGN);
-            newState.resourcePoolQuery = o.getBody(ResourcePoolState.class).query;
-            sendSelfPatch(newState);
+            proceedTo(EpzComputeEnumerationTaskState.SubStage.QUERY_COMPUTES_TO_UNASSIGN, s -> {
+                s.resourcePoolQuery = o.getBody(ResourcePoolState.class).query;
+            });
         }));
     }
 
@@ -266,18 +265,18 @@ public class EpzComputeEnumerationTaskService extends
                     }
 
                     ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
-                    EpzComputeEnumerationTaskState newState;
+
                     if (result.nextPageLink == null) {
                         logInfo("No computes found to %s resource pool %s",
                                 updateStage == EpzComputeEnumerationTaskState.SubStage.ASSIGN_COMPUTES
                                         ? "assign to" : "unassign from",
                                 state.resourcePoolLink);
-                        newState = createUpdateSubStageTask(state, nextStage);
+                        proceedTo(nextStage);
                     } else {
-                        newState = createUpdateSubStageTask(state, updateStage);
-                        newState.nextPageLink = result.nextPageLink;
+                        proceedTo(updateStage, s -> {
+                            s.nextPageLink = result.nextPageLink;
+                        });
                     }
-                    sendSelfPatch(newState);
                 }));
     }
 
@@ -303,7 +302,7 @@ public class EpzComputeEnumerationTaskService extends
 
         if (computes.isEmpty()) {
             logWarning("Empty compute page returned, nothing to %s", assign ? "assign" : "unassign");
-            sendSelfPatch(createUpdateSubStageTask(state, nextStage));
+            proceedTo(nextStage);
             return;
         }
 
@@ -327,14 +326,13 @@ public class EpzComputeEnumerationTaskService extends
                 return;
             }
 
-            EpzComputeEnumerationTaskState newState;
             if (result.nextPageLink == null) {
-                newState = createUpdateSubStageTask(state, nextStage);
+                proceedTo(nextStage);
             } else {
-                newState = createUpdateSubStageTask(state, state.taskSubStage);
-                newState.nextPageLink = result.nextPageLink;
+                proceedTo(state.taskSubStage, s -> {
+                    s.nextPageLink = result.nextPageLink;
+                });
             }
-            sendSelfPatch(newState);
         }).sendWith(this);
     }
 

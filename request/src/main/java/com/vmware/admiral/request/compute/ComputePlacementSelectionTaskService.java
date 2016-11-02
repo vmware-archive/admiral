@@ -129,11 +129,10 @@ public class ComputePlacementSelectionTaskService extends
             selectPlacement(state, computeDescription, QUERY_RETRY_COUNT);
             break;
         case COMPLETED:
-            complete(createUpdateSubStageTask(state, state.taskSubStage), state.taskSubStage);
+            complete();
             break;
         case ERROR:
-            completeWithError(createUpdateSubStageTask(state, state.taskSubStage),
-                    state.taskSubStage);
+            completeWithError();
             break;
         default:
             break;
@@ -327,11 +326,9 @@ public class ComputePlacementSelectionTaskService extends
         logInfo("The following placements selected for provisioning %d resources: %s",
                 state.resourceCount, selectedComputeLinks);
 
-        ComputePlacementSelectionTaskState newState = createUpdateSubStageTask(state,
-                DefaultSubStage.COMPLETED);
-        newState.selectedComputePlacementLinks = selectedComputeLinks;
-
-        sendSelfPatch(newState);
+        proceedTo(DefaultSubStage.COMPLETED, s -> {
+            s.selectedComputePlacementLinks = selectedComputeLinks;
+        });
     }
 
     private void getComputeDescription(ComputePlacementSelectionTaskState state,

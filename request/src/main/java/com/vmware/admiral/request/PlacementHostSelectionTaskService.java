@@ -109,11 +109,10 @@ public class PlacementHostSelectionTaskService
             selectBasedOnDescAndResourcePool(state, containerDescription, QUERY_RETRY_COUNT);
             break;
         case COMPLETED:
-            complete(createUpdateSubStageTask(state, state.taskSubStage), state.taskSubStage);
+            complete();
             break;
         case ERROR:
-            completeWithError(createUpdateSubStageTask(state, state.taskSubStage),
-                    state.taskSubStage);
+            completeWithError();
             break;
         default:
             break;
@@ -334,10 +333,9 @@ public class PlacementHostSelectionTaskService
             hostSelections.addAll(hostSelections.subList(0, diff % initialSize));
         }
 
-        PlacementHostSelectionTaskState newState =
-                createUpdateSubStageTask(state, DefaultSubStage.COMPLETED);
-        newState.hostSelections = hostSelections;
-        sendSelfPatch(newState);
+        proceedTo(DefaultSubStage.COMPLETED, s -> {
+            s.hostSelections = hostSelections;
+        });
     }
 
     private void getContainerDescription(PlacementHostSelectionTaskState state,

@@ -453,6 +453,11 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                 }));
     }
 
+    /**
+     * @deprecated Deprecated in favor of new methods that promote clarity and optimized patch body.
+     *      Use completeWithError() methods with subStage and optional patch body configurator.
+     */
+    @Deprecated
     protected void completeWithError(T state, E errorSubStage) {
         if (!isFailedOrCancelledTask(state)) {
             state.taskInfo.stage = TaskStage.FAILED;
@@ -461,6 +466,11 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         }
     }
 
+    /**
+     * @deprecated Deprecated in favor of new methods that promote clarity and optimized patch body.
+     *      Use complete() methods with subStage and optional patch body configurator.
+     */
+    @Deprecated
     protected void complete(T state, E completeSubStage) {
         if (!isFailedOrCancelledTask(state)) {
             state.taskInfo.stage = TaskStage.FINISHED;
@@ -469,6 +479,12 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         }
     }
 
+    /**
+     * @deprecated Deprecated in favor of new methods that promote clarity and optimized patch body.
+     *      Use the new proceedTo() methods where the patch body can be configured through a
+     *      function, if needed.
+     */
+    @Deprecated
     protected void sendSelfPatch(T body) {
         sendRequest(Operation.createPatch(getUri())
                 .setBody(body)
@@ -478,6 +494,86 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                         return;
                     }
                 }));
+    }
+
+    /**
+     * Moves the task to the given subStage. The method assumes the task stage is STARTED as this
+     * is the stage where most sub-stage transition happen.
+     */
+    protected void proceedTo(E subStage, Consumer<T> patchBodyConfigurator) {
+        proceedTo(TaskStage.STARTED, subStage, patchBodyConfigurator);
+    }
+
+    protected void proceedTo(E subStage) {
+        proceedTo(TaskStage.STARTED, subStage, null);
+    }
+
+    /**
+     * Completes the task by setting its stage to FINISHED. The subStage can be specified, and if
+     * not, the one named COMPLETED will be used, if any.
+     */
+    protected void complete(E subStage, Consumer<T> patchBodyConfigurator) {
+        proceedTo(TaskStage.FINISHED, subStage, patchBodyConfigurator);
+    }
+
+    protected void complete(E subStage) {
+        complete(subStage, null);
+    }
+
+    protected void complete() {
+        complete(Enum.valueOf(this.subStageType, DefaultSubStage.COMPLETED.toString()));
+    }
+
+    /**
+     * Completes the task by setting its stage to FAILED. The subStage can be specified, and if
+     * not, the one named ERROR will be used, if any.
+     */
+    protected void completeWithError(E subStage, Consumer<T> patchBodyConfigurator) {
+        proceedTo(TaskStage.FAILED, subStage, patchBodyConfigurator);
+    }
+
+    protected void completeWithError(E subStage) {
+        completeWithError(subStage, null);
+    }
+
+    protected void completeWithError() {
+        completeWithError(Enum.valueOf(this.subStageType, DefaultSubStage.ERROR.toString()));
+    }
+
+    /**
+     * Moves the task to the specified stage/subStage by sending a patch to self.
+     * By default the patch body is empty; use the {@code patchBodyConfigurator} argument to
+     * set patch fields that are required for this stage transition.
+     */
+    @SuppressWarnings("unchecked")
+    protected void proceedTo(TaskStage stage, E subStage, Consumer<T> patchBodyConfigurator) {
+        T body = null;
+
+        try {
+            body = (T)getStateType().newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+
+        body.taskInfo = new TaskState();
+        body.taskInfo.stage = stage;
+        body.taskSubStage = subStage;
+        if (patchBodyConfigurator != null) {
+            patchBodyConfigurator.accept(body);
+        }
+
+        sendRequest(Operation.createPatch(getUri())
+                .setBody(body)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Moving task to %s:%s failed: %s", stage, subStage,
+                                e.getMessage());
+                    }
+                }));
+    }
+
+    protected void proceedTo(TaskStage stage, E subStage) {
+        proceedTo(stage, subStage, null);
     }
 
     private void sendSelfDelete() {
@@ -680,6 +776,11 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         return taskStatus;
     }
 
+    /**
+     * @deprecated Deprecated in favor of new methods that promote clarity and optimized patch body.
+     *      Use the new proceedTo() methods instead.
+     */
+    @Deprecated
     protected T createUpdateSubStageTask(T state, E subStage) {
         try {
             @SuppressWarnings("unchecked")

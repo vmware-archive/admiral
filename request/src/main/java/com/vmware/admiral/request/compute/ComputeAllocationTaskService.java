@@ -199,10 +199,10 @@ public class ComputeAllocationTaskService
             queryForAllocatedResources(state);
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -255,12 +255,11 @@ public class ComputeAllocationTaskService
             return;
         }
 
-        // merge compute description properties over the resource pool description properties
-        Map<String, String> customProperties = mergeCustomProperties(resourcePool.customProperties,
-                computeDesc.customProperties);
-
-        // merge request/allocation properties over the previously merged properties
-        customProperties = mergeCustomProperties(customProperties, state.customProperties);
+        // merge compute description properties over the resource pool description properties and
+        // request/allocation properties
+        Map<String, String> customProperties = mergeCustomProperties(
+                mergeCustomProperties(resourcePool.customProperties, computeDesc.customProperties),
+                state.customProperties);
 
         String endpointLink = customProperties.get(ComputeProperties.ENDPOINT_LINK_PROP_NAME);
 
@@ -276,34 +275,31 @@ public class ComputeAllocationTaskService
             return;
         }
 
-        ComputeAllocationTaskState body = createUpdateSubStageTask(state,
-                SubStage.CONTEXT_PREPARED);
+        proceedTo(SubStage.CONTEXT_PREPARED, s -> {
+            s.customProperties = customProperties;
 
-        body.customProperties = customProperties;
+            s.endpointLink = endpointLink;
+            s.endpointComputeStateLink = endpoint.computeLink;
+            s.environmentLink = environment.documentSelfLink;
+            s.endpointType = endpoint.endpointType;
+            s.resourcePoolLink = resourcePool.documentSelfLink;
 
-        body.endpointLink = endpointLink;
-        body.endpointComputeStateLink = endpoint.computeLink;
-        body.environmentLink = environment.documentSelfLink;
-        body.endpointType = endpoint.endpointType;
-        body.resourcePoolLink = resourcePool.documentSelfLink;
-
-        if (body.getCustomProperty(FIELD_NAME_CONTEXT_ID_KEY) == null) {
-            body.addCustomProperty(FIELD_NAME_CONTEXT_ID_KEY, getSelfId());
-        }
-        if (body.getCustomProperty(
-                ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK) == null) {
-            body.addCustomProperty(
-                    ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK,
-                    resourcePool.documentSelfLink);
-        }
-
-        sendSelfPatch(body);
+            if (s.getCustomProperty(FIELD_NAME_CONTEXT_ID_KEY) == null) {
+                s.addCustomProperty(FIELD_NAME_CONTEXT_ID_KEY, getSelfId());
+            }
+            if (s.getCustomProperty(
+                    ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK) == null) {
+                s.addCustomProperty(
+                        ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK,
+                        resourcePool.documentSelfLink);
+            }
+        });
     }
 
     private void createOsDiskState(ComputeAllocationTaskState state,
             SubStage nextStage, EnvironmentMappingState mapping, ComputeDescription computeDesc) {
         if (state.customProperties.containsKey(ComputeConstants.CUSTOM_PROP_DISK_LINK)) {
-            sendSelfPatch(createUpdateSubStageTask(state, nextStage));
+            proceedTo(nextStage);
             return;
         }
         if (mapping == null) {
@@ -366,12 +362,11 @@ public class ComputeAllocationTaskService
                         }
                         DiskState diskState = o.getBody(DiskState.class);
                         logInfo("Resource created: %s", diskState.documentSelfLink);
-                        ComputeAllocationTaskState patch = createUpdateSubStageTask(state,
-                                nextStage);
-                        patch.addCustomProperty(
-                                ComputeConstants.CUSTOM_PROP_DISK_LINK,
-                                diskState.documentSelfLink);
-                        sendSelfPatch(patch);
+                        proceedTo(nextStage, s -> {
+                            s.addCustomProperty(
+                                    ComputeConstants.CUSTOM_PROP_DISK_LINK,
+                                    diskState.documentSelfLink);
+                        });
                     }));
 
         } catch (Throwable t) {
@@ -411,10 +406,9 @@ public class ComputeAllocationTaskService
                     } else if (r.hasResult()) {
                         computeResourceLinks.add(r.getDocumentSelfLink());
                     } else {
-                        ComputeAllocationTaskState body = createUpdateSubStageTask(
-                                state, SubStage.COMPLETED);
-                        body.resourceLinks = computeResourceLinks;
-                        sendSelfPatch(body);
+                        proceedTo(SubStage.COMPLETED, s -> {
+                            s.resourceLinks = computeResourceLinks;
+                        });
                     }
 
                 }).sendWith(getHost());
@@ -509,10 +503,9 @@ public class ComputeAllocationTaskService
                             return;
                         }
                         this.computeDescription = o.getBody(ComputeDescription.class);
-                        ComputeAllocationTaskState patchState = createUpdateSubStageTask(state,
-                                nextStage);
-                        patchState.customProperties = this.computeDescription.customProperties;
-                        sendSelfPatch(patchState);
+                        proceedTo(nextStage, s -> {
+                            s.customProperties = this.computeDescription.customProperties;
+                        });
                     })
                     .sendWith(this);
         });
