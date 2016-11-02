@@ -10,6 +10,9 @@
   -->
 
 <div class="endpointEdit">
+  <alert alert-type="danger"
+         v-bind:show-alert="model.validationErrors && model.validationErrors._generic"
+         v-bind:alert-message="model.validationErrors._generic"></alert>
   <div>
     <div class="endpointEdit-toolbar pull-right">
       <a href="#" class="btn admiral-btn admiral-btn-circle" v-bind:class="{'loading': model.saving}" v-on:click="save($event)" v-bind:disabled="saveDisabled">
@@ -25,8 +28,7 @@
       <div class="form-group col-md-12">
         <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.nameLabel')}}</label>
         <div class="nameInput col-md-8">
-          <input v-bind:value="model.item.name" class="form-control"
-                 v-on:change="onInputChange()" v-on:input="onInputChange()"/>
+          <input class="form-control" v-bind:value="model.item.name" v-on:input="onInputChange()"/>
         </div>
       </div>
       <div class="form-group col-md-12">
@@ -38,46 +40,40 @@
       <div class="form-group col-md-12" v-if="showInput('vsphere')">
         <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.endpointHostLabel')}}</label>
         <div class="endpointHostInput col-md-8">
-          <input v-bind:value="endpointProperties.hostName" class="form-control"
-                 v-on:change="onInputChange()" v-on:input="onInputChange()" />
+          <input class="form-control" v-bind:value="endpointProperties.hostName" v-on:input="onInputChange()"/>
         </div>
       </div>
-      <div class="form-group col-md-12">
+      <div class="form-group col-md-12" v-if="!showInput(null)">
         <label class="col-md-4 control-label" v-if="showInput('vsphere')">{{i18n('app.endpoint.edit.usernameLabel')}}</label>
         <label class="col-md-4 control-label" v-else>{{i18n('app.endpoint.edit.accessKeyIdLabel')}}</label>
         <div class="accessKeyId col-md-8">
-          <input v-bind:value="endpointProperties.privateKeyId" class="form-control"
-                 v-on:change="onInputChange()" v-on:input="onInputChange()"/>
+          <input class="form-control" v-bind:value="endpointProperties.privateKeyId" v-on:input="onInputChange()"/>
         </div>
       </div>
-      <div class="form-group col-md-12">
+      <div class="form-group col-md-12" v-if="!showInput(null)">
         <label class="col-md-4 control-label" v-if="showInput('vsphere')">{{i18n('app.endpoint.edit.passwordLabel')}}</label>
         <label class="col-md-4 control-label" v-else>{{i18n('app.endpoint.edit.secretAccessKeyLabel')}}</label>
         <div class="secretAccessKey col-md-8">
-          <input v-bind:value="endpointProperties.privateKey" class="form-control"
-                 v-on:change="onInputChange()" v-on:input="onInputChange()" type="password"/>
+          <input class="form-control" type="password" v-bind:value="endpointProperties.privateKey" v-on:input="onInputChange()"/>
         </div>
       </div>
-      <div class="form-group col-md-12">
+      <div class="form-group col-md-12" v-if="!showInput(null)">
         <label class="col-md-4 control-label" v-if="showInput('vsphere')">{{i18n('app.endpoint.edit.datacenterIdLabel')}}</label>
         <label class="col-md-4 control-label" v-else>{{i18n('app.endpoint.edit.regionIdLabel')}}</label>
         <div class="regionIdInput col-md-8">
-          <input v-bind:value="endpointProperties.regionId" class="form-control"
-                 v-on:change="onInputChange()" v-on:input="onInputChange()" />
+          <input class="form-control" v-bind:value="endpointProperties.regionId" v-on:input="onInputChange()"/>
         </div>
       </div>
       <div class="form-group col-md-12" v-if="showInput('azure')">
         <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.subscriptionIdLabel')}}</label>
         <div class="subscriptionIdInput col-md-8">
-          <input v-bind:value="endpointProperties.userLink" class="form-control"
-                 v-on:change="onInputChange()" v-on:input="onInputChange()" />
+          <input class="form-control" v-bind:value="endpointProperties.userLink" v-on:input="onInputChange()"/>
         </div>
       </div>
       <div class="form-group col-md-12" v-if="showInput('azure')">
         <label class="col-md-4 control-label">{{i18n('app.endpoint.edit.tenantIdLabel')}}</label>
         <div class="tenantIdInput col-md-8">
-          <input v-bind:value="endpointProperties.azureTenantId" class="form-control"
-                 v-on:change="onInputChange()" v-on:input="onInputChange()" />
+          <input class="form-control" v-bind:value="endpointProperties.azureTenantId" v-on:input="onInputChange()"/>
         </div>
       </div>
     </div>

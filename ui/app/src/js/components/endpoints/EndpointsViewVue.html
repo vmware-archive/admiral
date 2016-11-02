@@ -29,14 +29,14 @@
           <thead>
             <tr>
               <th is="thsort"
-                  :active="sortKey === 'endpointType'"
-                  :sort-order="sortOrders.endpointType"
-                  @click="sortBy('endpointType')"
+                  v-bind:active="sortKey === 'endpointType'"
+                  v-bind:sort-order="sortOrders.endpointType"
+                  v-on:click="sortBy('endpointType')"
                   style="width: 25%">{{i18n('app.endpoint.list.typeColumn')}}</th>
               <th is="thsort"
-                  :active="sortKey === 'name'"
-                  :sort-order="sortOrders.name"
-                  @click="sortBy('name')"
+                  v-bind:active="sortKey === 'name'"
+                  v-bind:sort-order="sortOrders.name"
+                  v-on:click="sortBy('name')"
                   style="width: 60%">{{i18n('app.endpoint.list.nameColumn')}}</th>
               <!-- Actions column -->
               <th style="width: 15%"></th>
@@ -48,11 +48,12 @@
                 <endpoint-editor v-bind:model="model.editingItemData"></endpoint-editor>
               </td>
             </tr>
-            <tr class="item" v-for="item in model.items | endpointOrderBy sortKey sortOrders[sortKey]" track-by="documentSelfLink">
+            <tr class="item" v-for="item in model.items | orderBy sortKey sortOrders[sortKey]" track-by="documentSelfLink">
               <template v-if="isHighlightedItem(item)">
-                <td colspan="3" class="highlight-item">
+               <td colspan="3" class="highlight-item" v-bind:class="{'highlight-item-fail': validationErrors}">
                   <div>
                     <div class="help-text"><i class="fa fa-check"></i>
+                      <span v-if="validationErrors">{{validationErrors._generic}}</span>
                       <span v-if="isNewItem(item)">{{i18n('infoMessages.created')}}</span>
                       <span v-else>{{i18n('infoMessages.updated')}}</span>
                     </div>

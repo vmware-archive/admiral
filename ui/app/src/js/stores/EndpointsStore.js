@@ -56,6 +56,7 @@ let EndpointsStore = Reflux.createStore({
 
   onCreateEndpoint: function(endpoint) {
 
+    this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
 
@@ -79,6 +80,7 @@ let EndpointsStore = Reflux.createStore({
 
   onUpdateEndpoint: function(endpoint) {
 
+    this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
 

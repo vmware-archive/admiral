@@ -92,7 +92,7 @@ var EndpointsView = Vue.extend({
     }
   },
   filters: {
-    endpointOrderBy: function(items, sortKey, reverse) {
+    orderBy: function(items, sortKey, reverse) {
       if (!sortKey) {
         return items;
       }
