@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.junit.Test;
@@ -35,6 +36,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.PortBinding;
+import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -75,7 +77,8 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         assertEquals(containerDesc.instanceAdapterReference.getPath(),
                 containerState.adapterManagementReference.getPath());
         assertNotNull(containerState.created);
-        assertEquals(groupPlacementState.documentSelfLink, containerState.groupResourcePlacementLink);
+        assertEquals(groupPlacementState.documentSelfLink,
+                containerState.groupResourcePlacementLink);
 
         assertEquals(ContainerAllocationTaskService
                 .getMinParam(groupPlacementState.cpuShares, containerDesc.cpuShares.longValue())
@@ -153,7 +156,8 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         assertEquals(containerDesc.documentSelfLink, containerState.descriptionLink);
         assertNull(containerState.created);
         assertEquals(allocationTask.hostSelections.get(0).hostLink, containerState.parentLink);
-        assertEquals(groupPlacementState.documentSelfLink, containerState.groupResourcePlacementLink);
+        assertEquals(groupPlacementState.documentSelfLink,
+                containerState.groupResourcePlacementLink);
         assertEquals(allocationTask.tenantLinks, containerState.tenantLinks);
         assertEquals(containerDesc.instanceAdapterReference.getPath(),
                 containerState.adapterManagementReference.getPath());
@@ -198,7 +202,8 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         assertEquals(containerDesc.instanceAdapterReference.getPath(),
                 containerState.adapterManagementReference.getPath());
         assertNotNull(containerState.created);
-        assertEquals(groupPlacementState.documentSelfLink, containerState.groupResourcePlacementLink);
+        assertEquals(groupPlacementState.documentSelfLink,
+                containerState.groupResourcePlacementLink);
 
         assertFalse(ContainerState.CONTAINER_ALLOCATION_STATUS.equals(containerState.status));
         assertEquals(0, containerState.documentExpirationTimeMicros);
@@ -263,6 +268,107 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
                         currContainer.parentLink);
             }
         }
+    }
+
+    @Test
+    public void testAllocationOfContainerLinksWithNetworks() throws Throwable {
+        Map<String, ServiceNetwork> networks = new HashMap<>();
+        networks.put("my-net", null);
+
+        createDockerHost(createDockerHostDescription(), createResourcePool(), true);
+        createDockerHost(createDockerHostDescription(), createResourcePool(), true);
+
+        ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription();
+        desc1.documentSelfLink = UUID.randomUUID().toString();
+        desc1.name = "linked-service";
+        desc1._cluster = 2;
+        desc1.portBindings = null;
+        desc1.networks = networks;
+        desc1 = doPost(desc1, ContainerDescriptionService.FACTORY_LINK);
+        assertNotNull(desc1);
+        addForDeletion(desc1);
+
+        String contextId = UUID.randomUUID().toString();
+        // all instances of this request should be allocated on the same hosts because of the pod.
+        ContainerAllocationTaskState allocationTask1 = createContainerAllocationTask(
+                desc1.documentSelfLink, 1);
+        allocationTask1.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        allocationTask1 = allocate(allocationTask1);
+
+        ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription();
+        desc2.documentSelfLink = UUID.randomUUID().toString();
+        desc2.name = "service";
+        desc2.networks = networks;
+        desc2.portBindings = null;
+        desc2.links = new String[] { "linked-service:my-service" };
+        desc2 = doPost(desc2, ContainerDescriptionService.FACTORY_LINK);
+        assertNotNull(desc2);
+        addForDeletion(desc2);
+
+        // all instances of this request should be allocated on the same host as the one already
+        // selected by the previous request since the desc1.pod == desc2.pod
+        ContainerAllocationTaskState allocationTask2 = createContainerAllocationTask(
+                desc2.documentSelfLink, 2);
+        allocationTask2.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        allocationTask2 = allocate(allocationTask2);
+        ContainerState cont2 = getDocument(ContainerState.class,
+                allocationTask2.resourceLinks.get(0));
+
+        assertNull(cont2.links);
+        assertEquals(1, cont2.networks.get("my-net").links.length);
+        assertEquals("linked-service:my-service", cont2.networks.get("my-net").links[0]);
+    }
+
+    @Test
+    public void testAllocationOfContainerLinksWithFallbackToLegacyLinks() throws Throwable {
+        createDockerHost(createDockerHostDescription(), createResourcePool(), true);
+        createDockerHost(createDockerHostDescription(), createResourcePool(), true);
+
+        ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription();
+        desc1.documentSelfLink = UUID.randomUUID().toString();
+        desc1.name = "linked-service";
+        desc1.portBindings = null;
+        desc1._cluster = 2;
+        desc1 = doPost(desc1, ContainerDescriptionService.FACTORY_LINK);
+        assertNotNull(desc1);
+        addForDeletion(desc1);
+
+        String contextId = UUID.randomUUID().toString();
+        // all instances of this request should be allocated on the same hosts because of the pod.
+        ContainerAllocationTaskState allocationTask1 = createContainerAllocationTask(
+                desc1.documentSelfLink, 1);
+        allocationTask1.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        allocationTask1.resourceCount = desc1._cluster.longValue();
+        allocationTask1 = allocate(allocationTask1);
+
+        ContainerState cont1A = getDocument(ContainerState.class,
+                allocationTask1.resourceLinks.get(0));
+        ContainerState cont1B = getDocument(ContainerState.class,
+                allocationTask1.resourceLinks.get(1));
+
+        ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription();
+        desc2.documentSelfLink = UUID.randomUUID().toString();
+        desc2.name = "service";
+        desc2.portBindings = null;
+        desc2.links = new String[] { "linked-service:my-service" };
+        desc2 = doPost(desc2, ContainerDescriptionService.FACTORY_LINK);
+        assertNotNull(desc2);
+        addForDeletion(desc2);
+
+        // all instances of this request should be allocated on the same host as the one already
+        // selected by the previous request since the desc1.pod == desc2.pod
+        ContainerAllocationTaskState allocationTask2 = createContainerAllocationTask(
+                desc2.documentSelfLink, 2);
+        allocationTask2.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        allocationTask2 = allocate(allocationTask2);
+        ContainerState cont2 = getDocument(ContainerState.class,
+                allocationTask2.resourceLinks.get(0));
+
+        assertNull(cont2.networks);
+        List<String> links = Arrays.asList(cont2.links);
+        assertEquals(2, links.size());
+        assertTrue(links.contains(cont1A.names.get(0) + ":my-service"));
+        assertTrue(links.contains(cont1B.names.get(0) + ":my-service"));
     }
 
     @Test
@@ -363,7 +469,8 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         HostSelection hostSelection = new HostSelection();
         hostSelection.resourceCount = 1;
         hostSelection.hostLink = dockerHost.documentSelfLink;
-        hostSelection.resourcePoolLinks = new ArrayList<>(Arrays.asList(dockerHost.resourcePoolLink));
+        hostSelection.resourcePoolLinks = new ArrayList<>(
+                Arrays.asList(dockerHost.resourcePoolLink));
         allocationTask.hostSelections = new ArrayList<>(Arrays.asList(hostSelection));
 
         allocationTask = allocate(allocationTask);
