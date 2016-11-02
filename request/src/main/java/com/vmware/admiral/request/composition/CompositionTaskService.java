@@ -186,18 +186,25 @@ public class CompositionTaskService
                 && currentState.remainingCount > 0
                 && patch.getReferer() != null
                 && patch.getReferer().getPath() != null) {
-            String patchSelfLink = patch.getReferer().getPath();
-            // count down how many of the subTask have callback by referrer link:
-            final ResourceNode resourceNode = currentState.resourceNodes.get(patchSelfLink);
-            if (resourceNode != null) {
-                currentState.remainingCount--;
-                logInfo("Remaining count: [%s]. Stage: [%s]. Completion of resource name: [%s] composition sub-task [%s] patched.",
-                        currentState.remainingCount, patchBody.taskSubStage, resourceNode.name,
-                        patchSelfLink);
+            CompositionSubTaskState state = patch.getBody(CompositionSubTaskState.class);
+            String patchSelfLink = state.getCustomProperty(CompositionSubTaskService.REFERER);
+            if (patchSelfLink != null) {
+                // count down how many of the subTask have callback by referrer link:
+                final ResourceNode resourceNode = currentState.resourceNodes.get(patchSelfLink);
+                if (resourceNode != null) {
+                    currentState.remainingCount--;
+                    logInfo("Remaining count: [%s]. Stage: [%s]. Completion of resource name: [%s] composition sub-task [%s] patched.",
+                            currentState.remainingCount, patchBody.taskSubStage, resourceNode.name,
+                            patchSelfLink);
+                } else {
+                    logWarning(
+                            "Remaining count: [%s]. Completion of composition sub-task [%s] patched but not found in the list.",
+                            currentState.remainingCount, patchSelfLink);
+                }
             } else {
                 logWarning(
-                        "Remaining count: [%s]. Completion of composition sub-task [%s] patched but not found in the list.",
-                        currentState.remainingCount, patchSelfLink);
+                        "Remaining count: [%s]. Completion of composition sub-task patched but no referer property was found. Actual referer [%s]",
+                        currentState.remainingCount, patch.getReferer().getPath());
             }
         } else if (SubStage.ERROR_ALLOCATING == patchBody.taskSubStage) {
             logWarning("No remaining count: %s", currentState.remainingCount);
