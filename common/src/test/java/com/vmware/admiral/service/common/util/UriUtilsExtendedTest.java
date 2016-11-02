@@ -271,14 +271,14 @@ public class UriUtilsExtendedTest {
         assertEquals("http", uri.getScheme());
         assertEquals("a.b.c", uri.getHost());
         assertEquals(1234, uri.getPort());
-        assertEquals("/v1.19", uri.getPath());
+        assertEquals("/v1.21", uri.getPath());
 
         uri = UriUtilsExtended.buildDockerUri(null, "a.b.c", -1, "/path");
         assertNotNull(uri);
         assertEquals("https", uri.getScheme());
         assertEquals("a.b.c", uri.getHost());
         assertEquals(443, uri.getPort());
-        assertEquals("/path/v1.19", uri.getPath());
+        assertEquals("/path/v1.21", uri.getPath());
 
         try {
             UriUtilsExtended.buildDockerUri("ftp", "a.b.c", 21, "/path");

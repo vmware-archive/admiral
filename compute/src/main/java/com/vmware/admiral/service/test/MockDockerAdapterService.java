@@ -430,11 +430,13 @@ public class MockDockerAdapterService extends StatelessService {
         stats.add("memory_stats", memory_stats);
 
         // Network:
-        // data.network.rx_bytes, data.network.tx_bytes
-        JsonObject network = new JsonObject();
-        network.addProperty("rx_bytes", 34887 * random);
-        network.addProperty("tx_bytes", 579367 * random);
-        stats.add("network", network);
+        // data.networks.eth0.rx_bytes, data.networks.eth0.tx_bytes
+        JsonObject networks = new JsonObject();
+        JsonObject iface = new JsonObject();
+        iface.addProperty("rx_bytes", 34887);
+        iface.addProperty("tx_bytes", 579367);
+        networks.add("eth0", iface);
+        stats.add("networks", networks);
 
         ContainerStats containerStats = ContainerStatsEvaluator
                 .calculateStatsValues(stats.toString());

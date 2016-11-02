@@ -226,11 +226,13 @@ public class ContainerStatsServiceTest extends ComputeBaseTest {
         stats.add("memory_stats", memory_stats);
 
         // Network:
-        // data.network.rx_bytes, data.network.tx_bytes
-        JsonObject network = new JsonObject();
-        network.addProperty("rx_bytes", 34887);
-        network.addProperty("tx_bytes", 579367);
-        stats.add("network", network);
+        // data.networks.eth0.rx_bytes, data.networks.eth0.tx_bytes, ...
+        JsonObject networks = new JsonObject();
+        JsonObject iface = new JsonObject();
+        iface.addProperty("rx_bytes", 34887);
+        iface.addProperty("tx_bytes", 579367);
+        networks.add("eth0", iface);
+        stats.add("networks", networks);
 
         return stats.toString();
     }

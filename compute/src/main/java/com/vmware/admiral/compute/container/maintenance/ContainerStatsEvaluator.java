@@ -12,6 +12,8 @@
 package com.vmware.admiral.compute.container.maintenance;
 
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -28,7 +30,8 @@ public class ContainerStatsEvaluator {
     private static final String CONTAINER_STOPPED_TIME = "0001-01-01T00:00:00Z";
 
     /**
-     * Parse the json stats value and return ContainerStats state with the calculated values from the json field.
+     * Parse the json stats value and return ContainerStats state with the calculated values from
+     * the json field.
      *
      * @return ContainerStats with parsed and calculated stats value.
      */
@@ -65,23 +68,48 @@ public class ContainerStatsEvaluator {
 
     private static void setNetworkUsage(ContainerStats state, Map<String, JsonElement> stats) {
         try {
-            JsonElement jsonElement = stats.get("network");
+            JsonElement jsonElement = stats.get("networks");
             if (jsonElement == null) {
                 return;
             }
-            JsonObject network = jsonElement.getAsJsonObject();
-            if (network == null) {
+            JsonObject networks = jsonElement.getAsJsonObject();
+            if (networks == null) {
                 return;
             }
-            JsonElement netInValue = network.get("rx_bytes");
-            if (netInValue != null) {
-                state.networkIn = netInValue.getAsLong();
+            Set<Entry<String, JsonElement>> entrySet = networks.entrySet();
+            if (entrySet == null) {
+                return;
             }
 
-            JsonElement netOutValue = network.get("tx_bytes");
-            if (netOutValue != null) {
-                state.networkOut = netOutValue.getAsLong();
-            }
+            NetworkTraffic summedTraffic = entrySet.stream()
+                    .map(entry -> {
+
+                        JsonObject network = entry.getValue().getAsJsonObject();
+                        NetworkTraffic result = new NetworkTraffic();
+
+                        if (network != null) {
+                            JsonElement netInValue = network.get("rx_bytes");
+                            if (netInValue != null) {
+                                result.networkIn = netInValue.getAsLong();
+                            }
+
+                            JsonElement netOutValue = network.get("tx_bytes");
+                            if (netOutValue != null) {
+                                result.networkOut += netOutValue.getAsLong();
+                            }
+                        }
+
+                        return result;
+
+                    }).reduce(new NetworkTraffic(), (t1, t2) -> {
+
+                        return new NetworkTraffic(t1.networkIn + t2.networkIn,
+                                t1.networkOut + t2.networkOut);
+                    });
+
+            state.networkIn = summedTraffic.networkIn;
+            state.networkOut = summedTraffic.networkOut;
+
         } catch (Exception e) {
             Utils.logWarning("Error during container stats network usage parsing: %s",
                     Utils.toString(e));
@@ -207,5 +235,21 @@ public class ContainerStatsEvaluator {
             Utils.logWarning("Error during container stats status calculations: %s",
                     Utils.toString(e));
         }
+    }
+
+    private static class NetworkTraffic {
+
+        public long networkIn;
+        public long networkOut;
+
+        public NetworkTraffic() {
+            this(0, 0);
+        }
+
+        public NetworkTraffic(long networkIn, long networkOut) {
+            this.networkIn = networkIn;
+            this.networkOut = networkOut;
+        }
+
     }
 }

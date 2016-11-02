@@ -25,7 +25,7 @@ import com.vmware.admiral.service.common.ReverseProxyService;
 import com.vmware.xenon.common.UriUtils;
 
 public class UriUtilsExtended {
-    private static final String MINIMUM_DOCKER_API_VERSION = "1.19";
+    private static final String MINIMUM_DOCKER_API_VERSION = "1.21";
     private static final String DEFAULT_DOCKER_SCHEME = UriUtils.HTTPS_SCHEME;
     private static final int DEFAULT_DOCKER_HTTP_PORT = 80;
     private static final int DEFAULT_DOCKER_HTTPS_PORT = 443;
