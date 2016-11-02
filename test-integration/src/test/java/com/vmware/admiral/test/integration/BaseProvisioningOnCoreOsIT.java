@@ -242,7 +242,6 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
                 getTestRequiredProp("docker.host.ssl.trust.file"),
                 CommonTestStateFactory.REGISTRATION_DOCKER_ID);
 
-        dockerHostSslTrust.resourceLink = getDockerHost().documentSelfLink;
         postDocument(SslTrustCertificateService.FACTORY_LINK, dockerHostSslTrust);
     }
 

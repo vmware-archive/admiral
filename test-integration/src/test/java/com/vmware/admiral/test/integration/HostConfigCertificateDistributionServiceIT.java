@@ -69,7 +69,7 @@ public class HostConfigCertificateDistributionServiceIT extends
         logger.info("---------- Removing old certificate directory --------");
         removeCertificateDirectoryOnCoreOsHost(dockerHostCompute.documentSelfLink,
                 registryHostAndPort);
-        logger.info("---------- Stoping system container --------");
+        logger.info("---------- Stopping system container --------");
         stopContainer(systemContainerLink);
         requestDataCollection();
 

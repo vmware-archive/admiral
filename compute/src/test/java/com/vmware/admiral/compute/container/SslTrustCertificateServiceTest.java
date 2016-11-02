@@ -13,14 +13,13 @@ package com.vmware.admiral.compute.container;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.net.URI;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -33,12 +32,7 @@ import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.xenon.common.FactoryService;
-import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service.Action;
-import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceSubscriptionState;
-import com.vmware.xenon.common.ServiceSubscriptionState.ServiceSubscriber;
-import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 
 public class SslTrustCertificateServiceTest extends ComputeBaseTest {
@@ -80,17 +74,17 @@ public class SslTrustCertificateServiceTest extends ComputeBaseTest {
         }, "certificate must not be null.");
 
         sslTrustCert.certificate = "invalid cert";
-        validateIllegalArgument(() -> {
+        try {
             postForValidation(sslTrustCert);
-        }, "certificate is not valid.");
+            fail();
+        } catch (RuntimeException e) {
+
+        }
     }
 
     @Test
     public void testPATCH() throws Throwable {
         sslTrustCert = doPost(sslTrustCert, SslTrustCertificateService.FACTORY_LINK);
-        String shouldNotUpdateLink = "/some-service/not-valid/patch";
-        assertNull(sslTrustCert.resourceLink);
-        sslTrustCert.resourceLink = shouldNotUpdateLink;
         sslTrustCert.certificate = sslTrust2;
 
         boolean expectedFailure = false;
@@ -100,7 +94,6 @@ public class SslTrustCertificateServiceTest extends ComputeBaseTest {
         SslTrustCertificateState updatedSslTrustCert = getDocument(SslTrustCertificateState.class,
                 sslTrustCert.documentSelfLink);
 
-        assertNull(updatedSslTrustCert.resourceLink);
         assertEquals(sslTrust2, updatedSslTrustCert.certificate);
         validateCertProperties(updatedSslTrustCert);
     }
@@ -108,9 +101,6 @@ public class SslTrustCertificateServiceTest extends ComputeBaseTest {
     @Test
     public void testPUT() throws Throwable {
         sslTrustCert = doPost(sslTrustCert, SslTrustCertificateService.FACTORY_LINK);
-        String shouldNotUpdateLink = "/some-service/not-valid/put";
-        assertNull(sslTrustCert.resourceLink);
-        sslTrustCert.resourceLink = shouldNotUpdateLink;
         sslTrustCert.certificate = sslTrust2;
 
         boolean expectedFailure = false;
@@ -120,155 +110,33 @@ public class SslTrustCertificateServiceTest extends ComputeBaseTest {
         SslTrustCertificateState updatedSslTrustCert = getDocument(SslTrustCertificateState.class,
                 sslTrustCert.documentSelfLink);
 
-        assertNull(updatedSslTrustCert.resourceLink);
         assertEquals(sslTrust2, updatedSslTrustCert.certificate);
         validateCertProperties(updatedSslTrustCert);
     }
 
     @Test
     public void testIdempotentPOST() throws Throwable {
-        String selfLinkId = "10.23.45.78:4567";
-
         SslTrustCertificateState sslTrustCert1 = new SslTrustCertificateState();
-        sslTrustCert1.documentSelfLink = selfLinkId;
         sslTrustCert1.certificate = sslTrust1;
+        sslTrustCert1.subscriptionLink = null;
         sslTrustCert1 = doPost(sslTrustCert1, SslTrustCertificateService.FACTORY_LINK);
 
         SslTrustCertificateState sslTrustCert2 = new SslTrustCertificateState();
-        sslTrustCert2.documentSelfLink = selfLinkId;
-        sslTrustCert2.certificate = sslTrust2;
+        sslTrustCert2.certificate = sslTrust1;
+        sslTrustCert2.subscriptionLink = "subscription-link";
         sslTrustCert2 = doPost(sslTrustCert2, SslTrustCertificateService.FACTORY_LINK);
 
         sslTrustCert = getDocument(SslTrustCertificateState.class,
-                UriUtils.buildUriPath(SslTrustCertificateService.FACTORY_LINK, selfLinkId));
+                sslTrustCert1.documentSelfLink);
 
-        assertEquals(sslTrust2, sslTrustCert.certificate);
+        /* We POST two different objects without explicitly setting the documentSelfLink, but these
+         * objects have the same certificate. The factory will build the same documentSelfLink for
+         * both of these objects and the idempotent option will turn the post to a put, so we expect
+         * to have the subscriptionLink set after the POST */
+        assertEquals(sslTrustCert2.subscriptionLink, sslTrustCert.subscriptionLink);
         validateCertProperties(sslTrustCert);
     }
 
-    @Test
-    public void testUnSubscribeWhenAssociatedResourceDeleted() throws Throwable {
-        ContainerState cs = doPost(createContainerState(), ContainerFactoryService.SELF_LINK);
-        sslTrustCert.resourceLink = cs.documentSelfLink;
-        sslTrustCert = doPost(sslTrustCert, SslTrustCertificateService.FACTORY_LINK);
-
-        AtomicBoolean resultSubscribe = new AtomicBoolean();
-        URI csSubscritionUri = UriUtils.buildSubscriptionUri(host, cs.documentSelfLink);
-        Operation query = Operation.createGet(csSubscritionUri)
-                .setReferer(host.getReferer())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        host.failIteration(e);
-                    }
-                    ServiceSubscriptionState subscriptionState = o
-                            .getBody(ServiceSubscriptionState.class);
-                    if (subscriptionState.subscribers.size() == 1) {
-                        resultSubscribe.set(true);
-                    }
-                    host.completeIteration();
-                });
-
-        // wait until the subscription is completed
-        waitFor(() -> {
-            host.testStart(1);
-            host.send(query);
-            host.testWait();
-            return resultSubscribe.get();
-        });
-
-        delete(sslTrustCert.documentSelfLink);
-
-        AtomicBoolean resultDelete = new AtomicBoolean();
-        Operation querySubs = Operation.createGet(csSubscritionUri)
-                .setReferer(host.getReferer())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        host.failIteration(e);
-                    }
-                    ServiceSubscriptionState subscriptionState = o
-                            .getBody(ServiceSubscriptionState.class);
-                    if (subscriptionState.subscribers.size() == 0) {
-                        resultDelete.set(true);
-                    }
-                    host.completeIteration();
-
-                });
-
-        // wait until the subscription is removed
-        waitFor(() -> {
-            host.testStart(1);
-            host.send(querySubs);
-            host.testWait();
-            return resultDelete.get();
-        });
-    }
-
-    @Test
-    public void testSubscribeForDeletionWhenAssociateResourceSet() throws Throwable {
-        ContainerState cs = doPost(createContainerState(), ContainerFactoryService.SELF_LINK);
-
-        sslTrustCert.resourceLink = cs.documentSelfLink;
-        sslTrustCert = doPost(sslTrustCert, SslTrustCertificateService.FACTORY_LINK);
-        assertNotNull(sslTrustCert.subscriptionLink);
-
-        URI csSubscritionUri = UriUtils.buildSubscriptionUri(host, cs.documentSelfLink);
-        AtomicBoolean result = new AtomicBoolean();
-        Operation query = Operation.createGet(csSubscritionUri)
-                .setReferer(host.getReferer())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        host.failIteration(e);
-                        return;
-                    }
-                    ServiceSubscriptionState subscriptionState = o
-                            .getBody(ServiceSubscriptionState.class);
-                    if (subscriptionState.subscribers.size() == 1) {
-                        result.set(true);
-                    }
-                    host.completeIteration();
-                });
-
-        // wait until the subscription is completed
-        waitFor(() -> {
-            host.testStart(1);
-            host.send(query);
-            host.testWait();
-            return result.get();
-        });
-
-        // subscribe for SslTrustCertificateState DELETE in order to verify that
-        // the document will be self deleted after the reference object ContainerState is deleted.
-        URI subscriptionUrl = UriUtils.buildSubscriptionUri(host, sslTrustCert.documentSelfLink);
-        Operation subscribe = Operation.createPost(subscriptionUrl);
-        subscribe.setReferer(host.getReferer());
-
-        AtomicBoolean sslTrustCertDeleted = new AtomicBoolean();
-        boolean replayState = false;
-        boolean usePublicUri = false;
-        ServiceSubscriber sr = ServiceSubscriber.create(replayState).setUsePublicUri(usePublicUri);
-        host.startSubscriptionService(subscribe, new StatelessService() {
-            @Override
-            public void handleRequest(Operation update) {
-                if (Action.DELETE == update.getAction()) {
-                    sslTrustCertDeleted.set(true);
-                    update.complete();
-                    host.completeIteration();
-                }
-            }
-        }, sr);
-
-        // Delete ContainerState. The number of expected completion is two because
-        // the deletion will trigger notification and call the notification handler above.
-        host.testStart(2);
-        Operation post = Operation
-                .createDelete(UriUtils.buildUri(host, cs.documentSelfLink))
-                .setBody(new ServiceDocument())
-                .setCompletion(host.getCompletion());
-        host.send(post);
-        host.testWait();
-
-        assertTrue(sslTrustCertDeleted.get());
-    }
 
     @Test
     public void testNotifyForLastUpdatedPropertyOnAnyWriteOperation() throws Throwable {

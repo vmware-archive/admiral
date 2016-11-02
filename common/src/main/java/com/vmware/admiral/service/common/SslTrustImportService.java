@@ -63,12 +63,6 @@ public class SslTrustImportService extends StatelessService {
         public boolean acceptCertificate;
 
         /**
-         * (Optional) Resource (compute, registry ...) associate with the trust certificate. It is
-         * optional since some CA certificates will not be associated with a single server.
-         */
-        public String resourceLink;
-
-        /**
          * (Optional) Tenant links for the certificate
          */
         public List<String> tenantLinks;
@@ -222,10 +216,10 @@ public class SslTrustImportService extends StatelessService {
 
         SslTrustCertificateState sslTrustState = new SslTrustCertificateState();
         sslTrustState.certificate = sslTrust;
-        sslTrustState.resourceLink = request.resourceLink;
         SslTrustCertificateState.populateCertificateProperties(sslTrustState, certChain[0]);
-        sslTrustState.documentSelfLink = getCertSelfLink(request.hostUri);
         sslTrustState.tenantLinks = request.tenantLinks;
+        sslTrustState.documentSelfLink = SslTrustCertificateFactoryService
+                .generateSelfLink(sslTrustState);
 
         return sslTrustState;
     }

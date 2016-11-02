@@ -33,7 +33,6 @@ import java.util.logging.Level;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
 import org.junit.After;
 import org.junit.Before;
 import org.objenesis.Objenesis;

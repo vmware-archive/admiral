@@ -75,7 +75,6 @@ public class SslTrustImportServiceIT extends ComputeBaseTest {
         assertNotNull(sslTrustState.fingerprint);
 
         assertEquals(request.hostUri.getHost(), sslTrustState.commonName);
-        assertEquals(excludePort(extractId(sslTrustState.documentSelfLink)), sslTrustState.commonName);
         assertEquals(request.hostUri.getHost(), sslTrustState.issuerName);
     }
 
@@ -105,7 +104,6 @@ public class SslTrustImportServiceIT extends ComputeBaseTest {
         assertNotNull(sslTrustState.tenantLinks);
 
         assertEquals(request.hostUri.getHost(), sslTrustState.commonName);
-        assertEquals(excludePort(extractId(sslTrustState.documentSelfLink)), sslTrustState.commonName);
         assertEquals(request.hostUri.getHost(), sslTrustState.issuerName);
 
         assertEquals(request.tenantLinks.size(), sslTrustState.tenantLinks.size());

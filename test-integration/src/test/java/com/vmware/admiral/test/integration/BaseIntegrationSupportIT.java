@@ -31,7 +31,6 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
-
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -40,7 +39,6 @@ import javax.net.ssl.X509TrustManager;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -216,7 +214,7 @@ public abstract class BaseIntegrationSupportIT {
             }
         }
         String body = sendRequest(HttpMethod.POST, fabricLink, Utils.toJson(document));
-        if (body == null) {
+        if (body == null || body.isEmpty()) {
             return null;
         }
         T doc = (T) Utils.fromJson(body, document.getClass());

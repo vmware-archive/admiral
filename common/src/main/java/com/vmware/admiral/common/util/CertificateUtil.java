@@ -41,7 +41,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
 import javax.naming.ldap.Rdn;
@@ -94,7 +93,7 @@ public class CertificateUtil {
      * Utility method to decode a certificate chain PEM encoded string value to an array of X509Certificate
      * certificate instances.
      *
-     * @param sslTrust
+     * @param certChainPEM
      *            - a certificate chain (one or more certificates) PEM encoded string value.
      * @return - decoded array of X509Certificate  certificate instances.
      * @throws RuntimeException
@@ -131,7 +130,7 @@ public class CertificateUtil {
      * private or public key. For general purpose, where the expectation is to have one or more
      * PEM encoded certificates, certificate chain, use {@link #createCertificateChain(String)}.
      *
-     * @param sslTrust
+     * @param certPEM
      *            - a certificate PEM encoded string value.
      * @return - decoded X509Certificate type certificate instance.
      * @throws RuntimeException

@@ -19,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.CertificateUtil;
-import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.common.util.SubscriptionManager;
 import com.vmware.admiral.common.util.ValidationUtils;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
@@ -56,13 +55,6 @@ public class SslTrustCertificateService extends StatefulService {
                 indexing = { PropertyIndexingOption.STORE_ONLY },
                 usage = { PropertyUsageOption.SINGLE_ASSIGNMENT })
         public String certificate;
-
-        /** (Optional) Resource (compute, registry ...) associate with the trust certificate. */
-        @Documentation(description = "Resource (compute, registry ...) associate with the trust certificate.")
-        @PropertyOptions(
-                usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK,
-                        PropertyUsageOption.SINGLE_ASSIGNMENT })
-        public String resourceLink;
 
         /** (Read Only) The common name of the certificate. */
         @Documentation(description = "The common name of the certificate.")
@@ -192,7 +184,6 @@ public class SslTrustCertificateService extends StatefulService {
         SslTrustCertificateState state = getState(put);
         // these properties can't be modified once set:
         body.subscriptionLink = state.subscriptionLink;
-        body.resourceLink = state.resourceLink;
 
         boolean validated = ValidationUtils.validate(put, () -> validateStateOnStart(body));
         if (!validated) {
@@ -216,7 +207,6 @@ public class SslTrustCertificateService extends StatefulService {
             delete.complete();
             return;
         }
-        unsubscribeForResourceDeletion(state);
         delete.complete();
         notifyLastUpdatedSslTrustDocumentService();
     }
@@ -233,62 +223,16 @@ public class SslTrustCertificateService extends StatefulService {
         X509Certificate endCertificate = certificates[0];
         SslTrustCertificateState.populateCertificateProperties(state, endCertificate);
 
-        subscribeForResourceDeletion(state);
     }
 
     private boolean isModified(Operation op, String stateCert, String bodyCert) {
         if (stateCert != null && stateCert.equals(bodyCert)) {
-            op.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
             return false;
         }
         return true;
     }
 
-    /*
-     * Subscribe for the associated resource (server, computeHost, registry...). When the associated
-     * resource is deleted, the SSL trust certificate also is deleted. This will be valid only for
-     * imported server certificates as part of the compute host registration. CA certificates will
-     * not have a link to associated resource and will be automatically removed only after the
-     * certificate expires or by explicit delete operation..
-     */
-    private void subscribeForResourceDeletion(SslTrustCertificateState state) {
-        if (state.subscriptionLink != null || state.resourceLink == null) {
-            return;
-        }
 
-        subscriptionManager = getSubscriptionManager(state);
-        state.subscriptionLink = subscriptionManager.start((r) -> {
-            if (r.isDelete()) {
-                logInfo("Self delete based on deleted reference: [%s].",
-                        r.getResult() == null ? "n.a." : r.getResult().documentSelfLink);
-                ServiceUtils.sendSelfDelete(this);
-            }
-        });
-    }
-
-    private void unsubscribeForResourceDeletion(SslTrustCertificateState state) {
-        try {
-            if (state != null && state.subscriptionLink != null) {
-                getSubscriptionManager(state).close();
-            }
-        } catch (Throwable e) {
-            logWarning("Error unsubscribing during deletion. Error: %s", e.getMessage());
-        }
-    }
-
-    private SubscriptionManager<SslTrustCertificateState> getSubscriptionManager(
-            SslTrustCertificateState state) {
-        if (subscriptionManager == null) {
-            subscriptionManager = new SubscriptionManager<SslTrustCertificateState>(this.getHost(),
-                    getSelfId(), state.resourceLink, SslTrustCertificateState.class);
-        } else {
-            // set the subscription link in case the service has been restarted
-            // (or the service on another node has become active)
-            // and the subscription has already been completed.
-            subscriptionManager.setSubscriptionLink(state.subscriptionLink);
-        }
-        return subscriptionManager;
-    }
 
     private void notifyLastUpdatedSslTrustDocumentService() {
         ConfigurationState body = new ConfigurationState();

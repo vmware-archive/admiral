@@ -21,7 +21,7 @@ import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ReverseProxyService;
-import com.vmware.admiral.service.common.SslTrustCertificateService;
+import com.vmware.admiral.service.common.SslTrustCertificateFactoryService;
 import com.vmware.admiral.service.common.SslTrustImportService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -34,11 +34,12 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
         startServices(host, SslTrustImportService.class,
                 ClusterMonitoringService.class,
                 ConfigurationFactoryService.class,
+                SslTrustCertificateFactoryService.class,
                 CommonInitialBootService.class,
                 ReverseProxyService.class);
 
         startServiceFactories(host, ResourceNamePrefixService.class, RegistryService.class,
-                LogService.class, EventLogService.class, SslTrustCertificateService.class,
+                LogService.class, EventLogService.class,
                 CounterSubTaskService.class, AuthBootstrapService.class);
 
         // start initialization of system documents
