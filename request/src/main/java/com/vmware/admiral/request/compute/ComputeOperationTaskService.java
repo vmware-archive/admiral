@@ -11,8 +11,8 @@
 
 package com.vmware.admiral.request.compute;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.net.URI;
@@ -56,11 +56,11 @@ public class ComputeOperationTaskService extends
         }
 
         @Documentation(description = "The identifier of the resource operation to be performed.")
-        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED }, indexing = STORE_ONLY)
         public String operation;
 
         @Documentation(description = "The resources on which the given operation will be applied")
-        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
     }
 
@@ -87,13 +87,6 @@ public class ComputeOperationTaskService extends
         default:
             break;
         }
-    }
-
-    @Override
-    protected void validateStateOnStart(ComputeOperationTaskState state)
-            throws IllegalArgumentException {
-        assertNotEmpty(state.operation, "operation");
-        assertNotEmpty(state.resourceLinks, "resourceLinks");
     }
 
     @Override

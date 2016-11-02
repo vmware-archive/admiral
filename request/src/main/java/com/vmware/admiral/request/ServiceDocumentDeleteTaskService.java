@@ -11,7 +11,8 @@
 
 package com.vmware.admiral.request;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -45,18 +46,13 @@ public class ServiceDocumentDeleteTaskService
     public static class ServiceDocumentDeleteTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<DefaultSubStage> {
 
+        @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public String deleteDocumentKind;
 
     }
 
     public ServiceDocumentDeleteTaskService() {
         super(ServiceDocumentDeleteTaskState.class, DefaultSubStage.class, DISPLAY_NAME);
-
-    }
-
-    @Override
-    protected void validateStateOnStart(ServiceDocumentDeleteTaskState state) {
-        assertNotEmpty(state.deleteDocumentKind, "deleteDocumentKind");
     }
 
     @Override

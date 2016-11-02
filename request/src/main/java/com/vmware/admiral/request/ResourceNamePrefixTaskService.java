@@ -11,9 +11,9 @@
 
 package com.vmware.admiral.request;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
 import java.util.ArrayList;
@@ -53,6 +53,7 @@ public class ResourceNamePrefixTaskService
         public long resourceCount;
 
         /** (Required) The base name format to which the prefix will be applied */
+        @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public String baseResourceNameFormat;
 
         /** Set by the Task with the result of applying prefixes based on group selection. */
@@ -77,7 +78,6 @@ public class ResourceNamePrefixTaskService
 
     @Override
     protected void validateStateOnStart(ResourceNamePrefixTaskState state) {
-        assertNotEmpty(state.baseResourceNameFormat, "baseResourceNameFormat");
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
         }

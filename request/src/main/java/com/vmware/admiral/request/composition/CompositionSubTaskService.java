@@ -11,12 +11,12 @@
 
 package com.vmware.admiral.request.composition;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertTrue;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_ALLOCATION_REQUEST;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
 import java.net.URI;
@@ -106,12 +106,15 @@ public class CompositionSubTaskService
         public String resourceDescriptionLink;
 
         /** (Required) Type of resource to create. */
+        @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public String resourceType;
 
         /** (Required) The operation name/id to be performed */
+        @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public String operation;
 
         /** The unique name per context that defines the requested resource. */
+        @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public String name;
 
         /** Flag indicating that it is only allocation request */
@@ -269,15 +272,12 @@ public class CompositionSubTaskService
     @Override
     protected void validateStateOnStart(CompositionSubTaskState state)
             throws IllegalArgumentException {
-        assertNotEmpty(state.name, "name");
         boolean descAndResourcesEmpty = (state.resourceDescriptionLink == null || state.resourceDescriptionLink
                 .isEmpty())
                 &&
                 (state.resourceLinks == null || state.resourceLinks.isEmpty());
 
         assertTrue(!descAndResourcesEmpty, "resourceDescriptionLink and resourceLinks are empty");
-        assertNotEmpty(state.operation, "operation");
-        assertNotEmpty(state.resourceType, "resourceType");
     }
 
     @Override

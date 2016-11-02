@@ -11,9 +11,8 @@
 
 package com.vmware.admiral.request;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
-import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
@@ -36,7 +35,7 @@ public class ReservationRemovalTaskService
 
     public static class ReservationRemovalTaskState extends TaskServiceDocument<DefaultSubStage> {
         /** (Required) The description that defines the requested resource. */
-        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
         /** (Required) Number of resources to provision. */
@@ -44,7 +43,7 @@ public class ReservationRemovalTaskService
         public long resourceCount;
 
         /** (Required) The {@link GroupResourcePlacementState} to release the placements. */
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED }, indexing = STORE_ONLY)
         public String groupResourcePlacementLink;
     }
 
@@ -64,9 +63,6 @@ public class ReservationRemovalTaskService
 
     @Override
     protected void validateStateOnStart(ReservationRemovalTaskState state) {
-        assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
-        assertNotEmpty(state.groupResourcePlacementLink, "groupResourcePlacementLink");
-
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
         }

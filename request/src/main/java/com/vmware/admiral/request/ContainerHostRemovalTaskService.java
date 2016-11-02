@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.request;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
@@ -99,13 +98,6 @@ public class ContainerHostRemovalTaskService extends
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.transientSubStages = SubStage.TRANSIENT_SUB_STAGES;
-    }
-
-    @Override
-    protected void validateStateOnStart(ContainerHostRemovalTaskState state)
-            throws IllegalArgumentException {
-
-        assertNotEmpty(state.resourceLinks, "resourceLinks");
     }
 
     @Override

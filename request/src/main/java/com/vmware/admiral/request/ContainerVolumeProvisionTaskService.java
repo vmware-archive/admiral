@@ -11,8 +11,6 @@
 
 package com.vmware.admiral.request;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
-import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 
 import java.net.URI;
@@ -120,17 +118,13 @@ public class ContainerVolumeProvisionTaskService
     @Override
     protected void validateStateOnStart(ContainerVolumeProvisionTaskState state)
             throws IllegalArgumentException {
-        assertNotEmpty(state.resourceType, "resourceType");
-        assertNotNull(state.resourceDescriptionLink, "resourceDescriptionLink");
-        assertNotNull(state.resourceLinks, "resourceLinks");
-
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
         }
 
         if (state.resourceCount != state.resourceLinks.size()) {
             throw new IllegalArgumentException(
-                    "size of 'resourceLinks' must be equal to 'resourcesCount'");
+                    "Size of 'resourceLinks' must be equal to 'resourcesCount'");
         }
 
     }

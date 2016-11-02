@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.request.composition;
 
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,7 +26,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ResourceType;
@@ -66,6 +68,7 @@ public class CompositeComponentRemovalTaskService
         }
 
         @Documentation(description = "(Required) The composites on which the given operation will be applied.")
+        @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
     }
 
@@ -82,12 +85,6 @@ public class CompositeComponentRemovalTaskService
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.transientSubStages = SubStage.TRANSIENT_SUB_STAGES;
-    }
-
-    @Override
-    protected void validateStateOnStart(CompositeComponentRemovalTaskState state)
-            throws IllegalArgumentException {
-        AssertUtil.assertNotEmpty(state.resourceLinks, "resourceLinks");
     }
 
     @Override

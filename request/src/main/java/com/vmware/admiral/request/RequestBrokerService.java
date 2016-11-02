@@ -18,6 +18,7 @@ import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_I
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.OPTIONAL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
@@ -124,7 +125,7 @@ public class RequestBrokerService extends
         }
 
         /** (Required) Type of resource to create. */
-        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED }, indexing = STORE_ONLY)
         public String resourceType;
 
         /** (Required) The operation name/id to be performed */
@@ -159,8 +160,6 @@ public class RequestBrokerService extends
 
     @Override
     protected void validateStateOnStart(RequestBrokerState state) throws IllegalArgumentException {
-        assertNotEmpty(state.resourceType, "resourceType");
-
         if (state.operation == null) {
             state.operation = RequestBrokerState.PROVISION_RESOURCE_OPERATION;
         }
@@ -187,7 +186,7 @@ public class RequestBrokerService extends
 
     @Override
     protected boolean validateStateOnStart(RequestBrokerState state, Operation startOpr) {
-        validateStateOnStart(state);
+        super.validateStateOnStart(state, startOpr);
         return createRequestTrackerIfNoneProvided(state, startOpr);
     }
 

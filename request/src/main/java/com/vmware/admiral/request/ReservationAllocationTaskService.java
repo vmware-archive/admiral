@@ -13,6 +13,7 @@ package com.vmware.admiral.request;
 
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.LINK;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.util.LinkedHashMap;
@@ -73,7 +74,7 @@ public class ReservationAllocationTaskService extends
 
         /** The description that defines the requested resource. */
         @Documentation(description = "The description that defines the requested resource.")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, LINK }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED, LINK }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
         /** Type of resource to create. */
@@ -140,7 +141,6 @@ public class ReservationAllocationTaskService extends
     @Override
     protected void validateStateOnStart(ReservationAllocationTaskState state)
             throws IllegalArgumentException {
-        AssertUtil.assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
         AssertUtil.assertNotNull(state.customProperties, "Custom properties can not be null.");
         AssertUtil.assertNotNull(state.customProperties.get(CONTAINER_HOST_ID_CUSTOM_PROPERTY),
                 String.format("%s can not be null.", CONTAINER_HOST_ID_CUSTOM_PROPERTY));

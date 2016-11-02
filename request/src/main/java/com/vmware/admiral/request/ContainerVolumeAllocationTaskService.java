@@ -116,9 +116,6 @@ public class ContainerVolumeAllocationTaskService extends
     @Override
     protected void validateStateOnStart(ContainerVolumeAllocationTaskState state)
             throws IllegalArgumentException {
-
-        assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
-
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
         }

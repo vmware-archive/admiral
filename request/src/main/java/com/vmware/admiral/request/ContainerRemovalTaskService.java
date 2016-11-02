@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.request;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isDiscoveredContainer;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isSystemContainer;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
@@ -159,12 +158,6 @@ public class ContainerRemovalTaskService
                                 Utils.toString(e));
                     }
                 }));
-    }
-
-    @Override
-    protected void validateStateOnStart(ContainerRemovalTaskState state)
-            throws IllegalArgumentException {
-        assertNotEmpty(state.resourceLinks, "resourceLinks");
     }
 
     @Override

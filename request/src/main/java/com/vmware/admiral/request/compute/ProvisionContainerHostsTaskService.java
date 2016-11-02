@@ -70,14 +70,13 @@ public class ProvisionContainerHostsTaskService
         }
 
         /** (Required) The AWS compute description link. */
-        @Documentation(description = "The description that defines the requested resource.")
         @PropertyOptions(usage = { PropertyUsageOption.LINK, PropertyUsageOption.SINGLE_ASSIGNMENT,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL }, indexing = {
                         PropertyIndexingOption.STORE_ONLY })
         public String endpointLink;
 
-        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
-                PropertyIndexingOption.STORE_ONLY })
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT },
+                indexing = { PropertyIndexingOption.STORE_ONLY })
         public DockerHostDescription hostDescription;
 
         /** (Optional- default 1) Number of resources to provision. */
@@ -119,9 +118,9 @@ public class ProvisionContainerHostsTaskService
     @Override
     protected void validateStateOnStart(ProvisionContainerHostsTaskState state)
             throws IllegalArgumentException {
-
         if (state.computeDescriptionLink == null && state.hostDescription == null) {
-            throw new IllegalArgumentException("'computeDescriptionLink' is required");
+            throw new IllegalArgumentException(
+                    "'computeDescriptionLink' or 'hostDescription' is required");
         }
         if (state.hostDescription != null) {
             assertNotEmpty(state.endpointLink, "endpointLink");

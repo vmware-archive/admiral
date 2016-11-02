@@ -11,11 +11,11 @@
 
 package com.vmware.admiral.request.compute;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.LINK;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.LINKS;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
@@ -78,7 +78,7 @@ public class ComputePlacementSelectionTaskService extends
             extends com.vmware.admiral.service.common.TaskServiceDocument<DefaultSubStage> {
 
         @Documentation(description = "The description that defines the requested resource.")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, LINK }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED, LINK }, indexing = STORE_ONLY)
         public String computeDescriptionLink;
 
         @Documentation(description = "Number of resources to provision.")
@@ -86,7 +86,7 @@ public class ComputePlacementSelectionTaskService extends
         public long resourceCount;
 
         @Documentation(description = "The resource pool to be used for this placement.")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, LINK }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED, LINK }, indexing = STORE_ONLY)
         public String resourcePoolLink;
 
         @Documentation(description = "Set by the task as result of the selection algorithm filters."
@@ -141,8 +141,6 @@ public class ComputePlacementSelectionTaskService extends
 
     @Override
     protected void validateStateOnStart(ComputePlacementSelectionTaskState state) {
-        assertNotEmpty(state.computeDescriptionLink, "computeDescriptionLink");
-        assertNotEmpty(state.resourcePoolLink, "resourcePoolLink");
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
         }

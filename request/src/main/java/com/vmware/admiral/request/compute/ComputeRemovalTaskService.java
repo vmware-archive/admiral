@@ -11,8 +11,8 @@
 
 package com.vmware.admiral.request.compute;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.util.ArrayList;
@@ -66,7 +66,7 @@ public class ComputeRemovalTaskService extends
             com.vmware.admiral.service.common.TaskServiceDocument<ComputeRemovalTaskState.SubStage> {
 
         @Documentation(description = "The compute resources to be removed")
-        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
 
         @Documentation(description = "whether to skip the associated reservation or not")
@@ -98,13 +98,6 @@ public class ComputeRemovalTaskService extends
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.transientSubStages = SubStage.TRANSIENT_SUB_STAGES;
-    }
-
-    @Override
-    protected void validateStateOnStart(ComputeRemovalTaskState state)
-            throws IllegalArgumentException {
-
-        assertNotEmpty(state.resourceLinks, "resourceLinks");
     }
 
     @Override

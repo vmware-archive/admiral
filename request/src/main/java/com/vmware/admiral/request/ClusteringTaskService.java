@@ -11,12 +11,12 @@
 
 package com.vmware.admiral.request;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isSystemContainer;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_ALLOCATION_REQUEST;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
 import java.util.Arrays;
@@ -79,9 +79,11 @@ public class ClusteringTaskService extends
         public String contextId;
 
         /** The description that defines the requested resource. */
+        @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
         /** (Required) Type of resource to create. */
+        @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public String resourceType;
 
         /** (Required) Number of resources to provision. */
@@ -107,9 +109,6 @@ public class ClusteringTaskService extends
     @Override
     protected void validateStateOnStart(ClusteringTaskState state)
             throws IllegalArgumentException {
-        assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
-        assertNotEmpty(state.resourceType, "resourceType");
-
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
         }

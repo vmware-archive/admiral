@@ -180,11 +180,20 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
     protected boolean validateStateOnStart(T state, Operation startPost)
             throws IllegalArgumentException {
+        // validate based on annotations
+        Utils.validateState(getStateDescription(), state);
+
+        // apply optional custom validation
         validateStateOnStart(state);
         return false;
     }
 
-    protected abstract void validateStateOnStart(T state) throws IllegalArgumentException;
+    /**
+     * Optional custom validation code, if needed.
+     * Validation based on state annotations has been already performed.
+     */
+    protected void validateStateOnStart(T state) throws IllegalArgumentException {
+    }
 
     @Override
     public void handlePatch(Operation patch) {

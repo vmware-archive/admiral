@@ -11,10 +11,10 @@
 
 package com.vmware.admiral.request;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.PropertyUtils.getPropertyLong;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
 import java.util.ArrayList;
@@ -69,21 +69,25 @@ public class PlacementHostSelectionTaskService
             com.vmware.admiral.service.common.TaskServiceDocument<DefaultSubStage> {
 
         /** (Required) The description that defines the requested resource. */
+        @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
         /** (Required) Type of resource to create. */
+        @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public String resourceType;
 
         /** (Required) Number of resources to provision. */
         public long resourceCount;
 
         /** (Required) The resourcePool to be used for this provisioning allocation */
+        @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public List<String> resourcePoolLinks;
 
         /**
          * (Required) The overall contextId of this request (could be the same across multiple
          * request - composite allocation)
          */
+        @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public String contextId;
 
         // Internal service properties:
@@ -121,10 +125,6 @@ public class PlacementHostSelectionTaskService
 
     @Override
     protected void validateStateOnStart(PlacementHostSelectionTaskState state) {
-        assertNotEmpty(state.resourceType, "resourceType");
-        assertNotEmpty(state.contextId, "contextId");
-        assertNotEmpty(state.resourcePoolLinks, "resourcePoolLinks");
-        assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
         }

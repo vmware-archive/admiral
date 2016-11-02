@@ -11,8 +11,9 @@
 
 package com.vmware.admiral.request;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isSystemContainer;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,9 +58,11 @@ public class ContainerOperationTaskService extends
         }
 
         /** (Required) The name of the resource operation to be performed. */
+        @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public String operation;
 
         /** (Required) The resources on which the given operation will be applied */
+        @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
     }
 
@@ -86,13 +89,6 @@ public class ContainerOperationTaskService extends
         default:
             break;
         }
-    }
-
-    @Override
-    protected void validateStateOnStart(ContainerOperationTaskState state)
-            throws IllegalArgumentException {
-        assertNotEmpty(state.operation, "operation");
-        assertNotEmpty(state.resourceLinks, "resourceLinks");
     }
 
     @Override

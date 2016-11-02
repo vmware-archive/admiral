@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.request;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 
@@ -120,9 +119,6 @@ public class ContainerNetworkProvisionTaskService
 
     @Override
     protected void validateStateOnStart(ContainerNetworkProvisionTaskState state) {
-        assertNotNull(state.resourceDescriptionLink, "resourceDescriptionLink");
-        assertNotNull(state.resourceLinks, "resourceLinks");
-
         state.resourceCount = (long) state.resourceLinks.size();
 
         if (state.resourceCount < 1) {

@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.request.compute;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.compute.ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
@@ -93,12 +92,6 @@ public class ComputeProvisionTaskService extends
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.transientSubStages = SubStage.TRANSIENT_SUB_STAGES;
-    }
-
-    @Override
-    protected void validateStateOnStart(ComputeProvisionTaskState state)
-            throws IllegalArgumentException {
-        assertNotNull(state.resourceLinks, "resourceLinks");
     }
 
     @Override

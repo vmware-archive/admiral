@@ -127,8 +127,6 @@ public class ContainerNetworkAllocationTaskService extends
 
     @Override
     protected void validateStateOnStart(ContainerNetworkAllocationTaskState state) {
-        assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
-
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
         }

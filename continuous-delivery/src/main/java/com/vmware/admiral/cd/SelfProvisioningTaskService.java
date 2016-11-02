@@ -11,8 +11,6 @@
 
 package com.vmware.admiral.cd;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
-import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_ID;
 
@@ -115,38 +113,38 @@ public class SelfProvisioningTaskService extends
 
         /** (Required) The endpoint authentication key (aws, azure...) */
         @Documentation(description = "The endpoint authentication key (aws, azure...)", exampleString = "AKIAI7RVXXKQK52V2B6Q")
-        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT },
-                indexing = { PropertyIndexingOption.STORE_ONLY })
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.REQUIRED }, indexing = { PropertyIndexingOption.STORE_ONLY })
         public String endpointAuthKey;
 
         /** (Required) The endpoint authentication private key (aws, azure...) */
         @Documentation(description = "The endpoint authentication private key (aws, azure...)", exampleString = "akEHvnvz/k5TVWdnqmp4IwKpQDkHtKuZ/TRmce5u")
-        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT },
-                indexing = { PropertyIndexingOption.STORE_ONLY })
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.REQUIRED }, indexing = { PropertyIndexingOption.STORE_ONLY })
         public String endpointAuthPrivateKey;
 
         /** (Required) The endpoint availability zone (aws, azure...) */
         @Documentation(description = " The endpoint availability zone (aws, azure...)", exampleString = "us-east-1a")
-        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT },
-                indexing = { PropertyIndexingOption.STORE_ONLY })
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.REQUIRED }, indexing = { PropertyIndexingOption.STORE_ONLY })
         public String availabilityZoneId;
 
         /** (Required) Endpoint securityGroup used for networking definition*/
         @Documentation(description = "Endpoint compute instance type  (micro, small, large ...)")
-        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT },
-                indexing = { PropertyIndexingOption.STORE_ONLY })
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.REQUIRED }, indexing = { PropertyIndexingOption.STORE_ONLY })
         public String securityGroup;
 
         /** (Required) The Endpoint Type (AWS, Azure, GCP) */
         @Documentation(description = "The Endpoint Type (AWS, Azure, GCP)")
-        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT },
-                indexing = { PropertyIndexingOption.STORE_ONLY })
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.REQUIRED }, indexing = { PropertyIndexingOption.STORE_ONLY })
         public EndpointType endpointType;
 
         /** (Required) Endpoint compute instance type  (micro, small, large ...)*/
         @Documentation(description = "Endpoint compute instance type  (micro, small, large ...)", exampleString = "t2.micro")
-        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT },
-                indexing = { PropertyIndexingOption.STORE_ONLY })
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.REQUIRED }, indexing = { PropertyIndexingOption.STORE_ONLY })
         public String computeInstanceType;
 
         /** (Optional- default 1) Number of container hosts to provision. */
@@ -219,12 +217,6 @@ public class SelfProvisioningTaskService extends
     @Override
     protected void validateStateOnStart(SelfProvisioningTaskState state)
             throws IllegalArgumentException {
-        assertNotEmpty(state.endpointAuthKey, "endpointAuthKey");
-        assertNotEmpty(state.endpointAuthPrivateKey, "endpointAuthPrivateKey");
-        assertNotEmpty(state.availabilityZoneId, "endpointAvailabilityZoneId");
-        assertNotNull(state.endpointType, "endpointType");
-        assertNotNull(state.securityGroup, "securityGroup");
-        assertNotNull(state.computeInstanceType, "computeInstanceType");
         if (state.clusterSize <= 0) {
             state.clusterSize = 1;
         }

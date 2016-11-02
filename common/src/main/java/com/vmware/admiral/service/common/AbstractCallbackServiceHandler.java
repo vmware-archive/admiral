@@ -53,17 +53,11 @@ public abstract class AbstractCallbackServiceHandler extends
     @Override
     protected boolean validateStateOnStart(CallbackServiceHandlerState state, Operation startPost)
             throws IllegalArgumentException {
-        validateStateOnStart(state);
+        super.validateStateOnStart(state, startPost);
         return true;//make sure that super.handleCreate() above doesn't close the startPost operation
     }
 
     @Override
     protected void handleStartedStagePatch(CallbackServiceHandlerState state) {
-    }
-
-    @Override
-    protected void validateStateOnStart(CallbackServiceHandlerState state)
-            throws IllegalArgumentException {
-
     }
 }

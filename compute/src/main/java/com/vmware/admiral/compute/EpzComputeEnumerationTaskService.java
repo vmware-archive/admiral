@@ -167,13 +167,6 @@ public class EpzComputeEnumerationTaskService extends
     }
 
     @Override
-    protected void validateStateOnStart(EpzComputeEnumerationTaskState state)
-            throws IllegalArgumentException {
-        // validate based on annotations
-        Utils.validateState(getStateDescription(), state);
-    }
-
-    @Override
     protected void handleStartedStagePatch(EpzComputeEnumerationTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:

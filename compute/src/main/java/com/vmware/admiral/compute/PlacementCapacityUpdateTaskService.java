@@ -197,13 +197,6 @@ public class PlacementCapacityUpdateTaskService extends
     }
 
     @Override
-    protected void validateStateOnStart(PlacementCapacityUpdateTaskState state)
-            throws IllegalArgumentException {
-        // validate based on annotations
-        Utils.validateState(getStateDescription(), state);
-    }
-
-    @Override
     protected void handleStartedStagePatch(PlacementCapacityUpdateTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:

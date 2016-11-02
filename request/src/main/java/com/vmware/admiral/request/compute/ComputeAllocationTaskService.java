@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.request.compute;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
@@ -124,7 +123,7 @@ public class ComputeAllocationTaskService
         }
 
         @Documentation(description = "The description that defines the requested resource.")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, LINK }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED, LINK }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
         @Documentation(description = "Type of resource to create")
@@ -132,7 +131,7 @@ public class ComputeAllocationTaskService
         public String resourceType;
 
         @Documentation(description = "(Required) the groupResourcePlacementState that links to ResourcePool")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED, LINK }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, OPTIONAL, LINK }, indexing = STORE_ONLY)
         public String groupResourcePlacementLink;
 
         @Documentation(description = "(Optional) the resourcePoolLink to ResourcePool")
@@ -212,10 +211,9 @@ public class ComputeAllocationTaskService
     @Override
     protected void validateStateOnStart(ComputeAllocationTaskState state)
             throws IllegalArgumentException {
-
-        assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
         if (state.groupResourcePlacementLink == null && state.resourcePoolLink == null) {
-            throw new IllegalArgumentException("'groupResourcePlacementLink' cannot be empty.");
+            throw new IllegalArgumentException(
+                    "'groupResourcePlacementLink' and 'resourcePoolLink' cannot be both empty.");
         }
 
         if (state.resourceCount < 1) {

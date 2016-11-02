@@ -19,6 +19,7 @@ import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_I
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
@@ -109,11 +110,11 @@ public class ContainerAllocationTaskService
         }
 
         /** The description that defines the requested resource. */
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
         /** (Required) Type of resource to create. */
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED }, indexing = STORE_ONLY)
         public String resourceType;
 
         /** (Required) the groupResourcePlacementState that links to ResourcePool */
@@ -219,8 +220,6 @@ public class ContainerAllocationTaskService
 
     @Override
     protected void validateStateOnStart(ContainerAllocationTaskState state) {
-        assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
-        assertNotEmpty(state.resourceType, "resourceType");
         if (state.postAllocation) {
             assertNotEmpty(state.resourceLinks, "resourceLinks");
             assertTrue(state.resourceCount <= state.resourceLinks.size(),
