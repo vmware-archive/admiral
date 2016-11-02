@@ -281,6 +281,10 @@ var TemplatesViewVueComponent = Vue.extend({
 
     alertType: function(alert) {
       return alert && alert.type;
+    },
+    alertClosed: function() {
+      this.alert.show = false;
+      this.alert.message = '';
     }
   },
   events: {
