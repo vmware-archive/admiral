@@ -31,42 +31,47 @@ public class DockerImageTest {
     private final String expectedHost;
     private final String expectedNamespace;
     private final String expectedRepo;
+    private final String expectedNamespaceAndRepo;
     private final String expectedTag;
 
     @Parameters
     public static List<String[]> data() {
         List<String[]> data = new ArrayList<>();
         data.add(new String[] { "all sections", "myhost:300/namespace/repo:tag", "myhost:300",
-                "namespace", "repo",
-                "tag" });
+                "namespace", "repo", "namespace/repo", "tag" });
 
-        data.add(new String[] { "repo and tag", "repo:tag", null, null, "repo", "tag" });
+        data.add(new String[] { "repo and tag", "repo:tag", null, null, "repo", "repo", "tag" });
 
-        data.add(new String[] { "repo without tag", "repo", null, null, "repo", "latest" });
+        data.add(new String[] { "implicit registry, repo and tag", "library/repo:tag", null,
+                "library", "repo", "repo", "tag" });
+
+        data.add(new String[] { "repo without tag", "repo", null, null, "repo", "repo", "latest" });
 
         data.add(new String[] { "namespace and repo", "namespace/repo", null, "namespace", "repo",
-                "latest" });
+                "namespace/repo", "latest" });
 
         data.add(new String[] { "host with dot and repo", "host.name/repo", "host.name", null,
-                "repo", "latest" });
+                "repo", "repo", "latest" });
 
         data.add(new String[] { "host with colon and repo", "host:3000/repo", "host:3000", null,
-                "repo", "latest" });
+                "repo", "repo", "latest" });
 
         data.add(new String[] { "host with colon, repo and tag", "host:3000/repo:tag", "host:3000",
-                null, "repo", "tag" });
+                null, "repo", "repo", "tag" });
 
         data.add(new String[] { "official repo with default namespace",
-                "registry.hub.docker.com/library/repo:tag", null, null, "repo", "tag" });
+                "registry.hub.docker.com/library/repo:tag", "registry.hub.docker.com", "library",
+                "repo", "repo", "tag" });
 
         data.add(new String[] { "official repo with custom namespace",
-                "registry.hub.docker.com/user/repo:tag", null, "user", "repo", "tag" });
+                "registry.hub.docker.com/user/repo:tag", "registry.hub.docker.com", "user", "repo",
+                "user/repo", "tag" });
 
         data.add(new String[] { "official repo with default namespace",
-                "docker.io/library/repo:tag", null, null, "repo", "tag" });
+                "docker.io/library/repo:tag", "docker.io", "library", "repo", "repo", "tag" });
 
         data.add(new String[] { "official repo with custom namespace",
-                "docker.io/user/repo:tag", null, "user", "repo", "tag" });
+                "docker.io/user/repo:tag", "docker.io", "user", "repo", "user/repo", "tag" });
 
         return data;
     }
@@ -79,6 +84,7 @@ public class DockerImageTest {
     public DockerImageTest(String description, String fullImageName, String expectedHost,
             String expectedNamespace,
             String expectedRepo,
+            String expectedNamespaceAndRepo,
             String expectedTag) {
 
         this.description = description;
@@ -86,6 +92,7 @@ public class DockerImageTest {
         this.expectedHost = expectedHost;
         this.expectedNamespace = expectedNamespace;
         this.expectedRepo = expectedRepo;
+        this.expectedNamespaceAndRepo = expectedNamespaceAndRepo;
         this.expectedTag = expectedTag;
     }
 
@@ -96,6 +103,8 @@ public class DockerImageTest {
         assertEquals(description + ": host", expectedHost, dockerImage.getHost());
         assertEquals(description + ": namespace", expectedNamespace, dockerImage.getNamespace());
         assertEquals(description + ": repository", expectedRepo, dockerImage.getRepository());
+        assertEquals(description + ": namespace and repo", expectedNamespaceAndRepo,
+                dockerImage.getNamespaceAndRepo());
         assertEquals(description + ": tag", expectedTag, dockerImage.getTag());
     }
 }

@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.image.service;
 
+import static com.vmware.admiral.adapter.registry.service.RegistryAdapterService.SEARCH_QUERY_PROP_NAME;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,11 +24,13 @@ import java.util.function.Consumer;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ImageOperationType;
+import com.vmware.admiral.adapter.docker.util.DockerImage;
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse.Result;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.RegistryUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.host.HostInitRegistryAdapterServiceConfig;
 import com.vmware.admiral.log.EventLogService;
@@ -85,6 +89,10 @@ public class ContainerImageService extends StatelessService {
         // get the group parameter to build the registry query
         // pass the rest of the query parameters as custom properties directly to the adapter
         Map<String, String> queryParams = UriUtils.parseUriQueryParams(op.getUri());
+
+        String searchTerm = queryParams.get(SEARCH_QUERY_PROP_NAME);
+        AssertUtil.assertNotNullOrEmpty(searchTerm, SEARCH_QUERY_PROP_NAME);
+
         String group = queryParams.remove(TENANT_LINKS_PARAM_NAME);
 
         logFine("Search in group: " + group);
@@ -96,7 +104,30 @@ public class ContainerImageService extends StatelessService {
         Consumer<Collection<Throwable>> failureConsumer = (failures) -> op.fail(failures.iterator()
                 .next());
 
-        RegistryService.forEachRegistry(getHost(), group, registryLinksConsumer, failureConsumer);
+        // limit the number of adapter requests if the search term contains a registry hostname
+        // otherwise, query for registries and execute an adapter request for each one
+        DockerImage image = parseDockerImage(searchTerm);
+        if (image != null && image.getHost() != null) {
+            RegistryUtil.findRegistriesByHostname(getHost(), image.getHost(), group, (links, error) -> {
+                if (error != null) {
+                    op.fail(error);
+                    return;
+                }
+
+                if (links.isEmpty()) {
+                    // failed to find a matching registry, create adapter request for each one
+                    RegistryService.forEachRegistry(getHost(), group, registryLinksConsumer,
+                            failureConsumer);
+                    return;
+                }
+
+                queryParams.put(SEARCH_QUERY_PROP_NAME, image.getNamespaceAndRepo());
+                registryLinksConsumer.accept(links);
+            });
+        } else {
+            RegistryService.forEachRegistry(getHost(), group, registryLinksConsumer,
+                    failureConsumer);
+        }
     }
 
     private void handleSearchRequest(Operation op, URI registryAdapterUri,
@@ -216,5 +247,13 @@ public class ContainerImageService extends StatelessService {
                     }
                 });
         sendRequest(createEventLog);
+    }
+
+    private DockerImage parseDockerImage(String imageName) {
+        try {
+            return DockerImage.fromImageName(imageName);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }

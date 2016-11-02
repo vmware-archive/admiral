@@ -30,6 +30,11 @@ public class AssertUtil {
         }
     }
 
+    public static void assertNotNullOrEmpty(String value, String propertyName) {
+        assertNotNull(value, propertyName);
+        assertNotEmpty(value, propertyName);
+    }
+
     public static void assertNotEmpty(Map<?, ?> value, String propertyName) {
         if (value == null || value.isEmpty()) {
             throw new IllegalArgumentException("'" + propertyName + "' cannot be empty");
