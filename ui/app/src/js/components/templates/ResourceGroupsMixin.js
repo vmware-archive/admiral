@@ -107,8 +107,11 @@ var ResourceGroupsMixin = {
         this.showGroupForProvisioning = false;
       }
     },
+    isSelectingGroup: function($clickEvent) {
+      return ($clickEvent.target.tagName === 'SELECT' || $clickEvent.target.tagName === 'OPTION');
+    },
     hideGroups: function($event) {
-      if ($event.target.tagName === 'SELECT' || $event.target.tagName === 'OPTION') {
+      if (this.isSelectingGroup($event)) {
         return;
       }
 

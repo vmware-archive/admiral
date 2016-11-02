@@ -215,6 +215,10 @@ var TemplatesViewVueComponent = Vue.extend({
           }
         },
         editTemplate: function($event) {
+          if (this.isSelectingGroup($event)) {
+            return;
+          }
+
           $event.stopPropagation();
           $event.preventDefault();
 

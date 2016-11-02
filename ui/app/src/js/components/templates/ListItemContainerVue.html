@@ -13,7 +13,7 @@
      role="alert" v-if="model.alert"><i class="fa alert-icon"
   v-bind:class="{'fa-check': model.alert.type === 'success', 'fa-exclamation-circle': model.alert.type === 'fail'}"
   ></i><span>{{model.alert.message}}</span></div>
-<div class="image-item" v-on:click="hideGroups($event)">
+<div class="image-item" v-on:click="hideGroups($event), editTemplate($event)" style="cursor: pointer;">
   <div class="image-header">
     <div v-bind:class="'icons icons-' + numberOfIcons">
       <template v-for="i in numberOfIcons">
@@ -76,19 +76,8 @@
         </div>
       </template>
       <template v-else>
-        <div class="btn-group pull-right">
-          <button type="button" class="btn admiral-btn create-container-btn"
-                  v-on:click="createTemplate($event)">{{i18n("app.template.list.provision")}}</button>
-          <button type="button" class="btn admiral-btn dropdown-toggle" data-toggle="dropdown"
-                  aria-haspopup="true" aria-expanded="false">
-            <span class="caret"></span>
-            <span class="sr-only">Toggle Dropdown</span>
-          </button>
-          <ul class="dropdown-menu">
-            <li><a href="#" class="edit-template-btn"
-                   v-on:click="editTemplate($event)">{{i18n("app.template.list.editTemplate")}}</a></li>
-          </ul>
-        </div>
+        <button type="button" class="btn admiral-btn create-container-btn"
+                v-on:click="createTemplate($event)">{{i18n("app.template.list.provision")}}</button>
     </template>
   </div></template>
   </div>
