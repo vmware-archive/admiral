@@ -627,23 +627,32 @@ public class ContainerAllocationTaskService
             containerState.volumes = mapVolumes(containerDesc, hostSelection);
             containerState.networks = mapNetworks(containerDesc, hostSelection);
 
-            String[] mapLinks = mapLinks(containerDesc, hostSelection);
-            if (mapLinks != null) {
-                if (containerState.networks != null && !containerState.networks.isEmpty()) {
-                    // use links in user defined networks
-                    for (ServiceNetwork sn : containerState.networks.values()) {
+            if (containerState.networks != null && !containerState.networks.isEmpty()) {
+                // use links in user defined networks. No need to map to specific containers,
+                // but to network aliases same for all containers in the service/cluster
+                for (String snKey : containerState.networks.keySet()) {
+                    if (containerDesc.links != null) {
+                        ServiceNetwork sn = containerState.networks.get(snKey);
+                        if (sn == null) {
+                            sn = new ServiceNetwork();
+                            containerState.networks.put(snKey, sn);
+                        }
+
                         if (sn.links == null) {
-                            sn.links = mapLinks;
+                            sn.links = containerDesc.links;
                         } else {
                             sn.links = Stream
-                                    .concat(Arrays.stream(sn.links), Arrays.stream(mapLinks))
+                                    .concat(Arrays.stream(sn.links),
+                                            Arrays.stream(containerDesc.links))
+                                    .distinct()
                                     .toArray(String[]::new);
                         }
                     }
-                } else {
-                    // Fallback to legacy links
-                    containerState.links = mapLinks;
                 }
+            } else {
+                // Fallback to legacy links mapped to specific containers
+                String[] mapLinks = mapLinks(containerDesc, hostSelection);
+                containerState.links = mapLinks;
             }
 
             containerState.documentExpirationTimeMicros = ServiceUtils

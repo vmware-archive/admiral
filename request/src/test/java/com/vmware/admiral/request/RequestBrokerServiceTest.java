@@ -1479,7 +1479,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         String[] links = cont2.networks.values().iterator().next().links;
 
         assertEquals(1, links.length);
-        assertEquals(cont1.names.get(0) + ":mycontainer", links[0]);
+        assertEquals("container1:mycontainer", links[0]);
 
         // Containers are placed on multiple hosts when using user define network links
     }
