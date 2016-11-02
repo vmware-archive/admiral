@@ -75,6 +75,7 @@ public class CompositionSubTaskService
         extends
         AbstractTaskStatefulService<CompositionSubTaskService.CompositionSubTaskState, CompositionSubTaskService.CompositionSubTaskState.SubStage> {
 
+    public static final String REFERER = "__referer";
     public static final String DISPLAY_NAME = "Composition Component";
     public static final String ALLOC_SUFFIX = "-alloc";
     public static final String DESCRIPTION_LINK_FIELD_NAME = "descriptionLink";
@@ -205,6 +206,7 @@ public class CompositionSubTaskService
             notifyDependentTasks(state, SubStage.EXECUTE, () -> {
                 CompositionSubTaskState body = createUpdateSubStageTask(state,
                         SubStage.COMPLETED);
+                body.addCustomProperty(REFERER, getSelfLink());
                 body.taskInfo.stage = TaskStage.FINISHED;
                 sendSelfPatch(body);
             });
@@ -213,6 +215,7 @@ public class CompositionSubTaskService
             if (!hasDependencies(state)) {
                 notifyDependentTasks(state, SubStage.ERROR, () -> {
                     CompositionSubTaskState body = createUpdateSubStageTask(state, SubStage.ERROR);
+                    body.addCustomProperty(REFERER, getSelfLink());
                     body.taskInfo.stage = TaskStage.FAILED;
                     sendSelfPatch(body);
                 });
@@ -227,6 +230,7 @@ public class CompositionSubTaskService
         ServiceTaskCallbackResponse callbackResponse = getFinishedCallbackResponse(state);
         callbackResponse.customProperties = mergeCustomProperties(
                 callbackResponse.customProperties, state.customProperties);
+        callbackResponse.addProperty(REFERER, this.getSelfLink());
         sendRequest(Operation.createPatch(this, state.serviceTaskCallback.serviceSelfLink)
                 .setBody(callbackResponse)
                 // Pragma needed because the service might be still in creation state (asynch
@@ -328,6 +332,7 @@ public class CompositionSubTaskService
             task.currentDependsOnLink = getSelfLink();
             task.taskInfo = state.taskInfo;
             task.taskSubStage = taskSubStage;
+            task.addCustomProperty(REFERER, getSelfLink());
             sendRequest(Operation.createPatch(this, dependentTaskLink)
                     .setBody(task)
                     .setContextId(state.requestId)
