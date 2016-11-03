@@ -455,6 +455,7 @@
       "list": {
         "network": {
           "name": "Network",
+          "connectedDateLabel": "Connected",
           "networkDriverLabel": "Network Driver",
           "ipamDriverLabel": "IPAM Driver",
           "subnetLabel": "Subnet",

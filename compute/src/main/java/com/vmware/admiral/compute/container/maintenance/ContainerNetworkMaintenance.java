@@ -39,14 +39,18 @@ public class ContainerNetworkMaintenance {
     private final String networkSelfLink;
     private long lastInspectMaintainanceInMicros;
 
-    public static ContainerNetworkMaintenance create(ServiceHost host, String networkSelfLink) {
-        return new ContainerNetworkMaintenance(host, networkSelfLink);
+    public static ContainerNetworkMaintenance create(ServiceHost host, String networkSelfLink,
+            boolean delayFirstMaintenance) {
+        return new ContainerNetworkMaintenance(host, networkSelfLink, delayFirstMaintenance);
     }
 
-    private ContainerNetworkMaintenance(ServiceHost host, String networkSelfLink) {
+    private ContainerNetworkMaintenance(ServiceHost host, String networkSelfLink,
+            boolean delayFirstMaintenance) {
         this.host = host;
         this.networkSelfLink = networkSelfLink;
-        this.lastInspectMaintainanceInMicros = Utils.getNowMicrosUtc();
+        if (delayFirstMaintenance) {
+            this.lastInspectMaintainanceInMicros = Utils.getNowMicrosUtc();
+        }
     }
 
     public void handleMaintenance(Operation post) {

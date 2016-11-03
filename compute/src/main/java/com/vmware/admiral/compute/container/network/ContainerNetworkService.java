@@ -13,6 +13,7 @@ package com.vmware.admiral.compute.container.network;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,6 +106,12 @@ public class ContainerNetworkService extends StatefulService {
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String driver;
 
+        /** Network connected time in milliseconds */
+        @Documentation(description = "Network connected time in milliseconds")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public Long connected;
+
         /**
          * If set to true, specifies that this network exists independently of any application.
          */
@@ -173,6 +180,8 @@ public class ContainerNetworkService extends StatefulService {
             if (body.powerState == null) {
                 body.powerState = ContainerNetworkState.PowerState.UNKNOWN;
             }
+
+            body.connected = new Date().getTime();
 
             // start the monitoring service instance for this network
             startMonitoringContainerNetworkState(body);
@@ -248,8 +257,16 @@ public class ContainerNetworkService extends StatefulService {
         }
 
         if (containerNetworkMaintenance == null) {
-            containerNetworkMaintenance = ContainerNetworkMaintenance.create(getHost(),
-                    getSelfLink());
+            sendRequest(Operation.createGet(getUri()).setCompletion((o, e) -> {
+                if (e == null) {
+                    ContainerNetworkState currentState = o.getBody(ContainerNetworkState.class);
+                    containerNetworkMaintenance = ContainerNetworkMaintenance.create(getHost(),
+                            getSelfLink(), !currentState.descriptionLink.startsWith(
+                                    ContainerNetworkDescriptionService.DISCOVERED_DESCRIPTION_LINK));
+                    containerNetworkMaintenance.handleMaintenance(post);
+                }
+            }));
+            return;
         }
         containerNetworkMaintenance.handleMaintenance(post);
     }

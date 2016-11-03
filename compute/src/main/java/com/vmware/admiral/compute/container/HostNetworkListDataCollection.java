@@ -280,8 +280,8 @@ public class HostNetworkListDataCollection extends StatefulService {
             }
 
             if (!existsInCallbackHost) {
+                boolean active = networkState.powerState == PowerState.CONNECTED;
                 if (!isOverlay) {
-                    boolean active = networkState.powerState == PowerState.CONNECTED;
                     if (active) {
                         handleMissingContainerNetwork(networkState);
                     }
@@ -289,6 +289,8 @@ public class HostNetworkListDataCollection extends StatefulService {
                     if (networkState.parentLinks.contains(callbackHostLink)) {
                         networkState.parentLinks.remove(callbackHostLink);
                         handleUpdateParentLinks(networkState);
+                    } else if (active && networkState.parentLinks.isEmpty()) {
+                        handleMissingContainerNetwork(networkState);
                     }
                 }
             } else {
@@ -321,8 +323,8 @@ public class HostNetworkListDataCollection extends StatefulService {
                                 ContainerNetworkState networkState = new ContainerNetworkState();
                                 networkState.id = entry.getKey();
                                 networkState.name = entry.getValue();
-                                networkState.documentSelfLink = UriUtils.buildUriPath(
-                                        ContainerNetworkService.FACTORY_LINK, networkState.name);
+                                networkState.documentSelfLink = NetworkUtils
+                                        .buildNetworkLink(networkState.id);
                                 networkState.external = true;
 
                                 networkState.tenantLinks = group;
@@ -394,11 +396,10 @@ public class HostNetworkListDataCollection extends StatefulService {
                     }
                     continue;
                 }
-                // check again if the network state already exists by name. This is needed in
+                // check again if the network state already exists by id. This is needed in
                 // cluster mode not to create container network states that we already have
                 Operation operation = Operation
-                        .createGet(this, UriUtils.buildUriPath(
-                                ContainerNetworkService.FACTORY_LINK, networkState.name))
+                        .createGet(this, NetworkUtils.buildNetworkLink(networkState.id))
                         .setCompletion(
                                 (o, ex) -> {
                                     if (ex != null) {

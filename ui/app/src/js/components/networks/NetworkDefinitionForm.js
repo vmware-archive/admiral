@@ -245,7 +245,6 @@ var NetworkDefinitionForm = Vue.extend({
               <div class="network-search-item-primary">
                 ${prefix}<strong>${root}</strong>${suffix}
               </div>
-              <div class="network-search-item-secondary">(${context.id})</div>
             </div>`;
         },
         footer: function(q) {

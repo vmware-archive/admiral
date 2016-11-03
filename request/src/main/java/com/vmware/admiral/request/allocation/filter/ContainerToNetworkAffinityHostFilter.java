@@ -201,29 +201,42 @@ public class ContainerToNetworkAffinityHostFilter
      */
     protected void filterByClusterStoreAffinity(
             final Map<String, HostSelection> hostSelectionMap,
-            Map<String, HostSelection> filteredHosts, final HostSelectionFilterCompletion callback,
+            final Map<String, HostSelection> filteredMap,
+            final HostSelectionFilterCompletion callback,
             PlacementHostSelectionTaskState state) {
 
-        /*
-         * No big choice here... filtered hosts due external networks have the highest priority.
-         */
-        if ((filteredHosts != null) && (filteredHosts.size() > 0)) {
+        Map<String, HostSelection> filteredHosts = null;
+
+        if ((filteredMap == null) || (filteredMap.isEmpty())) {
+            /*
+             * No filtered hosts due external networks.
+             */
+            filteredHosts = hostSelectionMap;
+        } else if (filteredMap.size() == 1) {
+            /*
+             * No big choice here... single filtered host due external networks.
+             */
             try {
-                callback.complete(filteredHosts, null);
+                callback.complete(filteredMap, null);
             } catch (Throwable e) {
                 host.log(Level.WARNING, "Exception when completing callback. Error: [%s]",
                         e.getMessage());
                 callback.complete(null, e);
             }
             return;
+        } else {
+            /*
+             * All filtered hosts due external networks are candidates.
+             */
+            filteredHosts = filteredMap;
         }
 
-        /*
-         * Neither here... 0 or only 1 host available.
-         */
-        if ((hostSelectionMap == null) || (hostSelectionMap.size() < 2)) {
+        if ((filteredHosts == null) || (filteredHosts.size() < 2)) {
+            /*
+             * No big choice here... 0 or only 1 host available.
+             */
             try {
-                callback.complete(hostSelectionMap, null);
+                callback.complete(filteredHosts, null);
             } catch (Throwable e) {
                 host.log(Level.WARNING, "Exception when completing callback. Error: [%s]",
                         e.getMessage());
@@ -240,7 +253,7 @@ public class ContainerToNetworkAffinityHostFilter
 
         Map<String, List<Entry<String, HostSelection>>> hostSelectionByKVStoreMap = new HashMap<>();
 
-        for (Entry<String, HostSelection> entry : hostSelectionMap.entrySet()) {
+        for (Entry<String, HostSelection> entry : filteredHosts.entrySet()) {
             HostSelection hostSelection = entry.getValue();
 
             String clusterStoreKey = hostSelection.clusterStore;
