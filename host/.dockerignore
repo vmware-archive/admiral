@@ -1,0 +1,4 @@
+target/admiral-host-?.?.?-SNAPSHOT-jar-with-dependencies-and-agent.jar
+target/admiral-host-?.?.?-SNAPSHOT-tests.jar
+target/admiral-host-?.?.?-jar-with-dependencies-and-agent.jar
+target/admiral-host-?.?.?-tests.jar
