@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -473,6 +474,7 @@ public class HostContainerListDataCollection extends StatefulService {
                                                 .get(containerState.id);
                                     }
                                 } else {
+
                                     containerState.tenantLinks = group;
                                     containerState.descriptionLink = String.format("%s-%s",
                                             SystemContainerDescriptions.DISCOVERED_DESCRIPTION_LINK,
@@ -589,10 +591,89 @@ public class HostContainerListDataCollection extends StatefulService {
             // if container version is old, delete the container and create it again
             recreateSystemContainer(containerState, hostId);
         } else {
-            // if version is valid, although we don't know the power state, start the containers
-            // anyway as start is idempotent
-            startSystemContainer(containerState, null);
+            // check if system ContainerState exists. If not, start won't work as docker-adapter
+            // will refer to missing ContainerState resulting in failure in starting operation.
+            checkIfSystemContainerStateExistsBeforeStartIt(containerState, containerDesc, hostId);
         }
+    }
+
+    private void checkIfSystemContainerStateExistsBeforeStartIt(ContainerState containerState, ContainerDescription containerDesc, String hostId) {
+
+        QueryTask containerQuery = QueryUtil.buildPropertyQuery(ContainerState.class,
+                ContainerState.FIELD_NAME_DESCRIPTION_LINK,
+                SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK,
+                ContainerState.FIELD_NAME_PARENT_LINK, containerState.parentLink);
+
+        QueryUtil.addExpandOption(containerQuery);
+        AtomicBoolean stateExists = new AtomicBoolean(false);
+        new ServiceDocumentQuery<ContainerState>(getHost(), ContainerState.class)
+                .query(containerQuery,
+                        (r) -> {
+                            if (r.hasException()) {
+                                logWarning("Failed to retrieve system container state: %s",
+                                        containerState.documentSelfLink);
+                            } else if (r.hasResult()) {
+                                // If System ContainerState exists, all supported container
+                                // operations start/stop will work.
+                                stateExists.set(true);
+                            } else {
+                                if (stateExists.get()) {
+                                    // If System ContainerState exists we can start it.
+                                    // if version is valid, although we don't know the power state,
+                                    // start the containers anyway as start is idempotent
+                                    startSystemContainer(containerState, null);
+                                } else {
+                                    // If System ContainerState does not exists, we create it before
+                                    // start operation.
+                                    final ContainerState systemContainerState = createSystemContainerState(containerState, containerDesc, hostId);
+
+                                    sendRequest(OperationUtil
+                                            .createForcedPost(this, ContainerFactoryService.SELF_LINK)
+                                            .setBody(systemContainerState)
+                                            .setCompletion(
+                                                    (o, e) -> {
+                                                        if (e != null) {
+                                                            logWarning("Failure creating system container: "
+                                                                    + Utils.toString(e));
+                                                            return;
+                                                        }
+                                                        ContainerState body = o.getBody(ContainerState.class);
+                                                        logInfo("Created system ContainerState: %s ",
+                                                                body.documentSelfLink);
+                                                        createSystemContainerInstanceRequest(body, null);
+                                                        updateNumberOfContainers(UriUtils.buildUriPath(
+                                                                ComputeService.FACTORY_LINK, hostId));
+                                                        startSystemContainer(containerState, null);
+                                                    }));
+
+                                }
+                            }
+                        });
+    }
+
+    private ContainerState createSystemContainerState(ContainerState containerState,
+            ContainerDescription containerDesc, String hostId) {
+
+        String systemContainerName = matchSystemContainerName(
+                SystemContainerDescriptions.getSystemContainerNames(), containerState.names);
+
+        final ContainerState systemContainerState = new ContainerState();
+        systemContainerState.documentSelfLink = containerState.documentSelfLink;
+        systemContainerState.names = new ArrayList<>();
+        systemContainerState.names.add(systemContainerName);
+        systemContainerState.descriptionLink = containerDesc.documentSelfLink;
+        systemContainerState.parentLink = UriUtils.buildUriPath(
+                ComputeService.FACTORY_LINK, hostId);
+        systemContainerState.powerState = ContainerState.PowerState.PROVISIONING;
+        systemContainerState.adapterManagementReference = containerDesc.instanceAdapterReference;
+        systemContainerState.image = containerDesc.image;
+        systemContainerState.command = containerDesc.command;
+        systemContainerState.groupResourcePlacementLink = GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
+        systemContainerState.system = Boolean.TRUE;
+        systemContainerState.volumes = containerDesc.volumes;
+        systemContainerState.id = containerState.id;
+
+        return systemContainerState;
     }
 
     private void recreateSystemContainer(ContainerState containerState, String hostId) {
