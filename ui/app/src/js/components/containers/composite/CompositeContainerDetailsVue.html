@@ -83,7 +83,6 @@
     </div>
   </div>
   <div v-if="model.selectedItemDetails"
-       transition="slide-and-fade"
        class="selected-context-holder closable-view"
        v-bind:class="{'expanded': model.selectedItemDetails.expanded}">
     <container-details v-if="model.selectedItemDetails.type === constants.CONTAINERS.TYPES.SINGLE"
