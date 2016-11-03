@@ -34,7 +34,6 @@ import java.util.stream.Stream;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState.SubStage;
@@ -49,6 +48,7 @@ import com.vmware.xenon.common.OperationSequence;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -330,9 +330,9 @@ public class ComputeProvisionTaskService extends
 
     private void validateConnectionsAndRegisterContainerHost(ComputeProvisionTaskState state,
             List<ComputeState> computes) {
-        URI specValidateUri = UriUtilsExtended.buildUri(getHost(), ContainerHostService.SELF_LINK,
+        URI specValidateUri = UriUtils.buildUri(getHost(), ContainerHostService.SELF_LINK,
                 ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
-        URI specUri = UriUtilsExtended.buildUri(getHost(), ContainerHostService.SELF_LINK);
+        URI specUri = UriUtils.buildUri(getHost(), ContainerHostService.SELF_LINK);
         AtomicInteger remaining = new AtomicInteger(computes.size());
         AtomicReference<Throwable> error = new AtomicReference<>();
         for (ComputeState computeState : computes) {

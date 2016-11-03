@@ -18,9 +18,9 @@ import java.net.URI;
 import java.util.function.Function;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.UriUtils;
 
 /**
  * Simple reverse proxy service to forward requests to 3rd party services.
@@ -114,7 +114,7 @@ public class ReverseProxyService extends StatelessService {
                 return null;
             }
             String path = uri.getPath().replaceFirst(ReverseProxyService.SELF_LINK, "");
-            uri = UriUtilsExtended.buildUri(referer, referer.getPath(), path);
+            uri = UriUtils.buildUri(referer, referer.getPath(), path);
             targetUri = getReverseProxyTargetUri(uri);
         }
         return targetUri;

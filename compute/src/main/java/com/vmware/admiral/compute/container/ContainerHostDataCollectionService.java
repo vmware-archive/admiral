@@ -36,7 +36,6 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
@@ -73,7 +72,7 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 public class ContainerHostDataCollectionService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.CONTAINER_HOST_DATA_COLLECTION;
     private static final String HOST_INFO_DATA_COLLECTION_ID = "host-info-data-collection";
-    public static final String HOST_INFO_DATA_COLLECTION_LINK = UriUtilsExtended.buildUriPath(
+    public static final String HOST_INFO_DATA_COLLECTION_LINK = UriUtils.buildUriPath(
             FACTORY_LINK, HOST_INFO_DATA_COLLECTION_ID);
 
     private static final long MAINTENANCE_INTERVAL_MICROS = Long.getLong(
@@ -571,7 +570,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         AdapterRequest request = new AdapterRequest();
         request.operationTypeId = ContainerHostOperationType.STATS.id;
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-        request.resourceReference = UriUtilsExtended.buildUri(getHost(), computeHostLink);
+        request.resourceReference = UriUtils.buildUri(getHost(), computeHostLink);
         sendRequest(Operation.createPatch(this, ManagementUriParts.ADAPTER_DOCKER_HOST)
                 .setBody(request)
                 .setCompletion((o, ex) -> {
@@ -707,7 +706,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         AdapterRequest request = new AdapterRequest();
         request.operationTypeId = ContainerHostOperationType.INFO.id;
         request.serviceTaskCallback = serviceTaskCallback;
-        request.resourceReference = UriUtilsExtended.buildUri(getHost(), documentSelfLink);
+        request.resourceReference = UriUtils.buildUri(getHost(), documentSelfLink);
         sendRequest(Operation.createPatch(this, ManagementUriParts.ADAPTER_DOCKER_HOST)
                 .setBody(request)
                 .setCompletion((o, ex) -> {

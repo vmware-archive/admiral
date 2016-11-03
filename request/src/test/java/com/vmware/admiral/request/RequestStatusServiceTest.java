@@ -30,7 +30,6 @@ import org.junit.Test;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -168,7 +167,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
 
         // The request is already finished the patch should not change the state
         requestStatus.taskInfo = TaskState.createAsStarted();
-        doOperation(requestStatus, UriUtilsExtended.buildUri(host, requestStatus.documentSelfLink),
+        doOperation(requestStatus, UriUtils.buildUri(host, requestStatus.documentSelfLink),
                 false,
                 Action.PATCH);
         RequestStatus finalStatus = getRequestStatus(requestId);
@@ -211,7 +210,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         requestStatus.subStage = DefaultSubStage.ERROR.name();
         requestStatus.phase = "Container Allocation";
         doOperation(requestStatus,
-                UriUtilsExtended.buildUri(host, getRequestStatus(requestId).documentSelfLink),
+                UriUtils.buildUri(host, getRequestStatus(requestId).documentSelfLink),
                 false,
                 Action.PATCH);
 
@@ -224,7 +223,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
         // Try to set the request status to finished
         requestStatus.taskInfo = TaskState.createAsFinished();
         doOperation(requestStatus,
-                UriUtilsExtended.buildUri(host, getRequestStatus(requestId).documentSelfLink),
+                UriUtils.buildUri(host, getRequestStatus(requestId).documentSelfLink),
                 false,
                 Action.PATCH);
 

@@ -25,7 +25,6 @@ import org.junit.Test;
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.EndpointCertificateUtil;
 import com.vmware.admiral.compute.RegistryConfigCertificateDistributionService;
 import com.vmware.admiral.compute.RegistryHostConfigService;
@@ -37,6 +36,7 @@ import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.admiral.service.common.SslTrustImportService;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class RegistryHostValidatingHelperServiceIT extends BaseTestCase {
@@ -51,29 +51,29 @@ public class RegistryHostValidatingHelperServiceIT extends BaseTestCase {
     @Before
     public void setUp() throws Throwable {
         host.startService(
-                Operation.createPost(UriUtilsExtended.buildUri(host,
+                Operation.createPost(UriUtils.buildUri(host,
                         ConfigurationFactoryService.class)),
                 new ConfigurationFactoryService());
 
         host.startFactory(new SslTrustCertificateService());
 
         host.startService(
-                Operation.createPost(UriUtilsExtended.buildUri(host, SslTrustImportService.class)),
+                Operation.createPost(UriUtils.buildUri(host, SslTrustImportService.class)),
                 new SslTrustImportService());
 
         host.startFactory(new RegistryService());
 
         host.startService(
-                Operation.createPost(UriUtilsExtended.buildUri(host,
+                Operation.createPost(UriUtils.buildUri(host,
                         RegistryHostConfigService.class)),
                 new RegistryHostConfigService());
 
         host.startService(
-                Operation.createPost(UriUtilsExtended.buildUri(host, RegistryAdapterService.class)),
+                Operation.createPost(UriUtils.buildUri(host, RegistryAdapterService.class)),
                 new RegistryAdapterService());
 
         host.startService(
-                Operation.createPost(UriUtilsExtended.buildUri(host,
+                Operation.createPost(UriUtils.buildUri(host,
                         RegistryConfigCertificateDistributionService.class)),
                 new RegistryConfigCertificateDistributionService());
 
@@ -90,8 +90,8 @@ public class RegistryHostValidatingHelperServiceIT extends BaseTestCase {
         hostState = new RegistryHostSpec();
         hostState.hostState = registryState;
 
-        helperUri = UriUtilsExtended.buildUri(host, RegistryHostConfigService.SELF_LINK);
-        helperWithValidationUri = UriUtilsExtended.extendUriWithQuery(helperUri,
+        helperUri = UriUtils.buildUri(host, RegistryHostConfigService.SELF_LINK);
+        helperWithValidationUri = UriUtils.extendUriWithQuery(helperUri,
                 EndpointCertificateUtil.REQUEST_PARAM_VALIDATE_OPERATION_NAME, "true");
 
         DeploymentProfileConfig.getInstance().setTest(false);

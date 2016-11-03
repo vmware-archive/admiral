@@ -18,7 +18,6 @@ import java.net.URI;
 import java.util.Map;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
@@ -45,7 +44,7 @@ public class ContainerShellService extends AbstractShellContainerService {
     }
 
     private void loadContainerShellURL(String containerDocumentId, Operation op) {
-        String path = UriUtilsExtended.buildUriPath(ContainerFactoryService.SELF_LINK,
+        String path = UriUtils.buildUriPath(ContainerFactoryService.SELF_LINK,
                 containerDocumentId);
         sendRequest(Operation.createGet(this, path).setCompletion((o, e) -> {
             if (e != null) {

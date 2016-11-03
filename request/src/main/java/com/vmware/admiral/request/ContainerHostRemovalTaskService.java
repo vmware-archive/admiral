@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
@@ -45,6 +44,7 @@ import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 
@@ -335,7 +335,7 @@ public class ContainerHostRemovalTaskService extends
             logInfo("Starting delete of %d container hosts", state.resourceLinks.size());
 
             // Notify the data collection service first
-            URI uri = UriUtilsExtended.buildUri(getHost(),
+            URI uri = UriUtils.buildUri(getHost(),
                     ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK);
             ContainerHostDataCollectionService.ContainerHostDataCollectionState dataCollectionState = new ContainerHostDataCollectionService.ContainerHostDataCollectionState();
             dataCollectionState.computeContainerHostLinks = state.resourceLinks;

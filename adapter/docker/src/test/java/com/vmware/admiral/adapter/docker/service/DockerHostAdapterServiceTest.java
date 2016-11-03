@@ -38,7 +38,6 @@ import com.vmware.admiral.adapter.docker.mock.MockDockerHostService;
 import com.vmware.admiral.adapter.docker.mock.MockDockerPathConstants;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.CertificateUtil;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
@@ -169,7 +168,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         ComputeState state = new ComputeState();
         state.powerState = PowerState.SUSPEND;
         doOperation(state,
-                UriUtilsExtended.buildUri(host, dockerHostState.documentSelfLink), false,
+                UriUtils.buildUri(host, dockerHostState.documentSelfLink), false,
                 Action.PATCH);
         waitFor(() -> {
             dockerHostState = retrieveDockerHostState();
@@ -204,7 +203,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         properties.put(ContainerHostService.RETRIES_COUNT_PROP_NAME, "1");
         state.customProperties = properties;
         doOperation(state,
-                UriUtilsExtended.buildUri(host, dockerHostState.documentSelfLink), false,
+                UriUtils.buildUri(host, dockerHostState.documentSelfLink), false,
                 Action.PATCH);
         waitFor(() -> {
             dockerHostState = retrieveDockerHostState();
@@ -215,7 +214,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         dataCollectionState.computeContainerHostLinks = new ArrayList<String>();
         dataCollectionState.computeContainerHostLinks
                 .add(retrieveDockerHostState().documentSelfLink);
-        doOperation(dataCollectionState, UriUtilsExtended.buildUri(host,
+        doOperation(dataCollectionState, UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -231,7 +230,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         ComputeState state = new ComputeState();
         state.powerState = PowerState.ON;
         doOperation(state,
-                UriUtilsExtended.buildUri(host, dockerHostState.documentSelfLink), false,
+                UriUtils.buildUri(host, dockerHostState.documentSelfLink), false,
                 Action.PATCH);
         waitFor(() -> {
             dockerHostState = retrieveDockerHostState();
@@ -246,7 +245,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         dataCollectionState.computeContainerHostLinks = new ArrayList<String>();
         dataCollectionState.computeContainerHostLinks
                 .add(retrieveDockerHostState().documentSelfLink);
-        doOperation(dataCollectionState, UriUtilsExtended.buildUri(host,
+        doOperation(dataCollectionState, UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -265,7 +264,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         properties.put(ContainerHostService.RETRIES_COUNT_PROP_NAME, "2");
         state.customProperties = properties;
         doOperation(state,
-                UriUtilsExtended.buildUri(host, dockerHostState.documentSelfLink), false,
+                UriUtils.buildUri(host, dockerHostState.documentSelfLink), false,
                 Action.PATCH);
         waitFor(() -> {
             dockerHostState = retrieveDockerHostState();
@@ -280,7 +279,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         dataCollectionState.computeContainerHostLinks = new ArrayList<String>();
         dataCollectionState.computeContainerHostLinks
                 .add(retrieveDockerHostState().documentSelfLink);
-        doOperation(dataCollectionState, UriUtilsExtended.buildUri(host,
+        doOperation(dataCollectionState, UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -299,7 +298,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         properties.put(ContainerHostService.RETRIES_COUNT_PROP_NAME, "2");
         state.customProperties = properties;
         doOperation(state,
-                UriUtilsExtended.buildUri(host, dockerHostState.documentSelfLink), false,
+                UriUtils.buildUri(host, dockerHostState.documentSelfLink), false,
                 Action.PATCH);
         waitFor(() -> {
             dockerHostState = retrieveDockerHostState();
@@ -315,7 +314,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         dataCollectionState.computeContainerHostLinks
                 .add(retrieveDockerHostState().documentSelfLink);
 
-        doOperation(dataCollectionState, UriUtilsExtended.buildUri(host,
+        doOperation(dataCollectionState, UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);

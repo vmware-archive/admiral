@@ -29,7 +29,6 @@ import java.util.stream.IntStream;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService;
@@ -250,7 +249,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         state.powerState = PowerState.SUSPEND;
 
         doOperation(state,
-                UriUtilsExtended.buildUri(host, hostSelfLink), false,
+                UriUtils.buildUri(host, hostSelfLink), false,
                 Action.PATCH);
         waitFor(() -> {
             ComputeState cs = getDocument(ComputeState.class, hostSelfLink);

@@ -24,12 +24,13 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.service.common.ReverseProxyService;
+import com.vmware.xenon.common.UriUtils;
 
 public class UriUtilsExtendedTest {
 
     private static final String SAMPLE_URL = "http://github.com/ob?product=admiral&branch=master";
 
-    private static final URI SAMPLE_URI = UriUtilsExtended.buildUri(SAMPLE_URL);
+    private static final URI SAMPLE_URI = UriUtils.buildUri(SAMPLE_URL);
 
     @Test
     public void testReverseProxyEncoding() {
@@ -63,7 +64,7 @@ public class UriUtilsExtendedTest {
         // http://abc:80/p1/p2
 
         String url = "http://www.test-url.com:8080/p1/p2";
-        URI uri = UriUtilsExtended.buildUri(url);
+        URI uri = UriUtils.buildUri(url);
         URI rpUri = UriUtilsExtended.getReverseProxyUri(uri);
         URI targetUri = UriUtilsExtended.getReverseProxyTargetUri(rpUri);
         assertEquals("http://www.test-url.com:8080/p1/p2", targetUri.toString());
@@ -72,7 +73,7 @@ public class UriUtilsExtendedTest {
         // http://abc:80/p1/p2?q1=v1
 
         url = "http://www.test-url.com:8080/p1/p2?q1=v1";
-        uri = UriUtilsExtended.buildUri(url);
+        uri = UriUtils.buildUri(url);
         rpUri = UriUtilsExtended.getReverseProxyUri(uri);
         targetUri = UriUtilsExtended.getReverseProxyTargetUri(rpUri);
         assertEquals("http://www.test-url.com:8080/p1/p2?q1=v1", targetUri.toString());
@@ -81,10 +82,10 @@ public class UriUtilsExtendedTest {
         // http://abc:80/p1/p2/ep1/ep2
 
         url = "http://www.test-url.com:8080/p1/p2";
-        uri = UriUtilsExtended.buildUri(url);
+        uri = UriUtils.buildUri(url);
         rpUri = UriUtilsExtended.getReverseProxyUri(uri);
 
-        rpUri = UriUtilsExtended.buildUri(rpUri.toString() + "/ep1/ep2");
+        rpUri = UriUtils.buildUri(rpUri.toString() + "/ep1/ep2");
 
         targetUri = UriUtilsExtended.getReverseProxyTargetUri(rpUri);
         assertEquals("http://www.test-url.com:8080/p1/p2/ep1/ep2", targetUri.toString());
@@ -93,10 +94,10 @@ public class UriUtilsExtendedTest {
         // http://abc:80/p1/p2/ep1/ep2?q1=v1
 
         url = "http://www.test-url.com:8080/p1/p2?q1=v1";
-        uri = UriUtilsExtended.buildUri(url);
+        uri = UriUtils.buildUri(url);
         rpUri = UriUtilsExtended.getReverseProxyUri(uri);
 
-        rpUri = UriUtilsExtended.buildUri(rpUri.toString() + "/ep1/ep2");
+        rpUri = UriUtils.buildUri(rpUri.toString() + "/ep1/ep2");
 
         targetUri = UriUtilsExtended.getReverseProxyTargetUri(rpUri);
         assertEquals("http://www.test-url.com:8080/p1/p2/ep1/ep2?q1=v1", targetUri.toString());
@@ -105,10 +106,10 @@ public class UriUtilsExtendedTest {
         // http://abc:80/p1/p2/ep1/ep2?q1=v1&q2=v2
 
         url = "http://www.test-url.com:8080/p1/p2?q1=v1";
-        uri = UriUtilsExtended.buildUri(url);
+        uri = UriUtils.buildUri(url);
         rpUri = UriUtilsExtended.getReverseProxyUri(uri);
 
-        rpUri = UriUtilsExtended.buildUri(rpUri.toString() + "/ep1/ep2?q2=v2");
+        rpUri = UriUtils.buildUri(rpUri.toString() + "/ep1/ep2?q2=v2");
 
         targetUri = UriUtilsExtended.getReverseProxyTargetUri(rpUri);
         assertEquals("http://www.test-url.com:8080/p1/p2/ep1/ep2?q1=v1&q2=v2", targetUri.toString());
@@ -121,7 +122,7 @@ public class UriUtilsExtendedTest {
         // http://abc:80/p1/p2/
 
         String url = "http://www.test-url.com:8080/p1/p2/";
-        URI uri = UriUtilsExtended.buildUri(url);
+        URI uri = UriUtils.buildUri(url);
         URI rpUri = UriUtilsExtended.getReverseProxyUri(uri);
         URI targetUri = UriUtilsExtended.getReverseProxyTargetUri(rpUri);
         assertEquals("http://www.test-url.com:8080/p1/p2/", targetUri.toString());
@@ -130,7 +131,7 @@ public class UriUtilsExtendedTest {
         // http://abc:80/p1/p2/?q1=v1
 
         url = "http://www.test-url.com:8080/p1/p2/?q1=v1";
-        uri = UriUtilsExtended.buildUri(url);
+        uri = UriUtils.buildUri(url);
         rpUri = UriUtilsExtended.getReverseProxyUri(uri);
         targetUri = UriUtilsExtended.getReverseProxyTargetUri(rpUri);
         assertEquals("http://www.test-url.com:8080/p1/p2/?q1=v1", targetUri.toString());
@@ -139,10 +140,10 @@ public class UriUtilsExtendedTest {
         // http://abc:80/p1/p2/ep1/ep2/
 
         url = "http://www.test-url.com:8080/p1/p2";
-        uri = UriUtilsExtended.buildUri(url);
+        uri = UriUtils.buildUri(url);
         rpUri = UriUtilsExtended.getReverseProxyUri(uri);
 
-        rpUri = UriUtilsExtended.buildUri(rpUri.toString() + "/ep1/ep2/");
+        rpUri = UriUtils.buildUri(rpUri.toString() + "/ep1/ep2/");
 
         targetUri = UriUtilsExtended.getReverseProxyTargetUri(rpUri);
         assertEquals("http://www.test-url.com:8080/p1/p2/ep1/ep2/", targetUri.toString());
@@ -151,10 +152,10 @@ public class UriUtilsExtendedTest {
         // http://abc:80/p1/p2/ep1/ep2/?q1=v1
 
         url = "http://www.test-url.com:8080/p1/p2?q1=v1";
-        uri = UriUtilsExtended.buildUri(url);
+        uri = UriUtils.buildUri(url);
         rpUri = UriUtilsExtended.getReverseProxyUri(uri);
 
-        rpUri = UriUtilsExtended.buildUri(rpUri.toString() + "/ep1/ep2/");
+        rpUri = UriUtils.buildUri(rpUri.toString() + "/ep1/ep2/");
 
         targetUri = UriUtilsExtended.getReverseProxyTargetUri(rpUri);
         assertEquals("http://www.test-url.com:8080/p1/p2/ep1/ep2/?q1=v1", targetUri.toString());
@@ -163,10 +164,10 @@ public class UriUtilsExtendedTest {
         // http://abc:80/p1/p2/ep1/ep2/?q1=v1&q2=v2
 
         url = "http://www.test-url.com:8080/p1/p2?q1=v1";
-        uri = UriUtilsExtended.buildUri(url);
+        uri = UriUtils.buildUri(url);
         rpUri = UriUtilsExtended.getReverseProxyUri(uri);
 
-        rpUri = UriUtilsExtended.buildUri(rpUri.toString() + "/ep1/ep2/?q2=v2");
+        rpUri = UriUtils.buildUri(rpUri.toString() + "/ep1/ep2/?q2=v2");
 
         targetUri = UriUtilsExtended.getReverseProxyTargetUri(rpUri);
         assertEquals("http://www.test-url.com:8080/p1/p2/ep1/ep2/?q1=v1&q2=v2", targetUri.toString());
@@ -176,7 +177,7 @@ public class UriUtilsExtendedTest {
     public void testReverseProxyLocationTransformations() {
 
         String url = "http://www.test-url.com:8080/p1/p2";
-        URI uri = UriUtilsExtended.buildUri(url);
+        URI uri = UriUtils.buildUri(url);
 
         // location: http://localhost/foo/bar ->
         // http://abc:80/rp/{http://localhost/foo/bar}
@@ -187,20 +188,20 @@ public class UriUtilsExtendedTest {
         assertTrue(targetLocation.startsWith(ReverseProxyService.SELF_LINK));
 
         URI targetUri = UriUtilsExtended.getReverseProxyTargetUri(
-                UriUtilsExtended.buildUri(uri, targetLocation));
+                UriUtils.buildUri(uri, targetLocation));
         assertEquals("http://localhost/foo/bar", targetUri.toString());
 
         // location: /foo/bar & referer: http://localhost/p ->
         // http://abc:80/rp/{http://localhost/foo/bar}
 
         location = "/foo/bar";
-        URI referer = UriUtilsExtended.buildUri("http://localhost/p");
+        URI referer = UriUtils.buildUri("http://localhost/p");
         targetLocation = UriUtilsExtended.getReverseProxyLocation(location, referer);
         assertNotNull(targetLocation);
         assertTrue(targetLocation.startsWith(ReverseProxyService.SELF_LINK));
 
         targetUri = UriUtilsExtended.getReverseProxyTargetUri(
-                UriUtilsExtended.buildUri(uri, targetLocation));
+                UriUtils.buildUri(uri, targetLocation));
         assertEquals("http://localhost/foo/bar", targetUri.toString());
     }
 
@@ -208,7 +209,7 @@ public class UriUtilsExtendedTest {
     public void testReverseProxyLocationTransformationsWithTrailingSlash() {
 
         String url = "http://www.test-url.com:8080/p1/p2";
-        URI uri = UriUtilsExtended.buildUri(url);
+        URI uri = UriUtils.buildUri(url);
 
         // location: http://localhost/foo/bar ->
         // http://abc:80/rp/{http://localhost/foo/bar}
@@ -219,20 +220,20 @@ public class UriUtilsExtendedTest {
         assertTrue(targetLocation.startsWith(ReverseProxyService.SELF_LINK));
 
         URI targetUri = UriUtilsExtended.getReverseProxyTargetUri(
-                UriUtilsExtended.buildUri(uri, targetLocation));
+                UriUtils.buildUri(uri, targetLocation));
         assertEquals("http://localhost/foo/bar/", targetUri.toString());
 
         // location: /foo/bar & referer: http://localhost/p ->
         // http://abc:80/rp/{http://localhost/foo/bar}
 
         location = "/foo/bar/";
-        URI referer = UriUtilsExtended.buildUri("http://localhost/p");
+        URI referer = UriUtils.buildUri("http://localhost/p");
         targetLocation = UriUtilsExtended.getReverseProxyLocation(location, referer);
         assertNotNull(targetLocation);
         assertTrue(targetLocation.startsWith(ReverseProxyService.SELF_LINK));
 
         targetUri = UriUtilsExtended.getReverseProxyTargetUri(
-                UriUtilsExtended.buildUri(uri, targetLocation));
+                UriUtils.buildUri(uri, targetLocation));
         assertEquals("http://localhost/foo/bar/", targetUri.toString());
     }
 
@@ -245,15 +246,15 @@ public class UriUtilsExtendedTest {
         uri = UriUtilsExtended.getReverseProxyTargetUri(null);
         assertNull(uri);
 
-        URI opUri = UriUtilsExtended.buildUri("http://localhost/rp");
+        URI opUri = UriUtils.buildUri("http://localhost/rp");
         uri = UriUtilsExtended.getReverseProxyTargetUri(opUri);
         assertNull(uri);
 
-        opUri = UriUtilsExtended.buildUri("http://localhost/rp/f-o-o/bar");
+        opUri = UriUtils.buildUri("http://localhost/rp/f-o-o/bar");
         uri = UriUtilsExtended.getReverseProxyTargetUri(opUri);
         assertNull(uri);
 
-        opUri = UriUtilsExtended.buildUri("http://localhost/rp/"
+        opUri = UriUtils.buildUri("http://localhost/rp/"
                 + UriUtilsExtended.getReverseProxyEncoded("%0"));
         try {
             uri = UriUtilsExtended.getReverseProxyTargetUri(opUri);

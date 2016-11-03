@@ -43,7 +43,6 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.HostConfigCertificateDistributionService;
@@ -363,7 +362,7 @@ public class HostContainerListDataCollection extends StatefulService {
                                 AdapterRequest request = new AdapterRequest();
                                 request.operationTypeId = ContainerHostOperationType.LIST_CONTAINERS.id;
                                 request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-                                request.resourceReference = UriUtilsExtended.buildUri(getHost(),
+                                request.resourceReference = UriUtils.buildUri(getHost(),
                                         body.containerHostLink);
                                 sendRequest(Operation
                                         .createPatch(this, ManagementUriParts.ADAPTER_DOCKER_HOST)
@@ -804,7 +803,7 @@ public class HostContainerListDataCollection extends StatefulService {
                 // check again if the container state already exists by names. This is needed in
                 // cluster mode not to create container states that we already have
                 Operation operation = Operation
-                        .createGet(this, UriUtilsExtended.buildUriPath(
+                        .createGet(this, UriUtils.buildUriPath(
                                 ContainerFactoryService.SELF_LINK, containerState.names.get(0)))
                         .setCompletion(
                                 (o, ex) -> {

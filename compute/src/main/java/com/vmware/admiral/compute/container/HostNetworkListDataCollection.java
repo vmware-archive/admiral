@@ -34,7 +34,6 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
@@ -233,7 +232,7 @@ public class HostNetworkListDataCollection extends StatefulService {
                                 AdapterRequest request = new AdapterRequest();
                                 request.operationTypeId = ContainerHostOperationType.LIST_NETWORKS.id;
                                 request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-                                request.resourceReference = UriUtilsExtended.buildUri(getHost(),
+                                request.resourceReference = UriUtils.buildUri(getHost(),
                                         body.containerHostLink);
                                 sendRequest(Operation
                                         .createPatch(this, ManagementUriParts.ADAPTER_DOCKER_HOST)
@@ -398,7 +397,7 @@ public class HostNetworkListDataCollection extends StatefulService {
                 // check again if the network state already exists by name. This is needed in
                 // cluster mode not to create container network states that we already have
                 Operation operation = Operation
-                        .createGet(this, UriUtilsExtended.buildUriPath(
+                        .createGet(this, UriUtils.buildUriPath(
                                 ContainerNetworkService.FACTORY_LINK, networkState.name))
                         .setCompletion(
                                 (o, ex) -> {

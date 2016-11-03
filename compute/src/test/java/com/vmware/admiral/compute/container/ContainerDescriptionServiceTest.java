@@ -25,11 +25,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class ContainerDescriptionServiceTest extends ComputeBaseTest {
@@ -391,7 +391,7 @@ public class ContainerDescriptionServiceTest extends ComputeBaseTest {
     }
 
     private URI getContainerDescriptionUri() {
-        return UriUtilsExtended.buildUri(host, ContainerDescriptionService.FACTORY_LINK);
+        return UriUtils.buildUri(host, ContainerDescriptionService.FACTORY_LINK);
     }
 
     private ContainerDescription createContainerDescription() {

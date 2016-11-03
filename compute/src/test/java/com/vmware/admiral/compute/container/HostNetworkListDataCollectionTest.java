@@ -25,7 +25,6 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionState;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
@@ -54,9 +53,9 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
 
     @Before
     public void setUp() throws Throwable {
-        host.startService(Operation.createPost(UriUtilsExtended.buildUri(host,
+        host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerNetworkAdapterService.class)), new MockDockerNetworkAdapterService());
-        host.startService(Operation.createPost(UriUtilsExtended.buildUri(host,
+        host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerHostAdapterService.class)), new MockDockerHostAdapterService());
 
         waitForServiceAvailability(ContainerHostDataCollectionService.FACTORY_LINK);
@@ -121,7 +120,7 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
     private void startAndWaitHostNetworkListDataCollection() throws Throwable {
         host.testStart(1);
         host.sendRequest(Operation
-                .createPatch(UriUtilsExtended.buildUri(host,
+                .createPatch(UriUtils.buildUri(host,
                         HostNetworkListDataCollectionFactoryService.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK))
                 .setBody(networkListCallback)
                 .setReferer(host.getUri())

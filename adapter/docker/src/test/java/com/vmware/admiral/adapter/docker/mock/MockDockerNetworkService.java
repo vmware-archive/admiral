@@ -23,9 +23,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.vmware.admiral.common.util.AssertUtil;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.UriUtils;
 
 public class MockDockerNetworkService extends StatelessService {
 
@@ -89,7 +89,7 @@ public class MockDockerNetworkService extends StatelessService {
     @Override
     public void handleGet(Operation get) {
 
-        String id = UriUtilsExtended.getLastPathSegment(get.getUri().getPath());
+        String id = UriUtils.getLastPathSegment(get.getUri().getPath());
 
         if (NETWORKS.endsWith(id)) {
             // list networks
@@ -111,7 +111,7 @@ public class MockDockerNetworkService extends StatelessService {
     @Override
     public void handlePost(Operation post) {
         String path = post.getUri().getPath();
-        String command = UriUtilsExtended.getLastPathSegment(path);
+        String command = UriUtils.getLastPathSegment(path);
 
         if (CREATE.endsWith(command)) {
             try {
@@ -138,7 +138,7 @@ public class MockDockerNetworkService extends StatelessService {
                 return;
             }
         } else if (CONNECT.endsWith(command)) {
-            String networkId = UriUtilsExtended.getLastPathSegment(stripTrailingPathSegment(path));
+            String networkId = UriUtils.getLastPathSegment(stripTrailingPathSegment(path));
 
             if (!networksMap.containsKey(networkId)) {
                 String message = String.format("Network with id '%s' does not exist", networkId);
@@ -173,6 +173,6 @@ public class MockDockerNetworkService extends StatelessService {
     /** remove the last path segment and the slash before it */
     private String stripTrailingPathSegment(String path) {
         return path.substring(0,
-                path.length() - UriUtilsExtended.getLastPathSegment(path).length() - 1);
+                path.length() - UriUtils.getLastPathSegment(path).length() - 1);
     }
 }

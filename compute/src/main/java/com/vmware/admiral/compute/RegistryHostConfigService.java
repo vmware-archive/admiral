@@ -118,10 +118,10 @@ public class RegistryHostConfigService extends StatelessService {
         Operation store = null;
         if (hostState.documentSelfLink == null
                 || !hostState.documentSelfLink.startsWith(RegistryService.FACTORY_LINK)) {
-            URI uri = UriUtilsExtended.buildUri(getHost(), RegistryService.FACTORY_LINK);
+            URI uri = UriUtils.buildUri(getHost(), RegistryService.FACTORY_LINK);
             store = OperationUtil.createForcedPost(uri);
         } else {
-            URI uri = UriUtilsExtended.buildUri(getHost(), hostState.documentSelfLink);
+            URI uri = UriUtils.buildUri(getHost(), hostState.documentSelfLink);
             store = Operation.createPut(uri);
         }
 

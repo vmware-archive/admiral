@@ -28,7 +28,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.CloneableResource;
 import com.vmware.admiral.compute.content.YamlMapper;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -39,6 +38,7 @@ import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -228,7 +228,7 @@ public class ContainerVolumeDescriptionService extends StatefulService {
         }
 
         if (state.instanceAdapterReference == null) {
-            state.instanceAdapterReference = UriUtilsExtended.buildUri(getHost(),
+            state.instanceAdapterReference = UriUtils.buildUri(getHost(),
                     ManagementUriParts.ADAPTER_DOCKER_VOLUME);
         }
 
