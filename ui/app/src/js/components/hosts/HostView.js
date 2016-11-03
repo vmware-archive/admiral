@@ -54,9 +54,7 @@ var HostView = Vue.extend({
       return !this.model.isUpdate && (this.selectedTab === TAB_ID_CREATE_HOST);
     },
     createHostEnabled: function() {
-      // TODO: Enable by default in standalone mode
-      // return !utils.isApplicationEmbedded();
-      return utils.getConfigurationProperty('host.provisioning') === 'true';
+      return !utils.isApplicationEmbedded();
     },
     activeContextItem: function() {
       return this.model.contextView && this.model.contextView.activeItem &&

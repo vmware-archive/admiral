@@ -21,13 +21,6 @@ import utils from 'core/utils';
 import imageUtils from 'core/imageUtils';
 import links from 'core/links';
 
-let ContainersStore;
-
-function getHostDocumentId(container) {
-  var host = container.parentLink.substring('/resources/compute/'.length);
-  return utils.extractHostId(host);
-}
-
 function getContainersImageIcons(containers) {
   let icons = new Set();
   for (var c in containers) {
@@ -52,7 +45,6 @@ function enhanceContainer(container, clusterId) {
   container.icon = imageUtils.getImageIconLink(container.image);
   container.documentId = utils.getDocumentId(container.documentSelfLink);
 
-  container.hostDocumentId = getHostDocumentId(container);
   container.type = constants.CONTAINERS.TYPES.SINGLE;
   if (clusterId) {
     container.clusterId = clusterId;
@@ -71,7 +63,7 @@ function decorateContainerHostName(container, hosts) {
   let host = getHostByLink(hosts, container.parentLink);
   container.hostName = host ? utils.getHostName(host) : null;
   container.hostAddress = host && host.address;
-
+  container.hostDocumentId = host.id;
   return container;
 }
 
@@ -302,7 +294,7 @@ let getNetworkLinks = function(containerOrCluster, networks) {
   return networkLinks;
 };
 
-ContainersStore = Reflux.createStore({
+let ContainersStore = Reflux.createStore({
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
   init: function() {
     NotificationsStore.listen((notifications) => {

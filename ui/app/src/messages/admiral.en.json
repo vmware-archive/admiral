@@ -42,6 +42,7 @@
         "hostAddress": "Address",
         "resourcePool": "Placement zone",
         "credential": "Login credential",
+        "guestCredential": "Guest credential",
         "deploymentPolicy": "Deployment policy",
         "tags": "Tags",
         "tagsHint": "Enter key:value tags",
@@ -72,7 +73,7 @@
         "azureOS": "OS",
         "vsphereCpu": "CPU",
         "vsphereMemory": "Memory",
-        "vsphereVmdk": "VMDK",
+        "vsphereOS": "OS",
         "clusterSize": "Cluster size"
       },
       "list": {

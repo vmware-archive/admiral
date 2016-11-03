@@ -175,6 +175,7 @@ let toViewModel = function(dto) {
   return {
     dto: dto,
     id: dto.id,
+    name: dto.name,
     address: dto.address ? dto.address : dto.id,
     descriptionLink: dto.descriptionLink,
     powerState: dto.powerState,
@@ -586,27 +587,29 @@ let HostsStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onCreateHost: function(hostModel) {
+  onCreateHost: function(description, clusterSize, tags) {
     this.setInData(['hostAddView', 'validationErrors'], null);
     this.setInData(['hostAddView', 'shouldAcceptCertificate'], null);
 
-    var validationErrors = utils.validate(hostModel, hostConstraints);
+    var validationErrors = utils.validate(description, hostConstraints);
     if (validationErrors) {
       this.setInData(['hostAddView', 'validationErrors'], validationErrors);
     } else {
       this.setInData(['hostAddView', 'isSavingHost'], true);
 
-      services.createHostDescription(hostModel).then((hostDescription) => {
-        services.createHost(hostDescription, hostModel.clusterSize).then((request) => {
-          console.log('started request for Create Host: ' + request);
+      Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
+        return Promise.all(tags.map((tag, i) =>
+          result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
+      }).then((createdTags) => {
+        description.tagLinks = [...new Set(createdTags.map((tag) => tag.documentSelfLink))];
 
+        services.createHostDescription(description).then((createdDescription) => {
+          return services.createHost(createdDescription, clusterSize);
+        }).then(() => {
           this.setInData(['listView', 'isCreatingHostRequest'], true);
-          this.emitChange();
-
           this.onHostAdded();
-        });
-
-      }).catch(this.onGenericEditError);
+        }).catch(this.onGenericEditError);
+      });
     }
 
     this.emitChange();

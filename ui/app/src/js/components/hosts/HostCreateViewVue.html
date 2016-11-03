@@ -33,6 +33,22 @@
     </div>
   </div>
 
+  <div id="awsOS" class="form-group"
+    v-if="showInput('aws')" v-bind:class="{'has-error': validationErrors.awsOS}">
+    <label class="col-sm-3 control-label">
+      {{i18n("app.host.details.awsOS")}}
+      <span class="requiredFieldMark">*</span>
+    </label>
+    <div class="col-sm-9">
+      <select v-model="awsOS" class="form-control">
+        <option value="coreos">CoreOS</option>
+        <option value="ubuntu">Ubuntu</option>
+      </select>
+
+      <span class="help-block">{{i18n(validationErrors.awsOS)}}</span>
+    </div>
+  </div>
+
   <div id="awsType" class="form-group"
     v-if="showInput('aws')" v-bind:class="{'has-error': validationErrors.awsType}">
     <label class="col-sm-3 control-label">
@@ -86,20 +102,18 @@
     </div>
   </div>
 
-  <div id="awsOS" class="form-group"
-    v-if="showInput('aws')" v-bind:class="{'has-error': validationErrors.awsOS}">
+  <div id="azureOS" class="form-group"
+    v-if="showInput('azure')" v-bind:class="{'has-error': validationErrors.azureOS}">
     <label class="col-sm-3 control-label">
-      {{i18n("app.host.details.awsOS")}}
+      {{i18n("app.host.details.azureOS")}}
       <span class="requiredFieldMark">*</span>
     </label>
     <div class="col-sm-9">
-      <select v-model="awsOS" class="form-control">
+      <select v-model="azureOS" class="form-control">
         <option value="coreos">CoreOS</option>
-        <option value="photon">Photon</option>
-        <option value="ubuntu">Ubuntu</option>
+        <option value="linux">Ubuntu</option>
       </select>
-
-      <span class="help-block">{{i18n(validationErrors.awsOS)}}</span>
+      <span class="help-block">{{i18n(validationErrors.azureOS)}}</span>
     </div>
   </div>
 
@@ -111,33 +125,28 @@
     </label>
     <div class="col-sm-9">
       <select v-model="azureType" class="form-control">
-        <option value="a0">Standard 1 Core, 0.75 GB</option>
-        <option value="a1">Standard 1 Core, 1.75 GB</option>
-        <option value="a2">Standard 2 Cores, 3.50 GB</option>
-        <option value="a3">Standard 4 Cores, 3.50 GB</option>
-        <option value="a4">Standard 8 Cores, 7.00 GB</option>
-        <option value="a5">Standard 2 Cores, 14.00 GB</option>
-        <option value="a6">Standard 4 Cores, 28.00 GB</option>
-        <option value="a7">Standard 8 Cores, 56.00 GB</option>
+        <option value="Basic_A0">Standard 1 Core, 0.75 GB</option>
+        <option value="Basic_A1">Standard 1 Core, 1.75 GB</option>
+        <option value="Basic_A2">Standard 2 Cores, 3.50 GB</option>
+        <option value="Basic_A3">Standard 4 Cores, 3.50 GB</option>
+        <option value="Basic_A4">Standard 8 Cores, 7.00 GB</option>
       </select>
 
       <span class="help-block">{{i18n(validationErrors.azureType)}}</span>
     </div>
   </div>
 
-  <div id="azureOS" class="form-group"
-    v-if="showInput('azure')" v-bind:class="{'has-error': validationErrors.azureOS}">
+  <div id="vsphereOS" class="form-group"
+    v-if="showInput('vsphere')" v-bind:class="{'has-error': validationErrors.vsphereOS}">
     <label class="col-sm-3 control-label">
-      {{i18n("app.host.details.azureOS")}}
+      {{i18n("app.host.details.vsphereOS")}}
       <span class="requiredFieldMark">*</span>
     </label>
     <div class="col-sm-9">
-      <select v-model="azureOS" class="form-control">
+      <select v-model="vsphereOS" class="form-control">
         <option value="coreos">CoreOS</option>
-        <option value="photon">Photon</option>
-        <option value="ubuntu">Ubuntu</option>
       </select>
-      <span class="help-block">{{i18n(validationErrors.azureOS)}}</span>
+      <span class="help-block">{{i18n(validationErrors.vsphereOS)}}</span>
     </div>
   </div>
 
@@ -147,7 +156,7 @@
       {{i18n("app.host.details.vsphereCpu")}}
       <span class="requiredFieldMark">*</span>
     </label>
-    <div class="col-sm-9">
+    <div class="col-sm-3">
       <input class="form-control" v-model="vsphereCpu">
       <span class="help-block">{{i18n(validationErrors.vsphereCpu)}}</span>
     </div>
@@ -159,25 +168,21 @@
       {{i18n("app.host.details.vsphereMemory")}}
       <span class="requiredFieldMark">*</span>
     </label>
-    <div class="col-sm-9">
+    <div class="col-sm-3">
       <input class="form-control" v-model="vsphereMemory">
       <span class="help-block">{{i18n(validationErrors.vsphereMemory)}}</span>
     </div>
   </div>
 
-  <div id="vsphereVmdk" class="form-group"
-    v-if="showInput('vsphere')" v-bind:class="{'has-error': validationErrors.vsphereVmdk}">
-    <label class="col-sm-3 control-label">
-      {{i18n("app.host.details.vsphereVmdk")}}
-      <span class="requiredFieldMark">*</span>
-    </label>
+  <div id="credential" class="form-group" v-bind:class="{'has-error': validationErrors.credential, 'hide': showInput(null)}">
+    <label class="col-sm-3 control-label">{{i18n("app.host.details.guestCredential")}}</label>
     <div class="col-sm-9">
-      <input class="form-control" v-model="vsphereVmdk">
-      <span class="help-block">{{i18n(validationErrors.vsphereVmdk)}}</span>
+      <div class="form-control dropdown-holder"></div>
+      <span class="help-block">{{i18n(validationErrors.credential)}}</span>
     </div>
   </div>
 
-  <div id="clusterSize" class="form-group" v-bind:class="{'has-error': validationErrors.clusterSize}">
+  <div id="clusterSize" class="form-group" v-bind:class="{'has-error': validationErrors.clusterSize, 'hide': showInput(null)}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.clusterSize")}}</label>
     <div class="clusterSizeInput col-sm-9"><span>{{clusterSize}}</span>&nbsp;
       <action-button name="incrementClusterSize" icon-name="plus"
@@ -187,7 +192,7 @@
     </div>
   </div>
 
-  <div id="tags" class="form-group tags" v-bind:class="{'has-error': validationErrors.tags}">
+  <div id="tags" class="form-group tags" v-bind:class="{'has-error': validationErrors.tags, 'hide': showInput(null)}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.tags")}}</label>
     <div class="col-sm-9">
       <div class="tags-holder">
@@ -199,7 +204,7 @@
     </div>
   </div>
 
-  <div id="customProperties" class="form-group" v-bind:class="{'has-error': validationErrors.customProperties}">
+  <div id="customProperties" class="form-group" v-bind:class="{'has-error': validationErrors.customProperties, 'hide': showInput(null)}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.customProperties")}}</label>
     <div class="col-sm-9">
       <div class="custom-prop-fields"></div>

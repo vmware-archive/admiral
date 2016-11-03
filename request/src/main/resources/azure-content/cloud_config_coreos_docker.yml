@@ -1,0 +1,26 @@
+#cloud-config
+
+{{serverCerts}}:
+
+coreos:
+  units:
+    - name: docker-tls-tcp.socket
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=Docker Secured Socket for the API
+
+        [Socket]
+        ListenStream=443
+        BindIPv6Only=both
+        Service=docker.service
+
+        [Install]
+        WantedBy=sockets.target
+    - name: docker.service
+      drop-ins:
+        - name: 10-tls-verify.conf
+          content: |
+            [Service]
+            Environment='DOCKER_OPTS=--tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem'

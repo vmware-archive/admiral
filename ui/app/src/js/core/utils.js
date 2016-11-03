@@ -988,6 +988,10 @@ var utils = {
       return null;
     }
 
+    if (host.name) {
+      return host.name;
+    }
+
     let customProps = host.customProperties;
 
     if (customProps) {

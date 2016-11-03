@@ -1,0 +1,13 @@
+---
+name: "vSphere environment"
+endpointType: "vsphere"
+properties:
+  instanceType:
+    mappings:
+      small: "small"
+  imageType:
+    mappings:
+      coreos: "https://stable.release.core-os.net/amd64-usr/current/coreos_production_vmware_ova.ova"
+  placement:
+    mappings:
+      networkId: VM Network

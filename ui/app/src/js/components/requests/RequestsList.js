@@ -127,6 +127,15 @@ var RequestsListVueComponent = Vue.extend({
           $e.preventDefault();
 
           if (this.isRequestFinished(this.model)) {
+            if (this.model.resourceLinks) {
+              var link = this.model.resourceLinks[0];
+              if (link.indexOf(links.COMPUTE_RESOURCES) !== -1) {
+                NavigationActions.openHosts({
+                  documentId: utils.getDocumentId(link)
+                });
+                return;
+              }
+            }
             NavigationActions.openContainers(this.getRequestResourceQueryOpts(this.model));
             return;
           }

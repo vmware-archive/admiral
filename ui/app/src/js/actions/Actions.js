@@ -160,6 +160,10 @@ export var NotificationsActions = Reflux.createActions([
   'retrieveNotifications'
 ]);
 
+export var StorageDescriptionsActions = Reflux.createActions([
+  'retrieveStorageDescriptions'
+]);
+
 /*
   Used to trigger a navigation change.
   The one listening for these will eventually call the corresponding action on a App/component level

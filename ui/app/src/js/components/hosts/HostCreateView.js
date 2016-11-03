@@ -14,7 +14,7 @@ import EndpointsView from 'components/endpoints/EndpointsView'; //eslint-disable
 import MulticolumnInputs from 'components/common/MulticolumnInputs';
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
 import Tags from 'components/common/Tags';
-import { HostContextToolbarActions } from 'actions/Actions';
+import { HostActions, HostContextToolbarActions } from 'actions/Actions';
 import constants from 'core/constants';
 import utils from 'core/utils';
 
@@ -25,6 +25,16 @@ const endpointManageOptions = [{
 }, {
   id: 'endpoint-manage',
   name: i18n.t('app.endpoint.manage'),
+  icon: 'pencil'
+}];
+
+const credentialManageOptions = [{
+  id: 'cred-create',
+  name: i18n.t('app.credential.createNew'),
+  icon: 'plus'
+}, {
+  id: 'cred-manage',
+  name: i18n.t('app.credential.manage'),
   icon: 'pencil'
 }];
 
@@ -44,13 +54,13 @@ var HostCreateView = Vue.extend({
     return {
       name: null,
       endpoint: null,
-      awsType: 't2.nano',
+      awsType: 't2.micro',
       awsOS: 'coreos',
-      azureType: 'a2',
-      azureOS: 'ubuntu',
+      azureType: 'Basic_A1',
+      azureOS: 'coreos',
       vsphereCpu: 1,
       vsphereMemory: 1024,
-      vsphereVmdk: 'none',
+      vsphereOS: 'coreos',
       clusterSize: 1
     };
   },
@@ -66,7 +76,8 @@ var HostCreateView = Vue.extend({
         case 'azure':
           return !this.azureType && !this.azureOS;
         case 'vsphere':
-          return !this.vsphereCpu && !this.vsphereMemory && !this.vsphereVmdk;
+          return !this.vsphereCpu && !this.vsphereMemory &&
+            !this.vsphereOS;
       }
     },
     validationErrors: function() {
@@ -98,7 +109,32 @@ var HostCreateView = Vue.extend({
       this.endpoint = option;
     });
     this.endpointInput.setClearOptionSelectCallback(() => {
-      this.endpoint = undefined;
+      this.endpoint = null;
+    });
+
+    // Credentials input
+    var elemCredentials = $(this.$el).find('#credential .form-control');
+    this.credentialInput = new DropdownSearchMenu(elemCredentials, {
+      title: i18n.t('dropdownSearchMenu.title', {
+        entity: i18n.t('app.credential.entity')
+      }),
+      searchPlaceholder: i18n.t('dropdownSearchMenu.searchPlaceholder', {
+        entity: i18n.t('app.credential.entity')
+      })
+    });
+    this.credentialInput.setManageOptions(credentialManageOptions);
+    this.credentialInput.setManageOptionSelectCallback(function(option) {
+      if (option.id === 'cred-create') {
+        HostContextToolbarActions.createCredential();
+      } else {
+        HostContextToolbarActions.manageCredentials();
+      }
+    });
+    this.credentialInput.setOptionSelectCallback((option) => {
+      this.credential = option;
+    });
+    this.credentialInput.setClearOptionSelectCallback(() => {
+      this.credential = null;
     });
 
     this.tagsInput = new Tags($(this.$el).find('#tags .tags-input'));
@@ -135,24 +171,18 @@ var HostCreateView = Vue.extend({
       }
     }, {immediate: true});
 
-    this.unwatchModel = this.$watch('model', (model, oldModel) => {
-      if (model.isUpdate) {
+    this.unwatchCredentials = this.$watch('model.credentials', () => {
+      if (this.model.credentials === constants.LOADING) {
+        this.credentialInput.setLoading(true);
+      } else {
+        this.credentialInput.setLoading(false);
+        this.credentialInput.setOptions(this.model.credentials);
+      }
+    }, {immediate: true});
 
-        oldModel = oldModel || {};
-
-        if (model.endpoint !== oldModel.endpoint) {
-          this.endpointInput.setSelectedOption(model.endpoint);
-          this.endpoint = this.endpointInput.getSelectedOption();
-        }
-
-        if (model.tags !== oldModel.tags) {
-          this.tagsInput.setValue(model.tags);
-          this.tags = this.tagsInput.getValue();
-        }
-
-        if (model.customProperties !== oldModel.customProperties) {
-          this.customPropertiesEditor.setData(model.customProperties);
-        }
+    this.unwatchCredential = this.$watch('model.credential', (credential, oldCredential) => {
+      if (this.model.credential && credential !== oldCredential) {
+        this.credentialInput.setSelectedOption(this.model.credential);
       }
     }, {immediate: true});
 
@@ -164,7 +194,8 @@ var HostCreateView = Vue.extend({
     this.unwatchEndpoints();
     this.unwatchEndpoint();
 
-    this.unwatchModel();
+    this.unwatchCredentials();
+    this.unwatchCredential();
   },
 
   methods: {
@@ -175,38 +206,49 @@ var HostCreateView = Vue.extend({
       this.clusterSize += incrementValue;
     },
     showInput: function(type) {
-      return this.endpoint && this.endpoint.endpointType === type;
+      if (this.endpoint) {
+        return this.endpoint.endpointType === type;
+      }
+      return type === null;
     },
-    getHostData: function() {
-      let hostData = {
+    getHostDescription: function() {
+      let customProperties = utils.arrayToObject(this.customPropertiesEditor.getData());
+      let hostDescription = {
+        authCredentialsLink: this.credential && this.credential.documentSelfLink,
         name: this.name,
-        endpointLink: this.endpoint.documentSelfLink,
-        clusterSize: this.clusterSize,
-        customProperties: this.customPropertiesEditor.getData()
+        supportedChildren: ['DOCKER_CONTAINER'],
+        customProperties: $.extend(customProperties, {
+          __endpointLink: this.endpoint.documentSelfLink
+        })
       };
       switch (this.endpoint.endpointType) {
         case 'aws':
-          return $.extend(hostData, {
-            type: this.awsType,
-            os: this.awsOS
+          return $.extend(true, hostDescription, {
+            instanceType: this.awsType,
+            customProperties: {
+              imageType: this.awsOS
+            }
           });
         case 'azure':
-          return $.extend(hostData, {
-            type: this.azureType,
-            os: this.azureOS
+          return $.extend(true, hostDescription, {
+            instanceType: this.azureType,
+            customProperties: {
+              imageType: this.azureOS
+            }
           });
         case 'vsphere':
-          return $.extend(hostData, {
-            cpu: this.vsphereCpu,
-            memory: this.vsphereMemory,
-            vmdk: this.vsphereVmdk
+          return $.extend(true, hostDescription, {
+            cpuCount: this.vsphereCpu,
+            totalMemoryBytes: this.vsphereMemory * 1024 * 1024,
+            customProperties: {
+              imageType: this.vsphereOS
+            }
           });
       }
     },
     createHost: function() {
-      //HostActions.createHost(this.getHostData());
       let tags = this.tagsInput.getValue();
-      console.log('createHost', this.getHostData(), tags);
+      HostActions.createHost(this.getHostDescription(), this.clusterSize, tags);
     }
   }
 });

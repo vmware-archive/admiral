@@ -616,6 +616,10 @@ $main-list-view-right: 10px;
   width: 200px;
 }
 
+.host-view .main-panel .host-form div.col-sm-3 {
+  padding-left: 0;
+}
+
 .host-view .main-panel .host-form .col-sm-9,
 .compute-view .main-panel .compute-form .col-sm-9 {
   width: 100%;

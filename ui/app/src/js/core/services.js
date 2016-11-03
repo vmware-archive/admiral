@@ -552,30 +552,12 @@ services.loadHostDescriptions = function(documentSelfLinks) {
   return list(links.COMPUTE_DESCRIPTIONS, true, params);
 };
 
-services.createHostDescription = function(hostData) {
-  var hostDescription = {
-    name: hostData.instanceType,
-    regionId: hostData.regionId,
-    customProperties: {
-      __resourcePoolLink: hostData.resourcePool.documentSelfLink,
-      __authCredentialsLink: hostData.credential.documentSelfLink,
-      awsSecurityGroup: 'admiral-security-group',
-      __deploymentPolicyLink: hostData.deploymentPolicy
-    },
-    supportedChildren: ['DOCKER_CONTAINER']
-  };
-
-  let envName = hostData.providerType === 'AWS' ? 'Amazon Web Services' : null;
-  // Only Amazon supported currently
-  if (envName != null) {
-    hostDescription.environmentName = envName;
-  }
-
-  return post(links.COMPUTE_DESCRIPTIONS, hostDescription);
-};
-
 services.addHost = function(host) {
   return put(links.CONTAINER_HOSTS, host);
+};
+
+services.createHostDescription = function(description) {
+  return post(links.COMPUTE_DESCRIPTIONS, description);
 };
 
 services.createHost = function(hostDescription, clusterSize) {
@@ -1517,6 +1499,16 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
       qOps[FILTER_VALUE_ALL_FIELDS] = anyArray.map((any) => {
         return {
           val: '*' + any + '*',
+          op: 'eq'
+        };
+      });
+    }
+
+    var documentIdArray = toArrayIfDefined(queryOptions.documentId);
+    if (documentIdArray) {
+      qOps.documentSelfLink = documentIdArray.map((documentId) => {
+        return {
+          val: links.COMPUTE_RESOURCES + '/' + documentId,
           op: 'eq'
         };
       });
