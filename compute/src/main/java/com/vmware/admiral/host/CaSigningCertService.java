@@ -141,6 +141,7 @@ public class CaSigningCertService extends StatelessService {
         authCredentials.publicKey = caCert;
         authCredentials.privateKey = EncryptionUtils.encrypt(caKey);
         return Operation.createPost(this, AuthCredentialsService.FACTORY_LINK)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                 .setBody(authCredentials);
     }
 
@@ -159,6 +160,7 @@ public class CaSigningCertService extends StatelessService {
         authCredentials.privateKey = EncryptionUtils.encrypt(
                 KeyUtil.toPEMFormat(signedForClient.getPrivateKey()));
         return Operation.createPost(this, AuthCredentialsService.FACTORY_LINK)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                 .setBody(authCredentials);
     }
 
