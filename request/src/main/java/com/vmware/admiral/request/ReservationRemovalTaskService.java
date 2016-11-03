@@ -106,6 +106,7 @@ public class ReservationRemovalTaskService
         ResourcePlacementReservationRequest reservationRequest = new ResourcePlacementReservationRequest();
         reservationRequest.resourceCount = -state.resourceCount;
         reservationRequest.resourceDescriptionLink = state.resourceDescriptionLink;
+        reservationRequest.referer = getSelfLink();
 
         logInfo("Releasing placement instances: %d for descLink: %s and groupPlacementId: %s",
                 reservationRequest.resourceCount, reservationRequest.resourceDescriptionLink,

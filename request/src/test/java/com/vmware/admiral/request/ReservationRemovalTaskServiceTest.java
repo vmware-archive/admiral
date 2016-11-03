@@ -105,8 +105,7 @@ public class ReservationRemovalTaskServiceTest extends RequestBaseTest {
         // simulated caller from reservation task:
         URI requestReservationTaskURI = UriUtils.buildUri(host,
                 ManagementUriParts.REQUEST_RESERVATION_TASKS);
-        setPrivateField(VerificationHost.class.getDeclaredField("referer"), host,
-                requestReservationTaskURI);
+        rsrvRequest.referer = requestReservationTaskURI.getPath();
 
         host.testStart(1);
         host.send(Operation

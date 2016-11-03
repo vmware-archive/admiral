@@ -516,6 +516,7 @@ public class ReservationTaskService
         ResourcePlacementReservationRequest reservationRequest = new ResourcePlacementReservationRequest();
         reservationRequest.resourceCount = state.resourceCount;
         reservationRequest.resourceDescriptionLink = state.resourceDescriptionLink;
+        reservationRequest.referer = getSelfLink();
 
         logInfo("Reserving instances: %d for descLink: %s and groupPlacementId: %s",
                 reservationRequest.resourceCount, reservationRequest.resourceDescriptionLink,
