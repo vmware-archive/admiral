@@ -44,7 +44,7 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 
 public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
-    private static final String TEST_PREEXISTING_NETWORK_ID = "preexisting-network";
+    private static final String TEST_PREEXISTING_NETWORK_ID = "01234567789";
     private static final String TEST_PREEXISTING_NETWORK_NAME = "preexisting-network-name";
     private static final String TEST_HOST_ID = "test-host-id-234:2376";
     private static final String COMPUTE_HOST_LINK = UriUtils.buildUriPath(
@@ -110,7 +110,7 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
         assertEquals(TEST_PREEXISTING_NETWORK_ID, preexistingNetwork.id);
         assertEquals(TEST_PREEXISTING_NETWORK_NAME, preexistingNetwork.name);
         assertEquals(UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK,
-                TEST_PREEXISTING_NETWORK_NAME), preexistingNetwork.documentSelfLink);
+                TEST_PREEXISTING_NETWORK_ID), preexistingNetwork.documentSelfLink);
         assertTrue(Boolean.TRUE.equals(preexistingNetwork.external));
 
         assertTrue("Preexisting network belongs to the host.",

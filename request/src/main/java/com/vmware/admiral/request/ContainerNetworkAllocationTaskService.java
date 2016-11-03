@@ -16,7 +16,6 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY;
-import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -316,7 +315,7 @@ public class ContainerNetworkAllocationTaskService extends
         assertNotNull(taskCallback, "taskCallback");
 
         if (Boolean.TRUE.equals(networkDescription.external)) {
-            handleUpdateExternalNetworkState(state, networkDescription, taskCallback);
+            completeSubTasksCounter(taskCallback, null);
             return;
         }
 
@@ -355,7 +354,8 @@ public class ContainerNetworkAllocationTaskService extends
 
             String contextId;
             if (!networkState.external && state.customProperties != null
-                    && (contextId = state.customProperties.get(FIELD_NAME_CONTEXT_ID_KEY)) != null) {
+                    && (contextId = state.customProperties
+                            .get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY)) != null) {
                 networkState.compositeComponentLinks = new ArrayList<>();
                 networkState.compositeComponentLinks.add(UriUtils.buildUriPath(
                         CompositeComponentFactoryService.SELF_LINK, contextId));
@@ -377,58 +377,6 @@ public class ContainerNetworkAllocationTaskService extends
 
         } catch (Throwable e) {
             failTask("System failure creating ContainerNetworkState", e);
-        }
-    }
-
-    private void handleUpdateExternalNetworkState(ContainerNetworkAllocationTaskState state,
-            ContainerNetworkDescription networkDescription, ServiceTaskCallback taskCallback) {
-
-        String networkStateLink = NetworkUtils.buildNetworkLink(networkDescription.name);
-
-        try {
-            sendRequest(Operation.createGet(UriUtils.buildUri(getHost(), networkStateLink))
-                    .setCompletion((o, e) -> {
-                        if (e != null) {
-                            logInfo("Error retrieving ContainerNetworkState: %s ", e.getMessage());
-                            completeSubTasksCounter(taskCallback, e);
-                            return;
-                        }
-
-                        ContainerNetworkState networkState = o.getBody(ContainerNetworkState.class);
-
-                        String contextId;
-                        if (state.customProperties != null && (contextId = state.customProperties
-                                .get(FIELD_NAME_CONTEXT_ID_KEY)) != null) {
-                            ContainerNetworkState networkStatePatch = new ContainerNetworkState();
-
-                            networkStatePatch.compositeComponentLinks = networkState.compositeComponentLinks;
-                            if (networkStatePatch.compositeComponentLinks == null) {
-                                networkStatePatch.compositeComponentLinks = new ArrayList<>();
-                            }
-                            networkStatePatch.compositeComponentLinks.add(UriUtils.buildUriPath(
-                                    CompositeComponentFactoryService.SELF_LINK, contextId));
-
-                            sendRequest(Operation.createPatch(
-                                    UriUtils.buildUri(getHost(), networkState.documentSelfLink))
-                                    .setBody(networkStatePatch)
-                                    .setCompletion(
-                                            (o2, e2) -> {
-                                                if (e2 == null) {
-                                                    ContainerNetworkState body = o2
-                                                            .getBody(ContainerNetworkState.class);
-                                                    logInfo("Updated ContainerNetworkState: %s ",
-                                                            body.documentSelfLink);
-                                                }
-                                                completeSubTasksCounter(taskCallback, e2);
-                                            }));
-                        } else {
-                            completeSubTasksCounter(taskCallback, null);
-                            return;
-                        }
-
-                    }));
-        } catch (Throwable e) {
-            failTask("System failure updating ContainerNetworkState", e);
         }
     }
 

@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute.container.network;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BinaryOperator;
 import java.util.logging.Level;
@@ -18,14 +20,22 @@ import java.util.logging.Level;
 import io.netty.util.internal.StringUtil;
 
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ConnectedContainersCountIncrement;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState.PowerState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 public class NetworkUtils {
 
@@ -152,6 +162,7 @@ public class NetworkUtils {
         networkDescription.tenantLinks = state.tenantLinks;
         networkDescription.instanceAdapterReference = state.adapterManagementReference;
         networkDescription.name = state.name;
+        networkDescription.id = state.id;
         networkDescription.customProperties = state.customProperties;
 
         // TODO - fill in other network settings
@@ -175,27 +186,102 @@ public class NetworkUtils {
         }
 
         networks.keySet().stream().forEach(name -> {
-            String networkLink = buildNetworkLink(name);
-
             ConnectedContainersCountIncrement patchBody = new ConnectedContainersCountIncrement();
             patchBody.increment = increment;
 
-            host.sendRequest(Operation.createPatch(UriUtils.buildUri(host, networkLink))
-                    .setReferer(host.getUri())
-                    .setBody(patchBody)
-                    .setCompletion(
-                            (o, e) -> {
-                                if (e != null) {
-                                    host.log(Level.WARNING,
-                                            "Error updating connected containers count for ContainerNetworkState: %s (%s)",
-                                            networkLink, e.getMessage());
-                                } else {
-                                    host.log(Level.FINE,
-                                            "Updated connected containers count for ContainerNetworkState: %s ",
-                                            networkLink);
-                                }
-                            }));
+            patchConnectedContainersCountIncrement(host, name, patchBody, container);
         });
     }
 
+    private static void patchConnectedContainersCountIncrement(ServiceHost host, String networkName,
+            ConnectedContainersCountIncrement patchBody, ContainerState container) {
+
+        String networkLink = buildNetworkLink(networkName);
+
+        host.sendRequest(Operation.createPatch(UriUtils.buildUri(host, networkLink))
+                .setReferer(host.getUri())
+                .setBody(patchBody)
+                .setCompletion((o, e) -> {
+                    if (e == null) {
+                        host.log(Level.FINE,
+                                "Updated connected containers count for ContainerNetworkState: %s ",
+                                networkName);
+                        return;
+                    }
+
+                    if (container == null) {
+                        // retry failed
+                        host.log(Level.WARNING,
+                                "Error updating connected containers count for ContainerNetworkState: %s (%s)",
+                                networkName, e.getMessage());
+                        return;
+                    }
+
+                    // retry by name...
+
+                    List<ContainerNetworkState> networkStates = new ArrayList<ContainerNetworkState>();
+
+                    QueryTask queryTask = NetworkUtils.getNetworkByHostAndNameQueryTask(
+                            container.parentLink, networkName);
+
+                    new ServiceDocumentQuery<ContainerNetworkState>(host,
+                            ContainerNetworkState.class).query(queryTask, (r) -> {
+                                if (r.hasException()) {
+                                    host.log(Level.WARNING,
+                                            "Failed to query for active networks by name '%s' in host '%s'! %s",
+                                            networkName, container.parentLink,
+                                            Utils.toString(r.getException()));
+                                } else if (r.hasResult()) {
+                                    networkStates.add(r.getResult());
+                                } else {
+                                    if (networkStates.size() == 1) {
+                                        patchConnectedContainersCountIncrement(host,
+                                                networkStates.get(0).id, patchBody, null);
+                                        return;
+                                    }
+                                    host.log(Level.WARNING,
+                                            "%s active network(s) found by name '%s' in host '%s'! %s",
+                                            networkStates.size(), networkName,
+                                            container.parentLink);
+                                }
+                            });
+                }));
+    }
+
+    public static QueryTask getNetworkByHostAndNameQueryTask(String hostLink, String networkName) {
+
+        QueryTask queryTask = QueryUtil.buildQuery(ContainerNetworkState.class, true);
+
+        String parentLinksItemField = QueryTask.QuerySpecification
+                .buildCollectionItemName(ContainerNetworkState.FIELD_NAME_PARENT_LINKS);
+        QueryTask.Query parentsClause = new QueryTask.Query()
+                .setTermPropertyName(parentLinksItemField)
+                .setTermMatchValue(hostLink)
+                .setTermMatchType(MatchType.TERM)
+                .setOccurance(Occurance.MUST_OCCUR);
+
+        QueryTask.Query nameClause = new QueryTask.Query()
+                .setTermPropertyName(ContainerNetworkState.FIELD_NAME_NAME)
+                .setTermMatchValue(networkName)
+                .setTermMatchType(MatchType.TERM)
+                .setOccurance(Occurance.MUST_OCCUR);
+
+        QueryTask.Query stateClause = new QueryTask.Query()
+                .setTermPropertyName(ContainerNetworkState.FIELD_NAME_POWER_STATE)
+                .setTermMatchValue(PowerState.CONNECTED.toString())
+                .setTermMatchType(MatchType.TERM)
+                .setOccurance(Occurance.MUST_OCCUR);
+
+        Query intermediate = new QueryTask.Query().setOccurance(Occurance.MUST_OCCUR);
+        intermediate.addBooleanClause(parentsClause);
+        intermediate.addBooleanClause(nameClause);
+        intermediate.addBooleanClause(stateClause);
+
+        queryTask.querySpec.query.addBooleanClause(intermediate);
+
+        QueryUtil.addExpandOption(queryTask);
+        QueryUtil.addBroadcastOption(queryTask);
+
+        return queryTask;
+    }
 }

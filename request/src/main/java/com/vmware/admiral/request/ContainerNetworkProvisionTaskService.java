@@ -14,6 +14,7 @@ package com.vmware.admiral.request;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
+import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 
 import java.net.URI;
@@ -39,8 +40,8 @@ import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
-import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.network.NetworkUtils;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService.ContainerNetworkProvisionTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -171,12 +172,11 @@ public class ContainerNetworkProvisionTaskService
 
         getContainerNetworkDescription(state, (networkDescription) -> {
             if (Boolean.TRUE.equals(networkDescription.external)) {
-                // The network is defined as external, just validate that it exists actually.
-                getNetwork(UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK,
-                        networkDescription.name),
-                        (networkState) -> {
-                            sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
-                        });
+                getNetworkByName(state, networkDescription.name, (networkState) -> {
+                    updateContainerNetworkState(state, networkState, () -> {
+                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
+                    });
+                });
             } else {
                 createTaskCallback(state,
                         (taskCallback) -> {
@@ -230,6 +230,38 @@ public class ContainerNetworkProvisionTaskService
         }).sendWith(this);
     }
 
+    private void getNetworkByName(ContainerNetworkProvisionTaskState state, String networkName,
+            Consumer<ContainerNetworkState> callback) {
+
+        selectHost(state, (host) -> {
+
+            List<ContainerNetworkState> networkStates = new ArrayList<ContainerNetworkState>();
+
+            QueryTask queryTask = NetworkUtils
+                    .getNetworkByHostAndNameQueryTask(host.documentSelfLink, networkName);
+
+            new ServiceDocumentQuery<ContainerNetworkState>(getHost(), ContainerNetworkState.class)
+                    .query(queryTask,
+                            (r) -> {
+                                if (r.hasException()) {
+                                    failTask("Failed to query for active networks by name '"
+                                            + networkName + "' in host '" + host.documentSelfLink
+                                            + "'!", r.getException());
+                                } else if (r.hasResult()) {
+                                    networkStates.add(r.getResult());
+                                } else {
+                                    if (networkStates.size() == 1) {
+                                        callback.accept(networkStates.get(0));
+                                        return;
+                                    }
+                                    failTask(networkStates.size()
+                                            + " active network(s) found by name '" + networkName
+                                            + "' in host '" + host.documentSelfLink + "'!", null);
+                                }
+                            });
+        });
+    }
+
     private void getHost(String hostLink, Consumer<ComputeState> callback) {
         Operation.createGet(this, hostLink).setCompletion((op, ex) -> {
             if (ex != null) {
@@ -257,6 +289,41 @@ public class ContainerNetworkProvisionTaskService
             if (cluster != null && !cluster.isEmpty()) {
                 patch.driver = ContainerNetworkDescription.NETWORK_DRIVER_OVERLAY;
             }
+        }
+
+        sendRequest(Operation
+                .createPatch(this, currentNetworkState.documentSelfLink)
+                .setBody(patch)
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                String errMsg = String.format("Error while updating network: %s",
+                                        currentNetworkState.documentSelfLink);
+                                logWarning(errMsg);
+                                failTask(errMsg, e);
+                            } else {
+                                callbackFunction.run();
+                            }
+                        }));
+    }
+
+    private void updateContainerNetworkState(ContainerNetworkProvisionTaskState state,
+            ContainerNetworkState currentNetworkState, Runnable callbackFunction) {
+
+        ContainerNetworkState patch = new ContainerNetworkState();
+
+        String contextId;
+        if (state.customProperties != null && (contextId = state.customProperties
+                .get(FIELD_NAME_CONTEXT_ID_KEY)) != null) {
+            patch.compositeComponentLinks = currentNetworkState.compositeComponentLinks;
+            if (patch.compositeComponentLinks == null) {
+                patch.compositeComponentLinks = new ArrayList<>();
+            }
+            patch.compositeComponentLinks.add(UriUtils.buildUriPath(
+                    CompositeComponentFactoryService.SELF_LINK, contextId));
+        } else {
+            callbackFunction.run();
+            return;
         }
 
         sendRequest(Operation
@@ -450,6 +517,13 @@ public class ContainerNetworkProvisionTaskService
             return;
         }
 
+        selectHost(state, (host) -> {
+            callback.accept(Collections.singletonList(host));
+        });
+    }
+
+    private void selectHost(ContainerNetworkProvisionTaskState state,
+            Consumer<ComputeState> callback) {
         getContextContainerStates(state, (states) -> {
             getContextContainerDescriptions(states, (descriptions) -> {
                 List<ContainerState> containerStatesForNetwork = getDependantContainerStates(
@@ -462,7 +536,7 @@ public class ContainerNetworkProvisionTaskService
                 } else {
                     String hostLink = containerStatesForNetwork.get(0).parentLink;
                     getHost(hostLink, (host) -> {
-                        callback.accept(Collections.singletonList(host));
+                        callback.accept(host);
                     });
                 }
             });

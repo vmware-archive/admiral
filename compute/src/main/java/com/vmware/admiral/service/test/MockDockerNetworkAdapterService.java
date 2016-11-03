@@ -57,6 +57,26 @@ public class MockDockerNetworkAdapterService extends StatelessService {
     // Map of network ids and names by hostId. hostId -> Map of networkId -> network name
     private static final Map<String, Map<String, String>> NETWORK_IDS_AND_NAMES = new ConcurrentHashMap<>();
 
+    static {
+        // TODO (VBV-806) - These special initializations are required because some Container
+        // Service tests rely on such external network but they create them directly by creating a
+        // network state (rather than requesting it through the request broker), and in such way the
+        // MockDockerNetworkAdapterService is not properly initialized.
+
+        addNetworkId("qe::test-docker-host-compute", "test-external-network",
+                "test-external-network");
+        addNetworkNames("qe::test-docker-host-compute", "test-external-network",
+                "test-external-network");
+        addNetworkId("qe::test-docker-host-compute2", "test-external-network",
+                "test-external-network");
+        addNetworkNames("qe::test-docker-host-compute2", "test-external-network",
+                "test-external-network");
+        addNetworkId("qe::test-docker-host-compute3", "test-external-network",
+                "test-external-network");
+        addNetworkNames("qe::test-docker-host-compute3", "test-external-network",
+                "test-external-network");
+    }
+
     private static class MockAdapterRequest extends AdapterRequest {
 
         public boolean isProvisioning() {
@@ -175,6 +195,8 @@ public class MockDockerNetworkAdapterService extends StatelessService {
             patchProvisioningTask(state, (Throwable) null);
         } else if (state.isDeprovisioning()) {
             removeNetworkByReference(state.resourceReference);
+            patchProvisioningTask(state, (Throwable) null);
+        } else if (NetworkOperationType.INSPECT.id.equals(state.operationTypeId)) {
             patchProvisioningTask(state, (Throwable) null);
         }
     }

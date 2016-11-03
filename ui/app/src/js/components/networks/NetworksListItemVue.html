@@ -27,6 +27,10 @@
   </div>
   <hr/>
   <div class="container-content">
+    <div class="network-connected-holder">
+      <span class="container-label">{{i18n("app.resource.list.network.connectedDateLabel")}}</span>
+      <span>{{model.connected | timestampToDate}}</span>
+    </div>
     <div class="network-driver-holder">
       <span class="container-label">{{i18n("app.resource.list.network.networkDriverLabel")}}</span>
       <span>{{model.driver}}</span>
