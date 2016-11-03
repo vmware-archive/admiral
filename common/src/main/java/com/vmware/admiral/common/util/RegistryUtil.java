@@ -32,8 +32,18 @@ public class RegistryUtil {
         QueryTask registryQuery = QueryUtil.buildQuery(RegistryState.class, false);
 
         if (group != null) {
-            registryQuery.querySpec.query.addBooleanClause(
-                    QueryUtil.addTenantGroupAndUserClause(group));
+            Query tenantClause = new QueryTask.Query();
+            tenantClause.occurance = Occurance.SHOULD_OCCUR;
+
+            // add query for registries of a specific tenant
+            Query groupClause = QueryUtil.addTenantGroupAndUserClause(group);
+            tenantClause.addBooleanClause(groupClause);
+
+            // add query for global groups
+            Query globalClause = QueryUtil.addTenantGroupAndUserClause((String) null);
+            tenantClause.addBooleanClause(globalClause);
+
+            registryQuery.querySpec.query.addBooleanClause(tenantClause);
         }
 
         registryQuery.querySpec.query.addBooleanClause(createAnyPropertyClause(
