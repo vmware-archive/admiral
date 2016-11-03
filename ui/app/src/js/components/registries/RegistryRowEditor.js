@@ -157,8 +157,8 @@ var getRegistryModel = function() {
     $.extend(toReturn, this.data.item);
   }
 
-  toReturn.address = this.$el.find('#hostname input').val();
-  toReturn.name = this.$el.find('#name input').val();
+  toReturn.address = validator.trim(this.$el.find('#hostname input').val());
+  toReturn.name = validator.trim(this.$el.find('#name input').val());
   toReturn.credential = this.credentialInput.getSelectedOption();
 
   return toReturn;

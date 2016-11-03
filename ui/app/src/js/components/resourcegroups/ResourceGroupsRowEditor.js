@@ -63,7 +63,7 @@ var addEventListeners = function() {
       $.extend(group, _this.group);
     }
 
-    group.name = _this.$el.find('.name-input').val();
+    group.name = validator.trim(_this.$el.find('.name-input').val());
 
     if (_this.group) {
       ResourceGroupsActions.updateGroup(group);

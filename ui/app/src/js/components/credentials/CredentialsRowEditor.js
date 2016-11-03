@@ -136,13 +136,13 @@ var addEventListeners = function() {
     if (_this.credentialsObject) {
       $.extend(toReturn, _this.credentialsObject);
     } else {
-      toReturn.name = _this.$el.find('.name-input').val();
+      toReturn.name = validator.trim(_this.$el.find('.name-input').val());
     }
 
     var credentialsType = _this
       .$el.find('.credentialsEdit input:radio[name="credentialsType"]:checked').val();
     if (credentialsType === constants.CREDENTIALS_TYPE.PASSWORD) {
-      toReturn.username = _this.$el.find('.username-input').val();
+      toReturn.username = validator.trim(_this.$el.find('.username-input').val());
       let usePassword = _this.$el.find('.private-key-input-holder').hasClass('hide');
 
       if (usePassword) {
@@ -151,14 +151,15 @@ var addEventListeners = function() {
       } else {
         toReturn.type = constants.CREDENTIALS_TYPE.PRIVATE_KEY;
         toReturn.privateKey = utils.unmaskValueIfEncrypted(
-                                      _this.$el.find('.private-key-input').val(),
+                                      validator.trim(_this.$el.find('.private-key-input').val()),
                                       toReturn.privateKey);
       }
     } else {
       toReturn.type = constants.CREDENTIALS_TYPE.PUBLIC_KEY;
-      toReturn.publicKey = _this.$el.find('.public-certificate-input').val();
+      toReturn.publicKey = validator.trim(_this.$el.find('.public-certificate-input').val());
       toReturn.privateKey = utils.unmaskValueIfEncrypted(
-                                      _this.$el.find('.private-certificate-input').val(),
+                                      validator.trim(
+                                        _this.$el.find('.private-certificate-input').val()),
                                       toReturn.privateKey);
     }
 
@@ -293,9 +294,9 @@ var toggleSaveButtonState = function($el, enableCondition) {
 var getPasswordValue = function($el) {
   var isPasswordShown = $el.find('.password-input-holder').hasClass('hide');
   if (isPasswordShown) {
-    return $el.find('.password-input-shown').val();
+    return validator.trim($el.find('.password-input-shown').val());
   } else {
-    return $el.find('.password-input').val();
+    return validator.trim($el.find('.password-input').val());
   }
 };
 

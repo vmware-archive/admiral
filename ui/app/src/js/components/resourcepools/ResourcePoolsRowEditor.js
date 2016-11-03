@@ -179,7 +179,7 @@ var addEventListeners = function() {
         };
       }
     }
-    item.resourcePoolState.name = this.$el.find('.name-input').val();
+    item.resourcePoolState.name = validator.trim(this.$el.find('.name-input').val());
     item.resourcePoolState.customProperties = {};
 
     if (this.endpointInput) {

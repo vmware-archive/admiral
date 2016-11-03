@@ -223,6 +223,7 @@ public class SslTrustCertificateService extends StatefulService {
 
     private void validateStateOnStart(SslTrustCertificateState state) throws Exception {
         assertNotEmpty(state.certificate, "certificate");
+        state.certificate = state.certificate.trim();
 
         X509Certificate[] certificates = CertificateUtil.createCertificateChain(state.certificate);
 

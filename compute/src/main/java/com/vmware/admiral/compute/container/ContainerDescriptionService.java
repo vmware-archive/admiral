@@ -460,6 +460,7 @@ public class ContainerDescriptionService extends StatefulService {
     private void validateState(ContainerDescription state) {
         assertNotNull(state.image, "image");
         validateContainerName(state.name);
+
         if (state.instanceAdapterReference == null) {
             state.instanceAdapterReference = UriUtils.buildUri(
                     ManagementUriParts.ADAPTER_DOCKER);
@@ -515,6 +516,14 @@ public class ContainerDescriptionService extends StatefulService {
 
         if (state.healthConfig != null && state.healthConfig.protocol == null) {
             state.healthConfig = null;
+        }
+
+        if (state.hostname != null) {
+            state.hostname = state.hostname.trim();
+        }
+
+        if (state.workingDir != null) {
+            state.workingDir = state.workingDir.trim();
         }
     }
 

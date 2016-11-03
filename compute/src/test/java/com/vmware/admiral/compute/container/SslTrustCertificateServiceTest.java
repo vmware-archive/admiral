@@ -48,8 +48,8 @@ public class SslTrustCertificateServiceTest extends ComputeBaseTest {
 
     @Before
     public void setUp() throws Throwable {
-        sslTrust1 = CommonTestStateFactory.getFileContent("test_ssl_trust.PEM");
-        sslTrust2 = CommonTestStateFactory.getFileContent("test_ssl_trust2.PEM");
+        sslTrust1 = CommonTestStateFactory.getFileContent("test_ssl_trust.PEM").trim();
+        sslTrust2 = CommonTestStateFactory.getFileContent("test_ssl_trust2.PEM").trim();
         sslTrustCert = new SslTrustCertificateState();
         sslTrustCert.certificate = sslTrust1;
 
