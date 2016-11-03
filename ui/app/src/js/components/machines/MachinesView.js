@@ -52,6 +52,12 @@ var MachinesViewVueComponent = Vue.extend({
     $mainPanel.off('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd');
   },
 
+  computed: {
+    searchSuggestions: function() {
+      return constants.MACHINES.SEARCH_SUGGESTIONS;
+    }
+  },
+
   methods: {
     search: function(queryOptions) {
       NavigationActions.openMachines(queryOptions);

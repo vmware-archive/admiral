@@ -52,6 +52,12 @@ var ComputeViewVueComponent = Vue.extend({
     $mainPanel.off('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd');
   },
 
+  computed: {
+    searchSuggestions: function() {
+      return constants.COMPUTE.SEARCH_SUGGESTIONS;
+    }
+  },
+
   methods: {
     goBack: function() {
       NavigationActions.openCompute(this.model.listView && this.model.listView.queryOptions);

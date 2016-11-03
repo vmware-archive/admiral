@@ -66,7 +66,8 @@ var constants = Immutable({
       ENABLE: 'ENABLE',
       DISABLE: 'DISABLE',
       DATACOLLECT: 'DATACOLLECT'
-    }
+    },
+    SEARCH_SUGGESTIONS: ['address']
   },
   // TODO move all entries from CONTAINERS to RESOURCES.CONTAINER
   RESOURCES: {
@@ -123,6 +124,7 @@ var constants = Immutable({
       CONTAINERS: 'containers',
       APPLICATIONS: 'applications'
     },
+    SEARCH_SUGGESTIONS: ['name', 'image', 'parentId', 'documentId', 'status', 'ports', 'command'],
     OPERATION: {
       LIST: 'LIST',
       DETAILS: 'DETAILS',
@@ -138,6 +140,9 @@ var constants = Immutable({
       NETWORKCREATE: 'NETWORKCREATE'
     }
   },
+  COMPUTE: {
+    SEARCH_SUGGESTIONS: ['name', 'type', 'tags']
+  },
   TEMPLATES: {
     TYPES: {
       TEMPLATE: 'TEMPLATE',
@@ -148,6 +153,7 @@ var constants = Immutable({
       IMAGES: 'images',
       TEMPLATES: 'templates'
     },
+    SEARCH_SUGGESTIONS: ['name', 'repository', 'size', 'description'],
     STATUS: {
       PUBLISHED: 'PUBLISHED',
       DRAFT: 'DRAFT'
@@ -163,6 +169,9 @@ var constants = Immutable({
       COMPOSITE_BLUEPRINT: 'COMPOSITE_BLUEPRINT',
       DOCKER_COMPOSE: 'DOCKER_COMPOSE'
     }
+  },
+  MACHINES: {
+    SEARCH_SUGGESTIONS: ['address']
   },
   REQUESTS: {
     STAGES: {

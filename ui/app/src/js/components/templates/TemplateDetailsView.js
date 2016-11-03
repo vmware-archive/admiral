@@ -65,6 +65,9 @@ var TemplateDetailsView = Vue.extend({
       var networkLinks = this.model.templateDetails &&
           this.model.templateDetails.listView.networkLinks;
       return networkLinks || {};
+    },
+    searchSuggestions: function() {
+      return constants.TEMPLATES.SEARCH_SUGGESTIONS;
     }
   },
   events: {

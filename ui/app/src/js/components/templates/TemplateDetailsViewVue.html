@@ -120,7 +120,7 @@
       <div class="sub-title">{{i18n('app.template.details.newDefinition.selectImage')}}</div>
       <div class="list-view">
         <div class="toolbar">
-          <search v-bind:suggestion-properties="['name', 'repository', 'size', 'description']"
+          <search v-bind:suggestion-properties="searchSuggestions"
                   v-bind:placeholder="i18n('app.template.list.searchImagesPlaceholder')"
                   v-bind:query-options="model.newContainerDefinition.listView.queryOptions"
                   v-on:search-change="searchForImage"

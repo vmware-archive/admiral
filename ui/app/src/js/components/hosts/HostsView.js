@@ -75,6 +75,9 @@ var HostsViewVueComponent = Vue.extend({
     },
     errorMessage: function() {
       return this.messages ? this.messages._generic : null;
+    },
+    searchSuggestions: function() {
+      return constants.HOSTS.SEARCH_SUGGESTIONS;
     }
   },
 

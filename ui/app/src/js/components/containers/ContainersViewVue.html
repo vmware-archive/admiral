@@ -12,11 +12,11 @@
 <div class="containers-view" v-bind:class="{'right-context-expanded':  contextExpanded, 'left-list-hover': listMouseover}">
   <div class="list-holder" v-on:mouseenter="onListMouseEnter()" v-on:mouseleave="onListMouseLeave()">
     <div class="main-panel">
-      <div class="list-view containers-list scroll-view" v-bind:class="{'context-selected': model.selectedItem}" 
+      <div class="list-view containers-list scroll-view" v-bind:class="{'context-selected': model.selectedItem}"
            v-if="model.listView">
         <a class="close-button" v-on:click="goBack($event)"><i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
         <div class="toolbar">
-          <search v-bind:suggestion-properties="['name', 'image', 'parentId', 'status']"
+          <search v-bind:suggestion-properties="searchSuggestions"
                   v-bind:placeholder-by-category="placeholderByCategoryMap"
                   v-bind:query-options="model.listView.queryOptions"
                   v-bind:occurrence-properties="

@@ -24,7 +24,7 @@
         class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
       <div class="toolbar">
-        <search v-bind:suggestion-properties="['address']"
+        <search v-bind:suggestion-properties="searchSuggestions"
                 v-bind:placeholder="i18n('app.host.list.searchPlaceholder')"
                 v-bind:query-options="model.listView.queryOptions"
                 v-on:search-change="search">

@@ -10,7 +10,7 @@
  */
 
 import constants from 'core/constants';
-const SEPARATOR = ': ';
+const SEPARATOR = ':';
 
 function Search(properties, changeCallback) {
   var _this = this;
@@ -36,7 +36,7 @@ function Search(properties, changeCallback) {
 
       suggestions.push(q);
       for (let i = 0; i < properties.suggestionProperties.length; i++) {
-        suggestions.push(properties.suggestionProperties[i] + SEPARATOR + q);
+        suggestions.push(properties.suggestionProperties[i] + SEPARATOR + ' ' + q);
       }
     }
 
@@ -96,7 +96,8 @@ function Search(properties, changeCallback) {
       typeahead: [{
         menu: $menu
       }, {
-        source: optionsMatcher
+        source: optionsMatcher,
+        limit: 10
       }],
       minWidth: 300
     });
@@ -131,7 +132,9 @@ Search.prototype.getQueryOptions = function() {
     let token = tokens[i].value;
     let type = token.substring(0, token.indexOf(SEPARATOR));
     let value;
-    if (type) {
+
+    if ((this.properties.suggestionProperties.indexOf(type) > -1) ||
+       token.substring(0, token.indexOf(SEPARATOR + ' '))) {
       value = token.substring(token.indexOf(SEPARATOR) + SEPARATOR.length).trim();
     } else {
       type = 'any';

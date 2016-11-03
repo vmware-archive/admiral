@@ -127,6 +127,9 @@ var ContainersViewVueComponent = Vue.extend({
     creatingNetwork: function() {
       return this.model.creatingResource &&
         this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS;
+    },
+    searchSuggestions: function() {
+      return constants.CONTAINERS.SEARCH_SUGGESTIONS;
     }
   },
   data: function() {
