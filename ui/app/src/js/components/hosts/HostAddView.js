@@ -363,7 +363,7 @@ var HostAddView = Vue.extend({
       var hostData = {
         dto: this.model.dto,
         id: this.model.id,
-        address: this.address,
+        address: validator.trim(this.address),
         hostAlias: this.hostAlias,
         resourcePoolLink: this.resourcePool ? this.resourcePool.documentSelfLink : null,
         credential: this.credential,

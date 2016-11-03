@@ -63,7 +63,7 @@ var addEventListeners = function() {
       $.extend(toReturn, _this.certificateHolder);
     }
 
-    toReturn.certificate = _this.$el.find('.certificate-input').val();
+    toReturn.certificate = validator.trim(_this.$el.find('.certificate-input').val());
 
     if (_this.certificateHolder) {
       CertificatesActions.updateCertificate(toReturn);

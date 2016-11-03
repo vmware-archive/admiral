@@ -256,7 +256,7 @@ var getPlacementModel = function() {
     $.extend(toReturn, this.data.item);
   }
 
-  toReturn.name = this.$el.find('.nameInput input').val();
+  toReturn.name = validator.trim(this.$el.find('.nameInput input').val());
 
   toReturn.groupId = this.placementGroupInput.getValue();
   toReturn.resourcePool = this.resourcePoolInput.getSelectedOption();

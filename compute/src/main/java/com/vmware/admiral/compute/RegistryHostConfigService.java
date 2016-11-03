@@ -109,6 +109,8 @@ public class RegistryHostConfigService extends StatelessService {
         AssertUtil.assertNotNull(state.address, "registryState.address");
         AssertUtil.assertNotNull(state.name, "registryState.name");
         state.address = state.address.trim().replaceAll("/+$", "");
+        state.name = state.name.trim();
+
         hostSpec.uri = getHostUri(state);
         state.address = hostSpec.uri.toString();
     }

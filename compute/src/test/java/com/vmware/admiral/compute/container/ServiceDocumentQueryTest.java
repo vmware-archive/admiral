@@ -42,8 +42,8 @@ public class ServiceDocumentQueryTest extends ComputeBaseTest {
     public void setUp() throws Throwable {
         query = new ServiceDocumentQuery<>(host, SslTrustCertificateState.class);
         certs = new ArrayList<>();
-        sslTrust1 = CommonTestStateFactory.getFileContent("test_ssl_trust.PEM");
-        sslTrust2 = CommonTestStateFactory.getFileContent("test_ssl_trust2.PEM");
+        sslTrust1 = CommonTestStateFactory.getFileContent("test_ssl_trust.PEM").trim();
+        sslTrust2 = CommonTestStateFactory.getFileContent("test_ssl_trust2.PEM").trim();
 
         waitForServiceAvailability(SslTrustCertificateService.FACTORY_LINK);
     }

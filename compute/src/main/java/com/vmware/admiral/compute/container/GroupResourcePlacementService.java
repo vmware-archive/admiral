@@ -538,7 +538,10 @@ public class GroupResourcePlacementService extends StatefulService {
     private void validateStateOnStart(GroupResourcePlacementState state, Operation operation,
             Consumer<Void> callbackFunction) {
         assertNotEmpty(state.name, "name");
+        state.name = state.name.trim();
+
         assertNotEmpty(state.resourcePoolLink, "placement zone");
+
         if (state.priority < 0) {
             throw new IllegalArgumentException(
                     "'priority' must be greater or equal to zero.");

@@ -65,7 +65,9 @@ var LoginPanel = Vue.extend({
       this.loginSuccess = false;
       this.loginError = false;
 
-      services.login(this.username, this.password).then(() => {
+      let username = validator.trim(this.username);
+      let password = validator.trim(this.password);
+      services.login(username, password).then(() => {
         this.loading = false;
         this.loginSuccess = true;
         setTimeout(() => {

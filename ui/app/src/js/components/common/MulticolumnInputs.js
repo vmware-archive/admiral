@@ -232,7 +232,7 @@ MulticolumnInputs.prototype.getData = function() {
         if (this.model[key].type === 'checkbox') {
           val = $input.is(':checked');
         } else {
-          val = $input.val();
+          val = validator.trim($input.val());
           if (val === '__null' && 'name' in object) {
             var repetedValNull = $.grep($items, function(e) {
               return $(e).find('input').eq(0).val() === object.name;

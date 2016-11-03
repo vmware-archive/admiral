@@ -385,14 +385,15 @@ class ContainerDefinitionForm extends Component {
     var result = {};
 
     result.image = this.$imageSearch.typeahead('val');
-    result.name = this.$el.find('.container-name-input .form-control').val();
+    result.name = validator.trim(this.$el.find('.container-name-input .form-control').val());
     result.command = this.commandsEditor.getData();
     result.links = this.linksEditor.getData();
     result.deploymentPolicyId = this.$el.find('.deployment-policy-input .form-control').val();
     result.portBindings = this.portsEditor.getData();
     result.publishAll = this.$el.find('.container-ports-publish-input .checkbox-control')
       .is(':checked');
-    result.hostname = this.$el.find('.container-hostname-input .form-control').val() || null;
+    result.hostname = validator.trim(this.$el.find('.container-hostname-input .form-control').val())
+      || null;
 
     var $networkMode = this.$el.find('.container-network-mode-input');
 
@@ -404,8 +405,9 @@ class ContainerDefinitionForm extends Component {
 
     result.volumes = this.volumesEditor.getData();
     result.volumesFrom = this.volumesFromEditor.getData();
-    result.workingDir = this.$el.find('.container-working-directory-input .form-control').val() ||
-      null;
+    result.workingDir =
+      validator.trim(this.$el.find('.container-working-directory-input .form-control').val())
+      || null;
     result._cluster = this.$el.find('.container-cluster-size-input .form-control').val() || 1;
     result.restartPolicy = this.$el.find('.container-restart-policy-input .form-control').val() ||
       null;
