@@ -63,6 +63,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
 
     private List<ServiceDocument> documentsForDeletion;
     private ContainerDescription containerDescription;
+    private URI requestReservationTaskURI;
     private ResourcePoolState resourcePool;
     private static final String TENANT = "/tenants/coke";
     private static final String BUSINESS_GROUP = "/coke/dev";
@@ -73,7 +74,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         documentsForDeletion = new ArrayList<>();
         waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);
         waitForServiceAvailability(ResourcePoolService.FACTORY_LINK);
-        URI requestReservationTaskURI = UriUtils.buildUri(host,
+        requestReservationTaskURI = UriUtils.buildUri(host,
                 ManagementUriParts.REQUEST_RESERVATION_TASKS);
         setPrivateField(VerificationHost.class.getDeclaredField("referer"), host,
                 requestReservationTaskURI);
@@ -720,6 +721,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         ResourcePlacementReservationRequest rsrvRequest = new ResourcePlacementReservationRequest();
         rsrvRequest.resourceCount = count;
         rsrvRequest.resourceDescriptionLink = descLink;
+        rsrvRequest.referer = requestReservationTaskURI.getPath();
 
         host.testStart(1);
         host.send(Operation

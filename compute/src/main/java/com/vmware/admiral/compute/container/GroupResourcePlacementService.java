@@ -197,6 +197,7 @@ public class GroupResourcePlacementService extends StatefulService {
     public static class ResourcePlacementReservationRequest {
         public long resourceCount;
         public String resourceDescriptionLink;
+        public String referer;
     }
 
     /**
@@ -660,13 +661,15 @@ public class GroupResourcePlacementService extends StatefulService {
     }
 
     private boolean isReservationServiceTaskAuthorizedRequest(Operation patch) {
-        return patch.getReferer() != null
-                && patch.getReferer().getPath() != null
-                && (patch.getReferer().getPath()
+        ResourcePlacementReservationRequest request = patch
+                .getBody(ResourcePlacementReservationRequest.class);
+
+        return request.referer != null
+                && (request.referer
                         .startsWith(ManagementUriParts.REQUEST_RESERVATION_TASKS)
-                        || patch.getReferer().getPath()
+                        || request.referer
                                 .startsWith(ManagementUriParts.REQUEST_RESERVATION_REMOVAL_TASKS)
-                        || patch.getReferer().getPath()
+                        || request.referer
                                 .startsWith(ManagementUriParts.REQUEST_COMPUTE_RESERVATION_TASKS));
 
     }
