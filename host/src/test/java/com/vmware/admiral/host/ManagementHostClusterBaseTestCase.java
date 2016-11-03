@@ -45,7 +45,6 @@ import javax.net.ssl.SSLSocketFactory;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.xenon.common.Operation;
@@ -325,7 +324,7 @@ public abstract class ManagementHostClusterBaseTestCase extends ManagementHostBa
         assertNotNull(response.getDocumentLinks());
 
         assertTrue("Document with selfLink 'test-container-desc' must exists in response!",
-                response.getDocumentLinks().contains(UriUtilsExtended
+                response.getDocumentLinks().contains(UriUtils
                         .buildUriPath(ContainerDescriptionService.FACTORY_LINK,
                                 TestAuthServiceDocumentHelper.TEST_CONTAINER_DESC_SELF_LINK)));
 

@@ -21,7 +21,6 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
@@ -304,7 +303,7 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         });
 
         MockDockerAdapterService dockerAdapterService = new MockDockerAdapterService();
-        host.startService(Operation.createPost(UriUtilsExtended.buildUri(host,
+        host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerAdapterService.class)), dockerAdapterService);
         waitForServiceAvailability(MockDockerAdapterService.SELF_LINK);
 

@@ -26,7 +26,6 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
@@ -38,6 +37,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class ContainerHostServiceIT extends RequestBaseTest {
@@ -61,7 +61,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         containerHostSpec = new ContainerHostSpec();
         containerHostSpec.hostState = computeState;
 
-        containerHostUri = UriUtilsExtended.buildUri(host, ContainerHostService.SELF_LINK);
+        containerHostUri = UriUtils.buildUri(host, ContainerHostService.SELF_LINK);
         DeploymentProfileConfig.getInstance().setTest(false);
     }
 
@@ -294,7 +294,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                             SslTrustCertificateState body = o
                                     .getBody(SslTrustCertificateState.class);
                             Operation storeCertOperation = Operation
-                                    .createPost(UriUtilsExtended.buildUri(host,
+                                    .createPost(UriUtils.buildUri(host,
                                             SslTrustCertificateService.FACTORY_LINK))
                                     .setBody(body)
                                     .setCompletion(
@@ -384,7 +384,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
     }
 
     private URI getContainerHostValidateUri() {
-        return UriUtilsExtended.buildUri(host, ContainerHostService.SELF_LINK,
+        return UriUtils.buildUri(host, ContainerHostService.SELF_LINK,
                 ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
     }
 

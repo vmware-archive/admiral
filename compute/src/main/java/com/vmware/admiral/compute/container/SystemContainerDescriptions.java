@@ -14,7 +14,6 @@ package com.vmware.admiral.compute.container;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
@@ -27,7 +26,7 @@ public class SystemContainerDescriptions {
             ContainerDescriptionService.FACTORY_LINK, DISCOVERED_INSTANCE);
 
     public static final String AGENT_CONTAINER_DESCRIPTION_ID = "admiral_agent";
-    public static final String AGENT_CONTAINER_DESCRIPTION_LINK = UriUtilsExtended
+    public static final String AGENT_CONTAINER_DESCRIPTION_LINK = UriUtils
             .buildUriPath(ContainerDescriptionService.FACTORY_LINK,
                     AGENT_CONTAINER_DESCRIPTION_ID);
     public static final String AGENT_CONTAINER_NAME = AGENT_CONTAINER_DESCRIPTION_ID;

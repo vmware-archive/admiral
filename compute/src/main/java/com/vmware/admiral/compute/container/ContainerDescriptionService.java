@@ -461,7 +461,7 @@ public class ContainerDescriptionService extends StatefulService {
         assertNotNull(state.image, "image");
         validateContainerName(state.name);
         if (state.instanceAdapterReference == null) {
-            state.instanceAdapterReference = UriUtilsExtended.buildUri(
+            state.instanceAdapterReference = UriUtils.buildUri(
                     ManagementUriParts.ADAPTER_DOCKER);
         }
         if (state.memoryLimit != null) {

@@ -37,7 +37,6 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
@@ -95,11 +94,11 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         containerNames.add(createdContainerName);
 
         MockDockerHostAdapterService service = new MockDockerHostAdapterService();
-        host.startService(Operation.createPost(UriUtilsExtended.buildUri(host,
+        host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerHostAdapterService.class)), service);
 
         mockAdapterService = new MockDockerAdapterService();
-        host.startService(Operation.createPost(UriUtilsExtended.buildUri(host,
+        host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerAdapterService.class)), mockAdapterService);
 
         waitForServiceAvailability(ContainerHostDataCollectionService.FACTORY_LINK);
@@ -147,7 +146,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         addContainerToMockAdapter(hostId, containerState.id, containerState.names);
         documentsForDeletion.add(containerState);
 
-        doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+        doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -183,7 +182,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         cs = doPost(cs, ComputeService.FACTORY_LINK);
         documentsForDeletion.add(cs);
 
-        doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+        doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -229,7 +228,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         addContainerToMockAdapter(hostId, containerState.id, containerState.names);
         documentsForDeletion.add(containerState);
 
-        doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+        doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -278,7 +277,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         addContainerToMockAdapter(hostId, containerState.id, containerState.names);
         documentsForDeletion.add(containerState);
 
-        doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+        doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -340,7 +339,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
             addContainerToMockAdapter(hostId, containerBeingProvisioned, containerState.names);
             documentsForDeletion.add(containerState);
 
-            doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+            doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                     ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                     false,
                     Service.Action.PATCH);
@@ -401,7 +400,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         cs = doPost(cs, ComputeService.FACTORY_LINK);
         documentsForDeletion.add(cs);
 
-        doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+        doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -492,7 +491,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         cs.address = "test-address";
         cs.powerState = com.vmware.photon.controller.model.resources.ComputeService.PowerState.ON;
         cs.descriptionLink = hostDescription.documentSelfLink;
-        cs.resourcePoolLink = UriUtilsExtended.buildUriPath(
+        cs.resourcePoolLink = UriUtils.buildUriPath(
                 ResourcePoolService.FACTORY_LINK,
                 UUID.randomUUID().toString());
         cs.customProperties = new HashMap<>();
@@ -519,7 +518,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                 1000L, 1000L, 500L, 100.0, 8);
 
         //Force data collection. (The one that happens every 5 minutes)
-        doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+        doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -549,7 +548,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         //Force a data collection just for that specific host
         ContainerHostDataCollectionState patch = new ContainerHostDataCollectionState();
         patch.computeContainerHostLinks = Collections.singleton(anotherOne.documentSelfLink);
-        doOperation(patch, UriUtilsExtended.buildUri(host,
+        doOperation(patch, UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -566,7 +565,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         });
 
         //CPU usage is updated only when doing "full" data collection.
-        doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+        doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -586,7 +585,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         //Send a patch to remove the second host
         patch.computeContainerHostLinks = Collections.singleton(anotherOne.documentSelfLink);
         patch.remove = true;
-        doOperation(patch, UriUtilsExtended.buildUri(host,
+        doOperation(patch, UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -603,7 +602,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         delete(anotherOne.documentSelfLink);
 
         delete(first.documentSelfLink);
-        doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+        doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -630,7 +629,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                 null, null, 0L, 0.0, 1);
         documentsForDeletion.add(noMemoryData);
 
-        doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+        doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -666,7 +665,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                 MIN_MEMORY, 1000L, 0L, 0.0, 1);
 
         //Force data collection. (The one that happens every 5 minutes)
-        doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+        doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -687,7 +686,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
 
         doDelete(UriUtils.buildUri(host, second.documentSelfLink), false);
 
-        doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+        doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -713,7 +712,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                 resourcePoolState.documentSelfLink, "B", 1, MIN_MEMORY, 800);
 
         doDelete(UriUtils.buildUri(host, second.documentSelfLink), false);
-        doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+        doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);
@@ -760,7 +759,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
             cs = doPost(cs, ComputeService.FACTORY_LINK);
             documentsForDeletion.add(cs);
 
-            doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+            doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                     ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                     false,
                     Service.Action.PATCH);
@@ -871,7 +870,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
 
         documentsForDeletion.add(containerState);
 
-        doOperation(new ContainerHostDataCollectionState(), UriUtilsExtended.buildUri(host,
+        doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
                 false,
                 Service.Action.PATCH);

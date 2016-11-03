@@ -29,7 +29,6 @@ import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourceType;
@@ -1148,7 +1147,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // Disable the hosts
         doOperation(computeState,
-                UriUtilsExtended.buildUri(host, dockerHost.documentSelfLink), false,
+                UriUtils.buildUri(host, dockerHost.documentSelfLink), false,
                 Action.PATCH);
 
         // Try to deploy a container
@@ -1191,13 +1190,13 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ComputeState computeState = new ComputeState();
         computeState.powerState = PowerState.ON;
         doOperation(computeState,
-                UriUtilsExtended.buildUri(host, activeDockerHost.documentSelfLink), false,
+                UriUtils.buildUri(host, activeDockerHost.documentSelfLink), false,
                 Action.PATCH);
 
         computeState.powerState = PowerState.SUSPEND;
         for (ComputeState containerHost : containerHostsToSuspend) {
             doOperation(computeState,
-                    UriUtilsExtended.buildUri(host, containerHost.documentSelfLink), false,
+                    UriUtils.buildUri(host, containerHost.documentSelfLink), false,
                     Action.PATCH);
         }
 
@@ -1230,7 +1229,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // Disable the hosts
         doOperation(computeState,
-                UriUtilsExtended.buildUri(host, dockerHost.documentSelfLink), false,
+                UriUtils.buildUri(host, dockerHost.documentSelfLink), false,
                 Action.PATCH);
 
         // Try to deploy a container

@@ -28,18 +28,15 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
-
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
-
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -73,7 +70,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
         waitForServiceAvailability(ComputeService.FACTORY_LINK);
 
         dockerAdapterService = new MockDockerHostAdapterService();
-        host.startService(Operation.createPost(UriUtilsExtended.buildUri(host,
+        host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerHostAdapterService.class)), dockerAdapterService);
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
 

@@ -42,7 +42,6 @@ import org.junit.Test;
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.util.FileUtil;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
@@ -124,7 +123,7 @@ public class SystemImageRetrievalManagerTest extends BaseTestCase {
         config.value = testXenonImagesPath.toAbsolutePath().toString();
 
         MockConfigurationService mockConfigurationService = new MockConfigurationService(config);
-        host.startService(Operation.createPost(UriUtilsExtended.buildUri(host, UriUtils
+        host.startService(Operation.createPost(UriUtils.buildUri(host, UriUtils
                 .buildUriPath(ConfigurationFactoryService.SELF_LINK,
                         FileUtil.USER_RESOURCES_PATH_VARIABLE))),
                 mockConfigurationService);

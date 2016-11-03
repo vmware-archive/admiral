@@ -33,7 +33,6 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.service.common.RegistryService.ApiVersion;
 import com.vmware.admiral.service.common.RegistryService.RegistryAuthState;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
@@ -250,8 +249,8 @@ public class RegistryAdapterService extends StatelessService {
     private void processV1SearchRequest(RequestContext context) {
         try {
             URI searchUri = URI.create(context.registryState.address);
-            searchUri = UriUtilsExtended.extendUri(searchUri, "/v1/search");
-            searchUri = UriUtilsExtended.extendUriWithQuery(searchUri, SEARCH_QUERY_PROP_NAME,
+            searchUri = UriUtils.extendUri(searchUri, "/v1/search");
+            searchUri = UriUtils.extendUriWithQuery(searchUri, SEARCH_QUERY_PROP_NAME,
                     context.request.customProperties.get(SEARCH_QUERY_PROP_NAME));
 
             logInfo("Performing registry search: %s", searchUri);
@@ -309,7 +308,7 @@ public class RegistryAdapterService extends StatelessService {
         try {
             URI searchUri = URI.create(context.registryState.address);
 
-            searchUri = UriUtilsExtended.extendUri(searchUri, "/v2/_catalog");
+            searchUri = UriUtils.extendUri(searchUri, "/v2/_catalog");
 
             String searchTerm = context.request.customProperties.get(SEARCH_QUERY_PROP_NAME)
                     .toLowerCase();
@@ -369,7 +368,7 @@ public class RegistryAdapterService extends StatelessService {
                                         "Unexpected link header format: " + linkHeader));
                                 return;
                             }
-                            URI nextPageUri = UriUtilsExtended.extendUri(
+                            URI nextPageUri = UriUtils.extendUri(
                                     URI.create(context.registryState.address), nextPagePath);
                             sendV2SearchRequest(nextPageUri, searchTerm, response, context);
                         } else {
@@ -421,7 +420,7 @@ public class RegistryAdapterService extends StatelessService {
     private void doPing(ApiVersion apiVersion, String pingEndpoint,
             RequestContext context, Consumer<Throwable> failureCallback) {
         URI registryUri = context.request.resourceReference;
-        URI pingUri = UriUtilsExtended.extendUri(registryUri, pingEndpoint);
+        URI pingUri = UriUtils.extendUri(registryUri, pingEndpoint);
 
         logInfo("Pinging registry: %s", pingUri);
 

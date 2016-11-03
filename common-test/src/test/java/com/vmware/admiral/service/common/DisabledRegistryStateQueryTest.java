@@ -17,9 +17,9 @@ import java.util.logging.Level;
 
 import org.junit.Test;
 
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.UriUtils;
 
 /**
  * Test the RegistryState query in RegistryFactoryService
@@ -62,7 +62,7 @@ public class DisabledRegistryStateQueryTest extends BaseRegistryStateQueryTest {
         // disable the registry
         registryState.disabled = Boolean.TRUE;
         doOperation(registryState,
-                UriUtilsExtended.buildUri(host, registryState.documentSelfLink), false, Action.PUT);
+                UriUtils.buildUri(host, registryState.documentSelfLink), false, Action.PUT);
 
         // this time expect the grouped registry to be excluded
         waitFor("time out waiting to remove a disabled registry from index..", () -> {

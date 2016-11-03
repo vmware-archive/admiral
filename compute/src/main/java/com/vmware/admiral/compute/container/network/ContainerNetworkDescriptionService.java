@@ -27,7 +27,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServiceDocumentTemplateUtil;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.CloneableResource;
 import com.vmware.admiral.compute.content.YamlMapper;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -212,8 +211,8 @@ public class ContainerNetworkDescriptionService extends StatefulService {
         }
 
         if (state.instanceAdapterReference == null) {
-            state.instanceAdapterReference = UriUtilsExtended
-                    .buildUri(ManagementUriParts.ADAPTER_DOCKER_NETWORK);
+            state.instanceAdapterReference =
+                    UriUtils.buildUri(ManagementUriParts.ADAPTER_DOCKER_NETWORK);
         }
 
         if (state.ipam != null) {

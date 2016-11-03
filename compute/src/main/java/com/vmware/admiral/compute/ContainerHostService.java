@@ -30,7 +30,6 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
@@ -62,7 +61,7 @@ public class ContainerHostService extends StatelessService {
     public static final String CONTAINER_HOST_ALREADY_EXISTS_MESSAGE = "Container host already exists";
 
     public static final String DOCKER_COMPUTE_DESC_ID = "docker-host-compute-desc-id";
-    public static final String DOCKER_COMPUTE_DESC_LINK = UriUtilsExtended.buildUriPath(
+    public static final String DOCKER_COMPUTE_DESC_LINK = UriUtils.buildUriPath(
             ComputeDescriptionService.FACTORY_LINK, DOCKER_COMPUTE_DESC_ID);
 
     public static final String HOST_DOCKER_ADAPTER_TYPE_PROP_NAME = "__adapterDockerType";
@@ -206,7 +205,7 @@ public class ContainerHostService extends StatelessService {
         Operation store = null;
         if (cs.documentSelfLink == null
                 || !cs.documentSelfLink.startsWith(ComputeService.FACTORY_LINK)) {
-            URI uri = UriUtilsExtended.buildUri(getHost(), ComputeService.FACTORY_LINK);
+            URI uri = UriUtils.buildUri(getHost(), ComputeService.FACTORY_LINK);
             store = OperationUtil.createForcedPost(uri);
             if (cs.id == null) {
                 cs.id = ContainerHostUtil.buildHostId(hostSpec.hostState.tenantLinks,
@@ -217,7 +216,7 @@ public class ContainerHostService extends StatelessService {
             cs.documentSelfLink = cs.id;
             cs.powerState = com.vmware.photon.controller.model.resources.ComputeService.PowerState.ON;
         } else {
-            URI uri = UriUtilsExtended.buildUri(getHost(), cs.documentSelfLink);
+            URI uri = UriUtils.buildUri(getHost(), cs.documentSelfLink);
             store = Operation.createPut(uri);
         }
 
@@ -237,7 +236,7 @@ public class ContainerHostService extends StatelessService {
                     }
                     String documentSelfLink = cs.documentSelfLink;
                     if (!documentSelfLink.startsWith(ComputeService.FACTORY_LINK)) {
-                        documentSelfLink = UriUtilsExtended.buildUriPath(
+                        documentSelfLink = UriUtils.buildUriPath(
                                 ComputeService.FACTORY_LINK, documentSelfLink);
                     }
                     op.addResponseHeader(Operation.LOCATION_HEADER, documentSelfLink);
@@ -296,7 +295,7 @@ public class ContainerHostService extends StatelessService {
         AdapterRequest request = new AdapterRequest();
         request.operationTypeId = ContainerHostOperationType.PING.id;
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-        request.resourceReference = UriUtilsExtended.buildUri(getHost(),
+        request.resourceReference = UriUtils.buildUri(getHost(),
                 ComputeService.FACTORY_LINK);
         request.customProperties = cs.customProperties == null ? new HashMap<>() : new HashMap<>(
                 cs.customProperties);
@@ -356,7 +355,7 @@ public class ContainerHostService extends StatelessService {
     }
 
     private void updateContainerHostInfo(String documentSelfLink) {
-        URI uri = UriUtilsExtended.buildUri(getHost(),
+        URI uri = UriUtils.buildUri(getHost(),
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK);
         ContainerHostDataCollectionState state = new ContainerHostDataCollectionState();
         state.computeContainerHostLinks = Collections.singleton(documentSelfLink);

@@ -22,13 +22,14 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import com.vmware.admiral.service.common.ReverseProxyService;
+import com.vmware.xenon.common.UriUtils;
 
-public class UriUtilsExtended extends com.vmware.xenon.common.UriUtils {
+public class UriUtilsExtended {
     private static final String MINIMUM_DOCKER_API_VERSION = "1.19";
-    private static final String DEFAULT_DOCKER_SCHEME = UriUtilsExtended.HTTPS_SCHEME;
+    private static final String DEFAULT_DOCKER_SCHEME = UriUtils.HTTPS_SCHEME;
     private static final int DEFAULT_DOCKER_HTTP_PORT = 80;
     private static final int DEFAULT_DOCKER_HTTPS_PORT = 443;
-    private static final String DEFAULT_DOCKER_REGISTRY_SCHEME = UriUtilsExtended.HTTPS_SCHEME;
+    private static final String DEFAULT_DOCKER_REGISTRY_SCHEME = UriUtils.HTTPS_SCHEME;
     private static final int DEFAULT_DOCKER_REGISTRY_HTTP_PORT = 80;
     private static final int DEFAULT_DOCKER_REGISTRY_HTTPS_PORT = 443;
     /* Host URL pattern */
@@ -47,8 +48,8 @@ public class UriUtilsExtended extends com.vmware.xenon.common.UriUtils {
             scheme = DEFAULT_DOCKER_REGISTRY_SCHEME;
         }
 
-        if (!scheme.equalsIgnoreCase(UriUtilsExtended.HTTP_SCHEME)
-                && !scheme.equalsIgnoreCase(UriUtilsExtended.HTTPS_SCHEME)) {
+        if (!scheme.equalsIgnoreCase(UriUtils.HTTP_SCHEME)
+                && !scheme.equalsIgnoreCase(UriUtils.HTTPS_SCHEME)) {
             throw new IllegalArgumentException(
                     "Unsupported scheme, must be http or https: " + scheme);
         }
@@ -58,7 +59,7 @@ public class UriUtilsExtended extends com.vmware.xenon.common.UriUtils {
         if (servicePort != null && !servicePort.isEmpty()) {
             port = Integer.parseInt(servicePort);
         } else {
-            if (UriUtilsExtended.HTTP_SCHEME.equals(scheme)) {
+            if (UriUtils.HTTP_SCHEME.equals(scheme)) {
                 port = DEFAULT_DOCKER_REGISTRY_HTTP_PORT;
             } else {
                 port = DEFAULT_DOCKER_REGISTRY_HTTPS_PORT;
@@ -84,8 +85,8 @@ public class UriUtilsExtended extends com.vmware.xenon.common.UriUtils {
         }
         scheme = scheme.toLowerCase();
 
-        if (!scheme.equalsIgnoreCase(UriUtilsExtended.HTTP_SCHEME)
-                && !scheme.equalsIgnoreCase(UriUtilsExtended.HTTPS_SCHEME)) {
+        if (!scheme.equalsIgnoreCase(UriUtils.HTTP_SCHEME)
+                && !scheme.equalsIgnoreCase(UriUtils.HTTPS_SCHEME)) {
             throw new IllegalArgumentException(
                     "Unsupported scheme, must be http or https: " + scheme);
         }
@@ -95,7 +96,7 @@ public class UriUtilsExtended extends com.vmware.xenon.common.UriUtils {
             port = Integer.parseInt(servicePort);
         }
         if (port == -1) {
-            if (UriUtilsExtended.HTTP_SCHEME.equals(scheme)) {
+            if (UriUtils.HTTP_SCHEME.equals(scheme)) {
                 port = DEFAULT_DOCKER_HTTP_PORT;
             } else {
                 port = DEFAULT_DOCKER_HTTPS_PORT;
@@ -202,7 +203,7 @@ public class UriUtilsExtended extends com.vmware.xenon.common.UriUtils {
             return null;
         }
         String encodedUri = getReverseProxyEncoded(in.toString());
-        return buildUri(buildUriPath(ReverseProxyService.SELF_LINK, encodedUri));
+        return UriUtils.buildUri(UriUtils.buildUriPath(ReverseProxyService.SELF_LINK, encodedUri));
     }
 
     /**
@@ -223,12 +224,12 @@ public class UriUtilsExtended extends com.vmware.xenon.common.UriUtils {
      * @return {@link ReverseProxyService} location
      */
     public static String getReverseProxyLocation(String location, URI currentUri) {
-        if (location.startsWith(URI_PATH_CHAR)) { // relative path
-            location = buildUri(currentUri, location).toString()
+        if (location.startsWith(UriUtils.URI_PATH_CHAR)) { // relative path
+            location = UriUtils.buildUri(currentUri, location).toString()
                     // keep trailing '/' if applies (important! e.g. for the ShellInABox case)
-                    + (location.endsWith(URI_PATH_CHAR) ? URI_PATH_CHAR : "");
+                    + (location.endsWith(UriUtils.URI_PATH_CHAR) ? UriUtils.URI_PATH_CHAR : "");
         }
-        return buildUriPath(ReverseProxyService.SELF_LINK, getReverseProxyEncoded(location));
+        return UriUtils.buildUriPath(ReverseProxyService.SELF_LINK, getReverseProxyEncoded(location));
     }
 
     /**
@@ -256,14 +257,14 @@ public class UriUtilsExtended extends com.vmware.xenon.common.UriUtils {
 
         String opPath = opUri.getPath().replaceFirst(ReverseProxyService.SELF_LINK, "");
 
-        if (opPath.startsWith(URI_PATH_CHAR)) {
+        if (opPath.startsWith(UriUtils.URI_PATH_CHAR)) {
             opPath = opPath.substring(1);
         } else {
             // no target URI provided!
             return null;
         }
 
-        String encodedUri = opPath.split(URI_PATH_CHAR)[0];
+        String encodedUri = opPath.split(UriUtils.URI_PATH_CHAR)[0];
         String decodedUri;
         try {
             decodedUri = getReverseProxyDecoded(encodedUri);
@@ -272,28 +273,29 @@ public class UriUtilsExtended extends com.vmware.xenon.common.UriUtils {
             return null;
         }
 
-        URI targetUri = buildUri(decodedUri);
+        URI targetUri = UriUtils.buildUri(decodedUri);
         if (targetUri == null) {
             throw new IllegalArgumentException("Invalid target URI: " + decodedUri);
         }
 
-        Map<String, String> queryParams = parseUriQueryParams(targetUri);
-        queryParams.putAll(parseUriQueryParams(opUri));
+        Map<String, String> queryParams = UriUtils.parseUriQueryParams(targetUri);
+        queryParams.putAll(UriUtils.parseUriQueryParams(opUri));
 
         String opExtraPath = opPath.replace(encodedUri, "");
-        if (!opExtraPath.isEmpty() && !opExtraPath.equals(URI_PATH_CHAR)) {
-            targetUri = extendUri(targetUri, opExtraPath);
+        if (!opExtraPath.isEmpty() && !opExtraPath.equals(UriUtils.URI_PATH_CHAR)) {
+            targetUri = UriUtils.extendUri(targetUri, opExtraPath);
         }
 
-        if (opExtraPath.endsWith(URI_PATH_CHAR) && !targetUri.toString().endsWith(URI_PATH_CHAR)) {
+        if (opExtraPath.endsWith(UriUtils.URI_PATH_CHAR) &&
+                !targetUri.toString().endsWith(UriUtils.URI_PATH_CHAR)) {
             // keep trailing '/' if applies (important! e.g. for the ShellInABox case)
-            targetUri = buildUri(targetUri.toString() + URI_PATH_CHAR);
+            targetUri = UriUtils.buildUri(targetUri.toString() + UriUtils.URI_PATH_CHAR);
         }
 
         if (!queryParams.isEmpty()) {
-            targetUri = extendUriWithQuery(
+            targetUri = UriUtils.extendUriWithQuery(
                     // keep trailing '/' if applies (important! e.g. for the ShellInABox case)
-                    buildUri(targetUri.toString().replace("?" + targetUri.getRawQuery(), "")),
+                    UriUtils.buildUri(targetUri.toString().replace("?" + targetUri.getRawQuery(), "")),
                     flattenQueryParams(queryParams));
         }
 

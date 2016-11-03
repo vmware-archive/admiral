@@ -27,7 +27,6 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -36,6 +35,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState.TaskStage;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
@@ -305,7 +305,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
 
             URI callbackReference = URI.create(request.serviceTaskCallback.serviceSelfLink);
             if (callbackReference.getScheme() == null) {
-                callbackReference = UriUtilsExtended.buildUri(getHost(),
+                callbackReference = UriUtils.buildUri(getHost(),
                         request.serviceTaskCallback.serviceSelfLink);
             }
 

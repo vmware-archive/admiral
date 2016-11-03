@@ -28,7 +28,6 @@ import org.junit.Test;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
@@ -85,7 +84,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
     @Test
     public void testWithSingleCompute() throws Throwable {
         ComputeDescription compute = TestRequestStateFactory.createDockerHostDescription();
-        compute.instanceAdapterReference = UriUtilsExtended.buildUri(host,
+        compute.instanceAdapterReference = UriUtils.buildUri(host,
                 ManagementUriParts.ADAPTER_DOCKER);
         CompositeDescription compositeDesc = createCompositeDesc(compute);
         RequestBrokerState request = startComputeRequest(compositeDesc);
@@ -119,11 +118,11 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
     public void testWithMultipleComputes() throws Throwable {
 
         ComputeDescription compute1 = TestRequestStateFactory.createDockerHostDescription();
-        compute1.instanceAdapterReference = UriUtilsExtended.buildUri(host,
+        compute1.instanceAdapterReference = UriUtils.buildUri(host,
                 ManagementUriParts.ADAPTER_DOCKER);
 
         ComputeDescription compute2 = TestRequestStateFactory.createDockerHostDescription();
-        compute2.instanceAdapterReference = UriUtilsExtended.buildUri(host,
+        compute2.instanceAdapterReference = UriUtils.buildUri(host,
                 ManagementUriParts.ADAPTER_DOCKER);
 
         CompositeDescription compositeDesc = createCompositeDesc(compute1, compute2);

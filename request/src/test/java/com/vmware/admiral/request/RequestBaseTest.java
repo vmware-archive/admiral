@@ -28,7 +28,6 @@ import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourceType;
@@ -78,6 +77,7 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService.Resource
 import com.vmware.xenon.common.OperationProcessingChain;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.VerificationHost;
@@ -297,7 +297,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         synchronized (initializationLock) {
             if (hostDesc == null) {
                 hostDesc = TestRequestStateFactory.createDockerHostDescription();
-                hostDesc.instanceAdapterReference = UriUtilsExtended.buildUri(host,
+                hostDesc.instanceAdapterReference = UriUtils.buildUri(host,
                         MockComputeHostInstanceAdapter.SELF_LINK);
                 hostDesc = doPost(hostDesc,
                         ComputeDescriptionService.FACTORY_LINK);

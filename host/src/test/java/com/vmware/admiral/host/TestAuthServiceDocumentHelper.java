@@ -14,12 +14,12 @@ package com.vmware.admiral.host;
 import java.util.ArrayList;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.UriUtils;
 
 /**
  * Generic class which is used for test purposes. It provides ability to have predefine set of
@@ -42,7 +42,7 @@ public class TestAuthServiceDocumentHelper extends AbstractInitialBootService {
 
     private ContainerDescription createContainerDescription() {
         ContainerDescription containerDesc = new ContainerDescription();
-        containerDesc.documentSelfLink = UriUtilsExtended
+        containerDesc.documentSelfLink = UriUtils
                 .buildUriPath(ContainerDescriptionService.FACTORY_LINK,
                         TEST_CONTAINER_DESC_SELF_LINK);
         containerDesc.name = "test-name";

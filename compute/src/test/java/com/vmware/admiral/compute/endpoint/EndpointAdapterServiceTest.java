@@ -28,7 +28,6 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -163,7 +162,7 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
 
         DeploymentProfileConfig.getInstance().setTest(true);
         host.testStart(1);
-        URI validateUri = UriUtilsExtended.buildUri(this.host, EndpointAdapterService.SELF_LINK,
+        URI validateUri = UriUtils.buildUri(this.host, EndpointAdapterService.SELF_LINK,
                 ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
         Operation op = Operation
                 .createPut(validateUri)
