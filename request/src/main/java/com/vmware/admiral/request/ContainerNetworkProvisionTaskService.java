@@ -174,7 +174,13 @@ public class ContainerNetworkProvisionTaskService
             if (Boolean.TRUE.equals(networkDescription.external)) {
                 getNetworkByName(state, networkDescription.name, (networkState) -> {
                     updateContainerNetworkState(state, networkState, () -> {
-                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
+                        ContainerNetworkProvisionTaskState patchState = createUpdateSubStageTask(
+                                state, SubStage.COMPLETED);
+                        // Small workaround to get the actual self link for discovered networks...
+                        patchState.customProperties = new HashMap<>();
+                        patchState.customProperties.put("__externalNetworkSelfLink",
+                                networkState.documentSelfLink);
+                        sendSelfPatch(patchState);
                     });
                 });
             } else {
