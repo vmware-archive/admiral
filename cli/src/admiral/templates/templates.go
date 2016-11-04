@@ -81,6 +81,26 @@ type Template struct {
 	ParentDescriptionLink string   `json:"parentDescriptionLink"`
 }
 
+func (t *Template) GetContainersCount() int {
+	count := 0
+	for _, link := range t.DescriptionLinks {
+		if strings.Contains(link, "/container-descriptions/") {
+			count++
+		}
+	}
+	return count
+}
+
+func (t *Template) GetNetworksCount() int {
+	count := 0
+	for _, link := range t.DescriptionLinks {
+		if strings.Contains(link, "/container-network-descriptions/") {
+			count++
+		}
+	}
+	return count
+}
+
 //GetID returns the ID of the template.
 func (t *Template) GetID() string {
 	return strings.Replace(*t.DocumentSelfLink, "/resources/composite-descriptions/", "", -1)
@@ -130,16 +150,13 @@ func (lt *TemplatesList) GetOutputStringWithoutContainers() string {
 		return "No elements found."
 	}
 	sort.Sort(TemplateSorter(lt.Results))
-	buffer.WriteString("ID\tNAME\tCONTAINERS\n")
+	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS\n")
 	for _, template := range lt.Results {
 		if template.ParentDescriptionLink != "" {
 			continue
 		}
-		contCnt := "n/a"
-		if len(template.DescriptionLinks) > 0 {
-			contCnt = fmt.Sprintf("%d", len(template.DescriptionLinks))
-		}
-		output := utils.GetFormattedString(template.GetID(), template.Name, contCnt)
+		output := utils.GetFormattedString(template.GetID(), template.Name,
+			template.GetContainersCount(), template.GetNetworksCount())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
@@ -154,16 +171,13 @@ func (lt *TemplatesList) GetOutputStringWithContainers() (string, error) {
 	if len(lt.Results) < 1 {
 		return "No elements found.", nil
 	}
-	buffer.WriteString("ID\tNAME\tCONTAINERS\n")
+	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS\n")
 	for _, template := range lt.Results {
 		if template.ParentDescriptionLink != "" {
 			continue
 		}
-		contCnt := "n/a"
-		if len(template.DescriptionLinks) > 0 {
-			contCnt = fmt.Sprintf("%d", len(template.DescriptionLinks))
-		}
-		output := utils.GetFormattedString(template.GetID(), template.Name, contCnt)
+		output := utils.GetFormattedString(template.GetID(), template.Name,
+			template.GetContainersCount(), template.GetNetworksCount())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 		for _, link := range template.DescriptionLinks {

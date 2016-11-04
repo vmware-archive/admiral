@@ -37,7 +37,6 @@ func CheckJson(err error) {
 	if err != nil {
 		fmt.Println("Json error when reading and/or writing.")
 		fmt.Println(err.Error())
-		panic(err.Error())
 		os.Exit(1)
 	}
 }

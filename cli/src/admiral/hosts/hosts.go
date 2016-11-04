@@ -53,6 +53,13 @@ type Host struct {
 	ResourcePoolLink string             `json:"resourcePoolLink,omitempty"`
 }
 
+func (h *Host) GetName() string {
+	if val, ok := h.CustomProperties["__hostAlias"]; !ok || val == nil || strings.TrimSpace(*val) == "" {
+		return *h.CustomProperties["__Name"]
+	}
+	return *h.CustomProperties["__hostAlias"]
+}
+
 func (h *Host) GetResourcePoolID() string {
 	return utils.GetResourceID(h.ResourcePoolLink)
 }
@@ -142,7 +149,7 @@ func (hl *HostsList) GetOutputString() string {
 	buffer.WriteString("\n")
 	for _, val := range hl.Documents {
 		pzName, _ := placementzones.GetPZName(val.ResourcePoolLink)
-		output := utils.GetFormattedString(val.Id, val.Address, *val.CustomProperties["__Name"], val.PowerState,
+		output := utils.GetFormattedString(val.Id, val.Address, val.GetName(), val.PowerState,
 			*val.CustomProperties["__Containers"], pzName)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
