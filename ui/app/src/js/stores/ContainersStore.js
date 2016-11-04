@@ -282,13 +282,12 @@ let getNetworkLinks = function(containerOrCluster, networks) {
     var container = containerOrCluster[i];
     var containerNetworks = container.networks || {};
 
-    for (var networkLink in containerNetworks) {
-      if (!containerNetworks.hasOwnProperty(networkLink)) {
+    for (var networkName in containerNetworks) {
+      if (!containerNetworks.hasOwnProperty(networkName)) {
         continue;
       }
 
-      networkLink = links.NETWORKS + '/' + networkLink;
-      var cNetworks = networks.filter(n => n.documentSelfLink === networkLink);
+      var cNetworks = networks.filter(n => n.name === networkName);
       if (cNetworks.length !== 1) {
         continue;
       }
@@ -297,7 +296,7 @@ let getNetworkLinks = function(containerOrCluster, networks) {
         networkLinks[container.documentSelfLink] = [];
       }
 
-      networkLinks[container.documentSelfLink].push(networkLink);
+      networkLinks[container.documentSelfLink].push(cNetworks[0].documentSelfLink);
     }
   }
   return networkLinks;
