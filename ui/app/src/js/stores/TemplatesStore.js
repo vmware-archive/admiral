@@ -905,7 +905,7 @@ let TemplatesStore = Reflux.createStore({
     var template = containerDefinition.asMutable({deep: true});
 
     if (increment) {
-      if (template._cluster === 0) {
+      if (!template._cluster) {
         template._cluster = 1;
       }
       template._cluster += 1;
