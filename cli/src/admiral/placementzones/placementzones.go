@@ -23,6 +23,9 @@ import (
 	"admiral/properties"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"fmt"
+	"os"
+	"strconv"
 )
 
 var (
@@ -31,22 +34,61 @@ var (
 )
 
 type PlacementZone struct {
-	PlacementZoneState PlacementZoneState `json:"resourcePoolState"`
-	DocumentSelfLink   string             `json:"documentSelfLink"`
+	ResourcePoolState ResourcePoolState `json:"resourcePoolState"`
+	DocumentSelfLink  string            `json:"documentSelfLink"`
 }
 
 func (pz *PlacementZone) GetID() string {
 	return strings.Replace(pz.DocumentSelfLink, "/resources/pools/", "", -1)
 }
 
-type PlacementZoneState struct {
+type ResourcePoolState struct {
 	Name             string             `json:"name,omitempty"`
+	MaxCpuCount      int64              `json:"maxCpuCount"`
+	MaxMemoryBytes   int64              `json:"maxMemoryBytes"`
 	CustomProperties map[string]*string `json:"customProperties"`
 	DocumentSelfLink string             `json:"documentSelfLink,omitempty"`
 }
 
-func (pzs *PlacementZoneState) GetID() string {
-	return strings.Replace(pzs.DocumentSelfLink, "/resources/pools/", "", -1)
+func (rps *ResourcePoolState) GetID() string {
+	return strings.Replace(rps.DocumentSelfLink, "/resources/pools/", "", -1)
+}
+
+func (rps *ResourcePoolState) GetUsedMemoryPercentage() string {
+	var (
+		maxMemory       int64
+		availableMemory int64
+		usedMemory      int64
+		err             error
+	)
+	maxMemory = rps.MaxMemoryBytes
+	if am, ok := rps.CustomProperties["__availableMemory"]; !ok || am == nil {
+		availableMemory = 0
+	} else {
+		availableMemory, err = strconv.ParseInt(*am, 10, 64)
+	}
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	usedMemory = maxMemory - availableMemory
+	percentage := 0.0
+	if maxMemory != 0 {
+		percentage = (float64(usedMemory) / float64(maxMemory)) * 100
+	}
+	return fmt.Sprintf("%.2f%%", utils.MathRound(percentage*100)/100)
+}
+
+func (rps *ResourcePoolState) GetUsedCpuPercentage() string {
+	if ac, ok := rps.CustomProperties["__cpuUsage"]; !ok || ac == nil {
+		return "0%"
+	}
+	result, err := strconv.ParseFloat(*rps.CustomProperties["__cpuUsage"], 64)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	return fmt.Sprintf("%.2f%%", utils.MathRound(result*100)/100)
 }
 
 type PlacementZoneList struct {
@@ -79,10 +121,11 @@ func (rpl *PlacementZoneList) FetchPZ() (int, error) {
 func (rpl *PlacementZoneList) GetOutputString() string {
 	var buffer bytes.Buffer
 	if len(rpl.Documents) > 0 {
-		buffer.WriteString("ID\tNAME\n")
+		buffer.WriteString("ID\tNAME\tMEMORY\tCPU\n")
 		for _, link := range rpl.DocumentLinks {
 			val := rpl.Documents[link]
-			output := utils.GetFormattedString(val.PlacementZoneState.GetID(), val.PlacementZoneState.Name)
+			output := utils.GetFormattedString(val.ResourcePoolState.GetID(), val.ResourcePoolState.Name,
+				val.ResourcePoolState.GetUsedMemoryPercentage(), val.ResourcePoolState.GetUsedCpuPercentage())
 			buffer.WriteString(output)
 			buffer.WriteString("\n")
 		}
@@ -118,12 +161,12 @@ func RemovePZID(id string) (string, error) {
 func AddPZ(rpName string, custProps []string) (string, error) {
 	url := config.URL + "/resources/elastic-placement-zones-config"
 	cp := properties.ParseCustomProperties(custProps)
-	pzState := PlacementZoneState{
+	pzState := ResourcePoolState{
 		Name:             rpName,
 		CustomProperties: cp,
 	}
 	pz := &PlacementZone{
-		PlacementZoneState: pzState,
+		ResourcePoolState: pzState,
 	}
 	jsonBody, _ := json.Marshal(pz)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
@@ -134,7 +177,7 @@ func AddPZ(rpName string, custProps []string) (string, error) {
 	pz = &PlacementZone{}
 	err := json.Unmarshal(respBody, pz)
 	utils.CheckJson(err)
-	return pz.PlacementZoneState.GetID(), nil
+	return pz.ResourcePoolState.GetID(), nil
 
 }
 
@@ -153,7 +196,7 @@ func EditPZID(id, newName string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(PlacementZoneList), utils.PLACEMENT_ZONE)
 	utils.CheckIdError(err)
 	url := config.URL + utils.CreateResLinkForPlacementZone(fullId)
-	pzState := PlacementZoneState{
+	pzState := ResourcePoolState{
 		Name: newName,
 	}
 	jsonBody, _ := json.Marshal(pzState)
@@ -170,7 +213,7 @@ func GetPZLinks(pzName string) []string {
 	pzl.FetchPZ()
 	links := make([]string, 0)
 	for key, val := range pzl.Documents {
-		if val.PlacementZoneState.Name == pzName {
+		if val.ResourcePoolState.Name == pzName {
 			links = append(links, key)
 		}
 	}
@@ -179,7 +222,7 @@ func GetPZLinks(pzName string) []string {
 
 func GetPZName(link string) (string, error) {
 	url := config.URL + link
-	pzs := &PlacementZoneState{}
+	pzs := &ResourcePoolState{}
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {

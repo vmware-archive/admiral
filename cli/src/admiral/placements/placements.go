@@ -121,7 +121,7 @@ func (pl *PlacementList) GetResource(index int) selflink.Identifiable {
 }
 
 func (pl *PlacementList) FetchPlacements() (int, error) {
-	url := config.URL + "/resources/group-placements?expand"
+	url := config.URL + "/resources/group-placements?documentType=true&expand=true"
 
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)

@@ -51,7 +51,7 @@ func TestAddRemovePlacementZone(t *testing.T) {
 	actualPZ := PlacementZone{}
 	exist := false
 	for _, rp := range pzl.Documents {
-		if rp.PlacementZoneState.GetID() == id {
+		if rp.ResourcePoolState.GetID() == id {
 			exist = true
 			actualPZ = rp
 			break
@@ -62,8 +62,8 @@ func TestAddRemovePlacementZone(t *testing.T) {
 		t.Error("Added placement zone is not found.")
 	}
 
-	if actualPZ.PlacementZoneState.Name != name {
-		t.Errorf("Expected name: %s, actual name: %s", name, actualPZ.PlacementZoneState.Name)
+	if actualPZ.ResourcePoolState.Name != name {
+		t.Errorf("Expected name: %s, actual name: %s", name, actualPZ.ResourcePoolState.Name)
 	}
 
 	// Testing phase 2
@@ -75,7 +75,7 @@ func TestAddRemovePlacementZone(t *testing.T) {
 	_, err = pzl.FetchPZ()
 	exist = false
 	for _, rp := range pzl.Documents {
-		if rp.PlacementZoneState.GetID() == id {
+		if rp.ResourcePoolState.GetID() == id {
 			exist = true
 			break
 		}
@@ -103,7 +103,7 @@ func TestUpdatePlacementZone(t *testing.T) {
 	actualPZ := PlacementZone{}
 	exist := false
 	for _, pz := range pzl.Documents {
-		if pz.PlacementZoneState.GetID() == id {
+		if pz.ResourcePoolState.GetID() == id {
 			exist = true
 			actualPZ = pz
 			break
@@ -114,8 +114,8 @@ func TestUpdatePlacementZone(t *testing.T) {
 		t.Error("Added placement zone is not found.")
 	}
 
-	if actualPZ.PlacementZoneState.Name != newName {
-		t.Errorf("Expected new name: %s, actual new name: %s", newName, actualPZ.PlacementZoneState.Name)
+	if actualPZ.ResourcePoolState.Name != newName {
+		t.Errorf("Expected new name: %s, actual new name: %s", newName, actualPZ.ResourcePoolState.Name)
 	}
 
 	// Cleaning

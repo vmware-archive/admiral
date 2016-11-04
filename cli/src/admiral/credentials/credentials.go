@@ -82,7 +82,7 @@ func (lc *ListCredentials) GetCount() int {
 //FetchCredentials fetches all credentials. It return the count
 //of fetched credentials.
 func (lc *ListCredentials) FetchCredentials() (int, error) {
-	url := config.URL + "/core/auth/credentials?expand&$filter=customProperties/scope%20ne%20%27SYSTEM%27"
+	url := config.URL + "/core/auth/credentials?documentType=true&expand=true&$filter=customProperties/scope%20ne%20%27SYSTEM%27"
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {

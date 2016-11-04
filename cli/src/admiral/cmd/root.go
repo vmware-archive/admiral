@@ -32,7 +32,7 @@ func init() {
 		DeploymentPoliciesRootCmd, HostsRootCmd, PlacementsRootCmd,
 		PlacementZonesRootCmd, TemplatesRootCmd, RegistriesRootCmd,
 		NetworksRootCmd, CustomPropertiesRootCmd, AutocompleteCmd,
-		ProjectsRootCmd, RequestsRootCmd)
+		ProjectsRootCmd, RequestsRootCmd, ConfigRootCmd)
 
 	RootCmd.Flags().BoolVar(&ShowVersion, "version", false, "Admiral CLI Version.")
 	RootCmd.PersistentFlags().BoolVar(&utils.Verbose, "verbose", false, "Showing every request/response json body.")
