@@ -21,6 +21,5 @@ public class HostInitUiServicesConfig extends HostInitServiceHelper {
     public static void startServices(ServiceHost host) {
         startServices(host, UiService.class, UserSessionService.class,
                 ContainerImageIconService.class);
-        startServices(host, com.vmware.xenon.ui.UiService.class);
     }
 }
