@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -471,7 +472,8 @@ public class ContainerRemovalTaskService
                 .createGet(this, cs.descriptionLink)
                 .setCompletion(
                         (o, e) -> {
-                            if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                            if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND ||
+                                    e instanceof CancellationException) {
                                 logFine("Resource [%s] not found, it will not be removed!",
                                         cs.descriptionLink);
                                 skipOperationException.set(o.getId());
