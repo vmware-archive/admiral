@@ -626,6 +626,15 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
         verifyContainerStateExists(containerStateReference);
 
+        waitFor(() -> {
+            ContainerState container = getDocument(ContainerState.class,
+                    containerStateReference.getPath());
+            if (container.powerState == PowerState.UNKNOWN) {
+                return false;
+            }
+            return true;
+        });
+
         // get and validate the container state
         sendGetContainerStateRequest();
         containerId = containerState.id;
