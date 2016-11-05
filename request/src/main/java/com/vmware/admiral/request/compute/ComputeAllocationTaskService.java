@@ -328,6 +328,9 @@ public class ComputeAllocationTaskService
             String absImageId = state.getCustomProperty(
                     ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
             String imageId = mapping.getMappingValue("imageType", absImageId);
+            if (imageId != null) {
+                imageId = absImageId;
+            }
 
             rootDisk.sourceImageReference = URI.create(imageId);
             rootDisk.bootConfig = new DiskState.BootConfig();

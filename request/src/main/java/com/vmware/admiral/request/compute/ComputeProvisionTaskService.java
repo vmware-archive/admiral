@@ -42,11 +42,11 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.tasks.ProvisionComputeTaskService;
+import com.vmware.photon.controller.model.tasks.ServiceTaskCallback;
 import com.vmware.photon.controller.model.tasks.SubTaskService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.OperationSequence;
-import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
@@ -241,16 +241,13 @@ public class ComputeProvisionTaskService extends
     }
 
     private void createSubTaskForProvisionCallbacks(ComputeProvisionTaskState currentState) {
-        SubTaskService.SubTaskState subTaskInitState = new SubTaskService.SubTaskState();
-        ComputeProvisionTaskState subTaskPatchBody = new ComputeProvisionTaskState();
-        subTaskPatchBody.taskInfo = new TaskState();
-        subTaskPatchBody.taskSubStage = SubStage.PROVISIONING_COMPUTE_COMPLETED;
-        subTaskPatchBody.taskInfo.stage = TaskState.TaskStage.STARTED;
-        // tell the sub task with what to patch us, on completion
-        subTaskInitState.parentPatchBody = Utils.toJson(subTaskPatchBody);
-        subTaskInitState.errorThreshold = 0;
 
-        subTaskInitState.parentTaskLink = getSelfLink();
+        ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getSelfLink());
+        callback.onSuccessTo(SubStage.PROVISIONING_COMPUTE_COMPLETED);
+        SubTaskService.SubTaskState<SubStage> subTaskInitState = new SubTaskService.SubTaskState<SubStage>();
+        // tell the sub task with what to patch us, on completion
+        subTaskInitState.serviceTaskCallback = callback;
+        subTaskInitState.errorThreshold = 0;
         subTaskInitState.completionsRemaining = currentState.resourceLinks.size();
         subTaskInitState.tenantLinks = currentState.tenantLinks;
         Operation startPost = Operation
@@ -264,12 +261,12 @@ public class ComputeProvisionTaskService extends
                                 failTask("Failure creating sub task", e);
                                 return;
                             }
-                            SubTaskService.SubTaskState body = o
+                            SubTaskService.SubTaskState<?> body = o
                                     .getBody(SubTaskService.SubTaskState.class);
                             // continue, passing the sub task link
                             provisionResources(currentState, body.documentSelfLink);
                         });
-        getHost().startService(startPost, new SubTaskService());
+        getHost().startService(startPost, new SubTaskService<SubStage>());
     }
 
     private void queryForProvisionedResources(ComputeProvisionTaskState state) {

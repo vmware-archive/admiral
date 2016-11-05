@@ -14,6 +14,7 @@ package com.vmware.admiral.compute.endpoint;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.EnumSet;
+import java.util.concurrent.TimeUnit;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -129,6 +130,7 @@ public class EndpointAdapterService extends StatelessService {
             eats.enumerationRequest = new EndpointAllocationTaskService.ResourceEnumerationRequest();
             eats.enumerationRequest.resourcePoolLink = UriUtils.getODataParamValueAsString(
                     post.getUri(), ManagementUriParts.REQUEST_PARAM_TARGET_RESOURCE_POOL_LINK);
+            eats.enumerationRequest.delayMicros = TimeUnit.SECONDS.toMicros(2);
         }
 
         Operation.createPost(this, EndpointAllocationTaskService.FACTORY_LINK)

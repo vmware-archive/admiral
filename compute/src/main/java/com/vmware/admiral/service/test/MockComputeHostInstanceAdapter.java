@@ -27,6 +27,7 @@ public class MockComputeHostInstanceAdapter extends StatelessService {
     public static final String SELF_LINK = UriPaths.PROVISIONING
             + "/mock_success_instance_adapter";
 
+    @SuppressWarnings("rawtypes")
     @Override
     public void handleRequest(Operation op) {
         if (!op.hasBody()) {
@@ -38,8 +39,7 @@ public class MockComputeHostInstanceAdapter extends StatelessService {
             ComputeInstanceRequest request = op
                     .getBody(ComputeInstanceRequest.class);
             op.complete();
-            if (request.requestType == InstanceRequestType.DELETE
-                    || request.requestType == InstanceRequestType.DELETE_DOCUMENTS_ONLY) {
+            if (request.requestType == InstanceRequestType.DELETE) {
                 Operation.createDelete(request.resourceReference).setCompletion((o, e) -> {
                     SubTaskState computeSubTaskState = new SubTaskState();
                     computeSubTaskState.taskInfo = new TaskState();
