@@ -240,7 +240,7 @@ public class NetworkUtils {
                                         return;
                                     }
                                     host.log(Level.WARNING,
-                                            "%s active network(s) found by name '%s' in host '%s'! %s",
+                                            "%s active network(s) found by name '%s' in host '%s'!",
                                             networkStates.size(), networkName,
                                             container.parentLink);
                                 }

@@ -100,7 +100,7 @@ public interface HostSelectionFilter<T> extends AffinityFilter {
         public String descLink;
         public String descriptionName;
         public String[] affinities;
-        private Set<String> containerNames;
+        public Set<String> containerNames;
 
         public DescName() {
         }
