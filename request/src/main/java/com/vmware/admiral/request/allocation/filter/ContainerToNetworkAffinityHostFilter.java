@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -66,13 +67,13 @@ public class ContainerToNetworkAffinityHostFilter
         }
 
         if (isActive()) {
-            findComponentDescriptions(state, sortedHostSelectionMap, callback);
+            findNetworkDescriptions(state, hostSelectionMap, callback);
         } else {
             callback.complete(sortedHostSelectionMap, null);
         }
     }
 
-    protected void findComponentDescriptions(final PlacementHostSelectionTaskState state,
+    private void findNetworkDescriptions(final PlacementHostSelectionTaskState state,
             final Map<String, HostSelection> hostSelectionMap,
             final HostSelectionFilterCompletion callback) {
 
@@ -107,12 +108,11 @@ public class ContainerToNetworkAffinityHostFilter
                 });
     }
 
-    protected void findContainerNetworks(final PlacementHostSelectionTaskState state,
+    private void findContainerNetworks(final PlacementHostSelectionTaskState state,
             final Map<String, HostSelection> hostSelectionMap,
-            Map<String, DescName> descLinksWithNames,
+            final Map<String, DescName> descLinksWithNames,
             final HostSelectionFilterCompletion callback) {
 
-        Map<String, HostSelection> filteredHosts = new TreeMap<>();
         QueryTask q = QueryUtil.buildQuery(ContainerNetworkState.class, false);
 
         String compositeComponentLinksItemField = QueryTask.QuerySpecification
@@ -138,59 +138,80 @@ public class ContainerToNetworkAffinityHostFilter
                                         state.contextId, r.getException().getMessage());
                                 callback.complete(null, r.getException());
                             } else if (r.hasResult()) {
+                                ContainerNetworkState networkState = r.getResult();
                                 final DescName descName = descLinksWithNames
-                                        .get(r.getResult().descriptionLink);
-                                descName.addContainerNames(
-                                        Collections.singletonList(r.getResult().name));
-
-                                for (HostSelection hs : hostSelectionMap.values()) {
-                                    hs.addDesc(descName);
+                                        .get(networkState.descriptionLink);
+                                if (descName != null) {
+                                    descName.addContainerNames(
+                                            Collections.singletonList(networkState.name));
+                                    for (HostSelection hs : hostSelectionMap.values()) {
+                                        hs.addDesc(descName);
+                                    }
                                 }
                             } else {
-                                QueryTask networkStateQuery = QueryUtil.buildPropertyQuery(
-                                        ContainerNetworkState.class,
-                                        ContainerNetworkState.FIELD_NAME_NAME,
-                                        descLinksWithNames.values()
-                                                .toArray(new DescName[0])[0].descriptionName);
-
-                                QueryUtil.addExpandOption(networkStateQuery);
-
-                                new ServiceDocumentQuery<ContainerNetworkState>(host,
-                                        ContainerNetworkState.class)
-                                                .query(networkStateQuery,
-                                                        (res) -> {
-                                                            if (res.hasException()) {
-                                                                host.log(
-                                                                        Level.WARNING,
-                                                                        "Exception while quering for container network [%s]. Error: [%s]",
-                                                                        descLinksWithNames.keySet().toArray(new String[0])[0],
-                                                                        res.getException()
-                                                                                .getMessage());
-                                                                callback.complete(null,
-                                                                        res.getException());
-                                                            } else if (res.hasResult()) {
-                                                                if (res.getResult().external) {
-                                                                    List<String> parentLinks = res
-                                                                            .getResult().parentLinks;
-                                                                    for (String parentLink : parentLinks) {
-                                                                        if (hostSelectionMap.get(
-                                                                                parentLink) != null) {
-                                                                            filteredHosts.put(
-                                                                                    parentLink,
-                                                                                    hostSelectionMap
-                                                                                            .get(parentLink));
-                                                                        }
-                                                                    }
-                                                                }
-                                                            } else {
-                                                                filterByClusterStoreAffinity(
-                                                                        hostSelectionMap,
-                                                                        filteredHosts, callback,
-                                                                        state);
-                                                            }
-                                                        });
+                                prefilterByNetworkHostLocation(state, hostSelectionMap,
+                                        descLinksWithNames, callback);
                             }
                         });
+    }
+
+    /*
+     * Get the actual network name if it has been resolved for any host!
+     */
+    private String getNetworkName(final Map<String, HostSelection> hostSelectionMap,
+            final Map<String, DescName> descLinksWithNames) {
+
+        DescName descName = descLinksWithNames.values().toArray(new DescName[0])[0];
+
+        for (HostSelection hs : hostSelectionMap.values()) {
+            if (hs.descNames != null) {
+                for (DescName dn : hs.descNames.values()) {
+                    if (descName.descriptionName.equals(dn.descriptionName)
+                            && (dn.containerNames != null) && (!dn.containerNames.isEmpty())) {
+                        return dn.containerNames.iterator().next();
+                    }
+                }
+            }
+        }
+
+        return descName.descriptionName;
+    }
+
+    private void prefilterByNetworkHostLocation(
+            final PlacementHostSelectionTaskState state,
+            final Map<String, HostSelection> hostSelectionMap,
+            final Map<String, DescName> descLinksWithNames,
+            final HostSelectionFilterCompletion callback) {
+
+        Map<String, HostSelection> filteredHosts = new TreeMap<>();
+
+        QueryTask networkStateQuery = QueryUtil.buildPropertyQuery(
+                ContainerNetworkState.class,
+                ContainerNetworkState.FIELD_NAME_NAME,
+                getNetworkName(hostSelectionMap, descLinksWithNames));
+
+        QueryUtil.addExpandOption(networkStateQuery);
+
+        new ServiceDocumentQuery<ContainerNetworkState>(host, ContainerNetworkState.class).query(
+                networkStateQuery, (res) -> {
+                    if (res.hasException()) {
+                        host.log(Level.WARNING,
+                                "Exception while quering for container network [%s]. Error: [%s]",
+                                descLinksWithNames.keySet().toArray(new String[0])[0],
+                                res.getException().getMessage());
+                        callback.complete(null, res.getException());
+                    } else if (res.hasResult()) {
+                        List<String> parentLinks = res.getResult().parentLinks;
+                        if (parentLinks != null) {
+                            for (String parentLink : parentLinks) {
+                                filteredHosts.put(parentLink, hostSelectionMap.get(parentLink));
+                            }
+                        }
+                    } else {
+                        filterByClusterStoreAffinity(hostSelectionMap, filteredHosts, callback,
+                                state);
+                    }
+                });
     }
 
     /*
@@ -199,7 +220,7 @@ public class ContainerToNetworkAffinityHostFilter
      * Docker Swarm hosts, VIC hosts, etc.) which, as a single host, may be better alternative to
      * clusters of regular hosts sharing the same KV store.
      */
-    protected void filterByClusterStoreAffinity(
+    private void filterByClusterStoreAffinity(
             final Map<String, HostSelection> hostSelectionMap,
             final Map<String, HostSelection> filteredMap,
             final HostSelectionFilterCompletion callback,
@@ -212,22 +233,18 @@ public class ContainerToNetworkAffinityHostFilter
              * No filtered hosts due external networks.
              */
             filteredHosts = hostSelectionMap;
-        } else if (filteredMap.size() == 1) {
-            /*
-             * No big choice here... single filtered host due external networks.
-             */
-            try {
-                callback.complete(filteredMap, null);
-            } catch (Throwable e) {
-                host.log(Level.WARNING, "Exception when completing callback. Error: [%s]",
-                        e.getMessage());
-                callback.complete(null, e);
-            }
-            return;
         } else {
             /*
-             * All filtered hosts due external networks are candidates.
+             * Filtered hosts due external networks, remove from them the ones that are not included
+             * in the hostSelectionMap.
              */
+            Iterator<Entry<String, HostSelection>> it = filteredMap.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry<String, HostSelection> entry = it.next();
+                if (entry.getValue() == null) {
+                    it.remove();
+                }
+            }
             filteredHosts = filteredMap;
         }
 

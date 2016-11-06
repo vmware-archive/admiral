@@ -684,6 +684,191 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         container1Desc.name = "container1";
         container1Desc.networks = new HashMap<>();
         container1Desc.networks.put(networkName, new ServiceNetwork());
+        container1Desc.portBindings = null;
+
+        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
+        container2Desc.documentSelfLink = UUID.randomUUID().toString();
+        container2Desc.name = "container2";
+        container2Desc.networks = new HashMap<>();
+        container2Desc.networks.put(networkName, new ServiceNetwork());
+        container2Desc.portBindings = null;
+
+        CompositeDescription compositeDesc = createCompositeDesc(networkDesc, container1Desc,
+                container2Desc);
+        assertNotNull(compositeDesc);
+
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
+
+        // 1. Request a composite container:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+
+        // Verify request status
+        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+
+        assertEquals(Integer.valueOf(100), rs.progress);
+        assertEquals(1, request.resourceLinks.size());
+
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+
+        String networkLink = null;
+        String containerLink1 = null;
+        String containerLink2 = null;
+
+        Iterator<String> iterator = cc.componentLinks.iterator();
+        while (iterator.hasNext()) {
+            String link = iterator.next();
+            if (link.startsWith(ContainerNetworkService.FACTORY_LINK)) {
+                networkLink = link;
+            } else if (containerLink1 == null) {
+                containerLink1 = link;
+            } else {
+                containerLink2 = link;
+            }
+        }
+
+        ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
+        ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
+
+        List<String> selectedCluster = null;
+        if (cluster1Hosts.contains(cont1.parentLink)) {
+            selectedCluster = cluster1Hosts;
+        } else if (cluster2Hosts.contains(cont1.parentLink)) {
+            selectedCluster = cluster2Hosts;
+        }
+
+        assertNotNull(selectedCluster);
+
+        // provisioned on the same cluster
+        boolean containersAreProvisionedOnTheSameCluster = selectedCluster
+                .contains(cont2.parentLink);
+        assertTrue(containersAreProvisionedOnTheSameCluster);
+
+        ContainerNetworkState network = getDocument(ContainerNetworkState.class, networkLink);
+
+        // the network as well
+        boolean networkProvisionedOnTheSameCluster = selectedCluster
+                .contains(network.originatingHostLink);
+        assertTrue(networkProvisionedOnTheSameCluster);
+
+        assertEquals(cc.documentSelfLink, cont1.compositeComponentLink);
+        assertEquals(cc.documentSelfLink, cont2.compositeComponentLink);
+        assertTrue((network.compositeComponentLinks.size() == 1)
+                && network.compositeComponentLinks.contains(cc.documentSelfLink));
+
+        // Add another cluster with more hosts so that it would be preferable for selection
+
+        dockerHostDesc.customProperties.put(
+                ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME, "my-kv-store-3");
+
+        addForDeletion(createDockerHost(dockerHostDesc, resourcePool, true));
+        addForDeletion(createDockerHost(dockerHostDesc, resourcePool, true));
+        addForDeletion(createDockerHost(dockerHostDesc, resourcePool, true));
+        addForDeletion(createDockerHost(dockerHostDesc, resourcePool, true));
+
+        // then scaling one container of the app should pick always the same cluster because the
+        // network exists only there (i.e. the operation can't fail)
+
+        int SCALE_SIZE = 8;
+
+        RequestBrokerState day2OperationClustering = TestRequestStateFactory.createRequestState();
+        day2OperationClustering.resourceDescriptionLink = cont1.descriptionLink;
+        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
+        day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
+        day2OperationClustering.resourceCount = 1 + SCALE_SIZE;
+        day2OperationClustering.documentDescription = containerDesc.documentDescription;
+        day2OperationClustering.customProperties = cont1.customProperties;
+
+        host.log("########  Start of request ######## ");
+        request = startRequest(day2OperationClustering);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+
+        // Verify request status
+        rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+
+        assertEquals(Integer.valueOf(100), rs.progress);
+        assertEquals(SCALE_SIZE, request.resourceLinks.size());
+
+        // Verify that even there is a bigger cluster, scaled containers are placed on the cluster where the others are,
+        // so that the networking between them will be working
+        for (String scaledContainerLink : request.resourceLinks) {
+            ContainerState scaledContainer = getDocument(ContainerState.class, scaledContainerLink);
+            boolean scaledContainersAreProvisionedOnTheSameCluster = selectedCluster
+                    .contains(scaledContainer.parentLink);
+            assertTrue(scaledContainersAreProvisionedOnTheSameCluster);
+        }
+
+        cc = getDocument(CompositeComponent.class, cc.documentSelfLink);
+
+        assertEquals(SCALE_SIZE + 3 /* 2 containers + 1 network */, cc.componentLinks.size());
+    }
+
+    @Test
+    public void testRequestLifeCycleWithContainerNetworkAndPortBindingConflictOnScaleShouldFail()
+            throws Throwable {
+        host.log(
+                "########  Start of testRequestLifeCycleWithContainerNetworkAndPortBindingConflictOnScaleShouldFail ######## ");
+
+        // setup Docker Host:
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+
+        delete(computeHost.documentSelfLink);
+        computeHost = null;
+
+        // setup cluster 1
+
+        dockerHostDesc.customProperties.put(
+                ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME, "my-kv-store-1");
+
+        ComputeState dockerHost1 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost1);
+
+        ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost2);
+
+        List<String> cluster1Hosts = Arrays.asList(dockerHost1.documentSelfLink,
+                dockerHost2.documentSelfLink);
+
+        // setup cluster 2
+
+        dockerHostDesc.customProperties.put(
+                ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME, "my-kv-store-2");
+
+        ComputeState dockerHost3 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost3);
+
+        ComputeState dockerHost4 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost4);
+
+        List<String> cluster2Hosts = Arrays.asList(dockerHost3.documentSelfLink,
+                dockerHost4.documentSelfLink);
+
+        // setup Composite description with 2 containers and 1 network
+
+        String networkName = "mynet";
+
+        ContainerNetworkDescription networkDesc = TestRequestStateFactory
+                .createContainerNetworkDescription(networkName);
+        networkDesc.documentSelfLink = UUID.randomUUID().toString();
+
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
+        container1Desc.documentSelfLink = UUID.randomUUID().toString();
+        container1Desc.name = "container1";
+        container1Desc.networks = new HashMap<>();
+        container1Desc.networks.put(networkName, new ServiceNetwork());
 
         ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
@@ -737,26 +922,41 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
         ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
 
+        List<String> selectedCluster = null;
+        if (cluster1Hosts.contains(cont1.parentLink)) {
+            selectedCluster = cluster1Hosts;
+        } else if (cluster2Hosts.contains(cont1.parentLink)) {
+            selectedCluster = cluster2Hosts;
+        }
+
+        assertNotNull(selectedCluster);
+
         // provisioned on the same cluster
-        boolean containersAreProvisionedOnTheSameCluster = (cluster1Hosts.contains(cont1.parentLink)
-                && cluster1Hosts.contains(cont2.parentLink))
-                || (cluster2Hosts.contains(cont1.parentLink)
-                        && cluster2Hosts.contains(cont2.parentLink));
+        boolean containersAreProvisionedOnTheSameCluster = selectedCluster
+                .contains(cont2.parentLink);
         assertTrue(containersAreProvisionedOnTheSameCluster);
 
         ContainerNetworkState network = getDocument(ContainerNetworkState.class, networkLink);
 
         // the network as well
-        boolean networkProvisionedOnTheSameCluster = (cluster1Hosts.contains(cont1.parentLink)
-                && cluster1Hosts.contains(network.originatingHostLink))
-                || (cluster2Hosts.contains(cont1.parentLink)
-                        && cluster2Hosts.contains(network.originatingHostLink));
+        boolean networkProvisionedOnTheSameCluster = selectedCluster
+                .contains(network.originatingHostLink);
         assertTrue(networkProvisionedOnTheSameCluster);
 
         assertEquals(cc.documentSelfLink, cont1.compositeComponentLink);
         assertEquals(cc.documentSelfLink, cont2.compositeComponentLink);
         assertTrue((network.compositeComponentLinks.size() == 1)
                 && network.compositeComponentLinks.contains(cc.documentSelfLink));
+
+        // Add another cluster with more hosts so that it would be preferable for selection
+
+        dockerHostDesc.customProperties.put(
+                ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME, "my-kv-store-3");
+
+        addForDeletion(createDockerHost(dockerHostDesc, resourcePool, true));
+        addForDeletion(createDockerHost(dockerHostDesc, resourcePool, true));
+        addForDeletion(createDockerHost(dockerHostDesc, resourcePool, true));
+        addForDeletion(createDockerHost(dockerHostDesc, resourcePool, true));
 
         // then scaling one container of the app should pick always the same cluster because the
         // network exists only there (i.e. the operation can't fail)
@@ -774,19 +974,13 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         host.log("########  Start of request ######## ");
         request = startRequest(day2OperationClustering);
 
-        // wait for request completed state:
-        request = waitForRequestToComplete(request);
+        // wait for request to fail because of the combination ExposedPortsHostFilter and
+        // ContainerToNetworkAffinityHostFilter, between them there are no hosts available!
+        waitForRequestToFail(request);
 
         // Verify request status
         rs = getDocument(RequestStatus.class, request.requestTrackerLink);
         assertNotNull(rs);
-
-        assertEquals(Integer.valueOf(100), rs.progress);
-        assertEquals(SCALE_SIZE, request.resourceLinks.size());
-
-        cc = getDocument(CompositeComponent.class, cc.documentSelfLink);
-
-        assertEquals(SCALE_SIZE + 3 /* 2 containers + 1 network */, cc.componentLinks.size());
     }
 
     @Test
