@@ -107,7 +107,11 @@ let MachinesStore = Reflux.createStore({
 
           this.setInData(['listView', 'items'], machines);
           this.setInData(['listView', 'itemsLoading'], false);
-          this.setInData(['listView', 'itemsCount'], result.itemsCount);
+
+          let itemsCount = result.totalCount;
+          if (itemsCount !== undefined && itemsCount !== null) {
+            this.setInData(['listView', 'itemsCount'], itemsCount);
+          }
           this.setInData(['listView', 'nextPageLink'], nextPageLink);
           this.emitChange();
         });
