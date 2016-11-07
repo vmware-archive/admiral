@@ -65,17 +65,11 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
-import com.vmware.photon.controller.model.tasks.ResourceEnumerationTaskService.ResourceEnumerationTaskState;
-import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
-import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.QueryTask.Query;
-import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
-import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
@@ -122,11 +116,10 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     @Before
     public void setUp() throws Throwable {
-
         endpointType = getEndpointType();
         endpoint = createEndpoint(endpointType, TestDocumentLifeCycle.NO_DELETE);
 
-        waitForEndpointEnumeration(endpoint.resourcePoolLink);
+        triggerAndWaitForEndpointEnumeration(endpoint);
 
         groupResourcePlacementState = createResourcePlacement(PLACEMENT_ID, endpointType,
                 endpoint.resourcePoolLink,
@@ -296,42 +289,6 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     private String getLink(String factoryLink, String name) {
         return UriUtils.buildUriPath(factoryLink, name);
-    }
-
-    private void waitForEndpointEnumeration(String resourcePoolLink) throws Throwable {
-        waitFor(() -> {
-            Query query = Query.Builder.create()
-                    .addKindFieldClause(ResourceEnumerationTaskState.class)
-                    .addFieldClause("resourcePoolLink", resourcePoolLink)
-                    .build();
-            QueryTask queryTask = QueryTask.Builder.createDirectTask()
-                    .setQuery(query)
-                    .addOption(QueryOption.INCLUDE_DELETED)
-                    .addOption(QueryOption.EXPAND_CONTENT)
-                    .build();
-
-            ServiceDocumentQueryResult result = postDocument(ServiceUriPaths.CORE_QUERY_TASKS,
-                    queryTask, TestDocumentLifeCycle.NO_DELETE).results;
-
-            if (result.documents == null || result.documents.isEmpty()) {
-                return false;
-            }
-
-            ResourceEnumerationTaskState enumerationTask = Utils.fromJson(
-                    result.documents.values().iterator().next(),
-                    ResourceEnumerationTaskState.class);
-            switch (enumerationTask.taskInfo.stage) {
-            case FAILED:
-            case CANCELLED:
-                throw new IllegalStateException("Enumeration task failed");
-
-            case FINISHED:
-                return true;
-
-            default:
-                return false;
-            }
-        });
     }
 
     protected ResourcePoolState createResourcePool(EndpointType endpointType,

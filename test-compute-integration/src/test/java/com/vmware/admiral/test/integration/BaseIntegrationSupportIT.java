@@ -51,7 +51,6 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
 
-import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
@@ -60,7 +59,6 @@ import com.vmware.admiral.request.ContainerHostRemovalTaskFactoryService;
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState;
 import com.vmware.admiral.request.RequestStatusFactoryService;
 import com.vmware.admiral.request.RequestStatusService.RequestStatus;
-import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
@@ -70,6 +68,8 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.tasks.ResourceEnumerationTaskService;
+import com.vmware.photon.controller.model.tasks.ResourceEnumerationTaskService.ResourceEnumerationTaskState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.TaskState;
@@ -346,17 +346,19 @@ public abstract class BaseIntegrationSupportIT {
     }
 
     protected void waitForTaskToComplete(final String documentSelfLink) throws Exception {
-        String propName = TaskServiceDocument.FIELD_NAME_TASK_SUB_STAGE;
-        String successPropValue = DefaultSubStage.COMPLETED.name();
-        String errorPropValue = DefaultSubStage.ERROR.name();
-
-        String body = null;
+        TaskState taskState = null;
         boolean error = false;
         for (int i = 0; i < TASK_CHANGE_WAIT_POLLING_RETRY_COUNT; i++) {
             Thread.sleep(STATE_CHANGE_WAIT_POLLING_PERIOD_MILLIS);
-            body = sendRequest(HttpMethod.GET, documentSelfLink, null);
-            String value = body != null ? getJsonValue(body, propName) : null;
-            if (successPropValue.equals(value)) {
+            String body = sendRequest(HttpMethod.GET, documentSelfLink, null);
+
+            taskState = null;
+            if (body != null) {
+                taskState = Utils.getJsonMapValue(body,
+                        TaskServiceDocument.FIELD_NAME_TASK_INFO, TaskState.class);
+            }
+
+            if (TaskState.isFinished(taskState)) {
                 return;
             }
 
@@ -371,30 +373,23 @@ public abstract class BaseIntegrationSupportIT {
                         requestStatus.requestProgressByComponent);
             }
 
-            if (errorPropValue.equals(value)) {
+            if (TaskState.isCancelled(taskState) || TaskState.isFailed(taskState)) {
                 error = true;
                 break;
             }
         }
 
         String failure = "";
-        if (body != null) {
-            // get the failure message to help in debugging test failures
-            TaskState taskInfo = Utils.getJsonMapValue(body,
-                    TaskServiceDocument.FIELD_NAME_TASK_INFO, TaskState.class);
-            if (taskInfo != null && taskInfo.failure != null) {
-                failure = "failure: " + taskInfo.failure.message;
-            }
+        if (taskState != null && taskState.failure != null) {
+            failure = "Failure: " + taskState.failure.message;
         }
 
         if (error) {
             throw new IllegalStateException(String.format(
-                    "Failed with Error waiting for %s to transition to %s. Failure: %s",
-                    documentSelfLink, successPropValue, failure));
+                    "Failed with error waiting for %s to succeed. %s", documentSelfLink, failure));
         } else {
             throw new RuntimeException(String.format(
-                    "Failed waiting for %s to transition to %s %s", documentSelfLink,
-                    successPropValue, failure));
+                    "Timeout waiting for %s to succeed. %s", documentSelfLink, failure));
         }
     }
 
@@ -505,10 +500,22 @@ public abstract class BaseIntegrationSupportIT {
         endpoint.endpointProperties = new HashMap<>();
         extendEndpoint(endpoint);
 
-        return postDocument(
-                EndpointAdapterService.SELF_LINK + UriUtils.URI_QUERY_CHAR
-                        + ManagementUriParts.REQUEST_PARAM_ENUMERATE_OPERATION_NAME,
-                endpoint, documentLifeCycle);
+        return postDocument(EndpointAdapterService.SELF_LINK, endpoint, documentLifeCycle);
+    }
+
+    protected void triggerAndWaitForEndpointEnumeration(EndpointState endpoint) throws Exception {
+        ComputeState parentCompute = getDocument(endpoint.computeLink, ComputeState.class);
+
+        ResourceEnumerationTaskState enumTask = new ResourceEnumerationTaskState();
+        enumTask.parentComputeLink = endpoint.computeLink;
+        enumTask.resourcePoolLink = endpoint.resourcePoolLink;
+        enumTask.adapterManagementReference = parentCompute.adapterManagementReference;
+        enumTask.tenantLinks = endpoint.tenantLinks;
+
+        ResourceEnumerationTaskState returnedState = postDocument(
+                ResourceEnumerationTaskService.FACTORY_LINK, enumTask);
+
+        waitForTaskToComplete(returnedState.documentSelfLink);
     }
 
     protected abstract EndpointType getEndpointType();
