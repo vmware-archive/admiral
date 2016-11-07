@@ -456,7 +456,7 @@ let HostsStore = Reflux.createStore({
             this.setInData(['listView', 'items'], hosts);
             this.setInData(['listView', 'itemsLoading'], false);
             this.setInData(['listView', 'nextPageLink'], nextPageLink);
-            if (itemsCount !== undefined) {
+            if (itemsCount !== undefined && itemsCount !== null) {
               this.setInData(['listView', 'itemsCount'], itemsCount);
             }
 

@@ -369,7 +369,7 @@ ContainersStore = Reflux.createStore({
 
       this.setInData(['listView', 'items'], mergedItems);
       this.setInData(['listView', 'itemsLoading'], false);
-      if (itemsCount !== undefined) {
+      if (itemsCount !== undefined && itemsCount !== null) {
         this.setInData(['listView', 'itemsCount'], itemsCount);
       }
       this.setInData(['listView', 'nextPageLink'], nextPageLink);
