@@ -18,6 +18,7 @@ import static com.vmware.admiral.common.util.ServiceDocumentQuery.noResult;
 import static com.vmware.admiral.common.util.ServiceDocumentQuery.result;
 import static com.vmware.admiral.common.util.UriUtilsExtended.flattenQueryParams;
 import static com.vmware.admiral.common.util.UriUtilsExtended.parseBooleanParam;
+import static com.vmware.xenon.common.UriUtils.URI_WILDCARD_CHAR;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -127,6 +128,14 @@ public class TemplateSearchService extends StatelessService {
 
     private void executeTemplateQuery(String query, Map<String, String> queryParams,
             BiConsumer<ServiceDocumentQueryElementResult<TemplateSpec>, Boolean> resultConsumer) {
+
+        if (!query.startsWith(URI_WILDCARD_CHAR)) {
+            query = URI_WILDCARD_CHAR + query;
+        }
+
+        if (!query.endsWith(URI_WILDCARD_CHAR)) {
+            query = query + URI_WILDCARD_CHAR;
+        }
 
         String tenantLink = queryParams.get(GROUP_PARAM);
         List<String> tenantLinks = null;
