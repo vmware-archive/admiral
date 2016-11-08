@@ -61,6 +61,9 @@ Handlebars.registerHelper('displayableCredentials', function(credentialObject) {
       '<div class="truncateText">'
             + utils.maskValueIfEncrypted(credentialObject.privateKey) + '</div>';
 
+  } else if (credentialObject.type === constants.CREDENTIALS_TYPE.PUBLIC) {
+    return '<div class="truncateText">' + credentialObject.publicKey + '</div>';
+
   } else {
     return 'Unknown [' + credentialObject.type + ']';
   }
@@ -82,6 +85,11 @@ Handlebars.registerHelper('displayableTitleCredentials', function(credentialObje
 
     return privateKey + '\n' + publicKey;
 
+  } else if (credentialObject.type === constants.CREDENTIALS_TYPE.PUBLIC) {
+    let publicKey = truncateContent(credentialObject.publicKey);
+
+    return publicKey;
+
   } else {
     return 'Unknown [' + credentialObject.type + ']';
   }
@@ -95,6 +103,9 @@ Handlebars.registerHelper('displayableCredentialsType', function(credentialObjec
 
   } else if (credentialObjectType === constants.CREDENTIALS_TYPE.PUBLIC_KEY) {
     return i18n.t('app.credential.edit.certificateTitle');
+
+  } else if (credentialObjectType === constants.CREDENTIALS_TYPE.PUBLIC) {
+    return i18n.t('app.credential.edit.publicTitle');
 
   } else {
     return 'Unknown [' + credentialObjectType + ']';

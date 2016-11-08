@@ -50,6 +50,7 @@ var constants = Immutable({
     }
   },
   CREDENTIALS_TYPE: {
+    PUBLIC: 'Public',
     PUBLIC_KEY: 'PublicKey',
     PRIVATE_KEY: 'PrivateKey',
     PASSWORD: 'Password'

@@ -66,6 +66,7 @@ CredentialsRowEditor.prototype.setData = function(data) {
   // Checked by default
   this.$el.find('#credentialTypePassword')[0].checked = true;
   this.$el.find('#credentialTypeCertificate')[0].checked = false;
+  this.$el.find('#credentialTypePublic')[0].checked = false;
 
   this.$el.find('.credentialsEdit-save').removeClass('loading').removeAttr('disabled');
 
@@ -92,12 +93,16 @@ CredentialsRowEditor.prototype.setData = function(data) {
         this.$el.find('.private-key-input-holder').removeClass('hide');
       }
 
-    } else {
+    } else if (this.credentialsObject.type === constants.CREDENTIALS_TYPE.PUBLIC_KEY) {
       this.$el.find('#credentialTypeCertificate')[0].checked = true;
       this.$el.find('#credentialTypePassword')[0].checked = false;
       this.$el.find('.public-certificate-input').val(this.credentialsObject.publicKey);
       this.$el.find('.private-certificate-input').val(
                           utils.maskValueIfEncrypted(this.credentialsObject.privateKey));
+    } else {
+      this.$el.find('#credentialTypePublic')[0].checked = true;
+      this.$el.find('#credentialTypePassword')[0].checked = false;
+      this.$el.find('.public-input').val(this.credentialsObject.publicKey);
     }
 
     handleCredentialsTypeInputs(this.$el, this.credentialsObject.type);
@@ -154,13 +159,16 @@ var addEventListeners = function() {
                                       validator.trim(_this.$el.find('.private-key-input').val()),
                                       toReturn.privateKey);
       }
-    } else {
+    } else if (credentialsType === constants.CREDENTIALS_TYPE.PUBLIC_KEY) {
       toReturn.type = constants.CREDENTIALS_TYPE.PUBLIC_KEY;
       toReturn.publicKey = validator.trim(_this.$el.find('.public-certificate-input').val());
       toReturn.privateKey = utils.unmaskValueIfEncrypted(
                                       validator.trim(
                                         _this.$el.find('.private-certificate-input').val()),
                                       toReturn.privateKey);
+    } else {
+      toReturn.type = constants.CREDENTIALS_TYPE.PUBLIC;
+      toReturn.publicKey = validator.trim(_this.$el.find('.public-input').val());
     }
 
     toReturn.customProperties = utils.arrayToObject(_this.customProperties.getData());
@@ -233,7 +241,8 @@ var addEventListeners = function() {
 
   this.$el.on('change input', '.name-input, .username-input, ' +
               '.private-key-input, ' +
-              '.public-certificate-input, .private-certificate-input',
+              '.public-certificate-input, .private-certificate-input, ' +
+              '.public-input',
     function() {
       toggleButtonsState(_this.$el);
   });
@@ -246,6 +255,9 @@ var handleCredentialsTypeInputs = function($el, type) {
 
   $el.find('.credentialsEdit-certificateInputs')
     .toggleClass('hide', type !== constants.CREDENTIALS_TYPE.PUBLIC_KEY);
+
+  $el.find('.credentialsEdit-publicInputs')
+    .toggleClass('hide', type !== constants.CREDENTIALS_TYPE.PUBLIC);
 };
 
 var applyValidationErrors = function($el, errors) {
@@ -275,11 +287,15 @@ var toggleButtonsState = function($el) {
       let privateKey = $el.find('.private-key-input').val();
       toggleSaveButtonState($el, userName && privateKey);
     }
-  } else {
+  } else if (credentialsType === constants.CREDENTIALS_TYPE.PUBLIC_KEY) {
     let publicKey = $el.find('.public-certificate-input').val();
     let privateKey = $el.find('.private-certificate-input').val();
 
     toggleSaveButtonState($el, publicKey && privateKey);
+  } else {
+    let publicKey = $el.find('.public-input').val();
+
+    toggleSaveButtonState($el, publicKey);
   }
 };
 

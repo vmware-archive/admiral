@@ -162,6 +162,7 @@
         "usePrivateKey": "Use private key",
         "usePassword": "Use password",
         "certificateTitle": "Certificate",
+        "publicTitle": "Public key",
         "publicCertificateTitle": "Public certificate",
         "privateCertificateTitle": "Private certificate"
       }

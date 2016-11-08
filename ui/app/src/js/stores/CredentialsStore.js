@@ -172,6 +172,9 @@ var toViewModel = function(dto) {
     viewModel.username = dto.userEmail;
     viewModel.privateKey = dto.privateKey;
 
+  } else if (dto.type === constants.CREDENTIALS_TYPE.PUBLIC) {
+    viewModel.publicKey = dto.publicKey;
+
   } else {
     throw 'Unknown type ' + dto.type;
   }
@@ -199,6 +202,9 @@ var toDto = function(viewModel) {
     // As discussed on review https://reviewboard.eng.vmware.com/r/825015/ and based on current
     // integration tests
     dto.privateKey = viewModel.privateKey;
+    dto.publicKey = viewModel.publicKey;
+
+  } else if (dto.type === constants.CREDENTIALS_TYPE.PUBLIC) {
     dto.publicKey = viewModel.publicKey;
 
   } else {
