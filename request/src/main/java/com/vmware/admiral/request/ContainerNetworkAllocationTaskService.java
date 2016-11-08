@@ -13,6 +13,7 @@ package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
+import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeLists;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY;
@@ -30,6 +31,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState.PowerState;
+import com.vmware.admiral.compute.container.network.Ipam;
 import com.vmware.admiral.compute.container.network.NetworkUtils;
 import com.vmware.admiral.request.ContainerNetworkAllocationTaskService.ContainerNetworkAllocationTaskState.SubStage;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
@@ -58,9 +60,6 @@ public class ContainerNetworkAllocationTaskService extends
     // cached network description
     private volatile ContainerNetworkDescription networkDescription;
 
-    public static final String CUSTOM_PROPERTY_NETWORK_DRIVER = "containers.network.driver";
-    public static final String CUSTOM_PROPERTY_IPAM_DRIVER = "containers.ipam.driver";
-
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
         List<String> resourceLinks;
     }
@@ -70,6 +69,7 @@ public class ContainerNetworkAllocationTaskService extends
 
         public static enum SubStage {
             CREATED,
+            CONTEXT_PREPARED,
             RESOURCES_NAMED,
             COMPLETED,
             ERROR
@@ -157,7 +157,14 @@ public class ContainerNetworkAllocationTaskService extends
     protected void handleStartedStagePatch(ContainerNetworkAllocationTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            prepareContextAndCreateResourcePrefixNameSelectionTask(state, null);
+            prepareContext(state, null);
+            break;
+        case CONTEXT_PREPARED:
+            if (state.resourceNames == null || state.resourceNames.isEmpty()) {
+                createResourcePrefixNameSelectionTask(state, networkDescription);
+            } else {
+                sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESOURCES_NAMED));
+            }
             break;
         case RESOURCES_NAMED:
             createContainerNetworkStates(state, null, null);
@@ -217,47 +224,42 @@ public class ContainerNetworkAllocationTaskService extends
         return resourceLinks;
     }
 
-    private void prepareContextAndCreateResourcePrefixNameSelectionTask(
-            ContainerNetworkAllocationTaskState state,
-            ContainerNetworkDescription networkDescription) {
-        if (networkDescription == null) {
-            getContainerNetworkDescription(state,
-                    (netwkDesc) -> this.prepareContextAndCreateResourcePrefixNameSelectionTask(
-                            state, netwkDesc));
-            return;
-        }
-
-        // prepare context
-        prepareContext(state, networkDescription);
-
-        // create ResourcePrefixNameSelectionTask
-        if (state.resourceNames == null || state.resourceNames.isEmpty()) {
-            createResourcePrefixNameSelectionTask(state, networkDescription);
-        } else {
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESOURCES_NAMED));
-        }
-    }
-
     private void prepareContext(ContainerNetworkAllocationTaskState state,
             ContainerNetworkDescription networkDescription) {
         assertNotNull(state, "state");
-        assertNotNull(networkDescription, "networkDescription");
+
+        if (networkDescription == null) {
+            getContainerNetworkDescription(state,
+                    (netwkDesc) -> prepareContext(state, netwkDesc));
+            return;
+        }
+
+        ContainerNetworkAllocationTaskState body = createUpdateSubStageTask(state,
+                SubStage.CONTEXT_PREPARED);
 
         // merge request/allocation properties over the network description properties
-        state.customProperties = mergeProperty(networkDescription.customProperties,
+        body.customProperties = mergeCustomProperties(networkDescription.customProperties,
                 state.customProperties);
 
-        if (state.getCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY) == null) {
-            state.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, getSelfId());
+        if (body.getCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY) == null) {
+            body.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, getSelfId());
         }
-        state.descName = networkDescription.name;
+        body.descName = networkDescription.name;
+
+        sendSelfPatch(body);
     }
 
     private void createResourcePrefixNameSelectionTask(ContainerNetworkAllocationTaskState state,
             ContainerNetworkDescription networkDescription) {
 
         assertNotNull(state, "state");
-        assertNotNull(networkDescription, "networkDescription");
+
+        if (networkDescription == null) {
+            getContainerNetworkDescription(state,
+                    (netwkDesc) -> this.createResourcePrefixNameSelectionTask(
+                            state, netwkDesc));
+            return;
+        }
 
         // create resource prefix name selection tasks
         ResourceNamePrefixTaskState namePrefixTask = new ResourceNamePrefixTaskState();
@@ -330,16 +332,19 @@ public class ContainerNetworkAllocationTaskService extends
             networkState.driver = networkDescription.driver;
 
             if (state.customProperties != null) {
-                if (state.customProperties.containsKey(CUSTOM_PROPERTY_NETWORK_DRIVER)) {
-                    networkState.driver = state.customProperties
-                            .get(CUSTOM_PROPERTY_NETWORK_DRIVER);
+                String networkDriver = state.customProperties
+                        .remove(ContainerNetworkDescription.CUSTOM_PROPERTY_NETWORK_DRIVER);
+                if (networkDriver != null) {
+                    networkState.driver = networkDriver;
                 }
 
-                if (state.customProperties.containsKey(CUSTOM_PROPERTY_IPAM_DRIVER)) {
-                    if (networkState.ipam != null) {
-                        networkState.ipam.driver = state.customProperties
-                                .get(CUSTOM_PROPERTY_IPAM_DRIVER);
+                String ipamDriver = state.customProperties
+                        .remove(ContainerNetworkDescription.CUSTOM_PROPERTY_IPAM_DRIVER);
+                if (ipamDriver != null) {
+                    if (networkState.ipam == null) {
+                        networkState.ipam = new Ipam();
                     }
+                    networkState.ipam.driver = ipamDriver;
                 }
             }
 
