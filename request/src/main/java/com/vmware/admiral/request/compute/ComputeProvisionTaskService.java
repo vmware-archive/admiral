@@ -143,6 +143,7 @@ public class ComputeProvisionTaskService extends
             if (exsGetComputes != null && !exsGetComputes.isEmpty()) {
                 failTask("Error retrieving compute states",
                         exsGetComputes.values().iterator().next());
+                return;
             }
 
             Map<String, String> diskLinkToContent = new HashMap<>();
@@ -196,7 +197,6 @@ public class ComputeProvisionTaskService extends
             if (getDisksOperations.size() > 0) {
                 OperationJoin.create(getDisksOperations).setCompletion(getDisksCompletion)
                         .sendWith(this);
-                return;
             } else {
                 sendSelfPatch(createUpdateSubStageTask(state, SubStage.CUSTOMIZED_COMPUTE));
             }

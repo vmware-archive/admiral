@@ -334,6 +334,9 @@ public class ComputePlacementSelectionTaskService extends
             selectedComputeLinks.addAll(selectedComputeLinks.subList(0, diff % initialSize));
         }
 
+        logInfo("The following placements selected for provisioning %d resources: %s",
+                state.resourceCount, selectedComputeLinks);
+
         ComputePlacementSelectionTaskState newState = createUpdateSubStageTask(state,
                 DefaultSubStage.COMPLETED);
         newState.selectedComputePlacementLinks = selectedComputeLinks;

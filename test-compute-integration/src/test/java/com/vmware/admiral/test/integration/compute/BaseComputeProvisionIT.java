@@ -112,7 +112,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
 
     private AuthCredentialsServiceState dockerRemoteApiClientCredentials;
-    private EndpointState endpoint;
+    protected EndpointState endpoint;
 
     @Before
     public void setUp() throws Throwable {

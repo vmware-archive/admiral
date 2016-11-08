@@ -23,13 +23,20 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.compute.ComputeOperationType;
+import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.test.integration.compute.BaseComputeProvisionIT;
 import com.vmware.photon.controller.model.ComputeProperties;
+import com.vmware.photon.controller.model.adapters.vsphere.CustomProperties;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     public static final String VC_USERNAME = "test.vsphere.username";
@@ -39,6 +46,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     public static final String VC_DATACENTER_ID = "test.vsphere.datacenter";
     public static final String VC_DATASTORE_ID = "test.vsphere.datastore.path";
     public static final String VC_NETWORK_ID = "test.vsphere.network.id";
+    public static final String VC_TARGET_COMPUTE_NAME = "test.vsphere.target.compute.name";
     public static final String VC_TARGET_FOLDER_PATH = "test.vsphere.vm.folder";
     public static final String VC_VM_DISK_URI = "test.vsphere.disk.uri";
     public static final String VC_VM_DISK_URI_TEMPLATE = "test.vsphere.disk.%s.uri";
@@ -119,6 +127,10 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
 
     @Override
     public void doSetUp() throws Exception {
+        // restrict available placements to the one specified through the VC_COMPUTE_NAME prop
+        // because this is the one which can access the storage used in the tests
+        restrictAvailablePlacements();
+
         EnvironmentMappingState ems = new EnvironmentMappingState();
         ems.endpointType = getEndpointType().name();
         ems.name = ems.endpointType;
@@ -145,6 +157,37 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
 
         postDocument(EnvironmentMappingService.FACTORY_LINK,
                 ems, documentLifeCycle);
+    }
+
+    private void restrictAvailablePlacements() throws Exception {
+        String computePlacementName = getTestRequiredProp(VC_TARGET_COMPUTE_NAME);
+        ResourcePoolState rp = getDocument(this.endpoint.resourcePoolLink, ResourcePoolState.class);
+
+        QueryTask queryTask = QueryTask.Builder.createDirectTask()
+                .setQuery(rp.query).addOption(QueryOption.EXPAND_CONTENT).build();
+        String responseJson = sendRequest(HttpMethod.POST, ServiceUriPaths.CORE_QUERY_TASKS,
+                Utils.toJson(queryTask));
+        QueryTask returnedTask = Utils.fromJson(responseJson, QueryTask.class);
+
+        for (Object computeJson : returnedTask.results.documents.values()) {
+            ComputeState compute = Utils.fromJson(computeJson, ComputeState.class);
+            if (computePlacementName.equals(compute.name)) {
+                continue;
+            }
+
+            if (compute.customProperties != null &&
+                    compute.customProperties.containsKey(CustomProperties.TYPE) &&
+                    compute.customProperties.get(CustomProperties.TYPE).equals(
+                            "VirtualMachine")) {
+                continue;
+            }
+
+            logger.info("Removing %s from the endpoint placement zone", compute.name);
+
+            // clear the resource pool assignment
+            compute.resourcePoolLink = null;
+            sendRequest(HttpMethod.PUT, compute.documentSelfLink, Utils.toJson(compute));
+        }
     }
 
     private String getDiskUri() {
