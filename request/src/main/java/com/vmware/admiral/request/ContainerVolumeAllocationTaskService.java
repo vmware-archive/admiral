@@ -17,7 +17,6 @@ import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -95,7 +94,7 @@ public class ContainerVolumeAllocationTaskService extends
                 PropertyUsageOption.SERVICE_USE,
                 PropertyUsageOption.SINGLE_ASSIGNMENT,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public List<String> resourceNames;
+        public Set<String> resourceNames;
 
         /** (Internal) Set by task with ContainerVolumeDescription name. */
         @Documentation(description = "Set by task with ContainerVolumeDescription name.")

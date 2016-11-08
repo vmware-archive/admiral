@@ -105,7 +105,7 @@ public class ContainerNetworkAllocationTaskService extends
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.SERVICE_USE,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public List<String> resourceNames;
+        public Set<String> resourceNames;
 
         /** (Internal) Set by task with ContainerNetworkDescription name. */
         @Documentation(description = "Set by task with ContainerNetworkDescription name.")

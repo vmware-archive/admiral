@@ -17,9 +17,11 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.IllegalFormatException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -55,7 +57,7 @@ public class ResourceNamePrefixTaskService
 
         /** Set by the Task with the result of applying prefixes based on group selection. */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
-        public List<String> resourceNames;
+        public Set<String> resourceNames;
     }
 
     public ResourceNamePrefixTaskService() {
@@ -91,7 +93,7 @@ public class ResourceNamePrefixTaskService
     }
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
-        List<String> resourceNames;
+        Set<String> resourceNames;
     }
 
     private void queryResourceNamePrefixes(ResourceNamePrefixTaskState state, boolean globalSearch) {
@@ -148,7 +150,7 @@ public class ResourceNamePrefixTaskService
                                 return;
                             }
                             NamePrefixResponse response = o.getBody(NamePrefixResponse.class);
-                            state.resourceNames = new ArrayList<>(response.resourceNamePrefixes
+                            state.resourceNames = new HashSet<>(response.resourceNamePrefixes
                                     .size());
                             for (String prefix : response.resourceNamePrefixes) {
                                 try {

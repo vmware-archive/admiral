@@ -135,7 +135,7 @@ public class ContainerAllocationTaskService
 
         /** (Internal) Set by task after resource name prefixes requested. */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
-        public List<String> resourceNames;
+        public Set<String> resourceNames;
 
         /** (Internal) Set by task after the ComputeState is found to host the containers */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
