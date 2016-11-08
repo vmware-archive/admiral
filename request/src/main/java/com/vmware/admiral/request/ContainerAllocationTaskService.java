@@ -406,7 +406,7 @@ public class ContainerAllocationTaskService
         ContainerAllocationTaskState body = createUpdateSubStageTask(state,
                 SubStage.CONTEXT_PREPARED);
         // merge request/allocation properties over the container description properties
-        body.customProperties = mergeProperty(containerDesc.customProperties,
+        body.customProperties = mergeCustomProperties(containerDesc.customProperties,
                 state.customProperties);
 
         if (body.getCustomProperty(FIELD_NAME_CONTEXT_ID_KEY) == null) {

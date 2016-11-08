@@ -57,10 +57,15 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testAllocationTaskServiceLifeCycle() throws Throwable {
+        containerDesc.customProperties = new HashMap<>();
+        containerDesc.customProperties.put("customPropA", "valueA");
+
         doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
                 false, Action.PUT);
 
         ContainerAllocationTaskState allocationTask = createContainerAllocationTask();
+        allocationTask.customProperties = new HashMap<>();
+        allocationTask.customProperties.put("customPropB", "valueB");
         allocationTask = allocate(allocationTask);
 
         ContainerState containerState = getDocument(ContainerState.class,
@@ -93,6 +98,9 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
 
         assertNotNull(containerState.extraHosts);
         assertTrue(Arrays.equals(containerDesc.extraHosts, containerState.extraHosts));
+
+        assertEquals("valueA", containerState.customProperties.get("customPropA"));
+        assertEquals("valueB", containerState.customProperties.get("customPropB"));
 
         waitForContainerPowerState(PowerState.RUNNING, containerState.documentSelfLink);
 

@@ -28,7 +28,6 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 
-
 public class ContainerNetworkAllocationTaskServiceTest extends RequestBaseTest {
 
     private static String NETWORK_DRIVER = "bridge";
@@ -62,7 +61,7 @@ public class ContainerNetworkAllocationTaskServiceTest extends RequestBaseTest {
         assertEquals(containerNetworkDesc.driver, null);
 
         allocationTask.customProperties.put(
-                ContainerNetworkAllocationTaskService.CUSTOM_PROPERTY_NETWORK_DRIVER,
+                ContainerNetworkDescription.CUSTOM_PROPERTY_NETWORK_DRIVER,
                 NETWORK_DRIVER);
 
         allocationTask = allocate(allocationTask);
@@ -72,10 +71,37 @@ public class ContainerNetworkAllocationTaskServiceTest extends RequestBaseTest {
 
         assertNotNull(networkState);
         assertEquals(containerNetworkDesc.documentSelfLink, networkState.descriptionLink);
-        assertEquals(networkState.driver, NETWORK_DRIVER);
+        assertEquals(NETWORK_DRIVER, networkState.driver);
         assertTrue(networkState.name.contains(containerNetworkDesc.name));
-        assertEquals(allocationTask.resourceLinks.get(0), networkState.documentSelfLink);
+    }
 
+    @Test
+    public void testNetworkDriverFromDescriptionCustomProperties() throws Throwable {
+        containerNetworkDesc.customProperties = new HashMap<>();
+        containerNetworkDesc.customProperties.put(
+                ContainerNetworkDescription.CUSTOM_PROPERTY_NETWORK_DRIVER,
+                NETWORK_DRIVER + "desc");
+        containerNetworkDesc.customProperties.put("customPropA", "valueA");
+        doPut(containerNetworkDesc);
+
+        ContainerNetworkAllocationTaskState allocationTask = createContainerNetworkAllocationTask(
+                containerNetworkDesc.documentSelfLink, 1);
+        allocationTask.customProperties.put("customPropB", "valueB");
+
+        assertEquals(containerNetworkDesc.driver, null);
+
+        allocationTask = allocate(allocationTask);
+
+        ContainerNetworkState networkState = getDocument(ContainerNetworkState.class,
+                allocationTask.resourceLinks.get(0));
+
+        assertNotNull(networkState);
+        assertEquals(containerNetworkDesc.documentSelfLink, networkState.descriptionLink);
+        assertEquals(NETWORK_DRIVER + "desc", networkState.driver);
+        assertTrue(networkState.name.contains(containerNetworkDesc.name));
+
+        assertEquals("valueA", networkState.customProperties.get("customPropA"));
+        assertEquals("valueB", networkState.customProperties.get("customPropB"));
     }
 
     @Test
@@ -94,7 +120,7 @@ public class ContainerNetworkAllocationTaskServiceTest extends RequestBaseTest {
         doOperation(patch, networkUri, false, Action.PATCH);
 
         allocationTask.customProperties.put(
-                ContainerNetworkAllocationTaskService.CUSTOM_PROPERTY_IPAM_DRIVER, IPAM_DRIVER);
+                ContainerNetworkDescription.CUSTOM_PROPERTY_IPAM_DRIVER, IPAM_DRIVER);
 
         allocationTask = allocate(allocationTask);
 
@@ -104,9 +130,8 @@ public class ContainerNetworkAllocationTaskServiceTest extends RequestBaseTest {
         assertNotNull(networkState);
         assertEquals(containerNetworkDesc.documentSelfLink, networkState.descriptionLink);
 
-        assertEquals(networkState.ipam.driver, IPAM_DRIVER);
+        assertEquals(IPAM_DRIVER, networkState.ipam.driver);
         assertTrue(networkState.name.contains(containerNetworkDesc.name));
-        assertEquals(allocationTask.resourceLinks.get(0), networkState.documentSelfLink);
 
     }
 

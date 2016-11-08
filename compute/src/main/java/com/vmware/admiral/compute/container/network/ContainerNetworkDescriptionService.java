@@ -63,6 +63,9 @@ public class ContainerNetworkDescriptionService extends StatefulService {
         public static final String FIELD_NAME_DRIVER = "driver";
         public static final String FIELD_NAME_OPTIONS = "options";
 
+        public static final String CUSTOM_PROPERTY_NETWORK_DRIVER = "containers.network.driver";
+        public static final String CUSTOM_PROPERTY_IPAM_DRIVER = "containers.ipam.driver";
+
         /** An IPAM configuration for a given network. */
         @Documentation(description = "An IPAM configuration for a given network.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
@@ -211,8 +214,8 @@ public class ContainerNetworkDescriptionService extends StatefulService {
         }
 
         if (state.instanceAdapterReference == null) {
-            state.instanceAdapterReference =
-                    UriUtils.buildUri(ManagementUriParts.ADAPTER_DOCKER_NETWORK);
+            state.instanceAdapterReference = UriUtils
+                    .buildUri(ManagementUriParts.ADAPTER_DOCKER_NETWORK);
         }
 
         if (state.ipam != null) {
