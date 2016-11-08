@@ -133,7 +133,11 @@ Search.prototype.getQueryOptions = function() {
     let type = token.substring(0, token.indexOf(SEPARATOR));
     let value;
 
-    if ((this.properties.suggestionProperties.indexOf(type) > -1) ||
+    var suggestionProperties = [];
+    if (this.properties && this.properties.suggestionProperties) {
+      suggestionProperties = this.properties.suggestionProperties;
+    }
+    if ((suggestionProperties.indexOf(type) > -1) ||
        token.substring(0, token.indexOf(SEPARATOR + ' '))) {
       value = token.substring(token.indexOf(SEPARATOR) + SEPARATOR.length).trim();
     } else {
