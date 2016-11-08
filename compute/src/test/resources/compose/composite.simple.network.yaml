@@ -27,11 +27,11 @@ components:
     type: "App.Network"
     data:
       name: "front"
-      driver: "custom-driver-1"
+      containers.network.driver: "custom-driver-1"
   back:
     type: "App.Network"
     data:
       name: "back"
-      driver: "custom-driver-2"
       foo: "1"
       bar: "2"
+      containers.network.driver: "custom-driver-2"

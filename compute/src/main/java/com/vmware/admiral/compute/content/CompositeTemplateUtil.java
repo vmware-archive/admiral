@@ -13,7 +13,6 @@ package com.vmware.admiral.compute.content;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
-
 import static com.vmware.admiral.compute.container.PortBinding.fromDockerPortMapping;
 
 import java.io.IOException;
@@ -21,6 +20,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +44,7 @@ import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.network.Ipam;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.content.compose.CommonDescriptionEntity;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
@@ -148,11 +149,12 @@ public class CompositeTemplateUtil {
                     .convertValue(deserialized, CompositeTemplate.class);
 
             if (!isNullOrEmpty(entity.components)) {
-                for (Entry<String, ComponentTemplate<CompositeTemplateContainerDescription>> entry :
-                        filterComponentTemplates(entity.components, CompositeTemplateContainerDescription.class)
+                for (Entry<String, ComponentTemplate<CompositeTemplateContainerDescription>> entry : filterComponentTemplates(
+                        entity.components, CompositeTemplateContainerDescription.class)
                                 .entrySet()) {
 
-                    ComponentTemplate<CompositeTemplateContainerDescription> component = entry.getValue();
+                    ComponentTemplate<CompositeTemplateContainerDescription> component = entry
+                            .getValue();
 
                     if (component.data.networksList != null) {
                         component.data.networks = component.data.networksList.stream()
@@ -187,8 +189,7 @@ public class CompositeTemplateUtil {
 
                 ComponentTemplate<ContainerDescription> component = entry.getValue();
 
-                CompositeTemplateContainerDescription newData =
-                        new CompositeTemplateContainerDescription();
+                CompositeTemplateContainerDescription newData = new CompositeTemplateContainerDescription();
 
                 PropertyUtils.mergeServiceDocuments(newData, component.data);
 
@@ -500,6 +501,11 @@ public class CompositeTemplateUtil {
             template.dependsOn = ((ContainerDescription) description).dependsOn;
             ((ContainerDescription) description).dependsOn = null;
         }
+
+        if (description instanceof ContainerNetworkDescription) {
+            transformDriversToComponentTemplate((ContainerNetworkDescription) description);
+        }
+
         return template;
     }
 
@@ -510,6 +516,7 @@ public class CompositeTemplateUtil {
         ComponentTemplate<ContainerNetworkDescription> template = new ComponentTemplate<>();
         template.type = ResourceType.NETWORK_TYPE.getContentType();
         template.data = description;
+        transformDriversToComponentTemplate(description);
         template.data.id = null;
         return template;
     }
@@ -597,7 +604,8 @@ public class CompositeTemplateUtil {
     }
 
     public static DockerComposeService fromCompositeComponentToDockerService(
-            ComponentTemplate<ContainerDescription> component, Map<String, ComponentTemplate<?>> components) {
+            ComponentTemplate<ContainerDescription> component,
+            Map<String, ComponentTemplate<?>> components) {
         assertNotNull(component, "component");
 
         ContainerDescription description = component.data;
@@ -658,6 +666,7 @@ public class CompositeTemplateUtil {
         assertNotNull(component, "component");
 
         ContainerNetworkDescription description = component.data;
+        transformDriversFromComponentTemplate(description);
 
         DockerComposeNetwork network = new DockerComposeNetwork();
 
@@ -810,5 +819,43 @@ public class CompositeTemplateUtil {
 
     private static boolean isNullOrEmpty(String s) {
         return (s == null || s.trim().isEmpty());
+    }
+
+    private static void transformDriversToComponentTemplate(
+            ContainerNetworkDescription description) {
+        Map<String, String> customProps = new HashMap<>();
+        if (description.driver != null) {
+            customProps.put(ContainerNetworkDescription.CUSTOM_PROPERTY_NETWORK_DRIVER,
+                    description.driver);
+            description.driver = null;
+        }
+
+        if (description.ipam != null && description.ipam.driver != null) {
+            customProps.put(ContainerNetworkDescription.CUSTOM_PROPERTY_IPAM_DRIVER,
+                    description.ipam.driver);
+            description.ipam.driver = null;
+        }
+
+        if (!customProps.isEmpty()) {
+            description.customProperties = PropertyUtils
+                    .mergeCustomProperties(description.customProperties, customProps);
+        }
+    }
+
+    private static void transformDriversFromComponentTemplate(
+            ContainerNetworkDescription description) {
+        if (description.customProperties != null) {
+            description.driver = description.customProperties
+                    .remove(ContainerNetworkDescription.CUSTOM_PROPERTY_NETWORK_DRIVER);
+
+            String ipamDriver = description.customProperties
+                    .remove(ContainerNetworkDescription.CUSTOM_PROPERTY_IPAM_DRIVER);
+            if (ipamDriver != null) {
+                if (description.ipam == null) {
+                    description.ipam = new Ipam();
+                }
+                description.ipam.driver = ipamDriver;
+            }
+        }
     }
 }

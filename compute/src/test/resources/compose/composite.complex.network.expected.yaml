@@ -34,20 +34,20 @@ components:
     type: "App.Network"
     data:
       name: "front"
-      driver: "custom-driver-1"
       external: false
+      containers.network.driver: "custom-driver-1"
   back:
     type: "App.Network"
     data:
       name: "back"
       ipam:
-        driver: "default"
         config:
         - subnet: "172.16.238.0/24"
           gateway: "172.16.238.1"
         - subnet: "2001:3984:3989::/64"
           gateway: "2001:3984:3989::1"
-      driver: "bridge"
+      containers.network.driver: "bridge"
+      containers.ipam.driver: "default"
       com.docker.network.enable_ipv6: "true"
   default:
     type: "App.Network"
