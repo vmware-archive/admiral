@@ -23,7 +23,7 @@ const TEMPLATE = `<div class="network">
                           <i class="btn fa fa-pencil"></i>
                         </a>
                         <a class="btn item-delete" v-on:click="onDelete($event)">
-                          <i class="fa fa-times"></i>
+                          <i class="fa fa-trash"></i>
                         </a>
                       </div>
                     </div>

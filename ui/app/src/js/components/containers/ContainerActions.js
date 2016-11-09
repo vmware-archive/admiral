@@ -30,7 +30,7 @@ const REBOOT_BUTTON = createAction('reboot', 'refresh');
 const STOP_BUTTON = createAction('stop', 'stop');
 const CLONE_BUTTON = createAction('clone', 'files-o');
 const DETAILS_BUTTON = createAction('details', 'eye');
-const REMOVE_BUTTON = createAction('remove', 'times');
+const REMOVE_BUTTON = createAction('remove', 'trash');
 
 function ContainerActions() {
   this.$el = $('<div>', {class: 'container-actions'});

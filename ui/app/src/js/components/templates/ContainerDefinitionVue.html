@@ -70,7 +70,7 @@
             <div class="link-item-actions">
               <action-button name="editContainerLink" icon-name="pencil"
                              v-on:click="editContainerLink($event)"></action-button>
-              <action-button name="deleteContainerLink" icon-name="times"
+              <action-button name="deleteContainerLink" icon-name="trash"
                              v-on:click="deleteContainerLink($event)"></action-button>
             </div>
           </div>
@@ -101,7 +101,7 @@
                    v-bind:label="i18n('edit')"
                    v-on:click="editContainerDefinition($event)"></action-button>
 
-    <action-button name="container-definition-remove" icon-name="times"
+    <action-button name="container-definition-remove" icon-name="trash"
                    v-bind:label="i18n('remove')"
                    v-on:click="askConfirmation($event)"></action-button>
   </div>
