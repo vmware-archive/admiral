@@ -632,8 +632,10 @@ public class ContainerAllocationTaskService
             containerState.env = containerDesc.env;
 
             String contextId;
-            if (state.customProperties != null && (contextId = state.customProperties
-                    .get(FIELD_NAME_CONTEXT_ID_KEY)) != null) {
+            if (state.customProperties != null
+                    && (contextId = state.customProperties
+                    .get(FIELD_NAME_CONTEXT_ID_KEY)) != null
+                    && !contextId.equals(getSelfId())) {
                 containerState.compositeComponentLink = UriUtils.buildUriPath(
                         CompositeComponentFactoryService.SELF_LINK, contextId);
             }
