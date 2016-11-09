@@ -2275,6 +2275,7 @@ $alert-text-color: #ffffff;
   display: inline;
   width: 40px;
   text-align: center;
+  z-index: 101;
 }
 .toolbar-actions .toolbar-action .btn {
   color: $main_color;
