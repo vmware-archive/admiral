@@ -960,8 +960,6 @@ ContainersStore = Reflux.createStore({
 
     } else if (operationType === constants.CONTAINERS.OPERATION.CREATE) {
       // Container created
-      actions.ContainersContextToolbarActions.openToolbarRequests();
-
     } else if (operationType === constants.CONTAINERS.OPERATION.REMOVE) {
       // Container Removed
       this.backFromContainerAction(operationType, resourceIds);

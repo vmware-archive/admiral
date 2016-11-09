@@ -62,7 +62,7 @@
                    v-bind:label="i18n('app.container.actions.start')"
                    v-bind:supported="operationSupported('START')"
                    v-on:click="startContainer($event)"></action-button>
-    <action-button name="remove" icon-name="times"
+    <action-button name="remove" icon-name="trash"
                    v-bind:label="i18n('app.container.actions.remove')"
                    v-bind:supported="operationSupported('REMOVE')"
                    v-on:click="askConfirmation($event)"></action-button>

@@ -36,5 +36,5 @@
     <a v-if="model.errorMessage" href="#" v-bind:class="{hide: !expanded}"
        v-on:click="toggleErrorMessage($event)"><i class="fa fa-eye-slash"></i></a>
     <a  v-if="isDeleteEnabled(model)" href="#"
-       v-on:click="deleteRequest($event)"><i class="fa fa-close"></i></a></div>
+       v-on:click="deleteRequest($event)"><i class="fa fa-trash"></i></a></div>
 </div>

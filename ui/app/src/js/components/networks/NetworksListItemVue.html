@@ -79,7 +79,7 @@
   <div class="container-actions"
        v-if="supportsDay2Operations"
        v-bind:class="{'hide': showDeleteConfirmation || alert.show}">
-    <action-button name="remove" icon-name="times"
+    <action-button name="remove" icon-name="trash"
                    v-bind:label="i18n('app.container.actions.remove')"
                    v-bind:supported="operationSupported('REMOVE')"
                    v-on:click="removeNetworkClicked($event)"></action-button>

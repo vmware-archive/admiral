@@ -73,7 +73,7 @@
                    v-bind:supported="operationSupported('DISABLE')"
                    icon-name="pause" v-on:click="disableHost($event)"></action-button>
     <action-button name="remove" v-bind:label="i18n('app.host.actions.remove')"
-                   icon-name="times" v-on:click="askConfirmation($event)"></action-button>
+                   icon-name="trash" v-on:click="askConfirmation($event)"></action-button>
   </div>
   <delete-confirmation v-bind:class="{'hide': !showDeleteConfirmation}"
                        v-bind:show="showDeleteConfirmation"

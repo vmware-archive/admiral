@@ -37,7 +37,7 @@
                                v-bind:supported="operationSupported('START')"
                                v-on:click="startContainer($event)"></toolbar-action-button>
 
-        <toolbar-action-button id="remove" icon-name="times" v-bind:label="i18n('app.container.actions.remove')"
+        <toolbar-action-button id="remove" icon-name="trash" v-bind:label="i18n('app.container.actions.remove')"
                                v-bind:supported="operationSupported('REMOVE')"
                                v-on:click="askConfirmation($event, 'removeContainer')"
                                 ></toolbar-action-button>
