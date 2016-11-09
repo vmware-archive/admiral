@@ -138,10 +138,10 @@ public class ContainerVolumeProvisionTaskService
         case PROVISIONING:
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -162,7 +162,7 @@ public class ContainerVolumeProvisionTaskService
             });
         });
 
-        sendSelfPatch(createUpdateSubStageTask(state, SubStage.PROVISIONING));
+        proceedTo(SubStage.PROVISIONING);
     }
 
     private void createTaskCallbackAndGetVolumeDescription(

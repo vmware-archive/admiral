@@ -200,8 +200,7 @@ public class PlacementCapacityUpdateTaskService extends
     protected void handleStartedStagePatch(PlacementCapacityUpdateTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            sendSelfPatch(createUpdateSubStageTask(state,
-                    PlacementCapacityUpdateTaskState.SubStage.QUERY_COMPUTES));
+            proceedTo(PlacementCapacityUpdateTaskState.SubStage.QUERY_COMPUTES);
             break;
         case QUERY_COMPUTES:
             startComputeQuery(state, null);
@@ -216,10 +215,10 @@ public class PlacementCapacityUpdateTaskService extends
             retrieveAndUpdatePlacements(state);
             break;
         case COMPLETED:
-            complete(state, state.taskSubStage);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, state.taskSubStage);
+            completeWithError();
             break;
         default:
             break;
@@ -258,18 +257,14 @@ public class PlacementCapacityUpdateTaskService extends
                     }
 
                     ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
-                    PlacementCapacityUpdateTaskState newState;
                     if (result.nextPageLink == null) {
                         logInfo("No computes found in resource pool %s", state.resourcePoolLink);
-                        newState = createUpdateSubStageTask(state,
-                                PlacementCapacityUpdateTaskState.SubStage.UPDATE_RESOURCE_POOL);
+                        proceedTo(PlacementCapacityUpdateTaskState.SubStage.UPDATE_RESOURCE_POOL);
                     } else {
-                        newState = createUpdateSubStageTask(state,
-                                PlacementCapacityUpdateTaskState.SubStage
-                                        .ACCUMMULATE_COMPUTE_FIGURES);
-                        newState.nextPageLink = result.nextPageLink;
+                        proceedTo(PlacementCapacityUpdateTaskState.SubStage.ACCUMMULATE_COMPUTE_FIGURES, s -> {
+                            s.nextPageLink = result.nextPageLink;
+                        });
                     }
-                    sendSelfPatch(newState);
                 }));
     }
 
@@ -315,16 +310,16 @@ public class PlacementCapacityUpdateTaskService extends
                         AggregatedComputeStats aggregatedStats = accummulateComputeFigures(
                                 state, computes, computeDescriptions);
 
-                        PlacementCapacityUpdateTaskState newState;
                         if (nextPageLink == null) {
-                            newState = createUpdateSubStageTask(state,
-                                    PlacementCapacityUpdateTaskState.SubStage.UPDATE_RESOURCE_POOL);
+                            proceedTo(PlacementCapacityUpdateTaskState.SubStage.UPDATE_RESOURCE_POOL, s -> {
+                                s.aggregatedStats = aggregatedStats;
+                            });
                         } else {
-                            newState = createUpdateSubStageTask(state, state.taskSubStage);
-                            newState.nextPageLink = nextPageLink;
+                            proceedTo(state.taskSubStage, s -> {
+                                s.aggregatedStats = aggregatedStats;
+                                s.nextPageLink = nextPageLink;
+                            });
                         }
-                        newState.aggregatedStats = aggregatedStats;
-                        sendSelfPatch(newState);
                     }
                 });
     }
@@ -387,10 +382,7 @@ public class PlacementCapacityUpdateTaskService extends
                         return;
                     }
 
-                    PlacementCapacityUpdateTaskState newState = createUpdateSubStageTask(
-                            state,
-                            PlacementCapacityUpdateTaskState.SubStage.UPDATE_PLACEMENTS);
-                    sendSelfPatch(newState);
+                    proceedTo(PlacementCapacityUpdateTaskState.SubStage.UPDATE_PLACEMENTS);
                 }));
     }
 
@@ -425,8 +417,7 @@ public class PlacementCapacityUpdateTaskService extends
                 - state.aggregatedStats.totalMemoryBytes;
         if (diff <= 0) {
             logInfo("No placement update needed for resource pool '%s'", state.resourcePoolLink);
-            sendSelfPatch(createUpdateSubStageTask(state,
-                    PlacementCapacityUpdateTaskState.SubStage.COMPLETED));
+            proceedTo(PlacementCapacityUpdateTaskState.SubStage.COMPLETED);
             return;
         }
 
@@ -475,8 +466,7 @@ public class PlacementCapacityUpdateTaskService extends
             if (exs != null) {
                 failTask("Error updating placements", exs.values().iterator().next());
             } else {
-                sendSelfPatch(createUpdateSubStageTask(state,
-                        PlacementCapacityUpdateTaskState.SubStage.COMPLETED));
+                proceedTo(PlacementCapacityUpdateTaskState.SubStage.COMPLETED);
             }
         }).sendWith(this);
     }

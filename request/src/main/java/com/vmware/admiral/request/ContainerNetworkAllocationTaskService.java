@@ -18,6 +18,7 @@ import static com.vmware.admiral.request.ReservationAllocationTaskService.CONTAI
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -148,7 +149,7 @@ public class ContainerNetworkAllocationTaskService extends
             if (state.resourceNames == null || state.resourceNames.isEmpty()) {
                 createResourcePrefixNameSelectionTask(state, networkDescription);
             } else {
-                sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESOURCES_NAMED));
+                proceedTo(SubStage.RESOURCES_NAMED);
             }
             break;
         case RESOURCES_NAMED:
@@ -158,7 +159,7 @@ public class ContainerNetworkAllocationTaskService extends
             updateResourcesAndComplete(state);
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -199,10 +200,10 @@ public class ContainerNetworkAllocationTaskService extends
         return statusTask;
     }
 
-    private Set<String> buildResourceLinks(ContainerNetworkAllocationTaskState state) {
+    private Set<String> buildResourceLinks(Set<String> resourceNames) {
         logInfo("Generate provisioned resourceLinks");
-        Set<String> resourceLinks = new HashSet<>(state.resourceNames.size());
-        for (String resourceName : state.resourceNames) {
+        Set<String> resourceLinks = new HashSet<>(resourceNames.size());
+        for (String resourceName : resourceNames) {
             String networkLink = NetworkUtils.buildNetworkLink(resourceName);
             resourceLinks.add(networkLink);
         }
@@ -219,19 +220,16 @@ public class ContainerNetworkAllocationTaskService extends
             return;
         }
 
-        ContainerNetworkAllocationTaskState body = createUpdateSubStageTask(state,
-                SubStage.CONTEXT_PREPARED);
+        proceedTo(SubStage.CONTEXT_PREPARED, s -> {
+            // merge request/allocation properties over the network description properties
+            s.customProperties = mergeCustomProperties(networkDescription.customProperties,
+                    state.customProperties);
 
-        // merge request/allocation properties over the network description properties
-        body.customProperties = mergeCustomProperties(networkDescription.customProperties,
-                state.customProperties);
-
-        if (body.getCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY) == null) {
-            body.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, getSelfId());
-        }
-        body.descName = networkDescription.name;
-
-        sendSelfPatch(body);
+            if (s.getCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY) == null) {
+                s.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, getSelfId());
+            }
+            s.descName = networkDescription.name;
+        });
     }
 
     private void createResourcePrefixNameSelectionTask(ContainerNetworkAllocationTaskState state,
@@ -373,12 +371,12 @@ public class ContainerNetworkAllocationTaskService extends
     private void updateResourcesAndComplete(ContainerNetworkAllocationTaskState state) {
         getContainerNetworkDescription(state,
                 (networkDescription) -> {
-                    if (Boolean.TRUE.equals(networkDescription.external)) {
-                        state.resourceNames.clear();
-                        state.resourceNames.add(networkDescription.name);
-                    }
-                    state.resourceLinks = buildResourceLinks(state);
-                    complete(state, SubStage.COMPLETED);
+                    complete(SubStage.COMPLETED, s -> {
+                        s.resourceLinks = buildResourceLinks(
+                                Boolean.TRUE.equals(networkDescription.external)
+                                        ? Collections.singleton(networkDescription.name)
+                                        : state.resourceNames);
+                    });
                 });
     }
 

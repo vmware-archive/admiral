@@ -123,10 +123,10 @@ public class ClusteringTaskService extends
         case CLUSTERING:
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -176,7 +176,7 @@ public class ClusteringTaskService extends
         if (desiredResourceCount > sortedResources.size()) {
             resourcesToAdd = desiredResourceCount - sortedResources.size();
         } else if (desiredResourceCount == sortedResources.size()) {
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
+            proceedTo(SubStage.COMPLETED);
             return;
         } else {
             resourcesToRemove = sortedResources
@@ -261,7 +261,7 @@ public class ClusteringTaskService extends
                         logSevere(Utils.toString(e));
                         return;
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.CLUSTERING));
+                    proceedTo(SubStage.CLUSTERING);
                 }));
     }
 
@@ -290,7 +290,7 @@ public class ClusteringTaskService extends
                         logSevere(Utils.toString(e));
                         return;
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.CLUSTERING));
+                    proceedTo(SubStage.CLUSTERING);
                 }));
     }
 

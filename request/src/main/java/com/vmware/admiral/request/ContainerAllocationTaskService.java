@@ -177,18 +177,15 @@ public class ContainerAllocationTaskService
             if (state.resourceNames == null || state.resourceNames.isEmpty()) {
                 createResourcePrefixNameSelectionTask(state, null);
             } else {
-                sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESOURCES_NAMED));
+                proceedTo(SubStage.RESOURCES_NAMED);
             }
             break;
         case RESOURCES_NAMED:
-            ContainerAllocationTaskState newState = createUpdateSubStageTask(state,
-                    SubStage.RESOURCES_LINKS_BUILT);
-
-            if (!state.postAllocation) {
-                newState.resourceLinks = buildResourceLinks(state);
-            }
-
-            sendSelfPatch(newState);
+            proceedTo(SubStage.RESOURCES_LINKS_BUILT, s -> {
+                if (!state.postAllocation) {
+                    s.resourceLinks = buildResourceLinks(state);
+                }
+            });
             break;
         case RESOURCES_LINKS_BUILT:
             if (state.hostSelections == null || state.hostSelections.isEmpty()) {
@@ -196,7 +193,7 @@ public class ContainerAllocationTaskService
             } else {
                 // in specific cases when the host is pre-selected
                 // (ex: installing agents directly to a host, this step is not needed)
-                sendSelfPatch(createUpdateSubStageTask(state, SubStage.PLACEMENT_HOST_SELECTED));
+                proceedTo(SubStage.PLACEMENT_HOST_SELECTED);
             }
             break;
         case PLACEMENT_HOST_SELECTED:
@@ -211,7 +208,7 @@ public class ContainerAllocationTaskService
             completeAllocationTask(state);
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -283,19 +280,17 @@ public class ContainerAllocationTaskService
             if (state.instanceAdapterReference == null) {
                 // reload container description if null
                 getContainerDescription(state, (contDesc) -> {
-                    ContainerAllocationTaskState body = createUpdateSubStageTask(state,
-                            SubStage.START_PROVISIONING);
-                    body.instanceAdapterReference = contDesc.instanceAdapterReference;
-                    body.resourceNameToHostSelection = resourceNameToHostSelection;
-                    body.customProperties = mergeCustomProperties(state.customProperties,
-                            contDesc.customProperties);
-                    sendSelfPatch(body);
+                    proceedTo(SubStage.START_PROVISIONING, s -> {
+                        s.instanceAdapterReference = contDesc.instanceAdapterReference;
+                        s.resourceNameToHostSelection = resourceNameToHostSelection;
+                        s.customProperties = mergeCustomProperties(state.customProperties,
+                                contDesc.customProperties);
+                    });
                 });
             } else {
-                ContainerAllocationTaskState body = createUpdateSubStageTask(state,
-                        SubStage.START_PROVISIONING);
-                body.resourceNameToHostSelection = resourceNameToHostSelection;
-                sendSelfPatch(body);
+                proceedTo(SubStage.START_PROVISIONING, s -> {
+                    s.resourceNameToHostSelection = resourceNameToHostSelection;
+                });
             }
         }
     }
@@ -324,7 +319,7 @@ public class ContainerAllocationTaskService
             }
         }
 
-        complete(state, SubStage.COMPLETED);
+        complete();
     }
 
     private Set<String> buildResourceLinks(ContainerAllocationTaskState state) {
@@ -364,7 +359,7 @@ public class ContainerAllocationTaskService
     private void prepareContext(ContainerAllocationTaskState state,
             ContainerDescription containerDesc) {
         if (state.postAllocation) {
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.PLACEMENT_HOST_SELECTED));
+            proceedTo(SubStage.PLACEMENT_HOST_SELECTED);
             return;
         }
 
@@ -373,18 +368,16 @@ public class ContainerAllocationTaskService
             return;
         }
 
-        ContainerAllocationTaskState body = createUpdateSubStageTask(state,
-                SubStage.CONTEXT_PREPARED);
-        // merge request/allocation properties over the container description properties
-        body.customProperties = mergeCustomProperties(containerDesc.customProperties,
-                state.customProperties);
+        proceedTo(SubStage.CONTEXT_PREPARED, s -> {
+            // merge request/allocation properties over the container description properties
+            s.customProperties = mergeCustomProperties(containerDesc.customProperties,
+                    state.customProperties);
 
-        if (body.getCustomProperty(FIELD_NAME_CONTEXT_ID_KEY) == null) {
-            body.addCustomProperty(FIELD_NAME_CONTEXT_ID_KEY, getSelfId());
-        }
-        body.descName = containerDesc.name;
-
-        sendSelfPatch(body);
+            if (s.getCustomProperty(FIELD_NAME_CONTEXT_ID_KEY) == null) {
+                s.addCustomProperty(FIELD_NAME_CONTEXT_ID_KEY, getSelfId());
+            }
+            s.descName = containerDesc.name;
+        });
     }
 
     private void selectPlacementComputeHost(ContainerAllocationTaskState state,
@@ -535,7 +528,7 @@ public class ContainerAllocationTaskService
             }
         }
 
-        sendSelfPatch(createUpdateSubStageTask(state, SubStage.PROVISIONING));
+        proceedTo(SubStage.PROVISIONING);
     }
 
     private boolean isAllocationRequest(ContainerAllocationTaskState state) {

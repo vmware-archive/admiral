@@ -128,10 +128,10 @@ public class ContainerRemovalTaskService
             break;
         case COMPLETED:
             updateContainerHosts(state);
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -190,12 +190,11 @@ public class ContainerRemovalTaskService
                     logWarning(
                             "No available resources found to be removed with links: %s",
                             state.resourceLinks);
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
+                    proceedTo(SubStage.COMPLETED);
                 } else {
-                    ContainerRemovalTaskState patchBody = createUpdateSubStageTask(state,
-                            SubStage.INSTANCES_REMOVING);
-                    patchBody.containersParentLinks = state.containersParentLinks;
-                    sendSelfPatch(patchBody);
+                    proceedTo(SubStage.INSTANCES_REMOVING, s -> {
+                        s.containersParentLinks = state.containersParentLinks;
+                    });
 
                     deleteResourceInstances(state, containerLinks, null);
                 }
@@ -219,7 +218,7 @@ public class ContainerRemovalTaskService
                     + "was set: %s", state.documentSelfLink);
 
             // skip the actual removal of containers through the adapter
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.INSTANCES_REMOVED));
+            proceedTo(SubStage.INSTANCES_REMOVED);
             return;
         }
 
@@ -360,7 +359,7 @@ public class ContainerRemovalTaskService
                                     doDeleteResource(state, subTaskLink, cs);
                                 }));
             }
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.REMOVING_RESOURCE_STATES));
+            proceedTo(SubStage.REMOVING_RESOURCE_STATES);
         } catch (Throwable e) {
             failTask("Unexpected exception while deleting resources", e);
         }

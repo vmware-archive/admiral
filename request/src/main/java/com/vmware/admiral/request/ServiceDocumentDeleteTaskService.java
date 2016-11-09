@@ -95,7 +95,7 @@ public class ServiceDocumentDeleteTaskService
     private void handleDeleteServices(ServiceDocumentDeleteTaskState task, List<String> documentLinks) {
 
         if (documentLinks.size() == 0) {
-            complete(task, DefaultSubStage.COMPLETED);
+            complete();
             return;
         }
 

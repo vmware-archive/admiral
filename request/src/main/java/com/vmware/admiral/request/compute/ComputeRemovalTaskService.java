@@ -125,10 +125,10 @@ public class ComputeRemovalTaskService extends
             subscribeToResourceRemovalTask(state);
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -162,8 +162,7 @@ public class ComputeRemovalTaskService extends
                     logInfo(
                             "No available container enabled computes found to be removed with links: %s",
                             state.resourceLinks);
-                    sendSelfPatch(
-                            createUpdateSubStageTask(state, SubStage.REMOVED_CONTAINER_HOSTS));
+                    proceedTo(SubStage.REMOVED_CONTAINER_HOSTS);
                 } else {
                     removeContainerHosts(state, containerHosts);
                 }
@@ -192,8 +191,7 @@ public class ComputeRemovalTaskService extends
                         failTask("Failed to create container host removal operation task", ex);
                         return;
                     }
-                    sendSelfPatch(
-                            createUpdateSubStageTask(state, SubStage.REMOVING_CONTAINER_HOSTS));
+                    proceedTo(SubStage.REMOVING_CONTAINER_HOSTS);
                 }));
     }
 
@@ -214,12 +212,12 @@ public class ComputeRemovalTaskService extends
                             logInfo("Failed suspending ComputeStates");
                             logFine("Failed suspending ComputeStates, reason %s",
                                     Utils.toString(exs));
-                            sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
+                            proceedTo(SubStage.COMPLETED);
                             return;
                         }
-                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.SUSPENDED_COMPUTES));
+                        proceedTo(SubStage.SUSPENDED_COMPUTES);
                     }).sendWith(this);
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.SUSPENDING_COMPUTES));
+            proceedTo(SubStage.SUSPENDING_COMPUTES);
         } catch (Throwable e) {
             failTask("Unexpected exception while suspending container host", e);
         }
@@ -229,7 +227,7 @@ public class ComputeRemovalTaskService extends
             ServiceTaskCallback taskCallback) {
         if (state.skipReleaseResourceQuota) {
             logFine("Skipping releasing quota");
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.DEALLOCATED_RESOURCES));
+            proceedTo(SubStage.DEALLOCATED_RESOURCES);
             return;
         }
 
@@ -258,7 +256,7 @@ public class ComputeRemovalTaskService extends
 
                                 }));
             }
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.DEALLOCATING_RESOURCES));
+            proceedTo(SubStage.DEALLOCATING_RESOURCES);
         } catch (Throwable e) {
             failTask("Unexpected exception while deleting resources", e);
         }
@@ -320,7 +318,7 @@ public class ComputeRemovalTaskService extends
                                     + state.resourceLinks, e);
                             return;
                         }
-                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.REMOVING_COMPUTES));
+                        proceedTo(SubStage.REMOVING_COMPUTES);
                     })
                     .sendWith(this);
 
@@ -336,9 +334,7 @@ public class ComputeRemovalTaskService extends
             }
             ResourceRemovalTaskState deletionState = op.getBody(ResourceRemovalTaskState.class);
             if (TaskState.isFinished(deletionState.taskInfo)) {
-                ComputeRemovalTaskState body = createUpdateSubStageTask(state,
-                        SubStage.COMPLETED);
-                sendSelfPatch(body);
+                proceedTo(SubStage.COMPLETED);
             } else if (TaskState.isCancelled(deletionState.taskInfo) ||
                     TaskState.isFailed(deletionState.taskInfo)) {
                 failTask("Fail to delete resources",

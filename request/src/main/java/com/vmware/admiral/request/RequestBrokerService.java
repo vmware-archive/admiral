@@ -87,7 +87,6 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceErrorResponse;
-import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
@@ -219,7 +218,7 @@ public class RequestBrokerService extends
                 state.operation = postAllocationOperation;
                 createAllocationTasks(state);
             } else {
-                complete(state, SubStage.COMPLETED);
+                complete();
             }
             break;
         case REQUEST_FAILED:
@@ -238,11 +237,11 @@ public class RequestBrokerService extends
             } else if (isProvisioningContainerHostsOperation(state)) {
                 createContainerHostRemovalTask(state);
             } else {
-                sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
+                proceedTo(SubStage.ERROR);
             }
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case RESERVATION_CLEANUP:
             break;
@@ -258,7 +257,7 @@ public class RequestBrokerService extends
             }
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -307,25 +306,25 @@ public class RequestBrokerService extends
         } else {
             logWarning(errMsg);
         }
-        RequestBrokerState body = new RequestBrokerState();
-        body.taskInfo = new TaskState();
-        body.taskInfo.stage = TaskStage.STARTED;
-        body.taskSubStage = SubStage.REQUEST_FAILED;
+
+        ServiceErrorResponse rsp;
         if (e != null) {
-            body.taskInfo.failure = Utils.toServiceErrorResponse(e);
+            rsp = Utils.toServiceErrorResponse(e);
         } else {
-            ServiceErrorResponse rsp = new ServiceErrorResponse();
+            rsp = new ServiceErrorResponse();
             rsp.message = errMsg;
-            body.taskInfo.failure = rsp;
         }
-        sendSelfPatch(body);
+
+        proceedTo(SubStage.REQUEST_FAILED, s -> {
+            s.taskInfo.failure = rsp;
+        });
     }
 
     private void failRequest(RequestBrokerState state, String message, Throwable ex) {
         logSevere(message + ",reason: %s", Utils.toString(ex));
-        RequestBrokerState error = createUpdateSubStageTask(state, SubStage.ERROR);
-        error.taskInfo.failure = Utils.toServiceErrorResponse(ex);
-        sendSelfPatch(error);
+        proceedTo(SubStage.ERROR, s -> {
+            s.taskInfo.failure = Utils.toServiceErrorResponse(ex);
+        });
     }
 
     @Override
@@ -460,7 +459,7 @@ public class RequestBrokerService extends
 
     private void createCompositeComponentRemovalTask(RequestBrokerState state) {
         if (state.resourceLinks == null) {
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
+            proceedTo(SubStage.ERROR);
             return;
         }
 
@@ -480,7 +479,7 @@ public class RequestBrokerService extends
                         failTask("Failed to create container removal task", ex);
                     }
 
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                    proceedTo(SubStage.ALLOCATING);
                 });
         sendRequest(post);
     }
@@ -505,13 +504,13 @@ public class RequestBrokerService extends
                         failTask("Failed to create provisioning container hosts task", ex);
                         return;
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                    proceedTo(SubStage.ALLOCATING);
                 }));
     }
 
     private void createContainerHostRemovalTask(RequestBrokerState state) {
         if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
+            proceedTo(SubStage.ERROR);
             return;
         }
         ContainerHostRemovalTaskState hostRemovalState = new ContainerHostRemovalTaskState();
@@ -533,7 +532,7 @@ public class RequestBrokerService extends
                                 ex);
                         return;
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                    proceedTo(SubStage.ALLOCATING);
                 }));
     }
 
@@ -542,8 +541,7 @@ public class RequestBrokerService extends
                 || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
 
         if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
-            sendSelfPatch(createUpdateSubStageTask(state,
-                    errorState ? SubStage.ERROR : SubStage.ALLOCATED));
+            proceedTo(errorState ? SubStage.ERROR : SubStage.ALLOCATED);
             return;
         }
         ComputeRemovalTaskState computeRemovalState = new ComputeRemovalTaskState();
@@ -564,7 +562,7 @@ public class RequestBrokerService extends
                         failRequest(state, "Failed to create compute removal operation task", ex);
                         return;
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                    proceedTo(SubStage.ALLOCATING);
                 }));
     }
 
@@ -579,8 +577,7 @@ public class RequestBrokerService extends
                 || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
 
         if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
-            sendSelfPatch(createUpdateSubStageTask(state,
-                    errorState ? SubStage.ERROR : SubStage.ALLOCATED));
+            proceedTo(errorState ? SubStage.ERROR : SubStage.ALLOCATED);
             return;
         }
         ContainerNetworkRemovalTaskState removalState = new ContainerNetworkRemovalTaskState();
@@ -609,7 +606,7 @@ public class RequestBrokerService extends
                                 "Failed to create container network removal operation task", ex);
                         return;
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                    proceedTo(SubStage.ALLOCATING);
                 }));
     }
 
@@ -618,8 +615,7 @@ public class RequestBrokerService extends
                 || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
 
         if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
-            sendSelfPatch(createUpdateSubStageTask(state,
-                    errorState ? SubStage.ERROR : SubStage.ALLOCATED));
+            proceedTo(errorState ? SubStage.ERROR : SubStage.ALLOCATED);
             return;
         }
         ContainerVolumeRemovalTaskState removalState = new ContainerVolumeRemovalTaskState();
@@ -643,7 +639,7 @@ public class RequestBrokerService extends
                                 "Failed to create container volume removal operation task", ex);
                         return;
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                    proceedTo(SubStage.ALLOCATING);
                 }));
     }
 
@@ -653,8 +649,7 @@ public class RequestBrokerService extends
                 || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
 
         if (state.resourceLinks == null) {
-            sendSelfPatch(createUpdateSubStageTask(state,
-                    errorState ? SubStage.ERROR : SubStage.ALLOCATED));
+            proceedTo(errorState ? SubStage.ERROR : SubStage.ALLOCATED);
             return;
         }
 
@@ -678,7 +673,7 @@ public class RequestBrokerService extends
                         return;
                     }
                     if (!errorState) {
-                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                        proceedTo(SubStage.ALLOCATING);
                     }
                 });
         sendRequest(post);
@@ -701,7 +696,7 @@ public class RequestBrokerService extends
                     if (ex != null) {
                         failTask("Failed to create container operation task", ex);
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                    proceedTo(SubStage.ALLOCATING);
                 }));
     }
 
@@ -722,7 +717,7 @@ public class RequestBrokerService extends
                     if (ex != null) {
                         failTask("Failed to create container operation task", ex);
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                    proceedTo(SubStage.ALLOCATING);
                 }));
     }
 
@@ -731,7 +726,7 @@ public class RequestBrokerService extends
             getComputeDescription(state, (cd) -> createComputeReservationTasks(state, cd));
         } else if (isContainerNetworkType(state) || isContainerVolumeType(state)) {
             // No reservation needed here, moving on...
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESERVED));
+            proceedTo(SubStage.RESERVED);
         } else {
             getContainerDescription(state, (cd) -> createReservationTasks(state, cd));
         }
@@ -780,7 +775,7 @@ public class RequestBrokerService extends
                         failTask("Failure creating reservation task", e);
                         return;
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESERVING));
+                    proceedTo(SubStage.RESERVING);
                 }));
     }
 
@@ -826,7 +821,7 @@ public class RequestBrokerService extends
                         failTask("Failure creating reservation task", e);
                         return;
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESERVING));
+                    proceedTo(SubStage.RESERVING);
                 }));
     }
 
@@ -865,7 +860,7 @@ public class RequestBrokerService extends
                             failTask("Failure creating resource allocation task", e);
                             return;
                         }
-                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                        proceedTo(SubStage.ALLOCATING);
                     }));
         });
     }
@@ -894,7 +889,7 @@ public class RequestBrokerService extends
                         failTask("Failure creating resource allocation task", e);
                         return;
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                    proceedTo(SubStage.ALLOCATING);
                 }));
     }
 
@@ -961,7 +956,7 @@ public class RequestBrokerService extends
                             failTask("Failure creating resource allocation task", e);
                             return;
                         }
-                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                        proceedTo(SubStage.ALLOCATING);
                     }));
         });
     }
@@ -1029,7 +1024,7 @@ public class RequestBrokerService extends
                         failTask("Failure creating resource allocation task", e);
                         return;
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                    proceedTo(SubStage.ALLOCATING);
                 }));
     }
 
@@ -1108,7 +1103,7 @@ public class RequestBrokerService extends
                             failTask("Failure creating composition task", e);
                             return;
                         }
-                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                        proceedTo(SubStage.ALLOCATING);
                     }));
         } else {
             failTask(null, new IllegalArgumentException("Not supported resourceType: "
@@ -1119,11 +1114,7 @@ public class RequestBrokerService extends
     private void createReservationRemovalTask(RequestBrokerState state) {
         if (state.groupResourcePlacementLink == null
                 || state.groupResourcePlacementLink.isEmpty()) {
-            RequestBrokerState body = new RequestBrokerState();
-            body.taskInfo = new TaskState();
-            body.taskInfo.stage = TaskStage.STARTED;
-            body.taskSubStage = SubStage.RESERVATION_CLEANED_UP;
-            sendSelfPatch(body);
+            proceedTo(SubStage.RESERVATION_CLEANED_UP);
             return;
         }
         ReservationRemovalTaskState rsrvTask = new ReservationRemovalTaskState();
@@ -1144,7 +1135,7 @@ public class RequestBrokerService extends
                     if (e != null) {
                         logSevere("Reservations can't be cleaned up. Error: " + Utils.toString(e));
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESERVATION_CLEANUP));
+                    proceedTo(SubStage.RESERVATION_CLEANUP);
                 }));
     }
 
@@ -1177,7 +1168,7 @@ public class RequestBrokerService extends
                         return;
                     }
                     if (!errorState) {
-                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                        proceedTo(SubStage.ALLOCATING);
                     }
                 });
         sendRequest(post);
@@ -1212,7 +1203,7 @@ public class RequestBrokerService extends
                         return;
                     }
                     if (!errorState) {
-                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                        proceedTo(SubStage.ALLOCATING);
                     }
                 });
         sendRequest(post);

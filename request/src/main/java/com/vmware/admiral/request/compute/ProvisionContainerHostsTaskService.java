@@ -165,10 +165,10 @@ public class ProvisionContainerHostsTaskService
         case PROVISIONING:
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -202,10 +202,9 @@ public class ProvisionContainerHostsTaskService
                     String descLink = o.getBody(ComputeDescription.class).documentSelfLink;
 
                     logInfo("ComputeDescription created: %s", descLink);
-                    ProvisionContainerHostsTaskState patch = createUpdateSubStageTask(state,
-                            nextStage);
-                    patch.computeDescriptionLink = descLink;
-                    sendSelfPatch(patch);
+                    proceedTo(nextStage, s -> {
+                        s.computeDescriptionLink = descLink;
+                    });
                 }));
     }
 
@@ -243,10 +242,9 @@ public class ProvisionContainerHostsTaskService
                     }
 
                     logInfo("ComputeDescription updated: %s", cd.documentSelfLink);
-                    ProvisionContainerHostsTaskState patch = createUpdateSubStageTask(state,
-                            nextStage);
-                    patch.endpointLink = endpointLink;
-                    sendSelfPatch(patch);
+                    proceedTo(nextStage, s -> {
+                        s.endpointLink = endpointLink;
+                    });
                 }));
     }
 
@@ -344,7 +342,7 @@ public class ProvisionContainerHostsTaskService
                         return;
                     }
                     logInfo("%s task was triggered from: %s", displayName, state.documentSelfLink);
-                    sendSelfPatch(createUpdateSubStageTask(state, nextStage));
+                    proceedTo(nextStage);
                 }));
     }
 }

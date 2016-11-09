@@ -135,10 +135,10 @@ public class ContainerNetworkProvisionTaskService
         case PROVISIONING:
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -153,13 +153,12 @@ public class ContainerNetworkProvisionTaskService
             if (Boolean.TRUE.equals(networkDescription.external)) {
                 getNetworkByName(state, networkDescription.name, (networkState) -> {
                     updateContainerNetworkState(state, networkState, () -> {
-                        ContainerNetworkProvisionTaskState patchState = createUpdateSubStageTask(
-                                state, SubStage.COMPLETED);
-                        // Small workaround to get the actual self link for discovered networks...
-                        patchState.customProperties = new HashMap<>();
-                        patchState.customProperties.put("__externalNetworkSelfLink",
-                                networkState.documentSelfLink);
-                        sendSelfPatch(patchState);
+                        proceedTo(SubStage.COMPLETED, s -> {
+                            // Small workaround to get the actual self link for discovered networks...
+                            s.customProperties = new HashMap<>();
+                            s.customProperties.put("__externalNetworkSelfLink",
+                                    networkState.documentSelfLink);
+                        });
                     });
                 });
             } else {
@@ -191,7 +190,7 @@ public class ContainerNetworkProvisionTaskService
             }
         });
 
-        sendSelfPatch(createUpdateSubStageTask(state, SubStage.PROVISIONING));
+        proceedTo(SubStage.PROVISIONING);
     }
 
     private void provisionNetwork(ContainerNetworkProvisionTaskState state,

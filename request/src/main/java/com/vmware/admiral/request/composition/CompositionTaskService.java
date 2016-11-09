@@ -156,7 +156,7 @@ public class CompositionTaskService
             transitionToErrorIfNoRemaining(state);
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
             cleanResource(state);
@@ -266,15 +266,15 @@ public class CompositionTaskService
                     .stream().collect(Collectors.toMap(
                             (r) -> buildCompositionSubTaskLink(r.name), Function.identity()));
 
-            CompositionTaskState body = createUpdateSubStageTask(state, SubStage.DEPENDENCY_GRAPH);
-            body.resourceNodes = state.resourceNodes;
-            body.remainingCount = (long) state.resourceNodes.size();
 
-            sendSelfPatch(body);
+            proceedTo(SubStage.DEPENDENCY_GRAPH, s -> {
+                s.resourceNodes = state.resourceNodes;
+                s.remainingCount = (long) state.resourceNodes.size();
+            });
 
         } catch (Exception e) {
             state.taskInfo.failure = Utils.toServiceErrorResponse(e);
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
+            proceedTo(SubStage.ERROR);
         }
     }
 
@@ -330,7 +330,7 @@ public class CompositionTaskService
             });
         }
 
-        sendSelfPatch(createUpdateSubStageTask(state, SubStage.DISTRIBUTING));
+        proceedTo(SubStage.DISTRIBUTING);
     }
 
     private void createCompositionSubTask(final CompositionTaskState state,
@@ -446,7 +446,7 @@ public class CompositionTaskService
             });
         }
 
-        sendSelfPatch(createUpdateSubStageTask(state, SubStage.DISTRIBUTE_TASKS));
+        proceedTo(SubStage.DISTRIBUTE_TASKS);
     }
 
     private void patchCompositionSubTaskToExecute(
@@ -473,15 +473,15 @@ public class CompositionTaskService
     private void counting(CompositionTaskState state, boolean allocate) {
         if (state.remainingCount == 0) {
             if (state.errorCount > 0) {
-                sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
+                proceedTo(SubStage.ERROR);
             } else {
-                CompositionTaskState body = createUpdateSubStageTask(state, SubStage.ALLOCATED);
                 if (allocate) {
-                    body.remainingCount = (long) state.resourceNodes.size();
+                    proceedTo(SubStage.ALLOCATED, s -> {
+                        s.remainingCount = (long) state.resourceNodes.size();
+                    });
                 } else {
-                    body.taskSubStage = SubStage.COMPLETED;
+                    proceedTo(SubStage.COMPLETED);
                 }
-                sendSelfPatch(body);
             }
         } else {
             logFine("CompositeTask patched - remaining subTasks in progress : %s",
@@ -491,7 +491,7 @@ public class CompositionTaskService
 
     private void transitionToErrorIfNoRemaining(CompositionTaskState state) {
         if (state.remainingCount == null || state.remainingCount == 0) {
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
+            proceedTo(SubStage.ERROR);
         }
     }
 
@@ -536,12 +536,11 @@ public class CompositionTaskService
                             logInfo("CompositeComponent created [%s]",
                                     compComponent.documentSelfLink);
 
-                            final CompositionTaskState body = createUpdateSubStageTask(state,
-                                    SubStage.CONTEXT_PREPARED);
-                            body.customProperties = state.customProperties;
-                            body.compositeComponentLink = compComponent.documentSelfLink;
-                            body.descName = compositeDesc.name;
-                            sendSelfPatch(body);
+                            proceedTo(SubStage.CONTEXT_PREPARED, s -> {
+                                s.customProperties = state.customProperties;
+                                s.compositeComponentLink = compComponent.documentSelfLink;
+                                s.descName = compositeDesc.name;
+                            });
                         }));
     }
 
@@ -588,7 +587,7 @@ public class CompositionTaskService
 
         if (!cleanUpComposite) {
             logInfo("Error count: [%s]. No resources to clean.", state.errorCount);
-            completeWithError(state, SubStage.FAILED);
+            completeWithError();
             return;
         }
 
@@ -612,7 +611,7 @@ public class CompositionTaskService
                                 logWarning(
                                         "Failure creating composite component removal task. Error: [%s]",
                                         Utils.toString(e));
-                                completeWithError(state, SubStage.FAILED);
+                                completeWithError();
                             }
                         }));
     }

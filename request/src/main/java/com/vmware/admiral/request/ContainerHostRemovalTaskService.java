@@ -124,10 +124,10 @@ public class ContainerHostRemovalTaskService extends
         case REMOVING_HOSTS:
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -169,7 +169,7 @@ public class ContainerHostRemovalTaskService extends
                             completeSubTasksCounter(subTaskLink, null);
                         }));
             }
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.SUSPENDING_HOSTS));
+            proceedTo(SubStage.SUSPENDING_HOSTS);
         } catch (Throwable e) {
             failTask("Unexpected exception while suspending container host", e);
         }
@@ -222,7 +222,7 @@ public class ContainerHostRemovalTaskService extends
                         return;
                     }
 
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.REMOVING_CONTAINERS));
+                    proceedTo(SubStage.REMOVING_CONTAINERS);
                 });
         sendRequest(startPost);
     }
@@ -312,7 +312,7 @@ public class ContainerHostRemovalTaskService extends
                         return;
                     }
 
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.REMOVING_NETWORKS));
+                    proceedTo(SubStage.REMOVING_NETWORKS);
                 });
         sendRequest(startPost);
     }
@@ -342,7 +342,7 @@ public class ContainerHostRemovalTaskService extends
                         }
 
                         if (state.skipComputeHostRemoval) {
-                            sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
+                            proceedTo(SubStage.COMPLETED);
                             return;
                         }
 
@@ -362,7 +362,7 @@ public class ContainerHostRemovalTaskService extends
                         }
                     }));
 
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.REMOVING_HOSTS));
+            proceedTo(SubStage.REMOVING_HOSTS);
         } catch (Throwable e) {
             failTask("Unexpected exception while deleting container host instances", e);
         }

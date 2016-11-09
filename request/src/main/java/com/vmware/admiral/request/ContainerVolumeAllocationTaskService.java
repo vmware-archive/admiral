@@ -132,11 +132,12 @@ public class ContainerVolumeAllocationTaskService extends
             createContainerVolumeStates(state, null, null);
             break;
         case COMPLETED:
-            state.resourceLinks = buildResourceLinks(state);
-            complete(state, SubStage.COMPLETED);
+            complete(SubStage.COMPLETED, s -> {
+                s.resourceLinks = buildResourceLinks(state);
+            });
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -196,7 +197,7 @@ public class ContainerVolumeAllocationTaskService extends
         if (state.resourceNames == null || state.resourceNames.isEmpty()) {
             createResourcePrefixNameSelectionTask(state, volumeDescription);
         } else {
-            sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESOURCES_NAMED));
+            proceedTo(SubStage.RESOURCES_NAMED);
         }
     }
 

@@ -463,49 +463,6 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     /**
-     * @deprecated Deprecated in favor of new methods that promote clarity and optimized patch body.
-     *      Use completeWithError() methods with subStage and optional patch body configurator.
-     */
-    @Deprecated
-    protected void completeWithError(T state, E errorSubStage) {
-        if (!isFailedOrCancelledTask(state)) {
-            state.taskInfo.stage = TaskStage.FAILED;
-            state.taskSubStage = errorSubStage;
-            sendSelfPatch(state);
-        }
-    }
-
-    /**
-     * @deprecated Deprecated in favor of new methods that promote clarity and optimized patch body.
-     *      Use complete() methods with subStage and optional patch body configurator.
-     */
-    @Deprecated
-    protected void complete(T state, E completeSubStage) {
-        if (!isFailedOrCancelledTask(state)) {
-            state.taskInfo.stage = TaskStage.FINISHED;
-            state.taskSubStage = completeSubStage;
-            sendSelfPatch(state);
-        }
-    }
-
-    /**
-     * @deprecated Deprecated in favor of new methods that promote clarity and optimized patch body.
-     *      Use the new proceedTo() methods where the patch body can be configured through a
-     *      function, if needed.
-     */
-    @Deprecated
-    protected void sendSelfPatch(T body) {
-        sendRequest(Operation.createPatch(getUri())
-                .setBody(body)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        logWarning("Self patch failed: %s", Utils.toString(ex));
-                        return;
-                    }
-                }));
-    }
-
-    /**
      * Moves the task to the given subStage. The method assumes the task stage is STARTED as this
      * is the stage where most sub-stage transition happen.
      */
@@ -529,6 +486,11 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         complete(subStage, null);
     }
 
+    protected void complete(Consumer<T> patchBodyConfigurator) {
+        complete(Enum.valueOf(this.subStageType, DefaultSubStage.COMPLETED.toString()),
+                patchBodyConfigurator);
+    }
+
     protected void complete() {
         complete(Enum.valueOf(this.subStageType, DefaultSubStage.COMPLETED.toString()));
     }
@@ -543,6 +505,11 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
     protected void completeWithError(E subStage) {
         completeWithError(subStage, null);
+    }
+
+    protected void completeWithError(Consumer<T> patchBodyConfigurator) {
+        completeWithError(Enum.valueOf(this.subStageType, DefaultSubStage.ERROR.toString()),
+                patchBodyConfigurator);
     }
 
     protected void completeWithError() {
@@ -783,23 +750,5 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         }
 
         return taskStatus;
-    }
-
-    /**
-     * @deprecated Deprecated in favor of new methods that promote clarity and optimized patch body.
-     *      Use the new proceedTo() methods instead.
-     */
-    @Deprecated
-    protected T createUpdateSubStageTask(T state, E subStage) {
-        try {
-            @SuppressWarnings("unchecked")
-            T body = (T) state.getClass().newInstance();
-            body.taskInfo = state.taskInfo;
-            body.taskSubStage = subStage;
-            body.requestTrackerLink = state.requestTrackerLink;
-            return body;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }

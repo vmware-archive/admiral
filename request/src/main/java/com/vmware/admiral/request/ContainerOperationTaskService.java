@@ -81,10 +81,10 @@ public class ContainerOperationTaskService extends
             queryContainerResources(state);
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -118,7 +118,7 @@ public class ContainerOperationTaskService extends
                     if (ContainerOperationType.DELETE.id.equals(state.operation)) {
                         logWarning("No resources found to be removed with links: %s",
                                 state.resourceLinks);
-                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
+                        proceedTo(SubStage.COMPLETED);
                     } else {
                         failTask("No available resources", null);
                     }

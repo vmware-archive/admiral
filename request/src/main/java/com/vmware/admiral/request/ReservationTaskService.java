@@ -161,10 +161,10 @@ public class ReservationTaskService
             queryGroupResourcePlacements(state, containerDescription, QUERY_RETRIES_COUNT);
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -243,8 +243,7 @@ public class ReservationTaskService
                                 failTask("Failure creating reservation allocation task", e);
                                 return;
                             }
-                            sendSelfPatch(createUpdateSubStageTask(reservationTask,
-                                    SubStage.ALLOCATING_RESOURCE_POOL));
+                            proceedTo(SubStage.ALLOCATING_RESOURCE_POOL);
                         }));
 
     }
@@ -262,8 +261,7 @@ public class ReservationTaskService
         // If property __containerHostId exists call ReservationAllocationTaskService
         if (containerDesc.customProperties != null && containerDesc.customProperties
                 .containsKey(ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY)) {
-            sendSelfPatch(createUpdateSubStageTask(state,
-                    ReservationTaskState.SubStage.RESERVATION_ALLOCATION));
+            proceedTo(ReservationTaskState.SubStage.RESERVATION_ALLOCATION);
             return;
         }
 
@@ -368,8 +366,7 @@ public class ReservationTaskService
                                 }, QueryUtil.QUERY_RETRY_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
                             } else {
                                 if (state.tenantLinks != null && !state.tenantLinks.isEmpty()) {
-                                    sendSelfPatch(createUpdateSubStageTask(state,
-                                            SubStage.QUERYING_GLOBAL));
+                                    proceedTo(SubStage.QUERYING_GLOBAL);
                                 } else {
                                     failTask("No available group placements.", null);
                                 }
@@ -377,13 +374,12 @@ public class ReservationTaskService
                             return;
                         }
 
-                        ReservationTaskState body = createUpdateSubStageTask(state,
-                                isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED);
-                        /* Use a LinkedHashMap to preserve the order */
-                        body.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>();
-                        body.resourcePoolsPerGroupPlacementLinks.putAll(buildResourcePoolsMap(
-                                containerDesc, placements));
-                        sendSelfPatch(body);
+                        proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED, s -> {
+                            /* Use a LinkedHashMap to preserve the order */
+                            s.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>();
+                            s.resourcePoolsPerGroupPlacementLinks.putAll(buildResourcePoolsMap(
+                                    containerDesc, placements));
+                        });
                     }
                 });
     }
@@ -451,17 +447,14 @@ public class ReservationTaskService
                         failTask("Failure creating placement task", e);
                         return;
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state,
-                            isGlobal(state) ? SubStage.PLACEMENT_GLOBAL
-                                    : SubStage.PLACEMENT));
+                    proceedTo(isGlobal(state) ? SubStage.PLACEMENT_GLOBAL : SubStage.PLACEMENT);
                 }));
     }
 
     private void hostsSelected(ReservationTaskState state) {
         if (state.hostSelections == null || state.hostSelections.isEmpty()) {
             if (state.tenantLinks != null && !state.tenantLinks.isEmpty()) {
-                sendSelfPatch(createUpdateSubStageTask(state,
-                        SubStage.QUERYING_GLOBAL));
+                proceedTo(SubStage.QUERYING_GLOBAL);
             } else {
                 failTask("Available compute host can't be selected.", null);
             }
@@ -495,11 +488,10 @@ public class ReservationTaskService
         iter.remove();
 
         logInfo("Current selected placement: %s", placementLink);
-        ReservationTaskState patchBody = createUpdateSubStageTask(state,
-                SubStage.RESERVATION_SELECTED);
-        patchBody.resourcePoolsPerGroupPlacementLinks = resourcePoolsPerGroupPlacementLinks;
-        patchBody.groupResourcePlacementLink = placementLink;
-        sendSelfPatch(patchBody);
+        proceedTo(SubStage.RESERVATION_SELECTED, s -> {
+            s.resourcePoolsPerGroupPlacementLinks = resourcePoolsPerGroupPlacementLinks;
+            s.groupResourcePlacementLink = placementLink;
+        });
     }
 
     private void makeReservation(ReservationTaskState state,
@@ -532,15 +524,12 @@ public class ReservationTaskService
 
                             GroupResourcePlacementState placement = o
                                     .getBody(GroupResourcePlacementState.class);
-                            ReservationTaskState body = createUpdateSubStageTask(state,
-                                    SubStage.COMPLETED);
-                            body.taskInfo.stage = TaskStage.FINISHED;
-                            body.customProperties = mergeCustomProperties(state.customProperties,
-                                    placement.customProperties);
-                            body.groupResourcePlacementLink = placement.documentSelfLink;
-                            body.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks;
-
-                            sendSelfPatch(body);
+                            complete(s -> {
+                                s.customProperties = mergeCustomProperties(state.customProperties,
+                                        placement.customProperties);
+                                s.groupResourcePlacementLink = placement.documentSelfLink;
+                                s.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks;
+                            });
                         }));
     }
 

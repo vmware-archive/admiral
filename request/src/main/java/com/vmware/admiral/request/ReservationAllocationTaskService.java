@@ -161,10 +161,10 @@ public class ReservationAllocationTaskService extends
             updateContainerHostResourcePool(state, null);
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -214,11 +214,9 @@ public class ReservationAllocationTaskService extends
                             ResourcePoolState resourcePool = o.getBody(ResourcePoolState.class);
                             state.resourcePoolLink = resourcePool.documentSelfLink;
 
-                            ReservationAllocationTaskState body = createUpdateSubStageTask(state,
-                                    ReservationAllocationTaskState.SubStage.GROUP_POLICY_CREATED);
-                            body.resourcePoolLink = resourcePool.documentSelfLink;
-                            sendSelfPatch(body);
-
+                            proceedTo(ReservationAllocationTaskState.SubStage.GROUP_POLICY_CREATED, s -> {
+                                s.resourcePoolLink = resourcePool.documentSelfLink;
+                            });
                         }));
     }
 
@@ -250,14 +248,15 @@ public class ReservationAllocationTaskService extends
                             GroupResourcePlacementState groupResourcePlacement = o
                                     .getBody(GroupResourcePlacementState.class);
 
-                            ReservationAllocationTaskState body = createUpdateSubStageTask(state,
-                                    ReservationAllocationTaskState.SubStage.RESOURCE_POOL_ADJUSTMENT);
-
-                            body.groupResourcePlacementLink = groupResourcePlacement.documentSelfLink;
-                            body.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>();
-                            body.resourcePoolsPerGroupPlacementLinks.put(groupResourcePlacement.documentSelfLink, groupResourcePlacement.resourcePoolLink);
-                            sendSelfPatch(body);
-
+                            proceedTo(
+                                    ReservationAllocationTaskState.SubStage.RESOURCE_POOL_ADJUSTMENT,
+                                    s -> {
+                                        s.groupResourcePlacementLink = groupResourcePlacement.documentSelfLink;
+                                        s.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>();
+                                        s.resourcePoolsPerGroupPlacementLinks.put(
+                                                groupResourcePlacement.documentSelfLink,
+                                                groupResourcePlacement.resourcePoolLink);
+                                    });
                         }));
 
     }
@@ -286,12 +285,9 @@ public class ReservationAllocationTaskService extends
                                 return;
                             }
 
-                            ReservationAllocationTaskState body = createUpdateSubStageTask(state,
-                                    ReservationAllocationTaskState.SubStage.COMPLETED);
-
-                            body.groupResourcePlacementLink = state.groupResourcePlacementLink;
-                            sendSelfPatch(body);
-
+                            proceedTo(ReservationAllocationTaskState.SubStage.COMPLETED, s -> {
+                                s.groupResourcePlacementLink = state.groupResourcePlacementLink;
+                            });
                         }));
 
     }

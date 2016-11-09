@@ -99,10 +99,10 @@ public class CompositeComponentRemovalTaskService
             removeCompositeComponents(state);
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -131,8 +131,7 @@ public class CompositeComponentRemovalTaskService
                             } else {
                                 if (resourceLinks.isEmpty()) {
                                     logWarning("Composite component's resource links are empty");
-                                    sendSelfPatch(createUpdateSubStageTask(state,
-                                            SubStage.COMPOSITE_REMOVING));
+                                    proceedTo(SubStage.COMPOSITE_REMOVING);
                                     return;
                                 }
 
@@ -153,7 +152,7 @@ public class CompositeComponentRemovalTaskService
                         return;
                     }
 
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
+                    proceedTo(SubStage.COMPLETED);
                 })
                 .sendWith(this);
     }

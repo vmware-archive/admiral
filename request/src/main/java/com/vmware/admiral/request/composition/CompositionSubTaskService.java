@@ -189,12 +189,9 @@ public class CompositionSubTaskService
         case ALLOCATED:
             notifyDependentTasks(state, SubStage.CREATED, () -> {
                 if (state.allocationRequest) {
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.NOTIFY));
+                    proceedTo(SubStage.NOTIFY);
                 } else {
-                    CompositionSubTaskState body = createUpdateSubStageTask(state,
-                            SubStage.COMPLETED);
-                    body.taskInfo.stage = TaskStage.FINISHED;
-                    sendSelfPatch(body);
+                    complete();
                 }
             });
             break;
@@ -210,20 +207,17 @@ public class CompositionSubTaskService
             break;
         case COMPLETED:
             notifyDependentTasks(state, SubStage.EXECUTE, () -> {
-                CompositionSubTaskState body = createUpdateSubStageTask(state,
-                        SubStage.COMPLETED);
-                body.addCustomProperty(REFERER, getSelfLink());
-                body.taskInfo.stage = TaskStage.FINISHED;
-                sendSelfPatch(body);
+                complete(s -> {
+                    s.addCustomProperty(REFERER, getSelfLink());
+                });
             });
             break;
         case ERROR:
             if (!hasDependencies(state)) {
                 notifyDependentTasks(state, SubStage.ERROR, () -> {
-                    CompositionSubTaskState body = createUpdateSubStageTask(state, SubStage.ERROR);
-                    body.addCustomProperty(REFERER, getSelfLink());
-                    body.taskInfo.stage = TaskStage.FAILED;
-                    sendSelfPatch(body);
+                    completeWithError(s -> {
+                        s.addCustomProperty(REFERER, getSelfLink());
+                    });
                 });
             }
             break;
@@ -376,7 +370,7 @@ public class CompositionSubTaskService
                     }
                 }));
 
-        sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+        proceedTo(SubStage.ALLOCATING);
     }
 
     private void executeTask(CompositionSubTaskState state) {
@@ -426,7 +420,7 @@ public class CompositionSubTaskService
                     }
                 }));
 
-        sendSelfPatch(createUpdateSubStageTask(state, SubStage.EXECUTING));
+        proceedTo(SubStage.EXECUTING);
     }
 
     private void createContainerNetworkProvisionTaskState(CompositionSubTaskState state) {
@@ -451,7 +445,7 @@ public class CompositionSubTaskService
                     }
                 }));
 
-        sendSelfPatch(createUpdateSubStageTask(state, SubStage.EXECUTING));
+        proceedTo(SubStage.EXECUTING);
     }
 
     private void createContainerVolumeProvisionTaskState(CompositionSubTaskState state) {
@@ -477,7 +471,7 @@ public class CompositionSubTaskService
                     }
                 }));
 
-        sendSelfPatch(createUpdateSubStageTask(state, SubStage.EXECUTING));
+        proceedTo(SubStage.EXECUTING);
     }
 
     private void createComputeProvisionTaskState(CompositionSubTaskState state) {
@@ -501,7 +495,7 @@ public class CompositionSubTaskService
                     }
                 }));
 
-        sendSelfPatch(createUpdateSubStageTask(state, SubStage.EXECUTING));
+        proceedTo(SubStage.EXECUTING);
     }
 
     private void createOperationTaskState(CompositionSubTaskState state) {
@@ -536,13 +530,13 @@ public class CompositionSubTaskService
                     }
                 }));
 
-        sendSelfPatch(createUpdateSubStageTask(state, SubStage.EXECUTING));
+        proceedTo(SubStage.EXECUTING);
     }
 
     private void checkDependencies(CompositionSubTaskState state) {
         if (!hasDependencies(state)) {
             if (state.errorCount > 0) {
-                sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
+                proceedTo(SubStage.ERROR);
             } else {
                 if (SubStage.ALLOCATING.ordinal() > state.taskSubStage.ordinal()
                         && isProvisionOperation(state)) {

@@ -266,15 +266,15 @@ public class SelfProvisioningTaskService extends
             break;//transient
         case CONTAINER_PROVISIONING_COMPLETED:
             logInfo("Provisioned container resources: %s", state.resourceLinks);
-            SelfProvisioningTaskState body = createUpdateSubStageTask(state, SubStage.COMPLETED);
-            body.containerResourceLinks = state.resourceLinks;
-            sendSelfPatch(body);
+            proceedTo(SubStage.COMPLETED, s -> {
+                s.containerResourceLinks = state.resourceLinks;
+            });
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -298,9 +298,6 @@ public class SelfProvisioningTaskService extends
 
                                 String compositeDescUrl = o
                                         .getResponseHeader(Operation.LOCATION_HEADER);
-                                SelfProvisioningTaskState body = createUpdateSubStageTask(state,
-                                        nextStage);
-                                body.computeResourceLinks = state.resourceLinks;
 
                                 sendRequest(Operation
                                         .createGet(URI.create(compositeDescUrl))
@@ -312,8 +309,11 @@ public class SelfProvisioningTaskService extends
                                                     }
                                                     CompositeDescription compDesc = op
                                                             .getBody(CompositeDescription.class);
-                                                    body.compositeDescriptionLink = compDesc.documentSelfLink;
-                                                    sendSelfPatch(body);
+
+                                                    proceedTo(nextStage, s -> {
+                                                        s.computeResourceLinks = state.resourceLinks;
+                                                        s.compositeDescriptionLink = compDesc.documentSelfLink;
+                                                    });
                                                 }));
                             }));
         } catch (Throwable e) {
@@ -336,7 +336,7 @@ public class SelfProvisioningTaskService extends
             getContainerWhenAvailable(state, systemContainerLink, retriesLeft, failedAlready,
                     () -> {
                         if (computeCount.decrementAndGet() == 0) {
-                            sendSelfPatch(createUpdateSubStageTask(state, nextStage));
+                            proceedTo(nextStage);
                         }
                     }
             );
@@ -372,8 +372,7 @@ public class SelfProvisioningTaskService extends
 
                 // but patch with error only once
                 if (!failedAlready.getAndSet(true)) {
-                    SelfProvisioningTaskState body = createUpdateSubStageTask(state, SubStage.ERROR);
-                    sendSelfPatch(body);
+                    proceedTo(SubStage.ERROR);
                 }
             }
         };
@@ -422,7 +421,7 @@ public class SelfProvisioningTaskService extends
                             createDocument(state, RequestBrokerFactoryService.SELF_LINK, request,
                                     nextStage);
                         } else {
-                            sendSelfPatch(createUpdateSubStageTask(state, nextStage));
+                            proceedTo(nextStage);
                         }
                     }
                 }).sendWith(getHost());
@@ -496,9 +495,9 @@ public class SelfProvisioningTaskService extends
                     ComputeDescription cd = o.getBody(ComputeDescription.class);
                     logInfo("ComputeDesc created: %s", cd.documentSelfLink);
 
-                    SelfProvisioningTaskState body = createUpdateSubStageTask(state, nextStage);
-                    body.computeDescriptionLink = cd.documentSelfLink;
-                    sendSelfPatch(body);
+                    proceedTo(nextStage, s -> {
+                        s.computeDescriptionLink = cd.documentSelfLink;
+                    });
                 }));
     }
 
@@ -523,13 +522,12 @@ public class SelfProvisioningTaskService extends
                                 r.getDocumentSelfLink(), getResourcePoolLink(state));
                         computeLinks.add(r.getDocumentSelfLink());
                     } else if (!computeLinks.isEmpty()) {
-                        SelfProvisioningTaskState body = createUpdateSubStageTask(state,
-                                SubStage.COMPUTE_PROVISIONING_COMPLETED);
-                        body.computeResourceLinks = computeLinks;
-                        sendSelfPatch(body);
+                        proceedTo(SubStage.COMPUTE_PROVISIONING_COMPLETED, s -> {
+                            s.computeResourceLinks = computeLinks;
+                        });
                     } else {
                         // move to the next stage to provision VMs
-                        sendSelfPatch(createUpdateSubStageTask(state, nextStage));
+                        proceedTo(nextStage);
                     }
                 }).sendWith(getHost());
 
@@ -562,7 +560,7 @@ public class SelfProvisioningTaskService extends
                                 + Utils.toString(exs), exs.values().iterator().next());
                         return;
                     }
-                    sendSelfPatch(createUpdateSubStageTask(state, nextStage));
+                    proceedTo(nextStage);
                 }).sendWith(this);
     }
 
@@ -605,7 +603,7 @@ public class SelfProvisioningTaskService extends
                         found.set(true);
                     } else if (found.get()) {
                         logInfo("Service document found: %s", selfLink);
-                        sendSelfPatch(createUpdateSubStageTask(state, nextStage));
+                        proceedTo(nextStage);
                     } else {
                         callback.accept(nextStage);
                     }
@@ -622,7 +620,7 @@ public class SelfProvisioningTaskService extends
                         return;
                     }
                     logInfo("Resource created: %s", state.documentSelfLink);
-                    sendSelfPatch(createUpdateSubStageTask(state, nextStage));
+                    proceedTo(nextStage);
                 }));
     }
 

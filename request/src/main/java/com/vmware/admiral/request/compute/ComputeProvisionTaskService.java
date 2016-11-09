@@ -109,10 +109,10 @@ public class ComputeProvisionTaskService extends
             queryForProvisionedResources(state);
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -170,7 +170,7 @@ public class ComputeProvisionTaskService extends
                         return;
                     }
 
-                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.CUSTOMIZED_COMPUTE));
+                    proceedTo(SubStage.CUSTOMIZED_COMPUTE);
                 }).sendWith(this);
             };
 
@@ -181,7 +181,7 @@ public class ComputeProvisionTaskService extends
                 OperationJoin.create(getDisksOperations).setCompletion(getDisksCompletion)
                         .sendWith(this);
             } else {
-                sendSelfPatch(createUpdateSubStageTask(state, SubStage.CUSTOMIZED_COMPUTE));
+                proceedTo(SubStage.CUSTOMIZED_COMPUTE);
             }
         };
 
@@ -231,8 +231,7 @@ public class ComputeProvisionTaskService extends
                         }
                         logInfo("Requested provisioning of %s compute resources.",
                                 resourceLinks.size());
-                        sendSelfPatch(
-                                createUpdateSubStageTask(state, SubStage.PROVISIONING_COMPUTE));
+                        proceedTo(SubStage.PROVISIONING_COMPUTE);
                         return;
                     }).sendWith(this);
         } catch (Throwable e) {
@@ -272,7 +271,7 @@ public class ComputeProvisionTaskService extends
     private void queryForProvisionedResources(ComputeProvisionTaskState state) {
         Set<String> resourceLinks = state.resourceLinks;
         if (resourceLinks == null || resourceLinks.isEmpty()) {
-            complete(state, SubStage.COMPLETED);
+            complete();
             return;
         }
         ArrayList<Operation> operations = new ArrayList<>(resourceLinks.size());
@@ -295,11 +294,11 @@ public class ComputeProvisionTaskService extends
                         }
                     });
                     if (computes.isEmpty()) {
-                        complete(state, SubStage.COMPLETED);
+                        complete();
                         return;
                     } else {
                         if (DeploymentProfileConfig.getInstance().isTest()) {
-                            complete(state, SubStage.COMPLETED);
+                            complete();
                         } else {
                             validateConnectionsAndRegisterContainerHost(state, computes);
                         }
@@ -351,7 +350,7 @@ public class ComputeProvisionTaskService extends
                 return;
             }
             if (remaining.decrementAndGet() == 0) {
-                complete(state, SubStage.COMPLETED);
+                complete();
             }
         }).sendWith(this);
 

@@ -79,10 +79,10 @@ public class ComputeOperationTaskService extends
             queryComputeResources(state);
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -126,7 +126,7 @@ public class ComputeOperationTaskService extends
             }
 
             if (computes.isEmpty()) {
-                sendSelfPatch(createUpdateSubStageTask(state, SubStage.COMPLETED));
+                proceedTo(SubStage.COMPLETED);
             } else {
                 performResourceOperations(state, computes, null);
             }

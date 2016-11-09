@@ -150,19 +150,20 @@ public class ResourceNamePrefixTaskService
                                 return;
                             }
                             NamePrefixResponse response = o.getBody(NamePrefixResponse.class);
-                            state.resourceNames = new HashSet<>(response.resourceNamePrefixes
+                            Set<String> resourceNames = new HashSet<>(response.resourceNamePrefixes
                                     .size());
                             for (String prefix : response.resourceNamePrefixes) {
                                 try {
-                                    state.resourceNames.add(String.format(
-                                            state.baseResourceNameFormat,
+                                    resourceNames.add(String.format(state.baseResourceNameFormat,
                                             prefix));
                                 } catch (IllegalFormatException fe) {
                                     failTask("Failure formatting baseResourceNameFormat", fe);
                                     return;
                                 }
                             }
-                            complete(state, DefaultSubStage.COMPLETED);
+                            complete(DefaultSubStage.COMPLETED, s -> {
+                                s.resourceNames = resourceNames;
+                            });
                         }));
     }
 }

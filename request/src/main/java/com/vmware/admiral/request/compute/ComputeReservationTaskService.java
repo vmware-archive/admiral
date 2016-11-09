@@ -43,7 +43,6 @@ import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.NumericRange;
@@ -129,10 +128,10 @@ public class ComputeReservationTaskService
             queryGroupResourcePlacements(state, null, this.computeDescription);
             break;
         case COMPLETED:
-            complete(state, SubStage.COMPLETED);
+            complete();
             break;
         case ERROR:
-            completeWithError(state, SubStage.ERROR);
+            completeWithError();
             break;
         default:
             break;
@@ -242,27 +241,26 @@ public class ComputeReservationTaskService
             } else {
                 if (placements.isEmpty()) {
                     if (tenantLinks != null && !tenantLinks.isEmpty()) {
-                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.QUERYING_GLOBAL));
+                        proceedTo(SubStage.QUERYING_GLOBAL);
                     } else {
                         failTask("No available group placements.", null);
                     }
                     return;
                 }
 
-                ComputeReservationTaskState body = createUpdateSubStageTask(state,
-                        isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED);
-                // Use a LinkedHashMap to preserve the order
-                body.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>();
-                // for now sort the placements by priority in memory.
-                placements.sort((g1, g2) -> g1.priority - g2.priority);
-                for (GroupResourcePlacementState placement : placements) {
-                    logInfo("Placements found: [%s] with available instances: [%s] and available memory: [%s].",
-                            placement.documentSelfLink, placement.availableInstancesCount,
-                            placement.availableMemory);
-                    body.resourcePoolsPerGroupPlacementLinks.put(placement.documentSelfLink,
-                            placement.resourcePoolLink);
-                }
-                sendSelfPatch(body);
+                proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED, s -> {
+                    // Use a LinkedHashMap to preserve the order
+                    s.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>();
+                    // for now sort the placements by priority in memory.
+                    placements.sort((g1, g2) -> g1.priority - g2.priority);
+                    for (GroupResourcePlacementState placement : placements) {
+                        logInfo("Placement found: [%s] with available instances: [%s] and available memory: [%s].",
+                                placement.documentSelfLink, placement.availableInstancesCount,
+                                placement.availableMemory);
+                        s.resourcePoolsPerGroupPlacementLinks.put(placement.documentSelfLink,
+                                placement.resourcePoolLink);
+                    }
+                });
             }
         });
     }
@@ -354,11 +352,10 @@ public class ComputeReservationTaskService
         iter.remove();
 
         logInfo("Current selected placement: %s", placementLink);
-        ComputeReservationTaskState patchBody = createUpdateSubStageTask(state,
-                SubStage.RESERVATION_SELECTED);
-        patchBody.resourcePoolsPerGroupPlacementLinks = resourcePoolsPerGroupPlacementLinks;
-        patchBody.groupResourcePlacementLink = placementLink;
-        sendSelfPatch(patchBody);
+        proceedTo(SubStage.RESERVATION_SELECTED, s -> {
+            s.resourcePoolsPerGroupPlacementLinks = resourcePoolsPerGroupPlacementLinks;
+            s.groupResourcePlacementLink = placementLink;
+        });
     }
 
     private void makeReservation(ComputeReservationTaskState state,
@@ -391,15 +388,13 @@ public class ComputeReservationTaskService
 
                             GroupResourcePlacementState placement = o
                                     .getBody(GroupResourcePlacementState.class);
-                            ComputeReservationTaskState body = createUpdateSubStageTask(state,
-                                    SubStage.COMPLETED);
-                            body.taskInfo.stage = TaskStage.FINISHED;
-                            body.customProperties = mergeCustomProperties(state.customProperties,
-                                    placement.customProperties);
-                            body.groupResourcePlacementLink = placement.documentSelfLink;
-                            body.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks;
-
-                            sendSelfPatch(body);
+                            complete(s -> {
+                                s.customProperties = mergeCustomProperties(state.customProperties,
+                                        placement.customProperties);
+                                s.groupResourcePlacementLink = placement.documentSelfLink;
+                                s.resourcePoolsPerGroupPlacementLinks =
+                                        state.resourcePoolsPerGroupPlacementLinks;
+                            });
                         }));
     }
 

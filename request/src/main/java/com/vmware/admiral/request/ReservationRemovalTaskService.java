@@ -22,7 +22,6 @@ import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
-import com.vmware.xenon.common.TaskState.TaskStage;
 
 /**
  * Task implementing the removal/free up of the previously reserved resource placements.
@@ -102,9 +101,7 @@ public class ReservationRemovalTaskService
                         failTask("Failure releasing group placement", e);
                         return;
                     }
-                    state.taskInfo.stage = TaskStage.FINISHED;
-                    state.taskSubStage = DefaultSubStage.COMPLETED;
-                    sendSelfPatch(state);
+                    complete();
                 }));
     }
 }
