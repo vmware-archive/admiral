@@ -60,7 +60,7 @@ type RequestInfo struct {
 	Name                     string   `json:"name"`
 	Progress                 int      `json:"progress"`
 	ResourceLinks            []string `json:"resourceLinks"`
-	DocumentUpdateTimeMicros int64    `json:"documentUpdateTimeMicros"`
+	DocumentUpdateTimeMicros string   `json:"documentUpdateTimeMicros"`
 	EventLogInfo             string   `json:"eventLogInfo"`
 	EventLogLink             string   `json:"eventLogLink"`
 	DocumentSelfLink         string   `json:"documentSelfLink"`
@@ -78,7 +78,8 @@ func (ri *RequestInfo) GetID() string {
 }
 
 func (ri *RequestInfo) GetLastUpdate() string {
-	then := time.Unix(0, ri.DocumentUpdateTimeMicros*int64(time.Microsecond))
+	parsedUpdateTime, _ := strconv.ParseInt(ri.DocumentUpdateTimeMicros, 10, 64)
+	then := time.Unix(0, parsedUpdateTime*int64(time.Microsecond))
 	timeSinceUpdate := time.Now().Sub(then)
 	if timeSinceUpdate.Hours() > 72 {
 		daysAgo := int(float64(timeSinceUpdate.Hours()) / 24.0)

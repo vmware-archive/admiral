@@ -315,11 +315,11 @@ func containsCert(cert *x509.Certificate) bool {
 }
 
 func urlRemoveTrailingSlash(url string) string {
-	newUrl := url
-	if string(url[len(url)-1]) == "/" {
-		newUrl = url[:len(url)-2]
+	newUrl := []rune(url)
+	if strings.HasSuffix(url, "/") {
+		newUrl = newUrl[0 : len(newUrl)-1]
 	}
-	return newUrl
+	return string(newUrl)
 }
 
 func urlAppendDefaultPort(url string) string {

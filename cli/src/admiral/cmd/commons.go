@@ -17,13 +17,15 @@ import (
 	"os"
 	"strings"
 	"text/tabwriter"
+
+	"admiral/utils"
 )
 
 var (
 	//Prefixes
 	required    = "*Required* "
 	prefixNew   = "New "
-	vraOptional = "*vRA Optional* "
+	vraOptional = "*vRA* "
 
 	//Token flag description
 	tokenDesc = "Authorization token."
@@ -193,6 +195,10 @@ var (
 
 	outputFormat     string
 	outputFormatDesc = "Output format: json, table."
+
+	//Business groups flags
+	businessGroupId     string
+	businessGroupIdDesc = "Business group ID."
 )
 
 var admiralLogo = `
@@ -259,4 +265,20 @@ func checkForErrors(errs []error) []error {
 		}
 	}
 	return notNilErrs
+}
+
+func isVraMode() bool {
+	token, _ := utils.GetAuthToken()
+	if strings.Contains(token, "Bearer") {
+		return true
+	}
+	return false
+}
+
+func urlRemoveTrailingSlash(url string) string {
+	newUrl := []rune(url)
+	if strings.HasSuffix(url, "/") {
+		newUrl = newUrl[0 : len(newUrl)-1]
+	}
+	return string(newUrl)
 }

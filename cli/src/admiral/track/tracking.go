@@ -57,55 +57,51 @@ func (or *OperationResponse) PrintTracerId() {
 }
 
 func Wait(taskId string) ([]string, error) {
-	url := config.URL + "/request-status/" + taskId
-	req, _ := http.NewRequest("GET", url, nil)
+	const progressBarWidth = 55
+	taskStatus := &TaskStatus{}
 	var (
 		result        string
-		errorMsg      string
 		resourceLinks []string
+		err           error
 	)
-
-	pb := ProgressBar{
-		Widht: 55,
-	}
+	pb := ProgressBar{progressBarWidth}
 	pb.InitPrint()
+
+	url := config.URL + "/request-status/" + taskId
+	req, _ := http.NewRequest("GET", url, nil)
+
 	begin := time.Now()
 	for {
 		elapsed := time.Now().Sub(begin)
 		if elapsed.Seconds() > float64(config.TASK_TIMEOUT) {
 			return nil, errors.New("Task timed out.")
 		}
-		taskStatus := &TaskStatus{}
+
 		_, respBody, respErr := client.ProcessRequest(req)
 		if respErr != nil {
 			return nil, respErr
 		}
-		err := json.Unmarshal(respBody, taskStatus)
+
+		err = json.Unmarshal(respBody, taskStatus)
 		utils.CheckJson(err)
 		pb.UpdateBar(taskStatus.Progress)
+
 		if taskStatus.SubStage == "COMPLETED" {
 			result = taskStatus.SubStage
 			resourceLinks = taskStatus.ResourceLinks
+			pb.FillUp()
 			break
 		} else if taskStatus.SubStage == "ERROR" {
 			result = taskStatus.SubStage
-			errorMsg, err = getErrorMessage(req)
+			err = getErrorMessage(req)
 			break
-			if err != nil {
-				return nil, err
-			}
 		}
 		time.Sleep(1000 * time.Millisecond)
 	}
 
 	fmt.Printf("\n%s The task has %s.\n", time.Now().Format("2006.01.02 15:04:05"), result)
 
-	if result == "ERROR" {
-		if errorMsg != "" {
-			return resourceLinks, errors.New(errorMsg)
-		}
-	}
-	return resourceLinks, nil
+	return resourceLinks, err
 }
 
 func GetResLinks(taskId string) ([]string, error) {
@@ -115,22 +111,20 @@ func GetResLinks(taskId string) ([]string, error) {
 		result        string
 		errorMsg      string
 		resourceLinks []string
+		err           error
 	)
 	taskStatus := &TaskStatus{}
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return nil, respErr
 	}
-	err := json.Unmarshal(respBody, taskStatus)
+	err = json.Unmarshal(respBody, taskStatus)
 	utils.CheckJson(err)
 	if taskStatus.SubStage == "COMPLETED" {
 		result = taskStatus.SubStage
 	} else if taskStatus.SubStage == "ERROR" {
 		result = taskStatus.SubStage
-		errorMsg, err = getErrorMessage(req)
-		if err != nil {
-			return nil, err
-		}
+		err = getErrorMessage(req)
 	}
 	resourceLinks = taskStatus.ResourceLinks
 
@@ -142,29 +136,29 @@ func GetResLinks(taskId string) ([]string, error) {
 	return resourceLinks, nil
 }
 
-func getErrorMessage(statusReq *http.Request) (string, error) {
+func getErrorMessage(statusReq *http.Request) error {
 	//Wait because sometimes event log link is not generated.
 	time.Sleep(1 * time.Second)
 	_, respBody, respErr := client.ProcessRequest(statusReq)
 	if respErr != nil {
-		return "", respErr
+		return respErr
 	}
 	taskStatus := &TaskStatus{}
 	err := json.Unmarshal(respBody, taskStatus)
 	utils.CheckJson(err)
 	if taskStatus.EventLogLink == "" {
-		return "", errors.New("No event log link.")
+		return errors.New("No event log link.")
 	}
 	url := config.URL + taskStatus.EventLogLink
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr = client.ProcessRequest(req)
 	if respErr != nil {
-		return "", respErr
+		return respErr
 	}
 	event := &events.EventInfo{}
 	err = json.Unmarshal(respBody, event)
 	utils.CheckJson(err)
-	return event.Description, nil
+	return errors.New(event.Description)
 }
 
 type ProgressBar struct {

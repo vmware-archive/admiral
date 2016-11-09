@@ -29,10 +29,17 @@ var (
 func init() {
 	AutocompleteCmd.Hidden = true
 	RootCmd.AddCommand(AppsRootCmd, CertsRootCmd, CredentialsRootCmd,
-		DeploymentPoliciesRootCmd, HostsRootCmd, PlacementsRootCmd,
-		PlacementZonesRootCmd, TemplatesRootCmd, RegistriesRootCmd,
-		NetworksRootCmd, CustomPropertiesRootCmd, AutocompleteCmd,
-		ProjectsRootCmd, RequestsRootCmd, ConfigRootCmd)
+		HostsRootCmd, PlacementsRootCmd, PlacementZonesRootCmd,
+		TemplatesRootCmd, RegistriesRootCmd, NetworksRootCmd,
+		CustomPropertiesRootCmd, AutocompleteCmd, RequestsRootCmd,
+		ConfigRootCmd)
+
+	if utils.IsVraMode {
+		RootCmd.AddCommand(BusinessGroupsRootCmd)
+		RootCmd.AddCommand(DeploymentPoliciesRootCmd)
+	} else {
+		RootCmd.AddCommand(ProjectsRootCmd)
+	}
 
 	RootCmd.Flags().BoolVar(&ShowVersion, "version", false, "Admiral CLI Version.")
 	RootCmd.PersistentFlags().BoolVar(&utils.Verbose, "verbose", false, "Showing every request/response json body.")
@@ -128,6 +135,11 @@ var ProjectsRootCmd = &cobra.Command{
 var RequestsRootCmd = &cobra.Command{
 	Use:   "requests",
 	Short: "Perform operations with requests.",
+}
+
+var BusinessGroupsRootCmd = &cobra.Command{
+	Use:   "business-group",
+	Short: "Perform operations with business groups.",
 }
 
 var AutocompleteCmd = &cobra.Command{

@@ -43,8 +43,7 @@ func (lc *ListContainers) GetResource(index int) selflink.Identifiable {
 //In case you want to fetch all containers, pass empty string as parameter.
 //The return result is the count of fetched containers.
 func (lc *ListContainers) FetchContainers(queryF string) (int, error) {
-	url := config.URL + "/resources/containers?documentType=true&$count=true&$limit=10000&$orderby=documentSelfLink+asc"
-
+	url := config.URL + "/resources/containers?documentType=true&$count=true&$limit=10000&$orderby=documentSelfLink+asc&$filter=system+ne+true"
 	var query string
 	if strings.TrimSpace(queryF) != "" {
 		query = fmt.Sprintf("&$filter=ALL_FIELDS+eq+'*%s*'", queryF)
@@ -119,19 +118,4 @@ func (lc *ListContainers) GetContainerLink(name string) string {
 		}
 	}
 	return ""
-}
-
-//Function to verify if the given container exists.
-//Return result is boolean which is true if it exists and false if it doesn't exist.
-func (lc *ListContainers) VerifyExistingContainer(names []string) bool {
-	for _, containerName := range names {
-		for _, val := range lc.Documents {
-			for _, currName := range val.Names {
-				if currName == containerName {
-					return true
-				}
-			}
-		}
-	}
-	return false
 }

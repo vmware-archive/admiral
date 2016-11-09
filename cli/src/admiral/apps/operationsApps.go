@@ -18,9 +18,11 @@ import (
 	"net/http"
 	"strings"
 
+	"admiral/businessgroups"
 	"admiral/client"
 	"admiral/config"
 	"admiral/containers"
+	"admiral/projects"
 	"admiral/templates"
 	"admiral/track"
 	"admiral/utils"
@@ -183,14 +185,15 @@ func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 		}
 	} else {
 		resLinks = nil
+		err = respErr
 	}
-	return resLinks, respErr
+	return resLinks, err
 }
 
 //Function to provision application.
 //For parameter takes application name and bool to trigger or not waiting for task.
 //Returns bool to specify if app is provisioning.
-func RunApp(app string, asyncTask bool) ([]string, error) {
+func RunApp(app, tenantId string, asyncTask bool) ([]string, error) {
 	links := queryTemplateName(app)
 	if len(links) > 1 {
 		return nil, templates.DuplicateNamesError
@@ -199,11 +202,11 @@ func RunApp(app string, asyncTask bool) ([]string, error) {
 	}
 
 	id := utils.GetResourceID(links[0])
-	return RunAppID(id, asyncTask)
+	return RunAppID(id, tenantId, asyncTask)
 }
 
 //Same as RunApp() but takes app's ID in order to avoid conflict from duplicate names.
-func RunAppID(id string, asyncTask bool) ([]string, error) {
+func RunAppID(id, tenantId string, asyncTask bool) ([]string, error) {
 	jsonBody := make(map[string]string, 0)
 	fullId, err := selflink.GetFullId(id, new(templates.CompositeDescriptionList), utils.TEMPLATE)
 	utils.CheckIdError(err)
@@ -223,19 +226,21 @@ func RunAppID(id string, asyncTask bool) ([]string, error) {
 	utils.CheckJson(err)
 
 	link = cd.DocumentSelfLink
+	tenantLinks := setTenantLink(tenantId)
 
 	ra := RunApplication{
 		ResourceDescriptionLink: link,
 		ResourceType:            "COMPOSITE_COMPONENT",
+		TenantLinks:             tenantLinks,
 	}
 	resLinks, err := ra.run(asyncTask)
 	ids := utils.GetResourceIDs(resLinks)
 	return ids, err
 }
 
-func RunAppFile(dirF string, keepTemplate, asyncTask bool) ([]string, error) {
+func RunAppFile(dirF, tenantId string, keepTemplate, asyncTask bool) ([]string, error) {
 	id, _ := templates.Import(dirF)
-	resLinks, err := RunAppID(id, false)
+	resLinks, err := RunAppID(id, tenantId, false)
 	if !keepTemplate {
 		templates.RemoveTemplateID(id)
 	}
@@ -255,8 +260,9 @@ func queryTemplateName(tmplName string) []string {
 }
 
 type RunApplication struct {
-	ResourceDescriptionLink string `json:"resourceDescriptionLink"`
-	ResourceType            string `json:"resourceType"`
+	ResourceDescriptionLink string   `json:"resourceDescriptionLink"`
+	ResourceType            string   `json:"resourceType"`
+	TenantLinks             []string `json:"tenantLinks"`
 }
 
 //Function that send request to the Admiral API to provision application.
@@ -283,6 +289,26 @@ func (ra *RunApplication) run(asyncTask bool) ([]string, error) {
 		}
 	}
 	return nil, respErr
+}
+
+func setTenantLink(tenantLinkId string) []string {
+	tenantLinks := make([]string, 0)
+	if tenantLinkId == "" {
+		return nil
+	}
+	if !utils.IsVraMode {
+		fullProjectId, err := selflink.GetFullId(tenantLinkId, new(projects.ProjectList), utils.PROJECT)
+		utils.CheckIdError(err)
+		projectLink := utils.CreateResLinkForProject(fullProjectId)
+		tenantLinks = append(tenantLinks, projectLink)
+	} else {
+		fullBusinessGroupId, err := businessgroups.GetFullId(tenantLinkId)
+		utils.CheckIdError(err)
+		businessGroupLink := utils.CreateResLinkForBusinessGroup(fullBusinessGroupId)
+		tenantLinks = append(tenantLinks, businessGroupLink)
+		tenantLinks = append(tenantLinks, "/tenants/"+utils.GetTenant())
+	}
+	return tenantLinks
 }
 
 func GetAppLinks(name string) []string {

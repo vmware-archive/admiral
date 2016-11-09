@@ -5,6 +5,7 @@ import "reflect"
 //Filters
 const (
 	ApplicationFilter      = "/resources/composite-components?documentType=true&$count=true&$limit=21&$filter=documentSelfLink+eq+"
+	BusinessGroupFilter    = "/tenants/%s/subtenants/?$top=1000"
 	CertFilter             = "/config/trust-certs?expand&$filter=documentSelfLink+eq+"
 	ContainerFilter        = "/resources/containers?documentType=true&$count=true&$limit=10000&$orderby=documentSelfLink+asc&$filter=documentSelfLink+eq+"
 	CredentialsFilter      = "/core/auth/credentials?expand&$filter=customProperties/scope%20ne%20%27SYSTEM%27+and+documentSelfLink+eq+"
@@ -27,28 +28,30 @@ func (rt ResourceType) GetName() string {
 	case 1:
 		return "Application"
 	case 2:
-		return "Certificate"
+		return "Business Group"
 	case 3:
-		return "Container"
+		return "Certificate"
 	case 4:
-		return "Credentials"
+		return "Container"
 	case 5:
-		return "Deployment Policy"
+		return "Credentials"
 	case 6:
-		return "Host"
+		return "Deployment Policy"
 	case 7:
-		return "Network"
+		return "Host"
 	case 8:
-		return "Placement"
+		return "Network"
 	case 9:
-		return "Placement Zone"
+		return "Placement"
 	case 10:
-		return "Project"
+		return "Placement Zone"
 	case 11:
-		return "Registry"
+		return "Project"
 	case 12:
-		return "Request"
+		return "Registry"
 	case 13:
+		return "Request"
+	case 14:
 		return "Template"
 	default:
 		return ""
@@ -57,6 +60,7 @@ func (rt ResourceType) GetName() string {
 
 const (
 	APPLICATION ResourceType = 1 + iota
+	BUSINESS_GROUP
 	CERTIFICATE
 	CONTAINER
 	CREDENTIALS

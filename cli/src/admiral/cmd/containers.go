@@ -404,7 +404,11 @@ func initContainerRun() {
 	containerRunCmd.Flags().StringVarP(&workingDir, "workdir", "w", "", workingDirDesc)
 	containerRunCmd.Flags().StringSliceVarP(&volumes, "volume", "v", []string{}, volumesDesc)
 	containerRunCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
-	containerRunCmd.Flags().StringVar(&projectF, "project", "", projectFDesc)
+	if !utils.IsVraMode {
+		containerRunCmd.Flags().StringVar(&projectF, "project", "", projectFDesc)
+	} else {
+		containerRunCmd.Flags().StringVar(&businessGroupId, "business-group", "", vraOptional+required+businessGroupIdDesc)
+	}
 	containerRunCmd.Flags().Bool("help", false, "Help for "+RootCmd.Name())
 	containerRunCmd.Flags().MarkHidden("help")
 	RootCmd.AddCommand(containerRunCmd)
@@ -463,8 +467,14 @@ func RunContainerRun(args []string) (string, []error) {
 	if len(errorArr) > 0 {
 		return "", errorArr
 	}
-	newID, err = cd.RunContainer(projectF, asyncTask)
-	errorArr = append(errorArr, err)
+
+	if !utils.IsVraMode {
+		newID, err = cd.RunContainer(projectF, asyncTask)
+		errorArr = append(errorArr, err)
+	} else {
+		newID, err = cd.RunContainer(businessGroupId, asyncTask)
+		errorArr = append(errorArr, err)
+	}
 
 	if asyncTask {
 		output = "Image is being provisioned."

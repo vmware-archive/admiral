@@ -21,17 +21,19 @@ import (
 	"admiral/utils"
 	"bytes"
 	"fmt"
+	"strconv"
 	"time"
 )
 
 type EventInfo struct {
 	EventLogType             string `json:"eventLogType"`
 	Description              string `json:"description"`
-	DocumentUpdateTimeMicros int64  `json:"documentUpdateTimeMicros"`
+	DocumentUpdateTimeMicros string `json:"documentUpdateTimeMicros"`
 }
 
 func (ei *EventInfo) GetLastUpdate() string {
-	then := time.Unix(0, ei.DocumentUpdateTimeMicros*int64(time.Microsecond))
+	parsedUpdateTime, _ := strconv.ParseInt(ei.DocumentUpdateTimeMicros, 10, 64)
+	then := time.Unix(0, parsedUpdateTime*int64(time.Microsecond))
 	timeSinceUpdate := time.Now().Sub(then)
 	if timeSinceUpdate.Hours() > 72 {
 		daysAgo := int(float64(timeSinceUpdate.Hours()) / 24.0)
@@ -54,8 +56,9 @@ func (ei *EventInfo) GetDescription() string {
 }
 
 type EventList struct {
-	TotalCount int32                `json:"totalCount"`
-	Documents  map[string]EventInfo `json:"documents"`
+	TotalCount    int32                `json:"totalCount"`
+	Documents     map[string]EventInfo `json:"documents"`
+	DocumentLinks []string             `json:"documentLinks"`
 }
 
 //FetchEvents fetches all events and returns their count.
@@ -79,7 +82,8 @@ func (el *EventList) GetOutputString() string {
 	var buffer bytes.Buffer
 	header := fmt.Sprintf("%-15s %s\n", "SINCE", "DESCRIPTION")
 	buffer.WriteString(header)
-	for _, val := range el.Documents {
+	for i := len(el.DocumentLinks) - 1; i >= 0; i-- {
+		val := el.Documents[el.DocumentLinks[i]]
 		output := fmt.Sprintf("%-15s %s", val.GetLastUpdate(), val.GetDescription())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")

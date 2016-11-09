@@ -133,8 +133,6 @@ func Loginvra(username, password, tenant, urlF string) string {
 	jsonBody, err := json.Marshal(login)
 	utils.CheckJson(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return respErr.Error()
@@ -145,7 +143,8 @@ func Loginvra(username, password, tenant, urlF string) string {
 	tokenFile, err := os.Create(utils.TokenPath())
 
 	utils.CheckFile(err)
-	tokenFile.Write([]byte("Bearer " + respLogin.Id))
+	tokenFile.Write([]byte(tenant))
+	tokenFile.Write([]byte("&Bearer " + respLogin.Id))
 	tokenFile.Close()
 	return "Login successful."
 }

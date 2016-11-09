@@ -18,11 +18,14 @@ import (
 	"net/http"
 	"strings"
 
+	"admiral/businessgroups"
 	"admiral/client"
 	"admiral/config"
 	"admiral/images"
+	"admiral/projects"
 	"admiral/track"
 	"admiral/utils"
+	"admiral/utils/selflink"
 )
 
 type LogConfig struct {
@@ -210,17 +213,13 @@ func (cd *ContainerDescription) SetVolumes(volumes []string) {
 	cd.Volumes = volumes
 }
 
-func (cd *ContainerDescription) RunContainer(projectId string, asyncTask bool) (string, error) {
+func (cd *ContainerDescription) RunContainer(tenantLinkId string, asyncTask bool) (string, error) {
 	linkToRun, err := getContaierRunLink(cd)
 	if err != nil {
 		return "", err
 	}
-	var tenantLinks []string
-	if projectId != "" {
-		tenantLinks = make([]string, 0)
-		projectLink := utils.CreateResLinkForProject(projectId)
-		tenantLinks = append(tenantLinks, projectLink)
-	}
+	tenantLinks := setTenantLink(tenantLinkId)
+
 	url := config.URL + "/requests"
 	runContainer := &RunContainer{
 		ResourceType:            "DOCKER_CONTAINER",
@@ -248,7 +247,6 @@ func (cd *ContainerDescription) RunContainer(projectId string, asyncTask bool) (
 		return utils.GetResourceID(resLinks[0]), err
 	}
 	return "", err
-
 }
 
 func getContaierRunLink(cd *ContainerDescription) (string, error) {
@@ -266,5 +264,24 @@ func getContaierRunLink(cd *ContainerDescription) (string, error) {
 	_ = json.Unmarshal(respBody, image)
 	runLink = image.DocumentSelfLink
 	return runLink, nil
+}
 
+func setTenantLink(tenantLinkId string) []string {
+	tenantLinks := make([]string, 0)
+	if tenantLinkId == "" {
+		return nil
+	}
+	if !utils.IsVraMode {
+		fullProjectId, err := selflink.GetFullId(tenantLinkId, new(projects.ProjectList), utils.PROJECT)
+		utils.CheckIdError(err)
+		projectLink := utils.CreateResLinkForProject(fullProjectId)
+		tenantLinks = append(tenantLinks, projectLink)
+	} else {
+		fullBusinessGroupId, err := businessgroups.GetFullId(tenantLinkId)
+		utils.CheckIdError(err)
+		businessGroupLink := utils.CreateResLinkForBusinessGroup(fullBusinessGroupId)
+		tenantLinks = append(tenantLinks, businessGroupLink)
+		tenantLinks = append(tenantLinks, "/tenants/"+utils.GetTenant())
+	}
+	return tenantLinks
 }

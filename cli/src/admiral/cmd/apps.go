@@ -17,6 +17,8 @@ import (
 	"admiral/apps"
 	"admiral/help"
 
+	"admiral/utils"
+
 	"github.com/spf13/cobra"
 )
 
@@ -190,7 +192,11 @@ func initAppRun() {
 	appRunCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
 	appRunCmd.Flags().StringVar(&dirF, "file", "", "Provision template from file.")
 	appRunCmd.Flags().BoolVar(&keepTemplate, "keep", false, keepTemplateDesc)
-	appRunCmd.Flags().StringVar(&projectF, "project", "", required+projectFDesc)
+	if !utils.IsVraMode {
+		appRunCmd.Flags().StringVar(&projectF, "project", "", projectFDesc)
+	} else {
+		appRunCmd.Flags().StringVar(&businessGroupId, "business-group", "", vraOptional+required+businessGroupIdDesc)
+	}
 	AppsRootCmd.AddCommand(appRunCmd)
 }
 
@@ -202,13 +208,24 @@ func RunAppRun(args []string) (string, error) {
 		id  string
 	)
 
-	if dirF != "" {
-		IDs, err = apps.RunAppFile(dirF, keepTemplate, asyncTask)
-	} else {
-		if id, ok = ValidateArgsCount(args); !ok {
-			return "", MissingTemplateIdError
+	if !utils.IsVraMode {
+		if dirF != "" {
+			IDs, err = apps.RunAppFile(dirF, projectF, keepTemplate, asyncTask)
+		} else {
+			if id, ok = ValidateArgsCount(args); !ok {
+				return "", MissingTemplateIdError
+			}
+			IDs, err = apps.RunAppID(id, projectF, asyncTask)
 		}
-		IDs, err = apps.RunAppID(id, asyncTask)
+	} else {
+		if dirF != "" {
+			IDs, err = apps.RunAppFile(dirF, businessGroupId, keepTemplate, asyncTask)
+		} else {
+			if id, ok = ValidateArgsCount(args); !ok {
+				return "", MissingTemplateIdError
+			}
+			IDs, err = apps.RunAppID(id, businessGroupId, asyncTask)
+		}
 	}
 
 	if err != nil {

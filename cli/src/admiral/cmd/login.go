@@ -77,11 +77,12 @@ func RunLogin(args []string) string {
 	if strings.TrimSpace(password) == "" {
 		password = promptPassword()
 	}
+	url := urlRemoveTrailingSlash(urlF)
 	if againstVra {
-		message := loginout.Loginvra(username, password, tenant, urlF)
+		message := loginout.Loginvra(username, password, tenant, url)
 		return message
 	}
-	message := loginout.Login(username, password, urlF)
+	message := loginout.Login(username, password, url)
 	return message
 }
 

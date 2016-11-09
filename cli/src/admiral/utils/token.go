@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 )
 
 var TokenFromFlagVar string
@@ -29,14 +30,14 @@ func GetAuthToken() (string, string) {
 	var token string
 	token = TokenFromFlag()
 	if token != "" {
-		return token, "flag"
+		return removeTenantFromToken(token), "flag"
 	}
 	token = TokenFromEnvVar()
 	if token != "" {
-		return token, "env variable"
+		return removeTenantFromToken(token), "env variable"
 	}
 	token = TokenFromFile()
-	return token, "file"
+	return removeTenantFromToken(token), "file"
 }
 
 //Function that verify after every single request if the user is still authorized.
@@ -65,4 +66,11 @@ func TokenFromEnvVar() string {
 
 func TokenFromFlag() string {
 	return TokenFromFlagVar
+}
+
+func removeTenantFromToken(token string) string {
+	if !strings.Contains(token, "&") {
+		return token
+	}
+	return strings.Split(token, "&")[1]
 }

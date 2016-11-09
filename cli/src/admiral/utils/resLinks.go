@@ -30,8 +30,11 @@ func CreateResLinksForContainer(args []string) []string {
 
 //Function to create links for the given IDs passed as parameters.
 //Return slice of already created links.
-func CreateResLinksForHosts(address string) string {
-	return "/resources/compute/" + address
+func CreateResLinksForHosts(id string) string {
+	if id == "" {
+		return ""
+	}
+	return "/resources/compute/" + id
 }
 
 //Function to create links for the given IDs passed as parameters.
@@ -48,6 +51,9 @@ func CreateResLinksForApps(args []string) []string {
 
 //Function to create resource links from the provided ID as parameter.
 func CreateResLinkForCerts(id string) string {
+	if id == "" {
+		return ""
+	}
 	return "/config/trust-certs/" + id
 }
 
@@ -77,27 +83,50 @@ func CreateResLinkForPlacementZone(id string) string {
 
 //Function to create resource links from the provided ID as parameter.
 func CreateResLinkForRegistry(id string) string {
+	if id == "" {
+		return ""
+	}
 	return "/config/registries/" + id
 }
 
 //Function to create resource links from the provided ID as parameter.
 func CreateResLinksForPlacement(id string) string {
+	if id == "" {
+		return ""
+	}
 	return "/resources/group-placements/" + id
 }
 
 //Function to create resource links from the provided ID as parameter.
 func CreateResLinkForProject(id string) string {
+	if id == "" {
+		return ""
+	}
 	return "/resources/groups/" + id
 }
 
 //Function to create resource links from the provided ID as parameter.
 func CreateResLinkForRequest(id string) string {
+	if id == "" {
+		return ""
+	}
 	return "/request-status/" + id
 }
 
 //Function to create resource links from the provided ID as parameter.
 func CreateResLinkForTemplate(id string) string {
+	if id == "" {
+		return ""
+	}
 	return "/resources/composite-descriptions/" + id
+}
+
+//Function to create resource links from the provided ID as parameter.
+func CreateResLinkForBusinessGroup(id string) string {
+	if id == "" {
+		return ""
+	}
+	return fmt.Sprintf("/tenants/%s/groups/%s", GetTenant(), id)
 }
 
 //Function to create resource links from the provided ID as parameter.

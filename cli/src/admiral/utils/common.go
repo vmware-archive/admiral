@@ -18,6 +18,10 @@ import (
 	"strings"
 )
 
+var (
+	IsVraMode = isVraMode()
+)
+
 //PrintID prints the provided ID as parameter in the format
 // "New entity ID: %s\n".
 func PrintID(id string) {
@@ -61,4 +65,23 @@ func MathRound(a float64) float64 {
 		return math.Ceil(a - 0.5)
 	}
 	return math.Floor(a + 0.5)
+}
+
+func GetTenant() string {
+	if !IsVraMode {
+		return ""
+	}
+	token := TokenFromFile()
+	if !strings.Contains(token, "&") {
+		return ""
+	}
+	return strings.Split(token, "&")[0]
+}
+
+func isVraMode() bool {
+	token, _ := GetAuthToken()
+	if strings.Contains(token, "Bearer") {
+		return true
+	}
+	return false
 }
