@@ -18,6 +18,7 @@ import static org.junit.Assert.assertNull;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -172,7 +173,7 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
                 request.resourceLinks);
         assertEquals(1, request.resourceLinks.size());
         ContainerState containerState = getDocument(ContainerState.class,
-                request.resourceLinks.get(0));
+                request.resourceLinks.iterator().next());
         assertNotNull(containerState);
 
         // Verify request status
@@ -183,14 +184,15 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
         // 4. Remove the container
         request = TestRequestStateFactory.createRequestState();
         request.operation = ContainerOperationType.DELETE.id;
-        request.resourceLinks = new ArrayList<>();
+        request.resourceLinks = new HashSet<>();
         request.resourceLinks.add(containerState.documentSelfLink);
         request = startRequest(request);
 
         request = waitForRequestToComplete(request);
 
         // Verify the container is removed
-        containerState = searchForDocument(ContainerState.class, request.resourceLinks.get(0));
+        containerState = searchForDocument(ContainerState.class,
+                request.resourceLinks.iterator().next());
         assertNull(containerState);
 
         // Verify request status

@@ -19,6 +19,7 @@ import static org.junit.Assert.assertTrue;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -460,7 +461,7 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
         // 4. Remove the container
         RequestBrokerState removeRequest = TestRequestStateFactory.createRequestState();
         removeRequest.operation = ContainerOperationType.DELETE.id;
-        removeRequest.resourceLinks = new ArrayList<>();
+        removeRequest.resourceLinks = new HashSet<>();
         RequestBrokerState request = getDocument(RequestBrokerState.class,
                 containerRequest.documentSelfLink);
         removeRequest.resourceLinks.addAll(request.resourceLinks);
