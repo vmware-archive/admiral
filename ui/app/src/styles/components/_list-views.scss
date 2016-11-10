@@ -1195,9 +1195,13 @@ $elements-side-margin: $elements-margin / 2;
   margin-top: 31px;
 }
 
-.template-details .edit-container-definition-view, .template-details .edit-existing-container-definition-view {
+.template-details .edit-container-definition-view,
+.template-details .edit-existing-container-definition-view,
+.template-details .new-container-definition-view,
+.template-details .edit-network {
   margin-right: $template-details-right;
   overflow: auto;
+  z-index: 102;
 }
 
 .template-details .edit-network.closable-view .control-btns {
