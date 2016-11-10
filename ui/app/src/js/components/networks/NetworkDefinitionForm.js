@@ -42,6 +42,37 @@ function createTypeaheadSource($typeaheadHolder) {
     clearTimeout(timeout);
 
     var promiseCallback = (result) => {
+
+      if (result.items) {
+        var networksNames = []; // names of networks
+        var filteredData = {}; // networks with unique name
+        var filteredDocLinks = []; // holder of unique documentLinks
+        $.each(result.items, function(documentSelfLink, network) {
+          if (networksNames.indexOf(network.name) === -1) {
+            networksNames.push(network.name);
+            filteredData[documentSelfLink] = network;
+            filteredDocLinks.push(documentSelfLink);
+          } else {
+            // find network with duplicate name in order to increase the instances.
+            for (var uniqueNetwork in filteredData) {
+              if (filteredData[uniqueNetwork].name === network.name) {
+                if (filteredData[uniqueNetwork].instances) {
+                  filteredData[uniqueNetwork].instances += 1;
+                } else {
+                  filteredData[uniqueNetwork].instances = 2;
+                }
+              }
+            }
+          }
+        });
+
+        var documentLinks = filteredDocLinks || [];
+
+        result.items = documentLinks.map((link) => {
+          return filteredData[link];
+        });
+      }
+
       if (lastCallback === asyncCallback) {
         source.lastResult = result;
         asyncCallback(result.items);
@@ -237,6 +268,10 @@ var NetworkDefinitionForm = Vue.extend({
           }
           if (end < name.length) {
             suffix = name.substring(end, name.length);
+            if (context.instances) {
+                suffix += ' <span class="network-search-item-secondary">(' + context.instances
+                  + ' ' + i18n.t('app.template.details.editNetwork.showingInstances') + ')</span>';
+            }
           }
           root = name.substring(start, end);
 

@@ -193,10 +193,17 @@ $network-details-size: 150px;
 }
 
 .host-picker-item-primary .host-picker-item-secondary,
-.network-search-item-primary, .network-search-item-secondary {
+.network-search-item-primary {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.network-search-item-secondary {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #cccccc;
 }
 
 .network-form .multicolumn-inputs-list-body-wrapper {

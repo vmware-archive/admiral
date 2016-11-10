@@ -270,6 +270,7 @@
           "name": "Name",
           "existingNetwork": "Existing",
           "showingCount": "Showing __count__ out of __totalCount__",
+          "showingInstances": "instances",
           "noResults": "No networks found",
           "hosts": "Hosts",
           "hostsSearchPlaceholder": "Search for host",
