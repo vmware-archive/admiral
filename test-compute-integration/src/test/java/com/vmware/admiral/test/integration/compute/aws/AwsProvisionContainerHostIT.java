@@ -15,6 +15,7 @@ import static org.junit.Assert.assertNotNull;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService;
@@ -24,6 +25,7 @@ import com.vmware.admiral.test.integration.BaseIntegrationSupportIT;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 
+@Ignore
 public class AwsProvisionContainerHostIT extends BaseIntegrationSupportIT {
 
     private static final String ACCESS_KEY_PROP = "test.aws.access.key";
@@ -59,7 +61,7 @@ public class AwsProvisionContainerHostIT extends BaseIntegrationSupportIT {
         endpoint.endpointProperties.put("privateKeyId", getTestRequiredProp(ACCESS_KEY_PROP));
         endpoint.endpointProperties.put("privateKey", getTestRequiredProp(ACCESS_SECRET_PROP));
         endpoint.endpointProperties.put("regionId", getTestProp(REGION_ID_PROP, "us-east-1"));
-    };
+    }
 
     @Test
     public void testProvision() throws Throwable {
