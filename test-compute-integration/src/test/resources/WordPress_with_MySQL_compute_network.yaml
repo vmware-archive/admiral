@@ -10,6 +10,10 @@ components:
       environmentName: "On premise"
       instanceType: small
       imageType: "ubuntu-server-1604"
+      networks:
+        - name: "wpnet"
+          address: 10.0.0.6
+          ports: [5432]
       __computeConfigContent: |
           #cloud-config
           repo_update: true
@@ -30,6 +34,10 @@ components:
       environmentName: "On premise"
       instanceType: small
       imageType: "ubuntu-server-1604"
+      networks:
+        - name: "wpnet"
+        - name: public-wpnet
+          ports: [443]
       __computeConfigContent: |
           #cloud-config
           repo_update: true
@@ -50,3 +58,13 @@ components:
            - mv /var/www/html/mywordpresssite/wp-config-sample.php /var/www/html/mywordpresssite/wp-config.php
            - sed -i -e s/"define('DB_NAME', 'database_name_here');"/"define('DB_NAME', 'wordpress_blog');"/ /var/www/html/mywordpresssite/wp-config.php && sed -i -e s/"define('DB_USER', 'username_here');"/"define('DB_USER', 'root');"/ /var/www/html/mywordpresssite/wp-config.php && sed -i -e s/"define('DB_PASSWORD', 'password_here');"/"define('DB_PASSWORD', 'mysqlpassword');"/ /var/www/html/mywordpresssite/wp-config.php && sed -i -e s/"define('DB_HOST', 'localhost');"/"define('DB_HOST', '${_resource~mysql~address}');"/ /var/www/html/mywordpresssite/wp-config.php
            - service apache2 reload
+  wpnet:
+    type: "Compute.Network"
+    data:
+      name: wpnet
+      assigment: static
+  public-wpnet:
+    type: "Compute.Network"
+    data:
+      name: public-wpnet
+      public: "true"

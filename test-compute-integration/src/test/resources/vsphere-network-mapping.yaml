@@ -1,0 +1,12 @@
+---
+name: "Network Profile 1"
+endpoint: "vsphere"
+networks:
+  - name: private
+    type: manual
+    subnets:
+      - name: "subnet-1"
+        network: "VM Network"
+        range: 10.0.0.0/24
+        gateway: 10.0.0.1
+        dns: [8.8.8.8]
