@@ -10,7 +10,7 @@ fi
 
 if [ "x" = "x$MEMORY_OPTS" ]
 then
-MEMORY_OPTS="-Xmx1024M -Xms1024M -Xss256K -Xmn356M"
+MEMORY_OPTS="-Xmx768M -Xms768M -Xss256K -Xmn256M -XX:MaxMetaspaceSize=256m"
 fi
 
 JAVA_OPTS="$JAVA_OPTS $MEMORY_OPTS"
