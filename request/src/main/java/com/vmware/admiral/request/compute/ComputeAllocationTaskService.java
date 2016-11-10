@@ -487,8 +487,6 @@ public class ComputeAllocationTaskService
                         ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
                         : SubStage.SELECT_PLACEMENT_COMPUTES;
 
-
-
         ComputeDescriptionEnhancers.build(this).enhance(computeDesc, (cd, t) -> {
             if (t != null) {
                 failTask("Failed patching compute description : "
@@ -707,7 +705,8 @@ public class ComputeAllocationTaskService
                     state.groupResourcePlacementLink);
         }
         resource.customProperties.put(ComputeProperties.PLACEMENT_LINK, placementLink);
-        resource.customProperties.put("computeType", "VirtualMachine");
+        // cleanup some properties that we don't need
+        resource.customProperties.remove(ComputeConstants.CUSTOM_PROP_ENDPOINT_TYPE_NAME);
         resource.tenantLinks = state.tenantLinks;
         resource.documentSelfLink = computeResourceLink;
         resource.powerState = ComputeService.PowerState.ON;

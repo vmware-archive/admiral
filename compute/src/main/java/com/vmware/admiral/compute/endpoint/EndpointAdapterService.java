@@ -207,6 +207,8 @@ public class EndpointAdapterService extends StatelessService {
 
         EndpointRemovalTaskState state = new EndpointRemovalTaskState();
         state.endpointLink = endpointLink;
+        state.taskInfo = new TaskState();
+        state.taskInfo.isDirect = true;
 
         if (DeploymentProfileConfig.getInstance().isTest()) {
             state.options = EnumSet.of(TaskOption.IS_MOCK);

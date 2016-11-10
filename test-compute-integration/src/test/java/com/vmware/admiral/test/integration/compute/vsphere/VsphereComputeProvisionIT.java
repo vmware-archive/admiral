@@ -40,18 +40,6 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
-    public static final String VC_USERNAME = "test.vsphere.username";
-    public static final String VC_PASSWORD = "test.vsphere.password";
-    public static final String VC_HOST = "test.vsphere.hostname";
-    public static final String VC_RESOURCE_POOL_ID = "test.vsphere.resource.pool.path";
-    public static final String VC_DATACENTER_ID = "test.vsphere.datacenter";
-    public static final String VC_DATASTORE_ID = "test.vsphere.datastore.path";
-    public static final String VC_NETWORK_ID = "test.vsphere.network.id";
-    public static final String VC_TARGET_COMPUTE_NAME = "test.vsphere.target.compute.name";
-    public static final String VC_TARGET_FOLDER_PATH = "test.vsphere.vm.folder";
-    public static final String VC_VM_DISK_URI = "test.vsphere.disk.uri";
-    public static final String VC_VM_DISK_URI_TEMPLATE = "test.vsphere.disk.%s.uri";
-
     @Override
     protected EndpointType getEndpointType() {
         return EndpointType.vsphere;
@@ -107,19 +95,19 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
 
     @Override
     public void extendEndpoint(EndpointState endpoint) {
-        endpoint.endpointProperties.put("privateKeyId", getTestRequiredProp(VC_USERNAME));
-        endpoint.endpointProperties.put("privateKey", getTestRequiredProp(VC_PASSWORD));
-        endpoint.endpointProperties.put("regionId", getTestRequiredProp(VC_DATACENTER_ID));
-        endpoint.endpointProperties.put("hostName", getTestRequiredProp(VC_HOST));
+        endpoint.endpointProperties.put("privateKeyId", getTestRequiredProp(VsphereUtil.VC_USERNAME));
+        endpoint.endpointProperties.put("privateKey", getTestRequiredProp(VsphereUtil.VC_PASSWORD));
+        endpoint.endpointProperties.put("regionId", getTestRequiredProp(VsphereUtil.VC_DATACENTER_ID));
+        endpoint.endpointProperties.put("hostName", getTestRequiredProp(VsphereUtil.VC_HOST));
     }
 
     @Override
     protected void extendComputeDescription(ComputeDescription computeDescription)
             throws Exception {
-        computeDescription.dataStoreId = getTestRequiredProp(VC_DATASTORE_ID);
-//        computeDescription.networkId = getTestRequiredProp(VC_NETWORK_ID);
-        computeDescription.zoneId = getTestRequiredProp(VC_RESOURCE_POOL_ID);
-        String vmFolder = getTestProp(VC_TARGET_FOLDER_PATH);
+        computeDescription.dataStoreId = getTestRequiredProp(VsphereUtil.VC_DATASTORE_ID);
+//        computeDescription.networkId = getTestRequiredProp(VsphereUtil.VC_NETWORK_ID);
+        computeDescription.zoneId = getTestRequiredProp(VsphereUtil.VC_RESOURCE_POOL_ID);
+        String vmFolder = getTestProp(VsphereUtil.VC_TARGET_FOLDER_PATH);
         if (vmFolder != null) {
             computeDescription.customProperties.put(ComputeProperties.RESOURCE_GROUP_NAME,
                     vmFolder);
@@ -151,9 +139,9 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
 
         PropertyMapping placementRefs = new PropertyMapping();
         placementRefs.mappings = new HashMap<>();
-        placementRefs.mappings.put("networkId", getTestRequiredProp(VC_NETWORK_ID));
-        placementRefs.mappings.put("dataStoreId", getTestRequiredProp(VC_DATASTORE_ID));
-        placementRefs.mappings.put("zoneId", getTestRequiredProp(VC_RESOURCE_POOL_ID));
+        placementRefs.mappings.put("networkId", getTestRequiredProp(VsphereUtil.VC_NETWORK_ID));
+        placementRefs.mappings.put("dataStoreId", getTestRequiredProp(VsphereUtil.VC_DATASTORE_ID));
+        placementRefs.mappings.put("zoneId", getTestRequiredProp(VsphereUtil.VC_RESOURCE_POOL_ID));
         ems.properties.put("placement", placementRefs);
 
         postDocument(EnvironmentMappingService.FACTORY_LINK,
@@ -161,7 +149,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     }
 
     private void restrictAvailablePlacements() throws Exception {
-        String computePlacementName = getTestRequiredProp(VC_TARGET_COMPUTE_NAME);
+        String computePlacementName = getTestRequiredProp(VsphereUtil.VC_TARGET_COMPUTE_NAME);
         ResourcePoolState rp = getDocument(this.endpoint.resourcePoolLink, ResourcePoolState.class);
 
         QueryTask queryTask = QueryTask.Builder.createDirectTask()
@@ -198,9 +186,9 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     private String getDiskUri(String image) {
         String diskUri;
         if (image == null) {
-            diskUri = getTestProp(VC_VM_DISK_URI);
+            diskUri = getTestProp(VsphereUtil.VC_VM_DISK_URI);
         } else {
-            diskUri = getTestProp(String.format(VC_VM_DISK_URI_TEMPLATE, image));
+            diskUri = getTestProp(String.format(VsphereUtil.VC_VM_DISK_URI_TEMPLATE, image));
         }
 
         if (diskUri == null) {

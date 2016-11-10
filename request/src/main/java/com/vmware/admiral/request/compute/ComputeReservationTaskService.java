@@ -43,7 +43,6 @@ import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.NumericRange;
 import com.vmware.xenon.services.common.QueryTask.Query;
@@ -187,12 +186,20 @@ public class ComputeReservationTaskService
         q.querySpec.query.addBooleanClause(tenantLinksQuery);
 
         // match on available number of instances:
-        QueryTask.Query numOfInstancesClause = new QueryTask.Query()
+        QueryTask.Query moreInstancesThanRequired = new QueryTask.Query()
                 .setTermPropertyName(GroupResourcePlacementState.FIELD_NAME_AVAILABLE_INSTANCES_COUNT)
                 .setNumericRange(NumericRange.createLongRange(state.resourceCount,
                         Long.MAX_VALUE, true, false))
-                .setTermMatchType(MatchType.TERM);
+                .setTermMatchType(MatchType.TERM)
+                .setOccurance(Occurance.SHOULD_OCCUR);
+        QueryTask.Query unlimitedInstances = new QueryTask.Query()
+                .setTermPropertyName(GroupResourcePlacementState.FIELD_NAME_MAX_NUMBER_INSTANCES)
+                .setNumericRange(NumericRange.createEqualRange(0L))
+                .setTermMatchType(MatchType.TERM)
+                .setOccurance(Occurance.SHOULD_OCCUR);
 
+        Query numOfInstancesClause = Query.Builder.create()
+                .addClauses(moreInstancesThanRequired, unlimitedInstances).build();
         q.querySpec.query.addBooleanClause(numOfInstancesClause);
 
         if (computeDesc.totalMemoryBytes > 0) {
@@ -308,7 +315,7 @@ public class ComputeReservationTaskService
                 .setBody(queryTask)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        failTask("Failure retrieving ResourcePools: " + Utils.toString(e), null);
+                        failTask("Error retrieving resource pools for the selected placements: ", e);
                         return;
                     }
 
@@ -325,8 +332,10 @@ public class ComputeReservationTaskService
 
                         selectReservation(state, state.resourcePoolsPerGroupPlacementLinks);
                     } else {
-                        failTask("All eligible placement zones rejected: "
-                                + state.resourcePoolsPerGroupPlacementLinks.values(), null);
+                        failTask(String.format("Could not retrieve any of the selected resource " +
+                                "pools (endpointLink: '%s'): %s",
+                                endpointLink, state.resourcePoolsPerGroupPlacementLinks.values()),
+                                null);
                     }
                 })
                 .sendWith(this);

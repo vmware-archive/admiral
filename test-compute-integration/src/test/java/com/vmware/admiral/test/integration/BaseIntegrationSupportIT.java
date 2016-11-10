@@ -132,7 +132,9 @@ public abstract class BaseIntegrationSupportIT {
     public void baseTearDown() throws Exception {
         try {
             while (!documentsForDeletion.isEmpty()) {
-                delete(documentsForDeletion.poll());
+                ServiceDocument documentToDelete = documentsForDeletion.poll();
+                logger.info("Cleanup: deleting %s", documentToDelete.documentSelfLink);
+                delete(documentToDelete);
             }
         } catch (Exception e) {
             documentsForDeletion.clear();

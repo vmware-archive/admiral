@@ -117,7 +117,8 @@ public class GroupResourcePlacementService extends StatefulService {
         public String resourcePoolLink;
 
         /** The priority with which the group resource placements will be applied */
-        @Documentation(description = "The priority with which the group resource placements will be applied.")
+        @Documentation(description = "The priority with which the group resource placements will be applied." +
+                    " Lower number means higher priority.")
         public int priority;
 
         @Documentation(description = "The resource type for which the group resource quotas will be applied.")
