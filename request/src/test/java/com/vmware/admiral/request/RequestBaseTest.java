@@ -517,12 +517,26 @@ public abstract class RequestBaseTest extends BaseTestCase {
     }
 
     protected CompositeDescriptionService.CompositeDescription createCompositeDesc(
+            ServiceDocument... descs) throws Throwable {
+
+        return createCompositeDesc(false, descs);
+    }
+
+    protected CompositeDescriptionService.CompositeDescription createCompositeDesc(
             boolean isCloned, ServiceDocument... descs) throws Throwable {
+
+        return createCompositeDesc(isCloned, true, descs);
+    }
+
+    protected CompositeDescriptionService.CompositeDescription createCompositeDesc(
+            boolean isCloned, boolean overrideSelfLink, ServiceDocument... descs) throws Throwable {
         CompositeDescriptionService.CompositeDescription compositeDesc = TestRequestStateFactory
                 .createCompositeDescription(isCloned);
 
         for (ServiceDocument desc : descs) {
-            desc.documentSelfLink = UUID.randomUUID().toString();
+            if (overrideSelfLink || desc.documentSelfLink == null) {
+                desc.documentSelfLink = UUID.randomUUID().toString();
+            }
             if (desc instanceof ContainerDescriptionService.ContainerDescription) {
                 desc = doPost(desc, ContainerDescriptionService.FACTORY_LINK);
             } else if (desc instanceof ContainerNetworkDescriptionService.ContainerNetworkDescription) {
@@ -544,12 +558,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
         addForDeletion(compositeDesc);
 
         return compositeDesc;
-    }
-
-    protected CompositeDescriptionService.CompositeDescription createCompositeDesc(
-            ServiceDocument... descs) throws Throwable {
-
-        return createCompositeDesc(false, descs);
     }
 
     protected List<ComputeState> queryComputeByCompositeComponentLink(

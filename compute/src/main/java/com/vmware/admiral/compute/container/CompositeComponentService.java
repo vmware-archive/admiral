@@ -167,11 +167,15 @@ public class CompositeComponentService extends StatefulService {
         // if the component links are only external networks then it's possible to delete the
         // composite component
 
+        List<String> containers = componentLinks.stream()
+                .filter((c) -> c.startsWith(ContainerFactoryService.SELF_LINK))
+                .collect(Collectors.toList());
+
         List<String> networks = componentLinks.stream()
                 .filter((c) -> c.startsWith(ContainerNetworkService.FACTORY_LINK))
                 .collect(Collectors.toList());
 
-        if (!networks.isEmpty()) {
+        if (containers.isEmpty() && !networks.isEmpty()) {
 
             QueryTask networkQuery = QueryUtil.buildQuery(ContainerNetworkState.class, false);
             QueryUtil.addListValueClause(networkQuery, ServiceDocument.FIELD_NAME_SELF_LINK,
