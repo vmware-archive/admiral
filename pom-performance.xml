@@ -21,7 +21,6 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>test-performance-unit</module>
         <module>test-performance</module>
     </modules>
 </project>
