@@ -239,11 +239,12 @@ var ContainersViewVueComponent = Vue.extend({
       Vue.nextTick(() => {
         var $smallContextHolder = $(this.$el)
           .find('.main-panel > .list-view > .selected-context-small-holder');
-        var top = '';
+        var top = 0;
         if ($smallContextHolder.length === 1) {
           top = $smallContextHolder.position().top + $smallContextHolder.height();
         }
-        $(this.$el).find('.main-panel > .list-view > .grid-container').css({top: top});
+        $(this.$el).find('.main-panel > .list-view > .grid-container')
+          .css({transform: 'translate(0px,' + top + 'px)'});
       });
     },
 

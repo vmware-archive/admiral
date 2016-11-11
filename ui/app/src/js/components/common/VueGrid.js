@@ -68,8 +68,9 @@ var VueGrid = Vue.extend({
         return;
       }
 
-      let height = Math.max.apply(null, items.map((index, element) =>
-          $(element).height()));
+      let itemsHeight = items.map((index, element) => $(element).height());
+
+      let height = Math.max.apply(null, itemsHeight);
 
       let minWidth = parseInt(items.css('minWidth'), 10);
       let maxWidth = parseInt(items.css('maxWidth'), 10);
@@ -88,16 +89,32 @@ var VueGrid = Vue.extend({
       let count = 0;
       for (let i = 0; i < visible; i++) {
         let item = $(items.get(i));
+        var left = (i % columnsToUse) * (itemWidth + itemSpacing);
+        var top = Math.floor(count / columnsToUse) * (height + marginHeight);
+
+        // trick to show nice apear animation, where the item is already positioned,
+        // but it will pop out
+        var oldTransform = item.css('transform');
+        if (!oldTransform || oldTransform === 'none') {
+          item.addClass('notransition');
+          item.css({
+            transform: 'translate(' + left + 'px,' + top + 'px) scale(0)'
+          });
+          reflow(item[0]);
+        }
+
+        item.removeClass('notransition');
         item.css({
-          left: (i % columnsToUse) * (itemWidth + itemSpacing),
-          top: Math.floor(count / columnsToUse) * (height + marginHeight),
-          width: itemWidth
+          transform: 'translate(' + left + 'px,' + top + 'px) scale(1)',
+          width: itemWidth,
+          transition: null
         });
         if (!item.hasClass('context-selected')) {
-          if (item.is(':hidden') && item.height() !== 0) {
+          var itemHeight = itemsHeight[i];
+          if (item.is(':hidden') && itemHeight !== 0) {
             item.show();
           }
-          if (item.height() !== 0) {
+          if (itemHeight !== 0) {
             count++;
           }
         }
@@ -115,6 +132,10 @@ var VueGrid = Vue.extend({
     }
   }
 });
+
+function reflow(el) {
+  el.offsetHeight; //eslint-disable-line
+}
 
 Vue.component('grid', VueGrid);
 

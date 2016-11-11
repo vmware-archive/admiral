@@ -178,20 +178,10 @@
   }
 }
 
-@keyframes enter {
-  0% {
-    transform: scale(0.0);
-  }
-  100% {
-    transform: scale(1.0);
-  }
-}
-
 .list-view:not(.context-selected) > .grid-container {
   > .content > .grid > .grid-item,
   > .grid > .grid-item {
-    @include transition(width 0.4s, top 0.4s, left 0.4s);
-    animation: enter 0.4s;
+    @include transition(width 0.4s, transform 0.4s);
   }
 }
 
@@ -764,7 +754,7 @@
       @extend .item-shown-for-collapse-animation;
     }
     .grid-container {
-      @include transition(all 0.4s);
+      @include transition(transform 0.4s);
       > .title, > .title-search {
          @extend .item-shown-for-collapse-animation;
       }

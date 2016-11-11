@@ -73,13 +73,13 @@ var ClusterContainerDetails = Vue.extend({
         var $el = $(this.$el);
         var $smallContextHolder = $el
           .children('.list-view').children('.selected-context-small-holder');
-        var top = '';
+        var top = 0;
         if ($smallContextHolder.length === 1) {
           top = $smallContextHolder.position().top + $smallContextHolder.height();
         }
         $(this.$el)
           .children('.list-view').children('.grid-container')
-          .css({top: top});
+          .css({transform: 'translate(0px,' + top + 'px)'});
       });
     },
     refresh: function() {
