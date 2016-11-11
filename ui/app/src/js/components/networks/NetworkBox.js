@@ -17,7 +17,7 @@ const TEMPLATE = `<div class="network">
                     <div class="network-details">
                       <img class="network-icon"
                         src="image-assets/resource-icons/network-small.png"/>
-                      <div class="network-label">{{model.name}}</div>
+                      <div class="network-label" title="{{model.name}}">{{model.name}}</div>
                       <div class="network-actions" v-if="!isSystemNetwork">
                         <a class="btn item-edit" v-on:click="onEdit($event)">
                           <i class="btn fa fa-pencil"></i>

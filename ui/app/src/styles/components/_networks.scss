@@ -146,7 +146,6 @@ $network-details-size: 150px;
 .composite-child-containers-view > .containers-list {
   .jsplumb-endpoint, .network-delete-connection, .network {
     cursor: auto;
-    pointer-events: none;
   }
 
   .jsplumb-endpoint:not(.jsplumb-endpoint-connected) {
