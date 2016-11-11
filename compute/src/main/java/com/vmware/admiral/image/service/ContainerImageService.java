@@ -36,7 +36,6 @@ import com.vmware.admiral.host.HostInitRegistryAdapterServiceConfig;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
-import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
@@ -108,15 +107,15 @@ public class ContainerImageService extends StatelessService {
         // otherwise, query for registries and execute an adapter request for each one
         DockerImage image = parseDockerImage(searchTerm);
         if (image != null && image.getHost() != null) {
-            RegistryUtil.findRegistriesByHostname(getHost(), image.getHost(), group, (links, error) -> {
-                if (error != null) {
-                    op.fail(error);
+            RegistryUtil.findRegistriesByHostname(getHost(), image.getHost(), group, (links, errors) -> {
+                if (errors != null && !errors.isEmpty()) {
+                    op.fail(errors.iterator().next());
                     return;
                 }
 
                 if (links.isEmpty()) {
                     // failed to find a matching registry, create adapter request for each one
-                    RegistryService.forEachRegistry(getHost(), group, registryLinksConsumer,
+                    RegistryUtil.forEachRegistry(getHost(), group, registryLinksConsumer,
                             failureConsumer);
                     return;
                 }
@@ -125,7 +124,7 @@ public class ContainerImageService extends StatelessService {
                 registryLinksConsumer.accept(links);
             });
         } else {
-            RegistryService.forEachRegistry(getHost(), group, registryLinksConsumer,
+            RegistryUtil.forEachRegistry(getHost(), group, registryLinksConsumer,
                     failureConsumer);
         }
     }

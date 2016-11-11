@@ -101,6 +101,13 @@ public class ContainerImageTagsIT extends BaseTestCase {
     }
 
     @Test
+    public void testFailWhenRegistryWithDifferentTenant() throws Exception {
+        configureRegistry(v1RegistryAddress, "different-tenant");
+        String imageName = toFullImageName(v1RegistryAddress, TEST_IMAGE);
+        verifyListTagsFailure(imageName, TENANT);
+    }
+
+    @Test
     public void testListTagsNoTenant() throws Exception {
         String v1ImageName = toFullImageName(v1RegistryAddress, TEST_IMAGE);
         String v2ImageName = toFullImageName(v2RegistryAddress, TEST_IMAGE);

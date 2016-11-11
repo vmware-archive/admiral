@@ -14,60 +14,183 @@ package com.vmware.admiral.common.util;
 import static com.vmware.admiral.common.util.QueryUtil.createAnyPropertyClause;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
-
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class RegistryUtil {
 
-    public static void findRegistriesByHostname(ServiceHost host, String hostname, String group,
-            BiConsumer<List<String>, Throwable> consumer) {
+    /**
+     * Do something with each registry available to the given group (and global registries)
+     *
+     * @param tenantLink
+     * @param registryLinksConsumer
+     * @param failureConsumer
+     */
+    public static void forEachRegistry(ServiceHost serviceHost, String tenantLink,
+            Consumer<Collection<String>> registryLinksConsumer,
+            Consumer<Collection<Throwable>> failureConsumer) {
 
-        QueryTask registryQuery = QueryUtil.buildQuery(RegistryState.class, false);
+        BiConsumer<Collection<String>, Collection<Throwable>> consumer = (links, failures) -> {
+            if (failures != null && !failures.isEmpty()) {
+                failureConsumer.accept(failures);
+                return;
+            }
+            registryLinksConsumer.accept(links);
+        };
 
-        if (group != null) {
-            Query tenantClause = new QueryTask.Query();
-            tenantClause.occurance = Occurance.SHOULD_OCCUR;
+        List<QueryTask> queryTasks = new ArrayList<QueryTask>();
 
-            // add query for registries of a specific tenant
-            Query groupClause = QueryUtil.addTenantGroupAndUserClause(group);
-            tenantClause.addBooleanClause(groupClause);
-
+        if (tenantLink != null) {
             // add query for global groups
-            Query globalClause = QueryUtil.addTenantGroupAndUserClause((String) null);
-            tenantClause.addBooleanClause(globalClause);
-
-            registryQuery.querySpec.query.addBooleanClause(tenantClause);
+            queryTasks.add(buildRegistryQueryByGroup(null));
+            // add query for registries of a specific tenant
+            queryTasks.add(buildRegistryQueryByGroup(tenantLink));
+        } else {
+            // add query for all registries if no tenant
+            queryTasks.add(buildAllRegistriesQuery());
         }
 
-        registryQuery.querySpec.query.addBooleanClause(createAnyPropertyClause(
-                String.format("*://%s*", hostname), RegistryState.FIELD_NAME_ADDRESS));
+        queryForRegistries(serviceHost, queryTasks, consumer);
+    }
+
+    public static void findRegistriesByHostname(ServiceHost serviceHost, String hostname,
+            String tenantLink, BiConsumer<Collection<String>, Collection<Throwable>> consumer) {
+
+        List<QueryTask> queryTasks = new ArrayList<QueryTask>();
+
+        if (tenantLink != null) {
+            // add query for global groups
+            queryTasks.add(buildRegistryQuery(buildQueryByGroup(null),
+                    buildQueryByHostname(hostname)));
+            // add query for registries of a specific tenant
+            queryTasks.add(buildRegistryQuery(buildQueryByGroup(tenantLink),
+                    buildQueryByHostname(hostname)));
+        } else {
+            // add query for all registries if no tenant
+            queryTasks.add(buildRegistryQuery(buildQueryByHostname(hostname)));
+        }
+
+        queryForRegistries(serviceHost, queryTasks, consumer);
+    }
+
+    private static void queryForRegistries(ServiceHost serviceHost, Collection<QueryTask> queryTasks,
+            BiConsumer<Collection<String>, Collection<Throwable>> consumer) {
+
+        List<Operation> queryOperations = new ArrayList<>();
+        for (QueryTask queryTask : queryTasks) {
+            queryOperations.add(Operation
+                    .createPost(UriUtils.buildUri(serviceHost, ServiceUriPaths.CORE_QUERY_TASKS))
+                    .setBody(queryTask)
+                    .setReferer(serviceHost.getUri()));
+        }
+
+        if (!queryOperations.isEmpty()) {
+            OperationJoin.create(queryOperations.toArray(new Operation[0]))
+                    .setCompletion((ops, failures) -> {
+                        if (failures != null) {
+                            consumer.accept(null, failures.values());
+                            return;
+                        }
+
+                        // return one registry link for each address (same registry address can be set in different
+                        // entries, in the same or different tenants (in case of system admin search))
+                        Map<String, String> registryLinks = new HashMap<>();
+                        for (Operation o : ops.values()) {
+                            QueryTask result = o.getBody(QueryTask.class);
+
+                            for (Map.Entry<String, Object> document : result.results.documents.entrySet()) {
+                                RegistryState registryState = Utils.fromJson(document.getValue(), RegistryState.class);
+                                // if same registry is repeated, return it only once
+                                if (!registryLinks.containsKey(registryState.address)) {
+                                    registryLinks.put(registryState.address, document.getKey());
+                                }
+                            }
+                        }
+
+                        consumer.accept(registryLinks.values(), null);
+                    })
+                    .sendWith(serviceHost);
+        } else {
+            // no registry links available
+            consumer.accept(Collections.emptyList(), null);
+        }
+    }
+
+    private static Query buildQueryByHostname(String hostname) {
+        return createAnyPropertyClause(String.format("*://%s*", hostname),
+                RegistryState.FIELD_NAME_ADDRESS);
+    }
+
+    /**
+     * Create a query to return all RegistryState links within a group or global RegistryState links
+     * if the group is null/empty
+     *
+     * @param tenantLink
+     * @return QueryTask
+     */
+    private static Query buildQueryByGroup(String tenantLink) {
+        return QueryUtil.addTenantGroupAndUserClause(tenantLink);
+    }
+
+    /**
+     * Create a query to return all RegistryState links
+     *
+     * @return
+     */
+    private static QueryTask buildAllRegistriesQuery() {
+        return buildRegistryQuery();
+    }
+
+    /**
+     * Create a query to return all RegistryState links within a group or global RegistryState links
+     * if the group is null/empty
+     *
+     * @param tenantLink
+     * @return QueryTask
+     */
+    private static QueryTask buildRegistryQueryByGroup(String tenantLink) {
+        Query groupClause = QueryUtil.addTenantGroupAndUserClause(tenantLink);
+        return buildRegistryQuery(groupClause);
+    }
+
+    private static QueryTask buildRegistryQuery(Query... additionalClauses) {
+
+        List<Query> clauses = new ArrayList<>();
+        if (additionalClauses != null) {
+            clauses.addAll(Arrays.asList(additionalClauses));
+        }
+        Query endpointTypeClause = new Query()
+                .setTermPropertyName(RegistryState.FIELD_NAME_ENDPOINT_TYPE)
+                .setTermMatchValue(RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE);
+        clauses.add(endpointTypeClause);
 
         Query excludeDisabledClause = new Query()
                 .setTermPropertyName(RegistryState.FIELD_NAME_DISABLED)
                 .setTermMatchValue(Boolean.TRUE.toString());
         excludeDisabledClause.occurance = Occurance.MUST_NOT_OCCUR;
-        registryQuery.querySpec.query.addBooleanClause(excludeDisabledClause);
+        clauses.add(excludeDisabledClause);
 
-        List<String> registryLinks = new ArrayList<>();
-        new ServiceDocumentQuery<RegistryState>(host, RegistryState.class).query(
-                registryQuery, (r) -> {
-                    if (r.hasException()) {
-                        Exception err = new Exception("Exception while querying for registry state",
-                                r.getException());
-                        consumer.accept(null, err);
-                        return;
-                    } else if (r.hasResult()) {
-                        registryLinks.add(r.getDocumentSelfLink());
-                    } else {
-                        consumer.accept(registryLinks, null);
-                    }
-                });
+        QueryTask queryTask = QueryUtil.buildQuery(RegistryState.class, true,
+                clauses.toArray(new Query[clauses.size()]));
+        QueryUtil.addExpandOption(queryTask);
+
+        return queryTask;
     }
 }

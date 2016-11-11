@@ -17,6 +17,7 @@ import java.util.logging.Level;
 
 import org.junit.Test;
 
+import com.vmware.admiral.common.util.RegistryUtil;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
@@ -46,7 +47,7 @@ public class DisabledRegistryStateQueryTest extends BaseRegistryStateQueryTest {
     public void testDisabledRegistriesExcluded() throws Throwable {
         // initially the registry is enabled so should be included in results
         waitFor("time out waiting for initially included registry.", () -> {
-            RegistryService.forEachRegistry(host, TEST_GROUP_TENANT_LINK,
+            RegistryUtil.forEachRegistry(host, TEST_GROUP_TENANT_LINK,
                     (registryLinks) -> {
                         System.out.println("REGISTRY LINKS ======> " + registryLinks);
                         if (!registryLinks.contains(registryState.documentSelfLink)) {
@@ -66,7 +67,7 @@ public class DisabledRegistryStateQueryTest extends BaseRegistryStateQueryTest {
 
         // this time expect the grouped registry to be excluded
         waitFor("time out waiting to remove a disabled registry from index..", () -> {
-            RegistryService.forEachRegistry(host, TEST_GROUP_TENANT_LINK,
+            RegistryUtil.forEachRegistry(host, TEST_GROUP_TENANT_LINK,
                     (registryLinks) -> {
                         if (registryLinks.contains(registryState.documentSelfLink)) {
                             host.log(Level.SEVERE, "Disabled registry %s included in results",

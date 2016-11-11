@@ -19,6 +19,7 @@ import java.util.logging.Level;
 
 import org.junit.Test;
 
+import com.vmware.admiral.common.util.RegistryUtil;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 
 /**
@@ -101,7 +102,7 @@ public class RegistryStateQueryTest extends BaseRegistryStateQueryTest {
     }
 
     private void verifyIncludedRegistries(String tenantLink, boolean shouldIncludeGrouped) {
-        RegistryService.forEachRegistry(host, tenantLink,
+        RegistryUtil.forEachRegistry(host, tenantLink,
                 (registryLinks) -> {
                     if (!registryLinks.contains(globalRegistryState.documentSelfLink)) {
                         host.log(Level.SEVERE, "Global registry %s missing",

@@ -79,9 +79,9 @@ public class ContainerImageTagsService extends StatelessService {
             return;
         }
 
-        RegistryUtil.findRegistriesByHostname(getHost(), image.getHost(), group, (links, error) -> {
-            if (error != null) {
-                op.fail(error);
+        RegistryUtil.findRegistriesByHostname(getHost(), image.getHost(), group, (links, errors) -> {
+            if (errors != null && !errors.isEmpty()) {
+                op.fail(errors.iterator().next());
                 return;
             }
 
@@ -93,7 +93,7 @@ public class ContainerImageTagsService extends StatelessService {
                 return;
             }
 
-            sendListTagRequest(op, registryAdapterUri, imageName, links.get(0));
+            sendListTagRequest(op, registryAdapterUri, imageName, links.iterator().next());
         });
     }
 

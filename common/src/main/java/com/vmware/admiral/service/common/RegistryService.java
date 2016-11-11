@@ -12,21 +12,14 @@
 package com.vmware.admiral.service.common;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ConfigurationUtil;
-import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.ServiceHost;
@@ -34,10 +27,6 @@ import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
-import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.QueryTask.Query;
-import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
-import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * Describes the authentication credentials to authenticate with internal/external APIs.
@@ -285,115 +274,5 @@ public class RegistryService extends StatefulService {
         if (newState.documentExpirationTimeMicros != 0) {
             currentState.documentExpirationTimeMicros = newState.documentExpirationTimeMicros;
         }
-    }
-
-    /**
-     * Do something with each registry available to the given group (and global registries)
-     *
-     * @param tenantLink
-     * @param registryLinksConsumer
-     * @param failureConsumer
-     *        exclude global registry from search only if tenantLink is null
-     */
-    public static void forEachRegistry(ServiceHost serviceHost, String tenantLink,
-            Consumer<Collection<String>> registryLinksConsumer,
-            Consumer<Collection<Throwable>> failureConsumer) {
-
-        List<QueryTask> queryTasks = new ArrayList<QueryTask>();
-
-        if (tenantLink != null) {
-            // add query for global groups
-            queryTasks.add(buildRegistryQueryByGroup(null));
-            // add query for registries of a specific tenant
-            queryTasks.add(buildRegistryQueryByGroup(tenantLink));
-        } else {
-            // add query for all registries if no tenant
-            queryTasks.add(buildAllRegistriesQuery());
-        }
-
-        List<Operation> queryOperations = new ArrayList<>();
-        for (QueryTask queryTask : queryTasks) {
-            queryOperations.add(Operation
-                    .createPost(
-                            UriUtils.buildUri(serviceHost, ServiceUriPaths.CORE_QUERY_TASKS))
-                    .setBody(queryTask)
-                    .setReferer(serviceHost.getUri()));
-        }
-
-        if (!queryOperations.isEmpty()) {
-            OperationJoin.create(queryOperations.toArray(new Operation[0]))
-                    .setCompletion((ops, failures) -> {
-                        if (failures != null) {
-                            failureConsumer.accept(failures.values());
-                            return;
-                        }
-
-                        // return one registry link for each address (same registry address can be set in different
-                        // entries, in the same or different tenants (in case of system admin search))
-                        Map<String, String> registryLinks = new HashMap<>();
-                        for (Operation o : ops.values()) {
-                            QueryTask result = o.getBody(QueryTask.class);
-
-                            for (Map.Entry<String, Object> document : result.results.documents.entrySet()) {
-                                RegistryState registryState = Utils.fromJson(document.getValue(), RegistryState.class);
-                                // if same registry is repeated, return it only once
-                                if (!registryLinks.containsKey(registryState.address)) {
-                                    registryLinks.put(registryState.address, document.getKey());
-                                }
-                            }
-                        }
-
-                        registryLinksConsumer.accept(registryLinks.values());
-                    })
-                    .sendWith(serviceHost);
-        } else {
-            // no registry links available
-            registryLinksConsumer.accept(Collections.emptyList());
-        }
-    }
-
-    /**
-     * Create a query to return all RegistryState links within a group or global RegistryState links
-     * if the group is null/empty
-     *
-     * @param tenantLink
-     * @return QueryTask
-     */
-    private static QueryTask buildRegistryQueryByGroup(String tenantLink) {
-        Query groupClause = QueryUtil.addTenantGroupAndUserClause(tenantLink);
-        return buildRegistryQuery(groupClause);
-    }
-
-    /**
-     * Create a query to return all RegistryState links
-     *
-     * @return
-     */
-    private static QueryTask buildAllRegistriesQuery() {
-        return buildRegistryQuery(null);
-    }
-
-    private static QueryTask buildRegistryQuery(Query groupClause) {
-
-        List<Query> clauses = new ArrayList<>();
-        if (groupClause != null) {
-            clauses.add(groupClause);
-        }
-        Query endpointTypeClause = new Query()
-                .setTermPropertyName(RegistryState.FIELD_NAME_ENDPOINT_TYPE)
-                .setTermMatchValue(RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE);
-        clauses.add(endpointTypeClause);
-
-        Query excludeDisabledClause = new Query()
-                .setTermPropertyName(RegistryState.FIELD_NAME_DISABLED)
-                .setTermMatchValue(Boolean.TRUE.toString());
-        excludeDisabledClause.occurance = Occurance.MUST_NOT_OCCUR;
-        clauses.add(excludeDisabledClause);
-
-        QueryTask queryTask = QueryUtil.buildQuery(RegistryState.class, true,
-                clauses.toArray(new Query[clauses.size()]));
-        QueryUtil.addExpandOption(queryTask);
-
-        return queryTask;
     }
 }
