@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -533,6 +534,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(0L, networkStates.documentCount.longValue());
     }
 
+    @Ignore("VBV-824")
     @Test
     public void testRequestLifeCycleWithContainerNetworkAndServiceAntiAffinityFilterFailureShouldCleanNetworks()
             throws Throwable {
