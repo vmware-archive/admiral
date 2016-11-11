@@ -195,6 +195,7 @@ public class ContainerVolumeRemovalTaskService extends
 
         sendRequest(Operation.createPatch(this, subTaskLink)
                 .setBody(body)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         failTask("Notifying counting task failed: %s", e);

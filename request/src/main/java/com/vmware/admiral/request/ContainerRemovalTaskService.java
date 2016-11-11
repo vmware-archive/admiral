@@ -281,6 +281,7 @@ public class ContainerRemovalTaskService
 
         sendRequest(Operation.createPatch(this, subTaskLink)
                 .setBody(body)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         failTask("Notifying counting task failed: %s", e);
@@ -307,8 +308,7 @@ public class ContainerRemovalTaskService
         AdapterRequest adapterRequest = new AdapterRequest();
         String selfLink = containerState.documentSelfLink;
         adapterRequest.resourceReference = UriUtils.buildUri(getHost(), selfLink);
-        adapterRequest.serviceTaskCallback = ServiceTaskCallback.create(UriUtils.buildUri(
-                getHost(), subTaskLink).toString());
+        adapterRequest.serviceTaskCallback = ServiceTaskCallback.create(subTaskLink);
         adapterRequest.operationTypeId = ContainerOperationType.DELETE.id;
         sendRequest(Operation.createPatch(getHost(), containerState.adapterManagementReference.toString())
                 .setBody(adapterRequest)
