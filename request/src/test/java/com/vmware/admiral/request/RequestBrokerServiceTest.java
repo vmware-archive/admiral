@@ -530,8 +530,10 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertNull(cont1);
 
         // Verify the composite component is removed (only a external network in the application)
-        cc = searchForDocument(CompositeComponent.class, compositeComponentLink);
-        assertNull(cc);
+        waitFor(() -> {
+            CompositeComponent compositeComponent = searchForDocument(CompositeComponent.class, compositeComponentLink);
+            return compositeComponent == null;
+        });
 
         // Verify the external network is not removed
         ContainerNetworkState network = searchForDocument(ContainerNetworkState.class, networkLink);
