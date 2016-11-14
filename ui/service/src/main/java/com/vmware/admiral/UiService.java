@@ -47,63 +47,7 @@ public class UiService extends StatelessService {
 
     @Override
     public void authorizeRequest(Operation op) {
-        if (getHost().isAuthorizationEnabled()) {
-
-            AuthorizationContext ctx = op.getAuthorizationContext();
-            if (ctx == null) {
-                // It should never happen. If no credentials are provided then Xenon falls back
-                // on the guest user authorization context and claims.
-                op.fail(new IllegalStateException("ctx == null"));
-                return;
-            }
-
-            Claims claims = ctx.getClaims();
-            if (claims == null) {
-                // It should never happen. If no credentials are provided then Xenon falls back
-                // on the guest user authorization context and claims.
-                op.fail(new IllegalStateException("claims == null"));
-                return;
-            }
-
-            String path = op.getUri().getPath();
-
-            // in embedded mode we are already authenticated
-            // no need to show login or home page upon successful login
-            boolean isNavigationInEmbeddedMode = ConfigurationUtil.isEmbedded()
-                    && path.equals(UriUtils.URI_PATH_CHAR);
-            if (isNavigationInEmbeddedMode) {
-                op.complete();
-                return;
-            }
-
-            // Is the user trying to login?
-            boolean isLoginPage = path.endsWith(LOGIN_PATH);
-
-            // Is the user trying to access an html page? No need to redirect requests to js,
-            // css, etc.
-            boolean isHTMLResource = !path.contains(".") ||
-                    path.endsWith(UiService.HTML_RESOURCE_EXTENSION);
-
-            // Is the user already authenticated?
-            boolean isValidUser = (claims.getSubject() != null)
-                    && !GuestUserService.SELF_LINK.equals(claims.getSubject());
-
-            boolean loginRequired = !isLoginPage && isHTMLResource && !isValidUser;
-            boolean showHomePage = isLoginPage && isValidUser;
-
-            if (loginRequired) {
-                // Redirect the browser to the login page
-                String location = UiService.SELF_LINK + LOGIN_PATH;
-                op.addResponseHeader(Operation.LOCATION_HEADER, location);
-                op.setStatusCode(Operation.STATUS_CODE_MOVED_TEMP);
-            } else if (showHomePage) {
-                // Redirect the browser to the home page
-                String location = UiService.SELF_LINK + UriUtils.URI_PATH_CHAR;
-                op.addResponseHeader(Operation.LOCATION_HEADER, location);
-                op.setStatusCode(Operation.STATUS_CODE_MOVED_TEMP);
-            }
-        }
-
+        // No authorization required. In case the user is not authorized, when retrieving the / we will redirect to login.
         op.complete();
     }
 
@@ -119,6 +63,10 @@ public class UiService extends StatelessService {
 
     @Override
     public void handleGet(Operation get) {
+        if (redirectToLoginOrIndex(get)) {
+            return;
+        }
+
         URI uri = get.getUri();
         String selfLink = getSelfLink();
         String requestUri = uri.getPath();
@@ -211,6 +159,67 @@ public class UiService extends StatelessService {
                 pathToURIPath.put(outputPath, uriPath.toString().replace('\\', '/'));
             }
         }
+    }
+
+    private boolean redirectToLoginOrIndex(Operation op) {
+        // in embedded mode we are already authenticated
+        // no need to show login or home page upon successful login
+        if (ConfigurationUtil.isEmbedded()) {
+            return false;
+        }
+
+        if (getHost().isAuthorizationEnabled()) {
+            AuthorizationContext ctx = op.getAuthorizationContext();
+            if (ctx == null) {
+                // It should never happen. If no credentials are provided then Xenon falls back
+                // on the guest user authorization context and claims.
+                op.fail(new IllegalStateException("ctx == null"));
+                return true;
+            }
+
+            Claims claims = ctx.getClaims();
+            if (claims == null) {
+                // It should never happen. If no credentials are provided then Xenon falls back
+                // on the guest user authorization context and claims.
+                op.fail(new IllegalStateException("claims == null"));
+                return true;
+            }
+            String path = op.getUri().getPath();
+
+            // Is the user trying to login?
+            boolean isLoginPage = path.endsWith(LOGIN_PATH);
+
+            // Is the user trying to access an html page? No need to redirect requests to js,
+            // css, etc.
+            boolean isHTMLResource = !path.contains(".") ||
+                    path.endsWith(UiService.HTML_RESOURCE_EXTENSION);
+
+            // Is the user already authenticated?
+            boolean isValidUser = (claims.getSubject() != null)
+                    && !GuestUserService.SELF_LINK.equals(claims.getSubject());
+
+            boolean loginRequired = !isLoginPage && isHTMLResource && !isValidUser;
+            boolean showHomePage = isLoginPage && isValidUser;
+
+            if (loginRequired) {
+                // Redirect the browser to the login page
+                String location = UiService.SELF_LINK + LOGIN_PATH;
+                op.addResponseHeader(Operation.LOCATION_HEADER, location);
+                op.setStatusCode(Operation.STATUS_CODE_MOVED_TEMP);
+                op.complete();
+
+                return true;
+            } else if (showHomePage) {
+                // Redirect the browser to the home page
+                String location = UiService.SELF_LINK + UriUtils.URI_PATH_CHAR;
+                op.addResponseHeader(Operation.LOCATION_HEADER, location);
+                op.setStatusCode(Operation.STATUS_CODE_MOVED_TEMP);
+                op.complete();
+
+                return true;
+            }
+        }
+        return false;
     }
 
     private void discoverFileResources(Service s, Map<Path, String> pathToURIPath,
