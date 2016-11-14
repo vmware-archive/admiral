@@ -17,7 +17,6 @@ import java.net.URI;
 import java.util.Collections;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
@@ -34,7 +33,6 @@ import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Utils;
 
-@Ignore
 public class HostConfigCertificateDistributionServiceIT extends
         BaseCertificateDistributionServiceIT {
 
