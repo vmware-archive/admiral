@@ -9,8 +9,10 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import DeploymentPoliciesRowTemplate from 'DeploymentPoliciesRowTemplate';
-import DeploymentPoliciesRowHighlightTemplate from 'DeploymentPoliciesRowHighlightTemplate';
+import DeploymentPoliciesRowTemplate from
+  'components/deploymentpolicies/DeploymentPoliciesRowTemplate.html';
+import DeploymentPoliciesRowHighlightTemplate from
+  'components/deploymentpolicies/DeploymentPoliciesRowHighlightTemplate.html';
 
 var renderers = {
   render: function(deploymentPolicyHolder) {

@@ -9,7 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import ContainerDefinitionFormTemplate from 'ContainerDefinitionFormTemplate';
+import ContainerDefinitionFormTemplate from
+  'components/containers/ContainerDefinitionFormTemplate.html';
 import MulticolumnInputs from 'components/common/MulticolumnInputs';
 import Component from 'components/common/Component';
 import utils from 'core/utils';

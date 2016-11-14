@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import ComputeViewVue from 'ComputeViewVue';
+import ComputeViewVue from 'components/compute/ComputeViewVue.html';
 import ComputeItem from 'components/compute/ComputeItem'; //eslint-disable-line
 import ComputeEditView from 'components/compute/ComputeEditView'; //eslint-disable-line
 import GridHolderMixin from 'components/common/GridHolderMixin';

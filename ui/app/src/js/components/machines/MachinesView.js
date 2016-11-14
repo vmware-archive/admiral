@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import MachinesViewVue from 'MachinesViewVue';
+import MachinesViewVue from 'components/machines/MachinesViewVue.html';
 import MachineItem from 'components/machines/MachineItem'; //eslint-disable-line
 import MachineDetails from 'components/machines/MachineDetails'; //eslint-disable-line
 import GridHolderMixin from 'components/common/GridHolderMixin';

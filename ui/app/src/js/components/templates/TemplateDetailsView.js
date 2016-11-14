@@ -9,11 +9,12 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import TemplateDetailsViewVue from 'TemplateDetailsViewVue';
-import ListItemImageVue from 'ListItemImageVue';
-import ContainerDefinitionVue from 'ContainerDefinitionVue';
+import TemplateDetailsViewVue from 'components/templates/TemplateDetailsViewVue.html';
+import ListItemImageVue from 'components/templates/ListItemImageVue.html';
+import ContainerDefinitionVue from 'components/templates/ContainerDefinitionVue.html';
 import ContainerDefinitionForm from 'components/containers/ContainerDefinitionForm';
-import InlineDeleteConfirmationTemplate from 'InlineDeleteConfirmationTemplate';
+import InlineDeleteConfirmationTemplate from
+  'components/common/InlineDeleteConfirmationTemplate.html';
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
 import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin'; // eslint-disable-line
 import GridHolderMixin from 'components/common/GridHolderMixin';

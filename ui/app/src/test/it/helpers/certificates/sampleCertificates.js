@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-var certificates = {
+var Certificates = {
   // took from test-integration/src/test/resources/client_cert_coreos_vra
   defaultCertificate: '-----BEGIN CERTIFICATE-----\n' +
       'MIIDFTCCAf2gAwIBAgIEVqdxmTANBgkqhkiG9w0BAQUFADBvMQswCQYDVQQGEwJV\n' +
@@ -31,3 +31,5 @@ var certificates = {
       '7N/ha/Ii6qQekQupQ7LgUyksu6sVK8xyuQ\u003d\u003d\n' +
       '-----END CERTIFICATE-----'
 };
+
+export default Certificates;

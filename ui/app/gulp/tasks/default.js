@@ -3,6 +3,6 @@
 */
 
 var gulp = require('gulp');
-gulp.task('default', ['build', 'server'], function() {
-  gulp.start('unit-tests-continious');
+gulp.task('default', ['build-dev', 'server'], function() {
+//  gulp.start('unit-tests-continious');
 });

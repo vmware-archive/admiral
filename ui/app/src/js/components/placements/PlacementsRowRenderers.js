@@ -9,8 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import PlacementsRowTemplate from 'PlacementsRowTemplate';
-import PlacementsRowHighlightTemplate from 'PlacementsRowHighlightTemplate';
+import PlacementsRowTemplate from 'components/placements/PlacementsRowTemplate.html';
+import PlacementsRowHighlightTemplate from
+  'components/placements/PlacementsRowHighlightTemplate.html';
 import { NavigationActions } from 'actions/Actions';
 import utils from 'core/utils';
 

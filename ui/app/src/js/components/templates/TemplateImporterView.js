@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import TemplateImporterViewVue from 'TemplateImporterViewVue';
+import TemplateImporterViewVue from 'components/templates/TemplateImporterViewVue.html';
 import { TemplateActions } from 'actions/Actions';
 import constants from 'core/constants';
 

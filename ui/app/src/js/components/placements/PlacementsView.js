@@ -10,8 +10,8 @@
  */
 
 import InlineEditableList from 'components/common/InlineEditableList';
-import PlacementsViewVue from 'PlacementsViewVue';
-import PlacementsListTemplate from 'PlacementsListTemplate';
+import PlacementsViewVue from 'components/placements/PlacementsViewVue.html';
+import PlacementsListTemplate from 'components/placements/PlacementsListTemplate.html';
 import PlacementsRowRenderers from 'components/placements/PlacementsRowRenderers';
 import PlacementsRowEditor from 'components/placements/PlacementsRowEditor';
 import ResourcePoolsList from 'components/resourcepools/ResourcePoolsList'; //eslint-disable-line

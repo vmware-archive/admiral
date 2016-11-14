@@ -361,3 +361,4 @@ ContainersMockData.compositeComponents = {
   }
 };
 
+export default ContainersMockData;

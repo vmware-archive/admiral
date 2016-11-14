@@ -22,9 +22,15 @@
   <div class="loading"><span class="vertical-helper"></span><img src="image-assets/loading-animation.gif"></div>
 
   <script src="lib/vendor.js"></script>
-  <script src="js/main-single-view.js"></script>
   <script>
-      window.isSingleView = true;
+    window.isSingleView = true;
+
+    // Load main script asynchronously so that the ones that embed can inject things onload
+    setTimeout(function() {
+      script = document.createElement('script');
+      script.src = 'js/main-single-view.js';
+      document.body.appendChild(script);
+    }, 50);
   </script>
 </body>
 </html>

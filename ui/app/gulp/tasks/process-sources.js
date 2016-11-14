@@ -9,27 +9,38 @@
 */
 
 var gulp = require('gulp');
-var sourcemaps = require('gulp-sourcemaps');
-var babel = require('gulp-babel');
-var concat = require('gulp-concat');
-var uglify = require('gulp-uglify');
-var gulpif = require('gulp-if');
-var connect = require('gulp-connect');
+var gutil = require('gulp-util');
 var config = require('../config');
+var webpackProcessor = require('../webpack-processor');
+var fs = require('fs');
+var path = require('path');
 
-gulp.task('process-sources', ['eslint'], function () {
-  gulp.src(config.processSources.indexSrc)
-    .pipe(gulp.dest(config.processSources.indexDest));
+var srcPath = 'src/js/';
+var jsFile = '.js';
 
-  return gulp.src([config.processSources.src, '!' + config.processSources.indexSrc])
-    .pipe(sourcemaps.init())
-    .pipe(babel({
-      modules: 'amd',
-      moduleIds: true
-    }))
-    .pipe(concat('all.js'))
-    .pipe(gulpif(config.production, uglify()))
-    .pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest(config.processSources.dest))
-    .pipe(connect.reload());
+gulp.task('process-sources', function (callback) {
+  var srcFiles = fs.readdirSync(srcPath).filter(function(file) {
+    return (file.indexOf(jsFile) + jsFile.length === file.length) &&
+      !fs.statSync(path.join(srcPath, file)).isDirectory();
+  });
+
+  var trackCallbacks = srcFiles.length;
+  var firstError;
+
+  var localCallback = function(err) {
+    if (err && !firstError) {
+      firstError = err;
+    }
+    if (--trackCallbacks === 0) {
+      callback(firstError);
+    }
+  };
+
+  srcFiles.forEach(function (file) {
+    webpackProcessor({
+      watch: false,
+      minify: !!config.production,
+      filename: file
+    }, localCallback);
+  });
 });

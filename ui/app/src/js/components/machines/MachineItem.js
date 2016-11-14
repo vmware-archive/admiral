@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import MachineItemVue from 'MachineItemVue';
+import MachineItemVue from 'components/machines/MachineItemVue.html';
 import constants from 'core/constants';
 import utils from 'core/utils';
 

@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import PlacementsRowEditTemplate from 'PlacementsRowEditTemplate';
+import PlacementsRowEditTemplate from 'components/placements/PlacementsRowEditTemplate.html';
 import {
   PlacementContextToolbarActions, PlacementActions
 }

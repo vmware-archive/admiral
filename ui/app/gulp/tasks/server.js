@@ -5,14 +5,34 @@
 var gulp = require('gulp');
 var connect = require('gulp-connect');
 var config = require('../config');
+var path = require('path');
+var webpackProcessor = require('../webpack-processor');
 
 gulp.task('server', function() {
+  var bundler = webpackProcessor({
+    watch: true,
+    minify: false,
+    filename: 'main.js'
+  }, function(err) {
+    if (!err) {
+      gulp.src('dist/js/*').pipe(connect.reload());
+    } else if (err.length) {
+      err.forEach(function(e) {
+        console.log(e);
+      });
+    } else {
+      console.log(err);
+    }
+  });
+
+  config.server.middleware = function() {
+    var result = [];
+    return result.concat(config.getDevServerProxies());
+  };
+
   connect.server(config.server);
 
-  gulp.watch(config.processSources.src, ['process-sources']);
   gulp.watch(config.styles.src, ['styles']);
   gulp.watch(config.html.src, ['html']);
   gulp.watch(config.i18n.src, ['i18n']);
-  gulp.watch(config.templates.src, ['templates']);
-  gulp.watch(config.templatesVue.src, ['templates-vue']);
 });

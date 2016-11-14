@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import HomeVue from 'HomeVue';
+import HomeVue from 'components/HomeVue.html';
 import VueAdapter from 'components/common/VueAdapter';
 import HostView from 'components/hosts/HostView'; //eslint-disable-line
 import EasterEgg from 'components/EasterEgg'; //eslint-disable-line

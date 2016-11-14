@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import AppVue from 'AppVue';
+import AppVue from 'components/AppVue.html';
 import AppMixin from 'components/AppMixin';
 import Home from 'components/Home';//eslint-disable-line
 import Navigation from 'components/common/Navigation';//eslint-disable-line

@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import EndpointsViewVue from 'EndpointsViewVue';
+import EndpointsViewVue from 'components/endpoints/EndpointsViewVue.html';
 import EndpointEditor from 'components/endpoints/EndpointEditor'; //eslint-disable-line
 import { EndpointsActions } from 'actions/Actions';
 

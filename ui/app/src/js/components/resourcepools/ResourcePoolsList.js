@@ -10,7 +10,7 @@
  */
 
 import InlineEditableListFactory from 'components/common/InlineEditableListFactory';
-import ResourcePoolsListVue from 'ResourcePoolsListVue';
+import ResourcePoolsListVue from 'components/resourcepools/ResourcePoolsListVue.html';
 import utils from 'core/utils';
 import { ResourcePoolsContextToolbarActions } from 'actions/Actions';
 import EndpointsView from 'components/endpoints/EndpointsView'; //eslint-disable-line

@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import DocsHelpVue from 'DocsHelpVue';
+import DocsHelpVue from 'components/common/DocsHelpVue.html';
 import docs from 'core/docs';
 import modal from 'core/modal';
 

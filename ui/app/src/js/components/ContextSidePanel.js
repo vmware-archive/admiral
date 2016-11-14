@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import ContextSidePanelVue from 'ContextSidePanelVue';
+import ContextSidePanelVue from 'components/ContextSidePanelVue.html';
 
 var ContextSidePanel = Vue.extend({
   template: ContextSidePanelVue

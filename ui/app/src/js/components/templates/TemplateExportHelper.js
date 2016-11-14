@@ -11,7 +11,7 @@
 
 import modal from 'core/modal';
 import constants from 'core/constants';
-import TemplateExportFormatTemplate from 'TemplateExportFormatTemplate';
+import TemplateExportFormatTemplate from 'components/templates/TemplateExportFormatTemplate.html';
 
 var showExportDialog = function(exportToYamlLink, exportToDockerComposeLink) {
     var templateFormatChooser = $(TemplateExportFormatTemplate());

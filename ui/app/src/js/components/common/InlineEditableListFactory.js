@@ -11,26 +11,28 @@
 
 import InlineEditableList from 'components/common/InlineEditableList';
 //resource pools
-import ResourcePoolsTemplate from 'ResourcePoolsTemplate';
+import ResourcePoolsTemplate from 'components/resourcepools/ResourcePoolsTemplate.html';
 import ResourcePoolsRowRenderers from 'components/resourcepools/ResourcePoolsRowRenderers';
 import ResourcePoolsRowEditor from 'components/resourcepools/ResourcePoolsRowEditor';
 // credentials
-import CredentialsTemplate from 'CredentialsTemplate';
+import CredentialsTemplate from 'components/credentials/CredentialsTemplate.html';
 import CredentialsRowRenderers from 'components/credentials/CredentialsRowRenderers';
 import CredentialsRowEditor from 'components/credentials/CredentialsRowEditor';
 // certificates
-import CertificatesTemplate from 'CertificatesTemplate';
+import CertificatesTemplate from 'components/certificates/CertificatesTemplate.html';
 import CertificatesRowRenderers from 'components/certificates/CertificatesRowRenderers';
 import CertificatesRowEditor from 'components/certificates/CertificatesRowEditor';
 // resource groups
-import ResourceGroupsTemplate from 'ResourceGroupsTemplate';
+import ResourceGroupsTemplate from 'components/resourcegroups/ResourceGroupsTemplate.html';
 import ResourceGroupsRowRenderers from 'components/resourcegroups/ResourceGroupsRowRenderers';
 import ResourceGroupsRowEditor from 'components/resourcegroups/ResourceGroupsRowEditor';
 // deployment policies
-import DeploymentPoliciesTemplate from 'DeploymentPoliciesTemplate';
+import DeploymentPoliciesTemplate from
+  'components/deploymentpolicies/DeploymentPoliciesTemplate.html';
 import DeploymentPoliciesRowRenderers from
-    'components/deploymentpolicies/DeploymentPoliciesRowRenderers';
-import DeploymentPoliciesRowEditor from 'components/deploymentpolicies/DeploymentPoliciesRowEditor';
+  'components/deploymentpolicies/DeploymentPoliciesRowRenderers';
+import DeploymentPoliciesRowEditor from
+  'components/deploymentpolicies/DeploymentPoliciesRowEditor';
 
 import { ResourcePoolsActions, CredentialsActions, CertificatesActions,
   ResourceGroupsActions, DeploymentPolicyActions } from 'actions/Actions';

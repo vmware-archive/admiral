@@ -13,9 +13,8 @@ var IT_TEST_SUITE = 'com.vmware.admiral.ui.integration';
 
 var getPreporcessorts = function() {
   var preprocessors = {};
-  preprocessors[config.dest + '/**/*.js'] = ['sourcemap'];
-  preprocessors[config.src + '/test/unit/**/*Test.js'] = ['babel', 'sourcemap', 'global'];
-  preprocessors[config.src + '/test/it/**/*IT.js'] = ['babel', 'sourcemap', 'global'];
+  preprocessors[config.src + '/test/common/helpers/includeGlobals.js'] = ['global'];
+  preprocessors[config.src + '/test/**/all-tests.js'] = ['webpack', 'sourcemap'];
   return preprocessors;
 };
 
@@ -30,10 +29,29 @@ var createCommonTestsConfig =  function(files, reporters, reportOutputFile, sing
     },
     files: files,
     preprocessors: getPreporcessorts(),
-    babelPreprocessor: {
-      options: {
-        modules: 'amd',
-        sourceMap: 'inline'
+    webpack: {
+      devtool: 'inline-source-map',
+      module: {
+        rules: [{
+          test: /Template\.html$/,
+          loader: 'handlebars-loader',
+          exclude: /(node_modules)/
+        }, {
+          test: /Vue\.html$/,
+          loader: 'raw-loader!html-minify-loader',
+          exclude: /(node_modules)/
+        }, {
+          loader: 'babel-loader?presets[]=es2015,plugins[]=transform-es2015-modules-commonjs,cacheDirectory=true',
+          test: /\.js$/,
+          exclude: /(node_modules)/
+        }],
+      },
+      resolve: {
+        modules: [
+          'test',
+          'src/js',
+          "node_modules"
+        ]
       }
     },
     port: port,

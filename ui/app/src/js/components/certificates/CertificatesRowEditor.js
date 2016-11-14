@@ -9,7 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import CertificatesRowEditTemplate from 'CertificatesRowEditTemplate';
+import CertificatesRowEditTemplate from
+  'components/certificates/CertificatesRowEditTemplate.html';
 import Alert from 'components/common/Alert';
 import ImportedCertificatesStore from 'stores/ImportedCertificatesStore';
 import { CertificatesActions } from 'actions/Actions';

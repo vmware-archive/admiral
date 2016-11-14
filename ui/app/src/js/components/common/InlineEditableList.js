@@ -11,7 +11,8 @@
 
 import constants from 'core/constants';
 import utils from 'core/utils';
-import InlineDeleteConfirmationTemplate from 'InlineDeleteConfirmationTemplate';
+import InlineDeleteConfirmationTemplate from
+  'components/common/InlineDeleteConfirmationTemplate.html';
 
 function InlineEditableList($el, ListTemplate, RowRenderers) {
   this.$el = $el;

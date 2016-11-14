@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import AlertTemplate from 'AlertTemplate';
+import AlertTemplate from 'components/common/AlertTemplate.html';
 import constants from 'core/constants';
 
 function Alert($parentEl, $elSiblingToInsertTo, isInsertAfter) {

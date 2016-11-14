@@ -14,6 +14,7 @@ import { ContainerActions, NavigationActions } from 'actions/Actions';
 import services from 'core/services';
 import constants from 'core/constants';
 import routes from 'core/routes';
+import ContainersMockData from 'unit/helpers/containers/ContainersMockData'
 
 describe("ContainerStore test", function() {
   var totalNumberShownItems;

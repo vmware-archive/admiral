@@ -9,8 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import ResourcePoolsRowTemplate from 'ResourcePoolsRowTemplate';
-import ResourcePoolsRowHighlightTemplate from 'ResourcePoolsRowHighlightTemplate';
+import ResourcePoolsRowTemplate from 'components/resourcepools/ResourcePoolsRowTemplate.html';
+import ResourcePoolsRowHighlightTemplate from
+  'components/resourcepools/ResourcePoolsRowHighlightTemplate.html';
 import utils from 'core/utils';
 
 var renderers = {

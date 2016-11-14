@@ -13,34 +13,29 @@
   Entry point of the application. Here we make initialization tasks. And then pass on the App.js
 */
 
-requirejs.config(
-  {
-    baseUrl: '',
-    waitSeconds: 60
-  });
+import initializer from 'core/initializer';
 
 var $loadingEl = $('body > .loading');
 
-requirejs(['js/all', 'template-assets/all', 'template-assets/all-vue'], function() {
-  requirejs(['core/initializer'], function(initializer) {
-    initializer.init(function() {
-      var applicationRequirements = ['components/App', 'stores/AppStore'];
+var appInitializer = function(App, Store) {
+  var app = new App($('#main'));
+  Store.listen(function(data) {
+    if ($loadingEl) {
+      $loadingEl.remove();
+      $loadingEl = null;
+    }
 
-      var locationSearch = window.location.search || '';
-      if (locationSearch.indexOf('compute') !== -1) {
-        applicationRequirements = ['components/AppCompute', 'stores/AppComputeStore'];
-      }
-      requirejs(applicationRequirements, function(App, Store) {
-        var app = new App($('#main'));
-        Store.listen(function(data) {
-          if ($loadingEl) {
-            $loadingEl.remove();
-            $loadingEl = null;
-          }
-
-          app.setData(data);
-        });
-      });
-    });
+    app.setData(data);
   });
+};
+
+initializer.init(() => {
+  var locationSearch = window.location.search || '';
+  if (locationSearch.indexOf('compute') !== -1) {
+    appInitializer(require('components/AppCompute').default,
+                   require('stores/AppComputeStore').default);
+  } else {
+    appInitializer(require('components/App').default,
+                     require('stores/AppStore').default);
+  }
 });

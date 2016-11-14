@@ -9,7 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import ResourceGroupsRowEditTemplate from 'ResourceGroupsRowEditTemplate';
+import ResourceGroupsRowEditTemplate from
+  'components/resourcegroups/ResourceGroupsRowEditTemplate.html';
 import Alert from 'components/common/Alert';
 import { ResourceGroupsActions } from 'actions/Actions';
 import constants from 'core/constants';

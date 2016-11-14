@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import MachineDetailsVue from 'MachineDetailsVue';
+import MachineDetailsVue from 'components/machines/MachineDetailsVue.html';
 import MaximizableBehaviour from 'components/common/MaximizableBehaviour'; //eslint-disable-line
 import MachineProperties from 'components/machines/MachineProperties'; //eslint-disable-line
 import utils from 'core/utils';

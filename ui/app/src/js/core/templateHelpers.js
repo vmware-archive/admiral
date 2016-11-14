@@ -11,6 +11,7 @@
 
 import utils from 'core/utils';
 import constants from 'core/constants';
+import Handlebars from 'handlebars/runtime';
 
 var templateHelpers = {};
 templateHelpers.register = function() {

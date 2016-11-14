@@ -9,10 +9,12 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import CredentialsRowTemplate from 'CredentialsRowTemplate';
-import CredentialsRowHighlightTemplate from 'CredentialsRowHighlightTemplate';
+import CredentialsRowTemplate from 'components/credentials/CredentialsRowTemplate.html';
+import CredentialsRowHighlightTemplate from
+  'components/credentials/CredentialsRowHighlightTemplate.html';
 import constants from 'core/constants';
 import utils from 'core/utils';
+import Handlebars from 'handlebars/runtime';
 
 const MAX_TITLE_KEY_LENGTH = 40;
 

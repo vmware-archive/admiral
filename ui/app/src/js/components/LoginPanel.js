@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import LoginPanelVue from 'LoginPanelVue';
+import LoginPanelVue from 'components/LoginPanelVue.html';
 import services from 'core/services';
 
 const SUCCESSFUL_REDIRECT_TIMEOUT = 1000;

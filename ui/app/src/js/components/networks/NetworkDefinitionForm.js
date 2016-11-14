@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import NetworkDefinitionFormVue from 'NetworkDefinitionFormVue';
+import NetworkDefinitionFormVue from 'components/networks/NetworkDefinitionFormVue.html';
 import MulticolumnInputs from 'components/common/MulticolumnInputs';
 import utils from 'core/utils';
 import services from 'core/services';

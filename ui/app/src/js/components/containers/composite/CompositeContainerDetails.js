@@ -9,7 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import CompositeContainerDetailsVue from 'CompositeContainerDetailsVue';
+import CompositeContainerDetailsVue from
+  'components/containers/composite/CompositeContainerDetailsVue.html';
 import ContainersListItem from 'components/containers/ContainersListItem'; //eslint-disable-line
 import ClusterContainersListItem from 'components/containers/cluster/ClusterContainersListItem';  //eslint-disable-line
 import ContainerDetails from 'components/containers/ContainerDetails'; //eslint-disable-line

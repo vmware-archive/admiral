@@ -12,8 +12,8 @@
 import InlineEditableList from 'components/common/InlineEditableList';
 import { RegistryActions, RegistryContextToolbarActions } from 'actions/Actions';
 import Component from 'components/common/Component';
-import RegistryViewTemplate from 'RegistryViewTemplate';
-import RegistryListTemplate from 'RegistryListTemplate';
+import RegistryViewTemplate from 'components/registries/RegistryViewTemplate.html';
+import RegistryListTemplate from 'components/registries/RegistryListTemplate.html';
 import RegistryRowRenderers from 'components/registries/RegistryRowRenderers';
 import RegistryRowEditor from 'components/registries/RegistryRowEditor';
 import CredentialsList from 'components/credentials/CredentialsList'; //eslint-disable-line

@@ -14,6 +14,7 @@ import { TemplateActions } from 'actions/Actions';
 import services from 'core/services';
 import constants from 'core/constants';
 import routes from 'core/routes';
+import TemplatesMockData from 'unit/helpers/templates/TemplatesMockData';
 
 describe("TemplatesStore test", function() {
   const BRIDGE_NETWORK_DESCRIPTION = {

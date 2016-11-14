@@ -9,8 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import CertificatesRowTemplate from 'CertificatesRowTemplate';
-import CertificatesRowHighlightTemplate from 'CertificatesRowHighlightTemplate';
+import CertificatesRowTemplate from 'components/certificates/CertificatesRowTemplate.html';
+import CertificatesRowHighlightTemplate from
+  'components/certificates/CertificatesRowHighlightTemplate.html';
 
 var renderers = {
   render: function(certificateHolder) {

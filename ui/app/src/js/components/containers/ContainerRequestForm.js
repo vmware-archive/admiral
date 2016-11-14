@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import ContainerRequestFormVue from 'ContainerRequestFormVue';
+import ContainerRequestFormVue from 'components/containers/ContainerRequestFormVue.html';
 import ContainerDefinitionForm from 'components/containers/ContainerDefinitionForm';
 import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin'; // eslint-disable-line
 import { TemplateActions, ContainerActions } from 'actions/Actions';

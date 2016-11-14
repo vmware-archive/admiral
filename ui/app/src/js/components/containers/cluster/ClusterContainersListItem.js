@@ -9,7 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import ClusterContainersListItemVue from 'ClusterContainersListItemVue'; //eslint-disable-line
+import ClusterContainersListItemVue from
+  'components/containers/cluster/ClusterContainersListItemVue.html';
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
 import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
 import { ContainerActions, NavigationActions } from 'actions/Actions'; //eslint-disable-line

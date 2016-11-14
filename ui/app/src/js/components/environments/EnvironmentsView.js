@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import EnvironmentsViewVue from 'EnvironmentsViewVue';
+import EnvironmentsViewVue from 'components/environments/EnvironmentsViewVue.html';
 import EnvironmentEditor from 'components/environments/EnvironmentEditor'; //eslint-disable-line
 import { EnvironmentsActions } from 'actions/Actions';
 

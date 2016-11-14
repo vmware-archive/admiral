@@ -13,6 +13,7 @@ import services from 'core/services';
 import InlineEditableListFactory from 'components/common/InlineEditableListFactory';
 import CertificatesStore from 'stores/CertificatesStore';
 import { CertificatesActions } from 'actions/Actions';
+import sampleCertificates from 'it/helpers/certificates/sampleCertificates';
 
 describe('Certificates management integration test', function() {
   var $container;
@@ -85,7 +86,7 @@ describe('Certificates management integration test', function() {
       var certifcateInput =
           $container.find('.certificatesEdit .certificatesEdit-properties .certificate-input');
       console.log('Set the certificate. Inputs length: ' + certifcateInput.length);
-      certifcateInput.val(certificates.defaultCertificate);
+      certifcateInput.val(sampleCertificates.defaultCertificate);
 
       // Trigger creation
       var certifcateSaveButton = $container.find('.certificatesEdit .certificatesEdit-save');
@@ -170,7 +171,7 @@ describe('Certificates management integration test', function() {
     }).then(function() {
       $container.find(
           '.certificatesEdit .certificatesEdit-properties .certificate-input').val(
-            certificates.defaultCertificate);
+            sampleCertificates.defaultCertificate);
 
       $container.find('.certificatesEdit .certificatesEdit-save').trigger('click');
 
@@ -230,7 +231,7 @@ describe('Certificates management integration test', function() {
 
   it('it should delete a certificate', function(done) {
     var testCertificate = {
-      certificate: certificates.defaultCertificate
+      certificate: sampleCertificates.defaultCertificate
     };
 
     var createdCertificate;

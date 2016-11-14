@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import HostViewVue from 'HostViewVue';
+import HostViewVue from 'components/hosts/HostViewVue.html';
 import HostAddView from 'components/hosts/HostAddView'; //eslint-disable-line
 import HostCreateView from 'components/hosts/HostCreateView'; //eslint-disable-line
 import { HostContextToolbarActions, NavigationActions } from 'actions/Actions';

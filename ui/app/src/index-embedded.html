@@ -52,42 +52,15 @@
   <div class="loading"><span class="vertical-helper"></span><img src="image-assets/loading-animation.gif"></div>
 
   <script src="lib/vendor.js"></script>
-  <script src="js/main.js"></script>
-
-  <!-- For testing purposes only, remove when APIs are finalized -->
   <script>
     window.isEmbedded = true;
 
-    // Need to wait a bit for all Application script to load
+    // Load main script asynchronously so that the ones that embed can inject things onload
     setTimeout(function() {
-      var debugFlag = "debug=true";
-      var isDebug = window.location.search && window.location.search.indexOf(debugFlag) !== -1;
-
-      if (isDebug) {
-        var apiTests = document.createElement('script');
-        apiTests.src = "apiTests/runtimeAPITests.js";
-        document.body.appendChild(apiTests);
-
-        var $links = $('<div>', {style: 'position: absolute; bottom: 0; right: 0; z-index: 1000; font-size: 10px;'});
-        $('body').append($links);
-
-        var $link = $('<a>', {href: '#', style: 'margin-right: 10px'});
-        $link.html('Run API tests');
-        $link.click(function(e) {
-          e.preventDefault();
-          $('.api-validation-reporter').remove();
-
-          var $div = $('<div>', {class: 'api-validation-reporter'});
-          $('body').append($div);
-          window.validateApi($div);
-        });
-        $links.append($link);
-
-        var $hostslink = $('<a>', {href: '#/hosts', style: 'margin-right: 10px'});
-        $hostslink.html('#hosts');
-        $links.append($hostslink);
-      }
-    }, 500);
+      script = document.createElement('script');
+      script.src = 'js/main.js';
+      document.body.appendChild(script);
+    }, 50);
   </script>
 </body>
 </html>

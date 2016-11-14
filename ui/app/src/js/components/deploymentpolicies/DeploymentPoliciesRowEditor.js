@@ -11,7 +11,8 @@
 
 import Alert from 'components/common/Alert';
 import { DeploymentPolicyActions } from 'actions/Actions';
-import DeploymentPoliciesRowEditTemplate from 'DeploymentPoliciesRowEditTemplate';
+import DeploymentPoliciesRowEditTemplate from
+  'components/deploymentpolicies/DeploymentPoliciesRowEditTemplate.html';
 import constants from 'core/constants';
 
 function DeploymentPoliciesRowEditor() {

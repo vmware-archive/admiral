@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import EndpointEditorVue from 'EndpointEditorVue';
+import EndpointEditorVue from 'components/endpoints/EndpointEditorVue.html';
 import { EndpointsActions } from 'actions/Actions';
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
 

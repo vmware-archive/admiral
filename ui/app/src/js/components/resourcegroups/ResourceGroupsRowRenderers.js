@@ -9,8 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import ResourceGroupsRowTemplate from 'ResourceGroupsRowTemplate';
-import ResourceGroupsRowHighlightTemplate from 'ResourceGroupsRowHighlightTemplate';
+import ResourceGroupsRowTemplate from 'components/resourcegroups/ResourceGroupsRowTemplate.html';
+import ResourceGroupsRowHighlightTemplate from
+  'components/resourcegroups/ResourceGroupsRowHighlightTemplate.html';
 
 var renderers = {
   render: function(groupHolder) {

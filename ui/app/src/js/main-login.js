@@ -9,22 +9,15 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-requirejs.config(
-  {
-    baseUrl: '',
-    waitSeconds: 60
-  });
+import initializer from 'core/initializer';
 
 var $loadingEl = $('body > .loading');
 
-requirejs(['js/all', 'template-assets/all', 'template-assets/all-vue'], function() {
-  requirejs(['core/initializer'], function(initializer) {
-    initializer.init(function() {
-      requirejs(['components/Login'], function(Login) {
-        $loadingEl.remove();
-        var login = new Login($('#main'));
-        login.attached();
-      });
-    });
-  });
+initializer.init(function() {
+  // Explicitly not imported but lazy initialized, after the other initialization jobs are done
+  var Login = require('components/Login').default;
+
+  $loadingEl.remove();
+  var login = new Login($('#main'));
+  login.attached();
 });

@@ -121,7 +121,6 @@ Additional changes to the original file:
     "$": true,
     "i18n"        : true,
     "Vue"         : true,
-    "Handlebars"  : true,
     "Reflux"      : true,
     "Immutable"   : true,
     "d3"          : true,
@@ -129,7 +128,7 @@ Additional changes to the original file:
     "hasher"      : true,
     "crossroads"  : true,
     "validator"   : true,
-    "requirejs"   : true,
+    "require"     : true,
     "moment"      : true,
     "jsPlumb"     : true
   }

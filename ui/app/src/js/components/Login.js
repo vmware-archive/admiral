@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import LoginVue from 'LoginVue';
+import LoginVue from 'components/LoginVue.html';
 import VueAdapter from 'components/common/VueAdapter';
 import EasterEgg from 'components/EasterEgg'; //eslint-disable-line
 import LoginPanel from 'components/LoginPanel'; //eslint-disable-line

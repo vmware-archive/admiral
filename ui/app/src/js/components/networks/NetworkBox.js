@@ -9,7 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import InlineDeleteConfirmationTemplate from 'InlineDeleteConfirmationTemplate';
+import InlineDeleteConfirmationTemplate from
+  'components/common/InlineDeleteConfirmationTemplate.html';
 import utils from 'core/utils';
 import links from 'core/links';
 

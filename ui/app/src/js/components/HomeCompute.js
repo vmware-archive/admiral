@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import HomeComputeVue from 'HomeComputeVue';
+import HomeComputeVue from 'components/HomeComputeVue.html';
 import VueAdapter from 'components/common/VueAdapter';
 import HostView from 'components/hosts/HostView'; //eslint-disable-line
 import LoginPanel from 'components/LoginPanel'; //eslint-disable-line

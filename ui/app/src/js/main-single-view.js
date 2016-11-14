@@ -14,21 +14,14 @@
   the SingleView.js
 */
 
-requirejs.config(
-  {
-    baseUrl: '',
-    waitSeconds: 60
-  });
+import initializer from 'core/initializer';
 
 var $loadingEl = $('body > .loading');
 
-requirejs(['js/all', 'template-assets/all', 'template-assets/all-vue'], function() {
-  requirejs(['core/initializer'], function(initializer) {
-    initializer.init(function() {
-      requirejs(['components/SingleView'], function(SingleView) {
-        $loadingEl.remove();
-        new SingleView($('#main')); //eslint-disable-line
-      });
-    });
-  });
+initializer.init(() => {
+  // Explicitly not imported but lazy initialized, after the other initialization jobs are done
+  var SingleView = require('components/SingleView').default;
+
+  $loadingEl.remove();
+  new SingleView($('#main')); //eslint-disable-line
 });

@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import NetworkRequestFormVue from 'NetworkRequestFormVue';
+import NetworkRequestFormVue from 'components/networks/NetworkRequestFormVue.html';
 import NetworkDefinitionForm from 'components/networks/NetworkDefinitionForm'; // eslint-disable-line
 import HostPicker from 'components/networks/HostPicker';
 import { ContainerActions } from 'actions/Actions';

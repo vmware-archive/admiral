@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import DropdownSearchMenuTemplate from 'DropdownSearchMenuTemplate';
+import DropdownSearchMenuTemplate from 'components/common/DropdownSearchMenuTemplate.html';
 import constants from 'core/constants';
 
 function DEFAULT_RENDERER(itemSpec) {

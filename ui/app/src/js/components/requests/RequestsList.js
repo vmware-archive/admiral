@@ -9,10 +9,11 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import RequestsListVue from 'RequestsListVue';
-import RequestsListItemVue from 'RequestsListItemVue';
+import RequestsListVue from 'components/requests/RequestsListVue.html';
+import RequestsListItemVue from 'components/requests/RequestsListItemVue.html';
 import Component from 'components/common/Component';
-import InlineDeleteConfirmationTemplate from 'InlineDeleteConfirmationTemplate';
+import InlineDeleteConfirmationTemplate from
+  'components/common/InlineDeleteConfirmationTemplate.html';
 import { RequestsActions, AppActions, NavigationActions } from 'actions/Actions';
 import constants from 'core/constants';
 import utils from 'core/utils';

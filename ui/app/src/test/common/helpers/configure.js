@@ -9,6 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import Handlebars from 'handlebars/runtime';
+
 Handlebars.registerHelper('i18n', function(i18n_key) {
   return i18n_key;
 });
@@ -58,7 +60,6 @@ var failureAjaxReporter = {
   specStarted: function(result) {
     pendindRequests = [];
     completedRequests = [];
-    requestToUrl = {};
   },
   specDone: function(result) {
     if (result.status == 'failed') {
@@ -68,25 +69,6 @@ var failureAjaxReporter = {
 };
 
 jasmine.getEnv().addReporter(failureAjaxReporter);
-
-var tests = [];
-for (var file in window.__karma__.files) {
-  if (/Test|IT\.js$/.test(file)) {
-    tests.push(file);
-  }
-}
-
-requirejs.config({
-  baseUrl: "/base/src",
-  // ask Require.js to load these files (all our tests)
-  deps: tests,
-  waitSeconds: 60,
-
-  // start test run, once Require.js is done
-  callback: function() {
-    window.__karma__.start();
-  }
-});
 
 /**
  * Uncomment this, when debugging issues and want to trace the callers of actions. As by default

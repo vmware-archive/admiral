@@ -54,3 +54,5 @@ TemplatesMockData.Mynet = {
   "name": "mynet",
   "documentSelfLink": "/resources/container-network-descriptions/mynet"
 };
+
+export default TemplatesMockData;

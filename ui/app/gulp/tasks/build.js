@@ -3,4 +3,7 @@
 */
 
 var gulp = require('gulp');
-gulp.task('build', ['eslint', 'process-sources', 'process-vendor-libs', 'html', 'styles', 'images', 'fonts', 'i18n', 'templates', 'templates-vue', 'copy-api-tests']);
+
+gulp.task('build', ['process-sources', 'process-vendor-libs', 'html', 'styles', 'images', 'fonts', 'i18n']);
+
+gulp.task('build-dev', ['process-vendor-libs', 'html', 'styles', 'images', 'fonts', 'i18n']);

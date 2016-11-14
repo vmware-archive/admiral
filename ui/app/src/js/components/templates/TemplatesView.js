@@ -9,9 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import TemplatesViewVue from 'TemplatesViewVue';
-import ListItemImageVue from 'ListItemImageVue';
-import ListItemContainerVue from 'ListItemContainerVue';
+import TemplatesViewVue from 'components/templates/TemplatesViewVue.html';
+import ListItemImageVue from 'components/templates/ListItemImageVue.html';
+import ListItemContainerVue from 'components/templates/ListItemContainerVue.html';
 import TemplateDetailsView from 'components/templates/TemplateDetailsView'; // eslint-disable-line
 import RegistryView from 'components/registries/RegistryView'; // eslint-disable-line
 import TemplateImporterView from 'components/templates/TemplateImporterView'; // eslint-disable-line

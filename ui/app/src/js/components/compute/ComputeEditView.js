@@ -13,7 +13,7 @@ import { ComputeActions, ComputeContextToolbarActions, NavigationActions } from 
 import constants from 'core/constants';
 import Tags from 'components/common/Tags';
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
-import ComputeEditViewVue from 'ComputeEditViewVue';
+import ComputeEditViewVue from 'components/compute/ComputeEditViewVue.html';
 
 const resourcePoolManageOptions = [{
   id: 'rp-create',

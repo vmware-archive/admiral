@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import MachinePropertiesVue from 'MachinePropertiesVue';
+import MachinePropertiesVue from 'components/machines/MachinePropertiesVue.html';
 
 var MachineProperties = Vue.extend({
   template: MachinePropertiesVue,

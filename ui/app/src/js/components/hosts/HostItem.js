@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import HostItemVue from 'HostItemVue';
+import HostItemVue from 'components/hosts/HostItemVue.html';
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
 import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
 import { HostActions, NavigationActions } from 'actions/Actions';

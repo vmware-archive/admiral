@@ -9,9 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import RegistryRowEditTemplate from 'RegistryRowEditTemplate';
+import RegistryRowEditTemplate from 'components/registries/RegistryRowEditTemplate.html';
 import { RegistryContextToolbarActions, RegistryActions } from 'actions/Actions';
-import HostCertificateConfirmTemplate from 'HostCertificateConfirmTemplate';
+import HostCertificateConfirmTemplate from 'components/hosts/HostCertificateConfirmTemplate.html';
 import Alert from 'components/common/Alert';
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
 import constants from 'core/constants';

@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import EasterEggVue from 'EasterEggVue';
+import EasterEggVue from 'components/EasterEggVue.html';
 
 var EasterEgg = Vue.extend({
   template: EasterEggVue,

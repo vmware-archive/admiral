@@ -9,7 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import ResourcePoolsRowEditTemplate from 'ResourcePoolsRowEditTemplate';
+import ResourcePoolsRowEditTemplate from
+  'components/resourcepools/ResourcePoolsRowEditTemplate.html';
 import Alert from 'components/common/Alert';
 import { ResourcePoolsActions, ResourcePoolsContextToolbarActions } from 'actions/Actions';
 import constants from 'core/constants';

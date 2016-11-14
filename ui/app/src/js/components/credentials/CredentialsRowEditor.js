@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import CredentialsRowEditTemplate from 'CredentialsRowEditTemplate';
+import CredentialsRowEditTemplate from 'components/credentials/CredentialsRowEditTemplate.html';
 import MulticolumnInputs from 'components/common/MulticolumnInputs';
 import Alert from 'components/common/Alert';
 import constants from 'core/constants';

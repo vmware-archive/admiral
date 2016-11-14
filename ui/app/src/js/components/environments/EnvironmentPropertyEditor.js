@@ -9,7 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import EnvironmentPropertyEditorVue from 'EnvironmentPropertyEditorVue';
+import EnvironmentPropertyEditorVue from
+  'components/environments/EnvironmentPropertyEditorVue.html';
 import { EnvironmentsActions } from 'actions/Actions';
 import utils from 'core/utils';
 

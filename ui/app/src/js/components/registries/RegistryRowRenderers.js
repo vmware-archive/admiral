@@ -9,8 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import RegistryRowTemplate from 'RegistryRowTemplate';
-import RegistryRowHighlightTemplate from 'RegistryRowHighlightTemplate';
+import RegistryRowTemplate from 'components/registries/RegistryRowTemplate.html';
+import RegistryRowHighlightTemplate from 'components/registries/RegistryRowHighlightTemplate.html';
 
 var renderers = {
   render: function(registryObject) {

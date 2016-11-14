@@ -9,7 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import ClusterContainerDetailsVue from 'ClusterContainerDetailsVue';
+import ClusterContainerDetailsVue from
+  'components/containers/cluster/ClusterContainerDetailsVue.html';
 import VueToolbarActionButton from 'components/common/VueToolbarActionButton'; //eslint-disable-line
 import ClusterContainersListItem from 'components/containers/cluster/ClusterContainersListItem';  //eslint-disable-line
 import ContainersListItem from 'components/containers/ContainersListItem'; //eslint-disable-line

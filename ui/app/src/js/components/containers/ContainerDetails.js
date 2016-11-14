@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import ContainerDetailsVue from 'ContainerDetailsVue';
+import ContainerDetailsVue from 'components/containers/ContainerDetailsVue.html';
 import Component from 'components/common/Component';
 import MaximizableBehaviour from 'components/common/MaximizableBehaviour'; //eslint-disable-line
 import VueToolbarActionButton from 'components/common/VueToolbarActionButton'; //eslint-disable-line
@@ -20,7 +20,7 @@ import { ContainerActions } from 'actions/Actions';
 import constants from 'core/constants';
 import utils from 'core/utils';
 import modal from 'core/modal';
-import ContainerShellTemplate from 'ContainerShellTemplate';
+import ContainerShellTemplate from 'components/containers/ContainerShellTemplate.html';
 
 const REFRESH_STATS_TIMEOUT = 60000;
 const REFRESH_LOGS_TIMEOUT = 5000;

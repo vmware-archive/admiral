@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import ContainerPropertiesVue from 'ContainerPropertiesVue';
+import ContainerPropertiesVue from 'components/containers/ContainerPropertiesVue.html';
 import { NavigationActions } from 'actions/Actions';
 import utils from 'core/utils';
 

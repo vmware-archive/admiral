@@ -10,12 +10,13 @@
  */
 
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
-import HostAddViewVue from 'HostAddViewVue'; //eslint-disable-line
+import HostAddViewVue from 'components/hosts/HostAddViewVue.html';
 import ResourcePoolsList from 'components/resourcepools/ResourcePoolsList'; //eslint-disable-line
 import CredentialsList from 'components/credentials/CredentialsList'; //eslint-disable-line
 import CertificatesList from 'components/certificates/CertificatesList'; //eslint-disable-line
 import DeploymentPoliciesList from 'components/deploymentpolicies/DeploymentPoliciesList'; //eslint-disable-line
-import HostCertificateConfirmTemplate from 'HostCertificateConfirmTemplate';
+import HostCertificateConfirmTemplate from
+  'components/hosts/HostCertificateConfirmTemplate.html';
 import MulticolumnInputs from 'components/common/MulticolumnInputs';
 import Tags from 'components/common/Tags';
 import { HostActions, HostContextToolbarActions } from 'actions/Actions';

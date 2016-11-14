@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import HostsViewVue from 'HostsViewVue';
+import HostsViewVue from 'components/hosts/HostsViewVue.html';
 import HostItemVue from 'components/hosts/HostItem'; //eslint-disable-line
 import HostView from 'components/hosts/HostView'; //eslint-disable-line
 import VueAdapter from 'components/common/VueAdapter';
@@ -84,7 +84,6 @@ var HostsViewVueComponent = Vue.extend({
   mixins: [GridHolderMixin],
 
   attached: function() {
-
     var $mainPanel = $(this.$el).children('.list-holder').children('.main-panel');
 
     $mainPanel.on('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd',

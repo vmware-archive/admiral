@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import HostCreateViewVue from 'HostCreateViewVue'; //eslint-disable-line
+import HostCreateViewVue from 'components/hosts/HostCreateViewVue.html';
 import EndpointsView from 'components/endpoints/EndpointsView'; //eslint-disable-line
 import MulticolumnInputs from 'components/common/MulticolumnInputs';
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';

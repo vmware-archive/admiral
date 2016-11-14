@@ -9,10 +9,11 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import EventLogListVue from 'EventLogListVue';
-import EventLogListItemVue from 'EventLogListItemVue';
+import EventLogListVue from 'components/eventlog/EventLogListVue.html';
+import EventLogListItemVue from 'components/eventlog/EventLogListItemVue.html';
 import Component from 'components/common/Component';
-import InlineDeleteConfirmationTemplate from 'InlineDeleteConfirmationTemplate';
+import InlineDeleteConfirmationTemplate from
+  'components/common/InlineDeleteConfirmationTemplate.html';
 import utils from 'core/utils';
 import * as actions from 'actions/Actions';
 

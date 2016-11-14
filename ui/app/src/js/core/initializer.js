@@ -34,20 +34,21 @@ initializer.init = function(callback) {
       }, callback);
   };
 
-  requirejs(['core/services', 'core/utils', 'components/common/CommonComponentsRegistry'],
-            function(services, utils) {
-    services.loadConfigurationProperties().then((properties) => {
-      var configurationProperties = {};
-      for (var prop in properties) {
-        if (properties.hasOwnProperty(prop)) {
-          configurationProperties[properties[prop].key] = properties[prop].value;
-        }
+  var services = require('core/services').default;
+  var utils = require('core/utils').default;
+  require('components/common/CommonComponentsRegistry').default; //eslint-disable-line
+
+  services.loadConfigurationProperties().then((properties) => {
+    var configurationProperties = {};
+    for (var prop in properties) {
+      if (properties.hasOwnProperty(prop)) {
+        configurationProperties[properties[prop].key] = properties[prop].value;
       }
-      utils.initializeConfigurationProperties(configurationProperties);
-    }).catch((err) => {
-      console.warn('Error when loading configuration properties! Error: ' + err);
-    }).then(initI18N);
-  });
+    }
+    utils.initializeConfigurationProperties(configurationProperties);
+  }).catch((err) => {
+    console.warn('Error when loading configuration properties! Error: ' + err);
+  }).then(initI18N);
 };
 
 export default initializer;

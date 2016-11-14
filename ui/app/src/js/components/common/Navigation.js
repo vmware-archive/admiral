@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import NavigationVue from 'NavigationVue';
+import NavigationVue from 'components/common/NavigationVue.html';
 import constants from 'core/constants';//eslint-disable-line
 import computeConstants from 'core/computeConstants';//eslint-disable-line
 import utils from 'core/utils';//eslint-disable-line

@@ -8,8 +8,7 @@ var proxyMiddleware = require('proxy-middleware');
 var jsLibsToCopy = [
   './node_modules/jquery/dist/jquery.js',
   './node_modules/es5-shim/es5-shim.js',
-  './node_modules/babel-core/browser-polyfill.js',
-  './node_modules/handlebars/dist/handlebars.js',
+  './node_modules/babel-polyfill/dist/polyfill.js',
   './node_modules/i18next-client/i18next.js',
   './node_modules/bootstrap-sass/assets/javascripts/bootstrap.js',
   './node_modules/reflux/dist/reflux.js',
@@ -25,7 +24,6 @@ var jsLibsToCopy = [
   './node_modules/jsplumb/dist/js/jsPlumb-2.1.5.js',
   './node_modules/d3/d3.js',
   './node_modules/moment/min/moment-with-locales.js',
-  './node_modules/requirejs/require.js',
   './node_modules/tablesort/src/tablesort.js',
   './node_modules/tablesort/src/sorts/tablesort.date.js',
   './node_modules/tablesort/src/sorts/tablesort.numeric.js'
@@ -34,8 +32,7 @@ var jsLibsToCopy = [
 var jsLibsToCopyMinified = [
   './node_modules/jquery/dist/jquery.min.js',
   './node_modules/es5-shim/es5-shim.min.js',
-  './node_modules/babel-core/browser-polyfill.min.js',
-  './node_modules/handlebars/dist/handlebars.min.js',
+  './node_modules/babel-polyfill/dist/polyfill.min.js',
   './node_modules/i18next-client/i18next.min.js',
   './node_modules/bootstrap-sass/assets/javascripts/bootstrap.min.js',
   './node_modules/reflux/dist/reflux.min.js',
@@ -51,7 +48,6 @@ var jsLibsToCopyMinified = [
   './node_modules/jsplumb/dist/js/jsPlumb-2.1.5-min.js',
   './node_modules/d3/d3.min.js',
   './node_modules/moment/min/moment-with-locales.min.js',
-  './node_modules/requirejs/require.js',
   './node_modules/tablesort/tablesort.min.js',
   './node_modules/tablesort/src/sorts/tablesort.date.js',
   './node_modules/tablesort/src/sorts/tablesort.numeric.js'
@@ -132,12 +128,6 @@ var getKarmaServerProxies = function() {
 };
 
 module.exports = {
-  processSources: {
-    src: src + '/js/**/*.js',
-    dest: dest + '/js',
-    indexSrc: src + '/js/main*.js',
-    indexDest: dest + '/js'
-  },
   processVendorLibs: {
     jsToCopy: gutil.env.type === 'production' ? jsLibsToCopyMinified : jsLibsToCopy,
     dest: dest + '/lib'
@@ -163,25 +153,12 @@ module.exports = {
     src: src + '/messages/**/*.json',
     dest: dest + '/messages'
   },
-  templates: {
-    src: src + '/**/*Template.html',
-    dest: dest + '/template-assets',
-    concat: 'all.js'
-  },
-  templatesVue: {
-    src: src + '/**/*Vue.html',
-    dest: dest + '/template-assets',
-    concat: 'all-vue.js'
-  },
   server: {
     root: dest,
     host: 'localhost',
     port: 10082,
     livereload: {
       port: 35930
-    },
-    middleware: function(connect, o) {
-      return getDevServerProxies();
     }
   },
   tests: {
@@ -190,41 +167,26 @@ module.exports = {
     unit: {
       src: [
         dest + '/lib/vendor.js',
-        dest + '/js/all.js',
-        {pattern: dest + '/js/all.js.map', included: false},
         './node_modules/jasmine-ajax/lib/mock-ajax.js',
-        'node_modules/karma-requirejs/lib/adapter.js',
-        {pattern: src + '/test/unit/**/*Test.js', included: false},
-        src + '/test/common/helpers/**/*.js',
-        src + '/test/unit/helpers/**/*.js',
-        {pattern: src + '/test/*.js.map', included: false}
+        src + '/test/common/helpers/includeGlobals.js',
+        {pattern: src + '/test/unit/all-tests.js'}
       ],
       reportOutputFile: 'target/surefire-reports/TEST-results.xml'
     },
     it: {
       src: [
         dest + '/lib/vendor.js',
-        dest + '/js/all.js',
-        dest + '/template-assets/all.js',
-        dest + '/template-assets/all-vue.js',
-        {pattern: dest + '/js/all.js.map', included: false},
         './node_modules/jasmine-ajax/lib/mock-ajax.js',
-        'node_modules/karma-requirejs/lib/adapter.js',
-        {pattern: src + '/test/it/**/*IT.js', included: false},
-        src + '/test/common/helpers/**/*.js',
-        src + '/test/it/helpers/**/*.js',
-        {pattern: src + '/test/*.js.map', included: false}
+        src + '/test/common/helpers/includeGlobals.js',
+        {pattern: src + '/test/it/all-tests.js'}
       ],
       reportOutputFile: 'target/failsafe-reports/TEST-results.xml'
     },
     proxies: getKarmaServerProxies()
   },
-  copyApiTests: {
-    src:  src + '/test/api/**/*.js',
-    dest: dest + '/apiTests'
-  },
   src: src,
   dest: dest,
   production: gutil.env.type === 'production',
-  INTEGRATION_TEST_PROPERTIES: INTEGRATION_TEST_PROPERTIES
+  INTEGRATION_TEST_PROPERTIES: INTEGRATION_TEST_PROPERTIES,
+  getDevServerProxies: getDevServerProxies
 };

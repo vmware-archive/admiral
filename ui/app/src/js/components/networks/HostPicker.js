@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import HostPickerVue from 'HostPickerVue';
+import HostPickerVue from 'components/networks/HostPickerVue.html';
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
 import utils from 'core/utils';
 import services from 'core/services';
