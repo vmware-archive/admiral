@@ -166,6 +166,41 @@ var findFreeEndpoints = function(jsplumbInstance, $els) {
   return sourceEndpoints;
 };
 
+var jsplumbOverrides = function(jsplumbInstance) {
+  var makeDynamicAnchor = jsplumbInstance.makeDynamicAnchor;
+
+  var netAnchors = [];
+  for (var i = 0; i <= 30; i++) {
+    var anchor = [1 / 30 * i, 0.5, 0, -1];
+    netAnchors.push(anchor);
+  }
+
+  jsplumbInstance.makeDynamicAnchor = function() {
+    return makeDynamicAnchor(netAnchors, anchorSelector);
+  };
+
+  // override getOffset to respect css transforms
+  jsplumbInstance.getOffset = function(el, relativeToRoot, container) {
+    el = jsPlumb.getElement(el);
+    var elRect = el.getBoundingClientRect();
+    if (relativeToRoot) {
+      return {
+        left: elRect.left,
+        top: elRect.top
+      };
+    } else {
+      container = container || this.getContainer();
+      var containerRect = container.getBoundingClientRect();
+      var scrollLeft = container.scrollLeft || 0;
+      var scrollTop = container.scrollTop || 0;
+      return {
+        left: elRect.left - containerRect.left + scrollLeft,
+        top: elRect.top - containerRect.top + scrollTop
+      };
+    }
+  };
+};
+
 var NetworkConnectorMixin = {
   attached: function() {
     this.jsplumbInstance = jsPlumb.getInstance({
@@ -209,16 +244,7 @@ var NetworkConnectorMixin = {
       return !!links;
     });
 
-    var makeDynamicAnchor = this.jsplumbInstance.makeDynamicAnchor;
-
-    var netAnchors = [];
-    for (var i = 0; i <= 30; i++) {
-        var anchor = [1 / 30 * i, 0.5, 0, -1];
-        netAnchors.push(anchor);
-    }
-    this.jsplumbInstance.makeDynamicAnchor = function() {
-        return makeDynamicAnchor(netAnchors, anchorSelector);
-    };
+    jsplumbOverrides(this.jsplumbInstance);
 
     $(this.$el).on('click', '.network-delete-connection', (e) => {
       e.preventDefault();
