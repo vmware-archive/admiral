@@ -308,8 +308,7 @@ public class ClusteringTaskService extends
             if (state.contextId != null) {
                 queryTask.querySpec.query.addBooleanClause(new QueryTask.Query()
                         .setTermPropertyName(getCompositeComponentLinkFieldName(stateClass))
-                        .setTermMatchValue(UriUtils.buildUriPath(
-                                CompositeComponentFactoryService.SELF_LINK, state.contextId)));
+                        .setTermMatchValue(getCompositeComponentId(stateClass, state.contextId)));
             }
 
             queryTask.querySpec.options = EnumSet.of(QueryOption.EXPAND_CONTENT);
@@ -332,11 +331,23 @@ public class ClusteringTaskService extends
 
     }
 
+    private String getCompositeComponentId(Class<? extends ResourceState> stateClass,
+            String contextId) {
+        if (ContainerState.class.isAssignableFrom(stateClass)) {
+            return contextId;
+        }
+        return UriUtils.buildUriPath(CompositeComponentFactoryService.SELF_LINK, contextId);
+    }
+
     private String getCompositeComponentLinkFieldName(Class<? extends ResourceState> stateClass) {
         if (ComputeState.class.isAssignableFrom(stateClass)) {
             return QuerySpecification.buildCompositeFieldName(
                     ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
                     ComputeConstants.FIELD_NAME_COMPOSITE_COMPONENT_LINK_KEY);
+        } else if (ContainerState.class.isAssignableFrom(stateClass)) {
+            return QuerySpecification.buildCompositeFieldName(
+                    ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                    RequestUtils.FIELD_NAME_CONTEXT_ID_KEY);
         }
         return ContainerState.FIELD_NAME_COMPOSITE_COMPONENT_LINK;
     }
