@@ -40,12 +40,14 @@ public class DockerImageTest {
         data.add(new String[] { "all sections", "myhost:300/namespace/repo:tag", "myhost:300",
                 "namespace", "repo", "namespace/repo", "tag" });
 
-        data.add(new String[] { "repo and tag", "repo:tag", null, null, "repo", "repo", "tag" });
+        data.add(new String[] { "repo and tag", "repo:tag", null, null, "repo", "library/repo",
+                "tag" });
 
         data.add(new String[] { "implicit registry, repo and tag", "library/repo:tag", null,
-                "library", "repo", "repo", "tag" });
+                "library", "repo", "library/repo", "tag" });
 
-        data.add(new String[] { "repo without tag", "repo", null, null, "repo", "repo", "latest" });
+        data.add(new String[] { "repo without tag", "repo", null, null, "repo", "library/repo",
+                "latest" });
 
         data.add(new String[] { "namespace and repo", "namespace/repo", null, "namespace", "repo",
                 "namespace/repo", "latest" });
@@ -61,14 +63,15 @@ public class DockerImageTest {
 
         data.add(new String[] { "official repo with default namespace",
                 "registry.hub.docker.com/library/repo:tag", "registry.hub.docker.com", "library",
-                "repo", "repo", "tag" });
+                "repo", "library/repo", "tag" });
 
         data.add(new String[] { "official repo with custom namespace",
                 "registry.hub.docker.com/user/repo:tag", "registry.hub.docker.com", "user", "repo",
                 "user/repo", "tag" });
 
         data.add(new String[] { "official repo with default namespace",
-                "docker.io/library/repo:tag", "docker.io", "library", "repo", "repo", "tag" });
+                "docker.io/library/repo:tag", "docker.io", "library", "repo", "library/repo",
+                "tag" });
 
         data.add(new String[] { "official repo with custom namespace",
                 "docker.io/user/repo:tag", "docker.io", "user", "repo", "user/repo", "tag" });

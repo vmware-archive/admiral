@@ -218,9 +218,9 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
 
     @Test
     public void testDockerHubListImageTags() throws Throwable {
-        URI defaultRegistryStateUri = UriUtils.buildUri(host, dockerHubRegistryStateLink);
+        URI dockerHubRegistryStateUri = UriUtils.buildUri(host, dockerHubRegistryStateLink);
 
-        sendRegistryListTagsRequest(defaultRegistryStateUri, "vmware/admiral", (Operation op) -> {
+        sendRegistryListTagsRequest(dockerHubRegistryStateUri, "vmware/admiral", (Operation op) -> {
             String[] tags = op.getBody(String[].class);
             assertNotNull("result is null", tags);
             assertArrayEquals(new String[] { "7.1", "7.2", "7.3", "7.4" }, tags);
@@ -231,7 +231,7 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
     public void testV1ListImageTags() throws Throwable {
         URI defaultRegistryStateUri = UriUtils.buildUri(host, defaultRegistryStateLink);
 
-        sendRegistryListTagsRequest(defaultRegistryStateUri, "vmware/admiral", (Operation op) -> {
+        sendRegistryListTagsRequest(defaultRegistryStateUri, "v1registry.test/vmware/admiral", (Operation op) -> {
             String[] tags = op.getBody(String[].class);
             assertNotNull("result is null", tags);
             assertArrayEquals(new String[] { "7.1", "7.2", "7.3", "7.4" }, tags);
@@ -242,7 +242,7 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
     public void testV2ListImageTags() throws Throwable {
         URI v2RegistryStateUri = UriUtils.buildUri(host, v2RegistryStateLink);
 
-        sendRegistryListTagsRequest(v2RegistryStateUri, "vmware/admiral", (Operation op) -> {
+        sendRegistryListTagsRequest(v2RegistryStateUri, "v2registry.test/vmware/admiral", (Operation op) -> {
             String[] tags = op.getBody(String[].class);
             assertNotNull("result is null", tags);
             assertArrayEquals(new String[] { "7.1", "7.2", "7.3", "7.4" }, tags);

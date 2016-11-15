@@ -54,17 +54,11 @@ public class DockerImage {
         return repository;
     }
 
-    /**
-     *
-     * @return the namespace and the repository
-     */
     public String getNamespaceAndRepo() {
         if (namespace != null) {
-            if (isDockerHubImage() && DEFAULT_NAMESPACE.equals(namespace)) {
-                return repository;
-            }
-
             return namespace + SECTION_SEPARATOR + repository;
+        } else if (isDockerHubImage()) {
+            return DEFAULT_NAMESPACE + SECTION_SEPARATOR + repository;
         }
 
         return repository;
@@ -168,12 +162,9 @@ public class DockerImage {
             imageName.append(SECTION_SEPARATOR);
         }
 
-        if (namespace != null) {
-            imageName.append(namespace);
-            imageName.append(SECTION_SEPARATOR);
-        }
-
-        imageName.append(repository);
+        // If namespace is null, do not set the default value 'library' as not all
+        // V2 registry implementations support this convention
+        imageName.append(getNamespaceAndRepo());
 
         if (tag != null) {
             imageName.append(TAG_SEPARATOR);

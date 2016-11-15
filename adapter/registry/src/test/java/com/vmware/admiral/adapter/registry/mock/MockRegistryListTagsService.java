@@ -13,6 +13,7 @@ package com.vmware.admiral.adapter.registry.mock;
 
 import static com.vmware.admiral.adapter.registry.mock.MockRegistryPathConstants.DOCKER_HUB_LIST_TAGS_PATH;
 
+import com.vmware.admiral.adapter.registry.mock.MockV2RegistryListTagsService.V2ImageTagsResponse;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 
@@ -31,12 +32,9 @@ public class MockRegistryListTagsService extends StatelessService {
 
     @Override
     public void handleGet(Operation get) {
-        DockerHubImageTagsResponseItem[] response = new DockerHubImageTagsResponseItem[] {
-                new DockerHubImageTagsResponseItem("686477c1", "7.1"),
-                new DockerHubImageTagsResponseItem("dce38fb5", "7.2"),
-                new DockerHubImageTagsResponseItem("195eb90b", "7.3"),
-                new DockerHubImageTagsResponseItem("25b0d242", "7.4")
-        };
+        V2ImageTagsResponse response = new V2ImageTagsResponse();
+        response.name = "vmware/admiral";
+        response.tags = new String[] { "7.1", "7.2", "7.3", "7.4" };
 
         get.setBody(response);
         get.complete();

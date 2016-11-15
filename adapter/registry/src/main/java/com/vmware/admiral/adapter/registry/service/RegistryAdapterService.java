@@ -17,7 +17,6 @@ import static com.vmware.admiral.service.common.RegistryService.API_VERSION_PROP
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -91,12 +90,6 @@ public class RegistryAdapterService extends StatelessService {
         @SuppressWarnings("unused")
         String issued_at;
         String token;
-    }
-
-    private static class DockerHubImageTagsResponseItem {
-        @SuppressWarnings("unused")
-        String layer;
-        String name;
     }
 
     private static class V2ImageTagsResponse {
@@ -491,6 +484,16 @@ public class RegistryAdapterService extends StatelessService {
     }
 
     private void processListImageTagsRequest(RequestContext context) {
+        // Docker Hub list tags requests are expected to use the v2 endpoint,
+        // otherwise an incomplete list of tags is returned. Also use the 'library' namespace
+        // for image without one in order for the request to succeed
+        String imageName = context.request.customProperties.get(SEARCH_QUERY_PROP_NAME);
+        boolean isDockerHubImage = DockerImage.fromImageName(imageName).isDockerHubImage();
+        if (isDockerHubImage) {
+            processV2ListImageTagsRequest(context);
+            return;
+        }
+
         String apiVersion = getApiVersion(context.registryState);
         if (ApiVersion.V1.toString().equals(apiVersion)) {
             processV1ListImageTagsRequest(context);
@@ -520,16 +523,9 @@ public class RegistryAdapterService extends StatelessService {
                             return;
                         }
 
-                        List<String> tags = null;
-
-                        try {
-                            tags = parseV1TagsResponse(o);
-                        } catch (Exception e1) {
-                            Exception err = new Exception("Cannot parse image tags response.");
-                            logSevere(err);
-                            context.operation.fail(err);
-                            return;
-                        }
+                        @SuppressWarnings("unchecked")
+                        Map<String, String> response = o.getBody(Map.class);
+                        List<String> tags = new ArrayList<String>(response.keySet());
 
                         context.operation.setBody(tags);
                         context.operation.complete();
@@ -547,40 +543,11 @@ public class RegistryAdapterService extends StatelessService {
         }
     }
 
-    /**
-     * There is an inconsistency between V1 registries and the official Docker registry in the
-     * /v1/repositories/:repo/tags API endpoint.
-     *
-     * curl https://registry.hub.docker.com/v1/repositories/centos/tags
-     * [{"layer": "b157b77b", "name": "latest"}, {"layer": "b1bd4990", "name": "centos6"},
-     *  {"layer": "b157b77b", "name": "centos7"}]
-     *
-     * curl -v [our-docker-registry]/v1/repositories/[repo]/tags
-     * {"0.1": "e9c379f8772deab9b73c7a2dfd2a70bbd732cfda5d214c584d2f9982068282bc",
-     *  "0.2": "124914b453965d5b5f6ad4d687ad6f93a98b787dca68defdec7ac9d05d2fdddf"}
-     *
-     * See also: https://github.com/docker/docker-registry/issues/517
-     */
-    private List<String> parseV1TagsResponse(Operation o) {
-        List<String> tags = null;
-        try {
-            DockerHubImageTagsResponseItem[] response = o
-                    .getBody(DockerHubImageTagsResponseItem[].class);
-            tags = Arrays.stream(response)
-                    .map(i -> i.name)
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            @SuppressWarnings("unchecked")
-            Map<String, String> response = o.getBody(Map.class);
-            tags = new ArrayList<String>(response.keySet());
-        }
-
-        return tags;
-    }
-
     private void processV2ListImageTagsRequest(RequestContext context) {
         try {
             String imageName = context.request.customProperties.get(SEARCH_QUERY_PROP_NAME);
+            // Use the 'library' namespace for images from docker hub that does not have one
+            // in order for the request to succeed
             imageName = DockerImage.fromImageName(imageName).getNamespaceAndRepo();
 
             URI searchUri = URI.create(context.registryState.address);

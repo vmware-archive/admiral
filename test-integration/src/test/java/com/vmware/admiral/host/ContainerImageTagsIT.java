@@ -13,15 +13,18 @@ package com.vmware.admiral.host;
 
 import static java.net.HttpURLConnection.HTTP_OK;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.hamcrest.CoreMatchers.hasItems;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.test.integration.TestPropertiesUtil.getTestRequiredProp;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -53,9 +56,9 @@ public class ContainerImageTagsIT extends BaseTestCase {
     private static final String DEFAULT_TAG = "latest";
 
     private static final String TEST_IMAGE = "vmware/bellevue";
-    private static final String TEST_IMAGE_DOCKER_HUB = "kitematic/hello-world-nginx";
+    private static final String TEST_IMAGE_DOCKER_HUB = "alpine";
     private static final String TEST_IMAGE_DOCKER_HUB_FULL_ADDRESS =
-            "registry.hub.docker.com/kitematic/hello-world-nginx";
+            "registry.hub.docker.com/library/alpine";
 
     private static String v1RegistryAddress;
     private static String v2RegistryAddress;
@@ -96,8 +99,16 @@ public class ContainerImageTagsIT extends BaseTestCase {
 
     @Test
     public void testListTagsFromDockerHub() throws Throwable {
-        verifyImageTags(TEST_IMAGE_DOCKER_HUB, TENANT, new String[] { DEFAULT_TAG });
-        verifyImageTags(TEST_IMAGE_DOCKER_HUB_FULL_ADDRESS, TENANT, new String[] { DEFAULT_TAG });
+        // Docker Hub list tags requests are expected to use the v2 endpoint,
+        // otherwise we get fewer tags, in our case only "2.6" and "2.7".
+        String[] expectedTags = new String[] {  "2.6", "2.7", "3.1", "3.2", "3.3", "3.4" };
+        verifyImageTags(TEST_IMAGE_DOCKER_HUB, TENANT, expectedTags);
+    }
+
+    @Test
+    public void testListTagsFromDockerHubFullImageName() throws Throwable {
+        String[] expectedTags = new String[] {  "2.6", "2.7", "3.1", "3.2", "3.3", "3.4" };
+        verifyImageTags(TEST_IMAGE_DOCKER_HUB_FULL_ADDRESS, TENANT, expectedTags);
     }
 
     @Test
@@ -156,7 +167,7 @@ public class ContainerImageTagsIT extends BaseTestCase {
         String[] response = Utils.fromJson(search.responseBody, String[].class);
 
         assertNotNull(response);
-        assertArrayEquals(expectedTags, response);
+        assertThat(Arrays.asList(response), hasItems(expectedTags));
     }
 
     private void verifyListTagsFailure(String imageName, String tenant) throws Exception {
