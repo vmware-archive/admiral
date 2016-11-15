@@ -85,7 +85,7 @@ func (li *ImagesList) GetOuputString() string {
 			buffer.WriteString("\n")
 		}
 	} else {
-		buffer.WriteString("No results.")
+		return utils.NoElementsFoundMessage
 	}
 	return strings.TrimSpace(buffer.String())
 }
@@ -121,7 +121,7 @@ func (li *ImagesList) QueryImages(imgName string) (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, li)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return len(li.Results), nil
 }
 
@@ -139,7 +139,7 @@ func GetPopular() (string, error) {
 	}
 	pi := PopularImages{}
 	err := json.Unmarshal(respBody, &pi)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	var buffer bytes.Buffer
 	buffer.WriteString("POPULAR TEMPLATES\n")
 	buffer.WriteString("NAME\tDESCRIPTION\tSTARS\tOFFICIAL\tAUTOMATED\tTRUSTED\n")

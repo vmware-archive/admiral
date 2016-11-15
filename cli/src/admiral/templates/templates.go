@@ -19,13 +19,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 
 	"admiral/client"
 	"admiral/config"
+	"admiral/containers"
 	"admiral/utils"
 	"admiral/utils/selflink"
-	"sort"
 )
 
 var (
@@ -45,7 +46,7 @@ func (lc *LightContainer) GetOutput(link string) (string, error) {
 		return "", respErr
 	}
 	err := json.Unmarshal(respBody, lc)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return fmt.Sprintf("   Container Name: %-22s\tContainer Image: %s\n", lc.Name, lc.Image), nil
 }
 
@@ -106,6 +107,14 @@ func (t *Template) GetID() string {
 	return strings.Replace(*t.DocumentSelfLink, "/resources/composite-descriptions/", "", -1)
 }
 
+func (t *Template) IsContainer(index int) bool {
+	link := t.DescriptionLinks[index]
+	if strings.Contains(link, "/container-descriptions/") {
+		return true
+	}
+	return false
+}
+
 type TemplatesList struct {
 	Results []Template `json:"results"`
 }
@@ -138,7 +147,7 @@ func (lt *TemplatesList) FetchTemplates(queryF string) (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, lt)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return len(lt.Results), nil
 }
 
@@ -147,7 +156,7 @@ func (lt *TemplatesList) FetchTemplates(queryF string) (int, error) {
 func (lt *TemplatesList) GetOutputStringWithoutContainers() string {
 	var buffer bytes.Buffer
 	if len(lt.Results) < 1 {
-		return "No elements found."
+		return utils.NoElementsFoundMessage
 	}
 	sort.Sort(TemplateSorter(lt.Results))
 	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS\n")
@@ -169,7 +178,7 @@ func (lt *TemplatesList) GetOutputStringWithContainers() (string, error) {
 	url := config.URL
 	var buffer bytes.Buffer
 	if len(lt.Results) < 1 {
-		return "No elements found.", nil
+		return utils.NoElementsFoundMessage, nil
 	}
 	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS\n")
 	for _, template := range lt.Results {
@@ -242,7 +251,7 @@ func RemoveTemplateID(id string) (string, error) {
 	}
 	template := &Template{}
 	err = json.Unmarshal(respBody, template)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	for i := range template.DescriptionLinks {
 		tempLink := config.URL + template.DescriptionLinks[i]
 		req, _ := http.NewRequest("DELETE", tempLink, nil)
@@ -310,4 +319,72 @@ func Export(id, dirF, format string) (string, error) {
 func verifyFile(dirF string) (*os.File, error) {
 	file, err := os.Create(dirF)
 	return file, err
+}
+
+type InspectTemplate struct {
+	Id         string               `json:"ID"`
+	Name       string               `json:"Name"`
+	Containers int                  `json:"ContainersCount"`
+	Networks   int                  `json:"NetworksCount"`
+	Components []*TemplateComponent `json:"Components"`
+}
+
+type TemplateComponent struct {
+	ComponentType     string   `json:"ComponentType"`
+	Id                string   `json:"ID"`
+	Name              string   `json:"Name,omitempty"`
+	Image             string   `json:"Image,omitempty"`
+	NetworksConnected []string `json:"NetworksConnected,omitempty"`
+}
+
+func InspectID(id string) (string, error) {
+	fullId, err := selflink.GetFullId(id, new(CompositeDescriptionList), utils.TEMPLATE)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinkForTemplate(fullId)
+	url := config.URL + link
+	req, _ := http.NewRequest("GET", url, nil)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
+	}
+	template := &Template{}
+	err = json.Unmarshal(respBody, template)
+	utils.CheckJsonError(err)
+	it := &InspectTemplate{
+		Id:         template.GetID(),
+		Name:       template.Name,
+		Containers: template.GetContainersCount(),
+		Networks:   template.GetNetworksCount(),
+		Components: make([]*TemplateComponent, 0),
+	}
+	for i, descLink := range template.DescriptionLinks {
+		component := &TemplateComponent{}
+		component.Id = utils.GetResourceID(descLink)
+		if template.IsContainer(i) {
+			component.ComponentType = utils.TEMPLATE.GetName()
+			cd := containers.GetContainerDescription(component.Id)
+			component.NetworksConnected = utils.ValuesToStrings(utils.GetMapKeys(cd.Networks))
+			component.Image = cd.Image.Value
+		} else {
+			component.ComponentType = utils.NETWORK.GetName()
+			component.Name = GetNetworkDescriptionName(descLink)
+		}
+		it.Components = append(it.Components, component)
+	}
+	jsonBody, _ := json.MarshalIndent(it, "", "    ")
+	return string(jsonBody), nil
+}
+
+func GetNetworkDescriptionName(link string) string {
+	if !strings.Contains(link, "/container-network-descriptions/") {
+		link = "/container-network-description/" + link
+	}
+	url := config.URL + link
+	req, _ := http.NewRequest("GET", url, nil)
+	_, respBody, respErr := client.ProcessRequest(req)
+	utils.CheckResponse(respErr, url)
+	v := make(map[string]interface{}, 0)
+	err := json.Unmarshal(respBody, &v)
+	utils.CheckJsonError(err)
+	return v["name"].(string)
 }

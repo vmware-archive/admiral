@@ -30,6 +30,7 @@ import (
 	"admiral/track"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"strconv"
 )
 
 var (
@@ -69,6 +70,12 @@ func (h *Host) GetCredentialsID() string {
 		return utils.GetResourceID(*val)
 	}
 	return ""
+}
+
+func (h *Host) GetContainersCount() int {
+	count, _ := strconv.Atoi(*h.CustomProperties["__Containers"])
+	//Returning count - 1, because we exclude the system container.
+	return count - 1
 }
 
 func (h *Host) GetID() string {
@@ -138,19 +145,22 @@ func (hl *HostsList) FetchHosts(queryF string) (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, hl)
-	utils.CheckJson(err)
-	return int(hl.TotalCount), nil
+	utils.CheckJsonError(err)
+	return int(hl.TotalCount - 1), nil
 }
 
 //Print already fetched hosts.
 func (hl *HostsList) GetOutputString() string {
+	if hl.GetCount() < 1 {
+		return utils.NoElementsFoundMessage
+	}
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tADDRESS\tNAME\tSTATE\tCONTAINERS\tPLACEMENT ZONE")
 	buffer.WriteString("\n")
 	for _, val := range hl.Documents {
 		pzName, _ := placementzones.GetPZName(val.ResourcePoolLink)
 		output := utils.GetFormattedString(val.Id, val.Address, val.GetName(), val.PowerState,
-			*val.CustomProperties["__Containers"], pzName)
+			val.GetContainersCount(), pzName)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
@@ -236,7 +246,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 	}
 
 	jsonBody, err := json.Marshal(hostObj)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	resp, respBody, respErr := client.ProcessRequest(req)
@@ -258,7 +268,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 			}
 			addedHost := &Host{}
 			err = json.Unmarshal(respBody, addedHost)
-			utils.CheckJson(err)
+			utils.CheckJsonError(err)
 			return addedHost.Id, nil
 		}
 		credentials.RemoveCredentialsID(newCredID)
@@ -273,7 +283,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 		}
 		addedHost := &Host{}
 		err = json.Unmarshal(respBody, addedHost)
-		utils.CheckJson(err)
+		utils.CheckJsonError(err)
 		return addedHost.Id, nil
 	}
 	return "", respErr
@@ -297,7 +307,7 @@ func RemoveHost(id string, asyncTask bool) (string, error) {
 
 	jsonBody, err := json.Marshal(jsonRemoveHost)
 
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -321,7 +331,7 @@ func DisableHost(id string) (string, error) {
 		PowerState: "SUSPEND",
 	}
 	jsonBody, err := json.Marshal(hostp)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
@@ -339,7 +349,7 @@ func EnableHost(id string) (string, error) {
 		PowerState: "ON",
 	}
 	jsonBody, err := json.Marshal(hostp)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -376,7 +386,7 @@ func GetCustomProperties(id string) (map[string]*string, error) {
 	}
 	host := &Host{}
 	err = json.Unmarshal(respBody, host)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return host.CustomProperties, nil
 }
 
@@ -398,7 +408,7 @@ func AddCustomProperties(id string, keys, vals []string) error {
 		CustomProperties: custProps,
 	}
 	jsonBody, err := json.Marshal(host)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -419,7 +429,7 @@ func RemoveCustomProperties(id string, keys []string) error {
 		CustomProperties: custProps,
 	}
 	jsonBody, err := json.Marshal(host)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -460,7 +470,7 @@ func EditHost(id, name, placementZoneId, deplPolicyF, credId string,
 		CustomProperties: props,
 	}
 	jsonBody, err := json.Marshal(newHost)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	req.Header.Add("Pragma", "xn-force-index-update")
 	_, _, respErr := client.ProcessRequest(req)

@@ -129,13 +129,13 @@ func (pl *PlacementList) FetchPlacements() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, pl)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return len(pl.DocumentLinks), nil
 }
 
 func (pl *PlacementList) GetOutputString() string {
-	if len(pl.DocumentLinks) < 1 {
-		return "No elements found."
+	if pl.GetCount() < 1 {
+		return utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tNAME\tPROJECT\tPLACEMENT ZONE\tPRIORITY\tINSTANCES\tCPU SHARES\tMEMORY LIMIT")
@@ -249,7 +249,7 @@ func AddPlacement(namePol, cpuShares, instances, priority, projectId, placementZ
 	}
 
 	jsonBody, err := json.Marshal(placement)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -258,7 +258,7 @@ func AddPlacement(namePol, cpuShares, instances, priority, projectId, placementZ
 	}
 	newPolicy := &Placement{}
 	err = json.Unmarshal(respBody, newPolicy)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return newPolicy.GetID(), nil
 }
 
@@ -288,7 +288,7 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, 
 		return "", respErr
 	}
 	err = json.Unmarshal(respBody, oldPlacement)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	//Workaround
 
 	if cpuShares != -1 {
@@ -328,7 +328,7 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, 
 	}
 
 	jsonBody, err := json.Marshal(oldPlacement)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ = http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr = client.ProcessRequest(req)
 	if respErr != nil {
@@ -336,7 +336,7 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, 
 	}
 	newPlacement := &Placement{}
 	err = json.Unmarshal(respBody, newPlacement)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return newPlacement.GetID(), nil
 }
 

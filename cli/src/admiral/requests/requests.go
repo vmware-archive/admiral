@@ -55,15 +55,15 @@ type TaskInfo struct {
 }
 
 type RequestInfo struct {
-	TaskInfo                 TaskInfo `json:"taskInfo"`
-	Phase                    string   `json:"phase"`
-	Name                     string   `json:"name"`
-	Progress                 int      `json:"progress"`
-	ResourceLinks            []string `json:"resourceLinks"`
-	DocumentUpdateTimeMicros string   `json:"documentUpdateTimeMicros"`
-	EventLogInfo             string   `json:"eventLogInfo"`
-	EventLogLink             string   `json:"eventLogLink"`
-	DocumentSelfLink         string   `json:"documentSelfLink"`
+	TaskInfo                 TaskInfo    `json:"taskInfo"`
+	Phase                    string      `json:"phase"`
+	Name                     string      `json:"name"`
+	Progress                 int         `json:"progress"`
+	ResourceLinks            []string    `json:"resourceLinks"`
+	DocumentUpdateTimeMicros interface{} `json:"documentUpdateTimeMicros"`
+	EventLogInfo             string      `json:"eventLogInfo"`
+	EventLogLink             string      `json:"eventLogLink"`
+	DocumentSelfLink         string      `json:"documentSelfLink"`
 }
 
 func (ri *RequestInfo) GetResourceID(index int) string {
@@ -77,9 +77,22 @@ func (ri *RequestInfo) GetID() string {
 	return utils.GetResourceID(ri.DocumentSelfLink)
 }
 
+func (ri *RequestInfo) GetDocumentUpdateTimeMicros() int64 {
+	switch v := ri.DocumentUpdateTimeMicros.(type) {
+	case string:
+		parsed, _ := strconv.ParseInt(v, 10, 64)
+		return parsed
+	case int64:
+		return v
+	case float64:
+		return int64(v)
+	default:
+		return 0
+	}
+}
+
 func (ri *RequestInfo) GetLastUpdate() string {
-	parsedUpdateTime, _ := strconv.ParseInt(ri.DocumentUpdateTimeMicros, 10, 64)
-	then := time.Unix(0, parsedUpdateTime*int64(time.Microsecond))
+	then := time.Unix(0, ri.GetDocumentUpdateTimeMicros()*int64(time.Microsecond))
 	timeSinceUpdate := time.Now().Sub(then)
 	if timeSinceUpdate.Hours() > 72 {
 		daysAgo := int(float64(timeSinceUpdate.Hours()) / 24.0)
@@ -158,7 +171,7 @@ func (rl *RequestsList) FetchRequests() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, rl)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return len(rl.DocumentLinks), nil
 }
 
@@ -218,7 +231,7 @@ func InspectRequestID(id string) (string, error) {
 	}
 	ri := &RequestInfo{}
 	err = json.Unmarshal(respBody, ri)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	inspectedRequest := &InspectedRequest{}
 	inspectedRequest.ID = ri.GetID()
@@ -281,7 +294,7 @@ func checkFailed(ri *RequestInfo) string {
 	_, respBody, _ := client.ProcessRequest(req)
 	event := &events.EventInfo{}
 	err := json.Unmarshal(respBody, event)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	res := strings.Replace(event.Description, "\n", "", -1)
 	return res
 }

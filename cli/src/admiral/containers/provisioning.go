@@ -46,26 +46,27 @@ func (lc *LogConfig) SetType(s string) error {
 //Note: nil types are from "admiral/nulls" package.
 //Note: "dot import" is used for cleaner code.
 type ContainerDescription struct {
-	Image              utils.NilString `json:"image"`
-	Name               utils.NilString `json:"name"`
-	ClusterSize        utils.NilInt32  `json:"_cluster"`
-	Commands           []string        `json:"command"`
-	CpuShares          utils.NilString `json:"cpuShares"`
-	DeploymentPolicyID utils.NilString `json:"deploymentPolicyId"`
-	Env                []string        `json:"env"`
-	ExposeServices     []string        `json:"exposeService"`
-	Hostname           utils.NilString `json:"hostname"`
-	Links              []string        `json:"links"`
-	LogConfig          LogConfig       `json:"logConfig"`
-	MaximumRetryCount  utils.NilInt32  `json:"maximumRetryCount"`
-	MemoryLimit        utils.NilInt64  `json:"memoryLimit"`
-	MemorySwapLimit    utils.NilInt64  `json:"memorySwapLimit"`
-	NetworkMode        utils.NilString `json:"networkMode"`
-	PortBindings       []Port          `json:"portBindings"`
-	PublishAll         bool            `json:"publishAll"`
-	RestartPolicy      utils.NilString `json:"restartPolicy"`
-	WorkingDir         utils.NilString `json:"workingDir"`
-	Volumes            []string        `json:"volumes"`
+	Image              utils.NilString        `json:"image"`
+	Name               utils.NilString        `json:"name"`
+	ClusterSize        utils.NilInt32         `json:"_cluster"`
+	Commands           []string               `json:"command"`
+	CpuShares          utils.NilString        `json:"cpuShares"`
+	DeploymentPolicyID utils.NilString        `json:"deploymentPolicyId"`
+	Env                []string               `json:"env"`
+	ExposeServices     []string               `json:"exposeService"`
+	Hostname           utils.NilString        `json:"hostname"`
+	Links              []string               `json:"links"`
+	LogConfig          LogConfig              `json:"logConfig"`
+	Networks           map[string]interface{} `json:"networks"`
+	MaximumRetryCount  utils.NilInt32         `json:"maximumRetryCount"`
+	MemoryLimit        utils.NilInt64         `json:"memoryLimit"`
+	MemorySwapLimit    utils.NilInt64         `json:"memorySwapLimit"`
+	NetworkMode        utils.NilString        `json:"networkMode"`
+	PortBindings       []Port                 `json:"portBindings"`
+	PublishAll         bool                   `json:"publishAll"`
+	RestartPolicy      utils.NilString        `json:"restartPolicy"`
+	WorkingDir         utils.NilString        `json:"workingDir"`
+	Volumes            []string               `json:"volumes"`
 }
 
 func (cd *ContainerDescription) SetImage(imageName string) error {
@@ -228,7 +229,7 @@ func (cd *ContainerDescription) RunContainer(tenantLinkId string, asyncTask bool
 	}
 
 	jsonBody, err := json.MarshalIndent(runContainer, "", "    ")
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -253,7 +254,7 @@ func getContaierRunLink(cd *ContainerDescription) (string, error) {
 	var runLink string
 	url := config.URL + "/resources/container-descriptions"
 	jsonBody, err := json.MarshalIndent(cd, "", "    ")
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Pragma", "xn-force-index-update")
 	_, respBody, respErr := client.ProcessRequest(req)

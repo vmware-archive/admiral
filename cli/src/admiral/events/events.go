@@ -26,14 +26,27 @@ import (
 )
 
 type EventInfo struct {
-	EventLogType             string `json:"eventLogType"`
-	Description              string `json:"description"`
-	DocumentUpdateTimeMicros string `json:"documentUpdateTimeMicros"`
+	EventLogType             string      `json:"eventLogType"`
+	Description              string      `json:"description"`
+	DocumentUpdateTimeMicros interface{} `json:"documentUpdateTimeMicros"`
+}
+
+func (ei *EventInfo) GetDocumentUpdateTimeMicros() int64 {
+	switch v := ei.DocumentUpdateTimeMicros.(type) {
+	case string:
+		parsed, _ := strconv.ParseInt(v, 10, 64)
+		return parsed
+	case int64:
+		return v
+	case float64:
+		return int64(v)
+	default:
+		return 0
+	}
 }
 
 func (ei *EventInfo) GetLastUpdate() string {
-	parsedUpdateTime, _ := strconv.ParseInt(ei.DocumentUpdateTimeMicros, 10, 64)
-	then := time.Unix(0, parsedUpdateTime*int64(time.Microsecond))
+	then := time.Unix(0, ei.GetDocumentUpdateTimeMicros()*int64(time.Microsecond))
 	timeSinceUpdate := time.Now().Sub(then)
 	if timeSinceUpdate.Hours() > 72 {
 		daysAgo := int(float64(timeSinceUpdate.Hours()) / 24.0)
@@ -70,14 +83,14 @@ func (el *EventList) FetchEvents() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, el)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return len(el.Documents), nil
 }
 
 //Print already fetched events.
 func (el *EventList) GetOutputString() string {
 	if el.TotalCount < 1 {
-		return "No elements found."
+		return utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer
 	header := fmt.Sprintf("%-15s %s\n", "SINCE", "DESCRIPTION")

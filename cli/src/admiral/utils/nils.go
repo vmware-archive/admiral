@@ -26,6 +26,10 @@ func (n NilInt64) MarshalJSON() ([]byte, error) {
 	return json.Marshal(n.Value)
 }
 
+func (n *NilInt64) UnmarshalJSON(buf []byte) error {
+	return json.Unmarshal(buf, &n.Value)
+}
+
 type NilInt32 struct {
 	Value int32
 }
@@ -35,6 +39,9 @@ func (n NilInt32) MarshalJSON() ([]byte, error) {
 		return json.Marshal(nil)
 	}
 	return json.Marshal(n.Value)
+}
+func (n *NilInt32) UnmarshalJSON(buf []byte) error {
+	return json.Unmarshal(buf, &n.Value)
 }
 
 type NilString struct {
@@ -46,4 +53,8 @@ func (n NilString) MarshalJSON() ([]byte, error) {
 		return json.Marshal(nil)
 	}
 	return json.Marshal(n.Value)
+}
+
+func (n *NilString) UnmarshalJSON(buf []byte) error {
+	return json.Unmarshal(buf, &n.Value)
 }

@@ -92,7 +92,7 @@ func (la *ListApps) FetchApps(queryF string) (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, la)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return len(la.DocumentLinks), nil
 }
 
@@ -110,7 +110,7 @@ func (la *ListApps) GetMatchingNames(name string) []string {
 //Function to print active applications without the containers in the apps.
 func (listApps *ListApps) GetOutputStringWithoutContainers() string {
 	if listApps.TotalCount < 1 {
-		return "No elements found."
+		return utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS")
@@ -150,7 +150,7 @@ func (listApps *ListApps) GetOutputStringWithContainers() string {
 			req, _ := http.NewRequest("GET", containerUrl, nil)
 			_, respBody, _ := client.ProcessRequest(req)
 			err := json.Unmarshal(respBody, container)
-			utils.CheckJson(err)
+			utils.CheckJsonError(err)
 			output = utils.GetFormattedString(indent+strings.Join(container.Names, " "), container.Address,
 				container.PowerState, container.GetCreated(), container.GetStarted(), container.Ports)
 			buffer.WriteString(output)

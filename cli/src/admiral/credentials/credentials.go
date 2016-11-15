@@ -89,12 +89,15 @@ func (lc *ListCredentials) FetchCredentials() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, lc)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return len(lc.Documents), nil
 }
 
 //Print prints already fetched credentials.
 func (lc *ListCredentials) GetOutputString() string {
+	if lc.GetCount() < 1 {
+		return utils.NoElementsFoundMessage
+	}
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tNAME\tTYPE")
 	buffer.WriteString("\n")
@@ -192,7 +195,7 @@ func AddByUsername(name, userName, passWord string,
 	}
 
 	jsonBody, err := json.Marshal(user)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -200,7 +203,7 @@ func AddByUsername(name, userName, passWord string,
 	}
 	creds := &Credentials{}
 	err = json.Unmarshal(respBody, creds)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return creds.GetID(), nil
 }
 
@@ -235,7 +238,7 @@ func AddByCert(name, publicCert, privateCert string,
 		Type:             "PublicKey",
 	}
 	jsonBody, err := json.Marshal(cert)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -243,7 +246,7 @@ func AddByCert(name, publicCert, privateCert string,
 	}
 	creds := &Credentials{}
 	err = json.Unmarshal(respBody, creds)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return creds.GetID(), nil
 }
 
@@ -333,7 +336,7 @@ func EditCredetialsID(id, publicCert, privateCert, userName, passWord string) (s
 		}
 	}
 	jsonBody, err := json.Marshal(cred)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -341,7 +344,7 @@ func EditCredetialsID(id, publicCert, privateCert, userName, passWord string) (s
 	}
 	creds := &Credentials{}
 	err = json.Unmarshal(respBody, creds)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return creds.GetID(), nil
 }
 
@@ -381,7 +384,7 @@ func GetCustomProperties(id string) (map[string]*string, error) {
 	}
 	credentials := &Credentials{}
 	err = json.Unmarshal(respBody, credentials)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return credentials.CustomProperties, nil
 }
 
@@ -410,7 +413,7 @@ func AddCustomProperties(id string, keys, vals []string) error {
 		CustomProperties: custProps,
 	}
 	jsonBody, err := json.Marshal(credentials)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -436,7 +439,7 @@ func RemoveCustomProperties(id string, keys []string) error {
 		CustomProperties: custProps,
 	}
 	jsonBody, err := json.Marshal(credentials)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 

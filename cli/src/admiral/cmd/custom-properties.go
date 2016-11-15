@@ -89,7 +89,7 @@ func hostCpString() (string, error) {
 		return "", err
 	}
 	cpJson, err := json.MarshalIndent(cpHost, "", "    ")
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	buffer := bytes.Buffer{}
 	buffer.WriteString(fmt.Sprintf("Custom Properties of Host: %s\n", cpHostId))
 	buffer.WriteString(fmt.Sprint(string(cpJson)))
@@ -102,7 +102,7 @@ func credCpString() (string, error) {
 		return "", err
 	}
 	cpJson, err := json.MarshalIndent(cpCred, "", "    ")
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	buffer := bytes.Buffer{}
 	buffer.WriteString(fmt.Sprintf("Custom Properties of Credentials: %s\n", cpCredId))
 	buffer.WriteString(fmt.Sprint(string(cpJson)))

@@ -129,6 +129,13 @@ func CreateResLinkForBusinessGroup(id string) string {
 	return fmt.Sprintf("/tenants/%s/groups/%s", GetTenant(), id)
 }
 
+func CreateResLinkForContainerDescription(id string) string {
+	if id == "" {
+		return ""
+	}
+	return "/resources/container-descriptions/" + id
+}
+
 //Function to create resource links from the provided ID as parameter.
 func CreateResLinksForNetwork(ids []string) []string {
 	links := make([]string, 0)

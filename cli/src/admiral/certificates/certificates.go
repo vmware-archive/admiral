@@ -97,14 +97,14 @@ func (cl *CertificateList) FetchCertificates() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, cl)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return len(cl.DocumentLinks), nil
 }
 
 //Print is printing already fetched certificates.
 func (cl *CertificateList) GetOutputString() string {
 	if len(cl.DocumentLinks) < 1 {
-		return "No elements found."
+		return utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tNAME\tVALID SINCE\tVALID TO")
@@ -205,7 +205,7 @@ func EditCertificateID(id, dirF, urlF string) (string, error) {
 		}
 		cert := &Certificate{}
 		err = json.Unmarshal(respBody, cert)
-		utils.CheckJson(err)
+		utils.CheckJsonError(err)
 		return cert.GetID(), nil
 	} else if urlF != "" {
 		//TODO
@@ -236,7 +236,7 @@ func AddFromFile(dirF string) (string, error) {
 	}
 	cert := &Certificate{}
 	err = json.Unmarshal(respBody, cert)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return cert.GetID(), nil
 }
 
@@ -252,7 +252,7 @@ func AddFromUrl(urlF string) (string, error) {
 		HostUri: urlF,
 	}
 	jsonBody, err := json.Marshal(cfu)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	url := config.URL + "/config/trust-certs-import"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -261,7 +261,7 @@ func AddFromUrl(urlF string) (string, error) {
 	}
 	cert := &Certificate{}
 	err = json.Unmarshal(respBody, cert)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return cert.GetID(), nil
 }
 
@@ -272,7 +272,7 @@ func AddFromUrl(urlF string) (string, error) {
 func CheckTrustCert(respBody []byte, autoAccept bool) bool {
 	cert := &Certificate{}
 	err := json.Unmarshal(respBody, cert)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	url := config.URL + "/config/trust-certs"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(respBody))
 	req.Header.Add("Pragma", "xn-force-index-update")

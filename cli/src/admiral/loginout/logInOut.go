@@ -131,7 +131,7 @@ func Loginvra(username, password, tenant, urlF string) string {
 	url := urlF + "/identity/api/tokens"
 
 	jsonBody, err := json.Marshal(login)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {

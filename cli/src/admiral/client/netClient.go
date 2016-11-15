@@ -121,6 +121,7 @@ func CheckResponseError(resp *http.Response, tokenFrom string) error {
 	return nil
 }
 
+// setReqHeaders sets most common request headers.
 func setReqHeaders(req *http.Request, token string) {
 	if req.Header.Get("Content-Type") == "" {
 		req.Header.Set("Content-Type", "application/json")
@@ -186,6 +187,14 @@ func setupCAPool() (*x509.CertPool, error) {
 	return caCertPool, nil
 }
 
+// checkForCertErrors checks if response error is related
+// to x509 certificate errors. In case the error is about,
+// selfsigned certificate, it prompts the user to accept it.
+// In case it's other x509 related error it loads already accepted
+// certificates and if the problematic one is included there it
+// turns off SSL verification of the http client, otherwise, prompts
+// the user to accept the certificate. In both cases if the user
+// decline the prompted certificates, the program execution is aborted.
 func checkForCertErrors(url string, errA error) (bool, error) {
 	if errA == nil {
 		return false, errA
@@ -211,6 +220,10 @@ func checkForCertErrors(url string, errA error) (bool, error) {
 	return false, nil
 }
 
+// checkCertInLoadedCerts first loads already trusted certificates from the user.
+// then it makes tls dial to the url to fetch the certificates and checks if
+// they are contained in the slice of already loaded. If they are not, it prompts the
+// user to accept them.
 func checkCertInLoadedCerts(url string) bool {
 	url = urlAppendDefaultPort(url)
 	conn, err := tls.Dial("tcp", url, &tls.Config{InsecureSkipVerify: true})
@@ -224,7 +237,7 @@ func checkCertInLoadedCerts(url string) bool {
 			result = true
 			continue
 		}
-		answer := prompCertAgreement(cert)
+		answer := promptCertAgreement(cert)
 		if answer {
 			cert.IsCA = true
 			saveTrustedCert(cert)
@@ -238,6 +251,8 @@ func checkCertInLoadedCerts(url string) bool {
 	return result
 }
 
+// promptAllCerts makes tls dial to fetch server certificates,
+// and then prompts all of them to the user.
 func promptAllCerts(url string) bool {
 	url = urlAppendDefaultPort(url)
 	conn, err := tls.Dial("tcp", url, &tls.Config{InsecureSkipVerify: true})
@@ -247,7 +262,7 @@ func promptAllCerts(url string) bool {
 	cs := conn.ConnectionState()
 	answer := false
 	for _, cert := range cs.PeerCertificates {
-		if prompCertAgreement(cert) {
+		if promptCertAgreement(cert) {
 			cert.IsCA = true
 			saveTrustedCert(cert)
 			answer = true
@@ -259,7 +274,9 @@ func promptAllCerts(url string) bool {
 	return answer
 }
 
-func prompCertAgreement(cert *x509.Certificate) bool {
+// promptCertAgreement takes x509 certificate as parameter and prompts the user
+// If the user accept it, the function returns true, otherwise returns false.
+func promptCertAgreement(cert *x509.Certificate) bool {
 	var buf bytes.Buffer
 	buf.WriteString(fmt.Sprintf("Common Name: %s\n", cert.Issuer.CommonName))
 	buf.WriteString(fmt.Sprintf("Serial: %s\n", cert.SerialNumber))
@@ -275,6 +292,9 @@ func prompCertAgreement(cert *x509.Certificate) bool {
 	return true
 }
 
+// saveTrustedCert takes x509 certificate as parameter, encode it,
+// and finally saves it to file where other user trusted certificates
+// are being saved.
 func saveTrustedCert(cert *x509.Certificate) {
 	if _, err := os.Stat(utils.TrustedCertsPath()); os.IsNotExist(err) {
 		os.Create(utils.TrustedCertsPath())
@@ -285,6 +305,8 @@ func saveTrustedCert(cert *x509.Certificate) {
 	trustedCerts.Write(pemCert)
 }
 
+// loadCertsFromFile loads the user trusted certificates, into
+// slice of x509 certificates.
 func loadCertsFromFile() error {
 	certBytes, err := ioutil.ReadFile(utils.TrustedCertsPath())
 	if err != nil {
@@ -305,6 +327,9 @@ func loadCertsFromFile() error {
 	return nil
 }
 
+// containsCert takes x509 certificate as parameter
+// and checks if this certificate is included into
+// the slice of already loaded user trusted certificates.
 func containsCert(cert *x509.Certificate) bool {
 	for i := range loadedTrustCerts {
 		if cert.Equal(loadedTrustCerts[i]) {
@@ -314,14 +339,18 @@ func containsCert(cert *x509.Certificate) bool {
 	return false
 }
 
+// urlRemoveTrailingSlash takes url string as parameter
+// and removes the trailing slash if there is any.
 func urlRemoveTrailingSlash(url string) string {
 	newUrl := []rune(url)
 	if strings.HasSuffix(url, "/") {
-		newUrl = newUrl[0 : len(newUrl)-1]
+		newUrl = newUrl[0 : len(newUrl)-2]
 	}
 	return string(newUrl)
 }
 
+// urlAppendDefaultPort takes url as parameter
+// and appends the default https port(443).
 func urlAppendDefaultPort(url string) string {
 	url = urlRemoveTrailingSlash(url)
 	if len(strings.Split(url, ":")) == 2 {
@@ -330,6 +359,9 @@ func urlAppendDefaultPort(url string) string {
 	return url + HttpsDefaultPort
 }
 
+// getResponseError takes int as parameter which is
+// response code and returns proper error.
+// TODO: Expand with more code cases.
 func getResponseError(code int) error {
 	switch code {
 	case 401:

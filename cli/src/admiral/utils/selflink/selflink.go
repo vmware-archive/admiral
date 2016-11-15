@@ -51,7 +51,7 @@ func GetFullId(shortId string, resList ResourceList, resType utils.ResourceType)
 		return "", respErr
 	}
 	err := json.Unmarshal(respBody, resList)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	if resList.GetCount() > 1 {
 		return "", NewSelfLinkError(NonUniqueIdMessage, shortId, resType)
 	}

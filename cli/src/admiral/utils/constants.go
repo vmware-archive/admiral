@@ -74,3 +74,7 @@ const (
 	REQUEST
 	TEMPLATE
 )
+
+const (
+	NoElementsFoundMessage = "No elements found."
+)

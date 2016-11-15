@@ -55,7 +55,7 @@ func (lc *ListContainers) FetchContainers(queryF string) (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, lc)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	systemCount := 0
 	for _, c := range lc.Documents {
 		if c.System {

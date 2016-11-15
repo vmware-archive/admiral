@@ -31,6 +31,7 @@ func init() {
 	initTemplateRemove()
 	initTemplateImport()
 	initTemplateExport()
+	initTemplateInspect()
 }
 
 var templateListCmd = &cobra.Command{
@@ -45,7 +46,7 @@ var templateListCmd = &cobra.Command{
 }
 
 func initTemplateList() {
-	templateListCmd.Flags().BoolVarP(&inclCont, "containers", "c", false, inclContDesc)
+	//templateListCmd.Flags().BoolVarP(&inclCont, "containers", "c", false, inclContDesc) Currently disabled.
 	templateListCmd.Flags().StringVarP(&queryF, "query", "q", "", queryFDesc)
 	templateListCmd.SetUsageTemplate(help.DefaultUsageListTemplate)
 	TemplatesRootCmd.AddCommand(templateListCmd)
@@ -174,4 +175,30 @@ func verifyFormat() (bool, error) {
 		return false, FileFormatNotSpecifiedError
 	}
 	return true, nil
+}
+
+var templateInspectCmd = &cobra.Command{
+	Use:   "inspect [TEMPLATE-ID]",
+	Short: "Inspect template.",
+	Long:  "Inspect template.",
+
+	Run: func(cmd *cobra.Command, args []string) {
+		output, err := RunTemplateInspect(args)
+		processOutput(output, err)
+	},
+}
+
+func initTemplateInspect() {
+	TemplatesRootCmd.AddCommand(templateInspectCmd)
+}
+
+func RunTemplateInspect(args []string) (string, error) {
+	var (
+		id string
+		ok bool
+	)
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", MissingTemplateIdError
+	}
+	return templates.InspectID(id)
 }

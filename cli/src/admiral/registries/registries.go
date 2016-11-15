@@ -78,22 +78,21 @@ func (rl *RegistryList) FetchRegistries() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, rl)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return len(rl.DocumentLinks), nil
 }
 
 func (rl *RegistryList) GetOutputString() string {
 	var buffer bytes.Buffer
-	if len(rl.DocumentLinks) > 0 {
-		buffer.WriteString("ID\tNAME\tADDRESS\tSTATUS\n")
-		for _, link := range rl.DocumentLinks {
-			val := rl.Documents[link]
-			output := utils.GetFormattedString(val.GetID(), val.Name, val.Address, val.Status())
-			buffer.WriteString(output)
-			buffer.WriteString("\n")
-		}
-	} else {
-		buffer.WriteString("No elements found.")
+	if rl.GetCount() < 1 {
+		return utils.NoElementsFoundMessage
+	}
+	buffer.WriteString("ID\tNAME\tADDRESS\tSTATUS\n")
+	for _, link := range rl.DocumentLinks {
+		val := rl.Documents[link]
+		output := utils.GetFormattedString(val.GetID(), val.Name, val.Address, val.Status())
+		buffer.WriteString(output)
+		buffer.WriteString("\n")
 	}
 	return strings.TrimSpace(buffer.String())
 }
@@ -168,7 +167,7 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 	}
 
 	jsonBody, err := json.Marshal(ho)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	resp, respBody, respErr := client.ProcessRequest(req)
@@ -179,7 +178,7 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 		_, respBody, respErr = client.ProcessRequest(req)
 		addedRegistry := &Registry{}
 		err = json.Unmarshal(respBody, addedRegistry)
-		utils.CheckJson(err)
+		utils.CheckJsonError(err)
 		return addedRegistry.GetID(), nil
 	} else if resp.StatusCode == 200 {
 		checkRes := certificates.CheckTrustCert(respBody, autoAccept)
@@ -198,7 +197,7 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 			}
 			addedRegistry := &Registry{}
 			err = json.Unmarshal(respBody, addedRegistry)
-			utils.CheckJson(err)
+			utils.CheckJsonError(err)
 			return addedRegistry.GetID(), nil
 		}
 		return "", CertNotAcceptedError
@@ -235,7 +234,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 	}
 	reg := &Registry{}
 	err = json.Unmarshal(respBody, reg)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	if newAddress != "" {
 		reg.Address = newAddress
 	}
@@ -253,7 +252,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 		Registry: *reg,
 	}
 	jsonBody, err := json.Marshal(registryObj)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ = http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	resp, respBody, respErr := client.ProcessRequest(req)
 	if resp.StatusCode == 200 {
@@ -270,7 +269,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 			_, respBody, _ = client.ProcessRequest(req)
 			reg = &Registry{}
 			err = json.Unmarshal(respBody, reg)
-			utils.CheckJson(err)
+			utils.CheckJsonError(err)
 			return reg.GetID(), nil
 		}
 		return "", errors.New("Error occurred when adding the new certificate.")
@@ -284,7 +283,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 		}
 		reg = &Registry{}
 		err = json.Unmarshal(respBody, reg)
-		utils.CheckJson(err)
+		utils.CheckJsonError(err)
 		return reg.GetID(), nil
 	} else if respErr != nil {
 		return "", respErr
@@ -316,7 +315,7 @@ func DisableID(id string) (string, error) {
 		DocumentSelfLink: link,
 	}
 	jsonBody, err := json.Marshal(rs)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	url := config.URL + link
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
@@ -349,7 +348,7 @@ func EnableID(id string) (string, error) {
 		DocumentSelfLink: link,
 	}
 	jsonBody, err := json.Marshal(rs)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	url := config.URL + link
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)

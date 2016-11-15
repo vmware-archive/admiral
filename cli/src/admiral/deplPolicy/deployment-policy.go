@@ -64,14 +64,14 @@ func (dpl *DeploymentPolicyList) FetchDP() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, dpl)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return len(dpl.DocumentLinks), nil
 }
 
 //Print prints already fetched deployment policies.
 func (dpl *DeploymentPolicyList) GetOutputString() string {
-	if len(dpl.DocumentLinks) < 1 {
-		return "No elements found."
+	if dpl.GetCount() < 1 {
+		return utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tNAME\tDESCRIPTION")
@@ -130,7 +130,7 @@ func AddDP(dpName, dpDescription string) (string, error) {
 		DocumentSelfLink: nil,
 	}
 	jsonBody, err := json.Marshal(dp)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -139,7 +139,7 @@ func AddDP(dpName, dpDescription string) (string, error) {
 	}
 	dp = &DeploymentPolicy{}
 	err = json.Unmarshal(respBody, dp)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return dp.GetID(), nil
 }
 
@@ -173,7 +173,7 @@ func EditDPID(id, newName, newDescription string) (string, error) {
 		DocumentSelfLink: nil,
 	}
 	jsonBody, err := json.Marshal(dp)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -181,7 +181,7 @@ func EditDPID(id, newName, newDescription string) (string, error) {
 	}
 	dp = &DeploymentPolicy{}
 	err = json.Unmarshal(respBody, dp)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return dp.GetID(), nil
 }
 

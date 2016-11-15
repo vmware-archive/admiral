@@ -67,7 +67,7 @@ func StartAppID(id string, asyncTask bool) ([]string, error) {
 	}
 
 	jsonBody, err := json.Marshal(oc)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr == nil {
@@ -83,8 +83,9 @@ func StartAppID(id string, asyncTask bool) ([]string, error) {
 		}
 	} else {
 		resLinks = nil
+		err = respErr
 	}
-	return resLinks, respErr
+	return resLinks, err
 }
 
 //Function to stop application.
@@ -118,7 +119,7 @@ func StopAppID(id string, asyncTask bool) ([]string, error) {
 	}
 
 	jsonBody, err := json.Marshal(oc)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr == nil {
@@ -134,8 +135,9 @@ func StopAppID(id string, asyncTask bool) ([]string, error) {
 		}
 	} else {
 		resLinks = nil
+		err = respErr
 	}
-	return resLinks, respErr
+	return resLinks, err
 }
 
 //Function to remove application.
@@ -169,7 +171,7 @@ func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 		ResourceType:  "COMPOSITE_COMPONENT",
 	}
 	jsonBody, err := json.Marshal(oc)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr == nil {
@@ -188,6 +190,10 @@ func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 		err = respErr
 	}
 	return resLinks, err
+}
+
+type CompositeDescription struct {
+	DocumentSelfLink string `json:"documentSelfLink"`
 }
 
 //Function to provision application.
@@ -213,7 +219,7 @@ func RunAppID(id, tenantId string, asyncTask bool) ([]string, error) {
 	link := utils.CreateResLinkForTemplate(fullId)
 	jsonBody["documentSelfLink"] = link
 	reqBody, err := json.Marshal(jsonBody)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	url := config.URL + "/resources/composite-descriptions-clone"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
@@ -223,7 +229,7 @@ func RunAppID(id, tenantId string, asyncTask bool) ([]string, error) {
 	}
 	cd := &CompositeDescription{}
 	err = json.Unmarshal(respBody, cd)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	link = cd.DocumentSelfLink
 	tenantLinks := setTenantLink(tenantId)
@@ -273,7 +279,7 @@ func (ra *RunApplication) run(asyncTask bool) ([]string, error) {
 	)
 	url := config.URL + "/requests"
 	jsonBody, err := json.Marshal(ra)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr == nil {
@@ -324,8 +330,18 @@ func GetAppLinks(name string) []string {
 	return links
 }
 
-type CompositeDescription struct {
-	DocumentSelfLink string `json:"documentSelfLink"`
+type AppComponent struct {
+	ComponentType     string   `json:"ComponentType"`
+	Id                string   `json:"ID"`
+	NetworksConnected []string `json:"NetworksConnected,omitempty"`
+}
+
+type InspectApp struct {
+	Id         string          `json:"ID"`
+	Name       string          `json:"Name"`
+	Containers int             `json:"ContainersCount"`
+	Networks   int             `json:"NetworksCount"`
+	Components []*AppComponent `json:"Components"`
 }
 
 func InspectID(id string) (string, error) {
@@ -340,20 +356,7 @@ func InspectID(id string) (string, error) {
 	}
 	app := &App{}
 	err = json.Unmarshal(respBody, app)
-	utils.CheckJson(err)
-
-	type AppComponent struct {
-		Id            string `json:"ID"`
-		ComponentType string `json:"ComponentType"`
-	}
-
-	type InspectApp struct {
-		Id         string          `json:"ID"`
-		Name       string          `json:"Name"`
-		Containers int             `json:"ContainersCount"`
-		Networks   int             `json:"NetworksCount"`
-		Components []*AppComponent `json:"Components"`
-	}
+	utils.CheckJsonError(err)
 
 	ia := &InspectApp{
 		Id:         app.GetID(),
@@ -364,12 +367,15 @@ func InspectID(id string) (string, error) {
 	}
 	for i, contLink := range app.ComponentLinks {
 		component := &AppComponent{}
+		component.Id = utils.GetResourceID(contLink)
 		if app.IsContainer(i) {
 			component.ComponentType = "Container"
+			c := containers.GetContainer(component.Id)
+			component.NetworksConnected = utils.ValuesToStrings(utils.GetMapKeys(c.Networks))
 		} else {
 			component.ComponentType = "Network"
 		}
-		component.Id = utils.GetResourceID(contLink)
+
 		ia.Components = append(ia.Components, component)
 	}
 	jsonBody, _ := json.MarshalIndent(ia, "", "    ")

@@ -15,6 +15,7 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"reflect"
 	"strings"
 )
 
@@ -84,4 +85,23 @@ func isVraMode() bool {
 		return true
 	}
 	return false
+}
+
+func GetMapKeys(m interface{}) []reflect.Value {
+	v := reflect.ValueOf(m)
+	if v.Kind() != reflect.Map {
+		return nil
+	}
+	return v.MapKeys()
+}
+
+func ValuesToStrings(v []reflect.Value) []string {
+	result := make([]string, 0)
+	for _, val := range v {
+		if val.String() == "" {
+			continue
+		}
+		result = append(result, val.String())
+	}
+	return result
 }

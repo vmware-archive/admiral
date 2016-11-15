@@ -83,7 +83,7 @@ func Wait(taskId string) ([]string, error) {
 		}
 
 		err = json.Unmarshal(respBody, taskStatus)
-		utils.CheckJson(err)
+		utils.CheckJsonError(err)
 		pb.UpdateBar(taskStatus.Progress)
 
 		if taskStatus.SubStage == "COMPLETED" {
@@ -119,7 +119,7 @@ func GetResLinks(taskId string) ([]string, error) {
 		return nil, respErr
 	}
 	err = json.Unmarshal(respBody, taskStatus)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	if taskStatus.SubStage == "COMPLETED" {
 		result = taskStatus.SubStage
 	} else if taskStatus.SubStage == "ERROR" {
@@ -145,7 +145,7 @@ func getErrorMessage(statusReq *http.Request) error {
 	}
 	taskStatus := &TaskStatus{}
 	err := json.Unmarshal(respBody, taskStatus)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	if taskStatus.EventLogLink == "" {
 		return errors.New("No event log link.")
 	}
@@ -157,7 +157,7 @@ func getErrorMessage(statusReq *http.Request) error {
 	}
 	event := &events.EventInfo{}
 	err = json.Unmarshal(respBody, event)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return errors.New(event.Description)
 }
 

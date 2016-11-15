@@ -63,14 +63,14 @@ func (gl *ProjectList) FetchProjects() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, gl)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return len(gl.DocumentLinks), nil
 }
 
 //Print prints already fetched projects.
 func (gl *ProjectList) GetOutputString() string {
-	if len(gl.DocumentLinks) < 1 {
-		return "No elements found."
+	if gl.GetCount() < 1 {
+		return utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tNAME\n")
@@ -93,7 +93,7 @@ func AddProject(name string) (string, error) {
 		Name: name,
 	}
 	jsonBody, err := json.Marshal(project)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	url := config.URL + "/resources/groups"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
@@ -103,7 +103,7 @@ func AddProject(name string) (string, error) {
 	}
 	project = &Project{}
 	err = json.Unmarshal(respBody, project)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return project.GetID(), nil
 }
 
@@ -171,7 +171,7 @@ func EditProjectID(id, newName string) (string, error) {
 		Name: newName,
 	}
 	jsonBody, err := json.Marshal(project)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Pragma", "xn-force-update-index")
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -180,7 +180,7 @@ func EditProjectID(id, newName string) (string, error) {
 	}
 	project = &Project{}
 	err = json.Unmarshal(respBody, project)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return project.GetID(), nil
 }
 
@@ -213,6 +213,6 @@ func GetProjectName(link string) (string, error) {
 	}
 	project := &Project{}
 	err := json.Unmarshal(respBody, project)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return project.Name, nil
 }

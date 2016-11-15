@@ -122,7 +122,7 @@ func (n *Network) SetCustomProperties(customProperties []string) {
 
 func (n *Network) String() string {
 	jsonBody, err := json.MarshalIndent(n, "", "    ")
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return string(jsonBody)
 }
 
@@ -181,7 +181,7 @@ func (nl *NetworkList) FetchNetworks() (int, error) {
 		return 0, respErr
 	}
 	err = json.Unmarshal(respBody, nl)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return len(nl.DocumentLinks), nil
 }
 
@@ -213,7 +213,7 @@ func RemoveNetwork(ids []string, asyncTask bool) ([]string, error) {
 		ResourceLinks: links,
 	}
 	jsonBody, err := json.Marshal(no)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -224,7 +224,7 @@ func RemoveNetwork(ids []string, asyncTask bool) ([]string, error) {
 
 	taskStatus := &track.OperationResponse{}
 	err = json.Unmarshal(respBody, taskStatus)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	taskStatus.PrintTracerId()
 	resLinks := make([]string, 0)
 	if !asyncTask {
@@ -252,7 +252,7 @@ func InspectNetwork(id string) (string, error) {
 	}
 	network := &Network{}
 	err = json.Unmarshal(respBody, network)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return network.String(), nil
 }
 
@@ -272,7 +272,7 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 
 	url := config.URL + "/resources/container-network-descriptions"
 	jsonBody, err := json.Marshal(network)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -280,7 +280,7 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 	}
 	nd := &NetworkDescription{}
 	err = json.Unmarshal(respBody, nd)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	networkLink := nd.DocumentSelfLink
 
 	no := &NetworkOperation{
@@ -298,7 +298,7 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 
 	taskStatus := &track.OperationResponse{}
 	err = json.Unmarshal(respBody, taskStatus)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	taskStatus.PrintTracerId()
 	resLinks := make([]string, 0)
 	if !asyncTask {

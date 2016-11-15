@@ -72,7 +72,7 @@ var appListCmd = &cobra.Command{
 }
 
 func initAppList() {
-	appListCmd.Flags().BoolVarP(&inclCont, "containers", "c", false, inclContDesc)
+	//appListCmd.Flags().BoolVarP(&inclCont, "containers", "c", false, inclContDesc) Currently disabled.
 	appListCmd.Flags().StringVarP(&queryF, "query", "q", "", queryFDesc)
 
 	appListCmd.SetUsageTemplate(help.DefaultUsageListTemplate)

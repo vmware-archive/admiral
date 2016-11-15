@@ -114,24 +114,24 @@ func (rpl *PlacementZoneList) FetchPZ() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, rpl)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return len(rpl.Documents), nil
 }
 
 func (rpl *PlacementZoneList) GetOutputString() string {
 	var buffer bytes.Buffer
-	if len(rpl.Documents) > 0 {
-		buffer.WriteString("ID\tNAME\tMEMORY\tCPU\n")
-		for _, link := range rpl.DocumentLinks {
-			val := rpl.Documents[link]
-			output := utils.GetFormattedString(val.ResourcePoolState.GetID(), val.ResourcePoolState.Name,
-				val.ResourcePoolState.GetUsedMemoryPercentage(), val.ResourcePoolState.GetUsedCpuPercentage())
-			buffer.WriteString(output)
-			buffer.WriteString("\n")
-		}
-	} else {
-		buffer.WriteString("No elements found.")
+	if rpl.GetCount() < 1 {
+		return utils.NoElementsFoundMessage
 	}
+	buffer.WriteString("ID\tNAME\tMEMORY\tCPU\n")
+	for _, link := range rpl.DocumentLinks {
+		val := rpl.Documents[link]
+		output := utils.GetFormattedString(val.ResourcePoolState.GetID(), val.ResourcePoolState.Name,
+			val.ResourcePoolState.GetUsedMemoryPercentage(), val.ResourcePoolState.GetUsedCpuPercentage())
+		buffer.WriteString(output)
+		buffer.WriteString("\n")
+	}
+
 	return strings.TrimSpace(buffer.String())
 }
 
@@ -176,7 +176,7 @@ func AddPZ(rpName string, custProps []string) (string, error) {
 	}
 	pz = &PlacementZone{}
 	err := json.Unmarshal(respBody, pz)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return pz.ResourcePoolState.GetID(), nil
 
 }
@@ -229,7 +229,7 @@ func GetPZName(link string) (string, error) {
 		return "", respErr
 	}
 	err := json.Unmarshal(respBody, pzs)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return pzs.Name, nil
 }
 

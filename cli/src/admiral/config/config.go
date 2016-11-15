@@ -154,6 +154,6 @@ func Inspect() []byte {
 		createDefaultCfgFile()
 	}
 	jsonBody, err := json.MarshalIndent(cfg, "", "    ")
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return jsonBody
 }

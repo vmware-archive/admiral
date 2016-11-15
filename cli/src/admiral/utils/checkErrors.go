@@ -21,10 +21,8 @@ import (
 //Currently panic too used for debugging.
 func CheckResponse(err error, url string) {
 	if err != nil {
-		fmt.Println("Error occurred when connecting to ", url)
-		if Verbose == true {
-			fmt.Println(err)
-		}
+		fmt.Println("Error occurred when connecting to", url)
+		fmt.Println(err)
 		os.Exit(1)
 	}
 
@@ -33,7 +31,7 @@ func CheckResponse(err error, url string) {
 //Check for error raised by reading/writing json.
 //Print message.
 //Currently panic too used for debugging.
-func CheckJson(err error) {
+func CheckJsonError(err error) {
 	if err != nil {
 		fmt.Println("Json error when reading and/or writing.")
 		fmt.Println(err.Error())

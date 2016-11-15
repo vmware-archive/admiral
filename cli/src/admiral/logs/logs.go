@@ -38,7 +38,7 @@ func GetLog(contName, since string) (string, error) {
 		return "", respErr
 	}
 	err := json.Unmarshal(respBody, lresp)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	log, err := base64.StdEncoding.DecodeString(lresp.Logs)
 	if err != nil {
 		return "", err

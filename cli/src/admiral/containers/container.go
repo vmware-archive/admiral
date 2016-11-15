@@ -35,19 +35,20 @@ var (
 )
 
 type Container struct {
-	Id               string     `json:"id"`
-	Address          string     `json:"address"`
-	Names            []string   `json:"names"`
-	PowerState       string     `json:"powerState"`
-	Ports            []Port     `json:"ports"`
-	DescriptionLink  string     `json:"descriptionLink"`
-	System           bool       `json:"system"`
-	Created          int64      `json:"created"`
-	Started          int64      `json:"started"`
-	Command          []string   `json:"command"`
-	PolicyLink       string     `json:"groupResourcePolicyLink"`
-	Attributes       Attributes `json:"attributes"`
-	DocumentSelfLink string     `json:"documentSelfLink"`
+	Id               string                 `json:"id"`
+	Address          string                 `json:"address"`
+	Names            []string               `json:"names"`
+	PowerState       string                 `json:"powerState"`
+	Ports            []Port                 `json:"ports"`
+	Networks         map[string]interface{} `json:"networks"`
+	DescriptionLink  string                 `json:"descriptionLink"`
+	System           bool                   `json:"system"`
+	Created          int64                  `json:"created"`
+	Started          int64                  `json:"started"`
+	Command          []string               `json:"command"`
+	PolicyLink       string                 `json:"groupResourcePolicyLink"`
+	Attributes       Attributes             `json:"attributes"`
+	DocumentSelfLink string                 `json:"documentSelfLink"`
 }
 
 //GetID returns the ID of the container.
@@ -143,7 +144,7 @@ func (c *Container) GetStarted() string {
 //StringJson returns the Container to string in json format.
 func (c *Container) StringJson() string {
 	jsonBody, err := json.MarshalIndent(c, "", "    ")
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	return string(jsonBody)
 }
 
@@ -219,7 +220,7 @@ func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 	}
 
 	jsonBody, err := json.Marshal(newStart)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -259,7 +260,7 @@ func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 
 	jsonBody, err := json.Marshal(newStop)
 
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -298,7 +299,7 @@ func RemoveContainer(containers []string, asyncTask bool) ([]string, error) {
 
 	jsonBody, err := json.Marshal(newRemoveContainer)
 
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -342,7 +343,7 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 
 	jsonBody, err := json.Marshal(newRemoveContainer)
 
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -377,7 +378,7 @@ func ExecuteCmd(container string, execF string) {
 		Command: exec,
 	}
 	jsonBody, err := json.Marshal(ch)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -400,7 +401,7 @@ func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (strin
 	}
 	container := &Container{}
 	err = json.Unmarshal(respBody, container)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 	contDesc := container.DescriptionLink
 
 	url = config.URL + "/requests"
@@ -412,7 +413,7 @@ func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (strin
 	}
 
 	scaleJson, err := json.Marshal(scale)
-	utils.CheckJson(err)
+	utils.CheckJsonError(err)
 
 	req, _ = http.NewRequest("POST", url, bytes.NewBuffer(scaleJson))
 	_, respBody, respErr = client.ProcessRequest(req)
@@ -454,17 +455,30 @@ func InspectContainer(id string) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func GetContainerLinks(name string) []string {
-	lc := &ListContainers{}
-	lc.FetchContainers(name)
-	links := make([]string, 0)
-	for i := range lc.DocumentLinks {
-		val := lc.Documents[lc.DocumentLinks[i]]
-		if val.Names[0] == name {
-			links = append(links, lc.DocumentLinks[i])
-		}
-	}
-	return links
+func GetContainer(id string) *Container {
+	fullId, err := selflink.GetFullId(id, new(ListContainers), utils.CONTAINER)
+	utils.CheckIdError(err)
+	link := utils.CreateResLinksForContainer([]string{fullId})[0]
+	url := config.URL + link
+	req, _ := http.NewRequest("GET", url, nil)
+	_, respBody, respErr := client.ProcessRequest(req)
+	utils.CheckResponse(respErr, url)
+	c := &Container{}
+	err = json.Unmarshal(respBody, c)
+	utils.CheckJsonError(err)
+	return c
+}
+
+func GetContainerDescription(id string) *ContainerDescription {
+	link := utils.CreateResLinkForContainerDescription(id)
+	url := config.URL + link
+	req, _ := http.NewRequest("GET", url, nil)
+	_, respBody, respErr := client.ProcessRequest(req)
+	utils.CheckResponse(respErr, url)
+	cd := &ContainerDescription{}
+	err := json.Unmarshal(respBody, cd)
+	utils.CheckJsonError(err)
+	return cd
 }
 
 type RunContainer struct {
