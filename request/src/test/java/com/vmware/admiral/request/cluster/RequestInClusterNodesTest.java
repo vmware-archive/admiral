@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -133,8 +134,38 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
     @Test
     public void testRequestLifeCycleInCluster() throws Throwable {
         provisionContainer();
+    }
+
+    @Test
+    public void testRequestLifeCycleInClusterWhenOneNodeDown() throws Throwable {
         stopOneNode();
         provisionContainer();
+    }
+
+    @Test
+    public void testCompositeComponentWithContainerNetworkRequestLifeCycleBridge()
+            throws Throwable {
+        provisionApplicationWithNetwork(false);
+    }
+
+    @Test
+    public void testCompositeComponentWithContainerNetworkRequestLifeCycleBridgeOneNodeDown()
+            throws Throwable {
+        stopOneNode();
+        provisionApplicationWithNetwork(false);
+    }
+
+    @Test
+    public void testCompositeComponentWithContainerNetworkRequestLifeCycleOverlay()
+            throws Throwable {
+        provisionApplicationWithNetwork(true);
+    }
+
+    @Test
+    public void testCompositeComponentWithContainerNetworkRequestLifeCycleOverlayOneNodeDown()
+            throws Throwable {
+        stopOneNode();
+        provisionApplicationWithNetwork(true);
     }
 
     private void stopOneNode() throws Throwable {
@@ -142,15 +173,6 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
         host.stopHost(hostToStop);
         waitForReplicatedFactoryServiceAvailable(host);
         hosts.remove(0);
-    }
-
-    @Test
-    public void testCompositeComponentWithContainerNetworkRequestLifeCycle() throws Throwable {
-        provisionApplicationWithNetwork(true);
-        provisionApplicationWithNetwork(false);
-        stopOneNode();
-        provisionApplicationWithNetwork(true);
-        provisionApplicationWithNetwork(false);
     }
 
     private void provisionApplicationWithNetwork(boolean overlay) throws Throwable {
@@ -262,6 +284,24 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
                 .size() == 1)
                 && getDocument(ContainerNetworkState.class, networkLink).compositeComponentLinks
                         .contains(cc.documentSelfLink));
+
+        RequestBrokerState day2RemovalRequest = new RequestBrokerState();
+        day2RemovalRequest.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
+        day2RemovalRequest.resourceLinks = new HashSet<>(Collections.singletonList(
+                cc.documentSelfLink));
+        day2RemovalRequest.operation = ContainerOperationType.DELETE.id;
+
+        day2RemovalRequest = startRequest(day2RemovalRequest);
+        waitForRequestToComplete(day2RemovalRequest);
+
+        // verify the CompositeComponent has been removed
+        cc = searchForDocument(CompositeComponent.class, cc.documentSelfLink);
+        assertNull(cc);
+
+        // verify the network and container states has been removed
+        assertNull(searchForDocument(ContainerNetworkState.class, networkLink));
+        assertNull(searchForDocument(ContainerState.class, containerLink1));
+        assertNull(searchForDocument(ContainerState.class, containerLink2));
 
         if (dockerHost1 != null && dockerHost2 != null) {
             delete(dockerHost1.documentSelfLink);
