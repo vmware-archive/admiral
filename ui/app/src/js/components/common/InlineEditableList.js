@@ -221,12 +221,9 @@ var highlightElement = function(entity, $actualElement, isNew, isUpdated, valida
   var $highlightElement = this.RowRenderers.renderHighlighted(entity, $actualElement, isNew,
                                                               isUpdated, validationErrors);
 
-  // TODO: mode to never hide the highlight, for Jennifer to work on stylings.
-  if (!utils.isDebugModeEnabled()) {
-    setTimeout(function() {
-      $highlightElement.replaceWith($actualElement);
-    }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
-  }
+  setTimeout(function() {
+    $highlightElement.replaceWith($actualElement);
+  }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
 
   return $highlightElement;
 };
