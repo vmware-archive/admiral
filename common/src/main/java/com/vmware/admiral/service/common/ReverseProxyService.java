@@ -16,11 +16,11 @@ import static com.vmware.admiral.common.util.UriUtilsExtended.getReverseProxyTar
 
 import java.net.URI;
 import java.util.function.Function;
+import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
-import com.vmware.xenon.common.UriUtils;
 
 /**
  * Simple reverse proxy service to forward requests to 3rd party services.
@@ -105,17 +105,8 @@ public class ReverseProxyService extends StatelessService {
         URI uri = op.getUri();
         URI targetUri = getReverseProxyTargetUri(uri);
         if (targetUri == null) {
-            // otherwise try to get it in combination with the referer URI
-            // the request URI should look like ../rp/target-path (relative to previous request)
-            // and then the referer URI should look like ../rp/{http://target-host}
-            URI referer = op.getReferer();
-            if (referer == null) {
-                // impossible to get a valid target URI!
-                return null;
-            }
-            String path = uri.getPath().replaceFirst(ReverseProxyService.SELF_LINK, "");
-            uri = UriUtils.buildUri(referer, referer.getPath(), path);
-            targetUri = getReverseProxyTargetUri(uri);
+            getHost().log(Level.WARNING, "Unable to get target uri");
+            return null;
         }
         return targetUri;
     }
