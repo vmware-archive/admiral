@@ -36,7 +36,6 @@ import com.vmware.admiral.common.util.SshUtil.ConsumedResult;
 import com.vmware.admiral.common.util.SshUtil.Result;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
-@Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-653")
 public class SshUtilTestIT extends BaseTestCase {
 
     private final String SSH_HOST = getSystemOrTestProp("ssh.host.hostname");
