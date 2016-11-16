@@ -87,6 +87,7 @@ public final class AffinityFilters {
         filters.add(new VolumesFromAffinityHostFilter(host, desc));
         filters.add(new ServiceAffinityHostFilter(host, desc));
         filters.add(new DeploymentPolicyAffinityFilter(host, desc));
+        filters.add(new ClusterServiceLinkAffinityHostFilter(host, desc));
         filters.add(new ServiceLinkAffinityFilter(host, desc));
 
         // networks define a host affinity filter since external networks may be available only on
