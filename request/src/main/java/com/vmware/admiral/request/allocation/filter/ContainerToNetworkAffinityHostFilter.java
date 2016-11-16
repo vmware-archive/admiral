@@ -67,7 +67,7 @@ public class ContainerToNetworkAffinityHostFilter
         }
 
         if (isActive()) {
-            findNetworkDescriptions(state, hostSelectionMap, callback);
+            findNetworkDescriptions(state, sortedHostSelectionMap, callback);
         } else {
             callback.complete(sortedHostSelectionMap, null);
         }
