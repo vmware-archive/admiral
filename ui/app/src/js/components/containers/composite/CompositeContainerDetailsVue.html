@@ -67,7 +67,7 @@
 
       <div v-if="model.listView.itemsLoading" class="loading">
         <span class="vertical-helper"></span>
-        <img src="image-assets/loading-animation.gif">
+        <div class="spinner"></div>
       </div>
       <network-box v-for="network in networks | networksOrderBy"
                    track-by="documentSelfLink"

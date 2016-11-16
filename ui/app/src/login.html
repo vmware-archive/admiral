@@ -18,13 +18,17 @@
   <link rel="icon" type="image/x-icon" href="image-assets/favicon.ico" />
 </head>
 <body class="admiral-default">
-  <div class="header">
-    <img class="topSplash" src="image-assets/vmware-pattern.png">
-    <img class="brandLogo" src="image-assets/logo-text-white.png">
-  </div>
+  <header class="header header-1">
+    <div class="branding">
+      <a href="#/home"><img class="brandLogo" src="image-assets/logo-text-white.png"></a>
+    </div>
+  </header>
   <div id="main"></div>
   <!-- Show loading immediately. When main.js is loaded and application is initialized, it will be removed -->
-  <div class="loading"><span class="vertical-helper"></span><img src="image-assets/loading-animation.gif"></div>
+  <div class="loading">
+    <span class="vertical-helper"></span>
+    <div class="spinner"></div>
+  </div>
 
   <script src="lib/vendor.js"></script>
   <script src="js/main-login.js"></script>

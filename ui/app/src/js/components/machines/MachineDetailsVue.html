@@ -57,7 +57,7 @@
       </div>
       <div class="loading loading-background" v-bind:class="{'hide': !model.statsLoading}">
         <span class="vertical-helper"></span>
-        <img src="image-assets/loading-animation.gif">
+        <div class="spinner"></div>
       </div>
     </maximizable-behaviour>
     <maximizable-behaviour class="container-details-logs">
@@ -65,7 +65,7 @@
       <div class="content">{{model.logs}}</div>
       <div class="loading" v-bind:class="{'hide': !model.logsLoading}">
         <span class="vertical-helper"></span>
-        <img src="image-assets/loading-animation.gif">
+        <div class="spinner"></div>
       </div>
       <div class="container-details-logs-settings">
         <span>{{i18n('app.container.details.showingLogsSince')}}</span>

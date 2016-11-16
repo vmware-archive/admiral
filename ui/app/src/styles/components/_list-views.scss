@@ -424,10 +424,10 @@
   .list-view .image-item .btn-group {
     top: 5px;
   }
-  .list-view .image-item .btn-group > .admiral-btn.dropdown-toggle {
+  .list-view .image-item .btn-group > .btn.dropdown-toggle {
     color: $secondary_hint_title_color;
   }
-  .list-view .image-item .btn-group > .admiral-btn.dropdown-toggle .caret {
+  .list-view .image-item .btn-group > .btn.dropdown-toggle .caret {
     width: 0;
     height: 0;
     border-style: solid;

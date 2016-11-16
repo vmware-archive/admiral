@@ -13,6 +13,8 @@ $font-family-sans-serif: "Helvetica Neue", Helvetica, Arial, sans-serif;
 @import "tokenfield-override";
 @import "mixins";
 
+@import "clarity-bootstrap-gap";
+
 @import "components/inline-editable-list";
 @import "components/list-views";
 @import "components/container-details";
@@ -165,6 +167,7 @@ textarea {
   width: 240px;
   margin: 0;
   padding: 0;
+  float: left;
 }
 
 /* TODO */
@@ -290,7 +293,6 @@ textarea {
   }
 }
 
-
 .admiral-btn {
   background-color: $main_color;
   border-radius: 30px;
@@ -345,29 +347,42 @@ textarea {
   margin-left: 10px;
 }
 
-.btn-circle, .btn-circle:hover, .btn-circle:active, .btn-circle:focus {
+.btn-circle {
   cursor: pointer;
   font-size: 12px;
   width: 20px;
-  line-height: 18px;
-  border: 1px solid $main_color;
+  min-width: 20px;
+  height: 20px;
+  min-height: 20px;
+  line-height: 20px;
   border-radius: 10px;
   text-align: center;
   padding: 0;
+  margin: 0;
+}
+
+
+
+.btn-circle, .btn-circle:hover,
+.btn-circle:active, .btn-circle:focus{
+  cursor: pointer;
+  border: 1px solid $main_color;
   color: #ffffff;
   background-color: $main_color;
 }
 
-.btn-circle:hover {
+.btn.btn-circle:hover {
   @include box-shadow(0px 1px 3px 0px rgba(0,0,72,0.4));
 }
 
-.btn-circle:active {
+.btn.btn-circle:active {
   @include box-shadow(0px 2px 3px 0px rgba(0,0,0,0.4) inset);
 }
 
-.btn-circle-outline, .btn-circle-outline:hover,
-.btn-circle-outline:active, .btn-circle-outline:focus {
+.btn.btn-circle-outline,
+.btn.btn-circle-outline:hover,
+.btn.btn-circle-outline:active,
+.btn.btn-circle-outline:focus {
   @extend .btn-circle;
   color: $main_color;
   background-color: #ffffff;
@@ -421,6 +436,7 @@ textarea {
   font-size: 30px;
   padding: 0 63px;
   line-height: 2em;
+  height: 2em;
   margin-right: 25px;
 }
 
@@ -450,7 +466,7 @@ textarea {
   font-size: 22px;
   font-weight:300;
   letter-spacing: 0.02em;
-  color: #3399cc;
+  color: $main_color;
 }
 
 .steps-boxes {
@@ -624,12 +640,8 @@ $main-list-view-right: 10px;
   padding-left: 0;
 }
 
-.host-view .main-panel .host-form .col-sm-9,
-.compute-view .main-panel .compute-form .col-sm-9 {
-  width: 100%;
-  padding-left: 200px;
-  margin-top: -30px;
-
+.host-view .main-panel .host-form,
+.compute-view .main-panel .compute-form {
   .fa-question-circle {
     color: $link_color;
     margin-top: 0;
@@ -765,6 +777,7 @@ $main-list-view-right: 10px;
 
 .form-group .dropdown button .loading {
   width: 18px;
+  height: 18px;
   float: left;
   margin-left: 5px;
 }
@@ -930,10 +943,12 @@ $main-list-view-right: 10px;
   border-top-right-radius: 0px;
   border-bottom-right-radius: 0px;
   width: $right-context-panel-toolbar-item-width;
+  min-width: $right-context-panel-toolbar-item-width;
   color: #FFFFFF;
   background-color: #bababa;
   height: 60px;
   border: none;
+  margin: 0;
 }
 
 .right-context-panel > .toolbar .toolbar-item > a:focus {
@@ -1665,7 +1680,7 @@ a.close-button i.fa-chevron-circle-left {
     height: 100%;
     vertical-align: middle;
   }
-  > img {
+  > .spinner {
     width: 100px;
     height: 100px;
     vertical-align: middle;
@@ -2250,7 +2265,7 @@ $alert-text-color: #ffffff;
 .title-action-button {
   margin-left: 10px;
 
-  .selected {
+  .btn.selected {
     color: #fff;
     background-color: $main-color;
   }
@@ -2305,7 +2320,9 @@ $alert-text-color: #ffffff;
 
 .toolbar-actions .toolbar-action .btn-circle {
   width: 32px;
+  min-width: 32px;
   line-height: 28px;
+  height: 32px;
   border: 2px solid $main_color;
   border-radius: 16px;
   text-align: center;
@@ -2380,6 +2397,8 @@ $alert-text-color: #ffffff;
 
   .btn-circle {
     width: 30px;
+    min-width: 30px;
+    height: 30px;
     line-height: 26px;
     margin-left: 5px;
     padding: 0;

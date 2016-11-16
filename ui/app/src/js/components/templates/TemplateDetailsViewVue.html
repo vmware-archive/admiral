@@ -111,7 +111,7 @@
         </grid>
         <div v-if="model.templateDetails.listView.itemsLoading" class="loading">
           <span class="vertical-helper"></span>
-          <img src="image-assets/loading-animation.gif">
+          <div class="spinner"></div>
         </div>
         <network-box v-for="network in networks | networksOrderBy" track-by="documentSelfLink" v-bind:model="network"
              v-on:attached="networkAttached"
@@ -150,7 +150,7 @@
           </grid>
           <div v-if="model.newContainerDefinition.listView.itemsLoading" class="loading">
             <span class="vertical-helper"></span>
-            <img src="image-assets/loading-animation.gif">
+            <div class="spinner"></div>
           </div>
         </div>
       </div>

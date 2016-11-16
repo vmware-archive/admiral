@@ -1,0 +1,14 @@
+/* Clarity - Bootstrap gap */
+
+.spinner {
+  background-image: url("../image-assets/loading-animation.gif");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+  display: inline-block;
+}
+
+.spinner.spinner-inline {
+  width: 100%;
+  height: 100%;
+}
