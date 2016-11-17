@@ -13,10 +13,11 @@ package cmd
 
 import (
 	"errors"
-	"strings"
 
 	"admiral/help"
 	"admiral/networks"
+
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -58,11 +59,10 @@ func initNetworkCreate() {
 
 func RunNetworkCreate(args []string) (string, error) {
 	var (
-		name   string
-		ok     bool
-		output string
-		id     string
-		err    error
+		name string
+		ok   bool
+		id   string
+		err  error
 	)
 	if name, ok = ValidateArgsCount(args); !ok {
 		return "", MissingNetworkNameError
@@ -71,12 +71,14 @@ func RunNetworkCreate(args []string) (string, error) {
 	id, err = networks.CreateNetwork(name, networkDriver, ipamDriver, gateways, subnets, ipRanges,
 		custProps, hostIds, asyncTask)
 
-	if !asyncTask {
-		output = "Network created: " + id
-	} else {
-		output = "Network is being created."
+	if err != nil {
+		return "", err
 	}
-	return output, err
+	if !asyncTask {
+		return "Network created: " + id, nil
+
+	}
+	return "Network is being created.", nil
 
 }
 
@@ -152,11 +154,13 @@ func RunNetworkRemove(args []string) (string, error) {
 	}
 
 	ids, err := networks.RemoveNetwork(args, asyncTask)
-	var output string
-	if !asyncTask {
-		output = "Networks removed: " + strings.Join(ids, ", ")
-	} else {
-		output = "Networks are being removed."
+	if err != nil {
+		return "", err
 	}
-	return output, err
+	if !asyncTask {
+		return "Network(s) removed: " + strings.Join(ids, ", "), nil
+
+	}
+	return "Network(s) are being removed.", nil
+
 }

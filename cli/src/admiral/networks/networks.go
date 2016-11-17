@@ -221,22 +221,11 @@ func RemoveNetwork(ids []string, asyncTask bool) ([]string, error) {
 	if respErr != nil {
 		return nil, respErr
 	}
-
-	taskStatus := &track.OperationResponse{}
-	err = json.Unmarshal(respBody, taskStatus)
-	utils.CheckJsonError(err)
-	taskStatus.PrintTracerId()
-	resLinks := make([]string, 0)
 	if !asyncTask {
-		resLinks, err = track.Wait(taskStatus.GetTracerId())
-	} else {
-		resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
-		if len(resLinks) < 1 {
-			return ids, err
-		}
+		resLinks, err := track.StartWaitingFromResponse(respBody)
+		return resLinks, err
 	}
-	resourcesIDs := utils.GetResourceIDs(resLinks)
-	return resourcesIDs, err
+	return nil, nil
 
 }
 
@@ -295,19 +284,9 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 	if respErr != nil {
 		return "", respErr
 	}
-
-	taskStatus := &track.OperationResponse{}
-	err = json.Unmarshal(respBody, taskStatus)
-	utils.CheckJsonError(err)
-	taskStatus.PrintTracerId()
-	resLinks := make([]string, 0)
 	if !asyncTask {
-		resLinks, err = track.Wait(taskStatus.GetTracerId())
-	} else {
-		resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
+		resLinks, err := track.StartWaitingFromResponse(respBody)
+		return strings.Join(resLinks, ", "), err
 	}
-	if len(resLinks) > 0 {
-		return utils.GetResourceID(resLinks[0]), err
-	}
-	return "", err
+	return "", nil
 }

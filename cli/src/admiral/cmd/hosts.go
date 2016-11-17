@@ -69,9 +69,9 @@ func RunAddHost(args []string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else {
-		return "Host added: " + newID, nil
 	}
+	return "Host added: " + newID, nil
+
 }
 
 var hostDisableCmd = &cobra.Command{
@@ -101,9 +101,9 @@ func RunHostDisable(args []string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else {
-		return "Host disabled " + newID, err
 	}
+	return "Host disabled " + newID, err
+
 }
 
 var hostEnableCmd = &cobra.Command{
@@ -133,9 +133,9 @@ func RunHostEnable(args []string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else {
-		return "Host enabled: " + newID, err
 	}
+	return "Host enabled: " + newID, err
+
 }
 
 var hostListCmd = &cobra.Command{
@@ -199,9 +199,11 @@ func RunHostRemove(args []string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else {
-		return "Host removed: " + newID, err
 	}
+	if asyncTask {
+		return "Host is being removed.", nil
+	}
+	return "Host removed: " + newID, err
 }
 
 var hostUpdateCmd = &cobra.Command{

@@ -166,15 +166,11 @@ func RunContainersRemove(args []string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else {
-		var output string
-		if asyncTask {
-			output = "Container(s) are being removed: " + strings.Join(resIDs, " ")
-		} else {
-			output = "Container(s) removed: " + strings.Join(resIDs, " ")
-		}
-		return output, err
 	}
+	if !asyncTask {
+		return "Container(s) removed: " + strings.Join(resIDs, " "), nil
+	}
+	return "Container(s) are being removed.", nil
 }
 
 var containerRestartCmd = &cobra.Command{
@@ -207,15 +203,11 @@ func RunContainerRestart(args []string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else {
-		var output string
-		if asyncTask {
-			output = "Container(s) are being started: " + strings.Join(resIDs, " ")
-		} else {
-			output = "Container(s) started: " + strings.Join(resIDs, " ")
-		}
-		return output, err
 	}
+	if !asyncTask {
+		return "Container(s) restarted: " + strings.Join(resIDs, ", "), nil
+	}
+	return "Container(s) are being restarted.", nil
 }
 
 var containerScaleCmd = &cobra.Command{
@@ -254,15 +246,11 @@ func RunContainerScale(args []string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else {
-		var output string
-		if asyncTask {
-			output = "Container is being scaled: " + newID
-		} else {
-			output = "Container scaled: " + newID
-		}
-		return output, err
 	}
+	if !asyncTask {
+		return "Container scaled: " + newID, nil
+	}
+	return "Container are being scaled.", nil
 }
 
 var containerListCmd = &cobra.Command{
@@ -321,16 +309,11 @@ func RunContainerStart(args []string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else {
-		var output string
-		if asyncTask {
-			output = "Container(s) are being started: " + strings.Join(resIDs, " ")
-			return output, err
-		} else {
-			output = "Container(s) started: " + strings.Join(resIDs, " ")
-			return output, err
-		}
 	}
+	if !asyncTask {
+		return "Container(s) started: " + strings.Join(resIDs, ", "), nil
+	}
+	return "Container(s) are being started.", nil
 }
 
 var containerStopCmd = &cobra.Command{
@@ -363,16 +346,11 @@ func RunContainerStop(args []string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else {
-		var output string
-		if asyncTask {
-			output = "Container(s) are being stopped: " + strings.Join(resIDs, " ")
-			return output, err
-		} else {
-			output = "Container(s) stopped: " + strings.Join(resIDs, " ")
-			return output, err
-		}
 	}
+	if !asyncTask {
+		return "Container(s) stopped: " + strings.Join(resIDs, ", "), nil
+	}
+	return "Container(s) are being stopped.", nil
 }
 
 var containerRunCmd = &cobra.Command{
@@ -418,7 +396,6 @@ func RunContainerRun(args []string) (string, []error) {
 	var (
 		imageName string
 		newID     string
-		output    string
 		errorArr  []error
 		ok        bool
 	)
@@ -476,11 +453,11 @@ func RunContainerRun(args []string) (string, []error) {
 		errorArr = append(errorArr, err)
 	}
 
-	if asyncTask {
-		output = "Image is being provisioned."
-		return output, errorArr
-	} else {
-		output = "Image provisioned: " + newID
-		return output, errorArr
+	if len(errorArr) > 0 {
+		return "", errorArr
 	}
+	if !asyncTask {
+		return "Container(s) provisioned: " + newID, nil
+	}
+	return "Container(s) are being provisioned.", nil
 }

@@ -19,6 +19,8 @@ import (
 
 	"admiral/utils"
 
+	"strings"
+
 	"github.com/spf13/cobra"
 )
 
@@ -122,16 +124,11 @@ func RunAppRemove(args []string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else if len(IDs) > 0 {
-		var output string
-		if asyncTask {
-			output = "Application is being removed: " + IDs[0]
-		} else {
-			output = "Application removed: " + IDs[0]
-		}
-		return output, err
 	}
-	return "", err
+	if asyncTask {
+		return "Application is being removed.", nil
+	}
+	return "Application removed: " + strings.Join(IDs, ", "), err
 }
 
 var appRestartCmd = &cobra.Command{
@@ -165,16 +162,11 @@ func RunAppRestart(args []string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else if len(IDs) > 0 {
-		var output string
-		if asyncTask {
-			output = "Application is being restarted: " + IDs[0]
-		} else {
-			output = "Application restarted: " + IDs[0]
-		}
-		return output, err
 	}
-	return "", err
+	if asyncTask {
+		return "Application is being restarted.", nil
+	}
+	return "Application restarted: " + strings.Join(IDs, ", "), err
 }
 
 var appRunCmd = &cobra.Command{
@@ -230,16 +222,11 @@ func RunAppRun(args []string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else if len(IDs) > 0 {
-		var output string
-		if asyncTask {
-			output = "Application is being provisioned: " + IDs[0]
-		} else {
-			output = "Application provisioned: " + IDs[0]
-		}
-		return output, err
 	}
-	return "", err
+	if asyncTask {
+		return "Application is being provisioned.", nil
+	}
+	return "Application provisioned: " + strings.Join(IDs, ", "), err
 }
 
 var appStartCmd = &cobra.Command{
@@ -247,9 +234,6 @@ var appStartCmd = &cobra.Command{
 	Short: "Starts existing application",
 	Long:  "Starts existing application",
 
-	//Main function for "start-app" command.
-	//For arguments take application names.
-	//If any of the name is non-unique the command will be aborted.
 	Run: func(cmd *cobra.Command, args []string) {
 		output, err := RunAppStart(args)
 		processOutput(output, err)
@@ -275,16 +259,11 @@ func RunAppStart(args []string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else if len(IDs) > 0 {
-		var output string
-		if asyncTask {
-			output = "Application is being started: " + IDs[0]
-		} else {
-			output = "Application started: " + IDs[0]
-		}
-		return output, err
 	}
-	return "", err
+	if asyncTask {
+		return "Application is being started.", nil
+	}
+	return "Application started: " + strings.Join(IDs, ", "), err
 }
 
 var appStopCmd = &cobra.Command{
@@ -292,8 +271,6 @@ var appStopCmd = &cobra.Command{
 	Short: "Stops existing application",
 	Long:  "Stops existing application",
 
-	//For arguments take application names.
-	//If any of the name is non-unique the command will be aborted.
 	Run: func(cmd *cobra.Command, args []string) {
 		output, err := RunAppStop(args)
 		processOutput(output, err)
@@ -320,14 +297,9 @@ func RunAppStop(args []string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else if len(IDs) > 0 {
-		var output string
-		if asyncTask {
-			output = "Application is being stopped: " + IDs[0]
-		} else {
-			output = "Application stopped: " + IDs[0]
-		}
-		return output, err
 	}
-	return "", err
+	if asyncTask {
+		return "Application is being stopped.", nil
+	}
+	return "Application stopped: " + strings.Join(IDs, ", "), err
 }

@@ -314,13 +314,11 @@ func RemoveHost(id string, asyncTask bool) (string, error) {
 	if respErr != nil {
 		return "", respErr
 	}
-	taskStatus := &track.OperationResponse{}
-	_ = json.Unmarshal(respBody, taskStatus)
-	taskStatus.PrintTracerId()
 	if !asyncTask {
-		_, err = track.Wait(taskStatus.GetTracerId())
+		resLinks, err := track.StartWaitingFromResponse(respBody)
+		return strings.Join(resLinks, ", "), err
 	}
-	return id, err
+	return "", nil
 }
 
 func DisableHost(id string) (string, error) {

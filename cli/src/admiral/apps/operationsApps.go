@@ -70,22 +70,14 @@ func StartAppID(id string, asyncTask bool) ([]string, error) {
 	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
-	if respErr == nil {
-		taskStatus := &track.OperationResponse{}
-		_ = json.Unmarshal(respBody, taskStatus)
-		taskStatus.PrintTracerId()
-		if !asyncTask {
-			resLinks, err = track.Wait(taskStatus.GetTracerId())
-			resLinks = []string{id}
-		} else {
-			resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
-			resLinks = []string{id}
-		}
-	} else {
-		resLinks = nil
-		err = respErr
+	if respErr != nil {
+		return nil, respErr
 	}
-	return resLinks, err
+	if !asyncTask {
+		resLinks, err = track.StartWaitingFromResponse(respBody)
+		return resLinks, err
+	}
+	return nil, nil
 }
 
 //Function to stop application.
@@ -122,22 +114,14 @@ func StopAppID(id string, asyncTask bool) ([]string, error) {
 	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
-	if respErr == nil {
-		taskStatus := &track.OperationResponse{}
-		_ = json.Unmarshal(respBody, taskStatus)
-		taskStatus.PrintTracerId()
-		if !asyncTask {
-			resLinks, err = track.Wait(taskStatus.GetTracerId())
-			resLinks = []string{id}
-		} else {
-			resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
-			resLinks = []string{id}
-		}
-	} else {
-		resLinks = nil
-		err = respErr
+	if respErr != nil {
+		return nil, respErr
 	}
-	return resLinks, err
+	if !asyncTask {
+		resLinks, err = track.StartWaitingFromResponse(respBody)
+		return resLinks, err
+	}
+	return nil, nil
 }
 
 //Function to remove application.
@@ -174,22 +158,14 @@ func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
-	if respErr == nil {
-		taskStatus := &track.OperationResponse{}
-		_ = json.Unmarshal(respBody, taskStatus)
-		taskStatus.PrintTracerId()
-		if !asyncTask {
-			resLinks, err = track.Wait(taskStatus.GetTracerId())
-			resLinks = []string{id}
-		} else {
-			resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
-			resLinks = []string{id}
-		}
-	} else {
-		resLinks = nil
-		err = respErr
+	if respErr != nil {
+		return nil, respErr
 	}
-	return resLinks, err
+	if !asyncTask {
+		resLinks, err = track.StartWaitingFromResponse(respBody)
+		return resLinks, err
+	}
+	return nil, nil
 }
 
 type CompositeDescription struct {
@@ -282,19 +258,14 @@ func (ra *RunApplication) run(asyncTask bool) ([]string, error) {
 	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
-	if respErr == nil {
-		taskStatus := &track.OperationResponse{}
-		_ = json.Unmarshal(respBody, taskStatus)
-		taskStatus.PrintTracerId()
-		if !asyncTask {
-			links, err = track.Wait(taskStatus.GetTracerId())
-			return links, err
-		} else {
-			links, err = track.GetResLinks(taskStatus.GetTracerId())
-			return links, err
-		}
+	if respErr != nil {
+		return nil, respErr
 	}
-	return nil, respErr
+	if !asyncTask {
+		links, err = track.StartWaitingFromResponse(respBody)
+		return links, err
+	}
+	return nil, nil
 }
 
 func setTenantLink(tenantLinkId string) []string {

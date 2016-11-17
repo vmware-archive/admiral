@@ -227,20 +227,14 @@ func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 	if respErr != nil {
 		return nil, respErr
 	}
-
-	taskStatus := &track.OperationResponse{}
-	_ = json.Unmarshal(respBody, taskStatus)
-	taskStatus.PrintTracerId()
-	if !asyncTask {
-		resLinks, err = track.Wait(taskStatus.GetTracerId())
-	} else {
-		resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
-		if len(resLinks) < 1 {
-			return containers, err
-		}
+	if respErr != nil {
+		return nil, respErr
 	}
-	resourcesIDs := utils.GetResourceIDs(resLinks)
-	return resourcesIDs, err
+	if !asyncTask {
+		resLinks, err = track.StartWaitingFromResponse(respBody)
+		return resLinks, err
+	}
+	return nil, nil
 
 }
 
@@ -267,20 +261,11 @@ func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 	if respErr != nil {
 		return nil, respErr
 	}
-	taskStatus := &track.OperationResponse{}
-	_ = json.Unmarshal(respBody, taskStatus)
-	taskStatus.PrintTracerId()
 	if !asyncTask {
-		resLinks, err = track.Wait(taskStatus.GetTracerId())
-	} else {
-		resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
-		if len(resLinks) < 1 {
-			return containers, err
-		}
+		resLinks, err = track.StartWaitingFromResponse(respBody)
+		return resLinks, err
 	}
-	resourcesIDs := utils.GetResourceIDs(resLinks)
-	return resourcesIDs, err
-
+	return nil, nil
 }
 
 //Function to remove container by it's name.
@@ -303,24 +288,14 @@ func RemoveContainer(containers []string, asyncTask bool) ([]string, error) {
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
-
 	if respErr != nil {
 		return nil, respErr
 	}
-	taskStatus := &track.OperationResponse{}
-	_ = json.Unmarshal(respBody, taskStatus)
-	taskStatus.PrintTracerId()
 	if !asyncTask {
-		resLinks, err = track.Wait(taskStatus.GetTracerId())
-	} else {
-		resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
-		if len(resLinks) < 1 {
-			return containers, err
-		}
+		resLinks, err = track.StartWaitingFromResponse(respBody)
+		return resLinks, err
 	}
-	resourcesIDs := utils.GetResourceIDs(resLinks)
-	return resourcesIDs, err
-
+	return nil, nil
 }
 
 //Function to remove many containers matching specified query
@@ -348,22 +323,14 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 
-	if respErr == nil {
-		taskStatus := &track.OperationResponse{}
-		_ = json.Unmarshal(respBody, taskStatus)
-		taskStatus.PrintTracerId()
-		if !asyncTask {
-			resLinks, err = track.Wait(taskStatus.GetTracerId())
-		} else {
-			resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
-			if len(resLinks) < 1 {
-				return utils.GetResourceIDs(lc.DocumentLinks), err
-			}
-		}
-		resourcesIDs := utils.GetResourceIDs(resLinks)
-		return resourcesIDs, err
+	if respErr != nil {
+		return nil, respErr
 	}
-	return nil, respErr
+	if !asyncTask {
+		resLinks, err = track.StartWaitingFromResponse(respBody)
+		return resLinks, err
+	}
+	return nil, nil
 }
 
 //Function to execute command inside container.
@@ -414,23 +381,17 @@ func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (strin
 
 	scaleJson, err := json.Marshal(scale)
 	utils.CheckJsonError(err)
-
 	req, _ = http.NewRequest("POST", url, bytes.NewBuffer(scaleJson))
 	_, respBody, respErr = client.ProcessRequest(req)
 
 	if respErr != nil {
 		return "", respErr
 	}
-	taskStatus := &track.OperationResponse{}
-	_ = json.Unmarshal(respBody, taskStatus)
-	taskStatus.PrintTracerId()
 	if !asyncTask {
-		resLinks, err = track.Wait(taskStatus.GetTracerId())
-	} else {
-		resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
+		resLinks, err = track.StartWaitingFromResponse(respBody)
+		return strings.Join(resLinks, ", "), err
 	}
-	return containerID, err
-
+	return "", nil
 }
 
 //Function to get information about container in JSON format.

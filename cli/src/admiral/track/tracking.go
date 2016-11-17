@@ -56,6 +56,23 @@ func (or *OperationResponse) PrintTracerId() {
 	fmt.Printf("%s Task ID: %s\n", time.Now().Format("2006.01.02 15:04:05"), or.GetTracerId())
 }
 
+// Operations that are going against RequestBrokerService,
+// returns link where you can track the request you made.
+// When you have sent operation to the RequestBrokerService,
+// invoke this function by passing the response body.
+// StartWaitingFromResponse will unmarshal the response body,
+// which is passed as parameter get the track link, and start waiting the task.
+// Finally it will return string slice containing the resource links,
+// and possible error, which occurred during the waiting,
+// or the request ended with with error.
+func StartWaitingFromResponse(respBody []byte) ([]string, error) {
+	opResp := &OperationResponse{}
+	json.Unmarshal(respBody, opResp)
+	opResp.PrintTracerId()
+	resLinks, err := Wait(opResp.GetTracerId())
+	return utils.GetResourceIDs(resLinks), err
+}
+
 func Wait(taskId string) ([]string, error) {
 	const progressBarWidth = 55
 	taskStatus := &TaskStatus{}
