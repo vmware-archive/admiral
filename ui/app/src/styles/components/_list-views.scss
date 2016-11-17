@@ -176,6 +176,12 @@
   .status-state {
     font-weight: bold;
   }
+  .status.FINISHED {
+    color: $status_running_color;
+  }
+  .status.FAILED {
+    color: $status_stopped_color;
+  }
 }
 
 .list-view:not(.context-selected) > .grid-container {
@@ -223,6 +229,9 @@
 
 .list-view .grid-item .title {
   font-size: 22px;
+}
+.list-view .grid-item .closure-title {
+  font-size: 18px;
 }
 .list-view .grid-item .image-tag {
   font-weight: 300;
@@ -385,6 +394,18 @@
     @extend .truncateText2Lines;
   }
 
+  .list-view .container-content .closure-description-text {
+    min-height: 145px;
+
+    @extend .image-description-text;
+  }
+
+  .list-view .closure-description-text {
+    min-height: 110px;
+
+    @extend .image-description-text;
+  }
+
   .list-view .image-item .image-content .image-description {
     color: $secondary_hint_title_color;
     margin-top: 10px;
@@ -435,7 +456,7 @@
 .list-view .image-item,
 .list-view .cluster-item,
 .list-view .composite-container-item,
-.list-view .container-template-item {
+.list-view .container-template-item, .list-view .closure-template-item {
   z-index: 0;
 
   .container-header {
@@ -798,6 +819,10 @@
       .container-template-item-stack {
         display: none;
       }
+
+     .closure-template-item-stack {
+       display: none;
+      }
       .container-containers-holder {
         display: none;
       }
@@ -965,6 +990,10 @@
       .container-template-item-stack {
         display: none;
       }
+
+      .closure-template-item-stack {
+        display: none;
+      }
     }
     .grid-item:hover .container-actions {
       display: none;
@@ -1085,6 +1114,7 @@ $template-details-right: 20px;
 }
 
 .template-details .list-view .new-item.grid-item:hover {
+
   .item-content.left {
     transform: translate(-80px, 0) scale(0.5);
   }
@@ -1197,6 +1227,82 @@ $elements-side-margin: $elements-margin / 2;
 
 .template-details .edit-network.closable-view .control-btns {
   margin-right: 20px;
+}
+
+.template-details .add-closure.closable-view .closure-form {
+  margin-right: $template-details-right;
+}
+
+.template-details .add-closure.closable-view {
+  margin-right: $template-details-right;
+}
+
+.template-details .add-closure.closable-view {
+  > .content {
+    @extend .position-expand;
+    z-index: 1;
+    > .mask {
+      display: none;
+    }
+  }
+  > .right-context-panel {
+    @extend .position-expand;
+    z-index: 2;
+    left: 100%;
+    top: -10px;
+    > .content {
+      top: 40px;
+    }
+  }
+}
+
+.grid-item.container-template-item.closure {
+  position: relative;
+}
+
+.images-view.right-context-expanded {
+  > .list-holder {
+    right: 55%;
+  }
+
+  > .right-context-panel.right-closure-panel {
+    left: 45%;
+    top: 20px;
+  }
+}
+
+.containers-view.right-context-expanded {
+  > .list-holder {
+    right: 55%;
+  }
+
+  > .right-context-panel.right-closure-panel {
+    left: 45%;
+    top: 20px;
+  }
+}
+
+.template-details .add-closure.closable-view.right-context-expanded {
+  > .content {
+    > .mask {
+      display: block;
+    }
+  }
+  > .right-context-panel {
+    left: 45%;
+  }
+}
+
+.closure-logs .centeredLabel {
+  text-align: center;
+}
+
+.closable-view .closure-logs {
+  margin-top: 80px;
+}
+
+.closable-view .closure-logs .td {
+  vertical-align:top;
 }
 
 .template-details .control-btns {
@@ -1338,7 +1444,33 @@ $elements-side-margin: $elements-margin / 2;
   border-radius: 5px;
 }
 
+.closure-template-item-stack {
+  position: absolute;
+  /* Neutralize borders */
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  z-index: 0;
+
+  border-radius: 5px;
+}
+
 .container-template-item-stack > div {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  background-color: #ffffff;
+
+  border: 1px solid $main-border-color;
+  border-radius: 5px;
+}
+
+.closure-template-item-stack > div {
   position: absolute;
 
   top: 0;
@@ -1366,9 +1498,18 @@ $thresshold: 5;
     .container-template-item-stack > div:nth-child(#{$container}) {
       border-color: lighten($main-border-color, 7%)
     }
+
+    .closure-template-item-stack > div:nth-child(#{$container}) {
+      border-color: lighten($main-border-color, 7%)
+    }
   }
 
   .container-template-item-stack > div:nth-child(#{$container}) {
+    transform: translateX($offset) translateY($offset);
+    z-index: 20-$container;
+  }
+
+  .closure-template-item-stack > div:nth-child(#{$container}) {
     transform: translateX($offset) translateY($offset);
     z-index: 20-$container;
   }

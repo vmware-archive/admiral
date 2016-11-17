@@ -38,6 +38,7 @@
         <module>common</module>
         <module>compute</module>
         <module>request</module>
+        <module>closures</module>
         <module>continuous-delivery</module>
         <module>ui</module>
         <module>host</module>
@@ -81,6 +82,8 @@
         <bouncycastle.version>1.54</bouncycastle.version>
         <jackson.version>2.8.4</jackson.version>
         <httpclient.version>4.5.2</httpclient.version>
+		<gson.version>2.3.1</gson.version>
+
 
         <!-- JS -->
         <maven.plugin.frontend.version>0.0.29</maven.plugin.frontend.version>

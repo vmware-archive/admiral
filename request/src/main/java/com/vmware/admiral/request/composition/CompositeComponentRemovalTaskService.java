@@ -48,7 +48,7 @@ import com.vmware.xenon.services.common.QueryTask;
 public class CompositeComponentRemovalTaskService
         extends
         AbstractTaskStatefulService<CompositeComponentRemovalTaskService.CompositeComponentRemovalTaskState,
-        CompositeComponentRemovalTaskService.CompositeComponentRemovalTaskState.SubStage> {
+                CompositeComponentRemovalTaskService.CompositeComponentRemovalTaskState.SubStage> {
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_COMPOSITION_REMOVAL_TASK;
 
     public static final String DISPLAY_NAME = ContainerRemovalTaskService.DISPLAY_NAME;
@@ -75,8 +75,7 @@ public class CompositeComponentRemovalTaskService
     // Order of batch remove of resources, grouped by resource type.
     private static final List<ResourceType> PREFERED_ORDER_OF_REMOVAL_PER_TYPE = Arrays.asList(
             ResourceType.CONTAINER_TYPE, ResourceType.COMPUTE_TYPE, ResourceType.NETWORK_TYPE,
-            ResourceType.VOLUME_TYPE
-            );
+            ResourceType.VOLUME_TYPE, ResourceType.CLOSURE_TYPE);
 
     public CompositeComponentRemovalTaskService() {
         super(CompositeComponentRemovalTaskState.class, SubStage.class, DISPLAY_NAME);

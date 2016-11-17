@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
+import static com.vmware.admiral.compute.ContainerHostService.SSH_HOST_KEY_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_CERT_PROP_NAME;
 
@@ -61,6 +62,8 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     private static final long SSL_TRUST_RETRIES_WAIT = Long.getLong(
             "com.vmware.admiral.adapter.ssltrust.delegate.retries.wait.millis", 500);
 
+    public static final String MEDIA_TYPE_APPLICATION_TAR = "application/tar";
+
     private static RemoteApiDockerAdapterCommandExecutorImpl INSTANCE;
 
     private static final Pattern ERROR_PATTERN = Pattern.compile("\"error\":\"(.*)\"");
@@ -108,6 +111,82 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             INSTANCE = new RemoteApiDockerAdapterCommandExecutorImpl(host, trustManager);
         }
         return INSTANCE;
+    }
+
+    @Override
+    public void buildImage(CommandInput input, Operation.CompletionHandler completionHandler) {
+        createOrUpdateTargetSsl(input);
+        URI targetUri = UriUtils.extendUri(input.getDockerUri(), "/build");
+
+        Map<String, Object> props = input.getProperties();
+        byte[] imageData = (byte[]) props.get(DockerAdapterCommandExecutor
+                .DOCKER_BUILD_IMAGE_DOCKERFILE_DATA);
+
+        props.remove(DockerAdapterCommandExecutor.DOCKER_BUILD_IMAGE_DOCKERFILE_DATA);
+        props.remove(SSL_TRUST_ALIAS_PROP_NAME);
+        props.remove(SSL_TRUST_CERT_PROP_NAME);
+        props.remove(SSH_HOST_KEY_PROP_NAME);
+
+        targetUri = extendUriWithQuery(targetUri, input);
+
+        logger.info("Building image on: " + targetUri);
+
+        Operation op = Operation.createPost(targetUri)
+                .setBody(imageData)
+                .setContentType(MEDIA_TYPE_APPLICATION_TAR)
+                .setCompletion((o, ex) -> {
+                    String body = o.getBody(String.class);
+                    logger.info("Dump response body: " + body);
+                    if (ex == null) {
+                        // check the last status to make sure there was no error during download
+                        // the response is not valid json so this is hacky way to find out if there
+                        // was an error
+                        Matcher matcher = ERROR_PATTERN.matcher(body);
+                        if (matcher.find()) {
+                            logger.info("Build failure detected! Response Body: " + body);
+                            completionHandler.handle(o, new RuntimeException("Error: "
+                                    + matcher.group(1)));
+                            o.complete();
+                            return;
+                        }
+                    } else {
+                        logger.severe("Unable to create image! Reason: " + ex.getMessage());
+                    }
+                    o.complete();
+                    completionHandler.handle(o, ex);
+                });
+
+        prepareRequest(op, true);
+        largeDataClient.send(op);
+
+        logger.info("Building image request sent.");
+    }
+
+    @Override
+    public void deleteImage(CommandInput input, Operation.CompletionHandler completionHandler) {
+        createOrUpdateTargetSsl(input);
+
+        String path = String.format("/images/%s", input.getProperties().get(DockerAdapterCommandExecutor
+                .DOCKER_BUILD_IMAGE_TAG_PROP_NAME));
+        URI targetUri = UriUtils.extendUri(input.getDockerUri(), path);
+
+        logger.info("Deleting image: " + targetUri);
+
+        sendDelete(targetUri, completionHandler);
+    }
+
+    @Override
+    public void inspectImage(CommandInput input, Operation.CompletionHandler completionHandler) {
+        createOrUpdateTargetSsl(input);
+
+        String path = String
+                .format("/images/%s/json", input.getProperties().get(DockerAdapterCommandExecutor
+                        .DOCKER_BUILD_IMAGE_INSPECT_NAME_PROP_NAME));
+        URI targetUri = UriUtils.extendUri(input.getDockerUri(), path);
+
+        logger.info("Inspecting image: " + targetUri);
+
+        sendRequest(Service.Action.GET, targetUri, null, completionHandler, ClientMode.LARGE_DATA);
     }
 
     @Override

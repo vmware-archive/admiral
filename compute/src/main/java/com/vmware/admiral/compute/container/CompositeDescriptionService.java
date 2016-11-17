@@ -14,6 +14,7 @@ package com.vmware.admiral.compute.container;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
+import static com.vmware.admiral.common.util.QueryUtil.createKindClause;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.EXPAND;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.FIXED_ITEM_NAME;
 
@@ -25,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
+import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -270,29 +273,64 @@ public class CompositeDescriptionService extends StatefulService {
             return;
         }
 
-        QueryTask queryTask = QueryUtil.buildQuery(ContainerDescription.class, true);
+        QueryTask queryTask = new QueryTask();
+        queryTask.querySpec = new QueryTask.QuerySpecification();
+        queryTask.taskInfo.isDirect = true;
 
         QueryUtil.addExpandOption(queryTask);
 
+        QueryTask.Query containerDescClause = new QueryTask.Query();
+        containerDescClause.addBooleanClause(createKindClause(ContainerDescription.class));
+        containerDescClause.occurance = QueryTask.Query.Occurance.SHOULD_OCCUR;
+
+        QueryTask.Query closureDescClause = new QueryTask.Query();
+        closureDescClause.addBooleanClause(createKindClause(ClosureDescription.class));
+        closureDescClause.occurance = QueryTask.Query.Occurance.SHOULD_OCCUR;
+
+        queryTask.querySpec.query.addBooleanClause(containerDescClause);
+        queryTask.querySpec.query.addBooleanClause(closureDescClause);
         QueryUtil.addListValueClause(queryTask,
                 ContainerDescription.FIELD_NAME_SELF_LINK,
                 descriptionLinks);
 
         Map<String, String> images = new HashMap<>();
-        CompositeDescriptionImages result = new CompositeDescriptionImages();
-
-        new ServiceDocumentQuery<>(getHost(), ContainerDescription.class)
-                .query(queryTask, (r) -> {
-                    if (r.hasException()) {
-                        op.fail(r.getException());
-                    } else if (r.hasResult()) {
-                        images.put(r.getResult().documentSelfLink, r.getResult().image);
-                        result.tenantLinks = r.getResult().tenantLinks;
+        CompositeDescriptionImages imagesResult = new CompositeDescriptionImages();
+        sendRequest(Operation
+                .createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
+                .setBody(queryTask)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        op.fail(ex);
                     } else {
-                        result.descriptionImages = images;
-                        op.setBody(result).complete();
+                        QueryTask resultTask = o.getBody(QueryTask.class);
+                        ServiceDocumentQueryResult result = resultTask.results;
+
+                        if (result == null || result.documents == null) {
+                            imagesResult.descriptionImages = images;
+                            op.setBody(imagesResult).complete();
+                            return;
+                        }
+                        result.documents.forEach((link, document) -> {
+                            if (link.startsWith(ContainerDescriptionService.FACTORY_LINK)) {
+                                ContainerDescription containerDescription = Utils.fromJson(document,
+                                        ContainerDescription.class);
+                                images.put(containerDescription.documentSelfLink, containerDescription.image);
+                                imagesResult.tenantLinks = containerDescription.tenantLinks;
+                            } else if (link.startsWith(ClosureDescriptionFactoryService.FACTORY_LINK)) {
+                                ClosureDescription closureDescription = Utils.fromJson(document,
+                                        ClosureDescription.class);
+                                images.put(closureDescription.documentSelfLink, closureDescription.runtime);
+                                imagesResult.tenantLinks = closureDescription.tenantLinks;
+                            } else {
+                                logWarning("Unexpected result type: %s", link);
+                            }
+                        });
+
+                        imagesResult.descriptionImages = images;
+                        op.setBody(imagesResult).complete();
+
                     }
-                });
+                }));
     }
 
     private void retrieveComponentDescriptions(CompositeDescription compositeDescription,

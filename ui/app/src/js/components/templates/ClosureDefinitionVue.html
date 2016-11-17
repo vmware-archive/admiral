@@ -1,0 +1,50 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="container-template-item closure-template-item">
+
+  <div class="container-header">
+    <img v-bind:src="closureIcon" />
+    <div class="title-holder">
+      <div class="title truncateText" title="{{model.name}}">{{model.name}}</div>
+      <div class="image-tag truncateText">{{closureRuntime}}</div>
+    </div>
+  </div>
+
+  <hr/>
+
+  <div class="container-content">
+    <div class="closure-description-text" title="{{model.description}}">{{model.description}}&nbsp;</div>
+    <div>
+        <span class="container-label">Memory:</span>
+        <span class="container-label">{{model.resources.ramMB}} MB&nbsp;</span>
+    </div>
+    <div>
+        <span class="container-label">Timeout:</span>
+        <span class="container-label">{{model.resources.timeoutSeconds}} seconds&nbsp;</span>
+    </div>
+  </div>
+
+  <div class="container-actions" v-bind:class="{'hide': showDeleteConfirmation}">
+    <action-button name="container-definition-edit" icon-name="pencil"
+                   v-bind:label="i18n('edit')"
+                   v-on:click="editClosureDescription($event)"></action-button>
+
+    <action-button name="container-definition-remove" icon-name="times"
+                   v-bind:label="i18n('remove')"
+                   v-on:click="askConfirmation($event)"></action-button>
+  </div>
+  <delete-confirmation v-bind:class="{'hide': !showDeleteConfirmation}"
+                       v-bind:show="showDeleteConfirmation"
+                       v-on:confirm-delete="deleteClosureDescription($event)"
+                       v-on:cancel-delete="cancelRemoval($event)"></delete-confirmation>
+
+</div>

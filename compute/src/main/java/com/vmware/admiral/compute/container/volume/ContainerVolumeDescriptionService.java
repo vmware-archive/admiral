@@ -28,8 +28,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.CloneableResource;
-import com.vmware.admiral.compute.content.YamlMapper;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;

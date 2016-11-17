@@ -242,7 +242,7 @@ public class BindingEvaluatorTest {
         Binding.ComponentBinding aComponentBinding = new Binding.ComponentBinding("A", aBindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
-                .asList(firstDescription, secondDescription),
+                        .asList(firstDescription, secondDescription),
                 Arrays.asList(bComponentBinding, aComponentBinding));
 
         BindingEvaluator.evaluateBindings(compositeDescription);
@@ -270,7 +270,7 @@ public class BindingEvaluatorTest {
         Binding.ComponentBinding aComponentBinding = new Binding.ComponentBinding("A", aBindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
-                .asList(firstDescription, secondDescription),
+                        .asList(firstDescription, secondDescription),
                 Arrays.asList(bComponentBinding, aComponentBinding));
 
         BindingEvaluator.evaluateBindings(compositeDescription);
@@ -309,7 +309,7 @@ public class BindingEvaluatorTest {
         Binding.ComponentBinding bComponentBinding = new Binding.ComponentBinding("B", bBindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
-                .asList(firstDescription, secondDescription, thirdDescription),
+                        .asList(firstDescription, secondDescription, thirdDescription),
                 Arrays.asList(bComponentBinding, aComponentBinding));
 
         BindingEvaluator.evaluateBindings(compositeDescription);
@@ -350,7 +350,7 @@ public class BindingEvaluatorTest {
         Binding.ComponentBinding bComponentBinding = new Binding.ComponentBinding("B", bBindings);
 
         CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
-                .asList(firstDescription, secondDescription, thirdDescription),
+                        .asList(firstDescription, secondDescription, thirdDescription),
                 Arrays.asList(bComponentBinding, aComponentBinding));
 
         BindingEvaluator.evaluateBindings(compositeDescription);
@@ -406,9 +406,10 @@ public class BindingEvaluatorTest {
         containers.put("A", containerState);
 
         ContainerState containerStateE = new ContainerState();
-        Object o = BindingEvaluator
+        List<Object> evalList = BindingEvaluator
                 .evaluateProvisioningTimeBindings(containerStateE, bindings, containers);
-        assertEquals(((ContainerState) o).parentLink, containerState.parentLink);
+        assertEquals(1, evalList.size());
+        assertEquals(((ContainerState) evalList.get(0)).parentLink, containerState.parentLink);
 
     }
 

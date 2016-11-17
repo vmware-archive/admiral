@@ -9,6 +9,10 @@ function processWebpack(options, callback) {
   var config = getWebpackConfig(options);
 
   webpack(config, function(err, stats) {
+
+    if (err && err.error) {
+      err = err.error;
+    }
     if (!err) {
       if (stats && stats.compilation &&
           stats.compilation.errors && stats.compilation.errors.length) {
@@ -20,6 +24,14 @@ function processWebpack(options, callback) {
 
     if (err) {
       console.log('error webpack for: ' + options.filename);
+      if (err.length) {
+        err.forEach(function(e) {
+          console.log(e);
+        });
+      } else {
+        console.log(err);
+      }
+
       beep();
     } else {
       console.log('completed webpack for: ' + options.filename);

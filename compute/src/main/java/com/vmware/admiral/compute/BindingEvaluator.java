@@ -33,10 +33,10 @@ import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.content.Binding;
 import com.vmware.admiral.compute.content.Binding.ComponentBinding;
-import com.vmware.admiral.compute.content.YamlMapper;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.ServiceDocument;
 
@@ -146,19 +146,21 @@ public class BindingEvaluator {
     /**
      * Applies the binding on a Component, after a dependent component is provisioned.
      */
-    public static Object evaluateProvisioningTimeBindings(
+    public static List<Object> evaluateProvisioningTimeBindings(
             Object state,
             List<Binding> bindings,
             Map<String, Object> provisionedResources) {
-
-        Object result = state;
+        List<Object> result = new ArrayList<>();
+        if (bindings.isEmpty()) {
+            result.add(state);
+        }
         for (Binding binding : bindings) {
             if (!binding.isProvisioningTimeBinding()) {
                 continue;
             }
-
             try {
-                result = evaluateProvisioningTimeBinding(binding, state, provisionedResources);
+                Object evaluatedBinding = evaluateProvisioningTimeBinding(binding, state, provisionedResources);
+                result.add(evaluatedBinding);
             } catch (ReflectiveOperationException | IOException e) {
                 throw new RuntimeException(e);
             }

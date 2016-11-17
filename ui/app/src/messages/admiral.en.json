@@ -22,6 +22,7 @@
       "containers": "Containers",
       "applications": "Applications",
       "networks": "Networks",
+      "closures": "Closures",
       "eventlog": "Event Log",
       "resourcePools": "Placement Zones",
       "environments": "Environments",
@@ -228,6 +229,7 @@
         "searchImagesTemplatesPlaceholder": "Search for images, templates",
         "searchImagesPlaceholder": "Search for images",
         "searchTemplatesPlaceholder": "Search for templates",
+        "searchClosuresPlaceholder": "Search for closures",
         "manageRegistry": "Manage Registry",
         "provision": "Provision",
         "provisionAdditionalInfo": "Enter additional info",
@@ -246,7 +248,8 @@
         "searchCategory": {
           "all": "All",
           "images": "Images",
-          "templates": "Templates"
+          "templates": "Templates",
+          "closures": "Closures"
         }
       },
       "details": {
@@ -284,6 +287,11 @@
           "ipamConfigGateway": "Gateway",
           "ipamConfigGatewayHint": "Example: 172.16.238.1",
           "customProperties": "Custom properties"
+        },
+        "editClosures" :{
+          "newTitle": "Add Closure",
+          "editTitle": "Edit Closure",
+          "name": "Name"
         },
         "network": {
           "drag": "Drag to attach container to this network",
@@ -486,15 +494,20 @@
         "container": {
           "create": "Create Container"
         },
+        "closure": {
+          "create": "Create Closure"
+        },
         "titleSearch": {
           "containers": "Containers",
           "applications": "Applications",
-          "networks": "Networks"
+          "networks": "Networks",
+          "closures": "Closures"
         },
         "searchPlaceholder": {
           "containers": "Search for containers",
           "applications": "Search for applications",
-          "networks": "Search for networks"
+          "networks": "Search for networks",
+          "closures": "Search for closures"
         },
         "searchCategory": {
           "networks": "Networks"
@@ -745,92 +758,190 @@
         "failed": "Failed"
       }
     },
-    "help": {
-      "link": "Help",
-      "description": "Ensemble allows you to access relevant information for the context of the task that you are currently performing. It will refresh automatically with instructions as you continue your work. Use a second screen or split-screen to access the information in real time. You can use a mobile device, a TV, and any other screen whether it is connected to your computer or not. You can use Ensemble outside of the trusted network, while still receiving instantaneous updates.",
-      "descriptionOpen": "To open Ensemble, click <strong>Open in new tab</strong> or scan the QR code with your mobile device."
-    },
-    "resources": {
-      "selectMultiple": "Select Items",
-      "message": {
-        "selectShift": "Use shift to select multiple items"
+    "closure": {
+      "title": "All Closures",
+      "titleSearch": "Found Closures",
+      "searchPlaceholder": "Search for closures",
+      "resourcePool": "Resource Pool",
+      "resultStatus": "Result Status",
+      "details": {
+        "name": "Name",
+        "description": "Description",
+        "runtime" : "Runtime",
+        "state": "State",
+        "id": "ID",
+        "inputs": "Inputs",
+        "outputs": "Outputs",
+        "closureTitle": "Closure run info",
+        "closureDescriptionTitle": "Closure description info",
+        "descriptionId": "ID",
+        "source": "Source",
+        "sourceURL": "Source URL",
+        "resources": "Resources"
+      },
+      "state": {
+        "CREATED": "CREATED",
+        "STARTED": "STARTED",
+        "FINISHED": "FINISHED",
+        "FAILED": "FAILED",
+        "CANCELLED": "CANCELLED"
+      },
+      "request": {
+        "title": "Closure definition",
+        "save": "Save",
+        "run": "Run",
+        "inputs": {
+          "name": "Name",
+          "description": "Description",
+          "runtime": "Runtime",
+          "source": "Source code",
+          "sourceURL": "Source URL",
+          "runtimeTypes": {
+            "nodejs": "Node.js 4.3.0",
+            "python": "Python 3.4.3"
+          },
+          "logConfigOptionsInputs" : {
+            "name": "Name",
+            "nameHint": "Example: max-size",
+            "value": "Value",
+            "valueHint": "Example: 10m"
+           },
+           "closureInputs" : {
+            "name": "Name",
+            "nameHint": "Example: a",
+            "value": "Value",
+            "valueHint": "Example: 1"
+           },
+           "closureOutputs" : {
+            "name": "Name",
+            "nameHint": "Example: result"
+           },
+          "memoryLimit": "Memory limit (megabytes)",
+          "timeout": "Timeout (seconds)",
+          "entrypoint": "Entrypoint handler",
+          "logConfigDriver": "Log driver",
+          "logConfigOptions": "Log options",
+          "sourceMode": "Mode",
+          "sourceProvided": "Source provided",
+          "sourceFromURL": "Source from URL",
+          "inputs": "Inputs",
+          "outputs": "Outputs",
+          "dependencies": "Dependencies",
+          "nameDescription": "Name of the closure. If entrypoint is not set the name will be used as function name to call.",
+          "descriptionDescription": "Description of the closure",
+          "sourceDescription": "Source code to execute",
+          "sourceURLDescription": "Source code accessible via URL. The content could be the code itself or a zip file. If source URL is used the field source code won't be used.",
+          "memoryLimitDescription": "Memory limit in megabytes",
+          "timeoutDescription": "Execution timeout in seconds. If execution exceeds the timeout the task execution is cancelled.",
+          "entrypointDescription": "Main function to be called in the form: file_name.function_name",
+          "logDriverDescription": "Logging driver for the closure task",
+          "logConfigOptionsDescription": "Supported options for each logging driver",
+          "dependenciesDescription": "Dependencies to install before running the code",
+          "inputDescription": "Input to use when running the code. The input must be a primitive or valid JSON object.",
+          "outputDescription": "Names of output parameters to use when populating the results."
+        },
+        "logs": {
+          "title": "Logs"
+        },
+        "tabs": {
+          "definition": "Definition",
+          "code": "Code",
+          "config": "Configuration"
+        }
+      },
+      "monitoredTask": {
+        "runStatus": "Run status",
+        "runId": "Run ID:",
+        "runState": "State:",
+        "outputs": "Outputs"
       }
+    },
+    "help": {
+        "link": "Help",
+        "description": "Ensemble allows you to access relevant information for the context of the task that you are currently performing. It will refresh automatically with instructions as you continue your work. Use a second screen or split-screen to access the information in real time. You can use a mobile device, a TV, and any other screen whether it is connected to your computer or not. You can use Ensemble outside of the trusted network, while still receiving instantaneous updates.",
+        "descriptionOpen": "To open Ensemble, click <strong>Open in new tab</strong> or scan the QR code with your mobile device."
+      },
+      "resources": {
+        "selectMultiple": "Select Items",
+        "message": {
+          "selectShift": "Use shift to select multiple items"
+        }
+      }
+    },
+    "loginPanel": {
+      "login": "Login",
+      "logout": "Logout",
+      "username": "Username",
+      "password": "Password",
+      "success": "Authentication successful",
+      "failure": "Authentication error"
+    },
+    "dropdownSearchMenu": {
+      "title": "Select from the __entity__ list",
+      "searchPlaceholder": "Search for __entity__",
+      "clear": "Clear Selection",
+      "showingCount": "Showing __count__ out of __totalCount__",
+      "noResults": "No items found"
+    },
+    "customProperties": {
+      "name": "Name",
+      "nameHint": "Example: speedchecker",
+      "value": "Value",
+      "valueHint": "Example: slow"
+    },
+    "yes": "Yes",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "enable": "Enable",
+    "enabled": "Enabled",
+    "disable": "Disable",
+    "disabled": "Disabled",
+    "close": "Close",
+    "edit": "Edit",
+    "remove": "Remove",
+    "add": "Add",
+    "save": "Save",
+    "back": "Back",
+    "refresh": "Refresh",
+    "clear": "Clear",
+    "deleteAll": "Delete All",
+    "pendingOperationCancel": "operation in",
+    "openInNewTab": "Open in new tab",
+    "unavailable": "N/A",
+    "advanced": "Advanced",
+    "noSelection": "No Selection",
+    "errors": {
+      "hostIp": "Value must be hostname or IP address.",
+      "urlPath": "URL path is invalid.",
+      "propertyNameRequired": "Property name is required.",
+      "propertyContainerNameInvalid": "Invalid container name, only [a-zA-Z0-9][a-zA-Z0-9_.-] are allowed.",
+      "propertyNamesNotUnique": "Property names must be unique.",
+      "nonNegativeNumber": "Value must be a non-negative integer less than 2147483648.",
+      "positiveNumber": "Value must be a positive integer less than 2147483648.",
+      "nonNegativeNumberAndMinusOne": "Value must be an integer between -1 and 2147483647.",
+      "portNumber": "Invalid port number. A valid port number ranges from 0 to 65535.",
+      "containerMemory": "Memory must be 0 (no limit) or at least 4194304 bytes (4MB).",
+      "required": "Value is required.",
+      "requiredAll": "All fields are required.",
+      "serviceNameRequired": "Service name is required.",
+      "networkRequired": "Network is required.",
+      "itemNotFound": "Item was not found.",
+      "networkExists": "Network already exists in template.",
+      "invalidInputValue": "Invalid input value"
+    },
+    "infoMessages": {
+      "created": "Created Successfully!",
+      "updated": "Updated Successfully!"
+    },
+    "occurrence": {
+      "all": "Match all",
+      "any": "Match any"
+    },
+    "state": {
+      "ON": "ON",
+      "OFF": "OFF",
+      "SUSPEND": "DISABLED",
+      "UNKNOWN": "UNKNOWN",
+      "stateSinceMessage": "since __date__"
     }
-  },
-  "loginPanel": {
-    "login": "Login",
-    "logout": "Logout",
-    "username": "Username",
-    "password": "Password",
-    "success": "Authentication successful",
-    "failure": "Authentication error"
-  },
-  "dropdownSearchMenu": {
-    "title": "Select from the __entity__ list",
-    "searchPlaceholder": "Search for __entity__",
-    "clear": "Clear Selection",
-    "showingCount": "Showing __count__ out of __totalCount__",
-    "noResults": "No items found"
-  },
-  "customProperties": {
-    "name": "Name",
-    "nameHint": "Example: speedchecker",
-    "value": "Value",
-    "valueHint": "Example: slow"
-  },
-  "yes": "Yes",
-  "cancel": "Cancel",
-  "delete": "Delete",
-  "enable": "Enable",
-  "enabled": "Enabled",
-  "disable": "Disable",
-  "disabled": "Disabled",
-  "close": "Close",
-  "edit": "Edit",
-  "remove": "Remove",
-  "add": "Add",
-  "save": "Save",
-  "back": "Back",
-  "refresh": "Refresh",
-  "clear": "Clear",
-  "deleteAll": "Delete All",
-  "pendingOperationCancel": "operation in",
-  "openInNewTab": "Open in new tab",
-  "unavailable": "N/A",
-  "advanced": "Advanced",
-  "noSelection": "No Selection",
-  "errors": {
-    "hostIp": "Value must be hostname or IP address.",
-    "urlPath": "URL path is invalid.",
-    "propertyNameRequired": "Property name is required.",
-    "propertyContainerNameInvalid": "Invalid container name, only [a-zA-Z0-9][a-zA-Z0-9_.-] are allowed.",
-    "propertyNamesNotUnique": "Property names must be unique.",
-    "nonNegativeNumber": "Value must be a non-negative integer less than 2147483648.",
-    "positiveNumber": "Value must be a positive integer less than 2147483648.",
-    "nonNegativeNumberAndMinusOne": "Value must be an integer between -1 and 2147483647.",
-    "portNumber": "Invalid port number. A valid port number ranges from 0 to 65535.",
-    "containerMemory": "Memory must be 0 (no limit) or at least 4194304 bytes (4MB).",
-    "required": "Value is required.",
-    "requiredAll": "All fields are required.",
-    "serviceNameRequired": "Service name is required.",
-    "networkRequired": "Network is required.",
-    "itemNotFound": "Item was not found.",
-    "networkExists": "Network already exists in template.",
-    "invalidInputValue": "Invalid input value"
-  },
-  "infoMessages": {
-    "created": "Created Successfully!",
-    "updated": "Updated Successfully!"
-  },
-  "occurrence": {
-    "all": "Match all",
-    "any": "Match any"
-  },
-  "state": {
-    "ON": "ON",
-    "OFF": "OFF",
-    "SUSPEND": "DISABLED",
-    "UNKNOWN": "UNKNOWN",
-    "stateSinceMessage": "since __date__"
-  }
 }

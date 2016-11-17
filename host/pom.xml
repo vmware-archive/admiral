@@ -53,7 +53,21 @@
             <artifactId>admiral-adapter-registry</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.vmware.admiral.closures</groupId>
+            <artifactId>admiral-closure-services</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vmware.admiral.closures</groupId>
+            <artifactId>admiral-closure-drivers</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vmware.admiral.closures</groupId>
+            <artifactId>admiral-closure-adapter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>admiral-adapter-etcd</artifactId>

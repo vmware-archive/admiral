@@ -12,6 +12,7 @@
 import TemplateDetailsViewVue from 'components/templates/TemplateDetailsViewVue.html';
 import ListItemImageVue from 'components/templates/ListItemImageVue.html';
 import ContainerDefinitionVue from 'components/templates/ContainerDefinitionVue.html';
+import ClosureDefinitionVue from 'components/templates/ClosureDefinitionVue.html';
 import ContainerDefinitionForm from 'components/containers/ContainerDefinitionForm';
 import InlineDeleteConfirmationTemplate from
   'components/common/InlineDeleteConfirmationTemplate.html';
@@ -24,6 +25,7 @@ import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmati
 import NetworkBox from 'components/networks/NetworkBox'; //eslint-disable-line
 import NetworkDefinitionForm from 'components/networks/NetworkDefinitionForm'; //eslint-disable-line
 import TemplateNewItemMenu from 'components/templates/TemplateNewItemMenu'; //eslint-disable-line
+// import ClosureBox from 'components/closures/ClosureBox'; //eslint-disable-line
 import exportHelper from 'components/templates/TemplateExportHelper';
 import { TemplateActions } from 'actions/Actions';
 import utils from 'core/utils';
@@ -69,6 +71,17 @@ var TemplateDetailsView = Vue.extend({
     },
     searchSuggestions: function() {
       return constants.TEMPLATES.SEARCH_SUGGESTIONS;
+    },
+    contextClosureExpanded: function() {
+      return this.model.contextView && this.model.contextView.expanded;
+    },
+    innerContextExpanded: function() {
+      var activeItemData = this.model.contextView && this.model.contextView.activeItem &&
+        this.model.contextView.activeItem.data;
+      return activeItemData && activeItemData.contextView && activeItemData.contextView.expanded;
+    },
+    areClosuresAllowed: function() {
+      return utils.areClosuresAllowed();
     }
   },
   events: {
@@ -290,6 +303,107 @@ var TemplateDetailsView = Vue.extend({
         }
       }
     },
+    'closure-template-item': {
+      props: {
+        model: {
+          required: true,
+          type: Object
+        },
+        editLinks: {
+          required: false
+        },
+        templateId: {
+          required: true,
+          type: String
+        },
+        numberOfNetworks: {
+          required: true,
+          type: Number
+        }
+      },
+      computed: {
+        closureIcon: function() {
+          if (this.model.runtime.startsWith('nodejs')) {
+            return 'image-assets/closure-nodejs.png';
+          } else if (this.model.runtime.startsWith('python')) {
+            return 'image-assets/closure-python.png';
+          }
+          return 'image-assets/closure-unknown.png';
+        },
+        closureRuntime: function() {
+          if (this.model.runtime === 'nodejs_4.3.0') {
+            return 'NodeJS 4.3.0';
+          } else if (this.model.runtime === 'python_3.4.3') {
+            return 'Python 3.4.3';
+          }
+          return 'Unknown';
+        }
+      },
+
+      template: ClosureDefinitionVue,
+      mixins: [DeleteConfirmationSupportMixin],
+
+      attached: function() {
+
+        $(this.$el).on('click', '.template-links .delete-inline-item-confirmation-cancel', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          var $deleteConfirmationHolder = $(e.currentTarget)
+            .closest('.delete-inline-item-confirmation-holder');
+
+            removeConfirmationHolder.call(this, $deleteConfirmationHolder);
+        });
+
+        $(this.$el).on('click', '.template-links .delete-inline-item-confirmation-confirm', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          let linkName = $(e.currentTarget).parents('.row').find('.link-service').text();
+          let alias = $(e.currentTarget).parents('.row').find('.link-alias').text();
+
+          let link = constructLink(linkName, alias);
+
+          let containerDefinition = this.model.asMutable();
+          let links = containerDefinition.links.asMutable();
+          let ind = links.indexOf(link);
+          if (ind > -1) {
+            links.splice(ind, 1);
+          }
+          containerDefinition.links = links;
+
+          TemplateActions.saveContainerDefinition(this.templateId, containerDefinition);
+
+          this.model = this.model.merge(containerDefinition);
+        });
+
+        this.unwatchTemplateDetails = this.$watch('model.templateDetails', (templateDetails) => {
+          this.templateName = templateDetails.name;
+        });
+
+        this.$dispatch('attached', this);
+      },
+      detached: function() {
+        this.unwatchTemplateDetails();
+
+        this.$dispatch('detached', this);
+      },
+
+      methods: {
+        editClosureDescription: function(e) {
+          if (e != null) {
+              e.preventDefault();
+          }
+
+          // ClosureActions.openAddClosure(this.model);
+          TemplateActions.openAddClosure(this.model);
+        },
+
+        deleteClosureDescription: function() {
+          TemplateActions.removeClosure(this.model, this.templateId);
+        }
+      }
+    },
     'container-image-item': {
       template: ListItemImageVue,
       mixins: [ResourceGroupsMixin],
@@ -427,6 +541,11 @@ var TemplateDetailsView = Vue.extend({
         return true;
       }
 
+      if (data.addClosureView) {
+        TemplateActions.cancelAddClosure(this.model.documentId);
+        return true;
+      }
+
       return false;
     },
     addContainerDefinition: function() {
@@ -466,6 +585,20 @@ var TemplateDetailsView = Vue.extend({
         this.savingNetwork = true;
         TemplateActions.saveNetwork(this.model.documentId, network);
       }
+    },
+    openAddNewClosure: function() {
+      // ClosureActions.openAddClosure();
+      TemplateActions.openAddClosure();
+    },
+
+    removeClosure: function(e) {
+      TemplateActions.removeClosure(e.model, this.model.documentId);
+    },
+
+    editClosureDescription: function(e) {
+
+      console.log('$$$$$$$$$$$$$$$4 Editing from TemplateDetailsView...');
+      TemplateActions.openAddClosure(e.model);
     },
     searchForImage: function(queryOptions) {
       TemplateActions.searchImagesForContainerDefinition(queryOptions);

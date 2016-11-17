@@ -43,6 +43,10 @@
                        v-bind:model="model.centerView.data"
                        v-ref:center-view >
       </containers-view>
+<!--       <closures-view v-if="areClosuresAllowed && model.centerView.name === constants.VIEWS.CLOSURES.name"
+                     v-bind:model="model.centerView.data"
+                     v-ref:center-view >
+      </closures-view> -->
       <div class="core-build-number" v-if="buildNumberSupported()">{{i18n("buildNumber")}} {{buildNumber}}</div>
     </div>
   </div>

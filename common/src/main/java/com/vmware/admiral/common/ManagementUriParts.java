@@ -57,6 +57,10 @@ public interface ManagementUriParts {
     String COMPOSITE_COMPONENT = RESOURCES + "/composite-components";
     String COMPOSITE_CONTENT_COMPOSE = RESOURCES + "/composite-content/compose";
 
+    String CLOSURES = RESOURCES + "/closures";
+    String CLOSURES_DESC = RESOURCES + "/closure" + DESCRIPTION_SUFFIX;
+    String CLOSURES_IMAGES = RESOURCES + "/closure-images";
+
     String CONTAINER_HOSTS = RESOURCES + "/hosts";
     String CONTAINER_HOST_DATA_COLLECTION = RESOURCES + "/hosts-data-collections";
     String HOST_CONTAINER_LIST_DATA_COLLECTION = RESOURCES + "/host-container-list-data-collection";
@@ -85,7 +89,11 @@ public interface ManagementUriParts {
     String REQUEST_CONTAINER_NETWORK_REMOVAL_TASKS = REQUEST + "/container-network-removal-tasks";
     String REQUEST_CONTAINER_VOLUME_ALLOCATION_TASKS = REQUEST
             + "/container-volume-allocation-tasks";
+    String REQUEST_CLOSURE_REMOVAL_TASKS = REQUEST + "/closure-removal-tasks";
     String REQUEST_CONTAINER_VOLUME_REMOVAL_TASKS = REQUEST + "/container-volume-removal-tasks";
+    String REQUEST_CLOSURE_ALLOCATION_TASKS = REQUEST + "/closure-allocation-tasks";
+    String REQUEST_CLOSURE_PROVISION_TASKS = REQUEST + "/provision-closure-tasks";
+    String REQUEST_CLOSURE_RUN = REQUEST + "/closures-run";
     String REQUEST_RESERVATION_TASKS = REQUEST + "/reservation-tasks";
     String REQUEST_RESERVATION_ALLOCATION_TASKS = REQUEST + "/reservation-allocation-tasks";
     String REQUEST_COMPUTE_RESERVATION_TASKS = REQUEST + "/compute-reservation-tasks";
@@ -131,6 +139,7 @@ public interface ManagementUriParts {
     String ADAPTERS = "/adapters";
     String ADAPTER_DOCKER = ADAPTERS + "/docker-service";
     String ADAPTER_DOCKER_HOST = ADAPTERS + "/host-docker-service";
+    String ADAPTER_DOCKER_IMAGE_HOST = ADAPTERS + "/host-docker-image-service";
     String ADAPTER_DOCKER_OPERATIONS = ADAPTER_DOCKER + "/operations";
     String ADAPTER_REGISTRY = ADAPTERS + "/registry-service";
     String ADAPTER_DOCKER_VOLUME = ADAPTERS + "/volume-docker-service";

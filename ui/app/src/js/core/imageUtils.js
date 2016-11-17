@@ -85,7 +85,9 @@ var imageUtils = {
     if (!image) {
       return;
     }
-    return links.CONTAINER_IMAGE_ICONS + '?container-image=' + this.getImageNamespaceAndName(image);
+    let l = links.CONTAINER_IMAGE_ICONS + '?container-image='
+     + this.getImageNamespaceAndName(image);
+    return l;
   }
 };
 

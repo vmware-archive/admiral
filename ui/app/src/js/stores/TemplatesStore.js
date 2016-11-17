@@ -17,6 +17,7 @@ import utils from 'core/utils';
 import imageUtils from 'core/imageUtils';
 import RegistryStore from 'stores/RegistryStore';
 import RequestsStore from 'stores/RequestsStore';
+import ResourcePoolsStore from 'stores/ResourcePoolsStore';
 import ResourceGroupsStore from 'stores/ResourceGroupsStore';
 import NotificationsStore from 'stores/NotificationsStore';
 import EventLogStore from 'stores/EventLogStore';
@@ -26,6 +27,8 @@ import recommendedImages from 'core/recommendedImages';
 
 const DTO_IMAGE_TYPE = 'CONTAINER_IMAGE_DESCRIPTION';
 const DTO_TEMPLATE_TYPE = 'COMPOSITE_DESCRIPTION';
+
+const CHECK_INTERVAL_MS = 1000;
 
 const OPERATION = {
   LIST: 'LIST'
@@ -57,28 +60,34 @@ let _enhanceContainerTemplate = function(containerTemplate, listViewPath) {
   containerTemplate.type = constants.TEMPLATES.TYPES.TEMPLATE;
 
   services.loadTemplateDescriptionImages(containerTemplate.documentSelfLink)
-      .then((result) => {
-    let icons = new Set();
-    for (var key in result.descriptionImages) {
-      if (result.descriptionImages.hasOwnProperty(key)) {
-        var icon = imageUtils.getImageIconLink(result.descriptionImages[key]);
-        icons.add(icon);
-      }
-    }
-    var selector = this.selectFromData(listViewPath);
-    let items = selector.getIn('items');
-    if (items) {
-      items = items.map((t) => {
-        if (t.documentSelfLink === containerTemplate.documentSelfLink) {
-          t = t.asMutable();
-          t.icons = [...icons];
+    .then((result) => {
+      let icons = new Set();
+      for (var key in result.descriptionImages) {
+        if (result.descriptionImages.hasOwnProperty(key)) {
+          var icon = imageUtils.getImageIconLink(result.descriptionImages[key]);
+          icons.add(icon);
         }
-        return t;
-      });
-      selector.setIn('items', items);
-      this.emitChange();
-    }
-  });
+      }
+      var selector = this.selectFromData(listViewPath);
+      let items = selector.getIn('items');
+      if (items) {
+        items = items.map((t) => {
+          if (t.documentSelfLink === containerTemplate.documentSelfLink) {
+            t = t.asMutable();
+            t.icons = [...icons];
+          }
+          return t;
+        });
+        selector.setIn('items', items);
+        this.emitChange();
+      }
+    });
+};
+
+let _enhanceClosureDescription = function(closure) {
+  closure.documentId = closure.documentSelfLink;
+  closure.icon = imageUtils.getImageIconLink(closure.name);
+  closure.type = constants.TEMPLATES.TYPES.CLOSURE;
 };
 
 let _enhanceContainerDescription = function(containerDescription, allContainerDescriptions) {
@@ -130,6 +139,7 @@ let searchImages = function(queryOptions, searchOnlyImages, forContainerDefiniti
     var resultTemplates = [];
     for (var i = 0; i < templates.length; i++) {
       var template = templates[i];
+      console.log(' TEMPLATE TYPE: ' + template.templateType);
       if (template.templateType === DTO_IMAGE_TYPE) {
         _enhanceImage(template);
         resultTemplates.push(template);
@@ -156,7 +166,64 @@ let searchImages = function(queryOptions, searchOnlyImages, forContainerDefiniti
     this.setInData(listViewPath.concat(['itemsLoading']), false);
     this.setInData(listViewPath.concat(['searchedItems']), true);
     this.setInData(listViewPath.concat(['error']),
-                        e.responseJSON.message || e.statusText);
+      e.responseJSON.message || e.statusText);
+    this.emitChange();
+  });
+};
+
+let processClosures = function(closuresResult) {
+  // Transforming from associative array to array
+  var closures = [];
+  for (var key in closuresResult) {
+    if (closuresResult.hasOwnProperty(key)) {
+      let closure = closuresResult[key];
+      closures.push(closure);
+    }
+  }
+
+  return closures;
+};
+
+let searchClosures = function(queryOptions, searchOnlyImages, forContainerDefinition) {
+  var listViewPath;
+  if (forContainerDefinition) {
+    listViewPath = ['selectedItemDetails', 'newContainerDefinition', 'listView'];
+  } else {
+    listViewPath = ['listView'];
+  }
+
+  var operation = this.requestCancellableOperation(OPERATION.LIST, queryOptions);
+  if (!operation) {
+    return;
+  }
+
+  this.setInData(listViewPath.concat(['itemsLoading']), true);
+
+  this.emitChange();
+
+  operation.forPromise(services.loadTemplateClosures(queryOptions)).then((closuresResult) => {
+    var resultTemplates = [];
+    if (closuresResult) {
+      let closures = processClosures(closuresResult);
+      for (var i = 0; i < closures.length; i++) {
+        var closure = closures[i];
+        console.log(' TEMPLATE TYPE: ' + closure.name);
+        _enhanceClosureDescription(closure);
+        resultTemplates.push(closure);
+      }
+    }
+
+    this.setInData(listViewPath.concat(['items']), resultTemplates);
+    this.setInData(listViewPath.concat(['itemsLoading']), false);
+    this.setInData(listViewPath.concat(['searchedItems']), true);
+    this.emitChange();
+  }).catch((e) => {
+    console.log(' TEMPLATE TYPE: ' + e);
+    this.setInData(listViewPath.concat(['items']), []);
+    this.setInData(listViewPath.concat(['itemsLoading']), false);
+    this.setInData(listViewPath.concat(['searchedItems']), true);
+    this.setInData(listViewPath.concat(['error']),
+      e.responseJSON.message || e.statusText);
     this.emitChange();
   });
 };
@@ -182,7 +249,9 @@ let handlePublishTemplate = function(templateDocumentSelfLink, alertObj) {
     this.emitChange();
   } else {
     // we are in main templates view
-    var templates = utils.getIn(this.getData(), ['listView', 'items']).asMutable({deep: true});
+    var templates = utils.getIn(this.getData(), ['listView', 'items']).asMutable({
+      deep: true
+    });
     for (let idx = 0; idx < templates.length; idx++) {
       if (templates[idx].documentSelfLink === templateDocumentSelfLink) {
         templates[idx].alert = alertObj;
@@ -195,7 +264,9 @@ let handlePublishTemplate = function(templateDocumentSelfLink, alertObj) {
     this.emitChange();
 
     setTimeout(() => {
-      var templates = utils.getIn(this.getData(), ['listView', 'items']).asMutable({deep: true});
+      var templates = utils.getIn(this.getData(), ['listView', 'items']).asMutable({
+        deep: true
+      });
       let idx;
       for (idx = 0; idx < templates.length; idx++) {
         if (templates[idx].documentSelfLink === templateDocumentSelfLink) {
@@ -224,7 +295,8 @@ let getNetworkByName = function(networkDescriptions, name) {
 */
 let getCompleteNetworkDescriptions = function(containerDescriptions, networkDescriptions) {
   var systemNetworkModes = [constants.NETWORK_MODES.BRIDGE.toLowerCase(),
-                            constants.NETWORK_MODES.HOST.toLowerCase()];
+    constants.NETWORK_MODES.HOST.toLowerCase()
+  ];
 
   var result = networkDescriptions;
 
@@ -302,11 +374,13 @@ let getNetworkNamesOfContainer = function(cd) {
 };
 
 let updateContainersNetworks = function(attachContainersToNetworks, detachContainersToNetworks) {
-  var networks = utils.getIn(this.getData(),
-                               ['selectedItemDetails', 'templateDetails', 'listView', 'networks']);
+  var networks = utils.getIn(this.getData(), ['selectedItemDetails', 'templateDetails',
+    'listView', 'networks'
+  ]);
 
-  var containers = utils.getIn(this.getData(),
-                               ['selectedItemDetails', 'templateDetails', 'listView', 'items']);
+  var containers = utils.getIn(this.getData(), ['selectedItemDetails', 'templateDetails',
+    'listView', 'items'
+  ]);
 
   var networksObj = {};
   for (let i = 0; i < networks.length; i++) {
@@ -315,7 +389,9 @@ let updateContainersNetworks = function(attachContainersToNetworks, detachContai
 
   var containersObj = {};
   for (let i = 0; i < containers.length; i++) {
-    var container = containers[i].asMutable({deep: true});
+    var container = containers[i].asMutable({
+      deep: true
+    });
     containersObj[container.documentSelfLink] = {
       documentSelfLink: container.documentSelfLink,
       networkMode: container.networkMode,
@@ -324,8 +400,9 @@ let updateContainersNetworks = function(attachContainersToNetworks, detachContai
   }
 
   var systemNetworkModes = [constants.NETWORK_MODES.BRIDGE.toLowerCase(),
-                            constants.NETWORK_MODES.HOST.toLowerCase(),
-                            constants.NETWORK_MODES.NONE.toLowerCase()];
+    constants.NETWORK_MODES.HOST.toLowerCase(),
+    constants.NETWORK_MODES.NONE.toLowerCase()
+  ];
 
   var containerPatches = {};
   var promises = [];
@@ -359,13 +436,14 @@ let updateContainersNetworks = function(attachContainersToNetworks, detachContai
   for (var link in containerPatches) {
     if (containerPatches.hasOwnProperty(link)) {
       promises.push(
-       services.patchDocument(link, containerPatches[link]));
+        services.patchDocument(link, containerPatches[link]));
     }
   }
 
   function updateDescriptions(patchDescriptions) {
-    var containerDefs = utils.getIn(this.getData(),
-                  ['selectedItemDetails', 'templateDetails', 'listView', 'items']);
+    var containerDefs = utils.getIn(this.getData(), ['selectedItemDetails', 'templateDetails',
+      'listView', 'items'
+    ]);
     if (containerDefs) {
       containerDefs = containerDefs.map((cd) => {
         for (var key in patchDescriptions) {
@@ -386,7 +464,7 @@ let updateContainersNetworks = function(attachContainersToNetworks, detachContai
       updateNetworksAndLinks.call(this, containerDefs);
 
       this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'items'],
-                    containerDefs);
+        containerDefs);
 
       this.emitChange();
     }
@@ -432,7 +510,7 @@ let updateNetworksAndLinks = function(containerDescriptions) {
 
   this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'networks'], networks);
   this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'networkLinks'],
-                 networkLinks);
+    networkLinks);
 };
 
 let TemplatesStore = Reflux.createStore({
@@ -492,13 +570,26 @@ let TemplatesStore = Reflux.createStore({
         this.emitChange();
       }
     });
+
+    ResourcePoolsStore.listen((resourcePoolsData) => {
+      this.setInData(['selectedItemDetails', 'resourcePools'], resourcePoolsData.items);
+
+      this.emitChange();
+    });
   },
 
-  listenables: [actions.TemplateActions, actions.RegistryActions,
-                actions.TemplatesContextToolbarActions],
+  listenables: [
+    actions.TemplateActions,
+    actions.RegistryActions,
+    actions.TemplatesContextToolbarActions,
+    actions.ClosureContextToolbarActions,
+    actions.NavigationActions,
+    actions.ResourcePoolActions
+  ],
 
   onOpenTemplates: function(queryOptions, forceReload) {
     var currentTemplates = this.data.listView && this.data.listView.items;
+
     if (!forceReload && currentTemplates && currentTemplates !== constants.LOADING) {
       return;
     }
@@ -521,17 +612,18 @@ let TemplatesStore = Reflux.createStore({
       actions.ResourceGroupsActions.retrieveGroups();
     }
 
-    var shouldLoadRecommended = !queryOptions
-      || (Object.keys(queryOptions).length === 1 &&
-          (queryOptions[constants.SEARCH_CATEGORY_PARAM]
-                  === constants.TEMPLATES.SEARCH_CATEGORY.ALL
-            || queryOptions[constants.SEARCH_CATEGORY_PARAM]
-                  === constants.TEMPLATES.SEARCH_CATEGORY.IMAGES));
+    var shouldLoadRecommended = !queryOptions ||
+      (Object.keys(queryOptions).length === 1 &&
+        (queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
+          constants.TEMPLATES.SEARCH_CATEGORY.ALL ||
+          queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
+          constants.TEMPLATES.SEARCH_CATEGORY.IMAGES));
     if (shouldLoadRecommended) {
-
       loadRecommended.call(this);
+    } else if (queryOptions[constants.SEARCH_CATEGORY_PARAM] ===
+      constants.TEMPLATES.SEARCH_CATEGORY.CLOSURES) {
+      searchClosures.call(this, queryOptions);
     } else {
-
       searchImages.call(this, queryOptions);
     }
   },
@@ -544,6 +636,11 @@ let TemplatesStore = Reflux.createStore({
   onOpenToolbarEventLogs: function(highlightedItemLink) {
     actions.EventLogActions.openEventLog(highlightedItemLink);
     this.openToolbarItem(constants.CONTEXT_PANEL.EVENTLOGS, EventLogStore.getData());
+  },
+
+  onOpenToolbarClosureResults: function() {
+    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, ResourcePoolsStore.getData(),
+      false);
   },
 
   onOpenContainerRequest: function(type, itemId) {
@@ -628,23 +725,29 @@ let TemplatesStore = Reflux.createStore({
         Promise.all(descriptionPromises).then((descriptions) => {
           var containerDescriptions = [];
           var networkDescriptions = [];
+          var closureDescriptions = [];
           for (let i = 0; i < descriptions.length; i++) {
             var desc = descriptions[i];
             if (desc.documentSelfLink.indexOf(links.CONTAINER_DESCRIPTIONS) !== -1) {
               containerDescriptions.push(desc);
-            } else if (desc.documentSelfLink.indexOf(links.CONTAINER_NETWORK_DESCRIPTIONS)
-                       !== -1) {
+            } else if (desc.documentSelfLink.indexOf(links.CONTAINER_NETWORK_DESCRIPTIONS) !==
+              -1) {
               networkDescriptions.push(desc);
+            } else if (desc.documentSelfLink.indexOf(links.CLOSURE_DESCRIPTIONS) !==
+              -1) {
+              closureDescriptions.push(desc);
             }
           }
 
           for (let i = 0; i < containerDescriptions.length; i++) {
-            _enhanceContainerDescription(containerDescriptions[i], containerDescriptions);
+            _enhanceContainerDescription(containerDescriptions[i],
+              containerDescriptions);
           }
 
           networkDescriptions = getCompleteNetworkDescriptions(containerDescriptions,
-                                                               networkDescriptions);
-          var networkLinks = getNetworkLinks(containerDescriptions, networkDescriptions);
+            networkDescriptions);
+          var networkLinks = getNetworkLinks(containerDescriptions,
+            networkDescriptions);
 
           detailsObject.templateDetails.name = template.name;
           detailsObject.templateDetails.documentSelfLink = template.documentSelfLink;
@@ -652,6 +755,7 @@ let TemplatesStore = Reflux.createStore({
           detailsObject.templateDetails.listView.itemsLoading = false;
           detailsObject.templateDetails.listView.networks = networkDescriptions;
           detailsObject.templateDetails.listView.networkLinks = networkLinks;
+          detailsObject.templateDetails.listView.closures = closureDescriptions;
           this.setInData(['selectedItemDetails'], detailsObject);
           this.emitChange();
         });
@@ -674,10 +778,12 @@ let TemplatesStore = Reflux.createStore({
 
       services.loadDeploymentPolicies().then((policies) => {
         containerDefinition.deploymentPolicies = policies;
-        var networks = utils.getIn(this.getData(),
-                               ['selectedItemDetails', 'templateDetails', 'listView',
-                                'networks']) || [];
-        containerDefinition.availableNetworks = getUserDefinedNetworkDescriptions(networks);
+        var networks = utils.getIn(this.getData(), ['selectedItemDetails',
+          'templateDetails', 'listView',
+          'networks'
+        ]) || [];
+        containerDefinition.availableNetworks = getUserDefinedNetworkDescriptions(
+          networks);
 
         this.setContainerDefinitionData(containerDefinition);
 
@@ -694,9 +800,195 @@ let TemplatesStore = Reflux.createStore({
     this.emitChange();
   },
 
+  onOpenAddClosure: function(closureDescription) {
+    var addClosureView = {};
+    if (closureDescription) {
+      this.setInData(['selectedItemDetails', 'tasks', 'editingItemData', 'item'],
+        closureDescription);
+      this.setInData(['selectedItemDetails', 'addClosureView'], addClosureView);
+    } else {
+      this.setInData(['selectedItemDetails', 'tasks'], {});
+      this.setInData(['selectedItemDetails', 'addClosureView'], addClosureView);
+    }
+    this.setInData(['selectedItemDetails', 'contextView'], {});
+    this.emitChange();
+
+    actions.ResourcePoolsActions.retrieveResourcePools();
+
+    if (closureDescription) {
+      var _this = this;
+      _this.loadClosureResourcePool(closureDescription);
+    }
+  },
+
+  onCancelAddClosure: function(templateId) {
+    services.loadContainerTemplate(templateId).then((template) => {
+      var descriptionPromises = [];
+      for (let i = 0; i < template.descriptionLinks.length; i++) {
+        descriptionPromises.push(services.loadDocument(template.descriptionLinks[i]));
+      }
+
+      Promise.all(descriptionPromises).then((descriptions) => {
+        var closureDescriptions = [];
+        for (let i = 0; i < descriptions.length; i++) {
+          var desc = descriptions[i];
+          if (desc.documentSelfLink.indexOf(links.CLOSURE_DESCRIPTIONS) !==
+            -1) {
+            closureDescriptions.push(desc);
+          }
+        }
+
+        let detailsObject = utils.getIn(this.getData(), ['selectedItemDetails']);
+
+        detailsObject.templateDetails.name = template.name;
+        detailsObject.templateDetails.documentSelfLink = template.documentSelfLink;
+        detailsObject.templateDetails.listView.closures = closureDescriptions;
+        this.setInData(['selectedItemDetails'], detailsObject);
+        this.setInData(['selectedItemDetails', 'addClosureView'], null);
+        this.emitChange();
+      });
+    });
+  },
+
+  loadClosureResourcePool: function(closureDescription) {
+    var _this = this;
+
+    if (closureDescription.resourcePoolId) {
+      Promise.all([
+          services.loadResourcePool(closureDescription.resourcePoolId)
+        ])
+        .then(function([resourcePool]) {
+
+          _this.setInData(['selectedItemDetails', 'tasks', 'editingItemData',
+              'resourcePool'
+            ],
+            resourcePool);
+
+          _this.emitChange();
+        });
+    }
+  },
+
+  onRemoveClosure: function(closureDesc, templateId) {
+    if (!templateId) {
+      console.log('Calling delete on: ' + closureDesc);
+      services.deleteClosure(closureDesc).then((request) => {
+        console.log('Closure deleted successfully! ' + request);
+          let queryOptions = this.selectFromData(['listView', 'queryOptions']).get();
+          // Refresh view
+          this.onOpenTemplates(queryOptions, true);
+      }).catch(this.onGenericCreateError);
+      return;
+    }
+
+    let descriptionLink = closureDesc.documentSelfLink;
+
+    let doDelete = function() {
+      let closures = this.data.selectedItemDetails.templateDetails.listView.closures
+        .filter((item) => {
+          return item.documentSelfLink !== descriptionLink;
+        });
+
+      this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'closures'],
+        closures);
+      this.emitChange();
+    };
+
+    // MOVE TO COMPLETION  HANDLER
+    doDelete.call(this);
+
+    services.deleteDocument(descriptionLink).then(() => {
+      return services.loadContainerTemplate(templateId);
+
+    }).then((template) => {
+      let index = template.descriptionLinks.indexOf(descriptionLink);
+      template.descriptionLinks.splice(index, 1);
+
+      return services.updateContainerTemplate(template);
+
+    }).then(() => {
+      if (this.data.selectedItemDetails &&
+        this.data.selectedItemDetails.documentId === templateId) {
+        doDelete.call(this);
+      }
+    }).catch(this.onGenericEditError);
+  },
+
+  runClosure: function(closureDescription, inputs) {
+    this.setInData(['tasks', 'monitoredTask'], null);
+    this.emitChange();
+
+    console.log('Calling run on: ' + closureDescription.documentSelfLink);
+    services.runClosure(closureDescription, inputs).then((request) => {
+      this.setInData(['tasks', 'monitoredTask'], request);
+      this.setInData(['selectedItemDetails', 'tasks', 'monitoredTask', 'isRunning'], {});
+      this.emitChange();
+      if (!this.requestCheckInterval) {
+        this.requestCheckInterval = setInterval(this.refreshMonitoredTask,
+          CHECK_INTERVAL_MS);
+      }
+    }).catch(this.onGenericCreateError);
+  },
+  refreshMonitoredTask: function() {
+    var task = this.data.tasks.monitoredTask;
+    if (task) {
+      if (task.state === 'FINISHED' || task.state === 'FAILED' || task.state === 'CANCELLED') {
+        this.stopTaskRefresh(this.requestCheckInterval);
+        this.fetchLogs();
+
+        this.setInData(['selectedItemDetails', 'tasks', 'monitoredTask', 'isRunning'], null);
+        this.emitChange();
+        return;
+      } else {
+        console.log('Monitoring closure: ' + task.documentSelfLink);
+      }
+      services.getClosure(task.documentSelfLink).then((fetchedTask) => {
+        this.setInData(['tasks', 'monitoredTask'], fetchedTask);
+        this.setInData(['tasks', 'monitoredTask', 'taskId'],
+          fetchedTask.documentSelfLink.split('/').pop());
+        this.emitChange();
+        if (fetchedTask.resourceLinks && fetchedTask.resourceLinks.length > 0) {
+          this.fetchLogs();
+        }
+      });
+    } else {
+      console.warn('No available closure to monitor!');
+    }
+  },
+  resetMonitoredClosure: function() {
+    if (this.data.tasks) {
+      console.log('Resetting monitored closure...');
+      this.data.tasks.monitoredTask = null;
+      this.emitChange();
+    }
+  },
+  stopTaskRefresh: function(refreshCheckInterval) {
+    if (refreshCheckInterval) {
+      clearInterval(refreshCheckInterval);
+      this.requestCheckInterval = null;
+    }
+  },
+  fetchLogs: function() {
+    var task = this.data.tasks.monitoredTask;
+    if (typeof task.resourceLinks === 'undefined' || task.resourceLinks.length <= 0) {
+      console.log('No resources to fetch logs...');
+      this.setInData(['tasks', 'monitoredTask', 'taskLogs'], task.errorMsg);
+      this.emitChange();
+      return;
+    }
+
+    var taskLogResource = task.resourceLinks[0].split('/').pop();
+    console.log('Requesting logs from: ' + taskLogResource);
+    services.getClosureLogs(taskLogResource).then((fetchedLogs) => {
+      this.setInData(['tasks', 'monitoredTask', 'taskLogs'], atob(fetchedLogs.logs));
+      this.emitChange();
+    });
+  },
+
   onCancelEditNetwork: function() {
     var cdSelector = this.selectFromData(['selectedItemDetails', 'editContainerDefinition',
-                                          'definitionInstance']);
+      'definitionInstance'
+    ]);
     var editNetworkSelector = this.selectFromData(['selectedItemDetails', 'editNetwork']);
 
     var editDefinitionSelectedNetworks = editNetworkSelector.getIn(
@@ -705,8 +997,9 @@ let TemplatesStore = Reflux.createStore({
       editDefinitionSelectedNetworks = editDefinitionSelectedNetworks.asMutable();
       delete editDefinitionSelectedNetworks[constants.NEW_ITEM_SYSTEM_VALUE];
 
-      var networks = utils.getIn(this.getData(),
-                               ['selectedItemDetails', 'templateDetails', 'listView', 'networks']);
+      var networks = utils.getIn(this.getData(), ['selectedItemDetails', 'templateDetails',
+        'listView', 'networks'
+      ]);
 
       cdSelector.setIn('availableNetworks', getUserDefinedNetworkDescriptions(networks));
       cdSelector.setIn('networks', editDefinitionSelectedNetworks);
@@ -721,11 +1014,12 @@ let TemplatesStore = Reflux.createStore({
     if (network.documentSelfLink) {
       services.updateDocument(network.documentSelfLink, network).then((updatedDescription) => {
         if (this.data.selectedItemDetails &&
-            this.data.selectedItemDetails.documentId === templateId) {
+          this.data.selectedItemDetails.documentId === templateId) {
 
           var networks = utils.getIn(this.getData(),
                                ['selectedItemDetails', 'templateDetails', 'listView', 'networks']);
           var editedNetwork = null;
+
           networks = networks.map((n) => {
             if (n.documentSelfLink === updatedDescription.documentSelfLink) {
               editedNetwork = n;
@@ -736,7 +1030,8 @@ let TemplatesStore = Reflux.createStore({
           });
 
           this.setInData(
-            ['selectedItemDetails', 'templateDetails', 'listView', 'networks'], networks);
+            ['selectedItemDetails', 'templateDetails', 'listView', 'networks'],
+            networks);
 
           this.setInData(['selectedItemDetails', 'editNetwork'], null);
 
@@ -756,19 +1051,25 @@ let TemplatesStore = Reflux.createStore({
         }).then(() => {
 
           if (this.data.selectedItemDetails &&
-              this.data.selectedItemDetails.documentId === templateId) {
+            this.data.selectedItemDetails.documentId === templateId) {
 
-            var networks = utils.getIn(this.getData(),
-                                 ['selectedItemDetails', 'templateDetails', 'listView',
-                                  'networks']);
+            var networks = utils.getIn(this.getData(), ['selectedItemDetails',
+              'templateDetails', 'listView',
+              'networks'
+            ]);
             networks = networks.asMutable();
             networks.push(createdDescription);
             this.setInData(
-              ['selectedItemDetails', 'templateDetails', 'listView', 'networks'], networks);
+              ['selectedItemDetails', 'templateDetails', 'listView', 'networks'],
+              networks);
 
-            var cdSelector = this.selectFromData(['selectedItemDetails', 'editContainerDefinition',
-                                            'definitionInstance']);
-            var editNetworkSelector = this.selectFromData(['selectedItemDetails', 'editNetwork']);
+            var cdSelector = this.selectFromData(['selectedItemDetails',
+              'editContainerDefinition',
+              'definitionInstance'
+            ]);
+            var editNetworkSelector = this.selectFromData(['selectedItemDetails',
+              'editNetwork'
+            ]);
 
             var editDefinitionSelectedNetworks = editNetworkSelector.getIn(
               ['editDefinitionSelectedNetworks']);
@@ -777,7 +1078,8 @@ let TemplatesStore = Reflux.createStore({
               delete editDefinitionSelectedNetworks[constants.NEW_ITEM_SYSTEM_VALUE];
               editDefinitionSelectedNetworks[createdDescription.name] = {};
 
-              cdSelector.setIn('availableNetworks', getUserDefinedNetworkDescriptions(networks));
+              cdSelector.setIn('availableNetworks', getUserDefinedNetworkDescriptions(
+                networks));
               cdSelector.setIn('networks', editDefinitionSelectedNetworks);
             }
             editNetworkSelector.clear();
@@ -819,7 +1121,7 @@ let TemplatesStore = Reflux.createStore({
       updateContainersNetworks.call(this, containersToAttach, containersToDetach);
 
       this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'networks'],
-                     networks);
+        networks);
       this.emitChange();
     };
 
@@ -840,7 +1142,7 @@ let TemplatesStore = Reflux.createStore({
     }).then(() => {
 
       if (this.data.selectedItemDetails &&
-          this.data.selectedItemDetails.documentId === templateId) {
+        this.data.selectedItemDetails.documentId === templateId) {
         doDelete.call(this);
       }
     }).catch(this.onGenericEditError);
@@ -865,9 +1167,9 @@ let TemplatesStore = Reflux.createStore({
   },
 
   onAttachDetachNetwork: function(oldContainerDescriptionLink, oldNetworkDescriptionLink,
-                                  newContainerDescriptionLink, newNetworkDescriptionLink) {
+    newContainerDescriptionLink, newNetworkDescriptionLink) {
     if (oldContainerDescriptionLink === newContainerDescriptionLink &&
-        oldNetworkDescriptionLink === newNetworkDescriptionLink) {
+      oldNetworkDescriptionLink === newNetworkDescriptionLink) {
       return;
     }
 
@@ -883,12 +1185,13 @@ let TemplatesStore = Reflux.createStore({
   },
 
   setContainerDefinitionData: function(containerDefinition) {
-    var containerDefs = utils.getIn(this.getData(),
-                    ['selectedItemDetails', 'templateDetails', 'listView', 'items']);
+    var containerDefs = utils.getIn(this.getData(), ['selectedItemDetails', 'templateDetails',
+      'listView', 'items'
+    ]);
     _enhanceContainerDescription(containerDefinition, containerDefs);
 
     this.setInData(['selectedItemDetails', 'editContainerDefinition', 'definitionInstance'],
-                      containerDefinition);
+      containerDefinition);
   },
 
   onIncreaseClusterSize: function(containerDefinition) {
@@ -902,7 +1205,9 @@ let TemplatesStore = Reflux.createStore({
   },
 
   modifyDescriptionClusterSize: function(containerDefinition, increment) {
-    var template = containerDefinition.asMutable({deep: true});
+    var template = containerDefinition.asMutable({
+      deep: true
+    });
 
     if (increment) {
       if (!template._cluster) {
@@ -917,7 +1222,9 @@ let TemplatesStore = Reflux.createStore({
     services.updateContainerDescription(template).then((updatedDefinition) => {
 
       var listViewItems =
-        this.data.selectedItemDetails.templateDetails.listView.items.asMutable({deep: true});
+        this.data.selectedItemDetails.templateDetails.listView.items.asMutable({
+          deep: true
+        });
 
       for (var i = 0; i < listViewItems.length; i++) {
         if (listViewItems[i].documentSelfLink === updatedDefinition.documentSelfLink) {
@@ -928,7 +1235,7 @@ let TemplatesStore = Reflux.createStore({
       }
 
       this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'items'],
-                     listViewItems);
+        listViewItems);
       this.emitChange();
 
     }).catch(this.onGenericEditError);
@@ -947,10 +1254,12 @@ let TemplatesStore = Reflux.createStore({
       }).then(() => {
 
         if (this.data.selectedItemDetails &&
-            this.data.selectedItemDetails.documentId === templateId) {
+          this.data.selectedItemDetails.documentId === templateId) {
 
           var listViewItems = this.data.selectedItemDetails.templateDetails.listView.items
-            .asMutable({deep: true});
+            .asMutable({
+              deep: true
+            });
 
           _enhanceContainerDescription(createdDefinition, listViewItems);
           listViewItems.push(createdDefinition);
@@ -963,8 +1272,10 @@ let TemplatesStore = Reflux.createStore({
 
           this.setInData(['selectedItemDetails', 'newContainerDefinition'], null);
           this.setInData(['selectedItemDetails', 'editContainerDefinition'], null);
-          this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'items'],
-                         listViewItems);
+          this.setInData(['selectedItemDetails', 'templateDetails', 'listView',
+              'items'
+            ],
+            listViewItems);
           this.emitChange();
         }
       });
@@ -987,7 +1298,7 @@ let TemplatesStore = Reflux.createStore({
     }).then(() => {
 
       if (this.data.selectedItemDetails &&
-          this.data.selectedItemDetails.documentId === templateId) {
+        this.data.selectedItemDetails.documentId === templateId) {
 
         var listViewItems = this.data.selectedItemDetails.templateDetails.listView.items
           .asMutable();
@@ -1003,7 +1314,7 @@ let TemplatesStore = Reflux.createStore({
         this.setInData(['selectedItemDetails', 'newContainerDefinition'], null);
         this.setInData(['selectedItemDetails', 'editContainerDefinition'], null);
         this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'items'],
-                       newListViewItems);
+          newListViewItems);
         this.emitChange();
       }
     }).catch(this.onContainerDescriptionDeleteError);
@@ -1012,10 +1323,12 @@ let TemplatesStore = Reflux.createStore({
   onSaveContainerDefinition: function(templateId, containerDefinition) {
     services.updateContainerDescription(containerDefinition).then((updatedDefinition) => {
       if (this.data.selectedItemDetails &&
-          this.data.selectedItemDetails.documentId === templateId) {
+        this.data.selectedItemDetails.documentId === templateId) {
 
         var listViewItems = this.data.selectedItemDetails.templateDetails.listView.items
-          .asMutable({'deep': true});
+          .asMutable({
+            'deep': true
+          });
 
         for (var i = 0, len = listViewItems.length; i < len; i += 1) {
           if (listViewItems[i].documentSelfLink === updatedDefinition.documentSelfLink) {
@@ -1032,7 +1345,7 @@ let TemplatesStore = Reflux.createStore({
         this.setInData(['selectedItemDetails', 'newContainerDefinition'], null);
         this.setInData(['selectedItemDetails', 'editContainerDefinition'], null);
         this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'items'],
-                       listViewItems);
+          listViewItems);
         this.emitChange();
       }
     }).catch(this.onGenericEditError);
@@ -1046,9 +1359,10 @@ let TemplatesStore = Reflux.createStore({
 
   onResetContainerDefinitionEdit: function() {
     if (this.data.selectedItemDetails.newContainerDefinition &&
-        this.data.selectedItemDetails.newContainerDefinition.definitionInstance) {
+      this.data.selectedItemDetails.newContainerDefinition.definitionInstance) {
       this.setInData(['selectedItemDetails', 'newContainerDefinition',
-                                  'definitionInstance'], null);
+        'definitionInstance'
+      ], null);
     } else if (this.data.selectedItemDetails.editContainerDefinition) {
       this.setInData(['selectedItemDetails', 'editContainerDefinition'], null);
     } else {
@@ -1060,7 +1374,8 @@ let TemplatesStore = Reflux.createStore({
 
   onSearchImagesForContainerDefinition: function(queryOptions) {
     var queryObjectsPath = ['selectedItemDetails', 'newContainerDefinition', 'listView',
-                            'queryOptions'];
+      'queryOptions'
+    ];
 
     if (queryOptions && !$.isEmptyObject(queryOptions)) {
       this.setInData(queryObjectsPath, queryOptions);
@@ -1076,8 +1391,9 @@ let TemplatesStore = Reflux.createStore({
       image: imageId,
       name: utils.getDocumentId(imageId)
     };
-    var containerDefs = utils.getIn(this.getData(),
-        ['selectedItemDetails', 'templateDetails', 'listView', 'items']);
+    var containerDefs = utils.getIn(this.getData(), ['selectedItemDetails', 'templateDetails',
+      'listView', 'items'
+    ]);
     _enhanceContainerDescription(definitionInstance, containerDefs);
     this.setInData(['selectedItemDetails', 'newContainerDefinition',
                     'definitionInstance'], definitionInstance);
@@ -1148,7 +1464,17 @@ let TemplatesStore = Reflux.createStore({
   onCreateContainerTemplate: function(containerDescription) {
     services.createContainerTemplate(containerDescription).then((containerTemplate) => {
       var documentId = utils.getDocumentId(containerTemplate.documentSelfLink);
-      actions.NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE, documentId);
+      actions.NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE,
+        documentId);
+
+    }).catch(this.onGenericCreateError);
+  },
+
+  onCreateClosureTemplate: function(closureDescription) {
+    services.createClosureTemplate(closureDescription).then((closureTemplate) => {
+      var documentId = utils.getDocumentId(closureTemplate.documentSelfLink);
+      actions.NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE,
+        documentId);
 
     }).catch(this.onGenericCreateError);
   },
@@ -1211,15 +1537,16 @@ let TemplatesStore = Reflux.createStore({
   onCopyTemplate: function(type, template, group) {
     services.copyContainerTemplate(template).then((result) => {
       actions.TemplateActions.createContainer(type,
-                                              utils.getDocumentId(result.documentSelfLink), group);
+        utils.getDocumentId(result.documentSelfLink), group);
     }).catch(this.onGenericCreateError);
   },
 
   onPublishTemplate: function(templateId) {
-   if (this.data.selectedItemDetails) {
+    if (this.data.selectedItemDetails) {
       // we are in template details view
       this.setInData(['selectedItemDetails', 'alert'], null);
-      this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'itemsLoading'], true);
+      this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'itemsLoading'],
+        true);
     } else {
       // we are in main templates view
       this.setInData(['listView', 'itemsLoading'], true);
@@ -1274,7 +1601,8 @@ let TemplatesStore = Reflux.createStore({
       this.emitChange();
 
       var documentId = utils.getDocumentId(templateSelfLink);
-      actions.NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE, documentId);
+      actions.NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE,
+        documentId);
     }).catch(this.onImportTemplateError);
   },
 
@@ -1297,18 +1625,21 @@ let TemplatesStore = Reflux.createStore({
   onGenericEditError: function(e) {
     var validationErrors = utils.getValidationErrors(e);
     var currentInstanceSelector = this.selectFromData(['selectedItemDetails',
-                                                       'newContainerDefinition',
-                                                       'definitionInstance']);
+      'newContainerDefinition',
+      'definitionInstance'
+    ]);
     if (!currentInstanceSelector.get()) {
       currentInstanceSelector = this.selectFromData(['selectedItemDetails',
-                                                     'editContainerDefinition',
-                                                     'definitionInstance']);
+        'editContainerDefinition',
+        'definitionInstance'
+      ]);
     }
 
     if (!currentInstanceSelector.get()) {
       currentInstanceSelector = this.selectFromData(['selectedItemDetails',
-                                                     'editNetwork',
-                                                     'definitionInstance']);
+        'editNetwork',
+        'definitionInstance'
+      ]);
     }
 
     if (!currentInstanceSelector.get()) {
@@ -1331,10 +1662,9 @@ let TemplatesStore = Reflux.createStore({
 
   onContainerDescriptionDeleteError: function(e) {
     this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'error'],
-                        utils.getErrorMessage(e));
+      utils.getErrorMessage(e));
     this.emitChange();
   }
 });
 
 export default TemplatesStore;
-

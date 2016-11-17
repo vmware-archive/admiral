@@ -1,0 +1,53 @@
+---
+id: kitematicWithClosure
+name: kitematicWithClosure
+status: PUBLISHED
+properties:
+  _leaseDays: 3
+components:
+  kitematicBeforeClosure:
+    type: App.Container
+    data:
+      name: kitematicBeforeClosure
+      image: kitematic/hello-world-nginx:latest
+      env:
+      - var: input_a
+        value: value_a
+      a: |
+        {
+          "p": 50
+        }
+      b: 60
+  test:
+    type: App.Closure
+    data:
+      name: test
+      runtime: nodejs_4.3.0
+      description: Sum function which is part of template.
+      source: |
+        module.exports = function test(ctx) {
+          var m = ctx.inputs.a;
+          console.log('Hello number: ' + m.p);
+          ctx.outputs.result = m.p + ctx.inputs.b;
+          console.log('Hello result: ' + ctx.outputs.result);
+        };
+
+      outputNames:
+        - result
+      logConfiguration:
+        type: "json-file"
+        config:
+          max-size: "100m"
+          max-file: "1"
+      inputs:
+        a: ${_resource~kitematicBeforeClosure~a}
+        b: ${_resource~kitematicBeforeClosure~b}
+  kitematicAfterClosure:
+    type: App.Container
+    data:
+      name: kitematicAfterClosure
+      image: kitematic/hello-world-nginx:latest
+      env:
+      - var: input_a
+        value: ${_resource~test~outputs~result}
+

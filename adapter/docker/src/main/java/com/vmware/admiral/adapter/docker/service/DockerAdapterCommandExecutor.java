@@ -143,11 +143,23 @@ public interface DockerAdapterCommandExecutor {
     String DOCKER_IMAGE_SRC_PROP_NAME = "fromSrc";
     String DOCKER_IMAGE_REPOSITORY_PROP_NAME = "repo";
     String DOCKER_IMAGE_TAG_PROP_NAME = "tag";
+    String DOCKER_IMAGE_NAME_PROP_NAME = "imageName";
     String DOCKER_IMAGE_DATA_PROP_NAME = "imageData";
     String DOCKER_IMAGE_REGISTRY_AUTH = "X-Registry-Auth";
 
     String DOCKER_VOLUME_NAME_PROP_NAME = "Name";
     String DOCKER_VOLUME_DRIVER_PROP_NAME = "Driver";
+
+    // local system build image parameters
+    String DOCKER_BUILD_IMAGE_DOCKERFILE_PROP_NAME = "dockerfile";
+    String DOCKER_BUILD_IMAGE_BUILDARGS_PROP_NAME = "buildargs";
+    String DOCKER_BUILD_IMAGE_FORCERM_PROP_NAME = "forcerm";
+    String DOCKER_BUILD_IMAGE_NOCACHE_PROP_NAME = "nocache";
+    String DOCKER_BUILD_IMAGE_DOCKERFILE_DATA = "dockerImageData";
+    String DOCKER_BUILD_IMAGE_TAG_PROP_NAME = "t";
+
+    // inspect image query parameters
+    String DOCKER_BUILD_IMAGE_INSPECT_NAME_PROP_NAME = "imageName";
 
     // Fetch logs query param
     String STD_ERR = "stderr";
@@ -160,11 +172,18 @@ public interface DockerAdapterCommandExecutor {
     // Management operations:
     void stop();
 
-    // Container operations:
+    // Image operations:
+    void buildImage(CommandInput input, CompletionHandler completionHandler);
+
+    void deleteImage(CommandInput input, CompletionHandler completionHandler);
+
+    void inspectImage(CommandInput input, CompletionHandler completionHandler);
+
     void loadImage(CommandInput input, CompletionHandler completionHandler);
 
     void createImage(CommandInput input, CompletionHandler completionHandler);
 
+    // Container operations:
     void createContainer(CommandInput input, CompletionHandler completionHandler);
 
     void startContainer(CommandInput input, CompletionHandler completionHandler);

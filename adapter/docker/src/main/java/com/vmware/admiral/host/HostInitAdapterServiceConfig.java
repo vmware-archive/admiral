@@ -15,6 +15,7 @@ import java.net.URI;
 import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.docker.service.DockerAdapterService;
+import com.vmware.admiral.adapter.docker.service.DockerHostAdapterImageService;
 import com.vmware.admiral.adapter.docker.service.DockerHostAdapterService;
 import com.vmware.admiral.adapter.docker.service.DockerNetworkAdapterService;
 import com.vmware.admiral.adapter.docker.service.DockerOperationTypesService;
@@ -51,7 +52,6 @@ public class HostInitAdapterServiceConfig {
             host.startService(Operation.createPost(UriUtils.buildUri(host,
                     MockDockerVolumeAdapterService.class)), new MockDockerVolumeAdapterService());
 
-
         } else {
             URI instanceReference = null;
             String remoteAdapterReference = System
@@ -75,7 +75,9 @@ public class HostInitAdapterServiceConfig {
             host.startService(
                     Operation.createPost(UriUtils.buildUri(host, DockerVolumeAdapterService.class)),
                     new DockerVolumeAdapterService());
-
+            host.startService(
+                    Operation.createPost(UriUtils.buildUri(host, DockerHostAdapterImageService.class)),
+                    new DockerHostAdapterImageService());
             host.log(Level.INFO, "Docker instance reference: %s", instanceReference);
         }
     }

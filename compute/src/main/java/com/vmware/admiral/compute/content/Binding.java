@@ -36,7 +36,7 @@ public class Binding implements Serializable {
         private static final long serialVersionUID = 1L;
 
         public String bindingExpression;// TODO could be a list of fields, but not sure about
-                                              // the syntax yet
+        // the syntax yet
         public String defaultValue;
 
         public BindingPlaceholder(String bindingExpression) {

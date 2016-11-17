@@ -22,7 +22,8 @@ public enum ResourceType {
     COMPUTE_TYPE("COMPUTE", "Compute"),
     CONTAINER_HOST_TYPE("CONTAINER_HOST", ""),
     NETWORK_TYPE("NETWORK", "App.Network"),
-    VOLUME_TYPE("VOLUME", "Volume.Docker");
+    VOLUME_TYPE("VOLUME", "Volume.Docker"),
+    CLOSURE_TYPE("CLOSURE", "App.Closure");
 
     private final String name;
     private final String contentType;

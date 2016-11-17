@@ -29,7 +29,22 @@ crossroads.addRoute('/', function() {
 });
 
 crossroads.addRoute('/home', function() {
-  actions.AppActions.openHome();
+ actions.AppActions.openHome();
+});
+
+//crossroads.addRoute('/closures', function() {
+//  actions.AppActions.openView(constants.VIEWS.CLOSURES.name);
+//  actions.ClosureActions.openClosures();
+//});
+
+//crossroads.addRoute('/home/newClosure', function() {
+//  actions.AppActions.openHome();
+//  actions.ClosureActions.openAddClosure();
+//});
+
+crossroads.addRoute('/closures/new', function() {
+  actions.AppActions.openView(constants.VIEWS.TEMPLATES.name);
+  actions.TemplateActions.openAddClosure();
 });
 
 crossroads.addRoute('/home/newHost', function() {
@@ -74,6 +89,21 @@ crossroads.addRoute('/networks:?query:', function(query) {
   query = query || {};
   query.$category = 'networks';
   actions.ContainerActions.openContainers(query, true);
+});
+
+crossroads.addRoute('/closures', function() {
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CLOSURES.name);
+  actions.ContainerActions.openContainers({
+    '$category': 'closures'
+  }, true, true);
+});
+
+crossroads.addRoute('/closures:?query:', function(query) {
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CLOSURES.name);
+
+  query = query || {};
+  query.$category = 'closures';
+  actions.ContainerActions.openContainers(query, true, true);
 });
 
 crossroads.addRoute('/templates:?query:', function(query) {
@@ -165,6 +195,11 @@ crossroads.addRoute('/containers/{containerId*}', function(containerId) {
   actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
   actions.ContainerActions.openContainers();
   actions.ContainerActions.openContainerDetails(containerId);
+});
+
+crossroads.addRoute('/closures/{closureId*}', function(closureId) {
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CLOSURES.name);
+  actions.ContainerActions.openClosureDetails(closureId);
 });
 
 crossroads.addRoute('/resource-pools', function() {
@@ -280,6 +315,10 @@ actions.NavigationActions.openContainerDetails.listen(function(containerId, clus
   }
 });
 
+actions.NavigationActions.openClosureDetails.listen(function(closureId) {
+  hasher.setHash('closures/' + closureId);
+});
+
 actions.NavigationActions.openClusterDetails.listen(function(clusterId, compositeComponentId) {
   if (compositeComponentId) {
     hasher.setHash('containers/composite/' + compositeComponentId + '/cluster/' + clusterId);
@@ -323,6 +362,24 @@ actions.NavigationActions.editCompute.listen(function(hostId) {
 actions.NavigationActions.openMachineDetails.listen(function() {
   // not yet supported
   // hasher.setHash('machines/' + machineId);
+});
+
+actions.NavigationActions.openHomeAddClosure.listen(function() {
+  hasher.setHash('home/newClosure');
+});
+
+actions.NavigationActions.openClosuresSilently.listen(function() {
+  hasher.changed.active = false;
+  hasher.setHash('closures');
+  hasher.changed.active = true;
+});
+
+actions.NavigationActions.openClosures.listen(function() {
+ hasher.setHash('closures');
+});
+
+actions.NavigationActions.openAddClosure.listen(function() {
+  hasher.setHash('closures/new');
 });
 
 function parseHash(newHash) {

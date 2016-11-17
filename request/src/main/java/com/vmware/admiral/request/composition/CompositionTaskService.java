@@ -172,9 +172,9 @@ public class CompositionTaskService
         if (currentState.taskInfo != null
                 && TaskStage.STARTED == currentState.taskInfo.stage
                 && (SubStage.ALLOCATING == patchBody.taskSubStage
-                        || SubStage.ERROR_ALLOCATING == patchBody.taskSubStage
-                        || SubStage.PROVISIONING == patchBody.taskSubStage
-                        || SubStage.ERROR_PROVISIONING == patchBody.taskSubStage)
+                || SubStage.ERROR_ALLOCATING == patchBody.taskSubStage
+                || SubStage.PROVISIONING == patchBody.taskSubStage
+                || SubStage.ERROR_PROVISIONING == patchBody.taskSubStage)
                 && currentState.remainingCount != null
                 && currentState.remainingCount > 0
                 && patch.getReferer() != null

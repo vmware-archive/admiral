@@ -19,6 +19,7 @@ const IMAGES_SEARCH_QUERY_WILDCARD = '*';
 const TEMPLATES_SEARCH_QUERY_TEMPLATES_ONLY_PARAM = 'templatesOnly';
 const TEMPLATES_SEARCH_QUERY_TEMPLATES_PARENTS_ONLY_PARAM = 'templatesParentOnly';
 const TEMPLATES_SEARCH_QUERY_IMAGES_ONLY_PARAM = 'imagesOnly';
+const TEMPLATES_SEARCH_QUERY_CLOSURES_ONLY_PARAM = 'closuresOnly';
 const TEMPLATE_DESCRIPTION_IMAGES_PARAM = 'descriptionImages';
 
 const REQUEST_PARAM_VALIDATE_OPERATION_NAME = 'validate';
@@ -27,6 +28,7 @@ const CONTAINER_TYPE_DOCKER = 'DOCKER_CONTAINER';
 const CONTAINER_HOST = 'CONTAINER_HOST';
 const COMPOSITE_COMPONENT_TYPE = 'COMPOSITE_COMPONENT';
 const NETWORK_TYPE = 'NETWORK';
+const CLOSURE_TYPE = 'CLOSURE';
 
 const DOCUMENT_TYPE_PROP_NAME = 'documentType';
 const EXPAND_QUERY_PROP_NAME = 'expand';
@@ -207,6 +209,11 @@ var ensurePrefixResourceLinks = function(prefix, links) {
 var makeDay2OperationRequestContainers = function(containerLinks, op) {
   return batchDay2OperationResource(CONTAINER_TYPE_DOCKER,
             ensurePrefixResourceLinks(links.CONTAINERS, containerLinks), op);
+};
+
+var makeDay2OperationRequestClosures = function(closureLinks, op) {
+  return batchDay2OperationResource(CLOSURE_TYPE,
+            ensurePrefixResourceLinks(links.CLOSURES, closureLinks), op);
 };
 
 var makeDay2OperationRequestNetworks = function(networkLinks, op) {
@@ -687,6 +694,9 @@ services.loadCompute = function(queryOptions) {
 };
 
 services.loadNextPage = function(nextPageLink) {
+
+  console.log('>>>>>>>>>>>. LOADING next page of: ' + nextPageLink);
+
   return get(nextPageLink + '&' + DOCUMENT_TYPE_PROP_NAME + '=true').then(function(result) {
     return result;
   });
@@ -775,6 +785,30 @@ services.loadTemplates = function(queryOptions) {
       results: results,
       isPartialResult: isPartialResult
     };
+  });
+};
+
+services.loadTemplateClosures = function(queryOptions) {
+  if (!queryOptions) {
+    queryOptions = {};
+  }
+
+  var anys = toArrayIfDefined(queryOptions.any);
+
+  var params = {};
+  if (anys) {
+    // TODO: there can be multiple query requests but we take only the first one, as the backend
+    // does not handle multiple
+    params[IMAGES_SEARCH_QUERY_PROP_NAME] = anys[0];
+  } else {
+    params[IMAGES_SEARCH_QUERY_PROP_NAME] = IMAGES_SEARCH_QUERY_WILDCARD;
+  }
+
+  params[TEMPLATES_SEARCH_QUERY_CLOSURES_ONLY_PARAM] = true;
+
+  console.log('Calling apo loadTemplateClosures: ' + JSON.stringify(queryOptions));
+  return list(links.TEMPLATES, false, params).then(function(data) {
+    return data.results || [];
   });
 };
 
@@ -954,6 +988,10 @@ services.loadContainer = function(containerId) {
   return get(links.CONTAINERS + '/' + containerId);
 };
 
+services.loadClosure = function(closureId) {
+  return get(links.CLOSURES + '/' + closureId);
+};
+
 services.loadContainers = function(queryOptions) {
   var filter = buildContainersSearchQuery(queryOptions);
   var url = buildPaginationUrl(links.CONTAINERS, filter, true, 'created asc');
@@ -1026,6 +1064,107 @@ services.loadContainerLogs = function(containerId, sinceMs) {
   });
 };
 
+services.loadClosures = function() {
+  console.log('Calling service api: ' + links.CLOSURE_DESCRIPTIONS);
+  return list(links.CLOSURE_DESCRIPTIONS, true);
+};
+
+services.loadClosureRuns = function(queryOptions) {
+  var filter = buildContainersSearchQuery(queryOptions);
+  var url = buildPaginationUrl(links.CLOSURES, filter, true);
+  return get(url).then(function(result) {
+    return result;
+  });
+};
+
+services.getClosure = function(closureSelfLink) {
+  return services.getClosureInstance(closureSelfLink).then(
+    function(fetchedClosure) {
+
+      console.log('Fetched closure instance.');
+
+      return fetchedClosure;
+    });
+};
+
+services.getClosureLogs = function(resourceLogLink) {
+  return services.getLogs(resourceLogLink).then(
+    function(fetchedLogs) {
+      return fetchedLogs;
+    });
+};
+
+services.createClosure = function(closureDescription) {
+  return services.createdClosureDescription(closureDescription).then(
+    function(createdClosureDescription) {
+      console.log('Created closure description.'
+       + createdClosureDescription.documentSelfLink);
+
+      return createdClosureDescription;
+    });
+};
+
+services.editClosure = function(closureDescription) {
+  console.log('Service edit called: ' + JSON.stringify(closureDescription));
+  return services.editClosureDescription(closureDescription).then(
+    function(createdClosureDescription) {
+      console.log('Edited closure description: ' + createdClosureDescription.documentSelfLink);
+
+      return createdClosureDescription;
+    });
+};
+
+services.deleteClosure = function(closureDescription) {
+  return deleteEntity(closureDescription.documentSelfLink);
+};
+
+services.deleteClosureRun = function(closureSelfLink) {
+  return deleteEntity(closureSelfLink);
+};
+
+services.runClosure = function(closureDescription, inputs) {
+  return services.createClosureInstance(closureDescription).then(
+  function(createdClosure) {
+    console.log('Executing closure: ' + createdClosure.documentSelfLink);
+    var closureRequest = {
+      inputs: inputs
+    };
+    return services.runClosureInstance(createdClosure, closureRequest);
+  });
+};
+
+services.createdClosureDescription = function(closureDescription) {
+  return post(links.CLOSURE_DESCRIPTIONS, closureDescription);
+};
+
+services.editClosureDescription = function(closureDescription) {
+  return patch(closureDescription.documentSelfLink, closureDescription);
+};
+
+services.createClosureInstance = function(closureDescription) {
+  var closureState = {
+    descriptionLink: closureDescription.documentSelfLink
+  };
+  return post(links.CLOSURES, closureState);
+};
+
+services.getClosureInstance = function(closureSelfLink) {
+  return get(closureSelfLink);
+};
+
+services.loadClosureDescription = function(closureDescriptionSelfLink) {
+  return get(closureDescriptionSelfLink);
+};
+
+services.getLogs = function(resourceId) {
+  var resourceLogLink = links.CONTAINER_LOGS + '?id=' + resourceId;
+  return get(resourceLogLink);
+};
+
+services.runClosureInstance = function(closureDescription, closureRequest) {
+  return post(closureDescription.documentSelfLink, closureRequest);
+};
+
 services.createContainer = function(containerDescription, group) {
   return services.createContainerDescription(containerDescription).then(
     function(createdContainerDescription) {
@@ -1084,6 +1223,14 @@ services.removeNetwork = function(networkId) {
 services.batchOpContainers = function(containerIds, operation) {
   return day2operation(links.REQUESTS,
     makeDay2OperationRequestContainers(containerIds, operation))
+    .then(function(day2OpRequest) {
+      return day2OpRequest;
+    });
+};
+
+services.batchOpClosures = function(closureIds, operation) {
+  return day2operation(links.REQUESTS,
+    makeDay2OperationRequestClosures(closureIds, operation))
     .then(function(day2OpRequest) {
       return day2OpRequest;
     });
@@ -1168,6 +1315,18 @@ services.createContainerTemplate = function(containerDescription) {
 
       return post(links.COMPOSITE_DESCRIPTIONS, multiContainerDescription);
   });
+};
+
+services.createClosureTemplate = function(closureDescription) {
+    return services.createClosure(closureDescription)
+      .then(function(createdClosureDescription) {
+        var multiContainerDescription = {
+          name: createdClosureDescription.name,
+          descriptionLinks: [createdClosureDescription.documentSelfLink]
+        };
+
+        return post(links.COMPOSITE_DESCRIPTIONS, multiContainerDescription);
+    });
 };
 
 services.removeContainerTemplate = function(templateId) {
@@ -1655,6 +1814,9 @@ var buildContainersSearchQuery = function(queryOptions) {
       switch (category) {
         case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
           link = links.NETWORKS;
+          break;
+        case constants.RESOURCES.SEARCH_CATEGORY.CLOSURES:
+          link = links.CLOSURES;
           break;
         case constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS:
           link = links.COMPOSITE_COMPONENTS;

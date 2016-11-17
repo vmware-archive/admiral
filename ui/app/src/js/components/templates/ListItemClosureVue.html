@@ -1,0 +1,92 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="alert" v-bind:class="{'success': model.alert.type === 'success', 'fail': model.alert.type === 'fail'}"
+     role="alert" v-if="model.alert"><i class="fa alert-icon"
+  v-bind:class="{'fa-check': model.alert.type === 'success', 'fa-exclamation-circle': model.alert.type === 'fail'}"
+  ></i><span>{{model.alert.message}}</span></div>
+<div class="image-item" v-on:click="hideGroups($event)">
+  <div class="image-header">
+    <img v-bind:src="closureIcon" />
+    <div v-bind:class="'icons icons-' + numberOfIcons">
+      <template v-for="i in numberOfIcons">
+        <img v-bind:src="model.icons[i]"/>
+      </template>
+    </div>
+    <div class="title-holder">
+      <div class="title truncateText" title="{{model.name}}">{{model.name}}</div>
+      <div class="image-tag">{{closureRuntime}}</div>
+      <div style="clear: both;"></div>
+    </div>
+  </div>
+  <hr/>
+  <div class="image-content">
+    <div class="closure-description-text" title="{{model.description}}">{{model.description}}&nbsp;</div>
+    <div>
+      <span class="image-label">Memory:</span>
+      <span class="image-label">{{model.resources.ramMB}} MB&nbsp;</span>
+    </div>
+    <div>
+      <span class="image-label">Timeout:</span>
+      <span class="image-label">{{model.resources.timeoutSeconds}} seconds&nbsp;</span>
+    </div>
+  </div>
+  <div class="image-actions" v-if="!model.alert" v-bind:class="{'hide': showDeleteConfirmation}">
+    <action-button name="edit" icon-name="pencil"
+               v-bind:label="i18n('app.template.actions.edit')"
+               v-on:click="editClosureDescription($event)"></action-button>
+    <action-button name="remove" icon-name="times"
+                   v-bind:label="i18n('app.container.actions.remove')"
+                   v-on:click="askConfirmation($event)"></action-button>
+  </div>
+  <delete-confirmation v-if="!model.alert" v-bind:class="{'hide': !showDeleteConfirmation}"
+                       v-bind:show="showDeleteConfirmation"
+                       v-on:confirm-delete="removeClosureDescription($event)"
+                       v-on:cancel-delete="cancelRemoval($event)"></delete-confirmation>
+  <div class="btn-group pull-right">
+    <button v-if="model.provisioning" type="button"
+            class="btn admiral-btn create-container-btn loading"
+            disabled="disabled">{{i18n("app.closure.request.run")}}<i class="fa fa-spinner fa-spin loader"></i></button>
+    <template v-else>
+      <div>
+        <template v-if="showGroupForProvisioning">
+        <div class="provisionGroup">
+          <select v-model="preferredGroupId">
+            <option v-for="option in groupOptions" track-by="id"
+                    value="{{option.id}}">
+              {{option.name}}
+            </option>
+            <option v-if="clearSelectionSupported()" value="">{{i18n('noSelection')}}</option>
+          </select>
+          <button type="button" class="btn admiral-btn create-container-with-group-btn"
+                  v-on:click="createTemplate($event)">{{i18n("app.template.list.provision")}}</button>
+        </div>
+      </template>
+      <template v-else>
+        <div class="btn-group pull-right">
+          <button type="button" class="btn admiral-btn create-container-btn"
+                  v-on:click="runClosure($event)">{{i18n("app.closure.request.run")}}</button>
+          <button type="button" class="btn admiral-btn dropdown-toggle" data-toggle="dropdown"
+                  aria-haspopup="true" aria-expanded="false">
+            <span class="caret"></span>
+            <span class="sr-only">Toggle Dropdown</span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a href="#" class="edit-template-btn"
+                   v-on:click="editClosureDescription($event)">{{i18n("app.template.list.editTemplate")}}</a></li>
+          </ul>
+        </div>
+    </template>
+    </div>
+  </template>
+  </div>
+  <div style="clear: both;"></div>
+</div>

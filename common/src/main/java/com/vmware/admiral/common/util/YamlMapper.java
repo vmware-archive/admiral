@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.content;
+package com.vmware.admiral.common.util;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;

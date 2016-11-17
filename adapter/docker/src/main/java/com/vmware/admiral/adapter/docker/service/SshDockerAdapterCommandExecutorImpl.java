@@ -617,6 +617,21 @@ public class SshDockerAdapterCommandExecutorImpl implements DockerAdapterCommand
     }
 
     @Override
+    public void buildImage(CommandInput input, CompletionHandler completionHandler) {
+        completionHandler.handle(null, new Exception("Not supported operation"));
+    }
+
+    @Override
+    public void deleteImage(CommandInput input, CompletionHandler completionHandler) {
+        completionHandler.handle(null, new Exception("Not supported operation"));
+    }
+
+    @Override
+    public void inspectImage(CommandInput input, CompletionHandler completionHandler) {
+        completionHandler.handle(null, new Exception("Not supported operation"));
+    }
+
+    @Override
     public void loadImage(CommandInput input, CompletionHandler completionHandler) {
         uploadImage(input, (completedOp, failure) -> {
             if (failure != null) {

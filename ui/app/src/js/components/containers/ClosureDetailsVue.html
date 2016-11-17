@@ -1,0 +1,70 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div>
+<alert alert-type="danger" v-bind:show-alert="hasGeneralError" v-bind:alert-message="generalError"></alert>
+<div class="container-details"
+     v-if="model.instance">
+  <alert alert-type="danger" v-bind:show-alert="hasOperationError"
+                             v-bind:alert-message="i18n('app.container.details.operation.failure')"></alert>
+  <div class="container-details-header">
+    <div class="title">{{model.instance.name}}<refresh-button v-on:click="refresh()"></refresh-button></div>
+    <div class="status {{model.instance.state}}">{{model.instance.state}}</div>
+    <div class="toolbar-actions">
+      <template v-if="hasOperationInProgress() || confirmationOperation">
+        <div class="progress-holder">
+          <action-confirmation v-bind:action-name="confirmationOperation"
+                               v-bind:action-title="i18n('app.container.actions.remove')"></action-confirmation>
+
+          <div class="loading" v-bind:class="{'hide': !hasOperationInProgress()}">
+            {{i18n('app.container.details.operation.pending')}}<i class="fa fa-spinner fa-2x fa-spin"></i></div>
+        </div>
+      </template>
+      <template v-else>
+        <toolbar-action-button id="remove" icon-name="times" v-bind:label="i18n('app.container.actions.remove')"
+                               v-bind:supported="operationSupported('REMOVE')"
+                               v-on:click="askConfirmation($event, 'removeClosureRun')"
+                                ></toolbar-action-button>
+      </template>
+    </div>
+  </div>
+  <div class="content">
+    <maximizable-behaviour class="closure-details-usages">
+      <div class="title">{{i18n('app.closure.details.closureTitle')}}</div>
+      <div class="content">
+        <closure-properties v-bind:model="model.instance"></closure-properties>
+      </div>
+    </maximizable-behaviour>
+    <maximizable-behaviour class="closure-details-properties">
+      <div class="title">{{i18n('app.closure.details.closureDescriptionTitle')}}</div>
+      <div class="content">
+        <closure-description-properties v-bind:model="model.instance"></closure-description-properties>
+      </div>
+    </maximizable-behaviour>
+    <maximizable-behaviour class="container-details-logs">
+      <div class="title">{{i18n('app.container.details.logs')}}</div>
+      <logs-scroll class="content" v-bind:logs="model.instance.logs"></logs-scroll>
+      <!-- <div class="loading" v-bind:class="{'hide': !model.logsLoading}">
+        <span class="vertical-helper"></span>
+        <img src="image-assets/loading-animation.gif">
+      </div> -->
+      <div class="container-details-logs-settings">
+        <span>{{i18n('app.container.details.showingLogsSince')}}</span>
+        <select v-on:change="onLogsSinceChange($event)" v-if="model.logsSettings">
+          <option v-for="duration in logsSinceDurations"
+                  v-bind:value="duration"
+                  v-bind:selected="duration === model.logsSettings.sinceDuration">{{duration | momentHumanize}}</option>
+        </select>
+      </div>
+    </maximizable-behaviour>
+  </div>
+</div>
+</div>

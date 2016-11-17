@@ -43,7 +43,8 @@ export var TemplateActions = Reflux.createActions([
   'createContainer', 'createContainerWithDetails', 'createContainerTemplate',
   'removeTemplate', 'saveTemplateName', 'copyTemplate', 'publishTemplate', 'openImportTemplate',
   'importTemplate', 'openEditNetwork', 'cancelEditNetwork', 'attachNetwork', 'detachNetwork',
-  'attachDetachNetwork', 'saveNetwork', 'removeNetwork'
+  'attachDetachNetwork', 'saveNetwork', 'removeNetwork',
+  'openAddClosure', 'removeClosure', 'runClosure', 'cancelAddClosure', 'createClosureTemplate'
 ]);
 
 export var ContainerActions = Reflux.createActions([
@@ -55,8 +56,9 @@ export var ContainerActions = Reflux.createActions([
   'removeContainerDetails', 'removeContainers', 'operationCompleted', 'operationFailed',
   'modifyClusterSize', 'scaleContainer', 'startCluster', 'stopCluster', 'removeCluster',
   'closeContainers', 'openShell', 'closeShell',
-  'batchOpContainers', 'batchOpCompositeContainers', 'batchOpNetworks',
-  'openCreateContainer', 'openCreateNetwork', 'createContainer', 'createNetwork'
+  'batchOpContainers', 'batchOpCompositeContainers', 'batchOpNetworks', 'batchOpClosures',
+  'openCreateContainer', 'openCreateNetwork', 'createContainer', 'createNetwork',
+  'removeClosureRun', 'openCreateClosure', 'openClosureDetails'
 ]);
 
 export var NetworkActions = Reflux.createActions([
@@ -105,11 +107,11 @@ export var PlacementContextToolbarActions = Reflux.createActions([
 ]);
 
 export var TemplatesContextToolbarActions = Reflux.createActions([
-  'openToolbarRequests', 'openToolbarEventLogs', 'closeToolbar'
+  'openToolbarRequests', 'openToolbarEventLogs', 'closeToolbar', 'openToolbarClosureResults'
 ]);
 
 export var ContainersContextToolbarActions = Reflux.createActions([
-  'openToolbarRequests', 'openToolbarEventLogs', 'closeToolbar'
+  'openToolbarRequests', 'openToolbarEventLogs', 'closeToolbar', 'openToolbarClosureResults'
 ]);
 
 export var ResourcePoolsContextToolbarActions = Reflux.createActions([
@@ -164,6 +166,16 @@ export var StorageDescriptionsActions = Reflux.createActions([
   'retrieveStorageDescriptions'
 ]);
 
+export var ClosureActions = Reflux.createActions([
+  'openClosures', 'openAddClosure', 'createClosure', 'deleteClosure', 'editClosure', 'runClosure',
+   'resetMonitoredClosure', 'createAndRunClosure'
+]);
+
+export var ClosureContextToolbarActions = Reflux.createActions([
+  'openToolbarResourcePools', 'closeToolbar',
+  'createResourcePool', 'manageResourcePools'
+]);
+
 /*
   Used to trigger a navigation change.
   The one listening for these will eventually call the corresponding action on a App/component level
@@ -173,5 +185,7 @@ export var NavigationActions = Reflux.createActions([
   'openTemplates', 'openEventLog', 'openRegistries', 'openContainerRequest', 'openContainers',
   'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
   'openTemplateDetails', 'showContainersPerPlacement', 'openPlacements', 'openEnvironments',
-  'openMachines', 'openMachineDetails', 'openCompute', 'editCompute'
+  'openMachines', 'openMachineDetails', 'openCompute', 'editCompute',
+  'openClosures', 'openClosuresSilently', 'openAddClosure', 'openHomeAddClosure',
+  'openClosureDetails'
 ]);

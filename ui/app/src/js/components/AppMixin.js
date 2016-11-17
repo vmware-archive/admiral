@@ -112,6 +112,10 @@ var centerViewHasExpandedContext = function(centerView) {
       return true;
     }
 
+    if (utils.hasExpandedContextView(centerView.data.taskAddView)) {
+      return true;
+    }
+
     if (utils.hasExpandedContextView(centerView.data.registries)) {
       return true;
     }

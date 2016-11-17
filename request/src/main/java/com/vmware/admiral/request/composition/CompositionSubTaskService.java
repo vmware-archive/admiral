@@ -42,6 +42,8 @@ import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.content.Binding;
+import com.vmware.admiral.request.ClosureProvisionTaskService;
+import com.vmware.admiral.request.ClosureProvisionTaskService.ClosureProvisionTaskState;
 import com.vmware.admiral.request.ContainerAllocationTaskFactoryService;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService;
@@ -391,9 +393,40 @@ public class CompositionSubTaskService
             createContainerVolumeProvisionTaskState(state);
         } else if (ResourceType.COMPUTE_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createComputeProvisionTaskState(state);
+        } else if (ResourceType.CLOSURE_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
+            createClosureProvisionTask(state);
         } else {
-            throw new IllegalArgumentException("Unsupported type.");
+            throw new IllegalArgumentException(String.format("Unsupported type. Must be: %s, %s, %s or %s",
+                    ResourceType.CONTAINER_TYPE, ResourceType.COMPUTE_TYPE, ResourceType.NETWORK_TYPE,
+                    ResourceType.CLOSURE_TYPE));
         }
+    }
+
+    private void createClosureProvisionTask(CompositionSubTaskState state) {
+        ClosureProvisionTaskState provisionTask = new ClosureProvisionTaskState();
+        provisionTask.documentSelfLink = getSelfId();
+        provisionTask.serviceTaskCallback = ServiceTaskCallback.create(
+                state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
+                TaskStage.STARTED, SubStage.ERROR);
+        provisionTask.customProperties = state.customProperties;
+        provisionTask.resourceDescriptionLink = state.resourceDescriptionLink;
+        provisionTask.resourceLinks = state.resourceLinks;
+        provisionTask.tenantLinks = state.tenantLinks;
+        provisionTask.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation
+                .createPost(this, ClosureProvisionTaskService.FACTORY_LINK)
+                .setBody(provisionTask)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating resource provision task", e);
+                        return;
+                    }
+                    //                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.EXECUTING));
+                }));
+
+        proceedTo(SubStage.EXECUTING);
     }
 
     private void createContainerAllocationTaskState(CompositionSubTaskState state) {
@@ -669,12 +702,12 @@ public class CompositionSubTaskService
 
                             List<Operation> updates = new ArrayList<>();
                             for (Map.Entry<String, Object> entry : statesToUpdate.entrySet()) {
-                                Object evaluated = BindingEvaluator
+                                List<Object> evaluated = BindingEvaluator
                                         .evaluateProvisioningTimeBindings(entry.getValue(),
                                                 provisioningTimeBindings, provisionedResources);
-                                updates.add(
-                                        Operation.createPut(this, entry.getKey())
-                                                .setBody(evaluated));
+                                evaluated.stream().forEach(obj -> updates.add(
+                                        Operation.createPut(this, entry.getKey()).setBody(obj)));
+
                             }
 
                             if (!updates.isEmpty()) {

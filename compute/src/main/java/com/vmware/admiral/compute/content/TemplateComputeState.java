@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.photon.controller.model.resources.ComputeService;
 
 /**

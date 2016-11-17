@@ -115,6 +115,7 @@ public class ManagementHost extends ServiceHost {
 
         startFabricServices();
         startManagementServices();
+        startClosureServices(this);
         startSwaggerService();
 
         log(Level.INFO, "**** Management host started. ****");
@@ -146,6 +147,16 @@ public class ManagementHost extends ServiceHost {
         HostInitPhotonModelServiceConfig.startServices(this);
 
         this.log(Level.INFO, "Fabric services started.");
+    }
+
+    /**
+     * Start all services related to closures support.
+     *
+     */
+    protected void startClosureServices(ServiceHost host) throws Throwable {
+        host.log(Level.INFO, "Starting closure services ...");
+        HostInitClosureServiceConfig.startServices(host);
+        host.log(Level.INFO, "Starting closure started");
     }
 
     /**

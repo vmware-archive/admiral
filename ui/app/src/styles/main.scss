@@ -17,6 +17,7 @@ $font-family-sans-serif: "Helvetica Neue", Helvetica, Arial, sans-serif;
 @import "components/list-views";
 @import "components/container-details";
 @import "components/container-request";
+@import "components/closures-request";
 @import "components/radialProgress";
 @import "components/query-search";
 @import "components/networks";
@@ -2498,3 +2499,67 @@ $alert-text-color: #ffffff;
     }
   }
 }
+
+.closures-view {
+  > .main-panel {
+    @extend .position-expand;
+    z-index: 1;
+    > .mask {
+      display: none;
+    }
+  }
+  > .right-context-panel {
+    @extend .position-expand;
+    z-index: 2;
+    left: 100%;
+    top: -10px;
+    > .content {
+      top: 40px;
+    }
+  }
+}
+
+.closures-view.right-context-expanded {
+  > .main-panel {
+    > .mask {
+      display: block;
+    }
+  }
+  > .right-context-panel {
+    left: 45%;
+  }
+}
+
+.closure-logs .centeredLabel {
+  text-align: center;
+}
+
+.right-context-panel > .content .closure-logs-content {
+  background-color: #353434;
+  color: #A6A6A6;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  bottom: 25px;
+}
+
+.closable-view .closure-logs {
+  margin-top: 80px;
+}
+
+.closable-view .closure-logs .td {
+  vertical-align:top;
+}
+
+.source-edit-area.ace_editor.ace-tm {
+  height: 300px;
+  border: 1px solid #DDDDDD;
+  border-radius: 4px;
+}
+
+.dependencies-edit-area.ace_editor.ace-tm {
+  height: 100px;
+  border: 1px solid #DDDDDD;
+  border-radius: 4px;
+}
+

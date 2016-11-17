@@ -23,6 +23,9 @@ var constants = Immutable({
   },
   VIEWS: {
     HOME: {name: 'home'},
+    CLOSURES: {
+      name: 'closures'
+    },
     HOSTS: {
       name: 'hosts',
       NEW: {name: 'hosts/new'}
@@ -45,6 +48,9 @@ var constants = Immutable({
         },
         NETWORKS: {
           name: 'networks'
+        },
+        CLOSURES: {
+          name: 'closures'
         }
       }
     }
@@ -73,13 +79,15 @@ var constants = Immutable({
   // TODO move all entries from CONTAINERS to RESOURCES.CONTAINER
   RESOURCES: {
     TYPES: {
-      NETWORK: 'NETWORK'
+      NETWORK: 'NETWORK',
+      CLOSURE: 'CLOSURE'
     },
     SEARCH_CATEGORY: {
       ALL: 'all',
       CONTAINERS: 'containers',
       APPLICATIONS: 'applications',
-      NETWORKS: 'networks'
+      NETWORKS: 'networks',
+      CLOSURES: 'closures'
     },
     NETWORKS: {
       OPERATION: {
@@ -147,12 +155,14 @@ var constants = Immutable({
   TEMPLATES: {
     TYPES: {
       TEMPLATE: 'TEMPLATE',
-      IMAGE: 'IMAGE'
+      IMAGE: 'IMAGE',
+      CLOSURE: 'CLOSURE'
     },
     SEARCH_CATEGORY: {
       ALL: 'all',
       IMAGES: 'images',
-      TEMPLATES: 'templates'
+      TEMPLATES: 'templates',
+      CLOSURES: 'closures'
     },
     SEARCH_SUGGESTIONS: ['name', 'repository', 'size', 'description'],
     STATUS: {

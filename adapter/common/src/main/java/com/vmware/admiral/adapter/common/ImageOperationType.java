@@ -20,7 +20,11 @@ import java.util.Map;
 public enum ImageOperationType {
     SEARCH("Image.Search"),
     PING("Image.Ping"),
-    LIST_TAGS("Image.Tags");
+    LIST_TAGS("Image.Tags"),
+    BUILD("Image.Build"),
+    LOAD("Image.Load"),
+    DELETE("Image.Delete"),
+    INSPECT("Image.Inspect");
 
     ImageOperationType(String id) {
         this.id = id;

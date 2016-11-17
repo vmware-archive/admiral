@@ -19,6 +19,7 @@ import java.net.URL;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
+import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.ResourceType;
 
 /**

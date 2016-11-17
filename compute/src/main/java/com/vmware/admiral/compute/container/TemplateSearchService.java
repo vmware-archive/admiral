@@ -31,10 +31,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse.Result;
+import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
+import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -65,10 +68,15 @@ public class TemplateSearchService extends StatelessService {
     public static final String TEMPLATES_ONLY_PARAM = "templatesOnly";
     public static final String TEMPLATES_PARENT_ONLY_PARAM = "templatesParentOnly";
     public static final String IMAGES_ONLY_PARAM = "imagesOnly";
+    public static final String CLOSURES_ONLY_PARAM = "closuresOnly";
 
     public static class Response {
         public Collection<TemplateSpec> results;
         public boolean isPartialResult;
+    }
+
+    public static class ClosuresResponse {
+        public Collection<ClosureDescription> results;
     }
 
     @Override
@@ -83,47 +91,159 @@ public class TemplateSearchService extends StatelessService {
 
         boolean templatesOnly = parseBooleanParam(queryParams.remove(TEMPLATES_ONLY_PARAM));
         boolean imagesOnly = parseBooleanParam(queryParams.remove(IMAGES_ONLY_PARAM));
+        boolean closuresOnly = parseBooleanParam(queryParams.remove(CLOSURES_ONLY_PARAM));
 
-        if (templatesOnly && imagesOnly) {
-            throw new IllegalArgumentException("Can't use both templatesOnly and imagesOnly");
-        }
+        if (closuresOnly) {
+            queryClosures(get, queryParams, query);
+        } else {
+            if (templatesOnly && imagesOnly) {
+                throw new IllegalArgumentException("Can't use both templatesOnly and imagesOnly");
+            }
 
-        Set<TemplateSpec> results = Collections.newSetFromMap(new ConcurrentHashMap<>());
+            Set<TemplateSpec> results = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-        // shared callback called by individual queries as they finish (successfully or not)
-        AtomicInteger queriesCountdown = new AtomicInteger(2);
-        if (templatesOnly || imagesOnly) {
-            queriesCountdown.decrementAndGet();
-        }
+            // shared callback called by individual queries as they finish (successfully or not)
+            AtomicInteger queriesCountdown = new AtomicInteger(2);
+            if (templatesOnly || imagesOnly) {
+                queriesCountdown.decrementAndGet();
+            }
 
-        BiConsumer<ServiceDocumentQueryElementResult<TemplateSpec>, Boolean> resultConsumer =
-                (r, isPartialResult) -> {
-                    if (r.hasException() || !r.hasResult()) {
-                        if (r.hasException()) {
-                            Utils.logWarning("Query failure: %s", Utils.toString(r.getException()));
-                        }
-
-                        if (queriesCountdown.decrementAndGet() == 0) {
-                            Response response = new Response();
-                            response.results = prependOfficialResults(new ArrayList<>(results));
-                            if (isPartialResult != null) {
-                                response.isPartialResult = isPartialResult;
+            BiConsumer<ServiceDocumentQueryElementResult<TemplateSpec>, Boolean> resultConsumer =
+                    (r, isPartialResult) -> {
+                        if (r.hasException() || !r.hasResult()) {
+                            if (r.hasException()) {
+                                Utils.logWarning("Query failure: %s", Utils.toString(r.getException()));
                             }
-                            get.setBody(response);
-                            get.complete();
+
+                            if (queriesCountdown.decrementAndGet() == 0) {
+                                Response response = new Response();
+                                response.results = prependOfficialResults(new ArrayList<>(results));
+                                if (isPartialResult != null) {
+                                    response.isPartialResult = isPartialResult;
+                                }
+                                get.setBody(response);
+                                get.complete();
+                            }
+
+                        } else if (r.hasResult()) {
+                            results.add(r.getResult());
                         }
+                    };
 
-                    } else if (r.hasResult()) {
-                        results.add(r.getResult());
+            if (!imagesOnly) {
+                executeTemplateQuery(query, queryParams, resultConsumer);
+            }
+            if (!templatesOnly) {
+                executeImageQuery(queryParams, resultConsumer);
+            }
+        }
+    }
+
+    private void queryClosures(Operation get, Map<String, String> queryParams, String query) {
+        AtomicInteger queriesCountdown = new AtomicInteger(2);
+        queriesCountdown.decrementAndGet();
+        Set<ClosureDescription> results = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        Consumer<ServiceDocumentQueryElementResult<ClosureDescription>> resultConsumer = (r) -> {
+            if (r.hasException() || !r.hasResult()) {
+                if (r.hasException()) {
+                    Utils.logWarning("Query failure: %s", Utils.toString(r.getException()));
+                }
+
+                if (queriesCountdown.decrementAndGet() == 0) {
+                    ClosuresResponse response = new ClosuresResponse();
+                    response.results = new ArrayList<>(results);
+                    get.setBody(response);
+                    get.complete();
+                }
+
+            } else if (r.hasResult()) {
+                results.add(r.getResult());
+            }
+        };
+
+        executeClosuresQuery(query, queryParams, resultConsumer);
+    }
+
+    private void executeClosuresQuery(String query, Map<String, String> queryParams,
+            Consumer<ServiceDocumentQueryElementResult<ClosureDescription>> resultConsumer) {
+
+        String tenantLink = queryParams.get(GROUP_PARAM);
+        List<String> tenantLinks = null;
+        if (tenantLink != null) {
+            tenantLinks = Arrays.asList(tenantLink.split("\\s*,\\s*"));
+        }
+
+        QueryTask queryTask = new QueryTask();
+        queryTask.querySpec = new QueryTask.QuerySpecification();
+        queryTask.taskInfo.isDirect = true;
+
+        QueryUtil.addExpandOption(queryTask);
+
+        boolean templatesParentOnly = parseBooleanParam(queryParams
+                .remove(TEMPLATES_PARENT_ONLY_PARAM));
+
+        QueryTask.Query compositeDescClause = createCompositeDescClause(query, tenantLinks,
+                templatesParentOnly);
+        compositeDescClause.occurance = Occurance.SHOULD_OCCUR;
+
+        queryTask.querySpec.query.addBooleanClause(compositeDescClause);
+
+        final List<String> finalTenantLinks = tenantLinks;
+        sendRequest(Operation
+                .createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
+                .setBody(queryTask)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        resultConsumer.accept(error(ex));
+
+                    } else {
+                        QueryTask resultTask = o.getBody(QueryTask.class);
+                        ServiceDocumentQueryResult result = resultTask.results;
+
+                        if (result == null || result.documents == null) {
+                            resultConsumer.accept(noResult());
+                            return;
+                        }
+                        List<String> closureDescriptionLinks = new ArrayList<>();
+                        result.documents.forEach((link, document) -> {
+                            if (link.startsWith(CompositeDescriptionFactoryService.SELF_LINK)) {
+                                CompositeDescription compositeDescription = Utils.fromJson(document,
+                                        CompositeDescription.class);
+                                compositeDescription.descriptionLinks.size();
+                                compositeDescription.descriptionLinks.stream()
+                                        .filter(l -> l.startsWith(ClosureDescriptionFactoryService.FACTORY_LINK))
+                                        .forEach(l -> {
+                                            closureDescriptionLinks.add(l);
+                                        });
+                            } else {
+                                logWarning("Unexpected result type: %s", link);
+                            }
+                        });
+
+                        logFine("Querying for ClosureDescriptions NOT containing: %s", closureDescriptionLinks);
+
+                        QueryTask closureQueryTask = new QueryTask();
+                        closureQueryTask.querySpec = new QueryTask.QuerySpecification();
+                        closureQueryTask.taskInfo.isDirect = true;
+
+                        QueryUtil.addExpandOption(closureQueryTask);
+
+                        QueryTask.Query closureDescClause = createClosureDescClause(query, finalTenantLinks);
+                        closureDescClause.occurance = Occurance.SHOULD_OCCUR;
+                        closureQueryTask.querySpec.query.addBooleanClause(closureDescClause);
+
+                        // exclude results already found by the previous query
+                        QueryUtil.addListValueExcludeClause(closureQueryTask,
+                                CompositeDescription.FIELD_NAME_SELF_LINK,
+                                closureDescriptionLinks);
+
+                        new ServiceDocumentQuery<ClosureDescription>(getHost(), ClosureDescription.class)
+                                .query(closureQueryTask,
+                                        (r) -> {
+                                            resultConsumer.accept(r);
+                                        });
                     }
-                };
-
-        if (!imagesOnly) {
-            executeTemplateQuery(query, queryParams, resultConsumer);
-        }
-        if (!templatesOnly) {
-            executeImageQuery(queryParams, resultConsumer);
-        }
+                }));
     }
 
     private void executeTemplateQuery(String query, Map<String, String> queryParams,
@@ -212,7 +332,7 @@ public class TemplateSearchService extends StatelessService {
 
                         String descriptionLinksItemField = QueryTask.QuerySpecification
                                 .buildCollectionItemName(
-                                CompositeDescription.FIELD_NAME_DESCRIPTION_LINKS);
+                                        CompositeDescription.FIELD_NAME_DESCRIPTION_LINKS);
 
                         QueryUtil.addExpandOption(compositeQueryTask);
                         QueryUtil.addListValueClause(compositeQueryTask,
@@ -344,6 +464,22 @@ public class TemplateSearchService extends StatelessService {
         }
 
         return containerDescClause;
+    }
+
+    private QueryTask.Query createClosureDescClause(String query, List<String> tenantLinks) {
+        QueryTask.Query closureDescClause = new QueryTask.Query();
+        closureDescClause.addBooleanClause(createKindClause(ClosureDescription.class));
+        closureDescClause.addBooleanClause(createAnyPropertyClause(query,
+                ClosureDescription.FIELD_NAME_NAME, ClosureDescription.FIELD_NAME_DESCRIPTION,
+                ClosureDescription.FIELD_NAME_RUNTIME));
+
+        // if tenant is null, do a global search, if not search in tenant
+        if (tenantLinks != null && !tenantLinks.isEmpty()) {
+            closureDescClause
+                    .addBooleanClause(QueryUtil.addTenantGroupAndUserClause(tenantLinks));
+        }
+
+        return closureDescClause;
     }
 
     private List<TemplateSpec> prependOfficialResults(List<TemplateSpec> results) {

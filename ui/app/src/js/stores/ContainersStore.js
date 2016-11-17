@@ -15,6 +15,7 @@ import constants from 'core/constants';
 import RequestsStore from 'stores/RequestsStore';
 import NotificationsStore from 'stores/NotificationsStore';
 import EventLogStore from 'stores/EventLogStore';
+import ResourcePoolsStore from 'stores/ResourcePoolsStore';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 import utils from 'core/utils';
@@ -79,8 +80,37 @@ function enhanceNetwork(network) {
   network.icon = imageUtils.getImageIconLink(network.name);
   network.documentId = utils.getDocumentId(network.documentSelfLink);
 
+  network.connectedContainers = [];
+  if (network.containerStateLinks) {
+    network.connectedContainers = network.containerStateLinks.map((documentSelfLink) => {
+        return {
+          documentId: utils.getDocumentId(documentSelfLink)
+        };
+    });
+  }
+
   network.type = constants.RESOURCES.TYPES.NETWORK;
   return network;
+}
+
+function enhanceClosure(closure) {
+  closure.icon = imageUtils.getImageIconLink(closure.name);
+  closure.documentId = utils.getDocumentId(closure.documentSelfLink);
+
+  closure.type = constants.RESOURCES.TYPES.CLOSURE;
+  return closure;
+}
+
+function enhanceClosureWithDescription(closure, closureDescription) {
+  closure = enhanceClosure(closure);
+  closure.name = closureDescription.name;
+  closure.runtime = closureDescription.runtime;
+  closure.description = closureDescription.description;
+  closure.source = closureDescription.source;
+  closure.sourceURL = closureDescription.sourceURL;
+  closure.descriptionId = closureDescription.documentSelfLink;
+  closure.resources = closureDescription.resources;
+  return closure;
 }
 
 function getSelectedItemDetailsCursor() {
@@ -320,6 +350,12 @@ let ContainersStore = Reflux.createStore({
         this.emitChange();
       }
     });
+
+    ResourcePoolsStore.listen((resourcePoolsData) => {
+      this.setInData(['selectedItemDetails', 'resourcePools'], resourcePoolsData.items);
+
+      this.emitChange();
+    });
   },
 
   listenables: [
@@ -338,7 +374,8 @@ let ContainersStore = Reflux.createStore({
         });
 
     if (category === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS ||
-        category === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS) {
+        category === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS ||
+        category === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES) {
 
       let enhanceFunction;
       switch (category) {
@@ -347,6 +384,9 @@ let ContainersStore = Reflux.createStore({
           break;
         case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
           enhanceFunction = enhanceNetwork;
+          break;
+        case constants.RESOURCES.SEARCH_CATEGORY.CLOSURES:
+          enhanceFunction = enhanceClosure;
           break;
       }
 
@@ -471,13 +511,16 @@ let ContainersStore = Reflux.createStore({
           loadResourceFunction = services.loadCompositeComponents;
           break;
 
+        case constants.RESOURCES.SEARCH_CATEGORY.CLOSURES:
+          loadResourceFunction = services.loadClosureRuns;
+          break;
+
         default:
         case constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS:
           loadResourceFunction = services.loadContainers;
           break;
       }
       operation.forPromise(loadResourceFunction(queryOptions)).then((result) => {
-
         return this.decorateContainers(result, queryOptions.$category, false);
       });
     }
@@ -534,6 +577,12 @@ let ContainersStore = Reflux.createStore({
     this.loadContainer(containerId, clusterId, compositeComponentId, operation);
   },
 
+  onOpenClosureDetails: function(closureId) {
+    this.cancelOperations(constants.CONTAINERS.OPERATION.DETAILS);
+    var operation = this.requestCancellableOperation(constants.CONTAINERS.OPERATION.DETAILS);
+    this.loadClosure(closureId, operation);
+  },
+
   onOpenClusterDetails: function(clusterId, compositeComponentId) {
 
     this.cancelOperations(constants.CONTAINERS.OPERATION.DETAILS,
@@ -568,6 +617,14 @@ let ContainersStore = Reflux.createStore({
         });
       this.emitChange();
     });
+  },
+
+  onOpenCreateClosure: function() {
+    this.setInData(['creatingResource'], {});
+    this.setInData(['creatingResource', 'tasks'], {});
+    this.setInData(['listView', 'queryOptions', '$category'],
+                   constants.RESOURCES.SEARCH_CATEGORY.CLOSURES);
+    this.emitChange();
   },
 
   openCreateNetwork: function() {
@@ -684,6 +741,18 @@ let ContainersStore = Reflux.createStore({
 
         this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
         actions.RequestsActions.requestCreated(removalRequest);
+      });
+  },
+
+
+  onRemoveClosureRun: function(closureRunlink) {
+
+    services.deleteClosureRun(closureRunlink)
+      .then((removalRequest) => {
+
+        console.log('---- Removed closure run: ' + removalRequest);
+        // this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
+        // actions.RequestsActions.requestCreated(removalRequest);
       });
   },
 
@@ -807,16 +876,16 @@ let ContainersStore = Reflux.createStore({
     });
   },
 
-  onBatchOpCompositeContainers: function(compositeIds, operation) {
-    services.batchOpCompositeContainers(compositeIds, operation).then((batchOpRequest) => {
+  onBatchOpClosures: function(closureLinks, operation) {
+    services.batchOpClosures(closureLinks, operation).then((batchOpRequest) => {
       this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
 
       actions.RequestsActions.requestCreated(batchOpRequest);
     });
   },
 
-  onBatchOpNetworks: function(networkLinks, operation) {
-    services.batchOpNetworks(networkLinks, operation).then((batchOpRequest) => {
+  onBatchOpCompositeContainers: function(compositeIds, operation) {
+    services.batchOpCompositeContainers(compositeIds, operation).then((batchOpRequest) => {
       this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
 
       actions.RequestsActions.requestCreated(batchOpRequest);
@@ -1222,6 +1291,37 @@ let ContainersStore = Reflux.createStore({
       }).catch(this.onGenericDetailsError);
   },
 
+  loadClosure: function(closureId, operation) {
+    var parentCursor = this.selectComponent(null, null, null);
+    // If switching between views, there will be a short period that we show old data,
+    // until the new one is loaded.
+
+    var currentItemDetailsCursor = parentCursor.select(['selectedItemDetails']);
+    currentItemDetailsCursor.merge({
+      type: constants.RESOURCES.TYPES.CLOSURE,
+      documentId: closureId,
+      logsLoading: true,
+      statsLoading: true
+    });
+
+    var currentItemCursor = parentCursor.select(['selectedItem']);
+    currentItemCursor.merge({
+      type: constants.RESOURCES.TYPES.CLOSURE,
+      documentId: closureId
+    });
+    this.emitChange();
+
+    operation.forPromise(services.loadClosure(closureId))
+      .then((closure) => {
+        services.loadClosureDescription(closure.descriptionLink).then((closureDescription) => {
+          enhanceClosureWithDescription(closure, closureDescription);
+          currentItemCursor.merge(closure);
+          currentItemDetailsCursor.setIn(['instance'], closure);
+          this.emitChange();
+        });
+      }).catch(this.onGenericDetailsError);
+  },
+
   aggregateClusterNodes: function(nodes) {
     let nodesByClusterId = [];
     for (let n in nodes) {
@@ -1300,6 +1400,11 @@ let ContainersStore = Reflux.createStore({
   onOpenToolbarRequests: function() {
     actions.RequestsActions.openRequests();
     this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
+  },
+
+  onOpenToolbarClosureResults: function() {
+    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, ResourcePoolsStore.getData(),
+      false);
   },
 
   onCloseToolbar: function() {

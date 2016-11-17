@@ -1,0 +1,22 @@
+<div class="dropdown">
+  <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+    <span class="dropdown-title placeholder">{{title}}</span>
+    <img src="image-assets/loading-animation50x50.gif" class="loading hide">
+    <span class="caret"></span>
+  </button>
+  <div class="dropdown-menu">
+    {{#if searchDisabled}}
+    {{else}}
+    <div class="dropdown-search">
+      <div class="search-input">
+        <input type="text" placeholder='{{searchPlaceholder}}'>
+        <i class="fa fa-spinner fa-spin loader-inline form-control-feedback""></i>
+        <i class="fa fa-search search-hint form-control-feedback""></i>
+      </div>
+    </div>
+    {{/if}}
+    <ul class="dropdown-options" role="menu" aria-labelledby="menu1">
+    <!-- Runtime options will appear here -->
+    </ul>
+  </div>
+</div>

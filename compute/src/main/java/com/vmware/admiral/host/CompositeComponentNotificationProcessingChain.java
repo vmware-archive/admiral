@@ -14,6 +14,7 @@ package com.vmware.admiral.host;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import com.vmware.admiral.closures.services.closure.ClosureService;
 import com.vmware.admiral.compute.Composable;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
@@ -143,6 +144,7 @@ public class CompositeComponentNotificationProcessingChain extends OperationProc
             Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
         chains.put(ComputeService.class, CompositeComponentNotificationProcessingChain.class);
         chains.put(ContainerService.class, CompositeComponentNotificationProcessingChain.class);
+        chains.put(ClosureService.class, CompositeComponentNotificationProcessingChain.class);
     }
 
     private String retrieveLink(ResourceState state) {

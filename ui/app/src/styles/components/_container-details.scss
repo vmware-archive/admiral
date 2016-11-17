@@ -59,6 +59,15 @@ $elements-side-margin: $elements-margin / 2;
   > .container-details-header .status.RETIRED {
     color: $secondary_inactive_button_color;
   }
+
+  > .container-details-header .status.FINISHED {
+    color: $status_running_color;
+  }
+
+  > .container-details-header .status.FAILED {
+    color: $status_stopped_color;
+  }
+
   /* Container Actions */
   > .container-details-header .toolbar-actions {
     margin-top: 12px;
@@ -110,6 +119,35 @@ $elements-side-margin: $elements-margin / 2;
     margin-right: $elements-side-margin;
     overflow: auto;
     z-index: 1;
+  }
+
+  > .content > .closure-details-properties {
+    top: 34%;
+    bottom: 0;
+    left: 0;
+    right: 50%;
+    margin-right: $elements-side-margin;
+    overflow: auto;
+    z-index: 1;
+  }
+
+  > .content > .closure-details-properties > .content {
+    background-color: #FFFFFF;
+    overflow: auto;
+  }
+
+  > .content > .closure-details-usages {
+    top: 0;
+    bottom: 67%;
+    left: 0;
+    right: 50%;
+    margin-right: $elements-side-margin;
+    overflow: auto;
+    z-index: 1;
+  }
+
+  > .content > .closure-details-usages > .content {
+    background-color: #FFFFFF;
   }
 
   > .content > .container-details-usages > .content {

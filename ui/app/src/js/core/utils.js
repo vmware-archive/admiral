@@ -55,7 +55,8 @@ var utils = {
    return viewName === constants.VIEWS.RESOURCES.name
             || viewName === constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name
             || viewName === constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name
-            || viewName === constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name;
+            || viewName === constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name
+            || viewName === constants.VIEWS.RESOURCES.VIEWS.CLOSURES.name;
   },
 
   validate: function(model, constraints) {
@@ -158,6 +159,10 @@ var utils = {
   shouldHideCustomProperty: function(property) {
     return (property.name.substring(0, 2) === constants.PROPERTIES.VISIBILITY_HIDDEN_PREFIX ||
            property.value === null);
+  },
+
+  areClosuresAllowed: function() {
+    return this.getConfigurationPropertyBoolean('allow.closures');
   },
 
   setIn: function(immutableObject, path, value) {

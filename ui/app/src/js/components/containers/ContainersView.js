@@ -11,14 +11,17 @@
 
 import ContainersViewVue from 'components/containers/ContainersViewVue.html';
 import ContainersListItem from 'components/containers/ContainersListItem'; //eslint-disable-line
+import ClosureListItem from 'components/containers/ClosureListItem'; //eslint-disable-line
 import ClusterContainersListItem from 'components/containers/cluster/ClusterContainersListItem';  //eslint-disable-line
 import CompositeContainersListItem from 'components/containers/composite/CompositeContainersListItem'; //eslint-disable-line
 import NetworksListItem from 'components/networks/NetworksListItem'; //eslint-disable-line
 import ContainerDetails from 'components/containers/ContainerDetails';//eslint-disable-line
+import ClosureDetails from 'components/containers/ClosureDetails';//eslint-disable-line
 import ClusterContainerDetails from 'components/containers/cluster/ClusterContainerDetails';//eslint-disable-line
 import CompositeContainerDetails from 'components/containers/composite/CompositeContainerDetails';//eslint-disable-line
 import RequestsList from 'components/requests/RequestsList';//eslint-disable-line
 import EventLogList from 'components/eventlog/EventLogList';//eslint-disable-line
+import ClosureRequestForm from 'components/closures/ClosureRequestForm'; // eslint-disable-line
 import ContainerRequestForm from 'components/containers/ContainerRequestForm'; // eslint-disable-line
 import NetworkRequestForm from 'components/networks/NetworkRequestForm'; // eslint-disable-line
 import VueAdapter from 'components/common/VueAdapter';
@@ -26,7 +29,8 @@ import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
 import utils from 'core/utils';
 import { NavigationActions, RequestsActions, NotificationsActions,
-          ContainerActions, ContainersContextToolbarActions } from 'actions/Actions';
+          ContainerActions, ContainersContextToolbarActions
+           } from 'actions/Actions';
 
 var ContainersViewVueComponent = Vue.extend({
   template: ContainersViewVue,
@@ -54,13 +58,16 @@ var ContainersViewVueComponent = Vue.extend({
           return i18n.t('app.resource.list.titleSearch.containers');
         case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
           return i18n.t('app.resource.list.titleSearch.networks');
+        case constants.RESOURCES.SEARCH_CATEGORY.CLOSURES:
+          return i18n.t('app.resource.list.titleSearch.closures');
       }
     },
     placeholderByCategoryMap: function() {
       return {
         'containers': i18n.t('app.resource.list.searchPlaceholder.containers'),
         'applications': i18n.t('app.resource.list.searchPlaceholder.applications'),
-        'networks': i18n.t('app.resource.list.searchPlaceholder.networks')
+        'networks': i18n.t('app.resource.list.searchPlaceholder.networks'),
+        'closures': i18n.t('app.resource.list.searchPlaceholder.closures')
       };
     },
     hasContainerDetailsError: function() {
@@ -130,6 +137,13 @@ var ContainersViewVueComponent = Vue.extend({
     },
     searchSuggestions: function() {
       return constants.CONTAINERS.SEARCH_SUGGESTIONS;
+    },
+    creatingClosure: function() {
+      return this.model.creatingResource &&
+        this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES;
+    },
+    areClosuresAllowed: function() {
+      return utils.areClosuresAllowed();
     }
   },
   data: function() {
@@ -206,6 +220,12 @@ var ContainersViewVueComponent = Vue.extend({
       NavigationActions.openContainers(this.queryOptions);
     },
 
+    goBackFromClosures: function() {
+        ContainerActions.openContainers({
+          '$category': 'closures'
+        }, true);
+    },
+
     search: function(queryOptions) {
       this.doSearchAndFilter(queryOptions, this.selectedCategory);
     },
@@ -225,6 +245,10 @@ var ContainersViewVueComponent = Vue.extend({
 
     openContainerDetails: function(documentId) {
       NavigationActions.openContainerDetails(documentId);
+    },
+
+    openClosureDetails: function(documentId) {
+      NavigationActions.openClosureDetails(documentId);
     },
 
     openClusterDetails: function(clusterId) {
@@ -268,6 +292,8 @@ var ContainersViewVueComponent = Vue.extend({
           || this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS) {
         return true;
       } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS) {
+        return operation === constants.RESOURCES.NETWORKS.OPERATION.REMOVE;
+      } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES) {
         return operation === constants.RESOURCES.NETWORKS.OPERATION.REMOVE;
       }
       return false;
@@ -314,6 +340,9 @@ var ContainersViewVueComponent = Vue.extend({
 
         this.removeNonRemoveableNetworksFromSelection();
         this.performBatchOperation('Network.Delete');
+      } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES) {
+
+        this.performBatchOperation('Closure.Delete');
       }
     },
 
@@ -361,6 +390,9 @@ var ContainersViewVueComponent = Vue.extend({
         } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS) {
 
           ContainerActions.batchOpNetworks(selectedItemIds, operation);
+        } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES) {
+
+          ContainerActions.batchOpClosures(selectedItemIds, operation);
         }
       }
     },
@@ -435,6 +467,7 @@ var ContainersViewVueComponent = Vue.extend({
 
     openToolbarRequests: ContainersContextToolbarActions.openToolbarRequests,
     openToolbarEventLogs: ContainersContextToolbarActions.openToolbarEventLogs,
+    openToolbarClosureResults: ContainersContextToolbarActions.openToolbarClosureResults,
     closeToolbar: ContainersContextToolbarActions.closeToolbar
   },
   events: {

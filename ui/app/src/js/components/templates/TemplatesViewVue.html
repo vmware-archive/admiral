@@ -55,6 +55,12 @@
                v-on:click="selectCategory(constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES, $event)"
                v-bind:class="{'active': selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES}"
               >{{i18n('app.template.list.searchCategory.templates')}}</a>
+            <a href="#"
+               data-category="closures"
+               v-if="areClosuresAllowed"
+               v-on:click="selectCategory(constants.TEMPLATES.SEARCH_CATEGORY.CLOSURES, $event)"
+               v-bind:class="{'active': selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.CLOSURES}"
+              >{{i18n('app.template.list.searchCategory.closures')}}</a>
           </div>
           <div class="content">
             <grid v-bind:preferred-width="preferredGridWidth">
@@ -66,6 +72,8 @@
                 <container-template-item v-if="item.type === constants.TEMPLATES.TYPES.TEMPLATE"
                                          v-bind:model="item" v-bind:groups="model.groups">
                 </container-template-item>
+                <closure-template-item v-if="item.type === constants.TEMPLATES.TYPES.CLOSURE && areClosuresAllowed" v-bind:model="item" v-bind:groups="model.groups">
+                </closure-template-item>
               </grid-item>
             </grid>
           </div>
@@ -111,9 +119,11 @@
                              v-bind:model="model.selectedItemDetails"></template-details-view>
       <container-request-form v-if="model.selectedItemDetails.selectedForRequest"
                              v-bind:model="model.selectedItemDetails"></container-request-form>
-    </div>
-  </div>
+      <closure-request-form class="template-details" v-if="!!model.selectedItemDetails.addClosureView && areClosuresAllowed" v-bind:model="model.selectedItemDetails"></closure-request-form>
 
+    </div>
+
+   </div>
   <context-sidepanel class="right-context-panel" v-if="showContextPanel">
 
     <div slot="toolbar" class="toolbar">
@@ -140,6 +150,60 @@
       <eventlog-list v-if="activeContextItem === 'eventlogs'"
                      v-bind:model="model.contextView.activeItem.data"></eventlog-list>
     </div>
+
+  </context-sidepanel>
+  <context-sidepanel class="right-context-panel right-closure-panel" v-if="showClosureContextPanel" v-bind:class="{'right-context-expanded': innerContextExpanded}">
+
+            <div slot="toolbar" class="toolbar">
+              <context-sidepanel-toolbar-item
+                v-bind:active="activeContextItem === 'resourcePools'"
+                v-bind:icon-class="'fa fa-tasks'"
+                v-bind:label="i18n('app.closure.resultStatus')"
+                v-on:open="openToolbarClosureResults()" v-on:close="closeToolbar()">
+              </context-sidepanel-toolbar-item>
+            </div>
+
+            <div slot="content" class="content">
+              <div class="closure-logs">
+                <div class="centeredLabel">
+                  <label>{{i18n('app.closure.monitoredTask.runStatus')}}</label>
+                </div>
+                <table style="width: 95%">
+                   <tr>
+                    <td colspan="2">
+                      <table style="width: 100%">
+                        <tr>
+                          <td class="col-sm-2" style="align=right">{{i18n('app.closure.monitoredTask.runId')}}</td>
+                          <td class="col-sm-10" style="align=right">{{model.tasks.monitoredTask.taskId}}</td>
+                        </tr>
+                        <tr>
+                          <td class="col-sm-2" style="align=right">{{i18n('app.closure.monitoredTask.runState')}}</td>
+                          <td class="col-sm-10">{{model.tasks.monitoredTask.state}}</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr><td colspan="2"><br><br></td></tr>
+                  <tr>
+                    <td class="col-sm-2" style="vertical-align:top; align=right">{{i18n('app.closure.request.logs.title')}}</td>
+                      <td class="col-sm-10">
+                          <textarea class="form-control closure-logs-content" rows="30" readonly>{{model.tasks.monitoredTask.taskLogs}}</textarea>
+                        <span class="help-block"></span>
+                      </td>
+                  </tr>
+                  <tr>
+                    <td class="col-sm-2" style="vertical-align:top; align=right">{{i18n('app.closure.monitoredTask.outputs')}}</td>
+                    <td class="col-sm-10">
+                     <table style="width: 100%">
+                        <tr class="item" v-for="output in model.tasks.monitoredTask.outputs">
+                          <td> {{ $key }} = {{ output }}</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </div>
 
   </context-sidepanel>
 </div>

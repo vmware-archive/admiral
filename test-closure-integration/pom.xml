@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.vmware.admiral</groupId>
+        <artifactId>admiral</artifactId>
+        <version>0.9.2-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>closure-test-integration</artifactId>
+
+    <properties>
+        <buildDirectory>${project.basedir}/target</buildDirectory>
+    </properties>
+
+    <build>
+        <directory>${buildDirectory}</directory>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>admiral-request</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>admiral-adapter-docker</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>admiral-compute</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${xenon.group}</groupId>
+            <artifactId>xenon-common</artifactId>
+            <version>${xenon.version}</version>
+        </dependency>
+
+
+        <!-- TEST -->
+        <dependency>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>admiral-common-test</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.vmware.admiral.closures</groupId>
+            <artifactId>admiral-closure-services</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

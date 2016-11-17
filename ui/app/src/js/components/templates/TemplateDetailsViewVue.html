@@ -88,6 +88,10 @@
                                      v-bind:number-of-networks="networks.length">
             </container-template-item>
           </grid-item>
+          <grid-item v-for="item in model.templateDetails.listView.closures" track-by="documentSelfLink">
+            <closure-template-item v-bind:model="item" v-bind:template-id="model.documentId">
+            </closure-template-item>
+          </grid-item>
           <grid-item class="new-item">
             <template-new-item-menu>
               <div class="new-definition template-new-item" v-on:click="openAddNewContainerDefinition">
@@ -98,7 +102,11 @@
                 <img src="image-assets/resource-icons/network.png"/>
                 <span class="label">{{i18n("app.template.details.editNetwork.newLabel")}}</span>
               </div>
-            </template-new-item>
+              <div v-if="areClosuresAllowed" class="template-new-item" v-on:click="openAddNewClosure">
+                <img src="image-assets/resource-icons/task.png"/>
+                <span class='label'>{{i18n('app.template.details.editClosures.newTitle')}}</span>
+              </div>
+            </template-new-item-menu>
           </grid-item>
         </grid>
         <div v-if="model.templateDetails.listView.itemsLoading" class="loading">
@@ -110,7 +118,11 @@
              v-on:detached="networkDetached"
              v-on:edit="editNetwork"
              v-on:remove="removeNetwork"></network-box>
-
+<!--
+        <hr/>
+         <closure-box v-if="areClosuresAllowed" v-for="closure in model.templateDetails.listView.closures" track-by="documentSelfLink" v-bind:model="closure"
+                     v-on:edit="editClosureDescription"
+                     v-on:remove="removeClosure"></closure-box> -->
       </div>
     </div>
   </div>
@@ -183,4 +195,9 @@
     </div>
     </div>
   </div>
+<!--   <div class="add-closure closable-view" v-if="!!model.addClosureView" v-bind:class="{'right-context-expanded':  contextExpanded}" transition="slide-and-fade">
+        <div class="content">
+         <closure-request-form v-bind:model="model"></closure-request-form>
+        </div>
+  </div> -->
 </div>

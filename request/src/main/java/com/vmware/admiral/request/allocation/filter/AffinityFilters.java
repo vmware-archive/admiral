@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.compute.BindingUtils;
 import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -57,7 +58,9 @@ public final class AffinityFilters {
         } else if (ComponentDescription.class.isInstance(desc)) {
             initialize(host, ((ComponentDescription) desc));
         } else if (ContainerVolumeDescription.class.isInstance(desc)) {
-            // TODO initialize(host, (ContainerVolumeDescription) desc)
+            //TODO initialize(host, (ContainerVolumeDescription) desc)
+        } else if (ClosureDescription.class.isInstance(desc)) {
+            initialize(host, (ClosureDescription) desc);
         } else {
             throw new IllegalArgumentException("Unsupported type:" + desc.getClass());
         }
@@ -77,8 +80,11 @@ public final class AffinityFilters {
         initialize(host, desc.getServiceDocument());
     }
 
-    private void initialize(ServiceHost host,
-            ContainerDescription desc) {
+    private void initialize(ServiceHost host, ClosureDescription desc) {
+
+    }
+
+    private void initialize(ServiceHost host, ContainerDescription desc) {
 
         filters.add(new ExposedPortsHostFilter(host, desc));
 

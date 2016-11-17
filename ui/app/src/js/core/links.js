@@ -65,6 +65,9 @@ var links = Immutable({
 
   DELETE_TASKS: '/delete-tasks',
 
+  CLOSURE_DESCRIPTIONS: RESOURCES + '/closure-descriptions',
+  CLOSURES: RESOURCES + '/closures',
+
   // Explicitly relative for both standalone and CAFE
   CONTAINER_IMAGE_ICONS: 'container-image-icons',
 

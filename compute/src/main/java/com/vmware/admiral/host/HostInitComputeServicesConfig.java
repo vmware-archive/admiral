@@ -11,6 +11,10 @@
 
 package com.vmware.admiral.host;
 
+import com.vmware.admiral.closures.services.closure.Closure;
+import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
+import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
+import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
@@ -112,6 +116,10 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         CompositeComponentRegistry.registerComponent(ResourceType.VOLUME_TYPE.getName(),
                 ContainerVolumeDescriptionService.FACTORY_LINK, ContainerVolumeDescription.class,
                 ContainerVolumeService.FACTORY_LINK, ContainerVolumeState.class);
+
+        CompositeComponentRegistry.registerComponent(ResourceType.CLOSURE_TYPE.getName(),
+                ClosureDescriptionFactoryService.FACTORY_LINK, ClosureDescription.class,
+                ClosureFactoryService.FACTORY_LINK, Closure.class);
 
         // start initialization of system documents
         host.sendRequest(Operation.createPost(

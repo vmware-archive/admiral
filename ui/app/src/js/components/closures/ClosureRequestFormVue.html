@@ -1,0 +1,34 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="closure-form closable-view">
+  <alert alert-type="danger"
+         v-bind:show-alert="$alert.show"
+         v-bind:alert-message="alert.message"></alert>
+  <div class="title">{{i18n('app.closure.request.title')}}</div>
+  <div class="closure-definition-form">
+    <!-- Dynamic form content will be inserted here -->
+  </div>
+  <div class="pull-right control-btns">
+  <!-- v-bind:class="{'loading': savingTask}" -->
+    <button class="btn admiral-btn create-container"
+            v-on:click="createClosureDescription()">{{i18n('app.closure.request.save')}}<i
+            class="fa fa-spinner fa-spin loader-inline"></i></button>
+    <button class="btn admiral-btn admiral-btn-secondary save-container-template"
+            v-bind:class="{'loading': savingTemplate}"
+            v-on:click="saveClosureTemplate()">{{i18n('app.container.request.saveTemplate')}}<i
+                class="fa fa-spinner fa-spin loader-inline"></i></button>
+    <button class="btn admiral-btn admiral-btn-secondary save-container-template"
+            v-bind:class="{'loading': runningTask}"
+            v-on:click="saveAndRunClosure()">{{i18n('app.closure.request.run')}}<i
+            class="fa fa-spinner fa-spin loader-inline"></i></button>
+  </div>
+</div>

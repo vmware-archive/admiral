@@ -33,9 +33,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.adapter.common.ClosureOperationType;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.adapter.common.VolumeOperationType;
+import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
@@ -46,6 +48,9 @@ import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
+import com.vmware.admiral.request.ClosureAllocationTaskService.ClosureAllocationTaskState;
+import com.vmware.admiral.request.ClosureProvisionTaskService.ClosureProvisionTaskState;
+import com.vmware.admiral.request.ClosureRemovalTaskService.ClosureRemovalTaskState;
 import com.vmware.admiral.request.ClusteringTaskService.ClusteringTaskState;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState;
@@ -172,7 +177,7 @@ public class RequestBrokerService extends
 
         if (!(isContainerType(state) || isContainerHostType(state) || isContainerNetworkType(state)
                 || isContainerVolumeType(state)
-                || isComputeType(state) || isCompositeComponentType(state))) {
+                || isComputeType(state) || isCompositeComponentType(state) || isClosureType(state))) {
             throw new IllegalArgumentException(
                     String.format("Only [ %s ] resource types are supported.",
                             ResourceType.getAllTypesAsString()));
@@ -231,6 +236,8 @@ public class RequestBrokerService extends
                     createContainerNetworkRemovalTask(state, true);
                 } else if (isContainerVolumeType(state)) {
                     createContainerVolumeRemovalTask(state);
+                } else if (isClosureType(state)) {
+                    createClosureRemovalTasks(state);
                 } else {
                     createContainerRemovalTasks(state, false);
                 }
@@ -252,6 +259,8 @@ public class RequestBrokerService extends
                 createContainerNetworkRemovalTask(state, true);
             } else if (isContainerVolumeType(state)) {
                 createContainerVolumeRemovalTask(state);
+            } else if (isClosureType(state)) {
+                createClosureRemovalTasks(state);
             } else {
                 createContainerRemovalTasks(state, true);
             }
@@ -270,7 +279,7 @@ public class RequestBrokerService extends
         finishedResponse.copy(state.serviceTaskCallback.getFinishedResponse());
         finishedResponse.resourceLinks = state.resourceLinks;
         if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
-            logFine("No resourceLinks found for allocated resources.");
+            logFine("No resourceLinks found for allocated resources." + state.taskInfo.stage);
         }
         return finishedResponse;
     }
@@ -418,10 +427,40 @@ public class RequestBrokerService extends
                 failTask(null, new IllegalArgumentException("Not supported operation: "
                         + state.operation));
             }
+        } else if (isClosureType(state)) {
+            if (isRemoveOperation(state)) {
+                //                createClosureRemovalTask(state);
+                createClosureRemovalTasks(state);
+            } else {
+                failTask(null, new IllegalArgumentException("Not supported operation for closure type: "
+                        + state.operation));
+            }
         } else {
             failTask(null, new IllegalArgumentException("Not supported resourceType: "
                     + state.resourceType));
         }
+    }
+
+    private void createClosureRemovalTask(RequestBrokerState state) {
+        if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
+//            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
+            proceedTo(SubStage.ERROR);
+            return;
+        }
+
+        // TODO: check the following
+        String resourceToRemove = state.resourceLinks.iterator().next();
+        sendRequest(Operation.createDelete(this,
+                resourceToRemove)
+                .setContextId(getSelfId())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        failTask("Failed to delete closure ", ex);
+                        return;
+                    }
+//                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATED));
+                    proceedTo(SubStage.ALLOCATED);
+                }));
     }
 
     private void createCompositeComponentOperationTask(RequestBrokerState state) {
@@ -679,6 +718,44 @@ public class RequestBrokerService extends
         sendRequest(post);
     }
 
+    private void createClosureRemovalTasks(RequestBrokerState state) {
+        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED
+                || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
+
+        if (state.resourceLinks == null) {
+            SubStage stage = errorState ? SubStage.ERROR : SubStage.ALLOCATED;
+            proceedTo(stage);
+//            sendSelfPatch(createUpdateSubStageTask(state,
+//                    errorState ? SubStage.ERROR : SubStage.ALLOCATED));
+            return;
+        }
+
+        ClosureRemovalTaskState removalState = new ClosureRemovalTaskState();
+        removalState.resourceLinks = state.resourceLinks.stream()
+                .filter((l) -> l.startsWith(ClosureFactoryService.FACTORY_LINK))
+                .collect(Collectors.toSet());
+
+        removalState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
+                TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
+                TaskStage.FAILED, SubStage.ERROR);
+        removalState.documentSelfLink = getSelfId();
+        removalState.requestTrackerLink = state.requestTrackerLink;
+        Operation post = Operation.createPost(this, ClosureRemovalTaskFactoryService.SELF_LINK)
+                .setBody(removalState)
+                .setContextId(getSelfId())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        failRequest(state, "Failed to create closure removal task", ex);
+                        return;
+                    }
+                    if (!errorState) {
+//                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                        proceedTo(SubStage.ALLOCATING);
+                    }
+                });
+        sendRequest(post);
+    }
+
     private void createContainerOperationTasks(RequestBrokerState state) {
         ContainerOperationTaskState operationState = new ContainerOperationTaskState();
         operationState.resourceLinks = state.resourceLinks;
@@ -726,6 +803,10 @@ public class RequestBrokerService extends
             getComputeDescription(state, (cd) -> createComputeReservationTasks(state, cd));
         } else if (isContainerNetworkType(state) || isContainerVolumeType(state)) {
             // No reservation needed here, moving on...
+            proceedTo(SubStage.RESERVED);
+        } else if (isClosureType(state)) {
+            // No reservation needed here, moving on...
+//            sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESERVED));
             proceedTo(SubStage.RESERVED);
         } else {
             getContainerDescription(state, (cd) -> createReservationTasks(state, cd));
@@ -1077,10 +1158,66 @@ public class RequestBrokerService extends
             } else {
                 createContainerVolumeProvisioningTask(state);
             }
+        } else if (isClosureType(state)) {
+            if (!isPostAllocationOperation(state)) {
+                createClosureAllocationTask(state);
+            } else {
+                createClosureProvisionTask(state);
+            }
         } else {
             failTask(null, new IllegalArgumentException("Not supported resourceType: "
                     + state.resourceType));
         }
+    }
+
+    private void createClosureProvisionTask(RequestBrokerState state) {
+        ClosureProvisionTaskState allocationTask = new ClosureProvisionTaskState();
+        allocationTask.documentSelfLink = getSelfId();
+        allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
+                state.documentSelfLink, TaskStage.STARTED, SubStage.COMPLETED,
+                TaskStage.STARTED, SubStage.REQUEST_FAILED);
+        allocationTask.customProperties = state.customProperties;
+        allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
+        allocationTask.resourceLinks = state.resourceLinks;
+        allocationTask.tenantLinks = state.tenantLinks;
+        allocationTask.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation
+                .createPost(this, ClosureProvisionTaskService.FACTORY_LINK)
+                .setBody(allocationTask)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating resource provisioning task", e);
+                        return;
+                    }
+                }));
+    }
+
+    private void createClosureAllocationTask(RequestBrokerState state) {
+        ClosureAllocationTaskState allocationTask = new ClosureAllocationTaskState();
+        allocationTask.documentSelfLink = getSelfId();
+        allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
+                state.documentSelfLink, TaskStage.STARTED, SubStage.ALLOCATED,
+                TaskStage.STARTED, SubStage.REQUEST_FAILED);
+        allocationTask.customProperties = state.customProperties;
+        allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
+        allocationTask.resourceLinks = state.resourceLinks;
+        allocationTask.tenantLinks = state.tenantLinks;
+        allocationTask.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation
+                .createPost(this, ClosureAllocationTaskService.FACTORY_LINK)
+                .setBody(allocationTask)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating resource allocation task", e);
+                        return;
+                    }
+//                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
+                    proceedTo(SubStage.ALLOCATING);
+                }));
     }
 
     private void createCompositionTask(RequestBrokerState state) {
@@ -1217,9 +1354,9 @@ public class RequestBrokerService extends
         return (isContainerType(state) || isContainerNetworkType(state) || isComputeType(state)
                 || isContainerVolumeType(state))
                 && (ContainerOperationType.CREATE.id.equals(state.operation)
-                        || NetworkOperationType.CREATE.id.equals(state.operation)
-                        || ComputeOperationType.CREATE.id.equals(state.operation)
-                        || VolumeOperationType.CREATE.id.equals(state.operation));
+                || NetworkOperationType.CREATE.id.equals(state.operation)
+                || ComputeOperationType.CREATE.id.equals(state.operation)
+                || VolumeOperationType.CREATE.id.equals(state.operation));
     }
 
     private String getPostAllocationOperation(RequestBrokerState state) {
@@ -1262,6 +1399,10 @@ public class RequestBrokerService extends
             return NetworkOperationType.DELETE.id.equals(state.operation);
         }
 
+        if (isClosureType(state)) {
+            return ClosureOperationType.DELETE.id.equals(state.operation);
+        }
+
         return false;
     }
 
@@ -1294,6 +1435,10 @@ public class RequestBrokerService extends
                 || state.getCustomProperty(RequestUtils.CLUSTERING_OPERATION_CUSTOM_PROP) != null;
     }
 
+    private boolean isClosureType(RequestBrokerState state) {
+        return ResourceType.CLOSURE_TYPE.getName().equals(state.resourceType);
+    }
+
     private boolean isProvisioningContainerHostsOperation(RequestBrokerState state) {
         return ProvisionContainerHostsTaskService.PROVISION_CONTAINER_HOSTS_OPERATITON
                 .equals(state.operation);
@@ -1311,6 +1456,8 @@ public class RequestBrokerService extends
                 Arrays.asList(ContainerNetworkProvisionTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.VOLUME_TYPE, new ArrayList<>(
                 Arrays.asList(ContainerVolumeProvisionTaskService.DISPLAY_NAME)));
+        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CLOSURE_TYPE, new ArrayList<>(
+                Arrays.asList(ClosureProvisionTaskService.DISPLAY_NAME)));
     }
 
     private static final Map<ResourceType, List<String>> SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE;
@@ -1333,6 +1480,9 @@ public class RequestBrokerService extends
                         ResourceNamePrefixTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.VOLUME_TYPE, new ArrayList<>(
                 Arrays.asList(ContainerVolumeAllocationTaskService.DISPLAY_NAME,
+                        ResourceNamePrefixTaskService.DISPLAY_NAME)));
+        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CLOSURE_TYPE, new ArrayList<>(
+                Arrays.asList(ClosureAllocationTaskService.DISPLAY_NAME,
                         ResourceNamePrefixTaskService.DISPLAY_NAME)));
     }
 
@@ -1364,6 +1514,9 @@ public class RequestBrokerService extends
             } else if (isContainerVolumeType(state)) {
                 trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
                         .get(ResourceType.VOLUME_TYPE);
+            } else if (isClosureType(state)) {
+                trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
+                        .get(ResourceType.CLOSURE_TYPE);
             } else {
                 trackedTasks = new ArrayList<>();
                 for (List<String> vals : SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.values()) {
@@ -1387,6 +1540,8 @@ public class RequestBrokerService extends
                     requestStatus.addTrackedTasks(ContainerHostRemovalTaskService.DISPLAY_NAME);
                 } else if (isContainerNetworkType(state)) {
                     requestStatus.addTrackedTasks(ContainerNetworkRemovalTaskService.DISPLAY_NAME);
+                } else if (isClosureType(state)) {
+                    requestStatus.addTrackedTasks(ClosureRemovalTaskService.DISPLAY_NAME);
                 } else {
                     requestStatus.addTrackedTasks(ContainerRemovalTaskService.DISPLAY_NAME);
                 }

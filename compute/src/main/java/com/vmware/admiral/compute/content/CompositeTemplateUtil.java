@@ -21,6 +21,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,10 +31,17 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
+import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.BindingUtils;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
@@ -77,7 +85,7 @@ public class CompositeTemplateUtil {
     /**
      * Returns the {@link YamlType} of the provided YAML.
      *
-     * @param yaml
+     //     * @param yaml
      *            The YAML content to process.
      * @return {@link YamlType} of the provided YAML
      */
@@ -184,38 +192,124 @@ public class CompositeTemplateUtil {
         sanitizeCompositeTemplate(entity);
 
         if (!isNullOrEmpty(entity.components)) {
-            for (Entry<String, ComponentTemplate<ContainerDescription>> entry : filterComponentTemplates(
-                    entity.components, ContainerDescription.class).entrySet()) {
-
-                ComponentTemplate<ContainerDescription> component = entry.getValue();
-
-                CompositeTemplateContainerDescription newData = new CompositeTemplateContainerDescription();
-
-                PropertyUtils.mergeServiceDocuments(newData, component.data);
-
-                if (newData.networks != null) {
-                    newData.networks.entrySet().forEach((e -> {
-                        if (e.getValue() instanceof Map) {
-                            @SuppressWarnings("unchecked")
-                            Map<String, String> map = (Map<String, String>) e.getValue();
-                            map.put("name", e.getKey());
-                        } else {
-                            e.getValue().name = e.getKey();
-                        }
-                    }));
-
-                    newData.networksList = newData.networks.entrySet().stream()
-                            .map(Map.Entry::getValue)
-                            .collect(Collectors.toList());
-
-                    newData.networks = null;
-                }
-
-                component.data = newData;
-            }
+            normalizeContainerDescription(entity);
+            normalizeClosureDescriptions(entity);
         }
 
         return YamlMapper.objectWriter().writeValueAsString(entity).trim();
+    }
+
+    private static void normalizeContainerDescription(CompositeTemplate entity) {
+        for (Entry<String, ComponentTemplate<ContainerDescription>> entry : filterComponentTemplates(
+                entity.components, ContainerDescription.class).entrySet()) {
+
+            ComponentTemplate<ContainerDescription> component = entry.getValue();
+
+            CompositeTemplateContainerDescription newData =
+                    new CompositeTemplateContainerDescription();
+
+            PropertyUtils.mergeServiceDocuments(newData, component.data);
+
+            if (newData.networks != null) {
+                newData.networks.entrySet().forEach((e -> {
+                    if (e.getValue() instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, String> map = (Map<String, String>) e.getValue();
+                        map.put("name", e.getKey());
+                    } else {
+                        e.getValue().name = e.getKey();
+                    }
+                }));
+
+                newData.networksList = newData.networks.entrySet().stream()
+                        .map(Entry::getValue)
+                        .collect(Collectors.toList());
+
+                newData.networks = null;
+            }
+
+            component.data = newData;
+        }
+    }
+
+    private static void normalizeClosureDescriptions(CompositeTemplate entity) {
+        for (Entry<String, ComponentTemplate<ClosureDescription>> entry : filterComponentTemplates(
+                entity.components, ClosureDescription.class).entrySet()) {
+
+            ComponentTemplate<ClosureDescription> component = entry.getValue();
+            CustomClosureDescription newData = new CustomClosureDescription();
+            PropertyUtils.mergeServiceDocuments(newData, component.data);
+
+            if (newData.inputs != null) {
+                newData.serializedInputs = new HashMap<>();
+                newData.inputs.entrySet().forEach((e -> {
+                    newData.serializedInputs.put(e.getKey(), e.getValue().getAsString());
+                }));
+
+                newData.inputs = null;
+            }
+            if (newData.logConfiguration != null) {
+                newData.serializedLogConfiguration = jsonToMap(newData.logConfiguration);
+                newData.logConfiguration = null;
+            }
+
+            component.data = newData;
+        }
+    }
+
+    public static Map<String, Object> jsonToMap(JsonObject json) {
+        Map<String, Object> retMap = new HashMap<String, Object>();
+        if (json != null) {
+            retMap = toMap(json);
+        }
+        return retMap;
+    }
+
+    public static Map<String, Object> toMap(JsonObject object) {
+        Map<String, Object> map = new HashMap<String, Object>();
+        Iterator<Entry<String, JsonElement>> keysItr = object.entrySet().iterator();
+        while (keysItr.hasNext()) {
+            String key = keysItr.next().getKey();
+            Object value = object.get(key);
+            if (((JsonElement) value).isJsonArray()) {
+                value = toList(((JsonElement) value).getAsJsonArray());
+                map.put(key, value);
+            } else if (value instanceof JsonObject) {
+                value = toMap((JsonObject) value);
+                map.put(key, value);
+            } else {
+                map.put(key, ((JsonElement) value).getAsString());
+            }
+
+        }
+        return map;
+    }
+
+    public static List<Object> toList(JsonArray array) {
+        List<Object> list = new ArrayList<Object>();
+        for (Object obj : list) {
+            if (obj instanceof JsonArray) {
+                obj = toList((JsonArray) obj);
+                list.add(obj);
+            } else if (obj instanceof JsonObject) {
+                obj = toMap((JsonObject) obj);
+                list.add(obj);
+            } else {
+                list.add(((JsonElement) obj).getAsString());
+            }
+
+        }
+        return list;
+    }
+
+    @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
+    public static class CustomClosureDescription extends ClosureDescription {
+
+        @JsonProperty("inputs")
+        public Map<String, String> serializedInputs;
+
+        @JsonProperty("logConfiguration")
+        public Map<String, Object> serializedLogConfiguration;
     }
 
     private static void sanitizeCompositeTemplate(CompositeTemplate entity) {
@@ -527,6 +621,17 @@ public class CompositeTemplateUtil {
 
         ComponentTemplate<ContainerVolumeDescription> template = new ComponentTemplate<>();
         template.type = ResourceType.VOLUME_TYPE.getContentType();
+        template.data = description;
+        template.data.id = null;
+        return template;
+    }
+
+    public static ComponentTemplate<ClosureDescription> fromClosureDescriptionToComponentTemplate(
+            ClosureDescription description) {
+        assertNotNull(description, "description");
+
+        ComponentTemplate<ClosureDescription> template = new ComponentTemplate<>();
+        template.type = ResourceType.CLOSURE_TYPE.getContentType();
         template.data = description;
         template.data.id = null;
         return template;

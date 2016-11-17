@@ -130,6 +130,7 @@ Additional changes to the original file:
     "validator"   : true,
     "require"     : true,
     "moment"      : true,
-    "jsPlumb"     : true
+    "jsPlumb"     : true,
+    "ace"         : true
   }
 }
