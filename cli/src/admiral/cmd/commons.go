@@ -199,6 +199,9 @@ var (
 	//Business groups flags
 	businessGroupId     string
 	businessGroupIdDesc = "Business group ID."
+
+	//Encryption flags
+	encryptionKey string
 )
 
 var admiralLogo = `

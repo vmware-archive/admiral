@@ -32,6 +32,9 @@ func init() {
 	cfgSetCmd.Flags().StringVarP(&keyProp, "key", "k", "", required+keyPropDesc)
 	cfgSetCmd.Flags().StringVarP(&valProp, "value", "v", "", required+valPropDesc)
 
+	initCfgEncrypt()
+	initCfgDecrypt()
+
 	ConfigRootCmd.AddCommand(cfgGetCmd)
 	ConfigRootCmd.AddCommand(cfgSetCmd)
 	ConfigRootCmd.AddCommand(cfgInspectCmd)
@@ -100,4 +103,54 @@ var cfgInspectCmd = &cobra.Command{
 func RunCfgInspect(args []string) string {
 	jsonBody := config.Inspect()
 	return string(jsonBody)
+}
+
+const ENCRYPT_PREFIX = "s2enc~"
+
+var cfgEncryptCmd = &cobra.Command{
+	Use:   "encrypt [TEXT]",
+	Short: "Encrypt text.",
+	Long:  "Encrypt text.",
+	Run: func(cmd *cobra.Command, args []string) {
+		output, err := RunCfgEncrypt(args)
+		processOutput(output, err)
+	},
+}
+
+func initCfgEncrypt() {
+	cfgEncryptCmd.Flags().StringVar(&encryptionKey, "encryption-key", "", "File containing encryption key.")
+	ConfigRootCmd.AddCommand(cfgEncryptCmd)
+}
+
+func RunCfgEncrypt(args []string) (string, error) {
+	toEncrypt := strings.Join(args, " ")
+	if strings.HasPrefix(toEncrypt, ENCRYPT_PREFIX) {
+		return "", errors.New("The input is already encrypted.")
+	}
+	data, err := config.Encrypt(toEncrypt, encryptionKey)
+	return ENCRYPT_PREFIX + string(data), err
+}
+
+var cfgDecryptCmd = &cobra.Command{
+	Use:   "decrypt [TEXT]",
+	Short: "Decrypt text.",
+	Long:  "Decrypt text.",
+	Run: func(cmd *cobra.Command, args []string) {
+		output, err := RunCfgDecrypt(args)
+		processOutput(output, err)
+	},
+}
+
+func initCfgDecrypt() {
+	cfgDecryptCmd.Flags().StringVar(&encryptionKey, "encryption-key", "", "File containing encryption key.")
+	ConfigRootCmd.AddCommand(cfgDecryptCmd)
+}
+
+func RunCfgDecrypt(args []string) (string, error) {
+	toDecrypt := strings.Join(args, " ")
+	if strings.HasPrefix(toDecrypt, ENCRYPT_PREFIX) {
+		toDecrypt = strings.Replace(toDecrypt, ENCRYPT_PREFIX, "", 1)
+	}
+	data, err := config.Decrypt(toDecrypt, encryptionKey)
+	return string(data), err
 }
