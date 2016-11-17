@@ -37,8 +37,10 @@ public abstract class BaseCertificateDistributionServiceIT extends BaseProvision
         registryHostAndPort = UriUtilsExtended.extractHostAndPort(registryAddress);
     }
 
-    protected static boolean waitUntilRegistryCertificateExists(String hostLink,
+    protected boolean waitUntilRegistryCertificateExists(String hostLink,
             String registryAddress) throws Exception {
+        logger.info("Waiting until registry certificate with CN [%s] exists on host [%s].",
+                registryAddress, hostLink);
         URI uri = URI.create(getBaseUrl() + buildServiceUri(
                 ShellContainerExecutorService.SELF_LINK));
 
@@ -56,8 +58,11 @@ public abstract class BaseCertificateDistributionServiceIT extends BaseProvision
                 SimpleHttpsClient.HttpResponse response = SimpleHttpsClient.execute(
                         SimpleHttpsClient.HttpMethod.POST, url,
                         Utils.toJson(command));
+                logger.info("[%s] Remote command [ls /etc/docker/certs.d] returned %s",
+                        i, response.responseBody);
 
                 if (response.responseBody.contains(registryAddress)) {
+                    logger.info("[%s] found in remote command response body", registryAddress);
                     return true;
                 }
             } catch (Exception e) {
@@ -67,12 +72,16 @@ public abstract class BaseCertificateDistributionServiceIT extends BaseProvision
             Thread.sleep(RETRY_TIMEOUT);
         }
 
+        logger.info("Failed to find registry cert with CN [%s] on host [%s] after max retries",
+                registryAddress, hostLink);
         return false;
     }
 
-    protected static void removeCertificateDirectoryOnCoreOsHost(String hostLink,
+    protected void removeCertificateDirectoryOnCoreOsHost(String hostLink,
             String registryAddress) throws Exception {
 
+        logger.info("Removing registry certificate with CN [%s] from host [%s]", registryAddress,
+                hostLink);
         URI uri = URI.create(getBaseUrl() + buildServiceUri(
                 ShellContainerExecutorService.SELF_LINK));
 
