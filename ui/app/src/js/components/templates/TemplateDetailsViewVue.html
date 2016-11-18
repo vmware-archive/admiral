@@ -15,19 +15,19 @@
       <div class="template-details-header">
         <div class="title truncateText">{{i18n('app.template.details.edit')}}
           <div class="template-name-content">
-          <template v-if="!editingTemplateName">
-            <span class="template-name" v-on:click="editTemplateName($event)">{{model.templateDetails.name}}</span>
-          </template>
-          <template v-else>
-            <input id="templateNameInput" class="form-control template-name-input"
-                   name="templateNameInput" type="text" value="{{model.templateDetails.name}}"
-                   v-on:keyup.enter="saveTemplateName($event)"
-                   v-on:keyup.esc="cancelEditTemplateName($event)"/>
-            <a href="#" class="btn admiral-btn admiral-btn-circle"
-               v-on:click="saveTemplateName($event)"><i class="fa fa-check"></i></a>
-            <a href="#" class="btn admiral-btn admiral-btn-circle"
-               v-on:click="cancelEditTemplateName($event)"><i class="fa fa-times"></i></a>
-          </template>
+            <template v-if="!editingTemplateName">
+              <span class="template-name" v-on:click="editTemplateName($event)">{{model.templateDetails.name}}</span>
+            </template>
+            <template v-else>
+              <input id="templateNameInput" class="form-control template-name-input"
+                     name="templateNameInput" type="text" value="{{model.templateDetails.name}}"
+                     v-on:keyup.enter="saveTemplateName($event)"
+                     v-on:keyup.esc="cancelEditTemplateName($event)"/>
+              <a href="#" class="btn admiral-btn admiral-btn-circle"
+                 v-on:click="saveTemplateName($event)"><i class="fa fa-check"></i></a>
+              <a href="#" class="btn admiral-btn admiral-btn-circle"
+                 v-on:click="cancelEditTemplateName($event)"><i class="fa fa-times"></i></a>
+            </template>
           </div>
         </div>
         <div class="editBtnHolder" v-if="!editingTemplateName">

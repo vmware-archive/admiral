@@ -1155,6 +1155,7 @@ let ContainersStore = Reflux.createStore({
       enhanceCompositeComponent(retrievedCompositeComponent);
       retrievedCompositeComponent.icons = getContainersImageIcons(childContainers);
       parentCursor.select(['selectedItem']).merge(retrievedCompositeComponent);
+      parentCursor.select(['selectedItemDetails']).merge(retrievedCompositeComponent);
 
       childContainers.forEach((childContainer) => {
         enhanceContainer(childContainer);

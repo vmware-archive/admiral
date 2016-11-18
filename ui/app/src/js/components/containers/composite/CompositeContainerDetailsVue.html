@@ -10,7 +10,6 @@
   -->
 
 <div class="composite-child-containers-view" v-bind:class="{'left-list-hover': listMouseover}">
-
   <div class="list-view containers-list" v-bind:class="{'context-selected': model.selectedItem}"
        v-on:mouseenter="onListMouseEnter()" v-on:mouseleave="onListMouseLeave()"
        v-if="model.listView">
@@ -29,11 +28,7 @@
     </div>
 
     <div class="grid-container">
-
-      <div class="title">{{i18n("app.container.list.composite.childContainersLabel")}}<span
-        class="total-items">({{keys(model.listView.items).length || 0}})</span><refresh-button
-        v-on:click="refresh()"></refresh-button></div>
-
+      <div class="title">{{model.name}}<refresh-button v-on:click="refresh()"></refresh-button></div>
       <div class="toolbar-actions" v-if="!model.selectedItem">
         <toolbar-action-button id="stop" icon-name="stop" v-bind:label="i18n('app.container.actions.stop')"
                                v-bind:supported="operationSupported('STOP')"
