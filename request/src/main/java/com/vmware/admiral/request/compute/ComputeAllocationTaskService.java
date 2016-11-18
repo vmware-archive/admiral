@@ -55,6 +55,7 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupR
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionEnhancers;
+import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
@@ -135,7 +136,8 @@ public class ComputeAllocationTaskService
         public String groupResourcePlacementLink;
 
         @Documentation(description = "(Optional) the resourcePoolLink to ResourcePool")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, OPTIONAL, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, OPTIONAL,
+                AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String resourcePoolLink;
 
         @Documentation(description = "(Required) Number of resources to provision. ")
@@ -150,16 +152,20 @@ public class ComputeAllocationTaskService
 
         // links to placement computes where to provision the requested resources
         // the size of the collection equals the requested resource count
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL, LINKS }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
+                LINKS }, indexing = STORE_ONLY)
         public Collection<String> selectedComputePlacementLinks;
 
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL, LINK }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
+                LINK }, indexing = STORE_ONLY)
         public String endpointLink;
 
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL, LINK }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
+                LINK }, indexing = STORE_ONLY)
         public String endpointComputeStateLink;
 
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL, LINK }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
+                LINK }, indexing = STORE_ONLY)
         public String environmentLink;
 
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
@@ -182,7 +188,7 @@ public class ComputeAllocationTaskService
             prepareContext(state, this.computeDescription, null, null, null);
             break;
         case CONTEXT_PREPARED:
-            configureComputeDescription(state, this.computeDescription, null, null);
+            configureComputeDescription(state, this.computeDescription, null);
             break;
         case COMPUTE_DESCRIPTION_RECONFIGURED:
             createOsDiskState(state, SubStage.SELECT_PLACEMENT_COMPUTES, null,
@@ -312,6 +318,7 @@ public class ComputeAllocationTaskService
         }
 
         try {
+
             DiskState rootDisk = new DiskState();
             rootDisk.id = UUID.randomUUID().toString();
             rootDisk.documentSelfLink = rootDisk.id;
@@ -325,12 +332,8 @@ public class ComputeAllocationTaskService
             rootDisk.type = DiskType.HDD;
             rootDisk.bootOrder = 1;
 
-            String absImageId = state.getCustomProperty(
-                    ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
-            String imageId = mapping.getMappingValue("imageType", absImageId);
-            if (imageId == null) {
-                imageId = absImageId;
-            }
+            String imageId = computeDesc.customProperties
+                    .get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
 
             rootDisk.sourceImageReference = URI.create(imageId);
             rootDisk.bootConfig = new DiskState.BootConfig();
@@ -416,53 +419,26 @@ public class ComputeAllocationTaskService
     }
 
     private void configureComputeDescription(ComputeAllocationTaskState state,
-            ComputeDescription computeDesc, EnvironmentMappingState mapping,
+            ComputeDescription computeDesc,
             ComputeStateWithDescription expandedEndpointComputeState) {
 
         if (computeDesc == null) {
             getServiceState(state.resourceDescriptionLink, ComputeDescription.class,
-                    (compDesc) -> configureComputeDescription(state, compDesc, mapping,
-                            expandedEndpointComputeState));
-            return;
-        }
-        if (mapping == null) {
-            getServiceState(state.environmentLink, EnvironmentMappingState.class,
-                    (envMapping) -> configureComputeDescription(state, computeDesc, envMapping,
+                    (compDesc) -> configureComputeDescription(state, compDesc,
                             expandedEndpointComputeState));
             return;
         }
         if (expandedEndpointComputeState == null) {
             getServiceState(state.endpointComputeStateLink, ComputeStateWithDescription.class,
                     true,
-                    (compState) -> configureComputeDescription(state, computeDesc, mapping,
-                            compState));
+                    (compState) -> configureComputeDescription(state, computeDesc, compState));
             return;
-        }
-
-        String value = mapping.getMappingValue("instanceType", computeDesc.instanceType);
-        if (value != null) {
-            computeDesc.instanceType = value;
-        }
-
-        if (computeDesc.dataStoreId == null) {
-            computeDesc.dataStoreId = mapping.getMappingValue("placement", "dataStoreId");
-        }
-
-        if (computeDesc.authCredentialsLink == null) {
-            computeDesc.authCredentialsLink = mapping.getMappingValue("authentication",
-                    "guestAuthLink");
-        }
-        if (computeDesc.zoneId == null) {
-            computeDesc.zoneId = mapping.getMappingValue("placement", "zoneId");
         }
 
         final ComputeDescription endpointComputeDescription = expandedEndpointComputeState.description;
         computeDesc.instanceAdapterReference = endpointComputeDescription.instanceAdapterReference;
         computeDesc.bootAdapterReference = endpointComputeDescription.bootAdapterReference;
         computeDesc.powerAdapterReference = endpointComputeDescription.powerAdapterReference;
-        if (computeDesc.zoneId == null) {
-            computeDesc.zoneId = endpointComputeDescription.zoneId;
-        }
         computeDesc.regionId = endpointComputeDescription.regionId;
         computeDesc.environmentName = endpointComputeDescription.environmentName;
 
@@ -479,22 +455,29 @@ public class ComputeAllocationTaskService
 
         computeDesc.customProperties = mergeCustomProperties(computeDesc.customProperties,
                 state.customProperties);
-        computeDesc.customProperties.put(ComputeConstants.CUSTOM_PROP_ENDPOINT_TYPE_NAME,
-                state.endpointType);
 
-        SubStage nextStage = computeDesc.customProperties
-                .containsKey(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME)
-                        ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
-                        : SubStage.SELECT_PLACEMENT_COMPUTES;
+        EnhanceContext context = new EnhanceContext();
+        context.environmentLink = state.environmentLink;
+        context.endpointComputeDescription = endpointComputeDescription;
+        context.endpointType = state.endpointType;
+        context.imageType = computeDesc.customProperties
+                .remove(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
 
-        ComputeDescriptionEnhancers.build(this).enhance(computeDesc, (cd, t) -> {
+        ComputeDescriptionEnhancers.build(this).enhance(context, computeDesc, (cd, t) -> {
             if (t != null) {
                 failTask("Failed patching compute description : "
                         + Utils.toString(t), t);
                 return;
             }
+            SubStage nextStage = cd.customProperties
+                    .containsKey(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME)
+                            ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
+                            : SubStage.SELECT_PLACEMENT_COMPUTES;
+
+            cd.customProperties.put("ovf.prop:guestinfo.coreos.config.data",
+                    cd.customProperties.get(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME));
             Operation.createPut(this, state.resourceDescriptionLink)
-                    .setBody(computeDesc)
+                    .setBody(cd)
                     .setCompletion((o, e) -> {
                         if (e != null) {
                             failTask("Failed patching compute description : " + Utils.toString(e),
@@ -516,6 +499,17 @@ public class ComputeAllocationTaskService
     }
 
     private void selectPlacement(ComputeAllocationTaskState state) {
+        String placementLink = state.customProperties.get(ComputeProperties.PLACEMENT_LINK);
+        if (placementLink != null) {
+            ArrayList<String> placementLinks = new ArrayList<>(state.resourceCount.intValue());
+            for (int i = 0; i < state.resourceCount; i++) {
+                placementLinks.add(placementLink);
+            }
+            proceedTo(SubStage.START_COMPUTE_ALLOCATION, s -> {
+                s.selectedComputePlacementLinks = placementLinks;
+            });
+            return;
+        }
 
         ComputePlacementSelectionTaskState computePlacementSelection = new ComputePlacementSelectionTaskState();
 
@@ -590,8 +584,8 @@ public class ComputeAllocationTaskService
             name = state.customProperties.get(CUSTOM_DISPLAY_NAME);
         }
 
-        Iterator<String> placementComputeLinkIterator =
-                state.selectedComputePlacementLinks.iterator();
+        Iterator<String> placementComputeLinkIterator = state.selectedComputePlacementLinks
+                .iterator();
         for (int i = 0; i < state.resourceCount; i++) {
             String computeResourceId = taskId + ID_DELIMITER_CHAR + i;
             String computeResourceLink = UriUtils.buildUriPath(
@@ -636,7 +630,8 @@ public class ComputeAllocationTaskService
             return;
         }
 
-        createComputeHost(state, cd, parentLink, placementLink, computeResourceId, computeResourceLink,
+        createComputeHost(state, cd, parentLink, placementLink, computeResourceId,
+                computeResourceLink,
                 computeName, diskLinks, networkLinks, taskCallback);
     }
 
@@ -705,8 +700,7 @@ public class ComputeAllocationTaskService
                     state.groupResourcePlacementLink);
         }
         resource.customProperties.put(ComputeProperties.PLACEMENT_LINK, placementLink);
-        // cleanup some properties that we don't need
-        resource.customProperties.remove(ComputeConstants.CUSTOM_PROP_ENDPOINT_TYPE_NAME);
+        resource.customProperties.put("__computeType", "VirtualMachine");
         resource.tenantLinks = state.tenantLinks;
         resource.documentSelfLink = computeResourceLink;
         resource.powerState = ComputeService.PowerState.ON;

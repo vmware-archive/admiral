@@ -13,6 +13,7 @@ package com.vmware.admiral.request.compute.enhancer;
 
 import java.util.function.BiConsumer;
 
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourceState;
 
 /**
@@ -24,5 +25,12 @@ public interface Enhancer<T extends ResourceState> {
      * Enhance resource T. The callback will be invoke with the enhanced resource, in case of an
      * error the second parameter in the callback will be not null.
      */
-    void enhance(T resource, BiConsumer<T, Throwable> callback);
+    void enhance(EnhanceContext context, T resource, BiConsumer<T, Throwable> callback);
+
+    static class EnhanceContext {
+        public String environmentLink;
+        public ComputeDescription endpointComputeDescription;
+        public String endpointType;
+        public String imageType;
+    }
 }

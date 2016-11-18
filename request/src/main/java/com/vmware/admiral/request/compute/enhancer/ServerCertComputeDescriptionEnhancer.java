@@ -60,7 +60,8 @@ public class ServerCertComputeDescriptionEnhancer implements ComputeDescriptionE
     }
 
     @Override
-    public void enhance(ComputeDescription cd, BiConsumer<ComputeDescription, Throwable> callback) {
+    public void enhance(EnhanceContext context, ComputeDescription cd,
+            BiConsumer<ComputeDescription, Throwable> callback) {
         String fileContent = getCustomProperty(cd,
                 ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME);
         if (fileContent == null) {

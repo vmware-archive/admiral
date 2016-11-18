@@ -43,7 +43,8 @@ public class GuestCredentialsComputeDescriptionEnhancer implements ComputeDescri
     }
 
     @Override
-    public void enhance(ComputeDescription cd, BiConsumer<ComputeDescription, Throwable> callback) {
+    public void enhance(EnhanceContext context, ComputeDescription cd,
+            BiConsumer<ComputeDescription, Throwable> callback) {
 
         createClientCredentialsIfNeeded(cd, (c, t) -> {
             if (t != null) {

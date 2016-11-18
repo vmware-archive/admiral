@@ -17,7 +17,6 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,8 +36,10 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
+import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.photon.controller.model.adapterapi.ResourceOperationResponse;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.tasks.ProvisionComputeTaskService;
@@ -46,9 +47,14 @@ import com.vmware.photon.controller.model.tasks.ServiceTaskCallback;
 import com.vmware.photon.controller.model.tasks.SubTaskService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
-import com.vmware.xenon.common.OperationSequence;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Builder;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * Task implementing the provisioning of a compute resource.
@@ -121,7 +127,8 @@ public class ComputeProvisionTaskService extends
 
     private void customizeCompute(ComputeProvisionTaskState state) {
 
-        OperationJoin.JoinedCompletionHandler getComputeCompletion = (opsGetComputes, exsGetComputes) -> {
+        OperationJoin.JoinedCompletionHandler getComputeCompletion = (opsGetComputes,
+                exsGetComputes) -> {
 
             if (exsGetComputes != null && !exsGetComputes.isEmpty()) {
                 failTask("Error retrieving compute states",
@@ -144,8 +151,8 @@ public class ComputeProvisionTaskService extends
                         }
                     });
 
-
-            OperationJoin.JoinedCompletionHandler getDisksCompletion = (opsGetDisks, exsGetDisks) -> {
+            OperationJoin.JoinedCompletionHandler getDisksCompletion = (opsGetDisks,
+                    exsGetDisks) -> {
                 if (exsGetDisks != null && !exsGetDisks.isEmpty()) {
                     failTask("Unable to get disk(s)", exsGetDisks.values().iterator().next());
                     return;
@@ -217,23 +224,25 @@ public class ComputeProvisionTaskService extends
             });
 
             OperationJoin.create(operations)
-                    .setCompletion((ox,
+                    .setCompletion((ops,
                             exc) -> {
                         if (exc != null) {
                             logSevere(
                                     "Failure creating provisioning tasks: %s",
                                     Utils.toString(exc));
 
-                            completeSubTasksCounter(null,
-                                    new IllegalStateException(Utils.toString(exc)));
+                            exc.forEach((i, t) -> {
+                                ResourceOperationResponse r = ResourceOperationResponse.fail(null,
+                                        t);
+                                completeSubTask(subTaskLink, r);
+                            });
                             return;
-
                         }
-                        logInfo("Requested provisioning of %s compute resources.",
-                                resourceLinks.size());
-                        proceedTo(SubStage.PROVISIONING_COMPUTE);
-                        return;
                     }).sendWith(this);
+            logInfo("Requested provisioning of %s compute resources.",
+                    resourceLinks.size());
+            proceedTo(SubStage.PROVISIONING_COMPUTE);
+            return;
         } catch (Throwable e) {
             failTask("System failure creating ContainerStates", e);
         }
@@ -268,43 +277,53 @@ public class ComputeProvisionTaskService extends
         getHost().startService(startPost, new SubTaskService<SubStage>());
     }
 
+    private void completeSubTask(String subTaskLink, Object body) {
+        Operation.createPatch(this, subTaskLink)
+                .setBody(body)
+                .setCompletion(
+                        (o, ex) -> {
+                            if (ex != null) {
+                                logWarning("Unable to complete subtask: %s, reason: %s",
+                                        subTaskLink, Utils.toString(ex));
+                            }
+                        })
+                .sendWith(this);
+    }
+
     private void queryForProvisionedResources(ComputeProvisionTaskState state) {
         Set<String> resourceLinks = state.resourceLinks;
         if (resourceLinks == null || resourceLinks.isEmpty()) {
             complete();
             return;
         }
-        ArrayList<Operation> operations = new ArrayList<>(resourceLinks.size());
-        for (String link : resourceLinks) {
-            operations.add(Operation.createGet(this, link));
-        }
 
-        OperationSequence.create(operations.toArray(new Operation[operations.size()]))
-                .setCompletion((ops, exs) -> {
-                    if (exs != null) {
-                        failTask("Failure retrieving provisioned resources: " + Utils.toString(exs),
+        Builder queryBuilder = Query.Builder.create()
+                .addInClause(ServiceDocument.FIELD_NAME_SELF_LINK, resourceLinks)
+                .addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                        ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
+        QueryTask.Builder queryTaskBuilder = QueryTask.Builder.createDirectTask()
+                .addOption(QueryOption.EXPAND_CONTENT)
+                .setQuery(queryBuilder.build());
+
+        sendRequest(Operation.createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
+                .setBody(queryTaskBuilder.build())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure retrieving provisioned resources: " + Utils.toString(e),
                                 null);
                         return;
                     }
-                    List<ComputeState> computes = new ArrayList<>();
-                    ops.forEach((k, v) -> {
-                        ComputeState cs = v.getBody(ComputeState.class);
-                        if (ComputeAllocationTaskService.enableContainerHost(cs.customProperties)) {
-                            computes.add(cs);
-                        }
-                    });
-                    if (computes.isEmpty()) {
+
+                    QueryTask task = o.getBody(QueryTask.class);
+                    if (task.results.documents == null || task.results.documents.isEmpty()) {
                         complete();
                         return;
-                    } else {
-                        if (DeploymentProfileConfig.getInstance().isTest()) {
-                            complete();
-                        } else {
-                            validateConnectionsAndRegisterContainerHost(state, computes);
-                        }
                     }
-                }).sendWith(this);
-
+                    validateConnectionsAndRegisterContainerHost(state,
+                            task.results.documents.values().stream()
+                                    .map(json -> Utils.fromJson(json, ComputeState.class))
+                                    .collect(Collectors.toList()));
+                }));
     }
 
     private void validateConnectionsAndRegisterContainerHost(ComputeProvisionTaskState state,
@@ -315,6 +334,11 @@ public class ComputeProvisionTaskService extends
         AtomicInteger remaining = new AtomicInteger(computes.size());
         AtomicReference<Throwable> error = new AtomicReference<>();
         for (ComputeState computeState : computes) {
+            if (computeState.address == null) {
+                if (DeploymentProfileConfig.getInstance().isTest()) {
+                    computeState.address = "127.0.0.1";
+                }
+            }
             ContainerHostSpec spec = new ContainerHostSpec();
             spec.hostState = computeState;
             spec.acceptCertificate = true;
@@ -361,6 +385,7 @@ public class ComputeProvisionTaskService extends
 
         Operation.createPut(specValidateUri).setBody(spec).setCompletion((op, er) -> {
             if (er != null) {
+                logSevere(er);
                 if (retryCount > WAIT_CONNECTION_RETRY_COUNT) {
                     callback.accept(er);
                 } else {

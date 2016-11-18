@@ -26,16 +26,16 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 public class CloudConfigComputeDescriptionEnhancer implements ComputeDescriptionEnhancer {
 
     @Override
-    public void enhance(ComputeDescription cd, BiConsumer<ComputeDescription, Throwable> callback) {
+    public void enhance(EnhanceContext context, ComputeDescription cd,
+            BiConsumer<ComputeDescription, Throwable> callback) {
         String fileContent = getCustomProperty(cd,
                 ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME);
         if (fileContent == null) {
             boolean supportDocker = enableContainerHost(cd.customProperties);
-            String imageType = getCustomProperty(cd, ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
+            String imageType = context.imageType;
             try {
                 fileContent = loadResource(String.format("/%s-content/cloud_config_%s.yml",
-                        getCustomProperty(cd, ComputeConstants.CUSTOM_PROP_ENDPOINT_TYPE_NAME),
-                        supportDocker ? imageType + "_docker" : "base"));
+                        context.endpointType, supportDocker ? imageType + "_docker" : "base"));
                 if (fileContent != null) {
                     cd.customProperties.put(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME,
                             fileContent);

@@ -30,6 +30,7 @@ public class ComputeDescriptionEnhancers implements ComputeDescriptionEnhancer {
     }
 
     private void initialize(StatefulService sender) {
+        this.enhancers.add(new EnvironmentComputeDescriptionEnhancer(sender));
         this.enhancers.add(new CloudConfigComputeDescriptionEnhancer());
         this.enhancers.add(new GuestCredentialsComputeDescriptionEnhancer(sender));
         this.enhancers.add(new ServerCertComputeDescriptionEnhancer(sender));
@@ -42,7 +43,7 @@ public class ComputeDescriptionEnhancers implements ComputeDescriptionEnhancer {
     }
 
     @Override
-    public void enhance(ComputeDescription resource,
+    public void enhance(EnhanceContext context, ComputeDescription resource,
             BiConsumer<ComputeDescription, Throwable> callback) {
         ComputeDescriptionEnhancer enhancer = enhancers.poll();
 
@@ -51,12 +52,12 @@ public class ComputeDescriptionEnhancers implements ComputeDescriptionEnhancer {
             return;
         }
 
-        enhancer.enhance(resource, (cd, t) -> {
+        enhancer.enhance(context, resource, (cd, t) -> {
             if (t != null) {
-                callback.accept(resource, t);
+                callback.accept(cd, t);
                 return;
             }
-            enhance(resource, callback);
+            enhance(context, cd, callback);
         });
     }
 }
