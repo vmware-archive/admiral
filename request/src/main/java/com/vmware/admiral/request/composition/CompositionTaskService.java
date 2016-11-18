@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 import org.yaml.snakeyaml.util.UriEncoder;
 
+import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.BindingEvaluator;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
@@ -42,11 +43,14 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.RequestStatusService.RequestStatus;
+import com.vmware.admiral.request.ResourceNamePrefixTaskService;
+import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.composition.CompositeComponentRemovalTaskService.CompositeComponentRemovalTaskState;
 import com.vmware.admiral.request.composition.CompositionGraph.ResourceNode;
 import com.vmware.admiral.request.composition.CompositionSubTaskService.CompositionSubTaskState;
 import com.vmware.admiral.request.composition.CompositionTaskService.CompositionTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
@@ -71,19 +75,7 @@ public class CompositionTaskService
             com.vmware.admiral.service.common.TaskServiceDocument<CompositionTaskState.SubStage> {
 
         public static enum SubStage {
-            CREATED,
-            CONTEXT_PREPARED,
-            DEPENDENCY_GRAPH,
-            DISTRIBUTING,
-            ALLOCATING,
-            ERROR_ALLOCATING,
-            ALLOCATED,
-            DISTRIBUTE_TASKS,
-            PROVISIONING,
-            ERROR_PROVISIONING,
-            COMPLETED,
-            ERROR,
-            FAILED;
+            CREATED, CONTEXT_PREPARED, RESOURCES_NAMED, COMPONENT_CREATED, DEPENDENCY_GRAPH, DISTRIBUTING, ALLOCATING, ERROR_ALLOCATING, ALLOCATED, DISTRIBUTE_TASKS, PROVISIONING, ERROR_PROVISIONING, COMPLETED, ERROR, FAILED;
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(DISTRIBUTING, DISTRIBUTE_TASKS));
@@ -113,6 +105,10 @@ public class CompositionTaskService
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String descName;
 
+        /** (Internal) Set by task after resource name prefixes requested. */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public Set<String> resourceNames;
+
     }
 
     public CompositionTaskService() {
@@ -131,6 +127,12 @@ public class CompositionTaskService
             prepareContext(state, null);
             break;
         case CONTEXT_PREPARED:
+            createResourcePrefixNameSelectionTask(state);
+            break;
+        case RESOURCES_NAMED:
+            crateComponentState(state, null);
+            break;
+        case COMPONENT_CREATED:
             calculateResourceDependencyGraph(state, null);
             break;
         case DEPENDENCY_GRAPH:
@@ -172,9 +174,9 @@ public class CompositionTaskService
         if (currentState.taskInfo != null
                 && TaskStage.STARTED == currentState.taskInfo.stage
                 && (SubStage.ALLOCATING == patchBody.taskSubStage
-                || SubStage.ERROR_ALLOCATING == patchBody.taskSubStage
-                || SubStage.PROVISIONING == patchBody.taskSubStage
-                || SubStage.ERROR_PROVISIONING == patchBody.taskSubStage)
+                        || SubStage.ERROR_ALLOCATING == patchBody.taskSubStage
+                        || SubStage.PROVISIONING == patchBody.taskSubStage
+                        || SubStage.ERROR_PROVISIONING == patchBody.taskSubStage)
                 && currentState.remainingCount != null
                 && currentState.remainingCount > 0
                 && patch.getReferer() != null
@@ -239,7 +241,7 @@ public class CompositionTaskService
     @Override
     protected TaskStatusState fromTask(TaskServiceDocument<SubStage> state) {
         final TaskStatusState statusTask = super.fromTask(state);
-        if (SubStage.CONTEXT_PREPARED == state.taskSubStage) {
+        if (SubStage.COMPONENT_CREATED == state.taskSubStage) {
             CompositionTaskState currentState = (CompositionTaskState) state;
             statusTask.name = currentState.descName;
             statusTask.resourceLinks = new HashSet<>();
@@ -247,6 +249,34 @@ public class CompositionTaskService
         }
 
         return statusTask;
+    }
+
+    private void createResourcePrefixNameSelectionTask(CompositionTaskState state) {
+        // create resource prefix name selection tasks
+        ResourceNamePrefixTaskState namePrefixTask = new ResourceNamePrefixTaskState();
+        namePrefixTask.documentSelfLink = getSelfId();
+        namePrefixTask.resourceCount = 1;
+
+        AssertUtil.assertNotEmpty(state.descName, "descName");
+
+        namePrefixTask.baseResourceNameFormat = ResourceNamePrefixService
+                .getDefaultResourceNameFormat(state.descName);
+        namePrefixTask.tenantLinks = state.tenantLinks;
+
+        namePrefixTask.customProperties = state.customProperties;
+        namePrefixTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
+                TaskStage.STARTED, SubStage.RESOURCES_NAMED,
+                TaskStage.STARTED, SubStage.ERROR);
+        namePrefixTask.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation.createPost(this, ResourceNamePrefixTaskService.FACTORY_LINK)
+                .setBody(namePrefixTask)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating resource name prefix task", e);
+                        return;
+                    }
+                }));
     }
 
     private void calculateResourceDependencyGraph(final CompositionTaskState state,
@@ -265,7 +295,6 @@ public class CompositionTaskService
                     .calculateGraph(compositeDesc)
                     .stream().collect(Collectors.toMap(
                             (r) -> buildCompositionSubTaskLink(r.name), Function.identity()));
-
 
             proceedTo(SubStage.DEPENDENCY_GRAPH, s -> {
                 s.resourceNodes = state.resourceNodes;
@@ -515,9 +544,29 @@ public class CompositionTaskService
             state.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
         }
 
+        proceedTo(SubStage.CONTEXT_PREPARED, s -> {
+            s.customProperties = state.customProperties;
+            s.descName = compositeDesc.name;
+        });
+    }
+
+    private void crateComponentState(final CompositionTaskState state,
+            final CompositeDescriptionExpanded compositeDesc) {
+        if (compositeDesc == null) {
+            getCompositeDescription(state, true,
+                    (compDesc) -> this.crateComponentState(state, compDesc));
+            return;
+        }
+
         final CompositeComponent component = new CompositeComponent();
-        component.documentSelfLink = contextId;
-        component.name = compositeDesc.name;
+        component.documentSelfLink = state.customProperties.get(FIELD_NAME_CONTEXT_ID_KEY);
+
+        if (state.resourceNames.size() != 1) {
+            failTask(String.format(
+                    "Resource names for composite description [%s] not properly generated.",
+                    state.resourceDescriptionLink), null);
+        }
+        component.name = state.resourceNames.iterator().next();
         component.compositeDescriptionLink = compositeDesc.documentSelfLink;
         component.tenantLinks = compositeDesc.tenantLinks;
 
@@ -536,7 +585,7 @@ public class CompositionTaskService
                             logInfo("CompositeComponent created [%s]",
                                     compComponent.documentSelfLink);
 
-                            proceedTo(SubStage.CONTEXT_PREPARED, s -> {
+                            proceedTo(SubStage.COMPONENT_CREATED, s -> {
                                 s.customProperties = state.customProperties;
                                 s.compositeComponentLink = compComponent.documentSelfLink;
                                 s.descName = compositeDesc.name;

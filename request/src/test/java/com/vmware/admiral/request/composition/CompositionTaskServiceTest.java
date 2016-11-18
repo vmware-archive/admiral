@@ -63,7 +63,6 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
     @Test
     public void testWithNoDescs() throws Throwable {
         CompositeDescription compositeDesc = createCompositeDesc();
-
         RequestBrokerState request = startRequest(compositeDesc);
         request = waitForTaskError(request.documentSelfLink, RequestBrokerState.class);
         assertNull(request.resourceLinks);
@@ -78,7 +77,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         RequestBrokerState request = startRequest(compositeDesc);
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
 
-        assertValidRequest(request, 1);
+        assertValidRequest(request, compositeDesc);
     }
 
     @Test
@@ -90,7 +89,8 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         RequestBrokerState request = startComputeRequest(compositeDesc);
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
+        CompositeComponent cc = getDocument(CompositeComponent.class,
+                request.resourceLinks.iterator().next());
         assertNotNull(cc);
 
         List<ComputeState> computes = queryComputeByCompositeComponentLink(cc.documentSelfLink);
@@ -129,7 +129,8 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         RequestBrokerState request = startComputeRequest(compositeDesc);
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
+        CompositeComponent cc = getDocument(CompositeComponent.class,
+                request.resourceLinks.iterator().next());
         assertNotNull(cc);
 
         List<ComputeState> computes = queryComputeByCompositeComponentLink(cc.documentSelfLink);
@@ -173,7 +174,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         RequestBrokerState request = startRequest(compositeDesc);
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
 
-        assertValidRequest(request, 2);
+        assertValidRequest(request, compositeDesc);
     }
 
     @Test
@@ -185,7 +186,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         RequestBrokerState request = startRequest(compositeDesc);
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
 
-        assertValidRequest(request, compositeDesc.descriptionLinks.size());
+        assertValidRequest(request, compositeDesc);
     }
 
     @Test
@@ -198,7 +199,8 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
 
         // Make sure that placements are less than the requested containers in order to fail
         // allocation
-        assertTrue(compositeDesc.descriptionLinks.size() > groupPlacementState.availableInstancesCount);
+        assertTrue(compositeDesc.descriptionLinks
+                .size() > groupPlacementState.availableInstancesCount);
 
         // fail on host placement:
         RequestBrokerState request = startRequest(compositeDesc);
@@ -361,8 +363,8 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         return request;
     }
 
-    private void assertValidRequest(RequestBrokerState requestBrokerState, int expectedCount)
-            throws Throwable {
+    private void assertValidRequest(RequestBrokerState requestBrokerState,
+            CompositeDescription compositeDesc) throws Throwable {
         assertNotNull(requestBrokerState);
         assertNotNull("Resource links null for requestBroker: "
                 + requestBrokerState.documentSelfLink,
@@ -373,7 +375,9 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
                 requestBrokerState.resourceLinks.iterator().next());
         assertNotNull(cc);
 
-        assertEquals(expectedCount, cc.componentLinks.size());
+        assertEquals(compositeDesc.descriptionLinks.size(), cc.componentLinks.size());
+
+        assertTrue(cc.name.startsWith(compositeDesc.name + "-"));
 
         for (String containerLink : cc.componentLinks) {
             ContainerState container = getDocument(ContainerState.class, containerLink);
@@ -386,7 +390,8 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         GroupResourcePlacementState additionalPlacement = TestRequestStateFactory
                 .createGroupResourcePlacementState();
         additionalPlacement.resourcePoolLink = resourcePool.documentSelfLink;
-        additionalPlacement = doPost(additionalPlacement, GroupResourcePlacementService.FACTORY_LINK);
+        additionalPlacement = doPost(additionalPlacement,
+                GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(additionalPlacement);
         assertNotNull(additionalPlacement);
     }
