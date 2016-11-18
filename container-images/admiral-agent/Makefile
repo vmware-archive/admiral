@@ -34,8 +34,8 @@ buildsib:
 
 buildagent:
 	docker ${DOCKER_ARGS} build ${BUILD_ARGS} --tag $(ADMIRAL_AGENT_IMAGE_NAME):$(ADMIRAL_AGENT_IMAGE_VERSION) -f Dockerfile .
-	rm -rf ../../host/images-bin/
-	mkdir -p ../../host/images-bin
+	rm -f ../../host/images-bin/$(ADMIRAL_AGENT_IMAGE_TAR_FILENAME)*
+	mkdir -p ../../host/images-bin || echo "Dir exists"
 	docker ${DOCKER_ARGS} save $(ADMIRAL_AGENT_IMAGE_NAME):$(ADMIRAL_AGENT_IMAGE_VERSION) | xz -z -f -c > ../../host/images-bin/$(ADMIRAL_AGENT_IMAGE_TAR_FILENAME).tar.xz
 
 buildall:
