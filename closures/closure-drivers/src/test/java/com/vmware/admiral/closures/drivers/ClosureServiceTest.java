@@ -22,6 +22,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -45,7 +49,7 @@ import com.vmware.xenon.common.UriUtils;
 
 public class ClosureServiceTest extends BasicReusableHostTestCase {
 
-    private static final long TEST_TASK_MAINTANENACE_TIMEOUT_MLS = 5000;
+    private static final int TEST_TASK_MAINTANENACE_TIMEOUT_MLS = 10;
 
     @Before
     public void setUp() throws Exception {
@@ -192,7 +196,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testWait();
 
         // Wait for the completion timeout
-        Thread.sleep(taskDefState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForCompletion(closureState.documentSelfLink, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
@@ -291,7 +295,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testWait();
 
         // Wait for the completion timeout
-        Thread.sleep(taskDefState.resources.timeoutSeconds * TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForCompletion(closureState.documentSelfLink, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
@@ -393,7 +397,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testWait();
 
         // Wait for the completion timeout
-        Thread.sleep(taskDefState.resources.timeoutSeconds * TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForCompletion(closureState.documentSelfLink, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
@@ -496,7 +500,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testWait();
 
         // Wait for the completion timeout
-        Thread.sleep(taskDefState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForCompletion(closureState.documentSelfLink, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
@@ -612,7 +616,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testWait();
 
         // Wait for the completion timeout
-        Thread.sleep(taskDefState.resources.timeoutSeconds * 1000);
+        waitForCompletion(closureState.documentSelfLink, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
@@ -730,7 +734,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testWait();
 
         // Wait for the completion timeout
-        Thread.sleep(taskDefState.resources.timeoutSeconds * 1000);
+        waitForCompletion(closureState.documentSelfLink, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
@@ -847,7 +851,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testWait();
 
         // Wait for the completion timeout
-        Thread.sleep(taskDefState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForCompletion(closureState.documentSelfLink, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
@@ -957,7 +961,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testWait();
 
         // Wait for the completion timeout
-        Thread.sleep(taskDefState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForCompletion(closureState.documentSelfLink, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
@@ -1055,7 +1059,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testWait();
 
         // Wait for the completion timeout
-        Thread.sleep(taskDefState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForCompletion(closureState.documentSelfLink, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
@@ -1140,7 +1144,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testWait();
 
         // Wait for the completion timeout
-        Thread.sleep(taskDefState.resources.timeoutSeconds * 1000);
+        waitForCompletion(closureState.documentSelfLink, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
 
         final Closure[] endStateClosureResponses = new Closure[1];
         this.host.testStart(1);
@@ -1223,8 +1227,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testWait();
 
         // Wait for the completion timeout
-        Thread.sleep(
-                (taskDefState.resources.timeoutSeconds * 1000) + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForCompletion(closureState.documentSelfLink, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
 
         final Closure[] endStateClosureResponses = new Closure[1];
         this.host.testStart(1);
@@ -1306,8 +1309,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testWait();
 
         // Wait for the completion timeout
-        Thread.sleep(
-                (taskDefState.resources.timeoutSeconds * 1000) + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForCompletion(closureState.documentSelfLink, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
 
         final Closure[] endStateClosureResponses = new Closure[1];
         this.host.testStart(1);
@@ -1411,10 +1413,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testWait();
 
         // Wait for the completion timeout
-        this.host.log("Waiting for: "
-                + taskDefState.resources.timeoutSeconds * TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-        Thread.sleep(
-                (taskDefState.resources.timeoutSeconds * 1000) + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForCompletion(closureState.documentSelfLink, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
 
         final Closure[] endStateClosureResponses = new Closure[1];
         this.host.testStart(1);
@@ -1506,11 +1505,72 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
     private void clean(URI childURI) throws Throwable {
         this.host.testStart(1);
+        CompletableFuture<Operation> c = new CompletableFuture<Operation>();
         Operation delete = Operation
                 .createDelete(childURI)
                 .setCompletion(BasicReusableHostTestCase
-                        .getSafeHandler((o, e) -> assertNull("Unable to clean document: " + childURI, e)));
+                        .getSafeHandler(
+                                (o, ex) -> {
+                                    if (ex != null) {
+                                        c.completeExceptionally(ex);
+                                    } else {
+                                        c.complete(o);
+                                    }
+                                }
+                        ));
+
         this.host.send(delete);
         this.host.testWait();
+
+        c.get(5000, TimeUnit.MILLISECONDS);
     }
+
+    private Closure getClosure(String closureLink) throws InterruptedException, ExecutionException,
+            TimeoutException {
+
+        CompletableFuture<Operation> c = new CompletableFuture<Operation>();
+
+        URI closureUri = UriUtils.buildUri(this.host,
+                ClosureFactoryService.FACTORY_LINK + "/" + closureLink);
+        Operation taskGet = Operation
+                .createGet(closureUri)
+                .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, ex) -> {
+                    if (ex != null) {
+                        c.completeExceptionally(ex);
+
+                    } else {
+                        c.complete(o);
+                    }
+
+                }));
+
+        this.host.testStart(1);
+        this.host.send(taskGet);
+        this.host.testWait();
+
+        return c.get(2000, TimeUnit.MILLISECONDS).getBody(Closure.class);
+    }
+
+    private void waitForCompletion(String closureLink, int timeout)
+            throws Exception {
+        Closure fetchedClosure = getClosure(closureLink);
+        long startTime = System.currentTimeMillis();
+        while (!isCompleted(fetchedClosure) && !isTimeoutElapsed(startTime, timeout)) {
+            try {
+                Thread.sleep(500);
+                fetchedClosure = getClosure(closureLink);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private boolean isCompleted(Closure fetchedClosure) {
+        return TaskStage.CREATED != fetchedClosure.state && TaskStage.STARTED != fetchedClosure.state;
+    }
+
+    private boolean isTimeoutElapsed(long startTime, int timeout) {
+        return System.currentTimeMillis() - startTime > TimeUnit.SECONDS.toMillis(timeout);
+    }
+
 }
