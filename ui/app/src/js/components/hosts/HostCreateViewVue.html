@@ -50,7 +50,7 @@
   </div>
 
   <div id="awsType" class="form-group"
-    v-if="showInput('aws')" v-bind:class="{'has-error': validationErrors.awsType}">
+    v-if="showInput('aws')">
     <label class="col-sm-3 control-label">
       {{i18n("app.host.details.awsType")}}
       <span class="requiredFieldMark">*</span>
@@ -71,39 +71,11 @@
         <option value="m3.large">General Purpose M3 large</option>
         <option value="m3.xlarge">General Purpose M3 xlarge</option>
         <option value="m3.2xlarge">General Purpose M3 2xlarge</option>
-        <option value="c4.large">Compute Optimized C4 large</option>
-        <option value="c4.xlarge">Compute Optimized C4 xlarge</option>
-        <option value="c4.2xlarge">Compute Optimized C4 2xlarge</option>
-        <option value="c4.4xlarge">Compute Optimized C4 4xlarge</option>
-        <option value="c4.8xlarge">Compute Optimized C4 8xlarge</option>
-        <option value="c3.large">Compute Optimized C3 large</option>
-        <option value="c3.xlarge">Compute Optimized C3 xlarge</option>
-        <option value="c3.2xlarge">Compute Optimized C3 2xlarge</option>
-        <option value="c3.4xlarge">Compute Optimized C3 4xlarge</option>
-        <option value="c3.8xlarge">Compute Optimized C3 8xlarge</option>
-        <option value="r3.large">Memory Optimized R3 large</option>
-        <option value="r3.xlarge">Memory Optimized R3 xlarge</option>
-        <option value="r3.2xlarge">Memory Optimized R3 2xlarge</option>
-        <option value="r3.4xlarge">Memory Optimized R3 4xlarge</option>
-        <option value="r3.8xlarge">Memory Optimized R3 8xlarge</option>
-        <option value="g2.2xlarge">GPU 2xlarge</option>
-        <option value="g2.8xlarge">GPU 8xlarge</option>
-        <option value="i2.xlarge">Storage Optimized I2 xlarge</option>
-        <option value="i2.2xlarge">Storage Optimized I2 2xlarge</option>
-        <option value="i2.4xlarge">Storage Optimized I2 4xlarge</option>
-        <option value="i2.8xlarge">Storage Optimized I2 8xlarge</option>
-        <option value="d2.xlarge">Dense-storage Instances D2 xlarge</option>
-        <option value="d2.2xlarge">Dense-storage Instances D2 2xlarge</option>
-        <option value="d2.4xlarge">Dense-storage Instances D2 4xlarge</option>
-        <option value="d2.8xlarge">Dense-storage Instances D2 8xlarge</option>
       </select>
-
-      <span class="help-block">{{i18n(validationErrors.awsType)}}</span>
     </div>
   </div>
 
-  <div id="azureOS" class="form-group"
-    v-if="showInput('azure')" v-bind:class="{'has-error': validationErrors.azureOS}">
+  <div id="azureOS" class="form-group" v-if="showInput('azure')">
     <label class="col-sm-3 control-label">
       {{i18n("app.host.details.azureOS")}}
       <span class="requiredFieldMark">*</span>
@@ -113,12 +85,10 @@
         <option value="coreos">CoreOS</option>
         <option value="linux">Ubuntu</option>
       </select>
-      <span class="help-block">{{i18n(validationErrors.azureOS)}}</span>
     </div>
   </div>
 
-  <div id="azureType" class="form-group"
-    v-if="showInput('azure')" v-bind:class="{'has-error': validationErrors.azureType}">
+  <div id="azureType" class="form-group" v-if="showInput('azure')">
     <label class="col-sm-3 control-label">
       {{i18n("app.host.details.azureType")}}
       <span class="requiredFieldMark">*</span>
@@ -131,13 +101,10 @@
         <option value="Basic_A3">Standard 4 Cores, 3.50 GB</option>
         <option value="Basic_A4">Standard 8 Cores, 7.00 GB</option>
       </select>
-
-      <span class="help-block">{{i18n(validationErrors.azureType)}}</span>
     </div>
   </div>
 
-  <div id="vsphereOS" class="form-group"
-    v-if="showInput('vsphere')" v-bind:class="{'has-error': validationErrors.vsphereOS}">
+  <div id="vsphereOS" class="form-group" v-if="showInput('vsphere')">
     <label class="col-sm-3 control-label">
       {{i18n("app.host.details.vsphereOS")}}
       <span class="requiredFieldMark">*</span>
@@ -146,43 +113,48 @@
       <select v-model="vsphereOS" class="form-control">
         <option value="coreos">CoreOS</option>
       </select>
-      <span class="help-block">{{i18n(validationErrors.vsphereOS)}}</span>
     </div>
   </div>
 
-  <div id="vsphereCpu" class="form-group"
-    v-if="showInput('vsphere')" v-bind:class="{'has-error': validationErrors.vsphereCpu}">
+  <div id="vsphereCpu" class="form-group" v-if="showInput('vsphere')">
     <label class="col-sm-3 control-label">
       {{i18n("app.host.details.vsphereCpu")}}
       <span class="requiredFieldMark">*</span>
     </label>
     <div class="col-sm-3">
       <input class="form-control" v-model="vsphereCpu">
-      <span class="help-block">{{i18n(validationErrors.vsphereCpu)}}</span>
     </div>
   </div>
 
-  <div id="vsphereMemory" class="form-group"
-    v-if="showInput('vsphere')" v-bind:class="{'has-error': validationErrors.vsphereMemory}">
+  <div id="vsphereMemory" class="form-group" v-if="showInput('vsphere')">
     <label class="col-sm-3 control-label">
       {{i18n("app.host.details.vsphereMemory")}}
       <span class="requiredFieldMark">*</span>
     </label>
     <div class="col-sm-3">
       <input class="form-control" v-model="vsphereMemory">
-      <span class="help-block">{{i18n(validationErrors.vsphereMemory)}}</span>
     </div>
   </div>
 
-  <div id="credential" class="form-group" v-bind:class="{'has-error': validationErrors.credential, 'hide': showInput(null)}">
+  <div id="vsphereDestination" class="form-group" v-if="showInput('vsphere')">
+    <label class="col-sm-3 control-label">
+      {{i18n('app.host.details.destination')}}
+      <span class="requiredFieldMark">*</span>
+    </label>
+    <div class="col-sm-9">
+      <destination-search class="dropdown-holder" v-bind:resource-pool-link="endpoint.resourcePoolLink"
+        v-on:change="onDestinationChange"></destination-search>
+    </div>
+  </div>
+
+  <div id="credential" class="form-group" v-bind:class="{'hide': showInput(null)}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.guestCredential")}}</label>
     <div class="col-sm-9">
       <div class="form-control dropdown-holder"></div>
-      <span class="help-block">{{i18n(validationErrors.credential)}}</span>
     </div>
   </div>
 
-  <div id="clusterSize" class="form-group" v-bind:class="{'has-error': validationErrors.clusterSize, 'hide': showInput(null)}">
+  <div id="clusterSize" class="form-group" v-bind:class="{'hide': showInput(null)}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.clusterSize")}}</label>
     <div class="clusterSizeInput col-sm-9"><span>{{clusterSize}}</span>&nbsp;
       <action-button name="incrementClusterSize" icon-name="plus"
@@ -192,7 +164,7 @@
     </div>
   </div>
 
-  <div id="tags" class="form-group tags" v-bind:class="{'has-error': validationErrors.tags, 'hide': showInput(null)}">
+  <div id="tags" class="form-group tags" v-bind:class="{'hide': showInput(null)}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.tags")}}</label>
     <div class="col-sm-9">
       <div class="tags-holder">
@@ -200,15 +172,13 @@
       </div>
       <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
          title="{{i18n ('app.host.details.tagsHint')}}"></i>
-      <span class="help-block">{{i18n(validationErrors.tags)}}</span>
     </div>
   </div>
 
-  <div id="customProperties" class="form-group" v-bind:class="{'has-error': validationErrors.customProperties, 'hide': showInput(null)}">
+  <div id="customProperties" class="form-group" v-bind:class="{'hide': showInput(null)}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.customProperties")}}</label>
     <div class="col-sm-9">
       <div class="custom-prop-fields"></div>
-      <span class="help-block">{{i18n(validationErrors.customProperties)}}</span>
     </div>
   </div>
 

@@ -44,6 +44,8 @@
         "resourcePool": "Placement zone",
         "credential": "Login credential",
         "guestCredential": "Guest credential",
+        "destination": "Destination",
+        "destinationPlaceholder": "Search for destination",
         "deploymentPolicy": "Deployment policy",
         "tags": "Tags",
         "tagsHint": "Enter key:value tags",
@@ -434,7 +436,7 @@
         "endpointHostLabel": "Host name or IP",
         "subscriptionIdLabel": "Subscription ID",
         "tenantIdLabel": "Tenant ID",
-        "datacenterIdLabel": "Datacenter name"
+        "datacenterIdLabel": "Datacenter"
       },
       "entity": "endpoint",
       "typeEntity": "type",
@@ -450,6 +452,7 @@
       }
     },
     "compute": {
+      "entity": "destination",
       "list": {
         "title": "Compute",
         "titleSearch": "Found Compute",

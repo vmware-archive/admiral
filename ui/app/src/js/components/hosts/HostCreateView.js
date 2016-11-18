@@ -16,6 +16,7 @@ import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
 import Tags from 'components/common/Tags';
 import { HostActions, HostContextToolbarActions } from 'actions/Actions';
 import constants from 'core/constants';
+import services from 'core/services';
 import utils from 'core/utils';
 
 const endpointManageOptions = [{
@@ -37,6 +38,34 @@ const credentialManageOptions = [{
   name: i18n.t('app.credential.manage'),
   icon: 'pencil'
 }];
+
+const INITIAL_FILTER = '';
+const HOST_RESULT_LIMIT = 10;
+
+function hostRenderer(host) {
+  return `
+    <div>
+      <div class="host-picker-item-primary" title="${host.name}">${host.name}</div>
+      <div class="host-picker-item-secondary" title="${host.customProperties.__computeType}">
+        (${host.customProperties.__computeType})
+      </div>
+    </div>`;
+}
+
+function hostSearchCallback(q, callback) {
+  services.searchCompute(this.resourcePoolLink,
+      q || INITIAL_FILTER, HOST_RESULT_LIMIT).then((result) => {
+    result.items = result.items.map((host) => {
+      host.name = utils.getHostName(host);
+      return host;
+    });
+    callback(result);
+  });
+}
+
+function toggleChanged() {
+  this.$dispatch('change', this.destinationInput.getSelectedOption());
+}
 
 // The Host Create View component
 var HostCreateView = Vue.extend({
@@ -61,6 +90,7 @@ var HostCreateView = Vue.extend({
       vsphereCpu: 1,
       vsphereMemory: 1024,
       vsphereOS: 'coreos',
+      vsphereDestination: null,
       clusterSize: 1
     };
   },
@@ -72,12 +102,12 @@ var HostCreateView = Vue.extend({
       }
       switch (this.endpoint.endpointType) {
         case 'aws':
-          return !this.awsType && !this.awsOS;
+          return !this.awsType || !this.awsOS;
         case 'azure':
-          return !this.azureType && !this.azureOS;
+          return !this.azureType || !this.azureOS;
         case 'vsphere':
-          return !this.vsphereCpu && !this.vsphereMemory &&
-            !this.vsphereOS;
+          return !this.vsphereCpu || !this.vsphereMemory ||
+            !this.vsphereOS || !this.vsphereDestination;
       }
     },
     validationErrors: function() {
@@ -198,7 +228,35 @@ var HostCreateView = Vue.extend({
     this.unwatchCredential();
   },
 
+  components: {
+    destinationSearch: {
+      template: '<div></div>',
+      props: {
+        resourcePoolLink: {
+          required: true,
+          type: String
+        }
+      },
+      attached: function() {
+        this.destinationInput = new DropdownSearchMenu($(this.$el), {
+          title: i18n.t('dropdownSearchMenu.title', {
+            entity: i18n.t('app.compute.entity')
+          }),
+          searchPlaceholder: i18n.t('app.host.details.destinationPlaceholder')
+        });
+        this.destinationInput.setOptionsRenderer(hostRenderer);
+        this.destinationInput.setOptionSelectCallback(() => toggleChanged.call(this));
+        this.destinationInput.setClearOptionSelectCallback(() => toggleChanged.call(this));
+        this.destinationInput.setFilterCallback(hostSearchCallback.bind(this));
+        this.destinationInput.setFilter(INITIAL_FILTER);
+      }
+    }
+  },
+
   methods: {
+    onDestinationChange: function(endpoint) {
+      this.vsphereDestination = endpoint ? endpoint.documentSelfLink : null;
+    },
     modifyClusterSize: function($event, incrementValue) {
       $event.stopPropagation();
       $event.preventDefault();
@@ -241,7 +299,8 @@ var HostCreateView = Vue.extend({
             cpuCount: this.vsphereCpu,
             totalMemoryBytes: this.vsphereMemory * 1024 * 1024,
             customProperties: {
-              imageType: this.vsphereOS
+              imageType: this.vsphereOS,
+              __placementLink: this.vsphereDestination
             }
           });
       }

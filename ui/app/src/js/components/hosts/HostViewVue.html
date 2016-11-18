@@ -45,6 +45,14 @@
   <context-sidepanel class="right-context-panel">
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
+        v-if="showTabCreateHost"
+        v-bind:active="activeContextItem === 'endpoints'"
+        v-bind:icon-class="'fa fa-cloud'"
+        v-bind:label="i18n('app.endpoint.contextPanelTooltip')"
+        v-on:open="openToolbarEndpoints()" v-on:close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+
+      <context-sidepanel-toolbar-item
         v-if="showTabAddHost"
         v-bind:active="activeContextItem === 'resourcePools'"
         v-bind:icon-class="'fa fa-bullseye'"
@@ -53,7 +61,7 @@
       </context-sidepanel-toolbar-item>
 
       <context-sidepanel-toolbar-item
-        v-if="showTabAddHost"
+        v-if="showTabAddHost || showTabCreateHost"
         v-bind:active="activeContextItem === 'credentials'"
         v-bind:icon-class="'fa fa-key'"
         v-bind:label="i18n('app.credential.contextPanelTooltip')"
@@ -74,14 +82,6 @@
         v-bind:icon-class="'fa fa-file-text'"
         v-bind:label="i18n('app.deploymentPolicy.contextPanelTooltip')"
         v-on:open="openToolbarDeploymentPolicies()" v-on:close="closeToolbar()">
-      </context-sidepanel-toolbar-item>
-
-      <context-sidepanel-toolbar-item
-        v-if="showTabCreateHost"
-        v-bind:active="activeContextItem === 'endpoints'"
-        v-bind:icon-class="'fa fa-cloud'"
-        v-bind:label="i18n('app.endpoint.contextPanelTooltip')"
-        v-on:open="openToolbarEndpoints()" v-on:close="closeToolbar()">
       </context-sidepanel-toolbar-item>
     </div>
 

@@ -677,6 +677,31 @@ services.searchHosts = function(query, limit) {
   });
 };
 
+services.searchCompute = function(resourcePoolLink, query, limit) {
+  var qOps = {
+    any: query,
+    powerState: 'ON',
+    resourcePoolLink
+  };
+
+  let filter = buildHostsQuery(qOps, false, true);
+  let url = buildPaginationUrl(links.COMPUTE_RESOURCES, filter, true,
+                               'creationTimeMicros asc', limit);
+  return get(url).then(function(data) {
+    var documentLinks = data.documentLinks || [];
+
+    var result = {
+      totalCount: data.totalCount
+    };
+
+    result.items = documentLinks.map((link) => {
+      return data.documents[link];
+    });
+
+    return result;
+  });
+};
+
 services.loadMachines = function(queryOptions) {
   let filter = buildHostsQuery(queryOptions, false, false);
   let url = buildPaginationUrl(links.COMPUTE_RESOURCES, filter, true, 'creationTimeMicros asc');
@@ -1732,6 +1757,13 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     if (queryOptions.powerState) {
       qOps.powerState = [{
         val: queryOptions.powerState,
+        op: 'eq'
+      }];
+    }
+
+    if (queryOptions.resourcePoolLink) {
+      qOps.resourcePoolLink = [{
+        val: queryOptions.resourcePoolLink,
         op: 'eq'
       }];
     }
