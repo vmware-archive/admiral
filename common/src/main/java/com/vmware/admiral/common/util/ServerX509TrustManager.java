@@ -22,9 +22,10 @@ import java.security.KeyStore;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-
 import javax.net.ssl.X509TrustManager;
 
 import com.vmware.admiral.common.util.ServiceDocumentQuery.ServiceDocumentQueryElementResult;
@@ -46,6 +47,18 @@ import com.vmware.xenon.common.Utils;
 public class ServerX509TrustManager implements X509TrustManager, Closeable {
     private static final String SSL_TRUST_CONFIG_SUBSCRIBE_FOR_LINK = UriUtils.buildUriPath(
             ConfigurationFactoryService.SELF_LINK, SSL_TRUST_LAST_UPDATED_DOCUMENT_KEY);
+
+    protected long maintenanceIntervalInitial = Long.getLong(
+            "dcp.management.config.certificates.reload.period.initial.micros",
+            TimeUnit.MINUTES.toMicros(1));
+
+    protected long maintenanceInterval = Long.getLong(
+            "dcp.management.config.certificates.reload.period.micros",
+            TimeUnit.MINUTES.toMicros(5));
+
+    protected volatile int reloadCounterThreshold = 10;
+    private volatile AtomicInteger reloadCounter = new AtomicInteger(0);
+
 
     public static final String JAVAX_NET_SSL_TRUST_STORE = "dcp.net.ssl.trustStore";
     public static final String JAVAX_NET_SSL_TRUST_STORE_PASSWORD = "dcp.net.ssl.trustStorePassword";
@@ -145,7 +158,34 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
         verifySubscriptionTargetExists(() -> {
             subscribeForSslTrustCertNotifications();
             loadSslTrustCertServices();
+
+            schedulePeriodicCertificatesReload();
         });
+    }
+
+    /**
+     * Periodically reload all certificates in case we missed something.. e.g. replicated
+     * certificates from other xenon nodes
+     */
+    private void schedulePeriodicCertificatesReload() {
+        long nextDelay = (reloadCounter.get() > reloadCounterThreshold) ?
+                maintenanceInterval :
+                maintenanceIntervalInitial;
+        host.schedule(() -> {
+            try {
+                documentUpdateTimeMicros = 0;
+                loadSslTrustCertServices();
+
+                reloadCounter.updateAndGet((r) -> (r > reloadCounterThreshold) ? r : r + 1);
+
+                schedulePeriodicCertificatesReload();
+            } catch (Exception e) {
+                host.log(Level.WARNING, e.getMessage());
+                host.log(Level.FINE, Utils.toString(e));
+
+                schedulePeriodicCertificatesReload();
+            }
+        }, nextDelay, TimeUnit.MICROSECONDS);
     }
 
     @Override

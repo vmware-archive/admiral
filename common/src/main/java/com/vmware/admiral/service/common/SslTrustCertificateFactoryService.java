@@ -41,6 +41,10 @@ public class SslTrustCertificateFactoryService extends FactoryService {
      */
     @Override
     public void handlePost(Operation op) {
+        if (op.isSynchronize()) {
+            op.complete();
+            return;
+        }
         if (op.hasBody()) {
             SslTrustCertificateState body = (SslTrustCertificateState) op.getBody(this.stateType);
             if (body == null) {

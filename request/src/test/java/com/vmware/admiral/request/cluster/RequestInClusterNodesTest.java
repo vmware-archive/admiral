@@ -18,13 +18,16 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
@@ -32,6 +35,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
+import com.vmware.admiral.common.test.CommonTestStateFactory;
+import com.vmware.admiral.common.util.CertificateUtil;
+import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
@@ -50,6 +56,7 @@ import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.request.ReservationTaskFactoryService;
 import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -63,6 +70,7 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
     private static final int DOCKER_HOST_COUNT = Integer.getInteger(
             "test.cluster.performance.docker.host.count", 5);
     private List<VerificationHost> hosts;
+    private Map<String, ServerX509TrustManager> trustManagers = new HashMap<>();
 
     //should completely override the one in the base class
     @Override
@@ -97,18 +105,25 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
     }
 
     public void addPeerNodes(int nodeCount) throws Throwable {
-        hosts = new ArrayList<>(nodeCount);
-        int newNodesCount = nodeCount - 1;//the initial host is already created
-        for (int i = 0; i < newNodesCount; i++) {
-            VerificationHost h = createHost();
+        if (hosts == null) {
+            hosts = new ArrayList<>(nodeCount);
+        }
+        for (int i = 0; i < nodeCount; i++) {
+            Map.Entry<VerificationHost, ServerX509TrustManager> entry = createHostWithTrustManager(
+                    TimeUnit.SECONDS.toMicros(1));
+            VerificationHost h = entry.getKey();
             hosts.add(h);
             startServices(h);
             waitForReplicatedFactoryServiceAvailable(h);
             addPeerNode(h);
+
+            ServerX509TrustManager serverX509TrustManager = entry.getValue();
+            trustManagers.put(h.getId(), serverX509TrustManager);
+            serverX509TrustManager.start();
         }
 
         host.joinNodesAndVerifyConvergence(nodeCount);
-        int quorum = NODE_COUNT / 2 + 1;
+        int quorum = (hosts.size() + 1) / 2 + 1;
         host.setNodeGroupQuorum(quorum);
 
         host.log("*****************************************************************************");
@@ -284,7 +299,7 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
         assertTrue((getDocument(ContainerNetworkState.class, networkLink).compositeComponentLinks
                 .size() == 1)
                 && getDocument(ContainerNetworkState.class, networkLink).compositeComponentLinks
-                        .contains(cc.documentSelfLink));
+                .contains(cc.documentSelfLink));
 
         RequestBrokerState day2RemovalRequest = new RequestBrokerState();
         day2RemovalRequest.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
@@ -380,5 +395,34 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
         rs = getDocument(RequestStatus.class, request.requestTrackerLink);
         assertNotNull(rs);
         assertEquals(Integer.valueOf(100), rs.progress);
+    }
+
+    @Test
+    public void testCertificateReplication() throws Throwable {
+        //import a certificate in the first host
+        SslTrustCertificateService.SslTrustCertificateState sslTrustCert1 = new SslTrustCertificateService.SslTrustCertificateState();
+        String sslTrust1 = CommonTestStateFactory.getFileContent("test_ssl_trust.PEM").trim();
+        sslTrustCert1.certificate = sslTrust1;
+        sslTrustCert1.subscriptionLink = null;
+        sslTrustCert1 = doPost(sslTrustCert1, SslTrustCertificateService.FACTORY_LINK);
+
+        //add a new node with an empty db
+        addPeerNodes(1);
+
+        VerificationHost lastHost = hosts.get(hosts.size() - 1);
+
+        //check that the corresponding trust manager of the new node has loaded the certificate
+        waitFor("The certificate should be trusted", () -> {
+            try {
+                ServerX509TrustManager trustManager = trustManagers.get(lastHost.getId());
+                X509Certificate[] certificateChain = CertificateUtil
+                        .createCertificateChain(sslTrust1);
+                trustManager.checkServerTrusted(certificateChain, "RSA");
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        });
+
     }
 }
