@@ -89,7 +89,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
                 { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_BRIDGE },
                 { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_OVERLAY },
                 { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_BRIDGE },
-                { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_OVERLAY },
+                // TODO: VBV-849
+                // { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_OVERLAY },
                 { "WordPress_with_MySQL_links.yaml", NetworkType.BRIDGE }
         });
     }
@@ -146,7 +147,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
 
         RequestBrokerState request = requestExternalNetwork(description.documentSelfLink);
 
-        externalNetwork = getDocument(request.resourceLinks.iterator().next(), ContainerNetworkState.class);
+        externalNetwork = getDocument(request.resourceLinks.iterator().next(),
+                ContainerNetworkState.class);
         assertNotNull(externalNetwork);
         assertTrue(externalNetwork.connectedContainersCount == 0);
 
@@ -197,7 +199,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         assertEquals("Unexpected number of resource links", 1,
                 request.resourceLinks.size());
 
-        CompositeComponent cc = getDocument(request.resourceLinks.iterator().next(), CompositeComponent.class);
+        CompositeComponent cc = getDocument(request.resourceLinks.iterator().next(),
+                CompositeComponent.class);
         assertEquals("Unexpected number of component links", expectedNumberOfResources,
                 cc.componentLinks.size());
 
