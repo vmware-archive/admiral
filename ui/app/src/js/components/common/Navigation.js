@@ -95,6 +95,9 @@ var Navigation = Vue.extend({
     },
     isCollapsed: function(item) {
       return !this.isExpanded(item);
+    },
+    areClosuresAllowed: function() {
+      return utils.areClosuresAllowed();
     }
   }
 });

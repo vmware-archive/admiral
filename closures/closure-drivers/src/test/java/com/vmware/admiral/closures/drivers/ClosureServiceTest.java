@@ -83,16 +83,16 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
     public void addDefaultTaskTest() throws Throwable {
         URI factoryUri = UriUtils.buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
         this.host.testStart(1);
-        ClosureDescription taskDefState = new ClosureDescription();
-        taskDefState.name = "test";
-        taskDefState.source = "var a = 1; print(\"Hello \" + a);";
-        taskDefState.runtime = "nashorn";
-        taskDefState.documentSelfLink = UUID.randomUUID().toString();
-        URI taskDefChildURI = UriUtils.buildUri(this.host,
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink);
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
+        closureDefState.source = "var a = 1; print(\"Hello \" + a);";
+        closureDefState.runtime = "nashorn";
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink);
         Operation post = Operation
                 .createPost(factoryUri)
-                .setBody(taskDefState)
+                .setBody(closureDefState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> assertNull(e)));
         this.host.send(post);
         this.host.testWait();
@@ -101,12 +101,12 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         Closure closureState = new Closure();
         closureState.descriptionLink =
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink;
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink;
         closureState.documentSelfLink = UUID.randomUUID().toString();
-        URI taskChildURI = UriUtils.buildUri(this.host,
+        URI closureChildURI = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
         Closure[] closureResponses = new Closure[1];
-        Operation taskPost = Operation
+        Operation closurePost = Operation
                 .createPost(factoryTaskUri)
                 .setBody(closureState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
@@ -115,11 +115,11 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CREATED, closureResponses[0].state);
                 }));
-        this.host.send(taskPost);
+        this.host.send(closurePost);
         this.host.testWait();
 
-        clean(taskDefChildURI);
-        clean(taskChildURI);
+        clean(closureChildURI);
+        clean(closureDefChildURI);
     }
 
     @Test
@@ -127,28 +127,28 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         // Create Closure Definition
         URI factoryUri = UriUtils.buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
         this.host.testStart(1);
-        ClosureDescription taskDefState = new ClosureDescription();
-        taskDefState.name = "test";
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
 
         int expectedInVar = 3;
         int expectedOutVar = 3;
         double expectedResult = 4.0;
 
-        taskDefState.source = "function test(x) {print('Hello number: ' + x); return x + 1;} var b = " +
+        closureDefState.source = "function test(x) {print('Hello number: ' + x); return x + 1;} var b = " +
                 expectedOutVar
                 + "; result = test(inputs.a);";
-        taskDefState.runtime = "nashorn";
-        taskDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        taskDefState.documentSelfLink = UUID.randomUUID().toString();
+        closureDefState.runtime = "nashorn";
+        closureDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 10;
-        taskDefState.resources = constraints;
+        closureDefState.resources = constraints;
         ClosureDescription[] responses = new ClosureDescription[1];
-        URI taskDefChildURI = UriUtils.buildUri(this.host,
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink);
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink);
         Operation post = Operation
                 .createPost(factoryUri)
-                .setBody(taskDefState)
+                .setBody(closureDefState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     assertNull(e);
                     responses[0] = o.getBody(ClosureDescription.class);
@@ -162,12 +162,12 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         Closure closureState = new Closure();
         closureState.descriptionLink =
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink;
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink;
         closureState.documentSelfLink = UUID.randomUUID().toString();
-        URI taskChildURI = UriUtils.buildUri(this.host,
+        URI closureChildURI = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
         final Closure[] closureResponses = new Closure[1];
-        Operation taskPost = Operation
+        Operation closurePost = Operation
                 .createPost(factoryTaskUri)
                 .setBody(closureState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
@@ -176,7 +176,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(TaskStage.CREATED, closureResponses[0].state);
 
                 }));
-        this.host.send(taskPost);
+        this.host.send(closurePost);
         this.host.testWait();
 
         // Executing the created Closure
@@ -185,14 +185,14 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         Map inputs = new HashMap<>();
         inputs.put("a", new JsonPrimitive(expectedInVar));
         closureRequest.inputs = inputs;
-        Operation taskExecPost = Operation
-                .createPost(taskChildURI)
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
                 .setBody(closureRequest)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     closureResponses[0] = o.getBody(Closure.class);
                     assertNotNull(closureResponses[0]);
                 }));
-        this.host.send(taskExecPost);
+        this.host.send(closureExecPost);
         this.host.testWait();
 
         // Wait for the completion timeout
@@ -200,8 +200,8 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
-        Operation taskGet = Operation
-                .createGet(taskChildURI)
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     finalClosureResponse[0] = o.getBody(Closure.class);
                     assertEquals(closureState.descriptionLink, finalClosureResponse[0].descriptionLink);
@@ -210,11 +210,11 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(expectedInVar, finalClosureResponse[0].inputs.get("a").getAsInt());
                     assertEquals(expectedResult, finalClosureResponse[0].outputs.get("result").getAsDouble(), 0);
                 }));
-        this.host.send(taskGet);
+        this.host.send(closureGet);
         this.host.testWait();
 
-        clean(taskDefChildURI);
-        clean(taskChildURI);
+        clean(closureChildURI);
+        clean(closureDefChildURI);
     }
 
     @Test
@@ -222,28 +222,28 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         // Create Closure Definition
         URI factoryUri = UriUtils.buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
         this.host.testStart(1);
-        ClosureDescription taskDefState = new ClosureDescription();
-        taskDefState.name = "test";
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
 
         Integer[] expectedInVar = { 1, 2, 3 };
         Integer expectedOutVar = 1;
         Integer[] expectedResult = { 2, 3, 4 };
 
-        taskDefState.source = "function increment(x) {" + "print('Hello array of numbers: ' + x);"
+        closureDefState.source = "function increment(x) {" + "print('Hello array of numbers: ' + x);"
                 + "for(var i = 0; i < x.length; i++) {" + "x[i] = x[i] + 1;" + "}" + " return x;}" + " var b = ["
                 + expectedOutVar + "]; result = increment(inputs.a);";
-        taskDefState.runtime = "nashorn";
-        taskDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        taskDefState.documentSelfLink = UUID.randomUUID().toString();
+        closureDefState.runtime = "nashorn";
+        closureDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 2;
-        taskDefState.resources = constraints;
+        closureDefState.resources = constraints;
         ClosureDescription[] responses = new ClosureDescription[1];
-        URI taskDefChildURI = UriUtils.buildUri(this.host,
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink);
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink);
         Operation post = Operation
                 .createPost(factoryUri)
-                .setBody(taskDefState)
+                .setBody(closureDefState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     assertNull(e);
                     responses[0] = o.getBody(ClosureDescription.class);
@@ -257,12 +257,12 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         Closure closureState = new Closure();
         closureState.descriptionLink =
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink;
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink;
         closureState.documentSelfLink = UUID.randomUUID().toString();
-        URI taskChildURI = UriUtils.buildUri(this.host,
+        URI closureChildURI = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
         final Closure[] closureResponses = new Closure[1];
-        Operation taskPost = Operation
+        Operation closurePost = Operation
                 .createPost(factoryTaskUri)
                 .setBody(closureState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
@@ -270,7 +270,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CREATED, closureResponses[0].state);
                 }));
-        this.host.send(taskPost);
+        this.host.send(closurePost);
         this.host.testWait();
 
         // Executing the created Closure
@@ -284,14 +284,14 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         }
         inputs.put("a", jsArray);
         closureRequest.inputs = inputs;
-        Operation taskExecPost = Operation
-                .createPost(taskChildURI)
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
                 .setBody(closureRequest)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     closureResponses[0] = o.getBody(Closure.class);
                     assertNotNull(closureResponses[0]);
                 }));
-        this.host.send(taskExecPost);
+        this.host.send(closureExecPost);
         this.host.testWait();
 
         // Wait for the completion timeout
@@ -299,8 +299,8 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
-        Operation taskGet = Operation
-                .createGet(taskChildURI)
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     finalClosureResponse[0] = o.getBody(Closure.class);
                     assertEquals(closureState.descriptionLink, finalClosureResponse[0].descriptionLink);
@@ -310,11 +310,11 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                             .getAsJsonArray());
                     verifyJsonArrayInts(expectedResult, finalClosureResponse[0].outputs.get("result").getAsJsonArray());
                 }));
-        this.host.send(taskGet);
+        this.host.send(closureGet);
         this.host.testWait();
 
-        clean(taskDefChildURI);
-        clean(taskChildURI);
+        clean(closureChildURI);
+        clean(closureDefChildURI);
     }
 
     @Test
@@ -322,30 +322,30 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         // Create Closure Definition
         URI factoryUri = UriUtils.buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
         this.host.testStart(1);
-        ClosureDescription taskDefState = new ClosureDescription();
-        taskDefState.name = "test";
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
 
         String[] expectedInVar = { "a", "b", "c" };
         String expectedOutVar = "test";
         String[] expectedResult = { "a_t", "b_t", "c_t" };
 
-        taskDefState.source = "function appnd(x) {" + "print('Hello array of strings: ' + x);"
+        closureDefState.source = "function appnd(x) {" + "print('Hello array of strings: ' + x);"
                 + "for(var i = 0; i < x.length; i++) {" + "x[i] = x[i] + '_t';" + "}"
                 + "print('Hello number: ' + x); return x;}" + " var b = ['" + expectedOutVar
                 + "']; result = appnd(inputs.a);";
-        taskDefState.runtime = "nashorn";
-        taskDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        taskDefState.documentSelfLink = UUID.randomUUID().toString();
+        closureDefState.runtime = "nashorn";
+        closureDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
-        taskDefState.resources = constraints;
+        closureDefState.resources = constraints;
 
         ClosureDescription[] responses = new ClosureDescription[1];
-        URI taskDefChildURI = UriUtils.buildUri(this.host,
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink);
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink);
         Operation post = Operation
                 .createPost(factoryUri)
-                .setBody(taskDefState)
+                .setBody(closureDefState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     assertNull(e);
                     responses[0] = o.getBody(ClosureDescription.class);
@@ -359,12 +359,12 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         Closure closureState = new Closure();
         closureState.descriptionLink =
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink;
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink;
         closureState.documentSelfLink = UUID.randomUUID().toString();
-        URI taskChildURI = UriUtils.buildUri(this.host,
+        URI closureChildURI = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
         final Closure[] closureResponses = new Closure[1];
-        Operation taskPost = Operation
+        Operation closurePost = Operation
                 .createPost(factoryTaskUri)
                 .setBody(closureState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
@@ -372,7 +372,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CREATED, closureResponses[0].state);
                 }));
-        this.host.send(taskPost);
+        this.host.send(closurePost);
         this.host.testWait();
 
         // Executing the created Closure
@@ -386,14 +386,14 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         }
         inputs.put("a", jsArray);
         closureRequest.inputs = inputs;
-        Operation taskExecPost = Operation
-                .createPost(taskChildURI)
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
                 .setBody(closureRequest)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     closureResponses[0] = o.getBody(Closure.class);
                     assertNotNull(closureResponses[0]);
                 }));
-        this.host.send(taskExecPost);
+        this.host.send(closureExecPost);
         this.host.testWait();
 
         // Wait for the completion timeout
@@ -401,8 +401,8 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
-        Operation taskGet = Operation
-                .createGet(taskChildURI)
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     finalClosureResponse[0] = o.getBody(Closure.class);
                     assertEquals(closureState.descriptionLink, finalClosureResponse[0].descriptionLink);
@@ -413,11 +413,11 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     verifyJsonArrayStrings(expectedResult,
                             finalClosureResponse[0].outputs.get("result").getAsJsonArray());
                 }));
-        this.host.send(taskGet);
+        this.host.send(closureGet);
         this.host.testWait();
 
-        clean(taskDefChildURI);
-        clean(taskChildURI);
+        clean(closureChildURI);
+        clean(closureDefChildURI);
     }
 
     @Test
@@ -425,29 +425,29 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         // Create Closure Definition
         URI factoryUri = UriUtils.buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
         this.host.testStart(1);
-        ClosureDescription taskDefState = new ClosureDescription();
-        taskDefState.name = "test";
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
 
         Boolean[] expectedInVar = { true, true, true };
         Boolean expectedOutVar = true;
         Boolean[] expectedResult = { false, false, false };
 
-        taskDefState.source = "function appl(x) {" + "print('Hello array of booleans: ' + x);"
+        closureDefState.source = "function appl(x) {" + "print('Hello array of booleans: ' + x);"
                 + "for(var i = 0; i < x.length; i++) {" + "x[i] = !x[i];" + "}" + "return x;}" + " var b = ["
                 + expectedOutVar + "]; result = appl(inputs.a);";
-        taskDefState.runtime = "nashorn";
-        taskDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        taskDefState.documentSelfLink = UUID.randomUUID().toString();
+        closureDefState.runtime = "nashorn";
+        closureDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
-        taskDefState.resources = constraints;
+        closureDefState.resources = constraints;
 
         ClosureDescription[] responses = new ClosureDescription[1];
-        URI taskDefChildURI = UriUtils.buildUri(this.host,
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink);
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink);
         Operation post = Operation
                 .createPost(factoryUri)
-                .setBody(taskDefState)
+                .setBody(closureDefState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     assertNull(e);
                     responses[0] = o.getBody(ClosureDescription.class);
@@ -461,13 +461,13 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         Closure closureState = new Closure();
         closureState.descriptionLink =
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink;
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink;
         closureState.documentSelfLink = UUID.randomUUID().toString();
 
-        URI taskChildURI = UriUtils.buildUri(this.host,
+        URI closureChildURI = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
         final Closure[] closureResponses = new Closure[1];
-        Operation taskPost = Operation
+        Operation closurePost = Operation
                 .createPost(factoryTaskUri)
                 .setBody(closureState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
@@ -475,7 +475,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CREATED, closureResponses[0].state);
                 }));
-        this.host.send(taskPost);
+        this.host.send(closurePost);
         this.host.testWait();
 
         // Executing the created Closure
@@ -489,14 +489,14 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         }
         inputs.put("a", jsArray);
         closureRequest.inputs = inputs;
-        Operation taskExecPost = Operation
-                .createPost(taskChildURI)
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
                 .setBody(closureRequest)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     closureResponses[0] = o.getBody(Closure.class);
                     assertNotNull(closureResponses[0]);
                 }));
-        this.host.send(taskExecPost);
+        this.host.send(closureExecPost);
         this.host.testWait();
 
         // Wait for the completion timeout
@@ -504,8 +504,8 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
-        Operation taskGet = Operation
-                .createGet(taskChildURI)
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     finalClosureResponse[0] = o.getBody(Closure.class);
 
@@ -516,11 +516,11 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     verifyJsonArrayBooleans(expectedResult,
                             finalClosureResponse[0].outputs.get("result").getAsJsonArray());
                 }));
-        this.host.send(taskGet);
+        this.host.send(closureGet);
         this.host.testWait();
 
-        clean(taskDefChildURI);
-        clean(taskChildURI);
+        clean(closureChildURI);
+        clean(closureDefChildURI);
     }
 
     class TestObject {
@@ -541,8 +541,8 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         // Create Closure Definition
         URI factoryUri = UriUtils.buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
         this.host.testStart(1);
-        ClosureDescription taskDefState = new ClosureDescription();
-        taskDefState.name = "test";
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
 
         TestObject expectedInVar = new TestObject();
         expectedInVar.strTest = "test";
@@ -551,23 +551,23 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         int expectedOutVar = 3;
         String expectedResult = expectedInVar.strTest + "_changed";
 
-        taskDefState.source = "function test(x) {print('Hello object: ' + x.strTest);"
+        closureDefState.source = "function test(x) {print('Hello object: ' + x.strTest);"
                 + " x.strTest = x.strTest + '_changed';"
                 + " x.intTest = x.intTest + 1; x.boolTest = !x.boolTest; return x;" + "}" + " var b = " + expectedOutVar
                 + "; result = test(inputs.a);";
-        taskDefState.runtime = "nashorn";
-        taskDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        taskDefState.documentSelfLink = UUID.randomUUID().toString();
+        closureDefState.runtime = "nashorn";
+        closureDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
-        taskDefState.resources = constraints;
+        closureDefState.resources = constraints;
 
         ClosureDescription[] responses = new ClosureDescription[1];
-        URI taskDefChildURI = UriUtils.buildUri(this.host,
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink);
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink);
         Operation post = Operation
                 .createPost(factoryUri)
-                .setBody(taskDefState)
+                .setBody(closureDefState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     assertNull(e);
                     responses[0] = o.getBody(ClosureDescription.class);
@@ -581,13 +581,13 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         Closure closureState = new Closure();
         closureState.descriptionLink =
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink;
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink;
         closureState.documentSelfLink = UUID.randomUUID().toString();
 
-        URI taskChildURI = UriUtils.buildUri(this.host,
+        URI closureChildURI = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
         final Closure[] closureResponses = new Closure[1];
-        Operation taskPost = Operation
+        Operation closurePost = Operation
                 .createPost(factoryTaskUri)
                 .setBody(closureState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
@@ -595,7 +595,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CREATED, closureResponses[0].state);
                 }));
-        this.host.send(taskPost);
+        this.host.send(closurePost);
         this.host.testWait();
 
         // Executing the created Closure
@@ -605,14 +605,14 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         Gson gson = new Gson();
         inputs.put("a", gson.toJsonTree(expectedInVar));
         closureRequest.inputs = inputs;
-        Operation taskExecPost = Operation
-                .createPost(taskChildURI)
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
                 .setBody(closureRequest)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     closureResponses[0] = o.getBody(Closure.class);
                     assertNotNull(closureResponses[0]);
                 }));
-        this.host.send(taskExecPost);
+        this.host.send(closureExecPost);
         this.host.testWait();
 
         // Wait for the completion timeout
@@ -620,8 +620,8 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
-        Operation taskGet = Operation
-                .createGet(taskChildURI)
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     finalClosureResponse[0] = o.getBody(Closure.class);
                     assertEquals(closureState.descriptionLink, finalClosureResponse[0].descriptionLink);
@@ -642,11 +642,11 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(expectedInVar.intTest + 1, resultObj.intTest);
                     assertEquals(!expectedInVar.boolTest, resultObj.boolTest);
                 }));
-        this.host.send(taskGet);
+        this.host.send(closureGet);
         this.host.testWait();
 
-        clean(taskDefChildURI);
-        clean(taskChildURI);
+        clean(closureChildURI);
+        clean(closureDefChildURI);
     }
 
     @Test
@@ -654,8 +654,8 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         // Create Closure Definition
         URI factoryUri = UriUtils.buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
         this.host.testStart(1);
-        ClosureDescription taskDefState = new ClosureDescription();
-        taskDefState.name = "test";
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
 
         NestedTestObject expectedInVar = new NestedTestObject();
         expectedInVar.strTest = "test";
@@ -669,23 +669,23 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         int expectedOutVar = 3;
         String expectedResult = expectedInVar.objTest.strTest + "_changed";
 
-        taskDefState.source = "function test(x) {print('Hello object: ' + x.objTest);"
+        closureDefState.source = "function test(x) {print('Hello object: ' + x.objTest);"
                 + " x.objTest.strTest = x.objTest.strTest + '_changed';"
                 + " x.objTest.intTest = x.objTest.intTest + 1; x.objTest.boolTest = !x.objTest.boolTest; return x;"
                 + "}" + " var b = " + expectedOutVar + "; result = test(inputs.a);";
-        taskDefState.runtime = "nashorn";
-        taskDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        taskDefState.documentSelfLink = UUID.randomUUID().toString();
+        closureDefState.runtime = "nashorn";
+        closureDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 2;
-        taskDefState.resources = constraints;
+        closureDefState.resources = constraints;
 
         ClosureDescription[] responses = new ClosureDescription[1];
-        URI taskDefChildURI = UriUtils.buildUri(this.host,
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink);
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink);
         Operation post = Operation
                 .createPost(factoryUri)
-                .setBody(taskDefState)
+                .setBody(closureDefState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     assertNull(e);
                     responses[0] = o.getBody(ClosureDescription.class);
@@ -699,13 +699,13 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         Closure closureState = new Closure();
         closureState.descriptionLink =
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink;
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink;
         closureState.documentSelfLink = UUID.randomUUID().toString();
 
-        URI taskChildURI = UriUtils.buildUri(this.host,
+        URI closureChildURI = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
         final Closure[] closureResponses = new Closure[1];
-        Operation taskPost = Operation
+        Operation closurePost = Operation
                 .createPost(factoryTaskUri)
                 .setBody(closureState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
@@ -713,7 +713,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CREATED, closureResponses[0].state);
                 }));
-        this.host.send(taskPost);
+        this.host.send(closurePost);
         this.host.testWait();
 
         // Executing the created Closure
@@ -723,14 +723,14 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         Gson gson = new Gson();
         inputs.put("a", gson.toJsonTree(expectedInVar));
         closureRequest.inputs = inputs;
-        Operation taskExecPost = Operation
-                .createPost(taskChildURI)
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
                 .setBody(closureRequest)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     closureResponses[0] = o.getBody(Closure.class);
                     assertNotNull(closureResponses[0]);
                 }));
-        this.host.send(taskExecPost);
+        this.host.send(closureExecPost);
         this.host.testWait();
 
         // Wait for the completion timeout
@@ -738,8 +738,8 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
-        Operation taskGet = Operation
-                .createGet(taskChildURI)
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     finalClosureResponse[0] = o.getBody(Closure.class);
                     assertEquals(closureState.descriptionLink, finalClosureResponse[0].descriptionLink);
@@ -762,11 +762,11 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(expectedInVar.objTest.intTest + 1, resultObj.intTest);
                     assertEquals(!expectedInVar.objTest.boolTest, resultObj.boolTest);
                 }));
-        this.host.send(taskGet);
+        this.host.send(closureGet);
         this.host.testWait();
 
-        clean(taskDefChildURI);
-        clean(taskChildURI);
+        clean(closureChildURI);
+        clean(closureDefChildURI);
     }
 
     @Test
@@ -774,8 +774,8 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         // Create Closure Definition
         URI factoryUri = UriUtils.buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
         this.host.testStart(1);
-        ClosureDescription taskDefState = new ClosureDescription();
-        taskDefState.name = "test";
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
 
         TestObject expectedInVar = new TestObject();
         expectedInVar.strTest = "test";
@@ -784,23 +784,23 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         int expectedOutVar = 3;
         String expectedResult = expectedInVar.strTest + "_changed";
 
-        taskDefState.source = "function test(x) { print('Hello object: ' + x[0].strTest);"
+        closureDefState.source = "function test(x) { print('Hello object: ' + x[0].strTest);"
                 + " x[0].strTest = x[0].strTest + '_changed';"
                 + " x[0].intTest = x[0].intTest + 1; x[0].boolTest = !x[0].boolTest; return x;" + "}" + " var b = "
                 + expectedOutVar + "; result = test(inputs.a);";
-        taskDefState.runtime = "nashorn";
-        taskDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        taskDefState.documentSelfLink = UUID.randomUUID().toString();
+        closureDefState.runtime = "nashorn";
+        closureDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
-        taskDefState.resources = constraints;
+        closureDefState.resources = constraints;
 
         ClosureDescription[] responses = new ClosureDescription[1];
-        URI taskDefChildURI = UriUtils.buildUri(this.host,
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink);
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink);
         Operation post = Operation
                 .createPost(factoryUri)
-                .setBody(taskDefState)
+                .setBody(closureDefState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     assertNull(e);
                     responses[0] = o.getBody(ClosureDescription.class);
@@ -814,13 +814,13 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         Closure closureState = new Closure();
         closureState.descriptionLink =
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink;
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink;
         closureState.documentSelfLink = UUID.randomUUID().toString();
 
-        URI taskChildURI = UriUtils.buildUri(this.host,
+        URI closureChildURI = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
         final Closure[] closureResponses = new Closure[1];
-        Operation taskPost = Operation
+        Operation closurePost = Operation
                 .createPost(factoryTaskUri)
                 .setBody(closureState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
@@ -828,7 +828,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CREATED, closureResponses[0].state);
                 }));
-        this.host.send(taskPost);
+        this.host.send(closurePost);
         this.host.testWait();
 
         // Executing the created Closure
@@ -840,14 +840,14 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         jsArray.add(new Gson().toJsonTree(expectedInVar));
         inputs.put("a", jsArray);
         closureRequest.inputs = inputs;
-        Operation taskExecPost = Operation
-                .createPost(taskChildURI)
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
                 .setBody(closureRequest)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     closureResponses[0] = o.getBody(Closure.class);
                     assertNotNull(closureResponses[0]);
                 }));
-        this.host.send(taskExecPost);
+        this.host.send(closureExecPost);
         this.host.testWait();
 
         // Wait for the completion timeout
@@ -855,8 +855,8 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
-        Operation taskGet = Operation
-                .createGet(taskChildURI)
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     finalClosureResponse[0] = o.getBody(Closure.class);
                     assertEquals(closureState.descriptionLink, finalClosureResponse[0].descriptionLink);
@@ -879,11 +879,11 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(expectedInVar.intTest + 1, resultObj.intTest);
                     assertEquals(!expectedInVar.boolTest, resultObj.boolTest);
                 }));
-        this.host.send(taskGet);
+        this.host.send(closureGet);
         this.host.testWait();
 
-        clean(taskDefChildURI);
-        clean(taskChildURI);
+        clean(closureChildURI);
+        clean(closureDefChildURI);
     }
 
     @Test
@@ -891,28 +891,28 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         // Create Closure Definition
         URI factoryUri = UriUtils.buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
         this.host.testStart(1);
-        ClosureDescription taskDefState = new ClosureDescription();
-        taskDefState.name = "test";
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
 
         String expectedInVar = "a";
         String expectedOutVar = "b";
         String expectedResult = "ac";
 
-        taskDefState.source = "function test(x) {print('Hello string: ' + x); return x.concat(\"c\");} var b = '"
+        closureDefState.source = "function test(x) {print('Hello string: ' + x); return x.concat(\"c\");} var b = '"
                 + expectedOutVar + "'; result = test(inputs.a);";
-        taskDefState.runtime = "nashorn";
-        taskDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        taskDefState.documentSelfLink = UUID.randomUUID().toString();
+        closureDefState.runtime = "nashorn";
+        closureDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 2;
-        taskDefState.resources = constraints;
+        closureDefState.resources = constraints;
 
         ClosureDescription[] responses = new ClosureDescription[1];
-        URI taskDefChildURI = UriUtils.buildUri(this.host,
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink);
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink);
         Operation post = Operation
                 .createPost(factoryUri)
-                .setBody(taskDefState)
+                .setBody(closureDefState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     assertNull(e);
                     responses[0] = o.getBody(ClosureDescription.class);
@@ -927,13 +927,13 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         Closure closureState = new Closure();
         closureState.descriptionLink =
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink;
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink;
         closureState.documentSelfLink = UUID.randomUUID().toString();
 
-        URI taskChildURI = UriUtils.buildUri(this.host,
+        URI closureChildURI = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
         final Closure[] closureResponses = new Closure[1];
-        Operation taskPost = Operation
+        Operation closurePost = Operation
                 .createPost(factoryTaskUri)
                 .setBody(closureState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
@@ -941,7 +941,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CREATED, closureResponses[0].state);
                 }));
-        this.host.send(taskPost);
+        this.host.send(closurePost);
         this.host.testWait();
 
         // Executing the created Closure
@@ -950,14 +950,14 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         Map inputs = new HashMap<>();
         inputs.put("a", new JsonPrimitive(expectedInVar));
         closureRequest.inputs = inputs;
-        Operation taskExecPost = Operation
-                .createPost(taskChildURI)
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
                 .setBody(closureRequest)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     closureResponses[0] = o.getBody(Closure.class);
                     assertNotNull(closureResponses[0]);
                 }));
-        this.host.send(taskExecPost);
+        this.host.send(closureExecPost);
         this.host.testWait();
 
         // Wait for the completion timeout
@@ -965,8 +965,8 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
-        Operation taskGet = Operation
-                .createGet(taskChildURI)
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     finalClosureResponse[0] = o.getBody(Closure.class);
                     assertEquals(closureState.descriptionLink, finalClosureResponse[0].descriptionLink);
@@ -976,11 +976,11 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                             finalClosureResponse[0].inputs.get("a").getAsString());
                     assertEquals(expectedResult, finalClosureResponse[0].outputs.get("result").getAsString());
                 }));
-        this.host.send(taskGet);
+        this.host.send(closureGet);
         this.host.testWait();
 
-        clean(taskDefChildURI);
-        clean(taskChildURI);
+        clean(closureChildURI);
+        clean(closureDefChildURI);
     }
 
     @Test
@@ -989,28 +989,28 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         // Create Closure Definition
         URI factoryUri = UriUtils.buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
         this.host.testStart(1);
-        ClosureDescription taskDefState = new ClosureDescription();
-        taskDefState.name = "test";
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
 
         boolean expectedInVar = true;
         int expectedOutVar = 1;
         boolean expectedResult = false;
 
-        taskDefState.source = "function test(x) {print('Hello boolean: ' + x); return !x;} var b = " + expectedOutVar
+        closureDefState.source = "function test(x) {print('Hello boolean: ' + x); return !x;} var b = " + expectedOutVar
                 + "; result = test(inputs.a);";
-        taskDefState.runtime = "nashorn";
-        taskDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        taskDefState.documentSelfLink = UUID.randomUUID().toString();
+        closureDefState.runtime = "nashorn";
+        closureDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
-        taskDefState.resources = constraints;
+        closureDefState.resources = constraints;
 
         ClosureDescription[] responses = new ClosureDescription[1];
-        URI taskDefChildURI = UriUtils.buildUri(this.host,
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink);
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink);
         Operation post = Operation
                 .createPost(factoryUri)
-                .setBody(taskDefState)
+                .setBody(closureDefState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     assertNull(e);
                     responses[0] = o.getBody(ClosureDescription.class);
@@ -1025,13 +1025,13 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         Closure closureState = new Closure();
         closureState.descriptionLink =
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink;
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink;
         closureState.documentSelfLink = UUID.randomUUID().toString();
 
-        URI taskChildURI = UriUtils.buildUri(this.host,
+        URI closureChildURI = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
         final Closure[] closureResponses = new Closure[1];
-        Operation taskPost = Operation
+        Operation closurePost = Operation
                 .createPost(factoryTaskUri)
                 .setBody(closureState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
@@ -1039,7 +1039,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CREATED, closureResponses[0].state);
                 }));
-        this.host.send(taskPost);
+        this.host.send(closurePost);
         this.host.testWait();
 
         // Executing the created Closure
@@ -1048,14 +1048,14 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         Map inputs = new HashMap<>();
         inputs.put("a", new JsonPrimitive(expectedInVar));
         closureRequest.inputs = inputs;
-        Operation taskExecPost = Operation
-                .createPost(taskChildURI)
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
                 .setBody(closureRequest)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     closureResponses[0] = o.getBody(Closure.class);
                     assertNotNull(closureResponses[0]);
                 }));
-        this.host.send(taskExecPost);
+        this.host.send(closureExecPost);
         this.host.testWait();
 
         // Wait for the completion timeout
@@ -1063,8 +1063,8 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
         final Closure[] finalClosureResponse = new Closure[1];
         this.host.testStart(1);
-        Operation taskGet = Operation
-                .createGet(taskChildURI)
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     finalClosureResponse[0] = o.getBody(Closure.class);
                     assertEquals(closureState.descriptionLink, finalClosureResponse[0].descriptionLink);
@@ -1074,11 +1074,11 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                             finalClosureResponse[0].inputs.get("a").getAsBoolean());
                     assertEquals(expectedResult, finalClosureResponse[0].outputs.get("result").getAsBoolean());
                 }));
-        this.host.send(taskGet);
+        this.host.send(closureGet);
         this.host.testWait();
 
-        clean(taskDefChildURI);
-        clean(taskChildURI);
+        clean(closureChildURI);
+        clean(closureDefChildURI);
     }
 
     @Test
@@ -1086,21 +1086,21 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         // Create Closure Definition
         URI factoryUri = UriUtils.buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
         this.host.testStart(1);
-        ClosureDescription taskDefState = new ClosureDescription();
-        taskDefState.name = "test";
-        taskDefState.source = "var a = 1; print(\"Hello \" + invalid);";
-        taskDefState.runtime = "nashorn";
-        taskDefState.documentSelfLink = UUID.randomUUID().toString();
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
+        closureDefState.source = "var a = 1; print(\"Hello \" + invalid);";
+        closureDefState.runtime = "nashorn";
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 2;
-        taskDefState.resources = constraints;
+        closureDefState.resources = constraints;
 
         ClosureDescription[] responses = new ClosureDescription[1];
-        URI taskDefChildURI = UriUtils.buildUri(this.host,
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink);
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink);
         Operation post = Operation
                 .createPost(factoryUri)
-                .setBody(taskDefState)
+                .setBody(closureDefState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     assertNull(e);
                     responses[0] = o.getBody(ClosureDescription.class);
@@ -1114,13 +1114,13 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         Closure closureState = new Closure();
         closureState.descriptionLink =
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink;
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink;
         closureState.documentSelfLink = UUID.randomUUID().toString();
 
-        URI taskChildURI = UriUtils.buildUri(this.host,
+        URI closureChildURI = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
         final Closure[] closureResponses = new Closure[1];
-        Operation taskPost = Operation
+        Operation closurePost = Operation
                 .createPost(factoryTaskUri)
                 .setBody(closureState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
@@ -1128,19 +1128,19 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CREATED, closureResponses[0].state);
                 }));
-        this.host.send(taskPost);
+        this.host.send(closurePost);
         this.host.testWait();
 
         // Executing the created Closure
         this.host.testStart(1);
-        Operation taskExecPost = Operation
-                .createPost(taskChildURI)
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
                 .setBody(new Closure())
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     closureResponses[0] = o.getBody(Closure.class);
                     assertNotNull(closureResponses[0]);
                 }));
-        this.host.send(taskExecPost);
+        this.host.send(closureExecPost);
         this.host.testWait();
 
         // Wait for the completion timeout
@@ -1148,8 +1148,8 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
         final Closure[] endStateClosureResponses = new Closure[1];
         this.host.testStart(1);
-        Operation taskGet = Operation
-                .createGet(taskChildURI)
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     endStateClosureResponses[0] = o.getBody(Closure.class);
                     assertEquals(closureState.descriptionLink,
@@ -1157,11 +1157,11 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(TaskStage.FAILED, endStateClosureResponses[0].state);
                     assertTrue(endStateClosureResponses[0].errorMsg.length() > 0);
                 }));
-        this.host.send(taskGet);
+        this.host.send(closureGet);
         this.host.testWait();
 
-        clean(taskDefChildURI);
-        clean(taskChildURI);
+        clean(closureChildURI);
+        clean(closureDefChildURI);
     }
 
     @Test
@@ -1169,21 +1169,21 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         // Create Closure Definition
         URI factoryUri = UriUtils.buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
         this.host.testStart(1);
-        ClosureDescription taskDefState = new ClosureDescription();
-        taskDefState.name = "test";
-        taskDefState.source = "function sleep(delay) {var start = new Date().getTime();while (new Date().getTime() < start + delay) {}} sleep(60000);";
-        taskDefState.runtime = "nashorn";
-        taskDefState.documentSelfLink = UUID.randomUUID().toString();
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
+        closureDefState.source = "function sleep(delay) {var start = new Date().getTime();while (new Date().getTime() < start + delay) {}} sleep(60000);";
+        closureDefState.runtime = "nashorn";
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
-        taskDefState.resources = constraints;
+        closureDefState.resources = constraints;
 
         ClosureDescription[] responses = new ClosureDescription[1];
-        URI taskDefChildURI = UriUtils.buildUri(this.host,
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink);
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink);
         Operation post = Operation
                 .createPost(factoryUri)
-                .setBody(taskDefState)
+                .setBody(closureDefState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     assertNull(e);
                     responses[0] = o.getBody(ClosureDescription.class);
@@ -1198,12 +1198,12 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         Closure closureState = new Closure();
 
         closureState.descriptionLink =
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink;
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink;
         closureState.documentSelfLink = UUID.randomUUID().toString();
-        URI taskChildURI = UriUtils.buildUri(this.host,
+        URI closureChildURI = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
         final Closure[] closureResponses = new Closure[1];
-        Operation taskPost = Operation
+        Operation closurePost = Operation
                 .createPost(factoryTaskUri)
                 .setBody(closureState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
@@ -1211,19 +1211,19 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CREATED, closureResponses[0].state);
                 }));
-        this.host.send(taskPost);
+        this.host.send(closurePost);
         this.host.testWait();
 
         // Executing the created Closure
         this.host.testStart(1);
-        Operation taskExecPost = Operation
-                .createPost(taskChildURI)
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
                 .setBody(new Closure())
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     closureResponses[0] = o.getBody(Closure.class);
                     assertNotNull(closureResponses[0]);
                 }));
-        this.host.send(taskExecPost);
+        this.host.send(closureExecPost);
         this.host.testWait();
 
         // Wait for the completion timeout
@@ -1231,19 +1231,19 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
         final Closure[] endStateClosureResponses = new Closure[1];
         this.host.testStart(1);
-        Operation taskGet = Operation
-                .createGet(taskChildURI)
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     endStateClosureResponses[0] = o.getBody(Closure.class);
                     assertEquals(closureState.descriptionLink,
                             endStateClosureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CANCELLED, endStateClosureResponses[0].state);
                 }));
-        this.host.send(taskGet);
+        this.host.send(closureGet);
         this.host.testWait();
 
-        clean(taskDefChildURI);
-        clean(taskChildURI);
+        clean(closureChildURI);
+        clean(closureDefChildURI);
     }
 
     @Test
@@ -1251,21 +1251,21 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         // Create Closure Definition
         URI factoryUri = UriUtils.buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
         this.host.testStart(1);
-        ClosureDescription taskDefState = new ClosureDescription();
-        taskDefState.name = "test";
-        taskDefState.source = "function sleep(delay) {var start = new Date().getTime();while (new Date().getTime() < start + delay) {}} sleep(60000);";
-        taskDefState.runtime = "nashorn";
-        taskDefState.documentSelfLink = UUID.randomUUID().toString();
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
+        closureDefState.source = "function sleep(delay) {var start = new Date().getTime();while (new Date().getTime() < start + delay) {}} sleep(60000);";
+        closureDefState.runtime = "nashorn";
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
-        taskDefState.resources = constraints;
+        closureDefState.resources = constraints;
 
         ClosureDescription[] responses = new ClosureDescription[1];
-        URI taskDefChildURI = UriUtils.buildUri(this.host,
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink);
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink);
         Operation post = Operation
                 .createPost(factoryUri)
-                .setBody(taskDefState)
+                .setBody(closureDefState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     assertNull(e);
                     responses[0] = o.getBody(ClosureDescription.class);
@@ -1280,12 +1280,12 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         Closure closureState = new Closure();
 
         closureState.descriptionLink =
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink;
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink;
         closureState.documentSelfLink = UUID.randomUUID().toString();
-        URI taskChildURI = UriUtils.buildUri(this.host,
+        URI closureChildURI = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
         final Closure[] closureResponses = new Closure[1];
-        Operation taskPost = Operation
+        Operation closurePost = Operation
                 .createPost(factoryTaskUri)
                 .setBody(closureState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
@@ -1293,19 +1293,19 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CREATED, closureResponses[0].state);
                 }));
-        this.host.send(taskPost);
+        this.host.send(closurePost);
         this.host.testWait();
 
         // Executing the created Closure
         this.host.testStart(1);
-        Operation taskExecPost = Operation
-                .createPost(taskChildURI)
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
                 .setBody(new Closure())
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     closureResponses[0] = o.getBody(Closure.class);
                     assertNotNull(closureResponses[0]);
                 }));
-        this.host.send(taskExecPost);
+        this.host.send(closureExecPost);
         this.host.testWait();
 
         // Wait for the completion timeout
@@ -1313,15 +1313,15 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
         final Closure[] endStateClosureResponses = new Closure[1];
         this.host.testStart(1);
-        Operation taskGet = Operation
-                .createGet(taskChildURI)
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     endStateClosureResponses[0] = o.getBody(Closure.class);
                     assertEquals(closureState.descriptionLink,
                             endStateClosureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CANCELLED, endStateClosureResponses[0].state);
                 }));
-        this.host.send(taskGet);
+        this.host.send(closureGet);
         this.host.testWait();
 
         // Try to complete already cancelled Closure
@@ -1346,8 +1346,8 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.send(post);
         this.host.testWait();
 
-        clean(taskDefChildURI);
-        clean(taskChildURI);
+        clean(closureChildURI);
+        clean(closureDefChildURI);
     }
 
     @Test
@@ -1355,21 +1355,21 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         // Create Closure Definition
         URI factoryUri = UriUtils.buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
         this.host.testStart(1);
-        ClosureDescription taskDefState = new ClosureDescription();
-        taskDefState.name = "test";
-        taskDefState.source = "function sleep(delay) {var start = new Date().getTime();while (new Date().getTime() < start + delay) {}} sleep(60000);";
-        taskDefState.runtime = "nashorn";
-        taskDefState.documentSelfLink = UUID.randomUUID().toString();
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
+        closureDefState.source = "function sleep(delay) {var start = new Date().getTime();while (new Date().getTime() < start + delay) {}} sleep(60000);";
+        closureDefState.runtime = "nashorn";
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
-        taskDefState.resources = constraints;
+        closureDefState.resources = constraints;
 
         ClosureDescription[] responses = new ClosureDescription[1];
-        URI taskDefChildURI = UriUtils.buildUri(this.host,
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink);
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink);
         Operation post = Operation
                 .createPost(factoryUri)
-                .setBody(taskDefState)
+                .setBody(closureDefState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     assertNull(e);
                     responses[0] = o.getBody(ClosureDescription.class);
@@ -1384,12 +1384,12 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         Closure closureState = new Closure();
 
         closureState.descriptionLink =
-                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + taskDefState.documentSelfLink;
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/" + closureDefState.documentSelfLink;
         closureState.documentSelfLink = UUID.randomUUID().toString();
-        URI taskChildURI = UriUtils.buildUri(this.host,
+        URI closureChildURI = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
         final Closure[] closureResponses = new Closure[1];
-        Operation taskPost = Operation
+        Operation closurePost = Operation
                 .createPost(factoryTaskUri)
                 .setBody(closureState)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
@@ -1397,19 +1397,19 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CREATED, closureResponses[0].state);
                 }));
-        this.host.send(taskPost);
+        this.host.send(closurePost);
         this.host.testWait();
 
         // Executing the created Closure
         this.host.testStart(1);
-        Operation taskExecPost = Operation
-                .createPost(taskChildURI)
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
                 .setBody(new Closure())
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     closureResponses[0] = o.getBody(Closure.class);
                     assertNotNull(closureResponses[0]);
                 }));
-        this.host.send(taskExecPost);
+        this.host.send(closureExecPost);
         this.host.testWait();
 
         // Wait for the completion timeout
@@ -1417,27 +1417,27 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
         final Closure[] endStateClosureResponses = new Closure[1];
         this.host.testStart(1);
-        Operation taskGet = Operation
-                .createGet(taskChildURI)
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     endStateClosureResponses[0] = o.getBody(Closure.class);
                     assertEquals(closureState.descriptionLink,
                             endStateClosureResponses[0].descriptionLink);
                     assertEquals(TaskStage.CANCELLED, endStateClosureResponses[0].state);
                 }));
-        this.host.send(taskGet);
+        this.host.send(closureGet);
         this.host.testWait();
 
         // Request bring new execution of the created Closure.
         this.host.testStart(1);
-        taskExecPost = Operation
-                .createPost(taskChildURI)
+        closureExecPost = Operation
+                .createPost(closureChildURI)
                 .setBody(new Closure())
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
                     closureResponses[0] = o.getBody(Closure.class);
                     assertNotNull(closureResponses[0]);
                 }));
-        this.host.send(taskExecPost);
+        this.host.send(closureExecPost);
         this.host.testWait();
 
         // Try to complete outdated Closure
@@ -1462,8 +1462,8 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.send(post);
         this.host.testWait();
 
-        clean(taskDefChildURI);
-        clean(taskChildURI);
+        clean(closureChildURI);
+        clean(closureDefChildURI);
     }
 
     @Test
@@ -1532,7 +1532,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
         URI closureUri = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureLink);
-        Operation taskGet = Operation
+        Operation closureGet = Operation
                 .createGet(closureUri)
                 .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, ex) -> {
                     if (ex != null) {
@@ -1545,7 +1545,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                 }));
 
         this.host.testStart(1);
-        this.host.send(taskGet);
+        this.host.send(closureGet);
         this.host.testWait();
 
         return c.get(2000, TimeUnit.MILLISECONDS).getBody(Closure.class);
