@@ -17,13 +17,26 @@ import com.vmware.photon.controller.model.PhotonModelServices;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSAdapters;
 import com.vmware.photon.controller.model.adapters.azure.AzureAdapters;
 import com.vmware.photon.controller.model.adapters.vsphere.VSphereAdapters;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.tasks.PhotonModelTaskServices;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.serialization.JsonMapper;
 
 public class HostInitPhotonModelServiceConfig {
 
     public static void startServices(ServiceHost host) throws Throwable {
+
+        // Null values in ResourceState.customProperties are ignored when serializing to JSON
+        // although needed for the remove PATCH operation to work. To solve this, we register
+        // a custom gson object for the base ResourceState where null values are serialized.
+        // Note:
+        //   1) This will also serialize all null fields in the ResourceState object.
+        //   2) This will get trigger only if the PATCH body is a ResourceState object and *not*
+        //      its subclass.
+        Utils.registerCustomJsonMapper(ResourceState.class, new JsonMapper(b -> {
+            b.serializeNulls();
+        }));
 
         PhotonModelServices.startServices(host);
         PhotonModelTaskServices.startServices(host);

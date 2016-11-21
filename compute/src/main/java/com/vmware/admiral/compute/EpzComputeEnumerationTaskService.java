@@ -305,7 +305,9 @@ public class EpzComputeEnumerationTaskService extends
 
         List<Operation> patchOps = new ArrayList<>(computes.size());
         for (ComputeState compute : computes) {
-            ComputeState patchBody = new ComputeState();
+            // Note: ResourceState patch body is used because it has custom JSON serialization
+            // support for null values in a map
+            ResourceState patchBody = new ResourceState();
             patchBody.customProperties = new HashMap<>();
             patchBody.customProperties.put(EPZ_CUSTOM_PROP_NAME_PREFIX + extractRpId(state),
                     assign ? EPZ_CUSTOM_PROP_VALUE : null);
