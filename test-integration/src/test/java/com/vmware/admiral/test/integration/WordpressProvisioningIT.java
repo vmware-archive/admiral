@@ -177,6 +177,9 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
 
         String location = op.getResponseHeader(Operation.LOCATION_HEADER);
         assertNotNull("Missing location header", location);
+
+        logger.info("Successfully imported: %s", template);
+
         return URI.create(location).getPath();
     }
 
@@ -208,6 +211,11 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
             // check single network state in use for external network
             String usedNetworkLink = getResourceContaining(cc.componentLinks,
                     EXTERNAL_NETWORK_NAME);
+            if (usedNetworkLink == null) {
+                logger.info("Cannot find netwotjk with name: %s in list components: %s",
+                        EXTERNAL_NETWORK_NAME, cc.componentLinks);
+            }
+
             assertEquals(externalNetwork.documentSelfLink, usedNetworkLink);
         }
 
