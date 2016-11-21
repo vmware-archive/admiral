@@ -20,7 +20,6 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_BUILD_IMAGE_TAG_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_IMAGE_DATA_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_IMAGE_NAME_PROP_NAME;
-import static com.vmware.admiral.compute.ContainerHostService.SSH_HOST_KEY_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_CERT_PROP_NAME;
 
@@ -133,7 +132,7 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
 
         CommandInput loadCommandInput = new CommandInput(commandInput)
                 .withProperty(DOCKER_IMAGE_DATA_PROP_NAME, imageData);
-        getCommandExecutor(computeState).loadImage(loadCommandInput, imageCompletionHandler);
+        getCommandExecutor().loadImage(loadCommandInput, imageCompletionHandler);
     }
 
     private void doInspectImage(AdapterRequest request, ComputeService.ComputeState computeState,
@@ -143,12 +142,11 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
 
         Map<String, String> customProperties = request.customProperties;
 
-        commandInput.getProperties().remove(SSH_HOST_KEY_PROP_NAME);
         commandInput
                 .withProperty(DOCKER_BUILD_IMAGE_INSPECT_NAME_PROP_NAME,
                         customProperties.get(DOCKER_BUILD_IMAGE_INSPECT_NAME_PROP_NAME));
 
-        getCommandExecutor(computeState)
+        getCommandExecutor()
                 .inspectImage(
                         commandInput,
                         (o, ex) -> {
@@ -190,7 +188,7 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
                 .withProperty(DOCKER_BUILD_IMAGE_TAG_PROP_NAME,
                         customProperties.get(DOCKER_BUILD_IMAGE_TAG_PROP_NAME));
 
-        getCommandExecutor(computeState).deleteImage(
+        getCommandExecutor().deleteImage(
                 commandInput,
                 (operation, ex) -> {
                     String imageName = (String) commandInput.getProperties().get(
@@ -230,7 +228,7 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
                     (DOCKER_BUILD_IMAGE_BUILDARGS_PROP_NAME));
         }
 
-        getCommandExecutor(computeState).buildImage(
+        getCommandExecutor().buildImage(
                 commandInput,
                 (operation, ex) -> {
                     String imageName = (String) commandInput.getProperties().get(

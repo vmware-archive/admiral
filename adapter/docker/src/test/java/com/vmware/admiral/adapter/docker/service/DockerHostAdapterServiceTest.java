@@ -436,7 +436,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
 
         DockerHostAdapterService dockerHostAdapterService = new DockerHostAdapterService() {
             @Override
-            protected DockerAdapterCommandExecutor getApiCommandExecutor() {
+            protected DockerAdapterCommandExecutor getCommandExecutor() {
                 return getTestCommandExecutor();
             }
         };

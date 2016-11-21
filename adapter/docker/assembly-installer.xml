@@ -1,0 +1,12 @@
+<assembly>
+    <formats>
+        <format>tar.gz</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <fileSets>
+        <fileSet>
+            <directory>installer</directory>
+            <outputDirectory>installer</outputDirectory>
+        </fileSet>
+    </fileSets>
+</assembly>

@@ -263,7 +263,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 context.request.resolve(context.containerState.parentLink),
                 (computeState, commandInput) -> {
                     context.commandInput = commandInput;
-                    context.executor = getCommandExecutor(computeState);
+                    context.executor = getCommandExecutor();
                     context.computeState = computeState;
                     handleExceptions(context.request, context.operation,
                             () -> processOperation(context));
@@ -463,7 +463,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 String.format("*://%s", image.getHost()), RegistryState.FIELD_NAME_ADDRESS));
 
         List<String> registryLinks = new ArrayList<>();
-        new ServiceDocumentQuery<ContainerState>(getHost(), ContainerState.class).query(
+        new ServiceDocumentQuery<>(getHost(), ContainerState.class).query(
                 registryQuery, (r) -> {
                     if (r.hasException()) {
                         fail(context.request, r.getException());

@@ -55,7 +55,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -108,27 +107,11 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
         doProvisionDockerContainerOnCoreOS(true, DockerAdapterType.API);
     }
 
-    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-653")
-    @Test
-    public void testProvisionDockerContainerOnCoreOSWithImageDownloadSSH()
-            throws Exception {
-
-        doProvisionDockerContainerOnCoreOS(true, DockerAdapterType.SSH);
-    }
-
     @Test
     public void testProvisionDockerContainerOnCoreOSWithRegistryImageAPI()
             throws Exception {
 
         doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
-    }
-
-    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-653")
-    @Test
-    public void testProvisionDockerContainerOnCoreOSWithRegistryImageSSH()
-            throws Exception {
-
-        doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.SSH);
     }
 
     @Test
@@ -155,7 +138,6 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
                 RegistryType.V2_BASIC_AUTH);
     }
 
-    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-654")
     @Test
     public void testProvisionDockerContainerOnCoreOSUsingLocalImageWithPriority()
             throws Exception {
@@ -196,7 +178,7 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
             containerDesc.image = getImageName(registryType);
         }
 
-        containerDesc.customProperties = new HashMap<String, String>();
+        containerDesc.customProperties = new HashMap<>();
         containerDesc.customProperties.put("DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY",
                 useLocalImageWithPriority.toString());
 
@@ -383,10 +365,11 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
                 config.get(DOCKER_CONTAINER_USER_PROP_NAME));
         assertArrayPropEquals(DOCKER_CONTAINER_ENTRYPOINT_PROP_NAME, TEST_ENTRY_POINT, config);
 
-        assertEquals(DOCKER_CONTAINER_HOSTNAME_PROP_NAME, TEST_HOSTNAME,
-                config.get(DOCKER_CONTAINER_HOSTNAME_PROP_NAME));
-        assertEquals(DOCKER_CONTAINER_DOMAINNAME_PROP_NAME, TEST_DOMAINNAME,
-                config.get(DOCKER_CONTAINER_DOMAINNAME_PROP_NAME));
+        // Verify FQDN, see https://github.com/docker/docker/pull/20200
+        assertEquals(DOCKER_CONTAINER_HOSTNAME_PROP_NAME, getFQDN(TEST_HOSTNAME, TEST_DOMAINNAME),
+                getFQDN(config.get(DOCKER_CONTAINER_HOSTNAME_PROP_NAME).toString(),
+                        config.get(DOCKER_CONTAINER_DOMAINNAME_PROP_NAME).toString()));
+
         assertEquals(DOCKER_CONTAINER_WORKING_DIR_PROP_NAME, TEST_WORKING_DIR,
                 config.get(DOCKER_CONTAINER_WORKING_DIR_PROP_NAME));
 
@@ -406,6 +389,14 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
             String[] split = volume.split(":");
             assertTrue("Missing volume: " + volume, actualVolumes.containsKey(split[1]));
         }
+    }
+
+    private String getFQDN(String hostName, String domainName) {
+        if (domainName != null && !domainName.equals("")) {
+            return hostName + "." + domainName;
+        }
+
+        return hostName;
     }
 
     @SuppressWarnings("unchecked")

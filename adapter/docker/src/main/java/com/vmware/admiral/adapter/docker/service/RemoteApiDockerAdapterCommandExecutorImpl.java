@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
-import static com.vmware.admiral.compute.ContainerHostService.SSH_HOST_KEY_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_CERT_PROP_NAME;
 
@@ -125,7 +124,6 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         props.remove(DockerAdapterCommandExecutor.DOCKER_BUILD_IMAGE_DOCKERFILE_DATA);
         props.remove(SSL_TRUST_ALIAS_PROP_NAME);
         props.remove(SSL_TRUST_CERT_PROP_NAME);
-        props.remove(SSH_HOST_KEY_PROP_NAME);
 
         targetUri = extendUriWithQuery(targetUri, input);
 
@@ -454,6 +452,8 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         if (largeDataClient != null) {
             largeDataClient.stop();
         }
+
+        INSTANCE = null;
     }
 
     @Override
@@ -487,7 +487,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         String attachStdOut = (String) input.getProperties().remove(
                 DOCKER_EXEC_ATTACH_STDOUT_PROP_NAME);
 
-        Map<String, Object> create = new HashMap<String, Object>();
+        Map<String, Object> create = new HashMap<>();
         create.put(DOCKER_EXEC_ATTACH_STDIN_PROP_NAME, false);
         create.put(DOCKER_EXEC_ATTACH_STDERR_PROP_NAME,
                 attachStdErr != null ? Boolean.valueOf(attachStdErr) : true);
@@ -509,7 +509,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     }
 
     private void startExec(CommandInput input, String execId, CompletionHandler completionHandler) {
-        Map<String, Object> startBody = new HashMap<String, Object>();
+        Map<String, Object> startBody = new HashMap<>();
         startBody.put(DOCKER_EXEC_TTY_PROP_NAME, false);
         startBody.put(DOCKER_EXEC_DETACH_PROP_NAME, false);
 
@@ -552,7 +552,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
      * Constructs the URI query parameters with the set of input properties from the command.
      */
     private URI extendUriWithQuery(URI targetUri, CommandInput input) {
-        List<String> parameters = new ArrayList<String>();
+        List<String> parameters = new ArrayList<>();
         for (Map.Entry<String, Object> property : input.getProperties().entrySet()) {
             parameters.add(property.getKey());
             parameters.add(String.valueOf(property.getValue()));

@@ -119,6 +119,7 @@ public interface ManagementUriParts {
     String REQUEST_PROVISION_SERVICE_LINKS_TASKS = REQUEST + "/service-link-processing-tasks";
     String REQUEST_PROVISION_EXPOSE_SERVICE_TASKS = REQUEST + "/expose-service-processing-tasks";
     String REQUEST_CALLBACK_HANDLER_TASKS = REQUEST + "/callback-handler/";
+    String CONFIGURE_HOST = REQUEST + "/configure-host/";
 
     String DELETE_SERVICE_DOCUMENTS = "/delete-tasks";
 

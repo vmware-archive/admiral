@@ -211,7 +211,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
         dockerAdapterService = new DockerAdapterService() {
             @Override
-            protected DockerAdapterCommandExecutor getApiCommandExecutor() {
+            protected DockerAdapterCommandExecutor getCommandExecutor() {
                 return getCommandExecutorWithFailingStats();
             }
         };
@@ -384,7 +384,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
         dockerAdapterService = new DockerAdapterService() {
             @Override
-            protected DockerAdapterCommandExecutor getApiCommandExecutor() {
+            protected DockerAdapterCommandExecutor getCommandExecutor() {
                 return getTestCommandExecutor();
             }
         };

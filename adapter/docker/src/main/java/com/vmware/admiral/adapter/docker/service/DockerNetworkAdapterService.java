@@ -114,7 +114,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
                 UriUtils.buildUri(getHost(), context.networkState.originatingHostLink),
                 (computeState, commandInput) -> {
                     context.commandInput = commandInput;
-                    context.executor = getCommandExecutor(computeState);
+                    context.executor = getCommandExecutor();
                     handleExceptions(context.request, context.operation,
                             () -> processOperation(context));
                 });

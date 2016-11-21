@@ -202,12 +202,6 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
                     .getFileContent(getTestRequiredProp("docker.client.cert.file"));
             break;
 
-        case SSH:
-            dockerHostAuthCredentials.userEmail = getTestRequiredProp("docker.host.user");
-            dockerHostAuthCredentials.privateKey = IntegratonTestStateFactory
-                    .getFileContent(getTestRequiredProp("docker.host.privateKey.file"));
-            break;
-
         default:
             throw new IllegalArgumentException("Unexpected adapter type: " + adapterType);
         }
@@ -603,7 +597,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
             throws InterruptedException, ExecutionException,
             TimeoutException {
 
-        CompletableFuture<Operation> c = new CompletableFuture<Operation>();
+        CompletableFuture<Operation> c = new CompletableFuture<>();
         serviceClient.send(op
                 .setReferer(URI.create("/"))
                 .setCompletion((o, ex) -> {

@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.SshUntrustedServerException;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -76,7 +75,6 @@ public class ContainerHostService extends StatelessService {
 
     public static final String SSL_TRUST_CERT_PROP_NAME = "__sslTrustCertificate";
     public static final String SSL_TRUST_ALIAS_PROP_NAME = "__sslTrustAlias";
-    public static final String SSH_HOST_KEY_PROP_NAME = "__sshHostKey";
 
     public static final String DOCKER_HOST_AVAILABLE_STORAGE_PROP_NAME = "__StorageAvailable";
     public static final String DOCKER_HOST_TOTAL_STORAGE_PROP_NAME = "__StorageTotal";
@@ -95,7 +93,6 @@ public class ContainerHostService extends StatelessService {
     public static final String DOCKER_HOST_PLUGINS_NETWORK_PROP_NAME = "Network";
 
     public enum DockerAdapterType {
-        SSH,
         API
     }
 
@@ -150,7 +147,8 @@ public class ContainerHostService extends StatelessService {
 
         if (validateHostConnection) {
             validateConnection(hostSpec, op);
-        } else if (hostSpec.isUpdateOperation != null && hostSpec.isUpdateOperation.booleanValue()) {
+        } else if (hostSpec.isUpdateOperation != null
+                && hostSpec.isUpdateOperation.booleanValue()) {
             updateHost(hostSpec, op);
         } else {
 
@@ -162,7 +160,8 @@ public class ContainerHostService extends StatelessService {
 
             List<String> tenantLinks = hostSpec.hostState.tenantLinks;
             if (tenantLinks != null) {
-                q.querySpec.query.addBooleanClause(QueryUtil.addTenantGroupAndUserClause(tenantLinks));
+                q.querySpec.query
+                        .addBooleanClause(QueryUtil.addTenantGroupAndUserClause(tenantLinks));
             }
 
             AtomicBoolean found = new AtomicBoolean(false);
@@ -319,13 +318,10 @@ public class ContainerHostService extends StatelessService {
 
                         // update the ComputeState with the new identification and try to ping again
                         if (hostSpec.acceptCertificate) {
-                            String hostKey = identification
-                                    .get(SshUntrustedServerException.HOST_KEY_PROP_NAME);
 
                             // the host is not stored yet so just add the custom property the object
                             logInfo("Updating SSH host key: %s", cs.documentSelfLink);
 
-                            cs.customProperties.put(SSH_HOST_KEY_PROP_NAME, hostKey);
                             pingHost(hostSpec, op, sslTrust, callbackFunction);
 
                         } else {
@@ -374,17 +370,7 @@ public class ContainerHostService extends StatelessService {
 
     private void validateSslTrust(ContainerHostSpec hostSpec, Operation op,
             Runnable callbackFunction) {
-
-        if (DockerAdapterType.SSH.name().equals(hostSpec.hostState.customProperties
-                .get(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME))) {
-
-            // skip this step for SSH - the host key will be validated by the adapter service during
-            // the ping operation
-            callbackFunction.run();
-
-        } else {
-            EndpointCertificateUtil.validateSslTrust(this, hostSpec, op, callbackFunction);
-        }
+        EndpointCertificateUtil.validateSslTrust(this, hostSpec, op, callbackFunction);
     }
 
     private void createHost(ContainerHostSpec hostSpec, Operation op) {

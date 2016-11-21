@@ -27,3 +27,4 @@ scripts/admiral-host*.jar
 scripts/xenon*.jar
 **/node_modules
 container-images/admiral-agent/tocopy/agent
+installer.tar.gz

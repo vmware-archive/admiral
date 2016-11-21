@@ -36,12 +36,12 @@ import com.vmware.admiral.common.util.SshUtil.ConsumedResult;
 import com.vmware.admiral.common.util.SshUtil.Result;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
-public class SshUtilTestIT extends BaseTestCase {
+public class SshUtilIT extends BaseTestCase {
 
-    private final String SSH_HOST = getSystemOrTestProp("ssh.host.hostname");
-    private final String SSH_USER = getSystemOrTestProp("ssh.host.username");
-    private final String SSH_PASS = getSystemOrTestProp("ssh.host.password");
-    private final String SSH_PKEY_FILE = getSystemOrTestProp("ssh.host.pkey");
+    public static final String SSH_HOST = getSystemOrTestProp("ssh.host.hostname");
+    public static final String SSH_USER = getSystemOrTestProp("ssh.host.username");
+    public static final String SSH_PASS = getSystemOrTestProp("ssh.host.password");
+    public static final String SSH_PKEY_FILE = getSystemOrTestProp("ssh.host.pkey");
 
     @Test
     public void testPasswordAuth() throws IOException {
@@ -219,7 +219,7 @@ public class SshUtilTestIT extends BaseTestCase {
     @Ignore("Takes too much time to execute with every build and require high MaxSession sshd property")
     public void testMaxConcurentExecutions()
             throws InterruptedException, IOException, TimeoutException {
-        List<AsyncResult> results = new ArrayList<AsyncResult>();
+        List<AsyncResult> results = new ArrayList<>();
         SSHClient client = SshUtil.getDefaultSshClient(SSH_HOST, getPrivateKeyCredentials());
         for (int i = 0; i < 250; i++) {
             results.add(SshUtil.asyncExec(client,
@@ -260,7 +260,7 @@ public class SshUtilTestIT extends BaseTestCase {
         }
     }
 
-    private AuthCredentialsServiceState getPasswordCredentials() {
+    public static AuthCredentialsServiceState getPasswordCredentials() {
         AuthCredentialsServiceState creds = new AuthCredentialsServiceState();
         creds.userEmail = SSH_USER;
         creds.type = "Password";
@@ -269,7 +269,7 @@ public class SshUtilTestIT extends BaseTestCase {
         return creds;
     }
 
-    private AuthCredentialsServiceState getPrivateKeyCredentials() {
+    public static AuthCredentialsServiceState getPrivateKeyCredentials() {
         AuthCredentialsServiceState creds = new AuthCredentialsServiceState();
         creds.userEmail = SSH_USER;
         creds.type = "PublicKey";

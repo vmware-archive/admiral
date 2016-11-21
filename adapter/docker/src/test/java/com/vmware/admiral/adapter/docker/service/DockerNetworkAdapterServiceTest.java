@@ -233,7 +233,7 @@ public class DockerNetworkAdapterServiceTest extends BaseMockDockerTestCase {
 
         dockerNetworkAdapterService = new DockerNetworkAdapterService() {
             @Override
-            protected DockerAdapterCommandExecutor getApiCommandExecutor() {
+            protected DockerAdapterCommandExecutor getCommandExecutor() {
                 return getTestCommandExecutor();
             }
         };

@@ -84,7 +84,7 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
                 context.volumeState.originatingHostReference,
                 (computeState, commandInput) -> {
                     context.commandInput = commandInput;
-                    context.executor = getCommandExecutor(computeState);
+                    context.executor = getCommandExecutor();
                     handleExceptions(context.request, context.operation,
                             () -> processOperation(context));
                 });

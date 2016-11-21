@@ -348,11 +348,6 @@ public class ManagementHost extends ServiceHost {
     }
 
     @Override
-    public void stop() {
-        super.stop();
-    }
-
-    @Override
     public void setAuthorizationContext(AuthorizationContext context) {
         super.setAuthorizationContext(context);
     }

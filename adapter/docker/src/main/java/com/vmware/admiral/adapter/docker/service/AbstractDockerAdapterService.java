@@ -11,12 +11,7 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
-import static com.vmware.admiral.compute.ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME;
-import static com.vmware.admiral.compute.ContainerHostService.SSH_HOST_KEY_PROP_NAME;
-
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
@@ -28,7 +23,6 @@ import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
-import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -45,33 +39,16 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
             TimeUnit.SECONDS.toMicros(10));
     protected static final String NOT_FOUND_EXCEPTION_MESSAGE = "returned error 404";
 
-    private static DockerAdapterCommandExecutor sshCommandExecutor;
-    private static DockerAdapterCommandExecutor apiCommandExecutor;
-
-    protected final Map<DockerAdapterType, DockerAdapterCommandExecutor> executors;
-
     public AbstractDockerAdapterService() {
         super();
-        executors = new HashMap<>(2);
         super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.setMaintenanceIntervalMicros(MAINTENANCE_INTERVAL_MICROS);
     }
 
     @Override
-    public void handleStart(Operation startPost) {
-        executors.put(DockerAdapterType.API, getApiCommandExecutor());
-        executors.put(DockerAdapterType.SSH, getSshCommandExecutor());
-        startPost.complete();
-    }
-
-    @Override
     public void handleStop(Operation delete) {
-        for (DockerAdapterCommandExecutor executor : executors.values()) {
-            if (executor != null) {
-                executor.stop();
-            }
-        }
+        getCommandExecutor().stop();
         delete.complete();
     }
 
@@ -91,40 +68,16 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
 
         logFine("Performing maintenance for: %s", getUri());
 
-        for (DockerAdapterCommandExecutor adapterExecutor : executors.values()) {
-            adapterExecutor.handleMaintenance(Operation.createPost(post.getUri()));
-        }
+        getCommandExecutor().handleMaintenance(Operation.createPost(post.getUri()));
 
         post.complete();
     }
 
-    protected DockerAdapterCommandExecutor getCommandExecutor(ComputeState parentComputeState) {
-        String adapterDockerType = parentComputeState.customProperties
-                .get(HOST_DOCKER_ADAPTER_TYPE_PROP_NAME);
-        DockerAdapterType adapterType = DockerAdapterType.API;
-        if (adapterDockerType != null) {
-            adapterType = DockerAdapterType.valueOf(adapterDockerType);
-        }
-        return executors.get(adapterType);
-    }
-
-    protected DockerAdapterCommandExecutor getApiCommandExecutor() {
+    protected DockerAdapterCommandExecutor getCommandExecutor() {
         synchronized (AbstractDockerAdapterService.class) {
-            if (apiCommandExecutor == null) {
-                ServerX509TrustManager trustManager = ServerX509TrustManager.create(getHost());
-                apiCommandExecutor = RemoteApiDockerAdapterCommandExecutorImpl.create(getHost(),
-                        trustManager);
-            }
-            return apiCommandExecutor;
-        }
-    }
-
-    protected DockerAdapterCommandExecutor getSshCommandExecutor() {
-        synchronized (AbstractDockerAdapterService.class) {
-            if (sshCommandExecutor == null) {
-                sshCommandExecutor = new SshDockerAdapterCommandExecutorImpl(getHost());
-            }
-            return sshCommandExecutor;
+            ServerX509TrustManager trustManager = ServerX509TrustManager.create(getHost());
+            return RemoteApiDockerAdapterCommandExecutorImpl.create(getHost(),
+                    trustManager);
         }
     }
 
@@ -179,10 +132,6 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
 
         CommandInput commandInput = new CommandInput()
                 .withDockerUri(dockerUri);
-
-        String sshHostKey = hostComputeState.customProperties
-                .get(SSH_HOST_KEY_PROP_NAME);
-        commandInput.withProperty(SSH_HOST_KEY_PROP_NAME, sshHostKey);
 
         String credentialsLink = getAuthCredentialLink(hostComputeState);
         if (credentialsLink == null) {

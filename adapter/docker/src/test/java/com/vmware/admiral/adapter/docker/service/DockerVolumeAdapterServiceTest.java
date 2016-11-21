@@ -239,7 +239,7 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
 
         dockerVolumeAdapterService = new DockerVolumeAdapterService() {
             @Override
-            protected DockerAdapterCommandExecutor getApiCommandExecutor() {
+            protected DockerAdapterCommandExecutor getCommandExecutor() {
                 return getTestCommandExecutor();
             }
         };

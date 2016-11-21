@@ -17,11 +17,9 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_ID_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerNetworkAdapterService.DOCKER_PREDEFINED_NETWORKS;
-import static com.vmware.admiral.compute.ContainerHostService.SSH_HOST_KEY_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_CERT_PROP_NAME;
 
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
@@ -32,8 +30,6 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.SshUntrustedServerException;
-import com.vmware.admiral.common.UntrustedServerException;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
@@ -116,13 +112,13 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
 
     private void doVersion(ContainerHostRequest request, ComputeState computeState,
             CommandInput commandInput) {
-        getCommandExecutor(computeState).hostVersion(commandInput,
+        getCommandExecutor().hostVersion(commandInput,
                 getHostPatchCompletionHandler(request));
     }
 
     private void doInfo(ContainerHostRequest request, ComputeState computeState,
             CommandInput commandInput) {
-        getCommandExecutor(computeState).hostInfo(commandInput,
+        getCommandExecutor().hostInfo(commandInput,
                 getHostPatchCompletionHandler(request));
     }
 
@@ -191,7 +187,7 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
 
         updateSslTrust(request, commandInput);
 
-        getCommandExecutor(computeState).hostPing(commandInput, (o, ex) -> {
+        getCommandExecutor().hostPing(commandInput, (o, ex) -> {
             if (ex != null) {
                 fail(request, o, ex);
             } else {
@@ -205,7 +201,7 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
 
         updateSslTrust(request, commandInput);
 
-        getCommandExecutor(computeState).listContainers(
+        getCommandExecutor().listContainers(
                 commandInput,
                 (o, ex) -> {
                     if (ex != null) {
@@ -231,7 +227,7 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             ComputeState computeState, CommandInput commandInput) {
         updateSslTrust(request, commandInput);
 
-        getCommandExecutor(computeState).listContainers(
+        getCommandExecutor().listContainers(
                 commandInput,
                 (o, ex) -> {
                     if (ex != null) {
@@ -282,7 +278,7 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
 
         updateSslTrust(request, commandInput);
 
-        getCommandExecutor(computeState).listNetworks(
+        getCommandExecutor().listNetworks(
                 commandInput,
                 (o, ex) -> {
                     if (ex != null) {
@@ -308,7 +304,7 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             ComputeState computeState, CommandInput commandInput) {
         updateSslTrust(request, commandInput);
 
-        getCommandExecutor(computeState).listNetworks(
+        getCommandExecutor().listNetworks(
                 commandInput,
                 (o, ex) -> {
                     if (ex != null) {
@@ -429,22 +425,12 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             commandInput.withCredentials(authCredentialsState);
         }
 
-        String sshHostKey = hostComputeState.customProperties.get(SSH_HOST_KEY_PROP_NAME);
-        commandInput.withProperty(SSH_HOST_KEY_PROP_NAME, sshHostKey);
-
         updateSslTrust(request, commandInput);
-        getCommandExecutor(hostComputeState)
+        getCommandExecutor()
                 .hostPing(
                         commandInput,
                         (currentOpr, currentEx) -> {
-                            if (currentEx instanceof SshUntrustedServerException) {
-                                UntrustedServerException usex =
-                                        (UntrustedServerException) currentEx;
-                                op.setStatusCode(HttpURLConnection.HTTP_BAD_GATEWAY);
-                                op.setBody(usex.getIdentification());
-                                op.complete();
-
-                            } else if (currentEx != null) {
+                            if (currentEx != null) {
                                 op.fail(currentEx);
                             } else {
                                 op.complete();

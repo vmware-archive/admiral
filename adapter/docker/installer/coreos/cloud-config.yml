@@ -1,0 +1,22 @@
+#cloud-config
+
+coreos:
+  update:
+    reboot-strategy: "off"
+
+  units:
+    - name: docker.service
+      command: start
+      enable: true
+      drop-ins:
+        - name: 10-tls-verify.conf
+          content: |
+            [Service]
+            Environment="DOCKER_OPTS=-H 0.0.0.0:{{PORT}} --tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem"
+
+    - name: "update-engine.service"
+      mask: true
+
+    - name: "locksmithd.service"
+      mask: true
+
