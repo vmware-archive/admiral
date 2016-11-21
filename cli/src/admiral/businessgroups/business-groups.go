@@ -28,20 +28,28 @@ type BusinessGroup struct {
 	Label string `json:"label"`
 }
 
+// GetID returns the ID by getting the last part
+// of the Id if split by slash.
 func (bg *BusinessGroup) GetID() string {
 	return utils.GetResourceID(bg.Id)
 }
 
 type BusinessGroupList []BusinessGroup
 
+// GetCount returns the count of fetched business groups.
 func (bgl *BusinessGroupList) GetCount() int {
 	return len(*bgl)
 }
 
+// GetResource returns resource at the specified index,
+// which resource implements the interface selflink.Identifiable.
 func (bgl *BusinessGroupList) GetResource(index int) selflink.Identifiable {
 	resource := (*bgl)[index]
 	return &resource
 }
+
+// FetchApps makes REST call to populate BusinessGroupList object
+// with Business Groups. The url of this call is /groups/
 func (bgl *BusinessGroupList) FetchBusinessGroups() (int, error) {
 	url := config.URL + "/groups?documentType=true&expand=true"
 	req, _ := http.NewRequest("GET", url, nil)
@@ -54,6 +62,9 @@ func (bgl *BusinessGroupList) FetchBusinessGroups() (int, error) {
 	return len(*bgl), nil
 }
 
+// GetOutputString returns raw string with information
+// about business groups. It is used from "business-groups list" command, and
+// this string requires formatting before printing it to the console.
 func (bgl *BusinessGroupList) GetOutputString() string {
 	if len(*bgl) < 1 {
 		return "No elemnts found."
@@ -61,13 +72,17 @@ func (bgl *BusinessGroupList) GetOutputString() string {
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tLABEL\n")
 	for _, bg := range *bgl {
-		output := utils.GetFormattedString(bg.GetID(), bg.Label)
+		output := utils.GetTabSeparatedString(bg.GetID(), bg.Label)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
 	return strings.TrimSpace(buffer.String())
 }
 
+// GetFullId is custom implementation to get the full id from
+// short id for business groups. Requires custom implementation
+// because business groups object are different from the standard
+// Admiral objects.
 func GetFullId(shortId string) (string, error) {
 	bgl := &BusinessGroupList{}
 	bgl.FetchBusinessGroups()

@@ -103,7 +103,7 @@ func (lc *ListCredentials) GetOutputString() string {
 	buffer.WriteString("\n")
 	for _, link := range lc.DocumentLinks {
 		cred := lc.Documents[link]
-		output := utils.GetFormattedString(cred.GetID(), cred.GetName(), cred.Type)
+		output := utils.GetTabSeparatedString(cred.GetID(), cred.GetName(), cred.Type)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}

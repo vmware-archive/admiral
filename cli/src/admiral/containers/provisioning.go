@@ -214,19 +214,21 @@ func (cd *ContainerDescription) SetVolumes(volumes []string) {
 	cd.Volumes = volumes
 }
 
+// RunContainer is provisioning container from
+// already configured ContainerDescription object.
 func (cd *ContainerDescription) RunContainer(tenantLinkId string, asyncTask bool) (string, error) {
-	linkToRun, err := getContaierRunLink(cd)
+	linkToRun, err := cd.getContainerDescriptionRunLink()
 	if err != nil {
 		return "", err
 	}
-	tenantLinks := setTenantLink(tenantLinkId)
 
 	url := config.URL + "/requests"
 	runContainer := &RunContainer{
 		ResourceType:            "DOCKER_CONTAINER",
 		ResourceDescriptionLink: linkToRun,
-		TenantLinks:             tenantLinks,
 	}
+
+	runContainer.setTenantLink(tenantLinkId)
 
 	jsonBody, err := json.MarshalIndent(runContainer, "", "    ")
 	utils.CheckJsonError(err)
@@ -236,21 +238,16 @@ func (cd *ContainerDescription) RunContainer(tenantLinkId string, asyncTask bool
 	if respErr != nil {
 		return "", respErr
 	}
-	taskStatus := &track.OperationResponse{}
-	_ = json.Unmarshal(respBody, taskStatus)
-	taskStatus.PrintTracerId()
 	if !asyncTask {
-		resLinks, err = track.Wait(taskStatus.GetTracerId())
-	} else {
-		resLinks, err = track.GetResLinks(taskStatus.GetTracerId())
+		resLinks, err = track.StartWaitingFromResponse(respBody)
+		return strings.Join(resLinks, ", "), err
 	}
-	if len(resLinks) > 0 {
-		return utils.GetResourceID(resLinks[0]), err
-	}
-	return "", err
+	return "", nil
 }
 
-func getContaierRunLink(cd *ContainerDescription) (string, error) {
+// getContainerDescriptionRunLink returns string containing
+// Resource Description Link needed to provision container.
+func (cd *ContainerDescription) getContainerDescriptionRunLink() (string, error) {
 	var runLink string
 	url := config.URL + "/resources/container-descriptions"
 	jsonBody, err := json.MarshalIndent(cd, "", "    ")
@@ -267,10 +264,17 @@ func getContaierRunLink(cd *ContainerDescription) (string, error) {
 	return runLink, nil
 }
 
-func setTenantLink(tenantLinkId string) []string {
+type RunContainer struct {
+	ResourceDescriptionLink string   `json:"resourceDescriptionLink"`
+	ResourceType            string   `json:"resourceType"`
+	TenantLinks             []string `json:"tenantLinks"`
+}
+
+func (rc *RunContainer) setTenantLink(tenantLinkId string) {
 	tenantLinks := make([]string, 0)
 	if tenantLinkId == "" {
-		return nil
+		rc.TenantLinks = nil
+		return
 	}
 	if !utils.IsVraMode {
 		fullProjectId, err := selflink.GetFullId(tenantLinkId, new(projects.ProjectList), utils.PROJECT)
@@ -284,5 +288,5 @@ func setTenantLink(tenantLinkId string) []string {
 		tenantLinks = append(tenantLinks, businessGroupLink)
 		tenantLinks = append(tenantLinks, "/tenants/"+utils.GetTenant())
 	}
-	return tenantLinks
+	rc.TenantLinks = tenantLinks
 }

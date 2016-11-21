@@ -202,8 +202,10 @@ var (
 	resLinks []string
 )
 
-//Function to start container by it's name.
-//Returns boolean result if it starting or not.
+// StartContainer starts containers by their IDs.
+// As second parameter takes boolean to specify if waiting
+// for this task is needed.
+// Usage of short unique IDs is supported for this operation.
 func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
 	fullIds, err := selflink.GetFullIds(containers, new(ListContainers), utils.CONTAINER)
@@ -227,9 +229,6 @@ func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 	if respErr != nil {
 		return nil, respErr
 	}
-	if respErr != nil {
-		return nil, respErr
-	}
 	if !asyncTask {
 		resLinks, err = track.StartWaitingFromResponse(respBody)
 		return resLinks, err
@@ -238,8 +237,10 @@ func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 
 }
 
-//Function to stop container by it's name.
-//Returns boolean result if it stopping or not.
+// StopContainer stops containers by their IDs.
+// As second parameter takes boolean to specify if waiting
+// for this task is needed.
+// Usage of short unique IDs is supported for this operation.
 func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
 	fullIds, err := selflink.GetFullIds(containers, new(ListContainers), utils.CONTAINER)
@@ -268,8 +269,10 @@ func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 	return nil, nil
 }
 
-//Function to remove container by it's name.
-//Returns boolean result if it removing or not.
+// RemoveContainer removes containers by their IDs.
+// As second parameter takes boolean to specify if waiting
+// for this task is needed.
+// Usage of short unique IDs is supported for this operation.
 func RemoveContainer(containers []string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
 	fullIds, err := selflink.GetFullIds(containers, new(ListContainers), utils.CONTAINER)
@@ -298,7 +301,7 @@ func RemoveContainer(containers []string, asyncTask bool) ([]string, error) {
 	return nil, nil
 }
 
-//Function to remove many containers matching specified query
+//RemoveMany removes many containers matching specified query
 //Returns boolean result if they are removing or not.
 func RemoveMany(container string, asyncTask bool) ([]string, error) {
 	lc := &ListContainers{}
@@ -333,13 +336,14 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 	return nil, nil
 }
 
-//Function to execute command inside container.
-func ExecuteCmd(container string, execF string) {
+// ExecuteCmd executes command in container.
+// Usage of short unique IDs is supported for this operation.
+func ExecuteCmd(container string, command string) {
 	fullIds, err := selflink.GetFullIds([]string{container}, new(ListContainers), utils.CONTAINER)
 	utils.CheckIdError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 	contLink := links[0]
-	exec := strings.Split(execF, " ")
+	exec := strings.Split(command, " ")
 	url := config.URL + "/exec?containerLink=" + contLink
 	ch := CommandHolder{
 		Command: exec,
@@ -355,7 +359,11 @@ func ExecuteCmd(container string, execF string) {
 	}
 }
 
-//Function to scale container by it's name with some count provided as parameter.
+// ScaleContainer scales container by it's IDs.
+// The second parameter is the new cluster size of the container.
+// As third parameter takes boolean to specify if waiting
+// for this task is needed.
+// Usage of short unique IDs is supported for this operation.
 func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (string, error) {
 	fullIds, err := selflink.GetFullIds([]string{containerID}, new(ListContainers), utils.CONTAINER)
 	utils.CheckIdError(err)
@@ -394,7 +402,7 @@ func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (strin
 	return "", nil
 }
 
-//Function to get information about container in JSON format.
+// InspectContainer returns information about container in JSON format.
 func InspectContainer(id string) ([]byte, error) {
 	fullIds, err := selflink.GetFullIds([]string{id}, new(ListContainers), utils.CONTAINER)
 	utils.CheckIdError(err)
@@ -416,6 +424,8 @@ func InspectContainer(id string) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
+// GetContainer return pointer to object of type Container,
+// which is fetched from Admiral by the provided ID.
 func GetContainer(id string) *Container {
 	fullId, err := selflink.GetFullId(id, new(ListContainers), utils.CONTAINER)
 	utils.CheckIdError(err)
@@ -430,6 +440,8 @@ func GetContainer(id string) *Container {
 	return c
 }
 
+// GetContainerDescription return pointer to object of type ContainerDescription,
+// which is fetched from Admiral by the provided ID.
 func GetContainerDescription(id string) *ContainerDescription {
 	link := utils.CreateResLinkForContainerDescription(id)
 	url := config.URL + link
@@ -440,12 +452,6 @@ func GetContainerDescription(id string) *ContainerDescription {
 	err := json.Unmarshal(respBody, cd)
 	utils.CheckJsonError(err)
 	return cd
-}
-
-type RunContainer struct {
-	ResourceDescriptionLink string   `json:"resourceDescriptionLink"`
-	ResourceType            string   `json:"resourceType"`
-	TenantLinks             []string `json:"tenantLinks"`
 }
 
 type OperationScale struct {

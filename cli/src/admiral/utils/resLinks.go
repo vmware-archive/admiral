@@ -188,6 +188,9 @@ func GetResourceIDs(s []string) []string {
 	return ids
 }
 
+// GetIdFilterUrl returns string which is URL required to check if the initially
+// provided ID for some operation is unique and try to retrieve the full ID,
+// assuming the user has used  short ID.
 func GetIdFilterUrl(shortId string, restype ResourceType) string {
 	var url string
 	switch restype {
@@ -234,6 +237,7 @@ func GetIdFilterUrl(shortId string, restype ResourceType) string {
 	return url
 }
 
+// Help function to build up the string containing the URL.
 func createIdFilter(shortSelfLink string) string {
 	return fmt.Sprintf("'%s*'", shortSelfLink)
 }

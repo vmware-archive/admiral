@@ -140,7 +140,7 @@ func SetProperty(key, val string) bool {
 	return true
 }
 
-//Inspect returns the content of the config file in json format as byte array.
+//Inspect returns the content of the config file in JSON format as byte array.
 func Inspect() []byte {
 	file, err := os.Open(utils.ConfigPath())
 	defer file.Close()

@@ -23,18 +23,24 @@ const WINDOWS_PATH_SEPARATOR = "\\"
 
 const UNIX_PATH_SEPARATOR = "/"
 
+// TokenPath returns the path to the file that contain the auth token.
 func TokenPath() string {
 	return CliDir() + "admiral-cli.token"
 }
 
+// ConfigPath returns the path to the file that contain CLI configurations.
 func ConfigPath() string {
 	return CliDir() + "admiral-cli.config"
 }
 
+// TrustedCertsPath returns the path to the file that contain
+// certificates trusted from the user.
 func TrustedCertsPath() string {
 	return CliDir() + "trusted-certs.pem"
 }
 
+// CliDir returns the path to the CLI directory where config, token and other
+// files are being kept.
 func CliDir() string {
 	home := GetHome()
 	if runtime.GOOS == "windows" {
@@ -44,6 +50,7 @@ func CliDir() string {
 	}
 }
 
+// MkCliDir makes CLI directory.
 func MkCliDir() bool {
 	err := os.MkdirAll(CliDir(), 0777)
 	if err != nil {
@@ -53,6 +60,7 @@ func MkCliDir() bool {
 	return true
 }
 
+// GetHome returns home directory of the current OS.
 func GetHome() string {
 	home, err := homedir.Dir()
 	if err != nil {

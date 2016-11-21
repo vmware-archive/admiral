@@ -66,9 +66,9 @@ func (lc *ListContainers) FetchContainers(queryF string) (int, error) {
 	return count - systemCount, nil
 }
 
-//Print is printing the containers to the console. It takes boolean
-//parameter. If it's true will print all the containers. If it's false
-//will print only the running containers.
+// GetOutputString returns raw string with information
+// about containers. It is used from "ls" command, and
+// this string requires formatting before printing it to the console.
 func (lc *ListContainers) GetOutputString(allContainers bool) string {
 	nameLen := 38
 	var buffer bytes.Buffer
@@ -81,14 +81,14 @@ func (lc *ListContainers) GetOutputString(allContainers bool) string {
 		}
 		if allContainers {
 			name := utils.ShortString(strings.Join(val.Names[0:1], ""), nameLen)
-			output := utils.GetFormattedString(val.GetID(), name, val.Address, val.GetStatus(),
+			output := utils.GetTabSeparatedString(val.GetID(), name, val.Address, val.GetStatus(),
 				val.GetCreated(), val.GetPorts(), val.GetExternalID())
 			buffer.WriteString(output)
 			buffer.WriteString("\n")
 		} else {
 			if val.PowerState == "RUNNING" {
 				name := utils.ShortString(strings.Join(val.Names[0:1], ""), nameLen)
-				output := utils.GetFormattedString(val.GetID(), name, val.Address, val.GetStatus(),
+				output := utils.GetTabSeparatedString(val.GetID(), name, val.Address, val.GetStatus(),
 					val.GetCreated(), val.GetPorts(), val.GetExternalID())
 				buffer.WriteString(output)
 				buffer.WriteString("\n")

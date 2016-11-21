@@ -170,7 +170,7 @@ func (pl *PlacementList) GetOutputString() string {
 				project = ""
 			}
 		}
-		output := utils.GetFormattedString(val.GetID(), val.Name, project, pz, val.Priority,
+		output := utils.GetTabSeparatedString(val.GetID(), val.Name, project, pz, val.Priority,
 			val.AvailableInstancesCount, val.CpuShares, val.GetFormattedMemoryLimit())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")

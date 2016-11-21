@@ -111,7 +111,7 @@ func (cl *CertificateList) GetOutputString() string {
 	buffer.WriteString("\n")
 	for _, link := range cl.DocumentLinks {
 		val := cl.Documents[link]
-		output := utils.GetFormattedString(val.GetID(), val.IssuerName, val.GetValidSince(), val.GetValidTo())
+		output := utils.GetTabSeparatedString(val.GetID(), val.IssuerName, val.GetValidSince(), val.GetValidTo())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}

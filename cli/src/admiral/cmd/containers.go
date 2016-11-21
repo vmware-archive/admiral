@@ -440,10 +440,6 @@ func RunContainerRun(args []string) (string, []error) {
 	cd.SetHostName(hostName)
 	cd.SetDeploymentPolicyId(deplPolicyF)
 	cd.SetMaxRetryCount(retryCount)
-	errorArr = checkForErrors(errorArr)
-	if len(errorArr) > 0 {
-		return "", errorArr
-	}
 
 	if !utils.IsVraMode {
 		newID, err = cd.RunContainer(projectF, asyncTask)
@@ -453,11 +449,8 @@ func RunContainerRun(args []string) (string, []error) {
 		errorArr = append(errorArr, err)
 	}
 
-	if len(errorArr) > 0 {
-		return "", errorArr
-	}
 	if !asyncTask {
-		return "Container(s) provisioned: " + newID, nil
+		return "Container(s) provisioned: " + newID, errorArr
 	}
-	return "Container(s) are being provisioned.", nil
+	return "Container(s) are being provisioned.", errorArr
 }

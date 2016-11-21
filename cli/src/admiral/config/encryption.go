@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 )
 
+// Encrypt is encrypting string the same way how passwords are being
+// encrypted in Admiral.
 func Encrypt(plainText string, keyString string) (string, error) {
 	key, err := loadEncryptionKey(keyString)
 	if err != nil {
@@ -22,6 +24,8 @@ func Encrypt(plainText string, keyString string) (string, error) {
 	return base64.StdEncoding.EncodeToString(encrypted), nil
 }
 
+// encryptAES is function invoked from Encrypt doing the
+// encryption part of the string.
 func encryptAES(key, data []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key[aes.BlockSize:])
 	if err != nil {
@@ -36,6 +40,8 @@ func encryptAES(key, data []byte) ([]byte, error) {
 	return output, nil
 }
 
+// Encrypt is decrypting string the same way how passwords are being
+// decrypted in Admiral.
 func Decrypt(cryptoText string, keyString string) (string, error) {
 	key, err := loadEncryptionKey(keyString)
 	if err != nil {
@@ -56,6 +62,8 @@ func Decrypt(cryptoText string, keyString string) (string, error) {
 	return string(decrypted), nil
 }
 
+// decryptAES is function invoked from Decrypt doing the
+// decryption part of the string.
 func decryptAES(key, data []byte) ([]byte, error) {
 	iv := key[:aes.BlockSize]
 
@@ -72,6 +80,7 @@ func decryptAES(key, data []byte) ([]byte, error) {
 	return data, nil
 }
 
+// loadEncryptionKey is loading the needed encryption key from file.
 func loadEncryptionKey(filePath string) ([]byte, error) {
 	fileBytes, err := ioutil.ReadFile(filePath)
 	if err != nil {

@@ -76,7 +76,7 @@ func (gl *ProjectList) GetOutputString() string {
 	buffer.WriteString("ID\tNAME\n")
 	for i := range gl.DocumentLinks {
 		val := gl.Documents[gl.DocumentLinks[i]]
-		output := utils.GetFormattedString(val.GetID(), val.Name)
+		output := utils.GetTabSeparatedString(val.GetID(), val.Name)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}

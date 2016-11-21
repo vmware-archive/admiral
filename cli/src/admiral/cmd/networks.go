@@ -159,7 +159,6 @@ func RunNetworkRemove(args []string) (string, error) {
 	}
 	if !asyncTask {
 		return "Network(s) removed: " + strings.Join(ids, ", "), nil
-
 	}
 	return "Network(s) are being removed.", nil
 

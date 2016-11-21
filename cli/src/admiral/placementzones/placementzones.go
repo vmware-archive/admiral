@@ -126,7 +126,7 @@ func (rpl *PlacementZoneList) GetOutputString() string {
 	buffer.WriteString("ID\tNAME\tMEMORY\tCPU\n")
 	for _, link := range rpl.DocumentLinks {
 		val := rpl.Documents[link]
-		output := utils.GetFormattedString(val.ResourcePoolState.GetID(), val.ResourcePoolState.Name,
+		output := utils.GetTabSeparatedString(val.ResourcePoolState.GetID(), val.ResourcePoolState.Name,
 			val.ResourcePoolState.GetUsedMemoryPercentage(), val.ResourcePoolState.GetUsedCpuPercentage())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")

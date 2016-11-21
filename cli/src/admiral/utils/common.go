@@ -23,12 +23,6 @@ var (
 	IsVraMode = isVraMode()
 )
 
-//PrintID prints the provided ID as parameter in the format
-// "New entity ID: %s\n".
-func PrintID(id string) {
-	fmt.Printf("New entity ID: %s\n", id)
-}
-
 //PromptAgreement is asking the user to enter either "y"/"yes" or "n"/"no".
 //Returns the user's answer.
 func PromptAgreement() string {
@@ -52,7 +46,11 @@ func ShortString(s string, outputLen int) string {
 	return s[:outputLen-3] + "..."
 }
 
-func GetFormattedString(v ...interface{}) string {
+// GetTabSeparatedString returns string containing
+// the values of all objects passed as parameters
+// separated with tabs. This is required for further
+// formatting and dynamic aligning.
+func GetTabSeparatedString(v ...interface{}) string {
 	var buffer bytes.Buffer
 	for i := range v {
 		buffer.WriteString(fmt.Sprintf("%v", v[i]))
@@ -61,6 +59,8 @@ func GetFormattedString(v ...interface{}) string {
 	return buffer.String()
 }
 
+// Simple implementation for rounding float64 numbers.
+// Created because standard math package is missing it.
 func MathRound(a float64) float64 {
 	if a < 0 {
 		return math.Ceil(a - 0.5)
@@ -68,6 +68,9 @@ func MathRound(a float64) float64 {
 	return math.Floor(a + 0.5)
 }
 
+// GetTenant returns the current tenant as string
+// loaded from file where it is stored together with the
+// auth token.
 func GetTenant() string {
 	if !IsVraMode {
 		return ""
@@ -79,6 +82,8 @@ func GetTenant() string {
 	return strings.Split(token, "&")[0]
 }
 
+// isVraMode is invoked from the exported boolean variable IsVraMode
+// It specify if the current user is logged against Admiral in vRA mode.
 func isVraMode() bool {
 	token, _ := GetAuthToken()
 	if strings.Contains(token, "Bearer") {
@@ -87,6 +92,9 @@ func isVraMode() bool {
 	return false
 }
 
+// GetMapKeys returns array of values which are the keys
+// of map passed as parameter. Nil is returned if the parameter
+// is not of type map.
 func GetMapKeys(m interface{}) []reflect.Value {
 	v := reflect.ValueOf(m)
 	if v.Kind() != reflect.Map {
@@ -95,6 +103,8 @@ func GetMapKeys(m interface{}) []reflect.Value {
 	return v.MapKeys()
 }
 
+// ValuesToString return string array which holds the string
+// representation of every reflect.Value which are passed as parameter.
 func ValuesToStrings(v []reflect.Value) []string {
 	result := make([]string, 0)
 	for _, val := range v {

@@ -34,9 +34,10 @@ var (
 	ApplicationNotFoundError = errors.New("Application not found.")
 )
 
-//Function to start application.
-//For parameter takes application name and bool to trigger or not waiting for task.
-//Returns bool to specify if app is starting.
+// StartApp starts application by specified name. It will return error
+// in case the name is non-unique. Currently not being used because
+// starting application by name is disabled. As second parameter takes
+// boolean to specify if waiting for this task is needed.
 func StartApp(name string, asyncTask bool) ([]string, error) {
 	resourceLinks := GetAppLinks(name)
 	if len(resourceLinks) > 1 {
@@ -49,7 +50,9 @@ func StartApp(name string, asyncTask bool) ([]string, error) {
 	return StartAppID(id, asyncTask)
 }
 
-//Same as StartApp() but takes app's ID in order to avoid conflict from duplicate names.
+// StartAppID starts application by it's ID. As second parameter takes
+// boolean to specify if waiting for this task is needed.
+// Usage of short unique IDs is supported for this operation.
 func StartAppID(id string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
 	var (
@@ -80,9 +83,10 @@ func StartAppID(id string, asyncTask bool) ([]string, error) {
 	return nil, nil
 }
 
-//Function to stop application.
-//For parameter takes application name and bool to trigger or not waiting for task.
-//Returns bool to specify if app is stopping.
+// StopApp stops application by specified name. It will return error
+// in case the name is non-unique. Currently not being used because
+// stopping application by name is disabled. As second parameter takes
+// boolean to specify if waiting for this task is needed.
 func StopApp(name string, asyncTask bool) ([]string, error) {
 	resourceLinks := GetAppLinks(name)
 	if len(resourceLinks) > 1 {
@@ -94,7 +98,9 @@ func StopApp(name string, asyncTask bool) ([]string, error) {
 	return StopAppID(id, asyncTask)
 }
 
-//Same as StopApp() but takes app's ID in order to avoid conflict from duplicate names.
+// StopAppID stops application by it's ID. As second parameter takes
+// boolean to specify if waiting for this task is needed.
+// Usage of short unique IDs is supported for this operation.
 func StopAppID(id string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
 	var (
@@ -124,9 +130,10 @@ func StopAppID(id string, asyncTask bool) ([]string, error) {
 	return nil, nil
 }
 
-//Function to remove application.
-//For parameter takes application name and bool to trigger or not waiting for task.
-//Returns bool to specify if app is removing.
+// RemoveApp removes application by specified name. It will return error
+// in case the name is non-unique. Currently not being used because
+// removing application by name is disabled. As second parameter takes
+// boolean to specify if waiting for this task is needed.
 func RemoveApp(name string, asyncTask bool) ([]string, error) {
 	resourceLinks := GetAppLinks(name)
 	if len(resourceLinks) > 1 {
@@ -138,7 +145,9 @@ func RemoveApp(name string, asyncTask bool) ([]string, error) {
 	return RemoveAppID(id, asyncTask)
 }
 
-//Same as RemoveApp() but takes app's ID in order to avoid conflict from duplicate names.
+// RemoveAppID removes application by it's ID. As second parameter takes
+// boolean to specify if waiting for this task is needed.
+// Usage of short unique IDs is supported for this operation.
 func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
 	var (
@@ -172,9 +181,10 @@ type CompositeDescription struct {
 	DocumentSelfLink string `json:"documentSelfLink"`
 }
 
-//Function to provision application.
-//For parameter takes application name and bool to trigger or not waiting for task.
-//Returns bool to specify if app is provisioning.
+// RunApp provision template by specified name. It will return error
+// in case the name is non-unique. Currently not being used because
+// provisioning template by name is disabled. As second parameter takes
+// boolean to specify if waiting for this task is needed.
 func RunApp(app, tenantId string, asyncTask bool) ([]string, error) {
 	links := queryTemplateName(app)
 	if len(links) > 1 {
@@ -187,7 +197,9 @@ func RunApp(app, tenantId string, asyncTask bool) ([]string, error) {
 	return RunAppID(id, tenantId, asyncTask)
 }
 
-//Same as RunApp() but takes app's ID in order to avoid conflict from duplicate names.
+// RunAppID provision template by it's ID. As second parameter takes
+// boolean to specify if waiting for this task is needed.
+// Usage of short unique IDs is supported for this operation.
 func RunAppID(id, tenantId string, asyncTask bool) ([]string, error) {
 	jsonBody := make(map[string]string, 0)
 	fullId, err := selflink.GetFullId(id, new(templates.CompositeDescriptionList), utils.TEMPLATE)
@@ -208,18 +220,20 @@ func RunAppID(id, tenantId string, asyncTask bool) ([]string, error) {
 	utils.CheckJsonError(err)
 
 	link = cd.DocumentSelfLink
-	tenantLinks := setTenantLink(tenantId)
 
-	ra := RunApplication{
+	ra := appProvisionOperation{
 		ResourceDescriptionLink: link,
 		ResourceType:            "COMPOSITE_COMPONENT",
-		TenantLinks:             tenantLinks,
 	}
+	ra.setTenantLink(tenantId)
 	resLinks, err := ra.run(asyncTask)
 	ids := utils.GetResourceIDs(resLinks)
 	return ids, err
 }
 
+// RunAppFile is provisioning template from file.
+// if keepTemplate parameter is true it will remove the
+// imported template after provisioning is done, otherwise it will keep it.
 func RunAppFile(dirF, tenantId string, keepTemplate, asyncTask bool) ([]string, error) {
 	id, _ := templates.Import(dirF)
 	resLinks, err := RunAppID(id, tenantId, false)
@@ -230,7 +244,7 @@ func RunAppFile(dirF, tenantId string, keepTemplate, asyncTask bool) ([]string, 
 	return ids, err
 }
 
-//Function to get links of templates with name equal to passed in paramater.
+//queryTemplateName gets links of templates with name equal to passed in parameter.
 func queryTemplateName(tmplName string) []string {
 	tmplNameArr := strings.Split(tmplName, "/")
 	name := tmplNameArr[len(tmplNameArr)-1]
@@ -241,20 +255,23 @@ func queryTemplateName(tmplName string) []string {
 
 }
 
-type RunApplication struct {
+// appProvision structure is used to create object,
+// which is needed to provision application from the description link.
+type appProvisionOperation struct {
 	ResourceDescriptionLink string   `json:"resourceDescriptionLink"`
 	ResourceType            string   `json:"resourceType"`
 	TenantLinks             []string `json:"tenantLinks"`
 }
 
-//Function that send request to the Admiral API to provision application.
-func (ra *RunApplication) run(asyncTask bool) ([]string, error) {
+// run will provision application from the already set up
+// appProvisionOperation object.
+func (this *appProvisionOperation) run(asyncTask bool) ([]string, error) {
 	var (
 		links []string
 		err   error
 	)
 	url := config.URL + "/requests"
-	jsonBody, err := json.Marshal(ra)
+	jsonBody, err := json.Marshal(this)
 	utils.CheckJsonError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -268,10 +285,14 @@ func (ra *RunApplication) run(asyncTask bool) ([]string, error) {
 	return nil, nil
 }
 
-func setTenantLink(tenantLinkId string) []string {
+// setTenantLink will set up properly either
+// the business group or project depending on the condition
+// if the user is logged against admiral standalone or vRA mode.
+func (this *appProvisionOperation) setTenantLink(tenantLinkId string) {
 	tenantLinks := make([]string, 0)
 	if tenantLinkId == "" {
-		return nil
+		this.TenantLinks = nil
+		return
 	}
 	if !utils.IsVraMode {
 		fullProjectId, err := selflink.GetFullId(tenantLinkId, new(projects.ProjectList), utils.PROJECT)
@@ -285,7 +306,7 @@ func setTenantLink(tenantLinkId string) []string {
 		tenantLinks = append(tenantLinks, businessGroupLink)
 		tenantLinks = append(tenantLinks, "/tenants/"+utils.GetTenant())
 	}
-	return tenantLinks
+	this.TenantLinks = tenantLinks
 }
 
 func GetAppLinks(name string) []string {
@@ -301,12 +322,16 @@ func GetAppLinks(name string) []string {
 	return links
 }
 
+// AppComponent structure is used just to hold data needed to print when
+// inspecting application.
 type AppComponent struct {
 	ComponentType     string   `json:"ComponentType"`
 	Id                string   `json:"ID"`
 	NetworksConnected []string `json:"NetworksConnected,omitempty"`
 }
 
+// InspectApp structure is used just to hold data needed to print when
+// inspecting application.
 type InspectApp struct {
 	Id         string          `json:"ID"`
 	Name       string          `json:"Name"`
@@ -315,6 +340,9 @@ type InspectApp struct {
 	Components []*AppComponent `json:"Components"`
 }
 
+// InspectID returns string containing information about the application.
+// that is being inspected. The string is JSON formatted.
+// Usage of short unique IDs is supported for this operation.
 func InspectID(id string) (string, error) {
 	fullIds, err := selflink.GetFullIds([]string{id}, new(ListApps), utils.APPLICATION)
 	utils.CheckIdError(err)

@@ -80,7 +80,7 @@ func (li *ImagesList) GetOuputString() string {
 			if image.IsTrusted {
 				trusted = "[OK]"
 			}
-			output := utils.GetFormattedString(image.GetShortName(), desc, image.StarsCount, official, automated, trusted)
+			output := utils.GetTabSeparatedString(image.GetShortName(), desc, image.StarsCount, official, automated, trusted)
 			buffer.WriteString(output)
 			buffer.WriteString("\n")
 		}
@@ -146,7 +146,7 @@ func GetPopular() (string, error) {
 	for _, img := range pi {
 		cuttedName := cutImgName(img.Name)
 		desc := utils.ShortString(img.Description, 40)
-		output := utils.GetFormattedString(cuttedName, desc, "---", "---", "---", "---")
+		output := utils.GetTabSeparatedString(cuttedName, desc, "---", "---", "---", "---")
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}

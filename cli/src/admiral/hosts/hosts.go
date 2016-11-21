@@ -159,7 +159,7 @@ func (hl *HostsList) GetOutputString() string {
 	buffer.WriteString("\n")
 	for _, val := range hl.Documents {
 		pzName, _ := placementzones.GetPZName(val.ResourcePoolLink)
-		output := utils.GetFormattedString(val.Id, val.Address, val.GetName(), val.PowerState,
+		output := utils.GetTabSeparatedString(val.Id, val.Address, val.GetName(), val.PowerState,
 			val.GetContainersCount(), pzName)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")

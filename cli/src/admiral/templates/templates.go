@@ -164,7 +164,7 @@ func (lt *TemplatesList) GetOutputStringWithoutContainers() string {
 		if template.ParentDescriptionLink != "" {
 			continue
 		}
-		output := utils.GetFormattedString(template.GetID(), template.Name,
+		output := utils.GetTabSeparatedString(template.GetID(), template.Name,
 			template.GetContainersCount(), template.GetNetworksCount())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
@@ -185,7 +185,7 @@ func (lt *TemplatesList) GetOutputStringWithContainers() (string, error) {
 		if template.ParentDescriptionLink != "" {
 			continue
 		}
-		output := utils.GetFormattedString(template.GetID(), template.Name,
+		output := utils.GetTabSeparatedString(template.GetID(), template.Name,
 			template.GetContainersCount(), template.GetNetworksCount())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")

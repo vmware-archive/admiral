@@ -194,7 +194,7 @@ func (nl *NetworkList) GetOutputString() string {
 	buffer.WriteString("ID\tNAME\tNETWORK DRIVER\tCONTAINERS\tHOSTS\tPOWER STATE\tEXTERNAL ID\n")
 	for _, link := range nl.DocumentLinks {
 		val := nl.Documents[link]
-		output := utils.GetFormattedString(val.GetID(), val.Name, val.Driver,
+		output := utils.GetTabSeparatedString(val.GetID(), val.Name, val.Driver,
 			val.ConnectedContainersCount, val.GetHostsCount(), val.PowerState, val.GetExternalID())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")

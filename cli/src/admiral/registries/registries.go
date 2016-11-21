@@ -90,7 +90,7 @@ func (rl *RegistryList) GetOutputString() string {
 	buffer.WriteString("ID\tNAME\tADDRESS\tSTATUS\n")
 	for _, link := range rl.DocumentLinks {
 		val := rl.Documents[link]
-		output := utils.GetFormattedString(val.GetID(), val.Name, val.Address, val.Status())
+		output := utils.GetTabSeparatedString(val.GetID(), val.Name, val.Address, val.Status())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}

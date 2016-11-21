@@ -32,6 +32,8 @@ type App struct {
 	ComponentLinks           []string `json:"componentLinks"`
 }
 
+// IsContainer returns boolean which specify if the
+// component at the given index is container.
 func (a *App) IsContainer(index int) bool {
 	link := a.ComponentLinks[index]
 	if strings.Contains(link, "/containers/") {
@@ -40,10 +42,14 @@ func (a *App) IsContainer(index int) bool {
 	return false
 }
 
+// GetID returns the ID by getting the last part
+// of the document selflink if split by slash.
 func (a *App) GetID() string {
 	return utils.GetResourceID(a.DocumentSelfLink)
 }
 
+// GetContainersCount returns the count of
+// the components that are containers.
 func (a *App) GetContainersCount() int {
 	count := 0
 	for _, link := range a.ComponentLinks {
@@ -54,6 +60,8 @@ func (a *App) GetContainersCount() int {
 	return count
 }
 
+// GetNetworksCount return the count of
+// the components tat are networks.
 func (a *App) GetNetworksCount() int {
 	count := 0
 	for _, link := range a.ComponentLinks {
@@ -70,15 +78,21 @@ type ListApps struct {
 	Documents     map[string]App `json:"documents"`
 }
 
+// GetCount returns the count of fetched applications.
+// It is used to implement the interface selflink.ResourceList
 func (la *ListApps) GetCount() int {
 	return len(la.DocumentLinks)
 }
 
+// GetResource returns resource at the specified index,
+// which resource implements the interface selflink.Identifiable.
 func (la *ListApps) GetResource(index int) selflink.Identifiable {
 	resource := la.Documents[la.DocumentLinks[index]]
 	return &resource
 }
 
+// FetchApps makes REST call to populate ListApps object
+// with Apps. The url of this call is /resources/composite-components/
 func (la *ListApps) FetchApps(queryF string) (int, error) {
 	url := config.URL + "/resources/composite-components?documentType=true&$count=true&$limit=21&$orderby=documentSelfLink+asc"
 	var query string
@@ -96,18 +110,9 @@ func (la *ListApps) FetchApps(queryF string) (int, error) {
 	return len(la.DocumentLinks), nil
 }
 
-//Function to get links of applications, matching the name from argument.
-func (la *ListApps) GetMatchingNames(name string) []string {
-	links := make([]string, 0)
-	for link, app := range la.Documents {
-		if app.Name == name {
-			links = append(links, link)
-		}
-	}
-	return links
-}
-
-//Function to print active applications without the containers in the apps.
+// GetOutputStringWithoutContainers returns raw string with information
+// about applications only. It is used from "app ls" command, and
+// this string requires formatting before printing it to the console.
 func (listApps *ListApps) GetOutputStringWithoutContainers() string {
 	if listApps.TotalCount < 1 {
 		return utils.NoElementsFoundMessage
@@ -117,14 +122,16 @@ func (listApps *ListApps) GetOutputStringWithoutContainers() string {
 	buffer.WriteString("\n")
 	for _, link := range listApps.DocumentLinks {
 		app := listApps.Documents[link]
-		output := utils.GetFormattedString(app.GetID(), app.Name, app.GetContainersCount(), app.GetNetworksCount())
+		output := utils.GetTabSeparatedString(app.GetID(), app.Name, app.GetContainersCount(), app.GetNetworksCount())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
 	return strings.TrimSpace(buffer.String())
 }
 
-//Function to print the active applications with the containers in the apps.
+// GetOutputStringWithContainers is similar to GetOutputStringWithoutContainers,
+// but it also contains the components inside the application.
+// Currently is not being used because "app list" with containers is disabled.
 func (listApps *ListApps) GetOutputStringWithContainers() string {
 	if listApps.TotalCount < 1 {
 		return "No elements found."
@@ -135,7 +142,7 @@ func (listApps *ListApps) GetOutputStringWithContainers() string {
 	buffer.WriteString("ID\tNAME")
 	buffer.WriteString("\n")
 	for _, app := range listApps.Documents {
-		output := utils.GetFormattedString(app.GetID(), app.Name)
+		output := utils.GetTabSeparatedString(app.GetID(), app.Name)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 		if len(app.ComponentLinks) < 1 {
@@ -151,7 +158,7 @@ func (listApps *ListApps) GetOutputStringWithContainers() string {
 			_, respBody, _ := client.ProcessRequest(req)
 			err := json.Unmarshal(respBody, container)
 			utils.CheckJsonError(err)
-			output = utils.GetFormattedString(indent+strings.Join(container.Names, " "), container.Address,
+			output = utils.GetTabSeparatedString(indent+strings.Join(container.Names, " "), container.Address,
 				container.PowerState, container.GetCreated(), container.GetStarted(), container.Ports)
 			buffer.WriteString(output)
 			buffer.WriteString("\n")

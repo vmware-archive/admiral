@@ -12,8 +12,6 @@
 package utils
 
 import (
-	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -25,7 +23,9 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-//Function to get current auth token from the temp file.
+// GetAuthToken returns two strings, the first one is the token,
+// the second one specify the source of the token -> flag/env variable/file.
+// Order of getting the token is Flag > Env Variable > File.
 func GetAuthToken() (string, string) {
 	var token string
 	token = TokenFromFlag()
@@ -40,34 +40,24 @@ func GetAuthToken() (string, string) {
 	return removeTenantFromToken(token), "file"
 }
 
-//Function that verify after every single request if the user is still authorized.
-//Returns true if it's authorized and false if it's not authorized.
-func IsAuthorized(respBody []byte, tokenFrom string) bool {
-	authCheck := &Error{}
-	err := json.Unmarshal(respBody, authCheck)
-	if authCheck.Message == "forbidden" && err == nil {
-		fmt.Println("Authorization error.")
-		fmt.Println("Check if you are logged in.")
-		fmt.Println("Token used from " + tokenFrom)
-		return false
-	}
-	return true
-}
-
+// TokenFromFile returns token which is loaded from file.
 func TokenFromFile() string {
 	token, _ := ioutil.ReadFile(TokenPath())
 	return string(token)
 }
 
+// TokenFromEnvVar returns token which is from environment variable.
 func TokenFromEnvVar() string {
 	token := os.Getenv("ADMIRAL_TOKEN")
 	return token
 }
 
+// TokenFromFlag returns token which is passed as command flag.
 func TokenFromFlag() string {
 	return TokenFromFlagVar
 }
 
+// removeTenantFromToken removes tenant if there is one concatanated with the token.
 func removeTenantFromToken(token string) string {
 	if !strings.Contains(token, "&") {
 		return token

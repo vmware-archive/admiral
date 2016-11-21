@@ -78,7 +78,7 @@ func (dpl *DeploymentPolicyList) GetOutputString() string {
 	buffer.WriteString("\n")
 	for _, link := range dpl.DocumentLinks {
 		val := dpl.Documents[link]
-		output := utils.GetFormattedString(val.GetID(), val.Name, val.Description)
+		output := utils.GetTabSeparatedString(val.GetID(), val.Name, val.Description)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
