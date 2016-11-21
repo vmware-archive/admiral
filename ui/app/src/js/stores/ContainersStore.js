@@ -895,6 +895,14 @@ let ContainersStore = Reflux.createStore({
     });
   },
 
+  onBatchOpNetworks: function(networkLinks, operation) {
+    services.batchOpNetworks(networkLinks, operation).then((batchOpRequest) => {
+      this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
+
+      actions.RequestsActions.requestCreated(batchOpRequest);
+    });
+  },
+
   backFromContainerAction: function(operationType, resourceIds) {
     var cursor = getSelectedContainerDetailsCursor.call(this);
 
