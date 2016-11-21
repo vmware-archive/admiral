@@ -13,8 +13,10 @@ import InlineDeleteConfirmationTemplate from
   'components/common/InlineDeleteConfirmationTemplate.html';
 import utils from 'core/utils';
 import links from 'core/links';
+import constants from 'core/constants';
+import { NavigationActions} from 'actions/Actions';
 
-const TEMPLATE = `<div class="network">
+const TEMPLATE = `<div class="network" v-on:click="showNetwork($event)">
                     <div class="network-details">
                       <img class="network-icon"
                         src="image-assets/resource-icons/network-small.png"/>
@@ -66,6 +68,10 @@ var NetworkBox = Vue.extend({
     this.$dispatch('detached', this);
   },
   computed: {
+    networkId: function() {
+      return this.model && this.model.documentSelfLink
+                && utils.getDocumentId(this.model.documentSelfLink);
+    },
     isSystemNetwork: function() {
       return this.model && this.model.documentSelfLink.indexOf(links.SYSTEM_NETWORK_LINK) === 0;
     }
@@ -108,6 +114,17 @@ var NetworkBox = Vue.extend({
       removeConfirmationHolder($deleteConfirmationHolder);
 
       this.$dispatch('remove', this);
+    },
+    showNetwork(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      let queryOptions = {
+        $category: constants.RESOURCES.SEARCH_CATEGORY.NETWORKS,
+        any: this.networkId
+      };
+
+      NavigationActions.openNetworks(queryOptions);
     }
   }
 });

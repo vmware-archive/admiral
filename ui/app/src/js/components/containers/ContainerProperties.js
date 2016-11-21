@@ -11,6 +11,7 @@
 
 import ContainerPropertiesVue from 'components/containers/ContainerPropertiesVue.html';
 import { NavigationActions } from 'actions/Actions';
+import constants from 'core/constants';
 import utils from 'core/utils';
 
 var ContainerProperties = Vue.extend({
@@ -21,6 +22,13 @@ var ContainerProperties = Vue.extend({
   computed: {
     portLinks: function() {
       return utils.getPortLinks(this.model.hostAddress, this.model.ports);
+    },
+    applicationId: function() {
+      return this.model.compositeComponentLink
+        ? utils.getDocumentId(this.model.compositeComponentLink) : null;
+    },
+    networkIds: function() {
+      return this.model.networks && Object.keys(this.model.networks);
     }
   },
   methods: {
@@ -33,6 +41,30 @@ var ContainerProperties = Vue.extend({
       };
 
       NavigationActions.openHosts(queryOptions);
+    },
+
+    showApp: function($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+
+      let queryOptions = {
+        $category: constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS,
+        documentId: this.applicationId
+      };
+
+      NavigationActions.openContainers(queryOptions, true);
+    },
+
+    showNetworks: function($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+
+      let queryOptions = {
+        $category: constants.RESOURCES.SEARCH_CATEGORY.NETWORKS,
+        any: this.networkIds
+      };
+
+      NavigationActions.openNetworks(queryOptions);
     }
   }
 });

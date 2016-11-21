@@ -660,6 +660,11 @@
   }
   .composite-container-item .container-content {
     height: $heightOfListViewItem;
+
+    .relations-holder {
+      position: absolute;
+      bottom: 5px;
+    }
   }
 }
 
@@ -703,6 +708,10 @@
       .composite-container-item {
         .container-content {
           margin-right: 0;
+
+          .relations-holder {
+            display: none;
+          }
         }
         .child-containers {
           .child-container {
@@ -895,6 +904,10 @@
 
       .grid-item {
         background-color: #FFFFFF;
+
+        .container-item .relations-holder {
+          display: none;
+        }
       }
     }
   }

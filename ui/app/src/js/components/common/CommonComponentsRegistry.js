@@ -25,6 +25,7 @@ import VueTimeoutAlert from 'components/common/VueTimeoutAlert';
 import VueActionConfirmation from 'components/common/VueActionConfirmation';
 import VueMulticolumnInputs from 'components/common/VueMulticolumnInputs';
 import VueActionButton from 'components/common/VueActionButton';
+import VueNavigationLink from 'components/common/VueNavigationLink';
 import VueTableHeaderSort from 'components/common/VueTableHeaderSort';
 import VueGrid from 'components/common/VueGrid';
 import VueAlert from 'components/common/VueAlert';

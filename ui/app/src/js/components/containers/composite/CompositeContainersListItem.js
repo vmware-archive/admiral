@@ -15,6 +15,7 @@ import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmation
 import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
 import utils from 'core/utils';
 import links from 'core/links';
+import constants from 'core/constants';
 import { ContainerActions, NavigationActions } from 'actions/Actions'; //eslint-disable-line
 
 var CompositeContainersListItem = Vue.extend({
@@ -27,11 +28,19 @@ var CompositeContainersListItem = Vue.extend({
     showNumbers: function() {
       return (typeof this.model.componentLinks !== 'undefined');
     },
+    hostsCount: function() {
+      return this.model.hostLinks && this.model.hostLinks.length;
+    },
     containersCount: function() {
       return this.model.componentLinks.filter(cl => cl.indexOf(links.CONTAINERS) === 0).length;
     },
+    networkIds: function() {
+      let networkLinks = this.model.componentLinks.filter(cl => cl.indexOf(links.NETWORKS) === 0);
+
+      return networkLinks && networkLinks.map(link => utils.getDocumentId(link));
+    },
     networksCount: function() {
-      return this.model.componentLinks.filter(cl => cl.indexOf(links.NETWORKS) === 0).length;
+      return this.networkIds && this.networkIds.length;
     },
     volumesCount: function() {
       return this.model.componentLinks.filter(
@@ -94,6 +103,42 @@ var CompositeContainersListItem = Vue.extend({
     },
     operationSupported: function(op) {
       return utils.operationSupported(op, this.model);
+    },
+
+    showHosts: function($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+
+      let hostIds = this.model.hostLinks.map((parentLink) => utils.getDocumentId(parentLink));
+      let queryOptions = {
+        any: hostIds
+      };
+
+      NavigationActions.openHosts(queryOptions);
+    },
+
+    showContainers: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      let queryOptions = {
+        $category: constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS,
+        any: utils.getDocumentId(this.model.documentSelfLink)
+      };
+
+      NavigationActions.openContainers(queryOptions);
+    },
+
+    showNetworks: function($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+
+      let queryOptions = {
+        $category: constants.RESOURCES.SEARCH_CATEGORY.NETWORKS,
+        any: this.networkIds
+      };
+
+      NavigationActions.openNetworks(queryOptions);
     }
   }
 });

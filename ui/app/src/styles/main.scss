@@ -387,6 +387,11 @@ textarea {
   -webkit-animation-duration: 1s;
   animation-duration: 1s;
 }
+
+.navigation-link-holder:not(:first-of-type) {
+  border-left: 1px solid #cccccc;
+}
+
 .navigation-link {
   color: $main_color;
   text-decoration: none;
@@ -396,6 +401,10 @@ textarea {
 .navigation-link:hover {
   color: $main_color;
   text-decoration: underline;
+}
+
+.relations-holder .navigation-link:hover {
+  text-decoration: none;
 }
 
 .toolbar > .new-item:last-child {

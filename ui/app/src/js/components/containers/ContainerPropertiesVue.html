@@ -19,8 +19,18 @@
   <tbody>
     <tr>
       <td>{{i18n("app.container.details.attributes.host")}}</td>
-      <td class="container-properties-value-cell"><a
+      <td class="container-properties-value-cell"><a class="navigation-link"
         href="#/hosts/{{model.hostDocumentId}}" v-on:click="showHost($event)">{{model.hostName}}</a></td>
+    </tr>
+    <tr v-if="applicationId">
+      <td>{{i18n("app.resource.list.relations.applications")}}</td>
+      <td class="container-properties-value-cell"><a class="navigation-link"
+        href="#/applications/{{model.compositeComponentLink}}" v-on:click="showApp($event)">1</a></td>
+    </tr>
+    <tr v-if="networkIds && networkIds.length > 0">
+      <td>{{i18n("app.resource.list.relations.networks")}}</td>
+      <td class="container-properties-value-cell"><a class="navigation-link"
+        href="#/networks/{{networkIds}}" v-on:click="showNetworks($event)">{{networkIds.length}}</a></td>
     </tr>
     <tr>
       <td>{{i18n("app.container.details.attributes.createdDateLabel")}}</td>

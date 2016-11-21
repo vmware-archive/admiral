@@ -43,25 +43,16 @@ var NetworksListItem = Vue.extend({
   },
 
   computed: {
-
-    hasConnectedContainers: function() {
-      return this.model.connectedContainersCount
-              && this.model.connectedContainersCount > 0;
-    },
-
     connectedContainersCount: function() {
-      return this.hasConnectedContainers
-              ? this.model.connectedContainersCount : 0;
+      return this.model.connectedContainersCount ? this.model.connectedContainersCount : 0;
     },
 
-    hasParentHosts: function() {
-      return this.model.parentLinks
-              && this.model.parentLinks.length > 0;
+    applicationsCount: function() {
+      return this.model.compositeComponentLinks ? this.model.compositeComponentLinks.length : 0;
     },
 
     parentHostsCount: function() {
-      return this.hasParentHosts
-              ? this.model.parentLinks.length : 0;
+      return this.model.parentLinks ? this.model.parentLinks.length : 0;
     },
 
     supportsDay2Operations: function() {
@@ -72,7 +63,6 @@ var NetworksListItem = Vue.extend({
           }
         });
     }
-
   },
 
   attached: function() {
@@ -88,7 +78,6 @@ var NetworksListItem = Vue.extend({
   },
 
   methods: {
-
     getNetworkDocumentId: function() {
       return this.model.documentId;
     },
@@ -97,21 +86,21 @@ var NetworksListItem = Vue.extend({
       $event.stopPropagation();
       $event.preventDefault();
 
-      if (this.hasConnectedContainers) {
-        let queryOptions = {
-          network: this.model.name
-        };
+      let queryOptions = {
+        network: this.model.name
+      };
 
-        NavigationActions.openContainers(queryOptions);
-      }
+      NavigationActions.openContainers(queryOptions);
     },
 
     removeNetworkClicked: function($event) {
       if (utils.isNetworkRemovalPossible(this.model)) {
+
         this.askConfirmation($event);
       } else {
         $event.stopPropagation();
         $event.preventDefault();
+
         this.showNetworkRemovalContainersConnectedAlert();
       }
     },
@@ -136,8 +125,34 @@ var NetworksListItem = Vue.extend({
       return utils.operationSupported(op, this.model);
     },
 
-    networkStatusDisplay: utils.networkStatusDisplay
+    showHosts: function($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
 
+      let hostIds = this.model.parentLinks.map((parentLink) => utils.getDocumentId(parentLink));
+      let queryOptions = {
+        any: hostIds
+      };
+
+      NavigationActions.openHosts(queryOptions);
+    },
+
+    showApps: function($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+
+      let appIds = this.model.compositeComponentLinks.map((appLink) =>
+                                                            utils.getDocumentId(appLink));
+      let queryOptions = {
+        $category: constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS,
+        $occurrence: constants.SEARCH_OCCURRENCE.ANY,
+        documentId: appIds
+      };
+
+      NavigationActions.openContainers(queryOptions, true);
+    },
+
+    networkStatusDisplay: utils.networkStatusDisplay
   }
 });
 

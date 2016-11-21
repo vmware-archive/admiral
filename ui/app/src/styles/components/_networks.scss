@@ -1,7 +1,7 @@
 $network-details-size: 150px;
 
 .network {
-  cursor:pointer;
+  cursor: pointer;
   position: relative;
   margin-right: 40px;
   margin-bottom: 10px;
@@ -146,6 +146,14 @@ $network-details-size: 150px;
 .composite-child-containers-view > .containers-list {
   .jsplumb-endpoint, .network-delete-connection, .network {
     cursor: auto;
+  }
+
+  .network .network-details {
+    cursor: pointer;
+  }
+  .network .network-details:hover {
+    border-color: $main-color-80;
+    @include box-shadow(0px 2px 10px 1px $main-color-semi);
   }
 
   .jsplumb-endpoint:not(.jsplumb-endpoint-connected) {

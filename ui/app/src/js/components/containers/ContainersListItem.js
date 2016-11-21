@@ -26,6 +26,16 @@ var ContainersListItem = Vue.extend({
   computed: {
     portsDisplayTexts: function() {
       return utils.getPortsDisplayTexts(this.model.hostAddress, this.model.ports);
+    },
+    networkCount: function() {
+      return this.model.networks && Object.keys(this.model.networks).length || 0;
+    },
+    applicationId: function() {
+      return this.model.compositeComponentLink
+               ? utils.getDocumentId(this.model.compositeComponentLink) : null;
+    },
+    networkIds: function() {
+      return this.model.networks && Object.keys(this.model.networks);
     }
   },
   attached: function() {
@@ -89,6 +99,30 @@ var ContainersListItem = Vue.extend({
       };
 
       NavigationActions.openHosts(queryOptions);
+    },
+
+    showApp: function($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+
+      let queryOptions = {
+        $category: constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS,
+        documentId: this.applicationId
+      };
+
+      NavigationActions.openContainers(queryOptions, true);
+    },
+
+    showNetworks: function($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+
+      let queryOptions = {
+        $category: constants.RESOURCES.SEARCH_CATEGORY.NETWORKS,
+        any: this.networkIds
+      };
+
+      NavigationActions.openNetworks(queryOptions);
     },
 
     operationSupported: function(op) {

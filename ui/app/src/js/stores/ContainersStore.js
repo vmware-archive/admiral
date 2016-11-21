@@ -418,7 +418,6 @@ let ContainersStore = Reflux.createStore({
           this.emitChange();
         }).catch(this.onListError);
       }
-
     } else {
       let compositeComponentsContainersCalls = [];
 
@@ -436,6 +435,7 @@ let ContainersStore = Reflux.createStore({
           });
 
           if (containers.length > 0) {
+            let hostLinks = [...new Set(containers.map((container) => container.parentLink))];
             // Assign the containers to the resp. composite component
             let compositeComponentLink = containers[0].compositeComponentLink;
 
@@ -446,6 +446,9 @@ let ContainersStore = Reflux.createStore({
             if (compositeComponent) {
               compositeComponent.containers = containers;
               compositeComponent.icons = getContainersImageIcons(containers);
+              if (hostLinks.length > 0) {
+                compositeComponent.hostLinks = hostLinks;
+              }
             }
           }
         }

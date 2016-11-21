@@ -493,6 +493,22 @@ services.countHostsPerResourcePool = function(resourcePoolLink, onlyContainerHos
   });
 };
 
+services.countNetworksPerHost = function(hostLink) {
+  var queryOptions = {
+    parentLink: hostLink
+  };
+
+  let params = {
+    [DOCUMENT_TYPE_PROP_NAME]: true,
+    [ODATA_COUNT_PROP_NAME]: true,
+    [ODATA_FILTER_PROP_NAME]: buildContainersSearchQuery(queryOptions)
+  };
+
+  return get(mergeUrl(links.NETWORKS, params)).then((result) => {
+    return result.totalCount;
+  });
+};
+
 services.loadCertificates = function() {
   return list(links.SSL_TRUST_CERTS, true);
 };
@@ -1052,6 +1068,22 @@ services.loadCompositeComponents = function(queryOptions) {
   return get(url).then(function(result) {
     return result;
   });
+};
+
+services.loadCompositeComponentsByLinks = function(documentSelfLinks) {
+  var params = {};
+  if (documentSelfLinks && documentSelfLinks.length) {
+    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+      documentSelfLink: documentSelfLinks.map((link) => {
+        return {
+          val: link,
+          op: 'eq'
+        };
+      }),
+      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+    });
+  }
+  return list(links.COMPOSITE_COMPONENTS, true, params);
 };
 
 services.loadNetworks = function(queryOptions) {

@@ -826,6 +826,18 @@ var utils = {
     return linkDisplayName;
   },
 
+  joinString: function(stringArray) {
+    if (!stringArray) {
+      return '';
+    }
+
+    if (!$.isArray(stringArray)) {
+      return stringArray;
+    }
+
+    return stringArray.join(', ');
+  },
+
   // Checks for deep equality for objects and primitives
   // http://stackoverflow.com/questions/1068834/object-comparison-in-javascript/6713782#6713782
   equals: function(x, y) {

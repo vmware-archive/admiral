@@ -297,7 +297,19 @@ actions.NavigationActions.openContainers.listen(function(queryOptions) {
     delete queryOptions.$category;
   }
 
-  category = category || 'containers';
+  category = category || constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS;
+  hasher.setHash(getHashWithQuery(category, queryOptions));
+});
+
+actions.NavigationActions.openNetworks.listen(function(queryOptions) {
+  var category;
+  if (queryOptions) {
+    category = queryOptions.$category;
+    queryOptions = $.extend({}, queryOptions);
+    delete queryOptions.$category;
+  }
+
+  category = category || constants.CONTAINERS.SEARCH_CATEGORY.NETWORKS;
   hasher.setHash(getHashWithQuery(category, queryOptions));
 });
 

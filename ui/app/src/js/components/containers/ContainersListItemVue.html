@@ -23,7 +23,8 @@
   <div class="container-content">
     <div class="container-host-holder">
       <span class="container-label">{{i18n("app.container.list.hostLabel")}}</span>
-      <a href="#/hosts/{{model.hostDocumentId}}" v-on:click="showHost($event)">{{model.hostName}}</a>
+      <a class="navigation-link" href="#/hosts/{{model.hostDocumentId}}"
+         v-on:click="showHost($event)">{{model.hostName}}</a>
     </div>
     <div class="container-created-holder">
       <span class="container-label">{{i18n("app.container.list.createdDateLabel")}}</span>
@@ -38,6 +39,18 @@
     <div class="container-command-holder">
       <span class="container-label">{{i18n("app.container.list.commandLabel")}}</span>
       <span>{{model.command}}</span>
+    </div>
+    <div class="relations-holder">
+      <navigation-link v-bind:show="model.compositeComponentLink != null"
+                       v-bind:label="1"
+                       icon-name="image-assets/applications-nav-link.png"
+                       v-bind:tooltip="i18n('app.resource.list.relations.applications')"
+                       v-on:click="showApp($event)"></navigation-link>
+      <navigation-link v-bind:show="networkCount > 0"
+                       v-bind:label="networkCount"
+                       icon-name="image-assets/networks-nav-link.png"
+                       v-bind:tooltip="i18n('app.resource.list.relations.networks')"
+                       v-on:click="showNetworks($event)"></navigation-link>
     </div>
   </div>
   <div class="container-actions" v-bind:class="{'hide': showDeleteConfirmation}">

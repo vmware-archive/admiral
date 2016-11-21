@@ -57,23 +57,26 @@
           <span>{{config.ipRange}}</span>
         </template></span>
     </div>
-    <div class="network-connected-containers-holder">
-      <span class="container-label">{{i18n("app.resource.list.network.connectedContainers")}}</span>
-      <span v-if="hasConnectedContainers">
-        <a href="#" v-on:click="openConnectedContainers($event)">{{connectedContainersCount}}</a>
-      </span>
-      <span v-else>--</span>
-    </div>
-    <div class="network-parent-hosts-holder">
-      <span class="container-label">{{i18n("app.resource.list.network.parentHosts")}}</span>
-      <span v-if="hasParentHosts">
-        <span>{{parentHostsCount}}</span>
-      </span>
-      <span v-else>--</span>
-    </div>
     <div class="network-external-flag">
       <span class="container-label">{{i18n("app.resource.list.network.external")}}</span>
       <span>{{model.external}}</span>
+    </div>
+    <div class="relations-holder">
+      <navigation-link v-bind:show="parentHostsCount > 0"
+                       v-bind:label="parentHostsCount"
+                       icon-name="image-assets/hosts-nav-link.png"
+                       v-bind:tooltip="i18n('app.resource.list.relations.hosts')"
+                       v-on:click="showHosts($event)"></navigation-link>
+      <navigation-link v-bind:show="(connectedContainersCount > 0)"
+                       v-bind:label="connectedContainersCount"
+                       icon-name="image-assets/containers-nav-link.png"
+                       v-bind:tooltip="i18n('app.resource.list.relations.containers')"
+                       v-on:click="openConnectedContainers($event)"></navigation-link>
+      <navigation-link v-bind:show="applicationsCount > 0"
+                       v-bind:label="applicationsCount"
+                       icon-name="image-assets/applications-nav-link.png"
+                       v-bind:tooltip="i18n('app.resource.list.relations.applications')"
+                       v-on:click="showApps($event)"></navigation-link>
     </div>
   </div>
   <div class="container-actions"
