@@ -888,15 +888,13 @@ public class HostContainerListDataCollection extends StatefulService {
                                 ContainerFactoryService.SELF_LINK, containerState.names.get(0)))
                         .setCompletion(
                                 (o, ex) -> {
-                                    if (ex != null) {
-                                        if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                                            createDiscoveredContainer(callback, counter,
-                                                    containerState);
-                                        } else {
+                                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                                        createDiscoveredContainer(callback, counter,
+                                                containerState);
+                                    } else if (ex != null) {
                                             logSevere("Failed to get container %s : %s",
                                                     containerState.names, ex.getMessage());
                                             callback.accept(ex);
-                                        }
                                     } else {
                                         if (counter.decrementAndGet() == 0) {
                                             callback.accept(null);
