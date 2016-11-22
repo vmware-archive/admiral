@@ -17,6 +17,8 @@ import (
 
 	"admiral/requests"
 
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
@@ -59,14 +61,14 @@ func RunRequestsList() {
 	rl := &requests.RequestsList{}
 	count, err := rl.FetchRequests()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		return
 	}
 	if count < 1 {
 		fmt.Println("No elements found.")
 		return
 	}
-	if allFalse() {
+	if !startedOnly && !finishedOnly && !failedOnly {
 		rl.Print(requests.ALL)
 	} else {
 		if startedOnly {
@@ -79,13 +81,6 @@ func RunRequestsList() {
 			rl.Print(requests.FINISHED)
 		}
 	}
-}
-
-func allFalse() bool {
-	if !startedOnly && !finishedOnly && !failedOnly {
-		return true
-	}
-	return false
 }
 
 var requestClearCmd = &cobra.Command{

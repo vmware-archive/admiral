@@ -16,12 +16,13 @@ import (
 
 	"admiral/cmd"
 	"admiral/config"
+	"os"
 )
 
 func main() {
 	config.GetCfg()
 	err := cmd.RootCmd.Execute()
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Fprintln(os.Stderr, err)
 	}
 }

@@ -230,7 +230,7 @@ func ValidateArgsCount(args []string) (string, bool) {
 
 func processOutput(output string, err error) {
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	} else {
 		fmt.Println(output)
@@ -240,14 +240,14 @@ func processOutput(output string, err error) {
 func processOutputMultiErrors(output string, errs []error) {
 	var buffer bytes.Buffer
 	for _, err := range errs {
-		if err != nil && err.Error() != "" {
+		if err != nil {
 			buffer.WriteString(err.Error() + "\n")
 		}
 	}
-	if strings.TrimSpace(buffer.String()) == "" {
+	if buffer.String() == "" {
 		fmt.Println(output)
 	} else {
-		fmt.Println(strings.TrimSpace(buffer.String()))
+		fmt.Fprintln(os.Stderr, strings.TrimSpace(buffer.String()))
 		os.Exit(1)
 	}
 }
@@ -255,7 +255,7 @@ func processOutputMultiErrors(output string, errs []error) {
 func formatAndPrintOutput(output string, err error) {
 	writer := tabwriter.NewWriter(os.Stdout, 5, 0, 5, ' ', 0)
 	if err != nil {
-		fmt.Fprintln(writer, err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	} else {
 		fmt.Fprintln(writer, output)

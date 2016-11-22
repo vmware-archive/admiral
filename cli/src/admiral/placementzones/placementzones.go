@@ -85,8 +85,7 @@ func (rps *ResourcePoolState) GetUsedCpuPercentage() string {
 	}
 	result, err := strconv.ParseFloat(*rps.CustomProperties["__cpuUsage"], 64)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return "0%"
 	}
 	return fmt.Sprintf("%.2f%%", utils.MathRound(result*100)/100)
 }
@@ -114,7 +113,7 @@ func (rpl *PlacementZoneList) FetchPZ() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, rpl)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return len(rpl.Documents), nil
 }
 
@@ -148,7 +147,7 @@ func RemovePZ(pzName string) (string, error) {
 
 func RemovePZID(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(PlacementZoneList), utils.PLACEMENT_ZONE)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForPlacementZone(fullId)
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
@@ -176,7 +175,7 @@ func AddPZ(rpName string, custProps []string) (string, error) {
 	}
 	pz = &PlacementZone{}
 	err := json.Unmarshal(respBody, pz)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return pz.ResourcePoolState.GetID(), nil
 
 }
@@ -194,7 +193,7 @@ func EditPZ(pzName, newName string) (string, error) {
 
 func EditPZID(id, newName string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(PlacementZoneList), utils.PLACEMENT_ZONE)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForPlacementZone(fullId)
 	pzState := ResourcePoolState{
 		Name: newName,
@@ -229,7 +228,7 @@ func GetPZName(link string) (string, error) {
 		return "", respErr
 	}
 	err := json.Unmarshal(respBody, pzs)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return pzs.Name, nil
 }
 

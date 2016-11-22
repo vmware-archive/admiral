@@ -97,7 +97,7 @@ func (cl *CertificateList) FetchCertificates() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, cl)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return len(cl.DocumentLinks), nil
 }
 
@@ -154,7 +154,7 @@ func RemoveCertificate(name string) (string, error) {
 //if response code is != 200.
 func RemoveCertificateID(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(CertificateList), utils.CERTIFICATE)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForCerts(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
@@ -190,13 +190,13 @@ func EditCertificate(name, dirF, urlF string) (string, error) {
 func EditCertificateID(id, dirF, urlF string) (string, error) {
 	if dirF != "" {
 		importFile, err := ioutil.ReadFile(dirF)
-		utils.CheckFile(err)
+		utils.CheckBlockingError(err)
 		cff := CertificateFromFile{
 			Certificate: string(importFile),
 		}
 		jsonBody, err := json.Marshal(cff)
 		fullId, err := selflink.GetFullId(id, new(CertificateList), utils.CERTIFICATE)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 		url := config.URL + utils.CreateResLinkForCerts(fullId)
 		req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 		_, respBody, respErr := client.ProcessRequest(req)
@@ -205,7 +205,7 @@ func EditCertificateID(id, dirF, urlF string) (string, error) {
 		}
 		cert := &Certificate{}
 		err = json.Unmarshal(respBody, cert)
-		utils.CheckJsonError(err)
+		utils.CheckBlockingError(err)
 		return cert.GetID(), nil
 	} else if urlF != "" {
 		//TODO
@@ -223,7 +223,7 @@ type CertificateFromFile struct {
 //response code is != 200.
 func AddFromFile(dirF string) (string, error) {
 	importFile, err := ioutil.ReadFile(dirF)
-	utils.CheckFile(err)
+	utils.CheckBlockingError(err)
 	cff := CertificateFromFile{
 		Certificate: string(importFile),
 	}
@@ -236,7 +236,7 @@ func AddFromFile(dirF string) (string, error) {
 	}
 	cert := &Certificate{}
 	err = json.Unmarshal(respBody, cert)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return cert.GetID(), nil
 }
 
@@ -252,7 +252,7 @@ func AddFromUrl(urlF string) (string, error) {
 		HostUri: urlF,
 	}
 	jsonBody, err := json.Marshal(cfu)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + "/config/trust-certs-import"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -261,7 +261,7 @@ func AddFromUrl(urlF string) (string, error) {
 	}
 	cert := &Certificate{}
 	err = json.Unmarshal(respBody, cert)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return cert.GetID(), nil
 }
 
@@ -272,7 +272,7 @@ func AddFromUrl(urlF string) (string, error) {
 func CheckTrustCert(respBody []byte, autoAccept bool) bool {
 	cert := &Certificate{}
 	err := json.Unmarshal(respBody, cert)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + "/config/trust-certs"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(respBody))
 	req.Header.Add("Pragma", "xn-force-index-update")

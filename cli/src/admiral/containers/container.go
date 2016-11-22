@@ -144,7 +144,7 @@ func (c *Container) GetStarted() string {
 //StringJson returns the Container to string in json format.
 func (c *Container) StringJson() string {
 	jsonBody, err := json.MarshalIndent(c, "", "    ")
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return string(jsonBody)
 }
 
@@ -209,7 +209,7 @@ var (
 func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
 	fullIds, err := selflink.GetFullIds(containers, new(ListContainers), utils.CONTAINER)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 
 	if len(containers) < 1 || containers[0] == "" {
@@ -222,7 +222,7 @@ func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 	}
 
 	jsonBody, err := json.Marshal(newStart)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -244,7 +244,7 @@ func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
 	fullIds, err := selflink.GetFullIds(containers, new(ListContainers), utils.CONTAINER)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 
 	newStop := OperationContainer{
@@ -255,7 +255,7 @@ func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 
 	jsonBody, err := json.Marshal(newStop)
 
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -276,7 +276,7 @@ func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 func RemoveContainer(containers []string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
 	fullIds, err := selflink.GetFullIds(containers, new(ListContainers), utils.CONTAINER)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 
 	newRemoveContainer := OperationContainer{
@@ -287,7 +287,7 @@ func RemoveContainer(containers []string, asyncTask bool) ([]string, error) {
 
 	jsonBody, err := json.Marshal(newRemoveContainer)
 
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -321,7 +321,7 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 
 	jsonBody, err := json.Marshal(newRemoveContainer)
 
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -340,7 +340,7 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 // Usage of short unique IDs is supported for this operation.
 func ExecuteCmd(container string, command string) {
 	fullIds, err := selflink.GetFullIds([]string{container}, new(ListContainers), utils.CONTAINER)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 	contLink := links[0]
 	exec := strings.Split(command, " ")
@@ -349,7 +349,7 @@ func ExecuteCmd(container string, command string) {
 		Command: exec,
 	}
 	jsonBody, err := json.Marshal(ch)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -366,7 +366,7 @@ func ExecuteCmd(container string, command string) {
 // Usage of short unique IDs is supported for this operation.
 func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (string, error) {
 	fullIds, err := selflink.GetFullIds([]string{containerID}, new(ListContainers), utils.CONTAINER)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 	url := config.URL + links[0]
 	req, _ := http.NewRequest("GET", url, nil)
@@ -376,7 +376,7 @@ func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (strin
 	}
 	container := &Container{}
 	err = json.Unmarshal(respBody, container)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	contDesc := container.DescriptionLink
 
 	url = config.URL + "/requests"
@@ -388,7 +388,7 @@ func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (strin
 	}
 
 	scaleJson, err := json.Marshal(scale)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ = http.NewRequest("POST", url, bytes.NewBuffer(scaleJson))
 	_, respBody, respErr = client.ProcessRequest(req)
 
@@ -405,7 +405,7 @@ func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (strin
 // InspectContainer returns information about container in JSON format.
 func InspectContainer(id string) ([]byte, error) {
 	fullIds, err := selflink.GetFullIds([]string{id}, new(ListContainers), utils.CONTAINER)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 	url := config.URL + links[0]
 	req, _ := http.NewRequest("GET", url, nil)
@@ -428,7 +428,7 @@ func InspectContainer(id string) ([]byte, error) {
 // which is fetched from Admiral by the provided ID.
 func GetContainer(id string) *Container {
 	fullId, err := selflink.GetFullId(id, new(ListContainers), utils.CONTAINER)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinksForContainer([]string{fullId})[0]
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
@@ -436,7 +436,7 @@ func GetContainer(id string) *Container {
 	utils.CheckResponse(respErr, url)
 	c := &Container{}
 	err = json.Unmarshal(respBody, c)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return c
 }
 
@@ -450,7 +450,7 @@ func GetContainerDescription(id string) *ContainerDescription {
 	utils.CheckResponse(respErr, url)
 	cd := &ContainerDescription{}
 	err := json.Unmarshal(respBody, cd)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return cd
 }
 

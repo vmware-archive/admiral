@@ -122,7 +122,7 @@ func (n *Network) SetCustomProperties(customProperties []string) {
 
 func (n *Network) String() string {
 	jsonBody, err := json.MarshalIndent(n, "", "    ")
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return string(jsonBody)
 }
 
@@ -167,7 +167,7 @@ type NetworkOperation struct {
 func (no *NetworkOperation) SetHosts(hostsIds []string) {
 	no.CustomProperties = make(map[string]string, 0)
 	fullHostIds, err := selflink.GetFullIds(hostsIds, new(hosts.HostsList), utils.HOST)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	if len(hostsIds) > 0 {
 		no.CustomProperties["__containerHostId"] = strings.Join(fullHostIds, ",")
 	}
@@ -181,7 +181,7 @@ func (nl *NetworkList) FetchNetworks() (int, error) {
 		return 0, respErr
 	}
 	err = json.Unmarshal(respBody, nl)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return len(nl.DocumentLinks), nil
 }
 
@@ -205,7 +205,7 @@ func (nl *NetworkList) GetOutputString() string {
 func RemoveNetwork(ids []string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
 	fullIds, err := selflink.GetFullIds(ids, new(NetworkList), utils.NETWORK)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForNetwork(fullIds)
 	no := &NetworkOperation{
 		Operation:     "Network.Delete",
@@ -213,7 +213,7 @@ func RemoveNetwork(ids []string, asyncTask bool) ([]string, error) {
 		ResourceLinks: links,
 	}
 	jsonBody, err := json.Marshal(no)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -231,7 +231,7 @@ func RemoveNetwork(ids []string, asyncTask bool) ([]string, error) {
 
 func InspectNetwork(id string) (string, error) {
 	fullIds, err := selflink.GetFullIds([]string{id}, new(NetworkList), utils.NETWORK)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForNetwork(fullIds)
 	url := config.URL + links[0]
 	req, _ := http.NewRequest("GET", url, nil)
@@ -241,7 +241,7 @@ func InspectNetwork(id string) (string, error) {
 	}
 	network := &Network{}
 	err = json.Unmarshal(respBody, network)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return network.String(), nil
 }
 
@@ -261,7 +261,7 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 
 	url := config.URL + "/resources/container-network-descriptions"
 	jsonBody, err := json.Marshal(network)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -269,7 +269,7 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 	}
 	nd := &NetworkDescription{}
 	err = json.Unmarshal(respBody, nd)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	networkLink := nd.DocumentSelfLink
 
 	no := &NetworkOperation{

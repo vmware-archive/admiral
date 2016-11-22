@@ -231,7 +231,7 @@ func (cd *ContainerDescription) RunContainer(tenantLinkId string, asyncTask bool
 	runContainer.setTenantLink(tenantLinkId)
 
 	jsonBody, err := json.MarshalIndent(runContainer, "", "    ")
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -251,7 +251,7 @@ func (cd *ContainerDescription) getContainerDescriptionRunLink() (string, error)
 	var runLink string
 	url := config.URL + "/resources/container-descriptions"
 	jsonBody, err := json.MarshalIndent(cd, "", "    ")
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Pragma", "xn-force-index-update")
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -278,12 +278,12 @@ func (rc *RunContainer) setTenantLink(tenantLinkId string) {
 	}
 	if !utils.IsVraMode {
 		fullProjectId, err := selflink.GetFullId(tenantLinkId, new(projects.ProjectList), utils.PROJECT)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 		projectLink := utils.CreateResLinkForProject(fullProjectId)
 		tenantLinks = append(tenantLinks, projectLink)
 	} else {
 		fullBusinessGroupId, err := businessgroups.GetFullId(tenantLinkId)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 		businessGroupLink := utils.CreateResLinkForBusinessGroup(fullBusinessGroupId)
 		tenantLinks = append(tenantLinks, businessGroupLink)
 		tenantLinks = append(tenantLinks, "/tenants/"+utils.GetTenant())

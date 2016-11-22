@@ -59,7 +59,7 @@ func Login(username, password, configUrl string) string {
 	utils.MkCliDir()
 	tokenFile, err := os.Create(utils.TokenPath())
 
-	utils.CheckFile(err)
+	utils.CheckBlockingError(err)
 	tokenFile.Write([]byte(token))
 	tokenFile.Close()
 	return success
@@ -79,7 +79,7 @@ func Logout() {
 
 	err := os.Remove(utils.TokenPath())
 
-	utils.CheckFile(err)
+	utils.CheckBlockingError(err)
 
 	fmt.Println("Logged out.")
 
@@ -131,7 +131,7 @@ func Loginvra(username, password, tenant, urlF string) string {
 	url := urlF + "/identity/api/tokens"
 
 	jsonBody, err := json.Marshal(login)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -142,7 +142,7 @@ func Loginvra(username, password, tenant, urlF string) string {
 	utils.MkCliDir()
 	tokenFile, err := os.Create(utils.TokenPath())
 
-	utils.CheckFile(err)
+	utils.CheckBlockingError(err)
 	tokenFile.Write([]byte(tenant))
 	tokenFile.Write([]byte("&Bearer " + respLogin.Id))
 	tokenFile.Close()

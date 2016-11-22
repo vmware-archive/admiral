@@ -171,7 +171,7 @@ func (rl *RequestsList) FetchRequests() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, rl)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return len(rl.DocumentLinks), nil
 }
 
@@ -200,7 +200,7 @@ func (rl *RequestsList) Print(what string) {
 
 func RemoveRequestID(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(RequestsList), utils.REQUEST)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForRequest(fullId)
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
@@ -222,7 +222,7 @@ type InspectedRequest struct {
 
 func InspectRequestID(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(RequestsList), utils.REQUEST)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForRequest(fullId)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -231,7 +231,7 @@ func InspectRequestID(id string) (string, error) {
 	}
 	ri := &RequestInfo{}
 	err = json.Unmarshal(respBody, ri)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	inspectedRequest := &InspectedRequest{}
 	inspectedRequest.ID = ri.GetID()
@@ -294,7 +294,7 @@ func checkFailed(ri *RequestInfo) string {
 	_, respBody, _ := client.ProcessRequest(req)
 	event := &events.EventInfo{}
 	err := json.Unmarshal(respBody, event)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	res := strings.Replace(event.Description, "\n", "", -1)
 	return res
 }

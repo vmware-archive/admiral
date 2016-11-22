@@ -83,7 +83,7 @@ func (el *EventList) FetchEvents() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, el)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return len(el.Documents), nil
 }
 

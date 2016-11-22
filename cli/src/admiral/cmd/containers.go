@@ -47,7 +47,7 @@ var containerExecCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		err := RunContainerExecute(args)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintln(os.Stderr, err)
 		}
 	},
 }

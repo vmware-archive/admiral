@@ -63,7 +63,7 @@ func (gl *ProjectList) FetchProjects() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, gl)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return len(gl.DocumentLinks), nil
 }
 
@@ -93,7 +93,7 @@ func AddProject(name string) (string, error) {
 		Name: name,
 	}
 	jsonBody, err := json.Marshal(project)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	url := config.URL + "/resources/groups"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
@@ -103,7 +103,7 @@ func AddProject(name string) (string, error) {
 	}
 	project = &Project{}
 	err = json.Unmarshal(respBody, project)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return project.GetID(), nil
 }
 
@@ -129,7 +129,7 @@ func RemoveProject(name string) (string, error) {
 //and error which is != nil if the response code is different from 200.
 func RemoveProjectID(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(ProjectList), utils.PROJECT)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForProject(fullId)
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
@@ -165,13 +165,13 @@ func EditProject(name, newName string) (string, error) {
 //returns the ID of the edited string and error which is != nil if the response code is different from 200.
 func EditProjectID(id, newName string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(ProjectList), utils.PROJECT)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForProject(fullId)
 	project := &Project{
 		Name: newName,
 	}
 	jsonBody, err := json.Marshal(project)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Pragma", "xn-force-update-index")
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -180,7 +180,7 @@ func EditProjectID(id, newName string) (string, error) {
 	}
 	project = &Project{}
 	err = json.Unmarshal(respBody, project)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return project.GetID(), nil
 }
 
@@ -213,6 +213,6 @@ func GetProjectName(link string) (string, error) {
 	}
 	project := &Project{}
 	err := json.Unmarshal(respBody, project)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return project.Name, nil
 }

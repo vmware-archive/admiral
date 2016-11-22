@@ -145,7 +145,7 @@ func (hl *HostsList) FetchHosts(queryF string) (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, hl)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return int(hl.TotalCount - 1), nil
 }
 
@@ -208,18 +208,18 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 		}
 	} else {
 		newCredID, err = selflink.GetFullId(credID, new(credentials.ListCredentials), utils.CREDENTIALS)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 	}
 
 	if placementZoneID != "" {
 		fullPzId, err := selflink.GetFullId(placementZoneID, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 		pzLink = utils.CreateResLinkForPlacementZone(fullPzId)
 	}
 
 	if deplPolicyID != "" {
 		fullDpId, err = selflink.GetFullId(deplPolicyID, new(deplPolicy.DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 		dpLink = utils.CreateResLinkForDP(fullDpId)
 	}
 
@@ -246,7 +246,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 	}
 
 	jsonBody, err := json.Marshal(hostObj)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	resp, respBody, respErr := client.ProcessRequest(req)
@@ -268,7 +268,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 			}
 			addedHost := &Host{}
 			err = json.Unmarshal(respBody, addedHost)
-			utils.CheckJsonError(err)
+			utils.CheckBlockingError(err)
 			return addedHost.Id, nil
 		}
 		credentials.RemoveCredentialsID(newCredID)
@@ -283,7 +283,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 		}
 		addedHost := &Host{}
 		err = json.Unmarshal(respBody, addedHost)
-		utils.CheckJsonError(err)
+		utils.CheckBlockingError(err)
 		return addedHost.Id, nil
 	}
 	return "", respErr
@@ -296,7 +296,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 func RemoveHost(id string, asyncTask bool) (string, error) {
 	url := config.URL + "/requests"
 	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinksForHosts(fullId)
 
 	jsonRemoveHost := &OperationHost{
@@ -307,7 +307,7 @@ func RemoveHost(id string, asyncTask bool) (string, error) {
 
 	jsonBody, err := json.Marshal(jsonRemoveHost)
 
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -323,13 +323,13 @@ func RemoveHost(id string, asyncTask bool) (string, error) {
 
 func DisableHost(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinksForHosts(fullId)
 	hostp := HostPatch{
 		PowerState: "SUSPEND",
 	}
 	jsonBody, err := json.Marshal(hostp)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
@@ -341,13 +341,13 @@ func DisableHost(id string) (string, error) {
 
 func EnableHost(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinksForHosts(fullId)
 	hostp := HostPatch{
 		PowerState: "ON",
 	}
 	jsonBody, err := json.Marshal(hostp)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -375,7 +375,7 @@ func GetPublicCustomProperties(id string) (map[string]*string, error) {
 
 func GetCustomProperties(id string) (map[string]*string, error) {
 	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinksForHosts(fullId)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -384,13 +384,13 @@ func GetCustomProperties(id string) (map[string]*string, error) {
 	}
 	host := &Host{}
 	err = json.Unmarshal(respBody, host)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return host.CustomProperties, nil
 }
 
 func AddCustomProperties(id string, keys, vals []string) error {
 	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinksForHosts(fullId)
 	var lowerLen []string
 	if len(keys) > len(vals) {
@@ -406,7 +406,7 @@ func AddCustomProperties(id string, keys, vals []string) error {
 		CustomProperties: custProps,
 	}
 	jsonBody, err := json.Marshal(host)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -417,7 +417,7 @@ func AddCustomProperties(id string, keys, vals []string) error {
 
 func RemoveCustomProperties(id string, keys []string) error {
 	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinksForHosts(fullId)
 	custProps := make(map[string]*string)
 	for i := range keys {
@@ -427,7 +427,7 @@ func RemoveCustomProperties(id string, keys []string) error {
 		CustomProperties: custProps,
 	}
 	jsonBody, err := json.Marshal(host)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -439,7 +439,7 @@ func RemoveCustomProperties(id string, keys []string) error {
 func EditHost(id, name, placementZoneId, deplPolicyF, credId string,
 	autoAccept bool) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinksForHosts(fullId)
 
 	var (
@@ -450,15 +450,15 @@ func EditHost(id, name, placementZoneId, deplPolicyF, credId string,
 	)
 	if deplPolicyF != "" {
 		fullDpId, err = selflink.GetFullId(deplPolicyF, new(deplPolicy.DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 	}
 	if credId != "" {
 		fullCredId, err = selflink.GetFullId(credId, new(credentials.ListCredentials), utils.CREDENTIALS)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 	}
 	if placementZoneId != "" {
 		fullPzId, err = selflink.GetFullId(placementZoneId, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 		pzLink = utils.CreateResLinkForPlacementZone(fullPzId)
 	}
 
@@ -468,7 +468,7 @@ func EditHost(id, name, placementZoneId, deplPolicyF, credId string,
 		CustomProperties: props,
 	}
 	jsonBody, err := json.Marshal(newHost)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	req.Header.Add("Pragma", "xn-force-index-update")
 	_, _, respErr := client.ProcessRequest(req)

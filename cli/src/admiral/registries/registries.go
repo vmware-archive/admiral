@@ -78,7 +78,7 @@ func (rl *RegistryList) FetchRegistries() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, rl)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return len(rl.DocumentLinks), nil
 }
 
@@ -110,7 +110,7 @@ func RemoveRegistry(address string) (string, error) {
 
 func RemoveRegistryID(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(RegistryList), utils.REGISTRY)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForRegistry(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
@@ -145,7 +145,7 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 		}
 	} else {
 		newCredID, err = selflink.GetFullId(credID, new(credentials.ListCredentials), utils.CREDENTIALS)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 	}
 
 	reg = &Registry{
@@ -167,7 +167,7 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 	}
 
 	jsonBody, err := json.Marshal(ho)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	resp, respBody, respErr := client.ProcessRequest(req)
@@ -178,7 +178,7 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 		_, respBody, respErr = client.ProcessRequest(req)
 		addedRegistry := &Registry{}
 		err = json.Unmarshal(respBody, addedRegistry)
-		utils.CheckJsonError(err)
+		utils.CheckBlockingError(err)
 		return addedRegistry.GetID(), nil
 	} else if resp.StatusCode == 200 {
 		checkRes := certificates.CheckTrustCert(respBody, autoAccept)
@@ -197,7 +197,7 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 			}
 			addedRegistry := &Registry{}
 			err = json.Unmarshal(respBody, addedRegistry)
-			utils.CheckJsonError(err)
+			utils.CheckBlockingError(err)
 			return addedRegistry.GetID(), nil
 		}
 		return "", CertNotAcceptedError
@@ -224,7 +224,7 @@ func EditRegistry(address, newAddress, newName, newCred string, autoAccept bool)
 
 func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(RegistryList), utils.REGISTRY)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForRegistry(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
@@ -234,7 +234,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 	}
 	reg := &Registry{}
 	err = json.Unmarshal(respBody, reg)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	if newAddress != "" {
 		reg.Address = newAddress
 	}
@@ -243,7 +243,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 	}
 	if newCred != "" {
 		fullCredId, err := selflink.GetFullId(newCred, new(credentials.ListCredentials), utils.CREDENTIALS)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 		credLink := utils.CreateResLinkForCredentials(fullCredId)
 		reg.AuthCredentialsLinks = &credLink
 	}
@@ -252,7 +252,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 		Registry: *reg,
 	}
 	jsonBody, err := json.Marshal(registryObj)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ = http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	resp, respBody, respErr := client.ProcessRequest(req)
 	if resp.StatusCode == 200 {
@@ -269,7 +269,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 			_, respBody, _ = client.ProcessRequest(req)
 			reg = &Registry{}
 			err = json.Unmarshal(respBody, reg)
-			utils.CheckJsonError(err)
+			utils.CheckBlockingError(err)
 			return reg.GetID(), nil
 		}
 		return "", errors.New("Error occurred when adding the new certificate.")
@@ -283,7 +283,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 		}
 		reg = &Registry{}
 		err = json.Unmarshal(respBody, reg)
-		utils.CheckJsonError(err)
+		utils.CheckBlockingError(err)
 		return reg.GetID(), nil
 	} else if respErr != nil {
 		return "", respErr
@@ -308,14 +308,14 @@ func Disable(address string) (string, error) {
 
 func DisableID(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(RegistryList), utils.REGISTRY)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForRegistry(fullId)
 	rs := &RegistryStatus{
 		Disabled:         true,
 		DocumentSelfLink: link,
 	}
 	jsonBody, err := json.Marshal(rs)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + link
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
@@ -341,14 +341,14 @@ func Enable(address string) (string, error) {
 
 func EnableID(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(RegistryList), utils.REGISTRY)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForRegistry(fullId)
 	rs := &RegistryStatus{
 		Disabled:         false,
 		DocumentSelfLink: link,
 	}
 	jsonBody, err := json.Marshal(rs)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + link
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)

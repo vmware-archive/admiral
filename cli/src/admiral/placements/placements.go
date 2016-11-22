@@ -129,7 +129,7 @@ func (pl *PlacementList) FetchPlacements() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, pl)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return len(pl.DocumentLinks), nil
 }
 
@@ -193,7 +193,7 @@ func RemovePlacement(polName string) (string, error) {
 
 func RemovePlacementID(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(PlacementList), utils.PLACEMENT)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinksForPlacement(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
@@ -220,18 +220,18 @@ func AddPlacement(namePol, cpuShares, instances, priority, projectId, placementZ
 	if deplPolId != "" {
 		var fullDpId string
 		fullDpId, err = selflink.GetFullId(deplPolId, new(deplPolicy.DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 		dpLink = utils.CreateResLinkForDP(fullDpId)
 	}
 
 	fullRpId, err := selflink.GetFullId(placementZoneId, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	rpLink = utils.CreateResLinkForPlacementZone(fullRpId)
 
 	if projectId != "" {
 		var fullProjectId string
 		fullProjectId, err = selflink.GetFullId(projectId, new(projects.ProjectList), utils.PROJECT)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 		projectLink = utils.CreateResLinkForProject(fullProjectId)
 	}
 
@@ -249,7 +249,7 @@ func AddPlacement(namePol, cpuShares, instances, priority, projectId, placementZ
 	}
 
 	jsonBody, err := json.Marshal(placement)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -258,7 +258,7 @@ func AddPlacement(namePol, cpuShares, instances, priority, projectId, placementZ
 	}
 	newPolicy := &Placement{}
 	err = json.Unmarshal(respBody, newPolicy)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return newPolicy.GetID(), nil
 }
 
@@ -277,7 +277,7 @@ func EditPlacement(name, namePol, projectId, resPoolID, deplPolID string, cpuSha
 
 func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, cpuShares, instances, priority int32, memoryLimit int64) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(PlacementList), utils.PLACEMENT)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinksForPlacement(fullId)
 	url := config.URL + link
 	//Workaround
@@ -288,7 +288,7 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, 
 		return "", respErr
 	}
 	err = json.Unmarshal(respBody, oldPlacement)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	//Workaround
 
 	if cpuShares != -1 {
@@ -309,18 +309,18 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, 
 		}
 		projectLinkIndex := GetProjectLinkIndex(oldPlacement.TenantLinks)
 		fullProjectId, err := selflink.GetFullId(projectId, new(projects.ProjectList), utils.PROJECT)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 		projectLink := utils.CreateResLinkForProject(fullProjectId)
 		oldPlacement.TenantLinks[projectLinkIndex] = projectLink
 	}
 	if placementZoneID != "" {
 		fullPzId, err := selflink.GetFullId(placementZoneID, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 		oldPlacement.ResourcePoolLink = utils.CreateResLinkForPlacementZone(fullPzId)
 	}
 	if deplPolId != "" {
 		fullDpId, err := selflink.GetFullId(deplPolId, new(deplPolicy.DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 		oldPlacement.DeploymentPolicyLink = utils.CreateResLinkForDP(fullDpId)
 	}
 	if memoryLimit != 0 {
@@ -328,7 +328,7 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, 
 	}
 
 	jsonBody, err := json.Marshal(oldPlacement)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ = http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr = client.ProcessRequest(req)
 	if respErr != nil {
@@ -336,7 +336,7 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, 
 	}
 	newPlacement := &Placement{}
 	err = json.Unmarshal(respBody, newPlacement)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return newPlacement.GetID(), nil
 }
 

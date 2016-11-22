@@ -198,26 +198,26 @@ func setupCAPool() (*x509.CertPool, error) {
 func checkForCertErrors(url string, errA error) (bool, error) {
 	if errA == nil {
 		return false, errA
-	} else if strings.Contains(errA.Error(), "x509: certificate signed by unknown authority") {
+	}
+
+	if strings.Contains(errA.Error(), "x509: certificate signed by unknown authority") {
 		result := promptAllCerts(url)
-		if result {
-			return true, nil
-		} else {
-			os.Exit(0)
+		if !result {
+			utils.CheckBlockingError(errors.New("Certificate declined, command execution aborted."))
 		}
-	} else if strings.Contains(errA.Error(), "x509") {
+		return true, nil
+	}
+
+	if strings.Contains(errA.Error(), "x509") {
 		loadCertsFromFile()
 		skipVerify := checkCertInLoadedCerts(url)
 		if skipVerify {
 			skipSSLVerification = skipVerify
 			return true, nil
-		} else {
-			return false, nil
 		}
-	} else {
-		return false, errA
 	}
-	return false, nil
+
+	return false, errA
 }
 
 // checkCertInLoadedCerts first loads already trusted certificates from the user.
@@ -301,7 +301,7 @@ func saveTrustedCert(cert *x509.Certificate) {
 	}
 	pemCert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
 	trustedCerts, err := os.OpenFile(utils.TrustedCertsPath(), os.O_APPEND|os.O_WRONLY, 0600)
-	utils.CheckFile(err)
+	utils.CheckBlockingError(err)
 	trustedCerts.Write(pemCert)
 }
 

@@ -46,7 +46,7 @@ func (lc *LightContainer) GetOutput(link string) (string, error) {
 		return "", respErr
 	}
 	err := json.Unmarshal(respBody, lc)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return fmt.Sprintf("   Container Name: %-22s\tContainer Image: %s\n", lc.Name, lc.Image), nil
 }
 
@@ -147,7 +147,7 @@ func (lt *TemplatesList) FetchTemplates(queryF string) (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, lt)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return len(lt.Results), nil
 }
 
@@ -240,7 +240,7 @@ func RemoveTemplate(name string) (string, error) {
 //ID = empty string and error != nil.
 func RemoveTemplateID(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(CompositeDescriptionList), utils.TEMPLATE)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForTemplate(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
@@ -251,7 +251,7 @@ func RemoveTemplateID(id string) (string, error) {
 	}
 	template := &Template{}
 	err = json.Unmarshal(respBody, template)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	for i := range template.DescriptionLinks {
 		tempLink := config.URL + template.DescriptionLinks[i]
 		req, _ := http.NewRequest("DELETE", tempLink, nil)
@@ -294,7 +294,7 @@ func Export(id, dirF, format string) (string, error) {
 		return "", err
 	}
 	fullId, err := selflink.GetFullId(id, new(CompositeDescriptionList), utils.TEMPLATE)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + "/resources/composite-templates?selfLink=" + fullId
 	if format == "docker" {
 		url = url + "&format=docker"
@@ -339,7 +339,7 @@ type TemplateComponent struct {
 
 func InspectID(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(CompositeDescriptionList), utils.TEMPLATE)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForTemplate(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
@@ -349,7 +349,7 @@ func InspectID(id string) (string, error) {
 	}
 	template := &Template{}
 	err = json.Unmarshal(respBody, template)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	it := &InspectTemplate{
 		Id:         template.GetID(),
 		Name:       template.Name,
@@ -385,6 +385,6 @@ func GetNetworkDescriptionName(link string) string {
 	utils.CheckResponse(respErr, url)
 	v := make(map[string]interface{}, 0)
 	err := json.Unmarshal(respBody, &v)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return v["name"].(string)
 }

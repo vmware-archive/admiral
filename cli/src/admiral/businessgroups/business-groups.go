@@ -58,7 +58,7 @@ func (bgl *BusinessGroupList) FetchBusinessGroups() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, bgl)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return len(*bgl), nil
 }
 

@@ -31,7 +31,7 @@ func CheckVerboseRequest(req *http.Request) {
 		fmt.Printf("%s %s\n", req.Method, req.URL)
 		//Read
 		buf, err := ioutil.ReadAll(req.Body)
-		CheckJsonError(err)
+		CheckBlockingError(err)
 		//Create 2 new readers.
 		//rdrToUse will be modified. rdrToSet will stay the same and set back to the request.
 		rdrToUse := ioutil.NopCloser(bytes.NewBuffer(buf))
@@ -42,7 +42,7 @@ func CheckVerboseRequest(req *http.Request) {
 		var indentBody = &bytes.Buffer{}
 		err = json.Indent(indentBody, body, "", "    ")
 
-		CheckJsonError(err)
+		CheckBlockingError(err)
 		fmt.Println(string(indentBody.Bytes()))
 
 		//Set unmodified reader.
@@ -59,7 +59,7 @@ func CheckVerboseResponse(resp *http.Response) {
 	}
 	//Read
 	buf, err := ioutil.ReadAll(resp.Body)
-	CheckJsonError(err)
+	CheckBlockingError(err)
 
 	//Create 2 new readers.
 	//rdrToUse will be modified. rdrToSet will stay the same and set back to the request.
@@ -67,7 +67,7 @@ func CheckVerboseResponse(resp *http.Response) {
 	rdrToSet := ioutil.NopCloser(bytes.NewBuffer(buf))
 
 	jsonBody, err := ioutil.ReadAll(rdrToUse)
-	CheckJsonError(err)
+	CheckBlockingError(err)
 	if len(jsonBody) < 1 {
 		fmt.Printf("Response status: %s\n", resp.Status)
 		resp.Body = rdrToSet

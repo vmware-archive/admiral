@@ -29,8 +29,8 @@ func TestMain(m *testing.M) {
 	var err error
 	tc, err = ConfigureTestEnv()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 	config.GetCfg()
 	loginout.Login(tc.Username, tc.Password, tc.AdmiralAddress)

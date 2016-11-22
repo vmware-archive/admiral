@@ -16,6 +16,8 @@ import (
 
 	"admiral/track"
 
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
@@ -44,7 +46,7 @@ var waitCmd = &cobra.Command{
 		}
 		_, err := track.Wait(taskId)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintln(os.Stderr, err)
 		}
 	},
 }

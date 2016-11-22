@@ -89,7 +89,7 @@ func (lc *ListCredentials) FetchCredentials() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, lc)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return len(lc.Documents), nil
 }
 
@@ -195,7 +195,7 @@ func AddByUsername(name, userName, passWord string,
 	}
 
 	jsonBody, err := json.Marshal(user)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -203,7 +203,7 @@ func AddByUsername(name, userName, passWord string,
 	}
 	creds := &Credentials{}
 	err = json.Unmarshal(respBody, creds)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return creds.GetID(), nil
 }
 
@@ -238,7 +238,7 @@ func AddByCert(name, publicCert, privateCert string,
 		Type:             "PublicKey",
 	}
 	jsonBody, err := json.Marshal(cert)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -246,7 +246,7 @@ func AddByCert(name, publicCert, privateCert string,
 	}
 	creds := &Credentials{}
 	err = json.Unmarshal(respBody, creds)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return creds.GetID(), nil
 }
 
@@ -271,7 +271,7 @@ func RemoveCredentials(name string) (string, error) {
 //the response code is different from 200.
 func RemoveCredentialsID(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(ListCredentials), utils.CREDENTIALS)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
@@ -307,7 +307,7 @@ func EditCredetials(credName, publicCert, privateCert, userName, passWord string
 //the response code is different from 200.
 func EditCredetialsID(id, publicCert, privateCert, userName, passWord string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(ListCredentials), utils.CREDENTIALS)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForCredentials(fullId)
 	var cred interface{}
 	if publicCert != "" || privateCert != "" {
@@ -317,11 +317,11 @@ func EditCredetialsID(id, publicCert, privateCert, userName, passWord string) (s
 		)
 		if publicCert != "" {
 			publicKey, err = ioutil.ReadFile(publicCert)
-			utils.CheckFile(err)
+			utils.CheckBlockingError(err)
 		}
 		if privateCert != "" {
 			privateKey, err = ioutil.ReadFile(privateCert)
-			utils.CheckFile(err)
+			utils.CheckBlockingError(err)
 		}
 		cred = &AddCertCredentials{
 			PublicKey:  string(publicKey),
@@ -336,7 +336,7 @@ func EditCredetialsID(id, publicCert, privateCert, userName, passWord string) (s
 		}
 	}
 	jsonBody, err := json.Marshal(cred)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -344,7 +344,7 @@ func EditCredetialsID(id, publicCert, privateCert, userName, passWord string) (s
 	}
 	creds := &Credentials{}
 	err = json.Unmarshal(respBody, creds)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return creds.GetID(), nil
 }
 
@@ -374,7 +374,7 @@ func GetPublicCustomProperties(id string) (map[string]*string, error) {
 //but values are pointer to strings.
 func GetCustomProperties(id string) (map[string]*string, error) {
 	fullId, err := selflink.GetFullId(id, new(ListCredentials), utils.CREDENTIALS)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)
@@ -384,7 +384,7 @@ func GetCustomProperties(id string) (map[string]*string, error) {
 	}
 	credentials := &Credentials{}
 	err = json.Unmarshal(respBody, credentials)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return credentials.CustomProperties, nil
 }
 
@@ -395,7 +395,7 @@ func GetCustomProperties(id string) (map[string]*string, error) {
 //than the other, it's left elements are ignored.
 func AddCustomProperties(id string, keys, vals []string) error {
 	fullId, err := selflink.GetFullId(id, new(ListCredentials), utils.CREDENTIALS)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link
 	var lowerLen []string
@@ -413,7 +413,7 @@ func AddCustomProperties(id string, keys, vals []string) error {
 		CustomProperties: custProps,
 	}
 	jsonBody, err := json.Marshal(credentials)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -427,7 +427,7 @@ func AddCustomProperties(id string, keys, vals []string) error {
 //and array of keys to be removed.
 func RemoveCustomProperties(id string, keys []string) error {
 	fullId, err := selflink.GetFullId(id, new(ListCredentials), utils.CREDENTIALS)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link
 	custProps := make(map[string]*string)
@@ -439,7 +439,7 @@ func RemoveCustomProperties(id string, keys []string) error {
 		CustomProperties: custProps,
 	}
 	jsonBody, err := json.Marshal(credentials)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 

@@ -106,7 +106,7 @@ func (la *ListApps) FetchApps(queryF string) (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, la)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return len(la.DocumentLinks), nil
 }
 
@@ -157,7 +157,7 @@ func (listApps *ListApps) GetOutputStringWithContainers() string {
 			req, _ := http.NewRequest("GET", containerUrl, nil)
 			_, respBody, _ := client.ProcessRequest(req)
 			err := json.Unmarshal(respBody, container)
-			utils.CheckJsonError(err)
+			utils.CheckBlockingError(err)
 			output = utils.GetTabSeparatedString(indent+strings.Join(container.Names, " "), container.Address,
 				container.PowerState, container.GetCreated(), container.GetStarted(), container.Ports)
 			buffer.WriteString(output)

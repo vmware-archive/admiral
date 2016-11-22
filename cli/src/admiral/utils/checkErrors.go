@@ -21,45 +21,15 @@ import (
 //Currently panic too used for debugging.
 func CheckResponse(err error, url string) {
 	if err != nil {
-		fmt.Println("Error occurred when connecting to", url)
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
 }
 
-//Check for error raised by reading/writing json.
-//Print message.
-//Currently panic too used for debugging.
-func CheckJsonError(err error) {
+func CheckBlockingError(err error) {
 	if err != nil {
-		fmt.Println("Json error when reading and/or writing.")
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-}
-
-//Check for error raised by operations with files.
-//Print message.
-//Currently panic too used for debugging.
-func CheckFile(err error) {
-	if err != nil {
-		fmt.Println("Error on read/write file.")
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-}
-
-func CheckParse(err error) {
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-}
-
-func CheckIdError(err error) {
-	if err != nil {
-		fmt.Fprintln(os.Stdout, err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }

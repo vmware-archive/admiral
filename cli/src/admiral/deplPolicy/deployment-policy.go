@@ -64,7 +64,7 @@ func (dpl *DeploymentPolicyList) FetchDP() (int, error) {
 		return 0, respErr
 	}
 	err := json.Unmarshal(respBody, dpl)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return len(dpl.DocumentLinks), nil
 }
 
@@ -104,7 +104,7 @@ func RemoveDP(name string) (string, error) {
 //from 200.
 func RemoveDPID(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForDP(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
@@ -130,7 +130,7 @@ func AddDP(dpName, dpDescription string) (string, error) {
 		DocumentSelfLink: nil,
 	}
 	jsonBody, err := json.Marshal(dp)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -139,7 +139,7 @@ func AddDP(dpName, dpDescription string) (string, error) {
 	}
 	dp = &DeploymentPolicy{}
 	err = json.Unmarshal(respBody, dp)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return dp.GetID(), nil
 }
 
@@ -165,7 +165,7 @@ func EditDP(dpName, newName, newDescription string) (string, error) {
 //deployment policy and error which is != nil if the response code is different from 200.
 func EditDPID(id, newName, newDescription string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForDP(fullId)
 	dp := &DeploymentPolicy{
 		Name:             newName,
@@ -173,7 +173,7 @@ func EditDPID(id, newName, newDescription string) (string, error) {
 		DocumentSelfLink: nil,
 	}
 	jsonBody, err := json.Marshal(dp)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -181,7 +181,7 @@ func EditDPID(id, newName, newDescription string) (string, error) {
 	}
 	dp = &DeploymentPolicy{}
 	err = json.Unmarshal(respBody, dp)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return dp.GetID(), nil
 }
 

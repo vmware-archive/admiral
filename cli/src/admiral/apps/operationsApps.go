@@ -60,7 +60,7 @@ func StartAppID(id string, asyncTask bool) ([]string, error) {
 		err      error
 	)
 	fullIds, err := selflink.GetFullIds([]string{id}, new(ListApps), utils.APPLICATION)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 
 	resourceLinks := utils.CreateResLinksForApps(fullIds)
 	oc := &containers.OperationContainer{
@@ -70,7 +70,7 @@ func StartAppID(id string, asyncTask bool) ([]string, error) {
 	}
 
 	jsonBody, err := json.Marshal(oc)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -108,7 +108,7 @@ func StopAppID(id string, asyncTask bool) ([]string, error) {
 		err      error
 	)
 	fullIds, err := selflink.GetFullIds([]string{id}, new(ListApps), utils.APPLICATION)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	resourceLinks := utils.CreateResLinksForApps(fullIds)
 	oc := &containers.OperationContainer{
 		Operation:     "Container.Stop",
@@ -117,7 +117,7 @@ func StopAppID(id string, asyncTask bool) ([]string, error) {
 	}
 
 	jsonBody, err := json.Marshal(oc)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -156,7 +156,7 @@ func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 	)
 
 	fullIds, err := selflink.GetFullIds([]string{id}, new(ListApps), utils.APPLICATION)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	resourceLinks := utils.CreateResLinksForApps(fullIds)
 	oc := &containers.OperationContainer{
 		Operation:     "Container.Delete",
@@ -164,7 +164,7 @@ func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 		ResourceType:  "COMPOSITE_COMPONENT",
 	}
 	jsonBody, err := json.Marshal(oc)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -203,11 +203,11 @@ func RunApp(app, tenantId string, asyncTask bool) ([]string, error) {
 func RunAppID(id, tenantId string, asyncTask bool) ([]string, error) {
 	jsonBody := make(map[string]string, 0)
 	fullId, err := selflink.GetFullId(id, new(templates.CompositeDescriptionList), utils.TEMPLATE)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForTemplate(fullId)
 	jsonBody["documentSelfLink"] = link
 	reqBody, err := json.Marshal(jsonBody)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	url := config.URL + "/resources/composite-descriptions-clone"
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
@@ -217,7 +217,7 @@ func RunAppID(id, tenantId string, asyncTask bool) ([]string, error) {
 	}
 	cd := &CompositeDescription{}
 	err = json.Unmarshal(respBody, cd)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	link = cd.DocumentSelfLink
 
@@ -271,8 +271,10 @@ func (this *appProvisionOperation) run(asyncTask bool) ([]string, error) {
 		err   error
 	)
 	url := config.URL + "/requests"
+
 	jsonBody, err := json.Marshal(this)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
+
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -296,12 +298,12 @@ func (this *appProvisionOperation) setTenantLink(tenantLinkId string) {
 	}
 	if !utils.IsVraMode {
 		fullProjectId, err := selflink.GetFullId(tenantLinkId, new(projects.ProjectList), utils.PROJECT)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 		projectLink := utils.CreateResLinkForProject(fullProjectId)
 		tenantLinks = append(tenantLinks, projectLink)
 	} else {
 		fullBusinessGroupId, err := businessgroups.GetFullId(tenantLinkId)
-		utils.CheckIdError(err)
+		utils.CheckBlockingError(err)
 		businessGroupLink := utils.CreateResLinkForBusinessGroup(fullBusinessGroupId)
 		tenantLinks = append(tenantLinks, businessGroupLink)
 		tenantLinks = append(tenantLinks, "/tenants/"+utils.GetTenant())
@@ -345,7 +347,7 @@ type InspectApp struct {
 // Usage of short unique IDs is supported for this operation.
 func InspectID(id string) (string, error) {
 	fullIds, err := selflink.GetFullIds([]string{id}, new(ListApps), utils.APPLICATION)
-	utils.CheckIdError(err)
+	utils.CheckBlockingError(err)
 	resourceLinks := utils.CreateResLinksForApps(fullIds)
 	url := config.URL + resourceLinks[0]
 	req, _ := http.NewRequest("GET", url, nil)
@@ -355,7 +357,7 @@ func InspectID(id string) (string, error) {
 	}
 	app := &App{}
 	err = json.Unmarshal(respBody, app)
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 
 	ia := &InspectApp{
 		Id:         app.GetID(),

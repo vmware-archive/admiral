@@ -76,14 +76,14 @@ func GetCfg() {
 		TASK_TIMEOUT = defaultTaskTimeout
 	} else {
 		TASK_TIMEOUT, err = strconv.Atoi(cfg.TaskTimeout)
-		utils.CheckParse(err)
+		utils.CheckBlockingError(err)
 	}
 
 	if strings.TrimSpace(cfg.ClientTimeout) == "" {
 		CLIENT_TIMEOUT = defaultClientTimeout
 	} else {
 		CLIENT_TIMEOUT, err = strconv.Atoi(cfg.ClientTimeout)
-		utils.CheckParse(err)
+		utils.CheckBlockingError(err)
 	}
 }
 
@@ -99,7 +99,7 @@ func createDefaultCfgFile() {
 	utils.MkCliDir()
 	file, err := os.Create(utils.ConfigPath())
 	defer file.Close()
-	utils.CheckFile(err)
+	utils.CheckBlockingError(err)
 	jsonCfg, err := json.MarshalIndent(cfg, "", "    ")
 	file.Write(jsonCfg)
 }
@@ -154,6 +154,6 @@ func Inspect() []byte {
 		createDefaultCfgFile()
 	}
 	jsonBody, err := json.MarshalIndent(cfg, "", "    ")
-	utils.CheckJsonError(err)
+	utils.CheckBlockingError(err)
 	return jsonBody
 }
