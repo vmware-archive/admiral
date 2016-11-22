@@ -387,13 +387,11 @@ public class RequestStatusServiceTest extends RequestBaseTest {
 
         host.send(Operation.createGet(uri)
                 .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        if (Operation.STATUS_CODE_NOT_FOUND == o.getStatusCode()) {
-                            /* resultHolder will hold a null result */
-                            host.completeIteration();
-                        } else {
-                            host.failIteration(ex);
-                        }
+                    if (Operation.STATUS_CODE_NOT_FOUND == o.getStatusCode()) {
+                        /* resultHolder will hold a null result */
+                        host.completeIteration();
+                    } else if (ex != null) {
+                        host.failIteration(ex);
                     } else {
                         resultHolder[0] = o.getBody(RequestStatus.class);
                         host.completeIteration();

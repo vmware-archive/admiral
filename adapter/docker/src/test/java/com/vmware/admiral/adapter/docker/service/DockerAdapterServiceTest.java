@@ -794,14 +794,12 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
         getTestCommandExecutor().inspectContainer(
                 commandInput,
                 (o, ex) -> {
-                    if (ex != null) {
-                        if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                            /* this is the expected result - the container is not found */
-                            host.completeIteration();
-                        } else {
+                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                        /* this is the expected result - the container is not found */
+                        host.completeIteration();
+                    } else if (ex != null) {
                             /* some other unexpected exception */
                             host.failIteration(ex);
-                        }
                     } else {
                         host.failIteration(new AssertionError(
                                 "Expected container not to be found, but it was: " + containerId));

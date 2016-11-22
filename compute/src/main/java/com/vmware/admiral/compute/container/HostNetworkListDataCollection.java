@@ -402,15 +402,13 @@ public class HostNetworkListDataCollection extends StatefulService {
                         .createGet(this, NetworkUtils.buildNetworkLink(networkState.id))
                         .setCompletion(
                                 (o, ex) -> {
-                                    if (ex != null) {
-                                        if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                                            createDiscoveredContainerNetwork(callback, counter,
-                                                    networkState);
-                                        } else {
-                                            logSevere("Failed to get network %s : %s",
-                                                    networkState.name, ex.getMessage());
-                                            callback.accept(ex);
-                                        }
+                                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                                        createDiscoveredContainerNetwork(callback, counter,
+                                                networkState);
+                                    } else if (ex != null) {
+                                        logSevere("Failed to get network %s : %s",
+                                                networkState.name, ex.getMessage());
+                                        callback.accept(ex);
                                     } else {
                                         if (counter.decrementAndGet() == 0) {
                                             callback.accept(null);
