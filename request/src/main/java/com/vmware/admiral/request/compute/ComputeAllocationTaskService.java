@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -300,6 +299,7 @@ public class ComputeAllocationTaskService
         });
     }
 
+    @SuppressWarnings("unchecked")
     private void createOsDiskState(ComputeAllocationTaskState state,
             SubStage nextStage, EnvironmentMappingState mapping, ComputeDescription computeDesc) {
         if (state.customProperties.containsKey(ComputeConstants.CUSTOM_PROP_DISK_LINK)) {
@@ -342,9 +342,9 @@ public class ComputeAllocationTaskService
             PropertyMapping values = mapping.properties.get("bootDiskProperties");
             if (values != null) {
                 rootDisk.customProperties = new HashMap<>();
-                for (Entry<String, String> entry : values.mappings.entrySet()) {
-                    rootDisk.customProperties.put(entry.getKey(), entry.getValue());
-                }
+                values.mappings.forEach((k, v) -> {
+                    rootDisk.customProperties.put(String.valueOf(k), String.valueOf(v));
+                });
             }
 
             String content = computeDesc.customProperties

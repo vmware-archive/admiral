@@ -12,6 +12,7 @@
 package com.vmware.admiral.request.compute.enhancer;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
 import com.vmware.admiral.compute.ComputeConstants;
@@ -38,21 +39,18 @@ public class EnvironmentComputeDescriptionEnhancer implements ComputeDescription
                 return;
             }
 
-            String value = env.getMappingValue("instanceType", cd.instanceType);
-            if (value != null) {
-                cd.instanceType = value;
-            }
+            applyInstanceType(cd, env);
 
             if (cd.dataStoreId == null) {
-                cd.dataStoreId = env.getMappingValue("placement", "dataStoreId");
+                cd.dataStoreId = env.getStringMappingValue("placement", "dataStoreId");
             }
 
             if (cd.authCredentialsLink == null) {
-                cd.authCredentialsLink = env.getMappingValue("authentication",
+                cd.authCredentialsLink = env.getStringMappingValue("authentication",
                         "guestAuthLink");
             }
             if (cd.zoneId == null) {
-                cd.zoneId = env.getMappingValue("placement", "zoneId");
+                cd.zoneId = env.getStringMappingValue("placement", "zoneId");
             }
             if (cd.zoneId == null) {
                 cd.zoneId = context.endpointComputeDescription.zoneId;
@@ -60,7 +58,7 @@ public class EnvironmentComputeDescriptionEnhancer implements ComputeDescription
 
             String absImageId = context.imageType;
             if (absImageId != null) {
-                String imageId = env.getMappingValue("imageType", absImageId);
+                String imageId = env.getStringMappingValue("imageType", absImageId);
                 if (imageId == null) {
                     imageId = absImageId;
                 }
@@ -70,8 +68,6 @@ public class EnvironmentComputeDescriptionEnhancer implements ComputeDescription
                     if (scheme != null
                             && (scheme.startsWith("http") || scheme.startsWith("file"))) {
                         cd.customProperties.put("ova.uri", imageUri.toString());
-                        cd.customProperties.put("ovf.uri", imageUri.toString());
-                        cd.customProperties.put("ovf.configuration", "");
                     } else {
                         cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
                                 imageId);
@@ -83,6 +79,28 @@ public class EnvironmentComputeDescriptionEnhancer implements ComputeDescription
             }
             callback.accept(cd, null);
         });
+
+    }
+
+    private void applyInstanceType(ComputeDescription cd, EnvironmentMappingState env) {
+        Object value = env.getMappingValue("instanceType", cd.instanceType);
+        if (value == null) {
+            return;
+        }
+        if (value instanceof String) {
+            cd.instanceType = (String) value;
+        } else if (value instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Integer> map = (Map<String, Integer>) value;
+            Integer cpu = map.get("cpu");
+            if (cpu != null) {
+                cd.cpuCount = cpu.longValue();
+            }
+            Integer mem = map.get("mem");
+            if (mem != null) {
+                cd.totalMemoryBytes = mem.longValue() * 1024 * 1024;
+            }
+        }
 
     }
 

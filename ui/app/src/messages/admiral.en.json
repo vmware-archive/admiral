@@ -74,8 +74,7 @@
         "awsOS": "OS",
         "azureType": "Instance type",
         "azureOS": "OS",
-        "vsphereCpu": "CPU",
-        "vsphereMemory": "Memory",
+        "vsphereType": "Instance type",
         "vsphereOS": "OS",
         "clusterSize": "Cluster size"
       },

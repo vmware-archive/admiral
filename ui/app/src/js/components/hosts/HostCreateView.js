@@ -87,8 +87,7 @@ var HostCreateView = Vue.extend({
       awsOS: 'coreos',
       azureType: 'Basic_A1',
       azureOS: 'coreos',
-      vsphereCpu: 1,
-      vsphereMemory: 1024,
+      vsphereType: 'small',
       vsphereOS: 'coreos',
       vsphereDestination: null,
       clusterSize: 1
@@ -106,7 +105,7 @@ var HostCreateView = Vue.extend({
         case 'azure':
           return !this.azureType || !this.azureOS;
         case 'vsphere':
-          return !this.vsphereCpu || !this.vsphereMemory ||
+          return !this.vsphereType ||
             !this.vsphereOS || !this.vsphereDestination;
       }
     },
@@ -296,8 +295,7 @@ var HostCreateView = Vue.extend({
           });
         case 'vsphere':
           return $.extend(true, hostDescription, {
-            cpuCount: this.vsphereCpu,
-            totalMemoryBytes: this.vsphereMemory * 1024 * 1024,
+            instanceType: this.vsphereType,
             customProperties: {
               imageType: this.vsphereOS,
               __placementLink: this.vsphereDestination

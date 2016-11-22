@@ -4,10 +4,26 @@ endpointType: "vsphere"
 properties:
   instanceType:
     mappings:
-      small: "small"
+      small:
+        cpu: 1
+        mem: 1024
+        disk: 10240
+      medium:
+        cpu: 2
+        mem: 4096
+        disk: 10240
+      large:
+        cpu: 2
+        mem: 8192
+        disk: 10240
+      xlarge:
+        cpu: 4
+        mem: 16384
+        disk: 10240
   imageType:
     mappings:
       coreos: "https://stable.release.core-os.net/amd64-usr/current/coreos_production_vmware_ova.ova"
+      photon: "https://bintray.com/vmware/photon/download_file?file_path=photon-custom-hw10-1.0-13c08b6.ova"
   placement:
     mappings:
       networkId: VM Network

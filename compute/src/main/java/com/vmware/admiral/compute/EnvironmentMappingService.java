@@ -46,10 +46,18 @@ public class EnvironmentMappingService extends StatefulService {
 
         public Map<String, PropertyMapping> properties;
 
-        public String getMappingValue(String propertyName, String key) {
+        public Object getMappingValue(String propertyName, String key) {
             PropertyMapping mapping = properties.get(propertyName);
             if (mapping != null) {
                 return mapping.mappings.get(key);
+            }
+            return null;
+        }
+
+        public String getStringMappingValue(String propertyName, String key) {
+            PropertyMapping mapping = properties.get(propertyName);
+            if (mapping != null) {
+                return (String) mapping.mappings.get(key);
             }
             return null;
         }

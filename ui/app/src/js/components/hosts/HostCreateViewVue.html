@@ -112,27 +112,23 @@
     <div class="col-sm-9">
       <select v-model="vsphereOS" class="form-control">
         <option value="coreos">CoreOS</option>
+        <option value="photon">PhotonOS</option>
       </select>
     </div>
   </div>
 
-  <div id="vsphereCpu" class="form-group" v-if="showInput('vsphere')">
+  <div id="vsphereType" class="form-group" v-if="showInput('vsphere')">
     <label class="col-sm-3 control-label">
-      {{i18n("app.host.details.vsphereCpu")}}
+      {{i18n("app.host.details.vsphereType")}}
       <span class="requiredFieldMark">*</span>
     </label>
-    <div class="col-sm-3">
-      <input class="form-control" v-model="vsphereCpu">
-    </div>
-  </div>
-
-  <div id="vsphereMemory" class="form-group" v-if="showInput('vsphere')">
-    <label class="col-sm-3 control-label">
-      {{i18n("app.host.details.vsphereMemory")}}
-      <span class="requiredFieldMark">*</span>
-    </label>
-    <div class="col-sm-3">
-      <input class="form-control" v-model="vsphereMemory">
+    <div class="col-sm-9">
+      <select v-model="vsphereType" class="form-control">
+        <option value="small">Standard 1 Core, 1 GB</option>
+        <option value="medium">Standard 2 Core, 4 GB</option>
+        <option value="large">Standard 2 Cores, 8 GB</option>
+        <option value="xlarge">Standard 4 Cores, 16 GB</option>
+      </select>
     </div>
   </div>
 

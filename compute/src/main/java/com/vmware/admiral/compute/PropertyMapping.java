@@ -17,8 +17,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class PropertyMapping {
 
+    @SuppressWarnings("rawtypes")
     @JsonProperty("mappings")
-    public Map<String, String> mappings;
+    public Map mappings;
 
     @Override
     public String toString() {
@@ -28,5 +29,4 @@ public class PropertyMapping {
         builder.append("]");
         return builder.toString();
     }
-
 }
