@@ -151,6 +151,7 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
         provisionContainer();
     }
 
+    @Ignore("Stared to fail on Nov 21 and until Nov 23 it failed 7 times. Jira task - https://jira-hzn.eng.vmware.com/browse/VBV-864")
     @Test
     public void testRequestLifeCycleInClusterWhenOneNodeDown() throws Throwable {
         stopOneNode();

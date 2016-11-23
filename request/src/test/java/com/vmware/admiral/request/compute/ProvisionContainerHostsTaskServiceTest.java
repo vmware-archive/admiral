@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
@@ -43,6 +44,7 @@ public class ProvisionContainerHostsTaskServiceTest extends RequestBaseTest {
         super.setUp();
     }
 
+    @Ignore("Fails around 10 times per day on Bellevue and Bellevue-gerrit jobs. Jira task - https://jira-hzn.eng.vmware.com/browse/VBV-858")
     @Test
     public void testProvisionDockerHostVMsOnAWS() throws Throwable {
 
