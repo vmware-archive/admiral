@@ -138,6 +138,7 @@ let ComputeStore = Reflux.createStore({
         // Transforming to the model of the view
         var documents = result.documents;
         var nextPageLink = result.nextPageLink;
+        var itemsCount = result.totalCount;
 
         // TODO: temporary client side filter
         var compute = [];
@@ -170,7 +171,9 @@ let ComputeStore = Reflux.createStore({
 
           this.setInData(['listView', 'items'], compute);
           this.setInData(['listView', 'itemsLoading'], false);
-          this.setInData(['listView', 'itemsCount'], result.itemsCount);
+          if (itemsCount !== undefined && itemsCount !== null) {
+            this.setInData(['listView', 'itemsCount'], itemsCount);
+          }
           this.setInData(['listView', 'nextPageLink'], nextPageLink);
           this.emitChange();
         });

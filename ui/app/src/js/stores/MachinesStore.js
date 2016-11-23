@@ -76,6 +76,7 @@ let MachinesStore = Reflux.createStore({
         // Transforming to the model of the view
         var documents = result.documents;
         var nextPageLink = result.nextPageLink;
+        var itemsCount = result.totalCount;
 
         // TODO: temporary client side filter
         var machines = [];
@@ -107,8 +108,6 @@ let MachinesStore = Reflux.createStore({
 
           this.setInData(['listView', 'items'], machines);
           this.setInData(['listView', 'itemsLoading'], false);
-
-          let itemsCount = result.totalCount;
           if (itemsCount !== undefined && itemsCount !== null) {
             this.setInData(['listView', 'itemsCount'], itemsCount);
           }
