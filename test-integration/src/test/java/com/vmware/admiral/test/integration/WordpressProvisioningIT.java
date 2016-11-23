@@ -87,12 +87,9 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
                 // In case of response 500 from docker check:
                 // https://github.com/docker/libnetwork/issues/1101
                 { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_BRIDGE },
-                // Started to fail on Nov 21 and until Nov 23 it failed 4 times. Jira task -
-                // https://jira-hzn.eng.vmware.com/browse/VBV-863"
-                // { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_OVERLAY },
+                { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_OVERLAY },
                 { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_BRIDGE },
-                // TODO: VBV-849
-                // { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_OVERLAY },
+                { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_OVERLAY },
                 { "WordPress_with_MySQL_links.yaml", NetworkType.BRIDGE }
         });
     }

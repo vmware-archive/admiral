@@ -15,7 +15,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -41,6 +44,7 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.services.common.QueryTask;
 
 public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
@@ -50,6 +54,7 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
     private static final String COMPUTE_HOST_LINK = UriUtils.buildUriPath(
             ComputeService.FACTORY_LINK, TEST_HOST_ID);
     private NetworkListCallback networkListCallback;
+    private List<String> networksForDeletion;
 
     @Before
     public void setUp() throws Throwable {
@@ -86,35 +91,70 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
         cs.customProperties = new HashMap<String, String>();
 
         doPost(cs, ComputeService.FACTORY_LINK);
+
+        networksForDeletion = new ArrayList<>();
     }
 
     @After
     public void tearDown() throws Throwable {
+        for (String selfLink : networksForDeletion) {
+            delete(selfLink);
+        }
         MockDockerNetworkAdapterService.resetNetworks();
     }
 
     @Test
     public void testDiscoverExistingNetworkOnHost() throws Throwable {
         // add preexisting network to the adapter service
-        MockDockerNetworkAdapterService.addNetworkId(TEST_HOST_ID, TEST_PREEXISTING_NETWORK_ID,
-                TEST_PREEXISTING_NETWORK_ID);
-        MockDockerNetworkAdapterService.addNetworkNames(TEST_HOST_ID, TEST_PREEXISTING_NETWORK_ID,
-                TEST_PREEXISTING_NETWORK_NAME);
+        addNetworkToMockAdapter(TEST_HOST_ID, TEST_PREEXISTING_NETWORK_ID, TEST_PREEXISTING_NETWORK_NAME);
 
         // run data collection on preexisting network
         startAndWaitHostNetworkListDataCollection();
 
         // ContainerNetworkState preexistingNetwork = waitForNetwork(preexistingNetworkLink);
-        ContainerNetworkState preexistingNetwork = waitForNetworkById(TEST_PREEXISTING_NETWORK_ID);
-        assertNotNull("Preexisting network not created or can't be retrieved.", preexistingNetwork);
-        assertEquals(TEST_PREEXISTING_NETWORK_ID, preexistingNetwork.id);
-        assertEquals(TEST_PREEXISTING_NETWORK_NAME, preexistingNetwork.name);
+        List<ContainerNetworkState> networkStates = getNetworkStates();
+        assertEquals(networkStates.size(), 1);
+        ContainerNetworkState preexistingNetworkState = networkStates.get(0);
+        assertNotNull("Preexisting network not created or can't be retrieved.", preexistingNetworkState);
+        assertEquals(TEST_PREEXISTING_NETWORK_ID, preexistingNetworkState.id);
+        assertEquals(TEST_PREEXISTING_NETWORK_NAME, preexistingNetworkState.name);
         assertEquals(UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK,
-                TEST_PREEXISTING_NETWORK_ID), preexistingNetwork.documentSelfLink);
-        assertTrue(Boolean.TRUE.equals(preexistingNetwork.external));
-
+                TEST_PREEXISTING_NETWORK_ID), preexistingNetworkState.documentSelfLink);
+        assertTrue(Boolean.TRUE.equals(preexistingNetworkState.external));
         assertTrue("Preexisting network belongs to the host.",
-                preexistingNetwork.parentLinks.contains(COMPUTE_HOST_LINK));
+                preexistingNetworkState.parentLinks.contains(COMPUTE_HOST_LINK));
+    }
+
+    @Test
+    public void testProvisionedContainerIsNotDiscovered() throws Throwable {
+        // provision network
+        ContainerNetworkState containerNetworkCreated = createNetwork(null);
+        addNetworkToMockAdapter(TEST_HOST_ID, containerNetworkCreated.id, containerNetworkCreated.name);
+        // run data collection on preexisting network
+        startAndWaitHostNetworkListDataCollection();
+        List<ContainerNetworkState> networkStates = getNetworkStates();
+        assertEquals(networkStates.size(), 1);
+        ContainerNetworkState containerNetworkGet = networkStates.get(0);
+        assertNotNull("Preexisting network not created or can't be retrieved.", containerNetworkGet);
+        assertEquals(containerNetworkCreated.id, containerNetworkGet.id);
+        assertEquals(containerNetworkCreated.name, containerNetworkGet.name);
+        assertEquals(containerNetworkCreated.documentSelfLink , containerNetworkGet.documentSelfLink);
+    }
+
+    @Test
+    public void testDiscoveredAndCreatedNetworksWithSameNames() throws Throwable {
+        // add preexisting network to the adapter service
+        addNetworkToMockAdapter(TEST_HOST_ID, TEST_PREEXISTING_NETWORK_ID, TEST_PREEXISTING_NETWORK_NAME);
+        // provision network
+        ContainerNetworkState containerNetworkCreated = createNetwork(TEST_PREEXISTING_NETWORK_NAME);
+        addNetworkToMockAdapter(TEST_HOST_ID, containerNetworkCreated.id, containerNetworkCreated.name);
+        // run data collection on preexisting network
+        startAndWaitHostNetworkListDataCollection();
+        List<ContainerNetworkState> networkStates = getNetworkStates();
+        assertEquals(networkStates.size(), 2);
+        assertEquals(networkStates.get(0).name, networkStates.get(1).name);
+        assertTrue(networkStates.get(0).name != networkStates.get(1).name);
+        assertTrue(networkStates.get(0).documentSelfLink != networkStates.get(1).documentSelfLink);
     }
 
     private void startAndWaitHostNetworkListDataCollection() throws Throwable {
@@ -130,36 +170,30 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
         waitForDataCollectionFinished();
     }
 
-    private ContainerNetworkState waitForNetworkById(String networkId) throws Throwable {
-        ContainerNetworkState[] result = new ContainerNetworkState[1];
-        AtomicBoolean cotinue = new AtomicBoolean();
+    private List<ContainerNetworkState> getNetworkStates() throws Throwable {
+        List<ContainerNetworkState> networkStatesFound = new ArrayList<>();
+        TestContext ctx = testCreate(1);
+        ServiceDocumentQuery<ContainerNetworkState> query = new ServiceDocumentQuery<>(host,
+                ContainerNetworkState.class);
 
-        waitFor(() -> {
-            ServiceDocumentQuery<ContainerNetworkState> query = new ServiceDocumentQuery<>(host,
-                    ContainerNetworkState.class);
+        QueryTask queryTask = QueryUtil.buildPropertyQuery(ContainerNetworkState.class);
+        QueryUtil.addExpandOption(queryTask);
 
-            QueryTask queryTask = QueryUtil.buildPropertyQuery(ContainerNetworkState.class,
-                    ContainerNetworkState.FIELD_NAME_ID, networkId);
-            QueryUtil.addExpandOption(queryTask);
-
-            query.query(queryTask, (r) -> {
-                if (r.hasException()) {
-                    host.log("Exception while retrieving ContainerNetworkState: "
-                            + (r.getException() instanceof CancellationException
-                                    ? r.getException().getMessage()
-                                    : Utils.toString(r.getException())));
-                    cotinue.set(true);
-                } else if (r.hasResult()) {
-                    // wait until network is ready
-                    if (networkId.equals(r.getResult().id)) {
-                        cotinue.set(true);
-                        result[0] = r.getResult();
-                    }
-                }
-            });
-            return cotinue.get();
+        query.query(queryTask, (r) -> {
+            if (r.hasException()) {
+                host.log("Exception while retrieving ContainerNetworkState: "
+                        + (r.getException() instanceof CancellationException
+                                ? r.getException().getMessage()
+                                : Utils.toString(r.getException())));
+                ctx.fail(r.getException());
+            } else if (r.hasResult()) {
+                networkStatesFound.add(r.getResult());
+            } else {
+                ctx.complete();
+            }
         });
-        return result[0];
+        ctx.await();
+        return networkStatesFound;
     }
 
     private void waitForDataCollectionFinished() throws Throwable {
@@ -185,5 +219,27 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
             });
             return cotinue.get();
         });
+    }
+
+    private ContainerNetworkState createNetwork(String name)
+            throws Throwable {
+        ContainerNetworkState networkState = new ContainerNetworkState();
+        networkState.id = UUID.randomUUID().toString();
+        if (name == null) {
+            networkState.name = "name_" + networkState.id;
+        } else {
+            networkState.name = name;
+        }
+        networkState = doPost(networkState, ContainerNetworkService.FACTORY_LINK);
+        networksForDeletion.add(networkState.documentSelfLink);
+        return networkState;
+    }
+
+    private void addNetworkToMockAdapter(String hostId, String networkd,
+            String networkNames) {
+        MockDockerNetworkAdapterService.addNetworkId(hostId, networkd,
+                networkNames);
+        MockDockerNetworkAdapterService.addNetworkNames(hostId, networkd,
+                networkNames);
     }
 }
