@@ -79,6 +79,7 @@ public abstract class BaseTestCase {
             "dcp.management.test.change.longer.count", 200);
     protected static final int WAIT_THREAD_SLEEP_IN_MILLIS = Integer.getInteger(
             "dcp.management.test.wait.thread.sleep.millis", 500);
+    private static final int HOST_TIMEOUT_SECONDS = 60;
 
     protected static final int MAINTENANCE_INTERVAL_MILLIS = 250;
     protected VerificationHost host;
@@ -160,7 +161,7 @@ public abstract class BaseTestCase {
                 args);
         h.setMaintenanceIntervalMicros(TimeUnit.MILLISECONDS
                 .toMicros(MAINTENANCE_INTERVAL_MILLIS));
-
+        h.setTimeoutSeconds(HOST_TIMEOUT_SECONDS);
 
         h.start();
 
