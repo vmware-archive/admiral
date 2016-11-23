@@ -435,7 +435,7 @@
         "endpointHostLabel": "Host name or IP",
         "subscriptionIdLabel": "Subscription ID",
         "tenantIdLabel": "Tenant ID",
-        "datacenterIdLabel": "Datacenter"
+        "datacenterIdLabel": "Datacenter name"
       },
       "entity": "endpoint",
       "typeEntity": "type",
