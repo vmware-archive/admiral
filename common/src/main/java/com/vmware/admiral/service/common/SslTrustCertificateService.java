@@ -19,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.CertificateUtil;
-import com.vmware.admiral.common.util.SubscriptionManager;
 import com.vmware.admiral.common.util.ValidationUtils;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
@@ -40,8 +39,6 @@ import com.vmware.xenon.common.Utils;
 public class SslTrustCertificateService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.SSL_TRUST_CERTS;
     public static final String SSL_TRUST_LAST_UPDATED_DOCUMENT_KEY = "ssl.trust.last.updated.document";
-
-    private volatile SubscriptionManager<SslTrustCertificateState> subscriptionManager;
 
     public static class SslTrustCertificateState extends MultiTenantDocument {
 
@@ -231,8 +228,6 @@ public class SslTrustCertificateService extends StatefulService {
         }
         return true;
     }
-
-
 
     private void notifyLastUpdatedSslTrustDocumentService() {
         ConfigurationState body = new ConfigurationState();

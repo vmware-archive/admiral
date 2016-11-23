@@ -14,8 +14,6 @@ package com.vmware.admiral.test.integration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import static com.vmware.admiral.test.integration.TestPropertiesUtil.getTestRequiredProp;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,20 +70,21 @@ public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
     }
 
     @Override
-    protected void validateAfterStart(String resourceDescLink, RequestBrokerService.RequestBrokerState request)
+    protected void validateAfterStart(String resourceDescLink,
+            RequestBrokerService.RequestBrokerState request)
             throws Exception {
-        String dockerHost = getTestRequiredProp("docker.host.address");
-
         int expectedNumberOfResources = 3;
         int expectedClosureResult = 110;
         assertEquals("Unexpected number of resource links", 1, request.resourceLinks.size());
 
         String resourceLink = request.resourceLinks.iterator().next();
         CompositeComponent cc = getDocument(resourceLink, CompositeComponent.class);
-        assertEquals("Unexpected number of component links", expectedNumberOfResources, cc.componentLinks.size());
+        assertEquals("Unexpected number of component links", expectedNumberOfResources,
+                cc.componentLinks.size());
 
         logger.info("------------- 1. Retrieving container states... -------------");
-        List<ContainerState> provisionedContainers = fetchProvisionedResources(cc.componentLinks, CONTAINER_NAME_MASK);
+        List<ContainerState> provisionedContainers = fetchProvisionedResources(cc.componentLinks,
+                CONTAINER_NAME_MASK);
         assertEquals("Unexpected number of container links", 2, provisionedContainers.size());
 
         ContainerState beforeClosureContainer = findProvisionedResource(provisionedContainers,
@@ -101,16 +100,20 @@ public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
         assertEquals(TaskState.TaskStage.FINISHED, closureState.state);
         assertEquals(expectedClosureResult, closureState.outputs.get("result").getAsInt());
 
-        ContainerState afterClosureContainer = findProvisionedResource(provisionedContainers, "kitematicAfterClosure");
+        ContainerState afterClosureContainer = findProvisionedResource(provisionedContainers,
+                "kitematicAfterClosure");
         assertEquals(INPUT_NAME + "=" + expectedClosureResult, afterClosureContainer.env[0]);
 
     }
 
-    private ContainerState findProvisionedResource(List<ContainerState> provisionedResources, String name) {
-        return provisionedResources.stream().filter(c -> c.names.get(0).contains(name)).findFirst().get();
+    private ContainerState findProvisionedResource(List<ContainerState> provisionedResources,
+            String name) {
+        return provisionedResources.stream().filter(c -> c.names.get(0).contains(name)).findFirst()
+                .get();
     }
 
-    private List<ContainerState> fetchProvisionedResources(List<String> componentLinks, String containerName) {
+    private List<ContainerState> fetchProvisionedResources(List<String> componentLinks,
+            String containerName) {
         List<ContainerState> fetchedResources = new ArrayList<>();
         componentLinks.stream().filter(l -> l.contains(containerName)).forEach(s -> {
             try {

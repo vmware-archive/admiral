@@ -159,7 +159,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         // Verify the container is removed
-        containerState = searchForDocument(ContainerState.class, request.resourceLinks.iterator().next());
+        containerState = searchForDocument(ContainerState.class, request.resourceLinks.iterator()
+                .next());
         assertNull(containerState);
 
         // Verify request status
@@ -245,7 +246,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         // Verify the container is removed
-        containerState = searchForDocument(ContainerState.class, request.resourceLinks.iterator().next());
+        containerState = searchForDocument(ContainerState.class, request.resourceLinks.iterator()
+                .next());
         assertNull(containerState);
 
         // Verify request status
@@ -402,7 +404,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
     }
 
     @Test
-    public void testCompositeComponentWithContainerExternalNetworkRequestLifeCycle() throws Throwable {
+    public void testCompositeComponentWithContainerExternalNetworkRequestLifeCycle()
+            throws Throwable {
         host.log(
                 "########  Start of testCompositeComponentWithContainerExternalNetworkRequestLifeCycle ######## ");
 
@@ -456,7 +459,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         container1Desc.networks.put(networkName, new ServiceNetwork());
 
         // create composite description, do not override the documentSelfLinks for the descriptions
-        CompositeDescription compositeDesc = createCompositeDesc(false, false, networkDesc, container1Desc);
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, networkDesc,
+                container1Desc);
         assertNotNull(compositeDesc);
 
         // setup Group Placement:
@@ -530,7 +534,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // Verify the composite component is removed (only a external network in the application)
         waitFor(() -> {
-            CompositeComponent compositeComponent = searchForDocument(CompositeComponent.class, compositeComponentLink);
+            CompositeComponent compositeComponent = searchForDocument(CompositeComponent.class,
+                    compositeComponentLink);
             return compositeComponent == null;
         });
 
@@ -544,13 +549,14 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
             throws Throwable {
         host.log(
                 "########  Start of "
-                + "testRequestLifecycleWithContainerNetworkShouldCleanNetworkStatesOnProvisionAndDeletionFailure ######## ");
+                        + "testRequestLifecycleWithContainerNetworkShouldCleanNetworkStatesOnProvisionAndDeletionFailure ######## ");
 
         // 1. Request a network with expected failure:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.NETWORK_TYPE.getName(), containerNetworkDesc.documentSelfLink);
         request.tenantLinks = groupPlacementState.tenantLinks;
-        request.customProperties.put(ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY, computeHost.id);
+        request.customProperties.put(
+                ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY, computeHost.id);
 
         // This should ensure that both the provisioning and the deletion (cleanup) requests to the
         // mock adapter will fail - during the allocation, the custom properties will be copied into
@@ -903,7 +909,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks
+                .iterator().next());
 
         String networkLink = null;
         String containerLink1 = null;
@@ -1230,7 +1237,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks
+                .iterator().next());
 
         String volumeLink = null;
         String containerLink1 = null;
@@ -1402,7 +1410,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 groupPlacementState.documentSelfLink);
         assertEquals(groupPlacementState.allocatedInstancesCount, 0);
         assertEquals(0,
-                groupPlacementState.resourceQuotaPerResourceDesc.get(containerDesc.documentSelfLink)
+                groupPlacementState.resourceQuotaPerResourceDesc
+                        .get(containerDesc.documentSelfLink)
                         .intValue());
     }
 
@@ -1450,7 +1459,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         // setup Group Placement:
         groupPlacementState = TestRequestStateFactory.createGroupResourcePlacementState();
         groupPlacementState.resourcePoolLink = resourcePool.documentSelfLink;
-        groupPlacementState = doPost(groupPlacementState, GroupResourcePlacementService.FACTORY_LINK);
+        groupPlacementState = doPost(groupPlacementState,
+                GroupResourcePlacementService.FACTORY_LINK);
         assertNotNull(groupPlacementState);
 
         // 1. Request a container instance:
@@ -1498,7 +1508,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                     .createGroupResourcePlacementState();
             groupPlacementState2.memoryLimit = 0;
             groupPlacementState2.resourcePoolLink = defaultResourcePool.documentSelfLink;
-            groupPlacementState2 = doPost(groupPlacementState2, GroupResourcePlacementService.FACTORY_LINK);
+            groupPlacementState2 = doPost(groupPlacementState2,
+                    GroupResourcePlacementService.FACTORY_LINK);
 
             // 1. Request a container instance:
             RequestBrokerState request = TestRequestStateFactory.createRequestState();
@@ -1839,20 +1850,16 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
     public void testCompositeComponentWithContainerServiceLinksAndNetwork() throws Throwable {
         CompositeComponent cc = setUpCompositeWithServiceLinks(true);
 
-        String containerLink1 = null;
         String containerLink2 = null;
 
         Iterator<String> iterator = cc.componentLinks.iterator();
         while (iterator.hasNext()) {
             String link = iterator.next();
-            if (link.startsWith(ContainerFactoryService.SELF_LINK + "/container1")) {
-                containerLink1 = link;
-            } else if (link.startsWith(ContainerFactoryService.SELF_LINK + "/container2")) {
+            if (link.startsWith(ContainerFactoryService.SELF_LINK + "/container2")) {
                 containerLink2 = link;
             }
         }
 
-        ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
         ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
 
         String[] links = cont2.networks.values().iterator().next().links;

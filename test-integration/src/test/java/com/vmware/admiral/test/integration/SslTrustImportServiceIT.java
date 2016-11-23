@@ -130,9 +130,4 @@ public class SslTrustImportServiceIT extends ComputeBaseTest {
         host.testWait();
         return result[0];
     }
-
-    private static String excludePort(String s) {
-        return s.substring(0, s.lastIndexOf("-"));
-    }
-
 }

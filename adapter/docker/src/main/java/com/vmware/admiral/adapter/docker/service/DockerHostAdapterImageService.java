@@ -53,10 +53,11 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
         DockerImageHostRequest request = op.getBody(DockerImageHostRequest.class);
         request.validate();
 
-        logFine("Processing host docker image operation request %s", request.getRequestTrackingLog());
+        logFine("Processing host docker image operation request %s",
+                request.getRequestTrackingLog());
         getContainerHost(request, op, request.resourceReference,
                 (computeState, commandInput) ->
-                        processOperation(request, op, computeState, commandInput));
+                processOperation(request, op, computeState, commandInput));
     }
 
     private void processOperation(DockerImageHostRequest request, Operation op,
@@ -86,7 +87,8 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
         }
     }
 
-    private void doLoadImage(DockerImageHostRequest request, Operation op, ComputeService.ComputeState computeState,
+    private void doLoadImage(DockerImageHostRequest request, Operation op,
+            ComputeService.ComputeState computeState,
             CommandInput commandInput) {
 
         String ref = request.customProperties.get(DOCKER_IMAGE_NAME_PROP_NAME);
@@ -95,22 +97,30 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
             if (ex != null) {
                 fail(request, o, ex);
             } else {
-                handleExceptions(request, op,
+                handleExceptions(
+                        request,
+                        op,
                         () -> {
-                            logInfo("Image loaded: %s on remote machine: %s", ref, computeState.documentSelfLink);
+                            logInfo("Image loaded: %s on remote machine: %s", ref,
+                                    computeState.documentSelfLink);
                             patchTaskStage(request, TaskState.TaskStage.FINISHED, null);
                         }
                 );
             }
         };
 
-        imageRetrievalManager.retrieveAgentImage(ref, request, (imageData) -> {
-            processLoadedImageData(computeState, commandInput, imageData, ref, imageCompletionHandler);
-        });
+        imageRetrievalManager.retrieveAgentImage(
+                ref,
+                request,
+                (imageData) -> {
+                    processLoadedImageData(computeState, commandInput, imageData, ref,
+                            imageCompletionHandler);
+                });
     }
 
     private void processLoadedImageData(ComputeService.ComputeState computeState,
-            CommandInput commandInput, byte[] imageData, String fileName, Operation.CompletionHandler
+            CommandInput commandInput, byte[] imageData, String fileName,
+            Operation.CompletionHandler
             imageCompletionHandler) {
         if (imageData == null || imageData.length == 0) {
             String errMsg = String.format("No content loaded for file: %s ", fileName);
@@ -138,19 +148,26 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
                 .withProperty(DOCKER_BUILD_IMAGE_INSPECT_NAME_PROP_NAME,
                         customProperties.get(DOCKER_BUILD_IMAGE_INSPECT_NAME_PROP_NAME));
 
-        getCommandExecutor(computeState).inspectImage(commandInput, (o, ex) -> {
-            if (ex != null) {
-                logWarning("Unable to inspect image %s on the remote host: %s",
-                        commandInput.getProperties().get(DOCKER_BUILD_IMAGE_INSPECT_NAME_PROP_NAME), ex);
-                fail(request, ex);
-            } else {
-                logInfo("Completed inspect image request on remote machine: %s ", computeState.documentSelfLink);
-                JsonElement rawResult = o.getBody(JsonElement.class);
-                ServiceTaskCallbackResponse callbackResponse = createSearchResponse(rawResult);
-                patchTaskStage(request, TaskState.TaskStage.FINISHED, null, callbackResponse);
-            }
+        getCommandExecutor(computeState)
+                .inspectImage(
+                        commandInput,
+                        (o, ex) -> {
+                            if (ex != null) {
+                                logWarning(
+                                        "Unable to inspect image %s on the remote host: %s",
+                                        commandInput.getProperties().get(
+                                                DOCKER_BUILD_IMAGE_INSPECT_NAME_PROP_NAME), ex);
+                                fail(request, ex);
+                            } else {
+                                logInfo("Completed inspect image request on remote machine: %s ",
+                                        computeState.documentSelfLink);
+                                JsonElement rawResult = o.getBody(JsonElement.class);
+                                ServiceTaskCallbackResponse callbackResponse = createSearchResponse(rawResult);
+                                patchTaskStage(request, TaskState.TaskStage.FINISHED, null,
+                                        callbackResponse);
+                            }
 
-        });
+                        });
     }
 
     private ServiceTaskCallbackResponse createSearchResponse(JsonElement rawResult) {
@@ -160,6 +177,7 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
     }
 
     private static class ImageInspectResponse extends ServiceTaskCallbackResponse {
+        @SuppressWarnings("unused")
         public JsonElement imageDetails;
     }
 
@@ -169,18 +187,24 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
 
         Map<String, String> customProperties = request.customProperties;
         commandInput
-                .withProperty(DOCKER_BUILD_IMAGE_TAG_PROP_NAME, customProperties.get(DOCKER_BUILD_IMAGE_TAG_PROP_NAME));
+                .withProperty(DOCKER_BUILD_IMAGE_TAG_PROP_NAME,
+                        customProperties.get(DOCKER_BUILD_IMAGE_TAG_PROP_NAME));
 
-        getCommandExecutor(computeState).deleteImage(commandInput, (operation, ex) -> {
-            String imageName = (String) commandInput.getProperties().get(DOCKER_BUILD_IMAGE_TAG_PROP_NAME);
-            if (ex != null) {
-                logWarning("Unable to delete image %s on the remote host: %s", imageName, ex);
-                fail(request, ex);
-            } else {
-                logInfo("Image deleted %s on remote machine: %s ", imageName, computeState.documentSelfLink);
-            }
+        getCommandExecutor(computeState).deleteImage(
+                commandInput,
+                (operation, ex) -> {
+                    String imageName = (String) commandInput.getProperties().get(
+                            DOCKER_BUILD_IMAGE_TAG_PROP_NAME);
+                    if (ex != null) {
+                        logWarning("Unable to delete image %s on the remote host: %s", imageName,
+                                ex);
+                        fail(request, ex);
+                    } else {
+                        logInfo("Image deleted %s on remote machine: %s ", imageName,
+                                computeState.documentSelfLink);
+                    }
 
-        });
+                });
     }
 
     private void doBuildImage(AdapterRequest request, ComputeService.ComputeState computeState,
@@ -190,32 +214,38 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
         Map<String, String> customProperties = request.customProperties;
 
         DockerImageHostRequest buildRequest = (DockerImageHostRequest) request;
-        commandInput.withProperty(DOCKER_BUILD_IMAGE_DOCKERFILE_DATA, buildRequest.getDockerImageData())
+        commandInput
+                .withProperty(DOCKER_BUILD_IMAGE_DOCKERFILE_DATA, buildRequest.getDockerImageData())
                 .withProperty(DOCKER_BUILD_IMAGE_DOCKERFILE_PROP_NAME,
                         customProperties.get(DOCKER_BUILD_IMAGE_DOCKERFILE_PROP_NAME))
                 .withProperty(DOCKER_BUILD_IMAGE_FORCERM_PROP_NAME, customProperties.get
                         (DOCKER_BUILD_IMAGE_FORCERM_PROP_NAME))
                 .withProperty(DOCKER_BUILD_IMAGE_NOCACHE_PROP_NAME, customProperties.get
                         (DOCKER_BUILD_IMAGE_NOCACHE_PROP_NAME))
-                .withProperty(DOCKER_BUILD_IMAGE_TAG_PROP_NAME, customProperties.get(DOCKER_BUILD_IMAGE_TAG_PROP_NAME));
+                .withProperty(DOCKER_BUILD_IMAGE_TAG_PROP_NAME,
+                        customProperties.get(DOCKER_BUILD_IMAGE_TAG_PROP_NAME));
 
         if (customProperties.get(DOCKER_BUILD_IMAGE_BUILDARGS_PROP_NAME) != null) {
             commandInput.withProperty(DOCKER_BUILD_IMAGE_BUILDARGS_PROP_NAME, customProperties.get
                     (DOCKER_BUILD_IMAGE_BUILDARGS_PROP_NAME));
         }
 
-        getCommandExecutor(computeState).buildImage(commandInput, (operation, ex) -> {
-            String imageName = (String) commandInput.getProperties().get(DOCKER_BUILD_IMAGE_TAG_PROP_NAME);
-            if (ex != null) {
-                logSevere("Unable to build image %s on the remote host! ", imageName);
-                fail(request, ex);
-            } else {
-                logInfo("Image created: %s on remote machine: %s", imageName, computeState.documentSelfLink);
+        getCommandExecutor(computeState).buildImage(
+                commandInput,
+                (operation, ex) -> {
+                    String imageName = (String) commandInput.getProperties().get(
+                            DOCKER_BUILD_IMAGE_TAG_PROP_NAME);
+                    if (ex != null) {
+                        logSevere("Unable to build image %s on the remote host! ", imageName);
+                        fail(request, ex);
+                    } else {
+                        logInfo("Image created: %s on remote machine: %s", imageName,
+                                computeState.documentSelfLink);
 
-                patchTaskStage(request, TaskState.TaskStage.FINISHED, null);
-            }
+                        patchTaskStage(request, TaskState.TaskStage.FINISHED, null);
+                    }
 
-        });
+                });
     }
 
     private void updateSslTrust(AdapterRequest request, CommandInput commandInput) {

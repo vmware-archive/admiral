@@ -32,7 +32,6 @@ import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.request.RequestBrokerService;
 import com.vmware.admiral.test.integration.SimpleHttpsClient;
 import com.vmware.admiral.test.integration.compute.aws.AwsComputeProvisionIT;
-import com.vmware.admiral.test.integration.compute.vsphere.VsphereComputeProvisionIT;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
@@ -47,18 +46,7 @@ public class WordpressProvisionIT extends BaseComputeProvisionIT {
     private static Consumer<EndpointState> awsEndpointExtender = endpointState -> new AwsComputeProvisionIT()
             .extendEndpoint(endpointState);
 
-    private static Consumer<EndpointState> vSphereEndpointExtender = endpointState -> new VsphereComputeProvisionIT()
-            .extendEndpoint(endpointState);
-
     private static Runnable awsSetUp = () -> {
-    };
-
-    private static Runnable vSphereSetUp = () -> {
-        try {
-            new VsphereComputeProvisionIT().doSetUp();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     };
 
     @Parameterized.Parameters
@@ -70,9 +58,9 @@ public class WordpressProvisionIT extends BaseComputeProvisionIT {
         });
     }
 
-    private EndpointType endpointType;
-    private Consumer<EndpointState> endpointExtender;
-    private Runnable setUp;
+    private final EndpointType endpointType;
+    private final Consumer<EndpointState> endpointExtender;
+    private final Runnable setUp;
 
     public WordpressProvisionIT(EndpointType endpointType,
             Consumer<EndpointState> endpointExtender, Runnable setUp) {

@@ -29,6 +29,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 
 import org.junit.After;
@@ -61,7 +62,8 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
 
     protected static String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
 
-    private static final String IMAGE_NAME = IMAGE_NAME_PREFIX + DriverConstants.RUNTIME_NODEJS_4_3_0;
+    private static final String IMAGE_NAME = IMAGE_NAME_PREFIX
+            + DriverConstants.RUNTIME_NODEJS_4_3_0;
 
     private static String RUNTIME_NODEJS = "nodejs_4.3.0";
 
@@ -77,13 +79,15 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
 
     @AfterClass
     public static void afterClass()
-            throws CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException,
+            throws CertificateException, NoSuchAlgorithmException, KeyStoreException,
+            KeyManagementException,
             IOException {
         SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildImageLink);
         SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildBaseImageLink);
         serviceClient.stop();
     }
 
+    @Override
     @After
     public void provisioningTearDown() throws Exception {
     }
@@ -98,10 +102,12 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
     public void setup() throws Exception {
         setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
         triggerExecutionImageBuildWithoutDependencies();
-        dockerBuildImageLink = getBaseUrl() + createImageBuildRequestUri(IMAGE_NAME + ":latest", dockerHostCompute
-                .documentSelfLink);
-        dockerBuildBaseImageLink = getBaseUrl() + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
-                .documentSelfLink);
+        dockerBuildImageLink = getBaseUrl()
+                + createImageBuildRequestUri(IMAGE_NAME + ":latest", dockerHostCompute
+                        .documentSelfLink);
+        dockerBuildBaseImageLink = getBaseUrl()
+                + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
+                        .documentSelfLink);
     }
 
     @Test
@@ -134,14 +140,15 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
 
         // Execute the created Closure
         Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
+        Map<String, JsonElement> inputs = new HashMap<>();
         inputs.put("a", new JsonPrimitive(expectedInVar));
         closureRequest.inputs = inputs;
 
         executeClosure(createdClosure, closureRequest);
 
         // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000
+                + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
 
         Closure closure = getClosure(createdClosure.documentSelfLink);
         assertNotNull(closure);
@@ -185,7 +192,8 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
         executeClosure(createdClosure, closureRequest);
 
         // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000
+                + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink);
 
@@ -206,15 +214,19 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
             throws InterruptedException, ExecutionException, TimeoutException {
         Closure closureState = new Closure();
         closureState.descriptionLink = closureDescription.documentSelfLink;
-        URI targetUri = URI.create(getBaseUrl() + buildServiceUri(ClosureFactoryService.FACTORY_LINK));
-        Operation op = sendRequest(serviceClient, Operation.createPost(targetUri).setBody(closureState));
+        URI targetUri = URI.create(getBaseUrl()
+                + buildServiceUri(ClosureFactoryService.FACTORY_LINK));
+        Operation op = sendRequest(serviceClient,
+                Operation.createPost(targetUri).setBody(closureState));
         return op.getBody(Closure.class);
     }
 
     protected ClosureDescription createClosureDescription(String taskDefPayload)
             throws InterruptedException, ExecutionException, TimeoutException {
-        URI targetUri = URI.create(getBaseUrl() + buildServiceUri(ClosureDescriptionFactoryService.FACTORY_LINK));
-        Operation op = sendRequest(serviceClient, Operation.createPost(targetUri).setBody(taskDefPayload));
+        URI targetUri = URI.create(getBaseUrl()
+                + buildServiceUri(ClosureDescriptionFactoryService.FACTORY_LINK));
+        Operation op = sendRequest(serviceClient,
+                Operation.createPost(targetUri).setBody(taskDefPayload));
         return op.getBody(ClosureDescription.class);
     }
 
@@ -222,7 +234,8 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
             throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException,
             KeyManagementException, InterruptedException, ExecutionException, TimeoutException {
         URI targetUri = URI.create(getBaseUrl() + buildServiceUri(createdClosure.documentSelfLink));
-        Operation op = sendRequest(serviceClient, Operation.createPost(targetUri).setBody(closureRequest));
+        Operation op = sendRequest(serviceClient,
+                Operation.createPost(targetUri).setBody(closureRequest));
         assertNotNull(op);
     }
 
@@ -261,7 +274,7 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
 
         // Execute the created Closure
         Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
+        Map<String, JsonElement> inputs = new HashMap<>();
         inputs.put("a", new JsonPrimitive(expectedInVar));
         closureRequest.inputs = inputs;
 
@@ -285,13 +298,15 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
         cleanResourceUri(createdClosure.documentSelfLink);
     }
 
-    protected String waitForBuildCompletion(String imagePrefix, ClosureDescription closureDescription,
+    protected String waitForBuildCompletion(String imagePrefix,
+            ClosureDescription closureDescription,
             long timeout) throws Exception {
         String imageName = prepareImageName(imagePrefix, closureDescription);
         logger.info(
                 "Build for docker execution image: " + imageName + " on host: " + dockerHostCompute
                         .documentSelfLink);
-        String dockerBuildImageLink = createImageBuildRequestUri(imageName, dockerHostCompute.documentSelfLink);
+        String dockerBuildImageLink = createImageBuildRequestUri(imageName,
+                dockerHostCompute.documentSelfLink);
         long startTime = System.currentTimeMillis();
         logger.info("Waiting for docker image build: " + dockerBuildImageLink);
         while (!isImageReady(getBaseUrl(), dockerBuildImageLink) && !isTimeoutElapsed(startTime,
@@ -302,22 +317,27 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
                 e.printStackTrace();
             }
         }
-        logger.info("Docker image " + imageName + " build on host: " + dockerHostCompute.documentSelfLink);
+        logger.info("Docker image " + imageName + " build on host: "
+                + dockerHostCompute.documentSelfLink);
         Thread.sleep(closureDescription.resources.timeoutSeconds.intValue() * 1000 + timeout);
 
         return dockerBuildImageLink;
     }
 
-    private boolean isImageReady(String serviceHostUri, String dockerBuildImageLink) throws Exception {
-        SimpleHttpsClient.HttpResponse imageRequestResponse = SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod
+    private boolean isImageReady(String serviceHostUri, String dockerBuildImageLink)
+            throws Exception {
+        SimpleHttpsClient.HttpResponse imageRequestResponse = SimpleHttpsClient.execute(
+                SimpleHttpsClient.HttpMethod
                 .GET, serviceHostUri + dockerBuildImageLink, null);
         if (imageRequestResponse == null || imageRequestResponse.responseBody == null) {
             return false;
         }
-        DockerImage imageRequest = Utils.fromJson(imageRequestResponse.responseBody, DockerImage.class);
+        DockerImage imageRequest = Utils.fromJson(imageRequestResponse.responseBody,
+                DockerImage.class);
         assertNotNull(imageRequest);
 
-        if (TaskState.isFailed(imageRequest.taskInfo) || TaskState.isCancelled(imageRequest.taskInfo)) {
+        if (TaskState.isFailed(imageRequest.taskInfo)
+                || TaskState.isCancelled(imageRequest.taskInfo)) {
             throw new Exception("Unable to build docker execution image: " + dockerBuildImageLink);
         }
 
@@ -341,7 +361,8 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
     }
 
     protected static String createImageBuildRequestUri(String imageName, String computeStateLink) {
-        String imageBuildRequestId = ClosureUtils.calculateHash(new String[] { imageName, "/", computeStateLink });
+        String imageBuildRequestId = ClosureUtils.calculateHash(new String[] { imageName, "/",
+                computeStateLink });
 
         return UriUtils.buildUriPath(DockerImageFactoryService.FACTORY_LINK, imageBuildRequestId);
     }

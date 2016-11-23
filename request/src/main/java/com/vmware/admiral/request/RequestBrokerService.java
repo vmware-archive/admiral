@@ -432,35 +432,14 @@ public class RequestBrokerService extends
                 //                createClosureRemovalTask(state);
                 createClosureRemovalTasks(state);
             } else {
-                failTask(null, new IllegalArgumentException("Not supported operation for closure type: "
-                        + state.operation));
+                failTask(null, new IllegalArgumentException(
+                        "Not supported operation for closure type: "
+                                + state.operation));
             }
         } else {
             failTask(null, new IllegalArgumentException("Not supported resourceType: "
                     + state.resourceType));
         }
-    }
-
-    private void createClosureRemovalTask(RequestBrokerState state) {
-        if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
-//            sendSelfPatch(createUpdateSubStageTask(state, SubStage.ERROR));
-            proceedTo(SubStage.ERROR);
-            return;
-        }
-
-        // TODO: check the following
-        String resourceToRemove = state.resourceLinks.iterator().next();
-        sendRequest(Operation.createDelete(this,
-                resourceToRemove)
-                .setContextId(getSelfId())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        failTask("Failed to delete closure ", ex);
-                        return;
-                    }
-//                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATED));
-                    proceedTo(SubStage.ALLOCATED);
-                }));
     }
 
     private void createCompositeComponentOperationTask(RequestBrokerState state) {
@@ -562,7 +541,8 @@ public class RequestBrokerService extends
         hostRemovalState.customProperties = state.customProperties;
         hostRemovalState.requestTrackerLink = state.requestTrackerLink;
 
-        sendRequest(Operation.createPost(this, ContainerHostRemovalTaskFactoryService.SELF_LINK)
+        sendRequest(Operation
+                .createPost(this, ContainerHostRemovalTaskFactoryService.SELF_LINK)
                 .setBody(hostRemovalState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
@@ -633,7 +613,7 @@ public class RequestBrokerService extends
 
         removalState.externalInspectOnly = (state.customProperties != null
                 && "true".equalsIgnoreCase(state.customProperties
-                        .get(ContainerNetworkRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
+                .get(ContainerNetworkRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
         removalState.cleanupRemoval = cleanupRemoval;
 
         sendRequest(Operation.createPost(this, ContainerNetworkRemovalTaskService.FACTORY_LINK)
@@ -725,8 +705,8 @@ public class RequestBrokerService extends
         if (state.resourceLinks == null) {
             SubStage stage = errorState ? SubStage.ERROR : SubStage.ALLOCATED;
             proceedTo(stage);
-//            sendSelfPatch(createUpdateSubStageTask(state,
-//                    errorState ? SubStage.ERROR : SubStage.ALLOCATED));
+            //            sendSelfPatch(createUpdateSubStageTask(state,
+            //                    errorState ? SubStage.ERROR : SubStage.ALLOCATED));
             return;
         }
 
@@ -806,7 +786,7 @@ public class RequestBrokerService extends
             proceedTo(SubStage.RESERVED);
         } else if (isClosureType(state)) {
             // No reservation needed here, moving on...
-//            sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESERVED));
+            //            sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESERVED));
             proceedTo(SubStage.RESERVED);
         } else {
             getContainerDescription(state, (cd) -> createReservationTasks(state, cd));
@@ -1354,9 +1334,9 @@ public class RequestBrokerService extends
         return (isContainerType(state) || isContainerNetworkType(state) || isComputeType(state)
                 || isContainerVolumeType(state))
                 && (ContainerOperationType.CREATE.id.equals(state.operation)
-                || NetworkOperationType.CREATE.id.equals(state.operation)
-                || ComputeOperationType.CREATE.id.equals(state.operation)
-                || VolumeOperationType.CREATE.id.equals(state.operation));
+                        || NetworkOperationType.CREATE.id.equals(state.operation)
+                        || ComputeOperationType.CREATE.id.equals(state.operation)
+                        || VolumeOperationType.CREATE.id.equals(state.operation));
     }
 
     private String getPostAllocationOperation(RequestBrokerState state) {
