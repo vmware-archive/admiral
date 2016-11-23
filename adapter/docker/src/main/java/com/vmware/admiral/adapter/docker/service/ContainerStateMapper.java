@@ -16,8 +16,13 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_CREATED_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_ID_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_IMAGE_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_INSPECT_NETWORKS_PROPS.DOCKER_CONTAINER_NETWORK_ALIASES_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_INSPECT_NETWORKS_PROPS.DOCKER_CONTAINER_NETWORK_IPV4_ADDRESS_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_INSPECT_NETWORKS_PROPS.DOCKER_CONTAINER_NETWORK_IPV6_ADDRESS_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_INSPECT_NETWORKS_PROPS.DOCKER_CONTAINER_NETWORK_LINKS_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_SETTINGS_IP_ADDRESS_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_SETTINGS_NETWORKS_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_SETTINGS_PORTS_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_SETTINGS_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_STATE_PROP_NAME;
@@ -31,6 +36,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -40,6 +46,7 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.PortBinding;
+import com.vmware.admiral.compute.container.ServiceNetwork;
 
 /**
  * Map properties into ContainerState
@@ -71,10 +78,7 @@ public class ContainerStateMapper {
 
         mapConfigProperties(containerState, getMap(properties, DOCKER_CONTAINER_CONFIG_PROP_NAME));
 
-        mapPortBindingProperties(containerState,
-                getMap(properties, DOCKER_CONTAINER_NETWORK_SETTINGS_PROP_NAME));
-
-        mapContainerIPAddress(containerState,
+        mapNetworkSettingsProperties(containerState,
                 getMap(properties, DOCKER_CONTAINER_NETWORK_SETTINGS_PROP_NAME));
     }
 
@@ -118,10 +122,86 @@ public class ContainerStateMapper {
     }
 
     /**
+     * Process network settings like port bindings, IP addresses, connected networks
+     *
+     * @param containerState
+     * @param networkSettings
+     *            the network settings that were returned by an inspect command
+     */
+    private void mapNetworkSettingsProperties(ContainerState containerState,
+            Map<String, Object> networkSettings) {
+
+        mapPortBindingProperties(containerState, networkSettings);
+
+        mapNetworks(containerState,
+                getMap(networkSettings, DOCKER_CONTAINER_NETWORK_SETTINGS_NETWORKS_PROP_NAME));
+
+        /*
+         * related to https://bugzilla.eng.vmware.com/show_bug.cgi?id=1749340. The
+         * NetworkSettings.IPAddress is now deprecated in favor of the per-network defined addresses
+         * in NetworkSettings.Networks.<a-network>.IPAddress.
+         */
+        mapContainerIPAddress(containerState, networkSettings);
+    }
+
+    /**
+     * Process all networks a container is connected to
+     *
+     * @param containerState
+     * @param networks
+     *            the list of networks that was returned by an inspect command
+     */
+    private void mapNetworks(ContainerState containerState, Map<String, Object> networks) {
+        if (containerState.networks == null) {
+            containerState.networks = new HashMap<>();
+        }
+
+        if (networks != null) {
+            networks.keySet().forEach(networkName -> mapNetwork(containerState.networks, networkName,
+                    getMap(networks, networkName)));
+        }
+    }
+
+    /**
+     * Process a single network a container is connected to
+     *
+     * @param networks
+     *            the list of networks in a container state, usually retrieved by
+     *            <code>containerState.networks</code>
+     * @param networkName
+     *            the name of the network
+     * @param networkProps
+     *            the properties of this network that were returned by an inspect command
+     */
+    private void mapNetwork(Map<String, ServiceNetwork> networks, String networkName,
+            Map<String, Object> networkProps) {
+
+        // skip system defined networks
+        if (DockerNetworkAdapterService.DOCKER_PREDEFINED_NETWORKS.contains(networkName)) {
+            return;
+        }
+
+        ServiceNetwork network = new ServiceNetwork();
+        List<Object> aliasesList = getList(networkProps,
+                DOCKER_CONTAINER_NETWORK_ALIASES_PROP_NAME);
+        List<Object> linksList = getList(networkProps,
+                DOCKER_CONTAINER_NETWORK_LINKS_PROP_NAME);
+
+        network.name = networkName;
+        network.aliases = aliasesList == null ? null : aliasesList.toArray(new String[0]);
+        network.links = linksList == null ? null : linksList.toArray(new String[0]);
+        network.ipv4_address = (String) networkProps
+                .get(DOCKER_CONTAINER_NETWORK_IPV4_ADDRESS_PROP_NAME);
+        network.ipv6_address = (String) networkProps
+                .get(DOCKER_CONTAINER_NETWORK_IPV6_ADDRESS_PROP_NAME);
+
+        networks.put(networkName, network);
+    }
+
+    /**
      * Process port binding properties
      *
      * @param containerState
-     * @param hostConfig
      * @param networkSettings
      */
     private void mapPortBindingProperties(ContainerState containerState,
@@ -190,6 +270,13 @@ public class ContainerStateMapper {
         return map;
     }
 
+    private <T> List<T> getList(Map<String, Object> container, String propertyName) {
+        @SuppressWarnings("unchecked")
+        List<T> list = (List<T>) container.get(propertyName);
+
+        return list;
+    }
+
     /**
      * Convert a string to a Date object
      *
@@ -206,7 +293,7 @@ public class ContainerStateMapper {
             // docker uses RFC3339Nano date format
             return Instant.parse(str).toEpochMilli();
         } catch (DateTimeParseException e) {
-            //workaround for VIC host until https://github.com/vmware/vic/issues/1874 is fixed
+            // workaround for VIC host until https://github.com/vmware/vic/issues/1874 is fixed
             if (str.length() == 0) {
                 return null;
             }

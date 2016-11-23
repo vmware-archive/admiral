@@ -58,6 +58,8 @@ public interface DockerAdapterCommandExecutor {
     String DOCKER_CONTAINER_NETWORK_SETTINGS_PROP_NAME = "NetworkSettings";
     String DOCKER_CONTAINER_NETWORK_SETTINGS_PORTS_PROP_NAME = "Ports";
     String DOCKER_CONTAINER_NETWORK_SETTINGS_IP_ADDRESS_PROP_NAME = "IPAddress";
+    String DOCKER_CONTAINER_NETWORK_SETTINGS_NETWORKS_PROP_NAME = "Networks";
+
     String DOCKER_CONTAINER_NETWORKING_CONFIG_PROP_NAME = "NetworkingConfig";
     String DOCKER_CONTAINER_NETWORK_CHECK_DUPLICATE_PROP_NAME = "CheckDuplicate";
 
@@ -133,6 +135,15 @@ public interface DockerAdapterCommandExecutor {
             String LINKS = "Links";
             String ALIASES = "Aliases";
         }
+
+    }
+
+    interface DOCKER_CONTAINER_INSPECT_NETWORKS_PROPS {
+
+        String DOCKER_CONTAINER_NETWORK_ALIASES_PROP_NAME = "Aliases";
+        String DOCKER_CONTAINER_NETWORK_IPV4_ADDRESS_PROP_NAME = "IPAddress";
+        String DOCKER_CONTAINER_NETWORK_IPV6_ADDRESS_PROP_NAME = "GlobalIPv6Address";
+        String DOCKER_CONTAINER_NETWORK_LINKS_PROP_NAME = "Links";
 
     }
 

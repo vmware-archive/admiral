@@ -99,6 +99,7 @@ public class ServiceNetwork {
         } else {
             sb.append("-");
         }
+        sb.append("',");
         sb.append("links='");
         if (links != null) {
             StringJoiner sj = new StringJoiner(",");
