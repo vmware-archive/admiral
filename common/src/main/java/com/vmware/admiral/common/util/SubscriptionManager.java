@@ -161,6 +161,7 @@ public class SubscriptionManager<T extends ServiceDocument> implements Closeable
 
         Operation subscribe = Operation
                 .createPost(buildSubscribeForUri())
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_SKIPPED_NOTIFICATIONS)
                 .setReferer(host.getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {

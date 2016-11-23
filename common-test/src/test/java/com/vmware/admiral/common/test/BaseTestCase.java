@@ -18,6 +18,8 @@ import static org.junit.Assert.fail;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -29,6 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+import javax.net.ssl.SSLContext;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -41,15 +44,19 @@ import org.objenesis.ObjenesisStd;
 import org.objenesis.instantiator.ObjectInstantiator;
 
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.common.util.TestServerX509TrustManager;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationProcessingChain;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
@@ -57,6 +64,7 @@ import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.http.netty.NettyHttpServiceClient;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.VerificationHost;
 import com.vmware.xenon.services.common.AuthCredentialsService;
@@ -153,9 +161,53 @@ public abstract class BaseTestCase {
                 args);
         h.setMaintenanceIntervalMicros(TimeUnit.MILLISECONDS
                 .toMicros(MAINTENANCE_INTERVAL_MILLIS));
+
+
         h.start();
 
         return h;
+    }
+
+    protected Map.Entry<VerificationHost, ServerX509TrustManager> createHostWithTrustManager(
+            long reloadTime) throws Throwable {
+        ServiceHost.Arguments args = new ServiceHost.Arguments();
+        args.sandbox = null; // ask runtime to pick a random storage location
+        args.port = 0; // ask runtime to pick a random port
+        Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains = new HashMap<>();
+        customizeChains(chains);
+
+        VerificationHost h = VerificationHost.initialize(new CustomizationVerificationHost(chains),
+                args);
+        h.setMaintenanceIntervalMicros(TimeUnit.MILLISECONDS
+                .toMicros(MAINTENANCE_INTERVAL_MILLIS));
+
+        ServerX509TrustManager trustManager = new TestServerX509TrustManager(h, reloadTime);
+        SSLContext sslContext = CertificateUtil.createSSLContext(trustManager, null);
+
+        h.setClient(createServiceClient(sslContext, 0, h));
+        h.start();
+
+        return new AbstractMap.SimpleEntry<>(h, trustManager);
+    }
+
+    private ServiceClient createServiceClient(SSLContext sslContext,
+            int requestPayloadSizeLimit, VerificationHost verificationHost) {
+        try {
+            String userAgent = ServiceHost.class.getSimpleName();
+            ServiceClient serviceClient = NettyHttpServiceClient.create(userAgent,
+                    null,
+                    verificationHost.getScheduledExecutor(),
+                    verificationHost);
+            if (requestPayloadSizeLimit > 0) {
+                serviceClient.setRequestPayloadSizeLimit(requestPayloadSizeLimit);
+            }
+            serviceClient.setSSLContext(sslContext);
+
+            return serviceClient;
+
+        } catch (URISyntaxException e) {
+            throw new RuntimeException("Failed to create ServiceClient", e);
+        }
     }
 
     protected void customizeChains(
