@@ -28,6 +28,7 @@ import java.util.UUID;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
@@ -46,6 +47,9 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.network.Ipam;
+import com.vmware.admiral.compute.container.network.IpamConfig;
+import com.vmware.admiral.compute.container.network.NetworkUtils;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
@@ -309,7 +313,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.get(0));
+        String compositeComponentLink = request.resourceLinks.iterator().next();
+        CompositeComponent cc = searchForDocument(CompositeComponent.class, compositeComponentLink);
 
         String networkLink = null;
         String containerLink1 = null;
@@ -327,8 +332,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
             }
         }
 
-        ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
-        ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
+        ContainerState cont1 = searchForDocument(ContainerState.class, containerLink1);
+        ContainerState cont2 = searchForDocument(ContainerState.class, containerLink2);
 
         boolean containerIsProvisionedOnAnyHosts = cont1.parentLink
                 .equals(dockerHost1.documentSelfLink)
@@ -342,7 +347,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         // provisioned on different hosts
         assertFalse(cont1.parentLink.equals(cont2.parentLink));
 
-        ContainerNetworkState network = getDocument(ContainerNetworkState.class, networkLink);
+        ContainerNetworkState network = searchForDocument(ContainerNetworkState.class, networkLink);
         boolean networkIsProvisionedOnAnyHosts = network.originatingHostLink
                 .equals(dockerHost1.documentSelfLink)
                 || network.originatingHostLink.equals(dockerHost2.documentSelfLink);
@@ -352,6 +357,178 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(cc.documentSelfLink, cont2.compositeComponentLink);
         assertTrue((network.compositeComponentLinks.size() == 1)
                 && network.compositeComponentLinks.contains(cc.documentSelfLink));
+
+        // Delete container 2
+        request = TestRequestStateFactory.createRequestState();
+        request.operation = ContainerOperationType.DELETE.id;
+        request.resourceLinks = new ArrayList<>();
+        request.resourceLinks.add(containerLink2);
+        request = startRequest(request);
+
+        request = waitForRequestToComplete(request);
+
+        // Verify the container is removed
+        cont2 = searchForDocument(ContainerState.class, containerLink2);
+        assertNull(cont2);
+
+        // Verify the composite component is not removed (there is still 1 container)
+        cc = searchForDocument(CompositeComponent.class, compositeComponentLink);
+        assertNotNull(cc);
+
+        // Delete container 1
+        request = TestRequestStateFactory.createRequestState();
+        request.operation = ContainerOperationType.DELETE.id;
+        request.resourceLinks = new ArrayList<>();
+        request.resourceLinks.add(containerLink1);
+        request = startRequest(request);
+
+        request = waitForRequestToComplete(request);
+
+        // Verify the container is removed
+        cont1 = searchForDocument(ContainerState.class, containerLink2);
+        assertNull(cont1);
+
+        // Verify the composite component is not removed (there is still a network)
+        cc = searchForDocument(CompositeComponent.class, compositeComponentLink);
+        assertNotNull(cc);
+    }
+
+    @Test
+    public void testCompositeComponentWithContainerExternalNetworkRequestLifeCycle() throws Throwable {
+        host.log(
+                "########  Start of testCompositeComponentWithContainerExternalNetworkRequestLifeCycle ######## ");
+
+        // setup Composite description with 2 containers and 1 external network
+
+        String networkName = "external-net";
+
+        // create external network (same as HostNetworkListDataCollection discovers external networks)
+        ContainerNetworkState networkState = new ContainerNetworkState();
+        networkState.id = UUID.randomUUID().toString();
+        networkState.name = networkName;
+        networkState.documentSelfLink = NetworkUtils.buildNetworkLink(networkState.id);
+        networkState.external = true;
+
+        networkState.tenantLinks = groupPlacementState.tenantLinks;
+        networkState.descriptionLink = String.format("%s-%s",
+                ContainerNetworkDescriptionService.DISCOVERED_DESCRIPTION_LINK,
+                UUID.randomUUID().toString());
+        networkState.originatingHostLink = computeHost.documentSelfLink;
+        networkState.parentLinks = new ArrayList<>(
+                Arrays.asList(computeHost.documentSelfLink));
+        networkState.adapterManagementReference = UriUtils
+                .buildUri(ManagementUriParts.ADAPTER_DOCKER_NETWORK);
+
+        networkState.powerState = ContainerNetworkState.PowerState.CONNECTED;
+        networkState.driver = "bridge";
+        networkState.ipam = new Ipam();
+        networkState.ipam.driver = "default";
+        networkState.ipam.config = new IpamConfig[1];
+        networkState.ipam.config[0] = new IpamConfig();
+        networkState.ipam.config[0].subnet = "172.20.0.0/16";
+        networkState.ipam.config[0].gateway = "172.20.0.1";
+        networkState.connectedContainersCount = 0;
+        networkState.options = new HashMap<>();
+        networkState = doPost(networkState, ContainerNetworkService.FACTORY_LINK);
+        addForDeletion(networkState);
+        MockDockerNetworkAdapterService.addNetworkId(extractId(computeHost.documentSelfLink),
+                networkState.id, networkState.id);
+        MockDockerNetworkAdapterService.addNetworkNames(extractId(computeHost.documentSelfLink),
+                networkState.id, networkState.name);
+
+        ContainerNetworkDescription networkDesc = NetworkUtils
+                .createContainerNetworkDescription(networkState);
+        networkDesc.external = networkState.external;
+
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
+        container1Desc.documentSelfLink = UUID.randomUUID().toString();
+        container1Desc.name = "container1";
+        container1Desc._cluster = 2;
+        container1Desc.networks = new HashMap<>();
+        container1Desc.networks.put(networkName, new ServiceNetwork());
+
+        // create composite description, do not override the documentSelfLinks for the descriptions
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, networkDesc, container1Desc);
+        assertNotNull(compositeDesc);
+
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+
+        // 1. Request a composite container:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+
+        // Verify request status
+        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+
+        assertEquals(Integer.valueOf(100), rs.progress);
+        assertEquals(1, request.resourceLinks.size());
+
+        String compositeComponentLink = request.resourceLinks.iterator().next();
+        CompositeComponent cc = searchForDocument(CompositeComponent.class, compositeComponentLink);
+
+        String networkLink = null;
+        String containerLink1 = null;
+        String containerLink2 = null;
+
+        Iterator<String> iterator = cc.componentLinks.iterator();
+        while (iterator.hasNext()) {
+            String link = iterator.next();
+            if (link.startsWith(ContainerNetworkService.FACTORY_LINK)) {
+                networkLink = link;
+            } else if (containerLink1 == null) {
+                containerLink1 = link;
+            } else {
+                containerLink2 = link;
+            }
+        }
+
+        // Delete container 2
+        request = TestRequestStateFactory.createRequestState();
+        request.operation = ContainerOperationType.DELETE.id;
+        request.resourceLinks = new ArrayList<>();
+        request.resourceLinks.add(containerLink2);
+        request = startRequest(request);
+
+        request = waitForRequestToComplete(request);
+
+        // Verify the container is removed
+        ContainerState cont2 = searchForDocument(ContainerState.class, containerLink2);
+        assertNull(cont2);
+
+        // Verify the composite component is not removed (there is still 1 container)
+        cc = searchForDocument(CompositeComponent.class, compositeComponentLink);
+        assertNotNull(cc);
+
+        // Delete container 1
+        request = TestRequestStateFactory.createRequestState();
+        request.operation = ContainerOperationType.DELETE.id;
+        request.resourceLinks = new ArrayList<>();
+        request.resourceLinks.add(containerLink1);
+        request = startRequest(request);
+
+        request = waitForRequestToComplete(request);
+
+        // Verify the container is removed
+        ContainerState cont1 = searchForDocument(ContainerState.class, containerLink2);
+        assertNull(cont1);
+
+        // Verify the composite component is removed (only a external network in the application)
+        waitFor(() -> {
+            CompositeComponent compositeComponent = searchForDocument(CompositeComponent.class, compositeComponentLink);
+            return compositeComponent == null;
+        });
+
+        // Verify the external network is not removed
+        ContainerNetworkState network = searchForDocument(ContainerNetworkState.class, networkLink);
+        assertNotNull(network);
     }
 
     @Test
