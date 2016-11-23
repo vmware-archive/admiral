@@ -397,25 +397,29 @@ public class HostNetworkListDataCollection extends StatefulService {
                 }
                 // check again if the network state already exists by id. This is needed in
                 // cluster mode not to create container network states that we already have
-                Operation operation = Operation
-                        .createGet(this, NetworkUtils.buildNetworkLink(networkState.id))
-                        .setCompletion(
-                                (o, ex) -> {
-                                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                                        createDiscoveredContainerNetwork(callback, counter,
-                                                networkState);
-                                    } else if (ex != null) {
-                                        logSevere("Failed to get network %s : %s",
-                                                networkState.name, ex.getMessage());
-                                        callback.accept(ex);
-                                    } else {
-                                        if (counter.decrementAndGet() == 0) {
-                                            callback.accept(null);
-                                        }
-                                    }
-                                });
 
-                sendRequest(operation);
+                List<ContainerNetworkState> networkStatesFound = new ArrayList<>();
+                QueryTask networkServicesQuery = QueryUtil.buildPropertyQuery(ContainerNetworkState.class,
+                        ContainerNetworkState.FIELD_NAME_ID, networkState.id);
+                new ServiceDocumentQuery<ContainerNetworkState>(getHost(), ContainerNetworkState.class).query(networkServicesQuery,
+                        (r) -> {
+                            if (r.hasException()) {
+                                logSevere("Failed to get network %s : %s",
+                                        networkState.name, r.getException().getMessage());
+                                callback.accept(r.getException());
+                            } else if (r.hasResult()) {
+                                networkStatesFound.add(r.getResult());
+                            } else {
+                                if (networkStatesFound.isEmpty()) {
+                                    createDiscoveredContainerNetwork(callback, counter,
+                                            networkState);
+                                } else {
+                                    if (counter.decrementAndGet() == 0) {
+                                        callback.accept(null);
+                                    }
+                                }
+                            }
+                        });
             }
         }
     }
