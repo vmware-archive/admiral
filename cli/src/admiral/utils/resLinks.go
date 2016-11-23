@@ -74,7 +74,7 @@ func CreateResLinkForDP(id string) string {
 }
 
 //Function to create resource links from the provided ID as parameter.
-func CreateResLinkForPlacementZone(id string) string {
+func CreateResLinkForResourcePool(id string) string {
 	if id == "" {
 		return ""
 	}
@@ -134,6 +134,23 @@ func CreateResLinkForContainerDescription(id string) string {
 		return ""
 	}
 	return "/resources/container-descriptions/" + id
+}
+
+func CreateResLinkForTag(id string) string {
+	if id == "" {
+		return ""
+	}
+	return "/resources/tags/" + id
+}
+
+func CreateResLinkForPlacementZone(id string) string {
+	if id == "" {
+		return ""
+	}
+	if strings.HasPrefix(id, "/") {
+		return "/resources/elastic-placement-zones-config" + id
+	}
+	return "/resources/elastic-placement-zones-config/" + id
 }
 
 //Function to create resource links from the provided ID as parameter.
@@ -219,7 +236,7 @@ func GetIdFilterUrl(shortId string, restype ResourceType) string {
 		shortSelfLink := CreateResLinksForPlacement(shortId)
 		url = PlacementFilter + createIdFilter(shortSelfLink)
 	case PLACEMENT_ZONE:
-		shortSelfLink := CreateResLinkForPlacementZone(shortId)
+		shortSelfLink := CreateResLinkForResourcePool(shortId)
 		url = PlacementZoneFilter + createIdFilter(shortSelfLink)
 	case PROJECT:
 		shortSelfLink := CreateResLinkForProject(shortId)

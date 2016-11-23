@@ -55,6 +55,7 @@ func initHostAdd() {
 	hostAddCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", deplPolicyFDesc)
 	hostAddCmd.Flags().BoolVar(&autoAccept, "accept", false, autoAcceptDesc)
 	hostAddCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)
+	hostAddCmd.Flags().StringSliceVar(&tags, "tag", []string{}, tagsDesc)
 	HostsRootCmd.AddCommand(hostAddCmd)
 }
 
@@ -65,7 +66,7 @@ func RunAddHost(args []string) (string, error) {
 	)
 	newID, err = hosts.AddHost(ipF, placementZoneId, deplPolicyF, credId, publicCert, privateCert, userName, passWord,
 		autoAccept,
-		custProps)
+		custProps, tags)
 
 	if err != nil {
 		return "", err
@@ -221,6 +222,8 @@ func initHostUpdate() {
 	hostUpdateCmd.Flags().StringVar(&credId, "credentials", "", prefixNew+credIdDesc)
 	hostUpdateCmd.Flags().StringVar(&placementZoneId, "placement-zone", "", prefixNew+placementZoneIdDesc)
 	hostUpdateCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", prefixNew+deplPolicyFDesc)
+	hostUpdateCmd.Flags().StringSliceVar(&tags, "tag-add", []string{}, tagsDesc)
+	hostUpdateCmd.Flags().StringSliceVar(&tagsToRemove, "tag-rm", []string{}, tagsToRemoveDesc)
 	hostUpdateCmd.Flags().BoolVar(&autoAccept, "accept", false, autoAcceptDesc)
 	HostsRootCmd.AddCommand(hostUpdateCmd)
 }
@@ -233,7 +236,7 @@ func RunHostUpdate(args []string) (string, error) {
 	if address, ok = ValidateArgsCount(args); !ok {
 		return "", MissingHostIdError
 	}
-	newID, err := hosts.EditHost(address, hostName, placementZoneId, deplPolicyF, credId, autoAccept)
+	newID, err := hosts.EditHost(address, hostName, placementZoneId, deplPolicyF, credId, autoAccept, tags, tagsToRemove)
 
 	if err != nil {
 		return "", err

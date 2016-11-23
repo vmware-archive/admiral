@@ -13,37 +13,43 @@ package properties
 
 import "regexp"
 
-func ParseCustomProperties(props []string) map[string]*string {
+func ParseCustomProperties(props []string, dst map[string]*string) {
+	if dst == nil {
+		dst = make(map[string]*string, 0)
+	}
 	if len(props) < 1 {
-		return nil
+		return
 	}
 	regex := regexp.MustCompile("\\w+\\s*=\\s*\\w+")
-
-	properties := make(map[string]*string)
 
 	for _, pair := range props {
 		if !regex.MatchString(pair) {
 			continue
 		}
 		keyVal := regexp.MustCompile("\\s*=\\s*").Split(pair, -1)
-		properties[keyVal[0]] = &keyVal[1]
+		dst[keyVal[0]] = &keyVal[1]
 	}
-	return properties
+
 }
 
-func AddCredentialsName(name string, props map[string]*string) map[string]*string {
+func AddCredentialsName(name string, props map[string]*string) {
 	props["__authCredentialsName"] = &name
-	return props
 }
 
-func MakeHostProperties(credLink, dpLink string, props map[string]*string) map[string]*string {
+func MakeHostProperties(credLink, dpLink, name string, dst map[string]*string) {
+	if dst == nil {
+		dst = make(map[string]*string, 0)
+	}
 	if credLink != "" {
-		props["__authCredentialsLink"] = &credLink
+		dst["__authCredentialsLink"] = &credLink
 	}
 	if dpLink != "" {
-		props["__deploymentPolicyLink"] = &dpLink
+		dst["__deploymentPolicyLink"] = &dpLink
+	}
+	if name != "" {
+		dst["__hostAlias"] = &name
 	}
 	api := "API"
-	props["__adapterDockerType"] = &api
-	return props
+	dst["__adapterDockerType"] = &api
+
 }

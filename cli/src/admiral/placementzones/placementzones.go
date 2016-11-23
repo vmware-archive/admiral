@@ -21,6 +21,7 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/properties"
+	"admiral/tags"
 	"admiral/utils"
 	"admiral/utils/selflink"
 	"fmt"
@@ -35,7 +36,8 @@ var (
 
 type PlacementZone struct {
 	ResourcePoolState ResourcePoolState `json:"resourcePoolState"`
-	DocumentSelfLink  string            `json:"documentSelfLink"`
+	EpzState          EpzState          `json:"epzState,omitempty"`
+	DocumentSelfLink  string            `json:"documentSelfLink,omitempty"`
 }
 
 func (pz *PlacementZone) GetID() string {
@@ -44,9 +46,9 @@ func (pz *PlacementZone) GetID() string {
 
 type ResourcePoolState struct {
 	Name             string             `json:"name,omitempty"`
-	MaxCpuCount      int64              `json:"maxCpuCount"`
-	MaxMemoryBytes   int64              `json:"maxMemoryBytes"`
-	CustomProperties map[string]*string `json:"customProperties"`
+	MaxCpuCount      int64              `json:"maxCpuCount,omitempty"`
+	MaxMemoryBytes   int64              `json:"maxMemoryBytes,omitempty"`
+	CustomProperties map[string]*string `json:"customProperties,omitempty"`
 	DocumentSelfLink string             `json:"documentSelfLink,omitempty"`
 }
 
@@ -90,6 +92,66 @@ func (rps *ResourcePoolState) GetUsedCpuPercentage() string {
 	return fmt.Sprintf("%.2f%%", utils.MathRound(result*100)/100)
 }
 
+type EpzState struct {
+	ResourcePoolLink string   `json:"resourcePoolLink,omitempty"`
+	TagLinksToMatch  []string `json:"tagLinksToMatch,omitempty"`
+	DocumentSelfLink string   `json:"documentSelfLink,omitempty"`
+}
+
+func (epzs *EpzState) AddTagLinks(tagsInput []string) error {
+	if epzs.TagLinksToMatch == nil {
+		epzs.TagLinksToMatch = make([]string, 0)
+	}
+	for _, ti := range tagsInput {
+		tagId, err := tags.GetTagIdByEqualKeyVals(ti, true)
+		if err != nil {
+			return err
+		}
+		tagLink := utils.CreateResLinkForTag(tagId)
+		if tagLink != "" && !epzs.containsTagLink(tagLink) {
+			epzs.TagLinksToMatch = append(epzs.TagLinksToMatch, tagLink)
+		}
+	}
+	return nil
+}
+
+func (epzs *EpzState) RemoveTagLinks(tagsInput []string) error {
+	indicesToDelete := make([]int, 0)
+	linksToMatch := make([]string, 0)
+	for _, ti := range tagsInput {
+		tagId, err := tags.GetTagIdByEqualKeyVals(ti, false)
+		if err != nil {
+			return err
+		}
+		if tagId != "" {
+			tagLink := utils.CreateResLinkForTag(tagId)
+			linksToMatch = append(linksToMatch, tagLink)
+		}
+	}
+
+	for _, link := range linksToMatch {
+		for i, tagLink := range epzs.TagLinksToMatch {
+			if tagLink == link {
+				indicesToDelete = append(indicesToDelete, i)
+			}
+		}
+	}
+
+	for _, index := range indicesToDelete {
+		epzs.TagLinksToMatch = append(epzs.TagLinksToMatch[:index], epzs.TagLinksToMatch[index+1:]...)
+	}
+	return nil
+}
+
+func (epzs *EpzState) containsTagLink(tagLink string) bool {
+	for _, tl := range epzs.TagLinksToMatch {
+		if tl == tagLink {
+			return true
+		}
+	}
+	return false
+}
+
 type PlacementZoneList struct {
 	TotalCount    int32                    `json:"totalCount"`
 	Documents     map[string]PlacementZone `json:"documents"`
@@ -122,11 +184,12 @@ func (rpl *PlacementZoneList) GetOutputString() string {
 	if rpl.GetCount() < 1 {
 		return utils.NoElementsFoundMessage
 	}
-	buffer.WriteString("ID\tNAME\tMEMORY\tCPU\n")
+	buffer.WriteString("ID\tNAME\tMEMORY\tCPU\tTAGS\n")
 	for _, link := range rpl.DocumentLinks {
 		val := rpl.Documents[link]
 		output := utils.GetTabSeparatedString(val.ResourcePoolState.GetID(), val.ResourcePoolState.Name,
-			val.ResourcePoolState.GetUsedMemoryPercentage(), val.ResourcePoolState.GetUsedCpuPercentage())
+			val.ResourcePoolState.GetUsedMemoryPercentage(), val.ResourcePoolState.GetUsedCpuPercentage(),
+			tags.TagsToString(val.EpzState.TagLinksToMatch))
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
@@ -148,7 +211,7 @@ func RemovePZ(pzName string) (string, error) {
 func RemovePZID(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(PlacementZoneList), utils.PLACEMENT_ZONE)
 	utils.CheckBlockingError(err)
-	url := config.URL + utils.CreateResLinkForPlacementZone(fullId)
+	url := config.URL + utils.CreateResLinkForResourcePool(fullId)
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -157,16 +220,25 @@ func RemovePZID(id string) (string, error) {
 	return id, nil
 }
 
-func AddPZ(rpName string, custProps []string) (string, error) {
+func AddPZ(rpName string, custProps, tags []string) (string, error) {
 	url := config.URL + "/resources/elastic-placement-zones-config"
-	cp := properties.ParseCustomProperties(custProps)
-	pzState := ResourcePoolState{
+
+	cp := make(map[string]*string, 0)
+	properties.ParseCustomProperties(custProps, cp)
+
+	resPoolState := ResourcePoolState{
 		Name:             rpName,
 		CustomProperties: cp,
 	}
+
+	epzState := EpzState{}
+	epzState.AddTagLinks(tags)
+
 	pz := &PlacementZone{
-		ResourcePoolState: pzState,
+		ResourcePoolState: resPoolState,
+		EpzState:          epzState,
 	}
+
 	jsonBody, _ := json.Marshal(pz)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -180,7 +252,7 @@ func AddPZ(rpName string, custProps []string) (string, error) {
 
 }
 
-func EditPZ(pzName, newName string) (string, error) {
+func EditPZ(pzName, newName string, tagsToAdd, tagsToRemove []string) (string, error) {
 	links := GetPZLinks(pzName)
 	if len(links) > 1 {
 		return "", DuplicateNamesError
@@ -188,17 +260,31 @@ func EditPZ(pzName, newName string) (string, error) {
 		return "", PlacementZoneNotFound
 	}
 	id := utils.GetResourceID(links[0])
-	return EditPZID(id, newName)
+	return EditPZID(id, newName, tagsToAdd, tagsToRemove)
 }
 
-func EditPZID(id, newName string) (string, error) {
+func EditPZID(id, newName string, tagsToAdd, tagsToRemove []string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(PlacementZoneList), utils.PLACEMENT_ZONE)
+
 	utils.CheckBlockingError(err)
-	url := config.URL + utils.CreateResLinkForPlacementZone(fullId)
-	pzState := ResourcePoolState{
-		Name: newName,
+	url := config.URL + utils.CreateResLinkForPlacementZone(utils.CreateResLinkForResourcePool(fullId))
+
+	oldPz, _ := GetPlacementZone(id)
+
+	if newName != "" {
+		oldPz.ResourcePoolState.Name = newName
 	}
-	jsonBody, _ := json.Marshal(pzState)
+
+	err = oldPz.EpzState.RemoveTagLinks(tagsToRemove)
+	if err != nil {
+		return "", err
+	}
+	err = oldPz.EpzState.AddTagLinks(tagsToAdd)
+	if err != nil {
+		return "", err
+	}
+
+	jsonBody, _ := json.Marshal(oldPz)
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -230,6 +316,25 @@ func GetPZName(link string) (string, error) {
 	err := json.Unmarshal(respBody, pzs)
 	utils.CheckBlockingError(err)
 	return pzs.Name, nil
+}
+
+func GetPlacementZone(id string) (*PlacementZone, error) {
+	fullId, err := selflink.GetFullId(id, new(PlacementZoneList), utils.PLACEMENT_ZONE)
+	utils.CheckBlockingError(err)
+	url := config.URL + utils.GetIdFilterUrl(fullId, utils.PLACEMENT_ZONE)
+	req, _ := http.NewRequest("GET", url, nil)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return nil, respErr
+	}
+	pzList := &PlacementZoneList{}
+	err = json.Unmarshal(respBody, pzList)
+	if err != nil {
+		return nil, err
+	}
+
+	pz := pzList.Documents[pzList.DocumentLinks[0]]
+	return &pz, nil
 }
 
 // Currently disabled!

@@ -181,11 +181,9 @@ func AddByUsername(name, userName, passWord string,
 		}
 	}
 
-	cp := properties.ParseCustomProperties(custProps)
-	if cp == nil {
-		cp = make(map[string]*string, 0)
-	}
-	cp = properties.AddCredentialsName(name, cp)
+	cp := make(map[string]*string, 0)
+	properties.ParseCustomProperties(custProps, cp)
+	properties.AddCredentialsName(name, cp)
 
 	user := AddUserCredentials{
 		Type:             "Password",
@@ -225,11 +223,10 @@ func AddByCert(name, publicCert, privateCert string,
 		return "", err
 	}
 	publicKey := string(bytePublic)
-	cp := properties.ParseCustomProperties(custProps)
-	if cp == nil {
-		cp = make(map[string]*string, 0)
-	}
-	cp = properties.AddCredentialsName(name, cp)
+
+	cp := make(map[string]*string, 0)
+	properties.ParseCustomProperties(custProps, cp)
+	properties.AddCredentialsName(name, cp)
 
 	cert := AddCertCredentials{
 		CustomProperties: cp,

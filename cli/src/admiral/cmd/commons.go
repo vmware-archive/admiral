@@ -202,6 +202,12 @@ var (
 
 	//Encryption flags
 	encryptionKey string
+
+	//Tags flags
+	tags             []string
+	tagsDesc         = "Host tags to match. Input format - key:value"
+	tagsToRemove     []string
+	tagsToRemoveDesc = "Host tags to remove. Input format - key:value"
 )
 
 var admiralLogo = `

@@ -225,8 +225,9 @@ func AddPlacement(namePol, cpuShares, instances, priority, projectId, placementZ
 	}
 
 	fullRpId, err := selflink.GetFullId(placementZoneId, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
+
 	utils.CheckBlockingError(err)
-	rpLink = utils.CreateResLinkForPlacementZone(fullRpId)
+	rpLink = utils.CreateResLinkForResourcePool(fullRpId)
 
 	if projectId != "" {
 		var fullProjectId string
@@ -316,7 +317,7 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, 
 	if placementZoneID != "" {
 		fullPzId, err := selflink.GetFullId(placementZoneID, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
 		utils.CheckBlockingError(err)
-		oldPlacement.ResourcePoolLink = utils.CreateResLinkForPlacementZone(fullPzId)
+		oldPlacement.ResourcePoolLink = utils.CreateResLinkForResourcePool(fullPzId)
 	}
 	if deplPolId != "" {
 		fullDpId, err := selflink.GetFullId(deplPolId, new(deplPolicy.DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
