@@ -80,6 +80,7 @@ public class ClusterMonitoringService extends StatelessService {
 
         Operation subscribeToNodeGroup = Operation.createPost(
                 UriUtils.buildSubscriptionUri(getHost(), this.cachedState.nodeGroupLink))
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_SKIPPED_NOTIFICATIONS)
                 .setCompletion(h)
                 .setReferer(getUri());
         getHost().startSubscriptionService(subscribeToNodeGroup, handleNodeGroupNotification());

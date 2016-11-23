@@ -56,6 +56,7 @@ import com.vmware.admiral.request.ReservationTaskFactoryService;
 import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
+import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -398,7 +399,7 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
     @Test
     public void testCertificateReplication() throws Throwable {
         //import a certificate in the first host
-        SslTrustCertificateService.SslTrustCertificateState sslTrustCert1 = new SslTrustCertificateService.SslTrustCertificateState();
+        SslTrustCertificateState sslTrustCert1 = new SslTrustCertificateState();
         String sslTrust1 = CommonTestStateFactory.getFileContent("test_ssl_trust.PEM").trim();
         sslTrustCert1.certificate = sslTrust1;
         sslTrustCert1.subscriptionLink = null;
@@ -423,4 +424,5 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
         });
 
     }
+
 }

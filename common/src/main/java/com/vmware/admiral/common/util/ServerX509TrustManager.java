@@ -70,7 +70,7 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
     private final ServiceHost host;
     private final ServiceDocumentQuery<SslTrustCertificateState> sslTrustQuery;
     private final SslTrustQueryCompletionHandler queryHandler;
-    private final SubscriptionManager<SslTrustCertificateState> subscriptionManager;
+    private final SubscriptionManager<ConfigurationState> subscriptionManager;
 
     /* Last time the document was update in microseconds since UNIX epoch */
     private volatile long documentUpdateTimeMicros;
@@ -128,8 +128,8 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
 
         this.queryHandler = new SslTrustQueryCompletionHandler(this);
 
-        this.subscriptionManager = new SubscriptionManager<SslTrustCertificateState>(host,
-                host.getId(), SSL_TRUST_CONFIG_SUBSCRIBE_FOR_LINK, SslTrustCertificateState.class,
+        this.subscriptionManager = new SubscriptionManager<>(host,
+                host.getId(), SSL_TRUST_CONFIG_SUBSCRIBE_FOR_LINK, ConfigurationState.class,
                 true);
     }
 
@@ -171,6 +171,7 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
         long nextDelay = (reloadCounter.get() > reloadCounterThreshold) ?
                 maintenanceInterval :
                 maintenanceIntervalInitial;
+
         host.schedule(() -> {
             try {
                 documentUpdateTimeMicros = 0;
@@ -224,7 +225,7 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
     }
 
     private void verifySubscriptionTargetExists(Runnable handler) {
-        new ServiceDocumentQuery<ConfigurationState>(host, ConfigurationState.class)
+        new ServiceDocumentQuery<>(host, ConfigurationState.class)
                 .queryDocument(SSL_TRUST_CONFIG_SUBSCRIBE_FOR_LINK, (r) -> {
                     if (r.hasException()) {
                         r.throwRunTimeException();

@@ -305,6 +305,8 @@ public class EtcdEmulatorService extends StatelessService {
                                 .createPost(
                                         UriUtils.buildSubscriptionUri(service.getHost(),
                                                 KVStoreFactoryService.SELF_LINK))
+                                .addPragmaDirective(
+                                        Operation.PRAGMA_DIRECTIVE_SKIPPED_NOTIFICATIONS)
                                 .setCompletion(h)
                                 .setReferer(service.getUri());
                         service.getHost().startSubscriptionService(subscribeToKvStore,
