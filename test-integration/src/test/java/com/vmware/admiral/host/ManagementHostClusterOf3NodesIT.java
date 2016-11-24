@@ -29,10 +29,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Similar to {@link ManagementHostClusterOf2NodesTest} but this test includes 3 nodes, only SSL
+ * Similar to {@link ManagementHostClusterOf2NodesIT} but this test includes 3 nodes, only SSL
  * enabled and the users' passwords are encrypted.
  */
-public class ManagementHostClusterOf3NodesTest extends ManagementHostClusterBaseTestCase {
+public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT {
 
     private ManagementHost hostOne;
     private ManagementHost hostTwo;
@@ -157,8 +157,8 @@ public class ManagementHostClusterOf3NodesTest extends ManagementHostClusterBase
     public void testRestrictedOperationWithTwoNodesRestarted() throws Throwable {
 
         /*
-         * Within this test the nodes are restarted but not at the same time,
-         * there're always at least 2 running nodes.
+         * Within this test 2 nodes are restarted at the same time, but there's always a
+         * running node.
          */
 
         String tokenOne = login(hostOne, USERNAME, PASSWORD);
@@ -169,6 +169,9 @@ public class ManagementHostClusterOf3NodesTest extends ManagementHostClusterBase
 
         String tokenThree = login(hostThree, USERNAME, PASSWORD);
         assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
+
+        List<ManagementHost> hosts = asList(hostOne, hostTwo, hostThree);
+        validateDefaultContentAdded(hosts, tokenOne);
 
         /*
          * ==== Restart node1 and node2 ==========================================================
@@ -191,6 +194,9 @@ public class ManagementHostClusterOf3NodesTest extends ManagementHostClusterBase
         assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
         assertClusterFromNodes(hostOne, hostTwo, hostThree);
 
+        hosts = asList(hostOne, hostTwo, hostThree);
+        validateDefaultContentAdded(hosts, tokenOne);
+
         /*
          * ==== Restart node2 and node3 ==========================================================
          */
@@ -212,6 +218,9 @@ public class ManagementHostClusterOf3NodesTest extends ManagementHostClusterBase
         assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
         assertClusterFromNodes(hostOne, hostTwo, hostThree);
 
+        hosts = asList(hostOne, hostTwo, hostThree);
+        validateDefaultContentAdded(hosts, tokenOne);
+
         /*
          * ==== Restart node1 and node3 ==========================================================
          */
@@ -232,14 +241,16 @@ public class ManagementHostClusterOf3NodesTest extends ManagementHostClusterBase
         assertClusterWithToken(tokenTwo, hostOne, hostTwo, hostThree);
         assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
         assertClusterFromNodes(hostOne, hostTwo, hostThree);
+
+        hosts = asList(hostOne, hostTwo, hostThree);
+        validateDefaultContentAdded(hosts, tokenOne);
     }
 
     @Test
     public void testRestrictedOperationWithNodesStoppedAndStarted() throws Throwable {
 
         /*
-         * Within this test the nodes are restarted but not at the same time,
-         * there're always at least 2 running nodes.
+         * Within this test the nodes are restarted at the same time.
          */
 
         String tokenOne = login(hostOne, USERNAME, PASSWORD);
@@ -250,6 +261,9 @@ public class ManagementHostClusterOf3NodesTest extends ManagementHostClusterBase
 
         String tokenThree = login(hostThree, USERNAME, PASSWORD);
         assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
+
+        List<ManagementHost> hosts = asList(hostOne, hostTwo, hostThree);
+        validateDefaultContentAdded(hosts, tokenOne);
 
         /*
          * ==== Stop all the nodes ===============================================================
@@ -274,6 +288,8 @@ public class ManagementHostClusterOf3NodesTest extends ManagementHostClusterBase
         assertClusterWithToken(tokenTwo, hostOne, hostTwo, hostThree);
         assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
         assertClusterFromNodes(hostOne, hostTwo, hostThree);
-    }
 
+        hosts = asList(hostOne, hostTwo, hostThree);
+        validateDefaultContentAdded(hosts, tokenOne);
+    }
 }

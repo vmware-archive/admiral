@@ -74,7 +74,6 @@ public class HostNetworkListDataCollection extends StatefulService {
 
         public HostNetworkListDataCollectionFactoryService() {
             super(HostNetworkListDataCollectionState.class);
-            super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
         }
 
         @Override

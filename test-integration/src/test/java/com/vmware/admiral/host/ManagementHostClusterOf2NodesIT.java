@@ -21,7 +21,6 @@ import static com.vmware.admiral.host.ManagementHostAuthUsersTest.login;
 import static com.vmware.admiral.service.common.AuthBootstrapService.waitForInitConfig;
 
 import java.net.HttpURLConnection;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,10 +33,10 @@ import org.junit.Test;
 import com.vmware.xenon.common.Operation;
 
 /**
- * Similar to {@link ManagementHostAuthUsersTest} but this test includes 2 nodes, only SSL enabled
+ * Similar to {@link ManagementHostAuthUsersIT} but this test includes 2 nodes, only SSL enabled
  * and the users' passwords are encrypted.
  */
-public class ManagementHostClusterOf2NodesTest extends ManagementHostClusterBaseTestCase {
+public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT {
 
     private ManagementHost hostOne;
     private ManagementHost hostTwo;
@@ -94,6 +93,9 @@ public class ManagementHostClusterOf2NodesTest extends ManagementHostClusterBase
         String tokenTwo = login(hostTwo, USERNAME, PASSWORD);
         assertClusterWithToken(tokenTwo, hostOne, hostTwo);
 
+        List<ManagementHost> hosts = asList(hostOne, hostTwo);
+        validateDefaultContentAdded(hosts, tokenOne);
+
         /*
          * ==== Restart node1 ====================================================================
          */
@@ -112,6 +114,9 @@ public class ManagementHostClusterOf2NodesTest extends ManagementHostClusterBase
         assertClusterWithToken(tokenTwo, hostOne, hostTwo);
         assertClusterFromNodes(hostOne, hostTwo);
 
+        hosts = asList(hostOne, hostTwo);
+        validateDefaultContentAdded(hosts, tokenOne);
+
         /*
          * ==== Restart node2 ====================================================================
          */
@@ -129,6 +134,9 @@ public class ManagementHostClusterOf2NodesTest extends ManagementHostClusterBase
         assertClusterWithToken(tokenOne, hostOne, hostTwo);
         assertClusterWithToken(tokenTwo, hostOne, hostTwo);
         assertClusterFromNodes(hostOne, hostTwo);
+
+        hosts = asList(hostOne, hostTwo);
+        validateDefaultContentAdded(hosts, tokenOne);
     }
 
     @Test
@@ -144,6 +152,9 @@ public class ManagementHostClusterOf2NodesTest extends ManagementHostClusterBase
 
         String tokenTwo = login(hostTwo, USERNAME, PASSWORD);
         assertClusterWithToken(tokenTwo, hostOne, hostTwo);
+
+        List<ManagementHost> hosts = asList(hostOne, hostTwo);
+        validateDefaultContentAdded(hosts, tokenOne);
 
         /*
          * ==== Stop both nodes ==================================================================
@@ -165,6 +176,9 @@ public class ManagementHostClusterOf2NodesTest extends ManagementHostClusterBase
         assertClusterWithToken(tokenTwo, hostOne, hostTwo);
 
         assertClusterFromNodes(hostOne, hostTwo);
+
+        hosts = asList(hostOne, hostTwo);
+        validateDefaultContentAdded(hosts, tokenOne);
     }
 
     @Test

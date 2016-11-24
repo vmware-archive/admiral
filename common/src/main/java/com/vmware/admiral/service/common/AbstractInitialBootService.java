@@ -19,6 +19,7 @@ import java.util.function.Consumer;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.QueryTaskClientHelper;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceHost.ServiceAlreadyStartedException;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -152,7 +153,7 @@ public abstract class AbstractInitialBootService extends StatelessService {
                 .setBody(state)
                 .setCompletion(
                         (op, ex) -> {
-                            if (ex != null) {
+                            if (ex != null && !(ex instanceof ServiceAlreadyStartedException)) {
                                 if (retryCount > 0 && !(ex instanceof CancellationException)) {
                                     logWarning(
                                             "Retrying with count %s after error creating default %s instance for factory %s. Error: %s",

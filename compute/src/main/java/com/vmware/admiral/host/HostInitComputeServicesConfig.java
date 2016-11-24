@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.host;
 
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
@@ -50,6 +53,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeService.Contai
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.content.TemplateComputeDescription;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -57,6 +61,8 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.AuthCredentialsService;
 
 public class HostInitComputeServicesConfig extends HostInitServiceHelper {
 
@@ -118,10 +124,26 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 UriUtils.buildUri(host, ComputeInitialBootService.class))
                 .setReferer(host.getUri())
                 .setBody(new ServiceDocument()));
-        host.sendRequest(Operation.createPost(
-                UriUtils.buildUri(host, CaSigningCertService.class))
-                .setReferer(host.getUri())
-                .setBody(new ServiceDocument()));
 
+        waitForServiceAvailability(host, () -> {
+            host.sendRequest(Operation.createPost(
+                    UriUtils.buildUri(host, CaSigningCertService.class))
+                    .setReferer(host.getUri())
+                    .setBody(new ServiceDocument()));
+        }, AuthCredentialsService.FACTORY_LINK, ConfigurationFactoryService.SELF_LINK);
+    }
+
+    private static void waitForServiceAvailability(ServiceHost host, Runnable completion,
+            String... servicePaths) {
+        AtomicInteger counter = new AtomicInteger(servicePaths.length);
+        host.registerForServiceAvailability((o, e) -> {
+            if (e != null) {
+                host.log(Level.SEVERE, "Error waiting for service(s): %s. Error: %s",
+                        servicePaths, Utils.toString(e));
+                return;
+            } else if (counter.decrementAndGet() == 0) {
+                completion.run();
+            }
+        }, true, servicePaths);
     }
 }

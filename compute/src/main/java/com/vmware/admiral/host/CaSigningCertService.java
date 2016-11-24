@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.host;
 
+import static com.vmware.admiral.common.util.OperationUtil.wrapForExceptionHandler;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -71,7 +73,7 @@ public class CaSigningCertService extends StatelessService {
 
     private void registerCaCertIfNeeded(String caCert, String caKey, Operation startOp) {
         Operation.createGet(this, ManagementUriParts.AUTH_CREDENTIALS_CA_LINK)
-                .setCompletion((o, e) -> {
+                .setCompletion(wrapForExceptionHandler((o, e) -> {
                     String cert = caCert;
                     String key = caKey;
                     if (caCert == null || caKey == null) {
@@ -89,20 +91,21 @@ public class CaSigningCertService extends StatelessService {
                     } else {
                         registerCaCert(cert, key, startOp);
                     }
-                })
+
+                }))
                 .sendWith(this);
     }
 
     private void registerClientCredIfNeeded(AuthCredentialsServiceState caCred, String caCert,
             String caKey, Operation startOp) {
         Operation.createGet(this, ManagementUriParts.AUTH_CREDENTIALS_CLIENT_LINK)
-                .setCompletion((o, e) -> {
+                .setCompletion(wrapForExceptionHandler((o, e) -> {
                     if (e != null) {
                         registerClientCred(caCert, caKey, startOp);
                         return;
                     }
                     startOp.complete();
-                })
+                }))
                 .sendWith(this);
     }
 
@@ -125,6 +128,7 @@ public class CaSigningCertService extends StatelessService {
                 createClientCredentials(caCert, caKey))
                 .setCompletion((ops, exs) -> {
                     if (exs != null) {
+                        logSevere("Fail create CA cred:", Utils.toString(exs));
                         startOp.fail(exs.values().iterator().next());
                         return;
                     }

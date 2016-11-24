@@ -16,8 +16,10 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
@@ -30,6 +32,36 @@ public class OperationUtil {
 
     public static Operation createForcedPost(Service sender, String targetPath) {
         return createForcedPost(UriUtils.buildUri(sender.getHost(), targetPath));
+    }
+
+    /** Wraps a typical {@link CompletionHandler} for an {@link Operation}, by taking into account
+     * Xenon's issue for missing serialized error https://www.pivotaltracker.com/story/show/134779885
+     * It does so by also trying to get the error from the body if possible. The expected usage for this
+     * is to pass a completion handler which checks only if the error is not null to handle it,
+     * and proceed successfully otherwise.
+     */
+    public static CompletionHandler wrapForExceptionHandler(CompletionHandler completion) {
+        return (o, e) -> {
+            e = getErrorBodyIfInError(o, e);
+            completion.handle(o, e);
+        };
+    }
+
+    private static Throwable getErrorBodyIfInError(Operation o, Throwable e) {
+        if (e != null) {
+            return e;
+        }
+
+        if (!o.hasBody()) {
+            return null;
+        }
+
+        ServiceErrorResponse response = o.getBody(ServiceErrorResponse.class);
+
+        if (response.documentKind.equals(Utils.buildKind(ServiceErrorResponse.class))) {
+            return new IllegalArgumentException(Utils.toJsonHtml(response));
+        }
+        return null;
     }
 
     /**
@@ -79,8 +111,7 @@ public class OperationUtil {
                             }
 
                             callbackFunction.accept(o.getBody(classT));
-                        })
-        );
+                        }));
     }
 
 }
