@@ -82,7 +82,7 @@ public class RequestStatusService extends StatefulService {
     }
 
     @Override
-    public void handleStart(Operation post) {
+    public void handleCreate(Operation post) {
         RequestStatus body = post.getBody(RequestStatus.class);
         body.documentExpirationTimeMicros = Utils.getNowMicrosUtc() + EXPIRATION_MICROS;
         post.complete();

@@ -160,34 +160,20 @@ public class ContainerNetworkService extends StatefulService {
     }
 
     @Override
-    public void handleStart(Operation startPost) {
-        try {
-            ContainerNetworkState state = getValidInputFrom(startPost, false);
-            logFine("Initial name is %s", state.name);
-            startPost.complete();
-        } catch (Throwable e) {
-            logSevere(e);
-            startPost.fail(e);
-        }
-    }
-
-    @Override
     public void handleCreate(Operation create) {
-        if (create.hasBody()) {
-            ContainerNetworkState body = create.getBody(ContainerNetworkState.class);
+        ContainerNetworkState body = getValidInputFrom(create, false);
 
-            if (body.powerState == null) {
-                body.powerState = ContainerNetworkState.PowerState.UNKNOWN;
-            }
-
-            body.connected = new Date().getTime();
-
-            // start the monitoring service instance for this network
-            startMonitoringContainerNetworkState(body);
-
-            CompositeComponentNotifier.notifyCompositionComponents(this,
-                    body.compositeComponentLinks, create.getAction());
+        if (body.powerState == null) {
+            body.powerState = ContainerNetworkState.PowerState.UNKNOWN;
         }
+
+        body.connected = new Date().getTime();
+
+        // start the monitoring service instance for this network
+        startMonitoringContainerNetworkState(body);
+
+        CompositeComponentNotifier.notifyCompositionComponents(this,
+                body.compositeComponentLinks, create.getAction());
 
         create.complete();
     }

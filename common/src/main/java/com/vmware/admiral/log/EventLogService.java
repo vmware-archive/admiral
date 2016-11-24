@@ -86,7 +86,7 @@ public class EventLogService extends StatefulService {
     }
 
     @Override
-    public void handleStart(Operation post) {
+    public void handleCreate(Operation post) {
         if (!post.hasBody()) {
             post.fail(new IllegalArgumentException("empty body"));
             return;

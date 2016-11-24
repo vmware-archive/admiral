@@ -117,24 +117,11 @@ public class ContainerVolumeService extends StatefulService {
     }
 
     @Override
-    public void handleStart(Operation startPost) {
-        try {
-            ContainerVolumeState state = getValidInputFrom(startPost, false);
-            logFine("Initial name is %s", state.name);
-            startPost.complete();
-        } catch (Throwable e) {
-            logSevere(e);
-            startPost.fail(e);
-        }
-    }
-
-    @Override
     public void handleCreate(Operation create) {
-        if (create.hasBody()) {
-            ContainerVolumeState body = create.getBody(ContainerVolumeState.class);
-            CompositeComponentNotifier.notifyCompositionComponent(this,
-                    body.compositeComponentLink, create.getAction());
-        }
+        ContainerVolumeState body = getValidInputFrom(create, false);
+
+        CompositeComponentNotifier.notifyCompositionComponent(this,
+                body.compositeComponentLink, create.getAction());
 
         create.complete();
     }
