@@ -17,7 +17,6 @@ import java.net.URI;
 import java.util.Collections;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
@@ -31,6 +30,8 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState.Powe
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
+import com.vmware.admiral.test.integration.data.IntegratonTestStateFactory;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Utils;
 
@@ -41,16 +42,26 @@ public class HostConfigCertificateDistributionServiceIT extends
     public void setUp() throws Exception {
         logger.info("---------- Adding host, to remove old certificate directory if any --------");
         setupCoreOsHost(ContainerHostService.DockerAdapterType.API);
+        waitForSystemContainerStatusCode(Operation.STATUS_CODE_OK);
+
         logger.info("---------- Removing old certificate directory --------");
         removeCertificateDirectoryOnCoreOsHost(dockerHostCompute.documentSelfLink,
                 registryHostAndPort);
         removeHost(dockerHostCompute);
+        waitForSystemContainerStatusCode(Operation.STATUS_CODE_NOT_FOUND);
 
         logger.info("---------- Configure registries on a clean host --------");
         configureRegistries(registryAddress, null);
     }
 
-    @Ignore("Started to fail on Nov 21 and until Nov 23 it failed 8 times. Jira task - https://jira-hzn.eng.vmware.com/browse/VBV-860")
+    private void waitForSystemContainerStatusCode(int expectedStatusCode) throws Exception {
+        String systemContainerLink = SystemContainerDescriptions.getSystemContainerSelfLink(
+                SystemContainerDescriptions.AGENT_CONTAINER_NAME,
+                IntegratonTestStateFactory.DOCKER_COMPUTE_ID);
+        URI uri = URI.create(getBaseUrl() + buildServiceUri(systemContainerLink));
+        waitForStatusCode(uri, expectedStatusCode);
+    }
+
     @Test
     public void testUploadRegistryCertificateOnDockerHostConfig() throws Exception {
         // Step 1: verify that certificate is added after host is added

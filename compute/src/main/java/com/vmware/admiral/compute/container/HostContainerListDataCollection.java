@@ -324,6 +324,12 @@ public class HostContainerListDataCollection extends StatefulService {
         if (state.containerHostLinks.get(body.containerHostLink) != null &&
                 Instant.now().isBefore(Instant.ofEpochMilli(
                         (state.containerHostLinks.get(body.containerHostLink))))) {
+            if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
+                logFine("Host container list callback for host [%s] with container IDs: %s " +
+                        "skipped, another instance is active",
+                        body.containerHostLink,
+                        body.containerIdsAndNames.keySet().stream().collect(Collectors.toList()));
+            }
             op.complete();
             return;// return since there is an active data collection for this host.
         } else {
@@ -614,6 +620,7 @@ public class HostContainerListDataCollection extends StatefulService {
                                     // If System ContainerState exists we can start it.
                                     // if version is valid, although we don't know the power state,
                                     // start the containers anyway as start is idempotent
+                                    logFine("start existing system container %s", containerState.documentSelfLink);
                                     startSystemContainer(containerState, null);
                                 } else {
                                     // If System ContainerState does not exists, we create it before
@@ -670,6 +677,7 @@ public class HostContainerListDataCollection extends StatefulService {
     }
 
     private void recreateSystemContainer(ContainerState containerState, String hostId) {
+        logFine("recreate system container %s", containerState.documentSelfLink);
         deleteSystemContainer(containerState,
                 (o, error) -> {
                     if (error) {
@@ -691,6 +699,7 @@ public class HostContainerListDataCollection extends StatefulService {
                 logSevere("Failure deleting system container.");
             } else {
                 // Upload trusted self-signed registry certificates to host
+                logFine("Distribute certificates for host %s", container.parentLink);
                 HostConfigCertificateDistributionState distState = new HostConfigCertificateDistributionState();
                 distState.hostLink = container.parentLink;
                 distState.tenantLinks = container.tenantLinks;

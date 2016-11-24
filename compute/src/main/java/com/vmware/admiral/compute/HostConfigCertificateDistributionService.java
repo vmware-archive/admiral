@@ -62,6 +62,7 @@ public class HostConfigCertificateDistributionService extends
 
                     ServiceDocumentQueryResult body = o.getBody(ServiceDocumentQueryResult.class);
 
+                    logFine("Distributing certificates for [%s]", body.documentLinks);
                     for (String registryLink : body.documentLinks) {
                         fetchRegistryState(registryLink, (registry) -> {
                             fetchSslTrustLink(registry.address, (sslTrustLink) -> {
