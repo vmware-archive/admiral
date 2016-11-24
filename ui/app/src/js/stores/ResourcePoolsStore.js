@@ -88,10 +88,11 @@ let ResourcePoolsStore = Reflux.createStore({
         Promise.all(tagPromises).then((configs) => {
 
           var countContainerHosts = !utils.isApplicationCompute();
+          var countOnlyComputes = utils.isApplicationCompute() ? true : undefined;
           // Retrieve hosts counts for the resource pools
           var countedHostsResPoolsPromises = Object.values(configs).map(function(config) {
             return services.countHostsPerResourcePool(config.resourcePoolState.documentSelfLink,
-                countContainerHosts).then(function(hostsCount) {
+                countContainerHosts, countOnlyComputes).then(function(hostsCount) {
                   config.resourcePoolState.hostsCount = hostsCount;
                   return config;
                 });

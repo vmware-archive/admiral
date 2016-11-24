@@ -477,7 +477,7 @@ services.deleteResourcePool = function(config) {
   return deleteEntity(links.EPZ_CONFIG + config.documentSelfLink);
 };
 
-services.countHostsPerResourcePool = function(resourcePoolLink, onlyContainerHosts) {
+services.countHostsPerResourcePool = function(resourcePoolLink, onlyContainerHosts, onlyComputes) {
   var queryOptions = {
     placementZone: resourcePoolLink
   };
@@ -485,7 +485,7 @@ services.countHostsPerResourcePool = function(resourcePoolLink, onlyContainerHos
   let params = {
     [DOCUMENT_TYPE_PROP_NAME]: true,
     [ODATA_COUNT_PROP_NAME]: true,
-    [ODATA_FILTER_PROP_NAME]: buildHostsQuery(queryOptions, onlyContainerHosts)
+    [ODATA_FILTER_PROP_NAME]: buildHostsQuery(queryOptions, onlyContainerHosts, onlyComputes)
   };
 
   return get(mergeUrl(links.COMPUTE_RESOURCES, params)).then((result) => {
