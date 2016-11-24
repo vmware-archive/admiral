@@ -705,8 +705,6 @@ public class RequestBrokerService extends
         if (state.resourceLinks == null) {
             SubStage stage = errorState ? SubStage.ERROR : SubStage.ALLOCATED;
             proceedTo(stage);
-            //            sendSelfPatch(createUpdateSubStageTask(state,
-            //                    errorState ? SubStage.ERROR : SubStage.ALLOCATED));
             return;
         }
 
@@ -729,7 +727,6 @@ public class RequestBrokerService extends
                         return;
                     }
                     if (!errorState) {
-//                        sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
                         proceedTo(SubStage.ALLOCATING);
                     }
                 });
@@ -1195,7 +1192,6 @@ public class RequestBrokerService extends
                         failTask("Failure creating resource allocation task", e);
                         return;
                     }
-//                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.ALLOCATING));
                     proceedTo(SubStage.ALLOCATING);
                 }));
     }

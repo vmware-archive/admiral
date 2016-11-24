@@ -214,6 +214,7 @@ public class ComputeOperationTaskServiceTest extends ComputeRequestBaseTest {
         });
     }
 
+    @SuppressWarnings("unchecked")
     private void createVSphereEnv() throws Throwable {
         EnvironmentMappingState ems = new EnvironmentMappingState();
         ems.endpointType = getEndpointType().name();

@@ -105,7 +105,6 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     protected void extendComputeDescription(ComputeDescription computeDescription)
             throws Exception {
         computeDescription.dataStoreId = getTestRequiredProp(VsphereUtil.VC_DATASTORE_ID);
-//        computeDescription.networkId = getTestRequiredProp(VsphereUtil.VC_NETWORK_ID);
         computeDescription.zoneId = getTestRequiredProp(VsphereUtil.VC_RESOURCE_POOL_ID);
         String vmFolder = getTestProp(VsphereUtil.VC_TARGET_FOLDER_PATH);
         if (vmFolder != null) {
@@ -114,6 +113,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void doSetUp() throws Exception {
         // restrict available placements to the one specified through the VC_COMPUTE_NAME prop

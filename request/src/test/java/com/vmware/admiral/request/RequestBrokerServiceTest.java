@@ -1850,18 +1850,23 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
     public void testCompositeComponentWithContainerServiceLinksAndNetwork() throws Throwable {
         CompositeComponent cc = setUpCompositeWithServiceLinks(true);
 
+        String containerLink1 = null;
         String containerLink2 = null;
 
         Iterator<String> iterator = cc.componentLinks.iterator();
         while (iterator.hasNext()) {
             String link = iterator.next();
-            if (link.startsWith(ContainerFactoryService.SELF_LINK + "/container2")) {
+            if (link.startsWith(ContainerFactoryService.SELF_LINK + "/container1")) {
+                containerLink1 = link;
+            } else if (link.startsWith(ContainerFactoryService.SELF_LINK + "/container2")) {
                 containerLink2 = link;
             }
         }
 
-        ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
+        ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
+        assertNotNull(cont1);
 
+        ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
         String[] links = cont2.networks.values().iterator().next().links;
 
         assertEquals(1, links.length);
