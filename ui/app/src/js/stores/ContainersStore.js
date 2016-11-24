@@ -140,12 +140,6 @@ function updateSelectedContainerDetails(path, value) {
   selectedItemDetailsCursor.setIn(path, value);
 }
 
-function mergeItems(items1, items2) {
-  return items1.concat(items2)
-                  .filter((item, index, self) =>
-                    self.findIndex((c) => c.documentSelfLink === item.documentSelfLink) === index);
-}
-
 function findContextId(containers) {
   if (containers) {
     for (let key in containers) {
@@ -397,7 +391,7 @@ let ContainersStore = Reflux.createStore({
       let previousItems = this.selectFromData(['listView', 'items']).get();
 
       let mergedItems = (previousItems && mergeWithExisting)
-        ? mergeItems(previousItems.asMutable(), items) : items;
+        ? utils.mergeDocuments(previousItems.asMutable(), items) : items;
 
       this.setInData(['listView', 'items'], mergedItems);
       this.setInData(['listView', 'itemsLoading'], false);
@@ -455,7 +449,7 @@ let ContainersStore = Reflux.createStore({
 
         let previousItems = this.selectFromData(['listView', 'items']).get();
         let mergedItems = (previousItems && mergeWithExisting)
-                            ? mergeItems(previousItems.asMutable(), items) : items;
+                            ? utils.mergeDocuments(previousItems.asMutable(), items) : items;
 
         this.setInData(['listView', 'items'], mergedItems);
         this.setInData(['listView', 'itemsLoading'], false);

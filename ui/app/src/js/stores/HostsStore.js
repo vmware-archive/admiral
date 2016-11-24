@@ -192,11 +192,6 @@ let toViewModel = function(dto) {
   };
 };
 
-function mergeItems(items1, items2) {
-  return items1.concat(items2).filter((item, index, self) =>
-      self.findIndex((c) => c.id === item.id) === index);
-}
-
 let updateEditableProperties = function(hostModel) {
   this.setInData(['hostAddView', 'hostAlias'], hostModel.hostAlias);
   this.setInData(['hostAddView', 'customProperties'], hostModel.customProperties);
@@ -434,36 +429,35 @@ let HostsStore = Reflux.createStore({
       this.cancelOperations(OPERATION.DETAILS);
       this.setInData(['listView', 'itemsLoading'], true);
 
-      operation.forPromise(services.loadHosts(queryOptions, true))
-        .then((result) => {
-          // TODO: temporary client side filter
-          let documents = result.documentLinks.map((documentLink) =>
-              result.documents[documentLink]).filter(({customProperties}) =>
-                  customProperties && customProperties.__computeContainerHost);
-          let nextPageLink = result.nextPageLink;
-          let itemsCount = result.totalCount;
+      operation.forPromise(services.loadHosts(queryOptions, true)).then((result) => {
+        // TODO: temporary client side filter
+        let documents = result.documentLinks.map((documentLink) =>
+            result.documents[documentLink]).filter(({customProperties}) =>
+                customProperties && customProperties.__computeContainerHost);
+        let nextPageLink = result.nextPageLink;
+        let itemsCount = result.totalCount;
 
-          // Transforming to the model of the view
-          let hosts = documents.map((document) => toViewModel(document));
-          this.getResourcePoolsForHostsCall(hosts).then((result) => {
-            hosts.forEach((host) => {
-              host.epzs.forEach((epz) => {
-                if (result[epz.epzLink]) {
-                  epz.epzName = result[epz.epzLink].resourcePoolState.name;
-                }
-              });
+        // Transforming to the model of the view
+        let hosts = documents.map((document) => toViewModel(document));
+        this.getResourcePoolsForHostsCall(hosts).then((result) => {
+          hosts.forEach((host) => {
+            host.epzs.forEach((epz) => {
+              if (result[epz.epzLink]) {
+                epz.epzName = result[epz.epzLink].resourcePoolState.name;
+              }
             });
-
-            this.setInData(['listView', 'items'], hosts);
-            this.setInData(['listView', 'itemsLoading'], false);
-            this.setInData(['listView', 'nextPageLink'], nextPageLink);
-            if (itemsCount !== undefined && itemsCount !== null) {
-              this.setInData(['listView', 'itemsCount'], itemsCount);
-            }
-
-            this.emitChange();
           });
+
+          this.setInData(['listView', 'items'], hosts);
+          this.setInData(['listView', 'itemsLoading'], false);
+          this.setInData(['listView', 'nextPageLink'], nextPageLink);
+          if (itemsCount !== undefined && itemsCount !== null) {
+            this.setInData(['listView', 'itemsCount'], itemsCount);
+          }
+
+          this.emitChange();
         });
+      });
     }
 
     this.emitChange();
@@ -478,34 +472,30 @@ let HostsStore = Reflux.createStore({
       this.cancelOperations(OPERATION.DETAILS);
       this.setInData(['listView', 'itemsLoading'], true);
 
-      operation.forPromise(services.loadNextPage(nextPageLink))
-        .then((result) => {
+      operation.forPromise(services.loadNextPage(nextPageLink)).then((result) => {
+        let documents = result.documentLinks.map((documentLink) =>
+            result.documents[documentLink]).filter(({customProperties}) =>
+                customProperties && customProperties.__computeContainerHost);
+        let nextPageLink = result.nextPageLink;
 
-          // TODO: temporary client side filter
-          let documents = result.documentLinks.map((documentLink) =>
-              result.documents[documentLink]).filter(({customProperties}) =>
-                  customProperties && customProperties.__computeContainerHost);
-          let nextPageLink = result.nextPageLink;
-
-          // Transforming to the model of the view
-          let hosts = mergeItems(this.data.listView.items.asMutable(),
-              documents.map((document) => toViewModel(document)));
-          this.getResourcePoolsForHostsCall(hosts).then((result) => {
-            hosts.forEach((host) => {
-              host.epzs.forEach((epz) => {
-                if (result[epz.epzLink]) {
-                  epz.epzName = result[epz.epzLink].resourcePoolState.name;
-                }
-              });
+        // Transforming to the model of the view
+        let hosts = documents.map((document) => toViewModel(document));
+        this.getResourcePoolsForHostsCall(hosts).then((result) => {
+          hosts.forEach((host) => {
+            host.epzs.forEach((epz) => {
+              if (result[epz.epzLink]) {
+                epz.epzName = result[epz.epzLink].resourcePoolState.name;
+              }
             });
-
-            this.setInData(['listView', 'items'], hosts);
-            this.setInData(['listView', 'itemsLoading'], false);
-            this.setInData(['listView', 'nextPageLink'], nextPageLink);
-
-            this.emitChange();
           });
+
+          this.setInData(['listView', 'items'],
+              utils.mergeDocuments(this.data.listView.items.asMutable(), hosts));
+          this.setInData(['listView', 'itemsLoading'], false);
+          this.setInData(['listView', 'nextPageLink'], nextPageLink);
+          this.emitChange();
         });
+      });
     }
 
     this.emitChange();

@@ -407,7 +407,7 @@ var utils = {
     // connected to it or if the network is in RETIRED state
     return utils.isRetiredNetwork(network)
       || !network.connectedContainersCount;
-},
+  },
 
   isSystemContainer: function(container) {
     return container.system;
@@ -1152,6 +1152,11 @@ var utils = {
     } else {
       return -1;
     }
+  },
+
+  mergeDocuments: function(items1, items2, prop = 'documentSelfLink') {
+    return items1.concat(items2).filter((item, index, self) =>
+        self.findIndex((c) => c[prop] === item[prop]) === index);
   }
 };
 

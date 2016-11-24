@@ -73,19 +73,11 @@ let MachinesStore = Reflux.createStore({
       this.setInData(['listView', 'itemsLoading'], true);
 
       operation.forPromise(services.loadMachines(queryOptions, false)).then((result) => {
-        // Transforming to the model of the view
-        var documents = result.documents;
+        var documents = result.documentLinks.map((documentLink) =>
+              result.documents[documentLink]);
         var nextPageLink = result.nextPageLink;
         var itemsCount = result.totalCount;
-
-        // TODO: temporary client side filter
-        var machines = [];
-        for (var key in documents) {
-          if (documents.hasOwnProperty(key)) {
-            var document = documents[key];
-            machines.push(toViewModel(document));
-          }
-        }
+        var machines = documents.map((document) => toViewModel(document));
 
         this.getResourcePools(machines).then((result) => {
           machines.forEach((machine) => {
@@ -111,6 +103,52 @@ let MachinesStore = Reflux.createStore({
           if (itemsCount !== undefined && itemsCount !== null) {
             this.setInData(['listView', 'itemsCount'], itemsCount);
           }
+          this.setInData(['listView', 'nextPageLink'], nextPageLink);
+          this.emitChange();
+        });
+      });
+    }
+
+    this.emitChange();
+  },
+
+  onOpenMachinesNext: function(queryOptions, nextPageLink) {
+    this.setInData(['listView', 'queryOptions'], queryOptions);
+
+    var operation = this.requestCancellableOperation(OPERATION.LIST, queryOptions);
+
+    if (operation) {
+      this.cancelOperations(OPERATION.DETAILS);
+      this.setInData(['listView', 'itemsLoading'], true);
+
+      operation.forPromise(services.loadNextPage(nextPageLink)).then((result) => {
+        var documents = result.documentLinks.map((documentLink) =>
+              result.documents[documentLink]);
+        var nextPageLink = result.nextPageLink;
+        let machines = documents.map((document) => toViewModel(document));
+
+        this.getResourcePools(machines).then((result) => {
+          machines.forEach((machine) => {
+            if (result[machine.resourcePoolLink]) {
+              machine.resourcePoolName =
+                 result[machine.resourcePoolLink].resourcePoolState.name;
+            }
+          });
+          return this.getDescriptions(machines);
+        }).then((result) => {
+
+          machines.forEach((machine) => {
+            if (result[machine.descriptionLink]) {
+              machine.cpuCount = result[machine.descriptionLink].cpuCount;
+              machine.cpuMhzPerCore = result[machine.descriptionLink].cpuMhzPerCore;
+              machine.memory =
+                  Math.floor(result[machine.descriptionLink].totalMemoryBytes / 1048576);
+            }
+          });
+
+          this.setInData(['listView', 'items'],
+              utils.mergeDocuments(this.data.listView.items.asMutable(), machines));
+          this.setInData(['listView', 'itemsLoading'], false);
           this.setInData(['listView', 'nextPageLink'], nextPageLink);
           this.emitChange();
         });

@@ -135,19 +135,11 @@ let ComputeStore = Reflux.createStore({
       this.setInData(['listView', 'itemsLoading'], true);
 
       operation.forPromise(services.loadCompute(queryOptions)).then((result) => {
-        // Transforming to the model of the view
-        var documents = result.documents;
+        var documents = result.documentLinks.map((documentLink) =>
+              result.documents[documentLink]);
         var nextPageLink = result.nextPageLink;
         var itemsCount = result.totalCount;
-
-        // TODO: temporary client side filter
-        var compute = [];
-        for (var key in documents) {
-          if (documents.hasOwnProperty(key)) {
-            var document = documents[key];
-            compute.push(toViewModel(document));
-          }
-        }
+        var compute = documents.map((document) => toViewModel(document));
 
         this.getResourcePools(compute).then((result) => {
           compute.forEach((compute) => {
@@ -177,6 +169,56 @@ let ComputeStore = Reflux.createStore({
           this.setInData(['listView', 'nextPageLink'], nextPageLink);
           this.emitChange();
         });
+      });
+    }
+
+    this.emitChange();
+  },
+
+  onOpenComputeNext: function(queryOptions, nextPageLink) {
+    this.setInData(['listView', 'queryOptions'], queryOptions);
+
+    var operation = this.requestCancellableOperation(OPERATION.LIST, queryOptions);
+
+    if (operation) {
+      this.cancelOperations(OPERATION.DETAILS);
+      this.setInData(['listView', 'itemsLoading'], true);
+
+      operation.forPromise(services.loadNextPage(nextPageLink)).then((result) => {
+
+        var documents = result.documentLinks.map((documentLink) =>
+              result.documents[documentLink]);
+        var nextPageLink = result.nextPageLink;
+        var compute = documents.map((document) => toViewModel(document));
+
+        this.getResourcePools(compute).then((result) => {
+          compute.forEach((compute) => {
+            compute.epzs.forEach((epz) => {
+              if (result[epz.epzLink]) {
+                epz.epzName = result[epz.epzLink].resourcePoolState.name;
+              }
+            });
+          });
+          return this.getDescriptions(compute);
+        }).then((result) => {
+
+          compute.forEach((compute) => {
+            if (result[compute.descriptionLink]) {
+              compute.cpuCount = result[compute.descriptionLink].cpuCount;
+              compute.cpuMhzPerCore = result[compute.descriptionLink].cpuMhzPerCore;
+              compute.memory =
+                  Math.floor(result[compute.descriptionLink].totalMemoryBytes / 1048576);
+            }
+          });
+
+          this.setInData(['listView', 'items'],
+              utils.mergeDocuments(this.data.listView.items.asMutable(), compute));
+
+          this.setInData(['listView', 'itemsLoading'], false);
+          this.setInData(['listView', 'nextPageLink'], nextPageLink);
+          this.emitChange();
+        });
+
       });
     }
 
