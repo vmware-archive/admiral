@@ -157,7 +157,7 @@ public class ContainerVolumeDescriptionService extends StatefulService {
     }
 
     @Override
-    public void handleStart(Operation startPost) {
+    public void handleCreate(Operation startPost) {
         try {
             ContainerVolumeDescription desc = getValidInputFrom(startPost, false);
             logFine("Initial name is %s", desc.name);

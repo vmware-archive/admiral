@@ -115,13 +115,9 @@ public class DeploymentPolicyService extends StatefulService {
     }
 
     @Override
-    public void handleStart(Operation start) {
-        try {
-            validate(start);
-        } catch (Throwable t) {
-            start.fail(t);
-        }
-        super.handleStart(start);
+    public void handleCreate(Operation start) {
+        validate(start);
+        start.complete();
     }
 
     private void validate(Operation op) {

@@ -149,7 +149,7 @@ public class ContainerNetworkDescriptionService extends StatefulService {
     }
 
     @Override
-    public void handleStart(Operation startPost) {
+    public void handleCreate(Operation startPost) {
         try {
             ContainerNetworkDescription state = getValidInputFrom(startPost, false);
             logFine("Initial name is %s", state.name);
