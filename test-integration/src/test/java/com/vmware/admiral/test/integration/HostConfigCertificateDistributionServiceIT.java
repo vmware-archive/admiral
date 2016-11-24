@@ -17,6 +17,7 @@ import java.net.URI;
 import java.util.Collections;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
@@ -49,6 +50,7 @@ public class HostConfigCertificateDistributionServiceIT extends
         configureRegistries(registryAddress, null);
     }
 
+    @Ignore("Started to fail on Nov 21 and until Nov 23 it failed 8 times. Jira task - https://jira-hzn.eng.vmware.com/browse/VBV-860")
     @Test
     public void testUploadRegistryCertificateOnDockerHostConfig() throws Exception {
         // Step 1: verify that certificate is added after host is added
