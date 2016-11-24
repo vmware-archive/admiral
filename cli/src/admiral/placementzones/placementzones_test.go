@@ -20,6 +20,7 @@ import (
 
 	"admiral/config"
 	"admiral/loginout"
+	"admiral/tags"
 	. "admiral/testutils"
 )
 
@@ -42,7 +43,7 @@ func TestMain(m *testing.M) {
 func TestAddRemovePlacementZone(t *testing.T) {
 	// Testing phase 1
 	name := "test-placement-zone"
-	id, err := AddPZ(name, nil)
+	id, err := AddPZ(name, nil, nil)
 	CheckTestError(err, t)
 
 	// Validating phase 1
@@ -51,7 +52,7 @@ func TestAddRemovePlacementZone(t *testing.T) {
 	actualPZ := PlacementZone{}
 	exist := false
 	for _, rp := range pzl.Documents {
-		if rp.ResourcePoolState.GetID() == id {
+		if rp.GetID() == id {
 			exist = true
 			actualPZ = rp
 			break
@@ -75,7 +76,7 @@ func TestAddRemovePlacementZone(t *testing.T) {
 	_, err = pzl.FetchPZ()
 	exist = false
 	for _, rp := range pzl.Documents {
-		if rp.ResourcePoolState.GetID() == id {
+		if rp.GetID() == id {
 			exist = true
 			break
 		}
@@ -89,21 +90,20 @@ func TestAddRemovePlacementZone(t *testing.T) {
 func TestUpdatePlacementZone(t *testing.T) {
 	// Preparing
 	name := "test-placement-zone"
-	id, err := AddPZ(name, nil)
+	id, err := AddPZ(name, nil, nil)
 	CheckTestError(err, t)
 
 	// Testing
 	newName := "new-test-placement-zone"
-	id, err = EditPZID(id, newName)
+	id, err = EditPZID(id, newName, nil, nil)
 	CheckTestError(err, t)
-
 	// Validating
 	pzl := &PlacementZoneList{}
 	_, err = pzl.FetchPZ()
 	actualPZ := PlacementZone{}
 	exist := false
 	for _, pz := range pzl.Documents {
-		if pz.ResourcePoolState.GetID() == id {
+		if pz.GetID() == id {
 			exist = true
 			actualPZ = pz
 			break
@@ -126,12 +126,81 @@ func TestUpdatePlacementZone(t *testing.T) {
 func TestAddPlacementZoneWithEmptyName(t *testing.T) {
 	// Testing
 	name := ""
-	_, err := AddPZ(name, nil)
+	_, err := AddPZ(name, nil, nil)
 
 	// Validating
 	if err == nil {
 		t.Error("Expected error != nil, got error = nil.")
 	}
+}
+
+func TestAddAndUpdatePlacementZoneWithTags(t *testing.T) {
+	// Testing phase 1
+	name := "test-placement-zone"
+	pzTags := []string{"test:test", "test1:test1"}
+	id, err := AddPZ(name, nil, pzTags)
+	CheckTestError(err, t)
+
+	// Validating phase 1
+	pzl := &PlacementZoneList{}
+	_, err = pzl.FetchPZ()
+	actualPZ := PlacementZone{}
+	exist := false
+	for _, rp := range pzl.Documents {
+		if rp.GetID() == id {
+			exist = true
+			actualPZ = rp
+			break
+		}
+	}
+
+	if !exist {
+		t.Error("Added placement zone is not found.")
+	}
+
+	expectedTagsOutput := "[test:test][test1:test1]"
+	actualTagsOutput := tags.TagsToString(actualPZ.EpzState.TagLinksToMatch)
+
+	if expectedTagsOutput != actualTagsOutput {
+		t.Errorf("Expected placement zone tags: %s, actual placement zone tags: %s", expectedTagsOutput, actualTagsOutput)
+	}
+
+	// Testing phase 2
+	tagsToAdd := []string{"newTag:newTag"}
+	tagsToRemove := []string{"test:test", "test1:test1"}
+	id, err = EditPZID(id, "", tagsToAdd, tagsToRemove)
+	CheckTestError(err, t)
+
+	// Validating phase 2
+	pzl = &PlacementZoneList{}
+	_, err = pzl.FetchPZ()
+	actualPZ = PlacementZone{}
+	exist = false
+	for _, rp := range pzl.Documents {
+		if rp.GetID() == id {
+			exist = true
+			actualPZ = rp
+			break
+		}
+	}
+
+	if !exist {
+		t.Error("Updated placement zone is not found.")
+	}
+
+	expectedTagsOutput = "[newTag:newTag]"
+	actualTagsOutput = tags.TagsToString(actualPZ.EpzState.TagLinksToMatch)
+
+	if expectedTagsOutput != actualTagsOutput {
+		t.Errorf("Expected updated placement zone tags: %s, actual updated placement zone tags: %s", expectedTagsOutput, actualTagsOutput)
+	}
+
+	if actualPZ.ResourcePoolState.Name != name {
+		t.Error("Placement zone name got updated when I shouldn't get updated.")
+	}
+
+	id, err = RemovePZID(id)
+	CheckTestError(err, t)
 }
 
 // Disabled for now!

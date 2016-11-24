@@ -45,7 +45,7 @@ func TestAddRemoveNetwork(t *testing.T) {
 	// Preparing
 	credentialsID, err := credentials.AddByCert("test-credentials", tc.PublicKey, tc.PrivateKey, nil)
 	CheckTestError(err, t)
-	hostID, err := hosts.AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil)
+	hostID, err := hosts.AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil, nil)
 	CheckTestError(err, t)
 
 	networkName := "test-network"

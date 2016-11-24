@@ -50,7 +50,7 @@ type Host struct {
 	TagLinks         []string           `json:"tagLinks,omitempty"`
 
 	CreationTimeMicros           int64  `json:"creationTimeMicros,omitempty"`
-	DescriptionLink              string `json:"descriptionLink"`
+	DescriptionLink              string `json:"descriptionLink,omitempty"`
 	DocumentSelfLink             string `json:"documentSelfLink,omitempty"`
 	DocumentVersion              int    `json:"documentVersion,omitempty"`
 	DocumentEpoch                int    `json:"documentEpoch,omitempty"`
@@ -64,6 +64,9 @@ type Host struct {
 
 func (h *Host) GetName() string {
 	if val, ok := h.CustomProperties["__hostAlias"]; !ok || val == nil || strings.TrimSpace(*val) == "" {
+		if val, ok := h.CustomProperties["__Name"]; !ok || val == nil || strings.TrimSpace(*val) == "" {
+			return ""
+		}
 		return *h.CustomProperties["__Name"]
 	}
 	return *h.CustomProperties["__hostAlias"]
@@ -178,8 +181,7 @@ func (h *Host) AddTagLinks(tagsInput []string) error {
 }
 
 func (h *Host) RemoveTagLinks(tagsInput []string) error {
-	indicesToDelete := make([]int, 0)
-	linksToMatch := make([]string, 0)
+	tagsToRemove := make([]string, 0)
 	for _, ti := range tagsInput {
 		tagId, err := tags.GetTagIdByEqualKeyVals(ti, false)
 		if err != nil {
@@ -187,21 +189,19 @@ func (h *Host) RemoveTagLinks(tagsInput []string) error {
 		}
 		if tagId != "" {
 			tagLink := utils.CreateResLinkForTag(tagId)
-			linksToMatch = append(linksToMatch, tagLink)
+			tagsToRemove = append(tagsToRemove, tagLink)
 		}
 	}
 
-	for _, link := range linksToMatch {
-		for i, tagLink := range h.TagLinks {
-			if tagLink == link {
-				indicesToDelete = append(indicesToDelete, i)
+	for _, tagToRemove := range tagsToRemove {
+		for i := 0; i < len(h.TagLinks); i++ {
+			if tagToRemove == h.TagLinks[i] {
+				h.TagLinks = append(h.TagLinks[:i], h.TagLinks[i+1:]...)
+				i--
 			}
 		}
 	}
 
-	for _, index := range indicesToDelete {
-		h.TagLinks = append(h.TagLinks[:index], h.TagLinks[index+1:]...)
-	}
 	return nil
 }
 

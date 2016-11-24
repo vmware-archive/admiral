@@ -116,8 +116,7 @@ func (epzs *EpzState) AddTagLinks(tagsInput []string) error {
 }
 
 func (epzs *EpzState) RemoveTagLinks(tagsInput []string) error {
-	indicesToDelete := make([]int, 0)
-	linksToMatch := make([]string, 0)
+	tagsToRemove := make([]string, 0)
 	for _, ti := range tagsInput {
 		tagId, err := tags.GetTagIdByEqualKeyVals(ti, false)
 		if err != nil {
@@ -125,21 +124,19 @@ func (epzs *EpzState) RemoveTagLinks(tagsInput []string) error {
 		}
 		if tagId != "" {
 			tagLink := utils.CreateResLinkForTag(tagId)
-			linksToMatch = append(linksToMatch, tagLink)
+			tagsToRemove = append(tagsToRemove, tagLink)
 		}
 	}
 
-	for _, link := range linksToMatch {
-		for i, tagLink := range epzs.TagLinksToMatch {
-			if tagLink == link {
-				indicesToDelete = append(indicesToDelete, i)
+	for _, tagToRemove := range tagsToRemove {
+		for i := 0; i < len(epzs.TagLinksToMatch); i++ {
+			if tagToRemove == epzs.TagLinksToMatch[i] {
+				epzs.TagLinksToMatch = append(epzs.TagLinksToMatch[:i], epzs.TagLinksToMatch[i+1:]...)
+				i--
 			}
 		}
 	}
 
-	for _, index := range indicesToDelete {
-		epzs.TagLinksToMatch = append(epzs.TagLinksToMatch[:index], epzs.TagLinksToMatch[index+1:]...)
-	}
 	return nil
 }
 
@@ -150,6 +147,20 @@ func (epzs *EpzState) containsTagLink(tagLink string) bool {
 		}
 	}
 	return false
+}
+
+func (epzs *EpzState) IsNullable() bool {
+	if len(epzs.TagLinksToMatch) == 0 && epzs.DocumentSelfLink == "" && epzs.ResourcePoolLink == "" {
+		return true
+	}
+	return false
+}
+
+func (epzs *EpzState) MarshalJSON() ([]byte, error) {
+	if epzs.IsNullable() {
+		return json.Marshal(nil)
+	}
+	return json.Marshal(*epzs)
 }
 
 type PlacementZoneList struct {

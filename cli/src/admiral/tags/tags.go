@@ -41,23 +41,22 @@ func (t *Tag) GetID() string {
 }
 
 func (t *Tag) SetKeyValues(input string) error {
+	var key, val string
+
 	if !strings.Contains(input, ":") {
-		return NewTagError(input)
+		key = input
+		val = ""
+	} else {
+		keyValArr := strings.Split(input, ":")
+		if len(keyValArr) != 2 {
+			return NewTagError(input)
+		}
+		key = strings.TrimSpace(keyValArr[0])
+		val = strings.TrimSpace(keyValArr[1])
+		if key == "" {
+			return NewTagError(input)
+		}
 	}
-
-	keyValArr := strings.Split(input, ":")
-
-	if len(keyValArr) != 2 {
-		return NewTagError(input)
-	}
-
-	key := strings.TrimSpace(keyValArr[0])
-	val := strings.TrimSpace(keyValArr[1])
-
-	if key == "" || val == "" {
-		return NewTagError(input)
-	}
-
 	t.Key = key
 	t.Value = val
 	return nil
@@ -126,6 +125,9 @@ func AddTag(tag *Tag) (string, error) {
 }
 
 func TagsToString(tagLinks []string) string {
+	if len(tagLinks) == 0 {
+		return "n/a"
+	}
 	var buffer bytes.Buffer
 	for _, tl := range tagLinks {
 		tag := getTag(tl)

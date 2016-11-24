@@ -23,6 +23,7 @@ import (
 	"admiral/credentials"
 	"admiral/loginout"
 	"admiral/placementzones"
+	"admiral/tags"
 	. "admiral/testutils"
 )
 
@@ -48,7 +49,7 @@ func TestAddRemoveHost(t *testing.T) {
 	CheckTestError(err, t)
 
 	// Testing phase 1
-	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil)
+	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil, nil)
 	CheckTestError(err, t)
 
 	// Validating phase 1
@@ -56,7 +57,7 @@ func TestAddRemoveHost(t *testing.T) {
 	hl.FetchHosts("")
 	exist := false
 	for _, host := range hl.Documents {
-		if host.Address == hostID {
+		if host.GetID() == hostID {
 			exist = true
 			break
 		}
@@ -75,7 +76,7 @@ func TestAddRemoveHost(t *testing.T) {
 	hl.FetchHosts("")
 	exist = false
 	for _, host := range hl.Documents {
-		if host.Address == hostID {
+		if host.GetID() == hostID {
 			exist = true
 			break
 		}
@@ -94,7 +95,7 @@ func TestEnableDisableHost(t *testing.T) {
 	// Preparing
 	credentialsID, err := credentials.AddByCert("test-credentials", tc.PublicKey, tc.PrivateKey, nil)
 	CheckTestError(err, t)
-	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil)
+	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil, nil)
 	CheckTestError(err, t)
 
 	// Testing phase 1
@@ -106,7 +107,7 @@ func TestEnableDisableHost(t *testing.T) {
 	hl := HostsList{}
 	hl.FetchHosts("")
 	for _, host := range hl.Documents {
-		if host.Address == hostID {
+		if host.GetID() == hostID {
 			if host.PowerState != "SUSPEND" {
 				t.Errorf("Expected host state: SUSPEND, actual state: %s", host.PowerState)
 			}
@@ -123,7 +124,7 @@ func TestEnableDisableHost(t *testing.T) {
 	hl = HostsList{}
 	hl.FetchHosts("")
 	for _, host := range hl.Documents {
-		if host.Address == hostID {
+		if host.GetID() == hostID {
 			if host.PowerState != "ON" {
 				t.Errorf("Expected host state: ON, actual state: %s", host.PowerState)
 			}
@@ -142,10 +143,10 @@ func TestHostUpdate(t *testing.T) {
 	// Preparing
 	credentialsID, err := credentials.AddByCert("test-credentials", tc.PublicKey, tc.PrivateKey, nil)
 	CheckTestError(err, t)
-	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil)
+	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil, nil)
 	CheckTestError(err, t)
 	rpName := "test-placement-zone"
-	pzID, err := placementzones.AddPZ(rpName, nil)
+	pzID, err := placementzones.AddPZ(rpName, nil, nil)
 	CheckTestError(err, t)
 	credentialsName := "test-credentials"
 	credentialsUsername := "testuser"
@@ -154,7 +155,7 @@ func TestHostUpdate(t *testing.T) {
 	CheckTestError(err, t)
 
 	// Testing
-	hostID, err = EditHost(hostID, "", pzID, "", newCredentialsID, true)
+	hostID, err = EditHost(hostID, "", pzID, "", newCredentialsID, true, nil, nil)
 	CheckTestError(err, t)
 
 	// Validating
@@ -162,7 +163,7 @@ func TestHostUpdate(t *testing.T) {
 	hl.FetchHosts("")
 	exist := false
 	for _, host := range hl.Documents {
-		if host.Address == hostID {
+		if host.GetID() == hostID {
 			exist = true
 			if host.GetResourcePoolID() != pzID {
 				t.Errorf("Expected updated placement zone ID: %s, actual placement zone ID: %s",
@@ -187,5 +188,75 @@ func TestHostUpdate(t *testing.T) {
 	_, err = credentials.RemoveCredentialsID(credentialsID)
 	CheckTestError(err, t)
 	_, err = credentials.RemoveCredentialsID(newCredentialsID)
+	CheckTestError(err, t)
+}
+
+func TestAddAndUpdateHostWithTags(t *testing.T) {
+	// Preparing
+	credentialsID, err := credentials.AddByCert("test-credentials", tc.PublicKey, tc.PrivateKey, nil)
+	CheckTestError(err, t)
+
+	// Testing phase 1
+	hostTags := []string{"test:test", "test1:test1"}
+	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil, hostTags)
+	CheckTestError(err, t)
+
+	// Validating phase 1
+	hl := HostsList{}
+	hl.FetchHosts("")
+	addedHost := Host{}
+	exist := false
+	for _, host := range hl.Documents {
+		if host.GetID() == hostID {
+			exist = true
+			addedHost = host
+			break
+		}
+	}
+
+	if !exist {
+		t.Error("Added host is not found.")
+	}
+
+	expectedTagsOutput := "[test:test][test1:test1]"
+	actualTagsOutput := tags.TagsToString(addedHost.TagLinks)
+
+	if expectedTagsOutput != actualTagsOutput {
+		t.Errorf("Expected host tags: %s, actual host tags: %s", expectedTagsOutput, actualTagsOutput)
+	}
+
+	// Testing phase 2
+	tagsToAdd := []string{"newTag:newTag"}
+	tagsToRemove := []string{"test:test", "test1:test1"}
+	hostID, err = EditHost(hostID, "", tc.PlacementZone, "", credentialsID, true, tagsToAdd, tagsToRemove)
+	CheckTestError(err, t)
+
+	// Validating phase 2
+	hl = HostsList{}
+	hl.FetchHosts("")
+	addedHost = Host{}
+	exist = false
+	for _, host := range hl.Documents {
+		if host.GetID() == hostID {
+			exist = true
+			addedHost = host
+			break
+		}
+	}
+
+	if !exist {
+		t.Error("Updated host is not found.")
+	}
+
+	expectedTagsOutput = "[newTag:newTag]"
+	actualTagsOutput = tags.TagsToString(addedHost.TagLinks)
+
+	if expectedTagsOutput != actualTagsOutput {
+		t.Errorf("Expected updated host tags: %s, actual updated host tags: %s", expectedTagsOutput, actualTagsOutput)
+	}
+
+	_, err = RemoveHost(hostID, false)
+	CheckTestError(err, t)
+	_, err = credentials.RemoveCredentialsID(credentialsID)
 	CheckTestError(err, t)
 }
