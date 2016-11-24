@@ -19,6 +19,18 @@ const OPERATION = {
   LIST: 'list'
 };
 
+function verifyEnumeration(endpoint, retries, callback) {
+  services.searchCompute(endpoint.resourcePoolLink, '').then((result) => {
+    setTimeout(() => {
+      if (result.totalCount !== 0 || retries === 0) {
+        callback(result);
+      } else {
+        verifyEnumeration(endpoint, retries - 1, callback);
+      }
+    }, 1000);
+  });
+}
+
 let EndpointsStore = Reflux.createStore({
   mixins: [CrudStoreMixin],
   listenables: [EndpointsActions],
@@ -61,20 +73,22 @@ let EndpointsStore = Reflux.createStore({
     this.emitChange();
 
     services.createEndpoint(endpoint).then((createdEndpoint) => {
-      var immutableEndpoint = Immutable(createdEndpoint);
+      verifyEnumeration(createdEndpoint, 10, () => {
+        var immutableEndpoint = Immutable(createdEndpoint);
 
-      var endpoints = this.data.items.asMutable();
-      endpoints.push(immutableEndpoint);
+        var endpoints = this.data.items.asMutable();
+        endpoints.push(immutableEndpoint);
 
-      this.setInData(['items'], endpoints);
-      this.setInData(['newItem'], immutableEndpoint);
-      this.setInData(['editingItemData'], null);
-      this.emitChange();
-
-      setTimeout(() => {
-        this.setInData(['newItem'], null);
+        this.setInData(['items'], endpoints);
+        this.setInData(['newItem'], immutableEndpoint);
+        this.setInData(['editingItemData'], null);
         this.emitChange();
-      }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
+
+        setTimeout(() => {
+          this.setInData(['newItem'], null);
+          this.emitChange();
+        }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
+      });
     }).catch(this.onGenericEditError);
   },
 
@@ -88,25 +102,26 @@ let EndpointsStore = Reflux.createStore({
       // If the backend did not make any changes, the response will be empty
       updatedEndpoint = updatedEndpoint || endpoint;
 
-      var immutableEndpoint = Immutable(updatedEndpoint);
+      verifyEnumeration(updatedEndpoint, 10, () => {
+        var immutableEndpoint = Immutable(updatedEndpoint);
+        var endpoints = this.data.items.asMutable();
 
-      var endpoints = this.data.items.asMutable();
-
-      for (var i = 0; i < endpoints.length; i++) {
-        if (endpoints[i].documentSelfLink === immutableEndpoint.documentSelfLink) {
-          endpoints[i] = immutableEndpoint;
+        for (var i = 0; i < endpoints.length; i++) {
+          if (endpoints[i].documentSelfLink === immutableEndpoint.documentSelfLink) {
+            endpoints[i] = immutableEndpoint;
+          }
         }
-      }
 
-      this.setInData(['items'], endpoints);
-      this.setInData(['updatedItem'], immutableEndpoint);
-      this.setInData(['editingItemData'], null);
-      this.emitChange();
-
-      setTimeout(() => {
-        this.setInData(['updatedItem'], null);
+        this.setInData(['items'], endpoints);
+        this.setInData(['updatedItem'], immutableEndpoint);
+        this.setInData(['editingItemData'], null);
         this.emitChange();
-      }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
+
+        setTimeout(() => {
+          this.setInData(['updatedItem'], null);
+          this.emitChange();
+        }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
+      });
     }).catch(this.onGenericEditError);
   },
 
