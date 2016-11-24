@@ -32,6 +32,10 @@ var isInteger = function(integer, min, max) {
   return validator.isInt(integer, range);
 };
 
+var isFromCatalog = function(item) {
+  return !!(item && item.customProperties && item.customProperties.subTenantId);
+};
+
 var utils = {
   initializeConfigurationProperties: function(props) {
     if (configurationProperties) {
@@ -464,9 +468,6 @@ var utils = {
 
     } else if (resource.type === constants.CONTAINERS.TYPES.COMPOSITE
                 || resource.type === constants.CONTAINERS.TYPES.CLUSTER) {
-      if (op === constants.CONTAINERS.OPERATION.REMOVE) {
-        return true;
-      }
 
       let items;
       if (resource.containers) {
@@ -478,26 +479,27 @@ var utils = {
       return this.operationSupportedMulti(op, items);
 
     } else if (resource.type === constants.RESOURCES.TYPES.NETWORK) {
-      if (op === constants.RESOURCES.NETWORKS.OPERATION.REMOVE) {
-        // an alert will be displayed if there are containers
-        // connected to this network.
-        return true;
-      }
+      return (op === constants.RESOURCES.NETWORKS.OPERATION.REMOVE
+            && !isFromCatalog(resource));
 
     } else if (op === constants.CONTAINERS.OPERATION.STOP) {
       return (!this.isApplicationSingleView())
-                && this.isContainerStatusActive(resource.powerState);
+                && this.isContainerStatusActive(resource.powerState)
+                && !isFromCatalog(resource);
 
     } else if (op === constants.CONTAINERS.OPERATION.START) {
       return (!this.isApplicationSingleView())
-                && this.isContainerStatusInactive(resource.powerState);
+                && this.isContainerStatusInactive(resource.powerState)
+                && !isFromCatalog(resource);
 
     } else if (op === constants.CONTAINERS.OPERATION.REMOVE) {
-      return !this.isApplicationSingleView();
+      return (!this.isApplicationSingleView()
+                && !isFromCatalog(resource));
 
     } else if (op === constants.CONTAINERS.OPERATION.CLUSTERING) {
-      return !this.isApplicationSingleView()
-                && this.isContainerStatusOk(resource.powerState);
+      return (!this.isApplicationSingleView()
+                && this.isContainerStatusOk(resource.powerState)
+                && !isFromCatalog(resource));
 
     } else if (op === constants.CONTAINERS.OPERATION.SHELL) {
       return this.getConfigurationPropertyBoolean('allow.browser.ssh.console')
