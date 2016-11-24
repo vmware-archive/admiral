@@ -781,6 +781,7 @@
         "id": "ID",
         "inputs": "Inputs",
         "outputs": "Outputs",
+        "errorMsg": "Error",
         "closureTitle": "Closure run info",
         "closureDescriptionTitle": "Closure description info",
         "descriptionId": "ID",

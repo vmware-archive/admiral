@@ -26,7 +26,7 @@ public final class ResourcesConstants {
     public static final Integer MIN_CPU_SHARES = 50;
     public static final Integer DEFAULT_CPU_SHARES = 1024;
 
-    public static final Integer DEFAULT_EXEC_TIMEOUT_SECONDS = 10;
+    public static final Integer DEFAULT_EXEC_TIMEOUT_SECONDS = 60;
     public static final Integer DEFAULT_MEMORY_MB_RES_CONSTRAINT = MIN_MEMORY_MB_RES_CONSTRAINT;
 
     private ResourcesConstants() {

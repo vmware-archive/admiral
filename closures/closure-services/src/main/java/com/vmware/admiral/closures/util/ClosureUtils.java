@@ -20,9 +20,16 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -102,6 +109,57 @@ public final class ClosureUtils {
         }
 
         return tagRemoved.substring(repoIndex + 1);
+    }
+
+    public static JsonElement toJsonElement(JsonNode node) {
+        JsonObject jsObject = new JsonObject();
+
+        Iterator<String> fieldsIterator = node.fieldNames();
+
+        if (!fieldsIterator.hasNext()) {
+            com.google.gson.JsonParser parser = new com.google.gson.JsonParser();
+            return parser.parse(node.textValue());
+        }
+
+        while (fieldsIterator.hasNext()) {
+            String field = fieldsIterator.next();
+            JsonNode childNode = node.get(field);
+
+            JsonElement convertedValue = null;
+            if (childNode.isObject()) {
+                convertedValue = toJsonElement(childNode);
+                jsObject.add(field, convertedValue);
+            } else if (childNode.isArray()) {
+                convertedValue = toJsonElementArray(childNode);
+                jsObject.add(field, convertedValue);
+            } else {
+                String val = childNode.textValue();
+                jsObject.add(field, new JsonPrimitive(val));
+            }
+        }
+
+        return jsObject;
+    }
+
+    private static JsonElement toJsonElementArray(JsonNode childNode) {
+        JsonArray jsObjArray = new JsonArray();
+        Iterator<JsonNode> iterator = childNode.iterator();
+        while (iterator.hasNext()) {
+            JsonElement convertedValue = null;
+            JsonNode node = iterator.next();
+            if (node.isObject()) {
+                convertedValue = toJsonElement(node);
+                jsObjArray.add(convertedValue);
+            } else if (node.isArray()) {
+                convertedValue = toJsonElementArray(node);
+                jsObjArray.add(convertedValue);
+            } else {
+                String val = node.textValue();
+                jsObjArray.add(new JsonPrimitive(val));
+            }
+        }
+
+        return jsObjArray;
     }
 
     private static void buildTarData(URL dirURL, String folderNameFilter, OutputStream outputStream) throws

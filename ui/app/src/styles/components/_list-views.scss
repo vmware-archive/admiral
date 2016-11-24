@@ -1273,6 +1273,17 @@ $elements-side-margin: $elements-margin / 2;
   position: relative;
 }
 
+.images-view.right-context-expanded {
+  > .list-holder {
+    right: 55%;
+  }
+
+  > .right-context-panel.right-closure-panel {
+    left: 45%;
+    top: 20px;
+  }
+}
+
 .template-details .add-closure.closable-view.right-context-expanded {
   > .content {
     > .mask {

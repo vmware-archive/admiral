@@ -17,14 +17,12 @@ import java.util.Iterator;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+
+import com.vmware.admiral.closures.util.ClosureUtils;
 
 public class ClosureInputsDeserializer extends StdDeserializer<Map<String, JsonElement>> {
 
@@ -38,7 +36,7 @@ public class ClosureInputsDeserializer extends StdDeserializer<Map<String, JsonE
 
     @Override
     public Map<String, JsonElement> deserialize(JsonParser p, DeserializationContext ctxt)
-            throws IOException, JsonProcessingException {
+            throws IOException {
 
         Map<String, JsonElement> result = new HashMap<>();
         JsonNode node = p.getCodec().readTree(p);
@@ -46,61 +44,10 @@ public class ClosureInputsDeserializer extends StdDeserializer<Map<String, JsonE
         while (fieldsIterator.hasNext()) {
             String field = fieldsIterator.next();
             JsonNode childNode = node.get(field);
-            result.put(field, toJsonElement(childNode));
+            result.put(field, ClosureUtils.toJsonElement(childNode));
         }
 
         return result;
-    }
-
-    private JsonElement toJsonElement(JsonNode node) {
-        JsonObject jsObject = new JsonObject();
-
-        Iterator<String> fieldsIterator = node.fieldNames();
-
-        if (!fieldsIterator.hasNext()) {
-            com.google.gson.JsonParser parser = new com.google.gson.JsonParser();
-            return parser.parse(node.textValue());
-        }
-
-        while (fieldsIterator.hasNext()) {
-            String field = fieldsIterator.next();
-            JsonNode childNode = node.get(field);
-
-            JsonElement convertedValue = null;
-            if (childNode.isObject()) {
-                convertedValue = toJsonElement(childNode);
-                jsObject.add(field, convertedValue);
-            } else if (childNode.isArray()) {
-                convertedValue = toJsonElementArray(childNode);
-                jsObject.add(field, convertedValue);
-            } else {
-                String val = childNode.textValue();
-                jsObject.add(field, new JsonPrimitive(val));
-            }
-        }
-
-        return jsObject;
-    }
-
-    private JsonElement toJsonElementArray(JsonNode childNode) {
-        JsonArray jsObjArray = new JsonArray();
-        Iterator<JsonNode> iterator = childNode.iterator();
-        while (iterator.hasNext()) {
-            JsonElement convertedValue = null;
-            JsonNode node = iterator.next();
-            if (node.isObject()) {
-                convertedValue = toJsonElement(node);
-                jsObjArray.add(convertedValue);
-            } else if (node.isArray()) {
-                convertedValue = toJsonElementArray(node);
-                jsObjArray.add(convertedValue);
-            } else {
-                String val = node.textValue();
-                jsObjArray.add(new JsonPrimitive(val));
-            }
-        }
-
-        return jsObjArray;
     }
 
 }

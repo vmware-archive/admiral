@@ -13,12 +13,10 @@ FROM vmware/photon:1.0
 
 MAINTAINER Admiral Team, https://vmware.github.io/admiral/
 
-RUN tyum install -y python3-devel openssl-devel libffi dbus-glib python3 curl &&\
+RUN tyum install python3-devel openssl-devel libffi dbus-glib python3 -y &&\
     mkdir -p /app &&\
     pip3 install requests &&\
+    tyum remove vim findutils -y  &&\
     tyum clean all
 
 WORKDIR /app
-
-
-

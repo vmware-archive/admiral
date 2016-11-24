@@ -17,13 +17,13 @@ WORKDIR /app
 
 COPY app/closure_module/package.json /app/closure_module/package.json
 
-RUN tyum -y install wget curl npm tar gzip &&\
+RUN tyum install wget curl npm tar gzip -y &&\
     wget http://nodejs.org/dist/v4.3.0/node-v4.3.0-linux-x64.tar.gz &&\
     tar --strip-components 1 -xzvf node-v4.3.0-linux-x64.tar.gz -C /usr/local &&\
     mkdir -p /app/closure_module &&\
     npm install /app/closure_module --production &&\
     rm -fr ~/.npm &&\
     rm -fr node-v4.3.0-linux-x64.tar.gz &&\
-    tyum remove wget tar gzip &&\
+    tyum remove wget tar gzip vim findutils -y  &&\
     tyum clean all
 

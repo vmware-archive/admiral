@@ -373,7 +373,10 @@ public class AdmiralAdapterService extends
 
     private String createBaseImageName(String image) {
         String baseName = image.substring(image.indexOf("/") + 1);
-        baseName = baseName.replaceAll(":latest", "");
+        int tagIndex = baseName.lastIndexOf(":");
+        if (tagIndex > 0) {
+            baseName = baseName.substring(0, tagIndex);
+        }
         return baseName + "_base.tar.xz";
     }
 
@@ -670,8 +673,8 @@ public class AdmiralAdapterService extends
         request.customProperties.putIfAbsent(DOCKER_BUILD_IMAGE_FORCERM_PROP_NAME, "true");
         request.customProperties.putIfAbsent(DOCKER_BUILD_IMAGE_NOCACHE_PROP_NAME, "true");
 
-        boolean skipScriptDownload = ClosureUtils.isEmpty(state.configuration.dependencies);
-        JsonElement buildArgsObj = prepareBuildArgs(containerDesc, skipScriptDownload);
+        boolean setTaskUri = !ClosureUtils.isEmpty(state.configuration.dependencies);
+        JsonElement buildArgsObj = prepareBuildArgs(containerDesc, setTaskUri);
 
         request.customProperties.putIfAbsent(DOCKER_BUILD_IMAGE_BUILDARGS_PROP_NAME, buildArgsObj.toString());
 
@@ -711,13 +714,15 @@ public class AdmiralAdapterService extends
         }
     }
 
-    private JsonElement prepareBuildArgs(ContainerDescription containerDesc, boolean skipTaskUri) {
+    private JsonElement prepareBuildArgs(ContainerDescription containerDesc, boolean setTaskUri) {
         JsonObject buildArgsObj = new JsonObject();
         for (String env : containerDesc.env) {
-            String key = env.split("=")[0].trim();
-            if (skipTaskUri && !"TASK_URI".equalsIgnoreCase(key)) {
-                String value = env.split("=")[1].trim();
-                buildArgsObj.addProperty(key, value);
+            if (env.indexOf("=") > 0) {
+                String key = env.split("=")[0].trim();
+                if (setTaskUri && "TASK_URI".equalsIgnoreCase(key)) {
+                    String value = env.split("=")[1].trim();
+                    buildArgsObj.addProperty(key, value);
+                }
             }
         }
 
