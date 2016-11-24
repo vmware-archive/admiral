@@ -487,8 +487,7 @@ let HostsStore = Reflux.createStore({
           let nextPageLink = result.nextPageLink;
 
           // Transforming to the model of the view
-          let hosts = mergeItems(this.data.listView.items.asMutable(),
-              documents.map((document) => toViewModel(document)));
+          let hosts = documents.map((document) => toViewModel(document));
           this.getResourcePoolsForHostsCall(hosts).then((result) => {
             hosts.forEach((host) => {
               host.epzs.forEach((epz) => {
@@ -498,7 +497,8 @@ let HostsStore = Reflux.createStore({
               });
             });
 
-            this.setInData(['listView', 'items'], hosts);
+            this.setInData(['listView', 'items'],
+                mergeItems(this.data.listView.items.asMutable(), hosts));
             this.setInData(['listView', 'itemsLoading'], false);
             this.setInData(['listView', 'nextPageLink'], nextPageLink);
 
