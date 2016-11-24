@@ -45,7 +45,7 @@ public class CaSigningCertService extends StatelessService {
     private static final String CA_KEY_PEM_FILE = "certs/default-ca-key.pem";
 
     @Override
-    public void handleStart(Operation startOp) {
+    public void handlePost(Operation startOp) {
         Operation caCertOp = Operation
                 .createGet(getHost(), UriUtils.buildUriPath(ManagementUriParts.CONFIG_PROPS,
                         "default.ca.cert.pem.file"));

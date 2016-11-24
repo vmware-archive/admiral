@@ -88,7 +88,7 @@ public abstract class AbstractInitialBootService extends StatelessService {
                 } else {
                     createDefaultInstance(state, callback, RETRIES_COUNT);
                 }
-            }, factoryPath);
+            }, true, factoryPath);
         } catch (Throwable t) {
             logSevere("Error registering for service availability: %s. Error: %s",
                     state.documentSelfLink, (t instanceof CancellationException)

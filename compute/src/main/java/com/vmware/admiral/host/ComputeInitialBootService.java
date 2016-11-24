@@ -35,7 +35,8 @@ public class ComputeInitialBootService extends AbstractInitialBootService {
     public void handlePost(Operation post) {
         ArrayList<ServiceDocument> states = new ArrayList<>();
         states.add(SystemContainerDescriptions.buildCoreAgentContainerDescription());
-        initInstances(post, false, false, states.toArray(new ServiceDocument[states.size()]));
+        initInstances(Operation.createGet(null), false, false,
+                states.toArray(new ServiceDocument[states.size()]));
 
         states = new ArrayList<>();
         states.add(ContainerHostDataCollectionService.buildDefaultStateInstance());

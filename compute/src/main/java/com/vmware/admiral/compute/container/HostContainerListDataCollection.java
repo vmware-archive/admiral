@@ -91,7 +91,6 @@ public class HostContainerListDataCollection extends StatefulService {
 
         public HostContainerListDataCollectionFactoryService() {
             super(HostContainerListDataCollectionState.class);
-            super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
         }
 
         @Override

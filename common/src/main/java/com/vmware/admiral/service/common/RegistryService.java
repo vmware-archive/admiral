@@ -76,7 +76,7 @@ public class RegistryService extends StatefulService {
             host.registerForServiceAvailability((o, e) -> {
                 System.out.println("registerForServiceAvailability: " + RegistryService.FACTORY_LINK);
                 deleteDefaulRegistry(host);
-            }, RegistryService.FACTORY_LINK);
+            }, true, RegistryService.FACTORY_LINK);
 
             return null;
         }
