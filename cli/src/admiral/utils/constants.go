@@ -10,6 +10,7 @@ const (
 	ContainerFilter        = "/resources/containers?documentType=true&$count=true&$limit=10000&$orderby=documentSelfLink+asc&$filter=documentSelfLink+eq+"
 	CredentialsFilter      = "/core/auth/credentials?expand&$filter=customProperties/scope%20ne%20%27SYSTEM%27+and+documentSelfLink+eq+"
 	DeploymentPolicyFilter = "/resources/deployment-policies?expand&$filter=documentSelfLink+eq+"
+	EndpointFilter         = "/config/endpoints?expand=true&$filter=documentSelfLink+eq+"
 	HostFilter             = "/resources/compute?documentType=true&$count=true&$limit=1000&$orderby=documentSelfLink%20asc&$filter=descriptionLink%20ne%20%27/resources/compute-descriptions/*-parent-compute-desc%27%20and%20customProperties/__computeHost%20eq%20%27*%27%20and%20customProperties/__computeContainerHost%20eq%20%27*%27+and+documentSelfLink+eq+"
 	NetworkFilter          = "/resources/container-networks?expand&$filter=documentSelfLink+eq+"
 	PlacementFilter        = "/resources/group-placements?expand&$filter=documentSelfLink+eq+"
@@ -38,20 +39,22 @@ func (rt ResourceType) GetName() string {
 	case 6:
 		return "Deployment Policy"
 	case 7:
-		return "Host"
+		return "Endpoint"
 	case 8:
-		return "Network"
+		return "Host"
 	case 9:
-		return "Placement"
+		return "Network"
 	case 10:
-		return "Placement Zone"
+		return "Placement"
 	case 11:
-		return "Project"
+		return "Placement Zone"
 	case 12:
-		return "Registry"
+		return "Project"
 	case 13:
-		return "Request"
+		return "Registry"
 	case 14:
+		return "Request"
+	case 15:
 		return "Template"
 	default:
 		return ""
@@ -65,6 +68,7 @@ const (
 	CONTAINER
 	CREDENTIALS
 	DEPLOYMENT_POLICY
+	ENDPOINT
 	HOST
 	NETWORK
 	PLACEMENT

@@ -70,6 +70,7 @@ var (
 
 	//Flag used to update.
 	newName        string
+	newNameDesc    = "New name."
 	newDescription string
 	newAddress     string
 	newCred        string
@@ -208,6 +209,26 @@ var (
 	tagsDesc         = "Host tags to match. Input format - key:value"
 	tagsToRemove     []string
 	tagsToRemoveDesc = "Host tags to remove. Input format - key:value"
+
+	//Endpoint flags
+	accessKey            string
+	accessKeyDesc        = "Access key ID."
+	secretKey            string
+	secretKeyDesc        = "Secret access key."
+	regionId             string
+	regionIdDesc         = "Region ID."
+	subscriptionId       string
+	subscriptionIdDesc   = "Subscription ID."
+	endpointTenantId     string
+	endpointTenantIdDesc = "Tenant ID."
+	endpointUsername     string
+	endpointUsernameDesc = "Username."
+	endpointPassword     string
+	endpointPasswordDesc = "Password."
+	endpointHostName     string
+	endpointHostNameDesc = "Host name or IP."
+	datacenterName       string
+	datacenterNameDesc   = "Datacenter name."
 )
 
 var admiralLogo = `

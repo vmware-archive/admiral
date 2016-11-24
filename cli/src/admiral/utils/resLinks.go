@@ -153,6 +153,13 @@ func CreateResLinkForPlacementZone(id string) string {
 	return "/resources/elastic-placement-zones-config/" + id
 }
 
+func CreateResLinkForEndpoint(id string) string {
+	if id == "" {
+		return ""
+	}
+	return "/resources/endpoints/" + id
+}
+
 //Function to create resource links from the provided ID as parameter.
 func CreateResLinksForNetwork(ids []string) []string {
 	links := make([]string, 0)
@@ -250,6 +257,10 @@ func GetIdFilterUrl(shortId string, restype ResourceType) string {
 	case TEMPLATE:
 		shortSelfLink := CreateResLinkForTemplate(shortId)
 		url = TemplateFilter + createIdFilter(shortSelfLink)
+	case ENDPOINT:
+		shortSelfLink := CreateResLinkForEndpoint(shortId)
+		url = EndpointFilter + createIdFilter(shortSelfLink)
+
 	}
 	return url
 }

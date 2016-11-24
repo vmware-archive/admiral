@@ -28,11 +28,12 @@ var (
 
 func init() {
 	AutocompleteCmd.Hidden = true
+	EndpointRootCmd.AddCommand(EndpointRootAddCmd, EndpointRootUpdateCmd)
 	RootCmd.AddCommand(AppsRootCmd, CertsRootCmd, CredentialsRootCmd,
 		HostsRootCmd, PlacementsRootCmd, PlacementZonesRootCmd,
 		TemplatesRootCmd, RegistriesRootCmd, NetworksRootCmd,
 		CustomPropertiesRootCmd, AutocompleteCmd, RequestsRootCmd,
-		ConfigRootCmd)
+		ConfigRootCmd, EndpointRootCmd)
 
 	if utils.IsVraMode {
 		RootCmd.AddCommand(BusinessGroupsRootCmd)
@@ -140,6 +141,21 @@ var RequestsRootCmd = &cobra.Command{
 var BusinessGroupsRootCmd = &cobra.Command{
 	Use:   "business-group",
 	Short: "Perform operations with business groups.",
+}
+
+var EndpointRootCmd = &cobra.Command{
+	Use:   "endpoint",
+	Short: "Perform operations with endpoints.",
+}
+
+var EndpointRootAddCmd = &cobra.Command{
+	Use:   "add",
+	Short: "Add endpoint.",
+}
+
+var EndpointRootUpdateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "Update endpoint.",
 }
 
 var AutocompleteCmd = &cobra.Command{
