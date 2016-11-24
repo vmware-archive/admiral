@@ -126,6 +126,10 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 UriUtils.buildUri(host, ComputeInitialBootService.class))
                 .setReferer(host.getUri())
                 .setBody(new ServiceDocument()));
+        host.sendRequest(Operation.createPost(
+                UriUtils.buildUri(host, CaSigningCertService.class))
+                .setReferer(host.getUri())
+                .setBody(new ServiceDocument()));
 
     }
 }

@@ -130,7 +130,6 @@ public class ContainerHostDataCollectionService extends StatefulService {
         super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.setMaintenanceIntervalMicros(MAINTENANCE_INTERVAL_MICROS);
-        super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
     }
 
     @Override
@@ -152,7 +151,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                         + ex.getMessage());
 
             } else {
-                handleMaintenance(o);
+                handleMaintenance(Operation.createGet(null));
             }
         }, getSelfLink());
     }
