@@ -100,13 +100,19 @@ $rightMarginInputs: 55px;
   visibility: visible;
 }
 
-.multicolumn-input .admiral-btn-circle {
-  background-color: #cbcbcb;
-  font-size: 12px;
-  width: 16px;
-  line-height: 15px;
-  padding-top: 1px;
-  /*  background: none; */
+.multicolumn-input {
+  .btn-circle, .btn-circle:hover {
+    background-color: #cbcbcb;
+    font-size: 12px;
+    width: 16px;
+    min-width: 16px;
+    height: 16px;
+    min-height: 16px;
+    line-height: 16px;
+    color: #FFFFFF;
+    border: none;
+    margin: 0;
+  }
 }
 
 .multicolumn-inputs-list-head {

@@ -15,7 +15,7 @@ var createAction = function(actionName, iconName) {
   var actionLabel = i18n.t('app.container.actions.' + actionName);
 
   var html = '<div class="action">' +
-             '<a href="#" class="btn admiral-btn admiral-btn-circle container-action-' +
+             '<a href="#" class="btn btn-circle container-action-' +
       actionName + '">' +
                '<i class="fa fa-' + iconName + '"></i>' +
              '</a>' +

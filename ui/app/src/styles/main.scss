@@ -336,28 +336,6 @@ textarea {
   color: $main_color;
 }
 
-.admiral-btn-circle {
-  font-size: 15px;
-  width: 20px;
-  line-height: 20px;
-  border-radius: 10px;
-  text-align: center;
-  padding: 0;
-  /*background: none;*/
-}
-.admiral-btn-circle.new-item {
-  font-size: 16px;
-  width: 22px;
-  line-height: 22px;
-  border-radius: 11px;
-  text-align: center;
-  padding: 0;
-  margin-right: 5px;
-}
-.admiral-btn-circle .fa-plus {
-  transform: translate(0.04em, 0);
-}
-
 .admiral-btn.warn {
   background-color: $status_stopped_color;
 }
@@ -367,7 +345,7 @@ textarea {
   margin-left: 10px;
 }
 
-.btn-circle, .btn-circle:hover, .btn-circle:active, .btn-circle:focus{
+.btn-circle, .btn-circle:hover, .btn-circle:active, .btn-circle:focus {
   cursor: pointer;
   font-size: 12px;
   width: 20px;
@@ -376,11 +354,23 @@ textarea {
   border-radius: 10px;
   text-align: center;
   padding: 0;
-  color: $main_color;
+  color: #ffffff;
+  background-color: $main_color;
 }
 
 .btn-circle:hover {
   @include box-shadow(0px 1px 3px 0px rgba(0,0,72,0.4));
+}
+
+.btn-circle:active {
+  @include box-shadow(0px 2px 3px 0px rgba(0,0,0,0.4) inset);
+}
+
+.btn-circle-outline, .btn-circle-outline:hover,
+.btn-circle-outline:active, .btn-circle-outline:focus {
+  @extend .btn-circle;
+  color: $main_color;
+  background-color: #ffffff;
 }
 
 .refresh-button .fa-spin {
@@ -414,7 +404,7 @@ textarea {
   position: relative;
   top: 2px;
 }
-.admiral-btn-circle .fa.fa-play {
+.btn-circle .fa.fa-play {
   transform: translate(1px, 0);
 }
 .btn-group > .admiral-btn + .dropdown-toggle {
@@ -2210,11 +2200,15 @@ $alert-text-color: #ffffff;
     text-align: center;
   }
 
-  .btn {
+  .btn, .btn-circle {
     background-color: $secondary_hint_title_color;
+    color: #ffffff;
+    border-color: transparent;
   }
-  .btn:hover {
+  .btn:hover, .btn-circle:hover {
     background-color: $main_color;
+    color: #ffffff;
+    border-color: transparent;
   }
 }
 
@@ -2234,10 +2228,12 @@ $alert-text-color: #ffffff;
   padding-right: 1px;
   min-width: 33px;
 
-  .action .btn {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
+  .action {
+    .btn, .btn-circle {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
   }
 }
 
@@ -2571,4 +2567,3 @@ $alert-text-color: #ffffff;
   border: 1px solid #DDDDDD;
   border-radius: 4px;
 }
-

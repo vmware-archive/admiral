@@ -10,7 +10,7 @@
  */
 
 var VueTitleActionButton = Vue.extend({
-  template: `<div class="title-action-button" v-show="show"><a class="btn btn-circle"
+  template: `<div class="title-action-button" v-show="show"><a class="btn btn-circle-outline"
               title="{{tooltip}}" v-on:mousedown="pressed()"
                 ><i class="fa fa-{{iconName}}"></i></a></div>`,
   props: {

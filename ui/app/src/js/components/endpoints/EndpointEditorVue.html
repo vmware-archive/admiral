@@ -15,11 +15,11 @@
          v-bind:alert-message="model.validationErrors._generic"></alert>
   <div>
     <div class="endpointEdit-toolbar pull-right">
-      <a href="#" class="btn admiral-btn admiral-btn-circle" v-bind:class="{'loading': model.saving}" v-on:click="save($event)" v-bind:disabled="saveDisabled">
+      <a href="#" class="btn btn-circle" v-bind:class="{'loading': model.saving}" v-on:click="save($event)" v-bind:disabled="saveDisabled">
         <i class="fa fa-check"></i>
         <i class="fa fa-spinner fa-spin loader"></i>
       </a>
-      <a href="#" class="btn admiral-btn admiral-btn-circle" v-on:click="cancel($event)">
+      <a href="#" class="btn btn-circle" v-on:click="cancel($event)">
         <i class="fa fa-times"></i>
       </a>
     </div>

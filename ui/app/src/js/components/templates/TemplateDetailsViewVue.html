@@ -23,9 +23,9 @@
                      name="templateNameInput" type="text" value="{{model.templateDetails.name}}"
                      v-on:keyup.enter="saveTemplateName($event)"
                      v-on:keyup.esc="cancelEditTemplateName($event)"/>
-              <a href="#" class="btn admiral-btn admiral-btn-circle"
+              <a href="#" class="btn btn-circle"
                  v-on:click="saveTemplateName($event)"><i class="fa fa-check"></i></a>
-              <a href="#" class="btn admiral-btn admiral-btn-circle"
+              <a href="#" class="btn btn-circle"
                  v-on:click="cancelEditTemplateName($event)"><i class="fa fa-times"></i></a>
             </template>
           </div>

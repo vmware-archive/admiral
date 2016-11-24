@@ -10,7 +10,7 @@
  */
 
 var VueRefreshButton = Vue.extend({
-  template: `<div class="refresh-button" v-show="supported"><a class="btn btn-circle"
+  template: `<div class="refresh-button" v-show="supported"><a class="btn btn-circle-outline"
               title="{{title}}" v-on:mousedown="spinIt()"
                 ><i class="fa fa-{{iconName}}"></i></a></div>`,
   props: {

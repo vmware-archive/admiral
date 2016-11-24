@@ -95,7 +95,7 @@ function createItem(object, model) {
       class: 'multicolumn-input-remove'
     })
     .append($('<i>', {
-      class: 'btn admiral-btn admiral-btn-circle fa fa-minus'
+      class: 'btn btn-circle fa fa-minus'
     }));
 
   var $addButton = $('<a>', {
@@ -103,7 +103,7 @@ function createItem(object, model) {
       class: 'multicolumn-input-add'
     })
     .append($('<i>', {
-      class: 'btn admiral-btn admiral-btn-circle fa fa-plus'
+      class: 'btn btn-circle fa fa-plus'
     }));
 
   $multicolumnInput.append($('<div>', {

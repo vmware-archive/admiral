@@ -12,7 +12,7 @@
 var VueActionButton = Vue.extend({
   template: `
     <div class="action" v-show="supported">
-      <a href="#" class="btn admiral-btn admiral-btn-circle container-action-{{name}}"
+      <a href="#" class="btn btn-circle-outline container-action-{{name}}"
          title="{{tooltip}}">
         <i class="fa fa-{{iconName}}"></i>
       </a>
