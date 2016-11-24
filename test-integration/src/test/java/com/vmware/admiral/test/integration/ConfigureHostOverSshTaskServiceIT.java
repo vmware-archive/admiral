@@ -13,6 +13,7 @@ package com.vmware.admiral.test.integration;
 
 import static com.vmware.admiral.test.integration.SshUtilIT.SSH_HOST;
 import static com.vmware.admiral.test.integration.SshUtilIT.getPasswordCredentials;
+import static com.vmware.admiral.test.integration.SshUtilIT.getPrivateKeyCredentials;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -82,8 +83,16 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
     }
 
     @Test
-    public void test() throws Throwable {
-        AuthCredentialsServiceState sshCreds = getPasswordCredentials();
+    public void testWithPassword() throws Throwable {
+        test(getPasswordCredentials());
+    }
+
+    @Test
+    public void testWithPrivateKey() throws Throwable {
+        test(getPrivateKeyCredentials());
+    }
+
+    public void test(AuthCredentialsServiceState sshCreds) throws Throwable {
         sshCreds = doPost(sshCreds, AuthCredentialsService.FACTORY_LINK);
 
         ResourcePoolState resourcePool = new ResourcePoolState();

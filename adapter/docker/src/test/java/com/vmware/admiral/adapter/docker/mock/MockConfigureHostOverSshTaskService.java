@@ -12,14 +12,13 @@
 package com.vmware.admiral.adapter.docker.mock;
 
 import com.vmware.admiral.adapter.docker.service.ConfigureHostOverSshTaskService;
+import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class MockConfigureHostOverSshTaskService extends ConfigureHostOverSshTaskService {
 
     @Override
-    public String getInstallCommand(SetupOverSshServiceState state) {
-        return String.format(
-                "tar -zxvf %s && cd installer",
-                INSTALLER_RESOURCE);
+    public String getInstallCommand(SetupOverSshServiceState state, AuthCredentialsServiceState credentials) {
+        return "cd installer && ls " + INSTALLER_RESOURCE;
     }
 
 }

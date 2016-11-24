@@ -55,10 +55,7 @@ public class ConfigureHostOverSshTaskService extends
     public static final String DISPLAY_NAME = "Configure Host";
     public static final String FACTORY_LINK = ManagementUriParts.CONFIGURE_HOST;
 
-    public static final String INSTALLER_RESOURCE = "installer.tar.gz"; // TODO: Iterate over
-                                                                        // contents and
-                                                                        // packaging, this one is
-                                                                        // prototype for testing
+    public static final String INSTALLER_RESOURCE = "installer.sh";
 
     private SshServiceUtil sshServiceUtil;
 
@@ -163,7 +160,8 @@ public class ConfigureHostOverSshTaskService extends
                         return;
                     }
 
-                    AuthCredentialsServiceState credentials = ops.get(fetchCredentialsOperation.getId())
+                    AuthCredentialsServiceState credentials = ops
+                            .get(fetchCredentialsOperation.getId())
                             .getBody(AuthCredentialsServiceState.class);
                     AuthCredentialsServiceState caCert = ops.get(fetchCaCertOperation.getId())
                             .getBody(AuthCredentialsServiceState.class);
@@ -240,7 +238,7 @@ public class ConfigureHostOverSshTaskService extends
         try {
             data = IOUtils.toByteArray(Thread.currentThread().getContextClassLoader()
                     .getResourceAsStream(INSTALLER_RESOURCE));
-            getSshServiceUtil().upload(state.address, credentials, data, INSTALLER_RESOURCE,
+            getSshServiceUtil().upload(state.address, credentials, data, "installer/" + INSTALLER_RESOURCE,
                     (op, failure) -> {
                         proceedTo(SubStage.SETUP);
                     });
@@ -257,8 +255,7 @@ public class ConfigureHostOverSshTaskService extends
             return;
         }
 
-        // Untar and execute
-        String command = getInstallCommand(state);
+        String command = getInstallCommand(state, credentials);
 
         getSshServiceUtil().exec(state.address, credentials, command,
                 (op, failure) -> {
@@ -272,10 +269,18 @@ public class ConfigureHostOverSshTaskService extends
                 SshServiceUtil.SSH_OPERATION_TIMEOUT_LONG, TimeUnit.SECONDS);
     }
 
-    public String getInstallCommand(SetupOverSshServiceState state) {
-        return String.format(
-                "tar -zxvf %s && cd installer && sudo bash installer.sh " + state.port,
+    public String getInstallCommand(SetupOverSshServiceState state,
+            AuthCredentialsServiceState credentials) {
+        String command = String.format(
+                "bash installer.sh " + state.port,
                 INSTALLER_RESOURCE);
+        if (!credentials.userEmail.equals("root")) {
+            command = "sudo " + command;
+        }
+
+        command = "cd installer && " + command;
+
+        return command;
     }
 
     public void addHost(SetupOverSshServiceState state) {
