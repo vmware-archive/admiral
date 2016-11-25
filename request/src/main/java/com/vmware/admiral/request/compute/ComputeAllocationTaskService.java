@@ -14,7 +14,6 @@ package com.vmware.admiral.request.compute;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
-import static com.vmware.photon.controller.model.ComputeProperties.CUSTOM_DISPLAY_NAME;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.LINK;
@@ -51,11 +50,14 @@ import com.vmware.admiral.compute.EnvironmentMappingService.EnvironmentMappingSt
 import com.vmware.admiral.compute.PropertyMapping;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.request.ResourceNamePrefixTaskService;
+import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionEnhancers;
 import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.ComputeProperties;
@@ -115,6 +117,7 @@ public class ComputeAllocationTaskService
             CREATED,
             CONTEXT_PREPARED,
             COMPUTE_DESCRIPTION_RECONFIGURED,
+            RESOURCES_NAMES,
             SELECT_PLACEMENT_COMPUTES,
             START_COMPUTE_ALLOCATION,
             COMPUTE_ALLOCATION_COMPLETED,
@@ -169,6 +172,10 @@ public class ComputeAllocationTaskService
 
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String endpointType;
+
+        /** (Internal) Set by task after resource name prefixes requested. */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public Set<String> resourceNames;
     }
 
     public ComputeAllocationTaskService() {
@@ -190,8 +197,11 @@ public class ComputeAllocationTaskService
             configureComputeDescription(state, this.computeDescription, null);
             break;
         case COMPUTE_DESCRIPTION_RECONFIGURED:
-            createOsDiskState(state, SubStage.SELECT_PLACEMENT_COMPUTES, null,
+            createOsDiskState(state, SubStage.RESOURCES_NAMES, null,
                     this.computeDescription);
+            break;
+        case RESOURCES_NAMES:
+            createResourcePrefixNameSelectionTask(state, this.computeDescription);
             break;
         case SELECT_PLACEMENT_COMPUTES:
             selectPlacement(state);
@@ -472,7 +482,7 @@ public class ComputeAllocationTaskService
             SubStage nextStage = cd.customProperties
                     .containsKey(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME)
                             ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
-                            : SubStage.SELECT_PLACEMENT_COMPUTES;
+                            : SubStage.RESOURCES_NAMES;
 
             cd.customProperties.put("ovf.prop:guestinfo.coreos.config.data",
                     cd.customProperties.get(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME));
@@ -496,6 +506,38 @@ public class ComputeAllocationTaskService
     static boolean enableContainerHost(Map<String, String> customProperties) {
         return customProperties
                 .containsKey(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME);
+    }
+
+    private void createResourcePrefixNameSelectionTask(ComputeAllocationTaskState state,
+            ComputeDescription computeDescription) {
+        if (computeDescription == null) {
+            getComputeDescription(state.resourceDescriptionLink,
+                    (desc) -> this.createResourcePrefixNameSelectionTask(state, desc));
+            return;
+        }
+
+        // create resource prefix name selection tasks
+        ResourceNamePrefixTaskState namePrefixTask = new ResourceNamePrefixTaskState();
+        namePrefixTask.documentSelfLink = getSelfId();
+        namePrefixTask.resourceCount = state.resourceCount;
+        namePrefixTask.baseResourceNameFormat = ResourceNamePrefixService
+                .getDefaultResourceNameFormat(computeDescription.name);
+        namePrefixTask.tenantLinks = state.tenantLinks;
+
+        namePrefixTask.customProperties = state.customProperties;
+        namePrefixTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
+                TaskStage.STARTED, SubStage.SELECT_PLACEMENT_COMPUTES,
+                TaskStage.STARTED, SubStage.ERROR);
+        namePrefixTask.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation.createPost(this, ResourceNamePrefixTaskService.FACTORY_LINK)
+                .setBody(namePrefixTask)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating resource name prefix task", e);
+                        return;
+                    }
+                }));
     }
 
     private void selectPlacement(ComputeAllocationTaskState state) {
@@ -572,22 +614,15 @@ public class ComputeAllocationTaskService
                         CompositeComponentFactoryService.SELF_LINK, contextId));
         state.customProperties.put(ComputeConstants.COMPUTE_HOST_PROP_NAME, "true");
 
-        // for human debugging reasons only, prefix the compute host resource id
-        // with the allocation
-        // task id
-        String taskId = getSelfId();
-
         logInfo("Creating %d provision tasks, reporting through sub task %s",
                 state.resourceCount, taskCallback.serviceSelfLink);
-        String name = computeDescription.name;
-        if (state.customProperties.get(CUSTOM_DISPLAY_NAME) != null) {
-            name = state.customProperties.get(CUSTOM_DISPLAY_NAME);
-        }
 
         Iterator<String> placementComputeLinkIterator = state.selectedComputePlacementLinks
                 .iterator();
+        Iterator<String> namesIterator = state.resourceNames.iterator();
         for (int i = 0; i < state.resourceCount; i++) {
-            String computeResourceId = taskId + ID_DELIMITER_CHAR + i;
+            String name = namesIterator.next();
+            String computeResourceId = buildResourceId(name);
             String computeResourceLink = UriUtils.buildUriPath(
                     ComputeService.FACTORY_LINK, computeResourceId);
 
@@ -597,9 +632,13 @@ public class ComputeAllocationTaskService
                     state.endpointComputeStateLink,
                     placementComputeLinkIterator.next(),
                     computeResourceId,
-                    computeResourceLink, name + i,
+                    computeResourceLink, name,
                     null, null, taskCallback);
         }
+    }
+
+    private String buildResourceId(String resourceName) {
+        return resourceName.replaceAll(" ", ID_DELIMITER_CHAR);
     }
 
     private void createComputeResource(ComputeAllocationTaskState state, ComputeDescription cd,

@@ -35,6 +35,7 @@ public class ComputeInitialBootService extends AbstractInitialBootService {
     public void handlePost(Operation post) {
         ArrayList<ServiceDocument> states = new ArrayList<>();
         states.add(SystemContainerDescriptions.buildCoreAgentContainerDescription());
+        states.addAll(EnvironmentMappingService.getDefaultMappings());
         initInstances(post, false, false, states.toArray(new ServiceDocument[states.size()]));
 
         states = new ArrayList<>();
@@ -47,7 +48,6 @@ public class ComputeInitialBootService extends AbstractInitialBootService {
             states.add(GroupResourcePlacementService.buildDefaultStateInstance());
         }
 
-        states.addAll(EnvironmentMappingService.getDefaultMappings());
         initInstances(post, states.toArray(new ServiceDocument[states.size()]));
     }
 }

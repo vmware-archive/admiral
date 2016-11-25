@@ -103,7 +103,7 @@ public class ResourceNamePrefixTaskService
         q.tenantLinks = state.tenantLinks;
 
         List<String> documentLinks = new ArrayList<>();
-        new ServiceDocumentQuery<>(getHost(), ResourceNamePrefixTaskState.class)
+        new ServiceDocumentQuery<>(getHost(), ResourceNamePrefixState.class)
                 .query(q, (r) -> {
                     if (r.hasException()) {
                         failTask("Cannot retrieve prefixes", r.getException());
