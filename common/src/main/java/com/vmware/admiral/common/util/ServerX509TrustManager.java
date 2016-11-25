@@ -155,12 +155,20 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
      */
     public void start() {
         this.documentUpdateTimeMicros = 0;
-        verifySubscriptionTargetExists(() -> {
-            subscribeForSslTrustCertNotifications();
-            loadSslTrustCertServices();
-
+        try {
+            verifySubscriptionTargetExists(() -> {
+                try {
+                    subscribeForSslTrustCertNotifications();
+                    loadSslTrustCertServices();
+                } catch (Exception e) {
+                    host.log(Level.SEVERE,
+                            "Failure while subscribing for ssl certificate notifications: " + Utils
+                                    .toString(e));
+                }
+            });
+        } finally {
             schedulePeriodicCertificatesReload();
-        });
+        }
     }
 
     /**
@@ -172,8 +180,12 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
                 maintenanceInterval :
                 maintenanceIntervalInitial;
 
+        if (host.isStopping()) {
+            return;
+        }
         host.schedule(() -> {
             try {
+                host.log(Level.INFO, "Host " + host.getPublicUri() + "reloading all certificates");
                 documentUpdateTimeMicros = 0;
                 loadSslTrustCertServices();
 
@@ -289,6 +301,7 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
                                 : Utils.toString(result.getException()));
             } else if (result.hasResult()) {
                 SslTrustCertificateState sslTrustCert = result.getResult();
+                self.host.log(Level.FINE, "Adding certificate " + sslTrustCert.fingerprint);
 
                 if (ServiceDocument.isDeleted(sslTrustCert)) {
                     deleteCertificate(sslTrustCert.getAlias());
