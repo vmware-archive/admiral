@@ -23,7 +23,8 @@ public enum ResourceType {
     CONTAINER_HOST_TYPE("CONTAINER_HOST", ""),
     NETWORK_TYPE("NETWORK", "App.Network"),
     VOLUME_TYPE("VOLUME", "Volume.Docker"),
-    CLOSURE_TYPE("CLOSURE", "App.Closure");
+    CLOSURE_TYPE("CLOSURE", "App.Closure"),
+    CONFIGURE_HOST_TYPE("CONFIGURE_HOST", "");
 
     private final String name;
     private final String contentType;

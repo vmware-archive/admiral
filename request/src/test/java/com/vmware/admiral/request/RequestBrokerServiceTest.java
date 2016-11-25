@@ -1875,6 +1875,20 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         // Containers are placed on multiple hosts when using user define network links
     }
 
+    @Test
+    public void testConfigureHost() throws Throwable {
+        getOrCreateDocument(CommonTestStateFactory.createAuthCredentials(false), AuthCredentialsService.FACTORY_LINK);
+        createResourcePool();
+
+        // 1. Request to configure host:
+        RequestBrokerState request = TestRequestStateFactory.createConfigureHostState();
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+    }
+
     private CompositeComponent setUpCompositeWithServiceLinks(boolean includeNetwork)
             throws Throwable {
         // setup Docker Host:

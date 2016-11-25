@@ -37,6 +37,8 @@ import com.vmware.admiral.adapter.common.ClosureOperationType;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.adapter.common.VolumeOperationType;
+import com.vmware.admiral.adapter.docker.service.ConfigureHostOverSshTaskService;
+import com.vmware.admiral.adapter.docker.service.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
@@ -111,6 +113,7 @@ public class RequestBrokerService extends
         public static final String PROVISION_RESOURCE_OPERATION = "PROVISION_RESOURCE";
         public static final String REMOVE_RESOURCE_OPERATION = "REMOVE_RESOURCE";
         public static final String CLUSTER_RESOURCE_OPERATION = "CLUSTER_RESOURCE";
+        public static final String CONFIGURE_HOST_OPERATION = "CONFIGURE_HOST";
 
         public static enum SubStage {
             CREATED,
@@ -145,8 +148,8 @@ public class RequestBrokerService extends
         public long resourceCount;
 
         /** Set by Task when resources are provisioned. */
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, SERVICE_USE, AUTO_MERGE_IF_NOT_NULL },
-                indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, SERVICE_USE,
+                AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
 
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
@@ -171,13 +174,14 @@ public class RequestBrokerService extends
         if (isProvisionOperation(state) || isClusteringOperation(state)
                 || isProvisioningContainerHostsOperation(state)) {
             assertNotEmpty(state.resourceDescriptionLink, "resourceDescriptionLink");
-        } else {
+        } else if (!isConfigureHostOperation(state)) {
             assertNotEmpty(state.resourceLinks, "resourceLinks");
         }
 
         if (!(isContainerType(state) || isContainerHostType(state) || isContainerNetworkType(state)
                 || isContainerVolumeType(state)
-                || isComputeType(state) || isCompositeComponentType(state) || isClosureType(state))) {
+                || isComputeType(state) || isCompositeComponentType(state) || isClosureType(state)
+                || isConfigureHostType(state))) {
             throw new IllegalArgumentException(
                     String.format("Only [ %s ] resource types are supported.",
                             ResourceType.getAllTypesAsString()));
@@ -206,6 +210,8 @@ public class RequestBrokerService extends
                 }
             } else if (isPostAllocationOperation(state)) {
                 createAllocationTasks(state);
+            } else if (isConfigureHostOperation(state)) {
+                createConfigureHostTask(state);
             } else {
                 createResourceOperation(state);
             }
@@ -429,7 +435,7 @@ public class RequestBrokerService extends
             }
         } else if (isClosureType(state)) {
             if (isRemoveOperation(state)) {
-                //                createClosureRemovalTask(state);
+                // createClosureRemovalTask(state);
                 createClosureRemovalTasks(state);
             } else {
                 failTask(null, new IllegalArgumentException(
@@ -453,8 +459,8 @@ public class RequestBrokerService extends
                     CompositeComponent.FIELD_NAME_SELF_LINK,
                     state.resourceLinks);
 
-            Set<String> componentLinks = new HashSet<String>();
-            new ServiceDocumentQuery<CompositeComponent>(getHost(), CompositeComponent.class)
+            Set<String> componentLinks = new HashSet<>();
+            new ServiceDocumentQuery<>(getHost(), CompositeComponent.class)
                     .query(compositeQueryTask, (r) -> {
                         if (r.hasException()) {
                             logSevere("Failed to create operation task for %s - %s",
@@ -613,7 +619,7 @@ public class RequestBrokerService extends
 
         removalState.externalInspectOnly = (state.customProperties != null
                 && "true".equalsIgnoreCase(state.customProperties
-                .get(ContainerNetworkRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
+                        .get(ContainerNetworkRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
         removalState.cleanupRemoval = cleanupRemoval;
 
         sendRequest(Operation.createPost(this, ContainerNetworkRemovalTaskService.FACTORY_LINK)
@@ -783,7 +789,7 @@ public class RequestBrokerService extends
             proceedTo(SubStage.RESERVED);
         } else if (isClosureType(state)) {
             // No reservation needed here, moving on...
-            //            sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESERVED));
+            // sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESERVED));
             proceedTo(SubStage.RESERVED);
         } else {
             getContainerDescription(state, (cd) -> createReservationTasks(state, cd));
@@ -1322,6 +1328,43 @@ public class RequestBrokerService extends
         sendRequest(post);
     }
 
+    private void createConfigureHostTask(RequestBrokerState state) {
+        ConfigureHostOverSshTaskServiceState configureState = new ConfigureHostOverSshTaskServiceState();
+        // Full docker address formatted as http(s)://1.2.3.4:2376
+        String url = state.getCustomProperty(
+                ConfigureHostOverSshTaskService.CONFIGURE_HOST_ADDRESS_CUSTOM_PROP);
+        String[] splitted = url.split(":");
+
+        configureState.address = splitted[1].substring(2);
+        configureState.port = Integer.parseInt(splitted[2]);
+        configureState.authCredentialsLink = state
+                .getCustomProperty(
+                        ConfigureHostOverSshTaskService.CONFIGURE_HOST_AUTH_CREDENTIALS_LINK_CUSTOM_PROP);
+        configureState.placementZoneLink = state
+                .getCustomProperty(
+                        ConfigureHostOverSshTaskService.CONFIGURE_HOST_PLACEMENT_ZONE_LINK_CUSTOM_PROP);
+
+        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED;
+        configureState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
+                TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
+                TaskStage.FAILED, SubStage.ERROR);
+
+        configureState.documentSelfLink = getSelfId();
+        configureState.requestTrackerLink = state.requestTrackerLink;
+        Operation post = Operation
+                .createPost(this, ConfigureHostOverSshTaskService.FACTORY_LINK)
+                .setBody(configureState)
+                .setContextId(getSelfId())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        failTask("Failed to create host configuration task.", ex);
+                    }
+
+                    proceedTo(SubStage.ALLOCATING);
+                });
+        sendRequest(post);
+    }
+
     private boolean isProvisionOperation(RequestBrokerState state) {
         return RequestBrokerState.PROVISION_RESOURCE_OPERATION.equals(state.operation);
     }
@@ -1382,6 +1425,10 @@ public class RequestBrokerService extends
         return false;
     }
 
+    private boolean isConfigureHostOperation(RequestBrokerState state) {
+        return isConfigureHostType(state);
+    }
+
     private boolean isContainerType(RequestBrokerState state) {
         return ResourceType.CONTAINER_TYPE.getName().equals(state.resourceType);
     }
@@ -1418,6 +1465,10 @@ public class RequestBrokerService extends
     private boolean isProvisioningContainerHostsOperation(RequestBrokerState state) {
         return ProvisionContainerHostsTaskService.PROVISION_CONTAINER_HOSTS_OPERATITON
                 .equals(state.operation);
+    }
+
+    private boolean isConfigureHostType(RequestBrokerState state) {
+        return ResourceType.CONFIGURE_HOST_TYPE.getName().equals(state.resourceType);
     }
 
     private static final Map<ResourceType, List<String>> SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE;
@@ -1510,6 +1561,8 @@ public class RequestBrokerService extends
             } else if (isContainerVolumeType(state)) {
                 requestStatus.addTrackedTasks(ContainerVolumeProvisionTaskService.DISPLAY_NAME);
             }
+        } else if (isConfigureHostOperation(state)) {
+            requestStatus.addTrackedTasks(ConfigureHostOverSshTaskService.DISPLAY_NAME);
         } else {
             if (isRemoveOperation(state)) {
                 if (isContainerHostType(state)) {

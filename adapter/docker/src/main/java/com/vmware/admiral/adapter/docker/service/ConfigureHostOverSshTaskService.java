@@ -21,7 +21,8 @@ import java.util.function.Consumer;
 
 import org.apache.commons.io.IOUtils;
 
-import com.vmware.admiral.adapter.docker.service.ConfigureHostOverSshTaskService.SetupOverSshServiceState.SubStage;
+import com.vmware.admiral.adapter.common.ContainerOperationType;
+import com.vmware.admiral.adapter.docker.service.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState.SubStage;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.CertificateUtil.CertChainKeyPair;
@@ -32,6 +33,7 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
@@ -47,20 +49,26 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
  * attach the setup machine as Admiral host.
  */
 public class ConfigureHostOverSshTaskService extends
-        AbstractTaskStatefulService<ConfigureHostOverSshTaskService.SetupOverSshServiceState, ConfigureHostOverSshTaskService.SetupOverSshServiceState.SubStage> {
+        AbstractTaskStatefulService<ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState, ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState.SubStage> {
+
+    public static final String CONFIGURE_HOST_PLACEMENT_ZONE_LINK_CUSTOM_PROP = "__placementZoneLink";
+    public static final String CONFIGURE_HOST_AUTH_CREDENTIALS_LINK_CUSTOM_PROP = "__authCredentialsLink";
+    public static final String CONFIGURE_HOST_ADDRESS_CUSTOM_PROP = "__address";
 
     public static final String ADDRESS_NOT_SET_ERROR_MESSAGE = "Address is not set";
     public static final String PORT_NOT_SET_ERROR_MESSAGE = "Port is not set";
+    public static final String CONNECTION_REFUSED_ERROR_MESSAGE = "Connection refused or user is not a sudoer.";
 
     public static final String DISPLAY_NAME = "Configure Host";
     public static final String FACTORY_LINK = ManagementUriParts.CONFIGURE_HOST;
 
     public static final String INSTALLER_RESOURCE = "installer.sh";
 
-    private SshServiceUtil sshServiceUtil;
+    protected SshServiceUtil sshServiceUtil;
 
     public ConfigureHostOverSshTaskService() {
-        super(SetupOverSshServiceState.class, SetupOverSshServiceState.SubStage.class,
+        super(ConfigureHostOverSshTaskServiceState.class,
+                ConfigureHostOverSshTaskServiceState.SubStage.class,
                 DISPLAY_NAME);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
@@ -68,16 +76,15 @@ public class ConfigureHostOverSshTaskService extends
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
     }
 
-    public static class SetupOverSshServiceState
+    public static class ConfigureHostOverSshTaskServiceState
             extends
-            com.vmware.admiral.service.common.TaskServiceDocument<SetupOverSshServiceState.SubStage> {
+            com.vmware.admiral.service.common.TaskServiceDocument<ConfigureHostOverSshTaskServiceState.SubStage> {
         public static enum SubStage {
             CREATED,
             SETUP,
             ADD_HOST,
             COMPLETED,
-            ERROR,
-            FAILED;
+            ERROR
         }
 
         @Documentation(description = "IP or hostname of the target machine.")
@@ -104,10 +111,24 @@ public class ConfigureHostOverSshTaskService extends
                 PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
                         PropertyIndexingOption.STORE_ONLY })
         public String placementZoneLink;
+
+        @Documentation(description = "If this is set to true the operation will only verify connectivity"
+                + "and complete without configuring the host.")
+        @PropertyOptions(usage = { PropertyUsageOption.SERVICE_USE,
+                PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
+                        PropertyIndexingOption.STORE_ONLY })
+        public boolean verify;
     }
 
     @Override
-    protected void handleStartedStagePatch(SetupOverSshServiceState state) {
+    protected TaskStatusState fromTask(TaskServiceDocument<SubStage> state) {
+        TaskStatusState statusTask = super.fromTask(state);
+        statusTask.name = ContainerOperationType.extractDisplayName(DISPLAY_NAME);
+        return statusTask;
+    }
+
+    @Override
+    protected void handleStartedStagePatch(ConfigureHostOverSshTaskServiceState state) {
         switch (state.taskSubStage) {
         case CREATED:
             if (state.address == null || state.address.equals("")) {
@@ -121,7 +142,28 @@ public class ConfigureHostOverSshTaskService extends
                 return;
             }
 
-            uploadResources(state);
+            // Verify connectivity and that the user is root or another sudoer
+            fetchCredentials(state.authCredentialsLink, (creds) -> {
+                String command = "echo 1234";
+                if (!isRoot(creds)) {
+                    command = "sudo " + command;
+                }
+
+                getSshServiceUtil().exec(state.address, creds, command, (op, failure) -> {
+                    if (failure != null) {
+                        failTask(CONNECTION_REFUSED_ERROR_MESSAGE, failure);
+                        return;
+                    }
+
+                    if (state.verify) {
+                        proceedTo(SubStage.COMPLETED);
+                        return;
+                    }
+
+                    uploadResources(state);
+                }, 30, TimeUnit.SECONDS);
+            });
+
             return;
         case SETUP:
             setup(state, null);
@@ -138,7 +180,7 @@ public class ConfigureHostOverSshTaskService extends
 
     }
 
-    public void uploadResources(SetupOverSshServiceState state) {
+    public void uploadResources(ConfigureHostOverSshTaskServiceState state) {
         Operation fetchCredentialsOperation = createFetchCredentialsOperation(
                 state.authCredentialsLink, (creds) -> {
                 });
@@ -170,7 +212,7 @@ public class ConfigureHostOverSshTaskService extends
                 }).sendWith(getHost());
     }
 
-    public void createDirectories(SetupOverSshServiceState state,
+    public void createDirectories(ConfigureHostOverSshTaskServiceState state,
             AuthCredentialsServiceState credentials, AuthCredentialsServiceState caCert) {
         getSshServiceUtil().exec(state.address, credentials, "mkdir -p installer/certs",
                 (op, failure) -> {
@@ -182,7 +224,7 @@ public class ConfigureHostOverSshTaskService extends
                 }, 1, TimeUnit.MINUTES);
     }
 
-    public void uploadCaPem(SetupOverSshServiceState state,
+    public void uploadCaPem(ConfigureHostOverSshTaskServiceState state,
             AuthCredentialsServiceState credentials, AuthCredentialsServiceState caCert) {
         String pem = caCert.publicKey;
         getSshServiceUtil().upload(state.address, credentials, pem.getBytes(),
@@ -195,7 +237,7 @@ public class ConfigureHostOverSshTaskService extends
                 });
     }
 
-    public void generateServerCertPair(SetupOverSshServiceState state,
+    public void generateServerCertPair(ConfigureHostOverSshTaskServiceState state,
             AuthCredentialsServiceState credentials, AuthCredentialsServiceState caCert) {
         KeyPair caKeyPair = CertificateUtil.createKeyPair(caCert.privateKey);
         X509Certificate caCertificate = CertificateUtil.createCertificate(caCert.publicKey);
@@ -205,7 +247,7 @@ public class ConfigureHostOverSshTaskService extends
         uploadServerPem(state, credentials, signedForServer);
     }
 
-    public void uploadServerPem(SetupOverSshServiceState state,
+    public void uploadServerPem(ConfigureHostOverSshTaskServiceState state,
             AuthCredentialsServiceState credentials, CertChainKeyPair pair) {
         String pem = CertificateUtil.toPEMformat(pair.getCertificate());
         getSshServiceUtil().upload(state.address, credentials, pem.getBytes(),
@@ -219,7 +261,7 @@ public class ConfigureHostOverSshTaskService extends
 
     }
 
-    public void uploadServerKeyPem(SetupOverSshServiceState state,
+    public void uploadServerKeyPem(ConfigureHostOverSshTaskServiceState state,
             AuthCredentialsServiceState credentials, CertChainKeyPair pair) {
         String pem = KeyUtil.toPEMFormat(pair.getPrivateKey());
         getSshServiceUtil().upload(state.address, credentials, pem.getBytes(),
@@ -232,13 +274,14 @@ public class ConfigureHostOverSshTaskService extends
                 });
     }
 
-    public void uploadInstaller(SetupOverSshServiceState state,
+    public void uploadInstaller(ConfigureHostOverSshTaskServiceState state,
             AuthCredentialsServiceState credentials) {
         byte[] data = null;
         try {
             data = IOUtils.toByteArray(Thread.currentThread().getContextClassLoader()
                     .getResourceAsStream(INSTALLER_RESOURCE));
-            getSshServiceUtil().upload(state.address, credentials, data, "installer/" + INSTALLER_RESOURCE,
+            getSshServiceUtil().upload(state.address, credentials, data,
+                    "installer/" + INSTALLER_RESOURCE,
                     (op, failure) -> {
                         proceedTo(SubStage.SETUP);
                     });
@@ -247,7 +290,8 @@ public class ConfigureHostOverSshTaskService extends
         }
     }
 
-    public void setup(SetupOverSshServiceState state, AuthCredentialsServiceState credentials) {
+    public void setup(ConfigureHostOverSshTaskServiceState state,
+            AuthCredentialsServiceState credentials) {
         if (credentials == null) {
             fetchCredentials(state.authCredentialsLink, (creds) -> {
                 setup(state, creds);
@@ -269,12 +313,12 @@ public class ConfigureHostOverSshTaskService extends
                 SshServiceUtil.SSH_OPERATION_TIMEOUT_LONG, TimeUnit.SECONDS);
     }
 
-    public String getInstallCommand(SetupOverSshServiceState state,
+    public String getInstallCommand(ConfigureHostOverSshTaskServiceState state,
             AuthCredentialsServiceState credentials) {
         String command = String.format(
                 "bash installer.sh " + state.port,
                 INSTALLER_RESOURCE);
-        if (!credentials.userEmail.equals("root")) {
+        if (!isRoot(credentials)) {
             command = "sudo " + command;
         }
 
@@ -283,7 +327,7 @@ public class ConfigureHostOverSshTaskService extends
         return command;
     }
 
-    public void addHost(SetupOverSshServiceState state) {
+    public void addHost(ConfigureHostOverSshTaskServiceState state) {
         ComputeState cs = new ComputeState();
         cs.address = getHostUri(state).toString();
         cs.name = cs.address;
@@ -318,7 +362,7 @@ public class ConfigureHostOverSshTaskService extends
                 .sendWith(getHost());
     }
 
-    private URI getHostUri(SetupOverSshServiceState state) {
+    private URI getHostUri(ConfigureHostOverSshTaskServiceState state) {
         return URI.create("https://" + state.address + ":" + state.port);
     }
 
@@ -342,11 +386,17 @@ public class ConfigureHostOverSshTaskService extends
                 });
     }
 
-    private SshServiceUtil getSshServiceUtil() {
-        if (sshServiceUtil == null) {
-            sshServiceUtil = new SshServiceUtil(getHost());
-        }
+    private boolean isRoot(AuthCredentialsServiceState creds) {
+        return creds.userEmail.equals("root");
+    }
 
-        return sshServiceUtil;
+    protected SshServiceUtil getSshServiceUtil() {
+        synchronized (this) {
+            if (sshServiceUtil == null) {
+                sshServiceUtil = new SshServiceUtil(getHost());
+            }
+
+            return sshServiceUtil;
+        }
     }
 }

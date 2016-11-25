@@ -20,12 +20,13 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
-import com.vmware.admiral.adapter.docker.mock.MockConfigureHostOverSshTaskService;
 import com.vmware.admiral.adapter.docker.service.ConfigureHostOverSshTaskService;
-import com.vmware.admiral.adapter.docker.service.ConfigureHostOverSshTaskService.SetupOverSshServiceState;
+import com.vmware.admiral.adapter.docker.service.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
 import com.vmware.admiral.adapter.docker.service.DockerHostAdapterService;
+import com.vmware.admiral.adapter.docker.service.test.MockConfigureHostOverSshTaskService;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
@@ -102,7 +103,7 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         placementZone.resourcePoolState = resourcePool;
         placementZone = doPost(placementZone, ElasticPlacementZoneConfigurationService.SELF_LINK);
 
-        SetupOverSshServiceState state = new ConfigureHostOverSshTaskService.SetupOverSshServiceState();
+        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState();
         state.address = SSH_HOST;
         state.port = 2376;
         state.authCredentialsLink = sshCreds.documentSelfLink;
@@ -126,7 +127,7 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         placementZone.resourcePoolState = resourcePool;
         placementZone = doPost(placementZone, ElasticPlacementZoneConfigurationService.SELF_LINK);
 
-        SetupOverSshServiceState state = new ConfigureHostOverSshTaskService.SetupOverSshServiceState();
+        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState();
         state.port = 2376;
         state.authCredentialsLink = sshCreds.documentSelfLink;
         state.placementZoneLink = placementZone.documentSelfLink;
@@ -151,7 +152,7 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         placementZone.resourcePoolState = resourcePool;
         placementZone = doPost(placementZone, ElasticPlacementZoneConfigurationService.SELF_LINK);
 
-        SetupOverSshServiceState state = new ConfigureHostOverSshTaskService.SetupOverSshServiceState();
+        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState();
         state.address = SSH_HOST;
         state.authCredentialsLink = sshCreds.documentSelfLink;
         state.placementZoneLink = placementZone.documentSelfLink;
@@ -164,15 +165,67 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
                 state.taskInfo.failure.message);
     }
 
-    private SetupOverSshServiceState waitForFinalState(
-            SetupOverSshServiceState state, long timeout, TimeUnit unit)
+    @Test
+    public void testVerify() throws Throwable {
+        AuthCredentialsServiceState sshCreds = getPasswordCredentials();
+        sshCreds = doPost(sshCreds, AuthCredentialsService.FACTORY_LINK);
+
+        ResourcePoolState resourcePool = new ResourcePoolState();
+        resourcePool.name = "test";
+
+        ElasticPlacementZoneConfigurationState placementZone = new ElasticPlacementZoneConfigurationState();
+        placementZone.resourcePoolState = resourcePool;
+        placementZone = doPost(placementZone, ElasticPlacementZoneConfigurationService.SELF_LINK);
+
+        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState();
+        state.address = SSH_HOST;
+        state.port = 2376;
+        state.authCredentialsLink = sshCreds.documentSelfLink;
+        state.placementZoneLink = placementZone.documentSelfLink;
+        state.verify = true;
+
+        state = doPost(state, ConfigureHostOverSshTaskService.FACTORY_LINK);
+        state = waitForFinalState(state, 1, TimeUnit.MINUTES);
+
+        Assert.assertEquals("Task failed", TaskStage.FINISHED, state.taskInfo.stage);
+    }
+
+    @Test
+    @Ignore("Usage of mock service fails this as all request complete successfully")
+    public void testVerifyConnectionError() throws Throwable {
+        AuthCredentialsServiceState sshCreds = getPasswordCredentials();
+        sshCreds = doPost(sshCreds, AuthCredentialsService.FACTORY_LINK);
+
+        ResourcePoolState resourcePool = new ResourcePoolState();
+        resourcePool.name = "test";
+
+        ElasticPlacementZoneConfigurationState placementZone = new ElasticPlacementZoneConfigurationState();
+        placementZone.resourcePoolState = resourcePool;
+        placementZone = doPost(placementZone, ElasticPlacementZoneConfigurationService.SELF_LINK);
+
+        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState();
+        state.address = "127.0.1.4";
+        state.port = 2376;
+        state.authCredentialsLink = sshCreds.documentSelfLink;
+        state.placementZoneLink = placementZone.documentSelfLink;
+        state.verify = true;
+
+        state = doPost(state, ConfigureHostOverSshTaskService.FACTORY_LINK);
+        state = waitForFinalState(state, 1, TimeUnit.MINUTES);
+
+        Assert.assertEquals(TaskStage.FAILED, state.taskInfo.stage);
+        Assert.assertEquals("Connection refused", state.taskInfo.failure.message);
+    }
+
+    private ConfigureHostOverSshTaskServiceState waitForFinalState(
+            ConfigureHostOverSshTaskServiceState state, long timeout, TimeUnit unit)
             throws Throwable {
         long timeoutTime = System.currentTimeMillis() + unit.toMillis(timeout);
         while (System.currentTimeMillis() < timeoutTime &&
                 !state.taskInfo.stage.equals(TaskStage.FINISHED) &&
                 !state.taskInfo.stage.equals(TaskStage.FAILED)) {
             Thread.sleep(5000);
-            state = getDocument(SetupOverSshServiceState.class, state.documentSelfLink);
+            state = getDocument(ConfigureHostOverSshTaskServiceState.class, state.documentSelfLink);
         }
 
         if (System.currentTimeMillis() > timeoutTime) {

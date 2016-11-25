@@ -204,7 +204,7 @@ public class SshServiceUtil {
             if (pidOrEmpty.equals("")) {
                 // Process exited, collect data
 
-                AsyncResult outOp = SshUtil.asyncExec(client, "cat " + outStreamFile);
+                AsyncResult outOp = SshUtil.asyncExec(client, "cat " + outStreamFile + " || echo EMPTY");
                 handleExecInProgress(new ExecutionState(outOp, (op1, failure1) -> {
                     if (failure1 != null) {
                         prc.completionHandler.handle(null, failure1);
@@ -212,7 +212,7 @@ public class SshServiceUtil {
                     }
                     prc.setOut(op1.getBody(String.class));
                 }, null, SSH_OPERATION_TIMEOUT_SHORT, TimeUnit.SECONDS));
-                AsyncResult errOp = SshUtil.asyncExec(client, "cat " + errStreamFile);
+                AsyncResult errOp = SshUtil.asyncExec(client, "cat " + errStreamFile + " || echo EMPTY");
                 handleExecInProgress(new ExecutionState(errOp, (op1, failure1) -> {
                     if (failure1 != null) {
                         prc.completionHandler.handle(null, failure1);
@@ -220,7 +220,7 @@ public class SshServiceUtil {
                     }
                     prc.setErr(op1.getBody(String.class));
                 }, null, SSH_OPERATION_TIMEOUT_SHORT, TimeUnit.SECONDS));
-                AsyncResult exitCodeOp = SshUtil.asyncExec(client, "cat " + exitCodeFile);
+                AsyncResult exitCodeOp = SshUtil.asyncExec(client, "cat " + exitCodeFile + " || echo 1");
                 handleExecInProgress(new ExecutionState(exitCodeOp, (op1, failure1) -> {
                     if (failure1 != null) {
                         prc.completionHandler.handle(null, failure1);

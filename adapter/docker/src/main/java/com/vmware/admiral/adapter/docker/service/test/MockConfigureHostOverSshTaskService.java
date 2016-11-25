@@ -9,16 +9,29 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.docker.mock;
+package com.vmware.admiral.adapter.docker.service.test;
 
 import com.vmware.admiral.adapter.docker.service.ConfigureHostOverSshTaskService;
+import com.vmware.admiral.common.util.SshServiceUtil;
+import com.vmware.admiral.service.common.MockSshServiceUtil;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class MockConfigureHostOverSshTaskService extends ConfigureHostOverSshTaskService {
 
     @Override
-    public String getInstallCommand(SetupOverSshServiceState state, AuthCredentialsServiceState credentials) {
+    public String getInstallCommand(ConfigureHostOverSshTaskServiceState state,
+            AuthCredentialsServiceState credentials) {
         return "cd installer && ls " + INSTALLER_RESOURCE;
     }
 
+    @Override
+    protected SshServiceUtil getSshServiceUtil() {
+        synchronized (this) {
+            if (sshServiceUtil == null) {
+                sshServiceUtil = new MockSshServiceUtil(getHost());
+            }
+
+            return sshServiceUtil;
+        }
+    }
 }

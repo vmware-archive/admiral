@@ -14,12 +14,14 @@ package com.vmware.admiral.host;
 import java.net.URI;
 import java.util.logging.Level;
 
+import com.vmware.admiral.adapter.docker.service.ConfigureHostOverSshTaskService;
 import com.vmware.admiral.adapter.docker.service.DockerAdapterService;
 import com.vmware.admiral.adapter.docker.service.DockerHostAdapterImageService;
 import com.vmware.admiral.adapter.docker.service.DockerHostAdapterService;
 import com.vmware.admiral.adapter.docker.service.DockerNetworkAdapterService;
 import com.vmware.admiral.adapter.docker.service.DockerOperationTypesService;
 import com.vmware.admiral.adapter.docker.service.DockerVolumeAdapterService;
+import com.vmware.admiral.adapter.docker.service.test.MockConfigureHostOverSshTaskService;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
@@ -52,6 +54,7 @@ public class HostInitAdapterServiceConfig {
             host.startService(Operation.createPost(UriUtils.buildUri(host,
                     MockDockerVolumeAdapterService.class)), new MockDockerVolumeAdapterService());
 
+            host.startFactory(new MockConfigureHostOverSshTaskService());
         } else {
             URI instanceReference = null;
             String remoteAdapterReference = System
@@ -70,14 +73,17 @@ public class HostInitAdapterServiceConfig {
                     Operation.createPost(UriUtils.buildUri(host, DockerHostAdapterService.class)),
                     new DockerHostAdapterService());
             host.startService(
-                    Operation.createPost(UriUtils.buildUri(host, DockerNetworkAdapterService.class)),
+                    Operation
+                            .createPost(UriUtils.buildUri(host, DockerNetworkAdapterService.class)),
                     new DockerNetworkAdapterService());
             host.startService(
                     Operation.createPost(UriUtils.buildUri(host, DockerVolumeAdapterService.class)),
                     new DockerVolumeAdapterService());
             host.startService(
-                    Operation.createPost(UriUtils.buildUri(host, DockerHostAdapterImageService.class)),
+                    Operation.createPost(
+                            UriUtils.buildUri(host, DockerHostAdapterImageService.class)),
                     new DockerHostAdapterImageService());
+            host.startFactory(new ConfigureHostOverSshTaskService());
             host.log(Level.INFO, "Docker instance reference: %s", instanceReference);
         }
     }

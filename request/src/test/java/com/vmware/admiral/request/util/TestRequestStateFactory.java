@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.adapter.docker.service.ConfigureHostOverSshTaskService;
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.compute.ComputeConstants;
@@ -193,13 +194,35 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return createRequestState(ResourceType.COMPUTE_TYPE.getName(), COMPUTE_DESC_ID);
     }
 
+    public static RequestBrokerState createConfigureHostState() {
+        HashMap<String, String> customProperties = new HashMap<>();
+        customProperties.put(ConfigureHostOverSshTaskService.CONFIGURE_HOST_ADDRESS_CUSTOM_PROP,
+                "https://127.0.0.1:2376");
+        customProperties.put(
+                ConfigureHostOverSshTaskService.CONFIGURE_HOST_AUTH_CREDENTIALS_LINK_CUSTOM_PROP,
+                AuthCredentialsService.FACTORY_LINK + "/"
+                        + CommonTestStateFactory.AUTH_CREDENTIALS_ID);
+        customProperties.put(
+                ConfigureHostOverSshTaskService.CONFIGURE_HOST_PLACEMENT_ZONE_LINK_CUSTOM_PROP,
+                ResourcePoolService.FACTORY_LINK + "/" + RESOURCE_POOL_ID);
+        return createRequestState(ResourceType.CONFIGURE_HOST_TYPE.getName(), null,
+                RequestBrokerState.CONFIGURE_HOST_OPERATION, customProperties);
+    }
+
     public static RequestBrokerState createRequestState(String resourceType,
             String resourceDescriptionLink) {
+        return createRequestState(resourceType, resourceDescriptionLink, null, new HashMap<>());
+    }
+
+    public static RequestBrokerState createRequestState(String resourceType,
+            String resourceDescriptionLink, String operation,
+            HashMap<String, String> customProperties) {
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = resourceType;
         request.resourceDescriptionLink = resourceDescriptionLink;
         request.tenantLinks = createTenantLinks(TENANT_NAME);
-        request.customProperties = new HashMap<>();
+        request.operation = operation;
+        request.customProperties = customProperties;
         return request;
     }
 
@@ -341,11 +364,11 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
     public static List<String> createTenantLinks(String tenant, String subTenant) {
 
         if (subTenant == null) {
-            return new ArrayList<String>(
+            return new ArrayList<>(
                     Arrays.asList(String.format(TENANT_LINK_TEMPLATE, tenant)));
         }
 
-        return new ArrayList<String>(
+        return new ArrayList<>(
                 Arrays.asList(String.format(TENANT_LINK_TEMPLATE, tenant),
                         String.format(TENANT_LINK_WITH_GROUP_TEMPLATE, tenant, subTenant)));
     }
