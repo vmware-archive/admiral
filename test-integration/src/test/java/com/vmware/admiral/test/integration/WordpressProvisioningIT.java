@@ -87,7 +87,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
                 // In case of response 500 from docker check:
                 // https://github.com/docker/libnetwork/issues/1101
                 { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_BRIDGE },
-                // Started to fail on Nov 21 and until Nov 23 it failed 4 times. Jira task - https://jira-hzn.eng.vmware.com/browse/VBV-863"
+                // Started to fail on Nov 21 and until Nov 23 it failed 4 times. Jira task -
+                // https://jira-hzn.eng.vmware.com/browse/VBV-863"
                 // { "WordPress_with_MySQL_network.yaml", NetworkType.USER_DEFINED_OVERLAY },
                 { "WordPress_with_MySQL_network_external.yaml", NetworkType.EXTERNAL_BRIDGE },
                 // TODO: VBV-849
@@ -213,8 +214,20 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
             String usedNetworkLink = getResourceContaining(cc.componentLinks,
                     EXTERNAL_NETWORK_NAME);
             if (usedNetworkLink == null) {
-                logger.info("Cannot find netwotjk with name: %s in list components: %s",
+                logger.warning("Cannot find network with name: %s in list components: %s",
                         EXTERNAL_NETWORK_NAME, cc.componentLinks);
+
+                String leftoverNetworkLink = getResourceContaining(cc.componentLinks,
+                        ContainerNetworkService.FACTORY_LINK);
+                if (leftoverNetworkLink != null) {
+                    // A sporadic race condition between an external network just created and the
+                    // network data collection process may cause the test to fail and leave some
+                    // network leftover. The problem is being fixed but this should avoid keeping
+                    // leftover networks in the test Docker hosts.
+                    logger.info("Found an external network leftover: %s in list components: %s",
+                            leftoverNetworkLink, cc.componentLinks);
+                    externalNetworksToDelete.add(leftoverNetworkLink);
+                }
             }
 
             assertEquals(externalNetwork.documentSelfLink, usedNetworkLink);
