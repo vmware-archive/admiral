@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-
 import javax.net.ssl.X509TrustManager;
 
 import com.vmware.admiral.common.util.ServiceDocumentQuery.ServiceDocumentQueryElementResult;
@@ -79,6 +78,13 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
         if (INSTANCE == null) {
             INSTANCE = new ServerX509TrustManager(host);
             INSTANCE.start();
+        }
+        return INSTANCE;
+    }
+
+    public static synchronized ServerX509TrustManager init(ServiceHost host) {
+        if (INSTANCE == null) {
+            INSTANCE = new ServerX509TrustManager(host);
         }
         return INSTANCE;
     }
@@ -144,12 +150,20 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
      */
     public void start() {
         this.documentUpdateTimeMicros = 0;
-        verifySubscriptionTargetExists(() -> {
-            subscribeForSslTrustCertNotifications();
-            loadSslTrustCertServices();
-
+        try {
+            verifySubscriptionTargetExists(() -> {
+                try {
+                    subscribeForSslTrustCertNotifications();
+                    loadSslTrustCertServices();
+                } catch (Exception e) {
+                    host.log(Level.SEVERE,
+                            "Failure while subscribing for ssl certificate notifications: " + Utils
+                                    .toString(e));
+                }
+            });
+        } finally {
             schedulePeriodicCertificatesReload();
-        });
+        }
     }
 
     /**
@@ -161,6 +175,7 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
                 : maintenanceIntervalInitial;
         host.schedule(() -> {
             try {
+                host.log(Level.INFO, "Host " + host.getPublicUri() + "reloading all certificates");
                 documentUpdateTimeMicros = 0;
                 loadSslTrustCertServices();
 
@@ -276,6 +291,7 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
                                 : Utils.toString(result.getException()));
             } else if (result.hasResult()) {
                 SslTrustCertificateState sslTrustCert = result.getResult();
+                self.host.log(Level.FINE, "Adding certificate " + sslTrustCert.fingerprint);
 
                 if (ServiceDocument.isDeleted(sslTrustCert)) {
                     deleteCertificate(sslTrustCert.getAlias());

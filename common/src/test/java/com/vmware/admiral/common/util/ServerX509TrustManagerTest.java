@@ -33,7 +33,7 @@ public class ServerX509TrustManagerTest {
     private static ServerX509TrustManager trustManager;
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() throws Throwable {
         // Force a custom trust store... that shouldn't override the Java default cacerts.
         URI customStore = ServerX509TrustManagerTest.class
                 .getResource("/certs/trusted_certificates.jks").toURI();
@@ -43,9 +43,10 @@ public class ServerX509TrustManagerTest {
 
         // Fake host, not really needed for the purpose of the trust manager test.
         ServiceHost host = new ServiceHost() {
+
         };
 
-        trustManager = ServerX509TrustManager.create(host);
+        trustManager = ServerX509TrustManager.init(host);
     }
 
     @Test
