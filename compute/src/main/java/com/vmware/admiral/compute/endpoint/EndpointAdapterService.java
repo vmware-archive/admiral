@@ -100,7 +100,7 @@ public class EndpointAdapterService extends StatelessService {
         Operation.createGet(this, endpointLink)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        get.fail(e);
+                        get.fail(o.getStatusCode(), e, o.getBodyRaw());
                         return;
                     }
                     get.setBody(o.getBodyRaw());
