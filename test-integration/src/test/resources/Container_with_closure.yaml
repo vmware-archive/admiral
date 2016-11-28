@@ -28,12 +28,16 @@ components:
         module.exports = function test(ctx) {
           var m = ctx.inputs.a;
           console.log('Hello number: ' + m.p);
-          ctx.outputs.result = m.p + ctx.inputs.b;
-          console.log('Hello result: ' + ctx.outputs.result);
+          ctx.outputs.resultInt = m.p + ctx.inputs.b;
+          ctx.outputs.resultObj = {};
+          ctx.outputs.resultObj.a = m.p + ctx.inputs.b;
+          console.log('Hello int result: ' + ctx.outputs.resultInt);
+          console.log('Hello obj result: ' + ctx.outputs.resultObj);
         };
 
       outputNames:
-        - result
+        - resultInt
+        - resultObj
       logConfiguration:
         type: "json-file"
         config:
@@ -48,6 +52,8 @@ components:
       name: kitematicAfterClosure
       image: kitematic/hello-world-nginx:latest
       env:
-      - var: input_a
-        value: ${_resource~test~outputs~result}
+        - var: input_obj
+          value: ${_resource~test~outputs~resultObj}
+      customProperties:
+        input_int: ${_resource~test~outputs~resultInt}
 

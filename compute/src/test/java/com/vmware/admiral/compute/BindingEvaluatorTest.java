@@ -406,10 +406,10 @@ public class BindingEvaluatorTest {
         containers.put("A", containerState);
 
         ContainerState containerStateE = new ContainerState();
-        List<Object> evalList = BindingEvaluator
+        Object evalObj = BindingEvaluator
                 .evaluateProvisioningTimeBindings(containerStateE, bindings, containers);
-        assertEquals(1, evalList.size());
-        assertEquals(((ContainerState) evalList.get(0)).parentLink, containerState.parentLink);
+        assertNotNull(evalObj);
+        assertEquals(((ContainerState) evalObj).parentLink, containerState.parentLink);
 
     }
 

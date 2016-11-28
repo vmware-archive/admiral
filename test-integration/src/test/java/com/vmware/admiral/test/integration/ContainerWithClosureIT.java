@@ -98,12 +98,14 @@ public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
         logger.info("------------- 2. Retrieving closure state for %s. -------------", closureLink);
         Closure closureState = getDocument(closureLink, Closure.class);
         assertEquals(TaskState.TaskStage.FINISHED, closureState.state);
-        assertEquals(expectedClosureResult, closureState.outputs.get("result").getAsInt());
+        assertEquals(expectedClosureResult, closureState.outputs.get("resultInt").getAsInt());
+        assertEquals(expectedClosureResult, closureState.outputs.get("resultObj").getAsJsonObject().get("a").getAsInt
+                ());
 
         ContainerState afterClosureContainer = findProvisionedResource(provisionedContainers,
                 "kitematicAfterClosure");
-        assertEquals(INPUT_NAME + "=" + expectedClosureResult, afterClosureContainer.env[0]);
-
+        assertEquals("input_obj={\"a\":" + expectedClosureResult + "}", afterClosureContainer.env[0]);
+        assertEquals(expectedClosureResult, Integer.parseInt(afterClosureContainer.customProperties.get("input_int")));
     }
 
     private ContainerState findProvisionedResource(List<ContainerState> provisionedResources,

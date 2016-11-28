@@ -16,6 +16,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -146,40 +147,68 @@ public class BindingEvaluator {
     /**
      * Applies the binding on a Component, after a dependent component is provisioned.
      */
-    public static List<Object> evaluateProvisioningTimeBindings(
+
+    public static Object evaluateProvisioningTimeBindings(
             Object state,
             List<Binding> bindings,
             Map<String, Object> provisionedResources) {
-        List<Object> result = new ArrayList<>();
-        if (bindings.isEmpty()) {
-            result.add(state);
-        }
+        Object result = state;
+        Map<String, Object> evaluatedBindingMap = new HashMap<>();
         for (Binding binding : bindings) {
             if (!binding.isProvisioningTimeBinding()) {
                 continue;
             }
             try {
-                Object evaluatedBinding = evaluateProvisioningTimeBinding(binding, state, provisionedResources);
-                result.add(evaluatedBinding);
+                evaluateProvisioningTimeBinding(binding, provisionedResources, evaluatedBindingMap);
             } catch (ReflectiveOperationException | IOException e) {
                 throw new RuntimeException(e);
             }
         }
+
+        try {
+            Map<String, Object> resultBindingMap = serializeToMap(state);
+            applyEvaluatedState(resultBindingMap, evaluatedBindingMap, bindings);
+            if (!evaluatedBindingMap.isEmpty()) {
+                result = deserializeFromMap(resultBindingMap, state.getClass());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         return result;
     }
 
-    private static Object evaluateProvisioningTimeBinding(Binding binding,
-            Object state,
-            Map<String, Object> provisionedResources)
+    private static void applyEvaluatedState(Map<String, Object> resultBindingMap,
+            Map<String, Object> evaluatedBindingMap, List<Binding> bindings) {
+        evaluatedBindingMap.forEach((k, v) -> {
+            Binding targetBinding = findBindingByExpression(k, bindings);
+            if (targetBinding != null) {
+                setValue(resultBindingMap, targetBinding.targetFieldPath, v);
+            }
+        });
+
+    }
+
+    private static Binding findBindingByExpression(String k, List<Binding> bindings) {
+        for (Binding b : bindings) {
+            if (k.equalsIgnoreCase(b.placeholder.bindingExpression)) {
+                return b;
+            }
+        }
+
+        return null;
+    }
+
+    private static void evaluateProvisioningTimeBinding(Binding binding,
+            Map<String, Object> provisionedResources, Map<String, Object> evaluatedBindings)
             throws ReflectiveOperationException, IOException {
 
         String componentName = BindingUtils
                 .extractComponentNameFromBindingExpression(binding.placeholder.bindingExpression);
 
         Object provisionedResource = provisionedResources.get(componentName);
-
         if (provisionedResource == null) {
-            return provisionedResource;
+            return;
         }
 
         Object value = getFieldValueByPath(
@@ -187,10 +216,7 @@ public class BindingEvaluator {
                 provisionedResource);
 
         value = BindingUtils.valueForBinding(binding, value);
-
-        Map<String, Object> serializedDescription = serializeToMap(state);
-        setValue(serializedDescription, binding.targetFieldPath, value);
-        return deserializeFromMap(serializedDescription, state.getClass());
+        evaluatedBindings.put(binding.placeholder.bindingExpression, value);
     }
 
     private static void evaluateBinding(

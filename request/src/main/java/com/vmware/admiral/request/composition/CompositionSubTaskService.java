@@ -702,12 +702,12 @@ public class CompositionSubTaskService
 
                             List<Operation> updates = new ArrayList<>();
                             for (Map.Entry<String, Object> entry : statesToUpdate.entrySet()) {
-                                List<Object> evaluated = BindingEvaluator
+                                Object evaluated = BindingEvaluator
                                         .evaluateProvisioningTimeBindings(entry.getValue(),
                                                 provisioningTimeBindings, provisionedResources);
-                                evaluated.stream().forEach(obj -> updates.add(
-                                        Operation.createPut(this, entry.getKey()).setBody(obj)));
-
+                                updates.add(
+                                        Operation.createPut(this, entry.getKey())
+                                                .setBody(evaluated));
                             }
 
                             if (!updates.isEmpty()) {

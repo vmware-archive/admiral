@@ -76,7 +76,6 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
             return;
         }
 
-        logInfo("Handle maintenance for: %s", getUri());
         sendRequest(Operation
                 .createGet(getUri())
                 .setCompletion((op, ex) -> {
@@ -115,7 +114,6 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
 
     @Override
     public void handleStart(Operation startOp) {
-        logInfo("Handle start....");
         if (!hasBody(startOp)) {
             return;
         }
@@ -136,8 +134,6 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
 
     @Override
     public void handlePatch(Operation patchOp) {
-        logInfo("Handle patch....");
-
         Closure requestedState = patchOp.getBody(Closure.class);
         Closure currentState = this.getState(patchOp);
 
@@ -384,7 +380,6 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
 
     @Override
     public void handlePut(Operation put) {
-        logWarning("Populating inputs...");
         Closure reqClosure = put.getBody(Closure.class);
         Closure closure = this.getState(put);
 
@@ -407,8 +402,6 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
 
     @Override
     public void handlePost(Operation post) {
-        logInfo("Handle post....");
-
         Closure reqClosure = post.getBody(Closure.class);
         Closure closure = this.getState(post);
 
@@ -506,13 +499,11 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
             return;
         }
 
-        logInfo("Handle maintenance of closure with state: " + closure.state);
         if (isTaskExpired(closure, taskDef)) {
             completeCancelTask(taskDef, closure);
         }
 
         op.complete();
-        logInfo("End of maintenance call for: %s", closure.documentSelfLink);
     }
 
     private void completeCancelTask(ClosureDescription taskDef, Closure closure) {

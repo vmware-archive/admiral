@@ -717,10 +717,11 @@ public class AdmiralAdapterService extends
     private JsonElement prepareBuildArgs(ContainerDescription containerDesc, boolean setTaskUri) {
         JsonObject buildArgsObj = new JsonObject();
         for (String env : containerDesc.env) {
-            if (env.indexOf("=") > 0) {
+            int sepIndex = env.indexOf("=");
+            if (sepIndex > 0) {
                 String key = env.split("=")[0].trim();
                 if (setTaskUri && "TASK_URI".equalsIgnoreCase(key)) {
-                    String value = env.split("=")[1].trim();
+                    String value = env.substring(sepIndex).trim();
                     buildArgsObj.addProperty(key, value);
                 }
             }

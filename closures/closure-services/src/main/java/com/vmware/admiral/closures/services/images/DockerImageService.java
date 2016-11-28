@@ -49,7 +49,6 @@ public class DockerImageService extends StatefulService {
             return;
         }
 
-        logInfo("Handle maintenance for: %s", getUri());
         sendRequest(Operation
                 .createGet(getUri())
                 .setCompletion((op, ex) -> {
@@ -69,14 +68,12 @@ public class DockerImageService extends StatefulService {
                             }
                         }
                         post.complete();
-                        logInfo("End of maintenance call for: %s ", getUri());
                     }
                 }));
     }
 
     @Override
     public void handleStart(Operation put) {
-        logInfo("Creating docker images service....");
         DockerImage newImageState = put.getBody(DockerImage.class);
         newImageState.lastAccessedTimeMillis = System.currentTimeMillis();
 
@@ -87,7 +84,7 @@ public class DockerImageService extends StatefulService {
     @Override
     public void handleDelete(Operation delete) {
         DockerImage currentImageState = this.getState(delete);
-        logInfo("Handle deleting....%s ", currentImageState.documentSelfLink);
+        logInfo("Handle delete of: %s ", currentImageState.documentSelfLink);
         cleanImage(currentImageState);
 
         delete.complete();
@@ -97,20 +94,12 @@ public class DockerImageService extends StatefulService {
     public void handlePatch(Operation patch) {
         DockerImage requestedImageState = patch.getBody(DockerImage.class);
         DockerImage currentImageState = this.getState(patch);
-
-        if (currentImageState.taskInfo != null) {
-            logInfo("Current state: %s Patched URI: %s", currentImageState.taskInfo.stage, patch.getUri());
-        }
-        if (requestedImageState.taskInfo != null) {
-            logInfo("Requested state: %s Patched URI: %s", requestedImageState.taskInfo.stage, patch.getUri());
-        }
-
         if (requestedImageState.taskInfo != null) {
             if (!(TaskState.isFailed(requestedImageState.taskInfo) && TaskState.isFinished(currentImageState
                     .taskInfo))) {
                 currentImageState.taskInfo = requestedImageState.taskInfo;
             } else {
-                logInfo("Not allowed requested state");
+                logInfo("Requested state not allowed!");
             }
         }
         if (TaskState.isFailed(currentImageState.taskInfo)) {
