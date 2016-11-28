@@ -11,7 +11,9 @@
 
 package com.vmware.admiral.host;
 
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.ConsoleHandler;
@@ -42,6 +44,7 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.http.netty.NettyHttpListener;
 import com.vmware.xenon.common.http.netty.NettyHttpServiceClient;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.ServiceUriPaths;
@@ -66,6 +69,27 @@ public class ManagementHost extends ServiceHost {
      * without an external KV store service
      */
     public boolean startEtcdEmulator;
+
+    /**
+     * Uri for clustering traffic. If set, another listener is started, which must be passed as
+     * peerNodes to the clustered nodes, and advertised as publicUri.
+     */
+    public String nodeGroupPublicUri;
+
+    /**
+     * File path to key file (same value as ServiceHost.Arguments)
+     */
+    public Path keyFile;
+
+    /**
+     * Key passphrase (same value as ServiceHost.Arguments)
+     */
+    public String keyPassphrase;
+
+    /**
+     * File path to certificate file (same value as ServiceHost.Arguments)
+     */
+    public Path certificateFile;
 
     private static Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains = new HashMap<>();
 
@@ -139,7 +163,9 @@ public class ManagementHost extends ServiceHost {
         if (AuthBootstrapService.isAuthxEnabled(localUsers)) {
             baseArgs.isAuthorizationEnabled = true;
         }
-        return super.initialize(args, baseArgs);
+        ServiceHost h = super.initialize(args, baseArgs);
+        validatePeerArgs();
+        return h;
     }
 
     protected void startFabricServices() throws Throwable {
@@ -220,7 +246,7 @@ public class ManagementHost extends ServiceHost {
         // Serve swagger on default uri
         this.startService(swagger);
         this.log(Level.INFO, "Swagger service started. Checkout Swagger UI at: "
-                + this.getPublicUri() + ServiceUriPaths.SWAGGER + "/ui");
+                + this.getUri() + ServiceUriPaths.SWAGGER + "/ui");
     }
 
     /**
@@ -255,6 +281,32 @@ public class ManagementHost extends ServiceHost {
         sendRequest(Operation.createPost(UriUtils.buildUri(this, LoaderFactoryService.class))
                 .setBody(payload)
                 .setReferer(getUri()));
+    }
+
+    private void validatePeerArgs() throws Throwable {
+        if (nodeGroupPublicUri != null) {
+            URI uri = new URI(nodeGroupPublicUri);
+
+            if (this.getPort() != -1 && uri.getPort() == this.getPort()) {
+                throw new IllegalArgumentException("--nodeGroupPublicUri port must be different from --port");
+            }
+
+            if (this.getSecurePort() != -1 && uri.getPort() == this.getSecurePort()) {
+                throw new IllegalArgumentException("--nodeGroupPublicUri port must be different from --securePort");
+            }
+
+            if (uri.getPort() < 0 || uri.getPort() >= Short.MAX_VALUE * 2) {
+                throw new IllegalArgumentException("--nodeGroupPublicUri port is not in range");
+            }
+
+            if (uri.getScheme() == null) {
+                throw new IllegalArgumentException("--nodeGroupPublicUri scheme must be set");
+            }
+
+            if (uri.getHost() == null) {
+                throw new IllegalArgumentException("--nodeGroupPublicUri host must be set");
+            }
+        }
     }
 
     @Override
@@ -307,6 +359,7 @@ public class ManagementHost extends ServiceHost {
         super.start();
 
         startDefaultCoreServicesSynchronously();
+        startPeerListener();
 
         log(Level.INFO, "Setting authorization context ...");
         // Set system user's authorization context to allow the services start privileged access.
@@ -344,6 +397,18 @@ public class ManagementHost extends ServiceHost {
 
         } catch (URISyntaxException e) {
             throw new RuntimeException("Failed to create ServiceClient", e);
+        }
+    }
+
+    private void startPeerListener() throws Throwable {
+        if (nodeGroupPublicUri != null) {
+            URI uri = new URI(nodeGroupPublicUri);
+            NettyHttpListener peerListener = new NettyHttpListener(this);
+            if (UriUtils.HTTPS_SCHEME.equalsIgnoreCase(uri.getScheme())) {
+                peerListener.setSSLContextFiles(certificateFile.toUri(),
+                        keyFile.toUri(), keyPassphrase);
+            }
+            peerListener.start(uri.getPort(), uri.getHost());
         }
     }
 

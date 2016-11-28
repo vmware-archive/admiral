@@ -19,7 +19,10 @@ import static com.vmware.xenon.common.CommandLineArgumentParser.ARGUMENT_PREFIX;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -62,17 +65,19 @@ public class ManagementHostTest {
 
     private static class TestManagementHost extends ManagementHost implements AutoCloseable {
 
-        public TestManagementHost(boolean startMockHostAdapterInstance) throws Throwable {
-            String[] args = {
+        public TestManagementHost(boolean startMockHostAdapterInstance, String... extraArgs) throws Throwable {
+            List<String> args = new ArrayList<>(Arrays.asList(
                     // start mock host adapter instance
                     ARGUMENT_PREFIX + HostInitAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE
                     + ARGUMENT_ASSIGNMENT + startMockHostAdapterInstance,
                     // generate a random sandbox
                     ARGUMENT_PREFIX + "sandbox" + ARGUMENT_ASSIGNMENT + SANDBOX.getRoot().toPath(),
                     // ask runtime to pick a random port
-                    ARGUMENT_PREFIX + "port" + ARGUMENT_ASSIGNMENT + "0"
-            };
-            initialize(args);
+                    ARGUMENT_PREFIX + "port" + ARGUMENT_ASSIGNMENT + "8282"));
+            for (String extraArg : extraArgs) {
+                args.add(extraArg);
+            }
+            initialize(args.toArray(new String[args.size()]));
         }
 
         @Override
@@ -140,6 +145,72 @@ public class ManagementHostTest {
             host.sendRequest(op);
             host.getTestContext().await();
             assertEquals("The loader service didn't start", 200, statusCode.get());
+        }
+    }
+
+    @Test
+    public void testManagementHostInitializationNoErrorsWithNodeGroup() throws Throwable {
+        try (TestManagementHost host = new TestManagementHost(false,
+                ARGUMENT_PREFIX + "publicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8292",
+                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8292",
+                ARGUMENT_PREFIX + "peerList" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8292")) {
+            // we're just verifying that no exceptions are thrown
+        }
+    }
+
+    @Test
+    public void testManagementHostInitializationWithNodeGroup() throws Throwable {
+        try (TestManagementHost host = new TestManagementHost(true,
+                ARGUMENT_PREFIX + "publicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8292",
+                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8292",
+                ARGUMENT_PREFIX + "peerList" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8292")) {
+            host.start();
+            host.startManagementServices();
+            AtomicInteger statusCode = new AtomicInteger(0);
+            Operation op =
+                    Operation.createGet(UriUtils.buildUri(host, MockDockerAdapterService.SELF_LINK))
+                    .setReferer(host.getUri())
+                    .setCompletion((o, e) -> {
+                        if (e == null) {
+                            statusCode.set(o.getStatusCode());
+                            host.getTestContext().completeIteration();
+                        } else {
+                            host.getTestContext().failIteration(e);
+                        }
+                    });
+            host.sendRequest(op);
+            host.getTestContext().await();
+            assertEquals("The MockHostInteractionService didn't start.", 204, statusCode.get());
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testManagementHostInitializationErrorNoNodeGroupScheme() throws Throwable {
+        try (TestManagementHost host = new TestManagementHost(true,
+                ARGUMENT_PREFIX + "publicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282",
+                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT + "//127.0.0.1:8282",
+                ARGUMENT_PREFIX + "peerList" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282")) {
+            // we're just verifying that exception is thrown
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testManagementHostInitializationErrorNoNodeGroupPort() throws Throwable {
+        try (TestManagementHost host = new TestManagementHost(true,
+                ARGUMENT_PREFIX + "publicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282",
+                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1",
+                ARGUMENT_PREFIX + "peerList" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282")) {
+            // we're just verifying that exception is thrown
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testManagementHostInitializationErrorSamePort() throws Throwable {
+        try (TestManagementHost host = new TestManagementHost(true,
+                ARGUMENT_PREFIX + "publicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282",
+                ARGUMENT_PREFIX + "nodeGroupPublicUri" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282",
+                ARGUMENT_PREFIX + "peerList" + ARGUMENT_ASSIGNMENT + "http://127.0.0.1:8282")) {
+            // we're just verifying that exception is thrown
         }
     }
 
