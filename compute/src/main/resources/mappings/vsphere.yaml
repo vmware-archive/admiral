@@ -9,8 +9,8 @@ properties:
         mem: 1024
         disk: 10240
       medium:
-        cpu: 2
-        mem: 4096
+        cpu: 1
+        mem: 2048
         disk: 10240
       large:
         cpu: 2

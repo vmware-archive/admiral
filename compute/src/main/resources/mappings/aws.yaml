@@ -10,8 +10,5 @@ properties:
       xlarge: "m4.xlarge"
   imageType:
     mappings:
-      linux: "ami-6869aa05"
       coreos: "ami-220f2b35"
-      windows: "ami-c8a9baa2"
-      ubuntu: "ami-787d6e12"
-      ubuntu-server-1604: "ami-2ef48339"
+      ubuntu-1604: "ami-2ef48339"

@@ -33,106 +33,37 @@
     </div>
   </div>
 
-  <div id="awsOS" class="form-group"
-    v-if="showInput('aws')" v-bind:class="{'has-error': validationErrors.awsOS}">
+  <div id="instanceType" class="form-group" v-if="endpointEnvironment">
     <label class="col-sm-3 control-label">
-      {{i18n("app.host.details.awsOS")}}
+      {{i18n("app.host.details.instanceType")}}
       <span class="requiredFieldMark">*</span>
     </label>
     <div class="col-sm-9">
-      <select v-model="awsOS" class="form-control">
-        <option value="coreos">CoreOS</option>
-        <option value="ubuntu">Ubuntu</option>
-      </select>
-
-      <span class="help-block">{{i18n(validationErrors.awsOS)}}</span>
-    </div>
-  </div>
-
-  <div id="awsType" class="form-group"
-    v-if="showInput('aws')">
-    <label class="col-sm-3 control-label">
-      {{i18n("app.host.details.awsType")}}
-      <span class="requiredFieldMark">*</span>
-    </label>
-    <div class="col-sm-9">
-      <select v-model="awsType" class="form-control">
-        <option value="t2.nano">General Purpose T2 nano</option>
-        <option value="t2.micro">General Purpose T2 micro</option>
-        <option value="t2.small">General Purpose T2 small</option>
-        <option value="t2.medium">General Purpose T2 medium</option>
-        <option value="t2.large">General Purpose T2 large</option>
-        <option value="m4.large">General Purpose M4 large</option>
-        <option value="m4.xlarge">General Purpose M4 xlarge</option>
-        <option value="m4.2xlarge">General Purpose M4 2xlarge</option>
-        <option value="m4.4xlarge">General Purpose M4 4xlarge</option>
-        <option value="m4.10xlarge">General Purpose M4 10xlarge</option>
-        <option value="m3.medium">General Purpose M3 medium</option>
-        <option value="m3.large">General Purpose M3 large</option>
-        <option value="m3.xlarge">General Purpose M3 xlarge</option>
-        <option value="m3.2xlarge">General Purpose M3 2xlarge</option>
+      <select v-model="instanceType" class="form-control">
+        <option v-for="(key, value) in instanceTypes"
+            value="{{key}}" track-by="$index">
+          {{getInstanceTypeDescription(key)}}
+        </option>
       </select>
     </div>
   </div>
 
-  <div id="azureOS" class="form-group" v-if="showInput('azure')">
+  <div id="imageType" class="form-group" v-if="endpointEnvironment">
     <label class="col-sm-3 control-label">
-      {{i18n("app.host.details.azureOS")}}
+      {{i18n("app.host.details.imageType")}}
       <span class="requiredFieldMark">*</span>
     </label>
     <div class="col-sm-9">
-      <select v-model="azureOS" class="form-control">
-        <option value="coreos">CoreOS</option>
-        <option value="linux">Ubuntu</option>
+      <select v-model="imageType" class="form-control">
+        <option v-for="(key, value) in imageTypes"
+            value="{{key}}" track-by="$index">
+          {{getImageTypeDescription(key)}}
+        </option>
       </select>
     </div>
   </div>
 
-  <div id="azureType" class="form-group" v-if="showInput('azure')">
-    <label class="col-sm-3 control-label">
-      {{i18n("app.host.details.azureType")}}
-      <span class="requiredFieldMark">*</span>
-    </label>
-    <div class="col-sm-9">
-      <select v-model="azureType" class="form-control">
-        <option value="Basic_A0">Standard 1 Core, 0.75 GB</option>
-        <option value="Basic_A1">Standard 1 Core, 1.75 GB</option>
-        <option value="Basic_A2">Standard 2 Cores, 3.50 GB</option>
-        <option value="Basic_A3">Standard 4 Cores, 3.50 GB</option>
-        <option value="Basic_A4">Standard 8 Cores, 7.00 GB</option>
-      </select>
-    </div>
-  </div>
-
-  <div id="vsphereOS" class="form-group" v-if="showInput('vsphere')">
-    <label class="col-sm-3 control-label">
-      {{i18n("app.host.details.vsphereOS")}}
-      <span class="requiredFieldMark">*</span>
-    </label>
-    <div class="col-sm-9">
-      <select v-model="vsphereOS" class="form-control">
-        <option value="coreos">CoreOS</option>
-        <option value="photon">PhotonOS</option>
-      </select>
-    </div>
-  </div>
-
-  <div id="vsphereType" class="form-group" v-if="showInput('vsphere')">
-    <label class="col-sm-3 control-label">
-      {{i18n("app.host.details.vsphereType")}}
-      <span class="requiredFieldMark">*</span>
-    </label>
-    <div class="col-sm-9">
-      <select v-model="vsphereType" class="form-control">
-        <option value="small">Standard 1 Core, 1 GB</option>
-        <option value="medium">Standard 2 Core, 4 GB</option>
-        <option value="large">Standard 2 Cores, 8 GB</option>
-        <option value="xlarge">Standard 4 Cores, 16 GB</option>
-      </select>
-    </div>
-  </div>
-
-  <div id="vsphereDestination" class="form-group" v-if="showInput('vsphere')">
+  <div id="destination" class="form-group" v-if="endpoint && endpoint.endpointType === 'vsphere'">
     <label class="col-sm-3 control-label">
       {{i18n('app.host.details.destination')}}
       <span class="requiredFieldMark">*</span>
@@ -143,14 +74,14 @@
     </div>
   </div>
 
-  <div id="credential" class="form-group" v-bind:class="{'hide': showInput(null)}">
+  <div id="credential" class="form-group" v-bind:class="{'hide': endpoint === null}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.guestCredential")}}</label>
     <div class="col-sm-9">
       <div class="form-control dropdown-holder"></div>
     </div>
   </div>
 
-  <div id="clusterSize" class="form-group" v-bind:class="{'hide': showInput(null)}">
+  <div id="clusterSize" class="form-group" v-bind:class="{'hide': endpoint === null}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.clusterSize")}}</label>
     <div class="clusterSizeInput col-sm-9"><span>{{clusterSize}}</span>&nbsp;
       <action-button name="incrementClusterSize" icon-name="plus"
@@ -160,7 +91,7 @@
     </div>
   </div>
 
-  <div id="tags" class="form-group tags" v-bind:class="{'hide': showInput(null)}">
+  <div id="tags" class="form-group tags" v-bind:class="{'hide': endpoint === null}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.tags")}}</label>
     <div class="col-sm-9">
       <div class="tags-holder">
@@ -171,7 +102,7 @@
     </div>
   </div>
 
-  <div id="customProperties" class="form-group" v-bind:class="{'hide': showInput(null)}">
+  <div id="customProperties" class="form-group" v-bind:class="{'hide': endpoint === null}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.customProperties")}}</label>
     <div class="col-sm-9">
       <div class="custom-prop-fields"></div>

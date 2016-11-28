@@ -70,12 +70,8 @@
         "providerType": "Cloud type",
         "regionId": "Region ID",
         "name": "Name",
-        "awsType": "Instance type",
-        "awsOS": "OS",
-        "azureType": "Instance type",
-        "azureOS": "OS",
-        "vsphereType": "Instance type",
-        "vsphereOS": "OS",
+        "instanceType": "Instance type",
+        "imageType": "OS",
         "clusterSize": "Cluster size"
       },
       "list": {
@@ -413,6 +409,40 @@
         "nameLabel": "Name",
         "endpointTypeLabel": "Endpoint Type",
         "propertiesLabel": "Properties"
+      },
+      "instanceType": {
+        "aws": {
+          "small": "Small (1 CPU, 1 GB Memory)",
+          "medium": "Medium (1 CPU, 2 GB Memory)",
+          "large": "Large (2 CPUs, 8 GB Memory)",
+          "xlarge": "X-Large (4 CPU, 16 GB Memory)"
+        },
+        "azure": {
+          "small": "Small (1 CPU, 0.75 GB Memory)",
+          "medium": "Medium (1 CPU, 1.75 GB Memory)",
+          "large": "Large (2 CPU, 3.50 GB Memory)",
+          "xlarge": "X-Large (4 CPU, 14 GB Memory)"
+        },
+        "vsphere": {
+          "small": "Small (1 CPU, 1 GB Memory)",
+          "medium": "Medium (1 CPU, 2 GB Memory)",
+          "large": "Large (2 CPU, 8 GB Memory)",
+          "xlarge": "X-Large (4 CPU, 16 GB Memory)"
+        }
+      },
+      "imageType": {
+        "aws": {
+          "coreos": "CoreOS",
+          "ubuntu-1604": "Ubuntu"
+        },
+        "azure": {
+          "coreos": "CoreOS",
+          "ubuntu-1604": "Ubuntu"
+        },
+        "vsphere": {
+          "coreos": "CoreOS",
+          "photon": "Photon"
+        }
       }
     },
     "endpoint": {

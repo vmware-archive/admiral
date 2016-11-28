@@ -5,10 +5,13 @@ properties:
   instanceType:
     mappings:
       small: "Basic_A0"
+      medium: "Basic_A1"
+      large: "Basic_A2"
+      xlarge: "Basic_A4"
   imageType:
     mappings:
-      linux: "canonical:ubuntuserver:16.04.5-LTS:latest"
       coreos: "CoreOS:coreos:Beta:1192.2.0"
+      ubuntu-1604: "canonical:ubuntuserver:16.04.5-LTS:latest"
   bootDiskProperties:
     mappings:
       azureStorageAccountType: "Standard_RAGRS"

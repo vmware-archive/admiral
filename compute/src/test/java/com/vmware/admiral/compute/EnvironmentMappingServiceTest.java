@@ -32,7 +32,7 @@ public class EnvironmentMappingServiceTest extends ComputeBaseTest {
         assertNotNull(envState);
         assertNotNull(envState.properties);
         assertEquals("t2.micro", envState.getMappingValue("instanceType", "small"));
-        assertEquals("ami-6869aa05", envState.getMappingValue("imageType", "linux"));
+        assertEquals("ami-220f2b35", envState.getMappingValue("imageType", "coreos"));
     }
 
 }

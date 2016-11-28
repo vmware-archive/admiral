@@ -83,13 +83,9 @@ var HostCreateView = Vue.extend({
     return {
       name: null,
       endpoint: null,
-      awsType: 't2.micro',
-      awsOS: 'coreos',
-      azureType: 'Basic_A1',
-      azureOS: 'coreos',
-      vsphereType: 'small',
-      vsphereOS: 'coreos',
-      vsphereDestination: null,
+      instanceType: null,
+      imageType: null,
+      destination: null,
       clusterSize: 1
     };
   },
@@ -99,15 +95,22 @@ var HostCreateView = Vue.extend({
       if (!this.name || !this.endpoint) {
         return true;
       }
-      switch (this.endpoint.endpointType) {
-        case 'aws':
-          return !this.awsType || !this.awsOS;
-        case 'azure':
-          return !this.azureType || !this.azureOS;
-        case 'vsphere':
-          return !this.vsphereType ||
-            !this.vsphereOS || !this.vsphereDestination;
+      return !this.instanceType || !this.imageType ||
+          (this.endpoint.endpointType === 'vsphere' && !this.destination);
+    },
+    endpointEnvironment: function() {
+      if (this.endpoint && this.model.environments) {
+        return this.model.environments.find((environment) =>
+            environment.endpointType === this.endpoint.endpointType);
       }
+    },
+    instanceTypes: function() {
+      return this.endpointEnvironment &&
+          this.endpointEnvironment.properties.instanceType.mappings;
+    },
+    imageTypes: function() {
+      return this.endpointEnvironment &&
+          this.endpointEnvironment.properties.imageType.mappings;
     },
     validationErrors: function() {
       return this.model.validationErrors || {};
@@ -136,6 +139,13 @@ var HostCreateView = Vue.extend({
     });
     this.endpointInput.setOptionSelectCallback((option) => {
       this.endpoint = option;
+      this.instanceType = null;
+      this.imageType = null;
+      this.destination = null;
+      Vue.nextTick(() => {
+        this.instanceType = Object.keys(this.instanceTypes)[0];
+        this.imageType = Object.keys(this.imageTypes)[0];
+      });
     });
     this.endpointInput.setClearOptionSelectCallback(() => {
       this.endpoint = null;
@@ -254,7 +264,7 @@ var HostCreateView = Vue.extend({
 
   methods: {
     onDestinationChange: function(endpoint) {
-      this.vsphereDestination = endpoint ? endpoint.documentSelfLink : null;
+      this.destination = endpoint ? endpoint.documentSelfLink : null;
     },
     modifyClusterSize: function($event, incrementValue) {
       $event.stopPropagation();
@@ -262,11 +272,17 @@ var HostCreateView = Vue.extend({
 
       this.clusterSize += incrementValue;
     },
-    showInput: function(type) {
-      if (this.endpoint) {
-        return this.endpoint.endpointType === type;
+    getInstanceTypeDescription: function(key) {
+      if (!utils.isApplicationEmbedded()) {
+        return i18n.t(`app.environment.instanceType.${this.endpoint.endpointType}.${key}`);
       }
-      return type === null;
+      return key;
+    },
+    getImageTypeDescription: function(key) {
+      if (!utils.isApplicationEmbedded()) {
+        return i18n.t(`app.environment.imageType.${this.endpoint.endpointType}.${key}`);
+      }
+      return key;
     },
     getHostDescription: function() {
       let customProperties = utils.arrayToObject(this.customPropertiesEditor.getData());
@@ -278,30 +294,13 @@ var HostCreateView = Vue.extend({
           __endpointLink: this.endpoint.documentSelfLink
         })
       };
-      switch (this.endpoint.endpointType) {
-        case 'aws':
-          return $.extend(true, hostDescription, {
-            instanceType: this.awsType,
-            customProperties: {
-              imageType: this.awsOS
-            }
-          });
-        case 'azure':
-          return $.extend(true, hostDescription, {
-            instanceType: this.azureType,
-            customProperties: {
-              imageType: this.azureOS
-            }
-          });
-        case 'vsphere':
-          return $.extend(true, hostDescription, {
-            instanceType: this.vsphereType,
-            customProperties: {
-              imageType: this.vsphereOS,
-              __placementLink: this.vsphereDestination
-            }
-          });
-      }
+      return $.extend(true, hostDescription, {
+        instanceType: this.instanceType,
+        customProperties: {
+          imageType: this.imageType,
+          __placementLink: this.destination
+        }
+      });
     },
     createHost: function() {
       let tags = this.tagsInput.getValue();

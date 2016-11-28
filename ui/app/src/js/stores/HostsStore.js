@@ -18,6 +18,7 @@ import ResourcePoolsStore from 'stores/ResourcePoolsStore';
 import CredentialsStore from 'stores/CredentialsStore';
 import CertificatesStore from 'stores/CertificatesStore';
 import EndpointsStore from 'stores/EndpointsStore';
+import EnvironmentsStore from 'stores/EnvironmentsStore';
 import DeploymentPolicyStore from 'stores/DeploymentPolicyStore';
 import RequestsStore from 'stores/RequestsStore';
 import EventLogStore from 'stores/EventLogStore';
@@ -401,6 +402,16 @@ let HostsStore = Reflux.createStore({
 
       this.emitChange();
     });
+
+
+    EnvironmentsStore.listen((environmentsData) => {
+      if (!this.data.hostAddView) {
+        return;
+      }
+
+      this.setInData(['hostAddView', 'environments'], environmentsData.items);
+      this.emitChange();
+    });
   },
 
   listenables: [actions.HostActions,
@@ -531,6 +542,7 @@ let HostsStore = Reflux.createStore({
     actions.CertificatesActions.retrieveCertificates();
     actions.DeploymentPolicyActions.retrieveDeploymentPolicies();
     actions.EndpointsActions.retrieveEndpoints();
+    actions.EnvironmentsActions.openEnvironments();
   },
 
   onCloseHosts: function() {

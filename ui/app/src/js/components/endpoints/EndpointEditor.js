@@ -20,11 +20,6 @@ const TYPES = [
     iconSrc: 'image-assets/endpoints/aws.png'
   },
   {
-    id: 'gcp',
-    name: 'GCP',
-    iconSrc: 'image-assets/endpoints/gcp.png'
-  },
-  {
     id: 'azure',
     name: 'Azure',
     iconSrc: 'image-assets/endpoints/azure.png'
