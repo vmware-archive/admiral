@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.request.compute.enhancer;
 
+import java.util.Map;
 import java.util.function.BiConsumer;
 
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -32,5 +33,6 @@ public interface Enhancer<T extends ResourceState> {
         public ComputeDescription endpointComputeDescription;
         public String endpointType;
         public String imageType;
+        public Map<String, Object> content;
     }
 }

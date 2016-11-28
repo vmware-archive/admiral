@@ -14,20 +14,23 @@ package com.vmware.admiral.request.compute.enhancer;
 import java.net.URI;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.logging.Level;
 
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.EnvironmentMappingService.EnvironmentMappingState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.ServiceHost;
 
-public class EnvironmentComputeDescriptionEnhancer implements ComputeDescriptionEnhancer {
+public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnhancer {
 
-    private StatefulService sender;
+    private ServiceHost host;
+    private URI referer;
 
-    public EnvironmentComputeDescriptionEnhancer(StatefulService sender) {
-        this.sender = sender;
+    public EnvironmentComputeDescriptionEnhancer(ServiceHost host, URI referer) {
+        this.host = host;
+        this.referer = referer;
     }
 
     @Override
@@ -52,7 +55,7 @@ public class EnvironmentComputeDescriptionEnhancer implements ComputeDescription
             if (cd.zoneId == null) {
                 cd.zoneId = env.getStringMappingValue("placement", "zoneId");
             }
-            if (cd.zoneId == null) {
+            if (cd.zoneId == null && context.endpointComputeDescription != null) {
                 cd.zoneId = context.endpointComputeDescription.zoneId;
             }
 
@@ -67,7 +70,7 @@ public class EnvironmentComputeDescriptionEnhancer implements ComputeDescription
                     String scheme = imageUri.getScheme();
                     if (scheme != null
                             && (scheme.startsWith("http") || scheme.startsWith("file"))) {
-                        cd.customProperties.put("ova.uri", imageUri.toString());
+                        cd.customProperties.put(OVA_URI, imageUri.toString());
                     } else {
                         cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
                                 imageId);
@@ -106,9 +109,10 @@ public class EnvironmentComputeDescriptionEnhancer implements ComputeDescription
 
     private <T extends ServiceDocument> void getEnvironmentState(String uriLink,
             BiConsumer<EnvironmentMappingState, Throwable> callback) {
-        sender.logInfo("Loading state for %s", uriLink);
+        host.log(Level.INFO, "Loading state for %s", uriLink);
 
-        sender.sendRequest(Operation.createGet(sender, uriLink)
+        host.sendRequest(Operation.createGet(host, uriLink)
+                .setReferer(referer)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         callback.accept(null, e);

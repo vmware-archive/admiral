@@ -1,28 +1,11 @@
 #cloud-config
 
-ssh_authorized_keys:
-  - {{sshAuthorizedKey}}
-
 package_upgrade: true
 
 packages:
  - docker
 
-write_files:
-    - path: /etc/docker/ca.pem
-      permissions: 0644
-      content: |
-        {{caCertPem}}
-    - path: /etc/docker/server.pem
-      permissions: 0644
-      content: |
-        {{serverCertPem}}
-    - path: /etc/docker/server-key.pem
-      permissions: 0600
-      content: |
-        {{serverKeyPem}}
-
 runcmd:
- - echo 'OPTIONS="$OPTIONS -H=0.0.0.0:2376  --insecure-registry=\"0.0.0.0/0\" --tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem"' | sudo tee -a /etc/sysconfig/docker
+ - echo 'OPTIONS="$OPTIONS -H=0.0.0.0:443 --tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem"' | sudo tee -a /etc/sysconfig/docker
  - service docker start
  - [ sh, -c, "usermod -a -G docker ec2-user" ]

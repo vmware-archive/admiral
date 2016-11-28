@@ -11,8 +11,9 @@ properties:
   imageType:
     mappings:
       coreos: "CoreOS:coreos:Beta:1192.2.0"
-      ubuntu-1604: "canonical:ubuntuserver:16.04.5-LTS:latest"
+      ubuntu-1604: "canonical:ubuntuserver:16.04.0-LTS:latest"
   bootDiskProperties:
     mappings:
       azureStorageAccountType: "Standard_RAGRS"
       azureOsDiskCaching: "None"
+      azureStorageAccountName: "basestorage1"

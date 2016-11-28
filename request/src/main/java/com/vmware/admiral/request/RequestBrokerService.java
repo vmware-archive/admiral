@@ -1524,6 +1524,11 @@ public class RequestBrokerService extends
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CLOSURE_TYPE, new ArrayList<>(
                 Arrays.asList(ClosureAllocationTaskService.DISPLAY_NAME,
                         ResourceNamePrefixTaskService.DISPLAY_NAME)));
+        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CONTAINER_HOST_TYPE,
+                new ArrayList<>(
+                        Arrays.asList(ProvisionContainerHostsTaskService.DISPLAY_NAME,
+                                ComputeAllocationTaskService.DISPLAY_NAME,
+                                ComputeProvisionTaskService.DISPLAY_NAME)));
     }
 
     private boolean createRequestTrackerIfNoneProvided(RequestBrokerState state, Operation op) {
@@ -1576,6 +1581,9 @@ public class RequestBrokerService extends
             }
         } else if (isConfigureHostOperation(state)) {
             requestStatus.addTrackedTasks(ConfigureHostOverSshTaskService.DISPLAY_NAME);
+        } else if (isProvisioningContainerHostsOperation(state)) {
+            requestStatus.addTrackedTasks(SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
+                    .get(ResourceType.CONTAINER_HOST_TYPE).toArray(new String[0]));
         } else {
             if (isRemoveOperation(state)) {
                 if (isContainerHostType(state)) {

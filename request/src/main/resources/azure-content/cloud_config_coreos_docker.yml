@@ -1,7 +1,5 @@
 #cloud-config
 
-{{serverCerts}}:
-
 coreos:
   units:
     - name: docker-tls-tcp.socket

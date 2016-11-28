@@ -11,17 +11,18 @@
 
 package com.vmware.admiral.request.compute.enhancer;
 
+import java.net.URI;
 import java.util.LinkedList;
 import java.util.function.BiConsumer;
 
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
-import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.ServiceHost;
 
 /**
  * Composition of all Compute description enhancers used to enhance the ComputeDescription during
  * request.
  */
-public class ComputeDescriptionEnhancers implements ComputeDescriptionEnhancer {
+public class ComputeDescriptionEnhancers extends ComputeDescriptionEnhancer {
 
     private final LinkedList<ComputeDescriptionEnhancer> enhancers;
 
@@ -29,16 +30,17 @@ public class ComputeDescriptionEnhancers implements ComputeDescriptionEnhancer {
         this.enhancers = new LinkedList<>();
     }
 
-    private void initialize(StatefulService sender) {
-        this.enhancers.add(new EnvironmentComputeDescriptionEnhancer(sender));
-        this.enhancers.add(new CloudConfigComputeDescriptionEnhancer());
-        this.enhancers.add(new GuestCredentialsComputeDescriptionEnhancer(sender));
-        this.enhancers.add(new ServerCertComputeDescriptionEnhancer(sender));
+    private void initialize(ServiceHost host, URI referer) {
+        this.enhancers.add(new EnvironmentComputeDescriptionEnhancer(host, referer));
+        this.enhancers.add(new CloudConfigLoaderEnhancer());
+        this.enhancers.add(new GuestCredentialsComputeDescriptionEnhancer(host, referer));
+        this.enhancers.add(new ServerCertComputeDescriptionEnhancer(host, referer));
+        this.enhancers.add(new CloudConfigSerializeEnhancer(host));
     }
 
-    public static ComputeDescriptionEnhancers build(StatefulService sender) {
+    public static ComputeDescriptionEnhancers build(ServiceHost host, URI referer) {
         ComputeDescriptionEnhancers enhancers = new ComputeDescriptionEnhancers();
-        enhancers.initialize(sender);
+        enhancers.initialize(host, referer);
         return enhancers;
     }
 

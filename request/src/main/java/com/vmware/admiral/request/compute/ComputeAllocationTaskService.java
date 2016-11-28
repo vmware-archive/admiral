@@ -473,34 +473,35 @@ public class ComputeAllocationTaskService
         context.imageType = computeDesc.customProperties
                 .remove(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
 
-        ComputeDescriptionEnhancers.build(this).enhance(context, computeDesc, (cd, t) -> {
-            if (t != null) {
-                failTask("Failed patching compute description : "
-                        + Utils.toString(t), t);
-                return;
-            }
-            SubStage nextStage = cd.customProperties
-                    .containsKey(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME)
-                            ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
-                            : SubStage.RESOURCES_NAMES;
+        ComputeDescriptionEnhancers
+                .build(getHost(), UriUtils.buildUri(getHost().getPublicUri(), getSelfLink()))
+                .enhance(context, computeDesc, (cd, t) -> {
+                    if (t != null) {
+                        failTask("Failed patching compute description : "
+                                + Utils.toString(t), t);
+                        return;
+                    }
+                    SubStage nextStage = cd.customProperties
+                            .containsKey(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME)
+                                    ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
+                                    : SubStage.RESOURCES_NAMES;
 
-            cd.customProperties.put("ovf.prop:guestinfo.coreos.config.data",
-                    cd.customProperties.get(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME));
-            Operation.createPut(this, state.resourceDescriptionLink)
-                    .setBody(cd)
-                    .setCompletion((o, e) -> {
-                        if (e != null) {
-                            failTask("Failed patching compute description : " + Utils.toString(e),
-                                    null);
-                            return;
-                        }
-                        this.computeDescription = o.getBody(ComputeDescription.class);
-                        proceedTo(nextStage, s -> {
-                            s.customProperties = this.computeDescription.customProperties;
-                        });
-                    })
-                    .sendWith(this);
-        });
+                    Operation.createPut(this, state.resourceDescriptionLink)
+                            .setBody(cd)
+                            .setCompletion((o, e) -> {
+                                if (e != null) {
+                                    failTask("Failed patching compute description : "
+                                            + Utils.toString(e),
+                                            null);
+                                    return;
+                                }
+                                this.computeDescription = o.getBody(ComputeDescription.class);
+                                proceedTo(nextStage, s -> {
+                                    s.customProperties = this.computeDescription.customProperties;
+                                });
+                            })
+                            .sendWith(this);
+                });
     }
 
     static boolean enableContainerHost(Map<String, String> customProperties) {

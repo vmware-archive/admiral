@@ -13,20 +13,42 @@ package com.vmware.admiral.request.compute.enhancer;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourceState;
 
 /**
- * An interface to be implemented by any ComputeDescription enhancer.
+ * An base class to be extended by any ComputeDescription enhancer.
  */
-public interface ComputeDescriptionEnhancer extends Enhancer<ComputeDescription> {
+public abstract class ComputeDescriptionEnhancer implements Enhancer<ComputeDescription> {
+    static final String SSH_AUTHORIZED_KEYS = "ssh_authorized_keys";
+    static final String OVA_URI = "ova.uri";
+
+    static ObjectMapper objectMapper;
+
+    {
+        YAMLFactory factory = new YAMLFactory();
+        factory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
+        factory.enable(YAMLGenerator.Feature.MINIMIZE_QUOTES);
+
+        objectMapper = new ObjectMapper(factory);
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+    }
 
     static String getCustomProperty(ResourceState resource, String propName) {
-        if (resource.customProperties == null) {
+        return getCustomProperty(resource.customProperties, propName);
+    }
+
+    static String getCustomProperty(Map<String, String> customProperties, String propName) {
+        if (customProperties == null) {
             return null;
         }
-        return resource.customProperties.get(propName);
+        return customProperties.get(propName);
     }
 
     static boolean enableContainerHost(Map<String, String> customProperties) {

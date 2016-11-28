@@ -11,19 +11,18 @@
 
 package com.vmware.admiral.request.compute.enhancer;
 
-import static com.vmware.admiral.request.compute.enhancer.ComputeDescriptionEnhancer.enableContainerHost;
-import static com.vmware.admiral.request.compute.enhancer.ComputeDescriptionEnhancer.getCustomProperty;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 
-public class CloudConfigComputeDescriptionEnhancer implements ComputeDescriptionEnhancer {
+public class CloudConfigLoaderEnhancer extends ComputeDescriptionEnhancer {
 
     @Override
     public void enhance(EnhanceContext context, ComputeDescription cd,
@@ -36,12 +35,16 @@ public class CloudConfigComputeDescriptionEnhancer implements ComputeDescription
             try {
                 fileContent = loadResource(String.format("/%s-content/cloud_config_%s.yml",
                         context.endpointType, supportDocker ? imageType + "_docker" : "base"));
-                if (fileContent != null) {
-                    cd.customProperties.put(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME,
-                            fileContent);
+                if (fileContent != null && !fileContent.trim().isEmpty()) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> content = objectMapper.readValue(fileContent, Map.class);
+
+                    context.content = content;
+                } else {
+                    context.content = new LinkedHashMap<>();
                 }
             } catch (IOException e) {
-
+                e.printStackTrace();
             }
             callback.accept(cd, null);
         }

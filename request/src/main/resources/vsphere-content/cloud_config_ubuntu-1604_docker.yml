@@ -1,0 +1,19 @@
+#cloud-config
+
+write_files:
+    - path: /etc/systemd/system/docker.service.d/docker.conf
+      permissions: 0644
+      content: |
+        [Service]
+        ExecStart=
+        ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:443 -H unix:///var/run/docker.sock -H fd:// --tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem
+
+runcmd:
+ - sudo apt-get update
+ - sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+ - sudo apt-add-repository 'deb https://apt.dockerproject.org/repo ubuntu-xenial main'
+ - sudo apt-get update
+ - sudo apt-get install -y docker-engine
+ - sudo systemctl stop docker
+ - sudo systemctl daemon-reload
+ - sudo systemctl restart docker

@@ -11,4 +11,4 @@ properties:
   imageType:
     mappings:
       coreos: "ami-220f2b35"
-      ubuntu-1604: "ami-2ef48339"
+      ubuntu-1604: "ami-40d28157"

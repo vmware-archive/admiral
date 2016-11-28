@@ -42,6 +42,8 @@ public class ComputeConstants {
 
     public static final String CUSTOM_PROP_SSH_AUTHORIZED_KEY_NAME = "sshKey";
 
+    public static final String CUSTOM_PROP_ENABLE_SSH_ACCESS_NAME = "enableSSH";
+
     public static final String CUSTOM_PROP_TAGS_KEY = "tags";
 
     public enum AdapterType {

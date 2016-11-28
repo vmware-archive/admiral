@@ -11,40 +11,52 @@
 
 package com.vmware.admiral.request.compute.enhancer;
 
-import static com.vmware.admiral.request.compute.enhancer.ComputeDescriptionEnhancer.getCustomProperty;
-
+import java.net.URI;
 import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.logging.Level;
 
 import com.vmware.admiral.common.AuthCredentialsType;
+import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.KeyUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
-public class GuestCredentialsComputeDescriptionEnhancer implements ComputeDescriptionEnhancer {
-    private static final String SSH_AUTHORIZED_KEY_PROP = "sshAuthorizedKey";
-    private static final Pattern SSH_KEY_PLACEHOLDER = Pattern
-            .compile("\\{\\{sshAuthorizedKey\\}\\}");
+public class GuestCredentialsComputeDescriptionEnhancer extends ComputeDescriptionEnhancer {
 
-    private StatefulService sender;
+    private ServiceHost host;
+    private URI referer;
 
-    public GuestCredentialsComputeDescriptionEnhancer(StatefulService sender) {
-        this.sender = sender;
+    public GuestCredentialsComputeDescriptionEnhancer(ServiceHost host, URI referer) {
+        this.host = host;
+        this.referer = referer;
     }
 
     @Override
     public void enhance(EnhanceContext context, ComputeDescription cd,
             BiConsumer<ComputeDescription, Throwable> callback) {
+
+        if (cd.authCredentialsLink == null && !cd.customProperties
+                .containsKey(ComputeConstants.CUSTOM_PROP_ENABLE_SSH_ACCESS_NAME)) {
+            callback.accept(cd, null);
+            return;
+        }
+
+        String sshKey = getCustomProperty(cd, ComputeConstants.CUSTOM_PROP_SSH_AUTHORIZED_KEY_NAME);
+        if (sshKey != null && !sshKey.isEmpty()) {
+            addSshAuthorizedKeys(context, sshKey);
+            callback.accept(cd, null);
+            return;
+        }
 
         createClientCredentialsIfNeeded(cd, (c, t) -> {
             if (t != null) {
@@ -52,32 +64,39 @@ public class GuestCredentialsComputeDescriptionEnhancer implements ComputeDescri
                 return;
             }
             cd.authCredentialsLink = c.documentSelfLink;
-            String fileContent = getCustomProperty(cd,
-                    ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME);
-            if (fileContent == null) {
-                callback.accept(cd, null);
-                return;
-            }
 
-            Matcher matcher = SSH_KEY_PLACEHOLDER.matcher(fileContent);
-            if (matcher.find()) {
-                String sshKey = getSshKey(cd, c);
-                if (sshKey != null && !sshKey.isEmpty()) {
-                    cd.customProperties.put(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME,
-                            matcher.replaceFirst(sshKey));
-                    cd.customProperties.put(ComputeConstants.CUSTOM_PROP_SSH_AUTHORIZED_KEY_NAME,
-                            sshKey);
-                }
+            String sshAuthorizedKey = getSshKey(c);
+            if (sshAuthorizedKey != null && !sshAuthorizedKey.isEmpty()) {
+                addSshAuthorizedKeys(context, sshAuthorizedKey);
+                cd.customProperties.put(ComputeConstants.CUSTOM_PROP_SSH_AUTHORIZED_KEY_NAME,
+                        sshAuthorizedKey);
             }
             callback.accept(cd, null);
         });
     }
 
-    private String getSshKey(ComputeDescription cd, AuthCredentialsServiceState c) {
-        String sshKey = getCustomProperty(cd, ComputeConstants.CUSTOM_PROP_SSH_AUTHORIZED_KEY_NAME);
-        if (sshKey == null || sshKey.isEmpty()) {
-            sshKey = c.customProperties != null ? c.customProperties.get(SSH_AUTHORIZED_KEY_PROP)
-                    : null;
+    private void addSshAuthorizedKeys(EnhanceContext context, String sshKey) {
+        ArrayList<String> keys = new ArrayList<>();
+        keys.add(sshKey);
+        context.content.put(SSH_AUTHORIZED_KEYS, keys);
+    }
+
+    private String getSshKey(AuthCredentialsServiceState c) {
+
+        String sshKey = getCustomProperty(c.customProperties,
+                ComputeConstants.CUSTOM_PROP_SSH_AUTHORIZED_KEY_NAME);
+        if (sshKey != null) {
+            return sshKey;
+        }
+        if (AuthCredentialsType.Public.name().equals(c.type)) {
+            return c.publicKey;
+        } else if (AuthCredentialsType.PublicKey.name().equals(c.type)) {
+            try {
+                KeyPair keyPair = CertificateUtil.createKeyPair(c.privateKey);
+                return KeyUtil.toPublicOpenSSHFormat((RSAPublicKey) keyPair.getPublic());
+            } catch (Exception e) {
+                return null;
+            }
         }
         return sshKey;
     }
@@ -96,21 +115,24 @@ public class GuestCredentialsComputeDescriptionEnhancer implements ComputeDescri
             String sshAuthorizedKey = KeyUtil
                     .toPublicOpenSSHFormat((RSAPublicKey) keyPair.getPublic());
             credentialsState.customProperties = new HashMap<>();
-            credentialsState.customProperties.put(SSH_AUTHORIZED_KEY_PROP, sshAuthorizedKey);
+            credentialsState.customProperties
+                    .put(ComputeConstants.CUSTOM_PROP_SSH_AUTHORIZED_KEY_NAME, sshAuthorizedKey);
 
-            Operation.createPost(sender, AuthCredentialsService.FACTORY_LINK)
+            Operation.createPost(host, AuthCredentialsService.FACTORY_LINK)
+                    .setReferer(referer)
                     .setBody(credentialsState)
                     .setCompletion((o, e) -> {
                         if (e != null) {
-                            sender.logWarning("Failed to store credentials: %s",
+                            host.log(Level.WARNING, "Failed to store credentials: %s",
                                     Utils.toString(e));
                             callback.accept(null, e);
                             return;
                         }
                         callback.accept(o.getBody(AuthCredentialsServiceState.class), null);
-                    }).sendWith(sender);
+                    }).sendWith(host);
         } else {
-            Operation.createGet(sender, cd.authCredentialsLink)
+            Operation.createGet(host, cd.authCredentialsLink)
+                    .setReferer(referer)
                     .setCompletion((o, e) -> {
                         if (e != null) {
                             callback.accept(null, e);
@@ -118,7 +140,7 @@ public class GuestCredentialsComputeDescriptionEnhancer implements ComputeDescri
                         }
                         callback.accept(o.getBody(AuthCredentialsServiceState.class), null);
                     })
-                    .sendWith(sender);
+                    .sendWith(host);
         }
     }
 

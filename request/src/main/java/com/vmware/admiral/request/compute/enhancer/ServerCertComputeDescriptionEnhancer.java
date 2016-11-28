@@ -11,122 +11,101 @@
 
 package com.vmware.admiral.request.compute.enhancer;
 
-import static com.vmware.admiral.request.compute.enhancer.ComputeDescriptionEnhancer.getCustomProperty;
-
+import java.net.URI;
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.CertificateUtil.CertChainKeyPair;
 import com.vmware.admiral.common.util.KeyUtil;
 import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
-public class ServerCertComputeDescriptionEnhancer implements ComputeDescriptionEnhancer {
-    private static final Pattern CERTS_PLACEHOLDER = Pattern
-            .compile("\\{\\{serverCerts\\}\\}:");
+public class ServerCertComputeDescriptionEnhancer extends ComputeDescriptionEnhancer {
 
-    private static ObjectMapper objectMapper;
+    private ServiceHost host;
+    private URI referer;
 
-    {
-        YAMLFactory factory = new YAMLFactory();
-        factory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
-        factory.enable(YAMLGenerator.Feature.MINIMIZE_QUOTES);
-
-        objectMapper = new ObjectMapper(factory);
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
-    }
-
-    private StatefulService sender;
-
-    public ServerCertComputeDescriptionEnhancer(StatefulService sender) {
-        this.sender = sender;
+    public ServerCertComputeDescriptionEnhancer(ServiceHost host, URI referer) {
+        this.host = host;
+        this.referer = referer;
     }
 
     @Override
     public void enhance(EnhanceContext context, ComputeDescription cd,
             BiConsumer<ComputeDescription, Throwable> callback) {
-        String fileContent = getCustomProperty(cd,
-                ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME);
-        if (fileContent == null) {
+        String adapterType = getCustomProperty(cd,
+                ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME);
+        if (adapterType == null || !DockerAdapterType.API.name().equals(adapterType)) {
             callback.accept(cd, null);
             return;
         }
 
-        processCaCertSign(sender, cd, callback, fileContent);
+        processCaCertSign(context, cd, callback);
     }
 
-    private void processCaCertSign(StatefulService sender, ComputeDescription cd,
-            BiConsumer<ComputeDescription, Throwable> callback, String fileContent) {
-        Matcher matcher = CERTS_PLACEHOLDER.matcher(fileContent);
-        if (matcher.find()) {
-            Operation.createGet(sender, ManagementUriParts.AUTH_CREDENTIALS_CA_LINK)
-                    .setCompletion((o, e) -> {
-                        if (e != null) {
-                            sender.logSevere(
-                                    "Exception retrieving ca credentials. Error: %s",
-                                    Utils.toString(e));
-                            callback.accept(cd, e);
-                            return;
-                        }
-                        AuthCredentialsServiceState caCred = o
-                                .getBody(AuthCredentialsServiceState.class);
-                        String content = generateAndReplaceServerCerts(matcher, fileContent,
-                                caCred);
-                        cd.customProperties.put(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME,
-                                content);
-                        cd.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
-                                ManagementUriParts.AUTH_CREDENTIALS_CLIENT_LINK);
-                        callback.accept(cd, null);
-                    })
-                    .sendWith(sender);
-        } else {
-            callback.accept(cd, null);
-        }
+    private void processCaCertSign(EnhanceContext context,
+            ComputeDescription cd,
+            BiConsumer<ComputeDescription, Throwable> callback) {
+
+        Operation.createGet(host, ManagementUriParts.AUTH_CREDENTIALS_CA_LINK)
+                .setReferer(referer)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.log(Level.SEVERE,
+                                "Exception retrieving ca credentials. Error: %s",
+                                Utils.toString(e));
+                        callback.accept(cd, e);
+                        return;
+                    }
+                    AuthCredentialsServiceState caCred = o
+                            .getBody(AuthCredentialsServiceState.class);
+                    addServerCerts(context, caCred);
+                    cd.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
+                            ManagementUriParts.AUTH_CREDENTIALS_CLIENT_LINK);
+                    callback.accept(cd, null);
+                })
+                .sendWith(host);
     }
 
-    private String generateAndReplaceServerCerts(Matcher matcher, String fileContent,
-            AuthCredentialsServiceState cred) {
+    void addServerCerts(EnhanceContext context, AuthCredentialsServiceState cred) {
 
         KeyPair caKeyPair = CertificateUtil.createKeyPair(cred.privateKey);
         X509Certificate caCertificate = CertificateUtil.createCertificate(cred.publicKey);
         CertChainKeyPair signedForServer = CertificateUtil.generateSigned("computeServer",
                 caCertificate, caKeyPair.getPrivate());
         try {
-            ArrayList<WriteFiles> list = new ArrayList<>();
+            Map<String, Object> content = context.content;
+            @SuppressWarnings("unchecked")
+            List<Object> list = (List<Object>) content.get("write_files");
+            if (list == null) {
+                list = new ArrayList<>();
+            }
+
             list.add(new WriteFiles("/etc/docker/ca.pem", "0644", cred.publicKey));
             list.add(new WriteFiles("/etc/docker/server.pem", "0644",
                     CertificateUtil.toPEMformat(signedForServer.getCertificate())));
             list.add(new WriteFiles("/etc/docker/server-key.pem", "0600",
                     KeyUtil.toPEMFormat(signedForServer.getPrivateKey())));
-            Map<String, Object> writeFiles = new LinkedHashMap<>();
-            writeFiles.put("write_files", list);
-
-            String value = objectMapper.writeValueAsString(writeFiles);
-
-            fileContent = matcher.replaceFirst(value);
+            content.put("write_files", list);
 
         } catch (Exception e) {
-            sender.logInfo(() -> String.format("Error writing server certs in cloud-init file",
+            host.log(Level.WARNING,
+                    () -> String.format("Error writing server certs in cloud-init file",
                     Utils.toString(e)));
         }
-        return fileContent;
     }
 
     @SuppressWarnings("unused")

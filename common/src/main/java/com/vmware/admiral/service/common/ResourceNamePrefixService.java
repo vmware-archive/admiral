@@ -82,7 +82,7 @@ public class ResourceNamePrefixService extends StatefulService {
         public static final boolean ADD_RANDOM_GENERATED_TOKEN = Boolean
                 .getBoolean("dcp.management.name.prefix.add.random.generated.token");
         public static final String RANDOM_GENERATED_TOKEN_DELIMITER = System.getProperty(
-                "dcp.management.name.prefix.random.generated.token.delimiter", "_");
+                "dcp.management.name.prefix.random.generated.token.delimiter", "-");
 
         /** (Required) Prefix or suffix name. */
         @Documentation(description = "Prefix or suffix name", exampleString = "prefix")

@@ -1,10 +1,5 @@
 #cloud-config
 
-ssh_authorized_keys:
-  - {{sshAuthorizedKey}}
-
-{{serverCerts}}:
-
 coreos:
   units:
     - name: docker-tls-tcp.socket
