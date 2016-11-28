@@ -255,6 +255,10 @@ public class HealthChecker {
 
         URI uri = null;
         try {
+            if (!healthConfig.urlPath.startsWith("/")) {
+                healthConfig.urlPath = "/" + healthConfig.urlPath;
+            }
+
             if (healthConfig.port != null && healthConfig.port > 0) {
                 uri = new URI(UriUtils.HTTP_SCHEME, null, hostPortBindings[0],
                         Integer.parseInt(hostPortBindings[1]),

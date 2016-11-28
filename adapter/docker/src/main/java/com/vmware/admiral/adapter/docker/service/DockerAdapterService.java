@@ -1178,8 +1178,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             } else {
                 handleExceptions(context.request, context.operation, () -> {
                     String stats = o.getBody(String.class);
-                    boolean healthCheckSuccess = true;
-                    processContainerStats(context, stats, healthCheckSuccess);
+                    processContainerStats(context, stats, null);
                 });
             }
         });
@@ -1191,7 +1190,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     }
 
     private void processContainerStats(RequestContext context, String stats,
-            boolean healthCheckSuccess) {
+            Boolean healthCheckSuccess) {
         getHost().log(Level.FINE, "Updating container stats: %s %s",
                 context.request.resourceReference, context.request.getRequestTrackingLog());
 
