@@ -15,8 +15,13 @@ import static com.vmware.admiral.test.integration.SshUtilIT.SSH_HOST;
 import static com.vmware.admiral.test.integration.SshUtilIT.getPasswordCredentials;
 import static com.vmware.admiral.test.integration.SshUtilIT.getPrivateKeyCredentials;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -39,11 +44,17 @@ import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustImportService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.QueryTaskClientHelper;
 import com.vmware.xenon.common.TaskState.TaskStage;
+import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
 
@@ -109,10 +120,35 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         state.authCredentialsLink = sshCreds.documentSelfLink;
         state.placementZoneLink = placementZone.documentSelfLink;
 
+        String testTagLink = "testTagLink";
+
+        state.tagLinks = new HashSet<>();
+        state.tagLinks.add(testTagLink);
+
+        String testCustomPropertyKey = "testKey";
+        String testCustomPropertyValue = "testValue";
+
+        state.customProperties = new HashMap<>();
+        state.customProperties.put(testCustomPropertyKey, testCustomPropertyValue);
+
         state = doPost(state, ConfigureHostOverSshTaskService.FACTORY_LINK);
         state = waitForFinalState(state, 10, TimeUnit.MINUTES);
 
         Assert.assertEquals("Task failed", TaskStage.FINISHED, state.taskInfo.stage);
+
+        List<ComputeState> hosts = getHosts();
+        Assert.assertEquals("Only 1 host expected", 1, hosts.size());
+        ComputeState h = hosts.get(0);
+        Assert.assertEquals("Incorrect adress", "https://" + state.address + ":" + state.port,
+                h.address);
+        Assert.assertEquals(state.placementZoneLink,
+                h.resourcePoolLink);
+        Assert.assertNotNull("Tag links not set", h.tagLinks);
+        Assert.assertTrue("Tag link missing", h.tagLinks.contains(testTagLink));
+        Assert.assertEquals("Unexpected custom property", testCustomPropertyValue,
+                h.customProperties.get(testCustomPropertyKey));
+
+        Assert.assertEquals(hosts.get(0).tagLinks.toArray(new String[0])[0], testTagLink);
     }
 
     @Test
@@ -233,5 +269,36 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         }
 
         return state;
+    }
+
+    public List<ComputeState> getHosts() throws Throwable {
+        List<ComputeState> result = new ArrayList<>();
+        AtomicReference<Throwable> t = new AtomicReference<>(null);
+        TestContext ctx = testCreate(1);
+
+        QuerySpecification qs = new QuerySpecification();
+        qs.query = Query.Builder.create().addKindFieldClause(ComputeState.class).build();
+        QueryTask qt = QueryTask.create(qs);
+        QuerySpecification.addExpandOption(qt);
+
+        QueryTaskClientHelper.create(ComputeState.class)
+                .setQueryTask(qt)
+                .setResultHandler((queryElementResult, failure) -> {
+                    if (failure != null) {
+                        ctx.fail(failure);
+                        return;
+                    }
+
+                    if (queryElementResult.getResult() != null) {
+                        result.add(queryElementResult.getResult());
+                        return;
+                    }
+
+                    ctx.completeIteration();
+                }).sendWith(host);
+        ctx.await();
+
+        Assert.assertNull("Failed to fetch hosts", t.get());
+        return result;
     }
 }

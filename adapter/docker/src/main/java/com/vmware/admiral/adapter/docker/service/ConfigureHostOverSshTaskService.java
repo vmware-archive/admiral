@@ -16,6 +16,7 @@ import java.net.URI;
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -54,6 +55,7 @@ public class ConfigureHostOverSshTaskService extends
     public static final String CONFIGURE_HOST_PLACEMENT_ZONE_LINK_CUSTOM_PROP = "__placementZoneLink";
     public static final String CONFIGURE_HOST_AUTH_CREDENTIALS_LINK_CUSTOM_PROP = "__authCredentialsLink";
     public static final String CONFIGURE_HOST_ADDRESS_CUSTOM_PROP = "__address";
+    public static final String CONFIGURE_HOST_TAG_LINKS_CUSTOM_PROP = "__tagLinks";
 
     public static final String ADDRESS_NOT_SET_ERROR_MESSAGE = "Address is not set";
     public static final String PORT_NOT_SET_ERROR_MESSAGE = "Port is not set";
@@ -111,6 +113,12 @@ public class ConfigureHostOverSshTaskService extends
                 PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
                         PropertyIndexingOption.STORE_ONLY })
         public String placementZoneLink;
+
+        @Documentation(description = "Set of tags set on this host.")
+        @PropertyOptions(usage = { PropertyUsageOption.SERVICE_USE,
+                PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
+                        PropertyIndexingOption.STORE_ONLY })
+        public Set<String> tagLinks;
 
         @Documentation(description = "If this is set to true the operation will only verify connectivity"
                 + "and complete without configuring the host.")
@@ -332,7 +340,7 @@ public class ConfigureHostOverSshTaskService extends
         cs.address = getHostUri(state).toString();
         cs.name = cs.address;
         cs.resourcePoolLink = state.placementZoneLink;
-        cs.customProperties = new HashMap<>();
+        cs.customProperties = new HashMap<>(state.customProperties);
         cs.customProperties.put(
                 ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 ManagementUriParts.AUTH_CREDENTIALS_CLIENT_LINK);
@@ -343,6 +351,7 @@ public class ConfigureHostOverSshTaskService extends
         cs.customProperties.put(ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME,
                 "true");
         cs.tenantLinks = state.tenantLinks;
+        cs.tagLinks = state.tagLinks;
 
         ContainerHostSpec spec = new ContainerHostSpec();
         spec.hostState = cs;

@@ -1349,6 +1349,19 @@ public class RequestBrokerService extends
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
                 TaskStage.FAILED, SubStage.ERROR);
 
+        if (state.getCustomProperty(
+                ConfigureHostOverSshTaskService.CONFIGURE_HOST_TAG_LINKS_CUSTOM_PROP) != null) {
+            configureState.tagLinks = new HashSet<>(
+                    Arrays.asList(state
+                            .getCustomProperty(
+                                    ConfigureHostOverSshTaskService.CONFIGURE_HOST_TAG_LINKS_CUSTOM_PROP)
+                            .split(" ")));
+        }
+
+        if (state.customProperties != null) {
+            configureState.customProperties = new HashMap<>(state.customProperties);
+        }
+
         configureState.documentSelfLink = getSelfId();
         configureState.requestTrackerLink = state.requestTrackerLink;
         Operation post = Operation
