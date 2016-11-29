@@ -636,20 +636,7 @@ let HostsStore = Reflux.createStore({
 
       var credentialLink = hostSpec.customProperties.__authCredentialsLink;
       var deploymentPolicyLink = hostSpec.customProperties.__deploymentPolicyLink;
-      if (!credentialLink) {
-        // for amazon hosts the credential is stored in the description,
-        // not in the compute instance
-        services.loadHostDescriptionByLink(hostSpec.descriptionLink).then((hostDescription) => {
-          credentialLink = hostDescription.customProperties
-                            && hostDescription.customProperties.__authCredentialsLink;
-          deploymentPolicyLink = hostDescription.customProperties
-                            && hostDescription.customProperties.__deploymentPolicyLink;
-
-          this.loadHostData(hostModel, credentialLink, deploymentPolicyLink);
-        }).catch(this.onGenericEditError);
-      } else {
-        this.loadHostData(hostModel, credentialLink, deploymentPolicyLink);
-      }
+      this.loadHostData(hostModel, credentialLink, deploymentPolicyLink);
     }).catch(this.onGenericEditError);
 
     this.emitChange();
