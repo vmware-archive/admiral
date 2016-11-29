@@ -76,7 +76,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         setFinalStatic(ContainerMaintenance.class
                 .getDeclaredField("MAINTENANCE_INTERVAL_MICROS"), TimeUnit.SECONDS.toMicros(1));
         setFinalStatic(ContainerMaintenance.class
-                .getDeclaredField("MAINTENANCE_INTERVAL_INSPECT_MICROS"),
+                .getDeclaredField("MAINTENANCE_PERIOD_MICROS"),
                 TimeUnit.SECONDS.toMicros(1));
     }
 

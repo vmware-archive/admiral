@@ -29,16 +29,20 @@ public class ContainerMaintenance {
     public static final long MAINTENANCE_INTERVAL_MICROS = Long.getLong(
             "dcp.management.container.periodic.maintenance.period.micros",
             TimeUnit.SECONDS.toMicros(30));
-    protected static final long MAINTENANCE_INTERVAL_INSPECT_MICROS = Long.getLong(
+    protected static final long MAINTENANCE_PERIOD_MICROS = Long.getLong(
             "dcp.management.container.periodic.maintenance.period.micros",
-            TimeUnit.SECONDS.toMicros(300));
-    protected static final long MAINTENANCE_INTERVAL_SLOW_DOWN_PERIOD = Long.getLong(
+            TimeUnit.MINUTES.toMicros(5));
+    protected static final long MAINTENANCE_SLOW_DOWN_AGE_MICROS = Long.getLong(
+            "dcp.management.container.periodic.maintenance.slow.down.age.micros",
+            TimeUnit.MINUTES.toMicros(10));
+    protected static final long MAINTENANCE_SLOW_DOWN_PERIOD_MICROS = Long.getLong(
             "dcp.management.container.periodic.maintenance.slow.down.period.micros",
-            TimeUnit.SECONDS.toMicros(600));
+            TimeUnit.HOURS.toMicros(1));
 
     private final ServiceHost host;
     private final String containerSelfLink;
     private long lastInspectMaintainanceInMicros;
+    private long lastStatsMaintainanceInMicros;
 
     public static ContainerMaintenance create(ServiceHost host, String containerSelfLink) {
         return new ContainerMaintenance(host, containerSelfLink);
@@ -71,33 +75,69 @@ public class ContainerMaintenance {
                                 return;
                             }
                             ContainerState containerState = o.getBody(ContainerState.class);
-                            long nowMicrosUtc = Utils.getNowMicrosUtc();
 
-                            /* if container hasn't been updated for a while, slow down the data-collection */
-                            if (containerState.documentUpdateTimeMicros
-                                    + MAINTENANCE_INTERVAL_SLOW_DOWN_PERIOD < nowMicrosUtc) {
-                                /* check if the slow-down period has expired */
-                                if (lastInspectMaintainanceInMicros + 6
-                                        * MAINTENANCE_INTERVAL_SLOW_DOWN_PERIOD < nowMicrosUtc) {
-                                    /* set another slow-down period and perform collection */
-                                    lastInspectMaintainanceInMicros = nowMicrosUtc + 6
-                                            * MAINTENANCE_INTERVAL_SLOW_DOWN_PERIOD;
-                                    processContainerInspect(post, containerState);
-                                } else {
+                            // inspect the container or update its stats (if needed)
+                            if (!inspectContainerIfNeeded(containerState, post)) {
+                                if (!collectStatsIfNeeded(containerState, post)) {
+                                    // in all other cases the inspect/stats request will
+                                    // complete the operation
                                     post.complete();
                                 }
-
-                                return;
-                            }
-
-                            if (lastInspectMaintainanceInMicros
-                                    + MAINTENANCE_INTERVAL_INSPECT_MICROS < nowMicrosUtc) {
-                                lastInspectMaintainanceInMicros = nowMicrosUtc;
-                                processContainerInspect(post, containerState);
-                            } else {
-                                performStatsInspection(post, containerState);
                             }
                         }));
+    }
+
+    /**
+     * Checks whether it is time to inspect this container and sends an inspect request if needed
+     *
+     * @return whether an inspect request was sent or not
+     */
+    private boolean inspectContainerIfNeeded(ContainerState containerState, Operation post) {
+        long nowMicrosUtc = Utils.getNowMicrosUtc();
+        long updatePeriod = isUpdatedRecently(containerState, nowMicrosUtc)
+                ? MAINTENANCE_PERIOD_MICROS : MAINTENANCE_SLOW_DOWN_PERIOD_MICROS;
+
+        // check whether the update period has passed
+        if (lastInspectMaintainanceInMicros + updatePeriod < nowMicrosUtc) {
+            // schedule next period and request inspect
+            lastInspectMaintainanceInMicros = nowMicrosUtc;
+            processContainerInspect(post, containerState);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Checks whether it is time to update the stats for this container and sends a stats collection
+     * request if needed
+     *
+     * @return whether a stats collection request was sent or not
+     */
+    private boolean collectStatsIfNeeded(ContainerState containerState, Operation post) {
+        long nowMicrosUtc = Utils.getNowMicrosUtc();
+        // if the container state is recently updated, we want to collect stats on each maintenance
+        long updatePeriod = isUpdatedRecently(containerState, nowMicrosUtc)
+                ? 0 : MAINTENANCE_PERIOD_MICROS;
+
+        // check whether the update period has passed
+        if (lastStatsMaintainanceInMicros + updatePeriod < nowMicrosUtc) {
+            // schedule next period and request stats collection
+            lastStatsMaintainanceInMicros = nowMicrosUtc;
+            performStatsInspection(post, containerState);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * @return whether the specified {@link ContainerState} has been updated in the previous
+     *         MAINTENANCE_SLOW_DOWN_AGE_MICROS microseconds.
+     */
+    private boolean isUpdatedRecently(ContainerState containerState, long nowMicrosUtc) {
+        return containerState.documentUpdateTimeMicros
+                + MAINTENANCE_SLOW_DOWN_AGE_MICROS > nowMicrosUtc;
     }
 
     private void processContainerInspect(Operation post, ContainerState containerState) {
