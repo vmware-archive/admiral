@@ -10,7 +10,8 @@
  */
 
 var VueNavigationLink = Vue.extend({
-  template: `<span class="navigation-link-holder" v-show="show" title="{{tooltip}}">
+  template: `<span class="navigation-link-holder" v-show="show" title="{{tooltip}}"
+                    :class="{'lone': lone}">
       <a class="navigation-link" href="{{link}}"><img v-if="iconName" class="nav-item-image"
           v-bind:src="iconName"> {{label}}</a>&nbsp;</span>`,
   props: {
@@ -35,6 +36,11 @@ var VueNavigationLink = Vue.extend({
       required: false,
       type: String,
       default: null
+    },
+    lone: {
+      required: false,
+      type: Boolean,
+      default: false
     }
   }
 });

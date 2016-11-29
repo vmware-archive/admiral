@@ -705,6 +705,10 @@
         position: static;
       }
 
+      .container-item .container-content .relations-holder {
+        display: none;
+      }
+
       .composite-container-item {
         .container-content {
           margin-right: 0;

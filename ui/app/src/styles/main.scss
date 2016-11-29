@@ -382,6 +382,10 @@ textarea {
   border-left: 1px solid #cccccc;
 }
 
+.navigation-link-holder.lone {
+  border: 0px;
+}
+
 .navigation-link {
   color: $main_color;
   text-decoration: none;
@@ -1116,6 +1120,9 @@ text-shadow: 0px 0px 20px black;
   width: 16px;
   height: 16px;
   margin-right: 10px;
+}
+.endpointEdit .typeInput .dropdown-holder .dropdown-options img {
+  margin-top: 2px;
 }
 
 .app-view {
@@ -2371,18 +2378,15 @@ $alert-text-color: #ffffff;
     }
   }
 
-  .admiral-btn {
-    margin-left: 5px;
-  }
-
   .btn-circle {
-    margin-left: 5px;
     width: 30px;
     line-height: 26px;
+    margin-left: 5px;
+    padding: 0;
+    text-align: center;
+    background-color: #fff;
     border: 2px solid #3399cc;
     border-radius: 16px;
-    text-align: center;
-    padding: 0;
   }
 }
 
