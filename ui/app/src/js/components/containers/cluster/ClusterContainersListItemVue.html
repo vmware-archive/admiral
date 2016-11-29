@@ -40,9 +40,11 @@
       </template>
       <div class="container-secondary-actions">
         <action-button name="incrementClusterSize" icon-name="plus"
-                       v-on:click="modifyClusterSize($event, 1)"></action-button>
+                       v-on:click="modifyClusterSize($event, 1)"
+                       v-bind:supported="operationSupported('CLUSTERING')"></action-button>
         <action-button v-if="clusterSize > 1" name="decrementClusterSize" icon-name="minus"
-                       v-on:click="modifyClusterSize($event, -1)"></action-button>
+                       v-on:click="modifyClusterSize($event, -1)"
+                       v-bind:supported="operationSupported('CLUSTERING')"></action-button>
       </div>
     </div>
   </div>
