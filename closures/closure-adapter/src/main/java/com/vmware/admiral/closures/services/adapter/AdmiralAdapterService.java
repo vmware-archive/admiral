@@ -673,7 +673,7 @@ public class AdmiralAdapterService extends
         request.customProperties.putIfAbsent(DOCKER_BUILD_IMAGE_FORCERM_PROP_NAME, "true");
         request.customProperties.putIfAbsent(DOCKER_BUILD_IMAGE_NOCACHE_PROP_NAME, "true");
 
-        boolean setTaskUri = !ClosureUtils.isEmpty(state.configuration.dependencies);
+        boolean setTaskUri = mustSetTaskUri(state);
         JsonElement buildArgsObj = prepareBuildArgs(containerDesc, setTaskUri);
 
         request.customProperties.putIfAbsent(DOCKER_BUILD_IMAGE_BUILDARGS_PROP_NAME, buildArgsObj.toString());
@@ -698,6 +698,18 @@ public class AdmiralAdapterService extends
 
         prepareRequest(op, true);
         getHost().sendRequest(op);
+    }
+
+    private boolean mustSetTaskUri(AdmiralAdapterTaskState state) {
+        if (!ClosureUtils.isEmpty(state.configuration.dependencies)) {
+            return true;
+        }
+
+        if (!ClosureUtils.isEmpty(state.configuration.sourceURL)) {
+            return true;
+        }
+
+        return false;
     }
 
     protected void prepareRequest(Operation op, boolean longRunningRequest) {
