@@ -28,7 +28,7 @@ import com.vmware.xenon.common.UriUtils;
 
 public class UriUtilsExtendedTest {
 
-    private static final String SAMPLE_URL = "http://github.com/ob?product=admiral&branch=master";
+    private static final String SAMPLE_URL = "http://github.com/ob?branch=master&product=admiral";
 
     private static final URI SAMPLE_URI = UriUtils.buildUri(SAMPLE_URL);
 
