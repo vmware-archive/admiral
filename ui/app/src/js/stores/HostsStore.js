@@ -762,6 +762,12 @@ let HostsStore = Reflux.createStore({
           delete hostDataCustomProperties.__deploymentPolicyLink;
         }
 
+        let credentials =
+          utils.getCustomPropertyValue(hostModel.customProperties, '__authCredentialsLink');
+        if (!credentials) {
+          delete hostDataCustomProperties.__authCredentialsLink;
+        }
+
         var hostData = $.extend({}, hostModel.dto, {
           customProperties: hostDataCustomProperties,
           descriptionLink: this.data.hostAddView.descriptionLink,
