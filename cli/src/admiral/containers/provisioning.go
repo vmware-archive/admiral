@@ -43,8 +43,6 @@ func (lc *LogConfig) SetType(s string) error {
 	return errors.New("Invalid log driver.")
 }
 
-//Note: nil types are from "admiral/nulls" package.
-//Note: "dot import" is used for cleaner code.
 type ContainerDescription struct {
 	Image              utils.NilString        `json:"image"`
 	Name               utils.NilString        `json:"name"`
@@ -239,7 +237,7 @@ func (cd *ContainerDescription) RunContainer(tenantLinkId string, asyncTask bool
 		return "", respErr
 	}
 	if !asyncTask {
-		resLinks, err = track.StartWaitingFromResponse(respBody)
+		resLinks, err := track.StartWaitingFromResponse(respBody)
 		return strings.Join(resLinks, ", "), err
 	}
 	return "", nil
@@ -271,11 +269,11 @@ type RunContainer struct {
 }
 
 func (rc *RunContainer) setTenantLink(tenantLinkId string) {
-	tenantLinks := make([]string, 0)
 	if tenantLinkId == "" {
 		rc.TenantLinks = nil
 		return
 	}
+	tenantLinks := make([]string, 0)
 	if !utils.IsVraMode {
 		fullProjectId, err := selflink.GetFullId(tenantLinkId, new(projects.ProjectList), utils.PROJECT)
 		utils.CheckBlockingError(err)

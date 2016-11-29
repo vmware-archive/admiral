@@ -203,7 +203,6 @@ func (nl *NetworkList) GetOutputString() string {
 }
 
 func RemoveNetwork(ids []string, asyncTask bool) ([]string, error) {
-	url := config.URL + "/requests"
 	fullIds, err := selflink.GetFullIds(ids, new(NetworkList), utils.NETWORK)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForNetwork(fullIds)
@@ -212,20 +211,8 @@ func RemoveNetwork(ids []string, asyncTask bool) ([]string, error) {
 		ResourceType:  "NETWORK",
 		ResourceLinks: links,
 	}
-	jsonBody, err := json.Marshal(no)
-	utils.CheckBlockingError(err)
 
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	_, respBody, respErr := client.ProcessRequest(req)
-
-	if respErr != nil {
-		return nil, respErr
-	}
-	if !asyncTask {
-		resLinks, err := track.StartWaitingFromResponse(respBody)
-		return resLinks, err
-	}
-	return nil, nil
+	return processNetworkOperation(no, asyncTask)
 
 }
 
@@ -277,16 +264,23 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 		ResourceType:            "NETWORK",
 	}
 	no.SetHosts(hosts)
-	jsonBody, err = json.Marshal(no)
-	url = config.URL + "/requests"
-	req, _ = http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	_, respBody, respErr = client.ProcessRequest(req)
+
+	resLinks, err := processNetworkOperation(no, asyncTask)
+	return strings.Join(resLinks, ","), err
+}
+
+func processNetworkOperation(no *NetworkOperation, asyncTask bool) ([]string, error) {
+	jsonBody, err := json.Marshal(no)
+	utils.CheckBlockingError(err)
+	url := config.URL + "/requests"
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
-		return "", respErr
+		return nil, respErr
 	}
 	if !asyncTask {
-		resLinks, err := track.StartWaitingFromResponse(respBody)
-		return strings.Join(resLinks, ", "), err
+		return track.StartWaitingFromResponse(respBody)
+
 	}
-	return "", nil
+	return nil, nil
 }

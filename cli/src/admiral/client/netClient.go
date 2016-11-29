@@ -39,10 +39,32 @@ var (
 	Code403Error      = errors.New("HTTP Status 403 - Forbidden")
 	Code404Error      = errors.New("HTTP Status 404 - Not found.")
 	NullResponseError = errors.New("Response from the server is null.")
+
+	customTimeout int
 )
+
+type AuthorizationError struct {
+	message, tokenSource string
+}
+
+func (ae AuthorizationError) Error() string {
+	return fmt.Sprintf(ae.message, ae.tokenSource)
+}
+
+func NewAuthorizationError(tokenSource string) AuthorizationError {
+	authErr := AuthorizationError{
+		message:     "Authorization error. Token used from %s.",
+		tokenSource: tokenSource,
+	}
+	return authErr
+}
 
 type ResponseError struct {
 	Message string `json:"message"`
+}
+
+func (re *ResponseError) Error() string {
+	return re.Message
 }
 
 var (
@@ -111,7 +133,7 @@ func CheckResponseError(resp *http.Response, tokenFrom string) error {
 			return getResponseError(resp.StatusCode)
 		}
 		if message.Message == "forbidden" {
-			return errors.New("Authorization error. Token used from " + tokenFrom)
+			return NewAuthorizationError(tokenFrom)
 		}
 		if message.Message == "" {
 			return errors.New("Connection error " + resp.Status)
@@ -119,6 +141,10 @@ func CheckResponseError(resp *http.Response, tokenFrom string) error {
 		return errors.New(message.Message)
 	}
 	return nil
+}
+
+func SetCustomTimeout(timeout int) {
+	customTimeout = timeout
 }
 
 // setReqHeaders sets most common request headers.
@@ -147,7 +173,12 @@ func buildHttpClient() (*http.Client, error) {
 		InsecureSkipVerify: skipSSLVerification,
 	}
 
-	var timeoutDuration = time.Second * time.Duration(config.CLIENT_TIMEOUT)
+	var timeoutDuration time.Duration
+	if customTimeout != 0 {
+		timeoutDuration = time.Duration(customTimeout) * time.Second
+	} else {
+		timeoutDuration = time.Second * time.Duration(config.CLIENT_TIMEOUT)
+	}
 
 	var netTransport = &http.Transport{
 		Dial: (&net.Dialer{

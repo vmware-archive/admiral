@@ -192,22 +192,34 @@ type CommandHolder struct {
 	Command []string `json:"command"`
 }
 
-type OperationContainer struct {
+// ContainersOperator is required interface to achieve polymorphism
+// for ContainersOperation and ContainersOperationScale structures.
+// It is used in the function processContainersOperation().
+type ContainersOperator interface {
+	GetOperation() string
+}
+
+type ContainersOperation struct {
 	Operation     string   `json:"operation"`
-	ResourceLinks []string `json:"resourceLinks"`
+	ResourceLinks []string `json:"resourceLinks,omitempty"`
 	ResourceType  string   `json:"resourceType"`
 }
 
-var (
-	resLinks []string
-)
+func (co *ContainersOperation) GetOperation() string {
+	return co.Operation
+}
+
+type ContainersOperationScale struct {
+	ContainersOperation
+	ResourceDescriptionLink string `json:"resourceDescriptionLink"`
+	ResourceCount           int32  `json:"resourceCount"`
+}
 
 // StartContainer starts containers by their IDs.
 // As second parameter takes boolean to specify if waiting
 // for this task is needed.
 // Usage of short unique IDs is supported for this operation.
 func StartContainer(containers []string, asyncTask bool) ([]string, error) {
-	url := config.URL + "/requests"
 	fullIds, err := selflink.GetFullIds(containers, new(ListContainers), utils.CONTAINER)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
@@ -215,26 +227,13 @@ func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 	if len(containers) < 1 || containers[0] == "" {
 		return nil, ContainersNotProvidedError
 	}
-	newStart := OperationContainer{
+	containersStartOperation := &ContainersOperation{
 		Operation:     "Container.Start",
 		ResourceLinks: links,
 		ResourceType:  "DOCKER_CONTAINER",
 	}
 
-	jsonBody, err := json.Marshal(newStart)
-	utils.CheckBlockingError(err)
-
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	_, respBody, respErr := client.ProcessRequest(req)
-	if respErr != nil {
-		return nil, respErr
-	}
-	if !asyncTask {
-		resLinks, err = track.StartWaitingFromResponse(respBody)
-		return resLinks, err
-	}
-	return nil, nil
-
+	return processContainersOperation(containersStartOperation, asyncTask)
 }
 
 // StopContainer stops containers by their IDs.
@@ -242,31 +241,19 @@ func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 // for this task is needed.
 // Usage of short unique IDs is supported for this operation.
 func StopContainer(containers []string, asyncTask bool) ([]string, error) {
-	url := config.URL + "/requests"
 	fullIds, err := selflink.GetFullIds(containers, new(ListContainers), utils.CONTAINER)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 
-	newStop := OperationContainer{
+	if len(containers) < 1 || containers[0] == "" {
+		return nil, ContainersNotProvidedError
+	}
+	containersStopOperation := &ContainersOperation{
 		Operation:     "Container.Stop",
 		ResourceLinks: links,
 		ResourceType:  "DOCKER_CONTAINER",
 	}
-
-	jsonBody, err := json.Marshal(newStop)
-
-	utils.CheckBlockingError(err)
-
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	_, respBody, respErr := client.ProcessRequest(req)
-	if respErr != nil {
-		return nil, respErr
-	}
-	if !asyncTask {
-		resLinks, err = track.StartWaitingFromResponse(respBody)
-		return resLinks, err
-	}
-	return nil, nil
+	return processContainersOperation(containersStopOperation, asyncTask)
 }
 
 // RemoveContainer removes containers by their IDs.
@@ -274,31 +261,20 @@ func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 // for this task is needed.
 // Usage of short unique IDs is supported for this operation.
 func RemoveContainer(containers []string, asyncTask bool) ([]string, error) {
-	url := config.URL + "/requests"
 	fullIds, err := selflink.GetFullIds(containers, new(ListContainers), utils.CONTAINER)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 
-	newRemoveContainer := OperationContainer{
+	if len(containers) < 1 || containers[0] == "" {
+		return nil, ContainersNotProvidedError
+	}
+	containersRemoveOperation := &ContainersOperation{
 		Operation:     "Container.Delete",
 		ResourceLinks: links,
 		ResourceType:  "DOCKER_CONTAINER",
 	}
 
-	jsonBody, err := json.Marshal(newRemoveContainer)
-
-	utils.CheckBlockingError(err)
-
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	_, respBody, respErr := client.ProcessRequest(req)
-	if respErr != nil {
-		return nil, respErr
-	}
-	if !asyncTask {
-		resLinks, err = track.StartWaitingFromResponse(respBody)
-		return resLinks, err
-	}
-	return nil, nil
+	return processContainersOperation(containersRemoveOperation, asyncTask)
 }
 
 //RemoveMany removes many containers matching specified query
@@ -312,25 +288,60 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 	if count < 1 {
 		return nil, ContainersNotMatchQueryError
 	}
-	url := config.URL + "/requests"
-	newRemoveContainer := OperationContainer{
+	containersRemoveManyOperation := &ContainersOperation{
 		Operation:     "Container.Delete",
 		ResourceLinks: lc.DocumentLinks,
 		ResourceType:  "DOCKER_CONTAINER",
 	}
 
-	jsonBody, err := json.Marshal(newRemoveContainer)
+	return processContainersOperation(containersRemoveManyOperation, asyncTask)
+}
 
+// ScaleContainer scales container by it's IDs.
+// The second parameter is the new cluster size of the container.
+// As third parameter takes boolean to specify if waiting
+// for this task is needed.
+// Usage of short unique IDs is supported for this operation.
+func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (string, error) {
+	fullIds, err := selflink.GetFullIds([]string{containerID}, new(ListContainers), utils.CONTAINER)
+	utils.CheckBlockingError(err)
+	links := utils.CreateResLinksForContainer(fullIds)
+	url := config.URL + links[0]
+	req, _ := http.NewRequest("GET", url, nil)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
+	}
+	container := &Container{}
+	err = json.Unmarshal(respBody, container)
+	utils.CheckBlockingError(err)
+	contDesc := container.DescriptionLink
+
+	url = config.URL + "/requests"
+	containersScaleOperation := &ContainersOperationScale{
+		ResourceDescriptionLink: contDesc,
+		ResourceCount:           scaleCount,
+	}
+	containersScaleOperation.Operation = "CLUSTER_RESOURCE"
+	containersScaleOperation.ResourceType = "DOCKER_CONTAINER"
+
+	resLinks, err := processContainersOperation(containersScaleOperation, asyncTask)
+	return strings.Join(resLinks, ","), err
+
+}
+
+func processContainersOperation(co ContainersOperator, asyncTask bool) ([]string, error) {
+	url := config.URL + "/requests"
+	jsonBody, err := json.Marshal(co)
 	utils.CheckBlockingError(err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
-
 	if respErr != nil {
 		return nil, respErr
 	}
 	if !asyncTask {
-		resLinks, err = track.StartWaitingFromResponse(respBody)
+		resLinks, err := track.StartWaitingFromResponse(respBody)
 		return resLinks, err
 	}
 	return nil, nil
@@ -357,49 +368,6 @@ func ExecuteCmd(container string, command string) {
 	} else {
 		fmt.Print(string(respBody))
 	}
-}
-
-// ScaleContainer scales container by it's IDs.
-// The second parameter is the new cluster size of the container.
-// As third parameter takes boolean to specify if waiting
-// for this task is needed.
-// Usage of short unique IDs is supported for this operation.
-func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (string, error) {
-	fullIds, err := selflink.GetFullIds([]string{containerID}, new(ListContainers), utils.CONTAINER)
-	utils.CheckBlockingError(err)
-	links := utils.CreateResLinksForContainer(fullIds)
-	url := config.URL + links[0]
-	req, _ := http.NewRequest("GET", url, nil)
-	_, respBody, respErr := client.ProcessRequest(req)
-	if respErr != nil {
-		return "", respErr
-	}
-	container := &Container{}
-	err = json.Unmarshal(respBody, container)
-	utils.CheckBlockingError(err)
-	contDesc := container.DescriptionLink
-
-	url = config.URL + "/requests"
-	scale := OperationScale{
-		Operation:               "CLUSTER_RESOURCE",
-		ResourceDescriptionLink: contDesc,
-		ResourceType:            "DOCKER_CONTAINER",
-		ResourceCount:           scaleCount,
-	}
-
-	scaleJson, err := json.Marshal(scale)
-	utils.CheckBlockingError(err)
-	req, _ = http.NewRequest("POST", url, bytes.NewBuffer(scaleJson))
-	_, respBody, respErr = client.ProcessRequest(req)
-
-	if respErr != nil {
-		return "", respErr
-	}
-	if !asyncTask {
-		resLinks, err = track.StartWaitingFromResponse(respBody)
-		return strings.Join(resLinks, ", "), err
-	}
-	return "", nil
 }
 
 // InspectContainer returns information about container in JSON format.
@@ -452,11 +420,4 @@ func GetContainerDescription(id string) *ContainerDescription {
 	err := json.Unmarshal(respBody, cd)
 	utils.CheckBlockingError(err)
 	return cd
-}
-
-type OperationScale struct {
-	Operation               string `json:"operation"`
-	ResourceDescriptionLink string `json:"resourceDescriptionLink"`
-	ResourceType            string `json:"resourceType"`
-	ResourceCount           int32  `json:"resourceCount"`
 }

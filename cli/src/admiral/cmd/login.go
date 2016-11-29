@@ -21,6 +21,8 @@ import (
 	"admiral/config"
 	"admiral/loginout"
 
+	"admiral/utils"
+
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -58,7 +60,9 @@ func initLogin() {
 	loginCmd.Flags().StringVar(&tenant, "tenant", "", vraOptional+tenantDesc)
 	loginCmd.Flags().BoolVar(&againstVra, "vra", false, vraOptional+againstVraDesc)
 	loginCmd.Flags().StringVar(&urlF, "url", "", "Set URL config property.")
-	loginCmd.Flags().BoolVar(&tokenInfo, "status", false, tokenInfoDesc)
+	if !utils.IsVraMode {
+		loginCmd.Flags().BoolVar(&tokenInfo, "status", false, tokenInfoDesc)
+	}
 	RootCmd.AddCommand(loginCmd)
 }
 

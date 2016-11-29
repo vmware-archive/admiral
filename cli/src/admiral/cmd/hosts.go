@@ -19,10 +19,24 @@ import (
 	"admiral/hosts"
 	"admiral/utils"
 
+	"os"
+	"text/tabwriter"
+
+	"admiral/endpoints/instancetypes"
+
 	"github.com/spf13/cobra"
 )
 
-var MissingHostIdError = errors.New("Host ID not provided.")
+var (
+	MissingHostIdError   = errors.New("Host ID not provided.")
+	MissingHostNameError = errors.New("Host Name not provided.")
+)
+
+func setLongHelp() {
+	hostCreateAwsCmd.Long = instancetypes.GetOutputString(instancetypes.AWS)
+	hostCreateVsphereCmd.Long = instancetypes.GetOutputString(instancetypes.VSPHERE)
+	hostCreateAzureCmd.Long = instancetypes.GetOutputString(instancetypes.AZURE)
+}
 
 func init() {
 	initHostAdd()
@@ -31,6 +45,11 @@ func init() {
 	initHostRemove()
 	initHostUpdate()
 	initHostList()
+
+	initHostCreateAws()
+	initHostCreateAzure()
+	initHostCreateVsphere()
+
 }
 
 var hostAddCmd = &cobra.Command{
@@ -243,4 +262,130 @@ func RunHostUpdate(args []string) (string, error) {
 	} else {
 		return "Host updated: " + newID, err
 	}
+}
+
+var hostCreateAwsCmd = &cobra.Command{
+	Use:   "aws [NAME]",
+	Short: "Create docker host on AWS.",
+
+	Run: func(cmd *cobra.Command, args []string) {
+		output, err := RunHostCreateAws(args)
+		processOutput(output, err)
+	},
+}
+
+func initHostCreateAws() {
+	hostCreateAwsCmd.SetOutput(tabwriter.NewWriter(os.Stdout, 5, 0, 5, ' ', 0))
+	hostCreateAwsCmd.Flags().StringVar(&endpointId, "endpoint", "", required+endpointIdDesc)
+	hostCreateAwsCmd.Flags().StringVar(&hostOS, "os", "", required+hostOSDesc)
+	hostCreateAwsCmd.Flags().StringVar(&instanceType, "instance-type", "", required+instanceTypeDesc)
+	hostCreateAwsCmd.Flags().StringVar(&guestCred, "credentials", "", guestCredDesc)
+	hostCreateAwsCmd.Flags().Int32Var(&clusterSize, "cluster-size", 1, clusterSizeDesc)
+	hostCreateAwsCmd.Flags().StringSliceVar(&tags, "tags", []string{}, tagsDesc)
+	hostCreateAwsCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)
+	hostCreateAwsCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
+	oldHelpFunc := hostCreateAwsCmd.HelpFunc()
+	hostCreateAwsCmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
+		hostCreateAwsCmd.Long = instancetypes.GetOutputString(instancetypes.AWS)
+		hostCreateAwsCmd.SetHelpFunc(oldHelpFunc)
+		hostCreateAwsCmd.Help()
+	})
+
+	HostsCreateRootCmd.AddCommand(hostCreateAwsCmd)
+}
+
+func RunHostCreateAws(args []string) (string, error) {
+	var (
+		name string
+		ok   bool
+	)
+	if name, ok = ValidateArgsCount(args); !ok {
+		return "", MissingHostNameError
+	}
+	return hosts.CreateHostAws(name, endpointId, instanceType, hostOS, guestCred, int(clusterSize), tags, custProps, asyncTask)
+}
+
+var hostCreateAzureCmd = &cobra.Command{
+	Use:   "azure [NAME]",
+	Short: "Create docker host on Azure.",
+
+	Run: func(cmd *cobra.Command, args []string) {
+		output, err := RunHostCreateAzure(args)
+		processOutput(output, err)
+	},
+}
+
+func initHostCreateAzure() {
+	hostCreateAzureCmd.SetOutput(tabwriter.NewWriter(os.Stdout, 5, 0, 5, ' ', 0))
+	hostCreateAzureCmd.Flags().StringVar(&endpointId, "endpoint", "", required+endpointIdDesc)
+	hostCreateAzureCmd.Flags().StringVar(&hostOS, "os", "", required+hostOSDesc)
+	hostCreateAzureCmd.Flags().StringVar(&instanceType, "instance-type", "", required+instanceTypeDesc)
+	hostCreateAzureCmd.Flags().StringVar(&guestCred, "credentials", "", guestCredDesc)
+	hostCreateAzureCmd.Flags().Int32Var(&clusterSize, "cluster-size", 1, clusterSizeDesc)
+	hostCreateAzureCmd.Flags().StringSliceVar(&tags, "tags", []string{}, tagsDesc)
+	hostCreateAzureCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)
+	hostCreateAzureCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
+	oldHelpFunc := hostCreateAzureCmd.HelpFunc()
+	hostCreateAzureCmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
+		hostCreateAzureCmd.Long = instancetypes.GetOutputString(instancetypes.AZURE)
+		hostCreateAzureCmd.SetHelpFunc(oldHelpFunc)
+		hostCreateAzureCmd.Help()
+	})
+	HostsCreateRootCmd.AddCommand(hostCreateAzureCmd)
+
+}
+
+func RunHostCreateAzure(args []string) (string, error) {
+	var (
+		name string
+		ok   bool
+	)
+	if name, ok = ValidateArgsCount(args); !ok {
+		return "", MissingHostNameError
+	}
+	return hosts.CreateHostAzure(name, endpointId, instanceType, hostOS, guestCred, int(clusterSize), tags, custProps, asyncTask)
+}
+
+var hostCreateVsphereCmd = &cobra.Command{
+	Use:   "vsphere [NAME]",
+	Short: "Create docker host on vSphere.",
+
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("hello")
+		output, err := RunHostCreateVsphere(args)
+		processOutput(output, err)
+	},
+}
+
+func initHostCreateVsphere() {
+	hostCreateVsphereCmd.SetOutput(tabwriter.NewWriter(os.Stdout, 5, 0, 5, ' ', 0))
+	hostCreateVsphereCmd.Flags().StringVar(&endpointId, "endpoint", "", required+endpointIdDesc)
+	hostCreateVsphereCmd.Flags().StringVar(&hostOS, "os", "", required+hostOSDesc)
+	hostCreateVsphereCmd.Flags().StringVar(&instanceType, "instance-type", "", required+instanceTypeDesc)
+	hostCreateVsphereCmd.Flags().StringVar(&destination, "destination", "", required+destinationDesc)
+	hostCreateVsphereCmd.Flags().StringVar(&guestCred, "credentials", "", guestCredDesc)
+	hostCreateVsphereCmd.Flags().Int32Var(&clusterSize, "cluster-size", 1, clusterSizeDesc)
+	hostCreateVsphereCmd.Flags().StringSliceVar(&tags, "tags", []string{}, tagsDesc)
+	hostCreateVsphereCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)
+	hostCreateVsphereCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
+
+	oldHelpFunc := hostCreateVsphereCmd.HelpFunc()
+	hostCreateVsphereCmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
+		hostCreateVsphereCmd.Long = instancetypes.GetOutputString(instancetypes.VSPHERE)
+		hostCreateVsphereCmd.SetHelpFunc(oldHelpFunc)
+		hostCreateVsphereCmd.Help()
+	})
+	HostsCreateRootCmd.AddCommand(hostCreateVsphereCmd)
+
+}
+
+func RunHostCreateVsphere(args []string) (string, error) {
+	var (
+		name string
+		ok   bool
+	)
+	if name, ok = ValidateArgsCount(args); !ok {
+		return "", MissingHostNameError
+	}
+	return hosts.CreateHostVsphere(name, endpointId, instanceType, hostOS, destination, guestCred, int(clusterSize), tags, custProps, asyncTask)
 }

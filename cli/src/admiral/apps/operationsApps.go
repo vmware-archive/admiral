@@ -63,7 +63,7 @@ func StartAppID(id string, asyncTask bool) ([]string, error) {
 	utils.CheckBlockingError(err)
 
 	resourceLinks := utils.CreateResLinksForApps(fullIds)
-	oc := &containers.OperationContainer{
+	oc := &containers.ContainersOperation{
 		Operation:     "Container.Start",
 		ResourceLinks: resourceLinks,
 		ResourceType:  "COMPOSITE_COMPONENT",
@@ -110,7 +110,7 @@ func StopAppID(id string, asyncTask bool) ([]string, error) {
 	fullIds, err := selflink.GetFullIds([]string{id}, new(ListApps), utils.APPLICATION)
 	utils.CheckBlockingError(err)
 	resourceLinks := utils.CreateResLinksForApps(fullIds)
-	oc := &containers.OperationContainer{
+	oc := &containers.ContainersOperation{
 		Operation:     "Container.Stop",
 		ResourceLinks: resourceLinks,
 		ResourceType:  "COMPOSITE_COMPONENT",
@@ -158,7 +158,7 @@ func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 	fullIds, err := selflink.GetFullIds([]string{id}, new(ListApps), utils.APPLICATION)
 	utils.CheckBlockingError(err)
 	resourceLinks := utils.CreateResLinksForApps(fullIds)
-	oc := &containers.OperationContainer{
+	oc := &containers.ContainersOperation{
 		Operation:     "Container.Delete",
 		ResourceLinks: resourceLinks,
 		ResourceType:  "COMPOSITE_COMPONENT",

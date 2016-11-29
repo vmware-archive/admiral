@@ -156,6 +156,18 @@ var (
 	autoAccept          bool
 	autoAcceptDesc      = "Auto accept if certificate is not trusted."
 
+	// Create host flags
+	endpointId       string
+	endpointIdDesc   = "Endpoint ID."
+	hostOS           string
+	hostOSDesc       = "Host OS. Use \"admiral host create [type] --help\" to list available host OS images."
+	instanceType     string
+	instanceTypeDesc = "Instance type ID. Use \"admiral host create [type] --help\" to list available instance types."
+	guestCred        string
+	guestCredDesc    = "Guest credentials ID."
+	destination      string
+	destinationDesc  = "Destination ID. Use \"admiral host create vsphere --help\" to list available destinations on vsphere endpoints."
+
 	// Network flags
 	gateways          []string
 	gatewaysDesc      = "Gateway for the master subnet."

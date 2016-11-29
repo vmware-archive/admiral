@@ -29,6 +29,7 @@ var (
 func init() {
 	AutocompleteCmd.Hidden = true
 	EndpointRootCmd.AddCommand(EndpointRootAddCmd, EndpointRootUpdateCmd)
+	HostsRootCmd.AddCommand(HostsCreateRootCmd)
 	RootCmd.AddCommand(AppsRootCmd, CertsRootCmd, CredentialsRootCmd,
 		HostsRootCmd, PlacementsRootCmd, PlacementZonesRootCmd,
 		TemplatesRootCmd, RegistriesRootCmd, NetworksRootCmd,
@@ -156,6 +157,11 @@ var EndpointRootAddCmd = &cobra.Command{
 var EndpointRootUpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update endpoint.",
+}
+
+var HostsCreateRootCmd = &cobra.Command{
+	Use:   "create",
+	Short: "Create docker host.",
 }
 
 var AutocompleteCmd = &cobra.Command{

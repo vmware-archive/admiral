@@ -48,6 +48,7 @@ type Host struct {
 	CustomProperties map[string]*string `json:"customProperties,omitempty"`
 	ResourcePoolLink string             `json:"resourcePoolLink,omitempty"`
 	TagLinks         []string           `json:"tagLinks,omitempty"`
+	Name             string             `json:"name,omitempty"`
 
 	CreationTimeMicros           int64  `json:"creationTimeMicros,omitempty"`
 	DescriptionLink              string `json:"descriptionLink,omitempty"`
@@ -90,7 +91,7 @@ func (h *Host) GetContainersCount() int {
 }
 
 func (h *Host) GetID() string {
-	return h.Id
+	return utils.GetResourceID(h.DocumentSelfLink)
 }
 
 func (h *Host) SetCustomProperties(ipF, deplPolicyID, name, credID,
