@@ -34,7 +34,7 @@ func init() {
 		HostsRootCmd, PlacementsRootCmd, PlacementZonesRootCmd,
 		TemplatesRootCmd, RegistriesRootCmd, NetworksRootCmd,
 		CustomPropertiesRootCmd, AutocompleteCmd, RequestsRootCmd,
-		ConfigRootCmd, EndpointRootCmd)
+		ConfigRootCmd, EndpointRootCmd, ClosuresRootCmd)
 
 	if utils.IsVraMode {
 		RootCmd.AddCommand(BusinessGroupsRootCmd)
@@ -162,6 +162,11 @@ var EndpointRootUpdateCmd = &cobra.Command{
 var HostsCreateRootCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create docker host.",
+}
+
+var ClosuresRootCmd = &cobra.Command{
+	Use:   "closure",
+	Short: "Perform operations with closures.",
 }
 
 var AutocompleteCmd = &cobra.Command{

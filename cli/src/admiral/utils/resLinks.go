@@ -160,6 +160,20 @@ func CreateResLinkForEndpoint(id string) string {
 	return "/resources/endpoints/" + id
 }
 
+func CreateResLinkForClosure(id string) string {
+	if id == "" {
+		return ""
+	}
+	return "/resources/closures/" + id
+}
+
+func CreateResLinkForClosureDescription(id string) string {
+	if id == "" {
+		return ""
+	}
+	return "/resources/closure-descriptions/" + id
+}
+
 //Function to create resource links from the provided ID as parameter.
 func CreateResLinksForNetwork(ids []string) []string {
 	links := make([]string, 0)
@@ -260,7 +274,9 @@ func GetIdFilterUrl(shortId string, restype ResourceType) string {
 	case ENDPOINT:
 		shortSelfLink := CreateResLinkForEndpoint(shortId)
 		url = EndpointFilter + createIdFilter(shortSelfLink)
-
+	case CLOSURE:
+		shortSelfLink := CreateResLinkForClosure(shortId)
+		url = ClosureFilter + createIdFilter(shortSelfLink)
 	}
 	return url
 }

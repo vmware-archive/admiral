@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"admiral/client"
+	"admiral/closures"
 	"admiral/config"
 	"admiral/containers"
 	"admiral/utils"
@@ -32,6 +33,12 @@ import (
 var (
 	DuplicateNamesError   = errors.New("Templates with duplicate name found, use ID to remove the desired one.")
 	TemplateNotFoundError = errors.New("Template not found.")
+)
+
+const (
+	ContainerDescription = "Container Description"
+	NetworkDescription   = "Network Description"
+	ClosureDescription   = "Closure Description"
 )
 
 type LightContainer struct {
@@ -102,6 +109,16 @@ func (t *Template) GetNetworksCount() int {
 	return count
 }
 
+func (t *Template) GetClosuresCount() int {
+	count := 0
+	for _, link := range t.DescriptionLinks {
+		if strings.Contains(link, "/closure-descriptions/") {
+			count++
+		}
+	}
+	return count
+}
+
 //GetID returns the ID of the template.
 func (t *Template) GetID() string {
 	return strings.Replace(*t.DocumentSelfLink, "/resources/composite-descriptions/", "", -1)
@@ -113,6 +130,19 @@ func (t *Template) IsContainer(index int) bool {
 		return true
 	}
 	return false
+}
+
+func (t *Template) GetResourceType(index int) utils.ResourceType {
+	link := t.DescriptionLinks[index]
+	if strings.Contains(link, "/container-descriptions/") {
+		return utils.CONTAINER
+	} else if strings.Contains(link, "/container-network-descriptions/") {
+		return utils.NETWORK
+	} else if strings.Contains(link, "/closure-descriptions/") {
+		return utils.CLOSURE
+	} else {
+		return -1
+	}
 }
 
 type TemplatesList struct {
@@ -159,13 +189,13 @@ func (lt *TemplatesList) GetOutputStringWithoutContainers() string {
 		return utils.NoElementsFoundMessage
 	}
 	sort.Sort(TemplateSorter(lt.Results))
-	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS\n")
+	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS\tCLOSURES\n")
 	for _, template := range lt.Results {
 		if template.ParentDescriptionLink != "" {
 			continue
 		}
 		output := utils.GetTabSeparatedString(template.GetID(), template.Name,
-			template.GetContainersCount(), template.GetNetworksCount())
+			template.GetContainersCount(), template.GetNetworksCount(), template.GetClosuresCount())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
@@ -180,13 +210,13 @@ func (lt *TemplatesList) GetOutputStringWithContainers() (string, error) {
 	if len(lt.Results) < 1 {
 		return utils.NoElementsFoundMessage, nil
 	}
-	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS\n")
+	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS\tCLOSURES\n")
 	for _, template := range lt.Results {
 		if template.ParentDescriptionLink != "" {
 			continue
 		}
 		output := utils.GetTabSeparatedString(template.GetID(), template.Name,
-			template.GetContainersCount(), template.GetNetworksCount())
+			template.GetContainersCount(), template.GetNetworksCount(), template.GetClosuresCount())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 		for _, link := range template.DescriptionLinks {
@@ -335,6 +365,8 @@ type TemplateComponent struct {
 	Name              string   `json:"Name,omitempty"`
 	Image             string   `json:"Image,omitempty"`
 	NetworksConnected []string `json:"NetworksConnected,omitempty"`
+
+	ClosureRuntime string `json:"Runtime,omitempty"`
 }
 
 func InspectID(id string) (string, error) {
@@ -360,14 +392,20 @@ func InspectID(id string) (string, error) {
 	for i, descLink := range template.DescriptionLinks {
 		component := &TemplateComponent{}
 		component.Id = utils.GetResourceID(descLink)
-		if template.IsContainer(i) {
-			component.ComponentType = utils.TEMPLATE.GetName()
+		switch template.GetResourceType(i) {
+		case utils.CONTAINER:
+			component.ComponentType = ContainerDescription
 			cd := containers.GetContainerDescription(component.Id)
 			component.NetworksConnected = utils.ValuesToStrings(utils.GetMapKeys(cd.Networks))
 			component.Image = cd.Image.Value
-		} else {
-			component.ComponentType = utils.NETWORK.GetName()
+		case utils.NETWORK:
+			component.ComponentType = NetworkDescription
 			component.Name = GetNetworkDescriptionName(descLink)
+		case utils.CLOSURE:
+			closureDescription := closures.GetClosureDescription(component.Id)
+			component.ComponentType = ClosureDescription
+			component.Name = closureDescription.Name
+			component.ClosureRuntime = closureDescription.Runtime
 		}
 		it.Components = append(it.Components, component)
 	}

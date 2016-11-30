@@ -98,7 +98,7 @@ var (
 	networkMode      string
 	networkModeDesc  = "Sets the networking mode for the container."
 	ports            []string
-	portsDesc        = "Publish a container's port(s) to the host."
+	portsDesc        = "Publish a container's port(s) to the host. Format: hostPort:containerPort"
 	publishAll       bool
 	publishAllDesc   = "Publish all exposed ports to random ports."
 	restartPol       string

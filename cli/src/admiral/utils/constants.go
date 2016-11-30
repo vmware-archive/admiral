@@ -19,6 +19,7 @@ const (
 	RegistryFilter         = "/config/registries?documentType=true&expand=true&$filter=documentSelfLink+eq+"
 	RequestFilter          = "/request-status?documentType=true&$count=false&$limit=1000&$orderby=documentExpirationTimeMicros+desc&$filter=taskInfo/stage+eq+'*'+and+documentSelfLink+eq+"
 	TemplateFilter         = "/resources/composite-descriptions?expand=true&documentType=true&$filter=parentDescriptionLink+ne+'*'+and+documentSelfLink+eq+"
+	ClosureFilter          = "/resources/closures?documentType=true&$count=true&$limit=19&$orderby=&$filter=documentSelfLink+eq+"
 )
 
 // Resource Type "Enum"
@@ -56,6 +57,8 @@ func (rt ResourceType) GetName() string {
 		return "Request"
 	case 15:
 		return "Template"
+	case 16:
+		return "Closure"
 	default:
 		return ""
 	}
@@ -77,6 +80,7 @@ const (
 	REGISTRY
 	REQUEST
 	TEMPLATE
+	CLOSURE
 )
 
 const (
