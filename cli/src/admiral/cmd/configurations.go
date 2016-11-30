@@ -119,6 +119,7 @@ var cfgEncryptCmd = &cobra.Command{
 
 func initCfgEncrypt() {
 	cfgEncryptCmd.Flags().StringVar(&encryptionKey, "encryption-key", "", "File containing encryption key.")
+	cfgEncryptCmd.Hidden = true
 	ConfigRootCmd.AddCommand(cfgEncryptCmd)
 }
 
@@ -143,6 +144,7 @@ var cfgDecryptCmd = &cobra.Command{
 
 func initCfgDecrypt() {
 	cfgDecryptCmd.Flags().StringVar(&encryptionKey, "encryption-key", "", "File containing encryption key.")
+	cfgDecryptCmd.Hidden = true
 	ConfigRootCmd.AddCommand(cfgDecryptCmd)
 }
 

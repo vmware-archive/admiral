@@ -32,12 +32,6 @@ var (
 	MissingHostNameError = errors.New("Host Name not provided.")
 )
 
-func setLongHelp() {
-	hostCreateAwsCmd.Long = instancetypes.GetOutputString(instancetypes.AWS)
-	hostCreateVsphereCmd.Long = instancetypes.GetOutputString(instancetypes.VSPHERE)
-	hostCreateAzureCmd.Long = instancetypes.GetOutputString(instancetypes.AZURE)
-}
-
 func init() {
 	initHostAdd()
 	initHostDisable()
@@ -351,7 +345,6 @@ var hostCreateVsphereCmd = &cobra.Command{
 	Short: "Create docker host on vSphere.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("hello")
 		output, err := RunHostCreateVsphere(args)
 		processOutput(output, err)
 	},
