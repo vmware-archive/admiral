@@ -2260,3 +2260,29 @@ header .branding img {
     padding: 20px;
   }
 }
+
+.request-graph {
+  position: relative;
+
+  .task-stage {
+    position: absolute;
+    border: 1px solid black;
+    border-radius: 10px;
+    height: 100px;
+    width: 150px;
+    word-break: break-all;
+
+    .stage {
+      margin: 5px;
+    }
+    .substage {
+      margin-left: 5px;
+      margin-right: 5px;
+    }
+  }
+
+  .task {
+    width: 200px;
+    position: absolute;
+  }
+}

@@ -1173,6 +1173,18 @@ services.removeRequestStatus = function(requestStatusSelfLink) {
   return deleteEntity(requestBrokerLink);
 };
 
+services.loadRequestGraph = function(requestId, host) {
+  var params = {
+    'requestId': requestId
+  };
+
+  if (host) {
+    params.xenonHost = host;
+  }
+
+  return list(links.REQUEST_GRAPH, false, params);
+};
+
 services.loadNotifications = function() {
   return get(links.NOTIFICATIONS);
 };
