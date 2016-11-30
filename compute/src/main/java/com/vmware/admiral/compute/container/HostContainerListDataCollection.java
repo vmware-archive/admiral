@@ -175,16 +175,10 @@ public class HostContainerListDataCollection extends StatefulService {
 
         private final BiConsumer<CallbackServiceHandlerState, Boolean> consumer;
 
-        private Runnable completionCallback;
-
         public SystemContainerOperationCallbackHandler(
                 BiConsumer<CallbackServiceHandlerState, Boolean> consumer) {
 
             this.consumer = consumer;
-        }
-
-        public void setCompletionCallback(Runnable completionCallback) {
-            this.completionCallback = completionCallback;
         }
 
         @Override

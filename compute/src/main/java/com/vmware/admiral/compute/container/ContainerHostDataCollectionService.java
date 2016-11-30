@@ -775,7 +775,9 @@ public class ContainerHostDataCollectionService extends StatefulService {
                     caller.accept(ServiceTaskCallback.create(callbackUri.toString()));
                 });
 
-        getHost().startService(startPost, new HostInfoUpdatedCallbackHandler(actualCallback));
+        HostInfoUpdatedCallbackHandler service = new HostInfoUpdatedCallbackHandler(actualCallback);
+        service.setCompletionCallback(() -> getHost().stopService(service));
+        getHost().startService(startPost, service);
     }
 
     private static class HostInfoUpdatedCallbackHandler extends
@@ -797,12 +799,20 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 logFine("Task failure stack trace: %s", err.stackTrace);
                 logWarning("Task failure error message: %s", err.message);
                 consumer.accept(state, err);
+
+                if (completionCallback != null) {
+                    completionCallback.run();
+                }
             }
         }
 
         @Override
         protected void handleFinishedStagePatch(CallbackServiceHandlerState state) {
             consumer.accept(state, null);
+
+            if (completionCallback != null) {
+                completionCallback.run();
+            }
         }
     }
 

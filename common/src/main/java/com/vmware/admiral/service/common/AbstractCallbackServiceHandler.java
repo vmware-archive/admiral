@@ -20,6 +20,8 @@ public abstract class AbstractCallbackServiceHandler extends
         AbstractTaskStatefulService<AbstractCallbackServiceHandler.CallbackServiceHandlerState,
         DefaultSubStage> {
 
+    protected Runnable completionCallback;
+
     public static class CallbackServiceHandlerState
             extends com.vmware.admiral.service.common.TaskServiceDocument<DefaultSubStage> {
 
@@ -35,6 +37,10 @@ public abstract class AbstractCallbackServiceHandler extends
 
     protected static String getDisplayName() {
         return "System Container Callback";
+    }
+
+    public void setCompletionCallback(Runnable completionCallback) {
+        this.completionCallback = completionCallback;
     }
 
     @Override
