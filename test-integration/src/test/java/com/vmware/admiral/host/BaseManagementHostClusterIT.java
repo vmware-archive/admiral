@@ -122,9 +122,15 @@ public abstract class BaseManagementHostClusterIT {
             sandboxPath = sandbox.getRoot().toPath().toString();
         }
 
+        String hostId = getClass().getSimpleName() + "-" + port;
+
         String peerNodes = String.join(",", peers);
 
         ManagementHost host = ManagementHostBaseTest.createManagementHost(new String[] {
+                ARGUMENT_PREFIX
+                        + "id"
+                        + ARGUMENT_ASSIGNMENT
+                        + hostId,
                 ARGUMENT_PREFIX
                         + FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE
                         + ARGUMENT_ASSIGNMENT
