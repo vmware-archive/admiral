@@ -40,6 +40,12 @@ public class UriUtilsExtended {
 
     public static final String MEDIA_TYPE_APPLICATION_YAML = "application/yaml";
 
+    /**
+     * URL parameter to be used in calls to the Reverse Proxy service to specify if the generated or
+     * processed reverse proxy address has to be relative to the path specified by this parameter.
+     */
+    public static final String RP_RELATIVE_TO_PARAM = "rp-relative-to";
+
     public static URI buildDockerRegistryUri(String address) {
         Matcher matcher = addressPatternMatcher(address);
 
@@ -156,7 +162,8 @@ public class UriUtilsExtended {
      *
      * Unlike Boolean.parseBoolean this will treat any value except null, false and 0 as true.
      *
-     * @param value text to parse
+     * @param value
+     *            text to parse
      * @return boolean value
      */
     public static boolean parseBooleanParam(String value) {
@@ -175,7 +182,8 @@ public class UriUtilsExtended {
     /**
      * Flattens a query parameters map so it can be used with extendQueryWithParams
      *
-     * @param queryParams key-value map of parameters
+     * @param queryParams
+     *            key-value map of parameters
      * @return array of Strings
      */
     public static String[] flattenQueryParams(Map<String, String> queryParams) {
@@ -207,9 +215,14 @@ public class UriUtilsExtended {
     }
 
     /**
-     * Returns the provided new location (form the header "location") transformed to be sent to the
+     * Returns the provided new location (from the header "location") transformed to be sent to the
      * {@link ReverseProxyService} instead of accessing directly to it. If the new location is
      * relative then it's transformed to absolute based on the provided current {@link URI}.
+     *
+     * Optionally, if the original {@link URI} containing the Reverse Proxy target specifies the
+     * parameter {@link RP_RELATIVE_TO_PARAM}, then the value of that parameter is used as a prefix
+     * of the new location. That's required in order to avoid relying on Xenon's method getReferer()
+     * since it's value can be altered by the framework.
      *
      * Some transformation examples ({xyz} means Reverse Proxy encoded path):
      * <pre>
@@ -221,15 +234,29 @@ public class UriUtilsExtended {
      *            Location going to the {@link ReverseProxyService}
      * @param currentUri
      *            Current {@link URI} where the header "location" was retrieved from
+     * @param originalUri
+     *            Original {@link URI} containing the Reverse Proxy target
      * @return {@link ReverseProxyService} location
      */
-    public static String getReverseProxyLocation(String location, URI currentUri) {
+    public static String getReverseProxyLocation(String location, URI currentUri, URI originalUri) {
         if (location.startsWith(UriUtils.URI_PATH_CHAR)) { // relative path
             location = UriUtils.buildUri(currentUri, location).toString()
                     // keep trailing '/' if applies (important! e.g. for the ShellInABox case)
                     + (location.endsWith(UriUtils.URI_PATH_CHAR) ? UriUtils.URI_PATH_CHAR : "");
         }
-        return UriUtils.buildUriPath(ReverseProxyService.SELF_LINK, getReverseProxyEncoded(location));
+        String newLocation = UriUtils.buildUriPath(ReverseProxyService.SELF_LINK,
+                getReverseProxyEncoded(location));
+        if (originalUri == null) {
+            return newLocation;
+        }
+        // check for the parameter RP_RELATIVE_TO_PARAM and use it if it applies
+        Map<String, String> params = UriUtils.parseUriQueryParams(originalUri);
+        String relativeTo = params.get(RP_RELATIVE_TO_PARAM);
+        if (relativeTo == null) {
+            return newLocation;
+        }
+        return UriUtils.buildUriPath(relativeTo, newLocation) + UriUtils.URI_QUERY_CHAR
+                + UriUtils.buildUriQuery(RP_RELATIVE_TO_PARAM, relativeTo);
     }
 
     /**
@@ -255,7 +282,14 @@ public class UriUtilsExtended {
             return null;
         }
 
-        String opPath = opUri.getPath().replaceFirst(ReverseProxyService.SELF_LINK, "");
+        String opUriPath = opUri.getPath();
+
+        int rpIndex = opUriPath.indexOf(ReverseProxyService.SELF_LINK);
+        if (rpIndex == -1) {
+            // no target URI provided!
+            return null;
+        }
+        String opPath = opUriPath.substring(rpIndex + ReverseProxyService.SELF_LINK.length());
 
         if (opPath.startsWith(UriUtils.URI_PATH_CHAR)) {
             opPath = opPath.substring(1);
@@ -280,6 +314,7 @@ public class UriUtilsExtended {
 
         Map<String, String> queryParams = UriUtils.parseUriQueryParams(targetUri);
         queryParams.putAll(UriUtils.parseUriQueryParams(opUri));
+        queryParams.remove(RP_RELATIVE_TO_PARAM);
 
         String opExtraPath = opPath.replace(encodedUri, "");
         if (!opExtraPath.isEmpty() && !opExtraPath.equals(UriUtils.URI_PATH_CHAR)) {
@@ -295,7 +330,8 @@ public class UriUtilsExtended {
         if (!queryParams.isEmpty()) {
             targetUri = UriUtils.extendUriWithQuery(
                     // keep trailing '/' if applies (important! e.g. for the ShellInABox case)
-                    UriUtils.buildUri(targetUri.toString().replace("?" + targetUri.getRawQuery(), "")),
+                    UriUtils.buildUri(
+                            targetUri.toString().replace("?" + targetUri.getRawQuery(), "")),
                     flattenQueryParams(queryParams));
         }
 

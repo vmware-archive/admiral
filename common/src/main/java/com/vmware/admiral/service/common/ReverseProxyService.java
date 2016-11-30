@@ -19,6 +19,7 @@ import java.util.function.Function;
 import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 
@@ -31,6 +32,15 @@ public class ReverseProxyService extends StatelessService {
 
     public ReverseProxyService() {
         super.toggleOption(ServiceOption.URI_NAMESPACE_OWNER, true);
+    }
+
+    @Override
+    public void authorizeRequest(Operation op) {
+        if (ConfigurationUtil.isEmbedded()) {
+            op.complete();
+            return;
+        }
+        super.authorizeRequest(op);
     }
 
     @Override
@@ -89,8 +99,9 @@ public class ReverseProxyService extends StatelessService {
                     if (o.getStatusCode() == Operation.STATUS_CODE_MOVED_PERM ||
                             o.getStatusCode() == Operation.STATUS_CODE_MOVED_TEMP) {
                         String location = o.getResponseHeader(Operation.LOCATION_HEADER);
-                        String rpLocation = getReverseProxyLocation(location, o.getUri());
-                        op.getResponseHeaders().put(Operation.LOCATION_HEADER, rpLocation);
+                        String newLocation = getReverseProxyLocation(location, o.getUri(),
+                                op.getUri());
+                        op.getResponseHeaders().put(Operation.LOCATION_HEADER, newLocation);
                     }
 
                     op.complete();

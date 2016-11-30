@@ -112,7 +112,8 @@ public class UriUtilsExtendedTest {
         rpUri = UriUtils.buildUri(rpUri.toString() + "/ep1/ep2?q2=v2");
 
         targetUri = UriUtilsExtended.getReverseProxyTargetUri(rpUri);
-        assertEquals("http://www.test-url.com:8080/p1/p2/ep1/ep2?q1=v1&q2=v2", targetUri.toString());
+        assertEquals("http://www.test-url.com:8080/p1/p2/ep1/ep2?q1=v1&q2=v2",
+                targetUri.toString());
     }
 
     @Test
@@ -170,7 +171,8 @@ public class UriUtilsExtendedTest {
         rpUri = UriUtils.buildUri(rpUri.toString() + "/ep1/ep2/?q2=v2");
 
         targetUri = UriUtilsExtended.getReverseProxyTargetUri(rpUri);
-        assertEquals("http://www.test-url.com:8080/p1/p2/ep1/ep2/?q1=v1&q2=v2", targetUri.toString());
+        assertEquals("http://www.test-url.com:8080/p1/p2/ep1/ep2/?q1=v1&q2=v2",
+                targetUri.toString());
     }
 
     @Test
@@ -183,7 +185,7 @@ public class UriUtilsExtendedTest {
         // http://abc:80/rp/{http://localhost/foo/bar}
 
         String location = "http://localhost/foo/bar";
-        String targetLocation = UriUtilsExtended.getReverseProxyLocation(location, null);
+        String targetLocation = UriUtilsExtended.getReverseProxyLocation(location, null, null);
         assertNotNull(targetLocation);
         assertTrue(targetLocation.startsWith(ReverseProxyService.SELF_LINK));
 
@@ -196,7 +198,7 @@ public class UriUtilsExtendedTest {
 
         location = "/foo/bar";
         URI referer = UriUtils.buildUri("http://localhost/p");
-        targetLocation = UriUtilsExtended.getReverseProxyLocation(location, referer);
+        targetLocation = UriUtilsExtended.getReverseProxyLocation(location, referer, null);
         assertNotNull(targetLocation);
         assertTrue(targetLocation.startsWith(ReverseProxyService.SELF_LINK));
 
@@ -215,7 +217,7 @@ public class UriUtilsExtendedTest {
         // http://abc:80/rp/{http://localhost/foo/bar}
 
         String location = "http://localhost/foo/bar/";
-        String targetLocation = UriUtilsExtended.getReverseProxyLocation(location, null);
+        String targetLocation = UriUtilsExtended.getReverseProxyLocation(location, null, null);
         assertNotNull(targetLocation);
         assertTrue(targetLocation.startsWith(ReverseProxyService.SELF_LINK));
 
@@ -228,9 +230,47 @@ public class UriUtilsExtendedTest {
 
         location = "/foo/bar/";
         URI referer = UriUtils.buildUri("http://localhost/p");
-        targetLocation = UriUtilsExtended.getReverseProxyLocation(location, referer);
+        targetLocation = UriUtilsExtended.getReverseProxyLocation(location, referer, null);
         assertNotNull(targetLocation);
         assertTrue(targetLocation.startsWith(ReverseProxyService.SELF_LINK));
+
+        targetUri = UriUtilsExtended.getReverseProxyTargetUri(
+                UriUtils.buildUri(uri, targetLocation));
+        assertEquals("http://localhost/foo/bar/", targetUri.toString());
+    }
+
+    @Test
+    public void testReverseProxyLocationTransformationsWithRelativeToParam() {
+
+        String RP_RELATIVE_TO = "/relative-path";
+
+        String originalUrl = "http://www.test-url.com/path?rp-relative-to=" + RP_RELATIVE_TO;
+        URI originalUri = UriUtils.buildUri(originalUrl);
+
+        String url = "http://www.test-url.com:8080/p1/p2";
+        URI uri = UriUtils.buildUri(url);
+
+        // location: http://localhost/foo/bar ->
+        // http://abc:80/rp/{http://localhost/foo/bar}
+
+        String location = "http://localhost/foo/bar/";
+        String targetLocation = UriUtilsExtended.getReverseProxyLocation(location, null,
+                originalUri);
+        assertNotNull(targetLocation);
+        assertTrue(targetLocation.startsWith(RP_RELATIVE_TO + ReverseProxyService.SELF_LINK));
+
+        URI targetUri = UriUtilsExtended.getReverseProxyTargetUri(
+                UriUtils.buildUri(uri, targetLocation));
+        assertEquals("http://localhost/foo/bar/", targetUri.toString());
+
+        // location: /foo/bar & referer: http://localhost/p ->
+        // http://abc:80/rp/{http://localhost/foo/bar}
+
+        location = "/foo/bar/";
+        URI referer = UriUtils.buildUri("http://localhost/p");
+        targetLocation = UriUtilsExtended.getReverseProxyLocation(location, referer, originalUri);
+        assertNotNull(targetLocation);
+        assertTrue(targetLocation.startsWith(RP_RELATIVE_TO + ReverseProxyService.SELF_LINK));
 
         targetUri = UriUtilsExtended.getReverseProxyTargetUri(
                 UriUtils.buildUri(uri, targetLocation));
