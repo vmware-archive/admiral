@@ -10,8 +10,10 @@
  */
 
 import ContainerDetails from 'components/containers/ContainerDetails';
+import RequestGraph from 'components/requests/RequestGraph';
 import ContainerDefinitionForm from 'components/containers/ContainerDefinitionForm';
 import ContainersStore from 'stores/ContainersStore';
+import RequestGraphStore from 'stores/RequestGraphStore';
 import * as actions from 'actions/Actions';
 import modal from 'core/modal';
 
@@ -35,6 +37,12 @@ function removeOldViews() {
 
 function openContainerDetails() {
   this.view = new ContainerDetails();
+  this.$el.append(this.view.getEl());
+  this.view.attached();
+}
+
+function openRequestGraph() {
+  this.view = new RequestGraph();
   this.$el.append(this.view.getEl());
   this.view.attached();
 }
@@ -63,6 +71,12 @@ function addEventListeners() {
       _this.view.setData(data.selectedItemDetails);
     }
   });
+
+  RequestGraphStore.listen(function(data) {
+    if (_this.view instanceof RequestGraph) {
+      _this.view.setData(data);
+    }
+  });
 }
 
 function initRoutes() {
@@ -77,6 +91,12 @@ function initRoutes() {
   crossroads.addRoute('/containers/{containerId}', function(containerId) {
     openContainerDetails.call(_this);
     actions.ContainerActions.openContainerDetails(containerId);
+  });
+
+  crossroads.addRoute('/request-graph/{requestId}:?host:', function(requestId, query) {
+    openRequestGraph.call(_this);
+    var host = query ? query.host : null;
+    actions.RequestGraphActions.openRequestGraph(requestId, host);
   });
 
   crossroads.addRoute('/container-form', function() {

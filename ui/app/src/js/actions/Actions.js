@@ -195,6 +195,10 @@ export var RequestsActions = Reflux.createActions([
   'requestCreated', 'removeRequest', 'closeRequests', 'clearRequests'
 ]);
 
+export var RequestGraphActions = Reflux.createActions([
+  'openRequestGraph', 'refreshRequestGraph'
+]);
+
 export var NotificationsActions = Reflux.createActions([
   'retrieveNotifications'
 ]);

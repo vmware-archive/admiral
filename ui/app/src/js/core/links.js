@@ -63,6 +63,7 @@ var links = Immutable({
   SSL_TRUST_CERTS: CONFIG + '/trust-certs',
   SSL_TRUST_CERTS_IMPORT: CONFIG + '/trust-certs-import',
   REQUESTS: '/requests',
+  REQUEST_GRAPH: '/request-graph',
   REQUEST_STATUS: '/request-status',
 
   IMAGES: '/images',

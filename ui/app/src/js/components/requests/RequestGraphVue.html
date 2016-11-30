@@ -1,0 +1,25 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="request-graph">
+  <div v-for="task in tasks" track-by="documentSelfLink" class="task" 
+       v-bind:style="{left: ($index * 200) + 'px'}">
+    <div>{{task.documentSelfLink}}</div>
+    <div>{{task.createdTimeMicros}}</div>
+    <div v-for="stage in task.stages" track-by="documentUpdateTimeMicros" class="task-stage"
+         data-task="{{task.documentSelfLink}}"
+         data-stage="{{stage.taskSubStage}}"
+         data-updatetime="{{stage.documentUpdateTimeMicros}}">
+        <div class="stage">{{stage.taskInfo.stage}}</div>
+        <div class="substage">({{stage.taskSubStage}})</div>
+    </div>
+  </div>
+</div>

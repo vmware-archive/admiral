@@ -118,6 +118,7 @@ public interface ManagementUriParts {
     String REQUEST = "/request";
     String REQUESTS = "/requests";
     String REQUEST_STATUS = "/request-status";
+    String REQUEST_GRAPH = "/request-graph";
     String REQUEST_RESOURCE_OPERATIONS = REQUEST + "/resource-operations";
     String REQUEST_REMOVAL_OPERATIONS = REQUEST + "/resource-removal-operations";
     String REQUEST_ALLOCATION_TASKS = REQUEST + "/allocation-tasks";
