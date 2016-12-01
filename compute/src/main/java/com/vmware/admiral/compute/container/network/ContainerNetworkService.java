@@ -246,8 +246,10 @@ public class ContainerNetworkService extends StatefulService {
                 if (e == null) {
                     ContainerNetworkState currentState = o.getBody(ContainerNetworkState.class);
                     containerNetworkMaintenance = ContainerNetworkMaintenance.create(getHost(),
-                            getSelfLink(), !currentState.descriptionLink.startsWith(
-                                    ContainerNetworkDescriptionService.DISCOVERED_DESCRIPTION_LINK));
+                            getSelfLink(),
+                            currentState.descriptionLink != null
+                                    && !currentState.descriptionLink.startsWith(
+                                            ContainerNetworkDescriptionService.DISCOVERED_DESCRIPTION_LINK));
                     containerNetworkMaintenance.handleMaintenance(post);
                 }
             }));

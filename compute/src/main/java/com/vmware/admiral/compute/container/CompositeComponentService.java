@@ -192,7 +192,8 @@ public class CompositeComponentService extends StatefulService {
                     logWarning("Can't find container network states. Error: %s",
                             Utils.toString(r.getException()));
                 } else if (r.hasResult()) {
-                    allNetworksExternal.set(allNetworksExternal.get() && r.getResult().external);
+                    allNetworksExternal.set(allNetworksExternal.get() && r.getResult().external != null
+                            && r.getResult().external);
                 } else {
                     if (allNetworksExternal.get()) {
                         deleteCallback.run();
