@@ -131,6 +131,26 @@ let getHostSpec = function(hostModel) {
   return hostSpec;
 };
 
+let getHostAutoConfigSpec = function(hostModel) {
+  var hostAutoConfigSpec = {
+    __address: hostModel.address,
+    __placementZoneLink: hostModel.resourcePoolLink,
+    __tagLinks: hostModel.tagLinks
+  };
+
+  if (hostModel.credential) {
+    hostAutoConfigSpec.__authCredentialsLink = hostModel.credential.documentSelfLink;
+  }
+
+  if (hostModel.customProperties) {
+    hostModel.customProperties.forEach(function(prop) {
+      hostAutoConfigSpec[prop.name] = prop.value;
+    });
+  }
+
+  return hostAutoConfigSpec;
+};
+
 let toViewModel = function(dto) {
   let customProperties = [];
   let hasCustomProperties = dto.customProperties && dto.customProperties !== null;
@@ -553,6 +573,37 @@ let HostsStore = Reflux.createStore({
     this.setInData(['listView', 'resourcePools'], null);
   },
 
+  onAutoConfigureHost: function(hostModel) {
+    this.setInData(['hostAddView', 'validationErrors'], null);
+    this.setInData(['hostAddView', 'shouldAcceptCertificate'], null);
+
+    var validationErrors = utils.validate(hostModel, hostConstraints);
+    if (validationErrors) {
+      // propagate errors
+      this.setInData(['hostAddView', 'validationErrors'], validationErrors);
+    } else {
+      let hostAutoConfigSpec = getHostAutoConfigSpec(hostModel);
+
+      services.autoConfigureHost(hostAutoConfigSpec).then((result) => {
+        // Navigate to hosts view and show requests pane
+        this.navigateHostsListViewAndOpenRequests(result);
+      }).catch(this.onGenericEditError);
+    }
+
+    this.emitChange();
+  },
+
+  navigateHostsListViewAndOpenRequests: function(request) {
+    var openHostsUnsubscribe = actions.HostActions.openHosts.listen(() => {
+      openHostsUnsubscribe();
+
+      this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
+      actions.RequestsActions.requestCreated(request);
+    });
+
+    actions.NavigationActions.openHosts();
+  },
+
   onAddHost: function(hostModel, tags) {
     this.setInData(['hostAddView', 'validationErrors'], null);
     this.setInData(['hostAddView', 'shouldAcceptCertificate'], null);
@@ -861,10 +912,8 @@ let HostsStore = Reflux.createStore({
       .catch(this.onGenericEditError);
   },
 
-  onHostRemovalCompleted: function(hostId) {
+  onOperationCompleted: function() {
     // TODO perform refresh only on the host item box, not whole screen
-    console.log('Host id: ' + hostId + ' just got removed.');
-
     this.onOpenHosts();
   },
 

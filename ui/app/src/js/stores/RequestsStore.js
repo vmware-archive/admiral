@@ -238,8 +238,10 @@ let RequestsStore = Reflux.createStore({
 
         if (req.requestProgressByComponent.hasOwnProperty('Host Removal')) {
           // Host Removed
-          return this.updateOnHostRemovalComplete(resourceLinks);
-
+          return this.hostOperationSuccess();
+        } else if (req.requestProgressByComponent.hasOwnProperty('Configure Host')) {
+          // Host auto-configured
+          return this.hostOperationSuccess();
         } else if (req.requestProgressByComponent.hasOwnProperty('Container Allocation')) {
           // Container created
           this.containerOperationSuccess(constants.CONTAINERS.OPERATION.CREATE);
@@ -302,9 +304,8 @@ let RequestsStore = Reflux.createStore({
     }
   },
 
-  updateOnHostRemovalComplete: function(resourceLinks) {
-    // refresh on hosts page
-    actions.HostActions.hostRemovalCompleted(utils.getDocumentId(resourceLinks[0]));
+  hostOperationSuccess: function() {
+    actions.HostActions.operationCompleted();
   },
 
   containerOperationSuccess: function(operationType, resourceLinks) {

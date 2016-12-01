@@ -73,13 +73,17 @@ var HostAddView = Vue.extend({
       resourcePool: null,
       credential: null,
       deploymentPolicy: null,
-      connectionType: 'API'
+      connectionType: 'API',
+      autoConfigure: false
     };
   },
 
   computed: {
     buttonsDisabled: function() {
       return !this.address;
+    },
+    isVerifyButtonDisabled: function() {
+      return this.buttonsDisabled || this.autoConfigure;
     },
     validationErrors: function() {
       return this.model.validationErrors || {};
@@ -406,10 +410,19 @@ var HostAddView = Vue.extend({
       HostActions.verifyHost(this.getHostData());
     },
     saveHost: function() {
+      let hostData = this.getHostData();
+
+      // Host auto configuration
+      if (this.autoConfigure) {
+        // full uri expected
+        hostData.address = utils.populateDefaultSchemeAndPort(this.address);
+        HostActions.autoConfigureHost(hostData);
+        return;
+      }
+
       // By default try to add the host at the given address.
       // If the host has self signed certificate, we may need to accept it,
       // by clicking confirmAddHost
-      let hostData = this.getHostData();
       let tags = this.tagsInput.getValue();
       if (this.model.isUpdate) {
         HostActions.updateHost(hostData, tags);

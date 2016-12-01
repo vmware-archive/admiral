@@ -579,6 +579,17 @@ services.addHost = function(host) {
   return put(links.CONTAINER_HOSTS, host);
 };
 
+services.autoConfigureHost = function(hostAutoConfigSpec) {
+  var request = {};
+  request.resourceType = 'CONFIGURE_HOST';
+  request.operation = 'CONFIGURE_HOST';
+  request.customProperties = hostAutoConfigSpec;
+
+  return post(links.REQUESTS, request).then(function(createdRequest) {
+    return createdRequest;
+  });
+};
+
 services.createHostDescription = function(description) {
   return post(links.COMPUTE_DESCRIPTIONS, description);
 };

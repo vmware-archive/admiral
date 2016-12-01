@@ -14,9 +14,9 @@ export var AppActions = Reflux.createActions([
 ]);
 
 export var HostActions = Reflux.createActions([
-  'openHosts', 'openHostsNext', 'openAddHost', 'verifyHost', 'addHost',
-  'createHost', 'editHost', 'updateHost', 'removeHost',
-  'hostRemovalCompleted', 'disableHost', 'enableHost',
+  'openHosts', 'openHostsNext', 'openAddHost', 'autoConfigureHost',
+  'verifyHost', 'addHost', 'createHost', 'editHost', 'updateHost', 'removeHost',
+  'operationCompleted', 'disableHost', 'enableHost',
   'acceptCertificateAndAddHost', 'acceptCertificateAndVerifyHost',
   'closeHosts', 'triggerDataCollection'
 ]);
