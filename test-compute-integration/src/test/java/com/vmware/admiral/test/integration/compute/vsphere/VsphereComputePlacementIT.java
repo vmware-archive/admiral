@@ -32,8 +32,6 @@ import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
 import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
-import com.vmware.admiral.compute.EnvironmentMappingService;
-import com.vmware.admiral.compute.EnvironmentMappingService.EnvironmentMappingState;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
@@ -138,7 +136,6 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
      */
     @Test
     public void testTagBasedPlacement() throws Exception {
-        createEnvironment();
 
         TagState tagSofia = createTag("loc", "sofia");
         TagState tagPA = createTag("loc", "pa");
@@ -167,15 +164,6 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         removeVm(this.provisionRequest2);
         this.provisionRequest2 = null;
         validateReservations(reservationA, reservationB, 0, 0);
-    }
-
-    private void createEnvironment() throws Exception {
-        EnvironmentMappingState ems = new EnvironmentMappingState();
-        ems.endpointType = getEndpointType().name();
-        ems.name = ems.endpointType;
-        ems.properties = new HashMap<>();
-
-        postDocument(EnvironmentMappingService.FACTORY_LINK, ems);
     }
 
     private TagState createTag(String key, String value) throws Exception {

@@ -14,12 +14,8 @@ package com.vmware.admiral.test.integration.compute.vsphere;
 import static org.junit.Assert.assertNotNull;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Set;
 
-import com.vmware.admiral.compute.EnvironmentMappingService;
-import com.vmware.admiral.compute.EnvironmentMappingService.EnvironmentMappingState;
-import com.vmware.admiral.compute.PropertyMapping;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -113,39 +109,11 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void doSetUp() throws Exception {
         // restrict available placements to the one specified through the VC_COMPUTE_NAME prop
         // because this is the one which can access the storage used in the tests
         restrictAvailablePlacements();
-
-        EnvironmentMappingState ems = new EnvironmentMappingState();
-        ems.endpointType = getEndpointType().name();
-        ems.name = ems.endpointType;
-        ems.properties = new HashMap<>();
-
-        PropertyMapping instanceType = new PropertyMapping();
-        instanceType.mappings = new HashMap<>();
-        instanceType.mappings.put("small", "small");
-        ems.properties.put("instanceType", instanceType);
-
-        PropertyMapping imageRefs = new PropertyMapping();
-        imageRefs.mappings = new HashMap<>();
-        imageRefs.mappings.put("linux", getDiskUri());
-        imageRefs.mappings.put("coreos", getDiskUri());
-        imageRefs.mappings.put("ubuntu-server-1604", getDiskUri("ubuntu-server-1604"));
-        ems.properties.put("imageType", imageRefs);
-
-        PropertyMapping placementRefs = new PropertyMapping();
-        placementRefs.mappings = new HashMap<>();
-        placementRefs.mappings.put("networkId", getTestRequiredProp(VsphereUtil.VC_NETWORK_ID));
-        placementRefs.mappings.put("dataStoreId", getTestRequiredProp(VsphereUtil.VC_DATASTORE_ID));
-        placementRefs.mappings.put("zoneId", getTestRequiredProp(VsphereUtil.VC_RESOURCE_POOL_ID));
-        ems.properties.put("placement", placementRefs);
-
-        postDocument(EnvironmentMappingService.FACTORY_LINK,
-                ems, documentLifeCycle);
     }
 
     private void restrictAvailablePlacements() throws Exception {
@@ -178,24 +146,4 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
             sendRequest(HttpMethod.PUT, compute.documentSelfLink, Utils.toJson(compute));
         }
     }
-
-    private String getDiskUri() {
-        return getDiskUri(null);
-    }
-
-    private String getDiskUri(String image) {
-        String diskUri;
-        if (image == null) {
-            diskUri = getTestProp(VsphereUtil.VC_VM_DISK_URI);
-        } else {
-            diskUri = getTestProp(String.format(VsphereUtil.VC_VM_DISK_URI_TEMPLATE, image));
-        }
-
-        if (diskUri == null) {
-            return null;
-        } else {
-            return diskUri;
-        }
-    }
-
 }
