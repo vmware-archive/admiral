@@ -1718,10 +1718,14 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     ];
   }
 
+  var result = buildOdataQuery(qOps);
+
   if (queryOptions) {
+    var userQueryOps = {};
+
     var anyArray = toArrayIfDefined(queryOptions.any);
     if (anyArray) {
-      qOps[FILTER_VALUE_ALL_FIELDS] = anyArray.map((any) => {
+      userQueryOps[FILTER_VALUE_ALL_FIELDS] = anyArray.map((any) => {
         return {
           val: '*' + any + '*',
           op: 'eq'
@@ -1731,7 +1735,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
 
     var documentIdArray = toArrayIfDefined(queryOptions.documentId);
     if (documentIdArray) {
-      qOps.documentSelfLink = documentIdArray.map((documentId) => {
+      userQueryOps.documentSelfLink = documentIdArray.map((documentId) => {
         return {
           val: links.COMPUTE_RESOURCES + '/' + documentId,
           op: 'eq'
@@ -1741,7 +1745,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
 
     var addressArray = toArrayIfDefined(queryOptions.address);
     if (addressArray) {
-      qOps.address = addressArray.map((address) => {
+      userQueryOps.address = addressArray.map((address) => {
         return {
           val: '*' + address + '*',
           op: 'eq'
@@ -1751,7 +1755,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
 
     var nameArray = toArrayIfDefined(queryOptions.name);
     if (nameArray) {
-      qOps.name = nameArray.map((name) => {
+      userQueryOps.name = nameArray.map((name) => {
         return {
           val: '*' + name + '*',
           op: 'eq'
@@ -1761,7 +1765,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
 
     var typeArray = toArrayIfDefined(queryOptions.type);
     if (typeArray) {
-      qOps['customProperties/__computeType'] = typeArray.map((type) => {
+      userQueryOps['customProperties/__computeType'] = typeArray.map((type) => {
         return {
           val: '*' + type + '*',
           op: 'eq'
@@ -1777,7 +1781,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
         if (resourcePoolId.startsWith(prefixPath)) {
             resourcePoolId = resourcePoolId.slice(prefixPath.length);
         }
-        qOps.customProperties = [
+        userQueryOps.customProperties = [
           {
             val: constants.CUSTOM_PROPS.EPZ_NAME_PREFIX + resourcePoolId,
             op: 'eq'
@@ -1787,21 +1791,30 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     }
 
     if (queryOptions.powerState) {
-      qOps.powerState = [{
+      userQueryOps.powerState = [{
         val: queryOptions.powerState,
         op: 'eq'
       }];
     }
 
     if (queryOptions.resourcePoolLink) {
-      qOps.resourcePoolLink = [{
+      userQueryOps.resourcePoolLink = [{
         val: queryOptions.resourcePoolLink,
         op: 'eq'
       }];
     }
+
+    var queryOptionsOccurrence = queryOptions[constants.SEARCH_OCCURRENCE.PARAM];
+    if (queryOptionsOccurrence) {
+      userQueryOps[constants.SEARCH_OCCURRENCE.PARAM] = queryOptionsOccurrence;
+    }
+    var userQueryOdata = buildOdataQuery(userQueryOps);
+    if (userQueryOdata) {
+      result += ' and (' + userQueryOdata + ')';
+    }
   }
 
-  return buildOdataQuery(qOps);
+  return result;
 };
 
 var buildClusterQuery = function(descriptionLink, compositionContextId) {

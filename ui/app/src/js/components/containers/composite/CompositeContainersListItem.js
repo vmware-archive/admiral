@@ -111,6 +111,7 @@ var CompositeContainersListItem = Vue.extend({
 
       let hostIds = this.model.hostLinks.map((parentLink) => utils.getDocumentId(parentLink));
       let queryOptions = {
+        $occurrence: constants.SEARCH_OCCURRENCE.ANY,
         any: hostIds
       };
 
