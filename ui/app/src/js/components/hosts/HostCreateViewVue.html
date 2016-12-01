@@ -74,6 +74,15 @@
     </div>
   </div>
 
+  <div id="port" class="form-group" v-bind:class="{'hide': endpoint === null}">
+    <label class="col-sm-3 control-label">
+      {{i18n("app.host.details.port")}}
+    </label>
+    <div class="col-sm-9">
+      <input class="form-control" type="number" v-model="port">
+    </div>
+  </div>
+
   <div id="credential" class="form-group" v-bind:class="{'hide': endpoint === null}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.guestCredential")}}</label>
     <div class="col-sm-9">

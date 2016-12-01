@@ -85,6 +85,7 @@ var HostCreateView = Vue.extend({
       endpoint: null,
       instanceType: null,
       imageType: null,
+      port: constants.COMPUTE.DOCKER_HOST_PORT,
       destination: null,
       clusterSize: 1
     };
@@ -291,7 +292,8 @@ var HostCreateView = Vue.extend({
         name: this.name,
         supportedChildren: ['DOCKER_CONTAINER'],
         customProperties: $.extend(customProperties, {
-          __endpointLink: this.endpoint.documentSelfLink
+          __endpointLink: this.endpoint.documentSelfLink,
+          __dockerHostPort: parseInt(this.port || constants.COMPUTE.DOCKER_HOST_PORT, 10)
         })
       };
       return $.extend(true, hostDescription, {
