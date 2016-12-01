@@ -13,6 +13,7 @@ package com.vmware.admiral.request;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -100,7 +101,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ContainerDescription containerDesc = createContainerDescription();
 
         // setup Group Placement:
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
 
         // 1. Request a container instance:
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
@@ -181,7 +183,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         CompositeDescription compositeDesc = createCompositeDesc(containerDesc);
 
         // setup Group Placement:
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
 
         // 1. Request a composite container:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
@@ -304,7 +307,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertNotNull(compositeDesc);
 
         // setup Group Placement:
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
 
         // 1. Request a composite container:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
@@ -413,7 +417,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         String networkName = "external-net";
 
-        // create external network (same as HostNetworkListDataCollection discovers external networks)
+        // create external network (same as HostNetworkListDataCollection discovers external
+        // networks)
         ContainerNetworkState networkState = new ContainerNetworkState();
         networkState.id = UUID.randomUUID().toString();
         networkState.name = networkName;
@@ -464,7 +469,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertNotNull(compositeDesc);
 
         // setup Group Placement:
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
 
         // 1. Request a composite container:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
@@ -633,7 +639,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertNotNull(compositeDesc);
 
         // setup Group Placement:
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
 
         // 1. Request a composite container with expected failure:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
@@ -755,15 +762,13 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 .createContainerNetworkDescription(networkName);
         networkDesc.documentSelfLink = UUID.randomUUID().toString();
 
-        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription("container1");
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
-        container1Desc.name = "container1";
         container1Desc.networks = new HashMap<>();
         container1Desc.networks.put(networkName, new ServiceNetwork());
 
-        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
+        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription("container2");
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
-        container2Desc.name = "container2";
         container2Desc.affinity = new String[] { "!container1:hard" };
         container2Desc.networks = new HashMap<>();
         container2Desc.networks.put(networkName, new ServiceNetwork());
@@ -993,7 +998,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(SCALE_SIZE, request.resourceLinks.size());
 
-        // Verify that even there is a bigger cluster, scaled containers are placed on the cluster where the others are,
+        // Verify that even there is a bigger cluster, scaled containers are placed on the cluster
+        // where the others are,
         // so that the networking between them will be working
         for (String scaledContainerLink : request.resourceLinks) {
             ContainerState scaledContainer = getDocument(ContainerState.class, scaledContainerLink);
@@ -1115,6 +1121,10 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
         ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
 
+        // Verify containers are on different hosts because of the same exposed ports
+        assertNotEquals("containers must be deployed on different hosts", cont1.parentLink,
+                cont2.parentLink);
+
         List<String> selectedCluster = null;
         if (cluster1Hosts.contains(cont1.parentLink)) {
             selectedCluster = cluster1Hosts;
@@ -1217,7 +1227,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertNotNull(compositeDesc);
 
         // setup Group Placement:
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
 
         // 1. Request a composite container:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
@@ -1322,6 +1333,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
         container2Desc.name = "container2";
+        container1Desc.portBindings = null;
         container2Desc.volumes = new String[] { volumeName + ":/tmp" };
         container2Desc.customProperties.put(MockDockerAdapterService.FAILURE_EXPECTED,
                 Boolean.TRUE.toString());
@@ -1331,7 +1343,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertNotNull(compositeDesc);
 
         // setup Group Placement:
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
 
         // 1. Request a composite container with expected failure:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
@@ -1389,7 +1402,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ContainerDescription containerDesc = createContainerDescription();
 
         // setup Group Placement:
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
 
         // 1. Request a container instance:
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
@@ -1502,7 +1516,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
             ContainerDescription containerDesc = createContainerDescription();
 
             // setup Group Placement:
-            GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+            GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                    resourcePool);
 
             GroupResourcePlacementState groupPlacementState2 = TestRequestStateFactory
                     .createGroupResourcePlacementState();
@@ -1543,7 +1558,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // Try to deploy a container
         ContainerDescription containerDescription = createContainerDescription();
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_TYPE.getName();
         request.resourceDescriptionLink = containerDescription.documentSelfLink;
@@ -1593,7 +1609,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // Deploy a container
         ContainerDescription containerDescription = createContainerDescription();
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
 
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_TYPE.getName();
@@ -1625,7 +1642,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // Try to deploy a container
         ContainerDescription containerDescription = createContainerDescription();
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_TYPE.getName();
         request.resourceDescriptionLink = containerDescription.documentSelfLink;
@@ -1655,7 +1673,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ResourcePoolState resourcePool = createResourcePool();
         // try to deploy a container
         ContainerDescription containerDescription = createContainerDescription();
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
 
         // stop the adapter service
         MockDockerAdapterService service = new MockDockerAdapterService();
@@ -1686,7 +1705,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ContainerDescription containerDesc = createContainerDescription();
 
         // setup Group Placement:
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
 
         // Request a container instance:
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
@@ -1712,7 +1732,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
     public void testGroupResourcePlacementAfterFailedProvisionOperation() throws Throwable {
         ResourcePoolState resourcePool = createResourcePool();
         ContainerDescription containerDescription = createContainerDescription();
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
         long allocatedInstancesCount = groupPlacementState.allocatedInstancesCount;
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_TYPE.getName();
@@ -1750,7 +1771,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
     public void testGroupResourcePlacementAfterSuccessfulProvisionOperation() throws Throwable {
         ResourcePoolState resourcePool = createResourcePool();
         ContainerDescription containerDescription = createContainerDescription();
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
         long allocatedInstancesCount = groupPlacementState.allocatedInstancesCount;
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_TYPE.getName();
@@ -1793,7 +1815,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ContainerDescription containerDesc = createContainerDescription();
 
         // setup Group Placement:
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
 
         // 1. Request a container instance:
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
@@ -1877,7 +1900,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
     @Test
     public void testConfigureHost() throws Throwable {
-        getOrCreateDocument(CommonTestStateFactory.createAuthCredentials(false), AuthCredentialsService.FACTORY_LINK);
+        getOrCreateDocument(CommonTestStateFactory.createAuthCredentials(false),
+                AuthCredentialsService.FACTORY_LINK);
         createResourcePool();
 
         // 1. Request to configure host:
@@ -1904,14 +1928,14 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
         addForDeletion(dockerHost2);
 
-        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription("container1");
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
-        container1Desc.name = "container1";
+        container1Desc.portBindings = null;
 
-        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
+        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription("container2");
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
-        container2Desc.name = "container2";
         container2Desc.links = new String[] { "container1:mycontainer" };
+        container1Desc.portBindings = null;
 
         CompositeDescription compositeDesc;
         if (includeNetwork) {
@@ -1932,7 +1956,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertNotNull(compositeDesc);
 
         // setup Group Placement:
-        GroupResourcePlacementState groupPlacememtState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacememtState = createGroupResourcePlacement(
+                resourcePool);
 
         // 1. Request a composite container:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(

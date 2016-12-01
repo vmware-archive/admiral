@@ -126,6 +126,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
     public void testCompositionRequestStatus() throws Throwable {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
+        desc2.portBindings = null;
         desc2.affinity = new String[] { desc1.name };
         CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
         RequestStatus requestStatus = verifyRequestStatus(compositeDesc.documentSelfLink,
@@ -179,6 +180,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
     public void testRequestStatusShouldBeFailedAfterError() throws Throwable {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
+        desc2.portBindings = null;
         desc2.affinity = new String[] { desc1.name };
         CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
 

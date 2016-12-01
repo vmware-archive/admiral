@@ -35,7 +35,8 @@ import com.vmware.xenon.services.common.QueryTask;
  * A filter implementing {@link HostSelectionFilter} aimed to provide host selection in case the
  * {@link ContainerDescription} specifies <code>ports</code> property. Based on the hostPorts
  * specified in <code>ports</code> the selection algorithm will filter out all docker hosts that
- * run containers with the same hostPorts.
+ * run containers with the same hostPorts. Basically this is a hard anti-affinity constraint, implicit
+ * between the containers exposing the same host port.
  */
 public class ExposedPortsHostFilter
         implements HostSelectionFilter<PlacementHostSelectionTaskState> {
@@ -88,7 +89,7 @@ public class ExposedPortsHostFilter
 
                 if (hostSelectionMap.isEmpty()) {
                     String errMsg = String.format(
-                            "No container states found with unexposed ports %s.",
+                            "No compute hosts found with unexposed ports %s.",
                             descExposedPorts.toString());
                     callback.complete(null, new HostSelectionFilterException(errMsg));
                 } else {

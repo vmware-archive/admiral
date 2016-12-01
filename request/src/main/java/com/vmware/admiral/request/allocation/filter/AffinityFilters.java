@@ -86,8 +86,6 @@ public final class AffinityFilters {
 
     private void initialize(ServiceHost host, ContainerDescription desc) {
 
-        filters.add(new ExposedPortsHostFilter(host, desc));
-
         // host affinity filters:
         filters.add(new PodAffinityHostFilter(host, desc));
         filters.add(new VolumesFromAffinityHostFilter(host, desc));
@@ -103,6 +101,7 @@ public final class AffinityFilters {
         filters.add(new ContainerToNetworkAffinityHostFilter(host, desc));
 
         // host anti-affinity filters:
+        filters.add(new ExposedPortsHostFilter(host, desc));
         filters.add(new ServiceAntiAffinityHostFilter(host, desc));
         filters.add(new ClusterAntiAffinityHostFilter(host, desc));
 

@@ -167,7 +167,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
     @Test
     public void testWithDependentDesc() throws Throwable {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
-        ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
+        ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2", false, false);
         desc2.affinity = new String[] { desc1.name };
         CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
 
@@ -304,39 +304,39 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
 
         ContainerDescription[] descs = new ContainerDescription[15];
         // level 1:
-        descs[0] = TestRequestStateFactory.createContainerDescription("name0");
-        descs[1] = TestRequestStateFactory.createContainerDescription("name1");
-        descs[2] = TestRequestStateFactory.createContainerDescription("name2");
+        descs[0] = TestRequestStateFactory.createContainerDescription("name0", false, false);
+        descs[1] = TestRequestStateFactory.createContainerDescription("name1", false, false);
+        descs[2] = TestRequestStateFactory.createContainerDescription("name2", false, false);
 
         // level 2:
-        descs[3] = TestRequestStateFactory.createContainerDescription("name3");
-        descs[4] = TestRequestStateFactory.createContainerDescription("name4");
-        descs[5] = TestRequestStateFactory.createContainerDescription("name5");
+        descs[3] = TestRequestStateFactory.createContainerDescription("name3", false, false);
+        descs[4] = TestRequestStateFactory.createContainerDescription("name4", false, false);
+        descs[5] = TestRequestStateFactory.createContainerDescription("name5", false, false);
 
         descs[1].volumesFrom = new String[] { descs[3].name };
         descs[1].affinity = new String[] { descs[4].name };
         descs[2].affinity = new String[] { descs[5].name };
 
         // level 3:
-        descs[6] = TestRequestStateFactory.createContainerDescription("name6");
-        descs[7] = TestRequestStateFactory.createContainerDescription("name7");
+        descs[6] = TestRequestStateFactory.createContainerDescription("name6", false, false);
+        descs[7] = TestRequestStateFactory.createContainerDescription("name7", false, false);
 
         descs[3].volumesFrom = new String[] { descs[6].name };
         descs[5].affinity = new String[] { descs[7].name };
 
         // level 4:
-        descs[8] = TestRequestStateFactory.createContainerDescription("name8");
-        descs[9] = TestRequestStateFactory.createContainerDescription("name9");
-        descs[10] = TestRequestStateFactory.createContainerDescription("name10");
-        descs[11] = TestRequestStateFactory.createContainerDescription("name11");
+        descs[8] = TestRequestStateFactory.createContainerDescription("name8", false, false);
+        descs[9] = TestRequestStateFactory.createContainerDescription("name9", false, false);
+        descs[10] = TestRequestStateFactory.createContainerDescription("name10", false, false);
+        descs[11] = TestRequestStateFactory.createContainerDescription("name11", false, false);
 
         descs[6].affinity = new String[] { descs[9].name, descs[8].name };
         descs[7].affinity = new String[] { descs[10].name, descs[11].name };
 
         // level 5:
-        descs[12] = TestRequestStateFactory.createContainerDescription("name12");
-        descs[13] = TestRequestStateFactory.createContainerDescription("name13");
-        descs[14] = TestRequestStateFactory.createContainerDescription("name14");
+        descs[12] = TestRequestStateFactory.createContainerDescription("name12", false, false);
+        descs[13] = TestRequestStateFactory.createContainerDescription("name13", false, false);
+        descs[14] = TestRequestStateFactory.createContainerDescription("name14", false, false);
 
         descs[8].volumesFrom = new String[] { descs[12].name, descs[13].name };
         descs[8].affinity = new String[] { descs[14].name };

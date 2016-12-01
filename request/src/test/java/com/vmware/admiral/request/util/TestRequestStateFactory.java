@@ -94,7 +94,8 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return createContainerDescription("admiral-test");
     }
 
-    public static ContainerDescription createContainerDescription(String name, boolean isCloned) {
+    public static ContainerDescription createContainerDescription(String name, boolean isCloned,
+            boolean exposePorts) {
         ContainerDescription containerDesc = new ContainerDescription();
         containerDesc.documentSelfLink = CONTAINER_DESC_LINK_NAME;
         containerDesc.name = name;
@@ -105,14 +106,18 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         containerDesc.memoryLimit = ContainerDescriptionService.getContainerMinMemoryLimit();
         containerDesc.memorySwapLimit = 0L;
         containerDesc.cpuShares = 5;
-        containerDesc.portBindings = Arrays.stream(new String[] {
-                "5000:5000",
-                "127.0.0.1::20080",
-                "127.0.0.1:20080:80",
-                "1234:1234/tcp" })
-                .map((s) -> PortBinding.fromDockerPortMapping(DockerPortMapping.fromString(s)))
-                .collect(Collectors.toList())
-                .toArray(new PortBinding[0]);
+
+        if (exposePorts) {
+            containerDesc.portBindings = Arrays.stream(new String[] {
+                    "5000:5000",
+                    "127.0.0.1::20080",
+                    "127.0.0.1:20080:80",
+                    "1234:1234/tcp" })
+                    .map((s) -> PortBinding.fromDockerPortMapping(DockerPortMapping.fromString(s)))
+                    .collect(Collectors.toList())
+                    .toArray(new PortBinding[0]);
+        }
+
         containerDesc.dns = new String[] { "0.0.0.0" };
         containerDesc.env = new String[] {
                 "ENV_VAR=value",
@@ -141,7 +146,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
     }
 
     public static ContainerDescription createContainerDescription(String name) {
-        return createContainerDescription(name, false);
+        return createContainerDescription(name, false, true);
     }
 
     public static ContainerNetworkDescription createContainerNetworkDescription(String name) {

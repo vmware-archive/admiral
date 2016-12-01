@@ -306,6 +306,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
         desc2.affinity = new String[] { desc1.name };
+        desc2.portBindings = null;
         CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
@@ -348,10 +349,11 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
     }
 
     @Test
-    public void testRemovingOfNotClonedContainerDescritionsAndContainerRemovals() throws Throwable {
+    public void testRemovingOfNotClonedContainerDescriptionsAndContainerRemovals() throws Throwable {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
         desc2.affinity = new String[] { desc1.name };
+        desc2.portBindings = null;
         CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
@@ -407,11 +409,11 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
     }
 
     @Test
-    public void testRemovingOfClonedContainerDescritionsAndContainerRemovals() throws Throwable {
+    public void testRemovingOfClonedContainerDescriptionsAndContainerRemovals() throws Throwable {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1",
-                true);
+                true, true);
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2",
-                true);
+                true, false);
         desc2.affinity = new String[] { desc1.name };
         CompositeDescription compositeDesc = createCompositeDesc(true, desc1, desc2);
 
@@ -476,7 +478,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
     @Test
     public void testScaleDownContainerShouldNotDeleteDescription() throws Throwable {
         ContainerDescription desc = TestRequestStateFactory
-                .createContainerDescription("name", true);
+                .createContainerDescription("name", true, true);
         desc._cluster = 2;
         CompositeDescription compositeDesc = createCompositeDesc(true, desc);
 
@@ -528,8 +530,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
     @Test
     public void testRemoveContainerSharingContainerDescription() throws Throwable {
         ContainerDescription desc = TestRequestStateFactory.createContainerDescription("name",
-                false);
-        desc.portBindings = null;
+                false, false);
         desc = doPost(desc, ContainerDescriptionService.FACTORY_LINK);
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
@@ -582,11 +583,12 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
     @Test
     public void testRemoveApplicationWithScaledContainer() throws Throwable {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1",
-                true);
+                true, true);
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2",
-                true);
+                true, false);
         desc2.affinity = new String[] { desc1.name };
         desc1._cluster = 9;
+
         CompositeDescription compositeDesc = createCompositeDesc(true, desc1, desc2);
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState(

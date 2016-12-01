@@ -589,6 +589,9 @@ public class ContainerAllocationTaskService
             containerState.volumeDriver = containerDesc.volumeDriver;
             containerState.volumes = mapVolumes(containerDesc, hostSelection);
             containerState.networks = mapNetworks(containerDesc, hostSelection);
+            if (containerDesc.portBindings != null) {
+                containerState.ports = Arrays.asList(containerDesc.portBindings);
+            }
 
             if (containerState.networks != null && !containerState.networks.isEmpty()) {
                 // use links in user defined networks. No need to map to specific containers,

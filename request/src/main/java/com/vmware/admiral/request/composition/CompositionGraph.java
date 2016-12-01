@@ -29,6 +29,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.volume.VolumeUtil;
 import com.vmware.admiral.request.allocation.filter.AffinityFilters;
+import com.vmware.admiral.request.allocation.filter.ImplicitDependencyFilters;
 
 public class CompositionGraph {
     private final Map<String, ResourceNode> resourceNodesByName;
@@ -279,6 +280,12 @@ public class CompositionGraph {
                 }
             }
         }
+        calculateImplicitDependencies(compositeDescription);
+    }
+
+    protected void calculateImplicitDependencies(CompositeDescriptionExpanded compositeDescription) {
+        final ImplicitDependencyFilters filters = ImplicitDependencyFilters.build(resourceNodesByName, compositeDescription);
+        filters.apply();
     }
 
     public Map<String, ResourceNode> resourceNodesByName() {

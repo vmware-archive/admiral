@@ -45,7 +45,14 @@ public class CompositionGraphTest {
 
     @Before
     public void setup() {
-        graph = new CompositionGraph();
+        graph = new CompositionGraph() {
+            @Override
+            protected void calculateImplicitDependencies(
+                    CompositeDescriptionExpanded compositeDescription) {
+                // Do nothing since we are a simple unit test and cannot deal with
+                // inter-component dependencies, which depend on JSON deserialization
+            }
+        };
     }
 
     @Test
