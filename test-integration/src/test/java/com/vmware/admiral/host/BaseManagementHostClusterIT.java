@@ -16,6 +16,7 @@ import static java.lang.Boolean.TRUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.host.HostInitAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doRestrictedOperation;
@@ -236,27 +237,36 @@ public abstract class BaseManagementHostClusterIT {
     private <T extends ServiceDocument> void validateDefaultContentInSync(
             List<ManagementHost> allHostsInstances, String token, String documentSelfLink,
             Class<T> type) {
-        ManagementHost host = allHostsInstances.get(0);
-        T firstState = doGet(host, documentSelfLink, type, token);
+
+        ManagementHost firstHost = allHostsInstances.get(0);
+        T firstState = doGet(firstHost, documentSelfLink, type, token);
         assertNotNull(
-                "State with link " + documentSelfLink + " was not found on host " + host.getId(),
+                "State with link " + documentSelfLink + " was not found on host "
+                        + firstHost.getUri().toString(),
                 firstState);
 
-        for (int i = 0; i < 10; i++) {
-            host = allHostsInstances.get(i % allHostsInstances.size());
+        for (ManagementHost host : allHostsInstances) {
             System.out.println(
-                    "Finding state with link " + documentSelfLink + " on host " + host.getId());
+                    "Finding state with link " + documentSelfLink + " on host "
+                            + host.getUri().toString());
             T state = doGet(host, documentSelfLink, type, token);
             assertNotNull("State with link " + documentSelfLink + " was not found on host "
-                    + host.getId(), state);
-
-            assertTrue(
-                    "States with link " + documentSelfLink
-                            + " were are not the same on different hosts",
-                    equals(firstState, state, type));
+                    + host.getUri().toString(), state);
 
             System.out.println(
-                    "Found state with link " + documentSelfLink + " on host " + host.getId());
+                    "Found state with link " + documentSelfLink + " on host "
+                            + host.getUri().toString());
+
+            if (!equals(firstState, state, type)) {
+                System.out.println(" - first state");
+                System.out.println(Utils.toJsonHtml(firstState));
+
+                System.out.println(" - current state");
+                System.out.println(Utils.toJsonHtml(state));
+
+                fail("States with link " + documentSelfLink
+                        + " are not the same on different hosts");
+            }
         }
     }
 
@@ -265,6 +275,12 @@ public abstract class BaseManagementHostClusterIT {
         EnumSet<ServiceOption> options = EnumSet.noneOf(ServiceOption.class);
         ServiceDocumentDescription buildDescription = Builder.create().buildDescription(type,
                 options);
+
+        documentA.documentUpdateTimeMicros = 0;
+        documentA.documentExpirationTimeMicros = 0;
+
+        documentB.documentUpdateTimeMicros = 0;
+        documentB.documentExpirationTimeMicros = 0;
 
         return ServiceDocument.equals(buildDescription, documentA, documentB);
     }
@@ -280,7 +296,8 @@ public abstract class BaseManagementHostClusterIT {
         QueryUtil.addExpandOption(q);
 
         host.sendRequest(Operation
-                .createPost(UriUtils.buildUri(host, ServiceUriPaths.CORE_QUERY_TASKS))
+                .createGet(UriUtils.buildUri(host, ServiceUriPaths.CORE_DOCUMENT_INDEX,
+                        "documentSelfLink=" + selfLink))
                 .addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, token)
                 .setBody(q)
                 .setReferer(host.getUri())
@@ -288,16 +305,8 @@ public abstract class BaseManagementHostClusterIT {
                     if (e != null) {
                         ctx.failIteration(e);
                     } else {
-                        QueryTask qrt = o.getBody(QueryTask.class);
-                        if (qrt.results.documents.size() != 1) {
-                            // Unexpected number of documents
-                            ctx.completeIteration();
-                        } else {
-                            result.set(
-                                    Utils.fromJson(qrt.results.documents.values().iterator().next(),
-                                            type));
-                            ctx.completeIteration();
-                        }
+                        result.set(o.getBody(type));
+                        ctx.completeIteration();
                     }
                 }));
 
