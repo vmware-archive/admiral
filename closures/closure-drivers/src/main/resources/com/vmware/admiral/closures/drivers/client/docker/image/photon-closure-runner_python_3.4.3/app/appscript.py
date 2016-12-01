@@ -54,10 +54,12 @@ def install_dependencies():
     requirements_path = SRC_DIR + os.sep + SRC_REQ_FILE
     if os.path.exists(requirements_path):
         try:
-            subprocess.check_call(['pip3', 'install', '-r', requirements_path])
+            subprocess.run(['pip3', 'install', '-r', requirements_path],
+                           check=True, stderr=subprocess.PIPE)
         except subprocess.CalledProcessError as e:
-            sys.stderr.write('ERROR: Unable to install dependencies. Reason: %s' % str(e.returncode))
-            raise Exception('Unable to install dependencies. Reason: %s' % str(e.output))
+            print ('Unable to install dependencies: %s' % str(e.stderr))
+            sys.stderr.write('ERROR: Unable to install dependencies. Reason: %s' % str(e.stderr))
+            raise Exception('Unable to install dependencies. Reason: %s' % str(e.stderr))
         print ('Dependencies installed.')
     print ('No dependencies found.')
 

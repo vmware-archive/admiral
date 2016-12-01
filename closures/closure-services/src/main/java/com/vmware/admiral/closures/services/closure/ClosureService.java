@@ -275,6 +275,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
     }
 
     private void handleStateChanged(Closure closure) {
+        fetchLogs(closure, () -> {
+        });
         if (isDone(closure)) {
             sendRequest(Operation
                     .createGet(this, closure.descriptionLink)
@@ -287,8 +289,15 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                         } else {
                             ClosureDescription closureDesc = op.getBody(ClosureDescription.class);
 
-                            // TODO: improve logs fetching
-                            getHost().schedule(() -> fetchLogs(closure, closureDesc, true), 3, TimeUnit.SECONDS);
+                            getHost().schedule(() -> fetchLogs(closure, () -> {
+                                if (!ClosureProps.IS_KEEP_ON_COMPLETION_ON && closure.state != TaskStage.CANCELLED) {
+                                    // clean execution container
+                                    logInfo("Cleaning execution container for closure: " + closure.documentSelfLink);
+                                    getExecutionDriver(closureDesc).cleanClosure(closure,
+                                            (error) -> logWarning("Unable to clean resources for %s",
+                                                    closure.documentSelfLink));
+                                }
+                            }), 3, TimeUnit.SECONDS);
 
                             if (closureDesc.notifyUrl != null && closureDesc.notifyUrl.length() > 0) {
                                 // Call webhook posting closure state
@@ -435,7 +444,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
 
     // PRIVATE METHODS
 
-    private void fetchLogs(Closure closure, ClosureDescription closureDesc, boolean cleanup) {
+    private void fetchLogs(Closure closure, Runnable operation) {
         if (closure.resourceLinks == null || closure.resourceLinks.size() <= 0) {
             return;
         }
@@ -455,13 +464,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                         closure.logs = shrinkToMaxAllowedSize(logState.logs);
                         sendSelfPatch(closure);
 
-                        if (cleanup && !ClosureProps.IS_KEEP_ON_COMPLETION_ON && closure.state != TaskStage.CANCELLED) {
-                            // clean execution container
-                            logInfo("Cleaning execution container for closure: " + closure.documentSelfLink);
-                            getExecutionDriver(closureDesc).cleanClosure(closure,
-                                    (error) -> logWarning("Unable to clean resources for %s",
-                                            closure.documentSelfLink));
-                        }
+                        operation.run();
                     }
                 }));
     }
