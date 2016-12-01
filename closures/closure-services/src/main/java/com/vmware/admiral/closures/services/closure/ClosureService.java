@@ -70,7 +70,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
     }
 
     @Override
-    public void handleMaintenance(Operation post) {
+    public void handlePeriodicMaintenance(Operation post) {
         if (getProcessingStage() != ProcessingStage.AVAILABLE) {
             logWarning("Skipping maintenance since service is not available: %s ", getUri());
             return;

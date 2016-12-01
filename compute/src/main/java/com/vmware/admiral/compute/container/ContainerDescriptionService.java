@@ -533,7 +533,7 @@ public class ContainerDescriptionService extends StatefulService {
     }
 
     @Override
-    public void handleMaintenance(Operation post) {
+    public void handlePeriodicMaintenance(Operation post) {
         if (getProcessingStage() != ProcessingStage.AVAILABLE) {
             logFine("Skipping maintenance since service is not available: %s ", getUri());
             post.complete();

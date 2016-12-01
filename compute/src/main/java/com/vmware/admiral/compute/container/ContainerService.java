@@ -342,7 +342,7 @@ public class ContainerService extends StatefulService {
         if (containerMaintenance == null) {
             containerMaintenance = ContainerMaintenance.create(getHost(), getSelfLink());
         }
-        containerMaintenance.handleMaintenance(post);
+        containerMaintenance.handlePeriodicMaintenance(post);
     }
 
     private void startMonitoringContainerState(ContainerState body) {
@@ -355,7 +355,7 @@ public class ContainerService extends StatefulService {
                             + ex.getMessage());
 
                 } else {
-                    handleMaintenance(o);
+                    handlePeriodicMaintenance(o);
                 }
             }, getSelfLink());
         }

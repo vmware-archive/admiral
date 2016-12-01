@@ -151,7 +151,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                         + ex.getMessage());
 
             } else {
-                handleMaintenance(Operation.createGet(null));
+                handlePeriodicMaintenance(Operation.createGet(null));
             }
         }, getSelfLink());
     }
@@ -581,7 +581,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
     }
 
     @Override
-    public void handleMaintenance(Operation post) {
+    public void handlePeriodicMaintenance(Operation post) {
         if (getProcessingStage() != ProcessingStage.AVAILABLE) {
             logFine("Skipping maintenance since service is not available: %s ", getUri());
             return;

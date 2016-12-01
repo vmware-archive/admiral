@@ -126,7 +126,7 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
     }
 
     @Test
-    public void testHandleMaintenance() throws Throwable {
+    public void testHandlePeriodicMaintenance() throws Throwable {
         // Create health config and a container to check the health for
 
         ContainerDescription containerDesc = createContainerDescription();
@@ -186,7 +186,7 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
     }
 
     @Test
-    public void testHandleMaintenanceOverTcp() throws Throwable {
+    public void testHandlePeriodicMaintenanceOverTcp() throws Throwable {
         // Create health config and a container to check the health for
         String mockContainerDescriptionLink = UriUtils.buildUriPath(
                 ContainerDescriptionService.FACTORY_LINK, "mockDescId");
@@ -256,7 +256,7 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
     }
 
     @Test
-    public void testHandleMaintenanceWithCommand() throws Throwable {
+    public void testHandlePeriodicMaintenanceWithCommand() throws Throwable {
         // Create health config and a container to check the health for
         String mockContainerDescriptionLink = UriUtils.buildUriPath(
                 ContainerDescriptionService.FACTORY_LINK, "mockDescId");
@@ -325,8 +325,8 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
     }
 
     @Test
-    public void testHandleMaintenanceWithSuccess() throws Throwable {
-        host.log("Test testHandleMaintenanceWithSuccess starts...");
+    public void testHandlePeriodicMaintenanceWithSuccess() throws Throwable {
+        host.log("Test testHandlePeriodicMaintenanceWithSuccess starts...");
 
         host.log("Creating HealthConfig...");
         // Create health config and a container to check the health for

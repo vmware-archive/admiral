@@ -235,7 +235,7 @@ public class ContainerNetworkService extends StatefulService {
     }
 
     @Override
-    public void handleMaintenance(Operation post) {
+    public void handlePeriodicMaintenance(Operation post) {
         if (getProcessingStage() != ProcessingStage.AVAILABLE) {
             logFine("Skipping maintenance since service is not available: %s ", getUri());
             return;
@@ -250,12 +250,12 @@ public class ContainerNetworkService extends StatefulService {
                             currentState.descriptionLink != null
                                     && !currentState.descriptionLink.startsWith(
                                             ContainerNetworkDescriptionService.DISCOVERED_DESCRIPTION_LINK));
-                    containerNetworkMaintenance.handleMaintenance(post);
+                    containerNetworkMaintenance.handlePeriodicMaintenance(post);
                 }
             }));
             return;
         }
-        containerNetworkMaintenance.handleMaintenance(post);
+        containerNetworkMaintenance.handlePeriodicMaintenance(post);
     }
 
     private void startMonitoringContainerNetworkState(ContainerNetworkState body) {
@@ -267,7 +267,7 @@ public class ContainerNetworkService extends StatefulService {
                     logWarning("Skipping maintenance because service failed to start: "
                             + ex.getMessage());
                 } else {
-                    handleMaintenance(o);
+                    handlePeriodicMaintenance(o);
                 }
             }, getSelfLink());
         }

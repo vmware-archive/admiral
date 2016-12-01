@@ -53,7 +53,7 @@ public class ContainerMaintenance {
         this.containerSelfLink = containerSelfLink;
     }
 
-    public void handleMaintenance(Operation post) {
+    public void handlePeriodicMaintenance(Operation post) {
         if (DeploymentProfileConfig.getInstance().isTest()) {
             host.log(Level.FINE,
                     "Skipping scheduled maintenance in test mode: %s", containerSelfLink);

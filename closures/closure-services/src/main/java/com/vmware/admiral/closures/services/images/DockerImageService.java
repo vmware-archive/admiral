@@ -43,7 +43,7 @@ public class DockerImageService extends StatefulService {
     }
 
     @Override
-    public void handleMaintenance(Operation post) {
+    public void handlePeriodicMaintenance(Operation post) {
         if (getProcessingStage() != ProcessingStage.AVAILABLE) {
             logWarning("Skipping maintenance since service is not available: %s ", getUri());
             return;
