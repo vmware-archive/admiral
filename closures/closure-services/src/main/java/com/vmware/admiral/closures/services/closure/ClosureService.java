@@ -461,12 +461,31 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                         logInfo("Logs fetched successfully for closure: %s", closure.documentSelfLink);
 
                         LogServiceState logState = op.getBody(LogServiceState.class);
-                        closure.logs = shrinkToMaxAllowedSize(logState.logs);
-                        sendSelfPatch(closure);
+                        byte[] fetchedLogs = shrinkToMaxAllowedSize(logState.logs);
+                        if (shouldUpdateLogs(closure.logs, fetchedLogs)) {
+                            closure.logs = fetchedLogs;
+                            sendSelfPatch(closure);
+                        }
 
                         operation.run();
                     }
                 }));
+    }
+
+    private static boolean shouldUpdateLogs(byte[] oldLogs, byte[] newLogs) {
+        if (oldLogs == newLogs) {
+            return false;
+        }
+        if (newLogs == null) {
+            return false;
+        }
+        if (oldLogs == null) {
+            return true;
+        }
+        if (newLogs.length != oldLogs.length) {
+            return true;
+        }
+        return false;
     }
 
     private byte[] shrinkToMaxAllowedSize(byte[] targetArray) {
