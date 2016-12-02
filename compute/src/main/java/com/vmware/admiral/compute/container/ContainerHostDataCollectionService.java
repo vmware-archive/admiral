@@ -25,8 +25,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
@@ -87,6 +89,9 @@ public class ContainerHostDataCollectionService extends StatefulService {
 
     public static final String RESOURCE_POOL_CPU_USAGE_CUSTOM_PROP = "__cpuUsage";
     public static final String RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP = "__availableMemory";
+
+    protected volatile AtomicBoolean scheduled = new AtomicBoolean(false);
+    protected long maintenanceIntervalInitial = TimeUnit.SECONDS.toMicros(90);
 
     public static ServiceDocument buildDefaultStateInstance() {
         ContainerHostDataCollectionState state = new ContainerHostDataCollectionState();
@@ -202,6 +207,9 @@ public class ContainerHostDataCollectionService extends StatefulService {
                         updateContainerHostInfo(computeState.documentSelfLink, (o, error) -> {
                             if (error != null) {
                                 handleHostNotAvailable(computeState, error);
+                                if (scheduled.getAndSet(true) == false) {
+                                    scheduleDataCollection();
+                                }
                             } else {
                                 handleHostAvailable(computeState);
                                 // TODO multiple operations in parallel for the same RP;
@@ -595,6 +603,25 @@ public class ContainerHostDataCollectionService extends StatefulService {
 
         logFine("Performing maintenance for: %s", getUri());
         updateHostInfoDataCollection(post);
+    }
+
+    /**
+     * Trigger the data collection more often in the beginning. The reason is that in cluster after
+     * restart the node will not have the certificates loaded. In this case the first run will mark
+     * the existing docker host in DISABLED state. Speed up the first runs in order to mark the
+     * hosts as ON again
+     */
+    private void scheduleDataCollection() {
+        getHost().schedule(() -> {
+            try {
+                updateHostInfoDataCollection(Operation.createGet(null));
+            } catch (Exception e) {
+                getHost().log(Level.WARNING, e.getMessage());
+                getHost().log(Level.FINE, Utils.toString(e));
+            } finally {
+                scheduled.set(false);
+            }
+        }, maintenanceIntervalInitial, TimeUnit.MICROSECONDS);
     }
 
     private void updateHostInfoDataCollection(Operation maintOp) {
