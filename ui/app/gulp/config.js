@@ -161,7 +161,7 @@ module.exports = {
     dest: dest + '/fonts',
   },
   styles: {
-    src: [src + '/styles/**/*.{sass,scss,css}', './node_modules/bootstrap-tokenfield/dist/css/*.css'],
+    src: [src + '/styles/**/*.{sass,scss,css}', './node_modules/bootstrap-tokenfield/dist/css/*.css', './node_modules/font-awesome/css/*.css'],
     dest: dest + '/styles',
     includePaths:  ['./node_modules/bootstrap-sass/assets/stylesheets', './node_modules/font-awesome/scss']
   },
