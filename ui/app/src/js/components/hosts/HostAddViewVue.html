@@ -67,7 +67,7 @@
     </div>
   </div>
 
-  <div id="hostAutoConfig" class="form-group auto-configure" v-if="!model || !model.isUpdate">
+  <div id="hostAutoConfig" class="form-group auto-configure" v-if="autoConfigurationEnabled">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.autoConfigure")}}</label>
     <div class="col-sm-9 form-input-group">
       <input class="checkbox-control" type="checkbox" name="hostAutoConfig" v-model="autoConfigure"/><label

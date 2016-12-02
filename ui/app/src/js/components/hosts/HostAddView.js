@@ -87,11 +87,13 @@ var HostAddView = Vue.extend({
     },
     validationErrors: function() {
       return this.model.validationErrors || {};
+    },
+    autoConfigurationEnabled: function() {
+      return !utils.isApplicationEmbedded() && (!this.model || !this.model.isUpdate);
     }
   },
 
   attached: function() {
-
     // Resource pool input
     var elemResourcePool = $(this.$el).find('#resourcePool .form-control');
     this.resourcePoolInput = new DropdownSearchMenu(elemResourcePool, {
