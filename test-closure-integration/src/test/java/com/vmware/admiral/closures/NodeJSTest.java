@@ -1,5 +1,12 @@
 /*
  * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
 package com.vmware.admiral.closures;
@@ -10,6 +17,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -18,69 +30,85 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.BaseIntegrationTest;
-import com.vmware.admiral.SimpleHttpsClient;
+import com.vmware.admiral.closures.drivers.DriverConstants;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
-import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
-import com.vmware.admiral.closures.drivers.DriverConstants;
 import com.vmware.admiral.closures.services.closuredescription.ResourceConstraints;
+import com.vmware.admiral.common.util.ServiceClientFactory;
+import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.service.common.LogService;
+import com.vmware.admiral.SimpleHttpsClient;
+import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
-/**
- * Integration tests of closure service for NodeJS runtime.
- */
-public class NodeJSRuntimeTest extends BaseIntegrationTest {
+public class NodeJSTest extends BaseIntegrationTest {
 
-    private static final long TEST_TASK_MAINTANENACE_TIMEOUT_MLS = 4000;
+    protected static String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
 
-    private static final String IMAGE_NAME = IMAGE_NAME_PREFIX + DriverConstants.RUNTIME_NODEJS_4_3_0;
+    private static final String IMAGE_NAME = IMAGE_NAME_PREFIX
+            + DriverConstants.RUNTIME_NODEJS_4_3_0;
 
-    private static String serviceHostUri;
     private static String testWebserverUri;
+
     private static String RUNTIME_NODEJS = "nodejs_4.3.0";
 
-    private static DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    private static ServiceClient serviceClient;
+
+    private static String dockerBuildImageLink;
+    private static String dockerBuildBaseImageLink;
 
     @BeforeClass
-    public static void setup() throws Exception {
-        serviceHostUri = getServiceHostUrl();
-        testWebserverUri = getTestWebServerUrl();
-        setUpDockerHostAuthentication();
+    public static void beforeClass() {
 
-        // trigger image build with no dependencies
-        triggerExecutionImageBuildWithoutDependencies();
+        serviceClient = ServiceClientFactory.createServiceClient(null);
+        testWebserverUri = getTestWebServerUrl();
     }
 
     @AfterClass
-    public static void clean() throws Exception {
-        String dockerBuildImageLink = createImageBuildRequestUri(IMAGE_NAME + ":latest", dockerHostCompute
+    public static void afterClass()
+            throws CertificateException, NoSuchAlgorithmException, KeyStoreException,
+            KeyManagementException,
+            IOException {
+        SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildImageLink);
+        SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildBaseImageLink);
+        serviceClient.stop();
+    }
+
+    @Override
+    @After
+    public void provisioningTearDown() throws Exception {
+    }
+
+    @Before
+    public void setup() throws Exception {
+        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
+        dockerBuildImageLink = getBaseUrl()
+                + createImageBuildRequestUri(IMAGE_NAME + ":latest", dockerHostCompute
                 .documentSelfLink);
-        cleanResourceUri(serviceHostUri + dockerBuildImageLink);
-        dockerBuildImageLink = createImageBuildRequestUri(BASE_IMAGE_NAME_PREFIX + "nodejs_base:1.0", dockerHostCompute
+        dockerBuildBaseImageLink = getBaseUrl()
+                + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
                 .documentSelfLink);
-        cleanResourceUri(serviceHostUri + dockerBuildImageLink);
-        Thread.sleep(30000);
     }
 
     @Test
     public void addDefaultTaskTest() throws Exception {
-        logger.info("Executing tests against docker host: {}" + serviceHostUri);
+        logger.info("Executing tests against docker host: {}" + serviceClient);
 
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -91,21 +119,20 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         closureDescState.runtime = RUNTIME_NODEJS;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
         assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
     }
 
     @Test
     public void executeJSNumberParametersTest() throws Throwable {
-        logger.info("Executing  against: " + serviceHostUri);
+        logger.info("Executing  against: " + serviceClient);
 
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
 
         int expectedInVar = 3;
-        int expectedOutVar = 3;
         double expectedResult = 4.0; // TODO: fix types
 
         closureDescState.source = "module.exports = function test(context) {"
@@ -120,10 +147,10 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
 
         // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
 
         // Execute the created Closure
         Closure closureRequest = new Closure();
@@ -131,12 +158,14 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         inputs.put("a", new JsonPrimitive(expectedInVar));
         closureRequest.inputs = inputs;
 
-        executeTask(createdClosure, closureRequest, serviceHostUri);
+        executeClosure(createdClosure, closureRequest, serviceClient);
 
         // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        Closure closure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
         assertNotNull(closure);
 
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
@@ -145,13 +174,13 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
         assertEquals(expectedResult, closure.outputs.get("result").getAsDouble(), 0);
 
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
 
     @Test
     public void executeJSDependenciesTest() throws Throwable {
-        logger.info("Executing  against: " + serviceHostUri);
+        logger.info("Executing  against: " + serviceClient);
 
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
@@ -175,10 +204,10 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
 
         // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
 
         // Execute the created Closure
         Closure closureRequest = new Closure();
@@ -186,13 +215,14 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         inputs.put("a", new JsonPrimitive(expectedInVar));
         closureRequest.inputs = inputs;
 
-        executeTask(createdClosure, closureRequest, serviceHostUri);
+        executeClosure(createdClosure, closureRequest, serviceClient);
 
         // Wait for the completion timeout
-        String imageRequestLink = waitForBuildCompletion(serviceHostUri, IMAGE_NAME, closureDescription,
-                TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        Closure closure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
         assertNotNull(closure);
 
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
@@ -201,13 +231,14 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
         assertEquals(expectedResult, closure.outputs.get("result").getAsDouble(), 0);
 
-        cleanResourceUri(serviceHostUri + imageRequestLink);
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
 
     @Test
     public void executeJSArrayOfNumberParametersTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -230,10 +261,10 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         ClosureDescription[] responses = new ClosureDescription[1];
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
 
         // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
 
         // Executing the created Closure
         Closure closureRequest = new Closure();
@@ -246,12 +277,14 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         inputs.put("a", jsArray);
         closureRequest.inputs = inputs;
 
-        executeTask(createdClosure, closureRequest, serviceHostUri);
+        executeClosure(createdClosure, closureRequest, serviceClient);
 
         // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        Closure finishedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure finishedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
         assertEquals(createdClosure.descriptionLink, finishedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, finishedClosure.state);
@@ -259,12 +292,14 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         verifyJsonArrayInts(expectedInVar, finishedClosure.inputs.get("a").getAsJsonArray());
         verifyJsonArrayInts(expectedResult, finishedClosure.outputs.get("result").getAsJsonArray());
 
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
 
     @Test
     public void executeJSArrayOfStringParametersTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -287,11 +322,11 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
         assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
 
@@ -306,24 +341,28 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         inputs.put("a", jsArray);
         closureRequest.inputs = inputs;
 
-        executeTask(createdClosure, closureRequest, serviceHostUri);
+        executeClosure(createdClosure, closureRequest, serviceClient);
 
         // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
 
         verifyJsonArrayStrings(expectedInVar, fetchedClosure.inputs.get("a").getAsJsonArray());
         verifyJsonArrayStrings(expectedResult, fetchedClosure.outputs.get("result").getAsJsonArray());
 
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
 
     @Test
     public void executeJSArrayOfBooleanParametersTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -345,11 +384,11 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
         assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
 
@@ -364,24 +403,28 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         inputs.put("a", jsArray);
         closureRequest.inputs = inputs;
 
-        executeTask(createdClosure, closureRequest, serviceHostUri);
+        executeClosure(createdClosure, closureRequest, serviceClient);
 
         // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
         verifyJsonArrayBooleans(expectedInVar, fetchedClosure.inputs.get("a").getAsJsonArray());
         verifyJsonArrayBooleans(expectedResult, fetchedClosure.outputs.get("result").getAsJsonArray());
 
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
 
     @Test
     public void executeJSDateParametersTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -407,11 +450,11 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
         assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
 
@@ -422,13 +465,14 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         inputs.put("a", gson.toJsonTree(zdt.format(DateTimeFormatter.ISO_INSTANT)));
         closureRequest.inputs = inputs;
 
-        executeTask(createdClosure, closureRequest, serviceHostUri);
+        executeClosure(createdClosure, closureRequest, serviceClient);
 
         // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS +
-                2000);
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
@@ -437,12 +481,14 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
                 fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult.toString(), fetchedClosure.outputs.get("result").getAsString());
 
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
 
     @Test
     public void executeJSArrayOfDateParametersTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -468,11 +514,11 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
         assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
 
@@ -485,12 +531,14 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         inputs.put("a", jsArray);
         closureRequest.inputs = inputs;
 
-        executeTask(createdClosure, closureRequest, serviceHostUri);
+        executeClosure(createdClosure, closureRequest, serviceClient);
 
         // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
@@ -500,8 +548,8 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         assertEquals(expectedResult.toString(), fetchedClosure.outputs.get("result").getAsJsonArray().get(0).getAsString
                 ());
 
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
 
     class TestObject {
@@ -519,6 +567,8 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
 
     @Test
     public void executeJSObjectParametersTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -544,11 +594,11 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
         assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
 
@@ -559,12 +609,14 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         inputs.put("a", gson.toJsonTree(expectedInVar));
         closureRequest.inputs = inputs;
 
-        executeTask(createdClosure, closureRequest, serviceHostUri);
+        executeClosure(createdClosure, closureRequest, serviceClient);
 
         // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
@@ -584,12 +636,14 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         assertEquals(expectedInVar.intTest + 1, resultObj.intTest);
         assertEquals(!expectedInVar.boolTest, resultObj.boolTest);
 
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
 
     @Test
     public void executeJSNestedObjectParametersTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -620,11 +674,11 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
         assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
 
@@ -635,12 +689,14 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         inputs.put("a", gson.toJsonTree(expectedInVar));
         closureRequest.inputs = inputs;
 
-        executeTask(createdClosure, closureRequest, serviceHostUri);
+        executeClosure(createdClosure, closureRequest, serviceClient);
 
         // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
@@ -661,12 +717,14 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         assertEquals(expectedInVar.objTest.intTest + 1, resultObj.intTest);
         assertEquals(!expectedInVar.objTest.boolTest, resultObj.boolTest);
 
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
 
     @Test
     public void executeJSArrayOfObjectParametersTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -692,11 +750,11 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
         assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
 
@@ -709,12 +767,14 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         inputs.put("a", jsArray);
         closureRequest.inputs = inputs;
 
-        executeTask(createdClosure, closureRequest, serviceHostUri);
+        executeClosure(createdClosure, closureRequest, serviceClient);
 
         // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
@@ -734,12 +794,14 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         assertEquals(expectedInVar.intTest + 1, resultObj.intTest);
         assertEquals(!expectedInVar.boolTest, resultObj.boolTest);
 
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
 
     @Test
     public void executeJSStringParametersTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -759,11 +821,11 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
         assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
 
@@ -773,12 +835,14 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         inputs.put("a", new JsonPrimitive(expectedInVar));
         closureRequest.inputs = inputs;
 
-        executeTask(createdClosure, closureRequest, serviceHostUri);
+        executeClosure(createdClosure, closureRequest, serviceClient);
 
         // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
@@ -786,9 +850,1144 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
 
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
+
+    @Test
+    public void executeJSExternalCodeSourceAsZIPWithPackageJsonTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+
+        String expectedInVar = "a";
+        String expectedOutVar = "b";
+        String expectedResult = "ac";
+
+        closureDescState.sourceURL = testWebserverUri + "/test_script_packagejson.zip";
+        closureDescState.source = "should not be used";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 20;
+        constraints.ramMB = 300;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        // Execute the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
+        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
+
+        cleanResource(imageRequestLink, serviceClient);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeJSExtSourceAsObjAsZIPWithPackageJsonTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+
+        String expectedInVar = "a";
+        String expectedOutVar = "b";
+        String expectedResult = "ac";
+
+        closureDescState.sourceURL = testWebserverUri + "/test_script_as_obj_packagejson.zip";
+        closureDescState.source = "should not be used";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 20;
+        constraints.ramMB = 300;
+        closureDescState.resources = constraints;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        // Execute the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
+        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
+
+        cleanResource(imageRequestLink, serviceClient);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeJSExtSourceAsZIPNoPackageJsonEntrypointTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+        closureDescState.entrypoint = "index.test";
+
+        String expectedInVar = "a";
+        String expectedOutVar = "b";
+        String expectedResult = "ac";
+
+        closureDescState.sourceURL = testWebserverUri + "/test_script_no_packagejson.zip";
+        closureDescState.source = "should not be used";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 20;
+        constraints.ramMB = 300;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        // Execute the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
+        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
+
+        cleanResource(imageRequestLink, serviceClient);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeJSExtSourceAsObjAsZIPNoPackageJsonEntrypointTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+        closureDescState.entrypoint = "index.test";
+
+        String expectedInVar = "a";
+        String expectedOutVar = "b";
+        String expectedResult = "ac";
+
+        closureDescState.sourceURL = testWebserverUri + "/test_script_as_obj_no_packagejson.zip";
+        closureDescState.source = "should not be used";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 20;
+        constraints.ramMB = 300;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        // Execute the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
+        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
+
+        cleanResource(imageRequestLink, serviceClient);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeJSExtSourceAsZIPNoPackageJsonNoEntrypointTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+
+        String expectedInVar = "a";
+        String expectedOutVar = "b";
+        String expectedResult = "ac";
+
+        closureDescState.sourceURL = testWebserverUri + "/test_script_no_packagejson.zip";
+        closureDescState.source = "should not be used";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 20;
+        constraints.ramMB = 300;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        // Execute the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
+        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
+
+        cleanResource(imageRequestLink, serviceClient);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeJSExtSourceAsObjAsZIPNoPackageJsonNoEntrypointTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+
+        String expectedInVar = "a";
+        String expectedOutVar = "b";
+        String expectedResult = "ac";
+
+        closureDescState.sourceURL = testWebserverUri + "/test_script_as_obj_no_packagejson.zip";
+        closureDescState.source = "should not be used";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 20;
+        constraints.ramMB = 300;
+        closureDescState.resources = constraints;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        // Execute the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
+        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
+
+        cleanResource(imageRequestLink, serviceClient);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeNegativeInvalidHandlerNameJSExtSourceAsZIPTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "invalid";
+
+        String expectedInVar = "a";
+        String expectedOutVar = "b";
+        String expectedResult = "ac";
+
+        closureDescState.sourceURL = testWebserverUri + "/test_script_as_obj_no_packagejson.zip";
+        closureDescState.source = "should not be used";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 20;
+        constraints.ramMB = 300;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        // Execute the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FAILED, serviceClient);
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FAILED, fetchedClosure.state);
+
+        cleanResource(imageRequestLink, serviceClient);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeNegativeInvalidEntrypointJSExtSourceAsZIPTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+        closureDescState.entrypoint = "invalid.invalid";
+
+        String expectedInVar = "a";
+        String expectedOutVar = "b";
+        String expectedResult = "ac";
+
+        closureDescState.sourceURL = testWebserverUri + "/test_script_as_obj_no_packagejson.zip";
+        closureDescState.source = "should not be used";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 20;
+        constraints.ramMB = 300;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        // Execute the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FAILED, serviceClient);
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FAILED, fetchedClosure.state);
+
+        cleanResource(imageRequestLink, serviceClient);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeJSBooleanParametersTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+
+        boolean expectedInVar = true;
+        int expectedOutVar = 1;
+        boolean expectedResult = false;
+
+        closureDescState.source = "module.exports = function test(ctx) {"
+                + " console.log('Hello boolean: ' + ctx.inputs.a);"
+                + " ctx.outputs.result = !ctx.inputs.a;"
+                + "}";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 4;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        // Executing the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsBoolean());
+        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsBoolean());
+
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeJSNameAsHandlerNameParametersTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+
+        boolean expectedInVar = true;
+        int expectedOutVar = 1;
+        boolean expectedResult = false;
+
+        closureDescState.source = "exports.test= function test(ctx) {"
+                + " console.log('Hello boolean: ' + ctx.inputs.a);"
+                + " ctx.outputs.result = !ctx.inputs.a;"
+                + "}";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 4;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        // Executing the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsBoolean());
+        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsBoolean());
+
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeJSWithEntrypointParametersTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "random";
+
+        boolean expectedInVar = true;
+        int expectedOutVar = 1;
+        boolean expectedResult = false;
+
+        closureDescState.entrypoint = "moduleName.test";
+        closureDescState.source = "exports.test = function test(ctx) {"
+                + " console.log('Hello boolean: ' + ctx.inputs.a);"
+                + " ctx.outputs.result = !ctx.inputs.a;"
+                + "}";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 4;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        // Executing the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsBoolean());
+        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsBoolean());
+
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeInvalidJSScriptTaskTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+        closureDescState.source = "module.exports = function test(ctx) {"
+                + " var a = 1;"
+                + " console.log(\"Hello \" + invalid);"
+                + "};";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 4;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        Closure closureRequest = new Closure();
+        // Executing the created Closure
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FAILED, serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FAILED, fetchedClosure.state);
+        assertTrue(fetchedClosure.errorMsg.length() > 0);
+
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeTimeoutedJSScriptTaskTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+        closureDescState.source = "function sleep(delay) {"
+                + " var start = new Date().getTime();"
+                + " while (new Date().getTime() < start + delay) {"
+                + " console.log('Waiting....');"
+                + " }}"
+                + " module.exports = function(ctx) {"
+                + " sleep(10000);"
+                + "};";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 1;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        // Executing the created Closure
+        executeClosure(createdClosure, new Closure(), serviceClient);
+
+        // Wait for the completion timeout
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.CANCELLED, serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CANCELLED, fetchedClosure.state);
+
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void completeFailTimeoutedJSScriptTaskTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+        closureDescState.source = "function sleep(delay) {"
+                + " var start = new Date().getTime();"
+                + " while (new Date().getTime() < start + delay) {"
+                + " console.log('Waiting...');"
+                + "}}"
+                + "module.exports = function(ctx) {"
+                + " sleep(10000);"
+                + "};";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 1;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        // Executing the created Closure
+        executeClosure(createdClosure, new Closure(), serviceClient);
+
+        // Wait for the completion timeout
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.CANCELLED, serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CANCELLED, fetchedClosure.state);
+
+        // Try to complete already cancelled Closure
+        fetchedClosure.state = TaskState.TaskStage.FINISHED;
+
+        try {
+            SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
+                    .execute(SimpleHttpsClient.HttpMethod.PATCH, serviceClient + fetchedClosure.documentSelfLink, Utils
+                            .toJson(fetchedClosure));
+            if (response != null) {
+                assertNotEquals("Closure is not allowed to complete once it is cancelled", 200, response.statusCode);
+            } else {
+                fail("Closure is not allowed to complete once it is cancelled");
+            }
+
+        } catch (Exception ignored) {
+        }
+
+        // Try to fail already cancelled Closure
+        fetchedClosure.state = TaskState.TaskStage.FAILED;
+
+        try {
+            SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
+                    .execute(SimpleHttpsClient.HttpMethod.PATCH, serviceClient + fetchedClosure.documentSelfLink, Utils
+                            .toJson(fetchedClosure));
+            if (response != null) {
+                assertNotEquals("Closure is not allowed to complete once it is cancelled", 200, response.statusCode);
+            } else {
+                fail("Closure is not allowed to complete once it is cancelled");
+            }
+        } catch (Exception ignored) {
+        }
+
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void completeOrFailOutdatedJSScriptTaskTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+        closureDescState.source = "function sleep(delay) {"
+                + " var start = new Date().getTime();"
+                + " while (new Date().getTime() < start + delay) {"
+                + "     console.log('Waiting...');"
+                + " }}"
+                + " module.exports = function(ctx) {"
+                + " sleep(60000);"
+                + "}";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 1;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        // Executing the created Closure
+        executeClosure(createdClosure, new Closure(), serviceClient);
+
+        // Wait for the completion timeout
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.CANCELLED, serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CANCELLED, fetchedClosure.state);
+
+        // Request bring new execution of the created Closure.
+        executeClosure(createdClosure, fetchedClosure, serviceClient);
+
+        // Wait for the completion timeout
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CANCELLED, fetchedClosure.state);
+
+        // Try to complete outdated Closure
+        try {
+            fetchedClosure.state = TaskState.TaskStage.FINISHED;
+            SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
+                    .execute(SimpleHttpsClient.HttpMethod.PATCH, serviceClient + fetchedClosure.documentSelfLink, Utils
+                            .toJson(fetchedClosure));
+            if (response != null) {
+                assertNotEquals("Closure is not allowed to complete once it is CANCELLED", 200, response.statusCode);
+            } else {
+                fail("Closure is not allowed to complete once it is cancelled");
+            }
+
+        } catch (Exception ignored) {
+        }
+
+        // Try to fail outdated cancelled Closure
+        try {
+            fetchedClosure.state = TaskState.TaskStage.FAILED;
+            SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
+                    .execute(SimpleHttpsClient.HttpMethod.PATCH, serviceClient + fetchedClosure.documentSelfLink, Utils
+                            .toJson(fetchedClosure));
+            if (response != null) {
+                assertNotEquals("Closure is not allowed to complete once it is CANCELLED", 200, response.statusCode);
+            } else {
+                fail("Closure is not allowed to complete once it is cancelled");
+            }
+
+        } catch (Exception ignored) {
+        }
+
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void invalidNegativeTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        Closure initialState = new Closure();
+        // Create Closure
+        try {
+            SimpleHttpsClient.HttpResponse taskResponse = SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod
+                    .POST, serviceClient + ClosureFactoryService.FACTORY_LINK, Utils.toJson(initialState));
+            if (taskResponse != null) {
+                assertNotEquals("Closure is not allowed to complete once it is cancelled", 200,
+                        taskResponse.statusCode);
+            } else {
+                fail("Closure is not allowed to complete once it is cancelled");
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Test
+    public void executeJSLogConfigurationTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+
+        int expectedInVar = 3;
+        int expectedOutVar = 3;
+        double expectedResult = 4.0; // TODO: fix types
+
+        closureDescState.source = "module.exports = function test(context) {"
+                + " console.log('Hello number: ' + context.inputs.a);"
+                + " context.outputs.result=context.inputs.a + 1;"
+                + " }; ";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 4;
+        closureDescState.resources = constraints;
+
+        closureDescState.logConfiguration = new JsonObject();
+        closureDescState.logConfiguration.addProperty("type", "json-file");
+        JsonObject logConfig = new JsonObject();
+        logConfig.addProperty("max-size", "300k");
+        closureDescState.logConfiguration.add("config", logConfig);
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+
+        // Execute the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
+        assertNotNull(closure);
+
+        assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FINISHED, closure.state);
+
+        assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
+        assertEquals(expectedResult, closure.outputs.get("result").getAsDouble(), 0);
+
+        String resourceLink = closure.resourceLinks.iterator().next();
+        String containerId = UriUtils.getLastPathSegment(resourceLink);
+        String logsURI = "/resources/container-logs?id=" + containerId;
+        logger.info("Fetching logs from: " + logsURI);
+        SimpleHttpsClient.HttpResponse response = getResource(logsURI);
+        assertNotNull(response);
+        LogService.LogServiceState logState = Utils.fromJson(response.responseBody, LogService.LogServiceState
+                .class);
+
+        assertNotNull(logState.logs);
+
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeJSNumbersWithWebHookTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+
+        int expectedInVar = 3;
+        int expectedOutVar = 3;
+        int expectedResult = 4;
+
+        closureDescState.source = "module.exports = function test(context) {"
+                + " console.log('Hello number: ' + context.inputs.a);"
+                + " context.outputs.result=context.inputs.a + 1;"
+                + " }; ";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.notifyUrl = "/cmp/task_consumer";
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 3;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+
+        // Execute the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
+        assertNotNull(closure);
+
+        assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FINISHED, closure.state);
+
+        assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
+        assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
+
+        // verify test service was notified and consumed the closure state
+        SimpleHttpsClient.HttpResponse consumedContent = SimpleHttpsClient
+                .execute(SimpleHttpsClient.HttpMethod.GET, getBaseUrl() + closureDescState.notifyUrl + closure.documentSelfLink);
+        assertNotNull(consumedContent);
+        assertEquals(200, consumedContent.statusCode);
+        Closure fetchedFromUrl = Utils.fromJson(consumedContent.responseBody, Closure.class);
+        assertEquals(closure.state, fetchedFromUrl.state);
+        assertEquals(expectedResult, fetchedFromUrl.outputs.get("result").getAsInt(), 0);
+
+
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeJSNumbersWithNotAvailableWebHookTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+
+        int expectedInVar = 3;
+        int expectedOutVar = 3;
+        int expectedResult = 4;
+
+        closureDescState.source = "module.exports = function test(context) {"
+                + " console.log('Hello number: ' + context.inputs.a);"
+                + " context.outputs.result=context.inputs.a + 1;"
+                + " }; ";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.notifyUrl = "/invalid";
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 2;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+
+        // Execute the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
+        assertNotNull(closure);
+
+        assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FINISHED, closure.state);
+
+        assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
+        assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
+
+        SimpleHttpsClient.HttpResponse consumedContent = SimpleHttpsClient
+                .execute(SimpleHttpsClient.HttpMethod.GET, getBaseUrl() + closureDescState.notifyUrl + closure.documentSelfLink);
+        assertNotNull(consumedContent);
+        assertEquals(404, consumedContent.statusCode);
+
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeJSSelfDefinedParametersTest() throws Throwable {
+        logger.info("Executing  against: " + serviceClient);
+
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+
+        int expectedInVar = 3;
+        double expectedResult = 6;
+
+        closureDescState.source = "module.exports = function test(ctx, a, b) {"
+                + "     console.log('Hello numbers: a=' + a + ' b=' + b);"
+                + "     ctx.outputs.result = a + b;"
+                + " }; ";
+        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 10;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+
+        // Execute the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        inputs.put("b", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+
+        Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
+        assertNotNull(closure);
+
+        assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FINISHED, closure.state);
+
+        assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
+        assertEquals(expectedInVar, closure.inputs.get("b").getAsInt());
+        assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
+
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
 /*
     @Test
     public void executeJSStringWithExternalCodeSourceNoDependenciesTest() throws Throwable {
@@ -850,9 +2049,9 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
 
-        cleanResourceUri(serviceHostUri + imageRequestLink);
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
+        cleanResource(serviceHostUri + imageRequestLink);
+        cleanResource(serviceHostUri + closureDescription.documentSelfLink);
+        cleanResource(serviceHostUri + createdClosure.documentSelfLink);
     }
 
     @Test
@@ -916,9 +2115,9 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
 
-        cleanResourceUri(serviceHostUri + imageRequestLink);
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
+        cleanResource(serviceHostUri + imageRequestLink);
+        cleanResource(serviceHostUri + closureDescription.documentSelfLink);
+        cleanResource(serviceHostUri + createdClosure.documentSelfLink);
     }
 
     @Test
@@ -981,9 +2180,9 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
 
-        cleanResourceUri(serviceHostUri + imageRequestLink);
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
+        cleanResource(serviceHostUri + imageRequestLink);
+        cleanResource(serviceHostUri + closureDescription.documentSelfLink);
+        cleanResource(serviceHostUri + createdClosure.documentSelfLink);
     }
 
     @Test
@@ -1047,1163 +2246,9 @@ public class NodeJSRuntimeTest extends BaseIntegrationTest {
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
 
-        cleanResourceUri(serviceHostUri + imageRequestLink);
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
+        cleanResource(serviceHostUri + imageRequestLink);
+        cleanResource(serviceHostUri + closureDescription.documentSelfLink);
+        cleanResource(serviceHostUri + createdClosure.documentSelfLink);
     }
 */
-
-    @Test
-    public void executeJSExternalCodeSourceAsZIPWithPackageJsonTest() throws Throwable {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-
-        String expectedInVar = "a";
-        String expectedOutVar = "b";
-        String expectedResult = "ac";
-
-        closureDescState.sourceURL = testWebserverUri + "/test_script_packagejson.zip";
-        closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 20;
-        constraints.ramMB = 300;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        assertNotNull(closureDescription);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
-
-        // Execute the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        String imageRequestLink = waitForBuildCompletion(serviceHostUri, IMAGE_NAME, closureDescription,
-                TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        waitForTaskState(createdClosure.documentSelfLink, serviceHostUri, TaskState.TaskStage.FINISHED);
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
-
-        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
-        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
-
-        cleanResourceUri(serviceHostUri + imageRequestLink);
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void executeJSExtSourceAsObjAsZIPWithPackageJsonTest() throws Throwable {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-
-        String expectedInVar = "a";
-        String expectedOutVar = "b";
-        String expectedResult = "ac";
-
-        closureDescState.sourceURL = testWebserverUri + "/test_script_as_obj_packagejson.zip";
-        closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 20;
-        constraints.ramMB = 300;
-        closureDescState.resources = constraints;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        assertNotNull(closureDescription);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
-
-        // Execute the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        String imageRequestLink = waitForBuildCompletion(serviceHostUri, IMAGE_NAME, closureDescription,
-                TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        waitForTaskState(createdClosure.documentSelfLink, serviceHostUri, TaskState.TaskStage.FINISHED);
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
-
-        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
-        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
-
-        cleanResourceUri(serviceHostUri + imageRequestLink);
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void executeJSExtSourceAsZIPNoPackageJsonEntrypointTest() throws Throwable {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-        closureDescState.entrypoint = "index.test";
-
-        String expectedInVar = "a";
-        String expectedOutVar = "b";
-        String expectedResult = "ac";
-
-        closureDescState.sourceURL = testWebserverUri + "/test_script_no_packagejson.zip";
-        closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 20;
-        constraints.ramMB = 300;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        assertNotNull(closureDescription);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
-
-        // Execute the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        String imageRequestLink = waitForBuildCompletion(serviceHostUri, IMAGE_NAME, closureDescription,
-                TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        waitForTaskState(createdClosure.documentSelfLink, serviceHostUri, TaskState.TaskStage.FINISHED);
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
-
-        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
-        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
-
-        cleanResourceUri(serviceHostUri + imageRequestLink);
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void executeJSExtSourceAsObjAsZIPNoPackageJsonEntrypointTest() throws Throwable {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-        closureDescState.entrypoint = "index.test";
-
-        String expectedInVar = "a";
-        String expectedOutVar = "b";
-        String expectedResult = "ac";
-
-        closureDescState.sourceURL = testWebserverUri + "/test_script_as_obj_no_packagejson.zip";
-        closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 20;
-        constraints.ramMB = 300;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        assertNotNull(closureDescription);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
-
-        // Execute the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        String imageRequestLink = waitForBuildCompletion(serviceHostUri, IMAGE_NAME, closureDescription,
-                TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        waitForTaskState(createdClosure.documentSelfLink, serviceHostUri, TaskState.TaskStage.FINISHED);
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
-
-        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
-        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
-
-        cleanResourceUri(serviceHostUri + imageRequestLink);
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void executeJSExtSourceAsZIPNoPackageJsonNoEntrypointTest() throws Throwable {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-
-        String expectedInVar = "a";
-        String expectedOutVar = "b";
-        String expectedResult = "ac";
-
-        closureDescState.sourceURL = testWebserverUri + "/test_script_no_packagejson.zip";
-        closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 20;
-        constraints.ramMB = 300;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        assertNotNull(closureDescription);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
-
-        // Execute the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        String imageRequestLink = waitForBuildCompletion(serviceHostUri, IMAGE_NAME, closureDescription,
-                TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        waitForTaskState(createdClosure.documentSelfLink, serviceHostUri, TaskState.TaskStage.FINISHED);
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
-
-        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
-        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
-
-        cleanResourceUri(serviceHostUri + imageRequestLink);
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void executeJSExtSourceAsObjAsZIPNoPackageJsonNoEntrypointTest() throws Throwable {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-
-        String expectedInVar = "a";
-        String expectedOutVar = "b";
-        String expectedResult = "ac";
-
-        closureDescState.sourceURL = testWebserverUri + "/test_script_as_obj_no_packagejson.zip";
-        closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 20;
-        constraints.ramMB = 300;
-        closureDescState.resources = constraints;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        assertNotNull(closureDescription);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
-
-        // Execute the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        String imageRequestLink = waitForBuildCompletion(serviceHostUri, IMAGE_NAME, closureDescription,
-                TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        waitForTaskState(createdClosure.documentSelfLink, serviceHostUri, TaskState.TaskStage.FINISHED);
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
-
-        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
-        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
-
-        cleanResourceUri(serviceHostUri + imageRequestLink);
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void executeNegativeInvalidHandlerNameJSExtSourceAsZIPTest() throws Throwable {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "invalid";
-
-        String expectedInVar = "a";
-        String expectedOutVar = "b";
-        String expectedResult = "ac";
-
-        closureDescState.sourceURL = testWebserverUri + "/test_script_as_obj_no_packagejson.zip";
-        closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 20;
-        constraints.ramMB = 300;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        assertNotNull(closureDescription);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
-
-        // Execute the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        String imageRequestLink = waitForBuildCompletion(serviceHostUri, IMAGE_NAME, closureDescription,
-                TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        waitForTaskState(createdClosure.documentSelfLink, serviceHostUri, TaskState.TaskStage.FAILED);
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FAILED, fetchedClosure.state);
-
-        cleanResourceUri(serviceHostUri + imageRequestLink);
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void executeNegativeInvalidEntrypointJSExtSourceAsZIPTest() throws Throwable {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-        closureDescState.entrypoint = "invalid.invalid";
-
-        String expectedInVar = "a";
-        String expectedOutVar = "b";
-        String expectedResult = "ac";
-
-        closureDescState.sourceURL = testWebserverUri + "/test_script_as_obj_no_packagejson.zip";
-        closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 20;
-        constraints.ramMB = 300;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        assertNotNull(closureDescription);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
-
-        // Execute the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        String imageRequestLink = waitForBuildCompletion(serviceHostUri, IMAGE_NAME, closureDescription,
-                TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        waitForTaskState(createdClosure.documentSelfLink, serviceHostUri, TaskState.TaskStage.FAILED);
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FAILED, fetchedClosure.state);
-
-        cleanResourceUri(serviceHostUri + imageRequestLink);
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void executeJSBooleanParametersTest() throws Throwable {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-
-        boolean expectedInVar = true;
-        int expectedOutVar = 1;
-        boolean expectedResult = false;
-
-        closureDescState.source = "module.exports = function test(ctx) {"
-                + " console.log('Hello boolean: ' + ctx.inputs.a);"
-                + " ctx.outputs.result = !ctx.inputs.a;"
-                + "}";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 4;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        assertNotNull(closureDescription);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
-
-        // Executing the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
-
-        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsBoolean());
-        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsBoolean());
-
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void executeJSNameAsHandlerNameParametersTest() throws Throwable {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-
-        boolean expectedInVar = true;
-        int expectedOutVar = 1;
-        boolean expectedResult = false;
-
-        closureDescState.source = "exports.test= function test(ctx) {"
-                + " console.log('Hello boolean: ' + ctx.inputs.a);"
-                + " ctx.outputs.result = !ctx.inputs.a;"
-                + "}";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 4;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        assertNotNull(closureDescription);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
-
-        // Executing the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
-
-        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsBoolean());
-        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsBoolean());
-
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void executeJSWithEntrypointParametersTest() throws Throwable {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "random";
-
-        boolean expectedInVar = true;
-        int expectedOutVar = 1;
-        boolean expectedResult = false;
-
-        closureDescState.entrypoint = "moduleName.test";
-        closureDescState.source = "exports.test = function test(ctx) {"
-                + " console.log('Hello boolean: ' + ctx.inputs.a);"
-                + " ctx.outputs.result = !ctx.inputs.a;"
-                + "}";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 4;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        assertNotNull(closureDescription);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
-
-        // Executing the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
-
-        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsBoolean());
-        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsBoolean());
-
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void executeInvalidJSScriptTaskTest() throws Throwable {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-        closureDescState.source = "module.exports = function test(ctx) {"
-                + " var a = 1;"
-                + " console.log(\"Hello \" + invalid);"
-                + "};";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 4;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        assertNotNull(closureDescription);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
-
-        Closure closureRequest = new Closure();
-        // Executing the created Closure
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FAILED, fetchedClosure.state);
-        assertTrue(fetchedClosure.errorMsg.length() > 0);
-
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void executeTimeoutedJSScriptTaskTest() throws Throwable {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-        closureDescState.source = "function sleep(delay) {"
-                + " var start = new Date().getTime();"
-                + " while (new Date().getTime() < start + delay) {"
-                + " console.log('Waiting....');"
-                + " }}"
-                + " module.exports = function(ctx) {"
-                + " sleep(10000);"
-                + "};";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 1;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        assertNotNull(closureDescription);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
-
-        // Executing the created Closure
-        executeTask(createdClosure, new Closure(), serviceHostUri);
-
-        // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS +
-                4000);
-
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CANCELLED, fetchedClosure.state);
-
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void completeFailTimeoutedJSScriptTaskTest() throws Throwable {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-        closureDescState.source = "function sleep(delay) {"
-                + " var start = new Date().getTime();"
-                + " while (new Date().getTime() < start + delay) {"
-                + " console.log('Waiting...');"
-                + "}}"
-                + "module.exports = function(ctx) {"
-                + " sleep(10000);"
-                + "};";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 1;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        assertNotNull(closureDescription);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
-
-        // Executing the created Closure
-        executeTask(createdClosure, new Closure(), serviceHostUri);
-
-        // Wait for the completion timeout
-        Thread.sleep(
-                closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS + 6000);
-
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CANCELLED, fetchedClosure.state);
-
-        // Try to complete already cancelled Closure
-        fetchedClosure.state = TaskState.TaskStage.FINISHED;
-
-        try {
-            SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
-                    .execute(SimpleHttpsClient.HttpMethod.PATCH, serviceHostUri + fetchedClosure.documentSelfLink, Utils
-                            .toJson(fetchedClosure));
-            if (response != null) {
-                assertNotEquals("Closure is not allowed to complete once it is cancelled", 200, response.statusCode);
-            } else {
-                fail("Closure is not allowed to complete once it is cancelled");
-            }
-
-        } catch (Exception ignored) {
-        }
-
-        // Try to fail already cancelled Closure
-        fetchedClosure.state = TaskState.TaskStage.FAILED;
-
-        try {
-            SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
-                    .execute(SimpleHttpsClient.HttpMethod.PATCH, serviceHostUri + fetchedClosure.documentSelfLink, Utils
-                            .toJson(fetchedClosure));
-            if (response != null) {
-                assertNotEquals("Closure is not allowed to complete once it is cancelled", 200, response.statusCode);
-            } else {
-                fail("Closure is not allowed to complete once it is cancelled");
-            }
-        } catch (Exception ignored) {
-        }
-
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void completeOrFailOutdatedJSScriptTaskTest() throws Throwable {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-        closureDescState.source = "function sleep(delay) {"
-                + " var start = new Date().getTime();"
-                + " while (new Date().getTime() < start + delay) {"
-                + "     console.log('Waiting...');"
-                + " }}"
-                + " module.exports = function(ctx) {"
-                + " sleep(60000);"
-                + "}";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 1;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-        assertNotNull(closureDescription);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
-
-        // Executing the created Closure
-        executeTask(createdClosure, new Closure(), serviceHostUri);
-
-        // Wait for the completion timeout
-        Thread.sleep(
-                closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS + 7000);
-
-        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CANCELLED, fetchedClosure.state);
-
-        // Request bring new execution of the created Closure.
-        executeTask(createdClosure, fetchedClosure, serviceHostUri);
-
-        // Wait for the completion timeout
-        Thread.sleep(
-                closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS + 7000);
-
-        fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-
-        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
-        assertEquals(TaskState.TaskStage.CANCELLED, fetchedClosure.state);
-
-        // Try to complete outdated Closure
-        try {
-            fetchedClosure.state = TaskState.TaskStage.FINISHED;
-            SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
-                    .execute(SimpleHttpsClient.HttpMethod.PATCH, serviceHostUri + fetchedClosure.documentSelfLink, Utils
-                            .toJson(fetchedClosure));
-            if (response != null) {
-                assertNotEquals("Closure is not allowed to complete once it is CANCELLED", 200, response.statusCode);
-            } else {
-                fail("Closure is not allowed to complete once it is cancelled");
-            }
-
-        } catch (Exception ignored) {
-        }
-
-        // Try to fail outdated cancelled Closure
-        try {
-            fetchedClosure.state = TaskState.TaskStage.FAILED;
-            SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
-                    .execute(SimpleHttpsClient.HttpMethod.PATCH, serviceHostUri + fetchedClosure.documentSelfLink, Utils
-                            .toJson(fetchedClosure));
-            if (response != null) {
-                assertNotEquals("Closure is not allowed to complete once it is CANCELLED", 200, response.statusCode);
-            } else {
-                fail("Closure is not allowed to complete once it is cancelled");
-            }
-
-        } catch (Exception ignored) {
-        }
-
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void invalidNegativeTest() throws Throwable {
-        Closure initialState = new Closure();
-        // Create Closure
-        try {
-            SimpleHttpsClient.HttpResponse taskResponse = SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod
-                    .POST, serviceHostUri + ClosureFactoryService.FACTORY_LINK, Utils.toJson(initialState));
-            if (taskResponse != null) {
-                assertNotEquals("Closure is not allowed to complete once it is cancelled", 200,
-                        taskResponse.statusCode);
-            } else {
-                fail("Closure is not allowed to complete once it is cancelled");
-            }
-        } catch (Exception ignored) {
-        }
-    }
-
-    @Test
-    public void executeJSLogConfigurationTest() throws Throwable {
-        logger.info("Executing  against: " + serviceHostUri);
-
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-
-        int expectedInVar = 3;
-        int expectedOutVar = 3;
-        double expectedResult = 4.0; // TODO: fix types
-
-        closureDescState.source = "module.exports = function test(context) {"
-                + " console.log('Hello number: ' + context.inputs.a);"
-                + " context.outputs.result=context.inputs.a + 1;"
-                + " }; ";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 4;
-        closureDescState.resources = constraints;
-
-        closureDescState.logConfiguration = new JsonObject();
-        closureDescState.logConfiguration.addProperty("type", "json-file");
-        JsonObject logConfig = new JsonObject();
-        logConfig.addProperty("max-size", "300k");
-        closureDescState.logConfiguration.add("config", logConfig);
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-
-        // Execute the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        Closure closure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-        assertNotNull(closure);
-
-        assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FINISHED, closure.state);
-
-        assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
-        assertEquals(expectedResult, closure.outputs.get("result").getAsDouble(), 0);
-
-        String resourceLink = closure.resourceLinks.iterator().next();
-        String containerId = UriUtils.getLastPathSegment(resourceLink);
-        String logsURI = serviceHostUri + "/resources/container-logs?id=" + containerId;
-        logger.info("Fetching logs from: " + logsURI);
-        SimpleHttpsClient.HttpResponse taskResponse = SimpleHttpsClient
-                .execute(SimpleHttpsClient.HttpMethod.GET, logsURI);
-        assertNotNull(taskResponse);
-
-        LogService.LogServiceState logState = Utils.fromJson(taskResponse.responseBody, LogService.LogServiceState
-                .class);
-
-        assertNotNull(logState.logs);
-
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void executeJSNumbersWithWebHookTest() throws Throwable {
-        logger.info("Executing  against: " + serviceHostUri);
-
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-
-        int expectedInVar = 3;
-        int expectedOutVar = 3;
-        int expectedResult = 4;
-
-        closureDescState.source = "module.exports = function test(context) {"
-                + " console.log('Hello number: ' + context.inputs.a);"
-                + " context.outputs.result=context.inputs.a + 1;"
-                + " }; ";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.notifyUrl = serviceHostUri + "/cmp/task_consumer";
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 3;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-
-        // Execute the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        Closure closure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-        assertNotNull(closure);
-
-        assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FINISHED, closure.state);
-
-        assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
-        assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
-
-        // verify test service was notified and consumed the closure state
-        SimpleHttpsClient.HttpResponse consumedContent = SimpleHttpsClient
-                .execute(SimpleHttpsClient.HttpMethod.GET, closureDescState.notifyUrl + closure.documentSelfLink);
-        assertNotNull(consumedContent);
-        Closure consumedClosure = Utils.fromJson(consumedContent.responseBody, Closure.class);
-        assertEquals(TaskState.TaskStage.FINISHED, closure.state);
-
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void executeJSNumbersWithNotAvailableWebHookTest() throws Throwable {
-        logger.info("Executing  against: " + serviceHostUri);
-
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-
-        int expectedInVar = 3;
-        int expectedOutVar = 3;
-        int expectedResult = 4;
-
-        closureDescState.source = "module.exports = function test(context) {"
-                + " console.log('Hello number: ' + context.inputs.a);"
-                + " context.outputs.result=context.inputs.a + 1;"
-                + " }; ";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.notifyUrl = serviceHostUri + "/invalid";
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 2;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-
-        // Execute the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        Closure closure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-        assertNotNull(closure);
-
-        assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FINISHED, closure.state);
-
-        assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
-        assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
-
-        SimpleHttpsClient.HttpResponse consumedContent = SimpleHttpsClient
-                .execute(SimpleHttpsClient.HttpMethod.GET, closureDescState.notifyUrl + closure.documentSelfLink);
-        assertNotNull(consumedContent);
-        assertEquals(404, consumedContent.statusCode);
-
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    @Test
-    public void executeJSSelfDefinedParametersTest() throws Throwable {
-        logger.info("Executing  against: " + serviceHostUri);
-
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-
-        int expectedInVar = 3;
-        double expectedResult = 6;
-
-        closureDescState.source = "module.exports = function test(ctx, a, b) {"
-                + "     console.log('Hello numbers: a=' + a + ' b=' + b);"
-                + "     ctx.outputs.result = a + b;"
-                + " }; ";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 10;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceHostUri);
-
-        // Create Closure
-        Closure createdClosure = createClosure(closureDescription, serviceHostUri);
-
-        // Execute the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        inputs.put("b", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        executeTask(createdClosure, closureRequest, serviceHostUri);
-
-        // Wait for the completion timeout
-        Thread.sleep(closureDescState.resources.timeoutSeconds * 1000 + TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        Closure closure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-        assertNotNull(closure);
-
-        assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FINISHED, closure.state);
-
-        assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
-        assertEquals(expectedInVar, closure.inputs.get("b").getAsInt());
-        assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
-
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
-    private static void triggerExecutionImageBuildWithoutDependencies() throws Exception {
-        // Create Closure Definition
-        ClosureDescription closureDescState = new ClosureDescription();
-        closureDescState.name = "test";
-
-        int expectedInVar = 3;
-        int expectedOutVar = 3;
-        double expectedResult = 4.0;
-
-        closureDescState.source = "module.exports = function test(context) {"
-                + " console.log('Hello number: ' + context.inputs.a);"
-                + " context.outputs.result=context.inputs.a + 1;"
-                + " }; ";
-        closureDescState.runtime = RUNTIME_NODEJS;
-        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
-        ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 3;
-        closureDescState.resources = constraints;
-
-        String taskDefPayload = Utils.toJson(closureDescState);
-        SimpleHttpsClient.HttpResponse taskDefResponse = SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod
-                .POST, serviceHostUri + ClosureDescriptionFactoryService.FACTORY_LINK, taskDefPayload);
-        assertNotNull(taskDefResponse);
-        ClosureDescription closureDescription = Utils.fromJson(taskDefResponse.responseBody, ClosureDescription.class);
-
-        // Create Closure
-        Closure closureState = new Closure();
-        closureState.descriptionLink = closureDescription.documentSelfLink;
-        SimpleHttpsClient.HttpResponse taskResponse = SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod
-                .POST, serviceHostUri + ClosureFactoryService.FACTORY_LINK, Utils.toJson(closureState));
-        assertNotNull(taskResponse);
-
-        Closure createdClosure = Utils.fromJson(taskResponse.responseBody, Closure.class);
-
-        // Execute the created Closure
-        Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
-        inputs.put("a", new JsonPrimitive(expectedInVar));
-        closureRequest.inputs = inputs;
-
-        SimpleHttpsClient.HttpResponse taskExecResponse = SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod
-                .POST, serviceHostUri + createdClosure.documentSelfLink, Utils.toJson(closureRequest));
-        assertNotNull(taskExecResponse);
-
-        // Wait for the completion timeout
-        waitForBuildCompletion(serviceHostUri, IMAGE_NAME, closureDescription, TEST_TASK_MAINTANENACE_TIMEOUT_MLS);
-
-        waitForTaskState(createdClosure.documentSelfLink, serviceHostUri, TaskState.TaskStage.FINISHED);
-
-        Closure closure = getClosure(createdClosure.documentSelfLink, serviceHostUri);
-        assertNotNull(closure);
-
-        assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
-        assertEquals(TaskState.TaskStage.FINISHED, closure.state);
-
-        assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
-        assertEquals(expectedResult, closure.outputs.get("result").getAsDouble(), 0);
-
-        cleanResourceUri(serviceHostUri + closureDescription.documentSelfLink);
-        cleanResourceUri(serviceHostUri + createdClosure.documentSelfLink);
-    }
-
 }

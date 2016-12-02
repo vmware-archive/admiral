@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
+import java.util.UUID;
 
 import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
@@ -19,23 +20,22 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
 
 public class CommonTestStateFactory {
     public static final String AUTH_CREDENTIALS_ID = "test-credentials-id";
-    public static final String COMPUTE_DESC_ID = "test-continaer-compute-desc-id";
     public static final String REGISTRATION_DOCKER_ID = "test-docker-registration-id";
-    public static final String SSL_TRUST_CERT_ID = "test-ssl-trust-cert-id";
-    public static final String DOCKER_HOST_REGISTRATION_NAME = "docker-host";
-    public static final String DOCKER_COMPUTE_ID = "test-docker-host-compute-id";
 
-    public static AuthCredentialsServiceState createAuthCredentials() throws Exception {
+    public static AuthCredentialsServiceState createAuthCredentials(boolean uniqueSelfLink) {
         AuthCredentialsServiceState authCredentials = new AuthCredentialsServiceState();
         authCredentials.documentSelfLink = AUTH_CREDENTIALS_ID;
+        if (uniqueSelfLink) {
+            authCredentials.documentSelfLink += "-" + UUID.randomUUID();
+        }
         authCredentials.type = AuthCredentialsType.PublicKey.name();
         authCredentials.userEmail = "core";
-        authCredentials.privateKey = getFileContent("docker-host-private-key.PEM");
+        authCredentials.privateKey = getFileContent("certs/client-key.pem");
         return authCredentials;
     }
 
     public static SslTrustCertificateState createSslTrustCertificateState(String pemFileName,
-            String id) throws Exception {
+                                                                          String id) {
 
         SslTrustCertificateState sslTrustState = new SslTrustCertificateState();
         sslTrustState.documentSelfLink = id;
@@ -43,11 +43,10 @@ public class CommonTestStateFactory {
         return sslTrustState;
     }
 
-    public static String getFileContent(String fileName) throws Exception {
-        // It should work because a trust store which contains the cert is passed as argument.
-        URI targetFile;
-        targetFile = CommonTestStateFactory.class.getResource(fileName).toURI();
-        try (InputStream is = new FileInputStream(targetFile.getPath())) {
+    // TODO: This method seems pretty similar to FileUtil.getResourceAsString...
+    public static String getFileContent(String fileName) {
+        try (InputStream is = CommonTestStateFactory.class.getClassLoader()
+                .getResourceAsStream(fileName)) {
             if (is != null) {
                 return readFile(new InputStreamReader(is));
             }

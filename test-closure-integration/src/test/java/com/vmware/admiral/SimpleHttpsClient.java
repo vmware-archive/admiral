@@ -1,5 +1,12 @@
 /*
  * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
 package com.vmware.admiral;
@@ -29,6 +36,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -67,7 +75,7 @@ public class SimpleHttpsClient {
     }
 
     public static HttpResponse execute(HttpMethod method, String targetUrl, String body,
-            SSLSocketFactory sslSocketFactory) throws IOException, KeyStoreException,
+                                       SSLSocketFactory sslSocketFactory) throws IOException, KeyStoreException,
             NoSuchAlgorithmException, CertificateException, KeyManagementException {
         return execute(method, targetUrl, body, Collections.emptyMap(), sslSocketFactory);
     }
@@ -87,8 +95,8 @@ public class SimpleHttpsClient {
      * @throws KeyManagementException
      */
     public static HttpResponse execute(HttpMethod method, String targetUrl, String body,
-            Map<String, String> headers,
-            SSLSocketFactory sslSocketFactory) throws IOException, KeyStoreException,
+                                       Map<String, String> headers,
+                                       SSLSocketFactory sslSocketFactory) throws IOException, KeyStoreException,
             NoSuchAlgorithmException, CertificateException, KeyManagementException {
         URL url = new URL(targetUrl);
 
@@ -97,7 +105,8 @@ public class SimpleHttpsClient {
         conn.addRequestProperty("Content-type", Operation.MEDIA_TYPE_APPLICATION_JSON);
         conn.addRequestProperty("Accept", Operation.MEDIA_TYPE_APPLICATION_JSON);
 
-        Operation op = new Operation().addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE);
+        Operation op = new Operation()
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE);
         conn.addRequestProperty(Operation.PRAGMA_HEADER,
                 op.getRequestHeader(Operation.PRAGMA_HEADER));
 
@@ -105,11 +114,11 @@ public class SimpleHttpsClient {
             conn.addRequestProperty(entry.getKey(), entry.getValue());
         }
 
-        if (sslSocketFactory != null && url.getProtocol().equals("https")) {
+        if (sslSocketFactory != null && UriUtils.HTTPS_SCHEME.equals(url.getProtocol())) {
             HttpsURLConnection httpsConn = (HttpsURLConnection) conn;
             httpsConn.setHostnameVerifier(ALLOW_ALL_HOSTNAME_VERIFIER);
             httpsConn.setSSLSocketFactory(sslSocketFactory);
-        } else if (url.getProtocol().equals("https")) {
+        } else if (UriUtils.HTTPS_SCHEME.equals(url.getProtocol())) {
             throw new IllegalArgumentException(
                     "Https protocol not supported without sslSocketFactory");
         }
@@ -125,7 +134,8 @@ public class SimpleHttpsClient {
         BufferedReader in = null;
         try {
             try {
-                in = new BufferedReader(new InputStreamReader(conn.getInputStream(), Utils.CHARSET));
+                in = new BufferedReader(
+                        new InputStreamReader(conn.getInputStream(), Utils.CHARSET));
             } catch (Throwable e) {
                 InputStream errorStream = conn.getErrorStream();
                 if (errorStream != null) {
@@ -196,9 +206,9 @@ public class SimpleHttpsClient {
         }
     }
 
-    //Copied from https://java.net/jira/browse/JERSEY-639 . This allows us to use the new HTTP
-    //methods like PATCH
-    private static void setRequestMethodUsingWorkaroundForJREBug(
+    // Copied from https://java.net/jira/browse/JERSEY-639 . This allows us to use the new HTTP
+    // methods like PATCH
+    private static final void setRequestMethodUsingWorkaroundForJREBug(
             final HttpURLConnection httpURLConnection, final String method) {
         try {
             httpURLConnection.setRequestMethod(method);
@@ -239,5 +249,4 @@ public class SimpleHttpsClient {
             }
         }
     }
-
 }
