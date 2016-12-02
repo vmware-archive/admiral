@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="alert" v-bind:class="{'success': model.alert.type === 'success', 'fail': model.alert.type === 'fail'}"
+<div class="alert" v-bind:class="{'success': model.alert.type === 'success', 'fail': model.alert.type === 'danger'}"
      role="alert" v-if="model.alert"><i class="fa alert-icon"
   v-bind:class="{'fa-check': model.alert.type === 'success', 'fa-exclamation-circle': model.alert.type === 'fail'}"
   ></i><span>{{model.alert.message}}</span></div>

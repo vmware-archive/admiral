@@ -65,7 +65,7 @@
           <div class="content">
             <grid v-bind:preferred-width="preferredGridWidth">
               <grid-item v-for="item in model.listView.items" track-by="documentId"
-                         v-bind:class="{'highlight-item': item.alert, 'success': alertType(item.alert) === 'success', 'fail': alertType(item.alert) === 'fail'}">
+                         v-bind:class="{'highlight-item': item.alert, 'success': alertType(item.alert) === 'success', 'fail': alertType(item.alert) === 'danger'}">
                 <container-image-item v-if="item.type === constants.TEMPLATES.TYPES.IMAGE"
                                       v-bind:model="item" v-bind:groups="model.groups">
                 </container-image-item>
