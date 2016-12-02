@@ -47,6 +47,8 @@ public class CloudConfigLoaderEnhancer extends ComputeDescriptionEnhancer {
                 e.printStackTrace();
             }
             callback.accept(cd, null);
+        } else {
+            callback.accept(cd, null);
         }
     }
 

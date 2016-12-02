@@ -1,15 +1,12 @@
 ---
 name: "wordPressWithMySqlCompute"
-properties:
-  _leaseDays: "3"
 components:
   mysql:
     type: "Compute"
     data:
       name: "mysql"
-      environmentName: "On premise"
       instanceType: small
-      imageType: "ubuntu-server-1604"
+      imageType: "ubuntu-1604"
       __computeConfigContent: |
           #cloud-config
           repo_update: true
@@ -27,9 +24,8 @@ components:
     type: "Compute"
     data:
       name: "wordpress"
-      environmentName: "On premise"
       instanceType: small
-      imageType: "ubuntu-server-1604"
+      imageType: "ubuntu-1604"
       __computeConfigContent: |
           #cloud-config
           repo_update: true

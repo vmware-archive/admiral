@@ -685,7 +685,8 @@ public class CompositionSubTaskService
                                 ComponentMeta meta = CompositeComponentRegistry
                                         .metaByStateLink(link);
                                 if (meta != null) {
-                                    ResourceState state = Utils.fromJson(document, meta.stateClass);
+                                    ResourceState state = Utils.fromJson(document,
+                                            meta.stateTemplateClass);
                                     String descriptionLink = PropertyUtils.getValue(state,
                                             DESCRIPTION_LINK_FIELD_NAME);
                                     ComponentDescription componentDescription = selfLinkToComponent

@@ -42,7 +42,6 @@ import java.util.stream.Stream;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
@@ -86,6 +85,7 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class ComputeAllocationTaskService
         extends
@@ -254,17 +254,17 @@ public class ComputeAllocationTaskService
 
     private void prepareContext(ComputeAllocationTaskState state,
             ComputeDescription computeDesc, ResourcePoolState resourcePool,
-            EndpointState endpoint, EnvironmentMappingState environment) {
+            EndpointState endpoint, String environmentLink) {
 
         if (resourcePool == null) {
             getResourcePool(state,
-                    (pool) -> prepareContext(state, computeDesc, pool, endpoint, environment));
+                    (pool) -> prepareContext(state, computeDesc, pool, endpoint, environmentLink));
             return;
         }
 
         if (computeDesc == null) {
             getComputeDescription(state.resourceDescriptionLink, (compDesc) -> prepareContext(state,
-                    compDesc, resourcePool, endpoint, environment));
+                    compDesc, resourcePool, endpoint, environmentLink));
             return;
         }
 
@@ -278,13 +278,14 @@ public class ComputeAllocationTaskService
 
         if (endpoint == null) {
             getServiceState(endpointLink, EndpointState.class,
-                    (ep) -> prepareContext(state, computeDesc, resourcePool, ep, environment));
+                    (ep) -> prepareContext(state, computeDesc, resourcePool, ep, environmentLink));
             return;
         }
 
-        if (environment == null) {
+        if (environmentLink == null) {
             queryEnvironment(state, endpoint.endpointType, state.tenantLinks,
-                    (env) -> prepareContext(state, computeDesc, resourcePool, endpoint, env));
+                    (envLink) -> prepareContext(state, computeDesc, resourcePool, endpoint,
+                            envLink));
             return;
         }
 
@@ -293,7 +294,7 @@ public class ComputeAllocationTaskService
 
             s.endpointLink = endpointLink;
             s.endpointComputeStateLink = endpoint.computeLink;
-            s.environmentLink = environment.documentSelfLink;
+            s.environmentLink = environmentLink;
             s.endpointType = endpoint.endpointType;
             s.resourcePoolLink = resourcePool.documentSelfLink;
 
@@ -942,7 +943,7 @@ public class ComputeAllocationTaskService
 
     private void queryEnvironment(ComputeAllocationTaskState state,
             String endpointType, List<String> tenantLinks,
-            Consumer<EnvironmentMappingState> callbackFunction) {
+            Consumer<String> callbackFunction) {
 
         QueryTask.Query endpointTypeClause = new QueryTask.Query()
                 .setTermPropertyName(EnvironmentMappingState.FIELD_NAME_ENDPOINT_TYPE_NAME)
@@ -956,35 +957,35 @@ public class ComputeAllocationTaskService
         }
         Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(tenantLinks);
 
-        QueryTask q = QueryUtil.buildQuery(EnvironmentMappingState.class, false,
+        QueryTask q = QueryUtil.buildQuery(EnvironmentMappingState.class, true,
                 endpointTypeClause,
                 tenantLinksQuery);
         q.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
-        QueryUtil.addExpandOption(q);
 
-        ServiceDocumentQuery<EnvironmentMappingState> query = new ServiceDocumentQuery<>(getHost(),
-                EnvironmentMappingState.class);
-        List<EnvironmentMappingState> environments = new ArrayList<>();
-        query.query(q, (r) -> {
-            if (r.hasException()) {
-                failTask("Exception while quering for enviroment mappings", r.getException());
-            } else if (r.hasResult()) {
-                environments.add(r.getResult());
-            } else {
-                if (environments.isEmpty()) {
-                    if (tenantLinks != null && !tenantLinks.isEmpty()) {
-                        ArrayList<String> subLinks = new ArrayList<>(tenantLinks);
-                        subLinks.remove(tenantLinks.size() - 1);
-                        queryEnvironment(state, endpointType, subLinks, callbackFunction);
-                    } else {
-                        failTask("No available environment mappings for endpoint type: "
-                                + endpointType, null);
+        sendRequest(Operation.createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
+                .setBody(q)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure while quering for enviroment mappings", e);
+                        return;
                     }
-                    return;
-                }
-                callbackFunction.accept(environments.get(0));
-            }
-        });
+
+                    QueryTask task = o.getBody(QueryTask.class);
+                    if (task.results == null || task.results.documentLinks == null
+                            || task.results.documentLinks.isEmpty()) {
+                        if (tenantLinks != null && !tenantLinks.isEmpty()) {
+                            ArrayList<String> subLinks = new ArrayList<>(tenantLinks);
+                            subLinks.remove(tenantLinks.size() - 1);
+                            queryEnvironment(state, endpointType, subLinks, callbackFunction);
+                        } else {
+                            failTask("No available environment mappings for endpoint type: "
+                                    + endpointType, null);
+                        }
+                        return;
+                    }
+                    callbackFunction.accept(task.results.documentLinks.get(0));
+                }));
+
     }
 
     private void getComputeDescription(String uriLink,
