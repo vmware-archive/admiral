@@ -205,7 +205,7 @@ public class ManagementHost extends ServiceHost {
     protected void startManagementServices() throws Throwable {
         this.log(Level.INFO, "Management service starting ...");
 
-        HostInitComputeServicesConfig.startServices(this);
+        HostInitComputeServicesConfig.startServices(this, false);
         HostInitComputeBackgroundServicesConfig.startServices(this);
         HostInitRequestServicesConfig.startServices(this);
         HostInitImageServicesConfig.startServices(this);

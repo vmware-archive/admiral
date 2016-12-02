@@ -184,7 +184,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         HostInitTestDcpServicesConfig.startServices(h);
         HostInitPhotonModelServiceConfig.startServices(h);
         HostInitCommonServiceConfig.startServices(h);
-        HostInitComputeServicesConfig.startServices(h);
+        HostInitComputeServicesConfig.startServices(h, true);
         HostInitRequestServicesConfig.startServices(h);
         HostInitAdapterServiceConfig.startServices(h, true);
 

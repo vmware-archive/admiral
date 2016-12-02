@@ -63,7 +63,7 @@ public abstract class ContinuousDeliveryBaseTest extends BaseTestCase {
         HostInitTestDcpServicesConfig.startServices(serviceHost);
         HostInitPhotonModelServiceConfig.startServices(serviceHost);
         HostInitCommonServiceConfig.startServices(serviceHost);
-        HostInitComputeServicesConfig.startServices(serviceHost);
+        HostInitComputeServicesConfig.startServices(serviceHost, false);
         HostInitComputeBackgroundServicesConfig.startServices(serviceHost);
         HostInitRequestServicesConfig.startServices(serviceHost);
         HostInitAdapterServiceConfig.startServices(serviceHost, true);

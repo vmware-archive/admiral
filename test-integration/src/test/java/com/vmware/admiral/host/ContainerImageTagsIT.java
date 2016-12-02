@@ -74,7 +74,7 @@ public class ContainerImageTagsIT extends BaseTestCase {
         HostInitCommonServiceConfig.startServices(host);
         HostInitRegistryAdapterServiceConfig.startServices(host);
         HostInitImageServicesConfig.startServices(host);
-        HostInitComputeServicesConfig.startServices(host);
+        HostInitComputeServicesConfig.startServices(host, false);
         waitForServiceAvailability(ConfigurationFactoryService.SELF_LINK);
         waitForServiceAvailability(RegistryAdapterService.SELF_LINK);
         waitForServiceAvailability(ContainerImageService.SELF_LINK);

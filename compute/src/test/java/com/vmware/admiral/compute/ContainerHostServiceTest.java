@@ -61,6 +61,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
     private static final String SECOND_USER_ID = USER_IDENTIFIER + "user2";
 
     private MockDockerHostAdapterService dockerAdapterService;
+
     private List<String> tenantLinks;
     private List<String> forDeletion;
 
@@ -106,10 +107,12 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
 
         try {
             createContainerHostSpec(hostSpec);
-            fail("Should've thrown IllegalArgumentException - " + ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE);
+            fail("Should've thrown IllegalArgumentException - "
+                    + ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE);
         } catch (IllegalArgumentException e) {
             assertNotNull(e);
-            assertEquals(ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE, e.getMessage());
+            assertEquals(ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE,
+                    e.getMessage());
         }
     }
 
@@ -126,7 +129,8 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
 
         List<String> tenantLinksWithDifferentTenant = Arrays.asList(
                 SECOND_TENANT_ID);
-        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinksWithDifferentTenant, SECOND_COMPUTE_DESC_ID);
+        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinksWithDifferentTenant,
+                SECOND_COMPUTE_DESC_ID);
 
         createContainerHostSpec(hostSpec);
 
@@ -149,10 +153,12 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
 
         try {
             createContainerHostSpec(hostSpec);
-            fail("Should've thrown IllegalArgumentException - " + ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE);
+            fail("Should've thrown IllegalArgumentException - "
+                    + ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE);
         } catch (IllegalArgumentException e) {
             assertNotNull(e);
-            assertEquals(ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE, e.getMessage());
+            assertEquals(ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE,
+                    e.getMessage());
         }
     }
 
@@ -172,7 +178,8 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                 FIRST_TENANT_ID,
                 SECOND_SUB_TENANT_ID);
 
-        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinksWithDifferentGroup, SECOND_COMPUTE_DESC_ID);
+        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinksWithDifferentGroup,
+                SECOND_COMPUTE_DESC_ID);
 
         createContainerHostSpec(hostSpec);
 
@@ -195,10 +202,12 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
 
         try {
             createContainerHostSpec(hostSpec);
-            fail("Should've thrown IllegalArgumentException - " + ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE);
+            fail("Should've thrown IllegalArgumentException - "
+                    + ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE);
         } catch (IllegalArgumentException e) {
             assertNotNull(e);
-            assertEquals(ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE, e.getMessage());
+            assertEquals(ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE,
+                    e.getMessage());
         }
     }
 
@@ -218,7 +227,8 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                 FIRST_TENANT_ID,
                 SECOND_USER_ID);
 
-        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinksWithDifferentUser, SECOND_COMPUTE_DESC_ID);
+        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinksWithDifferentUser,
+                SECOND_COMPUTE_DESC_ID);
 
         createContainerHostSpec(hostSpec);
 
@@ -241,15 +251,18 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                 SECOND_TENANT_ID,
                 FIRST_USER_ID);
 
-        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinksWithDifferentGroup, SECOND_COMPUTE_DESC_ID);
+        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinksWithDifferentGroup,
+                SECOND_COMPUTE_DESC_ID);
 
         createContainerHostSpec(hostSpec);
 
         assertComputeStateExists(hostSpec);
     }
 
-    // there is already created host with tenant links "[/tenants/tenant1, /groups/subtenant1, /user/user1]"
-    // and we will be able to add a host with tenant links "[/tenants/tenant1, /groups/subtenant1, /user/user2]"
+    // there is already created host with tenant links "[/tenants/tenant1, /groups/subtenant1,
+    // /user/user1]"
+    // and we will be able to add a host with tenant links "[/tenants/tenant1, /groups/subtenant1,
+    // /user/user2]"
     @Test
     public void testPutFromSameTenantSameGroupDifferentUser() throws Throwable {
         ComputeState cs = createComputeHost(tenantLinks, FIRST_COMPUTE_DESC_ID);
@@ -262,15 +275,18 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                 FIRST_SUB_TENANT_ID,
                 SECOND_USER_ID);
 
-        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinksWithSecondTenant, SECOND_COMPUTE_DESC_ID);
+        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinksWithSecondTenant,
+                SECOND_COMPUTE_DESC_ID);
 
         createContainerHostSpec(hostSpec);
 
         assertComputeStateExists(hostSpec);
     }
 
-    // there is already created host with tenant links "[/tenants/tenant1, /groups/subtenant1, /user/user1]"
-    // and we will be able to add a host with tenant links "[/tenants/tenant1, /groups/subtenant2, /user/user1]"
+    // there is already created host with tenant links "[/tenants/tenant1, /groups/subtenant1,
+    // /user/user1]"
+    // and we will be able to add a host with tenant links "[/tenants/tenant1, /groups/subtenant2,
+    // /user/user1]"
     @Test
     public void testPutFromSameTenantDifferentGroupSameUser() throws Throwable {
         ComputeState cs = createComputeHost(tenantLinks, FIRST_COMPUTE_DESC_ID);
@@ -283,14 +299,16 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                 SECOND_SUB_TENANT_ID,
                 FIRST_USER_ID);
 
-        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinksWithSecondTenant, SECOND_COMPUTE_DESC_ID);
+        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinksWithSecondTenant,
+                SECOND_COMPUTE_DESC_ID);
 
         createContainerHostSpec(hostSpec);
 
         assertComputeStateExists(hostSpec);
     }
 
-    private ComputeState createComputeHost(List<String> tenantLinks, String computeDescriptionId) throws Throwable {
+    static ComputeState createComputeHost(List<String> tenantLinks, String computeDescriptionId)
+            throws Throwable {
         ComputeState cs = new ComputeState();
         cs.id = UUID.randomUUID().toString();
         cs.primaryMAC = UUID.randomUUID().toString();
@@ -307,12 +325,13 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
         cs.customProperties.put(ComputeConstants.DOCKER_URI_PROP_NAME,
                 ContainerDescription.getDockerHostUri(cs).toString());
 
-        cs.tenantLinks = new ArrayList<String>(tenantLinks);
+        cs.tenantLinks = new ArrayList<>(tenantLinks);
 
         return cs;
     }
 
-    private ContainerHostSpec createContainerHostSpec(List<String> tenantLinks, String computeDescriptionId) throws Throwable {
+    static ContainerHostSpec createContainerHostSpec(List<String> tenantLinks,
+            String computeDescriptionId) throws Throwable {
         ContainerHostSpec ch = new ContainerHostSpec();
         ch.hostState = createComputeHost(tenantLinks, computeDescriptionId);
 
@@ -326,7 +345,8 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                 .setCompletion(
                         (o, e) -> {
                             if (e != null) {
-                                host.log("Exception while processing the container host: {}.", Utils.toString(e));
+                                host.log("Exception while processing the container host: {}.",
+                                        Utils.toString(e));
                                 host.failIteration(e);
                                 return;
                             } else {
@@ -345,17 +365,18 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
         host.testStart(1);
         new ServiceDocumentQuery<>(host, ComputeState.class)
                 .query(queryTask,
-                    (r) -> {
-                        if (r.hasException()) {
-                            host.log("Exception while gettion the compute state.");
-                            host.failIteration(r.getException());
-                        } else if (r.hasResult()) {
-                            host.completeIteration();
-                        } else {
-                            host.log("No compute state with description link {}", hostSpec.hostState.descriptionLink);
-                            host.failIteration(r.getException());
-                        }
-                    });
+                        (r) -> {
+                            if (r.hasException()) {
+                                host.log("Exception while gettion the compute state.");
+                                host.failIteration(r.getException());
+                            } else if (r.hasResult()) {
+                                host.completeIteration();
+                            } else {
+                                host.log("No compute state with description link {}",
+                                        hostSpec.hostState.descriptionLink);
+                                host.failIteration(r.getException());
+                            }
+                        });
         host.testWait();
     }
 }

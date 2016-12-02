@@ -29,6 +29,7 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
@@ -103,6 +104,9 @@ public class ContainerHostService extends StatelessService {
         /** The given container host exists and has to be updated. */
         public Boolean isUpdateOperation;
 
+        /** Configure the docker daemon of the host over ssh. **/
+        public Boolean isConfigureOverSsh = Boolean.valueOf(false);
+
         /**
          * {@inheritDoc}
          */
@@ -144,6 +148,41 @@ public class ContainerHostService extends StatelessService {
                 && op.getUri().getQuery()
                         .contains(
                                 ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
+
+        if (hostSpec.isConfigureOverSsh) {
+            ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskServiceState();
+            state.address = hostSpec.uri.getHost();
+            state.port = hostSpec.uri.getPort();
+            state.authCredentialsLink = hostSpec.hostState.customProperties
+                    .get(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME);
+            state.placementZoneLink = hostSpec.hostState.resourcePoolLink;
+            state.tagLinks = hostSpec.hostState.tagLinks;
+
+            if (validateHostConnection) {
+                validateConfigureOverSsh(state, op);
+            } else {
+                Operation
+                        .createPost(UriUtils.buildUri(getHost(),
+                                ConfigureHostOverSshTaskService.FACTORY_LINK))
+                        .setBody(state)
+                        .setReferer(getHost().getUri())
+                        .setCompletion((completedOp, failure) -> {
+                            if (failure != null) {
+                                op.fail(failure);
+                                return;
+                            }
+
+                            // Return the state to the requester for further tracking
+                            op.setBody(completedOp
+                                    .getBody(ConfigureHostOverSshTaskServiceState.class));
+                            op.complete();
+                            return;
+
+                        }).sendWith(getHost());
+            }
+
+            return;
+        }
 
         if (validateHostConnection) {
             validateConnection(hostSpec, op);
@@ -193,6 +232,18 @@ public class ContainerHostService extends StatelessService {
 
         cs.address = cs.address.trim();
         hostSpec.uri = getHostUri(cs);
+    }
+
+    protected void validateConfigureOverSsh(ConfigureHostOverSshTaskServiceState state,
+            Operation op) {
+        ConfigureHostOverSshTaskService.validate(getHost(), state, (t) -> {
+            if (t != null) {
+                op.fail(t);
+                return;
+            }
+
+            completeOperationSuccess(op);
+        });
     }
 
     protected void storeHost(ContainerHostSpec hostSpec, Operation op) {
@@ -410,7 +461,7 @@ public class ContainerHostService extends StatelessService {
                         () -> completeOperationSuccess(op)));
     }
 
-    private void completeOperationSuccess(Operation op) {
+    protected void completeOperationSuccess(Operation op) {
         op.setStatusCode(HttpURLConnection.HTTP_NO_CONTENT);
         op.setBody(null);
         op.complete();

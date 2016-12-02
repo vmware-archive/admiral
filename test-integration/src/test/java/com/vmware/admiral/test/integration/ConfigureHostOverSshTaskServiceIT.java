@@ -22,17 +22,17 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.vmware.admiral.adapter.docker.service.ConfigureHostOverSshTaskService;
-import com.vmware.admiral.adapter.docker.service.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
 import com.vmware.admiral.adapter.docker.service.DockerHostAdapterService;
-import com.vmware.admiral.adapter.docker.service.test.MockConfigureHostOverSshTaskService;
 import com.vmware.admiral.common.test.BaseTestCase;
+import com.vmware.admiral.compute.ConfigureHostOverSshTaskService;
+import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
@@ -42,6 +42,7 @@ import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustImportService;
+import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -218,12 +219,14 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         state.port = 2376;
         state.authCredentialsLink = sshCreds.documentSelfLink;
         state.placementZoneLink = placementZone.documentSelfLink;
-        state.verify = true;
 
-        state = doPost(state, ConfigureHostOverSshTaskService.FACTORY_LINK);
-        state = waitForFinalState(state, 1, TimeUnit.MINUTES);
+        ValidateConsumer consumer = new ValidateConsumer();
 
-        Assert.assertEquals("Task failed", TaskStage.FINISHED, state.taskInfo.stage);
+        MockConfigureHostOverSshTaskService.validate(host, state, consumer);
+
+        consumer.join(1, TimeUnit.MINUTES);
+
+        Assert.assertNull("Task failed", consumer.result);
     }
 
     @Test
@@ -244,13 +247,39 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         state.port = 2376;
         state.authCredentialsLink = sshCreds.documentSelfLink;
         state.placementZoneLink = placementZone.documentSelfLink;
-        state.verify = true;
 
-        state = doPost(state, ConfigureHostOverSshTaskService.FACTORY_LINK);
-        state = waitForFinalState(state, 1, TimeUnit.MINUTES);
+        ValidateConsumer consumer = new ValidateConsumer();
 
-        Assert.assertEquals(TaskStage.FAILED, state.taskInfo.stage);
-        Assert.assertEquals("Connection refused", state.taskInfo.failure.message);
+        MockConfigureHostOverSshTaskService.validate(host, state, consumer);
+
+        consumer.join(1, TimeUnit.MINUTES);
+
+        Assert.assertNotNull("Task expected to fail", consumer.result);
+        Assert.assertEquals("Connection refused", consumer.result.getMessage());
+    }
+
+    private class ValidateConsumer implements Consumer<Throwable> {
+
+        boolean done = false;
+        Throwable result = null;
+
+        @Override
+        public void accept(Throwable t) {
+            result = t;
+            done = true;
+        }
+
+        public void join(int timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+            long endtime = System.currentTimeMillis() + unit.toMillis(timeout);
+
+            while (System.currentTimeMillis() < endtime && !done) {
+                Thread.sleep(500);
+            }
+
+            if (!done) {
+                throw new TimeoutException("Failed to complete validation task on time");
+            }
+        }
     }
 
     private ConfigureHostOverSshTaskServiceState waitForFinalState(

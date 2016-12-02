@@ -41,7 +41,7 @@ public abstract class ComputeBaseTest extends BaseTestCase {
 
     protected static final Long MIN_MEMORY = 4_194_304L;
 
-    private List<Runnable> staticFieldValuesResetRunners = new ArrayList<Runnable>();
+    private List<Runnable> staticFieldValuesResetRunners = new ArrayList<>();
 
     @Before
     public void beforeForComputeBase() throws Throwable {
@@ -70,7 +70,7 @@ public abstract class ComputeBaseTest extends BaseTestCase {
         HostInitPhotonModelServiceConfig.startServices(serviceHost);
         HostInitTestDcpServicesConfig.startServices(serviceHost);
         HostInitCommonServiceConfig.startServices(serviceHost);
-        HostInitComputeServicesConfig.startServices(serviceHost);
+        HostInitComputeServicesConfig.startServices(serviceHost, false);
     }
 
     protected void startInitialBootService(

@@ -60,6 +60,8 @@ public class SshServiceUtil {
             System.getProperty("ssh.poll.max_delay", "60"));
     public static final int SSH_OPERATION_TIMEOUT_SHORT = Integer.parseInt(
             System.getProperty("ssh.operation.timeout.short", "15"));
+    public static final int SSH_OPERATION_TIMEOUT_MEDIUM = Integer.parseInt(
+            System.getProperty("ssh.operation.timeout.medium", "60"));
     public static final int SSH_OPERATION_TIMEOUT_LONG = Integer.parseInt(
             System.getProperty("ssh.operation.timeout.long", "300"));
     public static final int SSH_GC_INTERVAL = Integer.parseInt(

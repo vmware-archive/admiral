@@ -15,6 +15,7 @@ import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
+import com.vmware.admiral.compute.ConfigureHostOverSshTaskService;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
@@ -53,6 +54,8 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeService.Contai
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.content.TemplateComputeDescription;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
+import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskServiceWithoutValidate;
+import com.vmware.admiral.service.test.MockContainerHostService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -63,11 +66,10 @@ import com.vmware.xenon.common.UriUtils;
 
 public class HostInitComputeServicesConfig extends HostInitServiceHelper {
 
-    public static void startServices(ServiceHost host) {
+    public static void startServices(ServiceHost host, boolean startMockContainerHostService) {
         startServices(host,
                 CaSigningCertService.class,
                 ContainerFactoryService.class,
-                ContainerHostService.class,
                 EndpointAdapterService.class,
                 HostContainerListDataCollectionFactoryService.class,
                 HostNetworkListDataCollectionFactoryService.class,
@@ -95,6 +97,14 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ElasticPlacementZoneService.class,
                 EpzComputeEnumerationTaskService.class,
                 PlacementCapacityUpdateTaskService.class);
+
+        if (startMockContainerHostService) {
+            startServices(host, MockContainerHostService.class);
+            startServiceFactories(host, MockConfigureHostOverSshTaskServiceWithoutValidate.class);
+        } else {
+            startServices(host, ContainerHostService.class);
+            startServiceFactories(host, ConfigureHostOverSshTaskService.class);
+        }
 
         // register a well-know Components
         CompositeComponentRegistry.registerComponent(ResourceType.CONTAINER_TYPE.getName(),

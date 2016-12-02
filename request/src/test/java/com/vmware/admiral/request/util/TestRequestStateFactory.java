@@ -20,10 +20,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.vmware.admiral.adapter.docker.service.ConfigureHostOverSshTaskService;
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.compute.ConfigureHostOverSshTaskService;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;

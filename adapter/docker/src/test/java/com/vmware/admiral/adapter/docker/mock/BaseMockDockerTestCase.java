@@ -60,7 +60,7 @@ public class BaseMockDockerTestCase extends BaseTestCase {
         HostInitTestDcpServicesConfig.startServices(host);
         HostInitPhotonModelServiceConfig.startServices(host);
         HostInitCommonServiceConfig.startServices(host);
-        HostInitComputeServicesConfig.startServices(host);
+        HostInitComputeServicesConfig.startServices(host, false);
         waitForServiceAvailability(ComputeInitialBootService.SELF_LINK);
         waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
 

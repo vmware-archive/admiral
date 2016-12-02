@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.docker.service;
+package com.vmware.admiral.compute;
 
 import java.io.IOException;
 import java.net.URI;
@@ -23,14 +23,12 @@ import java.util.function.Consumer;
 import org.apache.commons.io.IOUtils;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
-import com.vmware.admiral.adapter.docker.service.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState.SubStage;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.CertificateUtil.CertChainKeyPair;
 import com.vmware.admiral.common.util.KeyUtil;
 import com.vmware.admiral.common.util.SshServiceUtil;
-import com.vmware.admiral.compute.ComputeConstants;
-import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState.SubStage;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
@@ -38,9 +36,11 @@ import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.OperationSequence;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
@@ -66,7 +66,7 @@ public class ConfigureHostOverSshTaskService extends
 
     public static final String INSTALLER_RESOURCE = "installer.sh";
 
-    protected SshServiceUtil sshServiceUtil;
+    static SshServiceUtil sshServiceUtil;
 
     public ConfigureHostOverSshTaskService() {
         super(ConfigureHostOverSshTaskServiceState.class,
@@ -119,13 +119,6 @@ public class ConfigureHostOverSshTaskService extends
                 PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
                         PropertyIndexingOption.STORE_ONLY })
         public Set<String> tagLinks;
-
-        @Documentation(description = "If this is set to true the operation will only verify connectivity"
-                + "and complete without configuring the host.")
-        @PropertyOptions(usage = { PropertyUsageOption.SERVICE_USE,
-                PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
-                        PropertyIndexingOption.STORE_ONLY })
-        public boolean verify;
     }
 
     @Override
@@ -139,37 +132,13 @@ public class ConfigureHostOverSshTaskService extends
     protected void handleStartedStagePatch(ConfigureHostOverSshTaskServiceState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            if (state.address == null || state.address.equals("")) {
-                failTask(ADDRESS_NOT_SET_ERROR_MESSAGE,
-                        new IllegalArgumentException(ADDRESS_NOT_SET_ERROR_MESSAGE));
-                return;
-            }
-            if (state.port == null || state.port < 0) {
-                failTask(PORT_NOT_SET_ERROR_MESSAGE,
-                        new IllegalArgumentException(PORT_NOT_SET_ERROR_MESSAGE));
-                return;
-            }
-
-            // Verify connectivity and that the user is root or another sudoer
-            fetchCredentials(state.authCredentialsLink, (creds) -> {
-                String command = "echo 1234";
-                if (!isRoot(creds)) {
-                    command = "sudo " + command;
+            validate(state, (t) -> {
+                if (t != null) {
+                    failTask(t.getMessage(), t);
+                    return;
                 }
 
-                getSshServiceUtil().exec(state.address, creds, command, (op, failure) -> {
-                    if (failure != null) {
-                        failTask(CONNECTION_REFUSED_ERROR_MESSAGE, failure);
-                        return;
-                    }
-
-                    if (state.verify) {
-                        proceedTo(SubStage.COMPLETED);
-                        return;
-                    }
-
-                    uploadResources(state);
-                }, 30, TimeUnit.SECONDS);
+                uploadResources(state);
             });
 
             return;
@@ -185,12 +154,58 @@ public class ConfigureHostOverSshTaskService extends
         default:
             completeWithError();
         }
+    }
 
+    @Override
+    public void handleStop(Operation delete) {
+        sshServiceUtil = null; // Null the static field to avoid issues in tests when the host
+                               // changes
+        super.handleStop(delete);
+    }
+
+    protected void validate(ConfigureHostOverSshTaskServiceState state,
+            Consumer<Throwable> consumer) {
+        validate(getHost(), state, consumer);
+    }
+
+    public static void validate(ServiceHost host, ConfigureHostOverSshTaskServiceState state,
+            Consumer<Throwable> consumer) {
+        if (state.address == null || state.address.equals("")) {
+            consumer.accept(new IllegalArgumentException(ADDRESS_NOT_SET_ERROR_MESSAGE));
+        }
+        if (state.port == null || state.port < 0) {
+            consumer.accept(new IllegalArgumentException(PORT_NOT_SET_ERROR_MESSAGE));
+        }
+
+        // Verify connectivity and that the user is root or another sudoer
+        fetchCredentials(host, state.authCredentialsLink, (op, failure) -> {
+            if (failure != null) {
+                consumer.accept(failure);
+                return;
+            }
+
+            AuthCredentialsServiceState creds = op.getBody(AuthCredentialsServiceState.class);
+
+            String command = "echo 1234";
+            if (!isRoot(creds)) {
+                command = "sudo " + command;
+            }
+
+            getSshServiceUtil(host).exec(state.address, creds, command, (sshOp, sshFailure) -> {
+                if (sshFailure != null) {
+                    consumer.accept(sshFailure);
+                    return;
+                }
+
+                consumer.accept(null);
+            }, SshServiceUtil.SSH_OPERATION_TIMEOUT_MEDIUM, TimeUnit.SECONDS);
+        });
     }
 
     public void uploadResources(ConfigureHostOverSshTaskServiceState state) {
-        Operation fetchCredentialsOperation = createFetchCredentialsOperation(
-                state.authCredentialsLink, (creds) -> {
+        Operation fetchCredentialsOperation = createFetchCredentialsOperation(getHost(),
+                state.authCredentialsLink, (op, failure) -> {
+                    // Handle in the joined operation handler
                 });
 
         Operation fetchCaCertOperation = Operation
@@ -229,7 +244,7 @@ public class ConfigureHostOverSshTaskService extends
                         return;
                     }
                     uploadCaPem(state, credentials, caCert);
-                }, 1, TimeUnit.MINUTES);
+                }, SshServiceUtil.SSH_OPERATION_TIMEOUT_MEDIUM, TimeUnit.SECONDS);
     }
 
     public void uploadCaPem(ConfigureHostOverSshTaskServiceState state,
@@ -301,8 +316,12 @@ public class ConfigureHostOverSshTaskService extends
     public void setup(ConfigureHostOverSshTaskServiceState state,
             AuthCredentialsServiceState credentials) {
         if (credentials == null) {
-            fetchCredentials(state.authCredentialsLink, (creds) -> {
-                setup(state, creds);
+            fetchCredentials(getHost(), state.authCredentialsLink, (op, failure) -> {
+                if (failure != null) {
+                    failTask("Failed to fetch credentials", failure);
+                    return;
+                }
+                setup(state, op.getBody(AuthCredentialsServiceState.class));
             });
             return;
         }
@@ -340,7 +359,11 @@ public class ConfigureHostOverSshTaskService extends
         cs.address = getHostUri(state).toString();
         cs.name = cs.address;
         cs.resourcePoolLink = state.placementZoneLink;
-        cs.customProperties = new HashMap<>(state.customProperties);
+        if (state.customProperties != null) {
+            cs.customProperties = new HashMap<>(state.customProperties);
+        } else {
+            cs.customProperties = new HashMap<>();
+        }
         cs.customProperties.put(
                 ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 ManagementUriParts.AUTH_CREDENTIALS_CLIENT_LINK);
@@ -375,34 +398,32 @@ public class ConfigureHostOverSshTaskService extends
         return URI.create("https://" + state.address + ":" + state.port);
     }
 
-    public void fetchCredentials(String authCredentialsLink,
-            Consumer<AuthCredentialsServiceState> consumer) {
-        createFetchCredentialsOperation(authCredentialsLink, consumer).sendWith(getHost());
+    private static void fetchCredentials(ServiceHost host,
+            String authCredentialsLink,
+            CompletionHandler handler) {
+        createFetchCredentialsOperation(host, authCredentialsLink, handler).sendWith(host);
     }
 
-    private Operation createFetchCredentialsOperation(String authCredentialsLink,
-            Consumer<AuthCredentialsServiceState> consumer) {
-        return Operation.createGet(UriUtils.buildUri(getHost(), authCredentialsLink))
-                .setReferer(this.getUri())
-                .setCompletion((op, failure) -> {
-                    if (failure != null) {
-                        failTask("Failed to find auth credentials: " + authCredentialsLink,
-                                failure);
-                        return;
-                    }
-
-                    consumer.accept(op.getBody(AuthCredentialsServiceState.class));
-                });
+    private static Operation createFetchCredentialsOperation(ServiceHost host,
+            String authCredentialsLink,
+            CompletionHandler handler) {
+        return Operation.createGet(UriUtils.buildUri(host, authCredentialsLink))
+                .setReferer(host.getUri())
+                .setCompletion(handler);
     }
 
-    private boolean isRoot(AuthCredentialsServiceState creds) {
+    private static boolean isRoot(AuthCredentialsServiceState creds) {
         return creds.userEmail.equals("root");
     }
 
     protected SshServiceUtil getSshServiceUtil() {
-        synchronized (this) {
+        return getSshServiceUtil(getHost());
+    }
+
+    protected static SshServiceUtil getSshServiceUtil(ServiceHost host) {
+        synchronized (ConfigureHostOverSshTaskService.class) {
             if (sshServiceUtil == null) {
-                sshServiceUtil = new SshServiceUtil(getHost());
+                sshServiceUtil = new SshServiceUtil(host);
             }
 
             return sshServiceUtil;
