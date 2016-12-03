@@ -21,8 +21,11 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -240,8 +243,9 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         assertNotNull(cd.authCredentialsLink);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    public void testEnhanceWithServerCerts() {
+    public void testEnhanceWithRemoteAPIAndDefaultPort() {
         cd.customProperties.put(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME,
                 "true");
         cd.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
@@ -261,9 +265,85 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         assertNotNull("Expected to have content", context.content);
         Object writeFiles = context.content.get("write_files");
         assertNotNull("Expected to have write-files section", writeFiles);
-        @SuppressWarnings("rawtypes")
-        List list = (List) writeFiles;
+        @SuppressWarnings({ "rawtypes" })
+        List<Object> list = (List) writeFiles;
         assertEquals(4, list.size());
+
+        list.stream()
+                .filter(e -> (e instanceof Map))
+                .map(e -> (Map<String, Object>) e)
+                .filter(m -> "/etc/systemd/system/docker.service.d/docker.conf"
+                        .equals(m.get("path")))
+                .map(m -> (String) m.get("content")).forEach(v -> assertTrue(v.contains("443")));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testEnhanceWithRemoteAPIAndCustomPort() {
+        cd.customProperties.put(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME,
+                "true");
+        cd.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
+                DockerAdapterType.API.name());
+        cd.customProperties.put(ContainerHostService.DOCKER_HOST_PORT_PROP_NAME, "2376");
+
+        TestContext ctx = testCreate(1);
+        ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")).enhance(context,
+                cd, (desc, t) -> {
+                    if (t != null) {
+                        ctx.failIteration(t);
+                        return;
+                    }
+                    ctx.completeIteration();
+                });
+        ctx.await();
+
+        assertNotNull("Expected to have content", context.content);
+        Object writeFiles = context.content.get("write_files");
+        assertNotNull("Expected to have write-files section", writeFiles);
+        @SuppressWarnings({ "rawtypes" })
+        List<Object> list = (List) writeFiles;
+        assertEquals(4, list.size());
+
+        list.stream()
+                .filter(e -> (e instanceof Map))
+                .map(e -> (Map<String, Object>) e)
+                .filter(m -> "/etc/systemd/system/docker.service.d/docker.conf"
+                        .equals(m.get("path")))
+                .map(m -> (String) m.get("content")).forEach(v -> assertTrue(v.contains("2376")));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testEnhanceWithRemoteAPIAndCustomPortOnCoreOs() throws JsonProcessingException {
+        context.imageType = "coreos";
+
+        cd.customProperties.put(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME,
+                "true");
+        cd.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
+                DockerAdapterType.API.name());
+        cd.customProperties.put(ContainerHostService.DOCKER_HOST_PORT_PROP_NAME, "2376");
+
+        TestContext ctx = testCreate(1);
+        ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")).enhance(context,
+                cd, (desc, t) -> {
+                    if (t != null) {
+                        ctx.failIteration(t);
+                        return;
+                    }
+                    ctx.completeIteration();
+                });
+        ctx.await();
+
+        assertNotNull("Expected to have content", context.content);
+        Object writeFiles = context.content.get("write_files");
+        assertNotNull("Expected to have write-files section", writeFiles);
+        @SuppressWarnings({ "rawtypes" })
+        List<Object> list = (List) writeFiles;
+        assertEquals(3, list.size());
+
+        String value = ComputeDescriptionEnhancer.objectMapper
+                .writeValueAsString(context.content.get("coreos"));
+        assertTrue(value.contains("ListenStream=2376"));
     }
 
     @Test

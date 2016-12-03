@@ -6,6 +6,6 @@ packages:
  - docker
 
 runcmd:
- - echo 'OPTIONS="$OPTIONS -H=0.0.0.0:443 --tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem"' | sudo tee -a /etc/sysconfig/docker
+ - echo 'OPTIONS="$OPTIONS -H=0.0.0.0:{{ remote_api_port }} --tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem"' | sudo tee -a /etc/sysconfig/docker
  - service docker start
  - [ sh, -c, "usermod -a -G docker ec2-user" ]

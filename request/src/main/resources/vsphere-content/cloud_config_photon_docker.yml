@@ -7,6 +7,6 @@ ssh_authorized_keys:
 
 runcmd:
  - systemctl stop docker
- - echo 'DOCKER_OPTS="-H 0.0.0.0:443 -H unix:///var/run/docker.sock --tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem"' | sudo tee -a /etc/default/docker
- - iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+ - echo 'DOCKER_OPTS="-H 0.0.0.0:{{ remote_api_port }} -H unix:///var/run/docker.sock --tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem"' | sudo tee -a /etc/default/docker
+ - iptables -A INPUT -p tcp --dport {{ remote_api_port }} -j ACCEPT
  - systemctl start docker

@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.CertificateUtil;
@@ -33,12 +35,14 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
-public class ServerCertComputeDescriptionEnhancer extends ComputeDescriptionEnhancer {
+public class ContainerHostRemoteAPIComputeDescriptionEnhancer extends ComputeDescriptionEnhancer {
+    private static final Pattern REMOTE_API_PORT = Pattern
+            .compile("\\{\\{ remote_api_port \\}\\}");
 
     private ServiceHost host;
     private URI referer;
 
-    public ServerCertComputeDescriptionEnhancer(ServiceHost host, URI referer) {
+    public ContainerHostRemoteAPIComputeDescriptionEnhancer(ServiceHost host, URI referer) {
         this.host = host;
         this.referer = referer;
     }
@@ -53,7 +57,64 @@ public class ServerCertComputeDescriptionEnhancer extends ComputeDescriptionEnha
             return;
         }
 
+        applyPort(context, cd);
         processCaCertSign(context, cd, callback);
+    }
+
+    private void applyPort(EnhanceContext context, ComputeDescription cd) {
+        String portValue = getCustomProperty(cd, ContainerHostService.DOCKER_HOST_PORT_PROP_NAME);
+        int port = 443;
+        if (portValue != null) {
+            try {
+                port = Integer.parseInt(portValue);
+            } catch (NumberFormatException e) {
+                host.log(Level.WARNING, "The remote API port is not a valid number: %s", portValue);
+            }
+        } else {
+            cd.customProperties.put(ContainerHostService.DOCKER_HOST_PORT_PROP_NAME,
+                    String.valueOf(port));
+        }
+
+        Map<String, Object> content = context.content;
+
+        replace(content, REMOTE_API_PORT, String.valueOf(port));
+
+    }
+
+    @SuppressWarnings({ "unchecked" })
+    private void replace(Map<String, Object> content, Pattern pattern, String replacement) {
+        content.forEach((k, v) -> {
+            if (v instanceof String) {
+                String val = (String) v;
+                Matcher m = pattern.matcher(val);
+                if (m.find()) {
+                    String replaced = m.replaceAll(replacement);
+                    content.put(k, replaced);
+                }
+            } else if (v instanceof Map) {
+                replace((Map<String, Object>) v, pattern, replacement);
+            } else if (v instanceof List) {
+                replace((List<Object>) v, pattern, replacement);
+            }
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    private void replace(List<Object> list, Pattern pattern, String replacement) {
+        list.replaceAll(el -> {
+            if (el instanceof String) {
+                String val = (String) el;
+                Matcher m = pattern.matcher(val);
+                if (m.find()) {
+                    return m.replaceAll(replacement);
+                }
+            } else if (el instanceof Map) {
+                replace((Map<String, Object>) el, pattern, replacement);
+            } else if (el instanceof List) {
+                replace((List<Object>) el, pattern, replacement);
+            }
+            return el;
+        });
     }
 
     private void processCaCertSign(EnhanceContext context,
@@ -104,7 +165,7 @@ public class ServerCertComputeDescriptionEnhancer extends ComputeDescriptionEnha
         } catch (Exception e) {
             host.log(Level.WARNING,
                     () -> String.format("Error writing server certs in cloud-init file",
-                    Utils.toString(e)));
+                            Utils.toString(e)));
         }
     }
 

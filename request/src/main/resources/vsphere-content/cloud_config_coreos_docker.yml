@@ -10,7 +10,7 @@ coreos:
         Description=Docker Secured Socket for the API
 
         [Socket]
-        ListenStream=443
+        ListenStream={{ remote_api_port }}
         BindIPv6Only=both
         Service=docker.service
 
