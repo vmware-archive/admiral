@@ -286,8 +286,7 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
                         state.epzState.resourcePoolLink = state.resourcePoolState.documentSelfLink;
                         createEpzOpHolder[0].setBody(state.epzState);
                     } else {
-                        EpzComputeEnumerationTaskService.triggerForResourcePool(this,
-                                state.documentSelfLink);
+                        triggerDependentUpdates(state.documentSelfLink);
                         originalOp.complete();
                     }
                 });
@@ -310,8 +309,7 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
                         }
                         state.epzState = ops.values().iterator().next()
                                 .getBody(ElasticPlacementZoneState.class);
-                        EpzComputeEnumerationTaskService.triggerForResourcePool(this,
-                                state.documentSelfLink);
+                        triggerDependentUpdates(state.documentSelfLink);
                         originalOp.complete();
                     });
         }
@@ -430,7 +428,7 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
                                 .getBody(ElasticPlacementZoneState.class);
                     }
 
-                    EpzComputeEnumerationTaskService.triggerForResourcePool(this, originalRpLink);
+                    triggerDependentUpdates(originalRpLink);
 
                     originalOp.complete();
                 })
@@ -456,5 +454,10 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
                 .setReferer(getUri());
 
         return queryEpzOp;
+    }
+
+    private void triggerDependentUpdates(String resourcePoolLink) {
+        EpzComputeEnumerationTaskService.triggerForResourcePool(this, resourcePoolLink);
+        PlacementCapacityUpdateTaskService.triggerForResourcePool(this, resourcePoolLink);
     }
 }

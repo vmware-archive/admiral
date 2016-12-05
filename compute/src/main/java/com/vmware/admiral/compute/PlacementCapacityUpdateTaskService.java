@@ -190,10 +190,25 @@ public class PlacementCapacityUpdateTaskService extends
     public PlacementCapacityUpdateTaskService() {
         super(PlacementCapacityUpdateTaskState.class,
                 PlacementCapacityUpdateTaskState.SubStage.class, DISPLAY_NAME);
+        super.toggleOption(ServiceOption.REPLICATION, true);
+        super.toggleOption(ServiceOption.OWNER_SELECTION, true);
+        super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
 
         // these are one-off tasks that are not needed upon completion
         this.setSelfDelete(true);
+    }
+
+    @Override
+    public void handlePut(Operation put) {
+        if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
+            logInfo("Task already started, ignoring converted PUT.");
+            put.complete();
+            return;
+        }
+
+        // unsupported op
+        put.fail(Operation.STATUS_CODE_BAD_METHOD);
     }
 
     @Override
@@ -259,7 +274,9 @@ public class PlacementCapacityUpdateTaskService extends
                     ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
                     if (result.nextPageLink == null) {
                         logInfo("No computes found in resource pool %s", state.resourcePoolLink);
-                        proceedTo(PlacementCapacityUpdateTaskState.SubStage.UPDATE_RESOURCE_POOL);
+                        proceedTo(PlacementCapacityUpdateTaskState.SubStage.UPDATE_RESOURCE_POOL, s -> {
+                            s.aggregatedStats = new AggregatedComputeStats();
+                        });
                     } else {
                         proceedTo(PlacementCapacityUpdateTaskState.SubStage.ACCUMMULATE_COMPUTE_FIGURES, s -> {
                             s.nextPageLink = result.nextPageLink;
@@ -483,15 +500,17 @@ public class PlacementCapacityUpdateTaskService extends
     private ComputeStats getComputeStats(PlacementCapacityUpdateTaskState state,
             ComputeState compute,
             ComputeDescription computeDescription) {
-        if (computeDescription.supportedChildren.contains(ComputeType.DOCKER_CONTAINER.name())) {
-            return getContainerHostStats(compute, computeDescription);
-        } else if (computeDescription.supportedChildren.contains(ComputeType.VM_GUEST.name())) {
-            return getComputeHostStats(compute, computeDescription);
-        } else {
-            logInfo("Compute '%s' excluded from capacity calculations of resource pool '%s'",
-                    compute.documentSelfLink, state.resourcePoolLink);
-            return null;
+        if (computeDescription.supportedChildren != null) {
+            if (computeDescription.supportedChildren.contains(ComputeType.DOCKER_CONTAINER.name())) {
+                return getContainerHostStats(compute, computeDescription);
+            } else if (computeDescription.supportedChildren.contains(ComputeType.VM_GUEST.name())) {
+                return getComputeHostStats(compute, computeDescription);
+            }
         }
+
+        logInfo("Compute '%s' excluded from capacity calculations of resource pool '%s'",
+                compute.documentSelfLink, state.resourcePoolLink);
+        return null;
     }
 
     private ComputeStats getContainerHostStats(ComputeState compute,

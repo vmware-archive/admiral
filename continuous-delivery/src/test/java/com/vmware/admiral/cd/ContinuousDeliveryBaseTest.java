@@ -24,6 +24,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState.Powe
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.host.HostInitAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
+import com.vmware.admiral.host.HostInitComputeBackgroundServicesConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitContinuousDeliveryServicesConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
@@ -63,6 +64,7 @@ public abstract class ContinuousDeliveryBaseTest extends BaseTestCase {
         HostInitPhotonModelServiceConfig.startServices(serviceHost);
         HostInitCommonServiceConfig.startServices(serviceHost);
         HostInitComputeServicesConfig.startServices(serviceHost);
+        HostInitComputeBackgroundServicesConfig.startServices(serviceHost);
         HostInitRequestServicesConfig.startServices(serviceHost);
         HostInitAdapterServiceConfig.startServices(serviceHost, true);
         HostInitContinuousDeliveryServicesConfig.startServices(serviceHost);

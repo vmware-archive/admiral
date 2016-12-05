@@ -19,7 +19,6 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
 import com.vmware.admiral.compute.EnvironmentMappingService;
-import com.vmware.admiral.compute.EpzComputeEnumerationPeriodicService;
 import com.vmware.admiral.compute.EpzComputeEnumerationTaskService;
 import com.vmware.admiral.compute.HostConfigCertificateDistributionService;
 import com.vmware.admiral.compute.PlacementCapacityUpdateTaskService;
@@ -81,8 +80,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 HostConfigCertificateDistributionService.class,
                 RegistryConfigCertificateDistributionService.class,
                 ComputeInitialBootService.class,
-                ElasticPlacementZoneConfigurationService.class,
-                EpzComputeEnumerationPeriodicService.class);
+                ElasticPlacementZoneConfigurationService.class);
 
         startServiceFactories(host, ContainerDescriptionService.class,
                 GroupResourcePlacementService.class,

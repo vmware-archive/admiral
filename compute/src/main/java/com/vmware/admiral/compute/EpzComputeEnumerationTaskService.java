@@ -101,6 +101,9 @@ public class EpzComputeEnumerationTaskService extends
     public EpzComputeEnumerationTaskService() {
         super(EpzComputeEnumerationTaskState.class,
                 EpzComputeEnumerationTaskState.SubStage.class, DISPLAY_NAME);
+        super.toggleOption(ServiceOption.REPLICATION, true);
+        super.toggleOption(ServiceOption.OWNER_SELECTION, true);
+        super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
 
         // these are one-off tasks that are not needed upon completion
@@ -164,6 +167,18 @@ public class EpzComputeEnumerationTaskService extends
                         });
                     }
                 }).sendWith(sender);
+    }
+
+    @Override
+    public void handlePut(Operation put) {
+        if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
+            logInfo("Task already started, ignoring converted PUT.");
+            put.complete();
+            return;
+        }
+
+        // unsupported op
+        put.fail(Operation.STATUS_CODE_BAD_METHOD);
     }
 
     @Override

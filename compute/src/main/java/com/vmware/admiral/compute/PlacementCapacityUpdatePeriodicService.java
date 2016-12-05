@@ -20,18 +20,18 @@ import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.services.common.QueryTask;
 
 /**
- * A stateless service that periodically triggers enumeration of computes participating in all
- * query-driven placement zones.
+ * A stateless service that periodically triggers capacity update on placements and
+ * placement zones based on the computes participating in them.
  */
-public class EpzComputeEnumerationPeriodicService extends StatelessService {
+public class PlacementCapacityUpdatePeriodicService extends StatelessService {
 
-    public static final String SELF_LINK = ManagementUriParts.EPZ_PERIODIC_ENUMERATION;
+    public static final String SELF_LINK = ManagementUriParts.PLACEMENT_PERIODIC_UPDATE;
 
     public static final long MAINTENANCE_INTERVAL_MICROS = Long.getLong(
-            "dcp.management.epz.compute.periodic.maintenance.period.micros",
+            "dcp.management.placement.compute.periodic.maintenance.period.micros",
             TimeUnit.SECONDS.toMicros(300));
 
-    public EpzComputeEnumerationPeriodicService() {
+    public PlacementCapacityUpdatePeriodicService() {
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
         super.setMaintenanceIntervalMicros(MAINTENANCE_INTERVAL_MICROS);
@@ -39,13 +39,14 @@ public class EpzComputeEnumerationPeriodicService extends StatelessService {
 
     @Override
     public void handlePeriodicMaintenance(Operation post) {
-        EpzComputeEnumerationTaskService.triggerForAllResourcePools(this);
+        PlacementCapacityUpdateTaskService.triggerForAllResourcePools(this);
         post.complete();
     }
 
     @Override
     public void handleStart(Operation startPost) {
         startPost.complete();
+
         CommonContinuousQueries.subscribeTo(this.getHost(), ContinuousQueryId.COMPUTES, this::onComputeChange);
     }
 
@@ -54,7 +55,7 @@ public class EpzComputeEnumerationPeriodicService extends StatelessService {
         QueryTask queryTask = op.getBody(QueryTask.class);
         if (queryTask.results != null && queryTask.results.documentLinks != null) {
             logInfo("Compute change: %s", String.join(", ", queryTask.results.documentLinks));
-            EpzComputeEnumerationTaskService.triggerForAllResourcePools(this);
+            PlacementCapacityUpdateTaskService.triggerForAllResourcePools(this);
         }
     }
 }
