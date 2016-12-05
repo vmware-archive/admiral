@@ -91,6 +91,9 @@ var EnvironmentsView = Vue.extend({
     sortBy: function(key) {
       this.sortKey = key;
       this.sortOrders[key] = this.sortOrders[key] * -1;
+    },
+    refresh: function() {
+      EnvironmentsActions.openEnvironments();
     }
   },
   filters: {

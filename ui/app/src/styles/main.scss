@@ -1123,7 +1123,7 @@ text-shadow: 0px 0px 20px black;
   }
 }
 
-.registry-view, .placements-view, .environments-view {
+.registry-view, .placements-view, .environments-view, .center-view > .endpoints-view {
   @extend .inline-editable-list-and-context-view;
 }
 

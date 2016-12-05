@@ -78,5 +78,10 @@
       <img class="nav-item-image" src="image-assets/resource-icons/network.png">
       <span>{{i18n("app.navbar.networks")}}</span>
     </a>
+    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.ENDPOINTS.name}"
+       class="nav-item templates" href="#/endpoints">
+      <span class="nav-item-image"><i class="fa fa-cloud"></i></span>
+      <span>{{i18n("app.navbar.endpoints")}}</span>
+    </a>
   </template>
 </div>

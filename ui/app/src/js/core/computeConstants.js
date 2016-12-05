@@ -23,6 +23,9 @@ var computeConstants = Immutable({
     ENVIRONMENTS: {
       name: 'environments'
     },
+    ENDPOINTS: {
+      name: 'endpoints'
+    },
     PLACEMENTS: {
       name: 'placements'
     },

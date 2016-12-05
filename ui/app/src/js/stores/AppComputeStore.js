@@ -11,6 +11,7 @@
 
 import PlacementsStore from 'stores/PlacementsStore';
 import EnvironmentsStore from 'stores/EnvironmentsStore';
+import EndpointsStore from 'stores/EndpointsStore';
 import MachinesStore from 'stores/MachinesStore';
 import ComputeStore from 'stores/ComputeStore';
 import * as actions from 'actions/Actions';
@@ -53,6 +54,12 @@ let updateSideView = function(view) {
 let initializeStoreListeners = function() {
   EnvironmentsStore.listen((data) => {
     if (this.data.centerView && this.data.centerView.name === constants.VIEWS.ENVIRONMENTS.name) {
+      this.setInData(['centerView', 'data'], data);
+      this.emitChange();
+    }
+  });
+  EndpointsStore.listen((data) => {
+    if (this.data.centerView && this.data.centerView.name === constants.VIEWS.ENDPOINTS.name) {
       this.setInData(['centerView', 'data'], data);
       this.emitChange();
     }

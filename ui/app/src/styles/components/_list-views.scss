@@ -1312,7 +1312,7 @@ $elements-side-margin: $elements-margin / 2;
   margin-top: 20px;
 }
 
-.placements-view {
+.placements-view, .environments-view, .center-view > .endpoints-view {
   > .main-panel {
     @extend .position-expand;
     z-index: 1;
@@ -1333,18 +1333,22 @@ $elements-side-margin: $elements-margin / 2;
       display: none;
     }
     > .list-holder {
-      margin: 20px 0 35px 25px;
+      margin: 10px 0 35px 25px;
       overflow: hidden !important;
-      .toolbar-placements {
+      .toolbar {
         margin: 0 50px 25px 0;
       }
       .inline-editable-list {
         right: 0 !important;
+        > .title {
+          font-size: 28px;
+          margin-top: -10px;
+        }
       }
       .inline-editable-list-table {
         overflow: auto;
         position: absolute;
-        top: 40px;
+        top: 50px;
         left: 0;
         right: 0px;
         bottom: 0;

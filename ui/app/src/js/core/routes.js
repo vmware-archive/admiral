@@ -211,6 +211,11 @@ crossroads.addRoute('/environments', function() {
   actions.EnvironmentsActions.openEnvironments();
 });
 
+crossroads.addRoute('/endpoints', function() {
+  actions.AppActions.openView(computeConstants.VIEWS.ENDPOINTS.name);
+  actions.EndpointsActions.retrieveEndpoints();
+});
+
 crossroads.addRoute('/machines:?query:', function(query) {
   actions.AppActions.openView(computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name);
   actions.MachineActions.openMachines(query, true);

@@ -26,6 +26,7 @@
       "eventlog": "Event Log",
       "placementZones": "Placement Zones",
       "environments": "Environments",
+      "endpoints": "Endpoints",
       "machines": "Machines",
       "compute": "Compute"
     },

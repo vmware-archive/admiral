@@ -17,6 +17,7 @@ import MachinesView from 'components/machines/MachinesView';//eslint-disable-lin
 import ComputeView from 'components/compute/ComputeView';//eslint-disable-line
 import PlacementsView from 'components/placements/PlacementsView';//eslint-disable-line
 import EnvironmentsView from 'components/environments/EnvironmentsView';//eslint-disable-line
+import EndpointsView from 'components/endpoints/EndpointsView';//eslint-disable-line
 import computeConstants from 'core/computeConstants';
 
 var AppComputeVueComponent = Vue.extend({
