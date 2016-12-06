@@ -11,9 +11,9 @@
 
 import InlineEditableList from 'components/common/InlineEditableList';
 //resource pools
-import ResourcePoolsTemplate from 'components/resourcepools/ResourcePoolsTemplate.html';
-import ResourcePoolsRowRenderers from 'components/resourcepools/ResourcePoolsRowRenderers';
-import ResourcePoolsRowEditor from 'components/resourcepools/ResourcePoolsRowEditor';
+import PlacementZonesTemplate from 'components/placementzones/PlacementZonesTemplate.html';
+import PlacementZonesRowRenderers from 'components/placementzones/PlacementZonesRowRenderers';
+import PlacementZonesRowEditor from 'components/placementzones/PlacementZonesRowEditor';
 // credentials
 import CredentialsTemplate from 'components/credentials/CredentialsTemplate.html';
 import CredentialsRowRenderers from 'components/credentials/CredentialsRowRenderers';
@@ -34,15 +34,15 @@ import DeploymentPoliciesRowRenderers from
 import DeploymentPoliciesRowEditor from
   'components/deploymentpolicies/DeploymentPoliciesRowEditor';
 
-import { ResourcePoolsActions, CredentialsActions, CertificatesActions,
+import { PlacementZonesActions, CredentialsActions, CertificatesActions,
   ResourceGroupsActions, DeploymentPolicyActions } from 'actions/Actions';
 
 var InlineEditableListFactory = {
-  createResourcePoolsList: function($el) {
-    var list = new InlineEditableList($el, ResourcePoolsTemplate, ResourcePoolsRowRenderers);
-    list.setRowEditor(ResourcePoolsRowEditor);
-    list.setDeleteCallback(ResourcePoolsActions.deleteResourcePool);
-    list.setEditCallback(ResourcePoolsActions.editResourcePool);
+  createPlacementZonesList: function($el) {
+    var list = new InlineEditableList($el, PlacementZonesTemplate, PlacementZonesRowRenderers);
+    list.setRowEditor(PlacementZonesRowEditor);
+    list.setDeleteCallback(PlacementZonesActions.deletePlacementZone);
+    list.setEditCallback(PlacementZonesActions.editPlacementZone);
 
     return list;
   },

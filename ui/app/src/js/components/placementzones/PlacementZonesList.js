@@ -10,13 +10,13 @@
  */
 
 import InlineEditableListFactory from 'components/common/InlineEditableListFactory';
-import ResourcePoolsListVue from 'components/resourcepools/ResourcePoolsListVue.html';
+import PlacementZonesListVue from 'components/placementzones/PlacementZonesListVue.html';
 import utils from 'core/utils';
-import { ResourcePoolsContextToolbarActions } from 'actions/Actions';
+import { PlacementZonesContextToolbarActions } from 'actions/Actions';
 import EndpointsView from 'components/endpoints/EndpointsView'; //eslint-disable-line
 
-var ResourcePoolsList = Vue.extend({
-  template: ResourcePoolsListVue,
+var PlacementZonesList = Vue.extend({
+  template: PlacementZonesListVue,
   data: function() {
     return {
       showContextPanel: utils.isApplicationCompute()
@@ -31,7 +31,7 @@ var ResourcePoolsList = Vue.extend({
   attached: function() {
     var $listHolder = $(this.$el).find('.list-holder');
 
-    var list = InlineEditableListFactory.createResourcePoolsList($listHolder);
+    var list = InlineEditableListFactory.createPlacementZonesList($listHolder);
 
     this.unwatchModel = this.$watch('model', (model) => {
       list.setData(model);
@@ -41,8 +41,8 @@ var ResourcePoolsList = Vue.extend({
     this.unwatchModel();
   },
   methods: {
-    openToolbarEndpoints: ResourcePoolsContextToolbarActions.openToolbarEndpoints,
-    closeToolbar: ResourcePoolsContextToolbarActions.closeToolbar
+    openToolbarEndpoints: PlacementZonesContextToolbarActions.openToolbarEndpoints,
+    closeToolbar: PlacementZonesContextToolbarActions.closeToolbar
   },
   computed: {
     activeContextItem: function() {
@@ -55,6 +55,6 @@ var ResourcePoolsList = Vue.extend({
   }
 });
 
-Vue.component('resource-pools-list', ResourcePoolsList);
+Vue.component('placement-zones-list', PlacementZonesList);
 
-export default ResourcePoolsList;
+export default PlacementZonesList;

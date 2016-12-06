@@ -67,7 +67,7 @@ templateHelpers.register = function() {
     }
   });
 
-  Handlebars.registerHelper('resourcePoolPercentageLevel', function(percentage) {
+  Handlebars.registerHelper('placementZonePercentageLevel', function(percentage) {
     if (percentage < 50) {
       return 'success';
     } else if (percentage < 80) {

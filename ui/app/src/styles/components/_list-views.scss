@@ -1377,7 +1377,7 @@ $elements-side-margin: $elements-margin / 2;
   }
 }
 
-.resource-pools-list {
+.placement-zones-list {
   > .main-panel {
     @extend .position-expand;
     z-index: 1;
@@ -1392,7 +1392,7 @@ $elements-side-margin: $elements-margin / 2;
   }
 }
 
-.resource-pools-list.right-context-expanded {
+.placement-zones-list.right-context-expanded {
   > .main-panel {
     > .mask {
       display: block;

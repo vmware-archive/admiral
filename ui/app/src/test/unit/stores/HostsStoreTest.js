@@ -24,7 +24,7 @@ describe("HostsStore test", function() {
     it("should give validation errors on empty fields", function(done) {
       var emptyHostModel = {
         address: "",
-        resourcePool: null,
+        placementZone: null,
         credential: null,
         connectionType: null
       };
@@ -38,11 +38,11 @@ describe("HostsStore test", function() {
         expect(validationErrors).not.toBe(null);
 
         expect(validationErrors.address).toBe('errors.required');
-        expect(validationErrors.resourcePool).toBe('errors.required');
+        expect(validationErrors.placementZone).toBe('errors.required');
 
         var onlyAddressEmptyHostModel = {
           address: "",
-          resourcePool: {documentSelfLink: "someResourcePoolRef"},
+          placementZone: {documentSelfLink: "somePlacementZoneRef"},
           credential: {documentSelfLink: "someCredentialRef"},
           connectionType: "someConnectionType"
         };
@@ -58,7 +58,7 @@ describe("HostsStore test", function() {
         expect(validationErrors).not.toBe(null);
 
         expect(validationErrors.address).toBe('errors.required');
-        expect(validationErrors.resourcePool).toBeUndefined();
+        expect(validationErrors.placementZone).toBeUndefined();
         expect(validationErrors.credential).toBeUndefined();
         expect(validationErrors.connectionType).toBeUndefined();
       }).then(done);
@@ -68,7 +68,7 @@ describe("HostsStore test", function() {
 
     it("should give validation error on incorrect address", function(done) {
       var incorrectAddressHostModel = {
-        resourcePool: {documentSelfLink: "someResourcePoolRef"},
+        placementZone: {documentSelfLink: "somePlacementZoneRef"},
         credential: {documentSelfLink: "someCredentialRef"},
         connectionType: "someConnectionType"
       };
@@ -125,7 +125,7 @@ describe("HostsStore test", function() {
     it("should prompt user to accept self-signed certificate", function(done) {
       var hostModel = {
         address: "my-docker.com",
-        resourcePool: {documentSelfLink: "someResourcePoolRef"},
+        placementZone: {documentSelfLink: "somePlacementZoneRef"},
         credential: {documentSelfLink: "someCredentialRef"},
         connectionType: "someConnectionType",
         customProperties: []
@@ -160,7 +160,7 @@ describe("HostsStore test", function() {
     it("should NOT prompt user to accept known certificate and add host", function(done) {
       var hostModel = {
         address: "docker.com",
-        resourcePool: {documentSelfLink: "someResourcePool"},
+        placementZone: {documentSelfLink: "somePlacementZone"},
         credential: {documentSelfLink: "someCredentialRef"},
         descriptionLink: "someDescLink",
         connectionType: "API",
@@ -203,7 +203,7 @@ describe("HostsStore test", function() {
     it("should add host when accept certificate", function(done) {
       var hostModel = {
         address: "my-docker.com",
-        resourcePool: {documentSelfLink: "someResourcePoolRef"},
+        placementZone: {documentSelfLink: "somePlacementZoneRef"},
         credential: {documentSelfLink: "someCredentialRef"},
         descriptionLink: "someDescLink",
         connectionType: "API",

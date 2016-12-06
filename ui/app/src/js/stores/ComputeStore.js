@@ -16,7 +16,7 @@ import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
 import links from 'core/links';
 import constants from 'core/constants';
-import ResourcePoolsStore from 'stores/ResourcePoolsStore';
+import PlacementZonesStore from 'stores/PlacementZonesStore';
 
 const OPERATION = {
   LIST: 'LIST',
@@ -57,7 +57,7 @@ let toViewModel = function(dto) {
     powerState: dto.powerState,
     descriptionLink: dto.descriptionLink,
     resourcePoolLink: dto.resourcePoolLink,
-    resourcePoolDocumentId: dto.resourcePoolLink && utils.getDocumentId(dto.resourcePoolLink),
+    placementZoneDocumentId: dto.resourcePoolLink && utils.getDocumentId(dto.resourcePoolLink),
     epzs: epzs,
     connectionType: hasCustomProperties ? dto.customProperties.__adapterDockerType : null,
     customProperties: customProperties,
@@ -90,22 +90,22 @@ let ComputeStore = Reflux.createStore({
 
   init: function() {
 
-    ResourcePoolsStore.listen((resourcePoolsData) => {
+    PlacementZonesStore.listen((placementZonesData) => {
       if (!this.data.computeEditView) {
         return;
       }
 
-      this.setInData(['computeEditView', 'resourcePools'], resourcePoolsData.items);
+      this.setInData(['computeEditView', 'placementZones'], placementZonesData.items);
 
       if (isContextPanelActive.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS)) {
         this.setInData(['computeEditView', 'contextView', 'activeItem', 'data'],
-          resourcePoolsData);
+          placementZonesData);
 
-        var itemToSelect = resourcePoolsData.newItem || resourcePoolsData.updatedItem;
+        var itemToSelect = placementZonesData.newItem || placementZonesData.updatedItem;
         if (itemToSelect && this.data.computeEditView.contextView.shouldSelectAndComplete) {
           clearTimeout(this.itemSelectTimeout);
           this.itemSelectTimeout = setTimeout(() => {
-            this.setInData(['computeEditView', 'resourcePool'], itemToSelect);
+            this.setInData(['computeEditView', 'placementZone'], itemToSelect);
             this.onCloseToolbar();
           }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
         }
@@ -141,7 +141,7 @@ let ComputeStore = Reflux.createStore({
         var itemsCount = result.totalCount;
         var compute = documents.map((document) => toViewModel(document));
 
-        this.getResourcePools(compute).then((result) => {
+        this.getPlacementZones(compute).then((result) => {
           compute.forEach((compute) => {
             compute.epzs.forEach((epz) => {
               if (result[epz.epzLink]) {
@@ -191,7 +191,7 @@ let ComputeStore = Reflux.createStore({
         var nextPageLink = result.nextPageLink;
         var compute = documents.map((document) => toViewModel(document));
 
-        this.getResourcePools(compute).then((result) => {
+        this.getPlacementZones(compute).then((result) => {
           compute.forEach((compute) => {
             compute.epzs.forEach((epz) => {
               if (result[epz.epzLink]) {
@@ -231,13 +231,13 @@ let ComputeStore = Reflux.createStore({
     services.loadHost(computeId).then((document) => {
       let computeModel = toViewModel(document);
 
-      actions.ResourcePoolsActions.retrieveResourcePools();
+      actions.PlacementZonesActions.retrievePlacementZones();
 
       var promises = [];
 
       if (document.resourcePoolLink) {
         promises.push(
-            services.loadResourcePool(document.resourcePoolLink).catch(() => Promise.resolve()));
+            services.loadPlacementZone(document.resourcePoolLink).catch(() => Promise.resolve()));
       } else {
         promises.push(Promise.resolve());
       }
@@ -251,7 +251,7 @@ let ComputeStore = Reflux.createStore({
 
       Promise.all(promises).then(([config, tags]) => {
         if (document.resourcePoolLink && config) {
-          computeModel.resourcePool = config.resourcePoolState;
+          computeModel.placementZone = config.resourcePoolState;
         }
         computeModel.tags = tags ? Object.values(tags) : [];
 
@@ -285,9 +285,9 @@ let ComputeStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onOpenToolbarResourcePools: function() {
+  onOpenToolbarPlacementZones: function() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS,
-      ResourcePoolsStore.getData(), false);
+      PlacementZonesStore.getData(), false);
   },
 
   onCloseToolbar: function() {
@@ -306,31 +306,32 @@ let ComputeStore = Reflux.createStore({
     }
   },
 
-  onCreateResourcePool: function() {
+  onCreatePlacementZone: function() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS,
-      ResourcePoolsStore.getData(), true);
-    actions.ResourcePoolsActions.editResourcePool();
+      PlacementZonesStore.getData(), true);
+    actions.PlacementZonesActions.editPlacementZone();
   },
 
-  onManageResourcePools: function() {
+  onManagePlacementZones: function() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS,
-      ResourcePoolsStore.getData(), true);
+      PlacementZonesStore.getData(), true);
   },
 
-  getResourcePools: function(compute) {
-    let resourcePools = utils.getIn(this.data, ['listView', 'resourcePools']) || {};
+  getPlacementZones: function(compute) {
+    let placementZones = utils.getIn(this.data, ['listView', 'placementZones']) || {};
     let resourcePoolLinks = [];
     compute.forEach((compute) => {
       compute.epzs.forEach((epz) => resourcePoolLinks.push(epz.epzLink));
     });
     let links = [...new Set(resourcePoolLinks)].filter((link) =>
-        !resourcePools.hasOwnProperty(link));
+        !placementZones.hasOwnProperty(link));
     if (links.length === 0) {
-      return Promise.resolve(resourcePools);
+      return Promise.resolve(placementZones);
     }
-    return services.loadResourcePools(links).then((newResourcePools) => {
-      this.setInData(['listView', 'resourcePools'], $.extend({}, resourcePools, newResourcePools));
-      return utils.getIn(this.data, ['listView', 'resourcePools']);
+    return services.loadPlacementZones(links).then((newPlacementZones) => {
+      this.setInData(['listView', 'placementZones'],
+          $.extend({}, placementZones, newPlacementZones));
+      return utils.getIn(this.data, ['listView', 'placementZones']);
     });
   },
 

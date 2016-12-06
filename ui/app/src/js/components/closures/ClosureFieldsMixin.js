@@ -16,34 +16,34 @@ var ClosureFieldsMixin = {
   methods: {
     initializeClosureFields: function() {
       // Resource pool input
-      var elemResourcePool = $(this.$el).find('.resourcePool .form-control');
-      this.resourcePoolInput = new CustomDropdownSearchMenu(elemResourcePool, {
+      var elemPlacementZone = $(this.$el).find('.placementZone .form-control');
+      this.placementZoneInput = new CustomDropdownSearchMenu(elemPlacementZone, {
         title: i18n.t('dropdownSearchMenu.title', {
-          entity: i18n.t('app.resourcePool.entity')
+          entity: i18n.t('app.placementZone.entity')
         }),
         searchPlaceholder: i18n.t('dropdownSearchMenu.searchPlaceholder', {
-          entity: i18n.t('app.resourcePool.entity')
+          entity: i18n.t('app.placementZone.entity')
         })
       });
 
       var _this = this;
-      this.resourcePoolInput.setOptionSelectCallback(function(option) {
-        _this.resourcePool = option;
+      this.placementZoneInput.setOptionSelectCallback(function(option) {
+        _this.placementZone = option;
       });
 
-      this.unwatchResourcePools = this.$watch('model.resourcePools', () => {
-        if (this.model.resourcePools === constants.LOADING) {
-          this.resourcePoolInput.setLoading(true);
+      this.unwatchPlacementZones = this.$watch('model.placementZones', () => {
+        if (this.model.placementZones === constants.LOADING) {
+          this.placementZoneInput.setLoading(true);
         } else {
-          this.resourcePoolInput.setLoading(false);
-          this.resourcePoolInput.setOptions(
-          (this.model.resourcePools || []).map((config) => config.resourcePoolState));
+          this.placementZoneInput.setLoading(false);
+          this.placementZoneInput.setOptions(
+          (this.model.placementZones || []).map((config) => config.resourcePoolState));
         }
       }, {immediate: true});
 
-      this.unwatchResourcePool = this.$watch('model.resourcePool', () => {
-        if (this.model.resourcePool) {
-          this.resourcePoolInput.setSelectedOption(this.model.resourcePool);
+      this.unwatchPlacementZone = this.$watch('model.placementZone', () => {
+        if (this.model.placementZone) {
+          this.placementZoneInput.setSelectedOption(this.model.placementZone);
         }
       }, {immediate: true});
 

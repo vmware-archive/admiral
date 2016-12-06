@@ -1219,7 +1219,7 @@ text-shadow: 0px 0px 20px black;
   float: left;
 }
 
-.resourcePoolEditHolder, .credentialsEditHolder, .certificatesEditHolder, .registryEditHolder,
+.placementZoneEditHolder, .credentialsEditHolder, .certificatesEditHolder, .registryEditHolder,
 .placementEditHolder, .environmentEditHolder, .deploymentPolicyEditHolder, .endpointEditHolder,
 .resourceGroupEditHolder {
   background-color: #ffffff;
@@ -1252,30 +1252,30 @@ text-shadow: 0px 0px 20px black;
 .credentialsEditHolder .credentialsEdit-properties label {
     font-weight: normal;
 }
-.resourcePoolEdit, .credentialsEdit .credentialsEdit-header,
+.placementZoneEdit, .credentialsEdit .credentialsEdit-header,
 .certificatesEdit .certificatesEdit-header, .registryEdit, .deploymentPolicyEdit, .resourceGroupEdit {
   display: table;
   width: 100%;
 }
 
-.resourcePoolEdit > div, .credentialsEdit-header > div, .certificatesEdit-header > div,
+.placementZoneEdit > div, .credentialsEdit-header > div, .certificatesEdit-header > div,
 .deploymentPolicyEdit > div, .resourceGroupEdit > div {
   display: table-cell;
 }
 
-.resourcePoolEdit-properties, {
+.placementZoneEdit-properties, {
   label {
     font-weight: normal;
   }
 }
 
-.resourcePoolEdit-toolbar, .credentialsEdit-toolbar, .certificatesEdit-toolbar,
+.placementZoneEdit-toolbar, .credentialsEdit-toolbar, .certificatesEdit-toolbar,
 .deploymentPolicyEdit-toolbar, .resourceGroupEdit-toolbar {
   width: 60px;
   text-align: right;
 }
 
-.resourcePoolEdit-toolbar .admiral-btn-circle, .credentialsEdit-toolbar .admiral-btn-circle,
+.placementZoneEdit-toolbar .admiral-btn-circle, .credentialsEdit-toolbar .admiral-btn-circle,
 .certificatesEdit-toolbar .admiral-btn-circle, .deploymentPolicyEdit-toolbar .admiral-btn-circle,
 .resourceGroupEdit-toolbar .admiral-btn-circle {
   margin: 0 4px;
@@ -1296,7 +1296,7 @@ text-shadow: 0px 0px 20px black;
 .certificatesEdit-properties , .deploymentPolicyEdit-properties, .resourceGroupEdit-properties {
   padding-right: 60px;
 }
-.resourcePoolEdit-properties .name-input,
+.placementZoneEdit-properties .name-input,
 .credentialsEdit-properties .name-input,
 .credentialsEdit-properties .credentialsEdit-passwordInputs input,
 .credentialsEdit-properties .credentialsEdit-passwordInputs textarea,
@@ -1365,7 +1365,7 @@ text-shadow: 0px 0px 20px black;
   padding-right: 60px;
   float: left;
 }
-.resourcePoolEdit .title, .credentialsEdit .title, .certificatesEdit .title,
+.placementZoneEdit .title, .credentialsEdit .title, .certificatesEdit .title,
 .placementEdit .title, .deploymentPolicyEdit .title, .resourceGroupEdit .title {
   color: $main_color;
   font-size: 16px;
@@ -1383,14 +1383,14 @@ text-shadow: 0px 0px 20px black;
   margin-top: 10px;
 }
 
-.resourcePoolEdit-properties .subtitle {
+.placementZoneEdit-properties .subtitle {
   margin: 3px 0 0 0;
   font-weight: 500;
   color: #999;
   line-height: 32px;
 }
 
-.resourcePoolEdit .custom-properties {
+.placementZoneEdit .custom-properties {
   /*overflow: auto;*/
   max-height: 200px;
 }

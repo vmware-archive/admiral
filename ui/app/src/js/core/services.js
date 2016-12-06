@@ -445,7 +445,7 @@ services.searchTags = function(q) {
   return list(links.TAGS, true, params);
 };
 
-services.loadResourcePools = function(documentSelfLinks) {
+services.loadPlacementZones = function(documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
     params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
@@ -461,23 +461,23 @@ services.loadResourcePools = function(documentSelfLinks) {
   return list(links.EPZ_CONFIG, true, params);
 };
 
-services.loadResourcePool = function(documentSelfLink) {
+services.loadPlacementZone = function(documentSelfLink) {
   return get(links.EPZ_CONFIG + documentSelfLink);
 };
 
-services.createResourcePool = function(config) {
+services.createPlacementZone = function(config) {
   return post(links.EPZ_CONFIG, config);
 };
 
-services.updateResourcePool = function(config) {
+services.updatePlacementZone = function(config) {
   return patch(links.EPZ_CONFIG + config.documentSelfLink, config);
 };
 
-services.deleteResourcePool = function(config) {
+services.deletePlacementZone = function(config) {
   return deleteEntity(links.EPZ_CONFIG + config.documentSelfLink);
 };
 
-services.countHostsPerResourcePool = function(resourcePoolLink, onlyContainerHosts, onlyComputes) {
+services.countHostsPerPlacementZone = function(resourcePoolLink, onlyContainerHosts, onlyComputes) {
   var queryOptions = {
     placementZone: resourcePoolLink
   };
@@ -1784,17 +1784,17 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
       });
     }
 
-    var resourcePoolArray = toArrayIfDefined(queryOptions.placementZone);
-    if (resourcePoolArray) {
-      for (let i = 0; i < resourcePoolArray.length; i++) {
+    var placementZoneArray = toArrayIfDefined(queryOptions.placementZone);
+    if (placementZoneArray) {
+      for (let i = 0; i < placementZoneArray.length; i++) {
         let prefixPath = links.RESOURCE_POOLS + '/';
-        let resourcePoolId = resourcePoolArray[i];
-        if (resourcePoolId.startsWith(prefixPath)) {
-            resourcePoolId = resourcePoolId.slice(prefixPath.length);
+        let placementZoneId = placementZoneArray[i];
+        if (placementZoneId.startsWith(prefixPath)) {
+            placementZoneId = placementZoneId.slice(prefixPath.length);
         }
         userQueryOps.customProperties = [
           {
-            val: constants.CUSTOM_PROPS.EPZ_NAME_PREFIX + resourcePoolId,
+            val: constants.CUSTOM_PROPS.EPZ_NAME_PREFIX + placementZoneId,
             op: 'eq'
           }
         ];

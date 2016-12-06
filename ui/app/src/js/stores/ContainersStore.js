@@ -15,7 +15,7 @@ import constants from 'core/constants';
 import RequestsStore from 'stores/RequestsStore';
 import NotificationsStore from 'stores/NotificationsStore';
 import EventLogStore from 'stores/EventLogStore';
-import ResourcePoolsStore from 'stores/ResourcePoolsStore';
+import PlacementZonesStore from 'stores/PlacementZonesStore';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 import utils from 'core/utils';
@@ -345,8 +345,8 @@ let ContainersStore = Reflux.createStore({
       }
     });
 
-    ResourcePoolsStore.listen((resourcePoolsData) => {
-      this.setInData(['selectedItemDetails', 'resourcePools'], resourcePoolsData.items);
+    PlacementZonesStore.listen((placementZonesData) => {
+      this.setInData(['selectedItemDetails', 'placementZones'], placementZonesData.items);
 
       this.emitChange();
     });
@@ -1409,7 +1409,7 @@ let ContainersStore = Reflux.createStore({
   },
 
   onOpenToolbarClosureResults: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, ResourcePoolsStore.getData(),
+    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, PlacementZonesStore.getData(),
       false);
   },
 

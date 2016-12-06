@@ -13,7 +13,7 @@ import * as actions from 'actions/Actions';
 import services from 'core/services';
 import constants from 'core/constants';
 import utils from 'core/utils';
-import ResourcePoolsStore from 'stores/ResourcePoolsStore';
+import PlacementZonesStore from 'stores/PlacementZonesStore';
 import ResourceGroupsStore from 'stores/ResourceGroupsStore';
 import DeploymentPolicyStore from 'stores/DeploymentPolicyStore';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
@@ -26,11 +26,11 @@ const OPERATION = {
 let _enhancePlacement = function(placement) {
   let placementEditData = this.selectFromData(['placements', 'editingItemData']).get();
 
-  let resourcePools = (placementEditData && placementEditData.resourcePools)
-                          || this.selectFromData(['placements', 'resourcePools']).get();
-  for (let i = 0; i < resourcePools.length; i++) {
-    if (resourcePools[i].documentSelfLink === placement.resourcePoolLink) {
-      placement.resourcePoolName = resourcePools[i].resourcePoolState.name;
+  let placementZones = (placementEditData && placementEditData.placementZones)
+                          || this.selectFromData(['placements', 'placementZones']).get();
+  for (let i = 0; i < placementZones.length; i++) {
+    if (placementZones[i].documentSelfLink === placement.resourcePoolLink) {
+      placement.placementZoneName = placementZones[i].resourcePoolState.name;
       break;
     }
   }
@@ -114,7 +114,7 @@ let onPlacementUpdated = function(placement) {
 
 let _createDto = function(placement) {
   var dto = $.extend({}, placement);
-  dto.resourcePoolLink = dto.resourcePool ? dto.resourcePool.documentSelfLink : null;
+  dto.resourcePoolLink = dto.placementZone ? dto.placementZone.documentSelfLink : null;
   dto.deploymentPolicyLink = dto.deploymentPolicy ? dto.deploymentPolicy.documentSelfLink : null;
 
   dto.name = placement.name ? placement.name
@@ -139,7 +139,7 @@ let _createDto = function(placement) {
   }
 
   delete dto.deploymentPolicy;
-  delete dto.resourcePool;
+  delete dto.placementZone;
   delete dto.groupId;
 
   return dto;
@@ -150,17 +150,18 @@ let PlacementsStore = Reflux.createStore({
 
   init: function() {
 
-    ResourcePoolsStore.listen((resourcePoolsData) => {
+    PlacementZonesStore.listen((placementZonesData) => {
 
       if (this.isContextPanelActive(constants.CONTEXT_PANEL.RESOURCE_POOLS)) {
-        this.setActiveItemData(resourcePoolsData);
+        this.setActiveItemData(placementZonesData);
 
-        var itemToSelect = resourcePoolsData.newItem || resourcePoolsData.updatedItem;
+        var itemToSelect = placementZonesData.newItem || placementZonesData.updatedItem;
         if (itemToSelect && this.data.contextView.shouldSelectAndComplete) {
           clearTimeout(this.itemSelectTimeout);
 
           this.itemSelectTimeout = setTimeout(() => {
-            this.setInData(['placements', 'editingItemData', 'selectedResourcePool'], itemToSelect);
+            this.setInData(['placements', 'editingItemData', 'selectedPlacementZone'],
+                itemToSelect);
             this.emitChange();
 
             this.closeToolbar();
@@ -170,9 +171,11 @@ let PlacementsStore = Reflux.createStore({
         this.emitChange();
       }
 
-      if (resourcePoolsData.items && this.data.placements && this.data.placements.editingItemData) {
+      if (placementZonesData.items && this.data.placements &&
+          this.data.placements.editingItemData) {
 
-        this.setInData(['placements', 'editingItemData', 'resourcePools'], resourcePoolsData.items);
+        this.setInData(['placements', 'editingItemData', 'placementZones'],
+            placementZonesData.items);
         this.emitChange();
       }
     });
@@ -274,7 +277,7 @@ let PlacementsStore = Reflux.createStore({
 
     this.emitChange();
 
-    actions.ResourcePoolsActions.retrieveResourcePools();
+    actions.PlacementZonesActions.retrievePlacementZones();
     if (!utils.isApplicationEmbedded()) {
       actions.ResourceGroupsActions.retrieveGroups();
     }
@@ -293,8 +296,8 @@ let PlacementsStore = Reflux.createStore({
         .map((placement) => placement.deploymentPolicyLink);
 
     var calls = [
-      services.loadResourcePools([...new Set(resourcePoolLinks)]).then((result) => {
-        this.setInData(['placements', 'resourcePools'], Object.values(result));
+      services.loadPlacementZones([...new Set(resourcePoolLinks)]).then((result) => {
+        this.setInData(['placements', 'placementZones'], Object.values(result));
       }),
       services.loadDeploymentPolicies([...new Set(deploymentPolicyLinks)]).then((result) => {
         this.setInData(['placements', 'deploymentPolicies'], Object.values(result));
@@ -327,13 +330,13 @@ let PlacementsStore = Reflux.createStore({
       placementModel = $.extend({}, placement);
     }
 
-    var resourcePools = ResourcePoolsStore.getData().items;
+    var placementZones = PlacementZonesStore.getData().items;
 
-    if (resourcePools && placement) {
-      for (let i = 0; i < resourcePools.length; i++) {
-        var resourcePool = resourcePools[i];
-        if (resourcePool.documentSelfLink === placement.resourcePoolLink) {
-          placementModel.resourcePool = resourcePool.resourcePoolState;
+    if (placementZones && placement) {
+      for (let i = 0; i < placementZones.length; i++) {
+        var placementZone = placementZones[i];
+        if (placementZone.documentSelfLink === placement.resourcePoolLink) {
+          placementModel.placementZone = placementZone.resourcePoolState;
           break;
         }
       }
@@ -364,7 +367,7 @@ let PlacementsStore = Reflux.createStore({
     }
 
     this.setInData(['placements', 'editingItemData', 'item'], placementModel);
-    this.setInData(['placements', 'editingItemData', 'resourcePools'], resourcePools);
+    this.setInData(['placements', 'editingItemData', 'placementZones'], placementZones);
     this.setInData(['placements', 'editingItemData', 'deploymentPolicies'], deploymentPolicies);
     this.setInData(['placements', 'editingItemData', 'groups'], groups);
 
@@ -424,8 +427,8 @@ let PlacementsStore = Reflux.createStore({
     }).catch(this.onPlacementDeleteError);
   },
 
-  onOpenToolbarResourcePools: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, ResourcePoolsStore.getData(),
+  onOpenToolbarPlacementZones: function() {
+    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, PlacementZonesStore.getData(),
       false);
   },
 
@@ -443,14 +446,14 @@ let PlacementsStore = Reflux.createStore({
     this.closeToolbar();
   },
 
-  onCreateResourcePool: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, ResourcePoolsStore.getData(),
+  onCreatePlacementZone: function() {
+    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, PlacementZonesStore.getData(),
       true);
-    actions.ResourcePoolsActions.editResourcePool();
+    actions.PlacementZonesActions.editPlacementZone();
   },
 
-  onManageResourcePools: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, ResourcePoolsStore.getData(),
+  onManagePlacementZones: function() {
+    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, PlacementZonesStore.getData(),
       true);
   },
 

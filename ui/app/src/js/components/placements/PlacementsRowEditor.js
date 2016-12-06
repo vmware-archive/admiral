@@ -19,13 +19,13 @@ import Alert from 'components/common/Alert';
 import constants from 'core/constants';
 import utils from 'core/utils';
 
-const resourcePoolManageOptions = [{
+const placementZoneManageOptions = [{
   id: 'rp-create',
-  name: i18n.t('app.resourcePool.createNew'),
+  name: i18n.t('app.placementZone.createNew'),
   icon: 'plus'
 }, {
   id: 'rp-manage',
-  name: i18n.t('app.resourcePool.manage'),
+  name: i18n.t('app.placementZone.manage'),
   icon: 'pencil'
 }];
 
@@ -68,25 +68,25 @@ function PlacementsRowEditor() {
   this.placementGroupInput = new GroupInput(this.$el.find('.placementGroupInput'), () =>
     toggleButtonsState.call(this));
 
-  let resourcePoolInputEl = this.$el.find('.resourcePool .form-control');
-  this.resourcePoolInput = new DropdownSearchMenu(resourcePoolInputEl, {
-    title: i18n.t('app.placement.edit.selectResourcePool'),
+  let placementZoneInputEl = this.$el.find('.placementZone .form-control');
+  this.placementZoneInput = new DropdownSearchMenu(placementZoneInputEl, {
+    title: i18n.t('app.placement.edit.selectPlacementZone'),
     searchPlaceholder: i18n.t('dropdownSearchMenu.searchPlaceholder', {
-      entity: i18n.t('app.resourcePool.entity')
+      entity: i18n.t('app.placementZone.entity')
     })
   });
 
-  this.resourcePoolInput.setManageOptions(resourcePoolManageOptions);
-  this.resourcePoolInput.setManageOptionSelectCallback(function(option) {
+  this.placementZoneInput.setManageOptions(placementZoneManageOptions);
+  this.placementZoneInput.setManageOptionSelectCallback(function(option) {
     if (option.id === 'rp-create') {
-      PlacementContextToolbarActions.createResourcePool();
+      PlacementContextToolbarActions.createPlacementZone();
     } else {
-      PlacementContextToolbarActions.manageResourcePools();
+      PlacementContextToolbarActions.managePlacementZones();
     }
   });
-  this.resourcePoolInput.setClearOptionSelectCallback(() => toggleButtonsState.call(this));
+  this.placementZoneInput.setClearOptionSelectCallback(() => toggleButtonsState.call(this));
 
-  this.resourcePoolInput.setOptionSelectCallback(() => toggleButtonsState.call(this));
+  this.placementZoneInput.setOptionSelectCallback(() => toggleButtonsState.call(this));
 
   var deploymentPolicyEl = this.$el.find('.deploymentPolicy .form-control');
   this.deploymentPolicyInput = new DropdownSearchMenu(deploymentPolicyEl, {
@@ -160,7 +160,7 @@ PlacementsRowEditor.prototype.setData = function(data) {
       let groupInputValue = placementObject.group ? placementObject.group.id :
         placementObject.groupId;
       this.placementGroupInput.setValue(groupInputValue);
-      this.resourcePoolInput.setSelectedOption(placementObject.resourcePool);
+      this.placementZoneInput.setSelectedOption(placementObject.placementZone);
       if (this.deploymentPolicyInput) {
         this.deploymentPolicyInput.setSelectedOption(placementObject.deploymentPolicy);
       }
@@ -173,16 +173,17 @@ PlacementsRowEditor.prototype.setData = function(data) {
       this.$el.find('.cpuSharesInput input').val(placementObject.cpuShares);
     }
 
-    if (data.resourcePools === constants.LOADING) {
-      this.resourcePoolInput.setLoading(true);
+    if (data.placementZones === constants.LOADING) {
+      this.placementZoneInput.setLoading(true);
     } else {
-      this.resourcePoolInput.setLoading(false);
-      this.resourcePoolInput.setOptions(
-          (data.resourcePools || []).map((config) => config.resourcePoolState));
+      this.placementZoneInput.setLoading(false);
+      this.placementZoneInput.setOptions(
+          (data.placementZones || []).map((config) => config.resourcePoolState));
     }
 
-    if (oldData.selectedResourcePool !== data.selectedResourcePool && data.selectedResourcePool) {
-      this.resourcePoolInput.setSelectedOption(data.selectedResourcePool.resourcePoolState);
+    if (oldData.selectedPlacementZone !== data.selectedPlacementZone &&
+        data.selectedPlacementZone) {
+      this.placementZoneInput.setSelectedOption(data.selectedPlacementZone.resourcePoolState);
     }
 
     // todo add loading for groups input
@@ -259,7 +260,7 @@ var getPlacementModel = function() {
   toReturn.name = validator.trim(this.$el.find('.nameInput input').val());
 
   toReturn.groupId = this.placementGroupInput.getValue();
-  toReturn.resourcePool = this.resourcePoolInput.getSelectedOption();
+  toReturn.placementZone = this.placementZoneInput.getSelectedOption();
   toReturn.deploymentPolicy = this.deploymentPolicyInput.getSelectedOption();
 
   var maxNumberInstances = this.$el.find('.maxInstancesInput input').val();
@@ -286,7 +287,7 @@ var getPlacementModel = function() {
 
 var toggleButtonsState = function() {
 
-  var resourcePool = this.resourcePoolInput.getSelectedOption();
+  var placementZone = this.placementZoneInput.getSelectedOption();
   var priority = this.$el.find('.priorityInput input').val();
   var maxNumberInstances = this.$el.find('.maxInstancesInput input').val();
   var memoryLimit = this.$el.find('.memoryLimitInput input').val();
@@ -315,7 +316,7 @@ var toggleButtonsState = function() {
   utils.applyValidationError(this.$el.find('.cpuSharesInput'),
                                      cpuSharesClause ? null : i18n.t('errors.invalidInputValue'));
 
-  let notEnoughInfo = !resourcePool || !priorityClause || !maxNumberInstancesClause
+  let notEnoughInfo = !placementZone || !priorityClause || !maxNumberInstancesClause
                       || !groupClause || !memoryLimitClause || !cpuSharesClause;
   if (notEnoughInfo) {
     $saveBtn.attr('disabled', true);

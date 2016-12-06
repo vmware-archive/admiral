@@ -82,11 +82,11 @@ var HostItem = Vue.extend({
       }
     },
 
-    showHostsPerResourcePool: function(event) {
+    showHostsPerPlacementZone: function(event) {
       event.preventDefault();
 
       var queryOptions = {
-        resourcePool: this.model.resourcePoolDocumentId
+        placementZone: this.model.placementZoneDocumentId
       };
 
       NavigationActions.openHosts(queryOptions);

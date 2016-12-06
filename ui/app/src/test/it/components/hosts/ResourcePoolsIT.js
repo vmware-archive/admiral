@@ -11,14 +11,14 @@
 
 import services from 'core/services';
 import InlineEditableListFactory from 'components/common/InlineEditableListFactory';
-import ResourcePoolsStore from 'stores/ResourcePoolsStore';
-import { ResourcePoolsActions } from 'actions/Actions';
+import PlacementZonesStore from 'stores/PlacementZonesStore';
+import { PlacementZonesActions } from 'actions/Actions';
 
 describe('Resource pools integration test', function() {
   var $container;
 
   var unspubscribeDataListener;
-  var lastResourcePoolsData;
+  var lastPlacementZonesData;
   var rpView;
 
   var createdConfigs = [];
@@ -27,9 +27,9 @@ describe('Resource pools integration test', function() {
     $container = $('<div>');
     $('body').append($container);
 
-    var realCreate = services.createResourcePool;
+    var realCreate = services.createPlacementZone;
     // intercepts the creation method
-    spyOn(services, 'createResourcePool').and.callFake(function(params) {
+    spyOn(services, 'createPlacementZone').and.callFake(function(params) {
       return new Promise(function(resolve, reject) {
         realCreate.call(null, params)
           .then(function(createdConfig) {
@@ -40,11 +40,11 @@ describe('Resource pools integration test', function() {
     });
 
     // Initialize and show the view
-    rpView = InlineEditableListFactory.createResourcePoolsList($container);
+    rpView = InlineEditableListFactory.createPlacementZonesList($container);
 
-    unspubscribeDataListener = ResourcePoolsStore.listen(function(resourcePoolsData) {
-      lastResourcePoolsData = resourcePoolsData;
-      rpView.setData(resourcePoolsData);
+    unspubscribeDataListener = PlacementZonesStore.listen(function(placementZonesData) {
+      lastPlacementZonesData = placementZonesData;
+      rpView.setData(placementZonesData);
     });
   });
 
@@ -52,47 +52,47 @@ describe('Resource pools integration test', function() {
     $container.remove();
 
     unspubscribeDataListener();
-    lastResourcePoolsData = null;
+    lastPlacementZonesData = null;
 
     var deletionPromises = [];
     createdConfigs.forEach(function(config) {
-      deletionPromises.push(services.deleteResourcePool(config));
+      deletionPromises.push(services.deletePlacementZone(config));
     });
 
     Promise.all(deletionPromises).then(done);
   });
 
   it('it should create a resource pool', function(done) {
-    ResourcePoolsActions.retrieveResourcePools();
+    PlacementZonesActions.retrievePlacementZones();
     // Reset the data and wait for new data to be set
-    lastResourcePoolsData = null;
+    lastPlacementZonesData = null;
 
     testUtils.waitFor(function() {
-      return lastResourcePoolsData && lastResourcePoolsData.items &&
-          lastResourcePoolsData.items.length >= 0;
+      return lastPlacementZonesData && lastPlacementZonesData.items &&
+          lastPlacementZonesData.items.length >= 0;
     }).then(function() {
 
       // Open up the editor
       $container.find('.new-item').trigger('click');
 
-      lastResourcePoolsData = null;
+      lastPlacementZonesData = null;
       return testUtils.waitFor(function() {
-        return lastResourcePoolsData && lastResourcePoolsData.editingItemData;
+        return lastPlacementZonesData && lastPlacementZonesData.editingItemData;
       });
     }).then(function() {
       fillName($container, 'RP-test');
 
       // Trigger creation
-      $container.find('.resourcePoolEdit .resourcePoolEdit-save').trigger('click');
+      $container.find('.placementZoneEdit .placementZoneEdit-save').trigger('click');
 
       // Reset the data and wait for new data to be set
-      lastResourcePoolsData = null;
+      lastPlacementZonesData = null;
 
       testUtils.waitFor(function() {
-        return lastResourcePoolsData && lastResourcePoolsData.newItem;
+        return lastPlacementZonesData && lastPlacementZonesData.newItem;
       }).then(function() {
-        expect(lastResourcePoolsData.newItem.resourcePoolState.name).toEqual('RP-test');
-        expect(lastResourcePoolsData.items).toContain(lastResourcePoolsData.newItem);
+        expect(lastPlacementZonesData.newItem.resourcePoolState.name).toEqual('RP-test');
+        expect(lastPlacementZonesData.items).toContain(lastPlacementZonesData.newItem);
 
         done();
       });
@@ -114,40 +114,40 @@ describe('Resource pools integration test', function() {
       }
     };
 
-    services.createResourcePool(testConfig).then(function() {
-      ResourcePoolsActions.retrieveResourcePools();
+    services.createPlacementZone(testConfig).then(function() {
+      PlacementZonesActions.retrievePlacementZones();
       // Reset the data and wait for new data to be set
-      lastResourcePoolsData = null;
+      lastPlacementZonesData = null;
 
       return testUtils.waitFor(function() {
-        return lastResourcePoolsData && lastResourcePoolsData.items &&
-            lastResourcePoolsData.items.length >= 0;
+        return lastPlacementZonesData && lastPlacementZonesData.items &&
+            lastPlacementZonesData.items.length >= 0;
       });
     }).then(function() {
       var $itemChild = $container.find('.item td[title="rp-edit-test"]');
       var $item = $itemChild.closest('.item');
       $item.find('.item-edit').trigger('click');
 
-      lastResourcePoolsData = null;
+      lastPlacementZonesData = null;
       return testUtils.waitFor(function() {
-        return lastResourcePoolsData && lastResourcePoolsData.editingItemData;
+        return lastPlacementZonesData && lastPlacementZonesData.editingItemData;
       });
     }).then(function() {
       fillName($container, 'rp-edit-test-updated');
 
         // Trigger update
-      $container.find('.resourcePoolEdit .resourcePoolEdit-save').trigger('click');
+      $container.find('.placementZoneEdit .placementZoneEdit-save').trigger('click');
 
       // Reset the data and wait for new data to be set
-      lastResourcePoolsData = null;
+      lastPlacementZonesData = null;
 
       return testUtils.waitFor(function() {
-        return lastResourcePoolsData && lastResourcePoolsData.updatedItem;
+        return lastPlacementZonesData && lastPlacementZonesData.updatedItem;
       });
     }).then(function() {
-      expect(lastResourcePoolsData.updatedItem.resourcePoolState.id).toEqual(
+      expect(lastPlacementZonesData.updatedItem.resourcePoolState.id).toEqual(
           testConfig.resourcePoolState.id);
-      expect(lastResourcePoolsData.updatedItem.resourcePoolState.name).toEqual(
+      expect(lastPlacementZonesData.updatedItem.resourcePoolState.name).toEqual(
           'rp-edit-test-updated');
 
       done();
@@ -165,16 +165,16 @@ describe('Resource pools integration test', function() {
     };
     var createdTestConfig;
 
-    services.createResourcePool(testConfig).then(function(responseBody) {
+    services.createPlacementZone(testConfig).then(function(responseBody) {
       createdTestConfig = responseBody;
 
-      ResourcePoolsActions.retrieveResourcePools();
+      PlacementZonesActions.retrievePlacementZones();
       // Reset the data and wait for new data to be set
-      lastResourcePoolsData = null;
+      lastPlacementZonesData = null;
 
       return testUtils.waitFor(function() {
-        return lastResourcePoolsData && lastResourcePoolsData.items &&
-            lastResourcePoolsData.items.length >= 0;
+        return lastPlacementZonesData && lastPlacementZonesData.items &&
+            lastPlacementZonesData.items.length >= 0;
       });
     }).then(function() {
       var $itemChild = $container.find('.item td[title="rp-edit-test"]');
@@ -184,21 +184,21 @@ describe('Resource pools integration test', function() {
       $item.find('.delete-inline-item-confirmation-confirm').trigger('click');
 
       // Reset the data and wait for new data to be set
-      lastResourcePoolsData = null;
+      lastPlacementZonesData = null;
 
       return testUtils.waitFor(function() {
-        return lastResourcePoolsData && lastResourcePoolsData.items &&
-            lastResourcePoolsData.items.length >= 0;
+        return lastPlacementZonesData && lastPlacementZonesData.items &&
+            lastPlacementZonesData.items.length >= 0;
       });
     }).then(function() {
-      for (var i = 0; i < lastResourcePoolsData.items.length; i++) {
-        if (lastResourcePoolsData.items[i].resourcePoolState.id === testConfig.id) {
+      for (var i = 0; i < lastPlacementZonesData.items.length; i++) {
+        if (lastPlacementZonesData.items[i].resourcePoolState.id === testConfig.id) {
           done.fail('Item with id ' + testConfig.id + ' was expected to be deleted');
           return;
         }
       }
 
-      services.loadResourcePool(createdTestConfig.resourcePoolState.documentSelfLink)
+      services.loadPlacementZone(createdTestConfig.resourcePoolState.documentSelfLink)
         .then(function() {
           done.fail('Load resource pool was expected to fail with 404');
         }).catch(function(e) {
@@ -214,5 +214,5 @@ describe('Resource pools integration test', function() {
 
 var fillName = function($container, name) {
   // Fill the name value
-  $container.find('.resourcePoolEdit .resourcePoolEdit-properties .name-input').val(name);
+  $container.find('.placementZoneEdit .placementZoneEdit-properties .name-input').val(name);
 };

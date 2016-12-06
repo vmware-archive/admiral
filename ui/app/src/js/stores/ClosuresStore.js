@@ -1,7 +1,7 @@
 import * as actions from 'actions/Actions';
 import services from 'core/services';
 import constants from 'core/constants';
-import ResourcePoolsStore from 'stores/ResourcePoolsStore';
+import PlacementZonesStore from 'stores/PlacementZonesStore';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 
@@ -15,8 +15,8 @@ let ClosuresStore = Reflux.createStore({
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
 
   init: function() {
-    ResourcePoolsStore.listen((resourcePoolsData) => {
-      this.setInData(['resourcePools'], resourcePoolsData.items);
+    PlacementZonesStore.listen((placementZonesData) => {
+      this.setInData(['placementZones'], placementZonesData.items);
 
       this.emitChange();
     });
@@ -27,7 +27,7 @@ let ClosuresStore = Reflux.createStore({
     actions.ClosureActions,
     actions.ClosureContextToolbarActions,
     actions.NavigationActions,
-    actions.ResourcePoolActions
+    actions.PlacementZoneActions
   ],
 
   onOpenClosures: function() {
@@ -49,7 +49,7 @@ let ClosuresStore = Reflux.createStore({
 
     this.emitChange();
 
-    actions.ResourcePoolsActions.retrieveResourcePools();
+    actions.PlacementZonesActions.retrievePlacementZones();
   },
 
   processTasks: function(tasksResult) {
@@ -78,7 +78,7 @@ let ClosuresStore = Reflux.createStore({
     }
     this.emitChange();
 
-    actions.ResourcePoolsActions.retrieveResourcePools();
+    actions.PlacementZonesActions.retrievePlacementZones();
 
     if (closureDescription) {
       var _this = this;
@@ -99,10 +99,10 @@ let ClosuresStore = Reflux.createStore({
     var _this = this;
 
     Promise.all([
-      services.loadResourcePool(closureDescription.resourcePoolId)
+      services.loadPlacementZone(closureDescription.placementZoneId)
     ])
-      .then(function([resourcePool]) {
-        _this.setInData(['tasks', 'editingItemData', 'resourcePool'], resourcePool);
+      .then(function([placementZone]) {
+        _this.setInData(['tasks', 'editingItemData', 'placementZone'], placementZone);
         _this.emitChange();
       });
   },
@@ -241,20 +241,20 @@ let ClosuresStore = Reflux.createStore({
       this.emitChange();
     });
   },
-  onOpenToolbarResourcePools: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, ResourcePoolsStore.getData(),
+  onOpenToolbarPlacementZones: function() {
+    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, PlacementZonesStore.getData(),
       false);
   },
   onCloseToolbar: function() {
     this.closeToolbar();
   },
-  onCreateResourcePool: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, ResourcePoolsStore.getData(),
+  onCreatePlacementZone: function() {
+    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, PlacementZonesStore.getData(),
       true);
-    actions.ResourcePoolsActions.editResourcePool();
+    actions.PlacementZonesActions.editPlacementZone();
   },
-  onManageResourcePools: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, ResourcePoolsStore.getData(),
+  onManagePlacementZones: function() {
+    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, PlacementZonesStore.getData(),
       true);
   }
 

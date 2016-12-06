@@ -17,7 +17,7 @@ import utils from 'core/utils';
 import imageUtils from 'core/imageUtils';
 import RegistryStore from 'stores/RegistryStore';
 import RequestsStore from 'stores/RequestsStore';
-import ResourcePoolsStore from 'stores/ResourcePoolsStore';
+import PlacementZonesStore from 'stores/PlacementZonesStore';
 import ResourceGroupsStore from 'stores/ResourceGroupsStore';
 import NotificationsStore from 'stores/NotificationsStore';
 import EventLogStore from 'stores/EventLogStore';
@@ -571,8 +571,8 @@ let TemplatesStore = Reflux.createStore({
       }
     });
 
-    ResourcePoolsStore.listen((resourcePoolsData) => {
-      this.setInData(['selectedItemDetails', 'resourcePools'], resourcePoolsData.items);
+    PlacementZonesStore.listen((placementZonesData) => {
+      this.setInData(['selectedItemDetails', 'placementZones'], placementZonesData.items);
 
       this.emitChange();
     });
@@ -584,7 +584,7 @@ let TemplatesStore = Reflux.createStore({
     actions.TemplatesContextToolbarActions,
     actions.ClosureContextToolbarActions,
     actions.NavigationActions,
-    actions.ResourcePoolActions
+    actions.PlacementZoneActions
   ],
 
   onOpenTemplates: function(queryOptions, forceReload) {
@@ -639,7 +639,7 @@ let TemplatesStore = Reflux.createStore({
   },
 
   onOpenToolbarClosureResults: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, ResourcePoolsStore.getData(),
+    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, PlacementZonesStore.getData(),
       false);
   },
 
@@ -813,11 +813,11 @@ let TemplatesStore = Reflux.createStore({
     this.setInData(['selectedItemDetails', 'contextView'], {});
     this.emitChange();
 
-    actions.ResourcePoolsActions.retrieveResourcePools();
+    actions.PlacementZonesActions.retrievePlacementZones();
 
     if (closureDescription) {
       var _this = this;
-      _this.loadClosureResourcePool(closureDescription);
+      _this.loadClosurePlacementZone(closureDescription);
     }
   },
 
@@ -850,19 +850,19 @@ let TemplatesStore = Reflux.createStore({
     });
   },
 
-  loadClosureResourcePool: function(closureDescription) {
+  loadClosurePlacementZone: function(closureDescription) {
     var _this = this;
 
-    if (closureDescription.resourcePoolId) {
+    if (closureDescription.placementZoneId) {
       Promise.all([
-          services.loadResourcePool(closureDescription.resourcePoolId)
+          services.loadPlacementZone(closureDescription.placementZoneId)
         ])
-        .then(function([resourcePool]) {
+        .then(function([placementZone]) {
 
           _this.setInData(['selectedItemDetails', 'tasks', 'editingItemData',
-              'resourcePool'
+              'placementZone'
             ],
-            resourcePool);
+            placementZone);
 
           _this.emitChange();
         });

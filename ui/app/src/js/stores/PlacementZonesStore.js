@@ -21,8 +21,8 @@ const OPERATION = {
   LIST: 'list'
 };
 
-let ResourcePoolsStore = Reflux.createStore({
-  listenables: [actions.ResourcePoolsActions, actions.ResourcePoolsContextToolbarActions],
+let PlacementZonesStore = Reflux.createStore({
+  listenables: [actions.PlacementZonesActions, actions.PlacementZonesContextToolbarActions],
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
 
   init: function() {
@@ -51,13 +51,13 @@ let ResourcePoolsStore = Reflux.createStore({
     });
   },
 
-  onRetrieveResourcePools: function() {
+  onRetrievePlacementZones: function() {
     var operation = this.requestCancellableOperation(OPERATION.LIST);
     if (operation) {
       this.setInData(['items'], constants.LOADING);
       this.emitChange();
 
-      operation.forPromise(services.loadResourcePools()).then((result) => {
+      operation.forPromise(services.loadPlacementZones()).then((result) => {
         // Transforming from associative array to array
         var processedResult = Object.values(result).map((config) => {
           // We need these to show the graphs when displaying the list of RPs
@@ -91,7 +91,7 @@ let ResourcePoolsStore = Reflux.createStore({
           var countOnlyComputes = utils.isApplicationCompute() ? true : undefined;
           // Retrieve hosts counts for the resource pools
           var countedHostsResPoolsPromises = Object.values(configs).map(function(config) {
-            return services.countHostsPerResourcePool(config.resourcePoolState.documentSelfLink,
+            return services.countHostsPerPlacementZone(config.resourcePoolState.documentSelfLink,
                 countContainerHosts, countOnlyComputes).then(function(hostsCount) {
                   config.resourcePoolState.hostsCount = hostsCount;
                   return config;
@@ -108,19 +108,19 @@ let ResourcePoolsStore = Reflux.createStore({
     }
   },
 
-  onEditResourcePool: function(config) {
+  onEditPlacementZone: function(config) {
     this.setInData(['editingItemData', 'item'], config);
     this.emitChange();
 
     actions.EndpointsActions.retrieveEndpoints();
   },
 
-  onCancelEditResourcePool: function() {
+  onCancelEditPlacementZone: function() {
     this.setInData(['editingItemData'], null);
     this.emitChange();
   },
 
-  onCreateResourcePool: function(config, tags) {
+  onCreatePlacementZone: function(config, tags) {
     Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
       return Promise.all(tags.map((tag, i) =>
         result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
@@ -130,7 +130,7 @@ let ResourcePoolsStore = Reflux.createStore({
           tagLinksToMatch: createdTags.map((tag) => tag.documentSelfLink)
         };
       }
-      return services.createResourcePool(config);
+      return services.createPlacementZone(config);
     }).then((createdConfig) => {
 
       createdConfig.resourcePoolState.__availableMemory = utils.getCustomPropertyValue(
@@ -158,7 +158,7 @@ let ResourcePoolsStore = Reflux.createStore({
     }).catch(this.onGenericEditError);
   },
 
-  onUpdateResourcePool: function(config, tags) {
+  onUpdatePlacementZone: function(config, tags) {
     Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
       return Promise.all(tags.map((tag, i) =>
         result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
@@ -171,7 +171,7 @@ let ResourcePoolsStore = Reflux.createStore({
           tagLinksToMatch: updatedTags.map((tag) => tag.documentSelfLink)
         };
       }
-      return services.updateResourcePool(config);
+      return services.updatePlacementZone(config);
     }).then((updatedConfig) => {
       // If the backend did not make any changes, the response will be empty
       updatedConfig.resourcePoolState = updatedConfig.resourcePoolState || config.resourcePoolState;
@@ -205,8 +205,8 @@ let ResourcePoolsStore = Reflux.createStore({
     }).catch(this.onGenericEditError);
   },
 
-  onDeleteResourcePool: function(config) {
-    services.deleteResourcePool(config).then(() => {
+  onDeletePlacementZone: function(config) {
+    services.deletePlacementZone(config).then(() => {
       var configs = this.data.items.filter(
         (cfg) => cfg.documentSelfLink !== config.documentSelfLink);
 
@@ -252,4 +252,4 @@ let ResourcePoolsStore = Reflux.createStore({
   }
 });
 
-export default ResourcePoolsStore;
+export default PlacementZonesStore;

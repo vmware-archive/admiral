@@ -11,7 +11,7 @@
 
 import ClosureRequestFormVue from 'components/closures/ClosureRequestFormVue.html';
 import ClosureDefinitionForm from 'components/closures/ClosureDefinitionForm';
-import ResourcePoolsList from 'components/resourcepools/ResourcePoolsList'; //eslint-disable-line
+import PlacementZonesList from 'components/placementzones/PlacementZonesList'; //eslint-disable-line
 import ClosureFieldsMixin from 'components/closures/ClosureFieldsMixin';
 import {
   ClosureActions, TemplateActions, TemplatesContextToolbarActions
@@ -29,7 +29,7 @@ var ClosureRequestForm = Vue.extend({
           tasks: {},
           contextView: {},
           taskLogs: {},
-          resourcePools: {}
+          placementZones: {}
         };
       }
     }
@@ -40,7 +40,7 @@ var ClosureRequestForm = Vue.extend({
   data: function() {
     return {
       savingTask: true,
-      resourcePool: null
+      placementZone: null
     };
   },
   computed: {
@@ -60,8 +60,8 @@ var ClosureRequestForm = Vue.extend({
       if (!validationErrors) {
         this.savingTask = false;
         var closureDefinition = this.definitionForm.getClosureDefinition();
-        if (this.resourcePool) {
-          closureDefinition.resourcePoolId = this.resourcePool.id;
+        if (this.placementZone) {
+          closureDefinition.placementZoneId = this.placementZone.id;
         }
         if (this.model.tasks.editingItemData == null) {
           ClosureActions.createClosure(this.model.documentId, closureDefinition);
@@ -80,8 +80,8 @@ var ClosureRequestForm = Vue.extend({
         this.savingTask = false;
         let closureDefinition = this.definitionForm.getClosureDefinition();
         let inputs = this.definitionForm.getClosureInputs();
-        if (this.resourcePool) {
-          closureDefinition.resourcePoolId = this.resourcePool.id;
+        if (this.placementZone) {
+          closureDefinition.placementZoneId = this.placementZone.id;
         }
         if (this.model.tasks.editingItemData == null) {
           ClosureActions.createAndRunClosure(this.model.documentId, closureDefinition, inputs);
@@ -111,8 +111,8 @@ var ClosureRequestForm = Vue.extend({
       if (!validationErrors) {
         this.savingTemplate = true;
         var closureDefinition = this.definitionForm.getClosureDefinition();
-        if (this.resourcePool) {
-          closureDefinition.resourcePoolId = this.resourcePool.id;
+        if (this.placementZone) {
+          closureDefinition.placementZoneId = this.placementZone.id;
         }
         TemplateActions.createClosureTemplate(closureDefinition);
       }
@@ -129,10 +129,10 @@ var ClosureRequestForm = Vue.extend({
     this.initializeClosureFields();
 
     this.unwatchModel = this.$watch('model', (data) => {
-      if (data.tasks && data.tasks.editingItemData && data.tasks.editingItemData.resourcePool) {
-        this.resourcePoolInput.setSelectedOption(data.tasks.editingItemData.resourcePool);
-        this.resourcePool = this.resourcePoolInput.getSelectedOption();
-        // this.disableInput('resourcePool', data.tasks.editingItemData.resourcePool.name);
+      if (data.tasks && data.tasks.editingItemData && data.tasks.editingItemData.placementZone) {
+        this.placementZoneInput.setSelectedOption(data.tasks.editingItemData.placementZone);
+        this.placementZone = this.placementZoneInput.getSelectedOption();
+        // this.disableInput('placementZone', data.tasks.editingItemData.placementZone.name);
       }
 
       if (data.tasks && data.tasks.editingItemData) {
@@ -150,8 +150,8 @@ var ClosureRequestForm = Vue.extend({
   detached: function() {
     this.unwatchModel();
     ClosureActions.resetMonitoredClosure();
-    this.unwatchResourcePools();
-    this.unwatchResourcePool();
+    this.unwatchPlacementZones();
+    this.unwatchPlacementZone();
   }
 });
 

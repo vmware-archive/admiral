@@ -30,7 +30,7 @@ var HostView = Vue.extend({
       default: () => {
         return {
           contextView: {},
-          resourcePools: {},
+          placementZones: {},
           credentials: {},
           deploymentPolicies: {},
           certificates: {},
@@ -39,7 +39,7 @@ var HostView = Vue.extend({
           isUpdate: false,
           id: null,
           address: null,
-          resourcePool: null,
+          placementZone: null,
           credential: null,
           connectionType: 'API'
         };
@@ -104,7 +104,7 @@ var HostView = Vue.extend({
       }
     },
 
-    openToolbarResourcePools: HostContextToolbarActions.openToolbarResourcePools,
+    openToolbarPlacementZones: HostContextToolbarActions.openToolbarPlacementZones,
     openToolbarCredentials: HostContextToolbarActions.openToolbarCredentials,
     openToolbarCertificates: HostContextToolbarActions.openToolbarCertificates,
     openToolbarDeploymentPolicies: HostContextToolbarActions.openToolbarDeploymentPolicies,

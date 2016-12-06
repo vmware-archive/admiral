@@ -9,10 +9,10 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import ResourcePoolsRowEditTemplate from
-  'components/resourcepools/ResourcePoolsRowEditTemplate.html';
+import PlacementZonesRowEditTemplate from
+  'components/placementzones/PlacementZonesRowEditTemplate.html';
 import Alert from 'components/common/Alert';
-import { ResourcePoolsActions, ResourcePoolsContextToolbarActions } from 'actions/Actions';
+import { PlacementZonesActions, PlacementZonesContextToolbarActions } from 'actions/Actions';
 import constants from 'core/constants';
 import utils from 'core/utils';
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
@@ -28,12 +28,12 @@ const endpointManageOptions = [{
   icon: 'pencil'
 }];
 
-function ResourcePoolRowEditor() {
-  this.$el = $(ResourcePoolsRowEditTemplate({
+function PlacementZoneRowEditor() {
+  this.$el = $(PlacementZonesRowEditTemplate({
     showEndpoint: utils.isApplicationCompute()
   }));
 
-  this.alert = new Alert(this.$el, this.$el.find('.resourcePoolEdit'));
+  this.alert = new Alert(this.$el, this.$el.find('.placementZoneEdit'));
   var endpointHolder = this.$el.find('.endpoint.dropdown-holder');
 
   if (utils.isApplicationCompute()) {
@@ -46,9 +46,9 @@ function ResourcePoolRowEditor() {
     this.endpointInput.setManageOptions(endpointManageOptions);
     this.endpointInput.setManageOptionSelectCallback(function(option) {
       if (option.id === 'endpoint-create') {
-        ResourcePoolsContextToolbarActions.createEndpoint();
+        PlacementZonesContextToolbarActions.createEndpoint();
       } else {
-        ResourcePoolsContextToolbarActions.manageEndpoints();
+        PlacementZonesContextToolbarActions.manageEndpoints();
       }
     });
   }
@@ -59,11 +59,11 @@ function ResourcePoolRowEditor() {
   addEventListeners.call(this);
 }
 
-ResourcePoolRowEditor.prototype.getEl = function() {
+PlacementZoneRowEditor.prototype.getEl = function() {
   return this.$el;
 };
 
-ResourcePoolRowEditor.prototype.setData = function(data) {
+PlacementZoneRowEditor.prototype.setData = function(data) {
 
   let title = this.$el.find('.title');
   let nameInput = this.$el.find('.name-input');
@@ -74,7 +74,7 @@ ResourcePoolRowEditor.prototype.setData = function(data) {
     this.item = data.item;
 
     if (data.item && data.item.resourcePoolState) {
-      title.html(i18n.t('app.resourcePool.edit.update'));
+      title.html(i18n.t('app.placementZone.edit.update'));
       nameInput.val(data.item.resourcePoolState.name);
       if (data.item.resourcePoolState.__tags && data.item.resourcePoolState.__tags.length) {
         dynamicInput.prop('checked', true);
@@ -85,7 +85,7 @@ ResourcePoolRowEditor.prototype.setData = function(data) {
       }
       this.tags.setValue(data.item.resourcePoolState.__tags);
     } else {
-      title.html(i18n.t('app.resourcePool.edit.createNew'));
+      title.html(i18n.t('app.placementZone.edit.createNew'));
       nameInput.val('');
       dynamicInput.prop('checked', false);
       tags.hide();
@@ -99,7 +99,7 @@ ResourcePoolRowEditor.prototype.setData = function(data) {
     nameInput.first().focus();
   }, 310);
 
-  this.$el.find('.resourcePoolEdit-save').removeAttr('disabled').removeClass('loading');
+  this.$el.find('.placementZoneEdit-save').removeAttr('disabled').removeClass('loading');
 
   var currentEndpointDocumentSelfLink = this.item && this.item.resourcePoolState
       && this.item.resourcePoolState.__endpointLink;
@@ -160,7 +160,7 @@ var addEventListeners = function() {
     this.tags.setValue([]);
   });
 
-  this.$el.find('.resourcePoolEdit').on('click', '.resourcePoolEdit-save', (e) => {
+  this.$el.find('.placementZoneEdit').on('click', '.placementZoneEdit-save', (e) => {
     e.preventDefault();
 
     $(e.currentTarget).addClass('loading');
@@ -197,16 +197,16 @@ var addEventListeners = function() {
     }, []);
 
     if (this.item) {
-      ResourcePoolsActions.updateResourcePool(item, tags);
+      PlacementZonesActions.updatePlacementZone(item, tags);
     } else {
-      ResourcePoolsActions.createResourcePool(item, tags);
+      PlacementZonesActions.createPlacementZone(item, tags);
     }
   });
 
-  this.$el.find('.resourcePoolEdit').on('click', '.resourcePoolEdit-cancel', (e) => {
+  this.$el.find('.placementZoneEdit').on('click', '.placementZoneEdit-cancel', (e) => {
     e.preventDefault();
     this.item = null;
-    ResourcePoolsActions.cancelEditResourcePool();
+    PlacementZonesActions.cancelEditPlacementZone();
   });
 
   this.$el.find('.name-input').on('input change', () => toggleButtonsState(this.$el));
@@ -221,10 +221,10 @@ var applyValidationErrors = function($el, errors) {
 var toggleButtonsState = function($el) {
   var nameValue = $el.find('.name-input').val();
   if (nameValue) {
-    $el.find('.resourcePoolEdit-save').removeAttr('disabled').removeClass('loading');
+    $el.find('.placementZoneEdit-save').removeAttr('disabled').removeClass('loading');
   } else {
-    $el.find('.resourcePoolEdit-save').attr('disabled', true);
+    $el.find('.placementZoneEdit-save').attr('disabled', true);
   }
 };
 
-export default ResourcePoolRowEditor;
+export default PlacementZoneRowEditor;

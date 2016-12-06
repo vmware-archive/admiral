@@ -54,10 +54,10 @@
 
       <context-sidepanel-toolbar-item
         v-if="showTabAddHost"
-        v-bind:active="activeContextItem === 'resourcePools'"
+        v-bind:active="activeContextItem === 'placementZones'"
         v-bind:icon-class="'fa fa-bullseye'"
-        v-bind:label="i18n('app.resourcePool.contextPanelTooltip')"
-        v-on:open="openToolbarResourcePools()" v-on:close="closeToolbar()">
+        v-bind:label="i18n('app.placementZone.contextPanelTooltip')"
+        v-on:open="openToolbarPlacementZones()" v-on:close="closeToolbar()">
       </context-sidepanel-toolbar-item>
 
       <context-sidepanel-toolbar-item
@@ -86,8 +86,8 @@
     </div>
 
     <div slot="content" class="content">
-      <resource-pools-list v-if="activeContextItem === 'resourcePools'"
-        v-bind:model="model.contextView.activeItem.data"></resource-pools-list>
+      <placement-zones-list v-if="activeContextItem === 'placementZones'"
+        v-bind:model="model.contextView.activeItem.data"></placement-zones-list>
       <credentials-list v-if="activeContextItem === 'credentials'"
         v-bind:model="model.contextView.activeItem.data"></credentials-list>
       <certificates-list v-if="activeContextItem === 'certificates'"

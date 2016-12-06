@@ -14,7 +14,7 @@ import { AppActions, HostActions } from 'actions/Actions';
 import constants from 'core/constants';
 import services from 'core/services';
 import routes from 'core/routes';
-import ResourcePoolsStore from 'stores/ResourcePoolsStore';
+import PlacementZonesStore from 'stores/PlacementZonesStore';
 import CredentialsStore from 'stores/CredentialsStore';
 import CertificatesStore from 'stores/CertificatesStore';
 
@@ -27,7 +27,7 @@ describe("AppStore test", function() {
   beforeEach(function() {
     spyOn(routes, 'initialize').and.callFake(function() {
     });
-    spyOn(ResourcePoolsStore, 'onRetrieveResourcePools').and.callFake(function() {
+    spyOn(PlacementZonesStore, 'onRetrievePlacementZones').and.callFake(function() {
     });
     spyOn(CredentialsStore, 'onRetrieveCredentials').and.callFake(function() {
     });

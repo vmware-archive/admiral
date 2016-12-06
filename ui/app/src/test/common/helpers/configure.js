@@ -19,7 +19,7 @@ Handlebars.registerHelper('timestampToDate', function(timestamp) {
   return timestamp;
 });
 
-Handlebars.registerHelper('resourcePoolPercentageLevel', function(percentage) {
+Handlebars.registerHelper('placementZonePercentageLevel', function(percentage) {
   return 'level-' + percentage;
 });
 

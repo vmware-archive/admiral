@@ -24,7 +24,7 @@
       "networks": "Networks",
       "closures": "Closures",
       "eventlog": "Event Log",
-      "resourcePools": "Placement Zones",
+      "placementZones": "Placement Zones",
       "environments": "Environments",
       "machines": "Machines",
       "compute": "Compute"
@@ -41,7 +41,7 @@
         "addressHint": "Please specify the appropriate scheme and port, e.g. https://myhost.com:2376. Default scheme: 'https'. Default ports: https/443, http/80.",
         "hostAlias": "Name",
         "hostAddress": "Address",
-        "resourcePool": "Placement zone",
+        "placementZone": "Placement zone",
         "credential": "Login credential",
         "guestCredential": "Guest credential",
         "destination": "Destination",
@@ -95,7 +95,7 @@
         "remove": "Remove"
       }
     },
-    "resourcePool": {
+    "placementZone": {
       "createNew": "New Placement Zone",
       "manage": "Manage Placement Zones",
       "entity": "placement zone",
@@ -335,7 +335,7 @@
         "nameColumn": "Name",
         "groupColumn": "Project",
         "businessGroupColumn": "Business Group",
-        "resourcePoolColumn": "Placement Zone",
+        "placementZoneColumn": "Placement Zone",
         "deploymentPolicyColumn": "Deployment Policy",
         "priorityColumn": "Priority",
         "instancesColumn": "Instances",
@@ -353,8 +353,8 @@
         "selectGroup": "Select Project",
         "businessGroupLabel": "Business Group",
         "selectBusinessGroup": "Select Business Group",
-        "resourcePoolLabel": "Placement Zone",
-        "selectResourcePool": "Select Placement Zone",
+        "placementZoneLabel": "Placement Zone",
+        "selectPlacementZone": "Select Placement Zone",
         "deploymentPolicyLabel": "Deployment Policy",
         "selectDeploymentPolicy": "Select Deployment Policy",
         "priorityLabel": "Priority",
@@ -806,7 +806,7 @@
       "title": "All Closures",
       "titleSearch": "Found Closures",
       "searchPlaceholder": "Search for closures",
-      "resourcePool": "Resource Pool",
+      "placementZone": "Resource Pool",
       "resultStatus": "Result Status",
       "details": {
         "name": "Name",

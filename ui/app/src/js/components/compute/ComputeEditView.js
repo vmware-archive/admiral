@@ -15,13 +15,13 @@ import Tags from 'components/common/Tags';
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
 import ComputeEditViewVue from 'components/compute/ComputeEditViewVue.html';
 
-const resourcePoolManageOptions = [{
+const placementZoneManageOptions = [{
   id: 'rp-create',
-  name: i18n.t('app.resourcePool.createNew'),
+  name: i18n.t('app.placementZone.createNew'),
   icon: 'plus'
 }, {
   id: 'rp-manage',
-  name: i18n.t('app.resourcePool.manage'),
+  name: i18n.t('app.placementZone.manage'),
   icon: 'pencil'
 }];
 
@@ -49,46 +49,46 @@ var ComputeEditView = Vue.extend({
   },
 
   attached: function() {
-    var elemResourcePool = $(this.$el).find('#resourcePool .form-control');
-    this.resourcePoolInput = new DropdownSearchMenu(elemResourcePool, {
+    var elemPlacementZone = $(this.$el).find('#placementZone .form-control');
+    this.placementZoneInput = new DropdownSearchMenu(elemPlacementZone, {
       title: i18n.t('dropdownSearchMenu.title', {
-        entity: i18n.t('app.resourcePool.entity')
+        entity: i18n.t('app.placementZone.entity')
       }),
       searchPlaceholder: i18n.t('dropdownSearchMenu.searchPlaceholder', {
-        entity: i18n.t('app.resourcePool.entity')
+        entity: i18n.t('app.placementZone.entity')
       })
     });
 
-    this.resourcePoolInput.setManageOptions(resourcePoolManageOptions);
-    this.resourcePoolInput.setManageOptionSelectCallback((option) => {
+    this.placementZoneInput.setManageOptions(placementZoneManageOptions);
+    this.placementZoneInput.setManageOptionSelectCallback((option) => {
       if (option.id === 'rp-create') {
-        ComputeContextToolbarActions.createResourcePool();
+        ComputeContextToolbarActions.createPlacementZone();
       } else {
-        ComputeContextToolbarActions.manageResourcePools();
+        ComputeContextToolbarActions.managePlacementZones();
       }
     });
 
-    this.resourcePoolInput.setOptionSelectCallback((option) => {
-      this.resourcePool = option;
+    this.placementZoneInput.setOptionSelectCallback((option) => {
+      this.placementZone = option;
     });
-    this.resourcePoolInput.setClearOptionSelectCallback(() => {
-      this.resourcePool = undefined;
+    this.placementZoneInput.setClearOptionSelectCallback(() => {
+      this.placementZone = undefined;
     });
 
-    this.unwatchResourcePools = this.$watch('model.resourcePools', () => {
-      if (this.model.resourcePools === constants.LOADING) {
-        this.resourcePoolInput.setLoading(true);
+    this.unwatchPlacementZones = this.$watch('model.placementZones', () => {
+      if (this.model.placementZones === constants.LOADING) {
+        this.placementZoneInput.setLoading(true);
       } else {
-        this.resourcePoolInput.setLoading(false);
-        this.resourcePoolInput.setOptions(
-            (this.model.resourcePools || []).map((config) => config.resourcePoolState));
+        this.placementZoneInput.setLoading(false);
+        this.placementZoneInput.setOptions(
+            (this.model.placementZones || []).map((config) => config.resourcePoolState));
       }
     }, {immediate: true});
 
-    this.unwatchResourcePool = this.$watch('model.resourcePool',
-                                           (resourcePool, oldResourcePool) => {
-      if (this.model.resourcePool && resourcePool !== oldResourcePool) {
-        this.resourcePoolInput.setSelectedOption(this.model.resourcePool.resourcePoolState);
+    this.unwatchPlacementZone = this.$watch('model.placementZone',
+                                           (placementZone, oldPlacementZone) => {
+      if (this.model.placementZone && placementZone !== oldPlacementZone) {
+        this.placementZoneInput.setSelectedOption(this.model.placementZone.resourcePoolState);
       }
     }, {immediate: true});
 
@@ -96,9 +96,9 @@ var ComputeEditView = Vue.extend({
 
     this.unwatchModel = this.$watch('model', (model, oldModel) => {
         oldModel = oldModel || {};
-        if (model.resourcePool !== oldModel.resourcePool) {
-          this.resourcePoolInput.setSelectedOption(model.resourcePool);
-          this.resourcePool = this.resourcePoolInput.getSelectedOption();
+        if (model.placementZone !== oldModel.placementZone) {
+          this.placementZoneInput.setSelectedOption(model.placementZone);
+          this.placementZone = this.placementZoneInput.getSelectedOption();
         }
         if (model.tags !== oldModel.tags) {
           this.tagsInput.setValue(model.tags);
@@ -108,8 +108,8 @@ var ComputeEditView = Vue.extend({
   },
 
   detached: function() {
-    this.unwatchResourcePools();
-    this.unwatchResourcePool();
+    this.unwatchPlacementZones();
+    this.unwatchPlacementZone();
     this.unwatchModel();
   },
 
@@ -120,13 +120,13 @@ var ComputeEditView = Vue.extend({
     saveCompute: function() {
       let computeModel = {
         dto: this.model.dto,
-        resourcePoolLink: this.resourcePool ? this.resourcePool.documentSelfLink : null,
+        resourcePoolLink: this.placementZone ? this.placementZone.documentSelfLink : null,
         selfLinkId: this.model.selfLinkId
       };
       let tags = this.tagsInput.getValue();
       ComputeActions.updateCompute(computeModel, tags);
     },
-    openToolbarResourcePools: ComputeContextToolbarActions.openToolbarResourcePools,
+    openToolbarPlacementZones: ComputeContextToolbarActions.openToolbarPlacementZones,
     closeToolbar: ComputeContextToolbarActions.closeToolbar
   }
 });

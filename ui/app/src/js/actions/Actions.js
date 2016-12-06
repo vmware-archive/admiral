@@ -77,17 +77,17 @@ export var RegistryActions = Reflux.createActions([
 ]);
 
 export var HostContextToolbarActions = Reflux.createActions([
-  'openToolbarResourcePools', 'openToolbarCredentials', 'openToolbarCertificates',
+  'openToolbarPlacementZones', 'openToolbarCredentials', 'openToolbarCertificates',
   'openToolbarDeploymentPolicies', 'openToolbarEndpoints', 'closeToolbar',
-  'createResourcePool', 'manageResourcePools',
+  'createPlacementZone', 'managePlacementZones',
   'createCredential', 'manageCredentials', 'manageCertificates',
   'createDeploymentPolicy', 'manageDeploymentPolicies',
   'createEndpoint', 'manageEndpoints'
 ]);
 
 export var ComputeContextToolbarActions = Reflux.createActions([
-  'openToolbarResourcePools', 'closeToolbar',
-  'createResourcePool', 'manageResourcePools'
+  'openToolbarPlacementZones', 'closeToolbar',
+  'createPlacementZone', 'managePlacementZones'
 ]);
 
 export var RegistryContextToolbarActions = Reflux.createActions([
@@ -100,7 +100,7 @@ export var HostsContextToolbarActions = Reflux.createActions([
 ]);
 
 export var PlacementContextToolbarActions = Reflux.createActions([
-  'openToolbarResourcePools', 'createResourcePool', 'manageResourcePools',
+  'openToolbarPlacementZones', 'createPlacementZone', 'managePlacementZones',
   'openToolbarDeploymentPolicies', 'createDeploymentPolicy', 'manageDeploymentPolicies',
   'openToolbarResourceGroups', 'createResourceGroup', 'manageResourceGroups',
   'closeToolbar'
@@ -114,13 +114,13 @@ export var ContainersContextToolbarActions = Reflux.createActions([
   'openToolbarRequests', 'openToolbarEventLogs', 'closeToolbar', 'openToolbarClosureResults'
 ]);
 
-export var ResourcePoolsContextToolbarActions = Reflux.createActions([
+export var PlacementZonesContextToolbarActions = Reflux.createActions([
   'openToolbarEndpoints', 'closeToolbar', 'createEndpoint', 'manageEndpoints'
 ]);
 
-export var ResourcePoolsActions = Reflux.createActions([
-  'retrieveResourcePools', 'editResourcePool', 'cancelEditResourcePool', 'createResourcePool',
-  'updateResourcePool', 'deleteResourcePool'
+export var PlacementZonesActions = Reflux.createActions([
+  'retrievePlacementZones', 'editPlacementZone', 'cancelEditPlacementZone', 'createPlacementZone',
+  'updatePlacementZone', 'deletePlacementZone'
 ]);
 
 export var CredentialsActions = Reflux.createActions([
@@ -172,8 +172,8 @@ export var ClosureActions = Reflux.createActions([
 ]);
 
 export var ClosureContextToolbarActions = Reflux.createActions([
-  'openToolbarResourcePools', 'closeToolbar',
-  'createResourcePool', 'manageResourcePools'
+  'openToolbarPlacementZones', 'closeToolbar',
+  'createPlacementZone', 'managePlacementZones'
 ]);
 
 /*

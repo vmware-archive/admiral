@@ -42,7 +42,7 @@ let toViewModel = function(dto) {
     powerState: dto.powerState,
     resourcePoolLink: dto.resourcePoolLink,
     descriptionLink: dto.descriptionLink,
-    resourcePoolDocumentId: dto.resourcePoolLink && utils.getDocumentId(dto.resourcePoolLink),
+    placementZoneDocumentId: dto.resourcePoolLink && utils.getDocumentId(dto.resourcePoolLink),
     connectionType: hasCustomProperties ? dto.customProperties.__adapterDockerType : null,
     customProperties: customProperties
   };
@@ -79,10 +79,10 @@ let MachinesStore = Reflux.createStore({
         var itemsCount = result.totalCount;
         var machines = documents.map((document) => toViewModel(document));
 
-        this.getResourcePools(machines).then((result) => {
+        this.getPlacementZones(machines).then((result) => {
           machines.forEach((machine) => {
             if (result[machine.resourcePoolLink]) {
-              machine.resourcePoolName =
+              machine.placementZoneName =
                  result[machine.resourcePoolLink].resourcePoolState.name;
             }
           });
@@ -127,10 +127,10 @@ let MachinesStore = Reflux.createStore({
         var nextPageLink = result.nextPageLink;
         let machines = documents.map((document) => toViewModel(document));
 
-        this.getResourcePools(machines).then((result) => {
+        this.getPlacementZones(machines).then((result) => {
           machines.forEach((machine) => {
             if (result[machine.resourcePoolLink]) {
-              machine.resourcePoolName =
+              machine.placementZoneName =
                  result[machine.resourcePoolLink].resourcePoolState.name;
             }
           });
@@ -188,18 +188,19 @@ let MachinesStore = Reflux.createStore({
       });
   },
 
-  getResourcePools: function(machines) {
-    let resourcePools = utils.getIn(this.data, ['listView', 'resourcePools']) || {};
+  getPlacementZones: function(machines) {
+    let placementZones = utils.getIn(this.data, ['listView', 'placementZones']) || {};
     let resourcePoolLinks = machines.filter((machine) =>
         machine.resourcePoolLink).map((machine) => machine.resourcePoolLink);
     let links = [...new Set(resourcePoolLinks)].filter((link) =>
-        !resourcePools.hasOwnProperty(link));
+        !placementZones.hasOwnProperty(link));
     if (links.length === 0) {
-      return Promise.resolve(resourcePools);
+      return Promise.resolve(placementZones);
     }
-    return services.loadResourcePools(links).then((newResourcePools) => {
-      this.setInData(['listView', 'resourcePools'], $.extend({}, resourcePools, newResourcePools));
-      return utils.getIn(this.data, ['listView', 'resourcePools']);
+    return services.loadPlacementZones(links).then((newPlacementZones) => {
+      this.setInData(['listView', 'placementZones'],
+          $.extend({}, placementZones, newPlacementZones));
+      return utils.getIn(this.data, ['listView', 'placementZones']);
     });
   },
 

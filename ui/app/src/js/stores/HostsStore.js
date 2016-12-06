@@ -14,7 +14,7 @@ import services from 'core/services';
 import links from 'core/links';
 import constants from 'core/constants';
 import utils from 'core/utils';
-import ResourcePoolsStore from 'stores/ResourcePoolsStore';
+import PlacementZonesStore from 'stores/PlacementZonesStore';
 import CredentialsStore from 'stores/CredentialsStore';
 import CertificatesStore from 'stores/CertificatesStore';
 import EndpointsStore from 'stores/EndpointsStore';
@@ -45,8 +45,8 @@ let hostConstraints = {
     }
   },
 
-  resourcePool: function(resourcePool) {
-    if (!resourcePool) {
+  placementZone: function(placementZone) {
+    if (!placementZone) {
       return 'errors.required';
     }
   },
@@ -134,7 +134,7 @@ let getHostSpec = function(hostModel) {
 let getHostAutoConfigSpec = function(hostModel) {
   var hostAutoConfigSpec = {
     __address: hostModel.address,
-    __placementZoneLink: hostModel.resourcePoolLink,
+    __resourcePoolLink: hostModel.resourcePoolLink,
     __tagLinks: hostModel.tagLinks
   };
 
@@ -201,7 +201,7 @@ let toViewModel = function(dto) {
     descriptionLink: dto.descriptionLink,
     powerState: dto.powerState,
     resourcePoolLink: dto.resourcePoolLink,
-    resourcePoolDocumentId: utils.getDocumentId(dto.resourcePoolLink),
+    placementZoneDocumentId: utils.getDocumentId(dto.resourcePoolLink),
     epzs: epzs,
     containers: containers,
     connectionType: hasCustomProperties ? dto.customProperties.__adapterDockerType : null,
@@ -227,14 +227,14 @@ let updateEditableProperties = function(hostModel) {
     this.setInData(['hostAddView', 'credential'], null);
   }
 
-  var resourcePools = utils.getIn(this.getData(), ['hostAddView', 'resourcePools']);
-  if (resourcePools && hostModel.resourcePoolLink) {
-    var resourcePool = resourcePools.find((resourcePool) => {
-      return resourcePool.documentSelfLink === hostModel.resourcePoolLink;
+  var placementZones = utils.getIn(this.getData(), ['hostAddView', 'placementZones']);
+  if (placementZones && hostModel.resourcePoolLink) {
+    var placementZone = placementZones.find((placementZone) => {
+      return placementZone.documentSelfLink === hostModel.resourcePoolLink;
     });
-    this.setInData(['hostAddView', 'resourcePool'], resourcePool);
+    this.setInData(['hostAddView', 'placementZone'], placementZone);
   } else {
-    this.setInData(['hostAddView', 'resourcePool'], null);
+    this.setInData(['hostAddView', 'placementZone'], null);
   }
 
   var deploymentPolicyProp = hostModel.customProperties.find((prop) => {
@@ -303,22 +303,22 @@ let HostsStore = Reflux.createStore({
       }
     });
 
-    ResourcePoolsStore.listen((resourcePoolsData) => {
+    PlacementZonesStore.listen((placementZonesData) => {
       if (!this.data.hostAddView) {
         return;
       }
 
-      this.setInData(['hostAddView', 'resourcePools'], resourcePoolsData.items);
+      this.setInData(['hostAddView', 'placementZones'], placementZonesData.items);
 
       if (isContextPanelActive.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS)) {
         this.setInData(['hostAddView', 'contextView', 'activeItem', 'data'],
-          resourcePoolsData);
+          placementZonesData);
 
-        var itemToSelect = resourcePoolsData.newItem || resourcePoolsData.updatedItem;
+        var itemToSelect = placementZonesData.newItem || placementZonesData.updatedItem;
         if (itemToSelect && this.data.hostAddView.contextView.shouldSelectAndComplete) {
           clearTimeout(this.itemSelectTimeout);
           this.itemSelectTimeout = setTimeout(() => {
-            this.setInData(['hostAddView', 'resourcePool'], itemToSelect);
+            this.setInData(['hostAddView', 'placementZone'], itemToSelect);
             this.onCloseToolbar();
           }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
         }
@@ -470,7 +470,7 @@ let HostsStore = Reflux.createStore({
 
         // Transforming to the model of the view
         let hosts = documents.map((document) => toViewModel(document));
-        this.getResourcePoolsForHostsCall(hosts).then((result) => {
+        this.getPlacementZonesForHostsCall(hosts).then((result) => {
           hosts.forEach((host) => {
             host.epzs.forEach((epz) => {
               if (result[epz.epzLink]) {
@@ -511,7 +511,7 @@ let HostsStore = Reflux.createStore({
 
         // Transforming to the model of the view
         let hosts = documents.map((document) => toViewModel(document));
-        this.getResourcePoolsForHostsCall(hosts).then((result) => {
+        this.getPlacementZonesForHostsCall(hosts).then((result) => {
           hosts.forEach((host) => {
             host.epzs.forEach((epz) => {
               if (result[epz.epzLink]) {
@@ -532,32 +532,33 @@ let HostsStore = Reflux.createStore({
     this.emitChange();
   },
 
-  getResourcePoolsForHostsCall: function(hosts) {
-    let resourcePools = utils.getIn(this.data, ['listView', 'resourcePools']) || {};
+  getPlacementZonesForHostsCall: function(hosts) {
+    let placementZones = utils.getIn(this.data, ['listView', 'placementZones']) || {};
     let resourcePoolLinks = [];
     hosts.forEach((host) => {
       host.epzs.forEach((epz) => resourcePoolLinks.push(epz.epzLink));
     });
     let links = [...new Set(resourcePoolLinks)].filter((link) =>
-        !resourcePools.hasOwnProperty(link));
+        !placementZones.hasOwnProperty(link));
     if (links.length === 0) {
-      return Promise.resolve(resourcePools);
+      return Promise.resolve(placementZones);
     }
-    return services.loadResourcePools(links).then((newResourcePools) => {
-      this.setInData(['listView', 'resourcePools'], $.extend({}, resourcePools, newResourcePools));
-      return utils.getIn(this.data, ['listView', 'resourcePools']);
+    return services.loadPlacementZones(links).then((newPlacementZones) => {
+      this.setInData(['listView', 'placementZones'],
+          $.extend({}, placementZones, newPlacementZones));
+      return utils.getIn(this.data, ['listView', 'placementZones']);
     });
   },
 
   onOpenAddHost: function() {
-    // Immediately update the view. Later the resourcePools and credentials lists will be updated.
+    // Immediately update the view. Later the placementZones and credentials lists will be updated.
     var hostAddView = {
       contextView: {}
     };
     this.setInData(['hostAddView'], hostAddView);
     this.emitChange();
 
-    actions.ResourcePoolsActions.retrieveResourcePools();
+    actions.PlacementZonesActions.retrievePlacementZones();
     actions.CredentialsActions.retrieveCredentials();
     actions.CertificatesActions.retrieveCertificates();
     actions.DeploymentPolicyActions.retrieveDeploymentPolicies();
@@ -570,7 +571,7 @@ let HostsStore = Reflux.createStore({
     this.setInData(['listView', 'itemsLoading'], false);
     this.setInData(['listView', 'itemsCount'], 0);
     this.setInData(['listView', 'nextPageLink'], null);
-    this.setInData(['listView', 'resourcePools'], null);
+    this.setInData(['listView', 'placementZones'], null);
   },
 
   onAutoConfigureHost: function(hostModel) {
@@ -680,7 +681,7 @@ let HostsStore = Reflux.createStore({
     services.loadHost(hostId).then((hostSpec) => {
       var hostModel = toViewModel(hostSpec);
 
-      actions.ResourcePoolsActions.retrieveResourcePools();
+      actions.PlacementZonesActions.retrievePlacementZones();
       actions.CredentialsActions.retrieveCredentials();
       actions.CertificatesActions.retrieveCertificates();
       actions.DeploymentPolicyActions.retrieveDeploymentPolicies();
@@ -698,7 +699,7 @@ let HostsStore = Reflux.createStore({
 
     if (hostModel.resourcePoolLink) {
         promises.push(
-            services.loadResourcePool(hostModel.resourcePoolLink).catch(() => Promise.resolve()));
+            services.loadPlacementZone(hostModel.resourcePoolLink).catch(() => Promise.resolve()));
     } else {
         promises.push(Promise.resolve());
     }
@@ -733,7 +734,7 @@ let HostsStore = Reflux.createStore({
         hostModel.credential = credential;
       }
       if (hostModel.resourcePoolLink && config) {
-          hostModel.resourcePool = config.resourcePoolState;
+          hostModel.placementZone = config.resourcePoolState;
       }
       hostModel.deploymentPolicy = deploymentPolicy;
 
@@ -743,7 +744,7 @@ let HostsStore = Reflux.createStore({
         id: hostModel.id,
         hostAlias: utils.getHostName(hostModel),
         address: hostModel.address ? hostModel.address : hostModel.id,
-        resourcePool: hostModel.resourcePool,
+        placementZone: hostModel.placementZone,
         credential: credential,
         deploymentPolicy: hostModel.deploymentPolicy,
         connectionType: hostModel.connectionType,
@@ -953,9 +954,9 @@ let HostsStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onOpenToolbarResourcePools: function() {
+  onOpenToolbarPlacementZones: function() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS,
-      ResourcePoolsStore.getData(), false);
+      PlacementZonesStore.getData(), false);
   },
 
   onOpenToolbarCredentials: function() {
@@ -1004,15 +1005,15 @@ let HostsStore = Reflux.createStore({
     }
   },
 
-  onCreateResourcePool: function() {
+  onCreatePlacementZone: function() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS,
-     ResourcePoolsStore.getData(), true);
-    actions.ResourcePoolsActions.editResourcePool();
+     PlacementZonesStore.getData(), true);
+    actions.PlacementZonesActions.editPlacementZone();
   },
 
-  onManageResourcePools: function() {
+  onManagePlacementZones: function() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS,
-     ResourcePoolsStore.getData(), true);
+     PlacementZonesStore.getData(), true);
   },
 
   onCreateCredential: function() {

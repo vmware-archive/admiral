@@ -14,7 +14,7 @@ import PlacementsViewVue from 'components/placements/PlacementsViewVue.html';
 import PlacementsListTemplate from 'components/placements/PlacementsListTemplate.html';
 import PlacementsRowRenderers from 'components/placements/PlacementsRowRenderers';
 import PlacementsRowEditor from 'components/placements/PlacementsRowEditor';
-import ResourcePoolsList from 'components/resourcepools/ResourcePoolsList'; //eslint-disable-line
+import PlacementZonesList from 'components/placementzones/PlacementZonesList'; //eslint-disable-line
 import ResourceGroupsList from 'components/resourcegroups/ResourceGroupsList'; //eslint-disable-line
 import DeploymentPoliciesList from 'components/deploymentpolicies/DeploymentPoliciesList'; //eslint-disable-line
 import { PlacementActions, PlacementContextToolbarActions } from 'actions/Actions';
@@ -86,7 +86,7 @@ var PlacementsView = Vue.extend({
   },
   methods: {
     i18n: i18n.t,
-    openToolbarResourcePools: PlacementContextToolbarActions.openToolbarResourcePools,
+    openToolbarPlacementZones: PlacementContextToolbarActions.openToolbarPlacementZones,
     openToolbarResourceGroups: PlacementContextToolbarActions.openToolbarResourceGroups,
     openToolbarDeploymentPolicies: PlacementContextToolbarActions.openToolbarDeploymentPolicies,
     closeToolbar: PlacementContextToolbarActions.closeToolbar,
