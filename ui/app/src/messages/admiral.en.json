@@ -791,7 +791,8 @@
         "remove": "Remove",
         "clone": "Clone",
         "details": "Details",
-        "terminal": "Terminal"
+        "terminal": "Terminal",
+        "manage": "Manage"
       }
     },
     "request": {

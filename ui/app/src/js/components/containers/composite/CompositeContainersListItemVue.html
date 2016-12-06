@@ -11,7 +11,10 @@
 
 <div class="composite-container-item">
   <div class="container-header-holder">
-    <div class="status {{model.powerState}}"><span class="status-state">{{i18n("app.container.list.composite.name")}}</span></div>
+    <div class="status {{model.powerState}}">
+      <i class="fa fa-lock" title="Managed by catalog"
+         v-bind:supported="operationSupported('MANAGE')"></i>
+      <span class="status-state">{{i18n("app.container.list.composite.name")}}</span></div>
     <div class="container-header">
       <div v-bind:class="'icons icons-' + numberOfIcons">
         <template v-for="i in numberOfIcons">
@@ -65,6 +68,10 @@
                    v-bind:label="i18n('app.container.actions.remove')"
                    v-bind:supported="operationSupported('REMOVE')"
                    v-on:click="askConfirmation($event)"></action-button>
+    <action-button name="manage" icon-name="external-link"
+                   v-bind:label="i18n('app.container.actions.manage')"
+                   v-bind:supported="operationSupported('MANAGE')"
+                   v-on:click="manageComposite($event)"></action-button>
   </div>
   <delete-confirmation v-bind:class="{'hide': !showDeleteConfirmation}"
                        v-bind:show="showDeleteConfirmation"

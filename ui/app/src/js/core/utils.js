@@ -465,7 +465,6 @@ var utils = {
   operationSupported: function(op, resource) {
     if (this.isSystemContainer(resource)) {
       return false;
-
     } else if (resource.type === constants.CONTAINERS.TYPES.COMPOSITE
                 || resource.type === constants.CONTAINERS.TYPES.CLUSTER) {
 
@@ -478,6 +477,8 @@ var utils = {
 
       return this.operationSupportedMulti(op, items);
 
+    } else if (op === constants.CONTAINERS.OPERATION.MANAGE) {
+      return (!this.isApplicationSingleView() && isFromCatalog(resource));
     } else if (resource.type === constants.RESOURCES.TYPES.NETWORK) {
       return (op === constants.RESOURCES.NETWORKS.OPERATION.REMOVE
             && !isFromCatalog(resource));

@@ -62,6 +62,14 @@ var ContainersListItem = Vue.extend({
       }
     },
 
+    manageContainer: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      let containerId = this.getContainerId();
+      ContainerActions.openManageContainers(containerId);
+    },
+
     startContainer: function($event) {
       $event.stopPropagation();
       $event.preventDefault();

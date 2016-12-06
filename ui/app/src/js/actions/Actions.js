@@ -49,7 +49,8 @@ export var TemplateActions = Reflux.createActions([
 
 export var ContainerActions = Reflux.createActions([
   'openContainers', 'openContainersNext', 'openContainerDetails', 'openClusterDetails',
-  'openCompositeContainerDetails', 'refreshContainer', 'refreshContainerStats',
+  'openCompositeContainerDetails', 'openManageContainers', 'openManageComposite',
+  'refreshContainer', 'refreshContainerStats',
   'refreshContainerLogs', 'changeLogsSinceDuration', 'startContainer', 'stopContainer',
   'removeContainer', 'startCompositeContainer', 'stopCompositeContainer',
   'removeCompositeContainer', 'startContainerDetails', 'stopContainerDetails',
@@ -62,7 +63,8 @@ export var ContainerActions = Reflux.createActions([
 ]);
 
 export var NetworkActions = Reflux.createActions([
-  'removeNetwork', 'networkOperationCompleted', 'networkOperationFailed'
+  'removeNetwork', 'networkOperationCompleted', 'networkOperationFailed',
+  'openManageNetworks'
 ]);
 
 export var EventLogActions = Reflux.createActions([

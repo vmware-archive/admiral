@@ -80,6 +80,14 @@ var CompositeContainersListItem = Vue.extend({
       NavigationActions.openCompositeContainerDetails(compositeId);
     },
 
+    manageComposite: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      let catalogResourceId = utils.getDocumentId(this.model.documentSelfLink);
+      ContainerActions.openManageComposite(catalogResourceId);
+    },
+
     startContainer: function($event) {
       $event.stopPropagation();
       $event.preventDefault();

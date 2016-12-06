@@ -292,6 +292,15 @@ function isEverythingRemoved(selectedItem, operationType, removedIds) {
   }
 }
 
+function redirectToCatalogItem(catalogItemId) {
+  let currentURL = window.top.location.href;
+  let redirectURL =
+      currentURL.substring(0, currentURL
+                           .indexOf('com.vmware.vcac.components.container'));
+  redirectURL += 'csp.catalog.item.details%5BresourceId:=' + catalogItemId;
+  window.top.location.href = redirectURL;
+}
+
 let getNetworkLinks = function(containerOrCluster, networks) {
   var networkLinks = {};
   for (var i = 0; i < containerOrCluster.length; i++) {
@@ -556,6 +565,36 @@ let ContainersStore = Reflux.createStore({
     this.setInData(['listView', 'nextPageLink'], null);
     this.setInData(['listView', 'hosts'], null);
     this.setInData(['listView', 'error'], null);
+  },
+
+  onOpenManageContainers: function(containerId) {
+    var operation = this.requestCancellableOperation(constants.CONTAINERS.OPERATION.MANAGE);
+
+    if (operation) {
+      operation.forPromise(services.manageContainer(containerId))
+        .then((catalogResource) => {
+          if (catalogResource && catalogResource.id) {
+            redirectToCatalogItem(catalogResource.id);
+          }
+        });
+    }
+  },
+
+  onOpenManageComposite: function(catalogResourceId) {
+    redirectToCatalogItem(catalogResourceId);
+  },
+
+  onOpenManageNetworks: function(networkId) {
+    var operation = this.requestCancellableOperation(constants.RESOURCES.NETWORKS.OPERATION.MANAGE);
+
+    if (operation) {
+      operation.forPromise(services.manageNetwork(networkId))
+        .then((catalogResource) => {
+          if (catalogResource && catalogResource.id) {
+            redirectToCatalogItem(catalogResource.id);
+          }
+        });
+    }
   },
 
   onOpenContainerDetails: function(containerId, clusterId, compositeComponentId) {

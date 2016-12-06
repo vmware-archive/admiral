@@ -10,8 +10,11 @@
   -->
 
 <div class="container-item">
-  <div class="status {{model.powerState}}"><span
-         class="status-state">{{containerStatusDisplay(model.powerState, model.started)}}</span></div>
+  <div class="status {{model.powerState}}">
+    <i class="fa fa-lock" title="Managed by catalog"
+       v-show="operationSupported('MANAGE')"></i>
+    <span class="status-state">{{containerStatusDisplay(model.powerState, model.started)}}</span>
+  </div>
   <div class="container-header">
     <img v-bind:src="model.icon"/>
     <div class="title-holder">
@@ -75,6 +78,10 @@
                    v-bind:label="i18n('app.container.list.cluster.scaleLabel')"
                    v-bind:supported="operationSupported('CLUSTERING')"
                    v-on:click="scaleContainer($event)"></action-button>
+    <action-button name="manage" icon-name="external-link"
+                   v-bind:label="i18n('app.container.actions.manage')"
+                   v-bind:supported="operationSupported('MANAGE')"
+                   v-on:click="manageContainer($event)"></action-button>
   </div>
   <delete-confirmation v-bind:class="{'hide': !showDeleteConfirmation}"
                        v-bind:show="showDeleteConfirmation"

@@ -16,6 +16,8 @@
           v-bind:alert-timeout="3000"
           v-on:alert-closed="alertClosed()"></alert>
   <div class="status {{model.powerState}}">
+    <i class="fa fa-lock" title="Managed by catalog"
+       v-bind:supported="operationSupported('MANAGE')"></i>
     <span class="status-state">{{networkStatusDisplay(model.powerState)}}</span>
   </div>
   <div class="container-header">
@@ -86,6 +88,10 @@
                    v-bind:label="i18n('app.container.actions.remove')"
                    v-bind:supported="operationSupported('REMOVE')"
                    v-on:click="removeNetworkClicked($event)"></action-button>
+    <action-button name="manage" icon-name="external-link"
+                   v-bind:label="i18n('app.container.actions.manage')"
+                   v-bind:supported="operationSupported('MANAGE')"
+                   v-on:click="manageNetwork($event)"></action-button>
   </div>
   <delete-confirmation v-bind:class="{'hide': !showDeleteConfirmation}"
                        v-bind:show="showDeleteConfirmation"

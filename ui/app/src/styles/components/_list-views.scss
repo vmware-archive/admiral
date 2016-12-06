@@ -146,6 +146,11 @@
   border: 2px solid $main-border-color;
   border-radius: 5px;
   margin: 0 40px 40px 5px;
+  .fa-lock {
+    color: #cccccc;
+    margin-left: -5px;
+    margin-right: 5px;
+  }
   .status {
     background-color: #f3f3f3;
     padding-left: 10px;

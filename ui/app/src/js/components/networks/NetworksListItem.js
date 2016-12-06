@@ -18,7 +18,8 @@ import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmati
 import { NetworkActions, NavigationActions } from 'actions/Actions';
 
 const possibleDay2Operations = [
-  constants.RESOURCES.NETWORKS.OPERATION.REMOVE
+  constants.RESOURCES.NETWORKS.OPERATION.REMOVE,
+  constants.RESOURCES.NETWORKS.OPERATION.MANAGE
 ];
 
 var NetworksListItem = Vue.extend({
@@ -91,6 +92,13 @@ var NetworksListItem = Vue.extend({
       };
 
       NavigationActions.openContainers(queryOptions);
+    },
+
+    manageNetwork: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+      let networkId = this.getNetworkDocumentId();
+      NetworkActions.openManageNetworks(networkId);
     },
 
     removeNetworkClicked: function($event) {

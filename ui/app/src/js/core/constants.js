@@ -91,7 +91,8 @@ var constants = Immutable({
     },
     NETWORKS: {
       OPERATION: {
-        REMOVE: 'REMOVE'
+        REMOVE: 'REMOVE',
+        MANAGE: 'MANAGE'
       },
       STATES: {
         PROVISIONING: 'PROVISIONING',
@@ -146,7 +147,8 @@ var constants = Immutable({
       SHELL: 'SHELL',
       CLUSTERING: 'CLUSTERING',
       DEFAULT: 'DEFAULT',
-      NETWORKCREATE: 'NETWORKCREATE'
+      NETWORKCREATE: 'NETWORKCREATE',
+      MANAGE: 'MANAGE'
     }
   },
   COMPUTE: {

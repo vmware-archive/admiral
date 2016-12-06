@@ -1040,6 +1040,18 @@ services.loadContainer = function(containerId) {
   return get(links.CONTAINERS + '/' + containerId);
 };
 
+services.manageContainer = function(containerId) {
+  return get(links.CONTAINERS + '/' + containerId + links.MANAGE_CONTAINERS_ENDPOINT);
+};
+
+services.manageComposite = function(compositeId) {
+  return get(links.COMPOSITE_COMPONENTS + '/' + compositeId + links.MANAGE_CONTAINERS_ENDPOINT);
+};
+
+services.manageNetwork = function(networkId) {
+  return get(links.NETWORKS + '/' + networkId + links.MANAGE_CONTAINERS_ENDPOINT);
+};
+
 services.loadClosure = function(closureId) {
   return get(links.CLOSURES + '/' + closureId);
 };
