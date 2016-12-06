@@ -26,8 +26,8 @@ import com.vmware.photon.controller.model.resources.ResourceState;
  * An base class to be extended by any ComputeDescription enhancer.
  */
 public abstract class ComputeDescriptionEnhancer implements Enhancer<ComputeDescription> {
-    static final String SSH_AUTHORIZED_KEYS = "ssh_authorized_keys";
-    static final String OVA_URI = "ova.uri";
+    public static final String SSH_AUTHORIZED_KEYS = "ssh_authorized_keys";
+    public static final String OVA_URI = "ova.uri";
 
     static ObjectMapper objectMapper;
 

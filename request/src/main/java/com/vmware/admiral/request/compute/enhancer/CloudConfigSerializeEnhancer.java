@@ -26,6 +26,10 @@ import com.vmware.xenon.common.ServiceHost;
 
 public class CloudConfigSerializeEnhancer extends ComputeDescriptionEnhancer {
 
+    public static final String OVF_PROP_PREFIX = "ovf.prop:";
+    public static final String VSPHERE_COREOS_CLOUD_INIT_PROP = "guestinfo.coreos.config.data";
+    public static final String VSPHERE_PHOTONOS_CLOUD_INIT_PROP = "user-data";
+
     private ServiceHost host;
 
     public CloudConfigSerializeEnhancer(ServiceHost host) {
@@ -50,10 +54,10 @@ public class CloudConfigSerializeEnhancer extends ComputeDescriptionEnhancer {
                 if (EndpointType.vsphere.name().equals(context.endpointType)
                         && cd.customProperties.containsKey(OVA_URI)) {
                     if (context.imageType.equals("coreos")) {
-                        cd.customProperties.put("ovf.prop:guestinfo.coreos.config.data",
+                        cd.customProperties.put(OVF_PROP_PREFIX + VSPHERE_COREOS_CLOUD_INIT_PROP,
                                 cloudConfig);
                     } else {
-                        cd.customProperties.put("ovf.prop:user-data",
+                        cd.customProperties.put(OVF_PROP_PREFIX + VSPHERE_PHOTONOS_CLOUD_INIT_PROP,
                                 Base64.getEncoder().encodeToString(cloudConfig.getBytes()));
                     }
                 } else {
