@@ -79,9 +79,10 @@ public interface ManagementUriParts {
     String CONTAINER_VOLUMES = RESOURCES + "/container-volumes";
     String CONTAINER_VOLUMES_DESC = RESOURCES + "/container-volume" + DESCRIPTION_SUFFIX;
 
+    String COMPUTE_NETWORK_DESC = RESOURCES + "/compute-network" + DESCRIPTION_SUFFIX;
+
     // Request tasks:
     String REQUEST = "/request";
-
     String REQUESTS = "/requests";
     String REQUEST_STATUS = "/request-status";
     String REQUEST_RESOURCE_OPERATIONS = REQUEST + "/resource-operations";
@@ -123,23 +124,23 @@ public interface ManagementUriParts {
     String REQUEST_PROVISION_SERVICE_LINKS_TASKS = REQUEST + "/service-link-processing-tasks";
     String REQUEST_PROVISION_EXPOSE_SERVICE_TASKS = REQUEST + "/expose-service-processing-tasks";
     String REQUEST_CALLBACK_HANDLER_TASKS = REQUEST + "/callback-handler/";
+
     String CONFIGURE_HOST = REQUEST + "/configure-host/";
 
     String DELETE_SERVICE_DOCUMENTS = "/delete-tasks";
 
     String COUNTER_SUB_TASKS = "/counter-subtasks";
-
     // Continuous delivery:
     String CONTINUOUS_DELIVERY = "/continous-delivery";
-    String SELF_PROVISIONING = CONTINUOUS_DELIVERY + "/self-provisioning";
 
+    String SELF_PROVISIONING = CONTINUOUS_DELIVERY + "/self-provisioning";
     // Image operations:
     String IMAGES = "/images";
     String IMAGE_TAGS = IMAGES + "/tags";
     String TEMPLATES = "/templates";
     String LOGS = "/logs";
-    String POPULAR_IMAGES = "/popular-images";
 
+    String POPULAR_IMAGES = "/popular-images";
     // Adapters:
     String ADAPTERS = "/adapters";
     String ADAPTER_DOCKER = ADAPTERS + "/docker-service";
@@ -148,28 +149,28 @@ public interface ManagementUriParts {
     String ADAPTER_DOCKER_OPERATIONS = ADAPTER_DOCKER + "/operations";
     String ADAPTER_REGISTRY = ADAPTERS + "/registry-service";
     String ADAPTER_DOCKER_VOLUME = ADAPTERS + "/volume-docker-service";
-    String ADAPTER_DOCKER_NETWORK = ADAPTERS + "/network-docker-service";
 
+    String ADAPTER_DOCKER_NETWORK = ADAPTERS + "/network-docker-service";
     String ADAPTER_ETCD_KV = "/v2/keys";
     String ADAPTER_ETCD_MEMBERS = "/v2/members";
-    String KV_STORE = "/kv-store";
 
+    String KV_STORE = "/kv-store";
     // UI Service:
     String UI_SERVICE = System.getProperty("dcp.management.ui.path", "/");
     String CONTAINER_ICONS_RESOURCE_PATH = "/container-icons";
     String CONTAINER_IDENTICONS_RESOURCE_PATH = "/container-identicons";
     String CONTAINER_IMAGE_ICONS = "/container-image-icons";
+
     String REVERSE_PROXY = "/rp";
 
     String USER_SESSION_SERVICE = "/user-session";
 
     String REQUEST_PARAM_VALIDATE_OPERATION_NAME = "validate";
-
     String REQUEST_PARAM_ENUMERATE_OPERATION_NAME = "enumerate";
+
     String REQUEST_PARAM_TARGET_RESOURCE_POOL_LINK = "targetRpLink";
 
     String EXEC = "/exec";
-
     String AUTH_CREDENTIALS_CA_LINK = UriUtils.buildUriPath(
             AuthCredentialsService.FACTORY_LINK, "default-ca-cert");
     String AUTH_CREDENTIALS_CLIENT_LINK = UriUtils.buildUriPath(

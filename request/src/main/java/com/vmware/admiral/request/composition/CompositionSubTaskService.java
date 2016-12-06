@@ -387,7 +387,8 @@ public class CompositionSubTaskService
     private void executeProvisionTask(CompositionSubTaskState state) {
         if (ResourceType.CONTAINER_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createContainerAllocationTaskState(state);
-        } else if (ResourceType.NETWORK_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
+        } else if (ResourceType.CONTAINER_NETWORK_TYPE.getName()
+                .equalsIgnoreCase(state.resourceType)) {
             createContainerNetworkProvisionTaskState(state);
         } else if (ResourceType.VOLUME_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createContainerVolumeProvisionTaskState(state);
@@ -397,7 +398,8 @@ public class CompositionSubTaskService
             createClosureProvisionTask(state);
         } else {
             throw new IllegalArgumentException(String.format("Unsupported type. Must be: %s, %s, %s or %s",
-                    ResourceType.CONTAINER_TYPE, ResourceType.COMPUTE_TYPE, ResourceType.NETWORK_TYPE,
+                    ResourceType.CONTAINER_TYPE, ResourceType.COMPUTE_TYPE,
+                    ResourceType.CONTAINER_NETWORK_TYPE,
                     ResourceType.CLOSURE_TYPE));
         }
     }
@@ -544,7 +546,8 @@ public class CompositionSubTaskService
         requestBrokerState.customProperties = state.customProperties;
 
         if (RequestBrokerState.REMOVE_RESOURCE_OPERATION.equals(requestBrokerState.operation)
-                && ResourceType.NETWORK_TYPE.getName().equals(requestBrokerState.resourceType)) {
+                && ResourceType.CONTAINER_NETWORK_TYPE.getName()
+                .equals(requestBrokerState.resourceType)) {
             if (requestBrokerState.customProperties == null) {
                 requestBrokerState.customProperties = new HashMap<>();
             }

@@ -1427,7 +1427,7 @@ public class RequestBrokerService extends
     }
 
     private boolean isContainerNetworkType(RequestBrokerState state) {
-        return ResourceType.NETWORK_TYPE.getName().equals(state.resourceType);
+        return ResourceType.CONTAINER_NETWORK_TYPE.getName().equals(state.resourceType);
     }
 
     private boolean isContainerVolumeType(RequestBrokerState state) {
@@ -1472,7 +1472,8 @@ public class RequestBrokerService extends
                 Arrays.asList(ContainerAllocationTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_TYPE, new ArrayList<>(
                 Arrays.asList(ComputeAllocationTaskService.DISPLAY_NAME)));
-        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.NETWORK_TYPE, new ArrayList<>(
+        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
+                .put(ResourceType.CONTAINER_NETWORK_TYPE, new ArrayList<>(
                 Arrays.asList(ContainerNetworkProvisionTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.VOLUME_TYPE, new ArrayList<>(
                 Arrays.asList(ContainerVolumeProvisionTaskService.DISPLAY_NAME)));
@@ -1495,7 +1496,8 @@ public class RequestBrokerService extends
                         ReservationTaskService.DISPLAY_NAME,
                         PlacementHostSelectionTaskService.DISPLAY_NAME,
                         ResourceNamePrefixTaskService.DISPLAY_NAME)));
-        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.NETWORK_TYPE, new ArrayList<>(
+        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
+                .put(ResourceType.CONTAINER_NETWORK_TYPE, new ArrayList<>(
                 Arrays.asList(ContainerNetworkAllocationTaskService.DISPLAY_NAME,
                         ResourceNamePrefixTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.VOLUME_TYPE, new ArrayList<>(
@@ -1535,7 +1537,7 @@ public class RequestBrokerService extends
                         .get(ResourceType.COMPUTE_TYPE);
             } else if (isContainerNetworkType(state)) {
                 trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
-                        .get(ResourceType.NETWORK_TYPE);
+                        .get(ResourceType.CONTAINER_NETWORK_TYPE);
             } else if (isContainerVolumeType(state)) {
                 trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
                         .get(ResourceType.VOLUME_TYPE);

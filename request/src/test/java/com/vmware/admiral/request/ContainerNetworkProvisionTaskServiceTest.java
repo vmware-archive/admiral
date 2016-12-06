@@ -261,7 +261,7 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
         addForDeletion(dockerHost2);
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
-                ResourceType.NETWORK_TYPE.getName(), networkDesc.documentSelfLink);
+                ResourceType.CONTAINER_NETWORK_TYPE.getName(), networkDesc.documentSelfLink);
 
         String hostIds = dockerHost1.id + "," + dockerHost2.id;
         request.customProperties = new HashMap<>();

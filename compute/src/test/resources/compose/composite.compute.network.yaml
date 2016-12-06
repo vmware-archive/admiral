@@ -1,0 +1,34 @@
+---
+name: "wordPressWithMySqlCompute"
+properties:
+  _leaseDays: "3"
+components:
+  mysql:
+    type: "Compute"
+    data:
+      name: "mysql"
+      networks:
+        - name: "wpnet"
+      environmentName: "On premise"
+      instanceType: small
+      imageType: "ubuntu-server-1604"
+  wordpress:
+    type: "Compute"
+    data:
+      name: "wordpress"
+      environmentName: "On premise"
+      networks:
+        - name: "public-wpnet"
+        - name: "wpnet"
+      instanceType: small
+      imageType: "ubuntu-server-1604"
+  wpnet:
+    type: "Compute.Network"
+    data:
+      name: wpnet
+      assignment: static
+  public-wpnet:
+    type: "Compute.Network"
+    data:
+      name: public-wpnet
+      public: "true"

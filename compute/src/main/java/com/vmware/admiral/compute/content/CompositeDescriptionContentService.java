@@ -26,6 +26,7 @@ import static com.vmware.admiral.compute.content.CompositeTemplateUtil.getYamlTy
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeDockerCompose;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,12 +39,15 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
-import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.content.CompositeTemplateUtil.YamlType;
+import com.vmware.admiral.compute.content.TemplateComputeDescription.TemplateNetworkInterfaceDescription;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
+import com.vmware.photon.controller.model.resources.FirewallService;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationSequence;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatelessService;
@@ -223,51 +227,124 @@ public class CompositeDescriptionContentService extends StatelessService {
         }
 
         Operation createDescriptionOp = Operation.createPost(this,
-                CompositeDescriptionFactoryService.SELF_LINK);
+                CompositeDescriptionFactoryService.SELF_LINK).setReferer(getUri());
 
-        Operation[] createComponentsOps = createComponents(template.components);
+        DeferredResult<List<Operation>> createComponentsOps = createComponents(template.components);
 
-        OperationSequence.create(createComponentsOps)
-                .setCompletion((ops, failures) -> {
-                    if (failures != null) {
-                        op.fail(new IllegalStateException("Failed to create components: "
-                                + Utils.toString(failures)));
-                    } else {
-                        CompositeDescription description = fromCompositeTemplateToCompositeDescription(
-                                template);
-                        description.descriptionLinks = ops.values().stream()
-                                .map((o) -> o.getBody(ContainerDescription.class).documentSelfLink)
-                                .collect(Collectors.toList());
-                        createDescriptionOp.setBody(description);
-                    }
-                })
-                .next(createDescriptionOp)
-                .setCompletion((ops, failures) -> {
-                    if (failures != null) {
+        DeferredResult<Object> handle = createComponentsOps.thenAccept(ops -> {
+            CompositeDescription description = fromCompositeTemplateToCompositeDescription(
+                    template);
+            description.descriptionLinks = ops.stream()
+                    .map((o) -> o.getBody(ServiceDocument.class).documentSelfLink)
+                    .collect(Collectors.toList());
+            createDescriptionOp.setBody(description);
+        })
+                .thenCompose(ops -> getHost().sendWithDeferredResult(createDescriptionOp))
+                .handle((o, e) -> {
+                    if (e != null) {
                         op.fail(new IllegalStateException("Failed to create CompositeDescription: "
-                                + Utils.toString(failures)));
+                                + Utils.toString(e)));
                     } else {
-                        CompositeDescription description = ops.get(createDescriptionOp.getId())
-                                .getBody(CompositeDescription.class);
+                        CompositeDescription description = o.getBody(CompositeDescription.class);
                         op.addResponseHeader(Operation.LOCATION_HEADER,
                                 description.documentSelfLink);
                         op.complete();
                     }
-                }).sendWith(this);
+                    return null;
+                });
+
+        if (handle.isDone()) {
+            //do something with the deferred result because findbugs complains
+        }
     }
 
-    private Operation[] createComponents(Map<String, ComponentTemplate<?>> components) {
+    private DeferredResult<List<Operation>> createComponents(
+            Map<String, ComponentTemplate<?>> components) {
 
-        List<Operation> operations = components.values().stream()
-                .map(component -> {
-                    ResourceType resourceType = ResourceType
-                            .fromContentType(component.type);
-                    return Operation.createPost(this, CompositeComponentRegistry
-                            .factoryLinkByType(resourceType.getName()))
-                            .setBody(component.data);
-                }).collect(Collectors.toList());
+        List<DeferredResult<Operation>> deferredResults = new ArrayList<>();
+        components.values().stream()
+                .forEach(component -> deferredResults.add(createComponent(component)));
 
-        return operations.toArray(new Operation[1]);
+        return DeferredResult.allOf(deferredResults);
+    }
+
+    private DeferredResult<Operation> createComponent(ComponentTemplate<?> component) {
+        ResourceType resourceType = ResourceType
+                .fromContentType(component.type);
+
+        //TODO special case to handle ComputeDescription as it has nested objects. This should be made generic
+        if (resourceType == ResourceType.COMPUTE_TYPE) {
+            return handleComputeDescription(component);
+        }
+
+        return getHost()
+                .sendWithDeferredResult(Operation.createPost(this, CompositeComponentRegistry
+                        .factoryLinkByType(resourceType.getName()))
+                        .setBody(component.data).setReferer(getUri()));
+    }
+
+    private DeferredResult<Operation> handleComputeDescription(ComponentTemplate<?> component) {
+        TemplateComputeDescription computeDescription = (TemplateComputeDescription) component.data;
+
+        Operation createComputeDescOperation = Operation
+                .createPost(getHost(), ComputeDescriptionService.FACTORY_LINK).setReferer(getUri());
+
+        if (computeDescription.networkInterfaceDescriptions == null
+                || computeDescription.networkInterfaceDescriptions.isEmpty()) {
+            return getHost()
+                    .sendWithDeferredResult(createComputeDescOperation.setBody(computeDescription));
+        }
+
+        List<DeferredResult<String>> createNetworkInterfaceDescs = new ArrayList<>();
+        for (TemplateNetworkInterfaceDescription tnid : computeDescription.networkInterfaceDescriptions) {
+
+            Operation createNetworkInterfaceDescOperation = Operation
+                    .createPost(getHost(), NetworkInterfaceDescriptionService.FACTORY_LINK)
+                    .setReferer(getUri());
+
+            // create the firewalls
+            List<DeferredResult<String>> firewallsDeferred = new ArrayList<>();
+            if (tnid.firewalls != null && !tnid.firewalls.isEmpty()) {
+                List<FirewallService.FirewallState> firewalls = tnid.firewalls;
+
+                firewalls.forEach(firewall -> {
+                    DeferredResult<FirewallService.FirewallState> createFirewallState = getHost()
+                            .sendWithDeferredResult(
+                                    Operation.createPost(getHost(), FirewallService.FACTORY_LINK)
+                                            .setBody(firewall),
+                                    FirewallService.FirewallState.class);
+
+                    firewallsDeferred.add(createFirewallState.thenApply(a -> a.documentSelfLink));
+                });
+            }
+
+            DeferredResult<Void> createFirewalls = DeferredResult.allOf(firewallsDeferred)
+                    .thenAccept(links -> {
+                        tnid.firewallLinks = links;
+                        tnid.firewalls = null;
+                    });
+
+
+            // after all of these are persisted. POST the NetworkInterfaceDescription
+            DeferredResult<NetworkInterfaceDescriptionService.NetworkInterfaceDescription> createTnid = createFirewalls
+                    .thenCompose(a -> {
+                        return getHost().sendWithDeferredResult(
+                                createNetworkInterfaceDescOperation.setBody(tnid),
+                                NetworkInterfaceDescriptionService.NetworkInterfaceDescription.class);
+                    });
+
+            createNetworkInterfaceDescs.add(createTnid.thenApply(n -> n.documentSelfLink));
+
+        }
+
+        // after all NetworkInterfaceDescriptions are persisted. POST the ComputeDescription
+        return DeferredResult.allOf(createNetworkInterfaceDescs).thenCompose(descLinks -> {
+            computeDescription.networkInterfaceDescLinks = descLinks;
+            computeDescription.networkInterfaceDescriptions = null;
+
+            return getHost()
+                    .sendWithDeferredResult(createComputeDescOperation.setBody(computeDescription));
+        });
     }
 
     private boolean isApplicationYamlContent(String contentType) {

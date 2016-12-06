@@ -30,11 +30,13 @@ import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serialize
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.FileUtil;
+import com.vmware.admiral.compute.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription.Status;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
@@ -66,7 +68,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
 
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 2,
                 template1.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 0,
                 template1.components);
         assertContainersComponents(ResourceType.VOLUME_TYPE.getContentType(), 0,
                 template1.components);
@@ -86,7 +88,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         assertContainersComponentsOnly(template2.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 2,
                 template1.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 0,
                 template1.components);
         assertContainersComponents(ResourceType.VOLUME_TYPE.getContentType(), 0,
                 template1.components);
@@ -115,7 +117,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         assertContainersComponentsOnly(template1.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template1.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 2,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 2,
                 template1.components);
         assertContainersComponents(ResourceType.VOLUME_TYPE.getContentType(), 0,
                 template1.components);
@@ -143,7 +145,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         assertContainersComponentsOnly(template2.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template2.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 3,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 3,
                 template2.components);
         assertContainersComponents(ResourceType.VOLUME_TYPE.getContentType(), 0,
                 template2.components);
@@ -172,7 +174,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         assertContainersComponentsOnly(template1.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 2,
                 template1.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 0,
                 template1.components);
         assertContainersComponents(ResourceType.VOLUME_TYPE.getContentType(), 2,
                 template1.components);
@@ -197,7 +199,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         assertContainersComponentsOnly(template2.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template2.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 0,
                 template2.components);
         assertContainersComponents(ResourceType.VOLUME_TYPE.getContentType(), 3,
                 template2.components);
@@ -442,7 +444,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 5,
                 template.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 0,
                 template.components);
         assertContainersComponents(ResourceType.VOLUME_TYPE.getContentType(), 0,
                 template.components);
@@ -472,7 +474,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 3,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 3,
                 template.components);
 
         String content = serializeCompositeTemplate(template);
@@ -501,7 +503,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 0,
                 template.components);
         assertContainersComponents(ResourceType.VOLUME_TYPE.getContentType(), 3,
                 template.components);
@@ -535,7 +537,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 4,
                 template.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 0,
                 template.components);
         assertContainersComponents(ResourceType.VOLUME_TYPE.getContentType(), 0,
                 template.components);
@@ -563,7 +565,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 2,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 2,
                 template.components);
         assertContainersComponents(ResourceType.VOLUME_TYPE.getContentType(), 0,
                 template.components);
@@ -591,7 +593,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 2,
                 template.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 0,
                 template.components);
         assertContainersComponents(ResourceType.VOLUME_TYPE.getContentType(), 2,
                 template.components);
@@ -619,7 +621,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 3,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 3,
                 template.components);
         assertContainersComponents(ResourceType.VOLUME_TYPE.getContentType(), 0,
                 template.components);
@@ -647,7 +649,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 0,
                 template.components);
         assertContainersComponents(ResourceType.VOLUME_TYPE.getContentType(), 3,
                 template.components);
@@ -669,7 +671,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 1,
                 template.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 0,
                 template.components);
         assertContainersComponents(ResourceType.VOLUME_TYPE.getContentType(), 0,
                 template.components);
@@ -703,7 +705,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         assertContainersComponentsOnly(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template.components);
-        assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 2,
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 2,
                 template.components);
         assertContainersComponents(ResourceType.VOLUME_TYPE.getContentType(), 0,
                 template.components);
@@ -745,6 +747,22 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         binding = partitionedBindings.get(true).get(0);
         assertTrue(binding.isProvisioningTimeBinding());
         assertEquals("_resource~db~env~MYSQL_USER", binding.placeholder.bindingExpression);
+    }
+
+    @Test
+    public void testDeserializeCompositeTemplateWithNetworkCompute() throws IOException {
+        String expectedContent = getContent("composite.compute.network.yaml");
+        CompositeTemplate compositeTemplate = deserializeCompositeTemplate(expectedContent);
+
+        Set<ComponentTemplate<?>> networkComponentTemplates = compositeTemplate.components.values()
+                .stream()
+                .filter(c -> c.type.equals(ResourceType.COMPUTE_NETWORK_TYPE.getContentType()))
+                .collect(Collectors.toSet());
+
+        assertEquals(2, networkComponentTemplates.size());
+
+        assertTrue(networkComponentTemplates.stream()
+                .allMatch(c -> c.data instanceof ComputeNetworkDescription));
     }
 
     public static String getContent(String filename) {

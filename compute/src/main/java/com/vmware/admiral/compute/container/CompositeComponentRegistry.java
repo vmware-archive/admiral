@@ -123,7 +123,7 @@ public class CompositeComponentRegistry {
             return null;
         }
         List<RegistryEntry> list = entries.stream()
-                .filter(m -> type.startsWith(m.componentMeta.resourceType))
+                .filter(m -> type.equals(m.componentMeta.resourceType))
                 .collect(Collectors.toList());
         if (list.isEmpty()) {
             return null;

@@ -115,7 +115,7 @@ public abstract class BaseIntegrationSupportIT {
                 ContainerDescriptionService.FACTORY_LINK,
                 ContainerDescription.class, ContainerFactoryService.SELF_LINK,
                 ContainerState.class);
-        CompositeComponentRegistry.registerComponent(ResourceType.NETWORK_TYPE.getName(),
+        CompositeComponentRegistry.registerComponent(ResourceType.CONTAINER_NETWORK_TYPE.getName(),
                 ContainerNetworkDescriptionService.FACTORY_LINK, ContainerNetworkDescription.class,
                 ContainerNetworkService.FACTORY_LINK, ContainerNetworkState.class);
         CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_TYPE.getName(),

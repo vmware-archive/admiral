@@ -21,10 +21,11 @@ public enum ResourceType {
     COMPOSITE_COMPONENT_TYPE("COMPOSITE_COMPONENT", ""),
     COMPUTE_TYPE("COMPUTE", "Compute"),
     CONTAINER_HOST_TYPE("CONTAINER_HOST", ""),
-    NETWORK_TYPE("NETWORK", "App.Network"),
+    CONTAINER_NETWORK_TYPE("NETWORK", "App.Network"),
     VOLUME_TYPE("VOLUME", "Volume.Docker"),
     CLOSURE_TYPE("CLOSURE", "App.Closure"),
-    CONFIGURE_HOST_TYPE("CONFIGURE_HOST", "");
+    CONFIGURE_HOST_TYPE("CONFIGURE_HOST", ""),
+    COMPUTE_NETWORK_TYPE("COMPUTE_NETWORK", "Compute.Network");
 
     private final String name;
     private final String contentType;

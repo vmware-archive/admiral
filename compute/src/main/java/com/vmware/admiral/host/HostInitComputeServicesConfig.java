@@ -15,6 +15,8 @@ import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
+import com.vmware.admiral.compute.ComputeNetworkDescriptionService;
+import com.vmware.admiral.compute.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
@@ -97,6 +99,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 DeploymentPolicyService.class,
                 ContainerNetworkService.class,
                 ContainerNetworkDescriptionService.class,
+                ComputeNetworkDescriptionService.class,
                 ContainerVolumeDescriptionService.class,
                 ContainerVolumeService.class,
                 ContainerVolumeDescriptionService.class,
@@ -117,7 +120,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ContainerDescriptionService.FACTORY_LINK,
                 ContainerDescription.class, ContainerFactoryService.SELF_LINK,
                 ContainerState.class);
-        CompositeComponentRegistry.registerComponent(ResourceType.NETWORK_TYPE.getName(),
+        CompositeComponentRegistry.registerComponent(ResourceType.CONTAINER_NETWORK_TYPE.getName(),
                 ContainerNetworkDescriptionService.FACTORY_LINK, ContainerNetworkDescription.class,
                 ContainerNetworkService.FACTORY_LINK, ContainerNetworkState.class);
         CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_TYPE.getName(),
@@ -134,6 +137,10 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         CompositeComponentRegistry.registerComponent(ResourceType.CLOSURE_TYPE.getName(),
                 ClosureDescriptionFactoryService.FACTORY_LINK, ClosureDescription.class,
                 ClosureFactoryService.FACTORY_LINK, Closure.class);
+
+        CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_NETWORK_TYPE.getName(),
+                ComputeNetworkDescriptionService.FACTORY_LINK, ComputeNetworkDescription.class,
+                "" /* state factory link */, null /* state class */);
 
         // start initialization of system documents
         host.sendRequest(Operation.createPost(

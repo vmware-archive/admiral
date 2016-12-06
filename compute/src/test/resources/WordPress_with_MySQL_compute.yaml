@@ -6,18 +6,29 @@ components:
   wordpress:
     type: "Compute"
     data:
-      id: "38ebf18d-cf27-4b5f-b86c-172a41a9e622"
       name: "wordpress"
       environmentName: "On premise"
       cpuCount: 1
+      networks:
+        - name: "public-wpnet"
+          address: 10.0.0.6
+          assignment: STATIC
       totalMemoryBytes: 1073741824
       __compute_image_id: "coreos"
   mysql:
     type: "Compute"
     data:
-      id: "8861e4d8-60ff-4a00-8247-f947c6bb2918"
       name: "mysql"
       environmentName: "On premise"
       cpuCount: 1
+      networks:
+        - name: "public-wpnet"
+          address: 10.0.0.7
+          assignment: STATIC
       totalMemoryBytes: 1073741824
       __compute_image_id: "coreos"
+  public-wpnet:
+    type: "Compute.Network"
+    data:
+      name: "public-wpnet"
+      public: true
