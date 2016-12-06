@@ -52,7 +52,8 @@ var NetworkBox = Vue.extend({
   },
   data: function() {
     return {
-      attached: false
+      attached: false,
+      isConfirmDelete: false
     };
   },
   attached: function() {
@@ -87,6 +88,8 @@ var NetworkBox = Vue.extend({
       e.preventDefault();
       e.stopImmediatePropagation();
 
+      this.isConfirmDelete = true;
+
       var $row = $(this.$el).find('.network-details');
       var $deleteConfirmationHolder = $(InlineDeleteConfirmationTemplate());
       var $deleteConfirmation = $deleteConfirmationHolder.find('.delete-inline-item-confirmation');
@@ -99,6 +102,8 @@ var NetworkBox = Vue.extend({
       e.preventDefault();
       e.stopPropagation();
 
+      this.isConfirmDelete = false;
+
       var $deleteConfirmationHolder = $(e.currentTarget)
         .closest('.delete-inline-item-confirmation-holder');
 
@@ -108,6 +113,8 @@ var NetworkBox = Vue.extend({
       e.preventDefault();
       e.stopPropagation();
 
+      this.isConfirmDelete = false;
+
       var $deleteConfirmationHolder = $(e.currentTarget)
         .closest('.delete-inline-item-confirmation-holder');
 
@@ -116,12 +123,21 @@ var NetworkBox = Vue.extend({
       this.$dispatch('remove', this);
     },
     showNetwork(e) {
+      if (this.isConfirmDelete) {
+         return;
+      }
+
       e.preventDefault();
       e.stopPropagation();
 
+      if (!this.model.external) {
+        // there's no point of showing the networks view for nonexistent network
+        return;
+      }
+
       let queryOptions = {
         $category: constants.RESOURCES.SEARCH_CATEGORY.NETWORKS,
-        any: this.networkId
+        any: this.model.name
       };
 
       NavigationActions.openNetworks(queryOptions);
