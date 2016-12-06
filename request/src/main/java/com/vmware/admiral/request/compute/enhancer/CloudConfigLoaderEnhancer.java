@@ -24,6 +24,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 
 public class CloudConfigLoaderEnhancer extends ComputeDescriptionEnhancer {
 
+    @SuppressWarnings("unchecked")
     @Override
     public void enhance(EnhanceContext context, ComputeDescription cd,
             BiConsumer<ComputeDescription, Throwable> callback) {
@@ -36,7 +37,6 @@ public class CloudConfigLoaderEnhancer extends ComputeDescriptionEnhancer {
                 fileContent = loadResource(String.format("/%s-content/cloud_config_%s.yml",
                         context.endpointType, supportDocker ? imageType + "_docker" : "base"));
                 if (fileContent != null && !fileContent.trim().isEmpty()) {
-                    @SuppressWarnings("unchecked")
                     Map<String, Object> content = objectMapper.readValue(fileContent, Map.class);
 
                     context.content = content;
@@ -48,6 +48,13 @@ public class CloudConfigLoaderEnhancer extends ComputeDescriptionEnhancer {
             }
             callback.accept(cd, null);
         } else {
+            try {
+                Map<String, Object> content = objectMapper.readValue(fileContent, Map.class);
+
+                context.content = content;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             callback.accept(cd, null);
         }
     }

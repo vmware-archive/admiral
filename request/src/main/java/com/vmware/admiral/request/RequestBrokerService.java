@@ -1427,6 +1427,10 @@ public class RequestBrokerService extends
             return ContainerOperationType.DELETE.id.equals(state.operation);
         }
 
+        if (isComputeType(state)) {
+            return ComputeOperationType.DELETE.id.equals(state.operation);
+        }
+
         if (isContainerNetworkType(state)) {
             return NetworkOperationType.DELETE.id.equals(state.operation);
         }
