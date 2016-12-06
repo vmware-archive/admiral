@@ -138,7 +138,9 @@ public abstract class BaseIntegrationSupportIT {
     public void baseTearDown() throws Exception {
         while (!documentsForDeletion.isEmpty()) {
             try {
-                delete(documentsForDeletion.poll());
+                ServiceDocument docToDelete = documentsForDeletion.poll();
+                logger.info("Deleting document: %s", docToDelete.documentSelfLink);
+                delete(docToDelete);
             } catch (Exception e) {
                 e.printStackTrace();
             }

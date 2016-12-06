@@ -344,7 +344,8 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         }
         day2DeleteRequest.operation = ContainerOperationType.DELETE.id;
         day2DeleteRequest.resourceLinks = resourceLinks;
-        day2DeleteRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2DeleteRequest);
+        day2DeleteRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2DeleteRequest,
+                TestDocumentLifeCycle.NO_DELETE);
 
         waitForTaskToComplete(day2DeleteRequest.documentSelfLink);
 
@@ -359,6 +360,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
                     .buildUriPath(ComputeService.FACTORY_LINK, extractId(containerLink));
             ComputeState computeState = getDocument(computeStateLink, ComputeState.class);
             assertNull(computeState);
+            logger.info("[requestContainerDelete] Deleting container: %s", containerLink);
             containersToDelete.remove(containerLink);
         }
     }
