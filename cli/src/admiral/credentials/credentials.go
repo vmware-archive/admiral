@@ -276,7 +276,7 @@ func RemoveCredentialsID(id string) (string, error) {
 	if respErr != nil {
 		return "", respErr
 	}
-	return id, nil
+	return fullId, nil
 }
 
 //EditCredentials edits credentials by name that is passed as parameter.

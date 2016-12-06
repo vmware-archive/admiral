@@ -118,7 +118,7 @@ func RemoveRegistryID(id string) (string, error) {
 	if respErr != nil {
 		return "", respErr
 	}
-	return id, nil
+	return fullId, nil
 
 }
 
@@ -320,7 +320,7 @@ func DisableID(id string) (string, error) {
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr == nil {
-		return id, nil
+		return fullId, nil
 	}
 	return "", respErr
 }
@@ -353,7 +353,7 @@ func EnableID(id string) (string, error) {
 	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr == nil {
-		return id, nil
+		return fullId, nil
 	}
 	return "", respErr
 }

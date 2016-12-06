@@ -112,7 +112,7 @@ func RemoveDPID(id string) (string, error) {
 	if respErr != nil {
 		return "", respErr
 	}
-	return id, nil
+	return fullId, nil
 }
 
 //AddDP adds deployment policy by provided name and description.

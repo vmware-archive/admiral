@@ -20,10 +20,11 @@ import (
 )
 
 var Verbose bool
+var Quiet bool
 
 //If verbose flag is provided, will print the request send to the API.
 func CheckVerboseRequest(req *http.Request) {
-	if !Verbose {
+	if !Verbose || Quiet {
 		return
 	}
 
@@ -54,7 +55,7 @@ func CheckVerboseRequest(req *http.Request) {
 
 //If verbose flag is provided, will print the response send from the API.
 func CheckVerboseResponse(resp *http.Response) {
-	if !Verbose || resp == nil {
+	if !Verbose || resp == nil || Quiet {
 		return
 	}
 	//Read

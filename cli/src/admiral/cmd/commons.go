@@ -80,33 +80,35 @@ var (
 	allContainersDesc = "Show all containers."
 
 	//Container Run Command Flags
-	clusterSize      int32
-	clusterSizeDesc  = "The number of nodes to be provisioned."
-	cmds             []string
-	cmdsDesc         = "Commands to run on container start."
-	envVariables     []string
-	envVariablesDesc = "Set enivornment variables."
-	hostName         string
-	hostNameDesc     = "Container host name."
-	retryCount       int32
-	retryCountDesc   = "Max restart count on container failures."
-	logDriver        string
-	logDriverDesc    = "Logging driver for container."
-	memoryLimit      int64
-	memorySwap       int64
-	memorySwapDesc   = "Total memory limit(Memory + Swap), set -1 to disable swap"
-	networkMode      string
-	networkModeDesc  = "Sets the networking mode for the container."
-	ports            []string
-	portsDesc        = "Publish a container's port(s) to the host. Format: hostPort:containerPort"
-	publishAll       bool
-	publishAllDesc   = "Publish all exposed ports to random ports."
-	restartPol       string
-	restartPolDesc   = "Restart policy to apply."
-	workingDir       string
-	workingDirDesc   = "Working directory inside the container"
-	volumes          []string
-	volumesDesc      = "Bind mount volume"
+	clusterSize       int32
+	clusterSizeDesc   = "The number of nodes to be provisioned."
+	cmds              []string
+	cmdsDesc          = "Commands to run on container start."
+	containerName     string
+	containerNameDesc = "Container name."
+	envVariables      []string
+	envVariablesDesc  = "Set enivornment variables."
+	hostName          string
+	hostNameDesc      = "Container host name."
+	retryCount        int32
+	retryCountDesc    = "Max restart count on container failures."
+	logDriver         string
+	logDriverDesc     = "Logging driver for container."
+	memoryLimit       int64
+	memorySwap        int64
+	memorySwapDesc    = "Total memory limit(Memory + Swap), set -1 to disable swap"
+	networkMode       string
+	networkModeDesc   = "Sets the networking mode for the container."
+	ports             []string
+	portsDesc         = "Publish a container's port(s) to the host. Format: hostPort:containerPort"
+	publishAll        bool
+	publishAllDesc    = "Publish all exposed ports to random ports."
+	restartPol        string
+	restartPolDesc    = "Restart policy to apply."
+	workingDir        string
+	workingDirDesc    = "Working directory inside the container"
+	volumes           []string
+	volumesDesc       = "Bind mount volume"
 
 	//Count for clusters
 	scaleCount     int32
@@ -269,11 +271,18 @@ func ValidateArgsCount(args []string) (string, bool) {
 
 func processOutput(output string, err error) {
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprint(os.Stderr, err)
 		os.Exit(1)
-	} else {
-		fmt.Println(output)
 	}
+	if utils.Quiet {
+		quietOutput := makeQuietOutput(output)
+		if quietOutput == "" {
+			os.Exit(0)
+		}
+		fmt.Print(makeQuietOutput(output))
+		os.Exit(0)
+	}
+	fmt.Print(output)
 }
 
 func processOutputMultiErrors(output string, errs []error) {
@@ -283,21 +292,29 @@ func processOutputMultiErrors(output string, errs []error) {
 			buffer.WriteString(err.Error() + "\n")
 		}
 	}
-	if buffer.String() == "" {
-		fmt.Println(output)
-	} else {
-		fmt.Fprintln(os.Stderr, strings.TrimSpace(buffer.String()))
+	if buffer.String() != "" {
+		fmt.Fprint(os.Stderr, strings.TrimSpace(buffer.String()))
 		os.Exit(1)
 	}
+
+	if utils.Quiet {
+		quietOutput := makeQuietOutput(output)
+		if quietOutput == "" {
+			os.Exit(0)
+		}
+		fmt.Print(makeQuietOutput(output))
+		os.Exit(0)
+	}
+	fmt.Print(output)
 }
 
 func formatAndPrintOutput(output string, err error) {
 	writer := tabwriter.NewWriter(os.Stdout, 5, 0, 5, ' ', 0)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprint(os.Stderr, err)
 		os.Exit(1)
 	} else {
-		fmt.Fprintln(writer, output)
+		fmt.Fprint(writer, output)
 	}
 	writer.Flush()
 }
@@ -326,4 +343,12 @@ func urlRemoveTrailingSlash(url string) string {
 		newUrl = newUrl[0 : len(newUrl)-1]
 	}
 	return string(newUrl)
+}
+
+func makeQuietOutput(output string) string {
+	outputArr := strings.Split(output, ": ")
+	if len(outputArr) < 2 {
+		return ""
+	}
+	return outputArr[1]
 }

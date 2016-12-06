@@ -414,9 +414,10 @@ func RemoveHost(id string, asyncTask bool) (string, error) {
 		return "", respErr
 	}
 	if !asyncTask {
-		resLinks, err := track.StartWaitingFromResponse(respBody)
-		return strings.Join(resLinks, ", "), err
+		resLinks, err := track.StartWaitingFromResponseBody(respBody)
+		return strings.Join(resLinks, " "), err
 	}
+	track.PrintTaskIdFromResponseBody(respBody)
 	return "", nil
 }
 
@@ -435,7 +436,7 @@ func DisableHost(id string) (string, error) {
 	if respErr != nil {
 		return "", respErr
 	}
-	return id, nil
+	return fullId, nil
 }
 
 func EnableHost(id string) (string, error) {
@@ -452,7 +453,7 @@ func EnableHost(id string) (string, error) {
 	if respErr != nil {
 		return "", respErr
 	}
-	return id, nil
+	return fullId, nil
 }
 
 func GetPublicCustomProperties(id string) (map[string]*string, error) {
@@ -571,7 +572,7 @@ func EditHost(id, name, placementZoneId, deplPolicyF, credId string,
 	if respErr != nil {
 		return "", respErr
 	}
-	return id, nil
+	return oldHost.GetID(), nil
 }
 
 func allFlagReadyHost(ipF string) (bool, error) {

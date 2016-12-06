@@ -204,7 +204,7 @@ func RemoveRequestID(id string) (string, error) {
 	url := config.URL + utils.CreateResLinkForRequest(fullId)
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
-	return id, respErr
+	return fullId, respErr
 }
 
 type Resource struct {

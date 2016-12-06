@@ -194,7 +194,7 @@ func RemoveEndpoint(id string) (string, error) {
 	if respErr != nil {
 		return "", respErr
 	}
-	return id, nil
+	return fullId, nil
 }
 
 func getEndpoint(id string) (*Endpoint, error) {

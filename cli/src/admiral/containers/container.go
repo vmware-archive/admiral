@@ -341,9 +341,10 @@ func processContainersOperation(co ContainersOperator, asyncTask bool) ([]string
 		return nil, respErr
 	}
 	if !asyncTask {
-		resLinks, err := track.StartWaitingFromResponse(respBody)
+		resLinks, err := track.StartWaitingFromResponseBody(respBody)
 		return resLinks, err
 	}
+	track.PrintTaskIdFromResponseBody(respBody)
 	return nil, nil
 }
 

@@ -292,7 +292,7 @@ func RemoveTemplateID(id string) (string, error) {
 	if respErr != nil {
 		return "", respErr
 	}
-	return id, nil
+	return fullId, nil
 
 }
 
@@ -341,7 +341,7 @@ func Export(id, dirF, format string) (string, error) {
 		os.Remove(dirF)
 		return "", err
 	}
-	return id, nil
+	return fullId, nil
 }
 
 //Function to verify if file can be created.

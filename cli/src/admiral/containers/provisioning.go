@@ -76,16 +76,20 @@ func (cd *ContainerDescription) SetImage(imageName string) error {
 }
 
 func (cd *ContainerDescription) SetName(name string) error {
+	if name != "" {
+		cd.Name = utils.NilString{name}
+		return nil
+	}
 	if name == "" && cd.Image.Value != "" {
 		splittedImageName := strings.Split(cd.Image.Value, "/")
 		nameToSet := splittedImageName[len(splittedImageName)-1]
+		nameToSet = strings.Split(nameToSet, ":")[0]
 		cd.Name = utils.NilString{nameToSet}
 		return nil
 	}
 	if name == "" {
 		return errors.New("Empty container name.")
 	}
-	cd.Name = utils.NilString{name}
 	return nil
 }
 
@@ -237,9 +241,10 @@ func (cd *ContainerDescription) RunContainer(tenantLinkId string, asyncTask bool
 		return "", respErr
 	}
 	if !asyncTask {
-		resLinks, err := track.StartWaitingFromResponse(respBody)
+		resLinks, err := track.StartWaitingFromResponseBody(respBody)
 		return strings.Join(resLinks, ", "), err
 	}
+	track.PrintTaskIdFromResponseBody(respBody)
 	return "", nil
 }
 

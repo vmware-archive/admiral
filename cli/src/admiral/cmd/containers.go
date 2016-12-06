@@ -368,7 +368,6 @@ func initContainerRun() {
 	containerRunCmd.Flags().StringVar(&cpuShares, "cpu-shares", "", cpuSharesDesc)
 	containerRunCmd.Flags().Int32Var(&clusterSize, "cluster-size", 1, clusterSizeDesc)
 	containerRunCmd.Flags().StringSliceVar(&cmds, "cmd", []string{}, cmdsDesc)
-	containerRunCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", deplPolicyFDesc)
 	containerRunCmd.Flags().StringSliceVarP(&envVariables, "env", "e", []string{}, envVariablesDesc)
 	containerRunCmd.Flags().StringVarP(&hostName, "hostname", "h", "", hostNameDesc)
 	containerRunCmd.Flags().StringVar(&logDriver, "log-driver", "", logDriverDesc)
@@ -376,6 +375,7 @@ func initContainerRun() {
 	containerRunCmd.Flags().Int64VarP(&memoryLimit, "memory", "m", 0, memoryLimitDesc)
 	containerRunCmd.Flags().Int64Var(&memorySwap, "memory-swap", 0, memoryLimitDesc)
 	containerRunCmd.Flags().StringVar(&networkMode, "network-mode", "bridge", networkDriverDesc)
+	containerRunCmd.Flags().StringVar(&containerName, "name", "", containerNameDesc)
 	containerRunCmd.Flags().StringSliceVarP(&ports, "publish", "p", []string{}, portsDesc)
 	containerRunCmd.Flags().BoolVarP(&publishAll, "publish-all", "P", true, publishAllDesc)
 	containerRunCmd.Flags().StringVar(&restartPol, "restart", "no", restartPolDesc)
@@ -386,6 +386,7 @@ func initContainerRun() {
 		containerRunCmd.Flags().StringVar(&projectF, "project", "", projectFDesc)
 	} else {
 		containerRunCmd.Flags().StringVar(&businessGroupId, "business-group", "", vraOptional+required+businessGroupIdDesc)
+		containerRunCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", deplPolicyFDesc)
 	}
 	containerRunCmd.Flags().Bool("help", false, "Help for "+RootCmd.Name())
 	containerRunCmd.Flags().MarkHidden("help")
@@ -409,7 +410,7 @@ func RunContainerRun(args []string) (string, []error) {
 	err := cd.SetImage(imageName)
 	errorArr = append(errorArr, err)
 
-	err = cd.SetName("")
+	err = cd.SetName(containerName)
 	errorArr = append(errorArr, err)
 
 	err = cd.SetNetworkMode(networkMode)

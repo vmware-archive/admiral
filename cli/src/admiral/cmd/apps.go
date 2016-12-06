@@ -122,11 +122,8 @@ func RunAppRemove(args []string) (string, error) {
 	}
 	IDs, err = apps.RemoveAppID(id, asyncTask)
 
-	if err != nil {
-		return "", err
-	}
 	if asyncTask {
-		return "Application is being removed.", nil
+		return "Application is being removed.", err
 	}
 	return "Application removed: " + strings.Join(IDs, ", "), err
 }

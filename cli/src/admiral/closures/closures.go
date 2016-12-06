@@ -79,7 +79,7 @@ func RemoveClosureID(id string) (string, error) {
 	url := config.URL + utils.CreateResLinkForClosure(fullId)
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
-	return id, respErr
+	return fullId, respErr
 }
 
 func GetClosure(id string) *Closure {

@@ -228,7 +228,7 @@ func RemovePZID(id string) (string, error) {
 	if respErr != nil {
 		return "", respErr
 	}
-	return id, nil
+	return fullId, nil
 }
 
 func AddPZ(rpName string, custProps, tags []string) (string, error) {
@@ -301,7 +301,7 @@ func EditPZID(id, newName string, tagsToAdd, tagsToRemove []string) (string, err
 	if respErr != nil {
 		return "", respErr
 	}
-	return id, nil
+	return fullId, nil
 }
 
 func GetPZLinks(pzName string) []string {

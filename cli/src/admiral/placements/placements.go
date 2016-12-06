@@ -201,7 +201,7 @@ func RemovePlacementID(id string) (string, error) {
 	if respErr != nil {
 		return "", respErr
 	}
-	return id, nil
+	return fullId, nil
 }
 
 func AddPlacement(namePol, cpuShares, instances, priority, projectId, placementZoneId, deplPolId string, memoryLimit int64) (string, error) {

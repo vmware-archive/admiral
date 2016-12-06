@@ -65,12 +65,27 @@ func (or *OperationResponse) PrintTracerId() {
 // Finally it will return string slice containing the resource links,
 // and possible error, which occurred during the waiting,
 // or the request ended with with error.
-func StartWaitingFromResponse(respBody []byte) ([]string, error) {
-	opResp := &OperationResponse{}
-	json.Unmarshal(respBody, opResp)
-	opResp.PrintTracerId()
+func StartWaitingFromResponseBody(respBody []byte) ([]string, error) {
+	opResp := getOperationResponse(respBody)
+	if !utils.Quiet {
+		opResp.PrintTracerId()
+	}
 	resLinks, err := Wait(opResp.GetTracerId())
 	return utils.GetResourceIDs(resLinks), err
+}
+
+func PrintTaskIdFromResponseBody(respBody []byte) {
+	if utils.Quiet {
+		return
+	}
+	opResp := getOperationResponse(respBody)
+	opResp.PrintTracerId()
+}
+
+func getOperationResponse(respBody []byte) *OperationResponse {
+	opResp := &OperationResponse{}
+	json.Unmarshal(respBody, opResp)
+	return opResp
 }
 
 func Wait(taskId string) ([]string, error) {
@@ -116,7 +131,9 @@ func Wait(taskId string) ([]string, error) {
 		time.Sleep(1000 * time.Millisecond)
 	}
 
-	fmt.Printf("\n%s The task has %s.\n", time.Now().Format("2006.01.02 15:04:05"), result)
+	if !utils.Quiet {
+		fmt.Printf("\n%s The task has %s.\n", time.Now().Format("2006.01.02 15:04:05"), result)
+	}
 
 	return resourceLinks, err
 }
@@ -183,6 +200,9 @@ type ProgressBar struct {
 }
 
 func (pb *ProgressBar) InitPrint() {
+	if utils.Quiet {
+		return
+	}
 	fmt.Print("|>")
 	for i := 0; i < pb.Widht; i++ {
 		fmt.Print("-")
@@ -191,6 +211,9 @@ func (pb *ProgressBar) InitPrint() {
 }
 
 func (pb *ProgressBar) UpdateBar(percentage int) {
+	if utils.Quiet {
+		return
+	}
 	fmt.Print("\r|")
 	result := int((float32(percentage) / 100) * float32(pb.Widht))
 	if result == pb.Widht && percentage == 100 {
@@ -208,6 +231,9 @@ func (pb *ProgressBar) UpdateBar(percentage int) {
 }
 
 func (pb *ProgressBar) FillUp() {
+	if utils.Quiet {
+		return
+	}
 	fmt.Print("\r|")
 	for i := 0; i < pb.Widht; i++ {
 		fmt.Print("=")

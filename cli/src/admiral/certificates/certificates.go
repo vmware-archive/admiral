@@ -162,7 +162,7 @@ func RemoveCertificateID(id string) (string, error) {
 	if respErr != nil {
 		return "", respErr
 	}
-	return id, nil
+	return fullId, nil
 }
 
 //EditCertificate looks for certificate with name matching the parameter.

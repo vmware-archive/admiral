@@ -244,8 +244,9 @@ func processComputeDescription(cd *ComputeDescription, clusterSize int, asyncTas
 	}
 
 	if asyncTask {
+		track.PrintTaskIdFromResponseBody(respBody)
 		return "", nil
 	}
-	ids, err := track.StartWaitingFromResponse(respBody)
+	ids, err := track.StartWaitingFromResponseBody(respBody)
 	return strings.Join(ids, " "), err
 }

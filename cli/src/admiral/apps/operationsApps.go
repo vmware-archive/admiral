@@ -77,7 +77,7 @@ func StartAppID(id string, asyncTask bool) ([]string, error) {
 		return nil, respErr
 	}
 	if !asyncTask {
-		resLinks, err = track.StartWaitingFromResponse(respBody)
+		resLinks, err = track.StartWaitingFromResponseBody(respBody)
 		return resLinks, err
 	}
 	return nil, nil
@@ -124,9 +124,11 @@ func StopAppID(id string, asyncTask bool) ([]string, error) {
 		return nil, respErr
 	}
 	if !asyncTask {
-		resLinks, err = track.StartWaitingFromResponse(respBody)
+		resLinks, err = track.StartWaitingFromResponseBody(respBody)
 		return resLinks, err
 	}
+
+	track.PrintTaskIdFromResponseBody(respBody)
 	return nil, nil
 }
 
@@ -150,10 +152,6 @@ func RemoveApp(name string, asyncTask bool) ([]string, error) {
 // Usage of short unique IDs is supported for this operation.
 func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 	url := config.URL + "/requests"
-	var (
-		resLinks []string
-		err      error
-	)
 
 	fullIds, err := selflink.GetFullIds([]string{id}, new(ListApps), utils.APPLICATION)
 	utils.CheckBlockingError(err)
@@ -171,9 +169,12 @@ func RemoveAppID(id string, asyncTask bool) ([]string, error) {
 		return nil, respErr
 	}
 	if !asyncTask {
-		resLinks, err = track.StartWaitingFromResponse(respBody)
-		return resLinks, err
+		// Ignore resource links from RequestBrokerService, because we want to
+		// return the ID of the applications instead of it's components.
+		_, err = track.StartWaitingFromResponseBody(respBody)
+		return fullIds, err
 	}
+	track.PrintTaskIdFromResponseBody(respBody)
 	return nil, nil
 }
 
@@ -281,9 +282,10 @@ func (this *appProvisionOperation) run(asyncTask bool) ([]string, error) {
 		return nil, respErr
 	}
 	if !asyncTask {
-		links, err = track.StartWaitingFromResponse(respBody)
+		links, err = track.StartWaitingFromResponseBody(respBody)
 		return links, err
 	}
+	track.PrintTaskIdFromResponseBody(respBody)
 	return nil, nil
 }
 

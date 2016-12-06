@@ -136,7 +136,7 @@ func RemoveProjectID(id string) (string, error) {
 	if respErr != nil {
 		return "", respErr
 	}
-	return id, nil
+	return fullId, nil
 }
 
 //EditProject edits project by name. The parameters it takes are

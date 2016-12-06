@@ -279,8 +279,8 @@ func processNetworkOperation(no *NetworkOperation, asyncTask bool) ([]string, er
 		return nil, respErr
 	}
 	if !asyncTask {
-		return track.StartWaitingFromResponse(respBody)
-
+		return track.StartWaitingFromResponseBody(respBody)
 	}
+	track.PrintTaskIdFromResponseBody(respBody)
 	return nil, nil
 }
