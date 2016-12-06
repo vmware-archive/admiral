@@ -40,6 +40,9 @@ public class HostConfigCertificateDistributionServiceIT extends
 
     @Before
     public void setUp() throws Exception {
+        logger.info("---------- Waiting until system agent is removed --------");
+        waitForSystemContainerStatusCode(Operation.STATUS_CODE_NOT_FOUND);
+
         logger.info("---------- Adding host, to remove old certificate directory if any --------");
         setupCoreOsHost(ContainerHostService.DockerAdapterType.API);
         waitForSystemContainerStatusCode(Operation.STATUS_CODE_OK);

@@ -39,8 +39,18 @@ public abstract class BaseCertificateDistributionServiceIT extends BaseProvision
 
     protected boolean waitUntilRegistryCertificateExists(String hostLink,
             String registryAddress) throws Exception {
-        logger.info("Waiting until registry certificate with CN [%s] exists on host [%s].",
-                registryAddress, hostLink);
+        return waitUntilRegistryCertificate(hostLink, registryAddress, true);
+    }
+
+    protected boolean waitUntilRegistryCertificateIsRemoved(String hostLink,
+            String registryAddress) throws Exception {
+        return waitUntilRegistryCertificate(hostLink, registryAddress, false);
+    }
+
+    private boolean waitUntilRegistryCertificate(String hostLink,
+            String registryAddress, boolean expected) throws Exception {
+        logger.info("Waiting until registry certificate with CN [%s] %s on host [%s].",
+                registryAddress, expected ? "exists" : "is removed", hostLink);
         URI uri = URI.create(getBaseUrl() + buildServiceUri(
                 ShellContainerExecutorService.SELF_LINK));
 
@@ -61,8 +71,12 @@ public abstract class BaseCertificateDistributionServiceIT extends BaseProvision
                 logger.info("[%s] Remote command [ls /etc/docker/certs.d] returned %s",
                         i, response.responseBody);
 
-                if (response.responseBody.contains(registryAddress)) {
+                if (expected && response.responseBody.contains(registryAddress)) {
                     logger.info("[%s] found in remote command response body", registryAddress);
+                    return true;
+                }
+                if (!expected && !response.responseBody.contains(registryAddress)) {
+                    logger.info("[%s] removed from remote command response body", registryAddress);
                     return true;
                 }
             } catch (Exception e) {
@@ -72,8 +86,8 @@ public abstract class BaseCertificateDistributionServiceIT extends BaseProvision
             Thread.sleep(RETRY_TIMEOUT);
         }
 
-        logger.info("Failed to find registry cert with CN [%s] on host [%s] after max retries",
-                registryAddress, hostLink);
+        logger.info("Failed to %s registry cert with CN [%s] on host [%s] after max retries",
+                expected ? "find" : "remove", registryAddress, hostLink);
         return false;
     }
 
@@ -96,5 +110,7 @@ public abstract class BaseCertificateDistributionServiceIT extends BaseProvision
 
         SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.POST, url,
                 Utils.toJson(command));
+
+        waitUntilRegistryCertificateIsRemoved(hostLink, registryAddress);
     }
 }
