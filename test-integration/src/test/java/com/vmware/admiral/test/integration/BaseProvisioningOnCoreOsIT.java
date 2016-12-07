@@ -113,17 +113,17 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
             String containerLink = it.next();
             ContainerState containerState = getDocument(containerLink, ContainerState.class);
             if (containerState == null) {
-                logger.warning(String.format("Unable to find container %s", containerLink));
-                continue;
+                logger.warning(String.format("Unable to find container %s. Skipping.", containerLink));
+                it.remove();
             }
+        }
 
-            try {
-                logger.info("---------- Clean up: Request Delete the container instance. --------");
-                requestContainerDelete(Collections.singleton(containerLink), false);
-            } catch (Throwable t) {
-                logger.warning(String.format("Unable to remove container %s: %s", containerLink,
-                        t.getMessage()));
-            }
+        try {
+            logger.info("---------- Clean up: Request Delete the container instances. --------");
+            requestContainerDelete(containersToDelete, false);
+        } catch (Throwable t) {
+            logger.warning(String.format("Unable to remove containers %s: %s", containersToDelete,
+                    t.getMessage()));
         }
 
         // remove the external networks, if any
