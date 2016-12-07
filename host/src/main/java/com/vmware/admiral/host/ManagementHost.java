@@ -25,16 +25,16 @@ import javax.net.ssl.SSLContext;
 
 import io.swagger.models.Info;
 
-import com.vmware.admiral.common.AdmiralColoredLogFormatter;
-import com.vmware.admiral.common.AdmiralLogFormatter;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
+import com.vmware.xenon.common.ColorLogFormatter;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LoaderFactoryService;
 import com.vmware.xenon.common.LoaderService;
+import com.vmware.xenon.common.LogFormatter;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.OperationProcessingChain;
@@ -117,9 +117,9 @@ public class ManagementHost extends ServiceHost {
     protected void configureLoggerFormatter(Logger logger) {
         for (Handler h : logger.getParent().getHandlers()) {
             if (h instanceof ConsoleHandler) {
-                h.setFormatter(new AdmiralLogFormatter());
+                h.setFormatter(new LogFormatter());
             } else {
-                h.setFormatter(new AdmiralColoredLogFormatter());
+                h.setFormatter(new ColorLogFormatter());
             }
         }
     }
