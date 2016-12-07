@@ -13,7 +13,7 @@
   <div class="container-header-holder">
     <div class="status {{model.powerState}}">
       <i class="fa fa-lock" title="Managed by catalog"
-         v-bind:supported="operationSupported('MANAGE')"></i>
+         v-show="operationSupported('MANAGE')"></i>
       <span class="status-state">{{i18n("app.container.list.composite.name")}}</span></div>
     <div class="container-header">
       <div v-bind:class="'icons icons-' + numberOfIcons">

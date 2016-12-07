@@ -17,7 +17,7 @@
           v-on:alert-closed="alertClosed()"></alert>
   <div class="status {{model.powerState}}">
     <i class="fa fa-lock" title="Managed by catalog"
-       v-bind:supported="operationSupported('MANAGE')"></i>
+       v-show="operationSupported('MANAGE')"></i>
     <span class="status-state">{{networkStatusDisplay(model.powerState)}}</span>
   </div>
   <div class="container-header">
