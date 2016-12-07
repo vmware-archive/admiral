@@ -1063,10 +1063,23 @@ let TemplatesStore = Reflux.createStore({
               ['selectedItemDetails', 'templateDetails', 'listView', 'networks'],
               networks);
 
-            var cdSelector = this.selectFromData(['selectedItemDetails',
+            var isEditContainerDefinition = utils.getIn(this.getData(), ['selectedItemDetails',
               'editContainerDefinition',
               'definitionInstance'
             ]);
+            var cdSelector;
+            if (isEditContainerDefinition) {
+              cdSelector = this.selectFromData(['selectedItemDetails',
+                'editContainerDefinition',
+                'definitionInstance'
+              ]);
+            } else {
+              cdSelector = this.selectFromData(['selectedItemDetails',
+                'newContainerDefinition',
+                'definitionInstance'
+              ]);
+            }
+
             var editNetworkSelector = this.selectFromData(['selectedItemDetails',
               'editNetwork'
             ]);
