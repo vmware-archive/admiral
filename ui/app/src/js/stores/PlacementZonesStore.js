@@ -15,40 +15,40 @@ import constants from 'core/constants';
 import utils from 'core/utils';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
-import EndpointsStore from 'stores/EndpointsStore';
 
 const OPERATION = {
   LIST: 'list'
 };
 
+function enhanceConfig(config) {
+  var cpuUsage = utils.getCustomPropertyValue(
+      config.resourcePoolState.customProperties, '__cpuUsage');
+  if (cpuUsage != null) {
+    config.cpuPercentage = Math.round(parseFloat(cpuUsage) * 100) / 100;
+  }
+  var availableMemory = utils.getCustomPropertyValue(
+      config.resourcePoolState.customProperties, '__availableMemory');
+  if (config.resourcePoolState.maxMemoryBytes !== undefined && availableMemory != null) {
+    var currentMemory = config.resourcePoolState.maxMemoryBytes -
+        parseFloat(availableMemory);
+    config.memoryPercentage = utils.calculatePercentageOfTotal(0,
+        config.resourcePoolState.maxMemoryBytes, currentMemory);
+  }
+  var minCapacity = config.resourcePoolState.minDiskCapacityBytes;
+  var maxCapacity = config.resourcePoolState.maxDiskCapacityBytes;
+  config.storagePercentage = utils.calculatePercentageOfTotal(minCapacity,
+      maxCapacity, minCapacity + (maxCapacity - minCapacity) * Math.random());
+  config.endpointLink = utils.getCustomPropertyValue(
+      config.resourcePoolState.customProperties, '__endpointLink');
+  config.name = config.resourcePoolState.name;
+  return config;
+}
+
 let PlacementZonesStore = Reflux.createStore({
-  listenables: [actions.PlacementZonesActions, actions.PlacementZonesContextToolbarActions],
+  listenables: [actions.PlacementZonesActions],
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
 
   init: function() {
-    EndpointsStore.listen((endpointsData) => {
-      if (this.isContextPanelActive(constants.CONTEXT_PANEL.ENDPOINTS)) {
-        this.setActiveItemData(endpointsData);
-
-        var itemToSelect = endpointsData.newItem || endpointsData.updatedItem;
-        if (itemToSelect && this.data.contextView.shouldSelectAndComplete) {
-          clearTimeout(this.itemSelectTimeout);
-          this.itemSelectTimeout = setTimeout(() => {
-            this.setInData(['editingItemData', 'selectedEndpoint'],
-              itemToSelect);
-            this.emitChange();
-
-            this.closeToolbar();
-          }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
-        }
-      }
-
-      if (this.data.editingItemData) {
-        this.setInData(['editingItemData', 'endpoints'], endpointsData.items);
-      }
-
-      this.emitChange();
-    });
   },
 
   onRetrievePlacementZones: function() {
@@ -60,14 +60,7 @@ let PlacementZonesStore = Reflux.createStore({
       operation.forPromise(services.loadPlacementZones()).then((result) => {
         // Transforming from associative array to array
         var processedResult = Object.values(result).map((config) => {
-          // We need these to show the graphs when displaying the list of RPs
-          config.resourcePoolState.__availableMemory = utils.getCustomPropertyValue(
-            config.resourcePoolState.customProperties, '__availableMemory');
-          config.resourcePoolState.__cpuUsage = utils.getCustomPropertyValue(
-            config.resourcePoolState.customProperties, '__cpuUsage');
-          config.resourcePoolState.__endpointLink = utils.getCustomPropertyValue(
-            config.resourcePoolState.customProperties, '__endpointLink');
-
+          config = enhanceConfig(config);
           config.resourcePoolState.customProperties =
             utils.getDisplayableCustomProperties(config.resourcePoolState.customProperties);
           return config;
@@ -77,7 +70,7 @@ let PlacementZonesStore = Reflux.createStore({
           if (config.epzState &&
               config.epzState.tagLinksToMatch && config.epzState.tagLinksToMatch.length) {
             return services.loadTags(config.epzState.tagLinksToMatch).then((tags) => {
-              config.resourcePoolState.__tags = Object.values(tags);
+              config.tags = Object.values(tags);
               return config;
             });
           } else {
@@ -93,7 +86,7 @@ let PlacementZonesStore = Reflux.createStore({
           var countedHostsResPoolsPromises = Object.values(configs).map(function(config) {
             return services.countHostsPerPlacementZone(config.resourcePoolState.documentSelfLink,
                 countContainerHosts, countOnlyComputes).then(function(hostsCount) {
-                  config.resourcePoolState.hostsCount = hostsCount;
+                  config.hostsCount = hostsCount;
                   return config;
                 });
           });
@@ -109,10 +102,18 @@ let PlacementZonesStore = Reflux.createStore({
   },
 
   onEditPlacementZone: function(config) {
-    this.setInData(['editingItemData', 'item'], config);
-    this.emitChange();
-
-    actions.EndpointsActions.retrieveEndpoints();
+    if (config.endpointLink) {
+      services.loadEndpoint(config.endpointLink).then((endpoint) => {
+        this.setInData(['editingItemData', 'item'], Immutable($.extend({
+          endpointName: endpoint.name,
+          endpointType: endpoint.endpointType
+        }, config)));
+        this.emitChange();
+      });
+    } else {
+      this.setInData(['editingItemData', 'item'], config);
+      this.emitChange();
+    }
   },
 
   onCancelEditPlacementZone: function() {
@@ -121,6 +122,10 @@ let PlacementZonesStore = Reflux.createStore({
   },
 
   onCreatePlacementZone: function(config, tags) {
+    this.setInData(['editingItemData', 'validationErrors'], null);
+    this.setInData(['editingItemData', 'saving'], true);
+    this.emitChange();
+
     Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
       return Promise.all(tags.map((tag, i) =>
         result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
@@ -133,14 +138,13 @@ let PlacementZonesStore = Reflux.createStore({
       return services.createPlacementZone(config);
     }).then((createdConfig) => {
 
-      createdConfig.resourcePoolState.__availableMemory = utils.getCustomPropertyValue(
-          createdConfig.resourcePoolState.customProperties, '__availableMemory');
-      createdConfig.resourcePoolState.__cpuUsage = utils.getCustomPropertyValue(
-          createdConfig.resourcePoolState.customProperties, '__cpuUsage');
-      createdConfig.resourcePoolState.__endpointLink = utils.getCustomPropertyValue(
-          createdConfig.resourcePoolState.customProperties, '__endpointLink');
+      createdConfig.hostsCount = 0;
+      createdConfig.cpuPercentage = 0;
+      createdConfig.memoryPercentage = 0;
+      createdConfig.storagePercentage = 0;
+      createdConfig = enhanceConfig(createdConfig);
       if (tags.length) {
-        createdConfig.resourcePoolState.__tags = tags;
+        createdConfig.tags = tags;
       }
 
       var immutableConfig = Immutable(createdConfig);
@@ -154,11 +158,19 @@ let PlacementZonesStore = Reflux.createStore({
       this.emitChange();
 
       // After we notify listeners, the new item is no logner actual
-      this.setInData(['newItem'], null);
+      setTimeout(() => {
+        this.setInData(['newItem'], null);
+        this.emitChange();
+      }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
+
     }).catch(this.onGenericEditError);
   },
 
   onUpdatePlacementZone: function(config, tags) {
+    this.setInData(['editingItemData', 'validationErrors'], null);
+    this.setInData(['editingItemData', 'saving'], true);
+    this.emitChange();
+
     Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
       return Promise.all(tags.map((tag, i) =>
         result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
@@ -176,20 +188,14 @@ let PlacementZonesStore = Reflux.createStore({
       // If the backend did not make any changes, the response will be empty
       updatedConfig.resourcePoolState = updatedConfig.resourcePoolState || config.resourcePoolState;
       updatedConfig.epzState = updatedConfig.epzState || config.epzState;
+      updatedConfig.tags = tags;
+      updatedConfig = enhanceConfig(updatedConfig);
 
       var configs = this.data.items.asMutable();
 
       for (var i = 0; i < configs.length; i++) {
         if (configs[i].documentSelfLink === updatedConfig.documentSelfLink) {
-          updatedConfig.resourcePoolState.__availableMemory = utils.getCustomPropertyValue(
-              updatedConfig.resourcePoolState.customProperties, '__availableMemory');
-          updatedConfig.resourcePoolState.__cpuUsage = utils.getCustomPropertyValue(
-              updatedConfig.resourcePoolState.customProperties, '__cpuUsage');
-          updatedConfig.resourcePoolState.__endpointLink = utils.getCustomPropertyValue(
-              updatedConfig.resourcePoolState.customProperties, '__endpointLink');
-          updatedConfig.resourcePoolState.__tags = tags;
-          updatedConfig.resourcePoolState.hostsCount = configs[i].resourcePoolState.hostsCount;
-
+          updatedConfig.hostsCount = configs[i].hostsCount;
           configs[i] = Immutable(updatedConfig);
 
           this.setInData(['items'], configs);
@@ -201,14 +207,18 @@ let PlacementZonesStore = Reflux.createStore({
       }
 
       // After we notify listeners, the updated item is no logner actual
-      this.setInData(['updatedItem'], null);
+      setTimeout(() => {
+        this.setInData(['updatedItem'], null);
+        this.emitChange();
+      }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
+
     }).catch(this.onGenericEditError);
   },
 
   onDeletePlacementZone: function(config) {
     services.deletePlacementZone(config).then(() => {
-      var configs = this.data.items.filter(
-        (cfg) => cfg.documentSelfLink !== config.documentSelfLink);
+      var configs = this.data.items.filter((cfg) =>
+          cfg.documentSelfLink !== config.documentSelfLink);
 
       this.setInData(['items'], configs);
       this.emitChange();
@@ -219,36 +229,20 @@ let PlacementZonesStore = Reflux.createStore({
       this.emitChange();
 
       // After we notify listeners, the updated item is no logner actual
-      this.setInData(['updatedItem'], null);
-      this.setInData(['validationErrors'], null);
+      setTimeout(() => {
+        this.setInData(['updatedItem'], null);
+        this.setInData(['validationErrors'], null);
+        this.emitChange();
+      }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
     });
   },
 
   onGenericEditError: function(e) {
     var validationErrors = utils.getValidationErrors(e);
     this.setInData(['editingItemData', 'validationErrors'], validationErrors);
+    this.setInData(['editingItemData', 'saving'], false);
     console.error(e);
     this.emitChange();
-  },
-
-  onOpenToolbarEndpoints: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.ENDPOINTS, {}, false);
-    actions.EndpointsActions.retrieveEndpoints();
-  },
-
-  onCreateEndpoint: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.ENDPOINTS, {}, true);
-    actions.EndpointsActions.retrieveEndpoints();
-    actions.EndpointsActions.editEndpoint({});
-  },
-
-  onManageEndpoints: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.ENDPOINTS, {}, true);
-    actions.EndpointsActions.retrieveEndpoints();
-  },
-
-  onCloseToolbar: function() {
-    this.closeToolbar();
   }
 });
 

@@ -1,0 +1,160 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="placement-zones-view">
+  <div class="main-panel">
+    <div class="list-holder">
+      <div class="inline-editable-list">
+        <list-title v-on:refresh-list="refresh()"
+                      v-bind:has-search-query="false" v-bind:count="itemsCount"
+                      v-bind:title="i18n('app.placementZone.list.title')">
+        </list-title>
+
+        <div class="toolbar">
+          <a href="#" class="btn btn-circle new-item"
+             v-on:click="addNewItem($event)"><i class="fa fa-plus"></i></a>
+          <a href="#" class="new-item"
+             v-on:click="addNewItem($event)">{{i18n('app.placementZone.list.addButton')}}</a>
+        </div>
+
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th is="thsort"
+                  v-bind:active="sortKey === 'name'"
+                  v-bind:sort-order="sortOrders.name"
+                  v-on:click="sortBy('name')"
+                  style="width: 24%">{{i18n('app.placementZone.list.nameColumn')}}</th>
+
+              <th is="thsort"
+                  v-bind:active="sortKey === 'cpuPercentage'"
+                  v-bind:sort-order="sortOrders.cpuPercentage"
+                  v-on:click="sortBy('cpuPercentage')"
+                  style="width: 24%">{{i18n('app.placementZone.list.cpuColumn')}}</th>
+
+              <th is="thsort"
+                  v-bind:active="sortKey === 'memoryPercentage'"
+                  v-bind:sort-order="sortOrders.memoryPercentage"
+                  v-on:click="sortBy('memoryPercentage')"
+                  style="width: 24%">{{i18n('app.placementZone.list.memoryColumn')}}</th>
+
+              <th is="thsort"
+                  v-bind:active="sortKey === 'hostsCount'"
+                  v-bind:sort-order="sortOrders.hostsCount"
+                  v-on:click="sortBy('hostsCount')"
+                  style="width: 14%">{{i18n('app.placementZone.list.hostsColumn')}}</th>
+
+              <!-- Actions column -->
+              <th style="width: 14%"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="isEditingNewItem()">
+              <td colspan="5" class="placementZoneEditHolder">
+                <placement-zone-editor v-bind:model="model.editingItemData || {item:{}}"></placement-zone-editor>
+              </td>
+            </tr>
+            <tr class="item" v-for="item in model.items | orderBy sortKey sortOrders[sortKey]" track-by="documentSelfLink">
+              <template v-if="isHighlightedItem(item)">
+               <td colspan="5" class="highlight-item" v-bind:class="{'highlight-item-fail': model.validationErrors}">
+                  <div>
+                    <div class="help-text"><i class="fa fa-check"></i>
+                      <span v-if="model.validationErrors">{{model.validationErrors._generic}}</span>
+                      <span v-else>
+                        <span v-if="isNewItem(item)">{{i18n('infoMessages.created')}}</span>
+                        <span v-else>{{i18n('infoMessages.updated')}}</span>
+                      </span>
+                    </div>
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th style="width: 24%"></th>
+                          <th style="width: 24%"></th>
+                          <th style="width: 24%"></th>
+                          <th style="width: 14%"></th>
+                          <!-- Actions column -->
+                          <th style="width: 14%"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <td class="truncateText primary-cell" title="{{item.name}}" colspan="5">{{item.name}}</td>
+                      </tbody>
+                    </table>
+                  </div>
+                </td>
+              </template>
+              <template v-if="isEditingItem(item)">
+                <td colspan="5" class="placementZoneEditHolder">
+                  <placement-zone-editor v-bind:model="model.editingItemData || {item:{}}"></placement-zone-editor>
+                </td>
+              </template>
+              <template v-if="!isEditingOrHighlightedItem(item)">
+                <td class="truncateText primary-cell" title="{{item.name}}">{{item.name}}</td>
+                <td>
+                  <div class="stats-holder">
+                    <div class="help-text">{{item.cpuPercentage}}%</div>
+                    <div class="progress">
+                      <div class="progress-bar progress-bar-{{getPercentageLevel(item.cpuPercentage)}}" role="progressbar" v-bind:style="{'width': item.cpuPercentage + '%'}"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="stats-holder">
+                    <div class="help-text">{{item.memoryPercentage}}%</div>
+                    <div class="progress">
+                      <div class="progress-bar progress-bar-{{getPercentageLevel(item.memoryPercentage)}}" role="progressbar" v-bind:style="{'width': item.memoryPercentage + '%'}"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="placementZone-host-count">
+                    <a href="#/{{getHostsPath()}}?placementZone={{getDocumentId(item)}}" class="link">{{item.hostsCount}}</a>
+                  </div>
+                </td>
+                <!-- Actions column -->
+                <td class="table-actions">
+                  <div v-bind:class="{hide: isDeleting(item)}">
+                    <a href="#" class="btn item-edit" v-on:click="editItem(item, $event)">
+                      <i class="fa fa-pencil"></i>
+                    </a>
+                    <a href="#" class="btn item-delete" v-on:click="confirmDelete(item, $event)">
+                      <i class="fa fa-trash"></i>
+                    </a>
+                  </div>
+                  <div v-bind:class="{hide: !isDeleting(item)}" class="delete-inline-item-confirmation-holder">
+                    <div v-if="isDeleting(item)" class="delete-inline-item-confirmation" transition="slide-and-fade">
+                      <a href="#" class="delete-inline-item-confirmation-cancel"
+                                  v-on:click="cancelDelete($event)"><span>{{i18n('cancel')}}</span></a>
+                      <a href="#" class="delete-inline-item-confirmation-confirm"
+                                  v-on:click="deleteItem($event)">
+                        <span v-bind:class="{'not-underlined': deleteConfirmationLoading}">
+                          {{i18n('delete')}}
+                          <i class="fa fa-spinner fa-spin loader-inline"
+                              v-bind:class="{hide: !deleteConfirmationLoading}"></i>
+                        </span>
+                      </a>
+                    </div>
+                  </div>
+
+                </td>
+              </template>
+            </tr>
+          </tbody>
+        </table>
+
+        <div v-if="model.itemsLoading" class="loading">
+          <span class="vertical-helper"></span>
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

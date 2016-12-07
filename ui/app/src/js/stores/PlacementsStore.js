@@ -152,7 +152,7 @@ let PlacementsStore = Reflux.createStore({
 
     PlacementZonesStore.listen((placementZonesData) => {
 
-      if (this.isContextPanelActive(constants.CONTEXT_PANEL.RESOURCE_POOLS)) {
+      if (this.isContextPanelActive(constants.CONTEXT_PANEL.PLACEMENT_ZONES)) {
         this.setActiveItemData(placementZonesData);
 
         var itemToSelect = placementZonesData.newItem || placementZonesData.updatedItem;
@@ -428,7 +428,7 @@ let PlacementsStore = Reflux.createStore({
   },
 
   onOpenToolbarPlacementZones: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, PlacementZonesStore.getData(),
+    this.openToolbarItem(constants.CONTEXT_PANEL.PLACEMENT_ZONES, PlacementZonesStore.getData(),
       false);
   },
 
@@ -447,13 +447,13 @@ let PlacementsStore = Reflux.createStore({
   },
 
   onCreatePlacementZone: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, PlacementZonesStore.getData(),
+    this.openToolbarItem(constants.CONTEXT_PANEL.PLACEMENT_ZONES, PlacementZonesStore.getData(),
       true);
     actions.PlacementZonesActions.editPlacementZone();
   },
 
   onManagePlacementZones: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, PlacementZonesStore.getData(),
+    this.openToolbarItem(constants.CONTEXT_PANEL.PLACEMENT_ZONES, PlacementZonesStore.getData(),
       true);
   },
 

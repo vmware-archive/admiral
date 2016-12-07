@@ -1390,7 +1390,7 @@ $elements-side-margin: $elements-margin / 2;
   }
 }
 
-.placement-zones-list {
+.placement-zones-view {
   > .main-panel {
     @extend .position-expand;
     z-index: 1;
@@ -1405,7 +1405,7 @@ $elements-side-margin: $elements-margin / 2;
   }
 }
 
-.placement-zones-list.right-context-expanded {
+.placement-zones-view.right-context-expanded {
   > .main-panel {
     > .mask {
       display: block;

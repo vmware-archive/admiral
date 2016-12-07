@@ -264,8 +264,8 @@ var HostCreateView = Vue.extend({
   },
 
   methods: {
-    onDestinationChange: function(endpoint) {
-      this.destination = endpoint ? endpoint.documentSelfLink : null;
+    onDestinationChange: function(destination) {
+      this.destination = destination ? destination.documentSelfLink : null;
     },
     modifyClusterSize: function($event, incrementValue) {
       $event.stopPropagation();

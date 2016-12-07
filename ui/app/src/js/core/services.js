@@ -1012,6 +1012,31 @@ services.deleteEnvironment = function(environment) {
   return deleteEntity(environment.documentSelfLink);
 };
 
+services.searchEndpoints = function(query, limit) {
+  let filter = buildOdataQuery({
+    name: [{
+      val: '*' + query + '*',
+      op: 'eq'
+    }]
+  });
+
+  let url = buildPaginationUrl(links.ENDPOINTS, filter, true,
+                               'name asc', limit);
+  return get(url).then(function(data) {
+    var documentLinks = data.documentLinks || [];
+
+    var result = {
+      totalCount: data.totalCount
+    };
+
+    result.items = documentLinks.map((link) => {
+      return data.documents[link];
+    });
+
+    return result;
+  });
+};
+
 services.loadEndpoints = function() {
   return list(links.ENDPOINTS, true);
 };
@@ -1799,7 +1824,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     var placementZoneArray = toArrayIfDefined(queryOptions.placementZone);
     if (placementZoneArray) {
       for (let i = 0; i < placementZoneArray.length; i++) {
-        let prefixPath = links.RESOURCE_POOLS + '/';
+        let prefixPath = links.PLACEMENT_ZONES + '/';
         let placementZoneId = placementZoneArray[i];
         if (placementZoneId.startsWith(prefixPath)) {
             placementZoneId = placementZoneId.slice(prefixPath.length);

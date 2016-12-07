@@ -659,7 +659,7 @@ $main-list-view-right: 10px;
 }
 
 .host-view .main-panel .host-form .clusterSizeInput {
-  margin-top: -22px;
+  margin-top: 10px;
 
   .action {
     display: inline;
@@ -920,6 +920,7 @@ $main-list-view-right: 10px;
 
 .right-context-panel > .toolbar .toolbar-item.active > a {
   width: 28px;
+  min-width: 28px;
 }
 
 .right-context-panel > .toolbar .toolbar-item i {
@@ -1127,7 +1128,7 @@ text-shadow: 0px 0px 20px black;
   @extend .inline-editable-list-and-context-view;
 }
 
-.endpoints-view .endpoint-icon,
+.endpoint-icon,
 .endpoint.dropdown-holder .dropdown-options img,
 .endpointEdit .typeInput .dropdown-holder .dropdown-options img {
   display: block;

@@ -10,10 +10,6 @@
  */
 
 import InlineEditableList from 'components/common/InlineEditableList';
-//resource pools
-import PlacementZonesTemplate from 'components/placementzones/PlacementZonesTemplate.html';
-import PlacementZonesRowRenderers from 'components/placementzones/PlacementZonesRowRenderers';
-import PlacementZonesRowEditor from 'components/placementzones/PlacementZonesRowEditor';
 // credentials
 import CredentialsTemplate from 'components/credentials/CredentialsTemplate.html';
 import CredentialsRowRenderers from 'components/credentials/CredentialsRowRenderers';
@@ -34,19 +30,10 @@ import DeploymentPoliciesRowRenderers from
 import DeploymentPoliciesRowEditor from
   'components/deploymentpolicies/DeploymentPoliciesRowEditor';
 
-import { PlacementZonesActions, CredentialsActions, CertificatesActions,
+import { CredentialsActions, CertificatesActions,
   ResourceGroupsActions, DeploymentPolicyActions } from 'actions/Actions';
 
 var InlineEditableListFactory = {
-  createPlacementZonesList: function($el) {
-    var list = new InlineEditableList($el, PlacementZonesTemplate, PlacementZonesRowRenderers);
-    list.setRowEditor(PlacementZonesRowEditor);
-    list.setDeleteCallback(PlacementZonesActions.deletePlacementZone);
-    list.setEditCallback(PlacementZonesActions.editPlacementZone);
-
-    return list;
-  },
-
   createCredentialsList: function($el) {
     var list = new InlineEditableList($el, CredentialsTemplate, CredentialsRowRenderers);
 

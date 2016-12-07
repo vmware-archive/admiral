@@ -76,10 +76,12 @@ var EndpointEditor = Vue.extend({
       }
     },
     onInputChange: function() {
-      var model = this.getModel();
-      this.saveDisabled = !model.name || !model.endpointType || !model.endpointProperties ||
-        !model.endpointProperties.privateKey || !model.endpointProperties.privateKeyId ||
-        (!model.endpointProperties.regionId && !(model.endpointType === 'vsphere'));
+      Vue.nextTick(() => {
+        var model = this.getModel();
+        this.saveDisabled = !model.name || !model.endpointType || !model.endpointProperties ||
+          !model.endpointProperties.privateKey || !model.endpointProperties.privateKeyId ||
+          (!model.endpointProperties.regionId && !(model.endpointType === 'vsphere'));
+      });
     },
     getModel: function() {
       var toSave = $.extend({}, this.model.item);

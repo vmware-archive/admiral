@@ -1,0 +1,62 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="placementZoneEdit">
+  <alert alert-type="danger"
+         v-bind:show-alert="model.validationErrors && model.validationErrors._generic"
+         v-bind:alert-message="model.validationErrors && model.validationErrors._generic"></alert>
+  <div class="placementZoneEdit-properties">
+    <div class="title">
+      <span v-if="model.item.name">{{i18n('app.placementZone.edit.update')}}</span>
+      <span v-else>{{i18n('app.placementZone.edit.createNew')}}</span>
+    </div>
+    <div class="form-group">
+      <input class="name-input"
+          v-bind:value="model.item.name" v-on:input="onNameChange()"
+          placeholder="{{i18n('app.placementZone.edit.nameTitle')}}">
+    </div>
+
+    <div class="form-group" v-if="showEndpoint && !model.item.endpointName">
+      <div class="subtitle">{{i18n('app.placementZone.edit.endpointTitle')}}</div>
+      <endpoint-search v-else class="endpoint dropdown-holder" v-on:change="onEndpointChange"></endpoint-search>
+    </div>
+
+    <div class="form-group" v-if="model.item.endpointName">
+      <div class="subtitle">{{i18n('app.placementZone.edit.endpointTitle')}}</div>
+      <div class="endpoint">
+        <img class="endpoint-icon" v-bind:src="'image-assets/endpoints/' + model.item.endpointType + '.png'"/>
+        <span class="truncateText">{{model.item.endpointName}}</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <input id="dynamic-input" class="dynamic-input" type="checkbox" v-on:change="onDynamicChange()">
+      <label for="dynamic-input">{{i18n('app.placementZone.edit.dynamicTitle')}}</label>
+    </div>
+    <div class="tags form-group">
+      <label>
+        <span>{{i18n('app.placementZone.edit.tagsToMatchTitle')}}</span>
+        <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"
+            title="{{i18n('app.placementZone.edit.tagsToMatchHint')}}"></i>
+      </label>
+      <input class="tags-input">
+    </div>
+  </div>
+  <div class="placementZoneEdit-toolbar">
+    <a href="#" class="placementZoneEdit-save btn btn-circle" v-bind:class="{'loading': model.saving}" v-on:click="save($event)" v-bind:disabled="saveDisabled">
+      <i class="fa fa-check"></i>
+      <i class="fa fa-spinner fa-spin loader"></i>
+    </a>
+    <a href="#" class="placementZoneEdit-cancel btn btn-circle" v-on:click="cancel($event)">
+      <i class="fa fa-times"></i>
+    </a>
+  </div>
+</div>

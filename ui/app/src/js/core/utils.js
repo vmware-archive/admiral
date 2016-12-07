@@ -1160,6 +1160,17 @@ var utils = {
   mergeDocuments: function(items1, items2, prop = 'documentSelfLink') {
     return items1.concat(items2).filter((item, index, self) =>
         self.findIndex((c) => c[prop] === item[prop]) === index);
+  },
+
+  calculatePercentageOfTotal: function(min, max, current) {
+    var percentage = 100;
+    if (!max) {
+      percentage = 0;
+    } else if (max - min > 0) {
+      percentage = ((current - min) / (max - min)) * 100;
+    }
+
+    return Math.round(percentage * 100) / 100;
   }
 };
 

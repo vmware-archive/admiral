@@ -203,7 +203,7 @@ crossroads.addRoute('/closures/{closureId*}', function(closureId) {
 });
 
 crossroads.addRoute('/resource-pools', function() {
-  actions.AppActions.openView(computeConstants.VIEWS.RESOURCE_POOLS.name);
+  actions.AppActions.openView(computeConstants.VIEWS.PLACEMENT_ZONES.name);
 });
 
 crossroads.addRoute('/environments', function() {

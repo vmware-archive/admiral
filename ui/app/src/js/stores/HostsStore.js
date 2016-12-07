@@ -171,7 +171,7 @@ let toViewModel = function(dto) {
         let epzId = customProperties[i].name.slice(constants.CUSTOM_PROPS.EPZ_NAME_PREFIX.length);
         epzs.push({
            epzDocumentId: epzId,
-           epzLink: links.RESOURCE_POOLS + '/' + epzId
+           epzLink: links.PLACEMENT_ZONES + '/' + epzId
         });
     }
   }
@@ -310,7 +310,7 @@ let HostsStore = Reflux.createStore({
 
       this.setInData(['hostAddView', 'placementZones'], placementZonesData.items);
 
-      if (isContextPanelActive.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS)) {
+      if (isContextPanelActive.call(this, constants.CONTEXT_PANEL.PLACEMENT_ZONES)) {
         this.setInData(['hostAddView', 'contextView', 'activeItem', 'data'],
           placementZonesData);
 
@@ -955,7 +955,7 @@ let HostsStore = Reflux.createStore({
   },
 
   onOpenToolbarPlacementZones: function() {
-    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS,
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.PLACEMENT_ZONES,
       PlacementZonesStore.getData(), false);
   },
 
@@ -1006,13 +1006,13 @@ let HostsStore = Reflux.createStore({
   },
 
   onCreatePlacementZone: function() {
-    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS,
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.PLACEMENT_ZONES,
      PlacementZonesStore.getData(), true);
-    actions.PlacementZonesActions.editPlacementZone();
+    actions.PlacementZonesActions.editPlacementZone({});
   },
 
   onManagePlacementZones: function() {
-    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.RESOURCE_POOLS,
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.PLACEMENT_ZONES,
      PlacementZonesStore.getData(), true);
   },
 

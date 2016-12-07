@@ -51,12 +51,14 @@
               </tr>
               <tr class="item" v-for="item in model.items | orderBy sortKey sortOrders[sortKey]" track-by="documentSelfLink">
                 <template v-if="isHighlightedItem(item)">
-                 <td colspan="3" class="highlight-item" v-bind:class="{'highlight-item-fail': validationErrors}">
+                 <td colspan="3" class="highlight-item" v-bind:class="{'highlight-item-fail': model.validationErrors}">
                     <div>
                       <div class="help-text"><i class="fa fa-check"></i>
-                        <span v-if="validationErrors">{{validationErrors._generic}}</span>
-                        <span v-if="isNewItem(item)">{{i18n('infoMessages.created')}}</span>
-                        <span v-else>{{i18n('infoMessages.updated')}}</span>
+                        <span v-if="model.validationErrors">{{model.validationErrors._generic}}</span>
+                        <span v-else>
+                          <span v-if="isNewItem(item)">{{i18n('infoMessages.created')}}</span>
+                          <span v-else>{{i18n('infoMessages.updated')}}</span>
+                        </span>
                       </div>
                       <table class="table">
                         <thead>

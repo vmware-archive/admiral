@@ -11,7 +11,7 @@
 
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
 import HostAddViewVue from 'components/hosts/HostAddViewVue.html';
-import PlacementZonesList from 'components/placementzones/PlacementZonesList'; //eslint-disable-line
+import PlacementZonesView from 'components/placementzones/PlacementZonesView'; //eslint-disable-line
 import CredentialsList from 'components/credentials/CredentialsList'; //eslint-disable-line
 import CertificatesList from 'components/certificates/CertificatesList'; //eslint-disable-line
 import DeploymentPoliciesList from 'components/deploymentpolicies/DeploymentPoliciesList'; //eslint-disable-line

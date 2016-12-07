@@ -12,7 +12,7 @@
 var computeConstants = Immutable({
   LOADING: {},
   CONTEXT_PANEL: {
-    RESOURCE_POOLS: 'placementZones',
+    PLACEMENT_ZONES: 'placementZones',
     CREDENTIALS: 'credentials',
     CERTIFICATES: 'certificates',
     REQUESTS: 'requests',

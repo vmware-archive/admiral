@@ -116,10 +116,6 @@ export var ContainersContextToolbarActions = Reflux.createActions([
   'openToolbarRequests', 'openToolbarEventLogs', 'closeToolbar', 'openToolbarClosureResults'
 ]);
 
-export var PlacementZonesContextToolbarActions = Reflux.createActions([
-  'openToolbarEndpoints', 'closeToolbar', 'createEndpoint', 'manageEndpoints'
-]);
-
 export var PlacementZonesActions = Reflux.createActions([
   'retrievePlacementZones', 'editPlacementZone', 'cancelEditPlacementZone', 'createPlacementZone',
   'updatePlacementZone', 'deletePlacementZone'

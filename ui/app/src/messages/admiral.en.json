@@ -114,6 +114,7 @@
         "update": "Edit Placement Zone",
         "nameTitle": "Placement zone name",
         "endpointTitle": "Endpoint",
+        "endpointPlaceholder": "Search for endpoint",
         "dynamicTitle": "Dynamically allocate resources to this zone",
         "tagsToMatchTitle": "Tags to match",
         "tagsToMatchHint": "Enter key:value tags to match"

@@ -11,7 +11,7 @@
 
 import ClosureRequestFormVue from 'components/closures/ClosureRequestFormVue.html';
 import ClosureDefinitionForm from 'components/closures/ClosureDefinitionForm';
-import PlacementZonesList from 'components/placementzones/PlacementZonesList'; //eslint-disable-line
+import PlacementZonesView from 'components/placementzones/PlacementZonesView'; //eslint-disable-line
 import ClosureFieldsMixin from 'components/closures/ClosureFieldsMixin';
 import {
   ClosureActions, TemplateActions, TemplatesContextToolbarActions

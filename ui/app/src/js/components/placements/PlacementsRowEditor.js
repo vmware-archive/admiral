@@ -20,11 +20,11 @@ import constants from 'core/constants';
 import utils from 'core/utils';
 
 const placementZoneManageOptions = [{
-  id: 'rp-create',
+  id: 'pz-create',
   name: i18n.t('app.placementZone.createNew'),
   icon: 'plus'
 }, {
-  id: 'rp-manage',
+  id: 'pz-manage',
   name: i18n.t('app.placementZone.manage'),
   icon: 'pencil'
 }];
@@ -78,7 +78,7 @@ function PlacementsRowEditor() {
 
   this.placementZoneInput.setManageOptions(placementZoneManageOptions);
   this.placementZoneInput.setManageOptionSelectCallback(function(option) {
-    if (option.id === 'rp-create') {
+    if (option.id === 'pz-create') {
       PlacementContextToolbarActions.createPlacementZone();
     } else {
       PlacementContextToolbarActions.managePlacementZones();

@@ -14,7 +14,7 @@ import PlacementsViewVue from 'components/placements/PlacementsViewVue.html';
 import PlacementsListTemplate from 'components/placements/PlacementsListTemplate.html';
 import PlacementsRowRenderers from 'components/placements/PlacementsRowRenderers';
 import PlacementsRowEditor from 'components/placements/PlacementsRowEditor';
-import PlacementZonesList from 'components/placementzones/PlacementZonesList'; //eslint-disable-line
+import PlacementZonesView from 'components/placementzones/PlacementZonesView'; //eslint-disable-line
 import ResourceGroupsList from 'components/resourcegroups/ResourceGroupsList'; //eslint-disable-line
 import DeploymentPoliciesList from 'components/deploymentpolicies/DeploymentPoliciesList'; //eslint-disable-line
 import { PlacementActions, PlacementContextToolbarActions } from 'actions/Actions';

@@ -12,7 +12,7 @@
 <div class="endpointEdit">
   <alert alert-type="danger"
          v-bind:show-alert="model.validationErrors && model.validationErrors._generic"
-         v-bind:alert-message="model.validationErrors._generic"></alert>
+         v-bind:alert-message="model.validationErrors && model.validationErrors._generic"></alert>
   <div>
     <div class="endpointEdit-toolbar pull-right">
       <a href="#" class="btn btn-circle" v-bind:class="{'loading': model.saving}" v-on:click="save($event)" v-bind:disabled="saveDisabled">

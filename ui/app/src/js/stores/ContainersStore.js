@@ -1448,7 +1448,7 @@ let ContainersStore = Reflux.createStore({
   },
 
   onOpenToolbarClosureResults: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, PlacementZonesStore.getData(),
+    this.openToolbarItem(constants.CONTEXT_PANEL.PLACEMENT_ZONES, PlacementZonesStore.getData(),
       false);
   },
 

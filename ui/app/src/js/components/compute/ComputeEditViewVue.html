@@ -85,8 +85,8 @@
     </div>
 
     <div slot="content" class="content">
-      <placement-zones-list v-if="activeContextItem === 'placementZones'"
-        v-bind:model="model.contextView.activeItem.data"></placement-zones-list>
+      <placement-zones-view v-if="activeContextItem === 'placementZones'"
+        v-bind:model="model.contextView.activeItem.data"></placement-zones-view>
     </div>
 
   </context-sidepanel>

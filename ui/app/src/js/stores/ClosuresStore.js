@@ -242,19 +242,19 @@ let ClosuresStore = Reflux.createStore({
     });
   },
   onOpenToolbarPlacementZones: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, PlacementZonesStore.getData(),
+    this.openToolbarItem(constants.CONTEXT_PANEL.PLACEMENT_ZONES, PlacementZonesStore.getData(),
       false);
   },
   onCloseToolbar: function() {
     this.closeToolbar();
   },
   onCreatePlacementZone: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, PlacementZonesStore.getData(),
+    this.openToolbarItem(constants.CONTEXT_PANEL.PLACEMENT_ZONES, PlacementZonesStore.getData(),
       true);
     actions.PlacementZonesActions.editPlacementZone();
   },
   onManagePlacementZones: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_POOLS, PlacementZonesStore.getData(),
+    this.openToolbarItem(constants.CONTEXT_PANEL.PLACEMENT_ZONES, PlacementZonesStore.getData(),
       true);
   }
 
