@@ -495,6 +495,11 @@
     letter-spacing: 0.02em;
   }
 
+  .relations-holder {
+    height: 30px;
+    margin: 0 15px;
+  }
+
   .container-content .container-ports-holder {
     margin-top: 20px;
   }
@@ -661,14 +666,11 @@
   }
   .cluster-item .container-content {
     height: $heightOfListViewItem;
+    overflow-y: auto;
   }
   .composite-container-item .container-content {
     height: $heightOfListViewItem;
-
-    .relations-holder {
-      position: absolute;
-      bottom: 5px;
-    }
+    overflow-y: auto;
   }
 }
 
@@ -709,17 +711,16 @@
         position: static;
       }
 
-      .container-item .container-content .relations-holder {
+      .container-item .relations-holder {
         display: none;
       }
 
       .composite-container-item {
         .container-content {
           margin-right: 0;
-
-          .relations-holder {
-            display: none;
-          }
+        }
+        .relations-holder {
+          display: none;
         }
         .child-containers {
           .child-container {
@@ -990,7 +991,9 @@
             font-size: 13px;
           }
         }
-
+        .relations-holder {
+          display: none;
+        }
         @include container-image-header-icons(40px);
       }
       .container-item:not(:hover) {
@@ -1313,6 +1316,7 @@ $elements-side-margin: $elements-margin / 2;
   padding-left: 30px;
   padding-right: 30px;
 }
+
 .list-view.containers-list .container-item .container-content {
   margin-top: 20px;
 }

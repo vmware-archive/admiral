@@ -32,26 +32,26 @@
       <span class="container-label">{{i18n("app.container.list.createdDateLabel")}}</span>
       <span>{{model.created | timestampToDate}}</span>
     </div>
-    <template v-if="showNumbers">
-      <div class="relations-holder">
-        <navigation-link v-bind:show="hostsCount > 0"
-                         v-bind:label="hostsCount"
-                         icon-name="image-assets/hosts-nav-link.png"
-                         v-bind:tooltip="i18n('app.resource.list.relations.hosts')"
-                         v-on:click="showHosts($event)"></navigation-link>
-        <navigation-link v-bind:show="(containersCount > 0)"
-                         v-bind:label="containersCount"
-                         icon-name="image-assets/containers-nav-link.png"
-                         v-bind:tooltip="i18n('app.resource.list.relations.containers')"
-                         v-on:click="showContainers($event)"></navigation-link>
-        <navigation-link v-bind:show="(networksCount > 0)"
-                         v-bind:label="networksCount"
-                         icon-name="image-assets/networks-nav-link.png"
-                         v-bind:tooltip="i18n('app.resource.list.relations.networks')"
-                         v-on:click="showNetworks($event)"></navigation-link>
-      </div>
-  </template>
   </div>
+  <template v-if="showNumbers">
+    <div class="relations-holder">
+      <navigation-link v-bind:show="hostsCount > 0"
+                       v-bind:label="hostsCount"
+                       icon-name="image-assets/hosts-nav-link.png"
+                       v-bind:tooltip="i18n('app.resource.list.relations.hosts')"
+                       v-on:click="showHosts($event)"></navigation-link>
+      <navigation-link v-bind:show="(containersCount > 0)"
+                       v-bind:label="containersCount"
+                       icon-name="image-assets/containers-nav-link.png"
+                       v-bind:tooltip="i18n('app.resource.list.relations.containers')"
+                       v-on:click="showContainers($event)"></navigation-link>
+      <navigation-link v-bind:show="(networksCount > 0)"
+                       v-bind:label="networksCount"
+                       icon-name="image-assets/networks-nav-link.png"
+                       v-bind:tooltip="i18n('app.resource.list.relations.networks')"
+                       v-on:click="showNetworks($event)"></navigation-link>
+    </div>
+  </template>
   <div class="container-actions" v-bind:class="{'hide': showDeleteConfirmation}">
     <action-button name="details" icon-name="eye"
                    v-bind:label="i18n('app.container.actions.details')"
