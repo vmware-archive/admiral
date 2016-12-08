@@ -341,6 +341,7 @@ type InspectApp struct {
 	Name       string          `json:"Name"`
 	Containers int             `json:"ContainersCount"`
 	Networks   int             `json:"NetworksCount"`
+	Closures   int             `json:"ClosuresCount"`
 	Components []*AppComponent `json:"Components"`
 }
 
@@ -366,17 +367,19 @@ func InspectID(id string) (string, error) {
 		Name:       app.Name,
 		Containers: app.GetContainersCount(),
 		Networks:   app.GetNetworksCount(),
+		Closures:   app.GetClosuresCount(),
 		Components: make([]*AppComponent, 0),
 	}
 	for i, contLink := range app.ComponentLinks {
 		component := &AppComponent{}
 		component.Id = utils.GetResourceID(contLink)
-		if app.IsContainer(i) {
-			component.ComponentType = "Container"
+		componentType := app.GetComponentResourceType(i)
+		if componentType == utils.CONTAINER {
+			component.ComponentType = componentType.GetName()
 			c := containers.GetContainer(component.Id)
 			component.NetworksConnected = utils.ValuesToStrings(utils.GetMapKeys(c.Networks))
 		} else {
-			component.ComponentType = "Network"
+			component.ComponentType = componentType.GetName()
 		}
 
 		ia.Components = append(ia.Components, component)

@@ -34,12 +34,16 @@ type App struct {
 
 // IsContainer returns boolean which specify if the
 // component at the given index is container.
-func (a *App) IsContainer(index int) bool {
+func (a *App) GetComponentResourceType(index int) utils.ResourceType {
 	link := a.ComponentLinks[index]
 	if strings.Contains(link, "/containers/") {
-		return true
+		return utils.CONTAINER
+	} else if strings.Contains(link, "/closures/") {
+		return utils.CLOSURE
+	} else if strings.Contains(link, "/container-networks/") {
+		return utils.NETWORK
 	}
-	return false
+	return -1
 }
 
 // GetID returns the ID by getting the last part
@@ -66,6 +70,16 @@ func (a *App) GetNetworksCount() int {
 	count := 0
 	for _, link := range a.ComponentLinks {
 		if strings.Contains(link, "/container-networks/") {
+			count++
+		}
+	}
+	return count
+}
+
+func (a *App) GetClosuresCount() int {
+	count := 0
+	for _, link := range a.ComponentLinks {
+		if strings.Contains(link, "/closures/") {
 			count++
 		}
 	}
@@ -118,11 +132,11 @@ func (listApps *ListApps) GetOutputStringWithoutContainers() string {
 		return utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer
-	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS")
+	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS\tCLOSURES")
 	buffer.WriteString("\n")
 	for _, link := range listApps.DocumentLinks {
 		app := listApps.Documents[link]
-		output := utils.GetTabSeparatedString(app.GetID(), app.Name, app.GetContainersCount(), app.GetNetworksCount())
+		output := utils.GetTabSeparatedString(app.GetID(), app.Name, app.GetContainersCount(), app.GetNetworksCount(), app.GetClosuresCount())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}

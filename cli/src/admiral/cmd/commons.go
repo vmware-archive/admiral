@@ -279,10 +279,10 @@ func processOutput(output string, err error) {
 		if quietOutput == "" {
 			os.Exit(0)
 		}
-		fmt.Print(makeQuietOutput(output))
+		fmt.Println(makeQuietOutput(output))
 		os.Exit(0)
 	}
-	fmt.Print(output)
+	fmt.Println(output)
 }
 
 func processOutputMultiErrors(output string, errs []error) {
@@ -293,7 +293,7 @@ func processOutputMultiErrors(output string, errs []error) {
 		}
 	}
 	if buffer.String() != "" {
-		fmt.Fprint(os.Stderr, strings.TrimSpace(buffer.String()))
+		fmt.Fprintln(os.Stderr, strings.TrimSpace(buffer.String()))
 		os.Exit(1)
 	}
 
@@ -302,19 +302,19 @@ func processOutputMultiErrors(output string, errs []error) {
 		if quietOutput == "" {
 			os.Exit(0)
 		}
-		fmt.Print(makeQuietOutput(output))
+		fmt.Println(makeQuietOutput(output))
 		os.Exit(0)
 	}
-	fmt.Print(output)
+	fmt.Println(output)
 }
 
 func formatAndPrintOutput(output string, err error) {
 	writer := tabwriter.NewWriter(os.Stdout, 5, 0, 5, ' ', 0)
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	} else {
-		fmt.Fprint(writer, output)
+		fmt.Fprintln(writer, output)
 	}
 	writer.Flush()
 }
