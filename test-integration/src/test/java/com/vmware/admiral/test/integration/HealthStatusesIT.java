@@ -35,7 +35,7 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceStats;
 import com.vmware.xenon.common.Utils;
 
-@Ignore
+@Ignore("Tests execution takes 10-15 min...")
 public class HealthStatusesIT extends BaseProvisioningOnCoreOsIT {
 
     private String containerDescLink = null;

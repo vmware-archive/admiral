@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.ServiceClientFactory;
@@ -63,7 +62,6 @@ public class ContainerMultiNetworkingIT extends BaseProvisioningOnCoreOsIT {
     }
 
     @Test
-    @Ignore("VBV-651")
     public void testProvision() throws Exception {
         doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
     }
@@ -81,7 +79,8 @@ public class ContainerMultiNetworkingIT extends BaseProvisioningOnCoreOsIT {
         assertEquals("Unexpected number of resource links", 1,
                 request.resourceLinks.size());
 
-        CompositeComponent cc = getDocument(request.resourceLinks.iterator().next(), CompositeComponent.class);
+        CompositeComponent cc = getDocument(request.resourceLinks.iterator().next(),
+                CompositeComponent.class);
         assertEquals("Unexpected number of component links", ALL_RESOURCES_SIZE,
                 cc.componentLinks.size());
 
