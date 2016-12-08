@@ -21,7 +21,7 @@ import (
 //Currently panic too used for debugging.
 func CheckResponse(err error, url string) {
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
@@ -29,7 +29,7 @@ func CheckResponse(err error, url string) {
 
 func CheckBlockingError(err error) {
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
