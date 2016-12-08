@@ -82,16 +82,13 @@ public final class ImplicitDependencyFilters {
 
         @Override
         public boolean isActive() {
-            return compositeDescription.componentDescriptions.stream()
-                    .collect(Collectors.mapping((cd) -> {
-                        return Utils.fromJson(cd.componentJson,
-                                CompositeComponentRegistry.metaByType(cd.type).descriptionClass);
-                    }, Collectors.toList()))
-                    .stream()
-                    .filter((cd) -> {
-                        return cd instanceof ContainerDescription
-                                && ((ContainerDescription) cd).portBindings != null;
-                    }).count() > 1;
+            return compositeDescription.componentDescriptions.stream().map((cd) -> {
+                return Utils.fromJson(cd.componentJson,
+                        CompositeComponentRegistry.metaByType(cd.type).descriptionClass);
+            }).filter((cd) -> {
+                return cd instanceof ContainerDescription
+                        && ((ContainerDescription) cd).portBindings != null;
+            }).count() > 1;
         }
 
         @Override
