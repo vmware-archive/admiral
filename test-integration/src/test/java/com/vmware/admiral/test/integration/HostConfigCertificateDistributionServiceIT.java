@@ -40,8 +40,13 @@ public class HostConfigCertificateDistributionServiceIT extends
 
     @Before
     public void setUp() throws Exception {
-        logger.info("---------- Waiting until system agent is removed --------");
-        waitForSystemContainerStatusCode(Operation.STATUS_CODE_NOT_FOUND);
+
+        // ensure there is no system agent leftover from previous tests
+        String systemContainerLink = SystemContainerDescriptions.getSystemContainerSelfLink(
+                SystemContainerDescriptions.AGENT_CONTAINER_NAME,
+                IntegratonTestStateFactory.DOCKER_COMPUTE_ID);
+        logger.info("---------- Removing system agent link (if it exists) --------");
+        delete(systemContainerLink);
 
         logger.info("---------- Adding host, to remove old certificate directory if any --------");
         setupCoreOsHost(ContainerHostService.DockerAdapterType.API);

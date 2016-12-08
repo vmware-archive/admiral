@@ -118,12 +118,14 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
             }
         }
 
-        try {
-            logger.info("---------- Clean up: Request Delete the container instances. --------");
-            requestContainerDelete(containersToDelete, false);
-        } catch (Throwable t) {
-            logger.warning(String.format("Unable to remove containers %s: %s", containersToDelete,
-                    t.getMessage()));
+        if (containersToDelete != null && !containersToDelete.isEmpty()) {
+            try {
+                logger.info("---------- Clean up: Request Delete the container instances. --------");
+                requestContainerDelete(containersToDelete, false);
+            } catch (Throwable t) {
+                logger.warning(String.format("Unable to remove containers %s: %s", containersToDelete,
+                        t.getMessage()));
+            }
         }
 
         // remove the external networks, if any
