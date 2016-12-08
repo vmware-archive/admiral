@@ -16,6 +16,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -106,6 +107,10 @@ public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
                 "kitematicAfterClosure");
         assertEquals("input_obj={\"a\":" + expectedClosureResult + "}", afterClosureContainer.env[0]);
         assertEquals(expectedClosureResult, Integer.parseInt(afterClosureContainer.customProperties.get("input_int")));
+
+        waitForClosureContainerCleanUp(
+                closureState.resourceLinks.iterator().next(),
+                r -> r.statusCode == 404);
     }
 
     private ContainerState findProvisionedResource(List<ContainerState> provisionedResources,
@@ -129,4 +134,19 @@ public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
         return fetchedResources;
     }
 
+    protected static void waitForClosureContainerCleanUp(final String documentSelfLink,
+            Predicate<SimpleHttpsClient.HttpResponse> predicate) throws Exception {
+
+        String body = null;
+        for (int i = 0; i < STATE_CHANGE_WAIT_POLLING_RETRY_COUNT; i++) {
+            SimpleHttpsClient.HttpResponse response = SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.GET,
+                    getBaseUrl() + buildServiceUri(documentSelfLink), null);
+            if (predicate.test(response)) {
+                return;
+            }
+            Thread.sleep(STATE_CHANGE_WAIT_POLLING_PERIOD_MILLIS);
+        }
+
+        throw new RuntimeException(String.format("Failed waiting for closure container clean-up!"));
+    }
 }
