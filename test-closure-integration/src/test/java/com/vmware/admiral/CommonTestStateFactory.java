@@ -1,17 +1,22 @@
 /*
  * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
 package com.vmware.admiral;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.net.URI;
 import java.util.UUID;
 
 import com.vmware.admiral.common.AuthCredentialsType;
@@ -35,7 +40,7 @@ public class CommonTestStateFactory {
     }
 
     public static SslTrustCertificateState createSslTrustCertificateState(String pemFileName,
-                                                                          String id) {
+            String id) {
 
         SslTrustCertificateState sslTrustState = new SslTrustCertificateState();
         sslTrustState.documentSelfLink = id;

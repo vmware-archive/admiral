@@ -32,11 +32,10 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
-public class IntegratonTestStateFactory extends CommonTestStateFactory{
+public class IntegratonTestStateFactory extends CommonTestStateFactory {
     public static final long DEFAULT_DOCUMENT_EXPIRATION_MICROS = Long.getLong(
             "dcp.document.test.expiration.time.seconds", TimeUnit.MINUTES.toMicros(30));
     public static final String DOCKER_COMPUTE_ID = "test-docker-host-compute-id";
-    ;
     public static final String CONTAINER_ADMIRAL_IMAGE = "vmware/bellevue";
     public static final String RESOURCE_POOL_ID = "test-docker-host-resource-pool";
     public static final String GLOBAL_TEST_RESERVATION_ID = "test-global-test-reservation-docker-host";

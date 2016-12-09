@@ -43,6 +43,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.vmware.admiral.BaseIntegrationTest;
+import com.vmware.admiral.SimpleHttpsClient;
 import com.vmware.admiral.closures.drivers.DriverConstants;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
@@ -51,7 +52,6 @@ import com.vmware.admiral.closures.services.closuredescription.ResourceConstrain
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.service.common.LogService;
-import com.vmware.admiral.SimpleHttpsClient;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;

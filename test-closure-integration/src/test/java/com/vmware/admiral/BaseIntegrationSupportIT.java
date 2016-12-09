@@ -21,16 +21,14 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -39,12 +37,15 @@ import javax.net.ssl.X509TrustManager;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
 
+import com.vmware.admiral.SimpleHttpsClient.HttpMethod;
+import com.vmware.admiral.SimpleHttpsClient.HttpResponse;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
@@ -66,8 +67,6 @@ import com.vmware.admiral.request.RequestStatusFactoryService;
 import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.TaskServiceDocument;
-import com.vmware.admiral.SimpleHttpsClient.HttpMethod;
-import com.vmware.admiral.SimpleHttpsClient.HttpResponse;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -184,7 +183,7 @@ public class BaseIntegrationSupportIT {
     }
 
     protected static <T extends ServiceDocument> T getDocument(String seflLink,
-                                                               Class<? extends T> type) throws Exception {
+            Class<? extends T> type) throws Exception {
         String body = sendRequest(HttpMethod.GET, seflLink, null);
         if (body == null || body.isEmpty()) {
             return null;
@@ -205,7 +204,7 @@ public class BaseIntegrationSupportIT {
 
     @SuppressWarnings("unchecked")
     protected static <T extends ServiceDocument> T postDocument(String fabricLink, T document,
-                                                                TestDocumentLifeCycle documentLifeCycle) throws Exception {
+            TestDocumentLifeCycle documentLifeCycle) throws Exception {
         if (document.documentSelfLink != null && !document.documentSelfLink.isEmpty()) {
             String servicePathUrl = buildServiceUri(fabricLink,
                     extractId(document.documentSelfLink));
@@ -220,14 +219,14 @@ public class BaseIntegrationSupportIT {
         }
         T doc = (T) Utils.fromJson(body, document.getClass());
         switch (documentLifeCycle) {
-            case FOR_DELETE:
-                cleanUpAfter(doc);
-                break;
-            case FOR_DELETE_AFTER_CLASS:
-                cleanUpAfterClass(doc);
-                break;
-            default:
-                break;
+        case FOR_DELETE:
+            cleanUpAfter(doc);
+            break;
+        case FOR_DELETE_AFTER_CLASS:
+            cleanUpAfterClass(doc);
+            break;
+        default:
+            break;
         }
         return doc;
     }
@@ -365,7 +364,7 @@ public class BaseIntegrationSupportIT {
     }
 
     protected static void waitForStateChange(final String documentSelfLink,
-                                             Predicate<String> predicate) throws Exception {
+            Predicate<String> predicate) throws Exception {
 
         String body = null;
         for (int i = 0; i < STATE_CHANGE_WAIT_POLLING_RETRY_COUNT; i++) {
@@ -390,7 +389,7 @@ public class BaseIntegrationSupportIT {
     }
 
     protected static void waitForStatusCode(URI uri, Map<String, String> headers,
-                                            int expectedStatusCode, int count)
+            int expectedStatusCode, int count)
             throws Exception {
 
         long toFinish = System.currentTimeMillis()

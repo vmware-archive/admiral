@@ -1,12 +1,19 @@
 /*
  * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
 package com.vmware.admiral;
 
-import static com.vmware.admiral.TestPropertiesUtil.getTestRequiredProp;
-
 import static org.junit.Assert.assertEquals;
+
+import static com.vmware.admiral.TestPropertiesUtil.getTestRequiredProp;
 
 import java.io.IOException;
 import java.net.URI;
@@ -22,24 +29,23 @@ import com.google.gson.JsonArray;
 
 import org.junit.Assert;
 
-import com.vmware.admiral.closures.util.ClosureUtils;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
 import com.vmware.admiral.closures.services.images.DockerImage;
 import com.vmware.admiral.closures.services.images.DockerImageFactoryService;
+import com.vmware.admiral.closures.util.ClosureUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
-
 /**
  * Base of integration tests.
  */
-public class BaseIntegrationTest extends BaseProvisioningOnCoreOsIT{
+public class BaseIntegrationTest extends BaseProvisioningOnCoreOsIT {
 
     public static final int DOCKER_IMAGE_BUILD_TIMEOUT_SECONDS = 30 * 60;
 
@@ -101,7 +107,7 @@ public class BaseIntegrationTest extends BaseProvisioningOnCoreOsIT{
     }
 
     protected String waitForBuildCompletion(String imagePrefix,
-                                            ClosureDescription closureDescription) throws Exception {
+            ClosureDescription closureDescription) throws Exception {
         String imageName = prepareImageName(imagePrefix, closureDescription);
         logger.info(
                 "Build for docker execution image: " + imageName + " on host: " + dockerHostCompute

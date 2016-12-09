@@ -16,8 +16,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import static com.vmware.admiral.TestPropertiesUtil.getTestRequiredProp;
 import static com.vmware.admiral.IntegratonTestStateFactory.CONTAINER_ADMIRAL_IMAGE;
+import static com.vmware.admiral.TestPropertiesUtil.getTestRequiredProp;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -35,6 +35,8 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
 
+import com.vmware.admiral.SimpleHttpsClient.HttpMethod;
+import com.vmware.admiral.SimpleHttpsClient.HttpResponse;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
@@ -61,8 +63,6 @@ import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
-import com.vmware.admiral.SimpleHttpsClient.HttpMethod;
-import com.vmware.admiral.SimpleHttpsClient.HttpResponse;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
@@ -72,7 +72,7 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
-public abstract class  BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportIT {
+public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportIT {
 
     protected static final List<String> TENANT = Collections.singletonList("docker-test");
     private static final List<String> TENANT_LINKS = Collections
@@ -149,12 +149,12 @@ public abstract class  BaseProvisioningOnCoreOsIT extends BaseIntegrationSupport
     }
 
     protected void doProvisionDockerContainerOnCoreOS(boolean downloadImage,
-                                                      DockerAdapterType adapterType) throws Exception {
+            DockerAdapterType adapterType) throws Exception {
         doProvisionDockerContainerOnCoreOS(downloadImage, adapterType, false);
     }
 
     protected void doProvisionDockerContainerOnCoreOS(boolean downloadImage,
-                                                      DockerAdapterType adapterType, boolean setupOnCluster) throws Exception {
+            DockerAdapterType adapterType, boolean setupOnCluster) throws Exception {
         setupCoreOsHost(adapterType, setupOnCluster);
 
         logger.info("---------- 5. Create test docker image container description. --------");
@@ -163,7 +163,7 @@ public abstract class  BaseProvisioningOnCoreOsIT extends BaseIntegrationSupport
     }
 
     protected void doProvisionDockerContainerOnCoreOS(boolean downloadImage,
-                                                      DockerAdapterType adapterType, RegistryType registryType) throws Exception {
+            DockerAdapterType adapterType, RegistryType registryType) throws Exception {
         setupCoreOsHost(adapterType);
 
         logger.info("---------- 5. Create test docker image container description. --------");
@@ -187,15 +187,15 @@ public abstract class  BaseProvisioningOnCoreOsIT extends BaseIntegrationSupport
         dockerHostAuthCredentials.type = AuthCredentialsType.PublicKey.name();
 
         switch (adapterType) {
-            case API:
-                dockerHostAuthCredentials.privateKey = IntegratonTestStateFactory
-                        .getFileContent(getTestRequiredProp("docker.client.key.file"));
-                dockerHostAuthCredentials.publicKey = IntegratonTestStateFactory
-                        .getFileContent(getTestRequiredProp("docker.client.cert.file"));
-                break;
+        case API:
+            dockerHostAuthCredentials.privateKey = IntegratonTestStateFactory
+                    .getFileContent(getTestRequiredProp("docker.client.key.file"));
+            dockerHostAuthCredentials.publicKey = IntegratonTestStateFactory
+                    .getFileContent(getTestRequiredProp("docker.client.cert.file"));
+            break;
 
-            default:
-                throw new IllegalArgumentException("Unexpected adapter type: " + adapterType);
+        default:
+            throw new IllegalArgumentException("Unexpected adapter type: " + adapterType);
         }
 
         dockerHostAuthCredentials = postDocument(AuthCredentialsService.FACTORY_LINK,
@@ -232,7 +232,7 @@ public abstract class  BaseProvisioningOnCoreOsIT extends BaseIntegrationSupport
     }
 
     protected abstract String getResourceDescriptionLink(boolean downloadImage,
-                                                         RegistryType registryType)
+            RegistryType registryType)
             throws Exception;
 
     protected String getImageName(RegistryType registryType) throws Exception {
@@ -250,21 +250,21 @@ public abstract class  BaseProvisioningOnCoreOsIT extends BaseIntegrationSupport
     protected String getRegistryHostname(RegistryType registryType) {
         switch (registryType) {
 
-            case V1_HTTP_INSECURE:
-                return getTestRequiredProp("docker.insecure.registry.host.address");
+        case V1_HTTP_INSECURE:
+            return getTestRequiredProp("docker.insecure.registry.host.address");
 
-            case V1_SSL_SECURE:
-                return getTestRequiredProp("docker.registry.host.address");
+        case V1_SSL_SECURE:
+            return getTestRequiredProp("docker.registry.host.address");
 
-            case V2_SSL_SECURE:
-                return getTestRequiredProp("docker.v2.registry.host.address");
+        case V2_SSL_SECURE:
+            return getTestRequiredProp("docker.v2.registry.host.address");
 
-            case V2_BASIC_AUTH:
-                return getTestRequiredProp("docker.secure.v2.registry.host.address");
+        case V2_BASIC_AUTH:
+            return getTestRequiredProp("docker.secure.v2.registry.host.address");
 
-            default:
-                throw new IllegalArgumentException(
-                        String.format("Unsupported registry type '%s'", registryType));
+        default:
+            throw new IllegalArgumentException(
+                    String.format("Unsupported registry type '%s'", registryType));
         }
     }
 
@@ -504,7 +504,7 @@ public abstract class  BaseProvisioningOnCoreOsIT extends BaseIntegrationSupport
     }
 
     private static ComputeState createDockerHost(String address, String port, String credLink,
-                                                 DockerAdapterType adapterType, String id) throws Exception {
+            DockerAdapterType adapterType, String id) throws Exception {
         ComputeState compute = IntegratonTestStateFactory.createDockerComputeHost();
         if (id != null) {
             compute.id = id;

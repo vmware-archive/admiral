@@ -42,13 +42,13 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.BaseIntegrationTest;
+import com.vmware.admiral.SimpleHttpsClient;
 import com.vmware.admiral.closures.drivers.DriverConstants;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ResourceConstraints;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService;
-import com.vmware.admiral.SimpleHttpsClient;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.Utils;
@@ -1458,22 +1458,22 @@ public class PythonTest extends BaseIntegrationTest {
         double expectedResult = 4;
 
         closureDescState.source = "import billiard\n"
-                +"\n"
-                +"\n"
-                +"def f():\n"
-                +"    print('ok!')\n"
-                +"\n"
-                +"def test(context):\n"
-                +"    inputs = context.inputs\n"
-                +"    print('Hello number  {}'.format(inputs['a']))\n"
-                +"    context.outputs['result'] = inputs['a'] + 1\n"
-                +"\n"
-                +"    billiard.forking_enable(1)\n"
-                +"    p = billiard.Process(target = f)\n"
-                +"    p.start()\n"
-                +"    while p.is_alive():\n"
-                +"        pass\n"
-                +"\n";
+                + "\n"
+                + "\n"
+                + "def f():\n"
+                + "    print('ok!')\n"
+                + "\n"
+                + "def test(context):\n"
+                + "    inputs = context.inputs\n"
+                + "    print('Hello number  {}'.format(inputs['a']))\n"
+                + "    context.outputs['result'] = inputs['a'] + 1\n"
+                + "\n"
+                + "    billiard.forking_enable(1)\n"
+                + "    p = billiard.Process(target = f)\n"
+                + "    p.start()\n"
+                + "    while p.is_alive():\n"
+                + "        pass\n"
+                + "\n";
 
         closureDescState.runtime = RUNTIME_PYTHON;
         closureDescState.dependencies = "requests >= 2.9.1\nbilliard >= 3.3.0.13";
