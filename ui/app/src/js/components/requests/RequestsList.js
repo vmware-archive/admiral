@@ -48,6 +48,9 @@ var RequestsListVueComponent = Vue.extend({
           } else {
             return this.model.name;
           }
+        },
+        requestId: function() {
+          return utils.getDocumentId(this.model.documentSelfLink);
         }
       },
       data: function() {
