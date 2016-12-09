@@ -17,6 +17,8 @@ import (
 	"os"
 	"testing"
 
+	"log"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -45,6 +47,7 @@ func ConfigureTestEnv() (*TestConfig, error) {
 
 func CheckTestError(err error, t *testing.T) {
 	if err != nil {
+		log.Println(err)
 		t.Error(err)
 	}
 }

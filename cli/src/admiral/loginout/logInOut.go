@@ -15,6 +15,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -26,13 +27,18 @@ import (
 	"admiral/utils"
 )
 
+var (
+	LoginFailedError            = errors.New("Login failed.")
+	TenantOrUrlNotProvidedError = errors.New("Tenant and/or url not provided.")
+
+	successLoginMsg = "Login successful."
+)
+
 type LogInOut struct {
 	RequestType string `json:"requestType"`
 }
 
-func Login(username, password, configUrl string) string {
-	fail := "Login failed."
-	success := "Login successful."
+func Login(username, password, configUrl string) (string, error) {
 	if configUrl != "" {
 		config.URL = configUrl
 		config.SetProperty("Url", configUrl)
@@ -47,11 +53,11 @@ func Login(username, password, configUrl string) string {
 	req.SetBasicAuth(strings.TrimSpace(username), strings.TrimSpace(password))
 	resp, _, _ := client.ProcessRequest(req)
 	if resp == nil {
-		return fail
+		return "", LoginFailedError
 	}
 	token := resp.Header.Get("x-xenon-auth-token")
 	if token == "" {
-		return fail
+		return "", LoginFailedError
 	}
 	if utils.Verbose {
 		fmt.Printf("%s: %s\n", "x-xenon-aut-token", token)
@@ -62,7 +68,7 @@ func Login(username, password, configUrl string) string {
 	utils.CheckBlockingError(err)
 	tokenFile.Write([]byte(token))
 	tokenFile.Close()
-	return success
+	return successLoginMsg, nil
 }
 
 func Logout() {
@@ -114,9 +120,9 @@ func GetInfo() string {
 	return buffer.String()
 }
 
-func Loginvra(username, password, tenant, urlF string) string {
+func Loginvra(username, password, tenant, urlF string) (string, error) {
 	if tenant == "" || urlF == "" {
-		return "Tenant and/or url not provided."
+		return "", TenantOrUrlNotProvidedError
 	}
 	login := &RequestLoginVRA{
 		Username: username,
@@ -135,7 +141,7 @@ func Loginvra(username, password, tenant, urlF string) string {
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
-		return respErr.Error()
+		return "", respErr
 	}
 	respLogin := &ResponseLoginVRA{}
 	err = json.Unmarshal(respBody, &respLogin)
@@ -146,7 +152,7 @@ func Loginvra(username, password, tenant, urlF string) string {
 	tokenFile.Write([]byte(tenant))
 	tokenFile.Write([]byte("&Bearer " + respLogin.Id))
 	tokenFile.Close()
-	return "Login successful."
+	return successLoginMsg, nil
 }
 
 type RequestLoginVRA struct {

@@ -49,8 +49,8 @@ var loginCmd = &cobra.Command{
 	Long:  "Login with username and pass",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		output := RunLogin(args)
-		fmt.Println(output)
+		output, err := RunLogin(args)
+		processOutput(output, err)
 	},
 }
 
@@ -66,10 +66,9 @@ func initLogin() {
 	RootCmd.AddCommand(loginCmd)
 }
 
-func RunLogin(args []string) string {
+func RunLogin(args []string) (string, error) {
 	if tokenInfo {
-		fmt.Println(loginout.GetInfo())
-		return ""
+		return loginout.GetInfo(), nil
 	}
 	if strings.TrimSpace(username) == "" {
 		if config.USER == "" {
@@ -83,11 +82,11 @@ func RunLogin(args []string) string {
 	}
 	url := urlRemoveTrailingSlash(urlF)
 	if againstVra {
-		message := loginout.Loginvra(username, password, tenant, url)
-		return message
+		return loginout.Loginvra(username, password, tenant, url)
+
 	}
-	message := loginout.Login(username, password, url)
-	return message
+	message, err := loginout.Login(username, password, url)
+	return message, err
 }
 
 //Function that prompt the user to enter his username.

@@ -39,7 +39,7 @@ func TestMain(m *testing.M) {
 
 func TestLoginCorrect(t *testing.T) {
 	// Testing
-	message := Login(tc.Username, tc.Password, tc.AdmiralAddress)
+	message, _ := Login(tc.Username, tc.Password, tc.AdmiralAddress)
 
 	// Validating
 	if message != "Login successful." {
@@ -49,10 +49,10 @@ func TestLoginCorrect(t *testing.T) {
 
 func TestLoginIncorrect(t *testing.T) {
 	// Testing
-	message := Login("invalidUsername", "invalidPass", tc.AdmiralAddress)
+	_, err := Login("invalidUsername", "invalidPass", tc.AdmiralAddress)
 
 	// Validating
-	if message != "Login failed." {
-		t.Errorf("Expected message = Login failed. got %s", message)
+	if err != LoginFailedError {
+		t.Errorf("Expected error: %s. got %s", LoginFailedError, err)
 	}
 }
