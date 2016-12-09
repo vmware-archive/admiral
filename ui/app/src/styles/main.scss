@@ -2261,28 +2261,158 @@ header .branding img {
   }
 }
 
+.request-heading {
+  font-size: 12px;
+  background-color: white;
+}
+
 .request-graph {
   position: relative;
+  z-index: 0;
+
+
+  .info {
+    word-wrap: break-word;
+    font-size: 12px;
+    padding-left: 5px;
+    padding-right: 5px;
+
+    .left {
+      color: #4c4c4c;
+    }
+    .right {
+      color: #0b40c8;
+    }
+  }
+  .children {
+    font-weight: bold;
+    font-size: 13px;
+  }
+
+  .resource-name {
+    color: #b00000;
+    font-weight: 600;
+  }
+
+  .task-header {
+    border: 2px solid grey;
+    border-radius: 10px;
+    margin: 5px;
+    background-color: #ededed;
+  }
+
+  .task-name {
+    color: #0b40c8;
+    word-wrap: break-word;
+    padding: 5px;
+    font-size: 13px;
+
+    span {
+      font-weight: bold;
+    }
+  }
+
+  .task-time {
+    color: #4c4c4c;
+    padding: 5px;
+    border-radius: 20px;
+    height: 50px;
+    font-size: 11px;
+    text-align: center;
+  }
 
   .task-stage {
     position: absolute;
-    border: 1px solid black;
-    border-radius: 10px;
-    height: 100px;
-    width: 150px;
-    word-break: break-all;
+    border: 2px solid grey;
+    border-radius: 20px;
+    height: 110px;
+    width: 200px;
+    word-break: keep-all;
 
-    .stage {
-      margin: 5px;
+    .stage-info {
+      font-size: 12px;
+      color: #000000;
     }
-    .substage {
-      margin-left: 5px;
-      margin-right: 5px;
+
+    .sub-task-title {
+      margin: 5px;
+      color: blue;
+      text-align: center;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .basic-info {
+      position: absolute;
+      top: 40px;
+      left: 40px;
+      display: none;
+      background-color: lightyellow;
+      color: darkgray;
+      border: 1px solid darkgray;
+      border-radius: 5px;
+      padding: 3px;
+      z-index: 3;
+    }
+
+    .sub-task-title:hover {
+      .basic-info {
+        display: block;
+      }
     }
   }
 
   .task {
     width: 200px;
     position: absolute;
+  }
+
+  .request-graph-general-info {
+    position: absolute;
+    top: 30px;
+    left: 5px;
+    width: 250px;
+    min-height: 100px;
+    background-color: #cccccc;
+    opacity: 0.9;
+    border: 2px solid lightcoral;
+    border-radius: 5px;
+    padding: 5px;
+    word-break: break-all;
+  }
+
+  .errMsg {
+    color: red;
+    padding: 2px;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: center;
+
+    .msg {
+      position: absolute;
+      top: 40px;
+      left: 20px;
+      display: none;
+      background-color: lightyellow;
+      color: red;
+      border: 1px solid red;
+      border-radius: 5px;
+      padding: 2px;
+      z-index: 3;
+      width: 200px;
+      word-break: break-all;
+    }
+
+    .general {
+      top: 40px;
+      left: 50px;
+      width: 250px;
+    }
+  }
+  .errMsg:hover {
+    text-decoration: underline;
+    .msg {
+      display: block;
+    }
   }
 }

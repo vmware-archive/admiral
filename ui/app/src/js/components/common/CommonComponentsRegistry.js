@@ -48,3 +48,4 @@ import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmati
 import VueModal from 'components/common/VueModal';
 import SideNavigation from 'components/common/SideNavigation';
 import VueClrIconClose from 'components/common/VueClrIconClose';
+import RequestGraph from 'components/requests/RequestGraph';

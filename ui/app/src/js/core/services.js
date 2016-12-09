@@ -1894,12 +1894,20 @@ services.importContainerTemplate = function(template) {
   });
 };
 
+services.loadContainerDescription = function(containerDescriptionLink) {
+  return get(containerDescriptionLink);
+};
+
 services.createContainerDescription = function(containerDescription) {
   return post(links.CONTAINER_DESCRIPTIONS, containerDescription);
 };
 
 services.updateContainerDescription = function(containerDescription) {
   return put(containerDescription.documentSelfLink, containerDescription);
+};
+
+services.loadNetworkDescription = function(networkDescriptionLink) {
+  return get(networkDescriptionLink);
 };
 
 services.createNetworkDescription = function(networkDescription) {
