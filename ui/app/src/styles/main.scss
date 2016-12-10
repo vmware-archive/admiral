@@ -2415,4 +2415,9 @@ header .branding img {
       display: block;
     }
   }
+
+  .tooltip-inner {
+    max-width:none;
+    white-space:pre-wrap;
+  }
 }

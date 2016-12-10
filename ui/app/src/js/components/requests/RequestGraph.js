@@ -126,6 +126,8 @@ var RequestGraphVueComponent = Vue.extend({
         taskStage.css('top', currentY + 'px').addClass('visited');
         taskStage.css('background-color', this.getTaskTypeColor(stage.documentSelfLink));
 
+        taskStage.tooltip({html: true});
+
         if (source) { // draw connection
           this.jsplumbInstance.connect({
             source: source[0],
