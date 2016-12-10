@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.request;
 
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -21,6 +22,11 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -32,6 +38,8 @@ import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.serialization.JsonMapper;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
@@ -60,6 +68,7 @@ public class RequestBrokerGraphService extends StatelessService {
         public Object taskSubStage;
         public ServiceTaskCallback serviceTaskCallback;
         public TaskState taskInfo;
+        public JsonObject properties;
     }
 
     public static class TaskServiceStageWithLink {
@@ -68,6 +77,7 @@ public class RequestBrokerGraphService extends StatelessService {
         public String documentSelfLink;
         public long documentUpdateTimeMicros;
         public TransitionSource transitionSource;
+        public JsonObject properties;
     }
 
     public static class TransitionSource {
@@ -80,6 +90,15 @@ public class RequestBrokerGraphService extends StatelessService {
         String documentSelfLink;
         long createdTimeMicros;
         List<TaskServiceStage> stages;
+    }
+
+    @Override
+    public void handleStart(Operation startPost) {
+        super.handleStart(startPost);
+
+        Utils.registerCustomJsonMapper(TaskServiceStage.class,
+                new JsonMapper((b) -> b.registerTypeAdapter(TaskServiceStage.class,
+                        new TaskServiceStageDeserializer())));
     }
 
     @Override
@@ -226,6 +245,7 @@ public class RequestBrokerGraphService extends StatelessService {
         firstStageWithLink.documentUpdateTimeMicros = firstStage.documentUpdateTimeMicros;
         firstStageWithLink.taskSubStage = firstStage.taskSubStage;
         firstStageWithLink.taskInfo = firstStage.taskInfo;
+        firstStageWithLink.properties = firstStage.properties;
 
         if (firstStage.serviceTaskCallback != null && !firstStage.serviceTaskCallback.isEmpty()) {
             TransitionSource transitionSource = getTransitionSource(
@@ -248,6 +268,7 @@ public class RequestBrokerGraphService extends StatelessService {
             stageWithLink.documentUpdateTimeMicros = stage.documentUpdateTimeMicros;
             stageWithLink.taskSubStage = stage.taskSubStage;
             stageWithLink.taskInfo = stage.taskInfo;
+            stageWithLink.properties = stage.properties;
 
             TransitionSource transitionSource = new TransitionSource();
             transitionSource.documentSelfLink = result.documentSelfLink;
@@ -356,5 +377,44 @@ public class RequestBrokerGraphService extends StatelessService {
         }
 
         return null;
+    }
+
+    public static final class TaskServiceStageDeserializer
+            implements JsonDeserializer<TaskServiceStage> {
+        @Override
+        public TaskServiceStage deserialize(JsonElement json, Type type,
+                JsonDeserializationContext context) throws JsonParseException {
+
+            JsonObject jobject = (JsonObject) json;
+
+            TaskServiceStage stage = new TaskServiceStage();
+            try {
+                stage.documentSelfLink = jobject.get("documentSelfLink").getAsString();
+                stage.serviceTaskCallback = Utils.fromJson(jobject.get("serviceTaskCallback"),
+                        ServiceTaskCallback.class);
+                stage.taskInfo = Utils.fromJson(jobject.get("taskInfo"), TaskState.class);
+                stage.taskSubStage = jobject.get("taskSubStage").getAsString();
+                stage.documentUpdateTimeMicros = jobject.get("documentUpdateTimeMicros")
+                        .getAsLong();
+                stage.documentVersion = jobject.get("documentVersion").getAsLong();
+                stage.properties = jobject;
+
+                stage.properties.remove("documentSelfLink");
+                stage.properties.remove("serviceTaskCallback");
+                stage.properties.remove("taskInfo");
+                stage.properties.remove("taskSubStage");
+                stage.properties.remove("documentVersion");
+                stage.properties.remove("documentUpdateTimeMicros");
+                stage.properties.remove("documentEpoch");
+                stage.properties.remove("documentKind");
+                stage.properties.remove("documentUpdateAction");
+                stage.properties.remove("documentExpirationTimeMicros");
+                stage.properties.remove("documentOwner");
+            } catch (Exception e) {
+                System.out.println(e);
+            }
+
+            return stage;
+        }
     }
 }
