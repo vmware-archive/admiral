@@ -116,7 +116,7 @@ var TemplatesViewVueComponent = Vue.extend({
           !this.model.selectedItemDetails.addClosureView);
     },
     showClosureContextPanel: function() {
-      return this.model.selectedItemDetails.addClosureView;
+      return this.model.selectedItemDetails && this.model.selectedItemDetails.addClosureView;
     },
     areClosuresAllowed: function() {
       return utils.areClosuresAllowed();
