@@ -111,7 +111,7 @@ var RequestGraphVueComponent = Vue.extend({
             stage.transitionSource.subStage + '"][data-updatetime="' +
             stage.transitionSource.documentUpdateTimeMicros + '"]');
           if (source.length === 0) {
-            return;
+            continue;
           } else {
             var offset = source.offset();
             currentY = offset.top + source.height() + PADDINGY;

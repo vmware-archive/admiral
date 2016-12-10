@@ -295,11 +295,25 @@ public class RequestBrokerGraphService extends StatelessService {
         ServiceTaskCallbackResponse failedResponseResponse = callback
                 .getFailedResponse((ServiceErrorResponse) null);
         for (TaskServiceStageWithLink stage : task.stages) {
-            if (stage.taskSubStage.equals(finishedResponse.taskSubStage)
-                    || stage.taskSubStage.equals(failedResponseResponse.taskSubStage)) {
+            if (equalsStages(stage, finishedResponse) ||
+                    equalsStages(stage, failedResponseResponse)) {
                 stage.transitionSource = transitionSource;
             }
         }
+    }
+
+    private static boolean equalsStages(TaskServiceStageWithLink stage,
+            ServiceTaskCallbackResponse response) {
+        return stage.taskSubStage.equals(response.taskSubStage)
+                && equalsTaskStateStages(stage.taskInfo, response.taskInfo);
+    }
+
+    private static boolean equalsTaskStateStages(TaskState state1, TaskState state2) {
+        if (state1 != null && state2 != null) {
+            return state1.stage.equals(state2.stage);
+        }
+
+        return false;
     }
 
     private static TransitionSource getTransitionSource(String taskCallbackDocumentSelfLink,
