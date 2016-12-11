@@ -64,7 +64,7 @@ var RequestGraphVueComponent = Vue.extend({
         ConnectionOverlays: [['Arrow', {
           location: 1
         }]],
-        Container: $(this.$el).find('.request-graph')[0]
+        Container: $(this.$el).find('.graph-container')[0]
       });
 
       this.jsplumbInstance['pointer-events'] = 'all';
@@ -113,7 +113,7 @@ var RequestGraphVueComponent = Vue.extend({
           if (source.length === 0) {
             continue;
           } else {
-            var offset = source.offset();
+            var offset = source.position();
             currentY = offset.top + source.height() + PADDINGY;
           }
         }
