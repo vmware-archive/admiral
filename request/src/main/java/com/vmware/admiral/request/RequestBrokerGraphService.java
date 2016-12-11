@@ -15,6 +15,7 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.request.graph.ComponentRequestVisitor;
+import com.vmware.admiral.request.graph.ContainerRequestVisitor;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
@@ -56,6 +59,7 @@ public class RequestBrokerGraphService extends StatelessService {
 
     public static class Response {
         List<TaskServiceDocumentHistory> tasks;
+        List<Object> requestInfos;
     }
 
     public static class TaskServiceDocumentHistory {
@@ -118,6 +122,7 @@ public class RequestBrokerGraphService extends StatelessService {
             } else {
                 Response r = new Response();
                 r.tasks = convert(foundTasks);
+                r.requestInfos = getRequestInfos(r.tasks);
                 get.setBody(r);
                 get.complete();
             }
@@ -417,4 +422,47 @@ public class RequestBrokerGraphService extends StatelessService {
             return stage;
         }
     }
+
+    private static List<Object> getRequestInfos(List<TaskServiceDocumentHistory> tasks) {
+        Map<String, TaskServiceStageWithLink> allStages = new HashMap<>();
+
+        for (TaskServiceDocumentHistory task : tasks) {
+            for (TaskServiceStageWithLink stage : task.stages) {
+                allStages.put(ComponentRequestVisitor.getStageId(stage), stage);
+            }
+        }
+
+        List<TaskServiceStageWithLink> sortedStages = new ArrayList<>(allStages.values());
+        sortedStages.sort((t1, t2) -> {
+            if (t1.documentUpdateTimeMicros < t2.documentUpdateTimeMicros) {
+                return 1;
+            } else if (t1.documentUpdateTimeMicros > t2.documentUpdateTimeMicros) {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
+
+        return getRequestInfos(sortedStages, allStages);
+    }
+
+    private static List<Object> getRequestInfos(List<TaskServiceStageWithLink> sortedStages,
+            Map<String, TaskServiceStageWithLink> allStages) {
+
+        List<ComponentRequestVisitor> visitors = Arrays.asList(new ContainerRequestVisitor());
+        // TODO: implement other visitors for network, compute, etc 
+
+        List<Object> result = new ArrayList<>();
+
+        for (TaskServiceStageWithLink stage : sortedStages) {
+            for (ComponentRequestVisitor visitor : visitors) {
+                if (visitor.accepts(stage)) {
+                    result.add(visitor.visit(stage, allStages));
+                }
+            }
+        }
+
+        return result;
+    }
+
 }
