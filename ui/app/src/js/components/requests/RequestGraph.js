@@ -156,8 +156,6 @@ var RequestGraphVueComponent = Vue.extend({
         taskStage.css('top', currentY + 'px').addClass('visited');
         taskStage.css('background-color', this.getTaskTypeColor(stage.documentSelfLink));
 
-        taskStage.tooltip({html: true});
-
         if (source) { // draw connection
           this.jsplumbInstance.connect({
             source: source[0],
@@ -174,6 +172,10 @@ var RequestGraphVueComponent = Vue.extend({
       var date = new Date(timeStamp / 1000); // timestamp is in micro seconds
 
       return date.toUTCString();
+    },
+
+    prettyJson: function(obj) {
+      return JSON.stringify(obj, null, 2);
     },
 
     displayTasksType: function(link) {
