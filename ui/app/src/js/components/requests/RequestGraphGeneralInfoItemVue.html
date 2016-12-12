@@ -20,6 +20,10 @@
     <div class="info"><span class="left">Environment:</span>&nbsp;<span class="right">TODO</span></div>-->
     <div v-for="info in model.infos" track-by="$index">
       <br/>&nbsp;-&nbsp;{{info.resourceDescription.name}}
+      <div class="simple-info">
+        <span class="left">Type:</span>
+        <span class="right">{{info.type}}</span>
+      </div>
       <template v-if="info.resourceDescription._cluster > 0">
         <div class="simple-info">cluster of {{info.resourceDescription._cluster}}</div>
       </template>
@@ -31,18 +35,17 @@
 
       <div class="simple-info" v-if="info.placement">
         <span class="left">Placement:</span>
-        <span class="right">{{info.placement.name}}</span>
+        <a class="right" href="#">{{info.placement.name}}</a>
       </div>
       <div class="simple-info" v-if="info.placementZone">
         <span class="left">Placement Zone:</span>
-        <span class="right">{{info.placementZone.name}}</span>
+        <a class="right" href="#">{{info.placementZone.name}}</a>
       </div>
       <div class="simple-info" v-if="info.hosts">
         <span class="left">Host(s) Selected:</span>
         <span class="right">
-          <template v-for="host in info.hosts" class="host" track-by="$index">
-          {{getHostName(host)}}</template
-        ></span>
+          <a v-for="host in info.hosts" class="host" track-by="$index" href="#">{{getHostName(host)}}</a>
+        </span>
       </div>
     </div>
   </div>

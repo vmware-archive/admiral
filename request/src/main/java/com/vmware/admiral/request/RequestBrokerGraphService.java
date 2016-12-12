@@ -28,11 +28,13 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.graph.ComponentRequestVisitor;
 import com.vmware.admiral.request.graph.ContainerRequestVisitor;
+import com.vmware.admiral.request.graph.NetworkRequestVisitor;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
@@ -462,8 +464,9 @@ public class RequestBrokerGraphService extends StatelessService {
     private static List<Object> getRequestInfos(List<TaskServiceStageWithLink> sortedStages,
             Map<String, TaskServiceStageWithLink> allStages) {
 
-        List<ComponentRequestVisitor> visitors = Arrays.asList(new ContainerRequestVisitor());
-        // TODO: implement other visitors for network, compute, etc 
+        List<ComponentRequestVisitor> visitors = Arrays.asList(new ContainerRequestVisitor(),
+                new NetworkRequestVisitor());
+        // TODO: implement other visitors for network, compute, etc
 
         List<Object> result = new ArrayList<>();
 
