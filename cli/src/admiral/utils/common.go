@@ -25,7 +25,7 @@ var (
 
 //PromptAgreement is asking the user to enter either "y"/"yes" or "n"/"no".
 //Returns the user's answer.
-func PromptAgreement() string {
+func PromptAgreement() bool {
 	var answer string
 	for {
 		fmt.Scanf("%s", &answer)
@@ -34,7 +34,10 @@ func PromptAgreement() string {
 			break
 		}
 	}
-	return answer
+	if answer == "yes" || answer == "y" {
+		return true
+	}
+	return false
 }
 
 //ShortString is trimming string to desired length and adding three dots in the end of it.

@@ -19,6 +19,7 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/utils"
+	"admiral/utils/urlutils"
 	"bytes"
 	"fmt"
 	"strconv"
@@ -74,9 +75,16 @@ type EventList struct {
 	DocumentLinks []string             `json:"documentLinks"`
 }
 
+func (el *EventList) GetCount() int {
+	return len(el.DocumentLinks)
+}
+
 //FetchEvents fetches all events and returns their count.
 func (el *EventList) FetchEvents() (int, error) {
-	url := config.URL + "/resources/event-logs?documentType=true&$count=false&$limit=1000&$orderby=documentExpirationTimeMicros+desc"
+	cqm := urlutils.GetCommonQueryMap()
+	cqm["$orderby"] = "documentExpirationTimeMicros+desc"
+	url := urlutils.BuildUrl(urlutils.Events, cqm, true)
+
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -89,7 +97,7 @@ func (el *EventList) FetchEvents() (int, error) {
 
 //Print already fetched events.
 func (el *EventList) GetOutputString() string {
-	if el.TotalCount < 1 {
+	if el.GetCount() < 1 {
 		return utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer

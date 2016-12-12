@@ -21,6 +21,7 @@ import (
 	"admiral/config"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 )
 
 type Closure struct {
@@ -48,7 +49,7 @@ func (cl *ClosureList) GetResource(index int) selflink.Identifiable {
 }
 
 func (cl *ClosureList) FetchClosures() (int, error) {
-	url := config.URL + "/resources/closures?documentType=true&$count=true&$limit=19&$orderby="
+	url := urlutils.BuildUrl(urlutils.Closure, urlutils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {

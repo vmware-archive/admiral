@@ -12,25 +12,23 @@
 package cmd
 
 import (
-	"strings"
-
 	"admiral/logs"
 
 	"github.com/spf13/cobra"
 )
 
 var (
-	since     int32
-	sinceDesc = "Since when to show logs."
+	since     int
+	sinceDesc = "Since when to show logs. (minutes)"
 )
 
 func init() {
-	logsCmd.Flags().Int32VarP(&since, "since", "s", 15, "Since when to show logs.(minutes)")
+	logsCmd.Flags().IntVarP(&since, "since", "s", 15, sinceDesc)
 	RootCmd.AddCommand(logsCmd)
 }
 
 var logsCmd = &cobra.Command{
-	Use:   "logs [CONTAINER]",
+	Use:   "logs [CONTAINER-ID]",
 	Short: "Fetch the logs of a container",
 	Long:  "Fetch the logs of a container",
 
@@ -41,7 +39,13 @@ var logsCmd = &cobra.Command{
 }
 
 func RunLogs(args []string) (string, error) {
-	contName := strings.Join(args, " ")
+	var (
+		ok bool
+		id string
+	)
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", MissingContainerIdError
+	}
 	sinceSecs := since * 60
-	return logs.GetLog(contName, string(sinceSecs))
+	return logs.GetLog(id, sinceSecs)
 }

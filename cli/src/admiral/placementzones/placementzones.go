@@ -24,6 +24,7 @@ import (
 	"admiral/tags"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 	"fmt"
 	"os"
 	"strconv"
@@ -179,7 +180,7 @@ func (pzl *PlacementZoneList) GetResource(index int) selflink.Identifiable {
 }
 
 func (rpl *PlacementZoneList) FetchPZ() (int, error) {
-	url := config.URL + "/resources/elastic-placement-zones-config?documentType=true&expand=true"
+	url := urlutils.BuildUrl(urlutils.ElasticPlacementZone, urlutils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -232,7 +233,7 @@ func RemovePZID(id string) (string, error) {
 }
 
 func AddPZ(rpName string, custProps, tags []string) (string, error) {
-	url := config.URL + "/resources/elastic-placement-zones-config"
+	url := urlutils.BuildUrl(urlutils.ElasticPlacementZone, nil, true)
 
 	cp := make(map[string]*string, 0)
 	properties.ParseCustomProperties(custProps, cp)

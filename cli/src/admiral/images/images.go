@@ -18,8 +18,8 @@ import (
 	"strings"
 
 	"admiral/client"
-	"admiral/config"
 	"admiral/utils"
+	"admiral/utils/urlutils"
 	"bytes"
 )
 
@@ -114,7 +114,10 @@ func cutImgName(name string) string {
 //QueryImages fetches images matching the imgName parameter.
 //The function returns the count of the fetched images.
 func (li *ImagesList) QueryImages(imgName string) (int, error) {
-	url := config.URL + "/templates?&documentType=true&imagesOnly=true&q=" + imgName
+	//url := config.URL + "/templates?&documentType=true&imagesOnly=true&q=" + imgName
+	cqm := urlutils.GetCommonQueryMap()
+	cqm["q"] = imgName
+	url := urlutils.BuildUrl(urlutils.Image, cqm, true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -131,7 +134,7 @@ type PopularImages []Image
 //This function is called when user execute "admiral search"
 //without passing any name as parameter.
 func GetPopular() (string, error) {
-	url := config.URL + "/popular-images?documentType=true"
+	url := urlutils.BuildUrl(urlutils.PopularImages, urlutils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {

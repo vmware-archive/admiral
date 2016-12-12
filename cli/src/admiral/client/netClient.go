@@ -317,7 +317,7 @@ func promptCertAgreement(cert *x509.Certificate) bool {
 	fmt.Println("Are you sure you want to connect to this site? (y/n)?")
 	answer := utils.PromptAgreement()
 
-	if answer == "n" || answer == "N" {
+	if !answer {
 		return false
 	}
 	return true
@@ -375,7 +375,7 @@ func containsCert(cert *x509.Certificate) bool {
 func urlRemoveTrailingSlash(url string) string {
 	newUrl := []rune(url)
 	if strings.HasSuffix(url, "/") {
-		newUrl = newUrl[0 : len(newUrl)-2]
+		newUrl = newUrl[0 : len(newUrl)-1]
 	}
 	return string(newUrl)
 }

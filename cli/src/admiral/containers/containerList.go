@@ -19,9 +19,9 @@ import (
 	"strings"
 
 	"admiral/client"
-	"admiral/config"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 )
 
 type ListContainers struct {
@@ -43,12 +43,14 @@ func (lc *ListContainers) GetResource(index int) selflink.Identifiable {
 //In case you want to fetch all containers, pass empty string as parameter.
 //The return result is the count of fetched containers.
 func (lc *ListContainers) FetchContainers(queryF string) (int, error) {
-	url := config.URL + "/resources/containers?documentType=true&$count=true&$limit=10000&$orderby=documentSelfLink+asc&$filter=system+ne+true"
-	var query string
+	cqm := urlutils.GetCommonQueryMap()
+	cqm["$orderby"] = "documentSelfLink+asc"
+	cqm["$filter"] = "system+ne+true"
 	if strings.TrimSpace(queryF) != "" {
-		query = fmt.Sprintf("&$filter=ALL_FIELDS+eq+'*%s*'", queryF)
-		url = url + query
+		queryFilter := fmt.Sprintf("+and+ALL_FIELDS+eq+'*%s*'", queryF)
+		cqm["$filter"] = cqm["$filter"].(string) + queryFilter
 	}
+	url := urlutils.BuildUrl(urlutils.Container, cqm, true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {

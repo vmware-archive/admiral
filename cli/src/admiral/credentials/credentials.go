@@ -30,6 +30,8 @@ import (
 
 	"admiral/utils/selflink"
 
+	"admiral/utils/urlutils"
+
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -82,7 +84,9 @@ func (lc *ListCredentials) GetCount() int {
 //FetchCredentials fetches all credentials. It return the count
 //of fetched credentials.
 func (lc *ListCredentials) FetchCredentials() (int, error) {
-	url := config.URL + "/core/auth/credentials?documentType=true&expand=true&$filter=customProperties/scope%20ne%20%27SYSTEM%27"
+	cqm := urlutils.GetCommonQueryMap()
+	cqm["$filter"] = "customProperties/scope%20ne%20%27SYSTEM%27"
+	url := urlutils.BuildUrl(urlutils.Credentials, cqm, true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -164,7 +168,7 @@ func GetCredentialsLinks(name string) []string {
 //take a look at "properties" package.
 func AddByUsername(name, userName, passWord string,
 	custProps []string) (string, error) {
-	url := config.URL + "/core/auth/credentials"
+	url := urlutils.BuildUrl(urlutils.Credentials, nil, true)
 	reader := bufio.NewReader(os.Stdin)
 
 	if userName == "" {
@@ -212,7 +216,7 @@ func AddByUsername(name, userName, passWord string,
 //take a look at "properties" package.
 func AddByCert(name, publicCert, privateCert string,
 	custProps []string) (string, error) {
-	url := config.URL + "/core/auth/credentials"
+	url := urlutils.BuildUrl(urlutils.Credentials, nil, true)
 	bytePrivate, err := ioutil.ReadFile(privateCert)
 	if err != nil {
 		return "", err

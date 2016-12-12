@@ -20,12 +20,12 @@ import (
 
 	"admiral/businessgroups"
 	"admiral/client"
-	"admiral/config"
 	"admiral/images"
 	"admiral/projects"
 	"admiral/track"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 )
 
 type LogConfig struct {
@@ -224,7 +224,7 @@ func (cd *ContainerDescription) RunContainer(tenantLinkId string, asyncTask bool
 		return "", err
 	}
 
-	url := config.URL + "/requests"
+	url := urlutils.BuildUrl(urlutils.RequestBrokerService, nil, true)
 	runContainer := &RunContainer{
 		ResourceType:            "DOCKER_CONTAINER",
 		ResourceDescriptionLink: linkToRun,
@@ -252,7 +252,7 @@ func (cd *ContainerDescription) RunContainer(tenantLinkId string, asyncTask bool
 // Resource Description Link needed to provision container.
 func (cd *ContainerDescription) getContainerDescriptionRunLink() (string, error) {
 	var runLink string
-	url := config.URL + "/resources/container-descriptions"
+	url := urlutils.BuildUrl(urlutils.ContainerDescription, nil, true)
 	jsonBody, err := json.MarshalIndent(cd, "", "    ")
 	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))

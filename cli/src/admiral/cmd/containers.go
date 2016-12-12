@@ -152,7 +152,7 @@ func RunContainersRemove(args []string) (string, error) {
 			if !autoAccept {
 				fmt.Printf("Are you sure you want to remove %s? (y/n)\n", strings.Join(args, " "))
 				answer := utils.PromptAgreement()
-				if answer == "n" || answer == "no" {
+				if !answer {
 					return "", errors.New("Remove command aborted.")
 				}
 				resIDs, err = containers.RemoveContainer(args, asyncTask)

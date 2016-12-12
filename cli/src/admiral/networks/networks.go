@@ -27,6 +27,7 @@ import (
 	"admiral/track"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 )
 
 var (
@@ -174,7 +175,7 @@ func (no *NetworkOperation) SetHosts(hostsIds []string) {
 }
 
 func (nl *NetworkList) FetchNetworks() (int, error) {
-	url := config.URL + "/resources/container-networks?expand"
+	url := urlutils.BuildUrl(urlutils.Network, urlutils.GetCommonQueryMap(), true)
 	req, err := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -246,7 +247,7 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 	network.SetCustomProperties(customProperties)
 	network.SetIPAMConfig(subnets, gateways, ipranges, ipamDriver)
 
-	url := config.URL + "/resources/container-network-descriptions"
+	url := urlutils.BuildUrl(urlutils.NetworkDescription, nil, true)
 	jsonBody, err := json.Marshal(network)
 	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
@@ -272,7 +273,7 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 func processNetworkOperation(no *NetworkOperation, asyncTask bool) ([]string, error) {
 	jsonBody, err := json.Marshal(no)
 	utils.CheckBlockingError(err)
-	url := config.URL + "/requests"
+	url := urlutils.BuildUrl(urlutils.RequestBrokerService, nil, true)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {

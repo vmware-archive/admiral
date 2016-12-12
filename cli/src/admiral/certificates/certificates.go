@@ -25,6 +25,7 @@ import (
 	"admiral/config"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 )
 
 var (
@@ -90,7 +91,7 @@ func (cl *CertificateList) GetResource(index int) selflink.Identifiable {
 
 //FetchCertificates is fetching all certificates and returns their count.
 func (cl *CertificateList) FetchCertificates() (int, error) {
-	url := config.URL + "/config/trust-certs?expand"
+	url := urlutils.BuildUrl(urlutils.Certificate, urlutils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -228,7 +229,7 @@ func AddFromFile(dirF string) (string, error) {
 		Certificate: string(importFile),
 	}
 	jsonBody, err := json.Marshal(cff)
-	url := config.URL + "/config/trust-certs"
+	url := urlutils.BuildUrl(urlutils.Certificate, nil, true)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -273,7 +274,7 @@ func CheckTrustCert(respBody []byte, autoAccept bool) bool {
 	cert := &Certificate{}
 	err := json.Unmarshal(respBody, cert)
 	utils.CheckBlockingError(err)
-	url := config.URL + "/config/trust-certs"
+	url := urlutils.BuildUrl(urlutils.Certificate, nil, true)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(respBody))
 	req.Header.Add("Pragma", "xn-force-index-update")
 	if autoAccept {
@@ -284,7 +285,7 @@ func CheckTrustCert(respBody []byte, autoAccept bool) bool {
 	fmt.Println("Are you sure you want to connect to this site? (y/n)?")
 	answer := utils.PromptAgreement()
 
-	if answer == "No" || answer == "no" {
+	if !answer {
 		return false
 	}
 

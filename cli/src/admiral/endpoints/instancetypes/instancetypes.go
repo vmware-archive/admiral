@@ -24,6 +24,7 @@ import (
 	"admiral/endpoints"
 	"admiral/hosts"
 	"admiral/utils"
+	"admiral/utils/urlutils"
 )
 
 type EndpointType int
@@ -55,7 +56,7 @@ type EnvMapping struct {
 
 func (em *EnvMapping) fetchMappings(e EndpointType) error {
 	config.GetCfg()
-	url := config.URL + "/config/env-mapping/" + e.getName()
+	url := urlutils.BuildUrl(urlutils.EnvMapping, nil, true) + e.getName()
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {

@@ -17,27 +17,32 @@ import (
 	"net/http"
 
 	"admiral/client"
-	"admiral/config"
+	"admiral/containers"
 	"admiral/utils"
+	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 )
 
 type LogResponse struct {
 	Logs string `json:"logs"`
 }
 
-func GetLog(contName, since string) (string, error) {
-	id := "id=" + contName
-	sinceQ := "&since=" + since
+func GetLog(id string, since int) (string, error) {
+	fullId, err := selflink.GetFullId(id, new(containers.ListContainers), utils.CONTAINER)
+	utils.CheckBlockingError(err)
 
-	url := config.URL + "/resources/container-logs?" + id + sinceQ
-	lresp := &LogResponse{}
+	queryMap := make(map[string]interface{})
+	queryMap["id"] = fullId
+	queryMap["since"] = since
+	url := urlutils.BuildUrl(urlutils.ContainerLogs, queryMap, true)
 
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return "", respErr
 	}
-	err := json.Unmarshal(respBody, lresp)
+	lresp := &LogResponse{}
+	err = json.Unmarshal(respBody, lresp)
 	utils.CheckBlockingError(err)
 	log, err := base64.StdEncoding.DecodeString(lresp.Logs)
 	if err != nil {

@@ -27,6 +27,7 @@ import (
 	"admiral/track"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 )
 
 var (
@@ -54,7 +55,7 @@ func StartApp(name string, asyncTask bool) ([]string, error) {
 // boolean to specify if waiting for this task is needed.
 // Usage of short unique IDs is supported for this operation.
 func StartAppID(id string, asyncTask bool) ([]string, error) {
-	url := config.URL + "/requests"
+	url := urlutils.BuildUrl(urlutils.RequestBrokerService, nil, true)
 	var (
 		resLinks []string
 		err      error
@@ -102,7 +103,7 @@ func StopApp(name string, asyncTask bool) ([]string, error) {
 // boolean to specify if waiting for this task is needed.
 // Usage of short unique IDs is supported for this operation.
 func StopAppID(id string, asyncTask bool) ([]string, error) {
-	url := config.URL + "/requests"
+	url := urlutils.BuildUrl(urlutils.RequestBrokerService, nil, true)
 	var (
 		resLinks []string
 		err      error
@@ -151,7 +152,7 @@ func RemoveApp(name string, asyncTask bool) ([]string, error) {
 // boolean to specify if waiting for this task is needed.
 // Usage of short unique IDs is supported for this operation.
 func RemoveAppID(id string, asyncTask bool) ([]string, error) {
-	url := config.URL + "/requests"
+	url := urlutils.BuildUrl(urlutils.RequestBrokerService, nil, true)
 
 	fullIds, err := selflink.GetFullIds([]string{id}, new(ListApps), utils.APPLICATION)
 	utils.CheckBlockingError(err)
@@ -271,7 +272,7 @@ func (this *appProvisionOperation) run(asyncTask bool) ([]string, error) {
 		links []string
 		err   error
 	)
-	url := config.URL + "/requests"
+	url := urlutils.BuildUrl(urlutils.RequestBrokerService, nil, true)
 
 	jsonBody, err := json.Marshal(this)
 	utils.CheckBlockingError(err)

@@ -23,6 +23,7 @@ import (
 	"admiral/containers"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 )
 
 type App struct {
@@ -108,12 +109,11 @@ func (la *ListApps) GetResource(index int) selflink.Identifiable {
 // FetchApps makes REST call to populate ListApps object
 // with Apps. The url of this call is /resources/composite-components/
 func (la *ListApps) FetchApps(queryF string) (int, error) {
-	url := config.URL + "/resources/composite-components?documentType=true&$count=true&$limit=21&$orderby=documentSelfLink+asc"
-	var query string
+	cqm := urlutils.GetCommonQueryMap()
 	if strings.TrimSpace(queryF) != "" {
-		query = fmt.Sprintf("&$filter=ALL_FIELDS+eq+'*%s*'", queryF)
-		url = url + query
+		cqm["$filter"] = fmt.Sprintf("ALL_FIELDS+eq+'*%s*'", queryF)
 	}
+	url := urlutils.BuildUrl(urlutils.CompositeComponent, cqm, true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -128,7 +128,7 @@ func (la *ListApps) FetchApps(queryF string) (int, error) {
 // about applications only. It is used from "app ls" command, and
 // this string requires formatting before printing it to the console.
 func (listApps *ListApps) GetOutputStringWithoutContainers() string {
-	if listApps.TotalCount < 1 {
+	if listApps.GetCount() < 1 {
 		return utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer

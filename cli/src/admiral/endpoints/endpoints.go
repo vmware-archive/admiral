@@ -22,18 +22,19 @@ import (
 	"admiral/config"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 )
 
 const (
 	AzureEndpoint   = "azure"
 	AwsEndpoint     = "aws"
 	VsphereEndpoint = "vsphere"
-
-	AddEndpointUrl   = "/config/endpoints?enumerate"
-	FetchEndpointUrl = "/config/endpoints?documentType=true&expand=true"
 )
 
 var (
+	AddEndpointUrl   = "/config/endpoints?enumerate"
+	FetchEndpointUrl = urlutils.BuildUrl(urlutils.Endpoint, urlutils.GetCommonQueryMap(), true)
+
 	RequiredParametersMissingError = errors.New("Required parameters are missing.")
 )
 
@@ -96,7 +97,7 @@ func (el *EndpointList) GetResource(index int) selflink.Identifiable {
 }
 
 func (el *EndpointList) FetchEndpoints() (int, error) {
-	url := config.URL + FetchEndpointUrl
+	url := urlutils.BuildUrl(urlutils.Endpoint, urlutils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -167,7 +168,9 @@ func processEndpointAddRequest(endpoint *Endpoint) (string, error) {
 	jsonBody, err := json.Marshal(endpoint)
 	utils.CheckBlockingError(err)
 
-	url := config.URL + AddEndpointUrl
+	cqm := urlutils.GetCommonQueryMap()
+	cqm["enumerate"] = true
+	url := urlutils.BuildUrl(urlutils.Endpoint, cqm, true)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Pragma", "xn-force-index-update")
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -293,7 +296,7 @@ func processEndpointUpdateRequest(endpoint *Endpoint) (string, error) {
 	jsonBody, err := json.Marshal(endpoint)
 	utils.CheckBlockingError(err)
 
-	url := config.URL + "/config/endpoints" + utils.CreateResLinkForEndpoint(endpoint.GetID())
+	url := urlutils.BuildUrl(urlutils.Endpoint, nil, true) + utils.CreateResLinkForEndpoint(endpoint.GetID())
 	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Pragma", "xn-force-index-update")
 	_, _, respErr := client.ProcessRequest(req)

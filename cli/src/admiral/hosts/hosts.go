@@ -31,6 +31,7 @@ import (
 	"admiral/track"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 	"strconv"
 )
 
@@ -262,13 +263,14 @@ type OperationHost struct {
 //all hosts should be fetched, pass empty string as parameter.
 //Returns the count of fetched hosts.
 func (hl *HostsList) FetchHosts(queryF string) (int, error) {
-	var query string
-	url := config.URL + "/resources/compute?documentType=true&$count=true&$limit=1000&$orderby=documentSelfLink%20asc&$filter=descriptionLink%20ne%20%27/resources/compute-descriptions/*-parent-compute-desc%27%20and%20customProperties/__computeHost%20eq%20%27*%27%20and%20customProperties/__computeContainerHost%20eq%20%27*%27"
-
+	cqm := urlutils.GetCommonQueryMap()
+	cqm["$orderby"] = "documentSelfLink%20asc"
+	cqm["$filter"] = "descriptionLink%20ne%20%27/resources/compute-descriptions/*-parent-compute-desc%27%20and%20customProperties/__computeHost%20eq%20%27*%27%20and%20customProperties/__computeContainerHost%20eq%20%27*%27"
 	if strings.TrimSpace(queryF) != "" {
-		query = fmt.Sprintf("+and+ALL_FIELDS+eq+'*%s*'", queryF)
-		url = url + query
+		query := fmt.Sprintf("+and+ALL_FIELDS+eq+'*%s*'", queryF)
+		cqm["$filter"] = cqm["$filter"].(string) + query
 	}
+	url := urlutils.BuildUrl(urlutils.Compute, cqm, true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -309,7 +311,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 	autoAccept bool,
 	custProps, tags []string) (string, error) {
 
-	url := config.URL + "/resources/hosts"
+	url := urlutils.BuildUrl(urlutils.Host, nil, true)
 
 	if ok, err := allFlagReadyHost(ipF); !ok {
 		return "", err
@@ -393,7 +395,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 //the host is added. Returns the address of the removed host and error = nil, or empty string
 //and error != nil.
 func RemoveHost(id string, asyncTask bool) (string, error) {
-	url := config.URL + "/requests"
+	url := urlutils.BuildUrl(urlutils.RequestBrokerService, nil, true)
 	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinksForHosts(fullId)
@@ -539,7 +541,7 @@ func RemoveCustomProperties(id string, keys []string) error {
 func EditHost(id, name, placementZoneId, deplPolicyF, credId string,
 	autoAccept bool,
 	tagsToAdd, tagsToRemove []string) (string, error) {
-	url := config.URL + "/resources/hosts"
+	url := urlutils.BuildUrl(urlutils.Host, nil, true)
 
 	oldHost, err := getHost(id)
 	if err != nil {

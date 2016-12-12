@@ -22,6 +22,7 @@ import (
 	"admiral/config"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 )
 
 var (
@@ -57,7 +58,7 @@ func (dpl *DeploymentPolicyList) GetResource(index int) selflink.Identifiable {
 
 //FetchDP fetches existing deployment policies and returns their count.
 func (dpl *DeploymentPolicyList) FetchDP() (int, error) {
-	url := config.URL + "/resources/deployment-policies?expand"
+	url := urlutils.BuildUrl(urlutils.DeploymentPolicy, urlutils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -120,7 +121,7 @@ func RemoveDPID(id string) (string, error) {
 //!= nil if the name or description strings is empty string or if the
 //response code is different from 200.
 func AddDP(dpName, dpDescription string) (string, error) {
-	url := config.URL + "/resources/deployment-policies"
+	url := urlutils.BuildUrl(urlutils.DeploymentPolicy, nil, true)
 	if dpName == "" {
 		return "", DeploymentPolicyNameNotProvidedError
 	}

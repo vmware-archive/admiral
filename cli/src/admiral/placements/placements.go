@@ -25,6 +25,7 @@ import (
 	"admiral/projects"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 	"fmt"
 )
 
@@ -121,7 +122,7 @@ func (pl *PlacementList) GetResource(index int) selflink.Identifiable {
 }
 
 func (pl *PlacementList) FetchPlacements() (int, error) {
-	url := config.URL + "/resources/group-placements?documentType=true&expand=true"
+	url := urlutils.BuildUrl(urlutils.Placement, urlutils.GetCommonQueryMap(), true)
 
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -205,7 +206,7 @@ func RemovePlacementID(id string) (string, error) {
 }
 
 func AddPlacement(namePol, cpuShares, instances, priority, projectId, placementZoneId, deplPolId string, memoryLimit int64) (string, error) {
-	url := config.URL + "/resources/group-placements"
+	url := urlutils.BuildUrl(urlutils.Placement, nil, true)
 	var (
 		err         error
 		dpLink      string

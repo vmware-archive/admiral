@@ -24,6 +24,7 @@ import (
 	"admiral/credentials"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 )
 
 var (
@@ -71,7 +72,7 @@ func (rl *RegistryList) GetResource(index int) selflink.Identifiable {
 }
 
 func (rl *RegistryList) FetchRegistries() (int, error) {
-	url := config.URL + "/config/registries?documentType=true&expand=true"
+	url := urlutils.BuildUrl(urlutils.Registry, urlutils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {

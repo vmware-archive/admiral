@@ -27,6 +27,7 @@ import (
 	"admiral/track"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 )
 
 var (
@@ -163,7 +164,7 @@ func (p Port) String() string {
 func (p *Port) SetPorts(s string) {
 	r, _ := regexp.Compile("[0-9]+:[0-9]+")
 	if !r.MatchString(s) {
-		fmt.Println("Invalid format of ports. \n Usage: \n    -p hostPort:containerPort \n Example:    -p 9080:80")
+		fmt.Fprintln(os.Stderr, "Invalid format of ports. \n Usage: \n    -p hostPort:containerPort \n Example:    -p 9080:80")
 		os.Exit(0)
 	}
 	pArr := strings.Split(r.FindString(s), ":")
@@ -331,7 +332,7 @@ func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (strin
 }
 
 func processContainersOperation(co ContainersOperator, asyncTask bool) ([]string, error) {
-	url := config.URL + "/requests"
+	url := urlutils.BuildUrl(urlutils.RequestBrokerService, nil, true)
 	jsonBody, err := json.Marshal(co)
 	utils.CheckBlockingError(err)
 

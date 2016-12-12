@@ -41,7 +41,7 @@ func TestPlacementAddRemove(t *testing.T) {
 	TestPrintln("Login")
 	err = loginCmd.ParseFlags([]string{"--user=" + tc.Username, "--pass=" + tc.Password, "--url=" + tc.AdmiralAddress})
 	CheckTestError(err, t)
-	token := RunLogin([]string{})
+	token, _ := RunLogin([]string{})
 	if token == "" {
 		t.Error("Login failed.")
 		t.FailNow()

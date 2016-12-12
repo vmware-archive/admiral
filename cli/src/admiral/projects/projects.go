@@ -22,6 +22,7 @@ import (
 	"admiral/config"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 )
 
 var (
@@ -56,7 +57,7 @@ func (pl *ProjectList) GetResource(index int) selflink.Identifiable {
 
 //FetchProjects fetches all projects and return their count.
 func (gl *ProjectList) FetchProjects() (int, error) {
-	url := config.URL + "/resources/groups?documentType=true&expand=true"
+	url := urlutils.BuildUrl(urlutils.Project, urlutils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -95,7 +96,7 @@ func AddProject(name string) (string, error) {
 	jsonBody, err := json.Marshal(project)
 	utils.CheckBlockingError(err)
 
-	url := config.URL + "/resources/groups"
+	url := urlutils.BuildUrl(urlutils.Project, nil, true)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {

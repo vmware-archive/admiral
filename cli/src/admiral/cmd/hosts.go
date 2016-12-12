@@ -204,7 +204,7 @@ func RunHostRemove(args []string) (string, error) {
 	if !forceF {
 		fmt.Printf("Are you sure you want to remove %s? (y/n)\n", address)
 		answer := utils.PromptAgreement()
-		if answer == "n" || answer == "no" {
+		if !answer {
 			return "", errors.New("Remove command aborted!")
 		}
 	}
