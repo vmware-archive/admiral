@@ -199,6 +199,8 @@ var RequestGraphVueComponent = Vue.extend({
         return 'Remove Composition';
       } else if (link.indexOf('resource-removal-operations') > -1) {
         return 'Resource Removal';
+      } else if (link.indexOf('reservation-removal-tasks') > -1) {
+        return 'Reservation Removal';
       }
 
       return link;
@@ -208,24 +210,30 @@ var RequestGraphVueComponent = Vue.extend({
       let taskType = this.displayTasksType(link);
 
       if (taskType === 'Reservation') {
-        return 'yellow';
+        return '#fff8be';
       } else if (taskType === 'Placement') {
-        return 'pink';
+        return '#ffdadc';
       } else if (taskType === 'Allocation') {
-        return 'aliceblue';
+        return '#f4f8ff';
       } else if (taskType === 'Request') {
-        return 'lightgreen';
+        return '#c1ffd3';
       } else if (taskType === 'Configure Host') {
-        return '#FF946D';
+        return '#ffd5bf';
       } else if (taskType === 'Composition Tasks') {
-        return '#E9E3FF';
+        return '#e9e3ff';
       } else if (taskType === 'Composition Sub Tasks') {
-        return 'lightblue';
+        return '#bfeffe';
       } else if (taskType === 'Host Removal') {
-        return '#FF946D';
+        return '#ffde75';
+      } else if (taskType === 'Resource Removal') {
+        return '#f4d3b7';
+      } else if (taskType === 'Reservation Removal') {
+        return '#f4d3b7';
+      } else if (taskType === 'Provision Network') {
+        return '#fff5ff';
       }
 
-      return 'lightgrey';
+      return '#f2f2f2';
     },
 
     displayState: function(taskLink, subStage, stage) {
@@ -246,14 +254,14 @@ var RequestGraphVueComponent = Vue.extend({
         }
         return 'Hosts selected for placement';
       } else if (subStage === 'RESERVATION_SELECTED') {
-         return 'Reservation selected';
+         return 'Reservation Selected';
       } else if (subStage === 'RESERVED') {
-        return 'Reservation completed';
+        return 'Reservation Completed';
       } else if (subStage === 'ALLOCATING') {
         return 'Allocation Started';
       } else if (subStage === 'ALLOCATED') {
         if (stage === 'STARTED') {
-          return 'Allocation completed';
+          return 'Allocation Completed';
         }
         return 'Allocated';
       } else if (subStage === 'COMPLETED') {
@@ -284,7 +292,7 @@ var RequestGraphVueComponent = Vue.extend({
       } else if (subStage === 'PROVISIONING') {
         return 'Provisioning';
       } else if (subStage === 'ERROR') {
-        return taskType + ': Error occurred';
+        return taskType + ': Error Occurred';
       } else if (subStage === 'QUERYING_GLOBAL') {
         if (taskType === 'Reservation') {
           return 'Checking Global Reservations';
@@ -300,31 +308,37 @@ var RequestGraphVueComponent = Vue.extend({
 
         return 'Global Placement';
       } else if (subStage === 'COMPONENT_CREATED') {
-        return 'Component created';
+        return 'Component Created';
       } else if (subStage === 'DEPENDENCY_GRAPH') {
-        return 'Creating dependency graph';
+        return 'Creating Dependency Graph';
       } else if (subStage === 'DISTRIBUTING') {
         return taskType + ' Distributing';
       } else if (subStage === 'NOTIFY') {
-        return taskType + ' Notifying workers';
+        return taskType + ' Notifying Workers';
       } else if (subStage === 'PREPARE_EXECUTE') {
-        return 'Preparing to execute tasks';
+        return 'Preparing to Execute Tasks';
       } else if (subStage === 'EXECUTE') {
-        return 'Execution started';
+        return 'Execution Started';
       } else if (subStage === 'EXECUTING') {
-        return 'Execution in progress';
+        return 'Execution in Progress';
       } else if (subStage === 'FAILED') {
         return taskType + ' Failed';
       } else if (subStage === 'ERROR_PROVISIONING') {
         return 'Error in Provisioning';
       } else if (subStage === 'INSTANCES_REMOVING') {
-        return 'Removing instances';
+        return 'Removing Instances';
       } else if (subStage === 'INSTANCES_REMOVED') {
-        return 'Instances removal finished';
+        return 'Instances Removal Finished';
       } else if (subStage === 'COMPOSITE_REMOVING') {
         return 'Removing Composition';
       } else if (subStage === 'REMOVING_RESOURCE_STATES') {
-        return 'Removing resource states';
+        return 'Removing Resource States';
+      } else if (subStage === 'REQUEST_FAILED') {
+        return 'Request Failed';
+      } else if (subStage === 'RESERVATION_CLEANUP') {
+        return 'Reservation Cleanup Started';
+      } else if (subStage === 'RESERVATION_CLEANED_UP') {
+        return 'Reservation Cleanup Finished';
       }
 
       return subStage;
