@@ -537,7 +537,12 @@
           }
         },
         "container": {
-          "create": "Create Container"
+          "create": "Create Container",
+          "operations": {
+            "errors": {
+              "managedByCatalog": "Managed by catalog"
+            }
+          }
         },
         "closure": {
           "create": "Create Closure"

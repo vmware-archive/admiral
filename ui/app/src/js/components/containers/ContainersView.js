@@ -154,6 +154,7 @@ var ContainersViewVueComponent = Vue.extend({
       selectionMode: false,
       selectedItems: [],
       containerConnectedAlerts: [],
+      managedByCatalogAlerts: [],
       lastSelectedItemId: null
     };
   },
@@ -314,6 +315,7 @@ var ContainersViewVueComponent = Vue.extend({
         let _this = this;
         this.$nextTick(() => {
           _this.containerConnectedAlerts = [];
+          _this.managedByCatalogAlerts = [];
         });
 
     },
@@ -334,16 +336,21 @@ var ContainersViewVueComponent = Vue.extend({
     performDeleteBatchOperation: function() {
       if (this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS
           || this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS) {
-
+        this.removeManagedByCatalogItemsFromSelection();
         this.performBatchOperation('Container.Delete');
       } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS) {
-
+        this.removeManagedByCatalogItemsFromSelection();
         this.removeNonRemoveableNetworksFromSelection();
         this.performBatchOperation('Network.Delete');
       } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES) {
 
         this.performBatchOperation('Closure.Delete');
       }
+    },
+
+    hasManagedByCatalogAlert: function(documentId) {
+      return this.managedByCatalogAlerts
+        && this.managedByCatalogAlerts.indexOf(documentId) > -1;
     },
 
     hasContainersConnectedAlert: function(documentId) {
@@ -369,7 +376,28 @@ var ContainersViewVueComponent = Vue.extend({
             // remove network from selection
             this.selectedItems.splice(index, 1);
           }
+        }
+      });
 
+    },
+
+    removeManagedByCatalogItemsFromSelection: function() {
+      this.model.listView.items.forEach((item) => {
+
+        let index = this.selectedItems
+          ? this.selectedItems.indexOf(item.documentId) : -1;
+
+        // if this item is selected
+        if (index > -1) {
+          // if manage operation is supported, than an alert is displayed
+          if (utils.operationSupported(constants.CONTAINERS.OPERATION.MANAGE, item)) {
+
+            // show alert
+            utils.pushNoDuplicates(this.managedByCatalogAlerts, item.documentId);
+
+            // remove item from selection
+            this.selectedItems.splice(index, 1);
+          }
         }
       });
 
@@ -382,7 +410,6 @@ var ContainersViewVueComponent = Vue.extend({
       if (selectedItemIds && selectedItemIds.length > 0) {
 
         if (this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS) {
-
           ContainerActions.batchOpContainers(selectedItemIds, operation);
         } else if (this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS) {
 
@@ -481,9 +508,11 @@ var ContainersViewVueComponent = Vue.extend({
           // Multi-selection mode
         this.toggleSelectionMode();
       } else if (actionName === 'multiStart') {
+        this.removeManagedByCatalogItemsFromSelection();
         this.performBatchOperation('Container.Start');
 
       } else if (actionName === 'multiStop') {
+        this.removeManagedByCatalogItemsFromSelection();
         this.performBatchOperation('Container.Stop');
 
       } else if (actionName === 'multiRemove') {

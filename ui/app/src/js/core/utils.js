@@ -32,10 +32,6 @@ var isInteger = function(integer, min, max) {
   return validator.isInt(integer, range);
 };
 
-var isFromCatalog = function(item) {
-  return !!(item && item.customProperties && item.customProperties.subTenantId);
-};
-
 var utils = {
   initializeConfigurationProperties: function(props) {
     if (configurationProperties) {
@@ -84,6 +80,10 @@ var utils = {
     }
 
     return null;
+  },
+
+  isFromCatalog: function(item) {
+    return !!(item && item.customProperties && item.customProperties.subTenantId);
   },
 
   deleteElementFromList(customProperties, key) {
@@ -478,29 +478,29 @@ var utils = {
       return this.operationSupportedMulti(op, items);
 
     } else if (op === constants.CONTAINERS.OPERATION.MANAGE) {
-      return (!this.isApplicationSingleView() && isFromCatalog(resource));
+      return (!this.isApplicationSingleView() && this.isFromCatalog(resource));
     } else if (resource.type === constants.RESOURCES.TYPES.NETWORK) {
       return (op === constants.RESOURCES.NETWORKS.OPERATION.REMOVE
-            && !isFromCatalog(resource));
+            && !this.isFromCatalog(resource));
 
     } else if (op === constants.CONTAINERS.OPERATION.STOP) {
       return (!this.isApplicationSingleView())
                 && this.isContainerStatusActive(resource.powerState)
-                && !isFromCatalog(resource);
+                && !this.isFromCatalog(resource);
 
     } else if (op === constants.CONTAINERS.OPERATION.START) {
       return (!this.isApplicationSingleView())
                 && this.isContainerStatusInactive(resource.powerState)
-                && !isFromCatalog(resource);
+                && !this.isFromCatalog(resource);
 
     } else if (op === constants.CONTAINERS.OPERATION.REMOVE) {
       return (!this.isApplicationSingleView()
-                && !isFromCatalog(resource));
+                && !this.isFromCatalog(resource));
 
     } else if (op === constants.CONTAINERS.OPERATION.CLUSTERING) {
       return (!this.isApplicationSingleView()
                 && this.isContainerStatusOk(resource.powerState)
-                && !isFromCatalog(resource));
+                && !this.isFromCatalog(resource));
 
     } else if (op === constants.CONTAINERS.OPERATION.SHELL) {
       return this.getConfigurationPropertyBoolean('allow.browser.ssh.console')

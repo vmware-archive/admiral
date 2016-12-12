@@ -93,6 +93,7 @@
                          v-bind:is-marked="isMarked(item)">
                 <container-grid-item v-if="item.type === constants.CONTAINERS.TYPES.SINGLE"
                                      v-bind:model="item"
+                                     v-bind:show-alert-managed-by-catalog="hasManagedByCatalogAlert(item.documentId)"
                                      v-on:click="handleItemClick($event, item, openContainerDetails)">
                 </container-grid-item>
                 <cluster-grid-item v-if="item.type === constants.CONTAINERS.TYPES.CLUSTER"
@@ -101,11 +102,13 @@
                 </cluster-grid-item>
                 <composite-container-grid-item v-if="item.type === constants.CONTAINERS.TYPES.COMPOSITE"
                            v-bind:model="item"
+                           v-bind:show-alert-managed-by-catalog="hasManagedByCatalogAlert(item.documentId)"
                            v-on:click="handleItemClick($event, item, openCompositeContainerDetails)">
                 </composite-container-grid-item>
                 <network-grid-item v-if="item.type === constants.RESOURCES.TYPES.NETWORK"
                            v-bind:model="item"
                            v-bind:show-alert-containers-connected="hasContainersConnectedAlert(item.documentId)"
+                           v-bind:show-alert-managed-by-catalog="hasManagedByCatalogAlert(item.documentId)"
                            v-on:click="handleItemClick($event, item)">
                 </network-grid-item>
                 <closure-grid-item v-if="item.type === constants.RESOURCES.TYPES.CLOSURE && areClosuresAllowed"

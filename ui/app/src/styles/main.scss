@@ -2118,7 +2118,7 @@ $alert-text-color: #ffffff;
   @include transition(height 0.3s ease, opacity 0.3s ease);
 }
 
-.container-item .alert-holder {
+.container-item .alert-holder, .composite-container-item .alert-holder {
   // vue.js transitions are used instead
   transition: none;
 

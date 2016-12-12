@@ -26,11 +26,9 @@ var NetworksListItem = Vue.extend({
   template: NetworksListItemVue,
   mixins: [DeleteConfirmationSupportMixin],
   props: {
-    model: {
-      required: true
-    }, showAlertContainersConnected: {
-      required: true
-    }
+    model: {required: true},
+    showAlertContainersConnected: {required: true},
+    showAlertManagedByCatalog: {required: true}
   },
 
   data: function() {
@@ -72,10 +70,17 @@ var NetworksListItem = Vue.extend({
         this.showNetworkRemovalContainersConnectedAlert();
       }
     });
+
+    this.unwatchShowAlertManagedByCatalog = this.$watch('showAlertManagedByCatalog', () => {
+      if (this.showAlertManagedByCatalog) {
+        this.showManagedByCatalogAlert();
+      }
+    });
   },
 
   detached: function() {
     this.unwatchShowAlertContainersConnected();
+    this.unwatchShowAlertManagedByCatalog();
   },
 
   methods: {
@@ -121,6 +126,12 @@ var NetworksListItem = Vue.extend({
     showNetworkRemovalContainersConnectedAlert: function() {
       this.alert.message =
         i18n.t('app.resource.list.network.operations.errors.remove.containersConnected');
+      this.alert.show = true;
+    },
+
+    showManagedByCatalogAlert: function() {
+      this.alert.message =
+        i18n.t('app.resource.list.container.operations.errors.managedByCatalog');
       this.alert.show = true;
     },
 

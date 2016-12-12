@@ -21,7 +21,17 @@ var ContainersListItem = Vue.extend({
   template: ContainersListItemVue,
   mixins: [DeleteConfirmationSupportMixin],
   props: {
-    model: {required: true}
+    model: {required: true},
+    showAlertManagedByCatalog: {required: true}
+  },
+  data: function() {
+    return {
+      alert: {
+        type: 'warning',
+        show: false,
+        message: ''
+      }
+    };
   },
   computed: {
     portsDisplayTexts: function() {
@@ -40,7 +50,18 @@ var ContainersListItem = Vue.extend({
   },
   attached: function() {
     this.$dispatch('attached', this);
+
+    this.unwatchShowAlertManagedByCatalog = this.$watch('showAlertManagedByCatalog', () => {
+      if (this.showAlertManagedByCatalog) {
+        this.showManagedByCatalogAlert();
+      }
+    });
   },
+
+  detached: function() {
+    this.unwatchShowAlertManagedByCatalog();
+  },
+
   methods: {
     containerStatusDisplay: utils.containerStatusDisplay,
 
@@ -131,6 +152,17 @@ var ContainersListItem = Vue.extend({
       };
 
       NavigationActions.openNetworks(queryOptions);
+    },
+
+    showManagedByCatalogAlert: function() {
+      this.alert.message =
+        i18n.t('app.resource.list.container.operations.errors.managedByCatalog');
+      this.alert.show = true;
+    },
+
+    alertClosed: function() {
+      this.alert.show = false;
+      this.alert.message = '';
     },
 
     operationSupported: function(op) {
