@@ -155,7 +155,7 @@ public abstract class BaseIntegrationSupportIT {
         documentsForDeletion.add(document);
     }
 
-    protected static String getBaseUrl() {
+    public static String getBaseUrl() {
         // if a dynamic port is used, build the URL from the host and port parts
         String port = getSystemOrTestProp(TEST_DCP_PORT_PROP_NAME);
 

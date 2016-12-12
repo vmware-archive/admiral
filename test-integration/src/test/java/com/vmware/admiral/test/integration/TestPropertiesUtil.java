@@ -14,6 +14,7 @@ package com.vmware.admiral.test.integration;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -75,6 +76,16 @@ public final class TestPropertiesUtil {
         } catch (IOException e) {
             throw new IllegalArgumentException(
                     String.format("Error loading %s", propertyFile.getAbsolutePath()), e);
+        }
+        return properties;
+    }
+
+    public static Properties loadProperties(Properties properties, InputStream stream) {
+        try {
+            properties.load(stream);
+        } catch (IOException e) {
+            throw new IllegalArgumentException(
+                    String.format("Error loading from stream", e));
         }
         return properties;
     }
