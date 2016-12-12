@@ -11,7 +11,6 @@
 
 import * as actions from 'actions/Actions';
 import services from 'core/services';
-import utils from 'core/utils';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 
 let RequestsGraphStore = Reflux.createStore({
@@ -19,92 +18,96 @@ let RequestsGraphStore = Reflux.createStore({
   listenables: [actions.RequestGraphActions],
 
   onOpenRequestGraph: function(requestId, host) {
-
-    services.loadRequests().then((requests) => {
-      let reqArr = utils.resultToArray(requests);
-      let theRequest = reqArr.find((req) => {
-        return req.documentSelfLink.endsWith(requestId);
-      });
-
-      this.setInData(['request'], theRequest);
-      this.emitChange();
-
-      if (theRequest && theRequest.resourceType === 'COMPOSITE_COMPONENT'
-            && theRequest.resourceLinks && theRequest.resourceLinks.length > 0) {
-
-        services.loadCompositeComponent(utils.getDocumentId(theRequest.resourceLinks[0]))
-          .then((compositeComponent) => {
-
-            this.setInData(['application'], compositeComponent);
-            this.emitChange();
-          }).catch((e) => {
-            console.log('Error', e);
-          });
-      }
-    });
-
     services.loadRequestGraph(requestId, host).then((graph) => {
       this.setInData(['graph'], graph);
       this.emitChange();
 
+      this.processGeneralInfo(graph);
       this.processRequestInfos(graph);
     });
   },
 
+  processGeneralInfo: function(graph) {
+    var request = graph.request;
+    if (!request) {
+      return;
+    }
+
+    var promises = [];
+
+    if (request.resourceLinks) {
+      request.resources = [];
+      request.resourceLinks.forEach((resourceLink) => {
+        promises.push(services.loadDocument(resourceLink).then((resource) => {
+          request.resources.push(resource);
+        }));
+      });
+    }
+
+    if (request.tenantLinks) {
+      request.tenants = [];
+      request.tenantLinks.forEach((tenantLink) => {
+        promises.push(services.loadDocument(tenantLink).then((tenant) => {
+          request.tenants.push(tenant);
+        }));
+      });
+    }
+
+    Promise.all(promises).then(() => {
+      this.setInData(['request'], request);
+      this.emitChange();
+    });
+  },
+
   processRequestInfos: function(graph) {
-    let requestInfos = graph.requestInfos;
-    if (!requestInfos || requestInfos.length < 1) {
+    let componentInfos = graph.componentInfos;
+    if (!componentInfos || componentInfos.length < 1) {
       // no request info available
       return;
     }
 
-    let placementLinks = new Set();
-    let containerDescriptionLinks = new Set();
-    let hostLinks = new Set();
-    requestInfos.forEach((requestInfo) => {
-      // Container requests
-      if (requestInfo.type === 'App.Container') {
-        placementLinks.add(requestInfo.groupResourcePlacementLink);
-        containerDescriptionLinks.add(requestInfo.resourceDescriptionLink);
-        if (requestInfo.hostSelections) {
-          requestInfo.hostSelections.forEach((hostSelection) => {
-            hostLinks.add(hostSelection.hostLink);
+    Promise.all(componentInfos.map(ri => this.processRequestInfo(ri))).then((infos) => {
+      this.setInData(['infos'], infos);
+      this.emitChange();
+    });
+  },
+
+  processRequestInfo: function(info) {
+    var result = {};
+
+    var promises = [];
+    if (info.groupResourcePlacementLink) {
+      promises.push(services.loadPlacement(info.groupResourcePlacementLink).then((placement) => {
+        result.placement = placement;
+        if (placement.resourcePoolLink) {
+          return services.loadResourcePool(placement.resourcePoolLink).then((placementZone) => {
+            result.placementZone = placementZone.resourcePoolState;
           });
         }
-      }
-    });
+      }));
+    }
 
-    let placementCalls = [...placementLinks].map(services.loadPlacement);
-    let containerDescriptionCalls = [...containerDescriptionLinks].map((cdl) =>
-      services.loadContainerDescription(cdl));
-    let hostCalls = [...hostLinks].map((hl) => services.loadHostByLink(hl));
+    if (info.resourceDescriptionLink) {
+      promises.push(services.loadDocument(info.resourceDescriptionLink)
+      .then((resourceDescription) => {
+        result.resourceDescription = resourceDescription;
+      }));
+    }
 
-    Promise.all(placementCalls).then((placementResults) => {
-      let placements = placementResults;
-      this.setInData(['placements'], placements);
-      this.emitChange();
+    if (info.hostSelections) {
+      var hostLinks = info.hostSelections.map(hs => hs.hostLink);
 
-      let placementZoneLinks = new Set();
-      placementResults.forEach((placementResult) => {
-        if (placementResult.resourcePoolLink) {
-          placementZoneLinks.add(placementResult.resourcePoolLink);
-        }
+      result.hosts = [];
+
+      hostLinks.forEach((hostLink) => {
+        promises.push(services.loadHostByLink(hostLink).then((host) => {
+          result.hosts.push(host);
+        }));
       });
-      let placementZoneCalls = [...placementZoneLinks].map(services.loadResourcePool);
-      Promise.all(placementZoneCalls).then((placementZoneResults) => {
-        this.setInData(['placementZones'], placementZoneResults.map(pz => pz.resourcePoolState));
-        this.emitChange();
-      });
-    });
+    }
 
-    Promise.all(containerDescriptionCalls).then((containerDescriptionResults) => {
-      this.setInData(['resourceDescriptions'], containerDescriptionResults);
-      this.emitChange();
-    });
-
-    Promise.all(hostCalls).then((hostResults) => {
-      this.setInData(['hosts'], hostResults);
-      this.emitChange();
+    return Promise.all(promises).then(() => {
+      return result;
     });
   }
 });

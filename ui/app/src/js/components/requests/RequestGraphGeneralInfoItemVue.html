@@ -5,41 +5,45 @@
         class="fa fa-exclamation-triangle"></i>&nbsp;<span>Error</span><div class="msg general">{{model.request.taskInfo.failure.message}}</div></div>
       <div><span v-if="model.request && model.request.operation">{{displayOperation(model.request.operation)}}</span>&nbsp;<span
         v-if="model.request && model.request.resourceType">{{displayResourceType(model.request.resourceType)}}</span></div>
-      <div class="resource-name" v-if="titleResourceName">&nbsp;{{titleResourceName}}</div>
+
+      <div v-for="resource in model.request.resources" track-by="$index">
+        <div class="resource-name">{{getResourceName(resource)}}</div>
+      </div>
     </div>
-    <div class="info" v-if="model.placements"><span class="left">Placement(s):</span>
-      <span class="right"><template v-for="placement in model.placements" track-by="$index">
-        {{placement.name}}</template></span>
+
+    <div v-for="tenant in model.request.tenants" track-by="$index">
+      <span class="left">&nbsp;Tenant:</span>
+      <span class="right">{{tenant.name}}</span>
     </div>
-    <div class="info" v-if="model.placementZones"><span class="left">Placement Zone:</span>
-      <span class="right"><template v-for="placementZone in model.placementZones" track-by="$index">
-        {{placementZone.name}}</template></span></div>
-    <div class="info" v-if="model.hosts"><span class="left">Host(s) Selected:</span>
-      <span class="right"><template v-for="host in model.hosts" class="host" track-by="$index">
-        {{getHostName(host)}}</template></span></div>
     <!--div class="info"><span class="left">Network:</span>&nbsp;<span class="right">TODO</span></div>
     <div class="info"><span class="left">Endpoint:</span>&nbsp;<span class="right">TODO</span></div>
-    <div class="info"><span class="left">Environment:</span>&nbsp;<span class="right">TODO</span></div>
-    <div class="info"><span class="left">Project/Business Group:</span>&nbsp;<span class="right">TODO Get it from tenant links in the placement data</span></div-->
-    <template v-if="isApplication && model.resourceDescriptions">
-      <div class="info children"><span class="left">Resources:</span>
-      <span class="right"
-         v-for="resourceDescription in model.resourceDescriptions" track-by="documentSelfLink">
-        <br/>&nbsp;-&nbsp;{{resourceDescription.name}}
-        <template v-if="resourceDescription._cluster > 0"><br/>&nbsp;&nbsp;&nbsp;&nbsp;<span
-          class="simple-info">cluster of {{resourceDescription._cluster}}</span></template>
-        <template v-if="resourceDescription.affinity"><br/>&nbsp;&nbsp;&nbsp;&nbsp;<span
-          class="simple-info">affinity: {{resourceDescription.affinity}}</span></template>
-      </span>
-      </div>
+    <div class="info"><span class="left">Environment:</span>&nbsp;<span class="right">TODO</span></div>-->
+    <div v-for="info in model.infos" track-by="$index">
+      <br/>&nbsp;-&nbsp;{{info.resourceDescription.name}}
+      <template v-if="info.resourceDescription._cluster > 0">
+        <div class="simple-info">cluster of {{info.resourceDescription._cluster}}</div>
       </template>
-    <template v-if="model.childNetworkDescriptions">
-      <div class="info children"><span class="left">Networks:</span>
-      <span class="right"
-           v-for="childNetworkDescription in model.childNetworkDescriptions" track-by="documentSelfLink">
-        {{childNetworkDescription.name}}
-      </span>
+      <template v-if="notEmpty(info.resourceDescription.affinity)">
+        <div class="simple-info">affinity:
+          <div class="simple-info" v-for="affinity in info.resourceDescription.affinity" track-by="$index">{{affinity}}</div>
+        </div>
+      </template>
+
+      <div class="simple-info" v-if="info.placement">
+        <span class="left">Placement:</span>
+        <span class="right">{{info.placement.name}}</span>
       </div>
-    </template>
+      <div class="simple-info" v-if="info.placementZone">
+        <span class="left">Placement Zone:</span>
+        <span class="right">{{info.placementZone.name}}</span>
+      </div>
+      <div class="simple-info" v-if="info.hosts">
+        <span class="left">Host(s) Selected:</span>
+        <span class="right">
+          <template v-for="host in info.hosts" class="host" track-by="$index">
+          {{getHostName(host)}}</template
+        ></span>
+      </div>
+    </div>
   </div>
 </div>
