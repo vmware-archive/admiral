@@ -1,27 +1,35 @@
 <div class="request-graph-general-info" style="z-index: 5;">
   <div class="taskHeader">
     <div class="task-name">
-      <div v-if="hasError"class="errMsg"><i class="fa fa-exclamation-triangle"></i>&nbsp;<span>Error</span><div class="msg general">{{model.request.taskInfo.failure.message}}</div></div>
-      <div><span v-if="model.request && model.request.operation">{{displayOperation(model.request.operation)}}</span>&nbsp;<span v-if="model.request && model.request.resourceType">{{displayResourceType(model.request.resourceType)}}</span>
-      </div>
-      <div class="resource-name" v-if="model.resourceDescription && model.resourceDescription.name">&nbsp;{{model.resourceDescription.name}}</div>
+      <div v-if="hasError"class="errMsg" style="text-align: left;"><i
+        class="fa fa-exclamation-triangle"></i>&nbsp;<span>Error</span><div class="msg general">{{model.request.taskInfo.failure.message}}</div></div>
+      <div><span v-if="model.request && model.request.operation">{{displayOperation(model.request.operation)}}</span>&nbsp;<span
+        v-if="model.request && model.request.resourceType">{{displayResourceType(model.request.resourceType)}}</span></div>
+      <div class="resource-name" v-if="titleResourceName">&nbsp;{{titleResourceName}}</div>
     </div>
-    <div class="info" v-if="model.placement && model.placement.name"><span class="left">Placement:</span>&nbsp;<span class="right">{{model.placement.name}}</span></div>
-    <div class="info" v-if="model.placementZone && model.placementZone.name"><span class="left">Placement Zone:</span>&nbsp;<span class="right">{{model.placementZone.name}}</span></div>
-    <div class="info" v-if="model.hosts"><span class="left">Host(s) Selected:</span>&nbsp;<span class="right" v-for="host in model.hosts" class="host" track-by="$index">{{getHostName(host)}}</span></div>
-    <div class="info" v-if="isCluster"><span class="left">Cluster of:</span>&nbsp;<span class="right">{{model.resourceDescription._cluster}}</span></div>
-    <div class="info" v-if="hasAffinityRules"><span class="left">Affinity:</span>&nbsp;<span class="right">{{model.resourceDescription.affinity}}</span></div>
+    <div class="info" v-if="model.placements"><span class="left">Placement(s):</span>
+      <span class="right"><template v-for="placement in model.placements" track-by="$index">
+        {{placement.name}}</template></span>
+    </div>
+    <div class="info" v-if="model.placementZones"><span class="left">Placement Zone:</span>
+      <span class="right"><template v-for="placementZone in model.placementZones" track-by="$index">
+        {{placementZone.name}}</template></span></div>
+    <div class="info" v-if="model.hosts"><span class="left">Host(s) Selected:</span>
+      <span class="right"><template v-for="host in model.hosts" class="host" track-by="$index">
+        {{getHostName(host)}}</template></span></div>
     <!--div class="info"><span class="left">Network:</span>&nbsp;<span class="right">TODO</span></div>
     <div class="info"><span class="left">Endpoint:</span>&nbsp;<span class="right">TODO</span></div>
     <div class="info"><span class="left">Environment:</span>&nbsp;<span class="right">TODO</span></div>
-    <div class="info"><span class="left">Business Group:</span>&nbsp;<span class="right">TODO</span></div-->
-    <template v-if="model.childContainerDescriptions">
-      <div class="info children"><span class="left">Containers:</span>
+    <div class="info"><span class="left">Project/Business Group:</span>&nbsp;<span class="right">TODO Get it from tenant links in the placement data</span></div-->
+    <template v-if="isApplication && model.resourceDescriptions">
+      <div class="info children"><span class="left">Resources:</span>
       <span class="right"
-         v-for="childContainerDescription in model.childContainerDescriptions" track-by="documentSelfLink">
-        <br/>{{childContainerDescription.name}}:
-        <template v-if="childContainerDescription._cluster > 0">&nbsp;cluster of {{childContainerDescription._cluster}}</template>
-        <template v-if="childContainerDescription.affinity">&nbsp;affinity: {{childContainerDescription.affinity}}</template>
+         v-for="resourceDescription in model.resourceDescriptions" track-by="documentSelfLink">
+        <br/>&nbsp;-&nbsp;{{resourceDescription.name}}
+        <template v-if="resourceDescription._cluster > 0"><br/>&nbsp;&nbsp;&nbsp;&nbsp;<span
+          class="simple-info">cluster of {{resourceDescription._cluster}}</span></template>
+        <template v-if="resourceDescription.affinity"><br/>&nbsp;&nbsp;&nbsp;&nbsp;<span
+          class="simple-info">affinity: {{resourceDescription.affinity}}</span></template>
       </span>
       </div>
       </template>

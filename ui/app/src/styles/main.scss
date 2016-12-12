@@ -2266,10 +2266,15 @@ header .branding img {
   background-color: white;
 }
 
+.simple-info {
+  font-weight: 300;
+  color: #000;
+}
+
+$request-graph-header-color: #0b40c8;
+
 .request-graph {
   position: relative;
-  z-index: 0;
-
 
   .info {
     word-wrap: break-word;
@@ -2281,7 +2286,7 @@ header .branding img {
       color: #4c4c4c;
     }
     .right {
-      color: #0b40c8;
+      color: $request-graph-header-color;
     }
   }
   .children {
@@ -2290,8 +2295,9 @@ header .branding img {
   }
 
   .resource-name {
-    color: #b00000;
+    color: #28814b;
     font-weight: 600;
+    font-size: 14px;
   }
 
   .task-header {
@@ -2302,7 +2308,7 @@ header .branding img {
   }
 
   .task-name {
-    color: #0b40c8;
+    color: $request-graph-header-color;
     word-wrap: break-word;
     padding: 5px;
     font-size: 13px;
@@ -2326,7 +2332,7 @@ header .branding img {
     border: 2px solid grey;
     border-radius: 20px;
     height: 110px;
-    width: 200px;
+    width: 160px;
     word-break: keep-all;
 
     .stage-info {
@@ -2336,9 +2342,10 @@ header .branding img {
 
     .sub-task-title {
       margin: 5px;
-      color: blue;
+      color: $request-graph-header-color;
       text-align: center;
-      font-size: 14px;
+      font-size: 13px;
+      font-weight: bold;
       cursor: pointer;
     }
 
@@ -2363,19 +2370,15 @@ header .branding img {
   }
 
   .task {
-    width: 200px;
+    width: 180px;
     position: absolute;
   }
 
   .request-graph-general-info {
-    position: absolute;
-    top: 30px;
-    left: 5px;
-    width: 250px;
-    min-height: 100px;
-    background-color: #cccccc;
+    margin-bottom: 50px;
+    background-color: #e8e8e8;
     opacity: 0.9;
-    border: 2px solid lightcoral;
+    border: 1px solid lightcoral;
     border-radius: 5px;
     padding: 5px;
     word-break: break-all;
@@ -2385,7 +2388,7 @@ header .branding img {
   .errMsg {
     color: red;
     padding: 2px;
-    font-size: 14px;
+    font-size: 13px;
     cursor: pointer;
     text-align: center;
 

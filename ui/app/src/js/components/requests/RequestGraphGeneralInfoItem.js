@@ -10,17 +10,19 @@ var RequestGraphGeneralInfoItemVueComponent = Vue.extend({
   },
 
   computed: {
-    hasResourceDescription: function() {
-      return this.model && this.model.resourceDescription;
+    hasResourceDescriptions: function() {
+      return this.model && this.model.resourceDescriptions
+        && this.model.resourceDescriptions.length > 0;
     },
-
-    isCluster: function() {
-      return this.hasResourceDescription && this.model.resourceDescription._cluster > 1;
+    isApplication: function() {
+      return this.model && this.model.application;
     },
+    titleResourceName: function() {
+      if (this.isApplication) {
+        return this.model.application.name;
+      }
 
-    hasAffinityRules: function() {
-      return this.hasResourceDescription && this.model.resourceDescription.affinity
-        && this.model.resourceDescription.affinity.length > 0;
+      return this.hasResourceDescriptions ? this.model.resourceDescriptions[0].name : null;
     },
 
     hasError: function() {
