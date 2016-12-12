@@ -73,7 +73,9 @@ let RequestsGraphStore = Reflux.createStore({
   },
 
   processRequestInfo: function(info) {
-    var result = {};
+    var result = {
+      type: info.type
+    };
 
     var promises = [];
     if (info.groupResourcePlacementLink) {
