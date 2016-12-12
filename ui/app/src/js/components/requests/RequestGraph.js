@@ -28,6 +28,36 @@ var RequestGraphVueComponent = Vue.extend({
 
   attached: function() {
     this.modelUnwatch = this.$watch('tasks', this.updateTasks, {immediate: true});
+
+    this.scale = 1;
+
+    window.addEventListener('mousewheel', (e) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        var delta = 0;
+
+        if (e.wheelDelta > 0) {
+          delta = 0.1;
+        } else if (e.wheelDelta < 0) {
+          delta = -0.1;
+        }
+
+        if (this.scale < 1) {
+          delta /= 3;
+        }
+
+        this.scale += delta;
+        this.scale = Math.max(this.scale, 0.1);
+        this.scale = Math.min(this.scale, 10);
+
+        $(this.$el).find('.graph-container').css({
+          transform: 'scale(' + this.scale + ')',
+          'transform-origin': 'top left'
+        });
+      }
+    }, false);
   },
 
   detached: function() {
