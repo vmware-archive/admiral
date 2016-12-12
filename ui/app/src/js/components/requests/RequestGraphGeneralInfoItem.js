@@ -14,16 +14,6 @@ var RequestGraphGeneralInfoItemVueComponent = Vue.extend({
       return this.model && this.model.resourceDescriptions
         && this.model.resourceDescriptions.length > 0;
     },
-    isApplication: function() {
-      return this.model && this.model.application;
-    },
-    titleResourceName: function() {
-      if (this.isApplication) {
-        return this.model.application.name;
-      }
-
-      return this.hasResourceDescriptions ? this.model.resourceDescriptions[0].name : null;
-    },
 
     hasError: function() {
       return this.model.request && this.model.request.taskInfo
@@ -60,6 +50,14 @@ var RequestGraphGeneralInfoItemVueComponent = Vue.extend({
 
     getHostName: function(host) {
       return host && utils.getHostName(host);
+    },
+
+    notEmpty: function(arr) {
+      return arr && arr.length > 0;
+    },
+
+    getResourceName: function(resource) {
+      return resource.name || resource.names;
     }
   }
 });

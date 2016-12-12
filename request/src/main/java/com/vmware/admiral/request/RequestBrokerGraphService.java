@@ -30,6 +30,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.graph.ComponentRequestVisitor;
 import com.vmware.admiral.request.graph.ContainerRequestVisitor;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -59,7 +60,8 @@ public class RequestBrokerGraphService extends StatelessService {
 
     public static class Response {
         List<TaskServiceDocumentHistory> tasks;
-        List<Object> requestInfos;
+        RequestBrokerState request;
+        List<Object> componentInfos;
     }
 
     public static class TaskServiceDocumentHistory {
@@ -122,7 +124,7 @@ public class RequestBrokerGraphService extends StatelessService {
             } else {
                 Response r = new Response();
                 r.tasks = convert(foundTasks);
-                r.requestInfos = getRequestInfos(r.tasks);
+                populateRequestInfos(r, r.tasks, requestId);
                 get.setBody(r);
                 get.complete();
             }
@@ -423,12 +425,23 @@ public class RequestBrokerGraphService extends StatelessService {
         }
     }
 
-    private static List<Object> getRequestInfos(List<TaskServiceDocumentHistory> tasks) {
+    private static void populateRequestInfos(Response response,
+            List<TaskServiceDocumentHistory> tasks, String requestId) {
         Map<String, TaskServiceStageWithLink> allStages = new HashMap<>();
+
+        String requestLink = ManagementUriParts.REQUESTS + "/" + requestId;
 
         for (TaskServiceDocumentHistory task : tasks) {
             for (TaskServiceStageWithLink stage : task.stages) {
                 allStages.put(ComponentRequestVisitor.getStageId(stage), stage);
+            }
+
+            if (task.documentSelfLink.equals(requestLink)) {
+                if (task.stages.size() > 0) {
+                    TaskServiceStageWithLink lastStage = task.stages.get(task.stages.size() - 1);
+                    response.request = Utils.fromJson(lastStage.properties,
+                            RequestBrokerState.class);
+                }
             }
         }
 
@@ -443,7 +456,7 @@ public class RequestBrokerGraphService extends StatelessService {
             }
         });
 
-        return getRequestInfos(sortedStages, allStages);
+        response.componentInfos = getRequestInfos(sortedStages, allStages);
     }
 
     private static List<Object> getRequestInfos(List<TaskServiceStageWithLink> sortedStages,
