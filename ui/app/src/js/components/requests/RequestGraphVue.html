@@ -24,11 +24,14 @@
       <div v-for="stage in task.stages" track-by="documentUpdateTimeMicros" class="task-stage"
           data-task="{{task.documentSelfLink}}"
           data-stage="{{stage.taskSubStage}}"
-          data-updatetime="{{stage.documentUpdateTimeMicros}}"
-          v-bind:title="stage.properties | prettyJson">
+          data-updatetime="{{stage.documentUpdateTimeMicros}}">
           <div v-if="stage.taskSubStage === 'ERROR'" class="errMsg"><i class="fa fa-exclamation-triangle"></i>&nbsp;<span>Error</span><div class="msg">{{stage.taskInfo.failure.message}}</div></div>
-          <div class="sub-task-title">{{displayState(task.documentSelfLink, stage.taskSubStage, stage.taskInfo.stage)}}<div class="basic-info">{{stage.taskSubStage}} <span class="stage-info">({{stage.taskInfo.stage}})</span></div></div>
+          <div class="sub-task-title">{{displayState(task.documentSelfLink, stage.taskSubStage, stage.taskInfo.stage)}}</div>
           <div class="task-time">{{showDate(stage.documentUpdateTimeMicros)}}</div>
+
+          <div class="basic-info">{{stage.taskSubStage}} <span class="stage-info">({{stage.taskInfo.stage}})</span>
+            <div>{{prettyJson(stage.properties)}}</div>
+          </div>
       </div>
     </div>
   </div>

@@ -167,10 +167,6 @@ templateHelpers.register = function() {
     }
   });
 
-  Vue.filter('prettyJson', function(obj) {
-    return JSON.stringify(obj, null, 2);
-  });
-
   Vue.mixin({
     methods: {
       i18n: function(i18nKey) {

@@ -2346,7 +2346,6 @@ $request-graph-header-color: #0b40c8;
       text-align: center;
       font-size: 13px;
       font-weight: bold;
-      cursor: pointer;
     }
 
     .basic-info {
@@ -2360,12 +2359,13 @@ $request-graph-header-color: #0b40c8;
       border-radius: 5px;
       padding: 3px;
       z-index: 3;
+      white-space: pre-wrap;
     }
+  }
 
-    .sub-task-title:hover {
-      .basic-info {
-        display: block;
-      }
+  .task-stage:hover {
+    .basic-info {
+      display: block;
     }
   }
 
