@@ -1,0 +1,24 @@
+---
+endpointType: azure
+name: "Azure default environment"
+computeProfile:
+  instanceTypeMapping:
+    small: 
+      instanceType: "Basic_A0"
+    medium: 
+      instanceType: "Basic_A1"
+    large: 
+      instanceType: "Basic_A2"
+    xlarge: 
+      instanceType: "Basic_A4"
+  imageMapping:
+    coreos:
+      image: "CoreOS:coreos:Beta:1192.2.0"
+    ubuntu-1604:
+      image: "canonical:ubuntuserver:16.04.0-LTS:latest"
+storageProfile:
+  bootDiskPropertyMapping:
+    azureStorageAccountType: "Standard_RAGRS"
+    azureOsDiskCaching: "None"
+    azureStorageAccountName: "basestorage1"  
+networkProfile: {}

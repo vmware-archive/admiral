@@ -1,0 +1,20 @@
+---
+endpointType: aws
+name: "AWS default environment"
+computeProfile:
+  instanceTypeMapping:
+    small: 
+      instanceType: "t2.micro"
+    medium: 
+      instanceType: "t2.small"
+    large: 
+      instanceType: "t2.large"
+    xlarge: 
+      instanceType: "m4.xlarge"
+  imageMapping:
+    coreos:
+      image: "ami-220f2b35"
+    ubuntu-1604:
+      image: "ami-40d28157"
+storageProfile: {}
+networkProfile: {}

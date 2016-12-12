@@ -21,10 +21,13 @@ public interface ManagementUriParts {
     String REGISTRY_HOSTS = CONFIG + "/registry-spec";
     String CONFIG_PROPS = CONFIG + "/props";
     String CONFIG_CA_CREDENTIALS = CONFIG + "/ca-credentials";
-    String ENVIRONMENT_MAPPING = CONFIG + "/env-mapping";
     String SSL_TRUST_CERTS = CONFIG + "/trust-certs";
     String SSL_TRUST_CERTS_IMPORT = CONFIG + "/trust-certs-import";
     String USER_INITIALIZATION_SERVICE = CONFIG + "/user-init-service";
+    String ENVIRONMENTS = CONFIG + "/environments";
+    String COMPUTE_PROFILES = CONFIG + "/compute-profiles";
+    String STORAGE_PROFILES = CONFIG + "/storage-profiles";
+    String NETWORK_PROFILES = CONFIG + "/network-profiles";
 
     String CERT_DISTRIBUTION_ADD_REGISTRY = CONFIG + "/cert-dist-add-reg";
     String CERT_DISTRIBUTION_ADD_HOST = CONFIG + "/certs-dist-add-host";

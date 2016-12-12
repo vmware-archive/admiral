@@ -19,7 +19,6 @@ import com.vmware.admiral.compute.ConfigureHostOverSshTaskService;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
-import com.vmware.admiral.compute.EnvironmentMappingService;
 import com.vmware.admiral.compute.EpzComputeEnumerationTaskService;
 import com.vmware.admiral.compute.HostConfigCertificateDistributionService;
 import com.vmware.admiral.compute.PlacementCapacityUpdateTaskService;
@@ -54,6 +53,10 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeService.Contai
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.content.TemplateComputeDescription;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
+import com.vmware.admiral.compute.env.ComputeProfileService;
+import com.vmware.admiral.compute.env.EnvironmentService;
+import com.vmware.admiral.compute.env.NetworkProfileService;
+import com.vmware.admiral.compute.env.StorageProfileService;
 import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskServiceWithoutValidate;
 import com.vmware.admiral.service.test.MockContainerHostService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -87,7 +90,10 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         startServiceFactories(host, ContainerDescriptionService.class,
                 GroupResourcePlacementService.class,
                 ContainerHostDataCollectionService.class,
-                EnvironmentMappingService.class,
+                EnvironmentService.class,
+                ComputeProfileService.class,
+                StorageProfileService.class,
+                NetworkProfileService.class,
                 DeploymentPolicyService.class,
                 ContainerNetworkService.class,
                 ContainerNetworkDescriptionService.class,

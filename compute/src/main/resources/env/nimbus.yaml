@@ -1,0 +1,26 @@
+---
+endpointType: nimbus
+name: "Nimbus default environment"
+computeProfile:
+  instanceTypeMapping:
+    small:
+      cpuCount: 1
+      memoryMb: 1024
+      diskSizeMb: 10240
+    medium: 
+      cpuCount: 1
+      memoryMb: 2048
+      diskSizeMb: 10240
+    large: 
+      cpuCount: 2
+      memoryMb: 8192
+      diskSizeMb: 10240
+    xlarge: 
+      cpuCount: 4
+      memoryMb: 16384
+      diskSizeMb: 10240
+  imageMapping:
+    coreos:
+      image: "http://tinyurl.eng.vmware.com/kymc"
+storageProfile: {}
+networkProfile: {}

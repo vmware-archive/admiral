@@ -17,7 +17,6 @@ import static org.junit.Assert.assertNotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
@@ -26,9 +25,6 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.compute.EnvironmentMappingService;
-import com.vmware.admiral.compute.EnvironmentMappingService.EnvironmentMappingState;
-import com.vmware.admiral.compute.PropertyMapping;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -62,8 +58,6 @@ public class ComputeOperationTaskServiceTest extends ComputeRequestBaseTest {
 
         // create a single powered-on compute available for placement
         createVmGuestCompute(true);
-
-        createVSphereEnv();
 
         request = TestRequestStateFactory.createRequestState(ResourceType.COMPUTE_TYPE.getName(),
                 hostDesc.documentSelfLink);
@@ -212,27 +206,6 @@ public class ComputeOperationTaskServiceTest extends ComputeRequestBaseTest {
             }
             return true;
         });
-    }
-
-    @SuppressWarnings("unchecked")
-    private void createVSphereEnv() throws Throwable {
-        EnvironmentMappingState ems = new EnvironmentMappingState();
-        ems.endpointType = getEndpointType().name();
-        ems.name = ems.endpointType;
-        ems.properties = new HashMap<>();
-
-        PropertyMapping instanceType = new PropertyMapping();
-        instanceType.mappings = new HashMap<>();
-        instanceType.mappings.put("small", "small");
-        ems.properties.put("instanceType", instanceType);
-
-        PropertyMapping imageRefs = new PropertyMapping();
-        imageRefs.mappings = new HashMap<>();
-        imageRefs.mappings.put("linux", "something");
-        ems.properties.put("imageType", imageRefs);
-
-        EnvironmentMappingState env = doPost(ems, EnvironmentMappingService.FACTORY_LINK);
-        documentLinksForDeletion.add(env.documentSelfLink);
     }
 
     private EndpointType getEndpointType() {

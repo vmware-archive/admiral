@@ -15,12 +15,12 @@ import java.util.ArrayList;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ConfigurationUtil;
-import com.vmware.admiral.compute.EnvironmentMappingService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
+import com.vmware.admiral.compute.env.EnvironmentService;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -35,7 +35,7 @@ public class ComputeInitialBootService extends AbstractInitialBootService {
     public void handlePost(Operation post) {
         ArrayList<ServiceDocument> states = new ArrayList<>();
         states.add(SystemContainerDescriptions.buildCoreAgentContainerDescription());
-        states.addAll(EnvironmentMappingService.getDefaultMappings());
+        states.addAll(EnvironmentService.getAllDefaultDocuments());
         initInstances(Operation.createGet(null), false, false,
                 states.toArray(new ServiceDocument[states.size()]));
 

@@ -45,10 +45,10 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
-import com.vmware.admiral.compute.EnvironmentMappingService.EnvironmentMappingState;
-import com.vmware.admiral.compute.PropertyMapping;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
+import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentStateExpanded;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage;
@@ -80,11 +80,15 @@ import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.OperationSequence;
 import com.vmware.xenon.common.QueryTaskClientHelper;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class ComputeAllocationTaskService
@@ -283,7 +287,7 @@ public class ComputeAllocationTaskService
         }
 
         if (environmentLink == null) {
-            queryEnvironment(state, endpoint.endpointType, state.tenantLinks,
+            queryEnvironment(state, endpoint, state.tenantLinks,
                     (envLink) -> prepareContext(state, computeDesc, resourcePool, endpoint,
                             envLink));
             return;
@@ -312,19 +316,19 @@ public class ComputeAllocationTaskService
 
     @SuppressWarnings("unchecked")
     private void createOsDiskState(ComputeAllocationTaskState state,
-            SubStage nextStage, EnvironmentMappingState mapping, ComputeDescription computeDesc) {
+            SubStage nextStage, EnvironmentStateExpanded env, ComputeDescription computeDesc) {
         if (state.customProperties.containsKey(ComputeConstants.CUSTOM_PROP_DISK_LINK)) {
             proceedTo(nextStage);
             return;
         }
-        if (mapping == null) {
-            getServiceState(state.environmentLink, EnvironmentMappingState.class,
-                    (envMapping) -> createOsDiskState(state, nextStage, envMapping, computeDesc));
+        if (env == null) {
+            getServiceState(state.environmentLink, EnvironmentStateExpanded.class, true,
+                    e -> createOsDiskState(state, nextStage, e, computeDesc));
             return;
         }
         if (computeDesc == null) {
             getServiceState(state.resourceDescriptionLink, ComputeDescription.class,
-                    (compDesc) -> createOsDiskState(state, nextStage, mapping, compDesc));
+                    compDesc -> createOsDiskState(state, nextStage, env, compDesc));
             return;
         }
 
@@ -350,12 +354,10 @@ public class ComputeAllocationTaskService
             rootDisk.bootConfig = new DiskState.BootConfig();
             rootDisk.bootConfig.label = "cidata";
 
-            PropertyMapping values = mapping.properties.get("bootDiskProperties");
+            Map<String, String> values = env.storageProfile != null
+                    ? env.storageProfile.bootDiskPropertyMapping : null;
             if (values != null) {
-                rootDisk.customProperties = new HashMap<>();
-                values.mappings.forEach((k, v) -> {
-                    rootDisk.customProperties.put(String.valueOf(k), String.valueOf(v));
-                });
+                rootDisk.customProperties = new HashMap<>(values);
             }
 
             String content = computeDesc.customProperties
@@ -942,50 +944,75 @@ public class ComputeAllocationTaskService
     }
 
     private void queryEnvironment(ComputeAllocationTaskState state,
-            String endpointType, List<String> tenantLinks,
+            EndpointState endpoint, List<String> tenantLinks,
             Consumer<String> callbackFunction) {
 
-        QueryTask.Query endpointTypeClause = new QueryTask.Query()
-                .setTermPropertyName(EnvironmentMappingState.FIELD_NAME_ENDPOINT_TYPE_NAME)
-                .setTermMatchValue(endpointType);
-
         if (tenantLinks == null || tenantLinks.isEmpty()) {
-            logInfo("Quering for global environments for endpoint type: [%s]...", endpointType);
+            logInfo("Quering for global environments for endpoint [%s] of type [%s]...",
+                    endpoint.documentSelfLink, endpoint.endpointType);
         } else {
-            logInfo("Quering for group [%s] environments for endpoint type: [%s]...",
-                    tenantLinks, endpointType);
+            logInfo("Quering for group [%s] environments for endpoint [%s] of type [%s]...",
+                    tenantLinks, endpoint.documentSelfLink, endpoint.endpointType);
         }
         Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(tenantLinks);
 
-        QueryTask q = QueryUtil.buildQuery(EnvironmentMappingState.class, true,
-                endpointTypeClause,
-                tenantLinksQuery);
-        q.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
+        // link=LINK || (link=unset && type=TYPE)
+        Query query = Query.Builder.create()
+                .addKindFieldClause(EnvironmentState.class)
+                .addClause(tenantLinksQuery)
+                .addClause(Query.Builder.create()
+                        .addFieldClause(EnvironmentState.FIELD_NAME_ENDPOINT_LINK,
+                                endpoint.documentSelfLink, Occurance.SHOULD_OCCUR)
+                        .addClause(Query.Builder.create(Occurance.SHOULD_OCCUR)
+                                .addFieldClause(EnvironmentState.FIELD_NAME_ENDPOINT_LINK,
+                                        "", MatchType.PREFIX, Occurance.MUST_NOT_OCCUR)
+                                .addFieldClause(EnvironmentState.FIELD_NAME_ENDPOINT_TYPE,
+                                        endpoint.endpointType)
+                                .build())
+                        .build())
+                .build();
+
+        QueryTask task = QueryTask.Builder.createDirectTask()
+                .setQuery(query)
+                .addOption(QueryOption.EXPAND_CONTENT)
+                .build();
+        task.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
 
         sendRequest(Operation.createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
-                .setBody(q)
+                .setBody(task)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         failTask("Failure while quering for enviroment mappings", e);
                         return;
                     }
 
-                    QueryTask task = o.getBody(QueryTask.class);
-                    if (task.results == null || task.results.documentLinks == null
-                            || task.results.documentLinks.isEmpty()) {
+                    ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
+                    if (result == null || result.documentLinks == null
+                            || result.documentLinks.isEmpty()) {
                         if (tenantLinks != null && !tenantLinks.isEmpty()) {
                             ArrayList<String> subLinks = new ArrayList<>(tenantLinks);
                             subLinks.remove(tenantLinks.size() - 1);
-                            queryEnvironment(state, endpointType, subLinks, callbackFunction);
+                            queryEnvironment(state, endpoint, subLinks, callbackFunction);
                         } else {
-                            failTask("No available environment mappings for endpoint type: "
-                                    + endpointType, null);
+                            failTask(String.format(
+                                    "No available environments for endpoint %s of type %s",
+                                    endpoint.documentSelfLink, endpoint.endpointType), null);
                         }
                         return;
                     }
-                    callbackFunction.accept(task.results.documentLinks.get(0));
-                }));
 
+                    List<EnvironmentState> foundEnvs = result.documents.values().stream()
+                            .map(json -> Utils.fromJson(json, EnvironmentState.class))
+                            .collect(Collectors.toList());
+                    EnvironmentState envForTheEndpoint = foundEnvs.stream()
+                            .filter(env -> endpoint.documentSelfLink.equals(env.endpointLink))
+                            .findFirst().orElse(null);
+                    if (envForTheEndpoint != null) {
+                        callbackFunction.accept(envForTheEndpoint.documentSelfLink);
+                    } else {
+                        callbackFunction.accept(result.documentLinks.get(0));
+                    }
+                }));
     }
 
     private void getComputeDescription(String uriLink,

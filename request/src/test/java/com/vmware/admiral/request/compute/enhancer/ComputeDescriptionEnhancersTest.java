@@ -37,7 +37,10 @@ import com.vmware.admiral.common.util.KeyUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
-import com.vmware.admiral.compute.EnvironmentMappingService;
+import com.vmware.admiral.compute.env.ComputeProfileService;
+import com.vmware.admiral.compute.env.EnvironmentService;
+import com.vmware.admiral.compute.env.NetworkProfileService;
+import com.vmware.admiral.compute.env.StorageProfileService;
 import com.vmware.admiral.host.CaSigningCertService;
 import com.vmware.admiral.host.HostInitServiceHelper;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
@@ -61,8 +64,10 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
     public void setup() throws Throwable {
         HostInitServiceHelper.startServices(host, CaSigningCertService.class,
                 TestInitialBootService.class);
-        HostInitServiceHelper.startServiceFactories(host, EnvironmentMappingService.class);
-        waitForServiceAvailability(EnvironmentMappingService.FACTORY_LINK);
+        HostInitServiceHelper.startServiceFactories(host, EnvironmentService.class,
+                ComputeProfileService.class, StorageProfileService.class,
+                NetworkProfileService.class);
+        waitForServiceAvailability(EnvironmentService.FACTORY_LINK);
 
         host.sendRequest(Operation.createPost(
                 UriUtils.buildUri(host, TestInitialBootService.class))
@@ -70,7 +75,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
                 .setBody(new ServiceDocument()));
 
         String awsEndpointType = EndpointType.aws.name();
-        String awsEnvLink = UriUtils.buildUriPath(EnvironmentMappingService.FACTORY_LINK,
+        String awsEnvLink = UriUtils.buildUriPath(EnvironmentService.FACTORY_LINK,
                 awsEndpointType);
         waitForServiceAvailability(awsEnvLink);
 
@@ -81,7 +86,6 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         context.imageType = "ubuntu-1604";
         context.endpointType = awsEndpointType;
         context.environmentLink = awsEnvLink;
-
     }
 
     @Test
@@ -385,7 +389,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         @Override
         public void handlePost(Operation post) {
             ArrayList<ServiceDocument> states = new ArrayList<>();
-            states.addAll(EnvironmentMappingService.getDefaultMappings());
+            states.addAll(EnvironmentService.getAllDefaultDocuments());
             initInstances(post, false, false, states.toArray(new ServiceDocument[states.size()]));
         }
     }

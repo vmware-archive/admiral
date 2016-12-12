@@ -12,16 +12,17 @@
 package com.vmware.admiral.request.compute.enhancer;
 
 import java.net.URI;
-import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 
 import com.vmware.admiral.compute.ComputeConstants;
-import com.vmware.admiral.compute.EnvironmentMappingService.EnvironmentMappingState;
+import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentStateExpanded;
+import com.vmware.admiral.compute.env.InstanceTypeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.UriUtils;
 
 public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnhancer {
 
@@ -45,15 +46,15 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
             applyInstanceType(cd, env);
 
             if (cd.dataStoreId == null) {
-                cd.dataStoreId = env.getStringMappingValue("placement", "dataStoreId");
+                cd.dataStoreId = env.getStringMiscValue("placement", "dataStoreId");
             }
 
             if (cd.authCredentialsLink == null) {
-                cd.authCredentialsLink = env.getStringMappingValue("authentication",
+                cd.authCredentialsLink = env.getStringMiscValue("authentication",
                         "guestAuthLink");
             }
             if (cd.zoneId == null) {
-                cd.zoneId = env.getStringMappingValue("placement", "zoneId");
+                cd.zoneId = env.getStringMiscValue("placement", "zoneId");
             }
             if (cd.zoneId == null && context.endpointComputeDescription != null) {
                 cd.zoneId = context.endpointComputeDescription.zoneId;
@@ -61,7 +62,11 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
 
             String absImageId = context.imageType;
             if (absImageId != null) {
-                String imageId = env.getStringMappingValue("imageType", absImageId);
+                String imageId = null;
+                if (env.computeProfile != null && env.computeProfile.imageMapping != null
+                        && env.computeProfile.imageMapping.containsKey(absImageId)) {
+                    imageId = env.computeProfile.imageMapping.get(absImageId).image;
+                }
                 if (imageId == null) {
                     imageId = absImageId;
                 }
@@ -85,33 +90,30 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
 
     }
 
-    private void applyInstanceType(ComputeDescription cd, EnvironmentMappingState env) {
-        Object value = env.getMappingValue("instanceType", cd.instanceType);
-        if (value == null) {
-            return;
-        }
-        if (value instanceof String) {
-            cd.instanceType = (String) value;
-        } else if (value instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Integer> map = (Map<String, Integer>) value;
-            Integer cpu = map.get("cpu");
-            if (cpu != null) {
-                cd.cpuCount = cpu.longValue();
-            }
-            Integer mem = map.get("mem");
-            if (mem != null) {
-                cd.totalMemoryBytes = mem.longValue() * 1024 * 1024;
-            }
+    private void applyInstanceType(ComputeDescription cd, EnvironmentStateExpanded env) {
+        InstanceTypeDescription instanceTypeDescription = null;
+        if (env.computeProfile != null && env.computeProfile.instanceTypeMapping != null) {
+            instanceTypeDescription = env.computeProfile.instanceTypeMapping.get(cd.instanceType);
         }
 
+        if (instanceTypeDescription == null) {
+            return;
+        }
+
+        if (instanceTypeDescription.instanceType != null) {
+            cd.instanceType = instanceTypeDescription.instanceType;
+        } else {
+            cd.cpuCount = instanceTypeDescription.cpuCount;
+            cd.totalMemoryBytes = instanceTypeDescription.memoryMb * 1024 * 1024;
+        }
     }
 
     private <T extends ServiceDocument> void getEnvironmentState(String uriLink,
-            BiConsumer<EnvironmentMappingState, Throwable> callback) {
+            BiConsumer<EnvironmentStateExpanded, Throwable> callback) {
         host.log(Level.INFO, "Loading state for %s", uriLink);
 
-        host.sendRequest(Operation.createGet(host, uriLink)
+        URI envUri = UriUtils.buildUri(host, uriLink);
+        host.sendRequest(Operation.createGet(EnvironmentStateExpanded.buildUri(envUri))
                 .setReferer(referer)
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -119,7 +121,7 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
                         return;
                     }
 
-                    EnvironmentMappingState state = o.getBody(EnvironmentMappingState.class);
+                    EnvironmentStateExpanded state = o.getBody(EnvironmentStateExpanded.class);
                     callback.accept(state, null);
                 }));
     }

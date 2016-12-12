@@ -196,15 +196,14 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
     public void testDeleteEndpoint() throws Throwable {
         EndpointState endpoint = createEndpoint("ep");
 
-        EndpointAllocationTaskState newEndpointState = allocateEndpoint(endpoint);
-        assertNotNull(newEndpointState);
-        assertNotNull(newEndpointState.endpointState);
-        assertNotNull(newEndpointState.endpointState.documentSelfLink);
+        EndpointAllocationTaskState endpointAllocationTask = allocateEndpoint(endpoint);
+        assertNotNull(endpointAllocationTask);
+        assertNotNull(endpointAllocationTask.endpointState);
+        assertNotNull(endpointAllocationTask.endpointState.documentSelfLink);
         delete(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK,
-                newEndpointState.endpointState.documentSelfLink));
+                endpointAllocationTask.endpointState.documentSelfLink));
 
-        documentLinksForDeletion.add(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK,
-                newEndpointState.documentSelfLink));
+        documentLinksForDeletion.add(endpointAllocationTask.endpointState.documentSelfLink);
     }
 
     private EndpointAllocationTaskState allocateEndpoint(EndpointState endpoint) throws Throwable {
