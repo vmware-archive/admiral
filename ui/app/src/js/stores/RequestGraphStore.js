@@ -56,6 +56,9 @@ let RequestsGraphStore = Reflux.createStore({
     Promise.all(promises).then(() => {
       this.setInData(['request'], request);
       this.emitChange();
+    }).catch(() => {
+      this.setInData(['request'], request);
+      this.emitChange();
     });
   },
 
@@ -99,16 +102,42 @@ let RequestsGraphStore = Reflux.createStore({
     if (info.hostSelections) {
       var hostLinks = info.hostSelections.map(hs => hs.hostLink);
 
-      result.hosts = [];
+      result.eligibleHosts = [];
 
       hostLinks.forEach((hostLink) => {
         promises.push(services.loadHostByLink(hostLink).then((host) => {
-          result.hosts.push(host);
+          result.eligibleHosts.push(host);
+        }));
+      });
+    }
+
+    if (info.resourceLinks) {
+      result.hosts = [];
+
+      info.resourceLinks.forEach((resourceLink) => {
+        promises.push(services.loadDocument(resourceLink).then((resource) => {
+          var parentLinks = resource.parentLinks;
+          if (!parentLinks && resource.parentLink) {
+            parentLinks = [resource.parentLink];
+          }
+
+          if (parentLinks && parentLinks.length > 0) {
+            var hostsPromises = [];
+            parentLinks.forEach((parentLink) => {
+              hostsPromises.push(services.loadHostByLink(parentLink).then((host) => {
+                result.hosts.push(host);
+              }));
+            });
+
+            return Promise.all(hostsPromises);
+          }
         }));
       });
     }
 
     return Promise.all(promises).then(() => {
+      return result;
+    }).catch(() => {
       return result;
     });
   }

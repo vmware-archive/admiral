@@ -408,10 +408,6 @@ public class RequestBrokerGraphService extends StatelessService {
                 stage.documentVersion = jobject.get("documentVersion").getAsLong();
                 stage.properties = jobject;
 
-                stage.properties.remove("documentSelfLink");
-                stage.properties.remove("serviceTaskCallback");
-                stage.properties.remove("taskInfo");
-                stage.properties.remove("taskSubStage");
                 stage.properties.remove("documentVersion");
                 stage.properties.remove("documentUpdateTimeMicros");
                 stage.properties.remove("documentEpoch");

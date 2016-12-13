@@ -41,10 +41,16 @@
         <span class="left">Placement Zone:</span>
         <a class="right" href="#">{{info.placementZone.name}}</a>
       </div>
-      <div class="simple-info" v-if="info.hosts">
-        <span class="left">Host(s) Selected:</span>
+      <div class="simple-info" v-if="info.eligibleHosts">
+        <span class="left">Eligible Hosts:</span>
         <span class="right">
-          <a v-for="host in info.hosts" class="host" track-by="$index" href="#">{{getHostName(host)}}</a>
+          <span v-for="host in info.eligibleHosts" track-by="$index"><a class="host" href="#">{{getHostName(host)}}</a>&nbsp;</span>
+        </span>
+      </div>
+      <div class="simple-info" v-if="info.hosts">
+        <span class="left">Selected Hosts:</span>
+        <span class="right">
+          <span v-for="host in info.hosts" track-by="$index"><a class="host" href="#">{{getHostName(host)}}</a>&nbsp;</span>
         </span>
       </div>
     </div>
