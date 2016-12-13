@@ -362,7 +362,7 @@ let getNetworkNamesOfContainer = function(cd) {
   if (cd.networks) {
     for (var key in cd.networks) {
       if (cd.networks.hasOwnProperty(key)) {
-        cdNetworks.push(key.toLowerCase());
+        cdNetworks.push(key);
       }
     }
   }
