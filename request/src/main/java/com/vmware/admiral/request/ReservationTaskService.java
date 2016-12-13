@@ -52,7 +52,6 @@ import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.NumericRange;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
-import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 /**
  * Task implementing the reservation request resource work flow.
@@ -269,6 +268,11 @@ public class ReservationTaskService
         QueryTask q = QueryUtil.buildQuery(GroupResourcePlacementState.class, false);
         q.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
 
+        q.querySpec.query.addBooleanClause(Query.Builder.create()
+                .addFieldClause(GroupResourcePlacementState.FIELD_NAME_RESOURCE_TYPE,
+                        state.resourceType)
+                .build());
+
         if (state.tenantLinks == null || state.tenantLinks.isEmpty()) {
 
             if (isGlobal(state)) {
@@ -291,45 +295,27 @@ public class ReservationTaskService
         }
 
         // match on available number of instances:
-        QueryTask.Query numOfInstancesClause = new QueryTask.Query();
-
-        QueryTask.Query moreInstancesThanRequired = new QueryTask.Query()
-                .setTermPropertyName(GroupResourcePlacementState.FIELD_NAME_AVAILABLE_INSTANCES_COUNT)
-                .setNumericRange(NumericRange.createLongRange(state.resourceCount,
-                        Long.MAX_VALUE, true, false))
-                .setTermMatchType(MatchType.TERM);
-
-        QueryTask.Query unlimitedInstances = new QueryTask.Query()
-                .setTermPropertyName(GroupResourcePlacementState.FIELD_NAME_MAX_NUMBER_INSTANCES)
-                .setNumericRange(NumericRange.createEqualRange(0L))
-                .setTermMatchType(MatchType.TERM);
-
-        moreInstancesThanRequired.occurance = Occurance.SHOULD_OCCUR;
-        numOfInstancesClause.addBooleanClause(moreInstancesThanRequired);
-        unlimitedInstances.occurance = Occurance.SHOULD_OCCUR;
-        numOfInstancesClause.addBooleanClause(unlimitedInstances);
-        numOfInstancesClause.occurance = Occurance.MUST_OCCUR;
-
+        Query numOfInstancesClause = Query.Builder.create()
+                .addRangeClause(GroupResourcePlacementState.FIELD_NAME_AVAILABLE_INSTANCES_COUNT,
+                        NumericRange.createLongRange(state.resourceCount, Long.MAX_VALUE, true,
+                                false),
+                        Occurance.SHOULD_OCCUR)
+                .addRangeClause(GroupResourcePlacementState.FIELD_NAME_MAX_NUMBER_INSTANCES,
+                        NumericRange.createEqualRange(0L), Occurance.SHOULD_OCCUR)
+                .build();
         q.querySpec.query.addBooleanClause(numOfInstancesClause);
 
         if (containerDesc.memoryLimit != null) {
-            QueryTask.Query memoryLimitClause = new QueryTask.Query();
-
-            QueryTask.Query moreAvailableMemoryThanRequired = new QueryTask.Query()
-                    .setTermPropertyName(GroupResourcePlacementState.FIELD_NAME_AVAILABLE_MEMORY)
-                    .setNumericRange(NumericRange
-                            .createLongRange(state.resourceCount * containerDesc.memoryLimit,
-                                    Long.MAX_VALUE, true, false))
-                    .setTermMatchType(MatchType.TERM).setOccurance(Occurance.SHOULD_OCCUR);
-
-            QueryTask.Query unlimitedPlacements = new QueryTask.Query()
-                    .setTermPropertyName(GroupResourcePlacementState.FIELD_NAME_MEMORY_LIMIT)
-                    .setNumericRange(NumericRange.createEqualRange(0L))
-                    .setTermMatchType(MatchType.TERM).setOccurance(Occurance.SHOULD_OCCUR);
-
-            memoryLimitClause.addBooleanClause(moreAvailableMemoryThanRequired);
-            memoryLimitClause.addBooleanClause(unlimitedPlacements);
-            memoryLimitClause.occurance = Occurance.MUST_OCCUR;
+            Query memoryLimitClause = Query.Builder.create()
+                    .addRangeClause(GroupResourcePlacementState.FIELD_NAME_AVAILABLE_MEMORY,
+                            NumericRange.createLongRange(
+                                    state.resourceCount * containerDesc.memoryLimit,
+                                    Long.MAX_VALUE, true, false),
+                            Occurance.SHOULD_OCCUR)
+                    .addRangeClause(GroupResourcePlacementState.FIELD_NAME_MEMORY_LIMIT,
+                            NumericRange.createEqualRange(0L),
+                            Occurance.SHOULD_OCCUR)
+                    .build();
 
             q.querySpec.query.addBooleanClause(memoryLimitClause);
             logInfo("Placement query includes memory limit of: [%s]: ", containerDesc.memoryLimit);

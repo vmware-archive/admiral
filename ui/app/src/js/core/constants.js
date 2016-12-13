@@ -248,6 +248,10 @@ var constants = Immutable({
     EPZ_NAME_PREFIX: '__epz_',
     EPZ_VALUE: 'true'
   },
+  RESOURCE_TYPES: {
+    CONTAINER: 'DOCKER_CONTAINER',
+    COMPUTE: 'COMPUTE'
+  },
   NEW_ITEM_SYSTEM_VALUE: '__new'
 });
 

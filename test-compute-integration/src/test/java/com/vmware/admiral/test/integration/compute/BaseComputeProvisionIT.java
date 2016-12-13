@@ -373,6 +373,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
             String resourcePoolLink, TestDocumentLifeCycle documentLifeCycle)
             throws Exception {
         GroupResourcePlacementState placementState = new GroupResourcePlacementState();
+        placementState.resourceType = ResourceType.COMPUTE_TYPE.getName();
         placementState.maxNumberInstances = 30;
         placementState.resourcePoolLink = resourcePoolLink;
         placementState.name = name(endpointType, name, SUFFIX);

@@ -82,6 +82,8 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testWithSingleCompute() throws Throwable {
+        createComputeGroupResourcePlacement(createComputeResourcePool(), 0);
+
         ComputeDescription compute = TestRequestStateFactory.createDockerHostDescription();
         compute.instanceAdapterReference = UriUtils.buildUri(host,
                 ManagementUriParts.ADAPTER_DOCKER);
@@ -116,6 +118,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testWithMultipleComputes() throws Throwable {
+        createComputeGroupResourcePlacement(createComputeResourcePool(), 0);
 
         ComputeDescription compute1 = TestRequestStateFactory.createDockerHostDescription();
         compute1.instanceAdapterReference = UriUtils.buildUri(host,

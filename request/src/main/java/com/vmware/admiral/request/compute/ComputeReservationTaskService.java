@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.ResourcePlacementReservationRequest;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState.SubStage;
@@ -168,58 +169,44 @@ public class ComputeReservationTaskService
             return;
         }
 
-        // match on group property:
-        QueryTask q = QueryUtil.buildQuery(GroupResourcePlacementState.class, false);
-        q.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
-
         if (tenantLinks == null || tenantLinks.isEmpty()) {
-
             logInfo("Quering for global placements for resource description: [%s] and resource count: [%s]...",
                     state.resourceDescriptionLink, state.resourceCount);
         } else {
-
             logInfo("Quering for group placements in [%s], for resource description: [%s] and resource count: [%s]...",
                     tenantLinks, state.resourceDescriptionLink, state.resourceCount);
         }
 
-        Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(tenantLinks);
-        q.querySpec.query.addBooleanClause(tenantLinksQuery);
+        // match on group property:
+        QueryTask q = QueryUtil.buildQuery(GroupResourcePlacementState.class, false);
+        q.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
+
+        q.querySpec.query.addBooleanClause(QueryUtil.addTenantAndGroupClause(tenantLinks));
+        q.querySpec.query.addBooleanClause(Query.Builder.create()
+                .addFieldClause(GroupResourcePlacementState.FIELD_NAME_RESOURCE_TYPE,
+                        ResourceType.COMPUTE_TYPE.getName())
+                .build());
 
         // match on available number of instances:
-        QueryTask.Query moreInstancesThanRequired = new QueryTask.Query()
-                .setTermPropertyName(GroupResourcePlacementState.FIELD_NAME_AVAILABLE_INSTANCES_COUNT)
-                .setNumericRange(NumericRange.createLongRange(state.resourceCount,
-                        Long.MAX_VALUE, true, false))
-                .setTermMatchType(MatchType.TERM)
-                .setOccurance(Occurance.SHOULD_OCCUR);
-        QueryTask.Query unlimitedInstances = new QueryTask.Query()
-                .setTermPropertyName(GroupResourcePlacementState.FIELD_NAME_MAX_NUMBER_INSTANCES)
-                .setNumericRange(NumericRange.createEqualRange(0L))
-                .setTermMatchType(MatchType.TERM)
-                .setOccurance(Occurance.SHOULD_OCCUR);
-
         Query numOfInstancesClause = Query.Builder.create()
-                .addClauses(moreInstancesThanRequired, unlimitedInstances).build();
+                .addRangeClause(GroupResourcePlacementState.FIELD_NAME_AVAILABLE_INSTANCES_COUNT,
+                        NumericRange.createLongRange(state.resourceCount, Long.MAX_VALUE, true,
+                                false),
+                        Occurance.SHOULD_OCCUR)
+                .addRangeClause(GroupResourcePlacementState.FIELD_NAME_MAX_NUMBER_INSTANCES,
+                        NumericRange.createEqualRange(0L), Occurance.SHOULD_OCCUR)
+                .build();
         q.querySpec.query.addBooleanClause(numOfInstancesClause);
 
         if (computeDesc.totalMemoryBytes > 0) {
-            QueryTask.Query memoryLimitClause = new QueryTask.Query();
-
-            QueryTask.Query moreAvailableMemoryThanRequired = new QueryTask.Query()
-                    .setTermPropertyName(GroupResourcePlacementState.FIELD_NAME_AVAILABLE_MEMORY)
-                    .setNumericRange(NumericRange
-                            .createLongRange(state.resourceCount * computeDesc.totalMemoryBytes,
+            Query memoryLimitClause = Query.Builder.create(Occurance.SHOULD_OCCUR)
+                    .addRangeClause(GroupResourcePlacementState.FIELD_NAME_AVAILABLE_MEMORY,
+                            NumericRange.createLongRange(
+                                    state.resourceCount * computeDesc.totalMemoryBytes,
                                     Long.MAX_VALUE, true, false))
-                    .setTermMatchType(MatchType.TERM);
-
-            QueryTask.Query unlimitedPlacements = new QueryTask.Query()
-                    .setTermPropertyName(GroupResourcePlacementState.FIELD_NAME_MEMORY_LIMIT)
-                    .setNumericRange(NumericRange.createEqualRange(0L))
-                    .setTermMatchType(MatchType.TERM);
-
-            memoryLimitClause.addBooleanClause(moreAvailableMemoryThanRequired);
-            memoryLimitClause.addBooleanClause(unlimitedPlacements);
-            memoryLimitClause.occurance = Occurance.SHOULD_OCCUR;
+                    .addRangeClause(GroupResourcePlacementState.FIELD_NAME_MEMORY_LIMIT,
+                            NumericRange.createEqualRange(0L))
+                    .build();
 
             q.querySpec.query.addBooleanClause(memoryLimitClause);
             logInfo("Placement query includes memory limit of: [%s]: ", computeDesc.totalMemoryBytes);

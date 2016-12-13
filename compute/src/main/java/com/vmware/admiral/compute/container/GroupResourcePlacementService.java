@@ -104,6 +104,7 @@ public class GroupResourcePlacementService extends StatefulService {
         public static final String FIELD_NAME_AVAILABLE_MEMORY = "availableMemory";
         public static final String FIELD_NAME_MEMORY_LIMIT = "memoryLimit";
         public static final String FIELD_NAME_PRIORITY = "priority";
+        public static final String FIELD_NAME_RESOURCE_TYPE = "resourceType";
         public static final String FIELD_NAME_DEPLOYMENT_POLICY_LINK = "deploymentPolicyLink";
         public static final String FIELD_NAME_CUSTOM_PROPERTIES = "customProperties";
 

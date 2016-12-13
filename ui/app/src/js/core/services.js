@@ -973,7 +973,21 @@ services.loadNotifications = function() {
 };
 
 services.loadPlacements = function() {
-  return list(links.RESOURCE_GROUP_PLACEMENTS, true);
+  var resourceType = utils.isApplicationCompute()
+      ? constants.RESOURCE_TYPES.COMPUTE
+      : constants.RESOURCE_TYPES.CONTAINER;
+
+  var params = {
+    [ODATA_FILTER_PROP_NAME]: buildOdataQuery({
+      resourceType: [{
+        val: resourceType,
+        op: 'eq'
+      }],
+      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+    })
+  };
+
+  return list(links.RESOURCE_GROUP_PLACEMENTS, true, params);
 };
 
 services.loadPlacement = function(documentSelfLink) {

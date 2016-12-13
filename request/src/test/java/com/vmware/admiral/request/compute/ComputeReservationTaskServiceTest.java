@@ -74,7 +74,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
     @Test
     public void testReservationTaskLifeCycle() throws Throwable {
         GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
-                .createGroupResourcePlacementState();
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         groupPlacementState.maxNumberInstances = 10;
         groupPlacementState.resourcePoolLink = resourcePool.documentSelfLink;
         groupPlacementState.customProperties = new HashMap<>();
@@ -84,7 +84,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         addForDeletion(groupPlacementState);
 
         GroupResourcePlacementState notEnougInstancesPlacement = TestRequestStateFactory
-                .createGroupResourcePlacementState();
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         notEnougInstancesPlacement.name = "not available";
         notEnougInstancesPlacement.maxNumberInstances = 4;
         notEnougInstancesPlacement = doPost(notEnougInstancesPlacement,
@@ -92,7 +92,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         addForDeletion(notEnougInstancesPlacement);
 
         GroupResourcePlacementState differentGroupPlacement = TestRequestStateFactory
-                .createGroupResourcePlacementState();
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         differentGroupPlacement.maxNumberInstances = 10;
         differentGroupPlacement.name = "different group";
         differentGroupPlacement.tenantLinks = Collections.singletonList("different-group");
@@ -135,7 +135,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
     @Test
     public void testReservationTaskLifeCyclePriorities() throws Throwable {
         GroupResourcePlacementState placementState = TestRequestStateFactory
-                .createGroupResourcePlacementState();
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         placementState.maxNumberInstances = 10;
         placementState.resourcePoolLink = resourcePool.documentSelfLink;
         placementState.priority = 3;
@@ -143,7 +143,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         addForDeletion(placementState);
 
         GroupResourcePlacementState placementState1 = TestRequestStateFactory
-                .createGroupResourcePlacementState();
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         placementState1.maxNumberInstances = 10;
         placementState1.resourcePoolLink = resourcePool.documentSelfLink;
 
@@ -152,7 +152,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         addForDeletion(placementState1);
 
         GroupResourcePlacementState placementState2 = TestRequestStateFactory
-                .createGroupResourcePlacementState();
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         placementState2.maxNumberInstances = 10;
         placementState2.resourcePoolLink = resourcePool.documentSelfLink;
         placementState2.priority = 2;
@@ -178,7 +178,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
     @Test
     public void testReservationTaskLifeCycleUnlimitedMemoryPlacement() throws Throwable {
         GroupResourcePlacementState placementState = TestRequestStateFactory
-                .createGroupResourcePlacementState();
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         placementState.maxNumberInstances = 10;
         placementState.resourcePoolLink = resourcePool.documentSelfLink;
         placementState.priority = 3;
@@ -204,14 +204,14 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
     @Test
     public void testReservationTaskLifeCycleWithNoGroup() throws Throwable {
         GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
-                .createGroupResourcePlacementState();
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         groupPlacementState.tenantLinks = null;
         groupPlacementState = doPost(groupPlacementState,
                 GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(groupPlacementState);
 
         // create another suitable group placement but with a group that should not be selected
-        doPost(TestRequestStateFactory.createGroupResourcePlacementState(),
+        doPost(TestRequestStateFactory.createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE),
                 GroupResourcePlacementService.FACTORY_LINK);
 
         ComputeReservationTaskState task = new ComputeReservationTaskState();
@@ -241,7 +241,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
     public void testReservationTaskLifeCycleWithGlobalGroup() throws Throwable {
         // create placement with same group but less number of instances:
         GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
-                .createGroupResourcePlacementState();
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         groupPlacementState.maxNumberInstances = 2;
         groupPlacementState = doPost(groupPlacementState,
                 GroupResourcePlacementService.FACTORY_LINK);
@@ -249,7 +249,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
 
         // create global placement that should be selected since the group placement is not applicable.
         GroupResourcePlacementState globalGroupState = TestRequestStateFactory
-                .createGroupResourcePlacementState();
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         globalGroupState.tenantLinks = null;
         globalGroupState = doPost(globalGroupState,
                 GroupResourcePlacementService.FACTORY_LINK);
@@ -257,7 +257,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
 
         // create another suitable group placement but with a group that should not be selected
         GroupResourcePlacementState differentGroup = TestRequestStateFactory
-                .createGroupResourcePlacementState();
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         differentGroup.tenantLinks = Collections.singletonList("different-group");
         differentGroup = doPost(differentGroup, GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(differentGroup);

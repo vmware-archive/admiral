@@ -199,6 +199,7 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
     private GroupResourcePlacementState createReservation(String name, ResourcePoolState rp, int priority,
             int maxInstances) throws Exception {
         GroupResourcePlacementState reservation = new GroupResourcePlacementState();
+        reservation.resourceType = ResourceType.COMPUTE_TYPE.getName();
         reservation.name = name;
         reservation.resourcePoolLink = rp.documentSelfLink;
         reservation.priority = priority;
