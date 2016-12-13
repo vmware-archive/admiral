@@ -28,3 +28,7 @@ computeProfile:
       image: "https://bintray.com/vmware/photon/download_file?file_path=photon-custom-hw10-1.0-13c08b6.ova"
 storageProfile: {}
 networkProfile: {}
+misc:
+  placement:
+    mappings:
+      networkId: VM Network

@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.request.compute.enhancer;
 
+import static com.vmware.admiral.compute.ComputeConstants.OVA_URI;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.function.BiConsumer;

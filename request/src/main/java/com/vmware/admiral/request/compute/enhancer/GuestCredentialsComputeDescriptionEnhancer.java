@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.request.compute.enhancer;
 
+import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.SSH_AUTHORIZED_KEYS;
+import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.getCustomProperty;
+
 import java.net.URI;
 import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;

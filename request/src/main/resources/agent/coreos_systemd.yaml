@@ -1,0 +1,13 @@
+coreos:
+   units:
+    - name: "vmware-sagent.service"
+      command: "start"
+      content: |
+        [Unit]
+        Description=softare agent
+        After=network.service
+
+        [Service]
+        Restart=always
+        ExecStart=/opt/vmware/agent/agent_bootstrap.sh
+        WorkingDirectory=/opt/vmware/agent/

@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.request.compute.enhancer;
 
+import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.WRITE_FILES_ELEMENT;
+import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.getCustomProperty;
+
 import java.net.URI;
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
@@ -29,6 +32,7 @@ import com.vmware.admiral.common.util.KeyUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
+import com.vmware.admiral.request.compute.enhancer.EnhancerUtils.WriteFiles;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
@@ -36,6 +40,7 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class ContainerHostRemoteAPIComputeDescriptionEnhancer extends ComputeDescriptionEnhancer {
+
     private static final Pattern REMOTE_API_PORT = Pattern
             .compile("\\{\\{ remote_api_port \\}\\}");
 
@@ -150,7 +155,7 @@ public class ContainerHostRemoteAPIComputeDescriptionEnhancer extends ComputeDes
         try {
             Map<String, Object> content = context.content;
             @SuppressWarnings("unchecked")
-            List<Object> list = (List<Object>) content.get("write_files");
+            List<Object> list = (List<Object>) content.get(WRITE_FILES_ELEMENT);
             if (list == null) {
                 list = new ArrayList<>();
             }
@@ -160,25 +165,12 @@ public class ContainerHostRemoteAPIComputeDescriptionEnhancer extends ComputeDes
                     CertificateUtil.toPEMformat(signedForServer.getCertificate())));
             list.add(new WriteFiles("/etc/docker/server-key.pem", "0600",
                     KeyUtil.toPEMFormat(signedForServer.getPrivateKey())));
-            content.put("write_files", list);
+            content.put(WRITE_FILES_ELEMENT, list);
 
         } catch (Exception e) {
             host.log(Level.WARNING,
                     () -> String.format("Error writing server certs in cloud-init file",
                             Utils.toString(e)));
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private static class WriteFiles {
-        public String path;
-        public String permissions;
-        public String content;
-
-        public WriteFiles(String path, String permissions, String content) {
-            this.path = path;
-            this.permissions = permissions;
-            this.content = content;
         }
     }
 }

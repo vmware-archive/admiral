@@ -11,15 +11,17 @@
 
 package com.vmware.admiral.request.compute.enhancer;
 
+import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.enableContainerHost;
+import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.getCustomProperty;
+import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.loadResource;
+import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.objectMapper;
+
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
 import com.vmware.admiral.compute.ComputeConstants;
-import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 
 public class CloudConfigLoaderEnhancer extends ComputeDescriptionEnhancer {
@@ -37,7 +39,7 @@ public class CloudConfigLoaderEnhancer extends ComputeDescriptionEnhancer {
                 fileContent = loadResource(String.format("/%s-content/cloud_config_%s.yml",
                         context.endpointType, supportDocker ? imageType + "_docker" : "base"));
                 if (fileContent != null && !fileContent.trim().isEmpty()) {
-                    Map<String, Object> content = objectMapper.readValue(fileContent, Map.class);
+                    Map<String, Object> content = objectMapper().readValue(fileContent, Map.class);
 
                     context.content = content;
                 } else {
@@ -49,7 +51,7 @@ public class CloudConfigLoaderEnhancer extends ComputeDescriptionEnhancer {
             callback.accept(cd, null);
         } else {
             try {
-                Map<String, Object> content = objectMapper.readValue(fileContent, Map.class);
+                Map<String, Object> content = objectMapper().readValue(fileContent, Map.class);
 
                 context.content = content;
             } catch (IOException e) {
@@ -57,24 +59,5 @@ public class CloudConfigLoaderEnhancer extends ComputeDescriptionEnhancer {
             }
             callback.accept(cd, null);
         }
-    }
-
-    private static String loadResource(String fileName) throws IOException {
-        try (InputStream is = ComputeAllocationTaskState.class.getResourceAsStream(fileName)) {
-            if (is != null) {
-                try (InputStreamReader r = new InputStreamReader(is)) {
-                    char[] buf = new char[1024];
-                    final StringBuilder out = new StringBuilder();
-
-                    int length = r.read(buf);
-                    while (length > 0) {
-                        out.append(buf, 0, length);
-                        length = r.read(buf);
-                    }
-                    return out.toString();
-                }
-            }
-        }
-        return null;
     }
 }

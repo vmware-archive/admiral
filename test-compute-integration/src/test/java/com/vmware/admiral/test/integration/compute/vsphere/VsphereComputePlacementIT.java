@@ -29,6 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
 import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
@@ -42,10 +43,10 @@ import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.test.integration.BaseIntegrationSupportIT;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.photon.controller.model.ComputeProperties;
-import com.vmware.photon.controller.model.adapters.vsphere.CustomProperties;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -238,10 +239,7 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         final List<ComputeState> selected = new ArrayList<>(returnedTask.results.documents.size());
         returnedTask.results.documents.values().forEach(json -> {
             ComputeState cs = Utils.fromJson(json, ComputeState.class);
-            String computeType = cs.customProperties != null
-                    ? cs.customProperties.get(CustomProperties.TYPE) : null;
-            if (Arrays.asList("HostSystem", "ComputeResource", "ClusterComputeResource")
-                    .contains(computeType)) {
+            if (cs.type == ComputeType.VM_HOST) {
                 selected.add(cs);
             }
         });
@@ -312,6 +310,8 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
     private ComputeDescription createVmComputeDescription(String vmName) throws Exception {
         ComputeDescription cd = new ComputeDescription();
         cd.name = vmName;
+        cd.customProperties = new HashMap<>();
+        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
         return postDocument(ComputeDescriptionService.FACTORY_LINK, cd);
     }
 

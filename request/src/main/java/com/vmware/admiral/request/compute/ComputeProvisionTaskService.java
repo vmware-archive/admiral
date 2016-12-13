@@ -11,24 +11,21 @@
 
 package com.vmware.admiral.request.compute;
 
-import static com.vmware.admiral.compute.ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,10 +35,10 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState.SubStage;
+import com.vmware.admiral.request.compute.enhancer.ComputeStateEnhancer;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.photon.controller.model.adapterapi.ResourceOperationResponse;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.tasks.ProvisionComputeTaskService;
 import com.vmware.photon.controller.model.tasks.ServiceTaskCallback;
 import com.vmware.photon.controller.model.tasks.SubTaskService;
@@ -136,65 +133,39 @@ public class ComputeProvisionTaskService extends
                 return;
             }
 
-            Map<String, String> diskLinkToContent = new HashMap<>();
-
-            Predicate<ComputeState> hasCustomConfigContent = cs -> cs.customProperties != null
-                    && cs.customProperties.containsKey(COMPUTE_CONFIG_CONTENT_PROP_NAME);
-
+            ComputeStateEnhancer enhancer = new ComputeStateEnhancer(getHost(),
+                    UriUtils.buildUri(getHost().getPublicUri(), getSelfLink()));
+            List<ComputeState> comps = new ArrayList<>();
+            AtomicInteger count = new AtomicInteger(opsGetComputes.values().size());
             opsGetComputes.values().stream()
                     .map(op -> op.getBody(ComputeState.class))
-                    .filter(hasCustomConfigContent)
                     .forEach(cs -> {
-                        for (String diskLink : cs.diskLinks) {
-                            diskLinkToContent.put(diskLink, cs.customProperties
-                                    .get(COMPUTE_CONFIG_CONTENT_PROP_NAME));
-                        }
-                    });
-
-            OperationJoin.JoinedCompletionHandler getDisksCompletion = (opsGetDisks,
-                    exsGetDisks) -> {
-                if (exsGetDisks != null && !exsGetDisks.isEmpty()) {
-                    failTask("Unable to get disk(s)", exsGetDisks.values().iterator().next());
-                    return;
-                }
-
-                Stream<Operation> updateOperations = opsGetDisks.values().stream()
-                        .map(op -> op.getBody(DiskService.DiskState.class))
-                        .filter(diskState -> diskState.type == DiskService.DiskType.HDD)
-                        .filter(diskState -> diskState.bootConfig != null
-                                && diskState.bootConfig.files.length > 0)
-                        .map(diskState -> {
-                            diskState.bootConfig.files[0].contents = diskLinkToContent
-                                    .get(diskState.documentSelfLink);
-                            return Operation.createPut(this, diskState.documentSelfLink)
-                                    .setBody(diskState);
+                        enhancer.enhance(null, cs, (c, t) -> {
+                            comps.add(c);
+                            if (count.decrementAndGet() == 0) {
+                                updateComputes(comps);
+                            }
                         });
-
-                OperationJoin.create(updateOperations).setCompletion((opsUpdDisks, exsUpdDisks) -> {
-                    if (exsUpdDisks != null && !exsUpdDisks.isEmpty()) {
-                        failTask("Unable to update disk(s)",
-                                exsUpdDisks.values().iterator().next());
-                        return;
-                    }
-
-                    proceedTo(SubStage.CUSTOMIZED_COMPUTE);
-                }).sendWith(this);
-            };
-
-            List<Operation> getDisksOperations = diskLinkToContent.keySet().stream()
-                    .map(link -> Operation.createGet(this, link)).collect(Collectors.toList());
-
-            if (getDisksOperations.size() > 0) {
-                OperationJoin.create(getDisksOperations).setCompletion(getDisksCompletion)
-                        .sendWith(this);
-            } else {
-                proceedTo(SubStage.CUSTOMIZED_COMPUTE);
-            }
+                    });
         };
 
         Stream<Operation> getComputeOperations = state.resourceLinks.stream()
                 .map(link -> Operation.createGet(this, link));
         OperationJoin.create(getComputeOperations).setCompletion(getComputeCompletion)
+                .sendWith(this);
+    }
+
+    private void updateComputes(List<ComputeState> comps) {
+        OperationJoin.JoinedCompletionHandler patchComputeCompletion = (ops, exs) -> {
+            if (exs != null && !exs.isEmpty()) {
+                failTask("Error patching compute states", exs.values().iterator().next());
+                return;
+            }
+            proceedTo(SubStage.CUSTOMIZED_COMPUTE);
+        };
+        Stream<Operation> patchComputeOperations = comps.stream()
+                .map(cs -> Operation.createPatch(this, cs.documentSelfLink).setBody(cs));
+        OperationJoin.create(patchComputeOperations).setCompletion(patchComputeCompletion)
                 .sendWith(this);
     }
 

@@ -11,7 +11,13 @@
 
 package com.vmware.admiral.request.compute.enhancer;
 
-import java.util.Base64;
+import static com.vmware.admiral.compute.ComputeConstants.OVA_URI;
+import static com.vmware.admiral.compute.ComputeConstants.OVF_COREOS_CLOUD_INIT_PROP;
+import static com.vmware.admiral.compute.ComputeConstants.OVF_LINUX_CLOUD_INIT_PROP;
+import static com.vmware.admiral.compute.ComputeConstants.OVF_PROP_PREFIX;
+import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.SSH_AUTHORIZED_KEYS;
+import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.objectMapper;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -25,10 +31,6 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.xenon.common.ServiceHost;
 
 public class CloudConfigSerializeEnhancer extends ComputeDescriptionEnhancer {
-
-    public static final String OVF_PROP_PREFIX = "ovf.prop:";
-    public static final String VSPHERE_COREOS_CLOUD_INIT_PROP = "guestinfo.coreos.config.data";
-    public static final String VSPHERE_PHOTONOS_CLOUD_INIT_PROP = "user-data";
 
     private ServiceHost host;
 
@@ -44,7 +46,7 @@ public class CloudConfigSerializeEnhancer extends ComputeDescriptionEnhancer {
             try {
                 context.content = order(context.content);
 
-                String payload = objectMapper.writeValueAsString(context.content);
+                String payload = objectMapper().writeValueAsString(context.content);
                 StringBuilder sb = new StringBuilder("#cloud-config\n");
                 sb.append(payload);
 
@@ -54,11 +56,11 @@ public class CloudConfigSerializeEnhancer extends ComputeDescriptionEnhancer {
                 if (EndpointType.vsphere.name().equals(context.endpointType)
                         && cd.customProperties.containsKey(OVA_URI)) {
                     if (context.imageType.equals("coreos")) {
-                        cd.customProperties.put(OVF_PROP_PREFIX + VSPHERE_COREOS_CLOUD_INIT_PROP,
+                        cd.customProperties.put(OVF_PROP_PREFIX + OVF_COREOS_CLOUD_INIT_PROP,
                                 cloudConfig);
                     } else {
-                        cd.customProperties.put(OVF_PROP_PREFIX + VSPHERE_PHOTONOS_CLOUD_INIT_PROP,
-                                Base64.getEncoder().encodeToString(cloudConfig.getBytes()));
+                        cd.customProperties.put(OVF_PROP_PREFIX + OVF_LINUX_CLOUD_INIT_PROP,
+                                cloudConfig);
                     }
                 } else {
                     cd.customProperties.put(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME,

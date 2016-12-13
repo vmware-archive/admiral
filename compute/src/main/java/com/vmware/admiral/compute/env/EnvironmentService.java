@@ -112,6 +112,7 @@ public class EnvironmentService extends StatefulService {
                 targetState.computeProfileLink = this.computeProfileLink;
                 targetState.storageProfileLink = this.storageProfileLink;
                 targetState.networkProfileLink = this.networkProfileLink;
+                targetState.misc = this.misc;
             }
         }
     }
@@ -237,6 +238,10 @@ public class EnvironmentService extends StatefulService {
                         try (InputStream is = r.url.openStream()) {
                             return mapper.readValue(is, EnvironmentStateExpanded.class);
                         } catch (Exception e) {
+                            Utils.log(EnvironmentService.class,
+                                    EnvironmentService.class.getSimpleName(), Level.WARNING,
+                                    "Failure reading default environment: %s, reason: %s", r.url,
+                                    e.getMessage());
                             return null;
                         }
                     }).filter(env -> env != null)

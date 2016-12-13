@@ -345,7 +345,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         List<Object> list = (List) writeFiles;
         assertEquals(3, list.size());
 
-        String value = ComputeDescriptionEnhancer.objectMapper
+        String value = EnhancerUtils.objectMapper()
                 .writeValueAsString(context.content.get("coreos"));
         assertTrue(value.contains("ListenStream=2376"));
     }
