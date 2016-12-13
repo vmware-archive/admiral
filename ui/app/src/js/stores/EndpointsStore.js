@@ -15,6 +15,7 @@ import utils from 'core/utils';
 import constants from 'core/constants';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 
+const ENUMERATION_RETRIES = 20;
 const OPERATION = {
   LIST: 'list'
 };
@@ -73,7 +74,7 @@ let EndpointsStore = Reflux.createStore({
     this.emitChange();
 
     services.createEndpoint(endpoint).then((createdEndpoint) => {
-      verifyEnumeration(createdEndpoint, 10, () => {
+      verifyEnumeration(createdEndpoint, ENUMERATION_RETRIES, () => {
         var immutableEndpoint = Immutable(createdEndpoint);
 
         var endpoints = this.data.items.asMutable();
@@ -102,7 +103,7 @@ let EndpointsStore = Reflux.createStore({
       // If the backend did not make any changes, the response will be empty
       updatedEndpoint = updatedEndpoint || endpoint;
 
-      verifyEnumeration(updatedEndpoint, 10, () => {
+      verifyEnumeration(updatedEndpoint, ENUMERATION_RETRIES, () => {
         var immutableEndpoint = Immutable(updatedEndpoint);
         var endpoints = this.data.items.asMutable();
 

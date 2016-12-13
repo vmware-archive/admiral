@@ -92,11 +92,12 @@
 
   <div id="clusterSize" class="form-group" v-bind:class="{'hide': endpoint === null}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.clusterSize")}}</label>
-    <div class="clusterSizeInput col-sm-9"><span>{{clusterSize}}</span>&nbsp;
+    <div class="clusterSizeInput col-sm-9">
+      <action-button v-bind:disabled="clusterSize == 1" name="decrementClusterSize" icon-name="minus"
+                   v-on:click="modifyClusterSize($event, -1)"></action-button>
+      <span>{{clusterSize}}</span>
       <action-button name="incrementClusterSize" icon-name="plus"
                      v-on:click="modifyClusterSize($event, 1)"></action-button>
-      <action-button v-if="clusterSize > 1" name="decrementClusterSize" icon-name="minus"
-                   v-on:click="modifyClusterSize($event, -1)"></action-button>
     </div>
   </div>
 

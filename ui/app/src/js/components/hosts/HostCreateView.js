@@ -271,6 +271,9 @@ var HostCreateView = Vue.extend({
       $event.stopPropagation();
       $event.preventDefault();
 
+      if (this.clusterSize === 1 && incrementValue < 0) {
+        return;
+      }
       this.clusterSize += incrementValue;
     },
     getInstanceTypeDescription: function(key) {

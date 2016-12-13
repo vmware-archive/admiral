@@ -12,8 +12,8 @@
 var VueActionButton = Vue.extend({
   template: `
     <div class="action" v-show="supported">
-      <a href="#" class="btn btn-circle-outline container-action-{{name}}"
-         title="{{tooltip}}">
+      <a href="#" disabled="{{disabled}}" title="{{tooltip}}"
+        class="btn btn-circle-outline container-action-{{name}}">
         <i class="fa fa-{{iconName}}"></i>
       </a>
       <div v-if="label" class="action-label">{{label}}</div>
@@ -35,6 +35,11 @@ var VueActionButton = Vue.extend({
       required: false,
       type: Boolean,
       default: true
+    },
+    disabled: {
+      required: false,
+      type: Boolean,
+      default: false
     },
     tooltip: {
       required: false,

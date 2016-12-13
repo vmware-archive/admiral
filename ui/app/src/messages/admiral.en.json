@@ -77,7 +77,7 @@
         "instanceType": "Instance type",
         "imageType": "OS",
         "port": "Port",
-        "clusterSize": "Cluster size"
+        "clusterSize": "Instance count"
       },
       "list": {
         "title": "Hosts",
