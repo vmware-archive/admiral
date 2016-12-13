@@ -115,6 +115,9 @@ var HostCreateView = Vue.extend({
     },
     validationErrors: function() {
       return this.model.validationErrors || {};
+    },
+    isNimbusEndpoint: function() {
+      return this.endpoint && this.endpoint.endpointType === 'nimbus';
     }
   },
 

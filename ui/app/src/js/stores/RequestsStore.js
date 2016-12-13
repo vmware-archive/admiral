@@ -236,7 +236,10 @@ let RequestsStore = Reflux.createStore({
         // remove from active
         activeRequests.splice(idxReq, 1);
 
-        if (req.requestProgressByComponent.hasOwnProperty('Host Removal')) {
+        if (req.requestProgressByComponent.hasOwnProperty('Compute Provision')) {
+          // Host Created
+          return this.hostOperationSuccess();
+        } else if (req.requestProgressByComponent.hasOwnProperty('Host Removal')) {
           // Host Removed
           return this.hostOperationSuccess();
         } else if (req.requestProgressByComponent.hasOwnProperty('Configure Host')) {

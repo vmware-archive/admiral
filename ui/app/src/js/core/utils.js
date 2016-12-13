@@ -586,6 +586,9 @@ var utils = {
    return this.isContextAwareHelpEnabled() && isDocsAvailable;
   },
 
+  isNimbusEnabled: function() {
+    return this.getConfigurationPropertyBoolean('allow.nimbus');
+  },
 
   isRequestRunning: function(request) {
     var stage = request.taskInfo.stage;

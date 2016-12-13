@@ -434,6 +434,9 @@
           "medium": "Medium (1 CPU, 2 GB Memory)",
           "large": "Large (2 CPU, 8 GB Memory)",
           "xlarge": "X-Large (4 CPU, 16 GB Memory)"
+        },
+        "nimbus": {
+          "small": "Small (1 CPU, 1 GB Memory)"
         }
       },
       "imageType": {
@@ -449,6 +452,9 @@
           "coreos": "CoreOS",
           "photon": "Photon OS",
           "ubuntu-1604": "Ubuntu"
+        },
+        "nimbus": {
+          "coreos": "CoreOS"
         }
       }
     },

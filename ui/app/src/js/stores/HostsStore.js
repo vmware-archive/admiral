@@ -446,14 +446,6 @@ let HostsStore = Reflux.createStore({
     this.setInData(['validationErrors'], null);
     this.setInData(['dataCollectionEnd'], null);
 
-    let isCreatingHost = this.selectFromData(['listView', 'isCreatingHostRequest']).get();
-    if (isCreatingHost) {
-      this.onOpenToolbarRequests();
-
-      this.setInData(['listView', 'isCreatingHostRequest'], false);
-      this.emitChange();
-    }
-
     var operation = this.requestCancellableOperation(OPERATION.LIST, queryOptions);
 
     if (operation) {
@@ -659,9 +651,9 @@ let HostsStore = Reflux.createStore({
 
         services.createHostDescription(description).then((createdDescription) => {
           return services.createHost(createdDescription, clusterSize);
-        }).then(() => {
-          this.setInData(['listView', 'isCreatingHostRequest'], true);
-          this.onHostAdded();
+        }).then((request) => {
+          // show hosts view and open requests side view
+          this.navigateHostsListViewAndOpenRequests(request);
         }).catch(this.onGenericEditError);
       });
     }

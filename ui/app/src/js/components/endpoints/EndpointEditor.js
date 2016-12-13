@@ -12,8 +12,9 @@
 import EndpointEditorVue from 'components/endpoints/EndpointEditorVue.html';
 import { EndpointsActions } from 'actions/Actions';
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
+import utils from 'core/utils';
 
-const TYPES = [
+const OOTB_TYPES = [
   {
     id: 'aws',
     name: 'AWS',
@@ -45,6 +46,19 @@ var EndpointEditor = Vue.extend({
     },
     endpointProperties: function() {
       return this.model.item.endpointProperties || {};
+    },
+    supportedEndpointTypes: function() {
+      var supportedTypes = OOTB_TYPES.slice();
+
+      if (utils.isNimbusEnabled()) {
+        supportedTypes.push({
+          id: 'nimbus',
+          name: 'Nimbus',
+          iconSrc: 'image-assets/endpoints/nimbus.png'
+        });
+      }
+
+      return supportedTypes;
     }
   },
   data: function() {
@@ -78,10 +92,28 @@ var EndpointEditor = Vue.extend({
     onInputChange: function() {
       Vue.nextTick(() => {
         var model = this.getModel();
-        this.saveDisabled = !model.name || !model.endpointType || !model.endpointProperties ||
-          !model.endpointProperties.privateKey || !model.endpointProperties.privateKeyId ||
-          (!model.endpointProperties.regionId && !(model.endpointType === 'vsphere'));
+
+        this.saveDisabled = !model.name || !model.endpointType || !model.endpointProperties;
+        if (!this.saveDisabled) {
+          // check specific properties
+          //  - region
+          let isRegionSupported = !this.isSelected('vsphere') && !this.isSelected('nimbus');
+          let noRegion = (isRegionSupported && !model.endpointProperties.regionId);
+          //  - authn properties
+          // username === privateKeyId
+          let isPasswordSupported = !this.isSelected('nimbus');
+          let noAuthData = !model.endpointProperties.privateKeyId
+                            || (isPasswordSupported && !model.endpointProperties.privateKey);
+
+          this.saveDisabled = noRegion || noAuthData;
+        }
       });
+    },
+    isSelected: function(endpointType) {
+      let selectedEndpointType = this.typeInputDropdown.getSelectedOption();
+      let selectedEndpointTypeId = selectedEndpointType && selectedEndpointType.id;
+
+      return selectedEndpointTypeId === endpointType;
     },
     getModel: function() {
       var toSave = $.extend({}, this.model.item);
@@ -97,7 +129,13 @@ var EndpointEditor = Vue.extend({
       }
 
       props.privateKey = $(this.$el).find('.secretAccessKey > input').val();
-      props.privateKeyId = $(this.$el).find('.accessKeyId > input').val();
+      let privateKeyId = $(this.$el).find('.accessKeyId > input').val();
+      if (this.isSelected('nimbus')) {
+        props.userEmail = privateKeyId;
+      }
+
+      props.privateKeyId = privateKeyId;
+
       props.regionId = $(this.$el).find('.regionIdInput > input').val();
       props.hostName = $(this.$el).find('.endpointHostInput > input').val();
       props.userLink = $(this.$el).find('.subscriptionIdInput > input').val();
@@ -117,7 +155,7 @@ var EndpointEditor = Vue.extend({
       searchDisabled: true
     });
 
-    this.typeInputDropdown.setOptions(TYPES);
+    this.typeInputDropdown.setOptions(this.supportedEndpointTypes);
     this.typeInputDropdown.setOptionSelectCallback(() => {
       var selectedType = this.typeInputDropdown.getSelectedOption();
       this.currentEndpointType = selectedType && selectedType.id;
@@ -127,9 +165,9 @@ var EndpointEditor = Vue.extend({
     this.unwatchType = this.$watch('model.item.endpointType', (type) => {
       var typeInstance = null;
       if (type) {
-        for (var i = 0; i < TYPES.length; i++) {
-          if (TYPES[i].id === type) {
-            typeInstance = TYPES[i];
+        for (var i = 0; i < this.supportedEndpointTypes.length; i++) {
+          if (this.supportedEndpointTypes[i].id === type) {
+            typeInstance = this.supportedEndpointTypes[i];
             break;
           }
         }

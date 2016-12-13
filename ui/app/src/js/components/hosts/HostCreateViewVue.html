@@ -74,7 +74,7 @@
     </div>
   </div>
 
-  <div id="port" class="form-group" v-bind:class="{'hide': endpoint === null}">
+  <div id="port" class="form-group" v-bind:class="{'hide': endpoint === null || isNimbusEndpoint}">
     <label class="col-sm-3 control-label">
       {{i18n("app.host.details.port")}}
     </label>
@@ -83,7 +83,7 @@
     </div>
   </div>
 
-  <div id="credential" class="form-group" v-bind:class="{'hide': endpoint === null}">
+  <div id="credential" class="form-group" v-bind:class="{'hide': endpoint === null || isNimbusEndpoint}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.guestCredential")}}</label>
     <div class="col-sm-9">
       <div class="form-control dropdown-holder"></div>
@@ -101,7 +101,7 @@
     </div>
   </div>
 
-  <div id="tags" class="form-group tags" v-bind:class="{'hide': endpoint === null}">
+  <div id="tags" class="form-group tags" v-bind:class="{'hide': endpoint === null || isNimbusEndpoint}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.tags")}}</label>
     <div class="col-sm-9">
       <div class="tags-holder">
@@ -112,7 +112,7 @@
     </div>
   </div>
 
-  <div id="customProperties" class="form-group" v-bind:class="{'hide': endpoint === null}">
+  <div id="customProperties" class="form-group" v-bind:class="{'hide': endpoint === null || isNimbusEndpoint}">
     <label class="col-sm-3 control-label">{{i18n("app.host.details.customProperties")}}</label>
     <div class="col-sm-9">
       <div class="custom-prop-fields"></div>
