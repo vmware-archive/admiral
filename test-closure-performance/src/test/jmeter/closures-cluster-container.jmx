@@ -30,7 +30,7 @@
           <stringProp name="BeanShellSampler.query">import java.io.*;
 
 // in jenkins the path is /var/jenkins_home/workspace/Bellevue-performance/test-performance/target/jmeter/bin/
-String fileName = &quot;/home/ptakova/projects/admiral/test-closure-integration/src/test/resources/integration-test.properties&quot;;
+String fileName = &quot;/home/ptakova/projects/admiral/test-closure-performance/src/test/resources/integration-test.properties&quot;;
 log.info(&quot;Executing...&quot;);
 String customFileName = props.get(&quot;properties.file&quot;);
 if (customFileName != null &amp;&amp; customFileName.length() &gt; 0) {
@@ -80,7 +80,7 @@ if (f.exists()) {
           <stringProp name="BeanShellSampler.query">import java.io.*;
 
 // in jenkins the path is /var/jenkins_home/workspace/Bellevue-performance/test-performance/target/jmeter/bin/
-String serverPemFile = &quot;/home/ptakova/projects/admiral/test-closure-integration/src/test/resources/certs/server.pem&quot;;
+String serverPemFile = &quot;/home/ptakova/projects/bellevue-ci/tools/jenkins/coreos/cfssl/server.pem&quot;;
 File f = new File(serverPemFile);
 log.info(&quot;Using pem file &quot; + serverPemFile);
 
@@ -92,7 +92,7 @@ for (String line; (line = in.readLine()) != null; ) {
 in.close();
 log.info(&quot;Server PEM:\n&quot; + serverPem);
 
-String clientPemFile = &quot;/home/ptakova/projects/admiral/test-closure-integration/src/test/resources/certs/client.pem&quot; ;
+String clientPemFile = &quot;/home/ptakova/projects/bellevue-ci/tools/jenkins/coreos/cfssl/client.pem&quot; ;
 f = new File(clientPemFile);
 in = new BufferedReader(new FileReader(f));
 String clientPem = &quot;&quot;;
@@ -102,7 +102,7 @@ for (String line; (line = in.readLine()) != null; ) {
 in.close();
 log.info(&quot;Client PEM:\n&quot; + clientPem);
 
-String clientKeyFile = &quot;/home/ptakova/projects/admiral/test-closure-integration/src/test/resources/certs/client-key.pem&quot; ;
+String clientKeyFile = &quot;/home/ptakova/projects/bellevue-ci/tools/jenkins/coreos/cfssl/client-key.pem&quot; ;
 f = new File(clientKeyFile);
 in = new BufferedReader(new FileReader(f));
 String clientKey = &quot;&quot;;
@@ -112,7 +112,7 @@ for (String line; (line = in.readLine()) != null; ) {
 in.close();
 log.info(&quot;Client KEY:\n&quot; + clientKey);
 
-log.info(&quot;!!!!!!!!docker.host.performance.address host address: &quot; + props.get(&quot;docker.host.performance.address&quot;));
+log.info(&quot;!!!!!!!!docker.host.performance.addresses host addresses: &quot; + props.get(&quot;docker.host.performance.addresses&quot;));
 
 
 props.put(&quot;server.pem&quot;, serverPem);
@@ -135,9 +135,9 @@ props.put(&quot;client.key&quot;, clientKey);</stringProp>
               <stringProp name="Argument.value">${__P(DCP_PORT, 8282)}</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
-            <elementProp name="DOCKER_HOST" elementType="Argument">
-              <stringProp name="Argument.name">DOCKER_HOST</stringProp>
-              <stringProp name="Argument.value">${__P(docker.host.performance.address)}</stringProp>
+            <elementProp name="DOCKER_HOST_ADDRESSES" elementType="Argument">
+              <stringProp name="Argument.name">DOCKER_HOST_ADDRESSES</stringProp>
+              <stringProp name="Argument.value">${__P(docker.host.performance.addresses)}</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
             <elementProp name="DOCKER_PORT" elementType="Argument">
@@ -147,7 +147,7 @@ props.put(&quot;client.key&quot;, clientKey);</stringProp>
             </elementProp>
             <elementProp name="TASKS_NUMBERS_PER_THREAD" elementType="Argument">
               <stringProp name="Argument.name">TASKS_NUMBERS_PER_THREAD</stringProp>
-              <stringProp name="Argument.value">46</stringProp>
+              <stringProp name="Argument.value">200</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
             <elementProp name="NUMBER_OF__THREADS" elementType="Argument">
@@ -214,7 +214,7 @@ props.put(&quot;client.key&quot;, clientKey);</stringProp>
         </HeaderManager>
         <hashTree/>
         <BeanShellSampler guiclass="BeanShellSamplerGui" testclass="BeanShellSampler" testname="set up propertiesTest-remmove it!" enabled="true">
-          <stringProp name="BeanShellSampler.query">log.info(&quot;!!!!!!!!DOCKER_HOST host address: &quot; + &quot;${DOCKER_HOST}&quot;);</stringProp>
+          <stringProp name="BeanShellSampler.query">log.info(&quot;!!!!!!!!DOCKER_HOST host addresses: &quot; + &quot;${DOCKER_HOST_ADDRESSES}&quot;);</stringProp>
           <stringProp name="BeanShellSampler.filename"></stringProp>
           <stringProp name="BeanShellSampler.parameters"></stringProp>
           <boolProp name="BeanShellSampler.resetInterpreter">false</boolProp>
@@ -296,43 +296,68 @@ props.put(&quot;client.key&quot;, clientKey);</stringProp>
           <stringProp name="ActionProcessor.duration">2000</stringProp>
         </TestAction>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="PUT add host - /resources/hosts" enabled="true">
-          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
-          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
-            <collectionProp name="Arguments.arguments">
-              <elementProp name="" elementType="HTTPArgument">
-                <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">{&quot;hostState&quot;:{&quot;id&quot;:&quot;10.152.8.44:${DOCKER_PORT}&quot;,&quot;resourcePoolLink&quot;:&quot;/resources/pools/default-placement-zone&quot;,&quot;address&quot;:&quot;10.192.62.138:${DOCKER_PORT}&quot;,&quot;powerState&quot;:&quot;ON&quot;,&quot;customProperties&quot;:{&quot;__dockerHostPort&quot;:&quot;2376&quot;,&quot;__authCredentialsLink&quot;:&quot;/core/auth/credentials/cert&quot;,&quot;__adapterDockerType&quot;:&quot;API&quot;},&quot;documentVersion&quot;:0,&quot;documentUpdateTimeMicros&quot;:0,&quot;documentExpirationTimeMicros&quot;:0},&quot;acceptCertificate&quot;:true, &quot;acceptHostAddress&quot;:false}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-            </collectionProp>
-          </elementProp>
-          <stringProp name="HTTPSampler.domain"></stringProp>
-          <stringProp name="HTTPSampler.port"></stringProp>
-          <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-          <stringProp name="HTTPSampler.response_timeout"></stringProp>
-          <stringProp name="HTTPSampler.protocol">http</stringProp>
-          <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
-          <stringProp name="HTTPSampler.path">/resources/hosts</stringProp>
-          <stringProp name="HTTPSampler.method">PUT</stringProp>
-          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
-          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
-          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
-          <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-          <boolProp name="HTTPSampler.monitor">false</boolProp>
-          <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-        </HTTPSamplerProxy>
+        <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">true</boolProp>
+          <stringProp name="LoopController.loops">2</stringProp>
+        </LoopController>
         <hashTree>
-          <com.atlantbh.jmeter.plugins.jsonutils.jsonpathextractor.JSONPathExtractor guiclass="com.atlantbh.jmeter.plugins.jsonutils.jsonpathextractor.gui.JSONPathExtractorGui" testclass="com.atlantbh.jmeter.plugins.jsonutils.jsonpathextractor.JSONPathExtractor" testname="get certificate" enabled="false">
-            <stringProp name="VAR">serverCertificate</stringProp>
-            <stringProp name="JSONPATH">$</stringProp>
-            <stringProp name="DEFAULT"></stringProp>
-            <stringProp name="VARIABLE"></stringProp>
-            <stringProp name="SUBJECT">BODY</stringProp>
-          </com.atlantbh.jmeter.plugins.jsonutils.jsonpathextractor.JSONPathExtractor>
+          <CounterConfig guiclass="CounterConfigGui" testclass="CounterConfig" testname="Counter" enabled="true">
+            <stringProp name="CounterConfig.start">0</stringProp>
+            <stringProp name="CounterConfig.end">2</stringProp>
+            <stringProp name="CounterConfig.incr">1</stringProp>
+            <stringProp name="CounterConfig.name">counter</stringProp>
+            <stringProp name="CounterConfig.format"></stringProp>
+            <boolProp name="CounterConfig.per_user">false</boolProp>
+          </CounterConfig>
+          <hashTree/>
+          <BeanShellPreProcessor guiclass="TestBeanGUI" testclass="BeanShellPreProcessor" testname="BeanShell PreProcessor" enabled="true">
+            <boolProp name="resetInterpreter">false</boolProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="script">String counter = vars.get(&quot;counter&quot;);
+String dockerHostAddress = props.get(&quot;docker.host.performance.addresses&quot;).split(&quot;, &quot;)[Integer.parseInt(counter)];
+log.info(&quot;DockerHost address &quot; + counter + &quot;: &quot; + dockerHostAddress);
+props.put(&quot;currentDockerHostAddress&quot;, dockerHostAddress);
+props.put(&quot;number&quot;, counter);
+
+</stringProp>
+          </BeanShellPreProcessor>
+          <hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="PUT add host - /resources/hosts" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">{&quot;hostState&quot;:{&quot;id&quot;:&quot;${__P(currentDockerHostAddress)}:${DOCKER_PORT}&quot;,&quot;resourcePoolLink&quot;:&quot;/resources/pools/default-placement-zone&quot;,&quot;address&quot;:&quot;${__P(currentDockerHostAddress)}:${DOCKER_PORT}&quot;,&quot;powerState&quot;:&quot;ON&quot;,&quot;customProperties&quot;:{&quot;__dockerHostPort&quot;:&quot;2376&quot;,&quot;__authCredentialsLink&quot;:&quot;/core/auth/credentials/cert&quot;,&quot;__adapterDockerType&quot;:&quot;API&quot;},&quot;documentVersion&quot;:0,&quot;documentUpdateTimeMicros&quot;:0,&quot;documentExpirationTimeMicros&quot;:0},&quot;acceptCertificate&quot;:true, &quot;acceptHostAddress&quot;:false}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <stringProp name="HTTPSampler.protocol">http</stringProp>
+            <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
+            <stringProp name="HTTPSampler.path">/resources/hosts</stringProp>
+            <stringProp name="HTTPSampler.method">PUT</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <boolProp name="HTTPSampler.monitor">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree/>
+          <TestAction guiclass="TestActionGui" testclass="TestAction" testname="sleep 2s" enabled="true">
+            <intProp name="ActionProcessor.action">1</intProp>
+            <intProp name="ActionProcessor.target">0</intProp>
+            <stringProp name="ActionProcessor.duration">2000</stringProp>
+          </TestAction>
           <hashTree/>
         </hashTree>
-        <TestAction guiclass="TestActionGui" testclass="TestAction" testname="sleep 15s" enabled="true">
+        <TestAction guiclass="TestActionGui" testclass="TestAction" testname="sleep 15s - wait for system containers to provision" enabled="true">
           <intProp name="ActionProcessor.action">1</intProp>
           <intProp name="ActionProcessor.target">0</intProp>
           <stringProp name="ActionProcessor.duration">15000</stringProp>
@@ -341,7 +366,7 @@ props.put(&quot;client.key&quot;, clientKey);</stringProp>
         <RecordingController guiclass="RecordController" testclass="RecordingController" testname="Recording Controller" enabled="true"/>
         <hashTree/>
       </hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Test - provision 100 tasks (2 x 50 tasks)" enabled="true">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Test - provision 400 tasks (2 x 200 tasks)" enabled="true">
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
@@ -413,7 +438,7 @@ props.put(&quot;client.key&quot;, clientKey);</stringProp>
         <hashTree/>
         <CounterConfig guiclass="CounterConfigGui" testclass="CounterConfig" testname="Counter" enabled="true">
           <stringProp name="CounterConfig.start">0</stringProp>
-          <stringProp name="CounterConfig.end">50</stringProp>
+          <stringProp name="CounterConfig.end">200</stringProp>
           <stringProp name="CounterConfig.incr">1</stringProp>
           <stringProp name="CounterConfig.name">counter</stringProp>
           <stringProp name="CounterConfig.format"></stringProp>
@@ -1047,33 +1072,60 @@ if (error){
           </BeanShellAssertion>
           <hashTree/>
         </hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST remove host - /requests" enabled="true">
-          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
-          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
-            <collectionProp name="Arguments.arguments">
-              <elementProp name="" elementType="HTTPArgument">
-                <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">{&quot;resourceType&quot;:&quot;CONTAINER_HOST&quot;,&quot;resourceLinks&quot;:[&quot;/resources/compute/10.152.8.44:2376&quot;],&quot;operation&quot;:&quot;REMOVE_RESOURCE&quot;}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-            </collectionProp>
-          </elementProp>
-          <stringProp name="HTTPSampler.domain"></stringProp>
-          <stringProp name="HTTPSampler.port"></stringProp>
-          <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-          <stringProp name="HTTPSampler.response_timeout"></stringProp>
-          <stringProp name="HTTPSampler.protocol">http</stringProp>
-          <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
-          <stringProp name="HTTPSampler.path">/requests</stringProp>
-          <stringProp name="HTTPSampler.method">POST</stringProp>
-          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
-          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
-          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
-          <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-          <boolProp name="HTTPSampler.monitor">false</boolProp>
-          <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-        </HTTPSamplerProxy>
-        <hashTree/>
+        <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">true</boolProp>
+          <stringProp name="LoopController.loops">2</stringProp>
+        </LoopController>
+        <hashTree>
+          <CounterConfig guiclass="CounterConfigGui" testclass="CounterConfig" testname="Counter" enabled="true">
+            <stringProp name="CounterConfig.start">0</stringProp>
+            <stringProp name="CounterConfig.end">2</stringProp>
+            <stringProp name="CounterConfig.incr">1</stringProp>
+            <stringProp name="CounterConfig.name">counter</stringProp>
+            <stringProp name="CounterConfig.format"></stringProp>
+            <boolProp name="CounterConfig.per_user">false</boolProp>
+          </CounterConfig>
+          <hashTree/>
+          <BeanShellPreProcessor guiclass="TestBeanGUI" testclass="BeanShellPreProcessor" testname="BeanShell PreProcessor" enabled="true">
+            <boolProp name="resetInterpreter">false</boolProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="script">String counter = vars.get(&quot;counter&quot;);
+String dockerHostAddress = props.get(&quot;docker.host.performance.addresses&quot;).split(&quot;, &quot;)[Integer.parseInt(counter)];
+log.info(&quot;!!!!!!!!!Remove DockerHost address &quot; + counter + &quot;: &quot; + dockerHostAddress);
+props.put(&quot;currentDockerHostAddress&quot;, dockerHostAddress);
+props.put(&quot;number&quot;, counter);
+</stringProp>
+          </BeanShellPreProcessor>
+          <hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST remove host - /requests" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">{&quot;resourceType&quot;:&quot;CONTAINER_HOST&quot;,&quot;resourceLinks&quot;:[&quot;/resources/compute/${__P(currentDockerHostAddress)}:${DOCKER_PORT}&quot;],&quot;operation&quot;:&quot;REMOVE_RESOURCE&quot;}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <stringProp name="HTTPSampler.protocol">http</stringProp>
+            <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
+            <stringProp name="HTTPSampler.path">/requests</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <boolProp name="HTTPSampler.monitor">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree/>
+        </hashTree>
       </hashTree>
       <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
         <boolProp name="ResultCollector.error_logging">false</boolProp>

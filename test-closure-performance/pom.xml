@@ -65,7 +65,7 @@
                                 <threads>${threads}</threads>
                             </propertiesUser>
                             <testFilesIncluded>
-                                <jMeterTestFile>provision-single-container-multiple-docker-hosts-parallel.jmx</jMeterTestFile>
+                                <jMeterTestFile>closure-single-container.jmx</jMeterTestFile>
                             </testFilesIncluded>
                         </configuration>
                     </execution>
