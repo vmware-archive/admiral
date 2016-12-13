@@ -38,9 +38,10 @@ import com.vmware.xenon.common.Utils;
 public class HostConfigCertificateDistributionServiceIT extends
         BaseCertificateDistributionServiceIT {
 
+    private static final int SYSTEM_CONTAINER_WAIT_POLLING_RETRY_COUNT = 30;
+
     @Before
     public void setUp() throws Exception {
-
         // ensure there is no system agent leftover from previous tests
         String systemContainerLink = SystemContainerDescriptions.getSystemContainerSelfLink(
                 SystemContainerDescriptions.AGENT_CONTAINER_NAME,
@@ -50,24 +51,29 @@ public class HostConfigCertificateDistributionServiceIT extends
 
         logger.info("---------- Adding host, to remove old certificate directory if any --------");
         setupCoreOsHost(ContainerHostService.DockerAdapterType.API);
-        waitForSystemContainerStatusCode(Operation.STATUS_CODE_OK);
+        waitForSystemContainerStatusCode(Operation.STATUS_CODE_OK,
+                SYSTEM_CONTAINER_WAIT_POLLING_RETRY_COUNT);
 
         logger.info("---------- Removing old certificate directory --------");
         removeCertificateDirectoryOnCoreOsHost(dockerHostCompute.documentSelfLink,
                 registryHostAndPort);
         removeHost(dockerHostCompute);
-        waitForSystemContainerStatusCode(Operation.STATUS_CODE_NOT_FOUND);
+        waitForSystemContainerStatusCode(Operation.STATUS_CODE_NOT_FOUND,
+                SYSTEM_CONTAINER_WAIT_POLLING_RETRY_COUNT);
+
+        // ensure there is no system agent leftover after removeHost and wait
+        delete(systemContainerLink);
 
         logger.info("---------- Configure registries on a clean host --------");
         configureRegistries(registryAddress, null);
     }
 
-    private void waitForSystemContainerStatusCode(int expectedStatusCode) throws Exception {
+    private void waitForSystemContainerStatusCode(int expectedStatusCode, int count) throws Exception {
         String systemContainerLink = SystemContainerDescriptions.getSystemContainerSelfLink(
                 SystemContainerDescriptions.AGENT_CONTAINER_NAME,
                 IntegratonTestStateFactory.DOCKER_COMPUTE_ID);
         URI uri = URI.create(getBaseUrl() + buildServiceUri(systemContainerLink));
-        waitForStatusCode(uri, expectedStatusCode);
+        waitForStatusCode(uri, expectedStatusCode, count);
     }
 
     @Test
