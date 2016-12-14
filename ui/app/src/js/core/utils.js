@@ -16,6 +16,11 @@ const URL_PROTOCOL_PART = /^(https?):\/\//;
 const URL_DEFAULT_PROTOCOL = 'http://';
 const URL_PORT_SEPARATOR = ':';
 
+const RX_NAME = '[a-zA-Z0-9_.-]+';
+const RX_UNIX_ABS_PATH = '/([a-zA-Z0-9_.-]+)+';
+const RE_UNIX_ABS_PATH = new RegExp('^' + RX_UNIX_ABS_PATH + '$');
+const RE_UNIX_ABS_PATH_OR_NAME = new RegExp('^((' + RX_NAME + ')|(' + RX_UNIX_ABS_PATH + '))$');
+
 var isEmbedded = window.isEmbedded;
 var isSingleView = window.isSingleView;
 
@@ -80,6 +85,14 @@ var utils = {
     }
 
     return null;
+  },
+
+  isAbsolutePath: function(item) {
+    return RE_UNIX_ABS_PATH.test(item);
+  },
+
+  isAbsolutePathOrName: function(item) {
+    return RE_UNIX_ABS_PATH_OR_NAME.test(item);
   },
 
   isFromCatalog: function(item) {
