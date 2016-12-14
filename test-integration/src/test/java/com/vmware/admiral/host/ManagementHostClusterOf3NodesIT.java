@@ -29,10 +29,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Similar to {@link ManagementHostClusterOf2NodesTest} but this test includes 3 nodes, only SSL
+ * Similar to {@link ManagementHostClusterOf2NodesIT} but this test includes 3 nodes, only SSL
  * enabled and the users' passwords are encrypted.
  */
-public class ManagementHostClusterOf3NodesTest extends ManagementHostClusterBaseTestCase {
+public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT {
 
     private ManagementHost hostOne;
     private ManagementHost hostTwo;
@@ -88,8 +88,8 @@ public class ManagementHostClusterOf3NodesTest extends ManagementHostClusterBase
     public void testRestrictedOperationWithOneNodeRestarted() throws Throwable {
 
         /*
-         * Within this test the nodes are restarted but not at the same time,
-         * there're always at least 2 running nodes.
+         * Within this test the nodes are restarted but not at the same time, there're always at
+         * least 2 running nodes.
          */
 
         String tokenOne = login(hostOne, USERNAME, PASSWORD);
@@ -109,7 +109,6 @@ public class ManagementHostClusterOf3NodesTest extends ManagementHostClusterBase
 
         assertClusterWithToken(tokenTwo, hostTwo, hostThree);
         assertClusterWithToken(tokenThree, hostTwo, hostThree);
-        assertClusterFromNodes(hostTwo, hostThree);
 
         hostOne = startHost(hostOne, null, ALL_HOSTS);
 
@@ -143,103 +142,19 @@ public class ManagementHostClusterOf3NodesTest extends ManagementHostClusterBase
 
         assertClusterWithToken(tokenOne, hostOne, hostTwo);
         assertClusterWithToken(tokenTwo, hostOne, hostTwo);
-        assertClusterFromNodes(hostOne, hostTwo);
 
         hostThree = startHost(hostThree, null, ALL_HOSTS);
 
         assertClusterWithToken(tokenOne, hostOne, hostTwo, hostThree);
         assertClusterWithToken(tokenTwo, hostOne, hostTwo, hostThree);
         assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
-        assertClusterFromNodes(hostOne, hostTwo, hostThree);
-    }
-
-    @Test
-    public void testRestrictedOperationWithTwoNodesRestarted() throws Throwable {
-
-        /*
-         * Within this test the nodes are restarted but not at the same time,
-         * there're always at least 2 running nodes.
-         */
-
-        String tokenOne = login(hostOne, USERNAME, PASSWORD);
-        assertClusterWithToken(tokenOne, hostOne, hostTwo, hostThree);
-
-        String tokenTwo = login(hostTwo, USERNAME, PASSWORD);
-        assertClusterWithToken(tokenTwo, hostOne, hostTwo, hostThree);
-
-        String tokenThree = login(hostThree, USERNAME, PASSWORD);
-        assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
-
-        /*
-         * ==== Restart node1 and node2 ==========================================================
-         */
-
-        stopHost(hostOne);
-        stopHost(hostTwo);
-
-        // We should explicitly set the quorum in the running node to 1 here, but now the
-        // ClusterMonitoringService will take care of that. Otherwise the next operation will hang.
-
-        assertClusterWithToken(tokenThree, hostThree);
-        assertClusterFromNodes(hostThree);
-
-        hostOne = startHost(hostOne, null, asList(HOST_ONE, HOST_THREE));
-        hostTwo = startHost(hostTwo, null, ALL_HOSTS);
-
-        assertClusterWithToken(tokenOne, hostOne, hostTwo, hostThree);
-        assertClusterWithToken(tokenTwo, hostOne, hostTwo, hostThree);
-        assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
-        assertClusterFromNodes(hostOne, hostTwo, hostThree);
-
-        /*
-         * ==== Restart node2 and node3 ==========================================================
-         */
-
-        stopHost(hostTwo);
-        stopHost(hostThree);
-
-        // We should explicitly set the quorum in the running node to 1 here, but now the
-        // ClusterMonitoringService will take care of that. Otherwise the next operation will hang.
-
-        assertClusterWithToken(tokenOne, hostOne);
-        assertClusterFromNodes(hostOne);
-
-        hostTwo = startHost(hostTwo, null, asList(HOST_ONE, HOST_TWO));
-        hostThree = startHost(hostThree, null, ALL_HOSTS);
-
-        assertClusterWithToken(tokenOne, hostOne, hostTwo, hostThree);
-        assertClusterWithToken(tokenTwo, hostOne, hostTwo, hostThree);
-        assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
-        assertClusterFromNodes(hostOne, hostTwo, hostThree);
-
-        /*
-         * ==== Restart node1 and node3 ==========================================================
-         */
-
-        stopHost(hostOne);
-        stopHost(hostThree);
-
-        // We should explicitly set the quorum in the running node to 1 here, but now the
-        // ClusterMonitoringService will take care of that. Otherwise the next operation will hang.
-
-        assertClusterWithToken(tokenTwo, hostTwo);
-        assertClusterFromNodes(hostTwo);
-
-        hostOne = startHost(hostOne, null, asList(HOST_ONE, HOST_TWO));
-        hostThree = startHost(hostThree, null, ALL_HOSTS);
-
-        assertClusterWithToken(tokenOne, hostOne, hostTwo, hostThree);
-        assertClusterWithToken(tokenTwo, hostOne, hostTwo, hostThree);
-        assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
-        assertClusterFromNodes(hostOne, hostTwo, hostThree);
     }
 
     @Test
     public void testRestrictedOperationWithNodesStoppedAndStarted() throws Throwable {
 
         /*
-         * Within this test the nodes are restarted but not at the same time,
-         * there're always at least 2 running nodes.
+         * Within this test the nodes are restarted at the same time.
          */
 
         String tokenOne = login(hostOne, USERNAME, PASSWORD);
@@ -250,6 +165,9 @@ public class ManagementHostClusterOf3NodesTest extends ManagementHostClusterBase
 
         String tokenThree = login(hostThree, USERNAME, PASSWORD);
         assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
+
+        List<ManagementHost> hosts = asList(hostOne, hostTwo, hostThree);
+        validateDefaultContentAdded(hosts, tokenOne);
 
         /*
          * ==== Stop all the nodes ===============================================================
@@ -274,6 +192,9 @@ public class ManagementHostClusterOf3NodesTest extends ManagementHostClusterBase
         assertClusterWithToken(tokenTwo, hostOne, hostTwo, hostThree);
         assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
         assertClusterFromNodes(hostOne, hostTwo, hostThree);
+
+        hosts = asList(hostOne, hostTwo, hostThree);
+        validateDefaultContentAdded(hosts, tokenOne);
     }
 
 }

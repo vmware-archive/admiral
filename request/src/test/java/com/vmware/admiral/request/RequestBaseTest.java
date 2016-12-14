@@ -48,6 +48,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
+import com.vmware.admiral.host.CaSigningCertService;
 import com.vmware.admiral.host.CompositeComponentNotificationProcessingChain;
 import com.vmware.admiral.host.HostInitAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
@@ -180,7 +181,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
         // speed up the test (default is 500ms):
         setFinalStatic(QueryUtil.class
                 .getDeclaredField("QUERY_RETRY_INTERVAL_MILLIS"), 20L);
-
+        h.registerForServiceAvailability(CaSigningCertService.startTask(h), true,
+                CaSigningCertService.FACTORY_LINK);
         HostInitTestDcpServicesConfig.startServices(h);
         HostInitPhotonModelServiceConfig.startServices(h);
         HostInitCommonServiceConfig.startServices(h);

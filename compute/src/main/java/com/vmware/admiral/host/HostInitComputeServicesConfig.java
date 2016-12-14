@@ -72,8 +72,8 @@ import com.vmware.xenon.common.UriUtils;
 public class HostInitComputeServicesConfig extends HostInitServiceHelper {
 
     public static void startServices(ServiceHost host, boolean startMockContainerHostService) {
+
         startServices(host,
-                CaSigningCertService.class,
                 ContainerFactoryService.class,
                 EndpointAdapterService.class,
                 HostContainerListDataCollectionFactoryService.class,
@@ -89,7 +89,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ComputeInitialBootService.class,
                 ElasticPlacementZoneConfigurationService.class);
 
-        startServiceFactories(host, ContainerDescriptionService.class,
+        startServiceFactories(host, CaSigningCertService.class,
+                ContainerDescriptionService.class,
                 GroupResourcePlacementService.class,
                 ContainerHostDataCollectionService.class,
                 EnvironmentService.class,
@@ -145,10 +146,6 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         // start initialization of system documents
         host.sendRequest(Operation.createPost(
                 UriUtils.buildUri(host, ComputeInitialBootService.class))
-                .setReferer(host.getUri())
-                .setBody(new ServiceDocument()));
-        host.sendRequest(Operation.createPost(
-                UriUtils.buildUri(host, CaSigningCertService.class))
                 .setReferer(host.getUri())
                 .setBody(new ServiceDocument()));
 

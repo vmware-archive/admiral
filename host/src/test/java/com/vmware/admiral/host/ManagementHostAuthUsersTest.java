@@ -212,7 +212,7 @@ public class ManagementHostAuthUsersTest extends ManagementHostBaseTest {
         return result.getValue();
     }
 
-    private static SimpleEntry<Integer, String> doPost(URI uri, Map<String, String> headers,
+    public static SimpleEntry<Integer, String> doPost(URI uri, Map<String, String> headers,
             String body) throws IOException {
 
         HttpURLConnection conn = getConnection(uri);

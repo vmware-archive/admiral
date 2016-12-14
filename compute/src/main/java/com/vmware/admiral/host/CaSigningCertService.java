@@ -21,6 +21,7 @@ import java.nio.file.Paths;
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.Scanner;
+import java.util.logging.Level;
 
 import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -29,23 +30,61 @@ import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.CertificateUtil.CertChainKeyPair;
 import com.vmware.admiral.common.util.KeyUtil;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.OperationSequence;
-import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
-public class CaSigningCertService extends StatelessService {
+public class CaSigningCertService extends StatefulService {
 
-    public static final String SELF_LINK = ManagementUriParts.CONFIG_CA_CREDENTIALS;
+    public static final String FACTORY_LINK = ManagementUriParts.CONFIG_CA_CREDENTIALS;
+
+    public static FactoryService createFactory() {
+        return FactoryService.create(CaSigningCertService.class);
+    }
 
     private static final String CA_CERT_PEM_FILE = "certs/default-ca.pem";
     private static final String CA_KEY_PEM_FILE = "certs/default-ca-key.pem";
 
+    public CaSigningCertService() {
+        super(ServiceDocument.class);
+        toggleOption(ServiceOption.IDEMPOTENT_POST, true);
+        toggleOption(ServiceOption.PERSISTENCE, true);
+        toggleOption(ServiceOption.REPLICATION, true);
+        toggleOption(ServiceOption.OWNER_SELECTION, true);
+    }
+
+    @Override
+    public void handlePut(Operation put) {
+
+        if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
+            // converted PUT due to IDEMPOTENT_POST option
+            logInfo("CaSigningCertService task has already started. Ignoring converted PUT.");
+            put.complete();
+            return;
+        }
+        // normal PUT is not supported
+        put.fail(Operation.STATUS_CODE_BAD_METHOD);
+    }
+
     @Override
     public void handleStart(Operation startOp) {
+
+        if (!ServiceHost.isServiceCreate(startOp)) {
+            // do not perform bootstrap logic when the post is NOT from direct client, eg: node
+            // restart
+            startOp.complete();
+            return;
+        }
+
         Operation caCertOp = Operation
                 .createGet(getHost(), UriUtils.buildUriPath(ManagementUriParts.CONFIG_PROPS,
                         "default.ca.cert.pem.file"));
@@ -146,6 +185,7 @@ public class CaSigningCertService extends StatelessService {
     }
 
     private Operation createClientCredentials(String caCert, String caKey) {
+
         X509Certificate caCertificate = CertificateUtil.createCertificate(caCert);
         KeyPair caKeyPair = CertificateUtil.createKeyPair(caKey);
 
@@ -202,6 +242,30 @@ public class CaSigningCertService extends StatelessService {
             inputStream = new FileInputStream(resourceFile);
         }
         return inputStream;
+    }
+
+    public static CompletionHandler startTask(ServiceHost host) {
+        return (o, e) -> {
+            if (e != null) {
+                host.log(Level.SEVERE, Utils.toString(e));
+                return;
+            }
+            // create service with fixed link
+            // POST will be issued multiple times but will be converted to PUT after the first one.
+            ServiceDocument doc = new ServiceDocument();
+            doc.documentSelfLink = "ca-signing-service";
+            Operation.createPost(host, CaSigningCertService.FACTORY_LINK)
+                    .setBody(doc)
+                    .setReferer(host.getUri())
+                    .setCompletion((oo, ee) -> {
+                        if (ee != null) {
+                            host.log(Level.SEVERE, Utils.toString(ee));
+                            return;
+                        }
+                        host.log(Level.INFO, "CaSigningCertService triggered");
+                    })
+                    .sendWith(host);
+        };
     }
 
 }

@@ -14,6 +14,7 @@ package com.vmware.admiral.host;
 import static java.util.Arrays.asList;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doRestrictedOperation;
@@ -21,23 +22,35 @@ import static com.vmware.admiral.host.ManagementHostAuthUsersTest.login;
 import static com.vmware.admiral.service.common.AuthBootstrapService.waitForInitConfig;
 
 import java.net.HttpURLConnection;
-
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
+import java.util.logging.Level;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
+import com.vmware.admiral.compute.container.ContainerDescriptionService;
+import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
+import com.vmware.admiral.request.RequestBrokerFactoryService;
+import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
+import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 /**
- * Similar to {@link ManagementHostAuthUsersTest} but this test includes 2 nodes, only SSL enabled
- * and the users' passwords are encrypted.
+ * Similar to {@link ManagementHostAuthUsersIT} but this test includes 2 nodes, only SSL enabled and
+ * the users' passwords are encrypted.
  */
-public class ManagementHostClusterOf2NodesTest extends ManagementHostClusterBaseTestCase {
+public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT {
 
     private ManagementHost hostOne;
     private ManagementHost hostTwo;
@@ -56,6 +69,9 @@ public class ManagementHostClusterOf2NodesTest extends ManagementHostClusterBase
 
         waitForInitConfig(hostOne, hostOne.localUsers);
         waitForInitConfig(hostTwo, hostTwo.localUsers);
+
+        // Initialize provisioning context
+        initializeProvisioningContext(hostOne);
     }
 
     @After
@@ -94,6 +110,9 @@ public class ManagementHostClusterOf2NodesTest extends ManagementHostClusterBase
         String tokenTwo = login(hostTwo, USERNAME, PASSWORD);
         assertClusterWithToken(tokenTwo, hostOne, hostTwo);
 
+        List<ManagementHost> hosts = asList(hostOne, hostTwo);
+        validateDefaultContentAdded(hosts, tokenOne);
+
         /*
          * ==== Restart node1 ====================================================================
          */
@@ -112,6 +131,9 @@ public class ManagementHostClusterOf2NodesTest extends ManagementHostClusterBase
         assertClusterWithToken(tokenTwo, hostOne, hostTwo);
         assertClusterFromNodes(hostOne, hostTwo);
 
+        hosts = asList(hostOne, hostTwo);
+        validateDefaultContentAdded(hosts, tokenOne);
+
         /*
          * ==== Restart node2 ====================================================================
          */
@@ -129,6 +151,9 @@ public class ManagementHostClusterOf2NodesTest extends ManagementHostClusterBase
         assertClusterWithToken(tokenOne, hostOne, hostTwo);
         assertClusterWithToken(tokenTwo, hostOne, hostTwo);
         assertClusterFromNodes(hostOne, hostTwo);
+
+        hosts = asList(hostOne, hostTwo);
+        validateDefaultContentAdded(hosts, tokenOne);
     }
 
     @Test
@@ -144,6 +169,9 @@ public class ManagementHostClusterOf2NodesTest extends ManagementHostClusterBase
 
         String tokenTwo = login(hostTwo, USERNAME, PASSWORD);
         assertClusterWithToken(tokenTwo, hostOne, hostTwo);
+
+        List<ManagementHost> hosts = asList(hostOne, hostTwo);
+        validateDefaultContentAdded(hosts, tokenOne);
 
         /*
          * ==== Stop both nodes ==================================================================
@@ -165,6 +193,9 @@ public class ManagementHostClusterOf2NodesTest extends ManagementHostClusterBase
         assertClusterWithToken(tokenTwo, hostOne, hostTwo);
 
         assertClusterFromNodes(hostOne, hostTwo);
+
+        hosts = asList(hostOne, hostTwo);
+        validateDefaultContentAdded(hosts, tokenOne);
     }
 
     @Test
@@ -195,4 +226,97 @@ public class ManagementHostClusterOf2NodesTest extends ManagementHostClusterBase
         assertContainerDescription(hostTwo, headers);
     }
 
+    @Test
+    public void testProvisioningOfContainerInCluster() throws Throwable {
+
+        Map<String, String> headers = getAuthenticationHeaders(hostOne);
+
+        // 1. Request a container instance:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(ResourceType.CONTAINER_TYPE.getName(), "test-container-desc");
+        request.resourceDescriptionLink = ContainerDescriptionService.FACTORY_LINK + "/test-container-desc";
+        request.tenantLinks = groupResourcePlacementState.tenantLinks;
+        request.documentSelfLink = "test-request";
+        hostOne.log(Level.INFO, "########  Start of request ######## ");
+        startRequest(headers, hostOne, request);
+
+        URI uri = UriUtils.buildUri(hostOne, RequestBrokerFactoryService.SELF_LINK + "/" + request.documentSelfLink);
+
+        // 2. Wait for provisioning request to finish
+        RequestJSONResponseMapper response = waitTaskToCompleteAndGetResponse(headers, hostOne, uri);
+
+        hostOne.log(Level.INFO, "########  Request finished. ######## ");
+
+        assertNotNull(response.resourceLinks);
+
+        assertEquals(1, response.resourceLinks.size());
+
+        response.resourceLinks.forEach((resourceLink) -> {
+            // Get the container from second host, the document should be replicated.
+            URI containersUri = UriUtils.buildUri(hostTwo, resourceLink);
+            String containerAsJson = null;
+
+            try {
+                containerAsJson = getResource(hostTwo, headers, containersUri);
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("Exception appears while trying to get a container %s ", containersUri));
+            }
+            assertNotNull(containerAsJson);
+            ContainerJSONResponseMapper container = Utils.fromJson(containerAsJson, ContainerJSONResponseMapper.class);
+            assertNotNull(container);
+            assertEquals(ContainerDescriptionService.FACTORY_LINK + "/test-container-desc", container.descriptionLink);
+            assertEquals(PowerState.RUNNING.toString(), container.powerState);
+
+        });
+
+    }
+
+    @Test
+    public void testProvisioningOfApplicationInCluster() throws Throwable {
+
+        Map<String, String> headers = getAuthenticationHeaders(hostOne);
+
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
+        container1Desc.documentSelfLink = UUID.randomUUID().toString();
+        container1Desc.name = "container1";
+        container1Desc.networks = new HashMap<>();
+
+        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
+        container2Desc.documentSelfLink = UUID.randomUUID().toString();
+        container2Desc.name = "container2";
+        container2Desc.portBindings = null;
+
+        CompositeDescription compositeDesc = createCompositeDesc(headers, hostOne, container1Desc, container2Desc);
+
+        // 1. Request a composite container:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+        request.documentSelfLink = UUID.randomUUID().toString();
+        request.tenantLinks = groupResourcePlacementState.tenantLinks;
+        startRequest(headers, hostOne, request);
+
+        URI uri = UriUtils.buildUri(hostOne, RequestBrokerFactoryService.SELF_LINK + "/" + request.documentSelfLink);
+
+        // 2. Wait for provisioning request to finish
+        RequestJSONResponseMapper response = waitTaskToCompleteAndGetResponse(headers, hostOne, uri);
+
+        hostOne.log(Level.INFO, "########  Request finished. ######## ");
+
+        assertNotNull(response.resourceLinks);
+
+        // Resource links should contain 1 composite-component element. Something like:
+        // "resourceLinks": ["/resources/composite-components/09fc328c-aae8-4a61-9fde-0a789bd7ecd1"]
+        assertEquals(1, response.resourceLinks.size());
+
+        // Get composition from second host. It should be replicated.
+        URI compositeComponentURI = UriUtils.buildUri(hostTwo, response.resourceLinks.get(0));
+
+        String compositeComponentAsJSON = getResource(hostTwo, headers, compositeComponentURI);
+        CompositeComponentJSONResponseMapper compositeComponent = Utils.fromJson(compositeComponentAsJSON, CompositeComponentJSONResponseMapper.class);
+        assertNotNull(compositeComponent);
+
+        assertEquals(compositeDesc.documentSelfLink, compositeComponent.compositeDescriptionLink);
+        assertNotNull(compositeComponent.componentLinks);
+        assertEquals(2, compositeComponent.componentLinks.size());
+
+    }
 }

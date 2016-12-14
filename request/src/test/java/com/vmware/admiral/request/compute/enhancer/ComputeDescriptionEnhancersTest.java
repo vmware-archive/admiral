@@ -62,12 +62,16 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
 
     @Before
     public void setup() throws Throwable {
-        HostInitServiceHelper.startServices(host, CaSigningCertService.class,
+        host.registerForServiceAvailability(CaSigningCertService.startTask(host), true,
+                CaSigningCertService.FACTORY_LINK);
+        HostInitServiceHelper.startServices(host,
                 TestInitialBootService.class);
-        HostInitServiceHelper.startServiceFactories(host, EnvironmentService.class,
+        HostInitServiceHelper.startServiceFactories(host, CaSigningCertService.class, EnvironmentService.class,
                 ComputeProfileService.class, StorageProfileService.class,
                 NetworkProfileService.class);
         waitForServiceAvailability(EnvironmentService.FACTORY_LINK);
+        waitForServiceAvailability(CaSigningCertService.FACTORY_LINK);
+        waitForServiceAvailability(ManagementUriParts.AUTH_CREDENTIALS_CA_LINK);
 
         host.sendRequest(Operation.createPost(
                 UriUtils.buildUri(host, TestInitialBootService.class))

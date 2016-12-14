@@ -189,6 +189,9 @@ public class ManagementHost extends ServiceHost {
     protected void startManagementServices() throws Throwable {
         this.log(Level.INFO, "Management service starting ...");
 
+        registerForServiceAvailability(CaSigningCertService.startTask(this), true,
+                CaSigningCertService.FACTORY_LINK);
+
         HostInitComputeServicesConfig.startServices(this, false);
         HostInitComputeBackgroundServicesConfig.startServices(this);
         HostInitRequestServicesConfig.startServices(this);
@@ -351,6 +354,7 @@ public class ManagementHost extends ServiceHost {
         setAuthorizationContext(getSystemAuthorizationContext());
 
         startCommonServices();
+
         // now start ServerX509TrustManager
         trustManager.start();
         setAuthorizationContext(null);

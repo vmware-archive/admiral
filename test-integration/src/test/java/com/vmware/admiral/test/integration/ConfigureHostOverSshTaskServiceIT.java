@@ -69,8 +69,12 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         waitForServiceAvailability(ElasticPlacementZoneService.FACTORY_LINK);
         waitForServiceAvailability(ElasticPlacementZoneConfigurationService.SELF_LINK);
 
+        host.registerForServiceAvailability(CaSigningCertService.startTask(host), true,
+                CaSigningCertService.FACTORY_LINK);
+
         // Compute Service
         host.startFactory(new ComputeService());
+        host.startFactory(new CaSigningCertService());
         host.startFactory(new ComputeDescriptionService());
         host.startFactory(new SslTrustCertificateService());
         host.startService(new SslTrustImportService());
@@ -85,11 +89,10 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         host.startService(new DockerHostAdapterService());
         host.startFactory(new EventLogService());
         host.startService(new ConfigurationFactoryService());
-        host.startService(new CaSigningCertService());
         waitForServiceAvailability(DockerHostAdapterService.SELF_LINK);
         waitForServiceAvailability(EventLogService.FACTORY_LINK);
         waitForServiceAvailability(ConfigurationFactoryService.SELF_LINK);
-        waitForServiceAvailability(CaSigningCertService.SELF_LINK);
+        waitForServiceAvailability(CaSigningCertService.FACTORY_LINK);
 
         host.startFactory(new MockConfigureHostOverSshTaskService());
         waitForServiceAvailability(MockConfigureHostOverSshTaskService.FACTORY_LINK);

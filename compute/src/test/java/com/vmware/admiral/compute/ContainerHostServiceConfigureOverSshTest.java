@@ -28,6 +28,7 @@ import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
+import com.vmware.admiral.host.CaSigningCertService;
 import com.vmware.admiral.host.ComputeInitialBootService;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
@@ -57,6 +58,8 @@ public class ContainerHostServiceConfigureOverSshTest extends ComputeBaseTest {
     @Before
     public void beforeForComputeBase() throws Throwable {
         DeploymentProfileConfig.getInstance().setTest(true);
+        host.registerForServiceAvailability(CaSigningCertService.startTask(host), true,
+                CaSigningCertService.FACTORY_LINK);
         HostInitPhotonModelServiceConfig.startServices(host);
         HostInitTestDcpServicesConfig.startServices(host);
         HostInitCommonServiceConfig.startServices(host);
@@ -64,6 +67,7 @@ public class ContainerHostServiceConfigureOverSshTest extends ComputeBaseTest {
 
         waitForServiceAvailability(ComputeInitialBootService.SELF_LINK);
         waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
+        waitForServiceAvailability(CaSigningCertService.FACTORY_LINK);
 
         dockerAdapterService = new MockDockerHostAdapterService();
         host.startService(Operation.createPost(UriUtils.buildUri(host,
