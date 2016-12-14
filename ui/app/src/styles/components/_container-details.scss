@@ -171,7 +171,7 @@ $elements-side-margin: $elements-margin / 2;
     overflow: auto;
     white-space: pre-wrap;
     word-wrap: break-word;
-    bottom: 25px;
+    bottom: 45px;
   }
 
   > .content > .container-details-logs .container-details-logs-settings {
@@ -180,7 +180,7 @@ $elements-side-margin: $elements-margin / 2;
     left: 0;
   }
 
-  > .content > .container-details-logs .container-details-logs-settings > select {
+  > .content > .container-details-logs .container-details-logs-settings .value {
     margin-left: 10px;
   }
 

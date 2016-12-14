@@ -747,6 +747,13 @@ let ContainersStore = Reflux.createStore({
 
   onChangeLogsSinceDuration: function(durationMs) {
     updateSelectedContainerDetails.call(this, ['logsSettings', 'sinceDuration'], durationMs);
+    localStorage.logsSinceDuration = durationMs;
+    this.emitChange();
+  },
+
+  onChangeLogsFormat: function(format) {
+    updateSelectedContainerDetails.call(this, ['logsSettings', 'format'], format);
+    localStorage.logsFormat = format;
     this.emitChange();
   },
 
@@ -1299,7 +1306,9 @@ let ContainersStore = Reflux.createStore({
     var currentItemDetailsCursor = parentCursor.select(['selectedItemDetails']);
     currentItemDetailsCursor.merge({
       logsSettings: {
-        sinceDuration: constants.CONTAINERS.LOGS.SINCE_DURATIONS[0]
+        sinceDuration: localStorage.logsSinceDuration
+          || constants.CONTAINERS.LOGS.SINCE_DURATIONS[0],
+        format: localStorage.logsFormat || constants.CONTAINERS.LOGS.FORMAT.ANSI
       },
       type: constants.CONTAINERS.TYPES.SINGLE,
       documentId: containerId,

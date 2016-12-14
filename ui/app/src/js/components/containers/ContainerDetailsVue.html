@@ -67,18 +67,37 @@
     </maximizable-behaviour>
     <maximizable-behaviour class="container-details-logs">
       <div class="title">{{i18n('app.container.details.logs')}}</div>
-      <logs-scroll class="content" v-bind:logs="model.logs"></logs-scroll>
+      <logs-scroll class="content" v-bind:logs="model.logs" v-bind:format="logsSettingsFormat"></logs-scroll>
       <div class="loading" v-bind:class="{'hide': !model.logsLoading}">
         <span class="vertical-helper"></span>
         <div class="spinner"></div>
       </div>
-      <div class="container-details-logs-settings">
-        <span>{{i18n('app.container.details.showingLogsSince')}}</span>
-        <select v-on:change="onLogsSinceChange($event)" v-if="model.logsSettings">
-          <option v-for="duration in logsSinceDurations"
-                  v-bind:value="duration"
-                  v-bind:selected="duration === model.logsSettings.sinceDuration">{{duration | momentHumanize}}</option>
-        </select>
+      <div class="container-details-logs-settings" v-if="model.logsSettings">
+        <div>
+          <span>{{i18n('app.container.details.showingLogsSince')}}</span>
+          <select v-on:change="onLogsSinceChange($event)" class="value">
+            <option v-for="duration in logsSinceDurations"
+                    v-bind:value="duration"
+                    v-bind:selected="duration == model.logsSettings.sinceDuration">{{duration | momentHumanize}}</option>
+          </select>
+        </div>
+        <div>
+          <span>{{i18n('app.container.details.logsFormat')}}</span>
+          <span class="value">
+            <label class="radio-inline">
+              <input type="radio" name="log-format-radio"
+                v-bind:value="logsFormat.ANSI"
+                v-bind:checked="logsFormat.ANSI == logsSettingsFormat"
+                v-on:change="onLogsFormatChange($event)">{{i18n('app.container.details.logsFormatAnsi')}}
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="log-format-radio"
+                v-bind:value="logsFormat.RAW"
+                v-bind:checked="logsFormat.RAW == logsSettingsFormat"
+                v-on:change="onLogsFormatChange($event)">{{i18n('app.container.details.logsFormatRaw')}}
+            </label>
+          </span>
+        </div>
       </div>
     </maximizable-behaviour>
   </div>

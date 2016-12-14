@@ -122,7 +122,11 @@ var constants = Immutable({
         moment.duration(1, 'hours').asMilliseconds(),
         moment.duration(2, 'hours').asMilliseconds(),
         moment.duration(5, 'hours').asMilliseconds()
-      ]
+      ],
+      FORMAT: {
+        ANSI: 'ansi',
+        RAW: 'raw'
+      }
     },
     TYPES: {
       SINGLE: 'SINGLE',

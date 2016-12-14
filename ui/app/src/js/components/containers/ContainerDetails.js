@@ -21,6 +21,7 @@ import constants from 'core/constants';
 import utils from 'core/utils';
 import modal from 'core/modal';
 import ContainerShellTemplate from 'components/containers/ContainerShellTemplate.html';
+import ansi from 'ansi_up';
 
 const REFRESH_STATS_TIMEOUT = 60000;
 const REFRESH_LOGS_TIMEOUT = 5000;
@@ -30,7 +31,8 @@ var ContainerDetailsVueComponent = Vue.extend({
   template: ContainerDetailsVue,
   data: function() {
     return {
-      logsSinceDurations: constants.CONTAINERS.LOGS.SINCE_DURATIONS
+      logsSinceDurations: constants.CONTAINERS.LOGS.SINCE_DURATIONS,
+      logsFormat: constants.CONTAINERS.LOGS.FORMAT
     };
   },
 
@@ -47,6 +49,9 @@ var ContainerDetailsVueComponent = Vue.extend({
     },
     generalError: function() {
       return this.hasGeneralError ? this.model.error._generic : '';
+    },
+    logsSettingsFormat: function() {
+      return this.model.logsSettings && this.model.logsSettings.format;
     }
   },
 
@@ -143,6 +148,11 @@ var ContainerDetailsVueComponent = Vue.extend({
       ContainerActions.changeLogsSinceDuration(sinceDuration);
     },
 
+    onLogsFormatChange: function(event) {
+      var format = $(event.target).val();
+      ContainerActions.changeLogsFormat(format);
+    },
+
     cloneContainer: function($event) {
       $event.stopPropagation();
       $event.preventDefault();
@@ -203,21 +213,43 @@ var ContainerDetailsVueComponent = Vue.extend({
     'logs-scroll': {
       template: '<div></div>',
       props: {
-        logs: {required: true}
+        logs: {required: true},
+        format: {required: true}
       },
       attached: function() {
-        this.logsUnwatch = this.$watch('logs', (logs) => {
+        this.logsUnwatch = this.$watch('logs', this.updateLogs, {immediate: true});
+        this.formatUnwatch = this.$watch('format', this.updateLogs, {immediate: true});
+      },
+      detached: function() {
+        this.logsUnwatch();
+        this.formatUnwatch();
+      },
+      methods: {
+        updateLogs: function() {
+          if (this.updatePending) {
+            return;
+          }
+
+          this.updatePending = true;
+
           var scrolledToBottom = (this.$el.scrollTop / this.$el.scrollHeight) > 0.95;
           Vue.nextTick(() => {
-            this.$el.textContent = logs;
+            this.updatePending = false;
+
+            // set the text content, regardless of the format. if the format is ansi,
+            // we want to use this method to escape html tags
+            this.$el.textContent = this.logs;
+            if (this.format === constants.CONTAINERS.LOGS.FORMAT.ANSI) {
+              var logsEscaped = this.$el.innerHTML;
+              if (logsEscaped) {
+                this.$el.innerHTML = ansi.ansi_to_html(logsEscaped);
+              }
+            }
             if (scrolledToBottom) {
               this.$el.scrollTop = this.$el.scrollHeight;
             }
           });
-        }, {immediate: true});
-      },
-      detached: function() {
-        this.logsUnwatch();
+        }
       }
     }
   }

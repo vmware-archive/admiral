@@ -504,7 +504,7 @@
         "type": "Type"
       },
       "edit": {
-        "title": "Edit Compute" 
+        "title": "Edit Compute"
       }
     },
     "resource": {
@@ -614,6 +614,9 @@
         "networkTrafficSent": "Sent",
         "networkTrafficReceived": "Received",
         "showingLogsSince": "Showing logs since",
+        "logsFormat": "Logs format",
+        "logsFormatAnsi": "ANSI",
+        "logsFormatRaw": "Raw",
         "attributes": {
           "host": "Host",
           "createdDateLabel": "Created",
