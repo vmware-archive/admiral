@@ -83,7 +83,7 @@ var HostAddView = Vue.extend({
       return !this.address;
     },
     isVerifyButtonDisabled: function() {
-      return this.buttonsDisabled || this.autoConfigure;
+      return this.buttonsDisabled;
     },
     validationErrors: function() {
       return this.model.validationErrors || {};
@@ -409,7 +409,11 @@ var HostAddView = Vue.extend({
     verifyHost: function(event) {
       event.preventDefault();
 
-      HostActions.verifyHost(this.getHostData());
+      var hostData = this.getHostData();
+      if (this.autoConfigure) {
+        hostData.isConfigureOverSsh = true;
+      }
+      HostActions.verifyHost(hostData);
     },
     saveHost: function() {
       let hostData = this.getHostData();

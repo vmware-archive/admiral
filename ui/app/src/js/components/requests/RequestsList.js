@@ -128,16 +128,25 @@ var RequestsListVueComponent = Vue.extend({
           $e.preventDefault();
 
           if (this.isRequestFinished(this.model)) {
+
+            let isHostsRequest = false;
+            let hostsQuery;
+
             if (this.model.resourceLinks) {
               var link = this.model.resourceLinks[0];
               if (link.indexOf(links.COMPUTE_RESOURCES) !== -1) {
-                NavigationActions.openHosts({
-                  documentId: utils.getDocumentId(link)
-                });
-                return;
+                isHostsRequest = true;
+                hostsQuery = { documentId: utils.getDocumentId(link) };
               }
+            } else if (this.model.name === 'Configure Host') {
+              isHostsRequest = true;
             }
-            NavigationActions.openContainers(this.getRequestResourceQueryOpts(this.model));
+
+            if (isHostsRequest) {
+              NavigationActions.openHosts(hostsQuery);
+            } else {
+              NavigationActions.openContainers(this.getRequestResourceQueryOpts(this.model));
+            }
             return;
           }
 

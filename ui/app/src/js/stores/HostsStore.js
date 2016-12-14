@@ -128,6 +128,10 @@ let getHostSpec = function(hostModel) {
     hostState: hostState
   };
 
+  if (hostModel.isConfigureOverSsh) {
+    hostSpec.isConfigureOverSsh = true;
+  }
+
   return hostSpec;
 };
 
