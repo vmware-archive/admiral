@@ -16,10 +16,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.net.ssl.SSLContext;
 
@@ -29,12 +26,10 @@ import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
-import com.vmware.xenon.common.ColorLogFormatter;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LoaderFactoryService;
 import com.vmware.xenon.common.LoaderService;
-import com.vmware.xenon.common.LogFormatter;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.OperationProcessingChain;
@@ -111,17 +106,6 @@ public class ManagementHost extends ServiceHost {
             h.stop();
             h.log(Level.WARNING, "Host is stopped");
         }));
-    }
-
-    @Override
-    protected void configureLoggerFormatter(Logger logger) {
-        for (Handler h : logger.getParent().getHandlers()) {
-            if (h instanceof ConsoleHandler) {
-                h.setFormatter(new LogFormatter());
-            } else {
-                h.setFormatter(new ColorLogFormatter());
-            }
-        }
     }
 
     ManagementHost initializeHostAndServices(String[] args) throws Throwable {
