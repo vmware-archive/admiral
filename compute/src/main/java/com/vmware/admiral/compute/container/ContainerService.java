@@ -130,8 +130,7 @@ public class ContainerService extends StatefulService {
          */
         @Documentation(description = "Port bindings in the format ip:hostPort:containerPort | ip::containerPort |+"
                 + "hostPort:containerPort | containerPort where range of ports can also be provided")
-        @PropertyOptions(usage = PropertyUsageOption.OPTIONAL,
-                indexing = PropertyIndexingOption.EXPAND)
+        @PropertyOptions(usage = PropertyUsageOption.OPTIONAL, indexing = PropertyIndexingOption.EXPAND)
         public List<PortBinding> ports;
 
         /** Joined networks and the configuration with which they are joined. */
@@ -309,7 +308,7 @@ public class ContainerService extends StatefulService {
 
         if (ContainerUtil.isDiscoveredContainer(currentState)) {
             ContainerUtil.ContainerDescriptionHelper.createInstance(this)
-                    .updateDiscoveredContainerDesc(currentState, patchBody, null);
+                    .updateDiscoveredContainerDesc(currentState, patchBody);
         }
 
         patch.complete();
@@ -371,7 +370,7 @@ public class ContainerService extends StatefulService {
         template.image = "library/hello-world";
         template.command = new String[] { "cat (string)" };
         template.volumesFrom = new String[] { "volumeFrom[:ro] (string)" };
-        template.volumes = new String [] {"host-volume-dir:/container-volume-dir"};
+        template.volumes = new String[] { "host-volume-dir:/container-volume-dir" };
         template.extraHosts = new String[] { "hostname:ip" };
         template.env = new String[] {
                 "ENV_VAR=value (string)",

@@ -155,7 +155,8 @@ var constants = Immutable({
       CLUSTERING: 'CLUSTERING',
       DEFAULT: 'DEFAULT',
       NETWORKCREATE: 'NETWORKCREATE',
-      MANAGE: 'MANAGE'
+      MANAGE: 'MANAGE',
+      CREATE_TEMPLATE: 'CREATE_TEMPLATE'
     }
   },
   COMPUTE: {

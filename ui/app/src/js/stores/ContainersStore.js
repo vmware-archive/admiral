@@ -986,7 +986,7 @@ let ContainersStore = Reflux.createStore({
   backFromContainerAction: function(operationType, resourceIds) {
     var cursor = getSelectedContainerDetailsCursor.call(this);
 
-    if ((cursor != null) && (resourceIds.length === 1)
+    if (cursor && resourceIds.length === 1
           && cursor.getIn(['documentId']) === resourceIds[0]
           && cursor.getIn(['operationInProgress'])) {
       // Refresh Container Details
@@ -1422,7 +1422,9 @@ let ContainersStore = Reflux.createStore({
       type: constants.CONTAINERS.TYPES.SINGLE,
       documentId: containerId,
       logsLoading: true,
-      statsLoading: true
+      statsLoading: true,
+      templateLink: null,
+      descriptionLinkToConvertToTemplate: null
     });
 
     var currentItemCursor = parentCursor.select(['selectedItem']);
@@ -1445,6 +1447,19 @@ let ContainersStore = Reflux.createStore({
         currentItemDetailsCursor.setIn(['instance'], container);
         this.emitChange();
 
+        this.loadTemplateContainerDescription(container.descriptionLink).then((template) => {
+          if (currentItemDetailsCursor.getIn(['documentId']) === containerId) {
+            if (template) {
+              currentItemDetailsCursor.setIn(['templateLink'], template.documentSelfLink);
+            } else {
+              currentItemDetailsCursor.setIn(['descriptionLinkToConvertToTemplate'],
+                container.descriptionLink);
+            }
+
+            this.emitChange();
+          }
+        });
+
         services.loadHostByLink(container.parentLink).then((host) => {
           decorateContainerHostName(container, [host]);
           currentItemCursor.merge(container);
@@ -1452,6 +1467,76 @@ let ContainersStore = Reflux.createStore({
           this.emitChange();
         });
       }).catch(this.onGenericDetailsError);
+  },
+
+  loadTemplateContainerDescription: function(descriptionLink) {
+    return this.loadTopMostParentDescription(descriptionLink).then((description) => {
+      if (description.documentSelfLink === descriptionLink) {
+        return null;
+      } else {
+        return services.loadTemplatesContainingComponentDescriptionLink(
+          description.documentSelfLink).then((result) => {
+            if (!result) {
+              return;
+            }
+
+            var template;
+            for (var key in result) {
+              if (result.hasOwnProperty(key)) {
+                if (template) {
+                  console.info(
+                    'More than one template found for a given description, will show only first.');
+                } else {
+                  template = result[key];
+                }
+              }
+            }
+
+            return template;
+        });
+      }
+    });
+  },
+
+  loadTopMostParentDescription: function(descriptionLink) {
+    return services.loadDocument(descriptionLink).then((description) => {
+      if (description.parentDescriptionLink) {
+        return this.loadTopMostParentDescription(description.parentDescriptionLink);
+      } else {
+        return description;
+      }
+    });
+  },
+
+  onCreateTemplateFromContainer: function(container) {
+    var cursor = getSelectedContainerDetailsCursor.call(this);
+    if (!cursor || cursor.getIn(['documentId']) !== container.documentId) {
+      return;
+    }
+
+    cursor.setIn(['operationInProgress'], constants.CONTAINERS.OPERATION.CREATE_TEMPLATE);
+      this.emitChange();
+
+    services.createContainerTemplateForDescription(container.names[0], container.descriptionLink)
+    .then((template) => {
+      return services.copyContainerTemplate(template);
+    }).then((copyTemplate) => {
+      return services.patchDocument(container.documentSelfLink, {
+        descriptionLink: copyTemplate.descriptionLinks[0]
+      }).then(() => {
+        if (cursor.getIn(['documentId']) !== container.documentId) {
+          return;
+        }
+
+        cursor.setIn(['operationInProgress'], null);
+        this.emitChange();
+
+        var templateId = utils.getDocumentId(copyTemplate.parentDescriptionLink);
+
+        actions.NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE,
+          templateId);
+      });
+    }).catch(this.onGenericDetailsError);
   },
 
   loadClosure: function(closureId, operation) {

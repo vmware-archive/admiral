@@ -2175,6 +2175,10 @@ $alert-text-color: #ffffff;
   border-radius: 16px;
   text-align: center;
   padding: 0;
+
+  img {
+    width: 16px;
+  }
 }
 
 .toolbar-actions .toolbar-action .toolbar-action-label {

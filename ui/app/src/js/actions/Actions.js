@@ -52,7 +52,7 @@ export var ContainerActions = Reflux.createActions([
   'openCompositeContainerDetails', 'openManageContainers', 'openManageComposite',
   'refreshContainer', 'refreshContainerStats',
   'refreshContainerLogs', 'changeLogsSinceDuration', 'changeLogsFormat', 'startContainer',
-  'stopContainer',
+  'stopContainer', 'createTemplateFromContainer',
   'removeContainer', 'startCompositeContainer', 'stopCompositeContainer',
   'removeCompositeContainer', 'startContainerDetails', 'stopContainerDetails',
   'removeContainerDetails', 'removeContainers', 'operationCompleted', 'operationFailed',

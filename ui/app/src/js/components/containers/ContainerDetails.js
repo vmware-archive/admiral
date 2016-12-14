@@ -16,7 +16,7 @@ import VueToolbarActionButton from 'components/common/VueToolbarActionButton'; /
 import ContainerProperties from 'components/containers/ContainerProperties'; //eslint-disable-line
 import ContainerStats from 'components/containers/ContainerStats'; //eslint-disable-line
 import ActionConfirmationSupportMixin from 'components/common/ActionConfirmationSupportMixin'; //eslint-disable-line
-import { ContainerActions } from 'actions/Actions';
+import { ContainerActions, NavigationActions } from 'actions/Actions';
 import constants from 'core/constants';
 import utils from 'core/utils';
 import modal from 'core/modal';
@@ -178,6 +178,24 @@ var ContainerDetailsVueComponent = Vue.extend({
 
       ContainerActions.stopContainerDetails(this.getContainerId());
     },
+
+    openTemplate: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      var templateId = utils.getDocumentId(this.model.templateLink);
+
+      NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE,
+        templateId);
+    },
+
+    createTemplateFromContainer: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      ContainerActions.createTemplateFromContainer(this.getContainer());
+    },
+
     handleConfirmation: function(actionName) {
 
       if (actionName === 'removeContainer') {
@@ -196,9 +214,7 @@ var ContainerDetailsVueComponent = Vue.extend({
     },
 
     hasOperationInProgress: function() {
-      var op = this.getOperationInProgress();
-
-      return op && (op != null);
+      return !!this.getOperationInProgress();
     },
 
     operationSupported: function(op) {

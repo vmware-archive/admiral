@@ -23,6 +23,18 @@ Handlebars.registerHelper('placementZonePercentageLevel', function(percentage) {
   return 'level-' + percentage;
 });
 
+  Vue.mixin({
+    methods: {
+      i18n: function(i18nKey) {
+        return i18nKey;
+      },
+
+      keys: function(object) {
+        return object ? Object.keys(object) : [];
+      }
+    }
+  });
+
 var pendindRequests = [];
 var completedRequests = [];
 

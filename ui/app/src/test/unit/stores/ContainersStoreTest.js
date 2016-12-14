@@ -14,6 +14,7 @@ import { ContainerActions, NavigationActions } from 'actions/Actions';
 import services from 'core/services';
 import constants from 'core/constants';
 import routes from 'core/routes';
+import links from 'core/links';
 import ContainersMockData from 'unit/helpers/containers/ContainersMockData'
 
 describe("ContainerStore test", function() {
@@ -33,6 +34,16 @@ describe("ContainerStore test", function() {
     hasher.setHash(""); //set hash without dispatching changed signal
     hasher.changed.active = true; //re-enable signal
     routes.initialize();
+
+    services.loadDocument = function(documentSelfLink) {
+      return new Promise(function(resolve, reject){
+        setTimeout(function() {
+          resolve({
+            documentSelfLink: documentSelfLink
+          });
+        }, 0);
+      });
+    };
 
     spyOn(services, 'loadContainers').and.callFake(function() {
       return new Promise(function(resolve, reject){
@@ -182,6 +193,78 @@ describe("ContainerStore test", function() {
         expect(details.instance.documentId).toBe(containerId);
         expect(details.instance.powerState).toBe("RUNNING");
         expect(details.instance.attributes.NetworkSettings.IPAddress).toBe("10.23.47.89");
+
+        return waitForData(function(data) {
+          return data.selectedItemDetails.descriptionLinkToConvertToTemplate;
+        });
+
+      }).then(function(data) {
+        var details = data.selectedItemDetails;
+
+        expect(details.descriptionLinkToConvertToTemplate).toBe(details.instance.descriptionLink);
+        done();
+      });
+
+      NavigationActions.openContainerDetails(containerId);
+    });
+
+    it("load container instance details with link to create template", function(done) {
+      var containerId = ContainersMockData.containerIds[0];
+
+      waitForData(function(data) {
+        return data.selectedItemDetails.descriptionLinkToConvertToTemplate;
+      }).then(function(data) {
+        var details = data.selectedItemDetails;
+
+        expect(details.descriptionLinkToConvertToTemplate).toBe(details.instance.descriptionLink);
+        done();
+      });
+
+      NavigationActions.openContainerDetails(containerId);
+    });
+
+    it("load container instance details with link to open template", function(done) {
+      var containerId = ContainersMockData.containerIds[0];
+      var container = ContainersMockData.containers[links.CONTAINERS + '/' + containerId];
+
+      var templateComponent = {
+        documentSelfLink: links.CONTAINER_DESCRIPTIONS + '/top-most-container-description'
+      };
+
+      var template = {
+        documentSelfLink: links.COMPOSITE_DESCRIPTIONS + '/top-most-composite-description',
+        descriptionLinks: [templateComponent.documentSelfLink],
+      };
+
+      var originalLoadDocument = services.loadDocument;
+      services.loadDocument = function(documentSelfLink) {
+        if (container.descriptionLink !== documentSelfLink) {
+          return originalLoadDocument.call(null, documentSelfLink);
+        }
+
+        return new Promise(function(resolve, reject) {
+          setTimeout(function() {
+            resolve({
+              documentSelfLink: documentSelfLink,
+              parentDescriptionLink: templateComponent.documentSelfLink
+            });
+          }, 0);
+        });
+      };
+
+      spyOn(services, 'loadTemplatesContainingComponentDescriptionLink').and.callFake(function() {
+        return new Promise(function(resolve, reject) {
+          resolve({
+            0: template
+          });
+        });
+      });
+
+      waitForData(function(data) {
+        return data.selectedItemDetails.templateLink;
+      }).then(function(data) {
+        var details = data.selectedItemDetails;
+        expect(details.templateLink).toBe(template.documentSelfLink);
         done();
       });
 

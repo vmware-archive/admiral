@@ -827,7 +827,9 @@
         "clone": "Clone",
         "details": "Details",
         "terminal": "Terminal",
-        "manage": "Manage"
+        "manage": "Manage",
+        "createTemplate": "Create Template",
+        "openTemplate": "Open Template"
       }
     },
     "request": {

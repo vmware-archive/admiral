@@ -45,6 +45,16 @@
         <toolbar-action-button id="terminal" icon-name="terminal" v-bind:label="i18n('app.container.actions.terminal')"
                                v-bind:supported="operationSupported('SHELL')"
                                v-on:click="openShell($event)"></toolbar-action-button>
+
+        <toolbar-action-button id="openTemplate" icon-src="image-assets/templates-blue.png"
+                               v-bind:label="i18n('app.container.actions.openTemplate')"
+                               v-bind:supported="!!model.templateLink"
+                               v-on:click="openTemplate($event)"></toolbar-action-button>
+
+        <toolbar-action-button id="createTemplate" icon-src="image-assets/templates-create.png"
+                               v-bind:label="i18n('app.container.actions.createTemplate')"
+                               v-bind:supported="!!model.descriptionLinkToConvertToTemplate"
+                               v-on:click="createTemplateFromContainer($event)"></toolbar-action-button>
       </template>
     </div>
   </div>

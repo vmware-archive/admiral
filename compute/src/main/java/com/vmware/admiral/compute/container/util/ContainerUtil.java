@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.logging.Level;
 
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
@@ -35,6 +35,7 @@ public class ContainerUtil {
     private static final String HOST_CONFIG_PROPERTY = "HostConfig";
     private static final String NOT_KNOWN_IMAGE = "__not_known_image";
 
+    @SuppressWarnings("unchecked")
     public static ContainerDescription createContainerDescription(ContainerState state) {
 
         ContainerDescription containerDescription = new ContainerDescription();
@@ -51,7 +52,6 @@ public class ContainerUtil {
         containerDescription.name = state.names != null ? state.names.get(0)
                 : DISCOVERED_CONTAINER_DESC + UUID.randomUUID().toString();
         containerDescription.customProperties = state.customProperties;
-        containerDescription.parentDescriptionLink = state.parentLink;
         if (state.extraHosts != null) {
             containerDescription.extraHosts = state.extraHosts;
         }
@@ -67,7 +67,69 @@ public class ContainerUtil {
             containerDescription.portBindings = ports;
         }
 
+        if (state.attributes != null) {
+            state.attributes.forEach((k, v) -> {
+
+                switch (k) {
+
+                case CONFIG_PROPERTY:
+                    containerDescription.hostname = getJsonValue(v,
+                            ContainerDescriptionHelper.HOSTNAME_PROPERTY);
+                    containerDescription.domainName = getJsonValue(v,
+                            ContainerDescriptionHelper.DOMAIN_NAME_PROPERTY);
+                    containerDescription.user = getJsonValue(v,
+                            ContainerDescriptionHelper.USER_PROPERTY);
+                    containerDescription.workingDir = getJsonValue(v,
+                            ContainerDescriptionHelper.WORKING_DIR_PROPERTY);
+                    break;
+
+                case HOST_CONFIG_PROPERTY:
+
+                    Map<String, String> logConfigProperty = Utils.getJsonMapValue(v,
+                            ContainerDescriptionHelper.LOG_CONFIG_PROPERTY, Map.class);
+                    if (!logConfigProperty.isEmpty()) {
+                        try {
+                            LogConfig logConfig = new LogConfig();
+                            logConfig.type = logConfigProperty
+                                    .get(ContainerDescriptionHelper.TYPE_PROPERTY);
+                            logConfig.config = Utils.getJsonMapValue(
+                                    logConfigProperty.toString(), CONFIG_PROPERTY,
+                                    Map.class);
+                            containerDescription.logConfig = logConfig;
+                        } catch (Exception e) {
+                            Utils.log(ContainerUtil.class, ContainerUtil.class.getSimpleName(),
+                                    Level.WARNING,
+                                    "Failed to retrieve value for LogConfig of ContainerState: %s. Exception: %s",
+                                    state.documentSelfLink,
+                                    Utils.toString(e));
+                        }
+                    }
+
+                    containerDescription.publishAll = Utils.getJsonMapValue(v,
+                            ContainerDescriptionHelper.PUBLISH_ALL_PORTS_PROPERTY,
+                            Boolean.class);
+                    break;
+                default:
+                    break;
+                }
+            });
+        }
+
         return containerDescription;
+    }
+
+    private static String getJsonValue(Object json, String key) {
+        String result = null;
+        try {
+            result = Utils.getJsonMapValue(json, key, String.class);
+        } catch (Exception e) {
+            Utils.log(ContainerUtil.class, ContainerUtil.class.getSimpleName(),
+                    Level.WARNING,
+                    "Failed to retrieve value for key: %s. Exception: %s",
+                    key,
+                    Utils.toString(e));
+        }
+        return result == null ? "" : result;
     }
 
     /**
@@ -83,7 +145,7 @@ public class ContainerUtil {
         return containerState.descriptionLink != null
                 && containerState.descriptionLink.contains(UriUtils
                         .buildUriPath(
-                        SystemContainerDescriptions.DISCOVERED_DESCRIPTION_LINK));
+                                SystemContainerDescriptions.DISCOVERED_DESCRIPTION_LINK));
 
     }
 
@@ -110,15 +172,9 @@ public class ContainerUtil {
             this.service = service;
         }
 
-        @SuppressWarnings("unchecked")
         public void updateDiscoveredContainerDesc(ContainerState containerState,
-                ContainerState newState,
-                ContainerDescription containerDesc) {
+                ContainerState newState) {
             if (!isDiscoveredContainer(containerState)) {
-                return;
-            }
-
-            if (newState.attributes == null || newState.attributes.isEmpty()) {
                 return;
             }
 
@@ -127,56 +183,7 @@ public class ContainerUtil {
                 return;
             }
 
-            if (containerDesc == null) {
-                getDiscoveredContainerDescription(containerState.descriptionLink,
-                        (containerDescription) -> this.updateDiscoveredContainerDesc(
-                                containerState,
-                                newState,
-                                containerDescription));
-                return;
-            }
-
-            ContainerDescription patch = new ContainerDescription();
-
-            newState.attributes
-                    .forEach((k, v) -> {
-
-                        switch (k) {
-
-                        case CONFIG_PROPERTY:
-                            patch.hostname = getJsonValue(v, HOSTNAME_PROPERTY);
-                            patch.domainName = getJsonValue(v, DOMAIN_NAME_PROPERTY);
-                            patch.user = getJsonValue(v, USER_PROPERTY);
-                            patch.workingDir = getJsonValue(v, WORKING_DIR_PROPERTY);
-                            break;
-
-                        case HOST_CONFIG_PROPERTY:
-
-                            Map<String, String> logConfigProperty = Utils.getJsonMapValue(v,
-                                    LOG_CONFIG_PROPERTY, Map.class);
-                            if (!logConfigProperty.isEmpty()) {
-                                try {
-                                    LogConfig logConfig = new LogConfig();
-                                    logConfig.type = logConfigProperty.get(TYPE_PROPERTY);
-                                    logConfig.config = Utils.getJsonMapValue(
-                                            logConfigProperty.toString(), CONFIG_PROPERTY,
-                                            Map.class);
-                                    patch.logConfig = logConfig;
-                                } catch (Exception e) {
-                                    service.logWarning(
-                                            "Failed to retrieve value for LogConfig of ContainerState: %s. Exception: %s",
-                                            containerState.documentSelfLink,
-                                            Utils.toString(e));
-                                }
-                            }
-
-                            patch.publishAll = Utils.getJsonMapValue(v, PUBLISH_ALL_PORTS_PROPERTY,
-                                    Boolean.class);
-                            break;
-                        default:
-                            break;
-                        }
-                    });
+            ContainerDescription patch = createContainerDescription(containerState);
 
             if (containerState.customProperties == null) {
                 containerState.customProperties = new HashMap<String, String>();
@@ -184,22 +191,21 @@ public class ContainerUtil {
             containerState.customProperties.put(DISCOVERED_CONTAINER_UPDATED,
                     Boolean.TRUE.toString());
 
-            patch.customProperties = containerState.customProperties;
-
             service.sendRequest(Operation
-                    .createPatch(service, containerDesc.documentSelfLink)
+                    .createPatch(service, patch.documentSelfLink)
+                    .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                     .setBody(patch)
                     .setCompletion(
                             (o, e) -> {
                                 if (e != null) {
                                     service.logWarning(
                                             "Failed to update ContainerDescription: %s. Error: %s",
-                                            containerDesc.documentSelfLink, Utils.toString(e));
+                                            patch.documentSelfLink, Utils.toString(e));
                                     return;
                                 }
                                 service.logInfo(
                                         "Discovered ContainerDescription: %s, was successfully updated.",
-                                        containerDesc.documentSelfLink);
+                                        patch.documentSelfLink);
 
                                 ContainerState patchState = new ContainerState();
                                 patchState.customProperties = containerState.customProperties;
@@ -224,34 +230,5 @@ public class ContainerUtil {
                             }));
 
         }
-
-        private void getDiscoveredContainerDescription(String containerDescriptionLink,
-                Consumer<ContainerDescription> callbackFunction) {
-            service.sendRequest(Operation.createGet(service, containerDescriptionLink)
-                    .setCompletion((o, e) -> {
-                        if (e != null) {
-                            service.logWarning(
-                                    "Failure retrieving description state: " + Utils.toString(e));
-                            return;
-                        }
-
-                        ContainerDescription desc = o.getBody(ContainerDescription.class);
-                        callbackFunction.accept(desc);
-                    }));
-        }
-
-        private String getJsonValue(Object json, String key) {
-            String result = null;
-            try {
-                result = Utils.getJsonMapValue(json, key, String.class);
-            } catch (Exception e) {
-                service.logWarning(
-                        "Failed to retrieve value for key: %s. Exception: %s",
-                        key,
-                        Utils.toString(e));
-            }
-            return result == null ? "" : result;
-        }
-
     }
 }

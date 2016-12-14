@@ -297,6 +297,10 @@ var list = function(url, expandQuery, paramsData) {
 
 var services = {};
 
+services.createDocument = function(factoryLink, document) {
+  return post(factoryLink, document);
+};
+
 services.loadDocument = function(documentSelfLink) {
   return get(documentSelfLink);
 };
@@ -837,6 +841,19 @@ services.loadTemplates = function(queryOptions) {
       results: results,
       isPartialResult: isPartialResult
     };
+  });
+};
+
+services.loadTemplatesContainingComponentDescriptionLink = function(componentDescriptionLink) {
+  var query = buildOdataQuery({
+    'descriptionLinks/item': [{
+      val: componentDescriptionLink,
+      op: 'eq'
+    }]
+  });
+
+  return list(links.COMPOSITE_DESCRIPTIONS, true, {
+    [ODATA_FILTER_PROP_NAME]: query
   });
 };
 
@@ -1454,6 +1471,15 @@ services.createContainerTemplate = function(containerDescription) {
 
       return post(links.COMPOSITE_DESCRIPTIONS, multiContainerDescription);
   });
+};
+
+services.createContainerTemplateForDescription = function(name, descriptionLink) {
+   var multiContainerDescription = {
+      name: name,
+      descriptionLinks: [descriptionLink]
+    };
+
+    return post(links.COMPOSITE_DESCRIPTIONS, multiContainerDescription);
 };
 
 services.createClosureTemplate = function(closureDescription) {
