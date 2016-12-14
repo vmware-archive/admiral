@@ -99,23 +99,6 @@ public class ContainerStateMapperTest {
     }
 
     /**
-     * Build a default {@link ContainerState} instance and its inspect map representation. Use the
-     * {@link ContainerStateMapper} to build a mapped instance and compare both instances. They
-     * should be identical.
-     *
-     * Note: the default inspect representation contains a "bridge" network and the default instance
-     * has no {@link ServiceNetwork}s registered. This is because the "bridge" network is
-     * system-defined and thus is not collected.
-     */
-    @Test
-    public void testCompareRunningContainerInBridgeNetworkAndMatchedContainerStateShouldPass() {
-        ContainerState mappedState = new ContainerState();
-        containerStateMapper.propertiesToContainerState(mappedState, predefinedInspectMap);
-        assertTrue("predefined and mapped state should be equal",
-                areEqualContainerStates(predefinedState, mappedState));
-    }
-
-    /**
      * Build a {@link ContainerState} instance that has a user-defined network and the
      * system-defined "bridge" network. Also build the inspect command map representation and use
      * the {@link ContainerStateMapper} to produce the mapped {@link ContainerState}. Both states
@@ -307,9 +290,14 @@ public class ContainerStateMapperTest {
         portBinding.protocol = DEFAULT_CONTAINER_EXPOSED_CONTAINER_PORT
                 .substring(protocolDefIndex + 1);
 
-        // The default container is connected to the bridge network but it is predefined, so it is
-        // not tracked in the container state
+        // The default container is connected to the bridge network
         containerState.networks = new HashMap<>(0);
+        ServiceNetwork bridgeNetwork = createServiceNetwork(BRIDGE_NETWORK_NAME,
+                DEFAULT_CONTAINER_BRIDGE_NETWORK_IPV4_ADDRESS,
+                DEFAULT_CONTAINER_BRIDGE_NETWORK_IPV6_ADDRESS,
+                DEFAULT_CONTAINER_BRIDGE_NETWORK_ALIASES_ARRAY,
+                DEFAULT_CONTAINER_BRIDGE_NETWORK_LINKS_ARRAY);
+        containerState.networks.put(BRIDGE_NETWORK_NAME, bridgeNetwork);
 
         return containerState;
     }

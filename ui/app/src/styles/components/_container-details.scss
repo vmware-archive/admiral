@@ -111,6 +111,10 @@ $elements-side-margin: $elements-margin / 2;
     word-wrap: break-word;
   }
 
+  > .content > .container-details-properties .container-properties-network-address {
+    margin-left: 50px;
+  }
+
   > .content > .container-details-usages {
     top: 0;
     bottom: 67%;

@@ -27,11 +27,6 @@
       <td class="container-properties-value-cell"><a class="navigation-link"
         href="#/applications/{{model.compositeComponentLink}}" v-on:click="showApp($event)">1</a></td>
     </tr>
-    <tr v-if="networkIds && networkIds.length > 0">
-      <td>{{i18n("app.resource.list.relations.networks")}}</td>
-      <td class="container-properties-value-cell"><a class="navigation-link"
-        href="#/networks/{{networkIds}}" v-on:click="showNetworks($event)">{{networkIds.length}}</a></td>
-    </tr>
     <tr>
       <td>{{i18n("app.container.details.attributes.createdDateLabel")}}</td>
       <td class="container-properties-value-cell">{{model.created | timestampToDate}}</td>
@@ -41,8 +36,22 @@
       <td class="container-properties-value-cell">{{model.image}}</td>
     </tr>
     <tr>
-      <td>{{i18n("app.container.details.attributes.ipaddress")}}</td>
-      <td class="container-properties-value-cell">{{model.address}}</td>
+      <td>{{i18n("app.container.details.networkAddresses")}}</td>
+      <td>
+        <table>
+          <tbody>
+            <tr v-for="network in networksInfo">
+              <td>
+                <span v-if="isBuiltinNetwork(network.name)">{{network.name}}</span>
+                <a v-else href="#" class="navigation-link" v-on:click.stop.prevent="showNetwork(network.name)">{{network.name}}</a>
+              </td>
+              <td v-if="network.ipv4_address">
+                <span class="container-properties-network-address">{{network.ipv4_address}}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
     </tr>
     <tr>
       <td>{{i18n("app.container.details.attributes.ports")}}</td>

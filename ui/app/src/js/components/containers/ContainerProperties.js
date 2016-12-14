@@ -27,8 +27,31 @@ var ContainerProperties = Vue.extend({
       return this.model.compositeComponentLink
         ? utils.getDocumentId(this.model.compositeComponentLink) : null;
     },
-    networkIds: function() {
-      return this.model.networks && Object.keys(this.model.networks);
+    networksInfo: function() {
+      let result = [];
+
+      if (this.model.networks) {
+        Object.keys(this.model.networks).forEach(network => {
+          result.push({
+            name: network,
+            ipv4_address: this.model.networks[network].ipv4_address
+          });
+        });
+      }
+
+      if (this.model.builtinNetworks) {
+        Object.keys(this.model.builtinNetworks).forEach(network => {
+          result.push({
+            name: network,
+            ipv4_address: this.model.builtinNetworks[network].ipv4_address
+          });
+        });
+      }
+
+      return result;
+    },
+    hasNetworksInfo: function() {
+      return this.networksInfo.length > 0;
     }
   },
   methods: {
@@ -55,17 +78,19 @@ var ContainerProperties = Vue.extend({
       NavigationActions.openContainers(queryOptions, true);
     },
 
-    showNetworks: function($event) {
-      $event.preventDefault();
-      $event.stopPropagation();
-
+    showNetwork: function(networkName) {
       let queryOptions = {
         $category: constants.RESOURCES.SEARCH_CATEGORY.NETWORKS,
-        any: this.networkIds
+        any: networkName
       };
 
       NavigationActions.openNetworks(queryOptions);
+    },
+
+    isBuiltinNetwork: function(networkName) {
+      return utils.isBuiltinNetwork(networkName);
     }
+
   }
 });
 

@@ -176,11 +176,6 @@ public class ContainerStateMapper {
     private void mapNetwork(Map<String, ServiceNetwork> networks, String networkName,
             Map<String, Object> networkProps) {
 
-        // skip system defined networks
-        if (DockerNetworkAdapterService.DOCKER_PREDEFINED_NETWORKS.contains(networkName)) {
-            return;
-        }
-
         ServiceNetwork network = new ServiceNetwork();
         List<Object> aliasesList = getList(networkProps,
                 DOCKER_CONTAINER_NETWORK_ALIASES_PROP_NAME);

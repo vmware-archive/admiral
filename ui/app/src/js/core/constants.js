@@ -248,6 +248,12 @@ var constants = Immutable({
     BRIDGE: 'BRIDGE',
     HOST: 'HOST'
   },
+  BUILT_IN_NETWORKS: {
+    NONE: 'none',
+    HOST: 'host',
+    BRIDGE: 'bridge',
+    GWBRIDGE: 'docker_gwbridge'
+  },
   CUSTOM_PROPS: {
     EPZ_NAME_PREFIX: '__epz_',
     EPZ_VALUE: 'true'

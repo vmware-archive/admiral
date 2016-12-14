@@ -406,6 +406,13 @@ var utils = {
       && network.powerState === constants.RESOURCES.NETWORKS.STATES.RETIRED;
   },
 
+  isBuiltinNetwork: function(networkName) {
+    return networkName === constants.BUILT_IN_NETWORKS.NONE
+      || networkName === constants.BUILT_IN_NETWORKS.HOST
+      || networkName === constants.BUILT_IN_NETWORKS.BRIDGE
+      || networkName === constants.BUILT_IN_NETWORKS.GWBRIDGE;
+  },
+
   isNetworkRemovalPossible: function(network) {
     // a network can be removed only if there are no containers
     // connected to it or if the network is in RETIRED state

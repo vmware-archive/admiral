@@ -57,7 +57,27 @@ function enhanceContainer(container, clusterId) {
     container.attributes.HostConfig = JSON.parse(container.attributes.HostConfig);
   }
 
+  processContainerBuiltinNetworks(container);
+
   return container;
+}
+
+// extract any host built-in networks from container.networks to container.builtinNetworks
+function processContainerBuiltinNetworks(container) {
+  if (container.networks) {
+    let builtinNetworks = {};
+
+    Object.keys(container.networks).forEach((network) => {
+      if (utils.isBuiltinNetwork(network)) {
+        builtinNetworks[network] = container.networks[network];
+        delete container.networks[network];
+      }
+    });
+
+    if (Object.keys(builtinNetworks).length > 0) {
+      container.builtinNetworks = builtinNetworks;
+    }
+  }
 }
 
 function decorateContainerHostName(container, hosts) {

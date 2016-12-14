@@ -617,6 +617,7 @@
         "logsFormat": "Logs format",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "Raw",
+        "networkAddresses": "Network Addresses",
         "attributes": {
           "host": "Host",
           "createdDateLabel": "Created",
