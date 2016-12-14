@@ -112,6 +112,7 @@ import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.compute.container.maintenance.ContainerStatsEvaluator;
 import com.vmware.admiral.compute.container.network.NetworkUtils;
+import com.vmware.admiral.compute.container.volume.VolumeBinding;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.LogService;
@@ -710,8 +711,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         hostConfig.put(DNS_PROP_NAME, context.containerDescription.dns);
         hostConfig.put(DNS_SEARCH_PROP_NAME, context.containerDescription.dnsSearch);
         hostConfig.put(EXTRA_HOSTS_PROP_NAME, context.containerState.extraHosts);
+
         // the volumes are added as binds property
-        hostConfig.put(BINDS_PROP_NAME, context.containerState.volumes);
+        hostConfig.put(BINDS_PROP_NAME, filterVolumeBindings(context.containerState.volumes));
         hostConfig.put(VOLUME_DRIVER, context.containerDescription.volumeDriver);
         hostConfig.put(CAP_ADD_PROP_NAME, context.containerDescription.capAdd);
         hostConfig.put(CAP_DROP_PROP_NAME, context.containerDescription.capDrop);
@@ -759,8 +761,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             for (String volume : context.containerState.volumes) {
                 // docker expects each volume to be mapped to an empty object (an empty map)
                 // where the key is the container_path (second element in the volume string)
-                String[] split = volume.split(":");
-                volumeMap.put(split[1], Collections.emptyMap());
+                String containerPart = VolumeBinding.fromString(volume).getContainerPart();
+                volumeMap.put(containerPart, Collections.emptyMap());
             }
 
             createCommandInput.withProperty(DOCKER_CONTAINER_VOLUMES_PROP_NAME, volumeMap);
@@ -1356,5 +1358,23 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         callback.accept(retriesCount);
                     }));
         }
+    }
+
+    /**
+     * Filter out volume bindings without host-src or volume name. Each volume binding is a
+     * string in the following form: [volume-name|host-src:]container-dest[:ro] Both host-src,
+     * and container-dest must be an absolute path.
+     */
+    private List<String> filterVolumeBindings(String[] volumes) {
+        List<String> volumeBindings = new ArrayList<>();
+        if (volumes != null) {
+            for (String volume: volumes) {
+                VolumeBinding binding = VolumeBinding.fromString(volume);
+                if (binding.getHostPart() != null) {
+                    volumeBindings.add(volume);
+                }
+            }
+        }
+        return volumeBindings;
     }
 }

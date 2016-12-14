@@ -56,6 +56,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.HttpVersion;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestProtocol;
+import com.vmware.admiral.compute.container.volume.VolumeBinding;
 import com.vmware.admiral.compute.content.EnvDeserializer;
 import com.vmware.admiral.compute.content.EnvSerializer;
 import com.vmware.admiral.compute.content.ServiceLinkDeserializer;
@@ -514,8 +515,7 @@ public class ContainerDescriptionService extends StatefulService {
         if (state.volumes != null) {
             for (String volume : state.volumes) {
                 assertNotNull(volume, "volume");
-                String[] split = volume.split(":");
-                assertTrue(split.length >= 2, "Volume must be host_path:container_path[:ro]");
+                VolumeBinding.fromString(volume);
             }
         }
 

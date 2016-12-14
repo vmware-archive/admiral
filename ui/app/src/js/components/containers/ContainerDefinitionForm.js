@@ -93,6 +93,26 @@ let containerDescriptionConstraints = {
       return error;
     });
   },
+  volumes: function(volumes) {
+    return prepareMultiInputErrors(volumes, (volume) => {
+      var error = {};
+      if (!volume.container) {
+        error.container = 'errors.volumeDestinationRequired';
+        return error;
+      }
+      if (!utils.isAbsolutePath(volume.container)) {
+        error.container = 'errors.invalidPath';
+        return error;
+      }
+      if (volume.host) {
+        var test = utils.isAbsolutePathOrName(volume.host);
+        if (!test) {
+          error.host = 'errors.invalidPathOrName';
+        }
+      }
+      return error;
+    });
+  },
   _cluster: function(clusterSize) {
     if (clusterSize && !utils.isPositiveInteger(clusterSize)) {
       return 'errors.positiveNumber';
@@ -597,14 +617,15 @@ class ContainerDefinitionForm extends Component {
 
     var volumes = [];
     result.volumes.forEach(function(o) {
-      if (o.host && o.container) {
-        var volume = o.host + ':' + o.container;
+      if (o.container) {
+        var volume = o.container;
+        if (o.host) {
+          volume = o.host + ':' + volume;
+        }
         if (o.readOnly) {
           volume += ':ro';
         }
-        if (o.container !== '__null') {
-            volumes.push(volume);
-        }
+        volumes.push(volume);
       }
     });
     result.volumes = volumes;
@@ -668,6 +689,9 @@ class ContainerDefinitionForm extends Component {
 
     var networks = this.$el.find('.container-networks-input');
     utils.applyMultilineValidationError(networks, errors.networks);
+
+    var volumes = this.$el.find('.container-volumes-input');
+    utils.applyMultilineValidationError(volumes, errors.volumes);
 
     var cluster = this.$el.find('.container-cluster-size-input');
     utils.applyValidationError(cluster, errors._cluster);
@@ -960,11 +984,29 @@ var updateForm = function(data, oldData) {
     var volumes = [];
     if (data.volumes) {
       data.volumes.forEach(function(vol) {
+        var src = '', dst, mode = 'rw';
+
         var volSplit = vol.split(':');
+        if (volSplit.length === 1) {
+          dst = volSplit[0];
+        } else if (volSplit.length === 2) {
+          if (volSplit[1] === 'ro') {
+            dst = volSplit[0];
+            mode = volSplit[1];
+          } else {
+            src = volSplit[0];
+            dst = volSplit[1];
+          }
+        } else {
+          src = volSplit[0];
+          dst = volSplit[1];
+          mode = volSplit[2];
+        }
+
         volumes.push({
-          host: volSplit[0],
-          container: volSplit[1],
-          readOnly: volSplit[2] === 'ro'
+          host: src,
+          container: dst,
+          readOnly: mode === 'ro'
         });
       });
     }

@@ -721,7 +721,7 @@
             "ipv6Hint": "Example: fe80::42:31ff:fecf:83e2"
           },
           "volumes": "Volumes",
-          "volumesDescription": "Mount point paths inside the container",
+          "volumesDescription": "Mount point paths inside the container. The container field is mandatory and must be an absolute path. The host field must be a volume name or an absolute path.",
           "volumesInputs": {
             "host": "Host",
             "hostHint": "Example: /host/project/path",
@@ -1024,7 +1024,10 @@
       "networkRequired": "Network is required.",
       "itemNotFound": "Item was not found.",
       "networkExists": "Network already exists in template.",
-      "invalidInputValue": "Invalid input value"
+      "volumeDestinationRequired": "Volume destination is required.",
+      "invalidInputValue": "Invalid input value",
+      "invalidPath": "Value must be an absolute path.",
+      "invalidPathOrName": "Value must be an absolute path or a valid volume name."
     },
     "infoMessages": {
       "created": "Created Successfully!",
