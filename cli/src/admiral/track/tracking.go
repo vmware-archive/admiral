@@ -35,6 +35,7 @@ type TaskInfo struct {
 }
 
 type TaskStatus struct {
+	Operation     string   `json:"operation"`
 	TaskInfo      TaskInfo `json:"taskInfo"`
 	Progress      int      `json:"progress"`
 	Name          string   `json:"name"`
@@ -88,6 +89,12 @@ func getOperationResponse(respBody []byte) *OperationResponse {
 	return opResp
 }
 
+const (
+	SubstageCompleted          = "COMPLETED"
+	SubstageError              = "ERROR"
+	ProvisionResourceOperation = "PROVISION_RESOURCE"
+)
+
 func Wait(taskId string) ([]string, error) {
 	const progressBarWidth = 55
 	taskStatus := &TaskStatus{}
@@ -118,12 +125,12 @@ func Wait(taskId string) ([]string, error) {
 		utils.CheckBlockingError(err)
 		pb.UpdateBar(taskStatus.Progress)
 
-		if taskStatus.SubStage == "COMPLETED" {
+		if isTaskCompleted(taskStatus) {
 			result = taskStatus.SubStage
 			resourceLinks = taskStatus.ResourceLinks
 			pb.FillUp()
 			break
-		} else if taskStatus.SubStage == "ERROR" {
+		} else if taskStatus.SubStage == SubstageError {
 			result = taskStatus.SubStage
 			err = getErrorMessage(req)
 			break
@@ -136,38 +143,6 @@ func Wait(taskId string) ([]string, error) {
 	}
 
 	return resourceLinks, err
-}
-
-func GetResLinks(taskId string) ([]string, error) {
-	url := config.URL + "/request-status/" + taskId
-	req, _ := http.NewRequest("GET", url, nil)
-	var (
-		result        string
-		errorMsg      string
-		resourceLinks []string
-		err           error
-	)
-	taskStatus := &TaskStatus{}
-	_, respBody, respErr := client.ProcessRequest(req)
-	if respErr != nil {
-		return nil, respErr
-	}
-	err = json.Unmarshal(respBody, taskStatus)
-	utils.CheckBlockingError(err)
-	if taskStatus.SubStage == "COMPLETED" {
-		result = taskStatus.SubStage
-	} else if taskStatus.SubStage == "ERROR" {
-		result = taskStatus.SubStage
-		err = getErrorMessage(req)
-	}
-	resourceLinks = taskStatus.ResourceLinks
-
-	if result == "ERROR" {
-		if errorMsg != "" {
-			return resourceLinks, errors.New(errorMsg)
-		}
-	}
-	return resourceLinks, nil
 }
 
 func getErrorMessage(statusReq *http.Request) error {
@@ -193,6 +168,18 @@ func getErrorMessage(statusReq *http.Request) error {
 	err = json.Unmarshal(respBody, event)
 	utils.CheckBlockingError(err)
 	return errors.New(event.Description)
+}
+
+func isTaskCompleted(taskStatus *TaskStatus) bool {
+	if taskStatus.SubStage == SubstageCompleted && taskStatus.Operation == ProvisionResourceOperation {
+		if taskStatus.ResourceLinks == nil || len(taskStatus.ResourceLinks) == 0 {
+			return false
+		}
+		return true
+	} else if taskStatus.SubStage == SubstageCompleted && taskStatus.Operation != ProvisionResourceOperation {
+		return true
+	}
+	return false
 }
 
 type ProgressBar struct {
