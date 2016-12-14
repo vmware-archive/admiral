@@ -433,7 +433,7 @@ let HostsStore = Reflux.createStore({
         return;
       }
 
-      this.setInData(['hostAddView', 'environments'], environmentsData.items);
+      this.setInData(['hostAddView', 'environments'], environmentsData.listView.items);
       this.emitChange();
     });
   },

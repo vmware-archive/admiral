@@ -10,110 +10,63 @@
   -->
 
 <div class="environments-view">
-  <div class="main-panel">
-    <div class="list-holder">
-      <div class="inline-editable-list">
-        <list-title v-on:refresh-list="refresh()"
-                      v-bind:has-search-query="false" v-bind:count="itemsCount"
-                      v-bind:title="i18n('app.environment.list.title')">
-        </list-title>
+  <div class="environments-list-holder">
+    <div class="main-panel">
+      <div class="list-view environments-list scroll-view" v-bind:class="{'context-selected': model.selectedItem}"
+           v-if="model.listView">
+
+        <a class="close-button hide" v-on:click="goBack($event)"><i
+          class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
+
 
         <div class="toolbar">
-          <a href="#" class="btn btn-circle new-item"
-             v-on:click="addNewItem($event)"><i class="fa fa-plus"></i></a>
-          <a href="#" class="new-item"
-             v-on:click="addNewItem($event)">{{i18n('app.environment.list.addButton')}}</a>
+          <search v-bind:suggestion-properties="searchSuggestions"
+                  v-bind:placeholder="i18n('app.environment.list.searchPlaceholder')"
+                  v-bind:query-options="model.listView.queryOptions"
+                  v-bind:occurrence-properties="
+                      [{
+                        name: constants.SEARCH_OCCURRENCE.ALL,
+                        label: i18n('occurrence.all')
+                      }, {
+                        name: constants.SEARCH_OCCURRENCE.ANY,
+                        label: i18n('occurrence.any')
+                      }]"
+                  v-on:search-change="search">
+         </search>
+         <a class="admiral-btn createEnvironment-btn" v-on:click="addEnvironment()"><i
+           class="fa fa-plus-circle"></i>{{i18n("app.environment.list.addButton")}}</a>
         </div>
 
-        <div class="inline-editable-list-table">
-          <table class="table table-striped table-hover">
-            <thead>
-              <tr>
-                <th is="thsort"
-                    :active="sortKey === 'name'"
-                    :sort-order="sortOrders.name"
-                    @click="sortBy('name')"
-                    style="width: 25%">{{i18n('app.environment.list.nameColumn')}}</th>
-                <th is="thsort"
-                    :active="sortKey === 'endpointType'"
-                    :sort-order="sortOrders.endpointType"
-                    @click="sortBy('endpointType')"
-                    style="width: 25%">{{i18n('app.environment.list.endpointTypeColumn')}}</th>
-                <th is="thsort"
-                    :active="sortKey === 'properties'"
-                    :sort-order="sortOrders.properties"
-                    @click="sortBy('properties')"
-                    style="width: 35%">{{i18n('app.environment.list.propertiesColumn')}}</th>
-                <!-- Actions column -->
-                <th style="width: 15%"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="isEditingNewItem()">
-                <td colspan="4" class="environmentEditHolder">
-                  <environment-editor v-bind:model="model.editingItemData"></environment-editor>
-                </td>
-              </tr>
-              <tr class="item" v-for="item in model.items | envrionmentOrderBy sortKey sortOrders[sortKey]" track-by="documentSelfLink">
-                <template v-if="isHighlightedItem(item)">
-                  <td colspan="4" class="highlight-item">
-                    <div>
-                      <div class="help-text"><i class="fa fa-check"></i>
-                        <span v-if="isNewItem(item)">{{i18n('infoMessages.created')}}</span>
-                        <span v-else>{{i18n('infoMessages.updated')}}</span>
-                      </div>
-                      <table class="table">
-                        <thead>
-                          <tr>
-                            <th style="width: 25%"></th>
-                            <th style="width: 25%"></th>
-                            <th style="width: 35%"></th>
-                            <!-- Actions column -->
-                            <th style="width: 15%"></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <td class="truncateText primary-cell" title="{{item.name}}">{{item.name}}</td>
-                          <td class="truncateText" title="{{item.endpointType}}">{{item.endpointType}}</td>
-                          <td class="truncateText" title="{{item.properties | propertiesToString}}">{{item.properties | propertiesToString}}</td>
-                          <!-- Actions column -->
-                          <td></td>
-                        </tbody>
-                      </table>
-                    </div>
-                  </td>
-                </template>
-                <template v-if="isEditingItem(item)">
-                  <td colspan="4" class="environmentEditHolder">
-                    <environment-editor v-bind:model="model.editingItemData"></environment-editor>
-                  </td>
-                </template>
-                <template v-if="!isEditingOrHighlightedItem(item)">
-                  <td class="truncateText primary-cell" title="{{item.name}}">{{item.name}}</td>
-                  <td class="truncateText" title="{{item.endpointType}}">{{item.endpointType}}</td>
-                  <td class="truncateText" title="{{item.properties | propertiesToString}}">{{item.properties | propertiesToString}}</td>
-                  <!-- Actions column -->
-                  <td class="table-actions">
-                    <div>
-                      <a href="#" class="btn item-edit" v-on:click="editItem(item, $event)">
-                        <i class="fa fa-pencil"></i>
-                      </a>
-                      <a href="#" class="btn item-delete" v-on:click="deleteItem(item, $event)">
-                        <i class="fa fa-trash"></i>
-                      </a>
-                    </div>
-                  </td>
-                </template>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div v-if="model.itemsLoading" class="loading">
-          <span class="vertical-helper"></span>
-          <div class="spinner"></div>
+        <div class="grid-container">
+          <list-title v-on:refresh-list="refresh()"
+                      v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
+                      v-bind:title="i18n('app.environment.list.title')"
+                      v-bind:title-search="i18n('app.environment.list.titleSearch')"></list-title>
+          <div class="content">
+            <grid v-bind:context-selected="model.selectedItem"
+                  v-bind:preferred-width="preferredGridWidth"
+                  v-bind:count="itemsCount"
+                  v-infinite-scroll="loadMore()">
+                <grid-item v-for="item in model.listView.items"
+                           track-by="documentSelfLink">
+                  <environment-grid-item v-bind:model="item"></environment-grid-item>
+              </grid-item>
+            </grid>
+          </div>
+          <div v-if="model.listView.itemsLoading" class="loading">
+            <span class="vertical-helper"></span>
+            <div class="spinner"></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
+
+  <div v-if="model.editingItemData" transition="slide-and-fade" class="closable-view">
+    <a class="close-button" v-on:click="goBack($event)"><i
+      class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
+
+    <environment-edit-view v-bind:model="model.editingItemData" class="content"></environment-edit-view>
+  </div>
+
 </div>

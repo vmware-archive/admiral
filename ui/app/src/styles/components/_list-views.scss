@@ -205,7 +205,7 @@
 .containers-view .container-item .container-header .title-holder .truncateText {
   color: #000;
 }
-.hosts-view, .machines-view, .compute-view {
+.hosts-view, .machines-view, .compute-view, .environments-view {
   .list-holder {
     > .main-panel {
       @extend .position-expand;
@@ -242,7 +242,7 @@
   font-weight: 300;
 }
 
-.hosts-view, .machines-view, .compute-view {
+.hosts-view, .machines-view, .compute-view, .environments-view {
   .list-view .grid-item .stats-holder {
     position: relative;
   }
@@ -284,16 +284,35 @@
     font-weight: normal;
   }
 
+  .list-view .environment-item .delete-inline-item-confirmation-holder,
   .list-view .host-item .delete-inline-item-confirmation-holder {
     @extend .item-delete-confirmation;
   }
 
+  .list-view .environment-item:hover .actions,
   .list-view .compute-item:hover .actions,
   .list-view .host-item:hover .actions,
   .list-view .machine-item:hover .actions {
     display: block;
   }
 }
+
+/* Environments */
+
+
+.environments-view {
+  .list-view .environment-item {
+    @include container-image-header-icons(48px);
+    .image-header {
+      position: relative;
+      margin: 20px;
+    }
+    .details {
+      margin: 20px;
+    }
+  }
+}
+
 /* Images */
 
 .images-view {

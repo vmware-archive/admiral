@@ -9,36 +9,12 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import DropdownSearch from 'components/common/VueDropdownSearch'; //eslint-disable-line
 import PlacementZoneEditorVue from 'components/placementzones/PlacementZoneEditorVue.html';
-import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
 import Tags from 'components/common/Tags';
 import { PlacementZonesActions } from 'actions/Actions';
 import services from 'core/services';
 import utils from 'core/utils';
-
-const INITIAL_FILTER = '';
-const HOST_RESULT_LIMIT = 10;
-
-function endpointRenderer(endpoint) {
-  return `
-    <div>
-      <img src="image-assets/endpoints/${endpoint.endpointType}.png">${endpoint.name}
-    </div>`;
-}
-
-function endpointSearchCallback(q, callback) {
-  services.searchEndpoints(q || INITIAL_FILTER, HOST_RESULT_LIMIT).then((result) => {
-    result.items = result.items.map((host) => {
-      host.name = utils.getHostName(host);
-      return host;
-    });
-    callback(result);
-  });
-}
-
-function toggleChanged() {
-  this.$dispatch('change', this.destinationInput.getSelectedOption());
-}
 
 var PlacementZoneEditor = Vue.extend({
   template: PlacementZoneEditorVue,
@@ -46,27 +22,6 @@ var PlacementZoneEditor = Vue.extend({
     model: {
       required: true,
       type: Object
-    }
-  },
-  components: {
-    endpointSearch: {
-      template: '<div></div>',
-      props: {
-
-      },
-      attached: function() {
-        this.destinationInput = new DropdownSearchMenu($(this.$el), {
-          title: i18n.t('dropdownSearchMenu.title', {
-            entity: i18n.t('app.endpoint.entity')
-          }),
-          searchPlaceholder: i18n.t('app.placementZone.edit.endpointPlaceholder')
-        });
-        this.destinationInput.setOptionsRenderer(endpointRenderer);
-        this.destinationInput.setOptionSelectCallback(() => toggleChanged.call(this));
-        this.destinationInput.setClearOptionSelectCallback(() => toggleChanged.call(this));
-        this.destinationInput.setFilterCallback(endpointSearchCallback.bind(this));
-        this.destinationInput.setFilter(INITIAL_FILTER);
-      }
     }
   },
   computed: {
@@ -126,6 +81,15 @@ var PlacementZoneEditor = Vue.extend({
       } else {
         PlacementZonesActions.createPlacementZone(item, tags);
       }
+    },
+    searchEndpoints: function(...args) {
+      return new Promise((resolve, reject) => {
+        services.searchEndpoints.apply(null, args).then((result) => {
+          result.items.forEach((item) =>
+            item.iconSrc = `image-assets/endpoints/${item.endpointType}.png`);
+          resolve(result);
+        }).catch(reject);
+      });
     },
     onEndpointChange: function(endpoint) {
       this.endpoint = endpoint;

@@ -83,11 +83,11 @@ function getWebpackConfig(options) {
     module: {
       rules: [{
         test: /Template\.html$/,
-        loader: 'handlebars-loader!html-minify-loader',
+        loader: 'handlebars-loader!html-minifier-loader',
         include: path.resolve('src/js')
       }, {
         test: /Vue\.html$/,
-        loader: 'raw-loader!html-minify-loader',
+        loader: 'raw-loader!html-minifier-loader',
         include: path.resolve('src/js')
       }, {
         loader: 'eslint-loader',

@@ -45,20 +45,25 @@
   </a>
   </template>
   <template v-if="app === 'compute'">
-    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.COMPUTE.name}"
-       class="nav-item compute" href="#/compute">
-      <img class="nav-item-image" src="image-assets/hosts.png">
-      <span>{{i18n("app.navbar.compute")}}</span>
+    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.ENDPOINTS.name}"
+       class="nav-item templates" href="#/endpoints">
+      <span class="nav-item-image"><i class="fa fa-cloud"></i></span>
+      <span>{{i18n("app.navbar.endpoints")}}</span>
+    </a>
+    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.ENVIRONMENTS.name}"
+       class="nav-item templates" href="#/environments">
+      <img class="nav-item-image" src="image-assets/templates.png">
+      <span>{{i18n("app.navbar.environments")}}</span>
     </a>
     <a v-bind:class="{'active': currentView === computeConstants.VIEWS.PLACEMENTS.name}"
        class="nav-item placements" href="#/placements">
       <span class="nav-item-image"><i class="fa fa-pie-chart"></i></span>
       <span>{{i18n("app.navbar.placements")}}</span>
     </a>
-    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.ENVIRONMENTS.name}"
-       class="nav-item templates" href="#/environments">
-      <img class="nav-item-image" src="image-assets/templates.png">
-      <span>{{i18n("app.navbar.environments")}}</span>
+    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.COMPUTE.name}"
+       class="nav-item compute" href="#/compute">
+      <img class="nav-item-image" src="image-assets/hosts.png">
+      <span>{{i18n("app.navbar.compute")}}</span>
     </a>
     <a class="nav-item resources"
        v-bind:class="{'expanded': isExpanded(computeConstants.VIEWS.RESOURCES)}"
@@ -77,11 +82,6 @@
        class="nav-item inner networks" href="#/networks">
       <img class="nav-item-image" src="image-assets/resource-icons/network.png">
       <span>{{i18n("app.navbar.networks")}}</span>
-    </a>
-    <a v-bind:class="{'active': currentView === computeConstants.VIEWS.ENDPOINTS.name}"
-       class="nav-item templates" href="#/endpoints">
-      <span class="nav-item-image"><i class="fa fa-cloud"></i></span>
-      <span>{{i18n("app.navbar.endpoints")}}</span>
     </a>
   </template>
 </div>

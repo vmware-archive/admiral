@@ -9,11 +9,10 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { EnvironmentsActions } from 'actions/Actions';
+import { EndpointsActions, EnvironmentsActions, NavigationActions } from 'actions/Actions';
+import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 import services from 'core/services';
 import utils from 'core/utils';
-import constants from 'core/constants';
-import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 
 const OPERATION = {
   LIST: 'list'
@@ -23,34 +22,70 @@ let EnvironmentsStore = Reflux.createStore({
   mixins: [CrudStoreMixin],
   listenables: [EnvironmentsActions],
 
-  onOpenEnvironments: function() {
+  onOpenEnvironments: function(queryOptions) {
+    this.setInData(['listView', 'queryOptions'], queryOptions);
     this.setInData(['editingItemData'], null);
+    this.setInData(['validationErrors'], null);
 
     var operation = this.requestCancellableOperation(OPERATION.LIST);
     if (operation) {
-      this.setInData(['itemsLoading'], true);
+      this.setInData(['listView', 'itemsLoading'], true);
       this.emitChange();
 
       operation.forPromise(services.loadEnvironments()).then((result) => {
-        var environments = [];
-        for (var key in result) {
-          if (result.hasOwnProperty(key)) {
-            environments.push(result[key]);
-          }
-        }
+        let nextPageLink = result.nextPageLink;
+        let itemsCount = result.totalCount;
+        let environments = result.documentLinks.map((documentLink) =>
+            result.documents[documentLink]);
 
-        this.setInData(['items'], environments);
-        this.setInData(['itemsLoading'], false);
+        this.setInData(['listView', 'items'], environments);
+        this.setInData(['listView', 'itemsLoading'], false);
+        this.setInData(['listView', 'nextPageLink'], nextPageLink);
+        if (itemsCount !== undefined && itemsCount !== null) {
+          this.setInData(['listView', 'itemsCount'], itemsCount);
+        }
         this.emitChange();
       });
     }
   },
 
-  onEditEnvironment: function(environment) {
-    this.setInData(['editingItemData', 'item'], environment);
-    if (Object.keys(environment.properties || {}).length === 0) {
-      this.setInData(['editingItemData', 'property'], {});
-    }
+  onOpenAddEnvironment: function() {
+    this.setInData(['editingItemData', 'item'], {});
+    this.emitChange();
+  },
+
+  onEditEnvironment: function(environmentId) {
+    services.loadEnvironment(environmentId).then((document) => {
+      var promises = [];
+
+      if (document.endpointLink) {
+        promises.push(
+            services.loadEndpoint(document.endpointLink).catch(() => Promise.resolve()));
+      } else {
+        promises.push(Promise.resolve());
+      }
+
+      if (document.tagLinks && document.tagLinks.length) {
+        promises.push(
+            services.loadTags(document.tagLinks).catch(() => Promise.resolve()));
+      } else {
+        promises.push(Promise.resolve());
+      }
+
+      Promise.all(promises).then(([endpoint, tags]) => {
+        if (document.endpointLink && endpoint) {
+          document.endpoint = endpoint;
+        }
+        document.tags = tags ? Object.values(tags) : [];
+
+        this.setInData(['editingItemData', 'item'], Immutable(document));
+        this.emitChange();
+      });
+
+    }).catch(this.onGenericEditError);
+
+    EndpointsActions.retrieveEndpoints();
+    this.setInData(['editingItemData', 'item'], {});
     this.emitChange();
   },
 
@@ -59,70 +94,51 @@ let EnvironmentsStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onCreateEnvironment: function(environment) {
+  onCreateEnvironment: function(model, tags) {
+    Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
+      return Promise.all(tags.map((tag, i) =>
+        result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
+    }).then((updatedTags) => {
+      let data = $.extend({}, model, {
+        tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
+      });
+      services.createEnvironment(data).then(() => {
+        NavigationActions.openEnvironments();
+        this.setInData(['editingItemData'], null);
+        this.emitChange();
+      }).catch(this.onGenericEditError);
+    });
+
     this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
-
-    services.createEnvironment(environment).then((createdEnvironment) => {
-      var immutableEnvironment = Immutable(createdEnvironment);
-
-      var environments = this.data.items.asMutable();
-      environments.push(immutableEnvironment);
-
-      this.setInData(['items'], environments);
-      this.setInData(['newItem'], immutableEnvironment);
-      this.setInData(['editingItemData'], null);
-      this.emitChange();
-
-      setTimeout(() => {
-        this.setInData(['newItem'], null);
-        this.emitChange();
-      }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
-
-    }).catch(this.onGenericEditError);
   },
 
-  onUpdateEnvironment: function(environment) {
+  onUpdateEnvironment: function(model, tags) {
+    Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
+      return Promise.all(tags.map((tag, i) =>
+        result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
+    }).then((updatedTags) => {
+      let data = $.extend({}, model, {
+        tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
+      });
+      services.updateEnvironment(data).then(() => {
+        NavigationActions.openEnvironments();
+        this.setInData(['editingItemData'], null);
+        this.emitChange();
+      }).catch(this.onGenericEditError);
+    });
+
     this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
-
-    services.updateEnvironment(environment).then((updatedEnvironment) => {
-      // If the backend did not make any changes, the response will be empty
-      updatedEnvironment = updatedEnvironment || environment;
-
-      var immutableEnvironment = Immutable(updatedEnvironment);
-
-      var environments = this.data.items.asMutable();
-
-      for (var i = 0; i < environments.length; i++) {
-        if (environments[i].documentSelfLink === immutableEnvironment.documentSelfLink) {
-          environments[i] = immutableEnvironment;
-        }
-      }
-
-      this.setInData(['items'], environments);
-      this.setInData(['updatedItem'], immutableEnvironment);
-      this.setInData(['editingItemData'], null);
-      this.emitChange();
-
-      setTimeout(() => {
-        this.setInData(['updatedItem'], null);
-        this.emitChange();
-      }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
-    }).catch(this.onGenericEditError);
   },
 
   onDeleteEnvironment: function(environment) {
     services.deleteEnvironment(environment).then(() => {
-      var environments = this.data.items.asMutable();
+      var environments = this.data.listView.items.asMutable().filter((item) =>
+          item.documentSelfLink !== environment.documentSelfLink);
 
-      for (var i = environments.length - 1; i >= 0; i--) {
-        if (environments[i].documentSelfLink === environment.documentSelfLink) {
-          environments.splice(i, 1);
-        }
-      }
-
-      this.setInData(['items'], environments);
+      this.setInData(['listView', 'items'], Immutable(environments));
+      this.setInData(['listView', 'itemsCount'], this.data.listView.itemsCount - 1);
       this.emitChange();
     });
   },

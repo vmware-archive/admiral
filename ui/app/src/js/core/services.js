@@ -1006,12 +1006,16 @@ services.deletePlacement = function(placement) {
   return deleteEntity(placement.documentSelfLink);
 };
 
-services.loadEnvironments = function() {
-  return list(links.ENVIRONMENT_MAPPING, true);
+services.loadEnvironments = function(queryOptions) {
+  let filter = buildOdataQuery(queryOptions);
+  let url = buildPaginationUrl(links.ENVIRONMENT_MAPPING, filter, true, 'name asc');
+  return get(url).then(function(result) {
+    return result;
+  });
 };
 
-services.loadEnvironment = function(documentSelfLink) {
-  return get(documentSelfLink);
+services.loadEnvironment = function(environmentId) {
+  return get(links.ENVIRONMENT_MAPPING + '/' + environmentId);
 };
 
 services.createEnvironment = function(environment) {

@@ -114,7 +114,6 @@
         "update": "Edit Placement Zone",
         "nameTitle": "Placement zone name",
         "endpointTitle": "Endpoint",
-        "endpointPlaceholder": "Search for endpoint",
         "dynamicTitle": "Dynamically allocate resources to this zone",
         "tagsToMatchTitle": "Tags to match",
         "tagsToMatchHint": "Enter key:value tags to match"
@@ -402,19 +401,39 @@
     "environment": {
       "list": {
         "title": "Environments",
-        "addButton": "Add",
+        "titleSearch": "Found environments",
+        "searchPlaceholder": "Search for environments",
+        "addButton": "Add Environment",
         "addPropertyButton": "Add Property",
         "nameColumn": "Name",
         "endpointTypeColumn": "Endpoint Type",
         "propertiesColumn": "Properties",
         "mappingsColumn": "Mappings"
       },
+      "details": {
+        "endpoint": "Endpoint"
+      },
+      "actions": {
+        "edit": "Edit",
+        "remove": "Remove"
+      },
       "edit": {
-        "createNew": "New Environment",
-        "update": "Edit Environment",
+        "addTitle": "Add Environment",
+        "editTitle": "Edit Environment",
+        "save": "Save",
+        "basicTab": "Basic",
+        "computeTab": "Compute",
+        "networkTab": "Network",
+        "storageTab": "Storage",
         "nameLabel": "Name",
-        "endpointTypeLabel": "Endpoint Type",
-        "propertiesLabel": "Properties"
+        "tagsLabel": "Tags",
+        "endpointLabel": "Endpoint",
+        "valueLabel": "Value",
+        "cpuLabel": "CPUs",
+        "diskLabel": "Disk size",
+        "memLabel": "Memory",
+        "instanceTypeLabel": "Instance type",
+        "imageTypeLabel": "Image type"
       },
       "instanceType": {
         "aws": {

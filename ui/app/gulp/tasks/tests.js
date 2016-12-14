@@ -34,11 +34,11 @@ var createCommonTestsConfig =  function(files, reporters, reportOutputFile, sing
       module: {
         rules: [{
           test: /Template\.html$/,
-          loader: 'handlebars-loader',
+          loader: 'handlebars-loader!html-minifier-loader',
           exclude: /(node_modules)/
         }, {
           test: /Vue\.html$/,
-          loader: 'raw-loader!html-minify-loader',
+          loader: 'raw-loader!html-minifier-loader',
           exclude: /(node_modules)/
         }, {
           loader: 'babel-loader?presets[]=es2015,plugins[]=transform-es2015-modules-commonjs,cacheDirectory=true',

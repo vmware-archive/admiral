@@ -142,9 +142,8 @@ export var CertificatesActions = Reflux.createActions([
 ]);
 
 export var EnvironmentsActions = Reflux.createActions([
-  'openEnvironments', 'editEnvironment', 'cancelEditEnvironment', 'createEnvironment',
-  'updateEnvironment', 'deleteEnvironment', 'importEnvironment',
-  'editEnvironmentProperty', 'cancelEditEnvironmentProperty', 'updateEnvironmentProperties'
+  'openEnvironments', 'openEnvironmentsNext', 'openAddEnvironment', 'editEnvironment',
+  'cancelEditEnvironment', 'createEnvironment', 'updateEnvironment', 'deleteEnvironment'
 ]);
 
 export var EndpointsActions = Reflux.createActions([
@@ -184,7 +183,7 @@ export var NavigationActions = Reflux.createActions([
   'openTemplates', 'openEventLog', 'openRegistries', 'openContainerRequest', 'openContainers',
   'openNetworks', 'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
   'openTemplateDetails', 'showContainersPerPlacement', 'openPlacements', 'openEnvironments',
-  'openMachines', 'openMachineDetails', 'openCompute', 'editCompute',
-  'openClosures', 'openClosuresSilently', 'openAddClosure', 'openHomeAddClosure',
+  'openAddEnvironment', 'editEnvironment', 'openMachines', 'openMachineDetails', 'openCompute',
+  'editCompute', 'openClosures', 'openClosuresSilently', 'openAddClosure', 'openHomeAddClosure',
   'openClosureDetails'
 ]);

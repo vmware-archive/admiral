@@ -24,17 +24,14 @@
           placeholder="{{i18n('app.placementZone.edit.nameTitle')}}">
     </div>
 
-    <div class="form-group" v-if="showEndpoint && !model.item.endpointName">
+    <div class="form-group" v-if="showEndpoint">
       <div class="subtitle">{{i18n('app.placementZone.edit.endpointTitle')}}</div>
-      <endpoint-search v-else class="endpoint dropdown-holder" v-on:change="onEndpointChange"></endpoint-search>
-    </div>
-
-    <div class="form-group" v-if="model.item.endpointName">
-      <div class="subtitle">{{i18n('app.placementZone.edit.endpointTitle')}}</div>
-      <div class="endpoint">
-        <img class="endpoint-icon" v-bind:src="'image-assets/endpoints/' + model.item.endpointType + '.png'"/>
-        <span class="truncateText">{{model.item.endpointName}}</span>
-      </div>
+      <dropdown-search
+          v-bind:disabled="!!model.item.endpoint"
+          v-bind:entity="i18n('app.endpoint.entity')"
+          v-bind:filter="searchEndpoints"
+          v-bind:value="model.item.endpoint"
+          v-on:change="onEndpointChange"></endpoint-search>
     </div>
 
     <div class="form-group">

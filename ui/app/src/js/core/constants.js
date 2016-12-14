@@ -191,6 +191,9 @@ var constants = Immutable({
   MACHINES: {
     SEARCH_SUGGESTIONS: ['address']
   },
+  ENVIRONMENTS: {
+    SEARCH_SUGGESTIONS: ['name']
+  },
   REQUESTS: {
     STAGES: {
       CREATED: 'CREATED',

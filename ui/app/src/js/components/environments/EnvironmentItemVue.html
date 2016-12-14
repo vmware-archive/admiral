@@ -1,0 +1,36 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="environment-item">
+  <div class="image-header">
+    <img v-bind:src="'image-assets/endpoints/' + model.endpointType + '.png'">
+    <div title="{{id}}" class="title truncateText">{{model.name}}</div>
+  </div>
+  <hr>
+  <div class="details form-horizontal">
+    <div class="form-group">
+      <label class="col-xs-3">{{i18n("app.environment.details.endpoint")}}</label>
+      <div class="col-xs-9 truncateText" title="{{model.endpointType}}">
+        <a href="#">{{model.endpointType}}</a>
+      </div>
+    </div>
+  </div>
+  <div class="actions" v-bind:class="{'hide': showDeleteConfirmation}">
+    <action-button name="edit" v-bind:label="i18n('app.host.actions.edit')"
+                   icon-name="edit" v-on:click="editEnvironment($event)"></action-button>
+    <action-button name="remove" v-bind:label="i18n('app.host.actions.remove')"
+                   icon-name="trash" v-on:click="askConfirmation($event)"></action-button>
+  </div>
+  <delete-confirmation v-bind:class="{'hide': !showDeleteConfirmation}"
+                       v-bind:show="showDeleteConfirmation"
+                       v-on:confirm-delete="removeEnvironment($event)"
+                       v-on:cancel-delete="cancelRemoval($event)"></delete-confirmation>
+</div>

@@ -105,8 +105,7 @@ let PlacementZonesStore = Reflux.createStore({
     if (config.endpointLink) {
       services.loadEndpoint(config.endpointLink).then((endpoint) => {
         this.setInData(['editingItemData', 'item'], Immutable($.extend({
-          endpointName: endpoint.name,
-          endpointType: endpoint.endpointType
+          endpoint
         }, config)));
         this.emitChange();
       });

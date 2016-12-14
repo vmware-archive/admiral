@@ -14,33 +14,22 @@ import MulticolumnInputs from 'components/common/MulticolumnInputs';
 var VueMulticolumnInputs = Vue.extend({
   template: '<div></div>',
   props: {
-    value: {},
-    columnModel: {required: true}
+    model: {
+      required: true
+    },
+    value: {}
   },
-
   attached: function() {
-    this.multicolumnInputs = new MulticolumnInputs($(this.$el), this.columnModel);
+    this.multicolumnInputs = new MulticolumnInputs($(this.$el), this.model);
     this.unwatchModel = this.$watch('value', (data) => {
       this.multicolumnInputs.setData(data);
     }, {immediate: true});
   },
-
   detached: function() {
     this.unwatchModel();
     this.multicolumnInputs = null;
   },
-
   methods: {
-    addColumn: function(column) {
-      if (!column.key) {
-        throw 'key is required property for column definition';
-      }
-      this.columnModel[column.key] = {
-        header: column.header,
-        placeholder: column.placeholder,
-        type: column.type
-      };
-    },
     getData: function() {
       return this.multicolumnInputs.getData();
     }

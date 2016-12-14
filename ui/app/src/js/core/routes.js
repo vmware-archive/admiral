@@ -206,9 +206,19 @@ crossroads.addRoute('/resource-pools', function() {
   actions.AppActions.openView(computeConstants.VIEWS.PLACEMENT_ZONES.name);
 });
 
-crossroads.addRoute('/environments', function() {
+crossroads.addRoute('/environments:?query:', function(query) {
   actions.AppActions.openView(computeConstants.VIEWS.ENVIRONMENTS.name);
-  actions.EnvironmentsActions.openEnvironments();
+  actions.EnvironmentsActions.openEnvironments(query);
+});
+
+crossroads.addRoute('/environments/new', function() {
+  actions.AppActions.openView(computeConstants.VIEWS.ENVIRONMENTS.name);
+  actions.EnvironmentsActions.openAddEnvironment();
+});
+
+crossroads.addRoute('/environments/{id*}', function(id) {
+  actions.AppActions.openView(computeConstants.VIEWS.ENVIRONMENTS.name);
+  actions.EnvironmentsActions.editEnvironment(id);
 });
 
 crossroads.addRoute('/endpoints', function() {
@@ -362,6 +372,14 @@ actions.NavigationActions.openPlacements.listen(function() {
 
 actions.NavigationActions.openEnvironments.listen(function() {
   hasher.setHash('environments');
+});
+
+actions.NavigationActions.openAddEnvironment.listen(function() {
+  hasher.setHash('environments/new');
+});
+
+actions.NavigationActions.editEnvironment.listen(function(id) {
+  hasher.setHash('environments/' + id);
 });
 
 actions.NavigationActions.openMachines.listen(function(queryOptions) {

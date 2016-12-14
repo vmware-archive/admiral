@@ -15,13 +15,13 @@ import constants from 'core/constants';
 function DEFAULT_RENDERER(itemSpec) {
   var result = '';
   if (itemSpec.icon) {
-    result += '<span class="fa fa-' + itemSpec.icon + '"></span>';
+    result += `<span class="fa fa-${itemSpec.icon}"></span>`;
   }
   if (itemSpec.iconSrc) {
-    result += '<img src="' + itemSpec.iconSrc + '"/>';
+    result += `<img src="${itemSpec.iconSrc}">`;
   }
 
-  result += '<span>' + itemSpec.name + '</span>';
+  result += `<span>${itemSpec.name}</span>`;
 
   return result;
 }

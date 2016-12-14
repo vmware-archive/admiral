@@ -10,122 +10,76 @@
  */
 
 import EnvironmentsViewVue from 'components/environments/EnvironmentsViewVue.html';
-import EnvironmentEditor from 'components/environments/EnvironmentEditor'; //eslint-disable-line
-import { EnvironmentsActions } from 'actions/Actions';
-
-var propertiesToString = function(properties) {
-  return properties ? Object.keys(properties).join(', ') : '';
-};
+import EnvironmentItem from 'components/environments/EnvironmentItem'; //eslint-disable-line
+import EnvironmentEditView from 'components/environments/EnvironmentEditView'; //eslint-disable-line
+import GridHolderMixin from 'components/common/GridHolderMixin';
+import constants from 'core/constants';
+import { EnvironmentsActions, NavigationActions } from 'actions/Actions';
 
 var EnvironmentsView = Vue.extend({
   template: EnvironmentsViewVue,
+
   props: {
     model: {
       required: true,
-      type: Object,
-      default: () => {
-        return {
-          environments: {},
-          contextView: {}
-        };
-      }
+      type: Object
     }
   },
+
   data: function() {
-    var sortOrders = {
-      name: 1,
-      endpointType: 1,
-      properties: 1
-    };
     return {
-      sortKey: '',
-      sortOrders: sortOrders
+      constants: constants,
+      // this view behaves better if the target width is set before the width transition
+      requiresPreTransitionWidth: true
     };
   },
-  computed: {
-    itemsCount: function() {
-      var items = this.model.items;
 
-      return items ? Object.keys(items).length : 0;
+  mixins: [GridHolderMixin],
+
+  attached: function() {
+    var $mainPanel = $(this.$el).find('.list-holder > .main-panel');
+    $mainPanel.on('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd',
+      (e) => {
+        if (e.target === $mainPanel[0]) {
+          this.unsetPostTransitionGridTargetWidth();
+        }
+      }
+    );
+  },
+
+  detached: function() {
+    var $mainPanel = $(this.$el).find('.list-holder > .main-panel');
+    $mainPanel.off('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd');
+  },
+
+  computed: {
+    searchSuggestions: function() {
+      return constants.ENVIRONMENTS.SEARCH_SUGGESTIONS;
     }
   },
+
   methods: {
-    isHighlightedItem: function(item) {
-      return this.isNewItem(item) || this.isUpdatedItem(item);
+    goBack: function() {
+      NavigationActions.openEnvironments(this.model.listView && this.model.listView.queryOptions);
     },
-    isNewItem: function(item) {
-      return item === this.model.newItem;
-    },
-    isUpdatedItem: function(item) {
-      return item === this.model.updatedItem;
-    },
-    isEditingItem: function(item) {
-      var editingItem = this.model.editingItemData && this.model.editingItemData.item;
-      return editingItem && editingItem.documentSelfLink === item.documentSelfLink;
-    },
-    isEditingNewItem: function() {
-      var editingItem = this.model.editingItemData && this.model.editingItemData.item;
-      return editingItem && !editingItem.documentSelfLink;
-    },
-    isEditingOrHighlightedItem: function(item) {
-      return this.isEditingItem(item) || this.isHighlightedItem(item);
-    },
-    addNewItem: function($event) {
-      $event.stopImmediatePropagation();
-      $event.preventDefault();
-
-      EnvironmentsActions.editEnvironment({});
-    },
-    editItem: function(item, $event) {
-      $event.stopImmediatePropagation();
-      $event.preventDefault();
-
-      EnvironmentsActions.editEnvironment(item);
-    },
-    deleteItem: function(item, $event) {
-      $event.stopImmediatePropagation();
-      $event.preventDefault();
-
-      EnvironmentsActions.deleteEnvironment(item);
-    },
-    sortBy: function(key) {
-      this.sortKey = key;
-      this.sortOrders[key] = this.sortOrders[key] * -1;
+    search: function(queryOptions) {
+      NavigationActions.openEnvironments(queryOptions);
     },
     refresh: function() {
-      EnvironmentsActions.openEnvironments();
-    }
-  },
-  filters: {
-    propertiesToString: propertiesToString,
-    envrionmentOrderBy: function(items, sortKey, reverse) {
-      if (!sortKey) {
-        return items;
+      EnvironmentsActions.openEnvironments(this.model.listView.queryOptions, true);
+    },
+    loadMore: function() {
+      if (this.model.listView.nextPageLink) {
+        EnvironmentsActions.openEnvironmentsNext(this.model.listView.queryOptions,
+          this.model.listView.nextPageLink);
       }
-      var order = reverse && reverse < 0 ? -1 : 1;
-
-      return items.asMutable().sort(function(a, b) {
-
-        if (sortKey === 'properties') {
-          a = propertiesToString(a.properties);
-          b = propertiesToString(b.properties);
-        } else {
-          a = a[sortKey];
-          b = b[sortKey];
-        }
-        if (!a) {
-          a = '';
-        }
-        if (!b) {
-          b = '';
-        }
-        return a.toLowerCase().localeCompare(b.toLowerCase()) * order;
-      });
+    },
+    addEnvironment: function() {
+      NavigationActions.openAddEnvironment();
+    },
+    editEnvironment: function(environment) {
+      NavigationActions.editEnvironment(environment.documentSelfLink);
     }
-  },
-  attached: function() {
-  },
-  detached: function() {
   }
 });
 

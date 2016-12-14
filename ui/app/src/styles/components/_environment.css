@@ -1,0 +1,60 @@
+.environment-form {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  overflow: auto;
+}
+
+.environment-form > .title {
+  font-size: 26px;
+}
+
+.environment-definition-form .environment-form-content {
+  background-color: #FFFFFF;
+  margin-top: 5px;
+}
+
+.environment-definition-form .tab-content {
+  padding: 30px;
+}
+
+.environment-form .control-btns {
+  margin-top: 20px;
+}
+
+.environment-form .control-btns > * {
+  margin-left: 20px;
+}
+
+.environment-form .control-btns .admiral-btn {
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
+.tag-separator {
+  position:absolute;
+  left: -2px;
+  top:-3px;
+}
+
+.environment-health-path-input .input-group {
+  display: flex;
+}
+
+.environment-health-path-input .input-group > select {
+  border-radius: 0;
+  width: auto;
+  min-width: 90px;
+}
+
+.environment-health-path-input .input-group .httpVersion {
+  border-radius: 0;
+  width: auto;
+  min-width: 105px;
+}
+
+.environment-network-expose-service-input .tooltip-inner {
+  max-width: 300px;
+}
