@@ -65,7 +65,7 @@
                                 <threads>${threads}</threads>
                             </propertiesUser>
                             <testFilesIncluded>
-                                <jMeterTestFile>closure-single-container.jmx</jMeterTestFile>
+                                <jMeterTestFile>closures-cluster-container.jmx</jMeterTestFile>
                             </testFilesIncluded>
                         </configuration>
                     </execution>
