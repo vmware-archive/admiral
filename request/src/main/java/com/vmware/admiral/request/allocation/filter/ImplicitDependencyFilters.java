@@ -176,6 +176,10 @@ public final class ImplicitDependencyFilters {
                         CompositeComponentRegistry.metaByType(cd.type).descriptionClass);
                 if (resourceState instanceof ContainerDescription) {
                     ContainerDescription containerDescription = (ContainerDescription) resourceState;
+                    if (containerDescription.portBindings == null) {
+                        return exposedHostPorts;
+                    }
+
                     for (PortBinding port : containerDescription.portBindings) {
                         if (port.hostPort == null) {
                             continue;
@@ -190,6 +194,7 @@ public final class ImplicitDependencyFilters {
                     }
                 }
             }
+
             return exposedHostPorts;
         }
     }

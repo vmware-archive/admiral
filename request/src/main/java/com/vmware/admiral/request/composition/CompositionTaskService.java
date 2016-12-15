@@ -302,8 +302,9 @@ public class CompositionTaskService
             });
 
         } catch (Exception e) {
-            state.taskInfo.failure = Utils.toServiceErrorResponse(e);
-            proceedTo(SubStage.ERROR);
+            proceedTo(SubStage.ERROR, (s) -> {
+                s.taskInfo.failure = Utils.toServiceErrorResponse(e);
+            });
         }
     }
 
