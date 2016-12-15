@@ -13,6 +13,7 @@ package com.vmware.admiral.compute;
 
 import static org.junit.Assert.assertEquals;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
@@ -128,6 +129,7 @@ public class PlacementCapacityUpdateTaskServiceTest extends ComputeBaseTest {
         cd.totalMemoryBytes = totalMemoryBytes;
         cd.cpuCount = cpuCoreCount;
         cd.cpuMhzPerCore = cpuMhzPerCore;
+        cd.instanceAdapterReference = new URI("http://instanceAdapterReference");
         if (supportedChildren != null) {
             cd.supportedChildren = new ArrayList<>();
             cd.supportedChildren.add(supportedChildren);

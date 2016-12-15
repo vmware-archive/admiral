@@ -12,6 +12,7 @@
 package com.vmware.admiral.request.util;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -295,6 +296,11 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         computeDescription.name = "test-vm-guest-compute-description";
         computeDescription.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
         computeDescription.id = UUID.randomUUID().toString();
+        try {
+            computeDescription.instanceAdapterReference = new URI(
+                    "http://instanceAdapterReference");
+        } catch (URISyntaxException e) {
+        }
         computeDescription.supportedChildren = new ArrayList<>(
                 Arrays.asList(ComputeType.VM_GUEST.toString()));
         computeDescription.documentSelfLink = VM_GUEST_COMPUTE_DESC_ID;
