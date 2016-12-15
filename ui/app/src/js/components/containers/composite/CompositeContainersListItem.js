@@ -168,6 +168,7 @@ var CompositeContainersListItem = Vue.extend({
 
       let queryOptions = {
         $category: constants.RESOURCES.SEARCH_CATEGORY.NETWORKS,
+        $occurrence: constants.SEARCH_OCCURRENCE.ANY,
         any: this.networkIds
       };
 

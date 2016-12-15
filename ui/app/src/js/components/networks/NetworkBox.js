@@ -137,6 +137,7 @@ var NetworkBox = Vue.extend({
 
       let queryOptions = {
         $category: constants.RESOURCES.SEARCH_CATEGORY.NETWORKS,
+        $occurrence: constants.SEARCH_OCCURRENCE.ANY,
         any: this.model.name
       };
 
