@@ -20,7 +20,6 @@ import (
 
 	"admiral/config"
 	"admiral/loginout"
-
 	"admiral/utils"
 
 	"github.com/spf13/cobra"

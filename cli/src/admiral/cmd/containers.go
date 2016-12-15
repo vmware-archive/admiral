@@ -272,7 +272,7 @@ func initContainerList() {
 }
 
 func RunContainerList(args []string) (string, error) {
-	lc := &containers.ListContainers{}
+	lc := &containers.ContainersList{}
 	_, err := lc.FetchContainers(queryF)
 	if err != nil {
 		return "", err

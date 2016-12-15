@@ -101,7 +101,6 @@ func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 	admiralHostUrl := req.URL.Scheme + "://" + req.URL.Host
 	utils.CheckResponse(err, admiralHostUrl)
 	utils.CheckVerboseResponse(resp)
-
 	if err = CheckResponseError(resp, from); err != nil {
 		return resp, nil, err
 	}
@@ -144,6 +143,9 @@ func CheckResponseError(resp *http.Response, tokenFrom string) error {
 }
 
 func SetCustomTimeout(timeout int) {
+	if customTimeout < 1 {
+		return
+	}
 	customTimeout = timeout
 }
 
@@ -231,13 +233,13 @@ func checkForCertErrors(url string, errA error) (bool, error) {
 		return false, errA
 	}
 
-	if strings.Contains(errA.Error(), "x509: certificate signed by unknown authority") {
-		result := promptAllCerts(url)
-		if !result {
-			utils.CheckBlockingError(errors.New("Certificate declined, command execution aborted."))
-		}
-		return true, nil
-	}
+	//if strings.Contains(errA.Error(), "x509: certificate signed by unknown authority") {
+	//	result := promptAllCerts(url)
+	//	if !result {
+	//		utils.CheckBlockingError(errors.New("Certificate declined, command execution aborted."))
+	//	}
+	//	return true, nil
+	//}
 
 	if strings.Contains(errA.Error(), "x509") {
 		loadCertsFromFile()
@@ -291,6 +293,7 @@ func promptAllCerts(url string) bool {
 		return false
 	}
 	cs := conn.ConnectionState()
+	fmt.Println(cs.HandshakeComplete)
 	answer := false
 	for _, cert := range cs.PeerCertificates {
 		if promptCertAgreement(cert) {

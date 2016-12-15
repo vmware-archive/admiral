@@ -24,25 +24,29 @@ import (
 	"admiral/utils/urlutils"
 )
 
-type ListContainers struct {
+type ContainersList struct {
 	TotalCount    int64                `json:"totalCount"`
 	Documents     map[string]Container `json:"documents"`
 	DocumentLinks []string             `json:"documentLinks"`
 }
 
-func (lc *ListContainers) GetCount() int {
+func (lc *ContainersList) GetCount() int {
 	return len(lc.DocumentLinks)
 }
 
-func (lc *ListContainers) GetResource(index int) selflink.Identifiable {
+func (lc *ContainersList) GetResource(index int) selflink.Identifiable {
 	resource := lc.Documents[lc.DocumentLinks[index]]
 	return &resource
+}
+
+func (cl *ContainersList) Renew() {
+	*cl = ContainersList{}
 }
 
 //FetchContainers fetches containers by given query which is passed as parameter.
 //In case you want to fetch all containers, pass empty string as parameter.
 //The return result is the count of fetched containers.
-func (lc *ListContainers) FetchContainers(queryF string) (int, error) {
+func (lc *ContainersList) FetchContainers(queryF string) (int, error) {
 	cqm := urlutils.GetCommonQueryMap()
 	cqm["$orderby"] = "documentSelfLink+asc"
 	cqm["$filter"] = "system+ne+true"
@@ -71,7 +75,7 @@ func (lc *ListContainers) FetchContainers(queryF string) (int, error) {
 // GetOutputString returns raw string with information
 // about containers. It is used from "ls" command, and
 // this string requires formatting before printing it to the console.
-func (lc *ListContainers) GetOutputString(allContainers bool) string {
+func (lc *ContainersList) GetOutputString(allContainers bool) string {
 	nameLen := 38
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tNAME\tADDRESS\tSTATUS\tCREATED\t[HOST:CONTAINER]\tEXTERNAL ID")
@@ -102,7 +106,7 @@ func (lc *ListContainers) GetOutputString(allContainers bool) string {
 }
 
 //Function to get container description if the name is equal to one passed in parameter.
-func (lc *ListContainers) GetContainerDescription(name string) string {
+func (lc *ContainersList) GetContainerDescription(name string) string {
 	for _, cont := range lc.Documents {
 		if name == cont.Names[0] {
 			return cont.DescriptionLink
@@ -112,7 +116,7 @@ func (lc *ListContainers) GetContainerDescription(name string) string {
 }
 
 //Function to get container self link if name is equal to one passed in parameter.
-func (lc *ListContainers) GetContainerLink(name string) string {
+func (lc *ContainersList) GetContainerLink(name string) string {
 	for _, link := range lc.DocumentLinks {
 		val := lc.Documents[link]
 		if name == val.Names[0] {

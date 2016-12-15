@@ -179,6 +179,10 @@ func (pzl *PlacementZoneList) GetResource(index int) selflink.Identifiable {
 	return &resource
 }
 
+func (pzl *PlacementZoneList) Renew() {
+	*pzl = PlacementZoneList{}
+}
+
 func (rpl *PlacementZoneList) FetchPZ() (int, error) {
 	url := urlutils.BuildUrl(urlutils.ElasticPlacementZone, urlutils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)

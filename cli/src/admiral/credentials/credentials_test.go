@@ -59,7 +59,7 @@ func TestAddRemoveCredentials(t *testing.T) {
 	CheckTestError(err, t)
 
 	// Validating phase 1 & phase 2
-	lc := &ListCredentials{}
+	lc := &CredentialsList{}
 	lc.FetchCredentials()
 	existByUsername := false
 	existByCert := false
@@ -108,7 +108,7 @@ func TestAddRemoveCredentials(t *testing.T) {
 	CheckTestError(err, t)
 
 	// Validating phase 3
-	lc = &ListCredentials{}
+	lc = &CredentialsList{}
 	lc.FetchCredentials()
 	existByUsername = false
 	existByCert = false
@@ -144,7 +144,7 @@ func TestUpdateCredentials(t *testing.T) {
 	CheckTestError(err, t)
 
 	// Validating
-	lc := &ListCredentials{}
+	lc := &CredentialsList{}
 	lc.FetchCredentials()
 	exist := false
 	actual := Credentials{}

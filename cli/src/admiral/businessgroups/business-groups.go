@@ -83,7 +83,25 @@ func (bgl *BusinessGroupList) GetOutputString() string {
 // short id for business groups. Requires custom implementation
 // because business groups object are different from the standard
 // Admiral objects.
-func GetFullId(shortId string) (string, error) {
+func GetFullId(idOrLabel string) (string, error) {
+	var (
+		id      string
+		idErr   error
+		nameErr error
+	)
+	id, idErr = getFullIdByShortId(idOrLabel)
+	if idErr == nil {
+		return id, nil
+	}
+	id, nameErr = getFullIdByLabel(idOrLabel)
+	if nameErr == nil {
+		return id, nil
+	}
+	resultError := buildIdError(idErr, nameErr, idOrLabel, utils.BUSINESS_GROUP)
+	return "", resultError
+}
+
+func getFullIdByShortId(shortId string) (string, error) {
 	bgl := &BusinessGroupList{}
 	bgl.FetchBusinessGroups()
 	matchedCount := 0
@@ -96,10 +114,45 @@ func GetFullId(shortId string) (string, error) {
 		lastMatchIndex = i
 	}
 	if matchedCount < 1 {
-		return "", selflink.NewSelfLinkError(selflink.NoElementsFoundMessage, shortId, utils.BUSINESS_GROUP)
+		return "", selflink.NotFound
 	}
 	if matchedCount > 1 {
-		return "", selflink.NewSelfLinkError(selflink.NonUniqueIdMessage, shortId, utils.BUSINESS_GROUP)
+		return "", selflink.NonUnique
 	}
 	return bgl.GetResource(lastMatchIndex).GetID(), nil
+}
+
+func getFullIdByLabel(label string) (string, error) {
+	bgl := &BusinessGroupList{}
+	bgl.FetchBusinessGroups()
+	matchedCount := 0
+	lastMatchIndex := 0
+	for i, bg := range *bgl {
+		if label != bg.Label {
+			continue
+		}
+		matchedCount++
+		lastMatchIndex = i
+	}
+	if matchedCount < 1 {
+		return "", selflink.NotFound
+	}
+	if matchedCount > 1 {
+		return "", selflink.NonUnique
+	}
+	return bgl.GetResource(lastMatchIndex).GetID(), nil
+}
+
+func buildIdError(idError, nameError error, idOrName string, resType utils.ResourceType) error {
+	if idError == selflink.NotFound && nameError == selflink.NotFound {
+		return selflink.NewSelfLinkError(selflink.NoElementsFoundMessage, idOrName, resType)
+	} else if idError == selflink.NonUnique && nameError == selflink.NonUnique {
+		return selflink.NewSelfLinkError(selflink.NonUniqueIdMessage, idOrName, resType)
+	} else if idError == selflink.NonUnique && nameError == selflink.NotFound {
+		return selflink.NewSelfLinkError(selflink.NonUniqueIdAndNoElementsWithName, idOrName, resType)
+	} else if idError == selflink.NotFound && nameError == selflink.NonUnique {
+		return selflink.NewSelfLinkError(selflink.NotFoundIdAndDuplicateName, idOrName, resType)
+	} else {
+		return nil
+	}
 }

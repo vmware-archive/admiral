@@ -126,7 +126,7 @@ func (h *Host) SetCustomProperties(ipF, deplPolicyID, name, credID,
 			newCredID = ""
 		}
 	} else {
-		newCredID, err = selflink.GetFullId(credID, new(credentials.ListCredentials), utils.CREDENTIALS)
+		newCredID, err = selflink.GetFullId(credID, new(credentials.CredentialsList), utils.CREDENTIALS)
 		utils.CheckBlockingError(err)
 	}
 
@@ -234,6 +234,10 @@ func (hl *HostsList) GetCount() int {
 func (hl *HostsList) GetResource(index int) selflink.Identifiable {
 	resource := hl.Documents[hl.DocumentLinks[index]]
 	return &resource
+}
+
+func (hl *HostsList) Renew() {
+	*hl = HostsList{}
 }
 
 //Struct used to send data in order to change host's power state.

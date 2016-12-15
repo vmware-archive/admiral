@@ -121,6 +121,10 @@ func (pl *PlacementList) GetResource(index int) selflink.Identifiable {
 	return &resource
 }
 
+func (pl *PlacementList) Renew() {
+	*pl = PlacementList{}
+}
+
 func (pl *PlacementList) FetchPlacements() (int, error) {
 	url := urlutils.BuildUrl(urlutils.Placement, urlutils.GetCommonQueryMap(), true)
 

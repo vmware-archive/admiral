@@ -234,49 +234,83 @@ func GetIdFilterUrl(shortId string, restype ResourceType) string {
 	switch restype {
 	case APPLICATION:
 		shortSelfLink := CreateResLinksForApps([]string{shortId})
-		url = ApplicationFilter + createIdFilter(shortSelfLink[0])
+		url = ApplicationFilterID + createIdFilter(shortSelfLink[0])
 	case CERTIFICATE:
 		shortSelfLink := CreateResLinkForCerts(shortId)
-		url = CertFilter + createIdFilter(shortSelfLink)
+		url = CertFilterID + createIdFilter(shortSelfLink)
 	case CONTAINER:
 		shortSelfLink := CreateResLinksForContainer([]string{shortId})
-		url = ContainerFilter + createIdFilter(shortSelfLink[0])
+		url = ContainerFilterID + createIdFilter(shortSelfLink[0])
 	case CREDENTIALS:
 		shortSelfLink := CreateResLinkForCredentials(shortId)
-		url = CredentialsFilter + createIdFilter(shortSelfLink)
+		url = CredentialsFilterID + createIdFilter(shortSelfLink)
 	case DEPLOYMENT_POLICY:
 		shortSelfLink := CreateResLinkForDP(shortId)
-		url = DeploymentPolicyFilter + createIdFilter(shortSelfLink)
+		url = DeploymentPolicyFilterID + createIdFilter(shortSelfLink)
 	case HOST:
 		shortSelfLink := CreateResLinksForHosts(shortId)
-		url = HostFilter + createIdFilter(shortSelfLink)
+		url = HostFilterID + createIdFilter(shortSelfLink)
 	case NETWORK:
 		shortSelfLink := CreateResLinksForNetwork([]string{shortId})
-		url = NetworkFilter + createIdFilter(shortSelfLink[0])
+		url = NetworkFilterID + createIdFilter(shortSelfLink[0])
 	case PLACEMENT:
 		shortSelfLink := CreateResLinksForPlacement(shortId)
-		url = PlacementFilter + createIdFilter(shortSelfLink)
+		url = PlacementFilterID + createIdFilter(shortSelfLink)
 	case PLACEMENT_ZONE:
 		shortSelfLink := CreateResLinkForResourcePool(shortId)
-		url = PlacementZoneFilter + createIdFilter(shortSelfLink)
+		url = PlacementZoneFilterID + createIdFilter(shortSelfLink)
 	case PROJECT:
 		shortSelfLink := CreateResLinkForProject(shortId)
-		url = ProjectFilter + createIdFilter(shortSelfLink)
+		url = ProjectFilterID + createIdFilter(shortSelfLink)
 	case REGISTRY:
 		shortSelfLink := CreateResLinkForRegistry(shortId)
-		url = RegistryFilter + createIdFilter(shortSelfLink)
+		url = RegistryFilterID + createIdFilter(shortSelfLink)
 	case REQUEST:
 		shortSelfLink := CreateResLinkForRequest(shortId)
-		url = RequestFilter + createIdFilter(shortSelfLink)
+		url = RequestFilterID + createIdFilter(shortSelfLink)
 	case TEMPLATE:
 		shortSelfLink := CreateResLinkForTemplate(shortId)
-		url = TemplateFilter + createIdFilter(shortSelfLink)
+		url = TemplateFilterID + createIdFilter(shortSelfLink)
 	case ENDPOINT:
 		shortSelfLink := CreateResLinkForEndpoint(shortId)
-		url = EndpointFilter + createIdFilter(shortSelfLink)
+		url = EndpointFilterID + createIdFilter(shortSelfLink)
 	case CLOSURE:
 		shortSelfLink := CreateResLinkForClosure(shortId)
-		url = ClosureFilter + createIdFilter(shortSelfLink)
+		url = ClosureFilterID + createIdFilter(shortSelfLink)
+	}
+	return url
+}
+
+func GetNameFilterUrl(name string, restype ResourceType) string {
+	var url string
+	switch restype {
+	case APPLICATION:
+		url = ApplicationFilterName + createNameFilter(name)
+	case CERTIFICATE:
+		url = CertFilterName + createNameFilter(name)
+	case CLOSURE:
+		url = ClosureFilterName + createNameFilter(name)
+	case CONTAINER:
+		url = ContainerFilterName + createNameFilter(name)
+	case CREDENTIALS:
+		url = CredentialsFilterName + createNameFilter(name)
+	case DEPLOYMENT_POLICY:
+		url = DeploymentPolicyFilterName + createNameFilter(name)
+	case ENDPOINT:
+		url = EndpointFilterName + createNameFilter(name)
+	case NETWORK:
+		url = NetworkFilterName + createNameFilter(name)
+	case PLACEMENT:
+		url = PlacementFilterName + createNameFilter(name)
+	case PLACEMENT_ZONE:
+		url = PlacementZoneFilterName + createNameFilter(name)
+	case PROJECT:
+		url = ProjectFilterName + createNameFilter(name)
+	case REGISTRY:
+		url = RegistryFilterName + createNameFilter(name)
+	case TEMPLATE:
+		url = TemplateFilterName + createNameFilter(name)
+
 	}
 	return url
 }
@@ -284,4 +318,8 @@ func GetIdFilterUrl(shortId string, restype ResourceType) string {
 // Help function to build up the string containing the URL.
 func createIdFilter(shortSelfLink string) string {
 	return fmt.Sprintf("'%s*'", shortSelfLink)
+}
+
+func createNameFilter(name string) string {
+	return fmt.Sprintf("'%s'", name)
 }

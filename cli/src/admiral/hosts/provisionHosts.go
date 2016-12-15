@@ -56,7 +56,7 @@ func (cd *ComputeDescription) SetAuthCredentialsLink(id string) error {
 	if id == "" {
 		return nil
 	}
-	fullId, err := selflink.GetFullId(id, new(credentials.ListCredentials), utils.CREDENTIALS)
+	fullId, err := selflink.GetFullId(id, new(credentials.CredentialsList), utils.CREDENTIALS)
 	if err != nil {
 		return err
 	}

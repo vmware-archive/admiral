@@ -61,7 +61,7 @@ func TestProvisionRemoveContainer(t *testing.T) {
 	CheckTestError(err, t)
 
 	// Validating phase 1
-	lc := ListContainers{}
+	lc := ContainersList{}
 	lc.FetchContainers("")
 	exist := false
 	for _, cont := range lc.Documents {
@@ -80,7 +80,7 @@ func TestProvisionRemoveContainer(t *testing.T) {
 	CheckTestError(err, t)
 
 	// Validating phase 2
-	lc = ListContainers{}
+	lc = ContainersList{}
 	lc.FetchContainers("")
 	exist = false
 	for _, cont := range lc.Documents {
@@ -121,7 +121,7 @@ func TestStopStartContainer(t *testing.T) {
 	CheckTestError(err, t)
 
 	// Validating phase 1
-	lc := ListContainers{}
+	lc := ContainersList{}
 	lc.FetchContainers("")
 	exist := false
 	for _, cont := range lc.Documents {
@@ -143,7 +143,7 @@ func TestStopStartContainer(t *testing.T) {
 	CheckTestError(err, t)
 
 	// Validating phase 2
-	lc = ListContainers{}
+	lc = ContainersList{}
 	lc.FetchContainers("")
 	for _, cont := range lc.Documents {
 		if cont.GetID() == contIds[0] {

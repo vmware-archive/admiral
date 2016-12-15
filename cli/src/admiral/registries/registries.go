@@ -71,6 +71,10 @@ func (rl *RegistryList) GetResource(index int) selflink.Identifiable {
 	return &resource
 }
 
+func (rl *RegistryList) Renew() {
+	*rl = RegistryList{}
+}
+
 func (rl *RegistryList) FetchRegistries() (int, error) {
 	url := urlutils.BuildUrl(urlutils.Registry, urlutils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)
@@ -145,7 +149,7 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 			newCredID = ""
 		}
 	} else {
-		newCredID, err = selflink.GetFullId(credID, new(credentials.ListCredentials), utils.CREDENTIALS)
+		newCredID, err = selflink.GetFullId(credID, new(credentials.CredentialsList), utils.CREDENTIALS)
 		utils.CheckBlockingError(err)
 	}
 
@@ -243,7 +247,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 		reg.Name = newName
 	}
 	if newCred != "" {
-		fullCredId, err := selflink.GetFullId(newCred, new(credentials.ListCredentials), utils.CREDENTIALS)
+		fullCredId, err := selflink.GetFullId(newCred, new(credentials.CredentialsList), utils.CREDENTIALS)
 		utils.CheckBlockingError(err)
 		credLink := utils.CreateResLinkForCredentials(fullCredId)
 		reg.AuthCredentialsLinks = &credLink

@@ -28,7 +28,7 @@ type LogResponse struct {
 }
 
 func GetLog(id string, since int) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(containers.ListContainers), utils.CONTAINER)
+	fullId, err := selflink.GetFullId(id, new(containers.ContainersList), utils.CONTAINER)
 	utils.CheckBlockingError(err)
 
 	queryMap := make(map[string]interface{})

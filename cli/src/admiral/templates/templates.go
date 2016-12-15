@@ -71,6 +71,10 @@ func (cdl *CompositeDescriptionList) GetResource(index int) selflink.Identifiabl
 	return &resource
 }
 
+func (cdl *CompositeDescriptionList) Renew() {
+	*cdl = CompositeDescriptionList{}
+}
+
 type TemplateSorter []Template
 
 func (ts TemplateSorter) Len() int           { return len(ts) }
@@ -156,6 +160,10 @@ func (tl *TemplatesList) GetCount() int {
 func (tl *TemplatesList) GetResource(index int) selflink.Identifiable {
 	resource := tl.Results[0]
 	return &resource
+}
+
+func (tl *TemplatesList) Renew() {
+	*tl = TemplatesList{}
 }
 
 //FetchTemplates fetches the templates by query. If it's needed to

@@ -48,6 +48,10 @@ func (cl *ClosureList) GetResource(index int) selflink.Identifiable {
 	return &resource
 }
 
+func (cl *ClosureList) Renew() {
+	*cl = ClosureList{}
+}
+
 func (cl *ClosureList) FetchClosures() (int, error) {
 	url := urlutils.BuildUrl(urlutils.Closure, urlutils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)

@@ -96,6 +96,10 @@ func (el *EndpointList) GetResource(index int) selflink.Identifiable {
 	return &resource
 }
 
+func (el *EndpointList) Renew() {
+	*el = EndpointList{}
+}
+
 func (el *EndpointList) FetchEndpoints() (int, error) {
 	url := urlutils.BuildUrl(urlutils.Endpoint, urlutils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)

@@ -55,6 +55,10 @@ func (pl *ProjectList) GetResource(index int) selflink.Identifiable {
 	return &resource
 }
 
+func (pl *ProjectList) Renew() {
+	*pl = ProjectList{}
+}
+
 //FetchProjects fetches all projects and return their count.
 func (gl *ProjectList) FetchProjects() (int, error) {
 	url := urlutils.BuildUrl(urlutils.Project, urlutils.GetCommonQueryMap(), true)

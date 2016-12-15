@@ -89,6 +89,10 @@ func (cl *CertificateList) GetResource(index int) selflink.Identifiable {
 	return &resource
 }
 
+func (cl *CertificateList) Renew() {
+	*cl = CertificateList{}
+}
+
 //FetchCertificates is fetching all certificates and returns their count.
 func (cl *CertificateList) FetchCertificates() (int, error) {
 	url := urlutils.BuildUrl(urlutils.Certificate, urlutils.GetCommonQueryMap(), true)

@@ -153,6 +153,10 @@ func (nl *NetworkList) GetResource(index int) selflink.Identifiable {
 	return &resource
 }
 
+func (nl *NetworkList) Renew() {
+	*nl = NetworkList{}
+}
+
 type NetworkDescription struct {
 	DocumentSelfLink string `json:"documentSelfLink"`
 }

@@ -95,7 +95,7 @@ func initCredentialsList() {
 }
 
 func RunCredentialsList(args []string) (string, error) {
-	lc := &credentials.ListCredentials{}
+	lc := &credentials.CredentialsList{}
 	_, err := lc.FetchCredentials()
 	if err != nil {
 		return "", err

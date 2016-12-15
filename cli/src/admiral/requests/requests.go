@@ -149,6 +149,10 @@ func (rl *RequestsList) GetResource(index int) selflink.Identifiable {
 	return &resource
 }
 
+func (rl *RequestsList) Renew() {
+	*rl = RequestsList{}
+}
+
 func (rl *RequestsList) ClearAllRequests() (string, []error) {
 	errs := make([]error, 0)
 	for i := len(rl.DocumentLinks) - 1; i >= 0; i-- {

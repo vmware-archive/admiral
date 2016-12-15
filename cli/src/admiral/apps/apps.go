@@ -106,6 +106,10 @@ func (la *ListApps) GetResource(index int) selflink.Identifiable {
 	return &resource
 }
 
+func (la *ListApps) Renew() {
+	*la = ListApps{}
+}
+
 // FetchApps makes REST call to populate ListApps object
 // with Apps. The url of this call is /resources/composite-components/
 func (la *ListApps) FetchApps(queryF string) (int, error) {

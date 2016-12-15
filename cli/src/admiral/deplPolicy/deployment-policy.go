@@ -56,6 +56,10 @@ func (dpl *DeploymentPolicyList) GetResource(index int) selflink.Identifiable {
 	return &resource
 }
 
+func (dpl *DeploymentPolicyList) Renew() {
+	*dpl = DeploymentPolicyList{}
+}
+
 //FetchDP fetches existing deployment policies and returns their count.
 func (dpl *DeploymentPolicyList) FetchDP() (int, error) {
 	url := urlutils.BuildUrl(urlutils.DeploymentPolicy, urlutils.GetCommonQueryMap(), true)

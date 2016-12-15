@@ -221,7 +221,7 @@ type ContainersOperationScale struct {
 // for this task is needed.
 // Usage of short unique IDs is supported for this operation.
 func StartContainer(containers []string, asyncTask bool) ([]string, error) {
-	fullIds, err := selflink.GetFullIds(containers, new(ListContainers), utils.CONTAINER)
+	fullIds, err := selflink.GetFullIds(containers, new(ContainersList), utils.CONTAINER)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 
@@ -242,7 +242,7 @@ func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 // for this task is needed.
 // Usage of short unique IDs is supported for this operation.
 func StopContainer(containers []string, asyncTask bool) ([]string, error) {
-	fullIds, err := selflink.GetFullIds(containers, new(ListContainers), utils.CONTAINER)
+	fullIds, err := selflink.GetFullIds(containers, new(ContainersList), utils.CONTAINER)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 
@@ -262,7 +262,7 @@ func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 // for this task is needed.
 // Usage of short unique IDs is supported for this operation.
 func RemoveContainer(containers []string, asyncTask bool) ([]string, error) {
-	fullIds, err := selflink.GetFullIds(containers, new(ListContainers), utils.CONTAINER)
+	fullIds, err := selflink.GetFullIds(containers, new(ContainersList), utils.CONTAINER)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 
@@ -281,7 +281,7 @@ func RemoveContainer(containers []string, asyncTask bool) ([]string, error) {
 //RemoveMany removes many containers matching specified query
 //Returns boolean result if they are removing or not.
 func RemoveMany(container string, asyncTask bool) ([]string, error) {
-	lc := &ListContainers{}
+	lc := &ContainersList{}
 	count, err := lc.FetchContainers(container)
 	if err != nil {
 		return nil, err
@@ -304,7 +304,7 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 // for this task is needed.
 // Usage of short unique IDs is supported for this operation.
 func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (string, error) {
-	fullIds, err := selflink.GetFullIds([]string{containerID}, new(ListContainers), utils.CONTAINER)
+	fullIds, err := selflink.GetFullIds([]string{containerID}, new(ContainersList), utils.CONTAINER)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 	url := config.URL + links[0]
@@ -352,7 +352,7 @@ func processContainersOperation(co ContainersOperator, asyncTask bool) ([]string
 // ExecuteCmd executes command in container.
 // Usage of short unique IDs is supported for this operation.
 func ExecuteCmd(container string, command string) {
-	fullIds, err := selflink.GetFullIds([]string{container}, new(ListContainers), utils.CONTAINER)
+	fullIds, err := selflink.GetFullIds([]string{container}, new(ContainersList), utils.CONTAINER)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 	contLink := links[0]
@@ -374,7 +374,7 @@ func ExecuteCmd(container string, command string) {
 
 // InspectContainer returns information about container in JSON format.
 func InspectContainer(id string) ([]byte, error) {
-	fullIds, err := selflink.GetFullIds([]string{id}, new(ListContainers), utils.CONTAINER)
+	fullIds, err := selflink.GetFullIds([]string{id}, new(ContainersList), utils.CONTAINER)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 	url := config.URL + links[0]
@@ -397,7 +397,7 @@ func InspectContainer(id string) ([]byte, error) {
 // GetContainer return pointer to object of type Container,
 // which is fetched from Admiral by the provided ID.
 func GetContainer(id string) *Container {
-	fullId, err := selflink.GetFullId(id, new(ListContainers), utils.CONTAINER)
+	fullId, err := selflink.GetFullId(id, new(ContainersList), utils.CONTAINER)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinksForContainer([]string{fullId})[0]
 	url := config.URL + link

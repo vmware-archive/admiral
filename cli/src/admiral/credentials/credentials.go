@@ -67,23 +67,27 @@ func (c *Credentials) GetName() string {
 	return checker
 }
 
-type ListCredentials struct {
+type CredentialsList struct {
 	Documents     map[string]Credentials `json:"documents"`
 	DocumentLinks []string               `json:"documentLinks"`
 }
 
-func (lc *ListCredentials) GetResource(index int) selflink.Identifiable {
+func (lc *CredentialsList) GetResource(index int) selflink.Identifiable {
 	resource := lc.Documents[lc.DocumentLinks[index]]
 	return &resource
 }
 
-func (lc *ListCredentials) GetCount() int {
+func (lc *CredentialsList) GetCount() int {
 	return len(lc.DocumentLinks)
+}
+
+func (cl *CredentialsList) Renew() {
+	*cl = CredentialsList{}
 }
 
 //FetchCredentials fetches all credentials. It return the count
 //of fetched credentials.
-func (lc *ListCredentials) FetchCredentials() (int, error) {
+func (lc *CredentialsList) FetchCredentials() (int, error) {
 	cqm := urlutils.GetCommonQueryMap()
 	cqm["$filter"] = "customProperties/scope%20ne%20%27SYSTEM%27"
 	url := urlutils.BuildUrl(urlutils.Credentials, cqm, true)
@@ -98,7 +102,7 @@ func (lc *ListCredentials) FetchCredentials() (int, error) {
 }
 
 //Print prints already fetched credentials.
-func (lc *ListCredentials) GetOutputString() string {
+func (lc *CredentialsList) GetOutputString() string {
 	if lc.GetCount() < 1 {
 		return utils.NoElementsFoundMessage
 	}
@@ -134,7 +138,7 @@ func (c *CustomProperties) String() string {
 }
 
 //Function that maps the names of credentials with links of credentials with the same name.
-func (lc *ListCredentials) GetMapNamesToLinks() map[string][]string {
+func (lc *CredentialsList) GetMapNamesToLinks() map[string][]string {
 	mappedNames := make(map[string][]string)
 	for key, val := range lc.Documents {
 		if _, ok := mappedNames[*val.CustomProperties["__authCredentialsName"]]; !ok {
@@ -150,7 +154,7 @@ func (lc *ListCredentials) GetMapNamesToLinks() map[string][]string {
 //Returns string array containing self links of credentials with the same name
 //as the one provided as parameter.
 func GetCredentialsLinks(name string) []string {
-	lc := &ListCredentials{}
+	lc := &CredentialsList{}
 	lc.FetchCredentials()
 	links := make([]string, 0)
 	for link, cred := range lc.Documents {
@@ -271,7 +275,7 @@ func RemoveCredentials(name string) (string, error) {
 //Returns the ID of removed credentials and error which is != nil if
 //the response code is different from 200.
 func RemoveCredentialsID(id string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(ListCredentials), utils.CREDENTIALS)
+	fullId, err := selflink.GetFullId(id, new(CredentialsList), utils.CREDENTIALS)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link
@@ -307,7 +311,7 @@ func EditCredetials(credName, publicCert, privateCert, userName, passWord string
 //Returns the ID of the edited credentials and error which is != nil if
 //the response code is different from 200.
 func EditCredetialsID(id, publicCert, privateCert, userName, passWord string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(ListCredentials), utils.CREDENTIALS)
+	fullId, err := selflink.GetFullId(id, new(CredentialsList), utils.CREDENTIALS)
 	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForCredentials(fullId)
 	var cred interface{}
@@ -374,7 +378,7 @@ func GetPublicCustomProperties(id string) (map[string]*string, error) {
 //custom properties of the credentials.  Note that keys are strings,
 //but values are pointer to strings.
 func GetCustomProperties(id string) (map[string]*string, error) {
-	fullId, err := selflink.GetFullId(id, new(ListCredentials), utils.CREDENTIALS)
+	fullId, err := selflink.GetFullId(id, new(CredentialsList), utils.CREDENTIALS)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link
@@ -395,7 +399,7 @@ func GetCustomProperties(id string) (map[string]*string, error) {
 //matching the same indexes from both arrays. That also means if the one array is longer
 //than the other, it's left elements are ignored.
 func AddCustomProperties(id string, keys, vals []string) error {
-	fullId, err := selflink.GetFullId(id, new(ListCredentials), utils.CREDENTIALS)
+	fullId, err := selflink.GetFullId(id, new(CredentialsList), utils.CREDENTIALS)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link
@@ -427,7 +431,7 @@ func AddCustomProperties(id string, keys, vals []string) error {
 //The function takes as parameter the ID of the credentials
 //and array of keys to be removed.
 func RemoveCustomProperties(id string, keys []string) error {
-	fullId, err := selflink.GetFullId(id, new(ListCredentials), utils.CREDENTIALS)
+	fullId, err := selflink.GetFullId(id, new(CredentialsList), utils.CREDENTIALS)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link
