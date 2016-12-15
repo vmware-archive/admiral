@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -38,6 +39,7 @@ import com.vmware.photon.controller.model.resources.EndpointService.EndpointStat
 import com.vmware.xenon.common.Operation;
 
 @RunWith(Parameterized.class)
+@Ignore
 public class WordpressProvisionIT extends BaseComputeProvisionIT {
 
     private static final String WP_PATH = "mywordpresssite";

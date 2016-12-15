@@ -69,7 +69,9 @@ import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.DiskService.DiskState;
 import com.vmware.photon.controller.model.resources.DiskService.DiskType;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.TagFactoryService;
 import com.vmware.photon.controller.model.resources.TagService;
@@ -314,7 +316,6 @@ public class ComputeAllocationTaskService
         });
     }
 
-    @SuppressWarnings("unchecked")
     private void createOsDiskState(ComputeAllocationTaskState state,
             SubStage nextStage, EnvironmentStateExpanded env, ComputeDescription computeDesc) {
         if (state.customProperties.containsKey(ComputeConstants.CUSTOM_PROP_DISK_LINK)) {
@@ -658,7 +659,7 @@ public class ComputeAllocationTaskService
         }
 
         if (networkLinks == null) {
-            createNetworkResources(state, taskCallback, nl -> createComputeResource(
+            createNetworkResources(state, cd, taskCallback, nl -> createComputeResource(
                     state, cd, parentLink, placementLink, computeResourceId, computeResourceLink,
                     computeName, diskLinks, nl, taskCallback));
             return;
@@ -833,13 +834,19 @@ public class ComputeAllocationTaskService
                 }));
     }
 
-    private void createNetworkResources(ComputeAllocationTaskState state,
+    private void createNetworkResources(ComputeAllocationTaskState state, ComputeDescription cd,
             ServiceTaskCallback taskCallback, Consumer<List<String>> networkLinksConsumer) {
         String netDescLink = state
                 .getCustomProperty(ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_NETWORK_LINK);
-        if (netDescLink == null) {
+        if (netDescLink == null && (cd.networkInterfaceDescLinks == null
+                || cd.networkInterfaceDescLinks.isEmpty())) {
             networkLinksConsumer.accept(new ArrayList<>());
             return;
+        }
+
+        if (netDescLink == null) {
+            // use first one for now
+            netDescLink = cd.networkInterfaceDescLinks.get(0);
         }
 
         ConcurrentLinkedQueue<String> networkLinks = new ConcurrentLinkedQueue<>();
@@ -852,12 +859,11 @@ public class ComputeAllocationTaskService
                 return;
             }
 
-            NetworkInterfaceService.NetworkInterfaceState newInterfaceState = o
-                    .getBody(NetworkInterfaceService.NetworkInterfaceState.class);
+            NetworkInterfaceState newInterfaceState = o.getBody(NetworkInterfaceState.class);
 
             networkLinks.add(newInterfaceState.documentSelfLink);
             if (counter.incrementAndGet() >= expected) {
-                // we have created all the disks. Now create the compute host
+                // we have created all the networks. Now create the compute host
                 // resource
                 networkLinksConsumer.accept(networkLinks.stream().collect(Collectors.toList()));
             }
@@ -866,33 +872,39 @@ public class ComputeAllocationTaskService
         // get all network descriptions first, then create new network
         // interfaces using the
         // description/template
+        String descLink = netDescLink;
         sendRequest(Operation
-                .createGet(this, netDescLink)
+                .createGet(this, descLink)
                 .setCompletion(
                         (o, e) -> {
                             if (e != null) {
                                 logWarning(
                                         "Failure getting network description %s: %s",
-                                        netDescLink, e.toString());
+                                        descLink, e.toString());
                                 completeSubTasksCounter(taskCallback, e);
                                 return;
                             }
 
-                            NetworkInterfaceService.NetworkInterfaceState templateNetwork = o
-                                    .getBody(
-                                            NetworkInterfaceService.NetworkInterfaceState.class);
-                            templateNetwork.id = UUID.randomUUID().toString();
-                            templateNetwork.documentSelfLink = templateNetwork.id;
-                            templateNetwork.tenantLinks = state.tenantLinks;
+                            NetworkInterfaceDescription nid = o
+                                    .getBody(NetworkInterfaceDescription.class);
+                            NetworkInterfaceState nic = new NetworkInterfaceState();
+                            nic.id = UUID.randomUUID().toString();
+                            nic.documentSelfLink = nic.id;
+                            nic.customProperties = nid.customProperties;
+                            nic.firewallLinks = nid.firewallLinks;
+                            nic.groupLinks = nid.groupLinks;
+                            nic.name = nid.name;
+                            nic.networkInterfaceDescriptionLink = nid.documentSelfLink;
+                            nic.networkLink = nid.networkLink;
+                            nic.subnetLink = nid.subnetLink;
+                            nic.tagLinks = nid.tagLinks;
+                            nic.tenantLinks = state.tenantLinks;
                             // create a new network based off the template
                             // but use a unique ID
                             sendRequest(Operation
-                                    .createPost(
-                                            this,
-                                            NetworkInterfaceService.FACTORY_LINK)
-                                    .setBody(templateNetwork)
-                                    .setCompletion(
-                                            networkInterfaceCreateCompletion));
+                                    .createPost(this, NetworkInterfaceService.FACTORY_LINK)
+                                    .setBody(nic)
+                                    .setCompletion(networkInterfaceCreateCompletion));
                         }));
     }
 

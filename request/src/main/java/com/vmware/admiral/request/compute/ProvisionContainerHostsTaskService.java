@@ -140,6 +140,18 @@ public class ProvisionContainerHostsTaskService
         return finishedResponse;
     }
 
+    @Override
+    protected ServiceTaskCallbackResponse getFailedCallbackResponse(
+            ProvisionContainerHostsTaskState state) {
+        CallbackCompleteResponse failedResponse = new CallbackCompleteResponse();
+        failedResponse.copy(state.serviceTaskCallback.getFailedResponse(state.taskInfo.failure));
+        failedResponse.resourceLinks = state.resourceLinks;
+        if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
+            logWarning("No resourceLinks found for allocated compute resources.");
+        }
+        return failedResponse;
+    }
+
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
         Set<String> resourceLinks;
     }

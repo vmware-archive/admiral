@@ -55,7 +55,6 @@ import com.vmware.admiral.request.ClosureProvisionTaskService.ClosureProvisionTa
 import com.vmware.admiral.request.ClosureRemovalTaskService.ClosureRemovalTaskState;
 import com.vmware.admiral.request.ClusteringTaskService.ClusteringTaskState;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
-import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState;
 import com.vmware.admiral.request.ContainerNetworkAllocationTaskService.ContainerNetworkAllocationTaskState;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService.ContainerNetworkProvisionTaskState;
 import com.vmware.admiral.request.ContainerNetworkRemovalTaskService.ContainerNetworkRemovalTaskState;
@@ -248,7 +247,7 @@ public class RequestBrokerService extends
                     createContainerRemovalTasks(state, false);
                 }
             } else if (isProvisioningContainerHostsOperation(state)) {
-                createContainerHostRemovalTask(state);
+                createComputeRemovalTask(state, true);
             } else {
                 proceedTo(SubStage.ERROR);
             }
@@ -404,7 +403,7 @@ public class RequestBrokerService extends
             createCompositeComponentOperationTask(state);
         } else if (isContainerHostType(state)) {
             if (isRemoveOperation(state)) {
-                createContainerHostRemovalTask(state);
+                createComputeRemovalTask(state, true);
             } else if (isProvisioningContainerHostsOperation(state)) {
                 createProvisioningContainerHostsTask(state);
             } else {
@@ -532,36 +531,12 @@ public class RequestBrokerService extends
                 }));
     }
 
-    private void createContainerHostRemovalTask(RequestBrokerState state) {
-        if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
-            proceedTo(SubStage.ERROR);
-            return;
-        }
-        ContainerHostRemovalTaskState hostRemovalState = new ContainerHostRemovalTaskState();
-        hostRemovalState.resourceLinks = state.resourceLinks;
-        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED;
-        hostRemovalState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
-                TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
-                TaskStage.FAILED, SubStage.ERROR);
-        hostRemovalState.documentSelfLink = getSelfId();
-        hostRemovalState.customProperties = state.customProperties;
-        hostRemovalState.requestTrackerLink = state.requestTrackerLink;
-
-        sendRequest(Operation
-                .createPost(this, ContainerHostRemovalTaskFactoryService.SELF_LINK)
-                .setBody(hostRemovalState)
-                .setContextId(getSelfId())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        failRequest(state, "Failed to create container host removal operation task",
-                                ex);
-                        return;
-                    }
-                    proceedTo(SubStage.ALLOCATING);
-                }));
+    private void createComputeRemovalTask(RequestBrokerState state) {
+        createComputeRemovalTask(state, false);
     }
 
-    private void createComputeRemovalTask(RequestBrokerState state) {
+    private void createComputeRemovalTask(RequestBrokerState state,
+            boolean skipReleaseResourceQuota) {
         boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED
                 || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
 
@@ -577,6 +552,7 @@ public class RequestBrokerService extends
                 TaskStage.FAILED, SubStage.ERROR);
         computeRemovalState.documentSelfLink = getSelfId();
         computeRemovalState.customProperties = state.customProperties;
+        computeRemovalState.skipReleaseResourceQuota = skipReleaseResourceQuota;
         computeRemovalState.requestTrackerLink = state.requestTrackerLink;
 
         sendRequest(Operation.createPost(this, ComputeRemovalTaskService.FACTORY_LINK)
@@ -1596,6 +1572,8 @@ public class RequestBrokerService extends
                     requestStatus.addTrackedTasks(ContainerNetworkRemovalTaskService.DISPLAY_NAME);
                 } else if (isClosureType(state)) {
                     requestStatus.addTrackedTasks(ClosureRemovalTaskService.DISPLAY_NAME);
+                } else if (isComputeType(state)) {
+                    requestStatus.addTrackedTasks(ComputeRemovalTaskService.DISPLAY_NAME);
                 } else {
                     requestStatus.addTrackedTasks(ContainerRemovalTaskService.DISPLAY_NAME);
                 }

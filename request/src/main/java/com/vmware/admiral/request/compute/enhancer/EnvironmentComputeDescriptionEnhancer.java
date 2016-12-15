@@ -12,6 +12,7 @@
 package com.vmware.admiral.request.compute.enhancer;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 
@@ -19,12 +20,20 @@ import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentStateExpanded;
 import com.vmware.admiral.compute.env.InstanceTypeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.IpAssignment;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
+import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnhancer {
+    static final String TEMPLATE_LINK = "__templateComputeLink";
 
     private ServiceHost host;
     private URI referer;
@@ -70,24 +79,37 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
                 if (imageId == null) {
                     imageId = absImageId;
                 }
-                try {
-                    URI imageUri = URI.create(imageId);
-                    String scheme = imageUri.getScheme();
-                    if (scheme != null
-                            && (scheme.startsWith("http") || scheme.startsWith("file"))) {
-                        cd.customProperties.put(OVA_URI, imageUri.toString());
-                    } else {
-                        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
-                                imageId);
+
+                // if it's not clone from template
+                if (!cd.customProperties.containsKey(TEMPLATE_LINK)) {
+                    try {
+                        URI imageUri = URI.create(imageId);
+                        String scheme = imageUri.getScheme();
+                        if (scheme != null
+                                && (scheme.startsWith("http") || scheme.startsWith("file"))) {
+                            cd.customProperties.put(OVA_URI, imageUri.toString());
+                        } else {
+                            cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
+                                    imageId);
+                        }
+                    } catch (Throwable t) {
+                        callback.accept(cd, t);
+                        return;
                     }
-                } catch (Throwable t) {
-                    callback.accept(cd, t);
-                    return;
+                } else {
+                    cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
+                            imageId);
                 }
             }
-            callback.accept(cd, null);
-        });
 
+            String networkId = env.getStringMiscValue("placement", "networkId");
+            if (networkId != null && (cd.networkInterfaceDescLinks == null
+                    || cd.networkInterfaceDescLinks.isEmpty())) {
+                attachNetworkInterfaceDescription(context, cd, networkId, callback);
+            } else {
+                callback.accept(cd, null);
+            }
+        });
     }
 
     private void applyInstanceType(ComputeDescription cd, EnvironmentStateExpanded env) {
@@ -106,6 +128,70 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
             cd.cpuCount = instanceTypeDescription.cpuCount;
             cd.totalMemoryBytes = instanceTypeDescription.memoryMb * 1024 * 1024;
         }
+    }
+
+    private void attachNetworkInterfaceDescription(EnhanceContext context, ComputeDescription cd,
+            String networkId,
+            BiConsumer<ComputeDescription, Throwable> callback) {
+        Query q = Query.Builder.create()
+                .addKindFieldClause(NetworkState.class)
+                .addFieldClause(NetworkState.FIELD_NAME_NAME, networkId)
+                .addFieldClause(NetworkState.FIELD_NAME_REGION_ID,
+                        context.endpointComputeDescription.regionId)
+                .build();
+
+        QueryTask queryTask = QueryTask.Builder.createDirectTask()
+                .setQuery(q)
+                .build();
+        queryTask.tenantLinks = cd.tenantLinks;
+        Operation.createPost(UriUtils.buildUri(this.host, ServiceUriPaths.CORE_QUERY_TASKS))
+                .setBody(queryTask)
+                .setReferer(this.referer)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.log(Level.WARNING, "Error processing task %s",
+                                queryTask.documentSelfLink);
+                        callback.accept(cd, null);
+                        return;
+                    }
+
+                    QueryTask body = o.getBody(QueryTask.class);
+                    if (body.results.documentLinks.isEmpty()) {
+                        callback.accept(cd, null);
+                    } else {
+                        String networkLink = body.results.documentLinks.get(0);
+                        createNicDesc(context, cd, networkLink, callback);
+                    }
+                })
+                .sendWith(this.host);
+    }
+
+    private void createNicDesc(
+            com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext context,
+            ComputeDescription cd, String networkLink,
+            BiConsumer<ComputeDescription, Throwable> callback) {
+        NetworkInterfaceDescription nid = new NetworkInterfaceDescription();
+        nid.assignment = IpAssignment.DYNAMIC;
+        nid.deviceIndex = 0;
+        nid.name = cd.name + "_nic";
+        nid.networkLink = networkLink;
+        nid.tenantLinks = cd.tenantLinks;
+        Operation.createPost(this.host, NetworkInterfaceDescriptionService.FACTORY_LINK)
+                .setBody(nid)
+                .setReferer(this.referer)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        // don't fail for now
+                        host.log(Level.WARNING, "Unable to create Nic description");
+                        callback.accept(cd, null);
+                        return;
+                    }
+                    NetworkInterfaceDescription b = o.getBody(NetworkInterfaceDescription.class);
+                    cd.networkInterfaceDescLinks = new ArrayList<>();
+                    cd.networkInterfaceDescLinks.add(b.documentSelfLink);
+                    callback.accept(cd, null);
+                })
+                .sendWith(host);
     }
 
     private <T extends ServiceDocument> void getEnvironmentState(String uriLink,

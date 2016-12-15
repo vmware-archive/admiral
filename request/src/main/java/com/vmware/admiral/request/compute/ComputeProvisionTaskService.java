@@ -337,6 +337,9 @@ public class ComputeProvisionTaskService extends
             if (computeState.address == null) {
                 if (DeploymentProfileConfig.getInstance().isTest()) {
                     computeState.address = "127.0.0.1";
+                } else {
+                    failTask("No IP address allocated on machine: " + computeState.name, null);
+                    return;
                 }
             }
             ContainerHostSpec spec = new ContainerHostSpec();
