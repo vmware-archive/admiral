@@ -35,7 +35,6 @@ type TaskInfo struct {
 }
 
 type TaskStatus struct {
-	Operation     string   `json:"operation"`
 	TaskInfo      TaskInfo `json:"taskInfo"`
 	Progress      int      `json:"progress"`
 	Name          string   `json:"name"`
@@ -45,6 +44,7 @@ type TaskStatus struct {
 }
 
 type OperationResponse struct {
+	Operation          string `json:"operation"`
 	RequestTrackerLink string `json:"requestTrackerLink"`
 }
 
@@ -71,7 +71,8 @@ func StartWaitingFromResponseBody(respBody []byte) ([]string, error) {
 	if !utils.Quiet {
 		opResp.PrintTracerId()
 	}
-	resLinks, err := Wait(opResp.GetTracerId())
+	resLinks, err := Wait(opResp.GetTracerId(), opResp.Operation)
+
 	return utils.GetResourceIDs(resLinks), err
 }
 
@@ -95,7 +96,7 @@ const (
 	ProvisionResourceOperation = "PROVISION_RESOURCE"
 )
 
-func Wait(taskId string) ([]string, error) {
+func Wait(taskId string, operationType string) ([]string, error) {
 	const progressBarWidth = 55
 	taskStatus := &TaskStatus{}
 	var (
@@ -125,7 +126,7 @@ func Wait(taskId string) ([]string, error) {
 		utils.CheckBlockingError(err)
 		pb.UpdateBar(taskStatus.Progress)
 
-		if isTaskCompleted(taskStatus) {
+		if isTaskCompleted(taskStatus, operationType) {
 			result = taskStatus.SubStage
 			resourceLinks = taskStatus.ResourceLinks
 			pb.FillUp()
@@ -170,13 +171,13 @@ func getErrorMessage(statusReq *http.Request) error {
 	return errors.New(event.Description)
 }
 
-func isTaskCompleted(taskStatus *TaskStatus) bool {
-	if taskStatus.SubStage == SubstageCompleted && taskStatus.Operation == ProvisionResourceOperation {
+func isTaskCompleted(taskStatus *TaskStatus, operationType string) bool {
+	if taskStatus.SubStage == SubstageCompleted && operationType == ProvisionResourceOperation {
 		if taskStatus.ResourceLinks == nil || len(taskStatus.ResourceLinks) == 0 {
 			return false
 		}
 		return true
-	} else if taskStatus.SubStage == SubstageCompleted && taskStatus.Operation != ProvisionResourceOperation {
+	} else if taskStatus.SubStage == SubstageCompleted && operationType != ProvisionResourceOperation {
 		return true
 	}
 	return false
