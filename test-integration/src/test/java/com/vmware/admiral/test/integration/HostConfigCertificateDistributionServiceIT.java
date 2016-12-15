@@ -58,11 +58,13 @@ public class HostConfigCertificateDistributionServiceIT extends
         removeCertificateDirectoryOnCoreOsHost(dockerHostCompute.documentSelfLink,
                 registryHostAndPort);
         removeHost(dockerHostCompute);
-        waitForSystemContainerStatusCode(Operation.STATUS_CODE_NOT_FOUND,
-                SYSTEM_CONTAINER_WAIT_POLLING_RETRY_COUNT);
-
-        // ensure there is no system agent leftover after removeHost and wait
-        delete(systemContainerLink);
+        try {
+            waitForSystemContainerStatusCode(Operation.STATUS_CODE_NOT_FOUND,
+                    SYSTEM_CONTAINER_WAIT_POLLING_RETRY_COUNT);
+        } catch (RuntimeException e) {
+            // ensure there is no system agent left if removeHost failed to remove it
+            delete(systemContainerLink);
+        }
 
         logger.info("---------- Configure registries on a clean host --------");
         configureRegistries(registryAddress, null);
