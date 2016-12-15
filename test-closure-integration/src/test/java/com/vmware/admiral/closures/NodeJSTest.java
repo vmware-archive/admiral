@@ -40,6 +40,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.BaseIntegrationTest;
@@ -1809,6 +1810,7 @@ public class NodeJSTest extends BaseIntegrationTest {
     }
 
     @Test
+    @Ignore("Ingnored until external dependent test service is available.")
     public void executeJSNumbersWithWebHookTest() throws Throwable {
         logger.info("Executing  against: " + serviceClient);
 
