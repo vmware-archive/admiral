@@ -124,7 +124,7 @@ public class EpzComputeEnumerationTaskService extends
                 .setBody(task)
                 .setCompletion((o, e) -> {
                     if (o.getStatusCode() == Operation.STATUS_CODE_CONFLICT) {
-                        sender.getHost().log(Level.INFO,
+                        sender.getHost().log(Level.FINE,
                                 "Enumeration task already running for " + resourcePoolLink);
                         return;
                     }
@@ -172,7 +172,7 @@ public class EpzComputeEnumerationTaskService extends
     @Override
     public void handlePut(Operation put) {
         if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
-            logInfo("Task already started, ignoring converted PUT.");
+            logFine("Task already started, ignoring converted PUT.");
             put.complete();
             return;
         }
@@ -275,7 +275,7 @@ public class EpzComputeEnumerationTaskService extends
                     ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
 
                     if (result.nextPageLink == null) {
-                        logInfo("No computes found to %s resource pool %s",
+                        logFine("No computes found to %s resource pool %s",
                                 updateStage == EpzComputeEnumerationTaskState.SubStage.ASSIGN_COMPUTES
                                         ? "assign to" : "unassign from",
                                 state.resourcePoolLink);
@@ -309,12 +309,12 @@ public class EpzComputeEnumerationTaskService extends
                 .map(json -> Utils.fromJson(json, ComputeState.class)).collect(Collectors.toList());
 
         if (computes.isEmpty()) {
-            logWarning("Empty compute page returned, nothing to %s", assign ? "assign" : "unassign");
+            logFine("Empty compute page returned, nothing to %s", assign ? "assign" : "unassign");
             proceedTo(nextStage);
             return;
         }
 
-        logInfo("Resource pool %s: %s %d computes, %s", state.resourcePoolLink,
+        logFine("Resource pool %s: %s %d computes, %s", state.resourcePoolLink,
                 assign ? "assigning" : "unassigning", computes.size(),
                 result.nextPageLink != null ? "there are more pages" : "no more pages");
 

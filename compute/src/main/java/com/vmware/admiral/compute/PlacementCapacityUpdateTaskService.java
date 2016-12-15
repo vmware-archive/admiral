@@ -138,7 +138,7 @@ public class PlacementCapacityUpdateTaskService extends
                 .setBody(task)
                 .setCompletion((o, e) -> {
                     if (o.getStatusCode() == Operation.STATUS_CODE_CONFLICT) {
-                        sender.getHost().log(Level.INFO,
+                        sender.getHost().log(Level.FINE,
                                 "Capacity update task already running for " + resourcePoolLink);
                         return;
                     }
@@ -202,7 +202,7 @@ public class PlacementCapacityUpdateTaskService extends
     @Override
     public void handlePut(Operation put) {
         if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
-            logInfo("Task already started, ignoring converted PUT.");
+            logFine("Task already started, ignoring converted PUT.");
             put.complete();
             return;
         }
@@ -273,12 +273,13 @@ public class PlacementCapacityUpdateTaskService extends
 
                     ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
                     if (result.nextPageLink == null) {
-                        logInfo("No computes found in resource pool %s", state.resourcePoolLink);
+                        logFine("No computes found in resource pool %s", state.resourcePoolLink);
                         proceedTo(PlacementCapacityUpdateTaskState.SubStage.UPDATE_RESOURCE_POOL, s -> {
                             s.aggregatedStats = new AggregatedComputeStats();
                         });
                     } else {
                         proceedTo(PlacementCapacityUpdateTaskState.SubStage.ACCUMMULATE_COMPUTE_FIGURES, s -> {
+                            s.aggregatedStats = new AggregatedComputeStats();
                             s.nextPageLink = result.nextPageLink;
                         });
                     }
@@ -299,7 +300,11 @@ public class PlacementCapacityUpdateTaskService extends
                             .map(json -> Utils.fromJson(json, ComputeState.class))
                             .collect(Collectors.toList());
 
-                    queryComputeDescriptions(state, computes, result.nextPageLink);
+                    if (computes.isEmpty()) {
+                        proceedTo(PlacementCapacityUpdateTaskState.SubStage.UPDATE_RESOURCE_POOL);
+                    } else {
+                        queryComputeDescriptions(state, computes, result.nextPageLink);
+                    }
                 }));
     }
 
@@ -433,7 +438,7 @@ public class PlacementCapacityUpdateTaskService extends
         long diff = placements.stream().map(q -> q.memoryLimit).reduce(0L, (a, b) -> a + b)
                 - state.aggregatedStats.totalMemoryBytes;
         if (diff <= 0) {
-            logInfo("No placement update needed for resource pool '%s'", state.resourcePoolLink);
+            logFine("No placement update needed for resource pool '%s'", state.resourcePoolLink);
             proceedTo(PlacementCapacityUpdateTaskState.SubStage.COMPLETED);
             return;
         }
@@ -508,8 +513,6 @@ public class PlacementCapacityUpdateTaskService extends
             }
         }
 
-        logInfo("Compute '%s' excluded from capacity calculations of resource pool '%s'",
-                compute.documentSelfLink, state.resourcePoolLink);
         return null;
     }
 

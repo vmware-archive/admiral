@@ -198,9 +198,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         T patchBody = getBody(patch);
         T state = getState(patch);
 
-        logWarning("Patch from: %s , selfLink: %s", patch.getRefererAsString(),
-                state.documentSelfLink);
-        // validates AND transitions the stage to the next state by using the patchBody.
+        // validates AND transitions the stage to the next state by using the patchBody
         if (validateStageTransitionAndState(patch, patchBody, state)) {
             // the patch operation is assumed to be already completed/failed in this case
             return;
@@ -297,6 +295,10 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     protected boolean validateStageTransitionAndState(Operation patch,
             T patchBody, T currentState) {
 
+        // referer is only shown if different from the task itself
+        final String refererLogPart = patch.getUri().equals(patch.getReferer()) ? "" :
+                String.format(" Caller: [%s]", patch.getReferer());
+
         if (patchBody.taskInfo == null || patchBody.taskInfo.stage == null) {
             patch.fail(new IllegalArgumentException("taskInfo and taskInfo.stage are required"));
             return true;
@@ -304,7 +306,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
         if (TaskStage.FAILED == patchBody.taskInfo.stage
                 && TaskStage.FAILED == currentState.taskInfo.stage) {
-            logWarning("Task patched to failed when already in failed state.");
+            logWarning("Task patched to failed when already in failed state.%s", refererLogPart);
             patch.complete();
             return true;
         }
@@ -313,12 +315,13 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             if (patchBody.taskSubStage == currentState.taskSubStage
                     && DefaultSubStage.ERROR.name().equals(currentState.taskSubStage.name())
                     && TaskStage.FAILED == currentState.taskInfo.stage) {
+                logWarning("Task already failed.%s", refererLogPart);
                 patch.complete(); // already failed. No need for another exception.
                 return true;
             }
-            logWarning("Can't move from %s(%s) to %s(%s). Caller: [%s]",
+            logWarning("Can't move from %s(%s) to %s(%s).%s",
                     currentState.taskInfo.stage, currentState.taskSubStage,
-                    patchBody.taskInfo.stage, patchBody.taskSubStage, patch.getReferer());
+                    patchBody.taskInfo.stage, patchBody.taskSubStage, refererLogPart);
             if (TaskStage.FAILED == currentState.taskInfo.stage) {
                 patch.complete(); // already failed. No need for another exception.
             } else {
@@ -332,9 +335,9 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                 && currentState.taskSubStage.ordinal() > patchBody.taskSubStage.ordinal()) {
             if (patchBody.taskInfo.stage == currentState.taskInfo.stage &&
                     !transientSubStages.contains(patchBody.taskSubStage)) {
-                logWarning("Can't move from %s(%s) to %s(%s). Caller: [%s]",
+                logWarning("Can't move from %s(%s) to %s(%s).%s",
                         currentState.taskInfo.stage, currentState.taskSubStage,
-                        patchBody.taskInfo.stage, patchBody.taskSubStage, patch.getReferer());
+                        patchBody.taskInfo.stage, patchBody.taskSubStage, refererLogPart);
                 patch.fail(new IllegalArgumentException("subStage can not move backwards from:"
                         + currentState.taskSubStage + " to: " + patchBody.taskSubStage));
             } else {
@@ -343,9 +346,9 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             return true;
         }
 
-        logInfo("Moving from %s(%s) to %s(%s). Caller: [%s]",
+        logInfo("Moving from %s(%s) to %s(%s).%s",
                 currentState.taskInfo.stage, currentState.taskSubStage,
-                patchBody.taskInfo.stage, patchBody.taskSubStage, patch.getReferer());
+                patchBody.taskInfo.stage, patchBody.taskSubStage, refererLogPart);
 
         if (patchBody.taskInfo.failure != null) {
             currentState.taskInfo.failure = patchBody.taskInfo.failure;
@@ -548,7 +551,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     private void sendSelfDelete() {
-        logInfo("Self deleting completed task %s", getUri().getPath());
+        logFine("Self deleting completed task %s", getUri().getPath());
         sendRequest(Operation.createDelete(getUri()));
     }
 
@@ -624,8 +627,10 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     protected void notifyCallerService(T state) {
-        logInfo("Callback to [%s] with state [%s] ",
-                state.serviceTaskCallback.serviceSelfLink, state.taskInfo.stage);
+        if (!state.serviceTaskCallback.isEmpty()) {
+            logInfo("Callback to [%s] with state [%s] ",
+                    state.serviceTaskCallback.serviceSelfLink, state.taskInfo.stage);
+        }
 
         ServiceTaskCallbackResponse callbackResponse;
         switch (state.taskInfo.stage) {
