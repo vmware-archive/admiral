@@ -28,6 +28,8 @@ import (
 
 	"admiral/config"
 	"admiral/utils"
+	//"net/url"
+	//"reflect"
 )
 
 const (
@@ -70,6 +72,9 @@ func (re *ResponseError) Error() string {
 var (
 	skipSSLVerification bool
 	loadedTrustCerts    []*x509.Certificate
+
+	netClient    *http.Client
+	netClientErr error
 )
 
 //ProcessRequest is used for common requests. As parameter is taking
@@ -79,17 +84,17 @@ var (
 //response body as byte array.
 func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 	token, from := utils.GetAuthToken()
-	netClient, err := buildHttpClient()
-	if err != nil {
-		return nil, nil, err
+	if netClient == nil {
+		netClient, netClientErr = buildHttpClient()
+		if netClientErr != nil {
+			return nil, nil, netClientErr
+		}
 	}
+
 	setReqHeaders(req, token)
 	utils.CheckVerboseRequest(req)
-	if err != nil {
-		return nil, nil, err
-	}
-	resp, err := netClient.Do(req)
 
+	resp, err := netClient.Do(req)
 	redo, err := checkForCertErrors(req.URL.Host, err)
 	if err != nil {
 		return nil, nil, err
@@ -228,28 +233,19 @@ func setupCAPool() (*x509.CertPool, error) {
 // turns off SSL verification of the http client, otherwise, prompts
 // the user to accept the certificate. In both cases if the user
 // decline the prompted certificates, the program execution is aborted.
-func checkForCertErrors(url string, errA error) (bool, error) {
+func checkForCertErrors(urlA string, errA error) (bool, error) {
 	if errA == nil {
 		return false, errA
 	}
-
-	//if strings.Contains(errA.Error(), "x509: certificate signed by unknown authority") {
-	//	result := promptAllCerts(url)
-	//	if !result {
-	//		utils.CheckBlockingError(errors.New("Certificate declined, command execution aborted."))
-	//	}
-	//	return true, nil
-	//}
-
 	if strings.Contains(errA.Error(), "x509") {
 		loadCertsFromFile()
-		skipVerify := checkCertInLoadedCerts(url)
+		skipVerify := checkCertInLoadedCerts(urlA)
 		if skipVerify {
 			skipSSLVerification = skipVerify
-			return true, nil
+			netClient, netClientErr = buildHttpClient()
+			return true, netClientErr
 		}
 	}
-
 	return false, errA
 }
 

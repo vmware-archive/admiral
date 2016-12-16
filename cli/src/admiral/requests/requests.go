@@ -28,8 +28,8 @@ import (
 )
 
 const (
-	RequestIdAlign = "30"
-	IndentAlign    = "28"
+	RequestIdAlign = "35"
+	IndentAlign    = "33"
 
 	DownAndHorizontal = "\u252c" // ┬
 	UpAndRight        = "\u2514" //  └

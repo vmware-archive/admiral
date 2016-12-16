@@ -33,8 +33,6 @@ type TestConfig struct {
 	PlacementZone  string `json:"placementZone"`
 }
 
-//var testLogger =
-
 func ConfigureTestEnv() (*TestConfig, error) {
 	file, err := os.Open("../testdata/test.config")
 	if err != nil {
