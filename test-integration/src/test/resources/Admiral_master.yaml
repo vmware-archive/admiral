@@ -1,0 +1,14 @@
+---
+name: "admiral-master"
+components:
+  admiral:
+    type: "App.Container"
+    data:
+      name: "admiral"
+      image: "vmware/bellevue:upgrade"
+      _cluster: 1
+      volumes:
+      - "/usr/tmp/admiral:/var/admiral/"
+      publish_all: true
+      UseLocalImageWithPriority: "true"
+      restart_policy: "no"

@@ -14,6 +14,7 @@ package com.vmware.admiral.test.integration;
 import java.util.Properties;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
@@ -38,6 +39,8 @@ public class ContentCheckIT {
 
     private static final String AUTH_CREDENTIALS_NAME_KEY = "__authCredentialsName";
 
+    // Admiral upgrade is testing this scenario now
+    @Ignore
     @Test
     public void test() throws Exception {
         // Credentials

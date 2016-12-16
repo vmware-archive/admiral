@@ -1,0 +1,13 @@
+---
+name: "admiral-0.9.1-rel"
+components:
+  admiral:
+    type: "App.Container"
+    data:
+      name: "admiral"
+      image: "registry.hub.docker.com/vmware/admiral:0.9.1"
+      _cluster: 1
+      volumes:
+      - "/usr/tmp/admiral:/var/admiral/"
+      publish_all: true
+      restart_policy: "no"
