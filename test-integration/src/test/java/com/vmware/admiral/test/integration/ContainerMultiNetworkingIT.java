@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.ServiceClientFactory;
@@ -62,6 +63,7 @@ public class ContainerMultiNetworkingIT extends BaseProvisioningOnCoreOsIT {
     }
 
     @Test
+    @Ignore("VBV-941")
     public void testProvision() throws Exception {
         doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
     }
