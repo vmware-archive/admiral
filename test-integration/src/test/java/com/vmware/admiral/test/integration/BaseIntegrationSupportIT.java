@@ -96,6 +96,7 @@ public abstract class BaseIntegrationSupportIT {
     protected static final Queue<ServiceDocument> documentsForDeletionAfterClass = new LinkedBlockingQueue<>();
     protected static final Queue<ServiceDocument> documentsForDeletion = new LinkedBlockingQueue<>();
     protected final TestLogger logger;
+    private static String baseURI;
 
     protected BaseIntegrationSupportIT() {
         logger = new TestLogger(getClass());
@@ -156,6 +157,9 @@ public abstract class BaseIntegrationSupportIT {
     }
 
     public static String getBaseUrl() {
+        if (baseURI != null) {
+            return baseURI;
+        }
         // if a dynamic port is used, build the URL from the host and port parts
         String port = getSystemOrTestProp(TEST_DCP_PORT_PROP_NAME);
 
@@ -501,5 +505,9 @@ public abstract class BaseIntegrationSupportIT {
 
             return instance;
         }
+    }
+
+    public static void setBaseURI(String baseURI) {
+        BaseIntegrationSupportIT.baseURI = baseURI;
     }
 }
