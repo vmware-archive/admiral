@@ -62,6 +62,7 @@
                             <propertiesUser>
                                 <DCP_HOST>${dcp.host}</DCP_HOST>
                                 <DCP_PORT>${dcp.port}</DCP_PORT>
+                                <DOCKER_HOST_ADDRESSES>${docker.host.performance.addresses}</DOCKER_HOST_ADDRESSES>
                                 <threads>${threads}</threads>
                             </propertiesUser>
                             <testFilesIncluded>

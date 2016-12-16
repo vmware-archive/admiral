@@ -30,7 +30,7 @@
           <stringProp name="BeanShellSampler.query">import java.io.*;
 
 // in jenkins the path is /var/jenkins_home/workspace/Bellevue-performance/test-performance/target/jmeter/bin/
-String fileName = &quot;/home/ptakova/projects/admiral/test-closure-performance/src/test/resources/performance-test.properties&quot;;
+String fileName = &quot;../../../../test-closure-performance/src/test/resources/performance-test.properties&quot;;
 log.info(&quot;Executing...&quot;);
 String customFileName = props.get(&quot;properties.file&quot;);
 if (customFileName != null &amp;&amp; customFileName.length() &gt; 0) {
@@ -80,7 +80,7 @@ if (f.exists()) {
           <stringProp name="BeanShellSampler.query">import java.io.*;
 
 // in jenkins the path is /var/jenkins_home/workspace/Bellevue-performance/test-performance/target/jmeter/bin/
-String serverPemFile = &quot;/home/ptakova/projects/bellevue-ci/tools/jenkins/coreos/cfssl/server.pem&quot;;
+String serverPemFile = &quot;../ci/tools/jenkins/coreos/cfssl/server.pem&quot;;
 File f = new File(serverPemFile);
 log.info(&quot;Using pem file &quot; + serverPemFile);
 
@@ -92,7 +92,7 @@ for (String line; (line = in.readLine()) != null; ) {
 in.close();
 log.info(&quot;Server PEM:\n&quot; + serverPem);
 
-String clientPemFile = &quot;/home/ptakova/projects/bellevue-ci/tools/jenkins/coreos/cfssl/client.pem&quot; ;
+String clientPemFile = &quot;../ci/tools/jenkins/coreos/cfssl/client.pem&quot; ;
 f = new File(clientPemFile);
 in = new BufferedReader(new FileReader(f));
 String clientPem = &quot;&quot;;
@@ -102,7 +102,7 @@ for (String line; (line = in.readLine()) != null; ) {
 in.close();
 log.info(&quot;Client PEM:\n&quot; + clientPem);
 
-String clientKeyFile = &quot;/home/ptakova/projects/bellevue-ci/tools/jenkins/coreos/cfssl/client-key.pem&quot; ;
+String clientKeyFile = &quot;../ci/tools/jenkins/coreos/cfssl/client-key.pem&quot; ;
 f = new File(clientKeyFile);
 in = new BufferedReader(new FileReader(f));
 String clientKey = &quot;&quot;;
