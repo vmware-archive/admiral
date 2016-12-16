@@ -127,6 +127,9 @@ templateHelpers.register = function() {
   Vue.filter('get-alias', function(link) {
     return link.split(':')[1];
   });
+  Vue.filter('commandToString', function(command) {
+    return command && command.join(' ');
+  });
 
   /* A filter that makes the object as mutable. Useful when passing to Vue where it should modify
   the object or calling function like sort() on an array*/

@@ -28,14 +28,7 @@
   </div>
   <hr/>
   <div class="image-content">
-    <div>
-      <span class="image-label">{{i18n("app.container.list.portsLabel")}}</span>
-      <span>{{model.ports | portsToString}}</span>
-    </div>
-    <div>
-      <span class="image-label">{{i18n("app.container.list.commandLabel")}}</span>
-      <span>{{model.command}}</span>
-    </div>
+    <!-- TODO display some general info about the template, e.g. number of containers, networks, closures -->
   </div>
   <div class="image-actions" v-if="!model.alert" v-bind:class="{'hide': showDeleteConfirmation}">
     <action-button name="edit" icon-name="pencil"
