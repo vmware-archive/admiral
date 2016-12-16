@@ -14,10 +14,10 @@ package com.vmware.admiral.request;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -59,9 +59,6 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         request.resourceDescriptionLink = containerDesc.documentSelfLink;
         request.tenantLinks = groupPlacementState.tenantLinks;
         request.resourceCount = 3;
-        Map<String, String> customProp = new HashMap<>();
-        customProp.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, "test");
-        request.customProperties = customProp;
     }
 
     @Test
@@ -122,7 +119,17 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
                 extractId(day2OperationClustering.documentSelfLink));
         waitForTaskSuccess(containerClusteringTaskLink, ClusteringTaskState.class);
 
-        waitForRequestToComplete(day2OperationClustering);
+        day2OperationClustering = waitForRequestToComplete(day2OperationClustering);
+        assertNotNull(day2OperationClustering.resourceLinks);
+        Set<String> allContainerLinks = new HashSet<>();
+        allContainerLinks.addAll(initialState.resourceLinks);
+        allContainerLinks.addAll(day2OperationClustering.resourceLinks);
+
+        for (String containerLink : allContainerLinks) {
+            ContainerState containerState = getDocument(ContainerState.class, containerLink);
+            // containers not provisioned from template do not have component link
+            assertNull(containerState.compositeComponentLink);
+        }
 
         long containersNumberAfterClustering = MockDockerAdapterService.getNumberOfContainers();
         assertEquals(desiredResourceCount /* 3 */, containersNumberAfterClustering);
@@ -636,13 +643,11 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         allContainerLinks.addAll(clusteringRequest.resourceLinks);
 
         Set<String> parentLinks = new HashSet<>();
-        allContainerLinks.forEach(link -> {
-            try {
-                parentLinks.add(getDocument(ContainerState.class, link).parentLink);
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
-            }
-        });
+        for (String containerLink : allContainerLinks) {
+            ContainerState containerState = getDocument(ContainerState.class, containerLink);
+            parentLinks.add(containerState.parentLink);
+            assertNotNull(containerState.compositeComponentLink);
+        }
 
         assertEquals("All containers should be on the same host", 1, parentLinks.size());
     }
@@ -734,13 +739,11 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         allContainerLinks.addAll(clusteringRequest.resourceLinks);
 
         Set<ContainerState> containerStates = new HashSet<>();
-        allContainerLinks.forEach(link -> {
-            try {
-                containerStates.add(getDocument(ContainerState.class, link));
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
-            }
-        });
+        for (String containerLink : allContainerLinks) {
+            ContainerState containerState = getDocument(ContainerState.class, containerLink);
+            containerStates.add(containerState);
+            assertNotNull(containerState.compositeComponentLink);
+        }
 
         Map<Boolean, List<ContainerState>> containers = containerStates.stream().collect(
                 Collectors.partitioningBy(c -> c.descriptionLink.contains(desc2.documentSelfLink)));
@@ -830,13 +833,11 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         allContainerLinks.addAll(clusteringRequest.resourceLinks);
 
         Set<String> parentLinks = new HashSet<>();
-        allContainerLinks.forEach(link -> {
-            try {
-                parentLinks.add(getDocument(ContainerState.class, link).parentLink);
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
-            }
-        });
+        for (String containerLink : allContainerLinks) {
+            ContainerState containerState = getDocument(ContainerState.class, containerLink);
+            parentLinks.add(containerState.parentLink);
+            assertNotNull(containerState.compositeComponentLink);
+        }
 
         assertEquals("All containers should be on the same host", 1, parentLinks.size());
     }
@@ -914,13 +915,11 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         assertEquals(10, allContainerLinks.size());
 
         Set<String> parentLinks = new HashSet<>();
-        allContainerLinks.forEach(link -> {
-            try {
-                parentLinks.add(getDocument(ContainerState.class, link).parentLink);
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
-            }
-        });
+        for (String containerLink : allContainerLinks) {
+            ContainerState containerState = getDocument(ContainerState.class, containerLink);
+            parentLinks.add(containerState.parentLink);
+            assertNull(containerState.compositeComponentLink);
+        }
 
         assertEquals("All containers should be on different hosts", 10, parentLinks.size());
     }

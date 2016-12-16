@@ -58,6 +58,7 @@ import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAlloca
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -454,6 +455,23 @@ public class ContainerAllocationTaskService
                 }));
     }
 
+    private void getCompositeComponent(ContainerAllocationTaskState state,
+            Consumer<Boolean> callbackFunction) {
+        String contextId = state.customProperties.get(FIELD_NAME_CONTEXT_ID_KEY);
+        String compositeComponentLink = UriUtils
+                .buildUriPath(CompositeComponentFactoryService.SELF_LINK, contextId);
+        sendRequest(Operation.createGet(this, compositeComponentLink)
+                .setCompletion((o, e) -> {
+                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                        callbackFunction.accept(Boolean.FALSE);
+                    } else if (e != null) {
+                        failTask("Failure retrieving CompositeComponent", e);
+                    } else {
+                        callbackFunction.accept(Boolean.TRUE);
+                    }
+                }));
+    }
+
     private void createResourcePrefixNameSelectionTask(ContainerAllocationTaskState state,
             ContainerDescription containerDescription) {
         if (containerDescription == null) {
@@ -522,7 +540,7 @@ public class ContainerAllocationTaskService
             }
         } else {
             for (String resourceName : state.resourceNames) {
-                createContainerState(state, containerDesc, resourceName,
+                createContainerState(state, containerDesc, null, resourceName,
                         allocationRequest, null,
                         state.resourceNameToHostSelection.get(resourceName), taskCallback);
             }
@@ -534,6 +552,10 @@ public class ContainerAllocationTaskService
     private boolean isAllocationRequest(ContainerAllocationTaskState state) {
         return !state.postAllocation && (state.customProperties != null
                 && Boolean.parseBoolean(state.customProperties.get(FIELD_NAME_ALLOCATION_REQUEST)));
+    }
+
+    private boolean isClusteringOperation(ContainerAllocationTaskState state) {
+        return state.getCustomProperty(RequestUtils.CLUSTERING_OPERATION_CUSTOM_PROP) != null;
     }
 
     private String buildResourceId(String resourceName) {
@@ -557,6 +579,7 @@ public class ContainerAllocationTaskService
 
     private void createContainerState(ContainerAllocationTaskState state,
             ContainerDescription containerDesc,
+            Boolean isFromTemplate,
             String resourceName, boolean allocationRequest,
             GroupResourcePlacementState groupResourcePlacementState, HostSelection hostSelection,
             ServiceTaskCallback taskCallback) {
@@ -565,8 +588,17 @@ public class ContainerAllocationTaskService
             if (groupResourcePlacementState == null) {
                 getResourcePlacementState(
                         state,
-                        (resourcePlacementState) -> createContainerState(state, containerDesc,
+                        (resourcePlacementState) -> createContainerState(state, containerDesc, isFromTemplate,
                                 resourceName, allocationRequest, resourcePlacementState,
+                                hostSelection, taskCallback));
+                return;
+            }
+
+            // get composite component only for scale operations (needed later)
+            if (isFromTemplate == null && isClusteringOperation(state)) {
+                getCompositeComponent(state,
+                        (isTemplate) -> createContainerState(state, containerDesc, isTemplate,
+                                resourceName, allocationRequest, groupResourcePlacementState,
                                 hostSelection, taskCallback));
                 return;
             }
@@ -634,13 +666,13 @@ public class ContainerAllocationTaskService
             containerState.extraHosts = containerDesc.extraHosts;
             containerState.env = containerDesc.env;
 
-            String contextId;
-            if (state.customProperties != null
-                    && (contextId = state.customProperties
-                    .get(FIELD_NAME_CONTEXT_ID_KEY)) != null
-                    && !contextId.equals(getSelfId())) {
-                containerState.compositeComponentLink = UriUtils.buildUriPath(
-                        CompositeComponentFactoryService.SELF_LINK, contextId);
+            // set the component link if container is created or scaled from a template
+            String contextId = state.getCustomProperty(FIELD_NAME_CONTEXT_ID_KEY);
+            if ((contextId != null && !isClusteringOperation(state)
+                    && !contextId.equals(getSelfId()))
+                    || (isClusteringOperation(state) && isFromTemplate)) {
+                containerState.compositeComponentLink = UriUtils
+                        .buildUriPath(CompositeComponentFactoryService.SELF_LINK, contextId);
             }
 
             sendRequest(OperationUtil
