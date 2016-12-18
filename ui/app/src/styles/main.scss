@@ -813,7 +813,7 @@ $main-list-view-right: 10px;
 
 .right-context-panel > .toolbar {
   position: absolute;
-  top: 40px;
+  top: 0px;
   bottom: 0;
   width: 1px;
   border-left: 2px solid #ccc;
@@ -824,6 +824,10 @@ $main-list-view-right: 10px;
   margin-left: -$right-context-panel-toolbar-item-width;
   margin-bottom: 2px;
   position: relative;
+}
+
+.right-context-panel > .toolbar .toolbar-item:first-of-type {
+  margin-top: 40px;
 }
 
 .right-context-panel > .toolbar .toolbar-item.active {
