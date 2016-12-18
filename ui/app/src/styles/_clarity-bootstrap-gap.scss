@@ -1,14 +1,128 @@
 /* Clarity - Bootstrap gap */
+@import "buttons/buttons.clarity";
+@import "grid/grid.clarity";
+@import "dropdown/dropdown.clarity";
+@import "images/images.clarity";
+@import "typography/typography.clarity";
+@import "forms/forms.clarity";
+@import "tooltips/tooltips.clarity";
+@import "progress-bars/progress-bars.clarity";
 
-.spinner {
-  background-image: url("../image-assets/loading-animation.gif");
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center center;
-  display: inline-block;
+.hide {
+  display: none !important;
 }
 
-.spinner.spinner-inline {
-  width: 100%;
-  height: 100%;
+.form-group {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 0 0 100%;
+  margin-right: -15px;
+  margin-left: -15px;
+
+  .form-control {
+    width: 100%;
+  }
+}
+
+input:not([type]) {
+  @extend %custom-inputs;
+  @extend %clr-form-fields-appearance;
+  @include input-border-bottom-animation();
+}
+
+.caret {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 2px;
+  vertical-align: middle;
+  border-top: 4px dashed;
+  border-top: 4px solid\9;
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent;
+}
+
+.btn .caret {
+  margin-left: 0;
+}
+
+.dropdown .dropdown-menu li a {
+  @extend .dropdown-item;
+}
+
+.dropdown .dropdown-menu .divider {
+  @extend .dropdown-divider;
+}
+
+.app-view .tokenfield {
+  @extend %clr-form-fields-appearance;
+  @include input-border-bottom-animation();
+}
+
+.app-view .tokenfield.focus {
+  border-bottom: 1px solid #0094d2;
+  background-size: 100% 100%;
+  box-shadow: none;
+}
+
+.tooltip {
+  z-index: 1;
+  > .tooltip-inner {
+    @extend .tooltip-content;
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+.bs-tether-target-attached-left {
+  @extend .tooltip-left;
+}
+
+.bs-tether-target-attached-right {
+  @extend .tooltip-right;
+}
+
+.bs-tether-target-attached-top {
+  @extend .tooltip-top-right;
+}
+
+.bs-tether-target-attached-bottom {
+  @extend .tooltip-bottom-right;
+}
+
+.progress {
+  @extend .progress-static;
+  background-color: #eee;
+  width: auto;
+  max-height: 100px;
+
+  .progress-bar {
+    @extend .progress-meter;
+    width: 0;
+  }
+
+  .progress-bar-success {
+    background-color: $clr-green;
+  }
+
+  .progress-bar-warning {
+    background-color: $clr-yellow;
+  }
+
+  .progress-bar-danger {
+    background-color: $clr-red;
+  }
+
+   .progress-bar-info {
+     background-color: $clr-blue;
+   }
+}
+
+.tab-content {
+  .tab-pane {
+    display: none;
+  }
+  .tab-pane.active {
+    display: block;
+  }
 }

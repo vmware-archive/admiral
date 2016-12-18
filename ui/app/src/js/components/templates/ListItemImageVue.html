@@ -58,7 +58,7 @@
           </div>
         </template>
         <template v-else>
-          <div class="btn-group pull-right">
+          <div class="dropdown pull-right">
             <button type="button" class="btn admiral-btn create-container-btn"
                     v-on:click="provisionContainer($event)">{{i18n("app.template.list.provision")}}</button>
             <button type="button" class="btn admiral-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -75,5 +75,5 @@
       </div></template>
     </template>
   </div>
-  <div style="clear: both;"></div>
+  <div style="clear: both;display: none;"></div>
 </div>

@@ -12,18 +12,18 @@
 <div class="container-definition-form">
 
   <div class="container-form-content">
-    <ul class="nav nav-pills nav-justified" role="tablist">
-      <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="pill">{{i18n 'app.container.request.tabs.basic'}}</a></li>
-      <li role="presentation"><a href="#network" aria-controls="network" role="tab" data-toggle="pill">{{i18n 'app.container.request.tabs.network'}}</a></li>
-      <li role="presentation"><a href="#storage" aria-controls="storage" role="tab" data-toggle="pill">{{i18n 'app.container.request.tabs.storage'}}</a></li>
-      <li role="presentation"><a href="#policy" aria-controls="policy" role="tab" data-toggle="pill">{{i18n 'app.container.request.tabs.policy'}}</a></li>
-      <li role="presentation"><a href="#environment" aria-controls="environment" role="tab" data-toggle="pill">{{i18n 'app.container.request.tabs.environment'}}</a></li>
-      <li role="presentation"><a href="#health" aria-controls="health" role="tab" data-toggle="pill">{{i18n 'app.container.request.tabs.health'}}</a></li>
-      <li role="presentation"><a href="#logconfig" aria-controls="logconfig" role="tab" data-toggle="pill">{{i18n 'app.container.request.tabs.logconfig'}}</a></li>
+    <ul class="nav" role="tablist">
+      <li role="presentation" class="nav-item"><a href="#basic" class="nav-link" aria-controls="basic" role="tab" data-toggle="tab">{{i18n 'app.container.request.tabs.basic'}}</a></li>
+      <li role="presentation" class="nav-item"><a href="#network" class="nav-link" aria-controls="network" role="tab" data-toggle="tab">{{i18n 'app.container.request.tabs.network'}}</a></li>
+      <li role="presentation" class="nav-item"><a href="#storage" class="nav-link" aria-controls="storage" role="tab" data-toggle="tab">{{i18n 'app.container.request.tabs.storage'}}</a></li>
+      <li role="presentation" class="nav-item"><a href="#policy" class="nav-link" aria-controls="policy" role="tab" data-toggle="tab">{{i18n 'app.container.request.tabs.policy'}}</a></li>
+      <li role="presentation" class="nav-item"><a href="#environment" class="nav-link" aria-controls="environment" role="tab" data-toggle="tab">{{i18n 'app.container.request.tabs.environment'}}</a></li>
+      <li role="presentation" class="nav-item"><a href="#health" class="nav-link" aria-controls="health" role="tab" data-toggle="tab">{{i18n 'app.container.request.tabs.health'}}</a></li>
+      <li role="presentation" class="nav-item"><a href="#logconfig" class="nav-link" aria-controls="logconfig" role="tab" data-toggle="tab">{{i18n 'app.container.request.tabs.logconfig'}}</a></li>
     </ul>
 
     <div class="tab-content">
-      <div role="tabpanel" class="tab-pane active" id="basic">
+      <div role="tabpanel" class="tab-pane" id="basic">
         <div class="form-horizontal">
           <div class="form-group container-image-input">
             <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.image'}}</label>
@@ -254,19 +254,23 @@
         <div class="form-horizontal">
           <div class="form-group container-health-protocol-input">
             <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.healthMode'}}</label>
-            <span class="col-sm-9">
-              <label class="radio-inline">
-                <input type="radio" name="health-protocol-radio" id="health-none" value="NONE">{{i18n 'app.container.request.inputs.healthConfigNone'}}
-              </label>
-              <label class="radio-inline">
-                <input type="radio" name="health-protocol-radio" id="http-health" value="HTTP">{{i18n 'app.container.request.inputs.healthConfigHTTP'}}
-              </label>
-              <label class="radio-inline">
-                <input type="radio" name="health-protocol-radio" id="tcp-health" value="TCP">{{i18n 'app.container.request.inputs.healthConfigTCP'}}
-              </label>
-              <label class="radio-inline">
-                <input type="radio" name="health-protocol-radio" id="tcp-health" value="COMMAND">{{i18n 'app.container.request.inputs.healthConfigCommand'}}
-              </label>
+            <span class="col-sm-9 form-group">
+              <div class="radio-inline">
+                <input type="radio" name="health-protocol-radio" id="health-none" value="NONE">
+                <label for="health-none">{{i18n 'app.container.request.inputs.healthConfigNone'}}</label>
+              </div>
+              <div class="radio-inline">
+                <input type="radio" name="health-protocol-radio" id="http-health" value="HTTP">
+                <label for="http-health">{{i18n 'app.container.request.inputs.healthConfigHTTP'}}</label>
+              </div>
+              <div class="radio-inline">
+                <input type="radio" name="health-protocol-radio" id="tcp-health" value="TCP">
+                <label for="tcp-health">{{i18n 'app.container.request.inputs.healthConfigTCP'}}</label>
+              </div>
+              <div class="radio-inline">
+                <input type="radio" name="health-protocol-radio" id="command-health" value="COMMAND">
+                <label for="command-health">{{i18n 'app.container.request.inputs.healthConfigCommand'}}</label>
+              </div>
             </span>
           </div>
           <span id="health-config">

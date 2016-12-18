@@ -20,7 +20,7 @@
         <input v-on:blur="onBlur" class="form-control" v-model="address">
       </div>
       <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
-         title="{{i18n('app.host.details.addressHint')}}"></i>
+         v-tooltip="i18n('app.host.details.addressHint')"></i>
       <span class="help-block">{{i18n(validationErrors.address)}}</span>
     </div>
   </div>
@@ -62,7 +62,7 @@
         <input class="tags-input">
       </div>
       <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
-         title="{{i18n('app.host.details.tagsHint')}}"></i>
+         v-tooltip="i18n('app.host.details.tagsHint')"></i>
       <span class="help-block">{{i18n(validationErrors.tags)}}</span>
     </div>
   </div>
@@ -73,7 +73,7 @@
       <input class="checkbox-control" type="checkbox" name="hostAutoConfig" v-model="autoConfigure"/><label
         class="radio-label" for="hostAutoConfig">{{i18n("app.host.details.autoConfigureInput")}}</label>
       <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
-         title="{{i18n('app.host.details.autoConfigureHint')}}"></i>
+         v-tooltip="i18n('app.host.details.autoConfigureHint')"></i>
     </div>
   </div>
   <!--
@@ -102,7 +102,7 @@
         <a href="#" class="btn verifyHost"
            v-bind:class="{'disabled': isVerifyButtonDisabled, 'loading': model.isVerifyingHost}"
            v-on:click="verifyHost">{{i18n("app.host.details.verify")}}<i class="fa fa-spinner fa-spin loader-inline"></i></a>
-        <button type="submit" class="btn admiral-btn saveHost"
+        <button type="submit" class="btn btn-primary saveHost"
                 v-bind:class="{'disabled': buttonsDisabled, 'loading': model.isSavingHost}"
                 v-on:click="saveHost"
                 :disabled="buttonsDisabled">

@@ -19,15 +19,15 @@
     </div>
   </div>
   <div class="eventlog-actions">
-    <a href="#" class="btn" v-on:click="toggleExpandDescription($event)"
+    <a href="#" class="btn btn-link" v-on:click="toggleExpandDescription($event)"
        v-bind:class="{hide: expanded}">
       <i class="fa fa-eye"></i>
     </a>
-    <a href="#" class="btn" v-on:click="toggleExpandDescription($event)"
+    <a href="#" class="btn btn-link" v-on:click="toggleExpandDescription($event)"
        v-bind:class="{hide: !expanded}">
       <i class="fa fa-eye-slash"></i>
     </a>
-    <a href="#" class="btn" v-on:click="deleteEventLog($event)">
+    <a href="#" class="btn btn-link" v-on:click="deleteEventLog($event)">
       <i class="fa fa-trash"></i>
     </a>
   </div>

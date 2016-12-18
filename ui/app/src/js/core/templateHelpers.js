@@ -221,12 +221,23 @@ templateHelpers.register = function() {
 
   Vue.directive('tooltip', {
     update: function(newValue) {
-      $(this.el).tooltip({
-        title: newValue,
-        trigger: 'hover click',
+      var options = {};
+      if (newValue) {
+        if (typeof newValue === 'string' || newValue instanceof String) {
+          options.title = newValue;
+        }
+        if (typeof newValue === 'object' || newValue instanceof Object) {
+          options = newValue;
+        }
+      }
+
+      options = $.extend(options, {
+        trigger: 'hover',
         html: true,
         viewport: this.el.parentElement
       });
+
+      $(this.el).tooltip(options);
     }
   });
 };

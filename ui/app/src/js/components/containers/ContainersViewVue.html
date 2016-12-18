@@ -29,16 +29,16 @@
                     }]"
                   v-on:search-change="search"
                   ></search>
-          <a href="#/containers/new" class="admiral-btn create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS">
+          <a href="#/containers/new" class="btn btn-primary create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS">
             <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.container.create")}}
           </a>
-          <a href="#/containers/new" class="admiral-btn create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS">
+          <a href="#/containers/new" class="btn btn-primary create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS">
             <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.container.create")}}
           </a>
-          <a href="#/networks/new" class="admiral-btn create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS">
+          <a href="#/networks/new" class="btn btn-primary create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS">
             <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.network.create")}}
           </a>
-          <a href="#/closures/new" class="admiral-btn create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES && areClosuresAllowed">
+          <a href="#/closures/new" class="btn btn-primary create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES && areClosuresAllowed">
             <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.closure.create")}}
           </a>
         </div>

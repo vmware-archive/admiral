@@ -444,6 +444,9 @@ class ContainerDefinitionForm extends Component {
     if (!utils.isApplicationEmbedded()) {
       this.$el.find('.deployment-policy-input').hide();
     }
+
+    this.$el.find('.nav-item a[href="#basic"]').tab('show');
+    this.$el.find('#basic.tab-pane').addClass('active');
   }
 
   setData(data) {

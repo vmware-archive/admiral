@@ -16,14 +16,20 @@
                            v-bind:tooltip="i18n('deleteAll')"
                            v-bind:confirmable="true"></title-action-button>
   </list-title>
-  <ul class="nav nav-pills nav-justified" role="tablist">
-    <li role="presentation" class="active"><a href="#" aria-controls="all-requests" role="tab" v-on:click="selectTab($event, 'all')">{{i18n('app.request.tabs.all')}}</a></li>
-    <li role="presentation"><a href="#" aria-controls="running-requests" role="tab" v-on:click="selectTab($event, 'running')">{{i18n('app.request.tabs.running')}}</a></li>
-    <li role="presentation"><a href="#" aria-controls="failed-requests" role="tab" v-on:click="selectTab($event, 'failed')">{{i18n('app.request.tabs.failed')}}</a></li>
+  <ul class="nav" role="tablist">
+    <li role="presentation" class="nav-item">
+      <a class="nav-link" href="#all" aria-controls="all-requests" role="tab" v-on:click="selectTab($event, 'all')">{{i18n('app.request.tabs.all')}}</button>
+    </li>
+    <li role="presentation" class="nav-item">
+      <a class="nav-link" href="#running" aria-controls="running-requests" role="tab" v-on:click="selectTab($event, 'running')">{{i18n('app.request.tabs.running')}}</button>
+    </li>
+    <li role="presentation" class="nav-item">
+      <a class="nav-link" href="#failed" aria-controls="failed-requests" role="tab" v-on:click="selectTab($event, 'failed')">{{i18n('app.request.tabs.failed')}}</button>
+    </li>
   </ul>
 
   <div class="tab-content">
-    <div role="tabpanel" class="tab-pane active" id="all" v-infinite-scroll="loadMore('all')">
+    <div role="tabpanel" class="tab-pane" id="all" v-infinite-scroll="loadMore('all')">
       <request-item v-for="request in model.items | asMutable | orderBy 'documentUpdateTimeMicros' -1"
                     track-by="documentSelfLink"
                     v-bind:model="request">

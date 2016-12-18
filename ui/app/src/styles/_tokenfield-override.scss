@@ -41,6 +41,13 @@
   padding: 0;
 }
 
+.tokenfield .token {
+  height: auto;
+  .close {
+    vertical-align: middle;
+  }
+}
+
 .twitter-typeahead .form-control[readonly].tt-hint {
   background-color: transparent;
 }

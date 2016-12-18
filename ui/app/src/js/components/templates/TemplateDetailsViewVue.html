@@ -31,7 +31,7 @@
           </div>
         </div>
         <div class="editBtnHolder" v-if="!editingTemplateName">
-          <a href="#" class="btn editBtn" v-on:click="editTemplateName($event)"><i class="fa fa-pencil"></i></a>
+          <a href="#" class="btn btn-link editBtn" v-on:click="editTemplateName($event)"><i class="fa fa-pencil"></i></a>
         </div>
         <div class="toolbar-actions">
           <template v-if="confirmationOperation">
@@ -160,7 +160,7 @@
       <container-definition-form v-ref:new-form v-bind:model="model.newContainerDefinition.definitionInstance">
       </container-definition-form>
       <div class="pull-right control-btns">
-        <button class="btn admiral-btn add-container-definition"
+        <button class="btn btn-primary add-container-definition"
                 v-bind:class="{'loading': addingContainer}"
                 v-bind:disabled="buttonsDisabled"
                 v-on:click="addContainerDefinition($event)">{{i18n('add')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
@@ -173,7 +173,7 @@
     <container-definition-form v-ref:edit-form v-bind:model="model.editContainerDefinition.definitionInstance">
     </container-definition-form>
     <div class="pull-right control-btns">
-      <button class="btn admiral-btn save-container-definition"
+      <button class="btn btn-primary save-container-definition"
               v-bind:class="{'loading': savingContainer}"
               v-bind:disabled="buttonsDisabled"
               v-on:click="saveContainerDefinition($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
@@ -188,7 +188,7 @@
                                v-bind:allow-existing="true"
                                ></network-definition-form>
       <div class="pull-right control-btns">
-      <button class="btn admiral-btn save-container-definition"
+      <button class="btn btn-primary save-container-definition"
               v-bind:class="{'loading': savingNetwork}"
               v-bind:disabled="buttonNetworkDisabled"
               v-on:click="saveNetwork($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>

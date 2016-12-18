@@ -138,11 +138,15 @@ function MulticolumnInputs($el, model) {
   }
 
   if (headers) {
+    this.$listHeadControls = $('<div>', {
+      class: 'multicolumn-input-controls'
+    });
+
     this.$listHead = $('<div>', {
       class: 'multicolumn-inputs-list-head'
-    });
+    }).append(this.$listHeadControls);
     this.$list.append(this.$listHead);
-    this.$listHead.append(createHeaders(model));
+    this.$listHeadControls.append(createHeaders(model));
   }
 
   this.$listBodyWrapper = $('<div>', {

@@ -240,10 +240,10 @@ var createOccurrenceSelector = function(occurrences) {
   }
 
   this.$occurrenceSelector = $('<div>', {
-      class: 'query-occurrence-dropdown btn-group'
+      class: 'query-occurrence-dropdown dropdown'
     })
     .append($('<button>', {
-        class: 'btn btn-default',
+        class: 'btn btn-outline dropdown-toggle',
         'data-toggle': 'dropdown',
         'aria-haspopup': 'true',
         'aria-expanded': 'false'

@@ -231,6 +231,15 @@ $elements-side-margin: $elements-margin / 2;
     @extend .position-expand;
     top: 20px;
     border: 1px solid #DFDFDF;
+
+    > table {
+      margin: 0;
+      border: none;
+
+      th, td {
+        text-align: left;
+      }
+    }
   }
 
   > .content > .maximizableControl .maximizableControlToggle {

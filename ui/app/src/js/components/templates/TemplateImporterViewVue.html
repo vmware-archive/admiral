@@ -15,7 +15,7 @@
   </div>
   <div class="templateImport-properties">
     <div class="template-import-option">
-      <a class="btn btn-xs admiral-btn-secondary fileUpload" v-on:click="browseFile" v-bind:class="{'disabled': model.isImportingTemplate}">
+      <a class="btn btn-sm btn-secondary fileUpload" v-on:click="browseFile" v-bind:class="{'disabled': model.isImportingTemplate}">
         <span>{{i18n("app.template.import.loadButton")}}</span>
       </a>
       <input type="file" class="upload" v-on:change="onFileChange"></input>

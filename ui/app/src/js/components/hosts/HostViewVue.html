@@ -21,10 +21,7 @@
     <div class="view-title-container">
       <div class="view-title">
       <template v-if="!model.isUpdate && createHostEnabled">
-        <div class="title-tab selected left"
-             v-on:click="selectTab($event, 'leftTab')"><a>{{i18n('app.host.details.title.add')}}</a></div>
-        <div class="title-tab right"
-             v-on:click="selectTab($event, 'rightTab')"><a>{{i18n('app.host.details.title.create')}}</a></div>
+        <div class="title">{{i18n('app.host.details.title.add')}}</div>
       </template>
 
       <template v-if="!model.isUpdate && !createHostEnabled">

@@ -161,10 +161,6 @@ var TemplatesViewVueComponent = Vue.extend({
         NotificationsActions.retrieveNotifications();
       }
     }, constants.NOTIFICATIONS.REFRESH_INTERVAL);
-
-    $(this.$el).find('.import-template i').tooltip({
-      html: true
-    });
   },
   detached: function() {
     this.unwatchExpanded();

@@ -11,7 +11,7 @@
 
 var VueActionConfirmation = Vue.extend({
   template: `<div v-if="actionName" class="action-confirmation" transition="fade-in">
-      <a href="#" class="admiral-btn warn action-confirm btn-{{actionName}}"
+      <a href="#" class="btn btn-warning action-confirm btn-{{actionName}}"
         v-on:click="confirmAction($event)"><span>{{actionTitle}}</span></a>
       <a href="#" class="action-cancel"
         v-on:click="cancelAction($event)"><span>{{i18n('cancel')}}</span></a>

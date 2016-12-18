@@ -1,19 +1,16 @@
 @import "font-awesome.css";
 @import "variables";
 @import "mixins";
+
 @import "components/multicolumn-inputs";
 @import "components/table-sort";
 
-/* Used by bootstrap to set on body */
-$font-family-sans-serif: "Helvetica Neue", Helvetica, Arial, sans-serif;
-@import "bootstrap-sprockets";
-@import "bootstrap";
 @import "bootstrap-tokenfield.css";
 @import "tokenfield-typeahead.css";
 @import "tokenfield-override";
-@import "mixins";
 
 @import "clarity-bootstrap-gap";
+@import "clarity-ui.min.css";
 
 @import "components/inline-editable-list";
 @import "components/list-views";
@@ -45,7 +42,7 @@ body.admiral-default {
   filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='$vmw_blue_top', endColorstr='$vmw_blue_bottom', GradientType=0);
 }
 
-a, a:focus {
+a, a:focus, a:visited {
   color: $link_color
 }
 
@@ -54,31 +51,14 @@ a[disabled] {
   text-decoration: none;
   pointer-events: none;
 }
-.btn:hover, .btn:focus, .btn.focus {
-  color: #224662;
-}
 
 button:focus {
   outline: 0;
 }
 
-.header {
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
 .font-mono {
   font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New;
 }
-
-.header .brandLogo {
-  position: absolute;
-  top: 20px;
-  left: 40px;
-  height: 20px;
-}
-
 
 .core-build-number {
   position: fixed;
@@ -93,29 +73,29 @@ textarea {
   width: 100%;
   padding: 0 5px;
   line-height: 26px;
-  border: 1px solid $tooltip-border-color;
+  border: 1px solid $secondary_inactive_button_color;
   font-size: 13px;
   height: 26px;
   border-radius: 2px;
 }
 
 ::-webkit-input-placeholder {
-  color: $tooltip-border-color;
+  color: $secondary_inactive_button_color;
   font-weight:200;
 }
 
 :-moz-placeholder { /* Firefox 18- */
-  color: $tooltip-border-color;
+  color: $secondary_inactive_button_color;
   font-weight:200;
 }
 
 ::-moz-placeholder {  /* Firefox 19+ */
-  color: $tooltip-border-color;
+  color: $secondary_inactive_button_color;
   font-weight:200;
 }
 
 :-ms-input-placeholder {
-  color: $tooltip-border-color;
+  color: $secondary_inactive_button_color;
   font-weight:200;
 }
 
@@ -129,7 +109,7 @@ textarea {
 }
 
 .multicolumn-input .checkbox-placehodler {
-  color: $tooltip-border-color;
+  color: $secondary_inactive_button_color;
 }
 
 #main {
@@ -138,9 +118,9 @@ textarea {
 
 .admiral-default #main {
   top: 50px;
-  left: 40px;
-  right: 40px;
-  bottom: 40px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   -webkit-border-radius: 2px;
   -moz-border-radius: 2px;
   border-radius: 2px;
@@ -194,17 +174,11 @@ textarea {
 
 .homepage > .top .welcome .welcome-title, .loginpage .welcome .welcome-title {
   font-size: 54px;
-  margin-top: -10px;
-  letter-spacing: 0.03em;
-  font-weight: 300;
-  color:#000;
 }
 
 .homepage > .top .welcome .welcome-description, .loginpage .welcome .welcome-description {
   margin-top: 8px;
   font-size: 18px;
-  font-weight: 300;
-  color: #000;
   letter-spacing: 0.01em;
   line-height: 1.6em;
 }
@@ -283,86 +257,41 @@ textarea {
           left: 0
         }
       }
-
-      .admiral-btn {
-        margin-top: 20px;
-        font-size: 20px;
-        padding: 0 35px;
-        width: 100%;
-      }
     }
   }
 }
 
-.admiral-btn {
-  background-color: $main_color;
-  border-radius: 30px;
-  color: #ffffff;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
+.btn {
+  min-width: 0;
+  margin-right: 0;
 }
 
-.admiral-btn:hover {
-  @include box-shadow(0px 1px 3px 0px rgba(0,0,0,0.4));
-  text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.5);
-  color: #ffffff;
-  text-decoration: none;
+.radio-inline {
+  margin-right: 12px;
 }
 
-.admiral-btn:active {
-  @include box-shadow(0px 2px 3px 0px rgba(0,0,0,0.4) inset);
+.btn-circle .fa-plus {
+  transform: translate(0.04em, 0);
 }
-
-.admiral-btn:focus {
-  color: #ffffff;
-  outline: 0;
-}
-
-.admiral-btn:active:focus {
-  outline: 0;
-}
-
-.admiral-btn-secondary {
-  @extend .admiral-btn;
-  background-color: #ffffff;
-  color: $main_color;
-  border: 1px solid $main_color;
-}
-
-.admiral-btn-secondary:hover {
-  color: $main_color;
-  text-shadow: none;
-}
-
-.admiral-btn-secondary:focus {
-  color: $main_color;
-}
-
-.admiral-btn.warn {
-  background-color: $status_stopped_color;
-}
-
 .refresh-button, .import-template {
   display: inline-block;
   margin-left: 10px;
 }
 
-.btn-circle {
+.btn.btn-circle {
   cursor: pointer;
   font-size: 12px;
-  width: 20px;
-  min-width: 20px;
-  height: 20px;
-  min-height: 20px;
-  line-height: 20px;
+  width: 21px;
+  min-width: 21px;
+  height: 21px;
+  min-height: 21px;
+  line-height: 21px;
   border-radius: 10px;
   text-align: center;
   padding: 0;
   margin: 0;
+  color: #ffffff;
 }
-
-
 
 .btn-circle, .btn-circle:hover,
 .btn-circle:active, .btn-circle:focus{
@@ -427,13 +356,15 @@ textarea {
 .btn-circle .fa.fa-play {
   transform: translate(1px, 0);
 }
-.btn-group > .admiral-btn + .dropdown-toggle {
+.dropdown > .admiral-btn + .dropdown-toggle {
+  padding: 0 10px;
   border-left: 1px dotted #ffffff;
   // Fixes Bootstraps hover of the other part of the button z-index
   z-index: 2;
+  margin-left: -6px;
 }
 
-.homepage > .top .welcome .admiral-btn {
+.homepage > .top .welcome .btn {
   font-size: 30px;
   padding: 0 63px;
   line-height: 2em;
@@ -678,11 +609,6 @@ $main-list-view-right: 10px;
   color: $main_color;
 }
 
-.host-view.certificate-confirm .admiral-btn {
-  font-size: 16px;
-  padding: 5px 30px 5px 30px;
-}
-
 .host-view.certificate-confirm .modal-body .modal-help-icon {
   float: left;
 }
@@ -740,67 +666,58 @@ $main-list-view-right: 10px;
   @include box-shadow(inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px $color-rgba);
 }
 
-.app-view .dropdown > .dropdown-toggle, .app-view .dropdown > .dropdown-toggle:focus {
-  background-color: #FFFFFF;
-}
-
 // Hides bootstrap specific progress shadows
 .app-view .progress, .app-view .progress-bar{
   @include box-shadow(none);
 }
 
-.placeholder .form-control.dropdown-holder {
-  border-style: none;
-}
-
 .form-group .dropdown-holder {
   @extend .form-control;
   padding: 0;
-
-  button {
-    border: none;
-    padding-top: 4px;
-    padding-bottom: 4px;
-  }
 }
 
 .form-group .dropdown button, .form-group .dropdown .dropdown-menu {
   width: 100%;
+  max-width: 100%;
 }
 
 .form-group .dropdown .dropdown-menu {
-  margin: 0;
-  padding: 10px 0 5px;
-
   .search-input {
-    margin-top: 10px;
+    margin-bottom: 20px;
   }
 }
 
-.form-group .dropdown button .loading {
-  width: 18px;
-  height: 18px;
-  float: left;
-  margin-left: 5px;
-}
+.form-group .dropdown {
+  width: 100%;
+  .btn {
+    width: 100%;
+    max-width: 100%;
+    padding-right: 10px;
 
-.form-group .dropdown button .dropdown-title {
-  float: left;
-  color: #333;
-  font-size: 16px;
-}
+    .loading {
+      width: 18px;
+      float: left;
+      margin-left: 5px;
+    }
 
-.form-group .dropdown button .dropdown-title.placeholder {
-  color: #999 !important;
+    .dropdown-title {
+      float: left;
+      color: #333;
+    }
+
+    .dropdown-title.placeholder {
+      color: #999 !important;
+    }
+
+    .caret {
+      float: right;
+      margin-top: 15px;
+    }
+  }
 }
 
 .host-form.form-horizontal .dropdown-menu .search-input input {
   font-size: 15px;
-}
-
-.form-group .dropdown button .caret {
-  float: right;
-  margin-top: 10px;
 }
 
 .form-group .dropdown .dropdown-search {
@@ -813,7 +730,6 @@ $main-list-view-right: 10px;
 }
 
 .form-group .dropdown .dropdown-options, .form-group .dropdown .dropdown-manage {
-  @extend .dropdown-menu;
   display: block;
   border: none;
   @include box-shadow(none);
@@ -821,14 +737,10 @@ $main-list-view-right: 10px;
   max-height: $search-result-list-max-height;
   overflow-y: auto;
   font-size: 15px;
-}
 
-.form-group .dropdown .dropdown-options {
-  margin: 0 0 7px 0;
-}
-.form-group .dropdown .dropdown-manage {
-  margin: 0 0 10px 0;
-  padding-top: 2px;
+  > li {
+    display: block;
+  }
 }
 
 .form-group .dropdown .divider {
@@ -848,9 +760,8 @@ $main-list-view-right: 10px;
 
 .form-group .dropdown .dropdown-manage li > a > .fa {
   position: absolute;
-  top: 0;
-  left: 16px;
-  padding: 5px;
+  top: 10px;
+  left: 20px;
 }
 
 .host-view .main-panel .radio-label {
@@ -985,7 +896,7 @@ text-shadow: 0px 0px 20px black;
 .toolbar-item .toolbar-item-title {
   font-size: 0.6em;
   margin-top: -17px;
-  color: $tooltip-color;
+  color: $admiral-black;
   word-wrap: break-word;
   width: 100%;
   white-space: pre-wrap;
@@ -1280,13 +1191,17 @@ text-shadow: 0px 0px 20px black;
   .tooltip-inner {
     width: 200px;
   }
+
+  input {
+    width: 100%;
+  }
 }
 
 .credentialsEditHolder .credentialsEdit-properties label {
     font-weight: normal;
 }
 .placementZoneEdit, .credentialsEdit .credentialsEdit-header,
-.certificatesEdit .certificatesEdit-header, .registryEdit, .deploymentPolicyEdit, .resourceGroupEdit {
+.certificatesEdit .certificatesEdit-header, .deploymentPolicyEdit, .resourceGroupEdit {
   display: table;
   width: 100%;
 }
@@ -1317,11 +1232,8 @@ text-shadow: 0px 0px 20px black;
 .inline-editable-list-edit-input {
   width: 100%;
   padding: 0 5px;
-  line-height: 26px;
-  border: 1px solid #ccc;
   font-size: 13px;
   height: 26px;
-  border-radius: 2px;
 }
 .credentialsEdit-properties {
 
@@ -1360,18 +1272,11 @@ text-shadow: 0px 0px 20px black;
 
 .certificatesEdit-properties .certificate-import-option > a,
 .certificatesEdit-properties .certificate-import-inputs > a.certificate-import-button {
-  font-size: 13px;
-  font-weight: 500;
   float: left;
-  padding: 0 20px;
-  line-height: 20px;
   width: auto;
 }
 .certificatesEdit-properties .certificate-import-inputs > a.certificate-import-option-cancel {
   width: auto;
-  padding: 0 10px;
-  font-size: 13px;
-  font-weight: 200;
 }
 .certificatesEdit-properties .certificate-import-option > .fa-question-circle {
   color: $link_color;
@@ -1469,10 +1374,6 @@ text-shadow: 0px 0px 20px black;
 
     .template-import-option {
       .fileUpload {
-        position: relative;
-        overflow: hidden;
-        padding: 5px 20px 5px 20px;
-        font-size: 14px;
         float: left;
       }
 
@@ -1483,8 +1384,7 @@ text-shadow: 0px 0px 20px black;
       > .fa-question-circle {
         @extend .hint;
         margin-left: 5px;
-        margin-top: 5px;
-        line-height: 20px;
+        margin-top: 7px;
         float: left;
       }
     }
@@ -1524,20 +1424,6 @@ text-shadow: 0px 0px 20px black;
   z-index: $closable-view-zindex;
   background-color: rgba(255, 255, 255, $disabled_opacity);
   left: 10px;
-}
-
-.tooltip-inner {
-  border: solid 1px $tooltip-border-color;
-  text-align: left;
-}
-
-/* Adds a white arrow to have the fill effect, so that only gray border is visible */
-.tooltip.top .tooltip-arrow:after {
-  @extend .tooltip-arrow;
-  bottom: 1px;
-  z-index: 1;
-  content: " ";
-  border-top-color: $tooltip-bg;
 }
 
 .nav-bar {
@@ -1750,14 +1636,6 @@ body > .loading, .container-details > .content .loading {
   background-color: $status_stopped_color;
 }
 
-.registryEdit #hostname input, .registryEdit #name input {
-  width: 100%;
-}
-
-.registryEdit .form-horizontal label {
-  color: $secondary_hint_title_color;
-}
-
 .registryRowEdit-toolbar > * {
   margin-right: 10px;
 }
@@ -1770,17 +1648,9 @@ body > .loading, .container-details > .content .loading {
   margin-left: -15px;
 }
 
-.placementEdit .form-horizontal .form-group {
+.inline-editable-list .form-group {
   margin-left: 0;
   margin-right: 0;
-}
-
-.placementEdit .form-horizontal .group > label {
-  margin-right: -5px;
-}
-
-.placementEdit .form-horizontal .group > div {
-  padding-right: 10px;
 }
 
 .placementEdit .placementRowEdit-toolbar {
@@ -1816,29 +1686,6 @@ body > .loading, .container-details > .content .loading {
   border-bottom: 1px solid #d3d3d3;
 }
 
-.btn-default:hover {
-  border: none;
-}
-
-.certificate-import-inputs .col-sm-6 {
-    width: 100%;
-    margin: 0;
-    padding: 0 150px 0 0;
-}
-.certificate-import-inputs .certificate-import-button {
-    position: absolute;
-    right: 125px;
-}
-.certificate-import-inputs .certificate-import-option-cancel {
-    position: absolute;
-    right: 65px;
-}
-.form-group .dropdown .dropdown-options {
-  > li > a, .dropdown-options-hint {
-    padding: 5px 20px;
-  }
-}
-
 .dropdown-options-hint {
   color: $secondary_hint_title_color;
 }
@@ -1847,44 +1694,6 @@ body > .loading, .container-details > .content .loading {
   font-size: 16px;
 }
 
-#main .nav-pills > li {
-  /*padding-left: 1px;
-  padding-right: 1px;*/
-  border-right: 1px solid #fff;
-}
-
-#main .nav-pills > li:last-child {
-  border-right: none;
-}
-
-#main .nav-pills > li > a,
-.container-form .nav-pills > li > a:hover,
-.container-form .nav-pills > li > a:focus,
-.environment-form .nav-pills > li > a:hover,
-.environment-form .nav-pills > li > a:focus {
-  background-color: $tab-color;
-  color: #666;
-  font-weight: 200;
-  border-radius: 0;
-}
-
-#main .nav-pills > li.active > a,
-.container-form .nav-pills > li > a:hover,
-.environment-form .nav-pills > li > a:hover {
-  color: #000000;
-  font-weight: 500;
-  background-color: #fff;
-}
-#main .nav-pills > li.active > a {
-  border-top: 1px solid $main_color;
-}
-#main .nav-pills > li.active > a:after {
-  content: " ";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
 
 .requests-list {
   @extend .position-expand;
@@ -1895,10 +1704,9 @@ body > .loading, .container-details > .content .loading {
 
   > .tab-content {
     @extend .position-expand;
-    top: 95px;
+    top: 60px;
     overflow-y: auto;
     overflow-x: hidden;
-    background-color: #fff;
 
     .request-item-holder {
       position: relative;
@@ -1937,6 +1745,7 @@ body > .loading, .container-details > .content .loading {
         display: block;
         padding-top: 10px;
         padding-bottom: 10px;
+        line-height: 16px;
         width: 95%;
 
         .title {
@@ -1958,6 +1767,7 @@ body > .loading, .container-details > .content .loading {
           margin-right: 5px;
           margin-bottom: 0;
           position: relative;
+          height: 18px;
 
           .progress-bar {
           }
@@ -2026,10 +1836,9 @@ body > .loading, .container-details > .content .loading {
 
   > .tab-content {
     @extend .position-expand;
-    top: 95px;
+    top: 60px;
     overflow-y: auto;
     overflow-x: hidden;
-    background-color: #fff;
 
     .highlight-item {
       @include box-shadow(0px 0px 15px 5px rgba(102,153,0,0.35));
@@ -2037,12 +1846,13 @@ body > .loading, .container-details > .content .loading {
 
     .eventlog-actions {
       position: absolute;
-      top: 16px;
-      right: 6px;
+      top: 1px;
+      bottom: 0;
+      right: 0;
       z-index: 10;
       display: none;
       padding-left: 2px;
-      background-color: white;
+      background-color: $context-view-background-color;
     }
 
     .delete-inline-item-confirmation-holder {
@@ -2061,6 +1871,7 @@ body > .loading, .container-details > .content .loading {
       border-bottom: 1px solid #ccc;
       text-decoration: none;
       position: relative;
+      line-height: 16px;
 
       .content {
         margin-left: 5px;
@@ -2173,13 +1984,14 @@ $alert-text-color: #ffffff;
     font-weight: normal;
     color: $brand-hint-color;
     background-color: $brand-hint-background-color;
-    border: 1px solid $tooltip-border-color;
+    border: 1px solid $secondary_inactive_button_color;
   }
 }
 
 .alert-holder.alert-hidden {
   height: 0px;
   opacity: 0;
+  pointer-events: none;
 }
 
 .alert {
@@ -2217,13 +2029,11 @@ $alert-text-color: #ffffff;
   padding: 5px;
 }
 
-.alert-dismissible {
-  padding-right: 30px;
-
+.alert {
+  display: inline;
+  min-height: 0;
   .close {
-    position: relative;
     top: 0px;
-    right: -21px;
 
     font-size: 14px;
     font-weight: normal;
@@ -2257,6 +2067,7 @@ $alert-text-color: #ffffff;
 .action {
   .action-label {
     font-size: 9px;
+    line-height: 12px;
     color: $main_color;
     visibility: hidden;
     text-align: center;
@@ -2317,10 +2128,6 @@ $alert-text-color: #ffffff;
   margin-left: 10px;
   font-weight: 300;
 
-  a {
-    padding: 2px 10px 2px 10px;
-  }
-
   .action-confirm {
     margin: 0;
   }
@@ -2363,7 +2170,7 @@ $alert-text-color: #ffffff;
   min-width: 32px;
   line-height: 28px;
   height: 32px;
-  border: 2px solid $main_color;
+  border-width: 2px;
   border-radius: 16px;
   text-align: center;
   padding: 0;
@@ -2416,6 +2223,8 @@ $alert-text-color: #ffffff;
     font-weight: normal;
   }
 
+  $input-height-small: 30px;
+
   select {
     color: $main_color;
     font-weight: normal;
@@ -2436,16 +2245,15 @@ $alert-text-color: #ffffff;
   }
 
   .btn-circle {
+    margin-left: 5px;
     width: 30px;
     min-width: 30px;
     height: 30px;
     line-height: 26px;
-    margin-left: 5px;
-    padding: 0;
-    text-align: center;
-    background-color: #fff;
-    border: 2px solid #3399cc;
+    border-width: 2px;
     border-radius: 16px;
+    text-align: center;
+    padding: 0;
   }
 }
 
@@ -2473,12 +2281,12 @@ $alert-text-color: #ffffff;
   font-weight: normal;
   color: $brand-hint-color;
   background-color: $brand-hint-background-color;
-  border: 1px solid $tooltip-border-color;
+  border: 1px solid $secondary_inactive_button_color;
 }
 
 .app-view .form-group {
-  margin-right: 15px;
   position: relative;
+  margin-bottom: 15px;
 
   .control-label {
     text-align: left;
@@ -2513,12 +2321,11 @@ $alert-text-color: #ffffff;
   position: relative;
 
   input, .twitter-typeahead input {
-    @extend .form-control;
     padding-left: 30px;
+    width: 100%;
   }
 
   input:not(.tt-input) {
-    border-radius: 20px;
   }
 
   .search-input span, .image-tags-input span {
@@ -2527,8 +2334,9 @@ $alert-text-color: #ffffff;
 
   .loader-inline, .search-hint {
     z-index: 1;
-    left: 0;
-    top: 0;
+    left: 4px;
+    bottom: 10px;
+    position: absolute;
   }
 
   .loader-inline {

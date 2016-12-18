@@ -32,17 +32,6 @@
 .inline-editable-list > .table,
 .inline-editable-list > div > .table {
   table-layout: fixed;
-  margin-top: 25px;
-  border-spacing: 0;
-  font-size: 13px;
-  > thead {
-    background-color: $tab-color;
-    border-bottom: 1px solid #ccc;
-    th {
-      padding-top: 14px;
-      padding-bottom: 14px;
-    }
-  }
   .inline-editable-list > .table {
     margin: 0 0 10px;
     > thead th,
@@ -184,6 +173,7 @@
 
 .inline-editable-list .table td {
   vertical-align: middle;
+  text-align: left;
 }
 
 .inline-editable-list .table .stats-holder .help-text {
@@ -240,11 +230,17 @@
   }
 }
 
-.inline-editable-list .table .table-actions .btn{
-  padding: 0 1px;
-  border: none;
-  color: $secondary_hint_title_color;
-  font-size: 20px;
+.inline-editable-list .table .table-actions {
+  .btn, .btn:active, .btn:focus {
+    padding: 0 1px;
+    border: none;
+    color: $secondary_hint_title_color;
+    font-size: 20px;
+    margin: 0;
+    min-width: 0;
+    background-color: transparent;
+    box-shadow: none;
+  }
 }
 
 .inline-editable-list .table .table-actions .btn-circle {
@@ -265,7 +261,7 @@
   color: $main_color;
 }
 
-.inline-editable-list .table .table-actions .admiral-btn-circle:hover{
+.inline-editable-list .table .table-actions .btn-circle:hover{
   color: #FFFFFF;
   background-color: $main_color;
 }

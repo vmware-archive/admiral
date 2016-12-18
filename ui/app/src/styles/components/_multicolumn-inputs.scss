@@ -3,6 +3,8 @@ $rightMarginInputs: 55px;
 
 .multicolumn-inputs-list {
   width: 100%;
+  border-collapse: separate;
+  border: 1px solid #ccc;
 }
 
 .multicolumn-input {
@@ -11,6 +13,7 @@ $rightMarginInputs: 55px;
 }
 
 .multicolumn-input .multicolumn-input-controls {
+  margin-left: 15px;
   margin-right: $rightMarginInputs;
 }
 
@@ -50,15 +53,7 @@ $rightMarginInputs: 55px;
     display: table-cell;
 
     input {
-      $border-size: 1px;
-      $height: 26px;
-      width: 100%;
-      padding: 0 5px;
-      line-height: $height - 2 * $border-size;
-      border: $border-size solid #ccc;
       font-size: 13px;
-      height: $height;
-      border-radius: 2px;
     }
 
     input[type="checkbox"] {
@@ -101,7 +96,7 @@ $rightMarginInputs: 55px;
 }
 
 .multicolumn-input {
-  .btn-circle, .btn-circle:hover {
+  .btn.btn-circle, .btn.btn-circle:hover {
     background-color: #cbcbcb;
     font-size: 12px;
     width: 16px;
@@ -118,14 +113,25 @@ $rightMarginInputs: 55px;
 .multicolumn-inputs-list-head {
   text-align: left;
   color: #cbcbcb;
-  margin-right: $rightMarginInputs + $scrollbarOffset;
+  background-color: #fafafa;
+  margin-bottom: 10px;
+
+  .multicolumn-input-controls {
+    margin-left: 15px;
+    margin-right: $rightMarginInputs + $scrollbarOffset;
+  }
 
   li {
     .multicolumn-header {
-      border-bottom: 1px solid #cbcbcb;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .03em;
+      background-color: #fafafa;
+      vertical-align: bottom;
+      border-bottom: 1px solid #ccc;
+      border-top: 0 none;
 
       .multicolumn-header-label {
-        margin-bottom: 5px;
       }
     }
   }

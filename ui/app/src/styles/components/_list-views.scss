@@ -14,7 +14,10 @@
   margin-right: 0;
 }
 
-.list-view .toolbar > .admiral-btn, .list-view .title > .admiral-btn {
+.list-view .toolbar > .btn-primary,
+.list-view .toolbar > .btn-outline,
+.list-view .title > .btn-primary,
+.list-view .title > .btn-outline {
   position: absolute;
   top: 0;
   right: 0;
@@ -27,7 +30,7 @@
   text-align: center;
 }
 
-.list-view .toolbar > .admiral-btn .fa {
+.list-view .toolbar > .btn .fa {
   margin-right: 10px;
   font-size: 21px;
   transform: translate(0, 1px);
@@ -257,6 +260,7 @@
 
   .list-view .grid-item .stats-holder .help-text {
     font-size: $stats_holder_font_size;
+    line-height: 14px;
     visibility: hidden;
     position: absolute;
     right: 0;
@@ -434,40 +438,13 @@
     margin-top: 10px;
   }
 
-  .list-view .image-item .btn-group > .admiral-btn {
-    background-color: #e7e7e7;
-    color: $link_color;
-  }
-  .list-view .image-item .btn-group > .admiral-btn.create-resource-btn {
-    padding: 0 12px 0 20px;
-    font-size: 15px;
-    line-height: 30px;
-    height: 30px;
-  }
-  .list-view .image-item .btn-group {
-    top: 5px;
-  }
-  .list-view .image-item .btn-group > .btn.dropdown-toggle {
-    color: $secondary_hint_title_color;
-  }
-  .list-view .image-item .btn-group > .btn.dropdown-toggle .caret {
+  .list-view .image-item .dropdown > .btn.dropdown-toggle .caret {
     width: 0;
     height: 0;
     border-style: solid;
     border-width: 5px 5px 0 5px;
   }
-  .list-view .image-item .btn-group:hover > .admiral-btn {
-    background-color: $main_color;
-    color: #FFFFFF;
-  }
 
-  .list-view .image-item .btn-group .dropdown-menu {
-    border: 1px solid $main_color;
-  }
-
-  .list-view .image-item .btn-group .dropdown-menu a {
-    color: $main_color;
-  }
   .list-view .grid-item.active .container-links {
     height: auto;
     max-height: 200px;
@@ -694,6 +671,7 @@
 }
 
 .list-view .grid-item:hover {
+  z-index: 2;
   .container-actions, .image-actions {
     display: block;
   }
@@ -1331,7 +1309,7 @@ $elements-side-margin: $elements-margin / 2;
   margin-bottom: 20px;
 }
 
-.template-details .control-btns .admiral-btn {
+.template-details .control-btns .btn {
   padding-left: 30px;
   padding-right: 30px;
 }

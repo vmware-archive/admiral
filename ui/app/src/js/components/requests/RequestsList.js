@@ -120,7 +120,7 @@ var RequestsListVueComponent = Vue.extend({
           } else if (utils.isRequestRunning(item)) {
             return ['progress-bar-info', 'progress-bar-striped', 'active'];
           } else {
-            return ['progress-bar-info'];
+            return ['progress-bar-success'];
           }
         },
 
@@ -216,6 +216,10 @@ var RequestsListVueComponent = Vue.extend({
         }
       }
     }
+  },
+
+  attached: function() {
+    $(this.$el).find('.nav-item:first-of-type .nav-link').tab('show');
   },
 
   methods: {

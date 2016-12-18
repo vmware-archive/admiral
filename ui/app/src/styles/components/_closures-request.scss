@@ -41,21 +41,6 @@
   padding-right: 0;
 }
 
-.container-definition-form .form-group {
-  .loader-inline {
-    display: none;
-    position: absolute;
-    right: 20px;
-    top: 10px;
-  }
-}
-
-.container-definition-form .form-group.loading {
-  .loader-inline {
-    display: block;
-  }
-}
-
 .container-definition-form .form-group > .fa-question-circle {
   @extend .hint;
   position: absolute;
@@ -92,21 +77,6 @@
   padding-right: 0;
 }
 
-.closure-definition-form .form-group {
-  .loader-inline {
-    display: none;
-    position: absolute;
-    right: 20px;
-    top: 10px;
-  }
-}
-
-.closure-definition-form .form-group.loading {
-  .loader-inline {
-    display: block;
-  }
-}
-
 .closure-definition-form .form-group > .fa-question-circle {
   position: absolute;
   top: 6px;
@@ -123,7 +93,7 @@
   margin-left: 20px;
 }
 
-.closure-form .control-btns .admiral-btn {
+.closure-form .control-btns .btn {
   padding-left: 30px;
   padding-right: 30px;
 }

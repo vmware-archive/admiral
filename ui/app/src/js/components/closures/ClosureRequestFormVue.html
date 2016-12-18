@@ -19,14 +19,14 @@
   </div>
   <div class="pull-right control-btns">
   <!-- v-bind:class="{'loading': savingTask}" -->
-    <button class="btn admiral-btn create-container"
+    <button class="btn btn-primary create-container"
             v-on:click="createClosureDescription()">{{i18n('app.closure.request.save')}}<i
             class="fa fa-spinner fa-spin loader-inline"></i></button>
-    <button class="btn admiral-btn admiral-btn-secondary save-container-template"
+    <button class="btn btn-secondary save-container-template"
             v-bind:class="{'loading': savingTemplate}"
             v-on:click="saveClosureTemplate()">{{i18n('app.container.request.saveTemplate')}}<i
                 class="fa fa-spinner fa-spin loader-inline"></i></button>
-    <button class="btn admiral-btn admiral-btn-secondary save-container-template"
+    <button class="btn btn-secondary save-container-template"
             v-bind:class="{'loading': runningTask}"
             v-on:click="saveAndRunClosure()">{{i18n('app.closure.request.run')}}<i
             class="fa fa-spinner fa-spin loader-inline"></i></button>

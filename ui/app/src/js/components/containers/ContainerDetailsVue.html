@@ -84,18 +84,20 @@
         <div>
           <span>{{i18n('app.container.details.logsFormat')}}</span>
           <span class="value">
-            <label class="radio-inline">
+            <span class="radio-inline">
               <input type="radio" name="log-format-radio"
                 v-bind:value="logsFormat.ANSI"
                 v-bind:checked="logsFormat.ANSI == logsSettingsFormat"
-                v-on:change="onLogsFormatChange($event)">{{i18n('app.container.details.logsFormatAnsi')}}
-            </label>
-            <label class="radio-inline">
+                v-on:change="onLogsFormatChange($event)">
+              <label>{{i18n('app.container.details.logsFormatAnsi')}}</label>
+            </span>
+            <span class="radio-inline">
               <input type="radio" name="log-format-radio"
                 v-bind:value="logsFormat.RAW"
                 v-bind:checked="logsFormat.RAW == logsSettingsFormat"
-                v-on:change="onLogsFormatChange($event)">{{i18n('app.container.details.logsFormatRaw')}}
-            </label>
+                v-on:change="onLogsFormatChange($event)">
+              <label>{{i18n('app.container.details.logsFormatRaw')}}</label>
+            </span>
           </span>
         </div>
       </div>

@@ -20,15 +20,15 @@
       </div>
       <div class="welcome-holder">
         <div class="welcome">
-          <div class="welcome-title">{{i18n("app.homepage.welcome")}}</div>
+          <h1 class="welcome-title">{{i18n("app.homepage.welcome")}}</h1>
           <!-- Notice that the mustaches are triple in order to un-escape HTML bold tags -->
-          <div class="welcome-description">
+          <h2 class="welcome-description">
             <div>{{{i18n("app.homepage.description")}}}</div>
             <div>{{{i18n("app.homepage.start")}}}</div>
-          </div>
+          </h2>
           <div class="buttonBar" v-bind:class="{'buttonBar-hidden': model.loginView}">
-            <button class="admiral-btn enter-btn" v-on:click="openHosts($event)">{{i18n("app.homepage.enter")}}</button>
-            <button class="admiral-btn-secondary addHost-btn" v-on:click="openAddHost($event)">{{i18n("app.homepage.addHost")}}</button>
+            <button class="btn btn-primary enter-btn" v-on:click="openHosts($event)">{{i18n("app.homepage.enter")}}</button>
+            <button class="btn btn-outline addHost-btn" v-on:click="openAddHost($event)">{{i18n("app.homepage.addHost")}}</button>
             <a v-if="model.isContextAwareHelpAvailable" href="#" class="helpcenter-link" @click="openHelp($event)">{{i18n("app.homepage.helpCenter")}}</a>
           </div>
         </div>
@@ -36,7 +36,7 @@
     </div>
     <div class="bottom">
       <div class="steps-description">{{i18n("app.homepage.steps.description")}}</div>
-      <div class="steps-boxes">
+      <div class="steps-boxes row">
         <div class="col-sm-4">
           <div class="step-box">
             <div class="step-index">1</div>

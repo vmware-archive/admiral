@@ -16,20 +16,23 @@
                          v-bind:confirmable="true"></title-action-button>
   </list-title>
 
-  <ul class="nav nav-pills nav-justified" role="tablist">
-    <li role="presentation" class="active"><a
-      href="#" aria-controls="all-events" role="tab"
+  <ul class="nav" role="tablist">
+    <li role="presentation" class="nav-item"><a
+      class="nav-link"
+      href="#all" aria-controls="all-events" role="tab"
       v-on:click="selectTab($event, 'all')">{{i18n('app.eventlog.tabs.all')}}</a></li>
-    <li role="presentation"><a
-      href="#" aria-controls="warning-events" role="tab"
+    <li role="presentation" class="nav-item"><a
+      class="nav-link"
+      href="#warning" aria-controls="warning-events" role="tab"
       v-on:click="selectTab($event, 'warning')">{{i18n('app.eventlog.tabs.warnings')}}</a></li>
-    <li role="presentation"><a
-      href="#" aria-controls="error-events" role="tab"
+    <li role="presentation" class="nav-item"><a
+      class="nav-link"
+      href="#error" aria-controls="error-events" role="tab"
       v-on:click="selectTab($event, 'error')">{{i18n('app.eventlog.tabs.errors')}}</a></li>
   </ul>
 
   <div class="tab-content">
-    <div role="tabpanel" class="tab-pane active" id="all" v-infinite-scroll="loadMore('all')">
+    <div role="tabpanel" class="tab-pane" id="all" v-infinite-scroll="loadMore('all')">
       <eventlog-item v-for="event in model.items | asMutable | orderBy 'documentUpdateTimeMicros' -1"
                     track-by="documentSelfLink"
                     v-bind:model="event">

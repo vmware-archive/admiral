@@ -23,7 +23,7 @@
                   v-bind:query-options="queryOptions"
                   v-on:search-change="search"
                   ></search>
-          <a href="#/registries" class="admiral-btn-secondary manage-registry-btn"
+          <a href="#/registries" class="btn btn-outline manage-registry-btn"
             ><i class="fa fa-server"></i>{{i18n("app.template.list.manageRegistry")}}</a>
         </div>
         <div class="grid-container">
@@ -34,7 +34,7 @@
                       v-bind:title-search="i18n('app.template.list.titleSearch')">
             <div class="import-template">
               <a href="#/import-template" class="btn btn-circle-outline">
-                <i class="fa fa-upload" data-toggle="tooltip" data-placement="right" title="{{i18n('app.template.import.importTemplateTooltip')}}"></i>
+                <i class="fa fa-upload" v-tooltip="i18n('app.template.import.importTemplateTooltip')"></i>
               </a>
             </div>
           </list-title>

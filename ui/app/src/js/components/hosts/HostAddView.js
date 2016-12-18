@@ -279,8 +279,6 @@ var HostAddView = Vue.extend({
     this.unwatchShouldAcceptCertificate = this.$watch('model.shouldAcceptCertificate', () => {
       this.updateCertificateModal(this.model.shouldAcceptCertificate);
     });
-
-    $(this.$el).find('.fa-question-circle').tooltip({html: true});
   },
 
   detached: function() {

@@ -1,8 +1,15 @@
+@import "color/color.clarity";
+
+/* bootstrap mixin feature toggles */
+$enable-shadows: true;
+$enable-gradients: true;
+$enable-transitions: true;
+
 $vmw_blue_top: #3888c5;
 $vmw_blue_bottom: #225277;
 $vmw_lightblue: #3888c5;
 
-$main_color: #3399cc;
+$main_color: $clr-action-blue;
 $main-color-80: rgba(51, 153, 204, 0.80);
 $main-color-semi: rgba(51, 153, 204, 0.50);
 $link_color: #356f9b;
@@ -22,21 +29,13 @@ $admiral-black: #333;
 // Overriding bootstrap variables
 $table-bg-accent: #FFFFFF;
 $table-bg-accent-even: #f3f3f3;
-$tooltip-color: #333;
-$tooltip-bg: #fff;
-$tooltip-opacity: 1;
-$tooltip-arrow-width: 6px;
 $progress-bg: #ccc;
-// Custom tooltip property
-$tooltip-border-color: #ccc;
 $brand-success: #669900;
 $brand-warning: #FFCC00;
 $brand-danger: #FF0000;
 $brand-info: $main_color;
 $brand-hint-color: #636363;
 $brand-hint-background-color: #fff8be;
-
-$tooltip-arrow-color: $tooltip-border-color;
 
 $context-view-background-color: #f7f7f7;
 $modal-with-help-icon-left-padding: 40px;

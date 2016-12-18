@@ -67,7 +67,6 @@ var EventLogListVueComponent = Vue.extend({
           e.preventDefault();
           this.hideDeleteConfirmationButtons(e);
         });
-
       },
 
       detached: function() {
@@ -128,7 +127,9 @@ var EventLogListVueComponent = Vue.extend({
       }
     }
   },
-
+  attached: function() {
+    $(this.$el).find('.nav-item a[href="#all"]').tab('show');
+  },
   methods: {
     detached: function() {
       actions.EventLogActions.closeEventLog();

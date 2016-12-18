@@ -63,12 +63,14 @@
           <div class="form-group closure-source-mode-input">
             <label class="col-sm-3 control-label">{{i18n 'app.closure.request.inputs.sourceMode'}}</label>
             <span class="col-sm-9">
-              <label class="radio-inline">
-                <input type="radio" name="health-protocol-radio" id="source-provided" value="Source">{{i18n 'app.closure.request.inputs.sourceProvided'}}
-              </label>
-              <label class="radio-inline">
-                <input type="radio" name="health-protocol-radio" id="source-url" value="SourceURL">{{i18n 'app.closure.request.inputs.sourceFromURL'}}
-              </label>
+              <div class="radio-inline">
+                <input type="radio" name="health-protocol-radio" id="source-provided" value="Source">
+                <label for="source-provided">{{i18n 'app.closure.request.inputs.sourceProvided'}}</label>
+              </div>
+              <div class="radio-inline">
+                <input type="radio" name="health-protocol-radio" id="source-url" value="SourceURL">
+                 <label for="source-url">{{i18n 'app.closure.request.inputs.sourceFromURL'}}</label>
+              </div>
             </span>
           </div>
           <div class="form-group closure-source-code-input">

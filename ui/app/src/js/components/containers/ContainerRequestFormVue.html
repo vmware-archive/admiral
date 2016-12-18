@@ -24,12 +24,12 @@
         <option v-if="clearSelectionSupported()" value="">{{i18n('noSelection')}}</option>
       </select>
     </div>
-    <button class="btn admiral-btn"
+    <button class="btn btn-primary"
             v-bind:class="{'loading': creatingContainer}"
             v-bind:disabled="buttonsDisabled"
             v-on:click="createContainer()">{{i18n('app.container.request.provision')}}<i
                 class="fa fa-spinner fa-spin loader-inline"></i></button>
-    <button class="btn admiral-btn admiral-btn-secondary save-container-template"
+    <button class="btn btn-outline save-container-template"
             v-bind:class="{'loading': savingTemplate}"
             v-bind:disabled="buttonsDisabled"
             v-on:click="saveTemplate()">{{i18n('app.container.request.saveTemplate')}}<i

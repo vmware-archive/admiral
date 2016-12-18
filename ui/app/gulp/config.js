@@ -10,7 +10,8 @@ var jsLibsToCopy = [
   './node_modules/es5-shim/es5-shim.js',
   './node_modules/babel-polyfill/dist/polyfill.js',
   './node_modules/i18next-client/i18next.js',
-  './node_modules/bootstrap-sass/assets/javascripts/bootstrap.js',
+  './node_modules/tether/dist/js/tether.js',
+  './node_modules/bootstrap/dist/js/bootstrap.js',
   './node_modules/reflux/dist/reflux.js',
   './node_modules/signals/dist/signals.min.js',
   './node_modules/crossroads/dist/crossroads.js',
@@ -42,7 +43,8 @@ var jsLibsToCopyMinified = [
   './node_modules/es5-shim/es5-shim.min.js',
   './node_modules/babel-polyfill/dist/polyfill.min.js',
   './node_modules/i18next-client/i18next.min.js',
-  './node_modules/bootstrap-sass/assets/javascripts/bootstrap.min.js',
+  './node_modules/tether/dist/js/tether.min.js',
+  './node_modules/bootstrap/dist/js/bootstrap.min.js',
   './node_modules/reflux/dist/reflux.min.js',
   './node_modules/signals/dist/signals.min.js',
   './node_modules/crossroads/dist/crossroads.min.js',
@@ -161,9 +163,14 @@ module.exports = {
     dest: dest + '/fonts',
   },
   styles: {
-    src: [src + '/styles/**/*.{sass,scss,css}', './node_modules/bootstrap-tokenfield/dist/css/*.css', './node_modules/font-awesome/css/*.css'],
+    src: [
+      src + '/styles/**/*.{sass,scss,css}',
+      './node_modules/bootstrap-tokenfield/dist/css/*.css',
+      './node_modules/clarity-ui/*.css',
+      './node_modules/font-awesome/css/*.css'
+    ],
     dest: dest + '/styles',
-    includePaths:  ['./node_modules/bootstrap-sass/assets/stylesheets', './node_modules/font-awesome/scss']
+    includePaths:  ['./node_modules/bootstrap-sass/assets/stylesheets', './node_modules/clarity-ui/src']
   },
   i18n: {
     src: src + '/messages/**/*.json',

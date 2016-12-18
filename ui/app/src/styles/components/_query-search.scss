@@ -12,12 +12,8 @@
   position: relative;
   height: auto;
   padding: 7px 12px 7px 12px;
-  border-radius: 20px;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
   white-space: nowrap;
   overflow: hidden;
-  @include box-shadow(inset 0px 3px 10px 0px rgba(0,0,0,0.1));
   display: table-cell;
   vertical-align: top;
   width: 100%;
@@ -36,11 +32,7 @@
   min-width: 38px;
   width: auto;
   padding: 1px 0px 1px 12px;
-  border-radius: 20px;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
   border-right: 0;
-  @include box-shadow(inset 0px 3px 10px 0px rgba(0,0,0,0.1));
 }
 
 .query-search-input .query-search-input-controls {
@@ -49,7 +41,7 @@
 
 .query-search-input .query-search-input-controls .btn {
   outline: none;
-  border-radius: 20px;
+  box-shadow: none;
   padding: 0;
   border: none;
   padding-right: 5px;
