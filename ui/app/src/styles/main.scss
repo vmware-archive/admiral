@@ -1678,10 +1678,6 @@ body > .loading, .container-details > .content .loading {
   margin: 0;
 }
 
-.table-striped > tbody > tr:nth-of-type(even) {
-  background-color: $table-bg-accent-even
-}
-
 .table > thead > tr > th {
   border-bottom: 1px solid #d3d3d3;
 }

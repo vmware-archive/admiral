@@ -44,15 +44,9 @@
   }
 }
 
-.inline-editable-list .table-striped > tbody > tr:nth-of-type(even) .table-actions .delete-inline-item-confirmation {
-  background-color: $table-bg-accent-even;
-}
 
-.inline-editable-list .table-striped > tbody > tr:nth-of-type(odd) .table-actions .delete-inline-item-confirmation {
-  background-color: $table-bg-accent;
-}
-
-.inline-editable-list .table-striped > tbody > tr:hover, .inline-editable-list .table-striped > tbody > tr:hover .table-actions .delete-inline-item-confirmation {
+.inline-editable-list .table-striped > tbody > tr .table-actions .delete-inline-item-confirmation {
+  background-color: $admiral-table-bgcolor;
 }
 
 .inline-editable-list .table .item.active .item-expand,
@@ -277,9 +271,7 @@
 .inline-editable-list .table > thead > tr  {
   overflow: auto;
 }
-.inline-editable-list .table > tbody > tr > td {
-  border-top: none;
-}
+
 .inline-editable-list .table > thead > tr > th:first-child, .table > thead > tr > td:first-child, .table > tbody > tr > th:first-child, .table > tbody > tr > td:first-child, .table > tfoot > tr > th:first-child, .table > tfoot > tr > td:first-child {
   padding-left: 12px;
 }
