@@ -166,7 +166,7 @@ var utils = {
   },
 
   areClosuresAllowed: function() {
-    return this.getConfigurationPropertyBoolean('allow.closures');
+    return this.getConfigurationPropertyBoolean('allow.closures') && !this.isApplicationEmbedded();
   },
 
   setIn: function(immutableObject, path, value) {

@@ -375,7 +375,7 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
             throws Exception {
         Closure fetchedClosure = getClosure(taskLink);
         long startTime = System.currentTimeMillis();
-        while (state != fetchedClosure.state && !isTimeoutElapsed(startTime, 60)) {
+        while (state != fetchedClosure.state && !isTimeoutElapsed(startTime, 120)) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
