@@ -49,6 +49,7 @@ let PlacementZonesStore = Reflux.createStore({
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
 
   init: function() {
+    this.setInData(['deleteConfirmationLoading'], false);
   },
 
   onRetrievePlacementZones: function() {
@@ -215,11 +216,14 @@ let PlacementZonesStore = Reflux.createStore({
   },
 
   onDeletePlacementZone: function(config) {
+    this.setInData(['deleteConfirmationLoading'], true);
+    this.emitChange();
     services.deletePlacementZone(config).then(() => {
       var configs = this.data.items.filter((cfg) =>
           cfg.documentSelfLink !== config.documentSelfLink);
 
       this.setInData(['items'], configs);
+      this.setInData(['deleteConfirmationLoading'], false);
       this.emitChange();
     }).catch((e) => {
       var validationErrors = utils.getValidationErrors(e);
@@ -231,6 +235,7 @@ let PlacementZonesStore = Reflux.createStore({
       setTimeout(() => {
         this.setInData(['updatedItem'], null);
         this.setInData(['validationErrors'], null);
+        this.setInData(['deleteConfirmationLoading'], false);
         this.emitChange();
       }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
     });

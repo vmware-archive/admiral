@@ -36,7 +36,6 @@ var PlacementZonesView = Vue.extend({
     };
     return {
       deleteConfirmationItem: null,
-      deleteConfirmationLoading: false,
       sortKey: '',
       sortOrders: sortOrders
     };
@@ -46,6 +45,9 @@ var PlacementZonesView = Vue.extend({
       var items = this.model.items;
 
       return items ? Object.keys(items).length : 0;
+    },
+    isDeleteConfirmationLoading: function() {
+      return this.model.deleteConfirmationLoading;
     }
   },
   methods: {
@@ -107,7 +109,6 @@ var PlacementZonesView = Vue.extend({
       $event.stopImmediatePropagation();
       $event.preventDefault();
 
-      this.deleteConfirmationLoading = false;
       this.deleteConfirmationItem = item;
     },
     cancelDelete: function($event) {
@@ -121,7 +122,6 @@ var PlacementZonesView = Vue.extend({
       $event.preventDefault();
 
       PlacementZonesActions.deletePlacementZone(this.deleteConfirmationItem);
-      this.deleteConfirmationLoading = true;
     },
     sortBy: function(key) {
       this.sortKey = key;

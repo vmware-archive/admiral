@@ -135,10 +135,10 @@
                                   v-on:click="cancelDelete($event)"><span>{{i18n('cancel')}}</span></a>
                       <a href="#" class="delete-inline-item-confirmation-confirm"
                                   v-on:click="deleteItem($event)">
-                        <span v-bind:class="{'not-underlined': deleteConfirmationLoading}">
+                        <span v-bind:class="{'not-underlined': isDeleteConfirmationLoading}">
                           {{i18n('delete')}}
                           <i class="fa fa-spinner fa-spin loader-inline"
-                              v-bind:class="{hide: !deleteConfirmationLoading}"></i>
+                              v-bind:class="{hide: !isDeleteConfirmationLoading}"></i>
                         </span>
                       </a>
                     </div>
