@@ -935,10 +935,10 @@ log.info(&quot;Event logs after removing: &quot; + eventLogs);</stringProp>
           </BeanShellPostProcessor>
           <hashTree/>
         </hashTree>
-        <TestAction guiclass="TestActionGui" testclass="TestAction" testname="sleep 60s - wait for the nodes to sync(cluster)" enabled="true">
+        <TestAction guiclass="TestActionGui" testclass="TestAction" testname="sleep 180s - wait for the nodes to sync(cluster)" enabled="true">
           <intProp name="ActionProcessor.action">1</intProp>
           <intProp name="ActionProcessor.target">0</intProp>
-          <stringProp name="ActionProcessor.duration">60000</stringProp>
+          <stringProp name="ActionProcessor.duration">180000</stringProp>
         </TestAction>
         <hashTree/>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET containers count /resources/containers" enabled="true">
@@ -994,7 +994,7 @@ if (error){
           </BeanShellAssertion>
           <hashTree/>
         </hashTree>
-        <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+        <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="false">
           <boolProp name="LoopController.continue_forever">true</boolProp>
           <stringProp name="LoopController.loops">20</stringProp>
         </LoopController>
