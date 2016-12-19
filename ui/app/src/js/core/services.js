@@ -1809,19 +1809,19 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
   }
 
   if (onlyCompute === false) {
-    qOps['customProperties/__computeType'] = [
+    qOps.type = [
       {
         op: 'eq',
-        val: 'VirtualMachine'
+        val: 'VM_GUEST'
       }
     ];
   }
 
   if (onlyCompute === true) {
-    qOps['customProperties/__computeType'] = [
+    qOps.type = [
       {
-        op: 'ne',
-        val: 'VirtualMachine'
+        op: 'eq',
+        val: 'VM_HOST'
       }
     ];
   }
@@ -1873,7 +1873,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
 
     var typeArray = toArrayIfDefined(queryOptions.type);
     if (typeArray) {
-      userQueryOps['customProperties/__computeType'] = typeArray.map((type) => {
+      userQueryOps.type = typeArray.map((type) => {
         return {
           val: '*' + type + '*',
           op: 'eq'
