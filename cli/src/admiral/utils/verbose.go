@@ -60,6 +60,7 @@ func CheckVerboseResponse(resp *http.Response) {
 	}
 	//Read
 	buf, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
 	CheckBlockingError(err)
 
 	//Create 2 new readers.

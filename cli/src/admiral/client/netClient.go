@@ -28,8 +28,6 @@ import (
 
 	"admiral/config"
 	"admiral/utils"
-	//"net/url"
-	//"reflect"
 )
 
 const (
@@ -107,7 +105,7 @@ func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 	utils.CheckResponse(err, admiralHostUrl)
 	utils.CheckVerboseResponse(resp)
 	if err = CheckResponseError(resp, from); err != nil {
-		return resp, nil, err
+		return nil, nil, err
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
@@ -123,6 +121,7 @@ func CheckResponseError(resp *http.Response, tokenFrom string) error {
 	}
 	if resp.StatusCode >= 400 && resp.StatusCode <= 500 {
 		body, err := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
 		//Create 2 new readers.
 		//rdrToUse will be modified. rdrToSet will stay the same and set back to the request.
 		rdrToUse := ioutil.NopCloser(bytes.NewBuffer(body))

@@ -21,6 +21,7 @@ import (
 
 	"strings"
 
+	"admiral/config"
 	"github.com/spf13/cobra"
 )
 
@@ -178,6 +179,7 @@ var appRunCmd = &cobra.Command{
 }
 
 func initAppRun() {
+	appRunCmd.Flags().IntVar(&customTimeout, "timeout", 0, customTimeoutDesc)
 	appRunCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
 	appRunCmd.Flags().StringVar(&dirF, "file", "", "Provision template from file.")
 	appRunCmd.Flags().BoolVar(&keepTemplate, "keep", false, keepTemplateDesc)
@@ -196,6 +198,10 @@ func RunAppRun(args []string) (string, error) {
 		ok  bool
 		id  string
 	)
+
+	if customTimeout != 0 {
+		config.TASK_TIMEOUT = customTimeout
+	}
 
 	if !utils.IsVraMode {
 		if dirF != "" {

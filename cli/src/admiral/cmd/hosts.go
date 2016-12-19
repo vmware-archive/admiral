@@ -24,6 +24,7 @@ import (
 
 	"admiral/endpoints/instancetypes"
 
+	"admiral/config"
 	"github.com/spf13/cobra"
 )
 
@@ -270,6 +271,7 @@ var hostCreateAwsCmd = &cobra.Command{
 
 func initHostCreateAws() {
 	hostCreateAwsCmd.SetOutput(tabwriter.NewWriter(os.Stdout, 5, 0, 5, ' ', 0))
+	hostCreateAwsCmd.Flags().IntVar(&customTimeout, "timeout", 0, customTimeoutDesc)
 	hostCreateAwsCmd.Flags().StringVar(&endpointId, "endpoint", "", required+endpointIdDesc)
 	hostCreateAwsCmd.Flags().StringVar(&hostOS, "os", "", required+hostOSDesc)
 	hostCreateAwsCmd.Flags().StringVar(&instanceType, "instance-type", "", required+instanceTypeDesc)
@@ -296,6 +298,11 @@ func RunHostCreateAws(args []string) (string, error) {
 	if name, ok = ValidateArgsCount(args); !ok {
 		return "", MissingHostNameError
 	}
+
+	if customTimeout != 0 {
+		config.TASK_TIMEOUT = customTimeout
+	}
+
 	return hosts.CreateHostAws(name, endpointId, instanceType, hostOS, guestCred, int(clusterSize), tags, custProps, asyncTask)
 }
 
@@ -311,6 +318,7 @@ var hostCreateAzureCmd = &cobra.Command{
 
 func initHostCreateAzure() {
 	hostCreateAzureCmd.SetOutput(tabwriter.NewWriter(os.Stdout, 5, 0, 5, ' ', 0))
+	hostCreateAzureCmd.Flags().IntVar(&customTimeout, "timeout", 0, customTimeoutDesc)
 	hostCreateAzureCmd.Flags().StringVar(&endpointId, "endpoint", "", required+endpointIdDesc)
 	hostCreateAzureCmd.Flags().StringVar(&hostOS, "os", "", required+hostOSDesc)
 	hostCreateAzureCmd.Flags().StringVar(&instanceType, "instance-type", "", required+instanceTypeDesc)
@@ -337,6 +345,11 @@ func RunHostCreateAzure(args []string) (string, error) {
 	if name, ok = ValidateArgsCount(args); !ok {
 		return "", MissingHostNameError
 	}
+
+	if customTimeout != 0 {
+		config.TASK_TIMEOUT = customTimeout
+	}
+
 	return hosts.CreateHostAzure(name, endpointId, instanceType, hostOS, guestCred, int(clusterSize), tags, custProps, asyncTask)
 }
 
@@ -352,6 +365,7 @@ var hostCreateVsphereCmd = &cobra.Command{
 
 func initHostCreateVsphere() {
 	hostCreateVsphereCmd.SetOutput(tabwriter.NewWriter(os.Stdout, 5, 0, 5, ' ', 0))
+	hostCreateVsphereCmd.Flags().IntVar(&customTimeout, "timeout", 0, customTimeoutDesc)
 	hostCreateVsphereCmd.Flags().StringVar(&endpointId, "endpoint", "", required+endpointIdDesc)
 	hostCreateVsphereCmd.Flags().StringVar(&hostOS, "os", "", required+hostOSDesc)
 	hostCreateVsphereCmd.Flags().StringVar(&instanceType, "instance-type", "", required+instanceTypeDesc)
@@ -380,5 +394,10 @@ func RunHostCreateVsphere(args []string) (string, error) {
 	if name, ok = ValidateArgsCount(args); !ok {
 		return "", MissingHostNameError
 	}
+
+	if customTimeout != 0 {
+		config.TASK_TIMEOUT = customTimeout
+	}
+
 	return hosts.CreateHostVsphere(name, endpointId, instanceType, hostOS, destination, guestCred, int(clusterSize), tags, custProps, asyncTask)
 }

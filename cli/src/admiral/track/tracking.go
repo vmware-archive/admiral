@@ -91,8 +91,11 @@ func getOperationResponse(respBody []byte) *OperationResponse {
 }
 
 const (
-	SubstageCompleted          = "COMPLETED"
-	SubstageError              = "ERROR"
+	SubstageCompleted = "COMPLETED"
+	SubstageError     = "ERROR"
+	StageFinished     = "FINISHED"
+	StageFailed       = "FAILED"
+
 	ProvisionResourceOperation = "PROVISION_RESOURCE"
 )
 
@@ -131,12 +134,12 @@ func Wait(taskId string, operationType string) ([]string, error) {
 			resourceLinks = taskStatus.ResourceLinks
 			pb.FillUp()
 			break
-		} else if taskStatus.SubStage == SubstageError {
+		} else if isTaskFailed(taskStatus) {
 			result = taskStatus.SubStage
-			err = getErrorMessage(req)
+			err = getErrorMessage(taskStatus)
 			break
 		}
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	if !utils.Quiet {
@@ -146,32 +149,26 @@ func Wait(taskId string, operationType string) ([]string, error) {
 	return resourceLinks, err
 }
 
-func getErrorMessage(statusReq *http.Request) error {
-	//Wait because sometimes event log link is not generated.
-	time.Sleep(1 * time.Second)
-	_, respBody, respErr := client.ProcessRequest(statusReq)
-	if respErr != nil {
-		return respErr
-	}
-	taskStatus := &TaskStatus{}
-	err := json.Unmarshal(respBody, taskStatus)
-	utils.CheckBlockingError(err)
+func getErrorMessage(taskStatus *TaskStatus) error {
 	if taskStatus.EventLogLink == "" {
 		return errors.New("No event log link.")
 	}
 	url := config.URL + taskStatus.EventLogLink
 	req, _ := http.NewRequest("GET", url, nil)
-	_, respBody, respErr = client.ProcessRequest(req)
+	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return respErr
 	}
 	event := &events.EventInfo{}
-	err = json.Unmarshal(respBody, event)
+	err := json.Unmarshal(respBody, event)
 	utils.CheckBlockingError(err)
 	return errors.New(event.Description)
 }
 
 func isTaskCompleted(taskStatus *TaskStatus, operationType string) bool {
+	if taskStatus.TaskInfo.Stage != StageFinished {
+		return false
+	}
 	if taskStatus.SubStage == SubstageCompleted && operationType == ProvisionResourceOperation {
 		if taskStatus.ResourceLinks == nil || len(taskStatus.ResourceLinks) == 0 {
 			return false
@@ -181,6 +178,16 @@ func isTaskCompleted(taskStatus *TaskStatus, operationType string) bool {
 		return true
 	}
 	return false
+}
+
+func isTaskFailed(taskStatus *TaskStatus) bool {
+	if taskStatus.TaskInfo.Stage != StageFailed {
+		return false
+	}
+	if taskStatus.SubStage == SubstageError && taskStatus.EventLogLink == "" {
+		return false
+	}
+	return true
 }
 
 type ProgressBar struct {

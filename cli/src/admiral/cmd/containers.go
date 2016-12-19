@@ -18,6 +18,7 @@ import (
 	"os"
 	"strings"
 
+	"admiral/config"
 	"admiral/containers"
 	"admiral/help"
 	"admiral/utils"
@@ -365,6 +366,7 @@ var containerRunCmd = &cobra.Command{
 }
 
 func initContainerRun() {
+	containerRunCmd.Flags().IntVar(&customTimeout, "timeout", 0, customTimeoutDesc)
 	containerRunCmd.Flags().StringVar(&cpuShares, "cpu-shares", "", cpuSharesDesc)
 	containerRunCmd.Flags().Int32Var(&clusterSize, "cluster-size", 1, clusterSizeDesc)
 	containerRunCmd.Flags().StringSliceVar(&cmds, "cmd", []string{}, cmdsDesc)
@@ -405,6 +407,11 @@ func RunContainerRun(args []string) (string, []error) {
 		err := errors.New("Image name not provided.")
 		return "", []error{err}
 	}
+
+	if customTimeout != 0 {
+		config.TASK_TIMEOUT = customTimeout
+	}
+
 	cd := &containers.ContainerDescription{}
 
 	err := cd.SetImage(imageName)

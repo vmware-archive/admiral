@@ -145,6 +145,11 @@ func Loginvra(username, password, tenant, urlF string) (string, error) {
 	}
 	respLogin := &ResponseLoginVRA{}
 	err = json.Unmarshal(respBody, &respLogin)
+
+	if err != nil || respLogin.Id == "" {
+		return "", LoginFailedError
+	}
+
 	utils.MkCliDir()
 	tokenFile, err := os.Create(utils.TokenPath())
 

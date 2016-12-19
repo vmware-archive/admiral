@@ -243,6 +243,10 @@ var (
 	endpointHostNameDesc = "Host name or IP."
 	datacenterName       string
 	datacenterNameDesc   = "Datacenter name."
+
+	//custom timeout flags
+	customTimeout     int
+	customTimeoutDesc = "Set custom task timeout (seconds)."
 )
 
 var admiralLogo = `
