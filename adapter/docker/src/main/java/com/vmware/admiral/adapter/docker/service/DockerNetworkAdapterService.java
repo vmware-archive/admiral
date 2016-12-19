@@ -21,9 +21,11 @@ import java.net.ProtocolException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.http.HttpStatus;
 
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -33,6 +35,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkService.Cont
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
@@ -44,6 +47,13 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
     public static final List<String> DOCKER_PREDEFINED_NETWORKS = Arrays.asList("none", "host",
             "bridge", "docker_gwbridge");
+
+    private static final List<Integer> RETRIABLE_HTTP_STATUSES = Arrays.asList(
+            HttpStatus.SC_INTERNAL_SERVER_ERROR
+    );
+
+    private static final int NETWORK_CREATE_RETRIES_COUNT = Integer.getInteger(
+            "com.vmware.admiral.adapter.network.create.retries", 3);
 
     private static class RequestContext {
         public NetworkRequest request;
@@ -131,7 +141,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
         try {
             switch (context.request.getOperationType()) {
             case CREATE:
-                processCreateNetwork(context);
+                processCreateNetwork(context, 0);
                 break;
 
             case DELETE:
@@ -164,7 +174,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
         }
     }
 
-    private void processCreateNetwork(RequestContext context) {
+    private void processCreateNetwork(RequestContext context, int retriesCount) {
         AssertUtil.assertNotNull(context.networkState, "networkState");
         AssertUtil.assertNotEmpty(context.networkState.name, "networkState.name");
 
@@ -194,7 +204,17 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
         context.executor.createNetwork(createCommandInput, (op, ex) -> {
             if (ex != null) {
-                fail(context.request, ex);
+                AtomicInteger retryCount = new AtomicInteger(retriesCount);
+                if (RETRIABLE_HTTP_STATUSES.contains(op.getStatusCode())
+                        && retryCount.getAndIncrement() < NETWORK_CREATE_RETRIES_COUNT) {
+                    // retry if failure is retriable
+                    logWarning("Create network %s failed with %s. Retries left %d",
+                            context.networkState.name, Utils.toString(ex),
+                            NETWORK_CREATE_RETRIES_COUNT - retryCount.get());
+                    processCreateNetwork(context, retryCount.get());
+                } else {
+                    fail(context.request, ex);
+                }
             } else {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> body = op.getBody(Map.class);
