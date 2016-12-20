@@ -507,55 +507,42 @@ $main-list-view-right: 10px;
   font-weight: 300;
 }
 
-.view-title .title-tab {
-  display: table-cell;
-  width: 50%;
+.view-title {
+  .title-tab {
+    @extend .btn;
+    display: table-cell;
+    width: 50%;
 
-  vertical-align: top;
-  text-align: center;
-  padding: 2px;
+    font-size: 20px;
 
-  color: $main_color;
-  background-color: white;
-  border: 1px solid $main_color;
-
-  font-size: 20px;
-  font-weight: 400;
+    a, a:hover, a:active {
+      color: $main_color;
+      text-decoration: none;
+    }
+  }
+  .title-tab.selected {
+    background-color: $main_color;
+    cursor: initial;
+    a, a:hover, a:active {
+      color: #FFFFFF;
+      text-decoration: none;
+    }
+  }
 }
 
 .title-tab.left {
-  border-top-left-radius: 20px;
-  border-bottom-left-radius: 20px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .title-tab.right {
-  border-top-right-radius: 20px;
-  border-bottom-right-radius: 20px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 .title-tab.single {
   border-radius: 20px;
 }
-
-.title-tab.selected {
-  background-color: $main_color;
-  color: white;
-}
-
-.title-tab a {
-  color: $main_color;
-  cursor: pointer;
-}
-
-.title-tab a:hover {
-  text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.5);
-  text-decoration: none;
-}
-
-.title-tab.selected a {
-  color: white;
-}
-
 .host-view .main-panel .host-form .form-group {
   margin-bottom: 15px;
 }
