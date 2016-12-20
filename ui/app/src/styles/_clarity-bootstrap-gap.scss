@@ -30,6 +30,7 @@ input:not([type]) {
   @include input-border-bottom-animation();
 }
 
+/* Bootstrap has a native caret style that renders a triangle, while Clarity, has a caret but as an Angular component */
 .caret {
   display: inline-block;
   width: 0;
@@ -124,5 +125,14 @@ input:not([type]) {
   }
   .tab-pane.active {
     display: block;
+  }
+}
+
+.nav {
+  li.disabled {
+    cursor: not-allowed;
+    > a {
+      pointer-events: none;
+    }
   }
 }

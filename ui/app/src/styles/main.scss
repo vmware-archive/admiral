@@ -1681,6 +1681,12 @@ body > .loading, .container-details > .content .loading {
   border-bottom: 1px solid #d3d3d3;
 }
 
+.form-group .dropdown .dropdown-options {
+  > li > a, .dropdown-options-hint {
+    padding: 0 20px;
+  }
+}
+
 .dropdown-options-hint {
   color: $secondary_hint_title_color;
 }

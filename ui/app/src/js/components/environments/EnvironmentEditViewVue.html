@@ -24,28 +24,27 @@
       </div>
 
       <div class="environment-definition-form">
-
         <div class="environment-form-content">
-          <ul class="nav nav-pills nav-justified" role="tablist">
-            <li role="presentation" class="active">
-              <a href="#basic" aria-controls="basic" role="tab" data-toggle="pill">
+          <ul class="nav" role="tablist">
+            <li role="presentation" class="nav-item">
+              <a href="#basic" class="nav-link" aria-controls="basic" role="tab" data-toggle="pill">
                 {{i18n('app.environment.edit.basicTab')}}
               </a>
             </li>
-            <li role="presentation" v-bind:class="{'disabled': saveDisabled}">
-              <a href="#compute" aria-controls="compute" role="tab" data-toggle="pill">
+            <li role="presentation" class="nav-item" v-bind:class="{'disabled': saveDisabled}">
+              <a href="#compute" class="nav-link" aria-controls="compute" role="tab" data-toggle="pill">
                 {{i18n('app.environment.edit.computeTab')}}
               </a>
             </li>
-            <li role="presentation" v-bind:class="{'disabled': saveDisabled}">
-              <a href="#network" aria-controls="network" role="tab" data-toggle="pill">
+            <li role="presentation" class="nav-item" v-bind:class="{'disabled': saveDisabled}">
+              <a href="#network" class="nav-link" aria-controls="network" role="tab" data-toggle="pill">
                 {{i18n('app.environment.edit.networkTab')}}
               </a>
             </li>
           </ul>
 
           <div class="tab-content">
-            <div role="tabpanel" class="tab-pane active" id="basic">
+            <div role="tabpanel" class="tab-pane" id="basic">
               <div class="form-horizontal">
 
                 <div class="form-group name">
@@ -80,7 +79,7 @@
                       <input class="tags-input">
                     </div>
                     <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
-                       title="{{i18n('app.host.details.tagsHint')}}"></i>
+                       v-tooltip="i18n('app.host.details.tagsHint')"></i>
                     <span class="help-block">{{i18n(validationErrors.tags)}}</span>
                   </div>
                 </div>

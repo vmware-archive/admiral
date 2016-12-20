@@ -75,12 +75,14 @@ var EnvironmentEditView = Vue.extend({
     }
   },
   attached: function() {
-    $(this.$el).find('.nav-pills a[data-toggle=pill]').on('click', function(e) {
+    $(this.$el).find('.nav a[data-toggle=pill]').on('click', function(e) {
       if ($(e.target).parent().hasClass('disabled')) {
         e.preventDefault();
         return false;
       }
     });
+
+    $(this.$el).find('.nav-item a[href="#basic"]').tab('show');
 
     this.tagsInput = new Tags($(this.$el).find('.tags .tags-input'));
 
