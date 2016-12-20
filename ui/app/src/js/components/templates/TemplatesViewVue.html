@@ -124,7 +124,7 @@
     </div>
 
    </div>
-  <context-sidepanel class="right-context-panel" v-if="showContextPanel">
+  <context-sidepanel class="right-context-panel" v-if="showContextPanel" v-on:close="closeToolbar()">
 
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item

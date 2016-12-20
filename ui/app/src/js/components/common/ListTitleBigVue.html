@@ -1,0 +1,13 @@
+<div class="title"><span>{{hasSearchQuery ? titleSearch : title}}</span>
+  <span v-if="count > -1" class="total-items">({{count}})</span>
+  <div class="title-big-actions" v-if="!actionName" transition="fade-in">
+    <slot></slot>
+    <big-action-button v-bind:name="'refresh'"
+                       v-bind:icon-name="'refresh'"
+                       v-bind:label="'Refresh'"
+                       v-bind:spinning="true"
+      ></big-action-button>
+  </div>
+  <action-confirmation v-else v-bind:action-name="actionName"
+                       v-bind:action-title="actionTitle"></action-confirmation>
+</div>

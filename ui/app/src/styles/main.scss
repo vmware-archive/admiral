@@ -1696,7 +1696,7 @@ body > .loading, .container-details > .content .loading {
 
   > .tab-content {
     @extend .position-expand;
-    top: 60px;
+    top: 80px;
     overflow-y: auto;
     overflow-x: hidden;
 
@@ -1707,42 +1707,18 @@ body > .loading, .container-details > .content .loading {
       display: block;
       border-bottom: 1px solid #ccc;
 
-      .request-status-actions {
-        position: absolute;
-        top: 22px;
-        right: 6px;
-        z-index: 10;
-        display: none;
-        padding-left: 2px;
-        background-color: white;
-
-        a {
-          color: #ccc;
-        }
-        a:hover {
-          color: $main_color;
-        }
-      }
-
-      .delete-inline-item-confirmation-holder {
-        position: absolute;
-        top: 0px;
-        right: 0px;
-        z-index: 10;
-      }
-
       .request-item {
-        cursor: pointer;
         text-decoration: none;
-        display: block;
+        display: inline-block;
         padding-top: 10px;
         padding-bottom: 10px;
         line-height: 16px;
-        width: 95%;
+        width: 100%;
 
         .title {
           margin-left: 5px;
           margin-right: 5px;
+          margin-bottom: 0px;
           .name {
             .fa {
               color: #838383;
@@ -1757,8 +1733,6 @@ body > .loading, .container-details > .content .loading {
         .progress {
           margin-left: 5px;
           margin-right: 5px;
-          margin-bottom: 0;
-          position: relative;
           height: 18px;
 
           .progress-bar {
@@ -1778,6 +1752,18 @@ body > .loading, .container-details > .content .loading {
           }
         }
 
+        .request-status-actions {
+          display: inline;
+          margin: 0px;
+          .btn.btn-circle-outline {
+            border-radius: 3px;
+            font-size: 9px;
+            min-width: 50px;
+            display: inline-block;
+            margin-left: 2px;
+          }
+        }
+
         .stage {
           font-size: 11px;
         }
@@ -1789,26 +1775,16 @@ body > .loading, .container-details > .content .loading {
         .details {
           cursor: pointer;
         }
-
-        .error-message {
-          margin: 2px 2px 2px 5px;
-          color: $brand-danger;
-
-          span {
-            font-size: 12px;
-          }
-        }
       }
 
-      .request-item[disabled] {
-        opacity: 1;
+      .delete-inline-item-confirmation-holder {
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        z-index: 11;
       }
     }
   }
-}
-
-.requests-list > .tab-content .request-item-holder:hover .request-status-actions {
-  display: block;
 }
 
 .requests-list > .tab-content .request-item-holder:hover {
@@ -1828,23 +1804,33 @@ body > .loading, .container-details > .content .loading {
 
   > .tab-content {
     @extend .position-expand;
-    top: 60px;
+    top: 80px;
     overflow-y: auto;
     overflow-x: hidden;
 
     .highlight-item {
-      @include box-shadow(0px 0px 15px 5px rgba(102,153,0,0.35));
+      @include box-shadow(0px 2px 10px 1px $main-color-semi);
     }
 
     .eventlog-actions {
       position: absolute;
-      top: 1px;
-      bottom: 0;
-      right: 0;
+      top: 10px;
+      right: 4px;
       z-index: 10;
-      display: none;
-      padding-left: 2px;
-      background-color: $context-view-background-color;
+      display: inline-block;
+      width: 110px;
+      text-align: right;
+      background-color: rgb(247, 247, 247);
+      padding-bottom: 2px;
+
+      .btn.btn-circle-outline {
+        border-radius: 3px;
+        font-size: 9px;
+        width: 50px;
+        float: right;
+        display: inline;
+        margin: 0px 2px 0px 2px;
+      }
     }
 
     .delete-inline-item-confirmation-holder {
@@ -1872,6 +1858,7 @@ body > .loading, .container-details > .content .loading {
         border-width: 0px 0px 0px 3px;
         padding-left: 5px;
         overflow-wrap: break-word;
+        width: 74%;
 
         .timestamp {
           font-size: 12px;
@@ -1880,15 +1867,6 @@ body > .loading, .container-details > .content .loading {
             margin-right: 5px;
           }
         }
-      }
-
-      .btn {
-        padding: 0;
-        color: $secondary_hint_title_color;
-      }
-
-      .btn:hover {
-        color: $main_color;
       }
 
       .event-type-info {
@@ -1901,12 +1879,6 @@ body > .loading, .container-details > .content .loading {
 
       .event-type-error {
         border-left-color: #ff0000;
-      }
-    }
-
-    .eventlog-item:hover {
-      .eventlog-actions {
-        display: block;
       }
     }
   }
@@ -2079,6 +2051,69 @@ $alert-text-color: #ffffff;
 
 .action:hover .action-label {
   visibility: visible;
+}
+
+.requests-list, .eventlog-list {
+  > .title {
+    font-size: 28px;
+    height: 40px;
+    margin-bottom: 20px;
+    margin-left: 5px;
+    letter-spacing: 0.02em;
+    font-weight: 300;
+
+    .action-confirmation {
+      float: right;
+      margin-top: 5px;
+      margin-right: 10px;
+    }
+  }
+}
+
+.title-big-actions {
+  display: flex;
+  float: right;
+  height: 40px;
+}
+
+.big-action {
+  display: inline;
+  text-align: center;
+  margin-right: 10px;
+
+  .fa {
+    font-size: 18px;
+  }
+
+  .btn, .btn-circle-outline, .btn-circle-outline:hover {
+    font-size: 18px;
+    width: 30px;
+    min-width: 25px;
+    height: 30px;
+    min-height: 25px;
+    line-height: 28px;
+    border-radius: 30px;
+  }
+
+  .big-action-label {
+    font-size: 9px;
+    font-weight: 400;
+    text-transform: uppercase;
+    text-align: center;
+    padding-top: 5px;
+  }
+}
+
+.title-close-button {
+  position: absolute;
+  top: -20px;
+  right: -10px;
+  font-size: 18px;
+  font-weight: 100;
+
+  a {
+    color: $main_color;
+  }
 }
 
 .actions {

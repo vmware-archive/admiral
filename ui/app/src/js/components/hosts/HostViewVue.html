@@ -42,7 +42,7 @@
     <div class="mask" v-bind:class="{'hide': !contextExpanded}"></div>
   </div>
 
-  <context-sidepanel class="right-context-panel">
+  <context-sidepanel class="right-context-panel" v-on:close="closeToolbar()">
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
         v-if="showTabCreateHost"

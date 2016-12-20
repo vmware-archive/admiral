@@ -158,6 +158,12 @@ var EventLogListVueComponent = Vue.extend({
       if (this.model.nextPageLink && itemsType === this.model.itemsType) {
         actions.EventLogActions.openEventLogNext(this.model.nextPageLink);
       }
+    },
+    close: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      this.$dispatch('close');
     }
   },
   events: {

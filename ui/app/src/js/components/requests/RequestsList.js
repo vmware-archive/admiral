@@ -108,12 +108,6 @@ var RequestsListVueComponent = Vue.extend({
           return !this.isRequestRunning(item);
         },
 
-        toggleErrorMessage($event) {
-          $event.preventDefault();
-
-          this.expanded = !this.expanded;
-        },
-
         getProgressClass: function(item) {
           if (utils.isRequestFailed(item)) {
             return ['progress-bar-danger'];
@@ -192,12 +186,12 @@ var RequestsListVueComponent = Vue.extend({
           let $deleteConfirmationHolder = $(InlineDeleteConfirmationTemplate());
           $deleteConfirmationHolder.height($requestItem.outerHeight(true));
 
-          let $actions = $requestItemHolder.children('.request-status-actions');
+          let $actions = $requestItem.find('.request-status-actions');
           $actions.addClass('hide');
-          $deleteConfirmationHolder.insertAfter($actions);
+          $deleteConfirmationHolder.insertAfter($requestItem);
 
           let $deleteConfirmation = $deleteConfirmationHolder
-            .find('.delete-inline-item-confirmation');
+                                      .find('.delete-inline-item-confirmation');
           utils.slideToLeft($deleteConfirmation);
         },
 
@@ -212,7 +206,7 @@ var RequestsListVueComponent = Vue.extend({
             $deleteConfirmationHolder.remove();
           });
 
-          $(this.$el).children('.request-status-actions').removeClass('hide');
+          $(this.$el).find('.request-status-actions').removeClass('hide');
         }
       }
     }
@@ -242,20 +236,26 @@ var RequestsListVueComponent = Vue.extend({
       RequestsActions.selectRequests(itemsType);
     },
 
-    refresh: function() {
-      RequestsActions.refreshRequests();
-    },
-
     loadMore: function(itemsType) {
       if (this.model.nextPageLink && itemsType === this.model.itemsType) {
         RequestsActions.openRequestsNext(this.model.nextPageLink);
       }
+    },
+
+    close: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      this.$dispatch('close');
     }
   },
   events: {
     'do-action': function(actionName) {
 
-      if (actionName === 'deleteAll') {
+      if (actionName === 'refresh') {
+        // Refresh
+        RequestsActions.refreshRequests();
+      } else if (actionName === 'deleteAll') {
         // Clear all requests
         RequestsActions.clearRequests();
       }

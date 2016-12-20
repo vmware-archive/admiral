@@ -820,12 +820,19 @@
       }
     },
     "request": {
-      "title": "Provision Requests",
+      "title": "Requests",
       "contextPanelTooltip": "Requests",
       "tabs": {
         "all": "All",
         "running": "Running",
         "failed": "Failed"
+      },
+      "actions": {
+        "details": {
+          "show": "Details",
+          "hide": "Hide Details"
+        },
+        "open": "Open"
       }
     },
     "closure": {

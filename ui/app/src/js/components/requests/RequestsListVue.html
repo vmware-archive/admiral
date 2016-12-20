@@ -10,21 +10,28 @@
   -->
 
 <div class="requests-list">
-  <list-title v-on:refresh-list="refresh()" v-bind:title="i18n('app.request.title')">
-      <title-action-button v-bind:name="'deleteAll'"
-                           v-bind:icon-name="'trash'"
-                           v-bind:tooltip="i18n('deleteAll')"
-                           v-bind:confirmable="true"></title-action-button>
-  </list-title>
+  <div class="title-close-button"><a href="#" v-on:click="close($event)"><i class="fa fa-times"></i></a></div>
+
+  <list-title-big v-bind:title="i18n('app.request.title')">
+    <big-action-button v-bind:name="'deleteAll'"
+                       v-bind:icon-name="'trash'"
+                       v-bind:label="i18n('clear')"
+                       v-bind:confirmable="true"
+      ></big-action-button>
+  </list-title-big>
+
   <ul class="nav" role="tablist">
     <li role="presentation" class="nav-item">
-      <a class="nav-link" href="#all" aria-controls="all-requests" role="tab" v-on:click="selectTab($event, 'all')">{{i18n('app.request.tabs.all')}}</button>
+      <a class="nav-link" href="#all" aria-controls="all-requests" role="tab"
+         v-on:click="selectTab($event, 'all')">{{i18n('app.request.tabs.all')}}</button>
     </li>
     <li role="presentation" class="nav-item">
-      <a class="nav-link" href="#running" aria-controls="running-requests" role="tab" v-on:click="selectTab($event, 'running')">{{i18n('app.request.tabs.running')}}</button>
+      <a class="nav-link" href="#running" aria-controls="running-requests" role="tab"
+         v-on:click="selectTab($event, 'running')">{{i18n('app.request.tabs.running')}}</button>
     </li>
     <li role="presentation" class="nav-item">
-      <a class="nav-link" href="#failed" aria-controls="failed-requests" role="tab" v-on:click="selectTab($event, 'failed')">{{i18n('app.request.tabs.failed')}}</button>
+      <a class="nav-link" href="#failed" aria-controls="failed-requests" role="tab"
+         v-on:click="selectTab($event, 'failed')">{{i18n('app.request.tabs.failed')}}</button>
     </li>
   </ul>
 

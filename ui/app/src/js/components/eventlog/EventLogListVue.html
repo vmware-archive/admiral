@@ -10,11 +10,15 @@
   -->
 
 <div class="eventlog-list">
-  <list-title v-on:refresh-list="refresh()" v-bind:title="i18n('app.eventlog.title')">
-    <title-action-button v-bind:name="'deleteAll'" v-bind:icon-name="'trash'"
-                         v-bind:tooltip="i18n('deleteAll')"
-                         v-bind:confirmable="true"></title-action-button>
-  </list-title>
+  <div class="title-close-button"><a href="#" v-on:click="close($event)"><i class="fa fa-times"></i></a></div>
+
+  <list-title-big v-bind:title="i18n('app.eventlog.title')">
+    <big-action-button v-bind:name="'deleteAll'"
+                       v-bind:icon-name="'trash'"
+                       v-bind:label="i18n('clear')"
+                       v-bind:confirmable="true"
+      ></big-action-button>
+  </list-title-big>
 
   <ul class="nav" role="tablist">
     <li role="presentation" class="nav-item"><a

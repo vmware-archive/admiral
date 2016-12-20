@@ -11,24 +11,15 @@
 
 <div class="eventlog-item" v-bind:class="{'highlight-item': model.isHighlighted}" >
   <div class="content" v-bind:class="getEventLogTypeClass(model)">
-    <div class="description" v-bind:class="{'truncateText': !expanded}">
-      {{model.description}}
-    </div>
-    <div class="timestamp">
-      <i class="fa fa-clock-o"></i><span>{{getTimeFromNow(model)}}</span>
-    </div>
+    <div class="description" v-bind:class="{'truncateText': !expanded}">{{model.description}}</div>
+    <div class="timestamp"><i class="fa fa-clock-o"></i><span>{{getTimeFromNow(model)}}</span></div>
   </div>
   <div class="eventlog-actions">
-    <a href="#" class="btn btn-link" v-on:click="toggleExpandDescription($event)"
-       v-bind:class="{hide: expanded}">
-      <i class="fa fa-eye"></i>
-    </a>
-    <a href="#" class="btn btn-link" v-on:click="toggleExpandDescription($event)"
-       v-bind:class="{hide: !expanded}">
-      <i class="fa fa-eye-slash"></i>
-    </a>
-    <a href="#" class="btn btn-link" v-on:click="deleteEventLog($event)">
-      <i class="fa fa-trash"></i>
-    </a>
+    <a href="#" class="btn btn-circle-outline"
+       v-on:click="deleteEventLog($event)">{{i18n('delete')}}</a>
+    <a href="#" class="btn btn-circle-outline" v-on:click="toggleExpandDescription($event)"
+       v-bind:class="{hide: expanded}">{{i18n('app.request.actions.details.show')}}</a>
+    <a href="#" class="btn btn-circle-outline" v-on:click="toggleExpandDescription($event)"
+       v-bind:class="{hide: !expanded}">{{i18n('app.request.actions.details.hide')}}</a>
   </div>
 </div>

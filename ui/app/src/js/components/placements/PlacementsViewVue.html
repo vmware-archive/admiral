@@ -22,7 +22,7 @@
     <div class="mask"></div>
   </div>
   <context-sidepanel class="right-context-panel"
-    v-bind:class="{'right-context-expanded': innerContextExpanded}">
+    v-bind:class="{'right-context-expanded': innerContextExpanded}" v-on:close="closeToolbar()">
 
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
