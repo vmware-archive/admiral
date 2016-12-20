@@ -1099,6 +1099,10 @@ services.loadClosure = function(closureId) {
   return get(links.CLOSURES + '/' + closureId);
 };
 
+services.loadClosureDescriptionById = function(closureDescriptionId) {
+  return get(links.CLOSURE_DESCRIPTIONS + '/' + closureDescriptionId);
+};
+
 services.loadContainers = function(queryOptions) {
   var filter = buildContainersSearchQuery(queryOptions);
   var url = buildPaginationUrl(links.CONTAINERS, filter, true, 'created asc');
@@ -1187,14 +1191,26 @@ services.loadContainerLogs = function(containerId, sinceMs) {
   });
 };
 
-services.loadClosures = function() {
-  console.log('Calling service api: ' + links.CLOSURE_DESCRIPTIONS);
-  return list(links.CLOSURE_DESCRIPTIONS, true);
+services.loadClosures = function(queryOptions) {
+  // console.log('Calling service api: ' + links.CLOSURE_DESCRIPTIONS);
+  // return list(links.CLOSURE_DESCRIPTIONS, true);
+    var filter = buildContainersSearchQuery(queryOptions);
+  var url = buildPaginationUrl(links.CLOSURE_DESCRIPTIONS, filter, true);
+  return get(url).then(function(result) {
+    return result;
+  });
 };
 
-services.loadClosureRuns = function(queryOptions) {
-  var filter = buildContainersSearchQuery(queryOptions);
-  var url = buildPaginationUrl(links.CLOSURES, filter, true);
+services.loadClosureRuns = function(closureDescriptionLink) {
+  // var filter = buildContainersSearchQuery(queryOptions);
+  let filter = buildOdataQuery({
+    descriptionLink: [{
+      val: closureDescriptionLink + '*',
+      op: 'eq'
+    }],
+    [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+  });
+  let url = buildPaginationUrl(links.CLOSURES, filter, true);
   return get(url).then(function(result) {
     return result;
   });

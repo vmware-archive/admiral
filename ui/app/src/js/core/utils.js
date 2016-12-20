@@ -1181,6 +1181,28 @@ var utils = {
     }
 
     return Math.round(percentage * 100) / 100;
+  },
+
+  getClosureIcon: function(runtime) {
+    let runtimeIcon = 'image-assets/closure-unknown.png';
+    if (runtime) {
+      if (runtime.startsWith('nodejs')) {
+        runtimeIcon = 'image-assets/closure-nodejs.png';
+      } else if (runtime.startsWith('python')) {
+        runtimeIcon = 'image-assets/closure-python.png';
+      }
+    }
+    return runtimeIcon;
+  },
+
+  getClosureRuntimeName: function(runtime) {
+    let runtimeName = 'Unknown';
+    if (runtime) {
+      runtimeName = runtime.replace('_', ' ');
+      runtimeName = runtimeName.charAt(0).toUpperCase() + runtimeName.slice(1);
+    }
+
+    return runtimeName;
   }
 };
 

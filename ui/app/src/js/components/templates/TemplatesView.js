@@ -287,20 +287,10 @@ var TemplatesViewVueComponent = Vue.extend({
           return Math.min(this.model.icons && this.model.icons.length, 4);
         },
         closureIcon: function() {
-          if (this.model.runtime.startsWith('nodejs')) {
-            return 'image-assets/closure-nodejs.png';
-          } else if (this.model.runtime.startsWith('python')) {
-            return 'image-assets/closure-python.png';
-          }
-          return 'image-assets/closure-unknown.png';
+          return utils.getClosureIcon(this.model.runtime);
         },
         closureRuntime: function() {
-          if (this.model.runtime === 'nodejs_4.3.0') {
-            return 'NodeJS 4.3.0';
-          } else if (this.model.runtime === 'python_3.4.3') {
-            return 'Python 3.4.3';
-          }
-          return 'Unknown';
+          return utils.getClosureRuntimeName(this.model.runtime);
         }
       },
       methods: {

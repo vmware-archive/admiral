@@ -1,0 +1,81 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="composite-child-closures-view" v-bind:class="{'left-list-hover': listMouseover}">
+  <div class="list-view containers-list" v-bind:class="{'context-selected': model.selectedItem}"
+       v-on:mouseenter="onListMouseEnter()" v-on:mouseleave="onListMouseLeave()"
+       v-if="model.listView">
+
+    <a class="close-button" v-on:click="openCompositeClosureDetails()"><i
+      class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
+
+    <div class="selected-context-small-holder" v-if="model.selectedItem">
+      <div class="grid-item">
+        <closure-grid-item v-bind:model="model.selectedItem"></closure-grid-item>
+      </div>
+    </div>
+
+    <div class="grid-container">
+      <list-title v-on:refresh-list="refresh()"
+                      v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
+                      v-bind:title="model.name"
+                      v-bind:title-search="titleSearch">
+          <title-action-button v-bind:name="'multiSelect'" v-bind:icon-name="'hand-pointer-o'"
+                               v-bind:confirmable="false" v-bind:button-type="'TOGGLE'"
+                               v-bind:tooltip="i18n('app.resources.selectMultiple')"
+                               v-bind:show="multiSelectionSupported()"
+                               v-bind:toggle-off="!selectionMode"
+                                ></title-action-button>
+          <div class="title-second-day-operations hide" transition="fade-in">
+            <title-action-button v-if="multiSelectionOperationSupported('REMOVE')"
+                                 v-bind:name="'multiRemove'" v-bind:icon-name="'trash'"
+                                 v-bind:confirmable="true" v-bind:button-type="'SPIN_TIMEOUT'"
+                                 v-bind:tooltip="i18n('delete')"
+                                 v-bind:show="selectionMode"></title-action-button>
+          </div>
+      </list-title>
+      <div class="toolbar-actions" v-if="!model.selectedItem">
+      </div>
+    </list-title>
+
+      <grid v-bind:context-selected="model.selectedItem"
+            v-bind:preferred-width="preferredGridWidth"
+            v-ref:container-grid>
+
+        <grid-item v-for="item in model.listView.items"
+                   transition="grid-item-fade" track-by="documentId"
+                   v-bind:class="{'context-selected': item.documentId == selectedItemDocumentId}"
+                   v-bind:select-mode-on="selectionMode"
+                   v-bind:is-marked="isMarked(item)">
+            <closure-grid-item v-bind:model="item"
+              v-on:click="handleItemClick($event, item, openClosureChildDetails)"
+              v-on:attached="containerAttached"></closure-grid-item>
+        </grid-item>
+
+      </grid>
+
+      <div v-if="model.listView.itemsLoading" class="loading">
+        <span class="vertical-helper"></span>
+        <div class="spinner"></div>
+      </div>
+
+    </div>
+  </div>
+  <div v-if="model.selectedItemDetails"
+       class="selected-context-holder closable-view"
+       v-bind:class="{'expanded': model.selectedItemDetails.expanded}">
+    <closure-details v-if="model.selectedItemDetails.type === constants.RESOURCES.TYPES.CLOSURE_DESC"
+                       class="content"
+                       v-bind:model="model.selectedItemDetails"
+                       transition="fade">
+    </closure-details>
+  </div>
+</div>

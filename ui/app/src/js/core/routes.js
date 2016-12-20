@@ -32,16 +32,6 @@ crossroads.addRoute('/home', function() {
  actions.AppActions.openHome();
 });
 
-//crossroads.addRoute('/closures', function() {
-//  actions.AppActions.openView(constants.VIEWS.CLOSURES.name);
-//  actions.ClosureActions.openClosures();
-//});
-
-//crossroads.addRoute('/home/newClosure', function() {
-//  actions.AppActions.openHome();
-//  actions.ClosureActions.openAddClosure();
-//});
-
 crossroads.addRoute('/closures/new', function() {
   actions.AppActions.openView(constants.VIEWS.TEMPLATES.name);
   actions.TemplateActions.openAddClosure();
@@ -191,13 +181,19 @@ crossroads.addRoute('containers/composite/{compositeComponentId*}', function(com
   actions.ContainerActions.openCompositeContainerDetails(compositeComponentId);
 });
 
+crossroads.addRoute('closures/{closureDescriptionId*}', function(closureDescriptionId) {
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CLOSURES.name);
+  actions.ContainerActions.openContainers();
+  actions.ContainerActions.openCompositeClosureDetails(closureDescriptionId);
+});
+
 crossroads.addRoute('/containers/{containerId*}', function(containerId) {
   actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name);
   actions.ContainerActions.openContainers();
   actions.ContainerActions.openContainerDetails(containerId);
 });
 
-crossroads.addRoute('/closures/{closureId*}', function(closureId) {
+crossroads.addRoute('/closure/{closureId*}', function(closureId) {
   actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CLOSURES.name);
   actions.ContainerActions.openClosureDetails(closureId);
 });
@@ -343,7 +339,7 @@ actions.NavigationActions.openContainerDetails.listen(function(containerId, clus
 });
 
 actions.NavigationActions.openClosureDetails.listen(function(closureId) {
-  hasher.setHash('closures/' + closureId);
+  hasher.setHash('closure/' + closureId);
 });
 
 actions.NavigationActions.openClusterDetails.listen(function(clusterId, compositeComponentId) {
@@ -357,6 +353,11 @@ actions.NavigationActions.openClusterDetails.listen(function(clusterId, composit
 actions.NavigationActions.openCompositeContainerDetails.listen(function(compositeComponentId) {
   hasher.setHash('containers/composite/' + compositeComponentId);
 });
+
+actions.NavigationActions.openCompositeClosureDetails.listen(function(closureDescriptionId) {
+  hasher.setHash('closures/' + closureDescriptionId);
+});
+
 
 actions.NavigationActions.showContainersPerPlacement.listen(function(placementId) {
   let queryOptions = {
@@ -397,10 +398,6 @@ actions.NavigationActions.editCompute.listen(function(hostId) {
 actions.NavigationActions.openMachineDetails.listen(function() {
   // not yet supported
   // hasher.setHash('machines/' + machineId);
-});
-
-actions.NavigationActions.openHomeAddClosure.listen(function() {
-  hasher.setHash('home/newClosure');
 });
 
 actions.NavigationActions.openClosuresSilently.listen(function() {

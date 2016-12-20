@@ -121,6 +121,14 @@ function enhanceClosure(closure) {
   return closure;
 }
 
+function enhanceClosureDesc(closureDescription) {
+  closureDescription.icon = imageUtils.getImageIconLink(closureDescription.name);
+  closureDescription.documentId = utils.getDocumentId(closureDescription.documentSelfLink);
+
+  closureDescription.type = constants.RESOURCES.TYPES.CLOSURE_DESC;
+  return closureDescription;
+}
+
 function enhanceClosureWithDescription(closure, closureDescription) {
   closure = enhanceClosure(closure);
   closure.name = closureDescription.name;
@@ -409,7 +417,7 @@ let ContainersStore = Reflux.createStore({
           enhanceFunction = enhanceNetwork;
           break;
         case constants.RESOURCES.SEARCH_CATEGORY.CLOSURES:
-          enhanceFunction = enhanceClosure;
+          enhanceFunction = enhanceClosureDesc;
           break;
       }
 
@@ -538,7 +546,7 @@ let ContainersStore = Reflux.createStore({
           break;
 
         case constants.RESOURCES.SEARCH_CATEGORY.CLOSURES:
-          loadResourceFunction = services.loadClosureRuns;
+          loadResourceFunction = services.loadClosures;
           break;
 
         default:
@@ -633,9 +641,14 @@ let ContainersStore = Reflux.createStore({
     this.loadContainer(containerId, clusterId, compositeComponentId, operation);
   },
 
-  onOpenClosureDetails: function(closureId) {
-    this.cancelOperations(constants.CONTAINERS.OPERATION.DETAILS);
-    var operation = this.requestCancellableOperation(constants.CONTAINERS.OPERATION.DETAILS);
+  onOpenClosureDetails: function(closureId, closureDescriptionId) {
+    this.cancelOperations(constants.CLOSURES.OPERATION.DETAILS);
+    var operation = this.requestCancellableOperation(constants.CLOSURES.OPERATION.DETAILS);
+
+    if (closureDescriptionId) {
+      this.loadCompositeClosure(closureDescriptionId, operation);
+    }
+
     this.loadClosure(closureId, operation);
   },
 
@@ -660,6 +673,13 @@ let ContainersStore = Reflux.createStore({
     var operation = this.requestCancellableOperation(constants.CONTAINERS.OPERATION.DETAILS);
 
     this.loadCompositeComponent(compositeComponentId, operation, true);
+  },
+
+  onOpenCompositeClosureDetails: function(closureDescriptionId) {
+
+    var operation = this.requestCancellableOperation(constants.CLOSURES.OPERATION.DETAILS);
+
+    this.loadCompositeClosure(closureDescriptionId, operation, true);
   },
 
   onOpenCreateContainer: function() {
@@ -1170,6 +1190,75 @@ let ContainersStore = Reflux.createStore({
     }
 
     return cursor;
+  },
+
+
+  loadCompositeClosure: function(closureDescriptionId, operation, force) {
+    var parentCursor = this.selectComponent(null, null, null);
+
+    var currentCompositeComponent = parentCursor.select(['selectedItemDetails']).get();
+
+    if (currentCompositeComponent &&
+        currentCompositeComponent.documentId === closureDescriptionId && !force) {
+      return;
+    }
+
+    var compositeClosure = {
+      documentId: closureDescriptionId,
+      name: closureDescriptionId,
+      type: constants.RESOURCES.TYPES.CLOSURE_DESC
+    };
+
+    var compositeClosureDetails = {
+      documentId: closureDescriptionId,
+      type: constants.RESOURCES.TYPES.CLOSURE_DESC,
+      listView: {
+        itemsLoading: true
+      }
+    };
+    if (currentCompositeComponent &&
+        currentCompositeComponent.documentId === closureDescriptionId) {
+      compositeClosureDetails.listView.items = currentCompositeComponent.listView.items;
+    }
+
+    parentCursor.setIn(['selectedItem'], compositeClosure);
+    parentCursor.setIn(['selectedItemDetails'], compositeClosureDetails);
+    // clear errors
+    parentCursor.setIn(['selectedItemDetails', 'error'], null);
+
+    this.emitChange();
+
+    var closureDescriptionLink = links.CLOSURE_DESCRIPTIONS + '/' + closureDescriptionId;
+
+    operation.forPromise(Promise.all([
+      services.loadClosureDescriptionById(closureDescriptionId),
+      services.loadClosureRuns(closureDescriptionLink)
+    ])).then(([retrievedClosureDescription, fecthedClosureResult]) => {
+
+      var childClosures = utils.resultToArray(fecthedClosureResult.documents ?
+          fecthedClosureResult.documents : fecthedClosureResult);
+
+      enhanceClosureDesc(retrievedClosureDescription);
+
+      parentCursor.select(['selectedItem']).merge(retrievedClosureDescription);
+      parentCursor.select(['selectedItemDetails']).merge(retrievedClosureDescription);
+
+      childClosures.forEach((childClosure) => {
+        enhanceClosure(childClosure);
+      });
+
+      var items = childClosures;
+
+      parentCursor.select(['selectedItemDetails', 'listView'])
+        .setIn(['items'], items)
+        .setIn(['itemsLoading'], false);
+
+      this.emitChange();
+
+      parentCursor.select(['selectedItemDetails'])
+        .setIn(['listView', 'items'], items);
+      this.emitChange();
+    }).catch(this.onGenericDetailsError);
   },
 
   loadCompositeComponent: function(compositeComponentId, operation, force) {

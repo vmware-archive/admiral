@@ -14,11 +14,13 @@ import ContainersListItem from 'components/containers/ContainersListItem'; //esl
 import ClosureListItem from 'components/containers/ClosureListItem'; //eslint-disable-line
 import ClusterContainersListItem from 'components/containers/cluster/ClusterContainersListItem';  //eslint-disable-line
 import CompositeContainersListItem from 'components/containers/composite/CompositeContainersListItem'; //eslint-disable-line
+import CompositeClosuresListItem from 'components/containers/closure/CompositeClosuresListItem'; //eslint-disable-line
 import NetworksListItem from 'components/networks/NetworksListItem'; //eslint-disable-line
 import ContainerDetails from 'components/containers/ContainerDetails';//eslint-disable-line
 import ClosureDetails from 'components/containers/ClosureDetails';//eslint-disable-line
 import ClusterContainerDetails from 'components/containers/cluster/ClusterContainerDetails';//eslint-disable-line
 import CompositeContainerDetails from 'components/containers/composite/CompositeContainerDetails';//eslint-disable-line
+import CompositeClosuresDetails from 'components/containers/closure/CompositeClosuresDetails';//eslint-disable-line
 import RequestsList from 'components/requests/RequestsList';//eslint-disable-line
 import EventLogList from 'components/eventlog/EventLogList';//eslint-disable-line
 import ClosureRequestForm from 'components/closures/ClosureRequestForm'; // eslint-disable-line
@@ -260,6 +262,10 @@ var ContainersViewVueComponent = Vue.extend({
       NavigationActions.openCompositeContainerDetails(documentId);
     },
 
+    openClosureDescriptionDetails: function(documentId) {
+      NavigationActions.openCompositeClosureDetails(documentId);
+    },
+
     repositionListView: function() {
       Vue.nextTick(() => {
         var $smallContextHolder = $(this.$el)
@@ -285,7 +291,8 @@ var ContainersViewVueComponent = Vue.extend({
     },
 
     multiSelectionSupported: function() {
-      return this.hasItems;
+      return this.hasItems
+       && this.selectedCategory !== constants.RESOURCES.SEARCH_CATEGORY.CLOSURES;
     },
 
     multiSelectionOperationSupported: function(operation) {
@@ -294,9 +301,8 @@ var ContainersViewVueComponent = Vue.extend({
         return true;
       } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS) {
         return operation === constants.RESOURCES.NETWORKS.OPERATION.REMOVE;
-      } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES) {
-        return operation === constants.RESOURCES.NETWORKS.OPERATION.REMOVE;
       }
+
       return false;
     },
 
@@ -343,7 +349,6 @@ var ContainersViewVueComponent = Vue.extend({
         this.removeNonRemoveableNetworksFromSelection();
         this.performBatchOperation('Network.Delete');
       } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES) {
-
         this.performBatchOperation('Closure.Delete');
       }
     },

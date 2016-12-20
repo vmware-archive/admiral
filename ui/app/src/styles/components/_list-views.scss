@@ -456,6 +456,7 @@
 .list-view .image-item,
 .list-view .cluster-item,
 .list-view .composite-container-item,
+.list-view .composite-closure-item,
 .list-view .container-template-item, .list-view .closure-template-item {
   z-index: 0;
 
@@ -668,6 +669,14 @@
     height: $heightOfListViewItem;
     overflow-y: auto;
   }
+  .composite-closure-item .container-content {
+    height: $heightOfListViewItem;
+
+    .relations-holder {
+      position: absolute;
+      bottom: 5px;
+    }
+  }
 }
 
 .list-view .grid-item:hover {
@@ -718,6 +727,22 @@
         }
         .relations-holder {
           display: none;
+        }
+        .child-containers {
+          .child-container {
+            /* Trick so that the selected context items looks like being overlapped with the closable view */
+            border-right: $border-overlap-size solid $context-view-background-color;
+          }
+        }
+      }
+
+      .composite-closure-item {
+        .container-content {
+          margin-right: 0;
+
+          .relations-holder {
+            display: none;
+          }
         }
         .child-containers {
           .child-container {
@@ -918,6 +943,25 @@
     }
   }
 
+  .composite-child-closures-view {
+    @extend .position-expand;
+    background-color: #f7f7f7;
+
+    @include transition(background-color 0.4s);
+
+    .list-view .grid-container {
+      top: 10px;
+
+      .grid-item {
+        background-color: #FFFFFF;
+
+        .container-item .relations-holder {
+          display: none;
+        }
+      }
+    }
+  }
+
   .selected-context-holder.closable-view {
     > .content {
       top: 0;
@@ -950,7 +994,7 @@
     }
 
     .grid-item:not(.context-selected) {
-      .container-item:not(:hover), .cluster-item:not(:hover), .composite-container-item:not(:hover) {
+      .container-item:not(:hover), .cluster-item:not(:hover), .composite-container-item:not(:hover), .composite-closure-item:not(:hover) {
         @extend .gray-filter;
       }
     }
@@ -971,7 +1015,7 @@
       border-right: 0;
       cursor: pointer;
       border-width: 1px;
-      .container-item, .cluster-item, .composite-container-item {
+      .container-item, .cluster-item, .composite-container-item, .composite-closure-item {
         margin: 5px 0;
         .container-header {
           margin-top: 20px;
@@ -1003,7 +1047,7 @@
           }
         }
       }
-      .container-item, .cluster-item, .composite-container-item {
+      .container-item, .cluster-item, .composite-container-item, .composite-closure-item {
         .container-content, .container-actions, hr, .status {
           @extend .item-hidden-for-collapse-animation;
         }
@@ -1030,7 +1074,7 @@
 
 .containers-view:not(.left-list-hover) {
   .main-panel > .list-view .selected-context-small-holder {
-    .container-item, .cluster-item, .composite-container-item {
+    .container-item, .cluster-item, .composite-container-item, .composite-closure-item {
       .container-content, .container-actions, hr, .status {
         @extend .item-hidden-for-collapse-animation;
       }
@@ -1042,7 +1086,7 @@
 2 rules don't interrupt */
 .composite-child-containers-view:not(.left-list-hover) {
   > .list-view .selected-context-small-holder {
-    .container-item, .cluster-item, .composite-container-item {
+    .container-item, .cluster-item, .composite-container-item, .composite-closure-item {
       .container-content, .container-actions, hr, .status {
         @extend .item-hidden-for-collapse-animation;
       }

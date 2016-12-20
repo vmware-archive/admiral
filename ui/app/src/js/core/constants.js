@@ -51,6 +51,9 @@ var constants = Immutable({
         },
         CLOSURES: {
           name: 'closures'
+        },
+        CLOSURES_DESC: {
+          name: 'closures_desc'
         }
       }
     }
@@ -158,6 +161,11 @@ var constants = Immutable({
   COMPUTE: {
     SEARCH_SUGGESTIONS: ['name', 'type'],
     DOCKER_HOST_PORT: 443
+  },
+  CLOSURES: {
+    OPERATION: {
+      DETAILS: 'DETAILS'
+    }
   },
   TEMPLATES: {
     TYPES: {

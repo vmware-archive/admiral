@@ -60,7 +60,7 @@ export var ContainerActions = Reflux.createActions([
   'closeContainers', 'openShell', 'closeShell',
   'batchOpContainers', 'batchOpCompositeContainers', 'batchOpNetworks', 'batchOpClosures',
   'openCreateContainer', 'openCreateNetwork', 'createContainer', 'createNetwork',
-  'removeClosureRun', 'openCreateClosure', 'openClosureDetails'
+  'removeClosureRun', 'openCreateClosure', 'openClosureDetails', 'openCompositeClosureDetails'
 ]);
 
 export var NetworkActions = Reflux.createActions([
@@ -184,6 +184,6 @@ export var NavigationActions = Reflux.createActions([
   'openNetworks', 'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
   'openTemplateDetails', 'showContainersPerPlacement', 'openPlacements', 'openEnvironments',
   'openAddEnvironment', 'editEnvironment', 'openMachines', 'openMachineDetails', 'openCompute',
-  'editCompute', 'openClosures', 'openClosuresSilently', 'openAddClosure', 'openHomeAddClosure',
-  'openClosureDetails'
+  'editCompute', 'openClosures', 'openClosuresSilently', 'openAddClosure', 'openClosureDetails',
+  'openCompositeClosureDetails'
 ]);

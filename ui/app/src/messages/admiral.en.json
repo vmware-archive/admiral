@@ -868,6 +868,13 @@
         "FAILED": "FAILED",
         "CANCELLED": "CANCELLED"
       },
+      "list" : {
+        "name": "Closure",
+        "closuresCountLabel": "Closures",
+        "closureRunsLabel": "Closure runs",
+        "memory": "Memory:",
+        "timeout": "Timeout:"
+      },
       "request": {
         "title": "Closure definition",
         "save": "Save",
