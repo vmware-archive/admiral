@@ -228,7 +228,6 @@ textarea {
     top: 16%;
     bottom: auto;
     left: 35%;
-    border-left: 2px solid $context-view-background-color;
 
     > * {
       margin-left: 50px;
@@ -252,7 +251,7 @@ textarea {
 
         .icon {
           position: absolute;
-          padding: 10px;
+          padding-left: 10px;
           pointer-events: none;
           left: 0
         }
