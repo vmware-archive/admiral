@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"admiral/config"
 	. "admiral/testutils"
@@ -72,6 +73,7 @@ func TestPlacementAddRemove(t *testing.T) {
 
 	// Run the test.
 	for i := range testArguments {
+		time.Sleep(5 * time.Second) // Wait for data collection.
 		TestPrintln("Adding new placement.")
 		ResetFlagValues(placementAddCmd)
 		placementAddCmd.ParseFlags(testArguments[i])

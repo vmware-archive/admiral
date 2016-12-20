@@ -16,7 +16,6 @@ import "reflect"
 //Filters
 const (
 	ApplicationFilterID      = "/resources/composite-components?documentType=true&$count=true&$limit=21&$filter=documentSelfLink+eq+"
-	BusinessGroupFilter      = "/tenants/%s/subtenants/?$top=1000"
 	CertFilterID             = "/config/trust-certs?documentType=true&expand&$filter=documentSelfLink+eq+"
 	ClosureFilterID          = "/resources/closures?documentType=true&$count=true&$limit=19&$orderby=&$filter=documentSelfLink+eq+"
 	ContainerFilterID        = "/resources/containers?documentType=true&$count=true&$limit=10000&$orderby=documentSelfLink+asc&$filter=documentSelfLink+eq+"
@@ -39,6 +38,7 @@ const (
 	CredentialsFilterName      = "/core/auth/credentials?documentType=true&expand&$filter=customProperties/scope%20ne%20%27SYSTEM%27+and+customProperties/__authCredentialsName+eq+"
 	DeploymentPolicyFilterName = "/resources/deployment-policies?documentType=true&expand&$filter=name+eq+"
 	EndpointFilterName         = "/config/endpoints?documentType=true&expand=true&$filter=name+eq+"
+	HostFilterName             = "/resources/compute?documentType=true&$count=true&$limit=1000&$orderby=documentSelfLink+asc&$filter=descriptionLink+ne+'/resources/compute-descriptions/*-parent-compute-desc'+and+customProperties/__computeHost+eq+'*'+and+customProperties/__computeContainerHost+eq+'*'+and+(customProperties/__hostAlias+eq+'%s'+or+(customProperties/__hostAlias+ne+'*'+and+customProperties/__Name+eq+'%s')+or+(customProperties/__hostAlias+eq+''+and+customProperties/__Name+eq+'%s'))"
 	NetworkFilterName          = "/resources/container-networks?documentType=true&expand&$filter=name+eq+"
 	PlacementFilterName        = "/resources/group-placements?documentType=true&expand&$filter=name+eq+"
 	PlacementZoneFilterName    = "/resources/elastic-placement-zones-config?documentType=true&expand=true&$filter=name+eq+"

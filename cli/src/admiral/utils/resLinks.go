@@ -298,6 +298,8 @@ func GetNameFilterUrl(name string, restype ResourceType) string {
 		url = DeploymentPolicyFilterName + createNameFilter(name)
 	case ENDPOINT:
 		url = EndpointFilterName + createNameFilter(name)
+	case HOST:
+		url = createNameFilterHost(name)
 	case NETWORK:
 		url = NetworkFilterName + createNameFilter(name)
 	case PLACEMENT:
@@ -322,4 +324,8 @@ func createIdFilter(shortSelfLink string) string {
 
 func createNameFilter(name string) string {
 	return fmt.Sprintf("'%s'", name)
+}
+
+func createNameFilterHost(name string) string {
+	return fmt.Sprintf(HostFilterName, name, name, name)
 }

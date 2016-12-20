@@ -65,13 +65,16 @@ type Host struct {
 }
 
 func (h *Host) GetName() string {
-	if val, ok := h.CustomProperties["__hostAlias"]; !ok || val == nil || strings.TrimSpace(*val) == "" {
-		if val, ok := h.CustomProperties["__Name"]; !ok || val == nil || strings.TrimSpace(*val) == "" {
-			return ""
-		}
-		return *h.CustomProperties["__Name"]
+	if val, ok := h.CustomProperties["__hostAlias"]; ok && val != nil && strings.TrimSpace(*val) != "" {
+		return *val
 	}
-	return *h.CustomProperties["__hostAlias"]
+
+	if strings.Contains(h.Id, h.Address) {
+		if val, ok := h.CustomProperties["__Name"]; ok && val != nil && strings.TrimSpace(*val) != "" {
+			return *val
+		}
+	}
+	return h.GetID()
 }
 
 func (h *Host) GetResourcePoolID() string {
