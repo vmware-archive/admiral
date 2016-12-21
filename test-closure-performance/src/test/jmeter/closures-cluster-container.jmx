@@ -112,7 +112,7 @@ for (String line; (line = in.readLine()) != null; ) {
 in.close();
 log.info(&quot;Client KEY:\n&quot; + clientKey);
 
-log.info(&quot;!!!!!!!!docker.host.performance.addresses host addresses: &quot; + props.get(&quot;docker.host.performance.addresses&quot;));
+log.info(&quot;!!!!!!!!DOCKER_HOST_ADDRESSES: &quot; + props.get(&quot;DOCKER_HOST_ADDRESSES&quot;));
 
 
 props.put(&quot;server.pem&quot;, serverPem);
@@ -137,7 +137,7 @@ props.put(&quot;client.key&quot;, clientKey);</stringProp>
             </elementProp>
             <elementProp name="DOCKER_HOST_ADDRESSES" elementType="Argument">
               <stringProp name="Argument.name">DOCKER_HOST_ADDRESSES</stringProp>
-              <stringProp name="Argument.value">${__P(docker.host.performance.addresses)}</stringProp>
+              <stringProp name="Argument.value">${__P(DOCKER_HOST_ADDRESSES)}</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
             <elementProp name="DOCKER_PORT" elementType="Argument">
@@ -315,7 +315,7 @@ props.put(&quot;client.key&quot;, clientKey);</stringProp>
             <stringProp name="parameters"></stringProp>
             <stringProp name="filename"></stringProp>
             <stringProp name="script">String counter = vars.get(&quot;counter&quot;);
-String dockerHostAddress = props.get(&quot;docker.host.performance.addresses&quot;).split(&quot;, &quot;)[Integer.parseInt(counter)];
+String dockerHostAddress = props.get(&quot;DOCKER_HOST_ADDRESSES&quot;).split(&quot;, &quot;)[Integer.parseInt(counter)];
 log.info(&quot;DockerHost address &quot; + counter + &quot;: &quot; + dockerHostAddress);
 props.put(&quot;currentDockerHostAddress&quot;, dockerHostAddress);
 props.put(&quot;number&quot;, counter);
@@ -1091,7 +1091,7 @@ if (error){
             <stringProp name="parameters"></stringProp>
             <stringProp name="filename"></stringProp>
             <stringProp name="script">String counter = vars.get(&quot;counter&quot;);
-String dockerHostAddress = props.get(&quot;docker.host.performance.addresses&quot;).split(&quot;, &quot;)[Integer.parseInt(counter)];
+String dockerHostAddress = props.get(&quot;DOCKER_HOST_ADDRESSES&quot;).split(&quot;, &quot;)[Integer.parseInt(counter)];
 log.info(&quot;!!!!!!!!!Remove DockerHost address &quot; + counter + &quot;: &quot; + dockerHostAddress);
 props.put(&quot;currentDockerHostAddress&quot;, dockerHostAddress);
 props.put(&quot;number&quot;, counter);
