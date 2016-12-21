@@ -64,6 +64,11 @@ public class EpzComputeEnumerationTaskService extends
     public static final String EPZ_CUSTOM_PROP_NAME_PREFIX = "__epz_";
     public static final String EPZ_CUSTOM_PROP_VALUE = "true";
 
+    // lower log level by default
+    private static final Level DEFAULT_LOG_LEVEL = Level.parse(System.getProperty(
+            "com.vmware.admiral.service.EpzComputeEnumerationTaskService.log.level",
+            Level.FINE.getName()));
+
     private static final int COMPUTE_PAGE_SIZE = 16;
 
     /**
@@ -108,6 +113,8 @@ public class EpzComputeEnumerationTaskService extends
 
         // these are one-off tasks that are not needed upon completion
         this.setSelfDelete(true);
+
+        this.setLogLevel(DEFAULT_LOG_LEVEL);
     }
 
     /**

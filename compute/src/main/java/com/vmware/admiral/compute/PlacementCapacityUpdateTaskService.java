@@ -64,6 +64,11 @@ public class PlacementCapacityUpdateTaskService extends
     public static final String FACTORY_LINK = ManagementUriParts.PLACEMENT_UPDATE_TASKS;
     public static final String DISPLAY_NAME = "Placement Capacity Update";
 
+    // lower log level by default
+    private static final Level DEFAULT_LOG_LEVEL = Level.parse(System.getProperty(
+            "com.vmware.admiral.service.EpzComputeEnumerationTaskService.log.level",
+            Level.FINE.getName()));
+
     private static final int COMPUTE_PAGE_SIZE = 16;
 
     /**
@@ -197,6 +202,8 @@ public class PlacementCapacityUpdateTaskService extends
 
         // these are one-off tasks that are not needed upon completion
         this.setSelfDelete(true);
+
+        this.setLogLevel(DEFAULT_LOG_LEVEL);
     }
 
     @Override

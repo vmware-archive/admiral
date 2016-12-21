@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceUtils;
@@ -41,6 +42,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             .getLong(
                     "com.vmware.admiral.service.common.AbstractTaskStatefulService.completion.polling.period.millis",
                     TimeUnit.SECONDS.toMillis(3));
+    private static final Level DEFAULT_LOG_LEVEL = Level.parse(System.getProperty(
+            "com.vmware.admiral.service.tasks.log.level", Level.INFO.getName()));
 
     protected Class<E> subStageType;
 
@@ -48,6 +51,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
     // whether the task should self-delete itself upon completion
     private boolean selfDelete;
+
+    private Level logLevel = DEFAULT_LOG_LEVEL;
 
     /** SubStages that are indicating a transient state and order of patching can't be guaranteed */
     protected Set<E> transientSubStages = Collections.emptySet();
@@ -87,6 +92,10 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
     protected void setSelfDelete(boolean selfDelete) {
         this.selfDelete = selfDelete;
+    }
+
+    protected void setLogLevel(Level logLevel) {
+        this.logLevel = logLevel;
     }
 
     @Override
@@ -136,11 +145,15 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
         if (state.taskInfo.stage == TaskStage.CREATED || state.documentVersion == 0) {
             state.taskInfo.stage = TaskStage.STARTED;
-            logInfo("starting task with parent link: %s",
-                    state.serviceTaskCallback.serviceSelfLink);
+            if (!state.serviceTaskCallback.isEmpty()) {
+                log(this.logLevel, "Starting task with parent link: %s",
+                        state.serviceTaskCallback.serviceSelfLink);
+            }
         } else {
-            logWarning("restarting task with parent link: %s",
-                    state.serviceTaskCallback.serviceSelfLink);
+            if (!state.serviceTaskCallback.isEmpty()) {
+                log(this.logLevel, "Restarting task with parent link: %s",
+                        state.serviceTaskCallback.serviceSelfLink);
+            }
         }
         startPost.setBody(state);
         startPost.complete();
@@ -346,7 +359,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             return true;
         }
 
-        logInfo("Moving from %s(%s) to %s(%s).%s",
+        log(this.logLevel, "Moving from %s(%s) to %s(%s).%s",
                 currentState.taskInfo.stage, currentState.taskSubStage,
                 patchBody.taskInfo.stage, patchBody.taskSubStage, refererLogPart);
 
@@ -628,7 +641,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
     protected void notifyCallerService(T state) {
         if (!state.serviceTaskCallback.isEmpty()) {
-            logInfo("Callback to [%s] with state [%s] ",
+            log(this.logLevel, "Callback to [%s] with state [%s] ",
                     state.serviceTaskCallback.serviceSelfLink, state.taskInfo.stage);
         }
 
@@ -677,7 +690,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
     private void sendRequestStateToExternalUrl(String callbackReference, T state) {
         // send put with the RequestState as the body
-        logInfo("Calling callback URI: %s", callbackReference);
+        log(this.logLevel, "Calling callback URI: %s", callbackReference);
 
         try {
             URI callbackUri = URI.create(callbackReference);

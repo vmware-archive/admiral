@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+
 import javax.net.ssl.X509TrustManager;
 
 import com.vmware.admiral.common.util.ServiceDocumentQuery.ServiceDocumentQueryElementResult;
@@ -185,7 +186,7 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
         }
         host.schedule(() -> {
             try {
-                host.log(Level.INFO, "Host " + host.getPublicUri() + "reloading all certificates");
+                host.log(Level.INFO, "Host " + host.getPublicUri() + ": reloading all certificates");
                 documentUpdateTimeMicros = 0;
                 loadSslTrustCertServices();
 
