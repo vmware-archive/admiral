@@ -35,16 +35,18 @@ let EnvironmentsStore = Reflux.createStore({
       operation.forPromise(services.loadEnvironments()).then((result) => {
         let nextPageLink = result.nextPageLink;
         let itemsCount = result.totalCount;
-        let environments = result.documentLinks.map((documentLink) =>
-            result.documents[documentLink]);
 
-        this.setInData(['listView', 'items'], environments);
-        this.setInData(['listView', 'itemsLoading'], false);
-        this.setInData(['listView', 'nextPageLink'], nextPageLink);
-        if (itemsCount !== undefined && itemsCount !== null) {
-          this.setInData(['listView', 'itemsCount'], itemsCount);
-        }
-        this.emitChange();
+        Promise.all(result.documentLinks.map((documentLink) =>
+          services.loadEnvironment(utils.getDocumentId(documentLink))
+        )).then((environments) => {
+          this.setInData(['listView', 'items'], environments);
+          this.setInData(['listView', 'itemsLoading'], false);
+          this.setInData(['listView', 'nextPageLink'], nextPageLink);
+          if (itemsCount !== undefined && itemsCount !== null) {
+            this.setInData(['listView', 'itemsCount'], itemsCount);
+          }
+          this.emitChange();
+        });
       });
     }
   },

@@ -1025,18 +1025,19 @@ services.deletePlacement = function(placement) {
 
 services.loadEnvironments = function(queryOptions) {
   let filter = buildOdataQuery(queryOptions);
-  let url = buildPaginationUrl(links.ENVIRONMENT_MAPPING, filter, true, 'name asc');
+  let url = buildPaginationUrl(links.ENVIRONMENTS, filter, true,
+      'documentExpirationTimeMicros desc');
   return get(url).then(function(result) {
     return result;
   });
 };
 
 services.loadEnvironment = function(environmentId) {
-  return get(links.ENVIRONMENT_MAPPING + '/' + environmentId);
+  return get(links.ENVIRONMENTS + '/' + environmentId + '?' + EXPAND_QUERY_PROP_NAME);
 };
 
 services.createEnvironment = function(environment) {
-  return post(links.ENVIRONMENT_MAPPING, environment);
+  return post(links.ENVIRONMENTS, environment);
 };
 
 services.updateEnvironment = function(environment) {
@@ -1056,7 +1057,7 @@ services.searchEndpoints = function(query, limit) {
   });
 
   let url = buildPaginationUrl(links.ENDPOINTS, filter, true,
-                               'name asc', limit);
+                               'documentExpirationTimeMicros desc', limit);
   return get(url).then(function(data) {
     var documentLinks = data.documentLinks || [];
 

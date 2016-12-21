@@ -41,20 +41,20 @@ var EnvironmentEditView = Vue.extend({
       return this.model.contextView && this.model.contextView.expanded;
     },
     instanceTypeValue: function() {
-      if (this.model.item.properties) {
-        var mappings = this.model.item.properties.instanceType.mappings;
+      if (this.model.item.computeProfile) {
+        var mappings = this.model.item.computeProfile.instanceTypeMapping;
         return Object.keys(mappings).map((key) => {
           if (this.endpointType === 'vsphere') {
             return {
               name: key,
-              cpu: mappings[key].cpu,
-              disk: mappings[key].disk,
-              mem: mappings[key].mem
+              cpu: mappings[key].cpuCount,
+              disk: mappings[key].diskSizeMb,
+              mem: mappings[key].memoryMb
             };
           } else {
             return {
               name: key,
-              value: mappings[key]
+              value: mappings[key].instanceType
             };
           }
         });
@@ -62,12 +62,12 @@ var EnvironmentEditView = Vue.extend({
       return {};
     },
     imageTypeValue: function() {
-      if (this.model.item.properties) {
-        var mappings = this.model.item.properties.imageType.mappings;
+      if (this.model.item.computeProfile) {
+        var mappings = this.model.item.computeProfile.imageMapping;
         return Object.keys(mappings).map((key) => {
           return {
             name: key,
-            value: mappings[key]
+            value: mappings[key].image
           };
         });
       }
@@ -142,30 +142,30 @@ var EnvironmentEditView = Vue.extend({
 
       if (this.$refs.instanceType) {
         var instanceType = this.$refs.instanceType.getData();
-        toSave.properties.instanceType = {
-          mappings: instanceType.reduce((previous, current) => {
-            if (this.endpointType === 'vsphere') {
-              previous[current.name] = {
-                cpu: current.cpu,
-                disk: current.disk,
-                mem: current.mem
-              };
-            } else {
-              previous[current.name] = current.value;
-            }
-            return previous;
-          }, {})
-        };
+        toSave.computeProfile.instanceTypeMapping = instanceType.reduce((previous, current) => {
+          if (this.endpointType === 'vsphere') {
+            previous[current.name] = {
+              cpuCount: current.cpu,
+              diskSizeMb: current.disk,
+              memoryMb: current.mem
+            };
+          } else {
+            previous[current.name] = {
+              instanceType: current.value
+            };
+          }
+          return previous;
+        }, {});
       }
 
       if (this.$refs.imageType) {
         var imageType = this.$refs.imageType.getData();
-        toSave.properties.imageType = {
-          mappings: imageType.reduce((previous, current) => {
-            previous[current.name] = current.value;
-            return previous;
-          }, {})
-        };
+        toSave.computeProfile.imageMapping = imageType.reduce((previous, current) => {
+          previous[current.name] = {
+            image: current.value
+          };
+          return previous;
+        }, {});
       }
 
       return toSave;

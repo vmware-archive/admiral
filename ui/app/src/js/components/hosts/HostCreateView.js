@@ -107,11 +107,11 @@ var HostCreateView = Vue.extend({
     },
     instanceTypes: function() {
       return this.endpointEnvironment &&
-          this.endpointEnvironment.properties.instanceType.mappings;
+          this.endpointEnvironment.computeProfile.instanceTypeMapping;
     },
     imageTypes: function() {
       return this.endpointEnvironment &&
-          this.endpointEnvironment.properties.imageType.mappings;
+          this.endpointEnvironment.computeProfile.imageMapping;
     },
     validationErrors: function() {
       return this.model.validationErrors || {};
