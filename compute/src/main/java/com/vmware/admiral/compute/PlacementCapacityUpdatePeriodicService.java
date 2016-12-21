@@ -53,7 +53,8 @@ public class PlacementCapacityUpdatePeriodicService extends StatelessService {
     public void onComputeChange(Operation op) {
         op.complete();
         QueryTask queryTask = op.getBody(QueryTask.class);
-        if (queryTask.results != null && queryTask.results.documentLinks != null) {
+        if (queryTask.results != null && queryTask.results.documentLinks != null
+                && !queryTask.results.documentLinks.isEmpty()) {
             logInfo("Compute change: %s", String.join(", ", queryTask.results.documentLinks));
             PlacementCapacityUpdateTaskService.triggerForAllResourcePools(this);
         }
