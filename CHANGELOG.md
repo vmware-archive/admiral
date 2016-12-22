@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## 0.9.2
+* Various bug fixes related to document and service replication consistency in an SSL enabled cluster environment. Minor UI bug fixes.
+
 ## 0.9.1
 
 * Added Admiral CLI, **a command line tool to manage and automate Admiral**. More information [here] (https://github.com/vmware/admiral/blob/master/cli/README.md).
