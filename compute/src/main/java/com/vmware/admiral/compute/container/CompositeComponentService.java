@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.util.PropertyUtils;
@@ -155,6 +156,55 @@ public class CompositeComponentService extends StatefulService {
                 ServiceUtils.sendSelfDelete(this);
             });
         }
+    }
+
+    @Override
+    public void handleDelete(Operation delete) {
+        // Start updating external networks composite components,
+        // but do not wait for the updates to finish
+        updateExternalNetworksIfNeeded(getState(delete));
+        delete.complete();
+    }
+
+    private void updateExternalNetworksIfNeeded(CompositeComponent composite) {
+        if (composite.componentLinks == null) {
+            return;
+        }
+
+        List<String> networkLinks = composite.componentLinks.stream()
+                .filter(link -> link.startsWith(ContainerNetworkService.FACTORY_LINK))
+                .collect(Collectors.toList());
+
+        QueryTask credentialsQuery = QueryUtil.buildQuery(ContainerNetworkState.class, false);
+
+        QueryUtil.addListValueClause(credentialsQuery,
+                ContainerNetworkState.FIELD_NAME_SELF_LINK, networkLinks);
+        QueryUtil.addExpandOption(credentialsQuery);
+
+        new ServiceDocumentQuery<ContainerNetworkState>(getHost(),
+                ContainerNetworkState.class).query(
+                        credentialsQuery, (r) -> {
+                            if (r.hasResult()) {
+                                if (r.getResult().external) {
+                                    ContainerNetworkState networkState = r.getResult();
+                                    networkState.compositeComponentLinks.remove(composite.documentSelfLink);
+                                    updateNetworkState(networkState);
+                                }
+                            }
+                        });
+
+
+    }
+
+    private void updateNetworkState(ContainerNetworkState patch) {
+        sendRequest(Operation.createPatch(getHost(), patch.documentSelfLink)
+                .setBody(patch)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        getHost().log(Level.WARNING, "Could not update the number of template for network %s", patch.name);
+                    }
+                }));
+
     }
 
     private void deleteDocumentIfNeeded(List<String> componentLinks, Runnable deleteCallback) {

@@ -146,6 +146,29 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
                 .contains(networkSubTaskState.documentSelfLink));
     }
 
+    @Test
+    public void testRemoveCompositeComponentsWithExternalNetwork() throws Throwable {
+        CompositeComponent composite1 = createCompositeComponent();
+        ContainerState container1 = createContainer(composite1);
+        ContainerNetworkState network = createNetwork(composite1, true);
+
+        RequestBrokerState day2RemovalRequest = new RequestBrokerState();
+        day2RemovalRequest.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
+        day2RemovalRequest.resourceLinks = new HashSet<>(
+                Arrays.asList(composite1.documentSelfLink));
+        day2RemovalRequest.operation = ContainerOperationType.DELETE.id;
+
+        day2RemovalRequest = startRequest(day2RemovalRequest);
+        waitForRequestToComplete(day2RemovalRequest);
+
+        verifyRemoved(composite1);
+        verifyRemoved(container1);
+
+        ContainerNetworkState net = getDocument(ContainerNetworkState.class, network.documentSelfLink);
+
+        assertEquals(0, net.compositeComponentLinks.size());
+    }
+
     private CompositeComponent createCompositeComponent() throws Throwable {
         CompositeComponent composite = new CompositeComponent();
         composite.name = "test-name";
@@ -166,6 +189,10 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
     }
 
     private ContainerNetworkState createNetwork(CompositeComponent composite) throws Throwable {
+        return createNetwork(composite, false);
+    }
+
+    private ContainerNetworkState createNetwork(CompositeComponent composite, boolean isExternal) throws Throwable {
         ContainerNetworkDescription networkDesc = TestRequestStateFactory
                 .createContainerNetworkDescription("test-net");
         networkDesc = doPost(networkDesc, ContainerNetworkDescriptionService.FACTORY_LINK);
@@ -176,6 +203,7 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
         network.compositeComponentLinks.add(composite.documentSelfLink);
         network.adapterManagementReference = networkDesc.instanceAdapterReference;
         network.descriptionLink = networkDesc.documentSelfLink;
+        network.external = isExternal;
         network = doPost(network, ContainerNetworkService.FACTORY_LINK);
         addForDeletion(network);
         return network;
