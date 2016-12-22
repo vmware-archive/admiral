@@ -108,7 +108,7 @@ public class ManagementHost extends ServiceHost {
         }));
     }
 
-    ManagementHost initializeHostAndServices(String[] args) throws Throwable {
+    protected ManagementHost initializeHostAndServices(String[] args) throws Throwable {
         log(Level.INFO, "Initializing ...");
         initialize(args);
 
