@@ -9,11 +9,12 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package instancetypes
+package environments
 
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -27,44 +28,11 @@ import (
 	"admiral/utils/urlutils"
 )
 
-type EndpointType int
-
-func (et *EndpointType) getName() string {
-	switch reflect.ValueOf(et).Elem().Int() {
-	case 0:
-		return "aws"
-	case 1:
-		return "azure"
-	case 2:
-		return "vsphere"
-	default:
-		return ""
-	}
-}
-
 const (
 	AWS EndpointType = iota
 	AZURE
 	VSPHERE
 )
-
-type EnvMapping struct {
-	Name         string                                  `json:"name"`
-	EndpointType string                                  `json:"endpointType"`
-	Properties   map[string]map[string]map[string]string `json:"properties"`
-}
-
-func (em *EnvMapping) fetchMappings(e EndpointType) error {
-	config.GetCfg()
-	url := urlutils.BuildUrl(urlutils.EnvMapping, nil, true) + e.getName()
-	req, _ := http.NewRequest("GET", url, nil)
-	_, respBody, respErr := client.ProcessRequest(req)
-	if respErr != nil {
-		return respErr
-	}
-	err := json.Unmarshal(respBody, em)
-	return err
-}
 
 const (
 	NotLoggedInMessage        = "Please login to see the available instance types."
@@ -104,6 +72,53 @@ func init() {
 
 }
 
+type EndpointType int
+
+func (et *EndpointType) getName() string {
+	switch reflect.ValueOf(et).Elem().Int() {
+	case 0:
+		return "aws"
+	case 1:
+		return "azure"
+	case 2:
+		return "vsphere"
+	default:
+		return ""
+	}
+}
+
+type EnvMapping struct {
+	Name         string `json:"name"`
+	EndpointType string `json:"endpointType"`
+
+	ComputeProfile struct {
+		InstanceTypeMapping map[string]interface{} `json:"instanceTypeMapping"`
+		ImageMapping        map[string]interface{} `json:"imageMapping"`
+	} `json:"computeProfile"`
+}
+
+func (em *EnvMapping) fetchMappings(e EndpointType) error {
+	config.GetCfg()
+	var url string
+	switch e {
+	case AWS:
+		url = urlutils.BuildUrl(urlutils.EnvironmentsAws, urlutils.GetCommonQueryMap(), true)
+	case AZURE:
+		url = urlutils.BuildUrl(urlutils.EnvironmentsAzure, urlutils.GetCommonQueryMap(), true)
+	case VSPHERE:
+		url = urlutils.BuildUrl(urlutils.EnvironmentsVsphere, urlutils.GetCommonQueryMap(), true)
+	default:
+		return errors.New("Invalid endpoint type.")
+	}
+	req, _ := http.NewRequest("GET", url, nil)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return respErr
+	}
+	err := json.Unmarshal(respBody, em)
+	return err
+}
+
 func GetOutputString(e EndpointType) string {
 	client.SetCustomTimeout(2)
 	em := &EnvMapping{}
@@ -112,32 +127,26 @@ func GetOutputString(e EndpointType) string {
 	if _, ok := err.(client.AuthorizationError); ok {
 		return NotLoggedInMessage
 	}
-	if _, ok := em.Properties["instanceType"]; !ok {
+
+	if em.ComputeProfile.InstanceTypeMapping == nil || len(em.ComputeProfile.InstanceTypeMapping) < 1 {
 		return NotAvailableInstanceTypes
 	}
 
-	if _, ok := em.Properties["instanceType"]["mappings"]; !ok {
-		return NotAvailableInstanceTypes
-	}
-
-	if _, ok := em.Properties["imageType"]; !ok {
+	if em.ComputeProfile.ImageMapping == nil || len(em.ComputeProfile.ImageMapping) < 1 {
 		return NotAvailableImageTypes
 	}
 
-	if _, ok := em.Properties["imageType"]["mappings"]; !ok {
-		return NotAvailableImageTypes
-	}
 	upperCaseName := strings.ToUpper(e.getName())
 	var buffer bytes.Buffer
 	buffer.WriteString(fmt.Sprintf("%s Instance Types:\n", upperCaseName))
 	buffer.WriteString("ID\tDESCRIPTION\n")
-	for id := range em.Properties["instanceType"]["mappings"] {
-		buffer.WriteString(utils.GetTabSeparatedString(id, AwsInstanceTypes[id]))
+	for id := range em.ComputeProfile.InstanceTypeMapping {
+		buffer.WriteString(utils.GetTabSeparatedString(id, getInstanceType(id, e)))
 		buffer.WriteString("\n")
 	}
 	strings.TrimSpace(buffer.String())
 	buffer.WriteString(fmt.Sprintf("\n%s Available OS:\n", upperCaseName))
-	for id := range em.Properties["imageType"]["mappings"] {
+	for id := range em.ComputeProfile.ImageMapping {
 		buffer.WriteString(id)
 		buffer.WriteString("\n")
 	}
@@ -178,4 +187,17 @@ func getDestinationsOutputString() string {
 		}
 	}
 	return strings.TrimSpace(buffer.String())
+}
+
+func getInstanceType(size string, e EndpointType) string {
+	switch e {
+	case AWS:
+		return AwsInstanceTypes[size]
+	case AZURE:
+		return AzureInstanceTypes[size]
+	case VSPHERE:
+		return VsphereInstanceTypes[size]
+	default:
+		return ""
+	}
 }

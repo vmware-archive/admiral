@@ -22,7 +22,7 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"admiral/endpoints/instancetypes"
+	"admiral/endpoints/environments"
 
 	"admiral/config"
 	"github.com/spf13/cobra"
@@ -282,6 +282,7 @@ var hostCreateAwsCmd = &cobra.Command{
 func initHostCreateAws() {
 	hostCreateAwsCmd.SetOutput(tabwriter.NewWriter(os.Stdout, 5, 0, 5, ' ', 0))
 	hostCreateAwsCmd.Flags().IntVar(&customTimeout, "timeout", 0, customTimeoutDesc)
+	hostCreateAwsCmd.Flags().IntVar(&dockerPort, "port", 0, dockerPortDesc)
 	hostCreateAwsCmd.Flags().StringVar(&endpointId, "endpoint", "", required+endpointIdDesc)
 	hostCreateAwsCmd.Flags().StringVar(&hostOS, "os", "", required+hostOSDesc)
 	hostCreateAwsCmd.Flags().StringVar(&instanceType, "instance-type", "", required+instanceTypeDesc)
@@ -292,7 +293,7 @@ func initHostCreateAws() {
 	hostCreateAwsCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
 	oldHelpFunc := hostCreateAwsCmd.HelpFunc()
 	hostCreateAwsCmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
-		hostCreateAwsCmd.Long = instancetypes.GetOutputString(instancetypes.AWS)
+		hostCreateAwsCmd.Long = environments.GetOutputString(environments.AWS)
 		hostCreateAwsCmd.SetHelpFunc(oldHelpFunc)
 		hostCreateAwsCmd.Help()
 	})
@@ -313,7 +314,9 @@ func RunHostCreateAws(args []string) (string, error) {
 		config.TASK_TIMEOUT = customTimeout
 	}
 
-	id, err := hosts.CreateHostAws(name, endpointId, instanceType, hostOS, guestCred, int(clusterSize), tags, custProps, asyncTask)
+	id, err := hosts.CreateHostAws(name, endpointId, instanceType, hostOS, guestCred,
+		dockerPort, int(clusterSize), tags, custProps, asyncTask)
+
 	return HostCreatedMessage + id, err
 }
 
@@ -330,6 +333,7 @@ var hostCreateAzureCmd = &cobra.Command{
 func initHostCreateAzure() {
 	hostCreateAzureCmd.SetOutput(tabwriter.NewWriter(os.Stdout, 5, 0, 5, ' ', 0))
 	hostCreateAzureCmd.Flags().IntVar(&customTimeout, "timeout", 0, customTimeoutDesc)
+	hostCreateAzureCmd.Flags().IntVar(&dockerPort, "port", 0, dockerPortDesc)
 	hostCreateAzureCmd.Flags().StringVar(&endpointId, "endpoint", "", required+endpointIdDesc)
 	hostCreateAzureCmd.Flags().StringVar(&hostOS, "os", "", required+hostOSDesc)
 	hostCreateAzureCmd.Flags().StringVar(&instanceType, "instance-type", "", required+instanceTypeDesc)
@@ -340,7 +344,7 @@ func initHostCreateAzure() {
 	hostCreateAzureCmd.Flags().BoolVar(&asyncTask, "async", false, asyncDesc)
 	oldHelpFunc := hostCreateAzureCmd.HelpFunc()
 	hostCreateAzureCmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
-		hostCreateAzureCmd.Long = instancetypes.GetOutputString(instancetypes.AZURE)
+		hostCreateAzureCmd.Long = environments.GetOutputString(environments.AZURE)
 		hostCreateAzureCmd.SetHelpFunc(oldHelpFunc)
 		hostCreateAzureCmd.Help()
 	})
@@ -361,7 +365,8 @@ func RunHostCreateAzure(args []string) (string, error) {
 		config.TASK_TIMEOUT = customTimeout
 	}
 
-	id, err := hosts.CreateHostAzure(name, endpointId, instanceType, hostOS, guestCred, int(clusterSize), tags, custProps, asyncTask)
+	id, err := hosts.CreateHostAzure(name, endpointId, instanceType, hostOS, guestCred,
+		dockerPort, int(clusterSize), tags, custProps, asyncTask)
 	return HostCreatedMessage + id, err
 }
 
@@ -378,6 +383,7 @@ var hostCreateVsphereCmd = &cobra.Command{
 func initHostCreateVsphere() {
 	hostCreateVsphereCmd.SetOutput(tabwriter.NewWriter(os.Stdout, 5, 0, 5, ' ', 0))
 	hostCreateVsphereCmd.Flags().IntVar(&customTimeout, "timeout", 0, customTimeoutDesc)
+	hostCreateVsphereCmd.Flags().IntVar(&dockerPort, "port", 0, dockerPortDesc)
 	hostCreateVsphereCmd.Flags().StringVar(&endpointId, "endpoint", "", required+endpointIdDesc)
 	hostCreateVsphereCmd.Flags().StringVar(&hostOS, "os", "", required+hostOSDesc)
 	hostCreateVsphereCmd.Flags().StringVar(&instanceType, "instance-type", "", required+instanceTypeDesc)
@@ -390,7 +396,7 @@ func initHostCreateVsphere() {
 
 	oldHelpFunc := hostCreateVsphereCmd.HelpFunc()
 	hostCreateVsphereCmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
-		hostCreateVsphereCmd.Long = instancetypes.GetOutputString(instancetypes.VSPHERE)
+		hostCreateVsphereCmd.Long = environments.GetOutputString(environments.VSPHERE)
 		hostCreateVsphereCmd.SetHelpFunc(oldHelpFunc)
 		hostCreateVsphereCmd.Help()
 	})
@@ -411,6 +417,8 @@ func RunHostCreateVsphere(args []string) (string, error) {
 		config.TASK_TIMEOUT = customTimeout
 	}
 
-	id, err := hosts.CreateHostVsphere(name, endpointId, instanceType, hostOS, destination, guestCred, int(clusterSize), tags, custProps, asyncTask)
+	id, err := hosts.CreateHostVsphere(name, endpointId, instanceType, hostOS, destination, guestCred,
+		dockerPort, int(clusterSize), tags, custProps, asyncTask)
+
 	return HostCreatedMessage + id, err
 }

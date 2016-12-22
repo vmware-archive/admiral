@@ -32,6 +32,25 @@ func ParseCustomProperties(props []string, dst map[string]*string) {
 
 }
 
+func ParseCustomPropertiesInterface(props []string, dst map[string]interface{}) {
+	if dst == nil {
+		dst = make(map[string]interface{}, 0)
+	}
+	if len(props) < 1 {
+		return
+	}
+	regex := regexp.MustCompile("\\w+\\s*=\\s*\\w+")
+
+	for _, pair := range props {
+		if !regex.MatchString(pair) {
+			continue
+		}
+		keyVal := regexp.MustCompile("\\s*=\\s*").Split(pair, -1)
+		dst[keyVal[0]] = &keyVal[1]
+	}
+
+}
+
 func AddCredentialsName(name string, props map[string]*string) {
 	props["__authCredentialsName"] = &name
 }

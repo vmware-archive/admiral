@@ -42,8 +42,14 @@ func (rt ResourceType) GetBaseUrl() string {
 		return "/core/auth/credentials"
 	case DeploymentPolicy:
 		return "/resources/deployment-policies"
-	case EnvMapping:
-		return "/config/env-mapping/"
+	case Environments:
+		return "/config/environments/"
+	case EnvironmentsAws:
+		return "/config/environments/aws"
+	case EnvironmentsAzure:
+		return "/config/environments/azure"
+	case EnvironmentsVsphere:
+		return "/config/environments/vsphere"
 	case Endpoint:
 		return "/config/endpoints"
 	case Events:
@@ -86,7 +92,10 @@ const (
 	ComputeDescription
 	Credentials
 	DeploymentPolicy
-	EnvMapping
+	Environments
+	EnvironmentsAws
+	EnvironmentsAzure
+	EnvironmentsVsphere
 	Endpoint
 	Events
 	Compute

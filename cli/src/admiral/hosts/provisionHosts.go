@@ -43,13 +43,13 @@ const (
 )
 
 type ComputeDescription struct {
-	AuthCredentialsLink string             `json:"authCredentialsLink,omitempty"`
-	Name                string             `json:"name,omitempty"`
-	InstanceType        string             `json:"instanceType,omitempty"`
-	SupportedChildren   []string           `json:"supportedChildren,omitempty"`
-	TagLinks            []string           `json:"tagLinks,omitempty"`
-	CustomProperties    map[string]*string `json:"customProperties,omitempty"`
-	DocumentSelfLink    string             `json:"documentSelfLink,omitempty"`
+	AuthCredentialsLink string                 `json:"authCredentialsLink,omitempty"`
+	Name                string                 `json:"name,omitempty"`
+	InstanceType        string                 `json:"instanceType,omitempty"`
+	SupportedChildren   []string               `json:"supportedChildren,omitempty"`
+	TagLinks            []string               `json:"tagLinks,omitempty"`
+	CustomProperties    map[string]interface{} `json:"customProperties,omitempty"`
+	DocumentSelfLink    string                 `json:"documentSelfLink,omitempty"`
 }
 
 func (cd *ComputeDescription) SetAuthCredentialsLink(id string) error {
@@ -94,9 +94,9 @@ func (cd *ComputeDescription) SetEndpoint(endpointId string) error {
 
 func (cd *ComputeDescription) SetCustomProperties(customProps []string) {
 	if cd.CustomProperties == nil {
-		cd.CustomProperties = make(map[string]*string, 0)
+		cd.CustomProperties = make(map[string]interface{}, 0)
 	}
-	properties.ParseCustomProperties(customProps, cd.CustomProperties)
+	properties.ParseCustomPropertiesInterface(customProps, cd.CustomProperties)
 }
 
 func (cd *ComputeDescription) SetInstanceType(instanceType string) error {
@@ -105,6 +105,13 @@ func (cd *ComputeDescription) SetInstanceType(instanceType string) error {
 	}
 	cd.InstanceType = instanceType
 	return nil
+}
+
+func (cd *ComputeDescription) SetDockerHostPort(port int) {
+	if port == 0 {
+		return
+	}
+	cd.CustomProperties["__dockerHostPort"] = port
 }
 
 func (cd *ComputeDescription) AddTags(tagsInput []string) error {
@@ -134,12 +141,14 @@ func (cd *ComputeDescription) containsTagLink(tagLink string) bool {
 }
 
 func NewComputeDescription(name, endpointId, instanceType, hostOS, credentialsId string,
+	dockerPort int,
 	tagsInput, customProps []string) (*ComputeDescription, error) {
 	computeDescription := &ComputeDescription{}
-	computeDescription.CustomProperties = make(map[string]*string, 0)
+	computeDescription.CustomProperties = make(map[string]interface{}, 0)
 	computeDescription.Name = name
 	computeDescription.SetSupportedChildren()
 	computeDescription.SetCustomProperties(customProps)
+	computeDescription.SetDockerHostPort(dockerPort)
 
 	err := computeDescription.AddTags(tagsInput)
 	if err != nil {
@@ -165,10 +174,11 @@ func NewComputeDescription(name, endpointId, instanceType, hostOS, credentialsId
 	return computeDescription, nil
 }
 
-func CreateHostAws(name, endpointId, instanceType, hostOS, credentialsId string, clusterSize int,
+func CreateHostAws(name, endpointId, instanceType, hostOS, credentialsId string, dockerPort, clusterSize int,
 	tagsInput, customProps []string, asyncTask bool) (string, error) {
 
-	computeDescription, err := NewComputeDescription(name, endpointId, instanceType, hostOS, credentialsId, tagsInput, customProps)
+	computeDescription, err := NewComputeDescription(name, endpointId, instanceType, hostOS,
+		credentialsId, dockerPort, tagsInput, customProps)
 
 	if err != nil {
 		return "", err
@@ -177,10 +187,11 @@ func CreateHostAws(name, endpointId, instanceType, hostOS, credentialsId string,
 	return processComputeDescription(computeDescription, clusterSize, asyncTask)
 }
 
-func CreateHostAzure(name, endpointId, instanceType, hostOS, credentialsId string, clusterSize int,
+func CreateHostAzure(name, endpointId, instanceType, hostOS, credentialsId string, dockerPort, clusterSize int,
 	tagsInput, customProps []string, asyncTask bool) (string, error) {
 
-	computeDescription, err := NewComputeDescription(name, endpointId, instanceType, hostOS, credentialsId, tagsInput, customProps)
+	computeDescription, err := NewComputeDescription(name, endpointId, instanceType, hostOS,
+		credentialsId, dockerPort, tagsInput, customProps)
 
 	if err != nil {
 		return "", err
@@ -189,10 +200,11 @@ func CreateHostAzure(name, endpointId, instanceType, hostOS, credentialsId strin
 	return processComputeDescription(computeDescription, clusterSize, asyncTask)
 }
 
-func CreateHostVsphere(name, endpointId, instanceType, hostOS, destinationId, credentialsId string, clusterSize int,
+func CreateHostVsphere(name, endpointId, instanceType, hostOS, destinationId, credentialsId string, dockerPort, clusterSize int,
 	tagsInput, customProps []string, asyncTask bool) (string, error) {
 
-	computeDescription, err := NewComputeDescription(name, endpointId, instanceType, hostOS, credentialsId, tagsInput, customProps)
+	computeDescription, err := NewComputeDescription(name, endpointId, instanceType, hostOS,
+		credentialsId, dockerPort, tagsInput, customProps)
 	if err != nil {
 		return "", err
 	}

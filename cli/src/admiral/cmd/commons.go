@@ -243,6 +243,8 @@ var (
 	endpointHostNameDesc = "Host name or IP."
 	datacenterName       string
 	datacenterNameDesc   = "Datacenter name."
+	dockerPort           int
+	dockerPortDesc       = "Docker host port."
 
 	//custom timeout flags
 	customTimeout     int
