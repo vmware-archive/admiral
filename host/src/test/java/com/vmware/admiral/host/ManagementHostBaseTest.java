@@ -46,11 +46,6 @@ public class ManagementHostBaseTest extends ServiceHost {
         return h;
     }
 
-    /**
-     * TODO - Protected helper methods for testing purposes. I need to find the way to use the
-     * existing VerificationHost or something similar for testing...
-     */
-
     static ManagementHost createManagementHost(String[] args) throws Throwable {
         ManagementHost h = new ManagementHost();
         h.initialize(args);
