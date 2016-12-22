@@ -137,7 +137,7 @@ public class SslCertificateResolver {
 
     private boolean validateIfTrusted(X509Certificate[] certificates, String authType) {
         if (trustManager == null) {
-            trustManager = (X509TrustManager) CertificateUtil.getTrustManagers(null)[0];
+            trustManager = ServerX509TrustManager.init(null);
         }
 
         try {

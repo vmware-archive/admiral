@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.compute;
 
-import java.net.URI;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -19,12 +18,8 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
-import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
-import com.vmware.admiral.service.common.SslTrustImportService;
-import com.vmware.admiral.service.common.SslTrustImportService.SslTrustImportRequest;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
-import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -48,7 +43,7 @@ public class HostConfigCertificateDistributionService extends
 
             handleAddDockerHostOperation(distState.hostLink, distState.tenantLinks);
         } catch (Throwable t) {
-            logSevere("Failed to process certificate distributuon request. %s", Utils.toString(t));
+            logSevere("Failed to process certificate distribution request. %s", Utils.toString(t));
         }
     }
 
@@ -65,11 +60,8 @@ public class HostConfigCertificateDistributionService extends
                     logFine("Distributing certificates for [%s]", body.documentLinks);
                     for (String registryLink : body.documentLinks) {
                         fetchRegistryState(registryLink, (registry) -> {
-                            fetchSslTrustLink(registry.address, (sslTrustLink) -> {
-                                fetchSslTrustCertificate(sslTrustLink, (cert) -> {
-                                    uploadCertificate(hostLink, registry.address, cert,
-                                            tenantLinks);
-                                });
+                            RegistryService.fetchRegistryCertificate(registry, (cert) -> {
+                                uploadCertificate(hostLink, registry.address, cert, tenantLinks);
                             });
                         });
                     }
@@ -90,46 +82,4 @@ public class HostConfigCertificateDistributionService extends
                 }));
     }
 
-    private void fetchSslTrustLink(String registryAddress, Consumer<String> callback) {
-        SslTrustImportRequest sslTrustRequest = new SslTrustImportRequest();
-        sslTrustRequest.hostUri = URI.create(registryAddress);
-
-        sendRequest(Operation.createPut(this, SslTrustImportService.SELF_LINK)
-                .setBody(sslTrustRequest)
-                .setCompletion((op, ex) -> {
-                    if (ex != null) {
-                        logSevere("Failed to to connect to registry host %s. "
-                                + "SSL certificate cannot be retrieved. %s",
-                                registryAddress, Utils.toString(ex));
-                    } else {
-                        // if location header is present it means a trusted self-signed
-                        // certificate has been stored
-                        String sslTrustLink = op.getResponseHeader(
-                                Operation.LOCATION_HEADER);
-                        if (sslTrustLink != null) {
-                            callback.accept(sslTrustLink);
-
-                        }
-                    }
-                }));
-    }
-
-    private void fetchSslTrustCertificate(String sslTrustLink, Consumer<String> callback) {
-
-        logFine("Fetching ssl trust: %s", sslTrustLink);
-        Operation fetchSslTrust = Operation.createGet(UriUtils.buildUri(getHost(), sslTrustLink))
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        logSevere("Failed to retrieve ssl trust state for %s. %s",
-                                sslTrustLink, Utils.toString(ex));
-                        return;
-                    }
-
-                    SslTrustCertificateState sslTrustState = o
-                            .getBody(SslTrustCertificateState.class);
-                    callback.accept(sslTrustState.certificate);
-                });
-
-        sendRequest(fetchSslTrust);
-    }
 }

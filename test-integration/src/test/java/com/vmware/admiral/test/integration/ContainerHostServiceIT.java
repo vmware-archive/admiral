@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
@@ -56,6 +57,8 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         waitForServiceAvailability(ComputeDescriptionService.FACTORY_LINK);
         waitForServiceAvailability(ContainerHostService.SELF_LINK);
         waitForServiceAvailability(SslTrustCertificateService.FACTORY_LINK);
+        ServerX509TrustManager.init(host);
+
         computeState = createComputeState();
 
         containerHostSpec = new ContainerHostSpec();
@@ -346,6 +349,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
 
     @Test
     public void testAddHostWithoutValidation() throws Throwable {
+        computeState.address = VALID_DOCKER_HOST_ADDRESS;
         containerHostSpec.acceptHostAddress = true;
         String[] result = new String[] { null };
         Operation op = Operation

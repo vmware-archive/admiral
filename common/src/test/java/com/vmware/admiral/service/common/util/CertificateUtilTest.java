@@ -13,6 +13,7 @@ package com.vmware.admiral.service.common.util;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -194,7 +195,7 @@ public class CertificateUtilTest {
     }
 
     @Test
-    public void testValidateCertificatehain() {
+    public void testValidateCertificateChain() {
         String chainPEM = loadPemFileContent("certs/chain.pem");
         X509Certificate[] chain = CertificateUtil.createCertificateChain(chainPEM);
         assertTrue(isValid(chain));
@@ -220,6 +221,25 @@ public class CertificateUtilTest {
     public void testLoadChainAsSingleCertificate() {
         String chainPEM = loadPemFileContent("certs/chain.pem");
         CertificateUtil.createCertificate(chainPEM);
+    }
+
+    @Test
+    public void testGeneratePureFingerPrint() {
+        String pem = loadPemFileContent("certs/chain.pem");
+        X509Certificate[] chain = CertificateUtil.createCertificateChain(pem);
+        String s = CertificateUtil.generatePureFingerPrint(chain);
+
+        assertNotNull(s);
+        assertNotEquals(0, s.length());
+        assertTrue(s.matches("[0-9a-f]+"));
+
+        pem = loadPemFileContent("certs/ca.pem");
+        X509Certificate cert = CertificateUtil.createCertificate(pem);
+        s = CertificateUtil.generatePureFingerPrint(cert);
+
+        assertNotNull(s);
+        assertNotEquals(0, s.length());
+        assertTrue(s.matches("[0-9a-f]+"));
     }
 
     private static String loadPemFileContent(String pemFile) {

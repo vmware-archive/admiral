@@ -14,13 +14,19 @@ package com.vmware.admiral.common.util;
 import java.net.Socket;
 import java.security.Principal;
 import java.security.PrivateKey;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509KeyManager;
+
+import com.vmware.xenon.common.Utils;
 
 /**
  * KeyManager that delegates to one of multiple KeyManagers based on alias. Each delegate KeyManager
@@ -30,50 +36,39 @@ import javax.net.ssl.X509KeyManager;
  * KeyManager.
  */
 public class DelegatingX509KeyManager extends X509ExtendedKeyManager {
-    private final Map<String, X509ExtendedKeyManager> delegates = new ConcurrentHashMap<String, X509ExtendedKeyManager>();
+
+    private static final Logger logger = Logger.getLogger(DelegatingX509KeyManager.class.getName());
+
+    private final Map<String, X509ExtendedKeyManager> delegates = new ConcurrentHashMap<>();
 
     @Override
-    public String chooseEngineClientAlias(String[] keyType,
-            Principal[] issuers, SSLEngine engine) {
-
-        // try each delegate and see if has a match for the issuers
-        for (X509KeyManager delegate : delegates.values()) {
-            String alias = ((X509ExtendedKeyManager) delegate)
-                    .chooseEngineClientAlias(keyType, issuers, engine);
-
-            if (alias != null) {
-                return alias;
-            }
+    public String chooseEngineClientAlias(String[] keyType, Principal[] issuers, SSLEngine engine) {
+        String alias = getAliasByRemoteCert(engine);
+        if (alias != null) {
+            return alias;
         }
 
-        // no matching alias found
-        return null;
+        return getAliasByRemoteCA(keyType, issuers, engine);
     }
 
     @Override
-    public String chooseEngineServerAlias(String keyType, Principal[] issuers,
-            SSLEngine engine) {
-
+    public String chooseEngineServerAlias(String keyType, Principal[] issuers, SSLEngine engine) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String chooseClientAlias(String[] keyType, Principal[] issuers,
-            Socket socket) {
-
+    public String chooseClientAlias(String[] keyType, Principal[] issuers, Socket socket) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String chooseServerAlias(String keyType, Principal[] issuers,
-            Socket socket) {
+    public String chooseServerAlias(String keyType, Principal[] issuers, Socket socket) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public X509Certificate[] getCertificateChain(String alias) {
-        X509Certificate[] certificateChain = delegates.get(alias)
-                .getCertificateChain(alias);
+        X509Certificate[] certificateChain = delegates.get(alias).getCertificateChain(alias);
         return certificateChain;
     }
 
@@ -94,10 +89,10 @@ public class DelegatingX509KeyManager extends X509ExtendedKeyManager {
     }
 
     /**
-     * Add a delegate identified by the given unique key (can be used to remove it later)
+     * Add a delegate identified by the given unique key (can be used to remove it later).
      *
-     * @param alias
-     * @param newDelegate
+     * @param alias       key with which the specified value is to be associated
+     * @param newDelegate value to be associated with the specified key
      */
     public void putDelegate(String alias, X509ExtendedKeyManager newDelegate) {
         if (!alias.equals(alias.toLowerCase())) {
@@ -109,13 +104,72 @@ public class DelegatingX509KeyManager extends X509ExtendedKeyManager {
     }
 
     /**
-     * Remove a previously added delegate
+     * Remove a previously added delegate.
      *
-     * @param alias
-     * @return
+     * @param alias key whose mapping is to be removed from the map
+     * @return the previous value associated with key, or null if there was no mapping for key.
      */
     public X509KeyManager removeDelegate(String alias) {
         return delegates.remove(alias);
+    }
+
+    private String getAliasByRemoteCert(SSLEngine engine) {
+        if (engine == null) {
+            logger.info("Cannot choose client alias: SSLEngine is null");
+            return null;
+        }
+
+        SSLSession handshakeSession = engine.getHandshakeSession();
+        if (handshakeSession == null) {
+            logger.info("Cannot choose client alias: HandshakeSession is null");
+            return null;
+        }
+
+        Certificate[] peerCertificates = null;
+        try {
+            peerCertificates = handshakeSession.getPeerCertificates();
+        } catch (SSLPeerUnverifiedException e) {
+            logger.info("Cannot choose client alias: error getting peer certificate " +
+                    Utils.toString(e));
+            return null;
+        }
+
+        if (peerCertificates == null || peerCertificates.length == 0) {
+            logger.info("Cannot choose client alias: peer certificate is empty");
+            return null;
+        }
+
+        X509Certificate cert;
+        try {
+            cert = (X509Certificate) peerCertificates[0];
+        } catch (ClassCastException e) {
+            logger.info("Cannot choose client alias: not a X509 certificate: " + Utils.toString(e));
+            return null;
+        }
+
+        String alias = CertificateUtil.generatePureFingerPrint(cert);
+
+        if (delegates.containsKey(alias)) {
+            return alias;
+        }
+
+        logger.info("Cannot choose client alias by cert: no delegate for key " + alias);
+        return null;
+    }
+
+    private String getAliasByRemoteCA(String[] keyType, Principal[] issuers, SSLEngine engine) {
+        // try each delegate and see if has a match for the issuers
+        for (X509KeyManager delegate : delegates.values()) {
+            String alias = ((X509ExtendedKeyManager) delegate)
+                    .chooseEngineClientAlias(keyType, issuers, engine);
+
+            if (alias != null) {
+                return alias;
+            }
+        }
+
+        logger.warning("Cannot choose client alias by CA: no delegate found");
+        return null;
     }
 
 }

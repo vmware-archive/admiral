@@ -62,11 +62,14 @@ public class ContainerImageTagsIT extends BaseTestCase {
 
     private static String v1RegistryAddress;
     private static String v2RegistryAddress;
+    private static String defaultRegistryAddress;
 
     @BeforeClass
-    public static void setUpClass() {
+    public static void setUpClass() throws Exception {
         v1RegistryAddress = getTestRequiredProp("docker.registry.host.address");
         v2RegistryAddress = getTestRequiredProp("docker.v2.registry.host.address");
+        defaultRegistryAddress = getPrivateField(
+                RegistryService.class.getDeclaredField("DEFAULT_REGISTRY_ADDRESS"), null);
     }
 
     @Before
@@ -78,7 +81,6 @@ public class ContainerImageTagsIT extends BaseTestCase {
         waitForServiceAvailability(ConfigurationFactoryService.SELF_LINK);
         waitForServiceAvailability(RegistryAdapterService.SELF_LINK);
         waitForServiceAvailability(ContainerImageService.SELF_LINK);
-        waitForServiceAvailability(RegistryService.DEFAULT_INSTANCE_LINK);
         waitForServiceAvailability(RegistryService.DEFAULT_INSTANCE_LINK);
         waitForServiceAvailability(ContainerImageTagsService.SELF_LINK);
     }
@@ -101,12 +103,14 @@ public class ContainerImageTagsIT extends BaseTestCase {
     public void testListTagsFromDockerHub() throws Throwable {
         // Docker Hub list tags requests are expected to use the v2 endpoint,
         // otherwise we get fewer tags, in our case only "2.6" and "2.7".
+        configureRegistry(defaultRegistryAddress, TENANT);
         String[] expectedTags = new String[] {  "2.6", "2.7", "3.1", "3.2", "3.3", "3.4" };
         verifyImageTags(TEST_IMAGE_DOCKER_HUB, TENANT, expectedTags);
     }
 
     @Test
     public void testListTagsFromDockerHubFullImageName() throws Throwable {
+        configureRegistry(defaultRegistryAddress, TENANT);
         String[] expectedTags = new String[] {  "2.6", "2.7", "3.1", "3.2", "3.3", "3.4" };
         verifyImageTags(TEST_IMAGE_DOCKER_HUB_FULL_ADDRESS, TENANT, expectedTags);
     }

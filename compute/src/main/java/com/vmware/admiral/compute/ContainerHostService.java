@@ -13,6 +13,7 @@ package com.vmware.admiral.compute;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,10 +25,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.common.util.SslCertificateResolver;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
@@ -36,6 +40,7 @@ import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.admiral.service.common.SslTrustCertificateFactoryService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -149,41 +154,8 @@ public class ContainerHostService extends StatelessService {
                                 ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
 
         if (hostSpec.isConfigureOverSsh) {
-            ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskServiceState();
-            state.address = hostSpec.uri.getHost();
-            state.port = hostSpec.uri.getPort();
-            state.authCredentialsLink = hostSpec.hostState.customProperties
-                    .get(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME);
-            state.placementZoneLink = hostSpec.hostState.resourcePoolLink;
-            state.tagLinks = hostSpec.hostState.tagLinks;
-
-            if (validateHostConnection) {
-                validateConfigureOverSsh(state, op);
-            } else {
-                Operation
-                        .createPost(UriUtils.buildUri(getHost(),
-                                ConfigureHostOverSshTaskService.FACTORY_LINK))
-                        .setBody(state)
-                        .setReferer(getHost().getUri())
-                        .setCompletion((completedOp, failure) -> {
-                            if (failure != null) {
-                                op.fail(failure);
-                                return;
-                            }
-
-                            // Return the state to the requester for further tracking
-                            op.setBody(completedOp
-                                    .getBody(ConfigureHostOverSshTaskServiceState.class));
-                            op.complete();
-                            return;
-
-                        }).sendWith(getHost());
-            }
-
-            return;
-        }
-
-        if (validateHostConnection) {
+            configureOverSsh(op, hostSpec, validateHostConnection);
+        } else if (validateHostConnection) {
             validateConnection(hostSpec, op);
         } else if (hostSpec.isUpdateOperation != null
                 && hostSpec.isUpdateOperation.booleanValue()) {
@@ -216,6 +188,65 @@ public class ContainerHostService extends StatelessService {
                                     createHost(hostSpec, op);
                                 }
                             });
+        }
+    }
+
+    private void configureOverSsh(Operation op, ContainerHostSpec hostSpec,
+            boolean validateHostConnection) {
+        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskServiceState();
+        state.address = hostSpec.uri.getHost();
+        state.port = hostSpec.uri.getPort();
+        state.authCredentialsLink = hostSpec.hostState.customProperties
+                .get(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME);
+        state.placementZoneLink = hostSpec.hostState.resourcePoolLink;
+        state.tagLinks = hostSpec.hostState.tagLinks;
+
+        if (validateHostConnection) {
+            validateConfigureOverSsh(state, op);
+        } else {
+            Operation
+                    .createPost(UriUtils.buildUri(getHost(),
+                            ConfigureHostOverSshTaskService.FACTORY_LINK))
+                    .setBody(state)
+                    .setReferer(getHost().getUri())
+                    .setCompletion((completedOp, failure) -> {
+                        if (failure != null) {
+                            op.fail(failure);
+                            return;
+                        }
+
+                        // Return the state to the requester for further tracking
+                        op.setBody(completedOp
+                                .getBody(ConfigureHostOverSshTaskServiceState.class));
+                        op.complete();
+                    }).sendWith(getHost());
+        }
+    }
+
+    /**
+     * Fetches server certificate and stores its fingerprint as custom property. It is then used
+     * as a hash key to get the client certificate when handshaking.
+     */
+    private void setSslTrustAliasProperty(ContainerHostSpec hostSpec) {
+        if (DeploymentProfileConfig.getInstance().isTest()) {
+            logInfo("No ssl trust validation is performed in test mode...");
+            return;
+        }
+
+        if (!hostSpec.isSecureScheme()) {
+            logInfo("Using non secure channel, skipping SSL validation for %s", hostSpec.uri);
+            return;
+        }
+
+        try {
+            SslCertificateResolver resolver = SslCertificateResolver.connect(hostSpec.uri);
+
+            X509Certificate[] certificateChain = resolver.getCertificateChain();
+
+            String s = CertificateUtil.generatePureFingerPrint(certificateChain);
+            hostSpec.hostState.customProperties.put(SSL_TRUST_ALIAS_PROP_NAME, s);
+        } catch (Exception e) {
+            logInfo("Cannot connect to %s to get remote certificate", hostSpec.uri);
         }
     }
 
@@ -347,16 +378,17 @@ public class ContainerHostService extends StatelessService {
         AdapterRequest request = new AdapterRequest();
         request.operationTypeId = ContainerHostOperationType.PING.id;
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-        request.resourceReference = UriUtils.buildUri(getHost(),
-                ComputeService.FACTORY_LINK);
-        request.customProperties = cs.customProperties == null ? new HashMap<>() : new HashMap<>(
-                cs.customProperties);
+        request.resourceReference = UriUtils.buildUri(getHost(), ComputeService.FACTORY_LINK);
+        request.customProperties = cs.customProperties == null ?
+                new HashMap<>() :
+                new HashMap<>(cs.customProperties);
         request.customProperties.putIfAbsent(ContainerHostService.DOCKER_HOST_ADDRESS_PROP_NAME,
                 cs.address);
 
         if (sslTrust != null) {
             request.customProperties.put(SSL_TRUST_CERT_PROP_NAME, sslTrust.certificate);
-            request.customProperties.put(SSL_TRUST_ALIAS_PROP_NAME, sslTrust.getAlias());
+            request.customProperties.put(SSL_TRUST_ALIAS_PROP_NAME,
+                    SslTrustCertificateFactoryService.generateSelfLink(sslTrust));
         }
 
         sendRequest(Operation
@@ -444,18 +476,22 @@ public class ContainerHostService extends StatelessService {
             if (hostSpec.acceptCertificate) {
                 op.nestCompletion((o) -> {
                     EndpointCertificateUtil.validateSslTrust(this, hostSpec, o, op::complete);
+                    setSslTrustAliasProperty(hostSpec);
                 });
             }
 
             storeHost(hostSpec, op);
         } else {
-            validateSslTrust(hostSpec, op,
-                    () -> pingHost(hostSpec, op, hostSpec.sslTrust,
-                            () -> storeHost(hostSpec, op)));
+            validateSslTrust(hostSpec, op, () -> {
+                setSslTrustAliasProperty(hostSpec);
+                pingHost(hostSpec, op, hostSpec.sslTrust, () -> storeHost(hostSpec, op));
+            });
         }
     }
 
     private void updateHost(ContainerHostSpec hostSpec, Operation op) {
+        setSslTrustAliasProperty(hostSpec);
+
         ComputeState cs = hostSpec.hostState;
         sendRequest(Operation.createPut(this, cs.documentSelfLink)
                 .setBody(cs)
@@ -471,9 +507,10 @@ public class ContainerHostService extends StatelessService {
     }
 
     private void validateConnection(ContainerHostSpec hostSpec, Operation op) {
-        validateSslTrust(hostSpec, op,
-                () -> pingHost(hostSpec, op, hostSpec.sslTrust,
-                        () -> completeOperationSuccess(op)));
+        validateSslTrust(hostSpec, op, () -> {
+            setSslTrustAliasProperty(hostSpec);
+            pingHost(hostSpec, op, hostSpec.sslTrust, () -> completeOperationSuccess(op));
+        });
     }
 
     protected void completeOperationSuccess(Operation op) {

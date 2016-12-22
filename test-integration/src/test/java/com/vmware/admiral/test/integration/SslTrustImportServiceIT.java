@@ -26,6 +26,7 @@ import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.admiral.service.common.SslTrustImportService;
@@ -46,6 +47,7 @@ public class SslTrustImportServiceIT extends ComputeBaseTest {
         uri = UriUtils.buildUri(host, SslTrustImportService.SELF_LINK);
         request = new SslTrustImportRequest();
         waitForServiceAvailability(SslTrustImportService.SELF_LINK);
+        ServerX509TrustManager.init(host);
     }
 
     @Test

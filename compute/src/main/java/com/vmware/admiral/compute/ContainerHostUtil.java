@@ -94,4 +94,16 @@ public class ContainerHostUtil {
 
         return vic;
     }
+
+    /**
+     * Gets trust alias property value from host custom properties.
+     */
+    public static String getTrustAlias(ComputeState computeState) {
+        if (computeState != null && computeState.customProperties != null) {
+            return computeState.customProperties
+                    .get(ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME);
+        }
+        return null;
+    }
+
 }

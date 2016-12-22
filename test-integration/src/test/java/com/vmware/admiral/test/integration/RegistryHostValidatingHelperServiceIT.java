@@ -16,8 +16,10 @@ import static org.junit.Assert.assertNotNull;
 
 import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOrTestProp;
 
+import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -25,6 +27,8 @@ import org.junit.Test;
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
+import com.vmware.admiral.common.util.DelegatingX509TrustManager;
+import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.compute.EndpointCertificateUtil;
 import com.vmware.admiral.compute.RegistryConfigCertificateDistributionService;
 import com.vmware.admiral.compute.RegistryHostConfigService;
@@ -84,6 +88,8 @@ public class RegistryHostValidatingHelperServiceIT extends BaseTestCase {
         waitForServiceAvailability(RegistryHostConfigService.SELF_LINK);
         waitForServiceAvailability(RegistryAdapterService.SELF_LINK);
         waitForServiceAvailability(RegistryConfigCertificateDistributionService.SELF_LINK);
+
+        ServerX509TrustManager.init(host);
 
         registryState = createRegistryState();
 
@@ -195,6 +201,8 @@ public class RegistryHostValidatingHelperServiceIT extends BaseTestCase {
     @Test
     public void testAddHostWhenSelfSignNotAccepted() throws Throwable {
         registryState.address = TEST_REGISTRY_ADDRESS;
+        // remove previously added certificates to simulate 'not accepted' case
+        cleanTrustCertificate();
 
         Operation op = Operation
                 .createPut(helperUri)
@@ -224,6 +232,19 @@ public class RegistryHostValidatingHelperServiceIT extends BaseTestCase {
         host.testStart(1);
         host.send(op);
         host.testWait();
+    }
+
+    private void cleanTrustCertificate() throws NoSuchFieldException, IllegalAccessException {
+        ServerX509TrustManager x509TrustManager = ServerX509TrustManager.init(null);
+        Field f = ServerX509TrustManager.class.getDeclaredField("delegatingTrustManager");
+        f.setAccessible(true);
+        DelegatingX509TrustManager delegatingX509TrustManager = (DelegatingX509TrustManager)
+                f.get(x509TrustManager);
+
+        f = DelegatingX509TrustManager.class.getDeclaredField("delegates");
+        f.setAccessible(true);
+        Map delegates = (Map) f.get(delegatingX509TrustManager);
+        delegates.clear();
     }
 
     @Test

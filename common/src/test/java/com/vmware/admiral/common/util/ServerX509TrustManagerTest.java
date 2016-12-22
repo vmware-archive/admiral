@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.common.util;
 
+import static org.junit.Assert.fail;
+
 import static com.vmware.admiral.common.util.ServerX509TrustManager.JAVAX_NET_SSL_TRUST_STORE;
 import static com.vmware.admiral.common.util.ServerX509TrustManager.JAVAX_NET_SSL_TRUST_STORE_PASSWORD;
 
@@ -19,6 +21,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
@@ -61,6 +64,22 @@ public class ServerX509TrustManagerTest {
         // It should work because a truststore which contains the cert is passed as argument.
 
         trustManager.checkServerTrusted(getCertificates("/certs/trusted_server.crt"), "RSA");
+
+        // Validate a custom certificate signed by a custom CA which is trusted.
+        trustManager.checkServerTrusted(getCertificates("/certs/signed-server.crt"), "RSA");
+    }
+
+    @Test
+    public void testUntrustedCertificates() throws Exception {
+
+        // Validate a custom certificate.
+        // Is should fail as it is signed by untrusted CA
+        try {
+            trustManager.checkServerTrusted(
+                    getCertificates("/certs/untrusted-server.crt"), "RSA");
+            fail("Should not trust untrusted certificate");
+        } catch (CertificateException ignored) {
+        }
     }
 
     private static X509Certificate[] getCertificates(String filename) throws Exception {

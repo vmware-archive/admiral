@@ -38,7 +38,6 @@ import com.vmware.admiral.common.util.DelegatingX509KeyManager;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.common.util.ServiceUtils;
-import com.vmware.admiral.service.common.SslTrustImportService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.Service;
@@ -164,8 +163,8 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     public void deleteImage(CommandInput input, Operation.CompletionHandler completionHandler) {
         createOrUpdateTargetSsl(input);
 
-        String path = String.format("/images/%s", input.getProperties().get(DockerAdapterCommandExecutor
-                .DOCKER_BUILD_IMAGE_TAG_PROP_NAME));
+        String path = String.format("/images/%s", input.getProperties()
+                .get(DockerAdapterCommandExecutor.DOCKER_BUILD_IMAGE_TAG_PROP_NAME));
         URI targetUri = UriUtils.extendUri(input.getDockerUri(), path);
 
         logger.info("Deleting image: " + targetUri);
@@ -574,25 +573,27 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             return;
         }
 
+        String sslTrust = (String) input.getProperties().get(SSL_TRUST_CERT_PROP_NAME);
+        String trustAlias = (String) input.getProperties().get(SSL_TRUST_ALIAS_PROP_NAME);
+        if (trustAlias == null) {
+            logger.warning("No trust alias property set, not using certificate.");
+            return;
+        }
+
+        if (sslTrust != null && trustManager != null) {
+            trustManager.putDelegate(trustAlias, sslTrust);
+        }
+
         String clientKey = EncryptionUtils.decrypt(input.getCredentials().privateKey);
         String clientCert = input.getCredentials().publicKey;
-        String alias = input.getDockerUri().toString().toLowerCase();
 
         // TODO use an LRU cache to limit the number of stored
         // KeyManagers while minimizing time wasted repeatedly
         // recreating them
         if (clientKey != null && !clientKey.isEmpty()) {
             X509ExtendedKeyManager delegateKeyManager = (X509ExtendedKeyManager) CertificateUtil
-                    .getKeyManagers(alias, clientKey, clientCert)[0];
-            keyManager.putDelegate(alias, delegateKeyManager);
-        }
-
-        String sslTrust = (String) input.getProperties().get(SSL_TRUST_CERT_PROP_NAME);
-
-        if (sslTrust != null && trustManager != null) {
-            String trustAlias = (String) input.getProperties().get(SSL_TRUST_ALIAS_PROP_NAME);
-
-            trustManager.putDelegate(trustAlias, sslTrust);
+                    .getKeyManagers(trustAlias, clientKey, clientCert)[0];
+            keyManager.putDelegate(trustAlias, delegateKeyManager);
         }
     }
 
@@ -604,7 +605,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
 
     private void ensureTrustDelegateExists(CommandInput input, int retryCount, Runnable callback) {
         if (trustManager != null) {
-            String trustAlias = SslTrustImportService.getCertSelfLink(input.getDockerUri());
+            String trustAlias = (String) input.getProperties().get(SSL_TRUST_ALIAS_PROP_NAME);
             X509TrustManager delegate = trustManager.getDelegate(trustAlias);
             if (delegate != null) {
                 callback.run();

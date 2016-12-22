@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
@@ -423,7 +424,10 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
 
         if (authCredentialsState != null) {
             checkAuthCredentialsSupportedType(authCredentialsState, true);
-            commandInput.withCredentials(authCredentialsState);
+            commandInput
+                    .withCredentials(authCredentialsState)
+                    .withProperty(SSL_TRUST_ALIAS_PROP_NAME,
+                            ContainerHostUtil.getTrustAlias(hostComputeState));
         }
 
         updateSslTrust(request, commandInput);

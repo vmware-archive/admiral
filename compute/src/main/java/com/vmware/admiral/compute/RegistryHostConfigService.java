@@ -148,8 +148,7 @@ public class RegistryHostConfigService extends StatelessService {
                             op.nestCompletion((nestedOp) -> {
                                 completeOperationSuccess(op);
                             });
-                            distributeCertificate(hostState.address, hostSpec.sslTrust, op,
-                                    hostState.tenantLinks);
+                            distributeCertificate(hostState, op);
                         }));
     }
 
@@ -224,25 +223,22 @@ public class RegistryHostConfigService extends StatelessService {
                         () -> completeOperationSuccess(op)));
     }
 
-    private void distributeCertificate(String registryAddress, SslTrustCertificateState certState,
-            Operation parentOp, List<String> tenantLinks) {
-        RegistryConfigCertificateDistributionState distributionState = new RegistryConfigCertificateDistributionState();
-        distributionState.registryAddress = registryAddress;
-        distributionState.certState = certState;
-        distributionState.tenantLinks = tenantLinks;
-
+    private void distributeCertificate(RegistryState registry, Operation parentOp) {
         parentOp.complete();
 
-        if (certState == null) {
-            logWarning("no cert state specified for %s, ignoring request",
-                    distributionState.registryAddress);
-            return;
-        }
+        RegistryService.fetchRegistryCertificate(registry, (certificate) -> {
+            RegistryConfigCertificateDistributionState distributionState =
+                    new RegistryConfigCertificateDistributionState();
+            distributionState.registryAddress = registry.address;
+            distributionState.tenantLinks = registry.tenantLinks;
+            distributionState.certState = new SslTrustCertificateState();
+            distributionState.certState.certificate = certificate;
 
-        sendRequest(Operation.createPost(this,
-                RegistryConfigCertificateDistributionService.SELF_LINK)
-                .setContextId(parentOp.getContextId())
-                .setBody(distributionState));
+            sendRequest(Operation.createPost(this,
+                    RegistryConfigCertificateDistributionService.SELF_LINK)
+                    .setContextId(parentOp.getContextId())
+                    .setBody(distributionState));
+        });
     }
 
     /**

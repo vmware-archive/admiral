@@ -11,8 +11,6 @@
 
 package com.vmware.admiral.service.common;
 
-import java.security.cert.X509Certificate;
-
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
@@ -68,11 +66,8 @@ public class SslTrustCertificateFactoryService extends FactoryService {
     public static String generateSelfLink(SslTrustCertificateState body) {
         AssertUtil.assertNotEmpty(body.certificate, "certificate");
 
-        X509Certificate[] certificateChain = CertificateUtil
-                .createCertificateChain(body.certificate);
-
-        String thumbprint = CertificateUtil.computeCertificateThumbprint(certificateChain[0]);
-        return thumbprint.replaceAll(":", "").toLowerCase();
-
+        return CertificateUtil.generatePureFingerPrint(
+                CertificateUtil.createCertificateChain(body.certificate));
     }
+
 }

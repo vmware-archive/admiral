@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
+import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME;
+
 import java.net.URI;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -27,6 +29,7 @@ import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -166,7 +169,10 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                             fail(request, e);
                         }
 
-                        commandInput.withCredentials(r.getResult());
+                        commandInput
+                                .withCredentials(r.getResult())
+                                .withProperty(SSL_TRUST_ALIAS_PROP_NAME,
+                                        ContainerHostUtil.getTrustAlias(hostComputeState));
 
                         credentialsFound.set(true);
 

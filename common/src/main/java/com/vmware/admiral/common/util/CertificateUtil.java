@@ -547,6 +547,22 @@ public class CertificateUtil {
         }
     }
 
+    /**
+     * Returns certificate thumbprint with no colon characters and lower-cased for the first
+     * certificate in the chain.
+     */
+    public static String generatePureFingerPrint(X509Certificate[] certificateChain) {
+        return generatePureFingerPrint(certificateChain[0]);
+    }
+
+    /**
+     * Returns certificate thumbprint with no colon characters and lower-cased.
+     */
+    public static String generatePureFingerPrint(X509Certificate certificate) {
+        String thumbprint = computeCertificateThumbprint(certificate);
+        return thumbprint.replaceAll(":", "").toLowerCase();
+    }
+
     private static CertChainKeyPair generateCertificateAndSign(String fqdn,
             X509Certificate issuerCertificate,
             PrivateKey issuerPrivateKey, List<ExtensionHolder> extensions)

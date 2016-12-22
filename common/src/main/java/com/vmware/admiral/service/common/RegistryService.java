@@ -12,13 +12,18 @@
 package com.vmware.admiral.service.common;
 
 import java.net.URI;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.common.util.SslCertificateResolver;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -63,7 +68,8 @@ public class RegistryService extends StatefulService {
         if (disableDefaultRegistry) {
             // ensure default registry does not exist
             host.registerForServiceAvailability((o, e) -> {
-                System.out.println("registerForServiceAvailability: " + RegistryService.FACTORY_LINK);
+                host.log(Level.INFO, "registerForServiceAvailability: %s",
+                        RegistryService.FACTORY_LINK);
                 deleteDefaulRegistry(host);
             }, true, RegistryService.FACTORY_LINK);
 
@@ -241,6 +247,32 @@ public class RegistryService extends StatefulService {
         // PUT replaces entire state, so update the linked state
         setState(put, currentState);
         put.setBody(currentState).complete();
+    }
+
+    public static void fetchRegistryCertificate(RegistryState registry, Consumer<String> callback) {
+        if (DeploymentProfileConfig.getInstance().isTest()) {
+            Utils.logWarning("No ssl trust validation is performed in test mode...");
+            return;
+        }
+
+        URI uri = URI.create(registry.address);
+        if (!UriUtils.HTTPS_SCHEME.equalsIgnoreCase(uri.getScheme())) {
+            Utils.logWarning("Using non secure channel, no certificate distribution for [%s]",
+                    registry.address);
+            return;
+        }
+
+        String certificate = null;
+        try {
+            SslCertificateResolver resolver = SslCertificateResolver.connect(uri);
+            X509Certificate[] certificateChain = resolver.getCertificateChain();
+            certificate = CertificateUtil.toPEMformat(certificateChain);
+            if (callback != null) {
+                callback.accept(certificate);
+            }
+        } catch (Exception e) {
+            Utils.logWarning("Cannot connect to %s to get remote certificate", registry.address);
+        }
     }
 
     private void updateState(RegistryState newState, RegistryState currentState) {

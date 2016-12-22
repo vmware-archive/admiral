@@ -888,6 +888,12 @@ public abstract class BaseTestCase {
         field.set(null, newValue);
     }
 
+    @SuppressWarnings("unchecked")
+    protected static <T> T getPrivateField(Field field, Object instance) throws Exception {
+        field.setAccessible(true);
+        return (T) field.get(instance);
+    }
+
     protected static void setPrivateField(Field field, Object instance, Object newValue)
             throws Exception {
         field.setAccessible(true);

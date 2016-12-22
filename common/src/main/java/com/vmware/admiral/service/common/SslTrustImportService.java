@@ -224,10 +224,4 @@ public class SslTrustImportService extends StatelessService {
         return sslTrustState;
     }
 
-    public static String getCertSelfLink(URI hostUri) {
-        if (hostUri.getPort() == -1) {
-            return hostUri.getHost();
-        }
-        return hostUri.getHost() + "-" + hostUri.getPort();
-    }
 }
