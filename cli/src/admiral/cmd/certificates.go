@@ -26,6 +26,12 @@ var (
 	ExclusiveFlagsError       = errors.New("--file and --url flags are exclusive, provide only one of them.")
 )
 
+const (
+	CertificateAddedMessage   = "Certificate added: "
+	CertificateRemovedMessage = "Certificate removed: "
+	CertificateUpdatedMessage = "Certificate updated: "
+)
+
 func init() {
 	initCertAdd()
 	initCertList()
@@ -70,7 +76,7 @@ func RunCertAdd(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Certificate added: " + id, err
+		return CertificateAddedMessage + id, err
 	}
 }
 
@@ -100,7 +106,7 @@ func RunCertList(args []string) (string, error) {
 }
 
 var certRemoveCmd = &cobra.Command{
-	Use:   "rm [CERTIFICATE-ID]",
+	Use:   "rm [CERTIFICATE]",
 	Short: "Remove certificate.",
 	Long:  "Remove certificate.",
 
@@ -130,12 +136,12 @@ func RunCertRemove(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Certificate removed: " + newID, err
+		return CertificateRemovedMessage + newID, err
 	}
 }
 
 var certUpdateCmd = &cobra.Command{
-	Use:   "update [CERTIFICATE-ID]",
+	Use:   "update [CERTIFICATE]",
 	Short: "Update certificate.",
 	Long:  "Update certificate.",
 
@@ -167,6 +173,6 @@ func RunCertUpdate(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Certificate updated: " + newID, err
+		return CertificateUpdatedMessage + newID, err
 	}
 }

@@ -147,7 +147,8 @@ func buildIdError(idError, nameError error, idOrName string, resType utils.Resou
 		return NewSelfLinkError(NonUniqueIdAndNoElementsWithName, idOrName, resType)
 	} else if idError == NotFound && nameError == NonUnique {
 		return NewSelfLinkError(NotFoundIdAndDuplicateName, idOrName, resType)
-	} else {
-		return nil
+	} else if _, ok := idError.(client.AuthorizationError); ok {
+		return idError
 	}
+	return nil
 }

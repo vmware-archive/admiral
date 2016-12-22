@@ -151,7 +151,7 @@ func RunEndpointAddVsphere(args []string) (string, error) {
 }
 
 var endpointRemoveCmd = &cobra.Command{
-	Use:   "rm [ENDPOINT-ID]",
+	Use:   "rm [ENDPOINT]",
 	Short: "Remove endpoint.",
 	Long:  "Remove endpoint.",
 
@@ -179,7 +179,7 @@ func RunEndpointRemove(args []string) (string, error) {
 }
 
 var endpointUpdateAwsCmd = &cobra.Command{
-	Use:   "aws [ENDPOINT-ID]",
+	Use:   "aws [ENDPOINT]",
 	Short: "Update AWS endpoint.",
 	Long:  "Update AWS endpoint.",
 
@@ -211,7 +211,7 @@ func RunEndpointUpdateAws(args []string) (string, error) {
 }
 
 var endpointUpdateAzureCmd = &cobra.Command{
-	Use:   "azure [ENDPOINT-ID]",
+	Use:   "azure [ENDPOINT]",
 	Short: "Update Azure endpoint.",
 	Long:  "Update Azure endpoint.",
 
@@ -245,7 +245,7 @@ func RunEndpointUpdateAzure(args []string) (string, error) {
 }
 
 var endpointUpdateVsphereCmd = &cobra.Command{
-	Use:   "vsphere [ENDPOINT-ID]",
+	Use:   "vsphere [ENDPOINT]",
 	Short: "Update vSphere endpoint.",
 	Long:  "Update vSphere endpoint.",
 

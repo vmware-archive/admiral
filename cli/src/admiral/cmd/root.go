@@ -30,6 +30,7 @@ func init() {
 	AutocompleteCmd.Hidden = true
 	EndpointRootCmd.AddCommand(EndpointRootAddCmd, EndpointRootUpdateCmd)
 	HostsRootCmd.AddCommand(HostsCreateRootCmd)
+	TemplatesRootCmd.AddCommand(TemplateClosureRootCmd)
 	RootCmd.AddCommand(AppsRootCmd, CertsRootCmd, CredentialsRootCmd,
 		HostsRootCmd, PlacementsRootCmd, PlacementZonesRootCmd,
 		TemplatesRootCmd, RegistriesRootCmd, NetworksRootCmd,
@@ -168,6 +169,11 @@ var HostsCreateRootCmd = &cobra.Command{
 var ClosuresRootCmd = &cobra.Command{
 	Use:   "closure",
 	Short: "Perform operations with closures.",
+}
+
+var TemplateClosureRootCmd = &cobra.Command{
+	Use:   "closure",
+	Short: "Perform operations with closure templates.",
 }
 
 var AutocompleteCmd = &cobra.Command{

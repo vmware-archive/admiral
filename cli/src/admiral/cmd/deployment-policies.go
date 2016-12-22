@@ -25,6 +25,12 @@ var (
 	MissingDeploymentPolicyNameError = errors.New("Enter deployment policy name.")
 )
 
+const (
+	DeploymentPolicyAddedMessage   = "Deployment policy added: "
+	DeploymentPolicyRemovedMessage = "Deployment policy removed: "
+	DeploymentPolicyUpdatedMessage = "Deployment policy updated: "
+)
+
 func init() {
 	initDeploymentPolicyAdd()
 	initDeploymentPolicyList()
@@ -63,7 +69,7 @@ func RunDeploymentPolicyAdd(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Deployment policy added: " + id, err
+		return DeploymentPolicyAddedMessage + id, err
 	}
 }
 
@@ -93,7 +99,7 @@ func RunDeploymentPolicyList(args []string) (string, error) {
 }
 
 var deploymentPolicyRemoveCmd = &cobra.Command{
-	Use:   "rm [DEPLOYMENT-POLICY-ID]",
+	Use:   "rm [DEPLOYMENT-POLICY]",
 	Short: "Removes existing depoyment policy.",
 	Long:  "Removes existing depoyment policy.",
 
@@ -123,12 +129,12 @@ func RunDeploymentPolicyRemove(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Deployment policy removed: " + newID, err
+		return DeploymentPolicyRemovedMessage + newID, err
 	}
 }
 
 var deploymentPolicyUpdateCmd = &cobra.Command{
-	Use:   "update [DEPLOYMENT-POLICY-ID]",
+	Use:   "update [DEPLOYMENT-POLICY]",
 	Short: "Update deployment policy.",
 	Long:  "Update deployment policy.",
 
@@ -160,6 +166,6 @@ func RunDeploymentPolicyUpdate(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Deployment policy updated: " + newID, err
+		return DeploymentPolicyUpdatedMessage + newID, err
 	}
 }

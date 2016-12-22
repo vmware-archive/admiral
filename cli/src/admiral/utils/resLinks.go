@@ -277,6 +277,9 @@ func GetIdFilterUrl(shortId string, restype ResourceType) string {
 	case CLOSURE:
 		shortSelfLink := CreateResLinkForClosure(shortId)
 		url = ClosureFilterID + createIdFilter(shortSelfLink)
+	case CLOSURE_DESCRIPTION:
+		shortSelfLink := CreateResLinkForClosureDescription(shortId)
+		url = ClosureDescriptionFilterID + createIdFilter(shortSelfLink)
 	}
 	return url
 }
@@ -290,6 +293,8 @@ func GetNameFilterUrl(name string, restype ResourceType) string {
 		url = CertFilterName + createNameFilter(name)
 	case CLOSURE:
 		url = ClosureFilterName + createNameFilter(name)
+	case CLOSURE_DESCRIPTION:
+		url = ClosureDescriptionFilterName + createNameFilter(name)
 	case CONTAINER:
 		url = ContainerFilterName + createNameFilter(name)
 	case CREDENTIALS:

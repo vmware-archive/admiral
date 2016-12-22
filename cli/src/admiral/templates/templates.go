@@ -23,11 +23,11 @@ import (
 	"strings"
 
 	"admiral/client"
-	"admiral/closures"
 	"admiral/config"
 	"admiral/containers"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 )
 
 var (
@@ -36,9 +36,9 @@ var (
 )
 
 const (
-	ContainerDescription = "Container Description"
-	NetworkDescription   = "Network Description"
-	ClosureDescription   = "Closure Description"
+	Container_Description = "Container Description"
+	Network_Description   = "Network Description"
+	Closure_Description   = "Closure Description"
 )
 
 type LightContainer struct {
@@ -106,7 +106,7 @@ func (t *Template) GetContainersCount() int {
 func (t *Template) GetNetworksCount() int {
 	count := 0
 	for _, link := range t.DescriptionLinks {
-		if strings.Contains(link, "/container-network-descriptions/") {
+		if strings.Contains(link, urlutils.NetworkDescription.GetBaseUrl()) {
 			count++
 		}
 	}
@@ -116,7 +116,7 @@ func (t *Template) GetNetworksCount() int {
 func (t *Template) GetClosuresCount() int {
 	count := 0
 	for _, link := range t.DescriptionLinks {
-		if strings.Contains(link, "/closure-descriptions/") {
+		if strings.Contains(link, urlutils.ClosureDescription.GetBaseUrl()) {
 			count++
 		}
 	}
@@ -125,12 +125,12 @@ func (t *Template) GetClosuresCount() int {
 
 //GetID returns the ID of the template.
 func (t *Template) GetID() string {
-	return strings.Replace(*t.DocumentSelfLink, "/resources/composite-descriptions/", "", -1)
+	return utils.GetResourceID(*t.DocumentSelfLink)
 }
 
 func (t *Template) IsContainer(index int) bool {
 	link := t.DescriptionLinks[index]
-	if strings.Contains(link, "/container-descriptions/") {
+	if strings.Contains(link, urlutils.ContainerDescription.GetBaseUrl()) {
 		return true
 	}
 	return false
@@ -138,11 +138,11 @@ func (t *Template) IsContainer(index int) bool {
 
 func (t *Template) GetResourceType(index int) utils.ResourceType {
 	link := t.DescriptionLinks[index]
-	if strings.Contains(link, "/container-descriptions/") {
+	if strings.Contains(link, urlutils.ContainerDescription.GetBaseUrl()) {
 		return utils.CONTAINER
-	} else if strings.Contains(link, "/container-network-descriptions/") {
+	} else if strings.Contains(link, urlutils.NetworkDescription.GetBaseUrl()) {
 		return utils.NETWORK
-	} else if strings.Contains(link, "/closure-descriptions/") {
+	} else if strings.Contains(link, urlutils.ClosureDescription.GetBaseUrl()) {
 		return utils.CLOSURE
 	} else {
 		return -1
@@ -402,16 +402,16 @@ func InspectID(id string) (string, error) {
 		component.Id = utils.GetResourceID(descLink)
 		switch template.GetResourceType(i) {
 		case utils.CONTAINER:
-			component.ComponentType = ContainerDescription
+			component.ComponentType = Container_Description
 			cd := containers.GetContainerDescription(component.Id)
 			component.NetworksConnected = utils.ValuesToStrings(utils.GetMapKeys(cd.Networks))
 			component.Image = cd.Image.Value
 		case utils.NETWORK:
-			component.ComponentType = NetworkDescription
+			component.ComponentType = Network_Description
 			component.Name = GetNetworkDescriptionName(descLink)
 		case utils.CLOSURE:
-			closureDescription := closures.GetClosureDescription(component.Id)
-			component.ComponentType = ClosureDescription
+			closureDescription := GetClosureDescription(component.Id)
+			component.ComponentType = Closure_Description
 			component.Name = closureDescription.Name
 			component.ClosureRuntime = closureDescription.Runtime
 		}
@@ -422,8 +422,8 @@ func InspectID(id string) (string, error) {
 }
 
 func GetNetworkDescriptionName(link string) string {
-	if !strings.Contains(link, "/container-network-descriptions/") {
-		link = "/container-network-description/" + link
+	if !strings.Contains(link, urlutils.NetworkDescription.GetBaseUrl()) {
+		link = urlutils.NetworkDescription.GetBaseUrl() + link
 	}
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)

@@ -25,6 +25,12 @@ var (
 	MissingPlacementZoneNameError = errors.New("Placement zone name not provided.")
 )
 
+const (
+	PlacementZoneAddedMessage   = "Placement zone added: "
+	PlacementZoneRemovedMessage = "Placement zone removed: "
+	PlacementZoneUpdatedMessage = "Placement zone updated: "
+)
+
 func init() {
 	initPlacementZoneAdd()
 	initPlacementZoneList()
@@ -33,11 +39,9 @@ func init() {
 }
 
 var placementZoneAddCmd = &cobra.Command{
-	Use: "add [NAME]",
-
+	Use:   "add [NAME]",
 	Short: "Add placement zone by given name.",
-
-	Long: "Add placement zone by given name.",
+	Long:  "Add placement zone by given name.",
 
 	Run: func(cmd *cobra.Command, args []string) {
 		output, err := RunPlacementZoneAdd(args)
@@ -63,16 +67,14 @@ func RunPlacementZoneAdd(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Placement zone added: " + id, err
+		return PlacementZoneAddedMessage + id, err
 	}
 }
 
 var placementZoneListCmd = &cobra.Command{
-	Use: "ls",
-
+	Use:   "ls",
 	Short: "Lists existing placement zones.",
-
-	Long: "Lists existing placement zones.",
+	Long:  "Lists existing placement zones.",
 
 	Run: func(cmd *cobra.Command, args []string) {
 		output, err := RunPlacementZoneList(args)
@@ -92,11 +94,9 @@ func RunPlacementZoneList(args []string) (string, error) {
 }
 
 var placementZoneRemoveCmd = &cobra.Command{
-	Use: "rm [PLACEMENT-ZONE-ID]",
-
+	Use:   "rm [PLACEMENT-ZONE]",
 	Short: "Removes existing placement zone.",
-
-	Long: "Removes existing placement zone",
+	Long:  "Removes existing placement zone",
 
 	Run: func(cmd *cobra.Command, args []string) {
 		output, err := RunPlacementZoneRemove(args)
@@ -124,7 +124,7 @@ func RunPlacementZoneRemove(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Placement zone removed: " + newID, err
+		return PlacementZoneRemovedMessage + newID, err
 	}
 }
 
@@ -132,6 +132,7 @@ var placementZoneUpdateCmd = &cobra.Command{
 	Use:   "update [PLACEMENT-ZONE-ID]",
 	Short: "Edit placement zone",
 	Long:  "Edit placement zone",
+
 	Run: func(cmd *cobra.Command, args []string) {
 		output, err := RunPlacementZoneUpdate(args)
 		processOutput(output, err)
@@ -161,6 +162,6 @@ func RunPlacementZoneUpdate(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Placement zone updated: " + newID, err
+		return PlacementZoneUpdatedMessage + newID, err
 	}
 }

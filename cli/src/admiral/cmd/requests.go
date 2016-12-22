@@ -33,6 +33,10 @@ var (
 	MissingRequestIdError = errors.New("Request ID not provided.")
 )
 
+const (
+	RequestRemovedMessage = "Request removed: "
+)
+
 func init() {
 	initRequestsList()
 	initRequestClear()
@@ -59,13 +63,9 @@ func initRequestsList() {
 
 func RunRequestsList() {
 	rl := &requests.RequestsList{}
-	count, err := rl.FetchRequests()
+	_, err := rl.FetchRequests()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	if count < 1 {
-		fmt.Println("No elements found.")
 		return
 	}
 	if !startedOnly && !finishedOnly && !failedOnly {
@@ -131,7 +131,7 @@ func RunRequestRemove(args []string) (string, error) {
 		return "", MissingRequestIdError
 	}
 	newID, err = requests.RemoveRequestID(id)
-	return "Request removed: " + newID, err
+	return RequestRemovedMessage + newID, err
 }
 
 var requestInspectCmd = &cobra.Command{

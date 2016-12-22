@@ -24,6 +24,12 @@ var (
 	MissingProjectNameError = errors.New("Project name not provided.")
 )
 
+const (
+	ProjectAddedMessage   = "Project added: "
+	ProjectUpdatedMessage = "Project updated: "
+	ProjectRemovedMessage = "Project removed: "
+)
+
 func init() {
 	initProjectAdd()
 	initProjectList()
@@ -61,7 +67,7 @@ func RunProjectAdd(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Project added: " + newID, err
+		return ProjectAddedMessage + newID, err
 	}
 }
 
@@ -87,7 +93,7 @@ func RunProjectList(args []string) (string, error) {
 }
 
 var projectRemoveCmd = &cobra.Command{
-	Use:   "rm [GROUP-ID]",
+	Use:   "rm [GROUP]",
 	Short: "Remove project.",
 	Long:  "Remove project.",
 
@@ -117,12 +123,12 @@ func RunProjectRemove(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Project removed: " + newID, err
+		return ProjectRemovedMessage + newID, err
 	}
 }
 
 var projectUpdateCmd = &cobra.Command{
-	Use:   "update [project-ID]",
+	Use:   "update [PROJECT]",
 	Short: "Update project.",
 	Long:  "Update project.",
 
@@ -153,6 +159,6 @@ func RunProjectUpdate(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Project updated: " + newID, err
+		return ProjectUpdatedMessage + newID, err
 	}
 }

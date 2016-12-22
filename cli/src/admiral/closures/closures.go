@@ -78,8 +78,8 @@ func (cl *ClosureList) GetOutputString() string {
 	return strings.TrimSpace(buffer.String())
 }
 
-func RemoveClosureID(id string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(ClosureList), utils.CLOSURE)
+func RemoveClosure(idOrName string) (string, error) {
+	fullId, err := selflink.GetFullId(idOrName, new(ClosureList), utils.CLOSURE)
 	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForClosure(fullId)
 	req, _ := http.NewRequest("DELETE", url, nil)
@@ -97,19 +97,4 @@ func GetClosure(id string) *Closure {
 	err = json.Unmarshal(respBody, closure)
 	utils.CheckBlockingError(err)
 	return closure
-}
-
-type ClosureDescription struct {
-	Runtime string `json:"runtime"`
-	Name    string `json:"name"`
-}
-
-func GetClosureDescription(id string) *ClosureDescription {
-	url := config.URL + utils.CreateResLinkForClosureDescription(id)
-	req, _ := http.NewRequest("GET", url, nil)
-	_, respBody, _ := client.ProcessRequest(req)
-	closureDescription := &ClosureDescription{}
-	err := json.Unmarshal(respBody, closureDescription)
-	utils.CheckBlockingError(err)
-	return closureDescription
 }

@@ -19,7 +19,6 @@ import (
 	"strings"
 
 	"admiral/client"
-	"admiral/config"
 	"admiral/credentials"
 	"admiral/endpoints"
 	"admiral/properties"
@@ -27,6 +26,7 @@ import (
 	"admiral/track"
 	"admiral/utils"
 	"admiral/utils/selflink"
+	"admiral/utils/urlutils"
 )
 
 var (
@@ -221,7 +221,7 @@ func processComputeDescription(cd *ComputeDescription, clusterSize int, asyncTas
 	jsonBody, err := json.Marshal(cd)
 	utils.CheckBlockingError(err)
 
-	url := config.URL + "/resources/compute-descriptions"
+	url := urlutils.BuildUrl(urlutils.ComputeDescription, nil, true)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -236,7 +236,7 @@ func processComputeDescription(cd *ComputeDescription, clusterSize int, asyncTas
 	jsonBody, err = json.Marshal(pho)
 	utils.CheckBlockingError(err)
 
-	url = config.URL + "/requests"
+	url = urlutils.BuildUrl(urlutils.RequestBrokerService, nil, true)
 	req, _ = http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr = client.ProcessRequest(req)
 	if respErr != nil {

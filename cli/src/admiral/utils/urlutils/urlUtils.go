@@ -20,7 +20,7 @@ import (
 
 type ResourceType int
 
-func (rt ResourceType) getBaseUrl() string {
+func (rt ResourceType) GetBaseUrl() string {
 	switch rt {
 	case Project:
 		return "/resources/groups"
@@ -32,6 +32,8 @@ func (rt ResourceType) getBaseUrl() string {
 		return "/config/trust-certs"
 	case Closure:
 		return "/resources/closures"
+	case ClosureDescription:
+		return "/resources/closure-descriptions"
 	case Container:
 		return "/resources/containers"
 	case ContainerDescription:
@@ -97,14 +99,15 @@ const (
 	Placement
 	ElasticPlacementZone
 	Registry
+	ClosureDescription
 )
 
 func BuildUrl(resType ResourceType, queryParameters map[string]interface{}, includeAdmiralUrl bool) string {
 	var url string
 	if includeAdmiralUrl {
-		url = config.URL + resType.getBaseUrl()
+		url = config.URL + resType.GetBaseUrl()
 	} else {
-		url = resType.getBaseUrl()
+		url = resType.GetBaseUrl()
 	}
 	return buildUrl(url, queryParameters)
 }

@@ -29,14 +29,18 @@ var (
 	MemoryParseError          = errors.New("Unable to parse the memory provided.")
 )
 
+const (
+	PlacementAddedMessage   = "Placement added: "
+	PlacementRemovedMessage = "Placement removed: "
+	PlacementUpdatedMessage = "Placement updated: "
+)
+
 func init() {
 	initPlacementAdd()
 	initPlacementUpdate()
 	initPlacementList()
 	initPlacementRemove()
 }
-
-var ()
 
 var placementAddCmd = &cobra.Command{
 	Use:   "add [NAME]",
@@ -101,7 +105,7 @@ func RunPlacementAdd(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Placement added: " + newID, err
+		return PlacementAddedMessage + newID, err
 	}
 }
 
@@ -131,7 +135,7 @@ func RunPlacementList(args []string) (string, error) {
 }
 
 var placementRemoveCmd = &cobra.Command{
-	Use:   "rm [PLACEMENT-ID]",
+	Use:   "rm [PLACEMENT]",
 	Short: "Remove placement",
 	Long:  "Remove placement",
 
@@ -161,12 +165,12 @@ func RunPlacementRemove(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Placement removed: " + newID, err
+		return PlacementRemovedMessage + newID, err
 	}
 }
 
 var placementUpdateCmd = &cobra.Command{
-	Use:   "update [PLACEMENT-ID]",
+	Use:   "update [PLACEMENT]",
 	Short: "Update placement.",
 	Long:  "Update placement.",
 
@@ -208,6 +212,6 @@ func RunPlacementUpdate(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Placement updated: " + newID, err
+		return PlacementUpdatedMessage + newID, err
 	}
 }

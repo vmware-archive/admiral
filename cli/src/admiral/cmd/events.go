@@ -36,12 +36,12 @@ var eventCmd = &cobra.Command{
 func RunEvents() (string, error) {
 	el := events.EventList{}
 	_, err := el.FetchEvents()
+	if err != nil {
+		return "", err
+	}
 	if clearAll {
 		el.ClearAllEvent()
 		return "Events cleared", err
-	}
-	if err != nil {
-		return "", err
 	}
 	return el.GetOutputString(), nil
 }

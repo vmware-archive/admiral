@@ -28,7 +28,7 @@ func init() {
 }
 
 var logsCmd = &cobra.Command{
-	Use:   "logs [CONTAINER-ID]",
+	Use:   "logs [CONTAINER]",
 	Short: "Fetch the logs of a container",
 	Long:  "Fetch the logs of a container",
 

@@ -27,6 +27,19 @@ import (
 
 var MissingAppIdError = errors.New("Application ID not provided.")
 
+const (
+	ApplicationStartedMessage        = "Application started: "
+	ApplicationBeingStartedMessage   = "Application is being started."
+	ApplicationStoppedMessage        = "Application stoppped: "
+	ApplicationBeingStoppedMessage   = "Application is being stopped."
+	ApplicationRestartedMessage      = "Application restarted: "
+	ApplicationBeingRestartedMessage = "Application is being restarted."
+	ApplicationRemovedMessage        = "Application removed: "
+	ApplicationBeingRemovedMessage   = "Application is being removed."
+	ApplicationProvisioned           = "Application provisioned: "
+	ApplicationBeingProvisioned      = "Application is being provisioned."
+)
+
 func init() {
 	initAppInspect()
 	initAppList()
@@ -38,7 +51,7 @@ func init() {
 }
 
 var appInspectCmd = &cobra.Command{
-	Use:   "inspect [APPLICATION-ID]",
+	Use:   "inspect [APPLICATION]",
 	Short: "Inspect application for additional info.",
 	Long:  "Inspect application for additional info.",
 
@@ -96,7 +109,7 @@ func RunAppList(args []string) (string, error) {
 }
 
 var appRemoveCmd = &cobra.Command{
-	Use:   "rm [APPLICATION-ID]",
+	Use:   "rm [APPLICATION]",
 	Short: "Stops existing application",
 	Long:  "Stops existing application",
 
@@ -124,13 +137,13 @@ func RunAppRemove(args []string) (string, error) {
 	IDs, err = apps.RemoveAppID(id, asyncTask)
 
 	if asyncTask {
-		return "Application is being removed.", err
+		return ApplicationBeingRemovedMessage, err
 	}
-	return "Application removed: " + strings.Join(IDs, ", "), err
+	return ApplicationRemovedMessage + strings.Join(IDs, ", "), err
 }
 
 var appRestartCmd = &cobra.Command{
-	Use:   "restart [APPLICATION-ID]",
+	Use:   "restart [APPLICATION]",
 	Short: "Restarts application.",
 	Long:  "Restarts application.",
 
@@ -162,13 +175,13 @@ func RunAppRestart(args []string) (string, error) {
 		return "", err
 	}
 	if asyncTask {
-		return "Application is being restarted.", nil
+		return ApplicationBeingRestartedMessage, nil
 	}
-	return "Application restarted: " + strings.Join(IDs, ", "), err
+	return ApplicationRestartedMessage + strings.Join(IDs, ", "), err
 }
 
 var appRunCmd = &cobra.Command{
-	Use:   "run [TEMPLATE-ID]",
+	Use:   "run [TEMPLATE]",
 	Short: "Provision application from template.",
 	Long:  "Provision application from template.",
 
@@ -227,13 +240,13 @@ func RunAppRun(args []string) (string, error) {
 		return "", err
 	}
 	if asyncTask {
-		return "Application is being provisioned.", nil
+		return ApplicationBeingProvisioned, nil
 	}
-	return "Application provisioned: " + strings.Join(IDs, ", "), err
+	return ApplicationProvisioned + strings.Join(IDs, ", "), err
 }
 
 var appStartCmd = &cobra.Command{
-	Use:   "start [APPLICATION-ID]",
+	Use:   "start [APPLICATION]",
 	Short: "Starts existing application",
 	Long:  "Starts existing application",
 
@@ -264,13 +277,13 @@ func RunAppStart(args []string) (string, error) {
 		return "", err
 	}
 	if asyncTask {
-		return "Application is being started.", nil
+		return ApplicationBeingStartedMessage, nil
 	}
-	return "Application started: " + strings.Join(IDs, ", "), err
+	return ApplicationStartedMessage + strings.Join(IDs, ", "), err
 }
 
 var appStopCmd = &cobra.Command{
-	Use:   "stop [APPLICATION-ID]",
+	Use:   "stop [APPLICATION]",
 	Short: "Stops existing application",
 	Long:  "Stops existing application",
 
@@ -302,7 +315,7 @@ func RunAppStop(args []string) (string, error) {
 		return "", err
 	}
 	if asyncTask {
-		return "Application is being stopped.", nil
+		return ApplicationBeingStoppedMessage, nil
 	}
-	return "Application stopped: " + strings.Join(IDs, ", "), err
+	return ApplicationStoppedMessage + strings.Join(IDs, ", "), err
 }

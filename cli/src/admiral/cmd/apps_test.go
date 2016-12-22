@@ -51,6 +51,7 @@ func TestApplicationProvision(t *testing.T) {
 
 	// Run the test
 	TestPrintln("Provisioning application.")
+	appRunCmd.ParseFlags([]string{"--timeout=100"})
 	appMsg, err := RunAppRun([]string{templateId})
 	CheckTestError(err, t)
 	appId := strings.Split(appMsg, " ")[2]

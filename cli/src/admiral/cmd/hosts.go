@@ -33,6 +33,16 @@ var (
 	MissingHostNameError = errors.New("Host Name not provided.")
 )
 
+const (
+	HostAddedMessage        = "Host added: "
+	HostEnabledMessage      = "Host enabled: "
+	HostDisabledMessage     = "Host disabled: "
+	HostUpdatedMessage      = "Host updated: "
+	HostCreatedMessage      = "Host created: "
+	HostRemovedMessage      = "Host removed: "
+	HostBeingRemovedMessage = "Host is being removed."
+)
+
 func init() {
 	initHostAdd()
 	initHostDisable()
@@ -85,12 +95,12 @@ func RunAddHost(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return "Host added: " + newID, nil
+	return HostAddedMessage + newID, nil
 
 }
 
 var hostDisableCmd = &cobra.Command{
-	Use:   "disable [HOST-ID]",
+	Use:   "disable [HOST]",
 	Short: "Disable host with address provided.",
 	Long:  "Disable host with address provided.",
 
@@ -117,12 +127,12 @@ func RunHostDisable(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return "Host disabled " + newID, err
+	return HostDisabledMessage + newID, err
 
 }
 
 var hostEnableCmd = &cobra.Command{
-	Use:   "enable [HOST-ID]",
+	Use:   "enable [HOST]",
 	Short: "Enable host with address provided.",
 	Long:  "Enable host with address provided.",
 
@@ -149,7 +159,7 @@ func RunHostEnable(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return "Host enabled: " + newID, err
+	return HostEnabledMessage + newID, err
 
 }
 
@@ -177,7 +187,7 @@ func RunHostList(args []string) (string, error) {
 }
 
 var hostRemoveCmd = &cobra.Command{
-	Use:   "rm [HOST-ID]",
+	Use:   "rm [HOST]",
 	Short: "Remove existing host.",
 	Long:  "Remove existing host.",
 
@@ -216,13 +226,13 @@ func RunHostRemove(args []string) (string, error) {
 		return "", err
 	}
 	if asyncTask {
-		return "Host is being removed.", nil
+		return HostBeingRemovedMessage, nil
 	}
-	return "Host removed: " + newID, err
+	return HostRemovedMessage + newID, err
 }
 
 var hostUpdateCmd = &cobra.Command{
-	Use:   "update [HOST-ID]",
+	Use:   "update [HOST]",
 	Short: "Edit existing hosts.",
 
 	Run: func(cmd *cobra.Command, args []string) {
@@ -255,7 +265,7 @@ func RunHostUpdate(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Host updated: " + newID, err
+		return HostUpdatedMessage + newID, err
 	}
 }
 
@@ -303,7 +313,8 @@ func RunHostCreateAws(args []string) (string, error) {
 		config.TASK_TIMEOUT = customTimeout
 	}
 
-	return hosts.CreateHostAws(name, endpointId, instanceType, hostOS, guestCred, int(clusterSize), tags, custProps, asyncTask)
+	id, err := hosts.CreateHostAws(name, endpointId, instanceType, hostOS, guestCred, int(clusterSize), tags, custProps, asyncTask)
+	return HostCreatedMessage + id, err
 }
 
 var hostCreateAzureCmd = &cobra.Command{
@@ -350,7 +361,8 @@ func RunHostCreateAzure(args []string) (string, error) {
 		config.TASK_TIMEOUT = customTimeout
 	}
 
-	return hosts.CreateHostAzure(name, endpointId, instanceType, hostOS, guestCred, int(clusterSize), tags, custProps, asyncTask)
+	id, err := hosts.CreateHostAzure(name, endpointId, instanceType, hostOS, guestCred, int(clusterSize), tags, custProps, asyncTask)
+	return HostCreatedMessage + id, err
 }
 
 var hostCreateVsphereCmd = &cobra.Command{
@@ -399,5 +411,6 @@ func RunHostCreateVsphere(args []string) (string, error) {
 		config.TASK_TIMEOUT = customTimeout
 	}
 
-	return hosts.CreateHostVsphere(name, endpointId, instanceType, hostOS, destination, guestCred, int(clusterSize), tags, custProps, asyncTask)
+	id, err := hosts.CreateHostVsphere(name, endpointId, instanceType, hostOS, destination, guestCred, int(clusterSize), tags, custProps, asyncTask)
+	return HostCreatedMessage + id, err
 }

@@ -28,6 +28,21 @@ import (
 
 var MissingContainerIdError = errors.New("Container ID not provided.")
 
+const (
+	ContainerStartedMessage        = "Container(s) started: "
+	ContainerBeingStartedMessage   = "Container(s) is being started."
+	ContainerStoppedMessage        = "Container(s) stoppped: "
+	ContainerBeingStoppedMessage   = "Container(s) is being stopped."
+	ContainerRestartedMessage      = "Container(s) restarted: "
+	ContainerBeingRestartedMessage = "Container(s) is being restarted."
+	ContainerRemovedMessage        = "Container(s) removed: "
+	ContainerBeingRemovedMessage   = "Container(s) is being removed."
+	ContainerProvisioned           = "Container provisioned: "
+	ContainerBeingProvisioned      = "Container is being provisioned."
+	ContainerScaledMessage         = "Container scaled: "
+	ContainerBeingScaledMessage    = "Container is being scaled."
+)
+
 func init() {
 	initContainerExec()
 	initContainerInspect()
@@ -41,7 +56,7 @@ func init() {
 }
 
 var containerExecCmd = &cobra.Command{
-	Use:   "exec [CONTAINER-ID]",
+	Use:   "exec [CONTAINER]",
 	Short: "Run a command in a running container.",
 	Long:  "Run a command in a running container.",
 
@@ -97,7 +112,7 @@ func interactive(id string) {
 }
 
 var containerInspectCmd = &cobra.Command{
-	Use:   "inspect [CONTAINER-ID]",
+	Use:   "inspect [CONTAINER]",
 	Short: "Return low-level information on a container.",
 	Long:  "Return low-level information on a container.",
 
@@ -124,7 +139,7 @@ func RunContainerInspect(args []string) (string, error) {
 }
 
 var containerRemoveCmd = &cobra.Command{
-	Use:   "rm [CONTAINER-ID]...",
+	Use:   "rm [CONTAINER]...",
 	Short: "Remove existing container(s).",
 	Long:  "Remove existing container(s).",
 
@@ -169,13 +184,13 @@ func RunContainersRemove(args []string) (string, error) {
 		return "", err
 	}
 	if !asyncTask {
-		return "Container(s) removed: " + strings.Join(resIDs, " "), nil
+		return ContainerRemovedMessage + strings.Join(resIDs, " "), nil
 	}
-	return "Container(s) are being removed.", nil
+	return ContainerBeingRemovedMessage, nil
 }
 
 var containerRestartCmd = &cobra.Command{
-	Use:   "restart [CONTAINER-ID]",
+	Use:   "restart [CONTAINER]",
 	Short: "Restart container.",
 	Long:  "Restart container.",
 
@@ -206,9 +221,9 @@ func RunContainerRestart(args []string) (string, error) {
 		return "", err
 	}
 	if !asyncTask {
-		return "Container(s) restarted: " + strings.Join(resIDs, ", "), nil
+		return ContainerRestartedMessage + strings.Join(resIDs, ", "), nil
 	}
-	return "Container(s) are being restarted.", nil
+	return ContainerBeingRestartedMessage, nil
 }
 
 var containerScaleCmd = &cobra.Command{
@@ -240,7 +255,7 @@ func RunContainerScale(args []string) (string, error) {
 	}
 
 	if scaleCount < 1 {
-		return "", errors.New("Scale count should be > 0.")
+		return "", errors.New("Cluster size should be greater than 0.")
 	}
 
 	newID, err = containers.ScaleContainer(id, scaleCount, asyncTask)
@@ -249,9 +264,9 @@ func RunContainerScale(args []string) (string, error) {
 		return "", err
 	}
 	if !asyncTask {
-		return "Container scaled: " + newID, nil
+		return ContainerScaledMessage + newID, nil
 	}
-	return "Container are being scaled.", nil
+	return ContainerBeingScaledMessage, nil
 }
 
 var containerListCmd = &cobra.Command{
@@ -282,7 +297,7 @@ func RunContainerList(args []string) (string, error) {
 }
 
 var containerStartCmd = &cobra.Command{
-	Use:   "start [CONTAINER-ID]...",
+	Use:   "start [CONTAINER]...",
 	Short: "Starts existing container",
 	Long:  "Starts existing container",
 
@@ -312,13 +327,13 @@ func RunContainerStart(args []string) (string, error) {
 		return "", err
 	}
 	if !asyncTask {
-		return "Container(s) started: " + strings.Join(resIDs, ", "), nil
+		return ContainerStartedMessage + strings.Join(resIDs, ", "), nil
 	}
-	return "Container(s) are being started.", nil
+	return ContainerBeingStartedMessage, nil
 }
 
 var containerStopCmd = &cobra.Command{
-	Use:   "stop [CONTAINER-ID]",
+	Use:   "stop [CONTAINER]",
 	Short: "Stops existing container",
 	Long:  "Stops existing container",
 
@@ -349,9 +364,9 @@ func RunContainerStop(args []string) (string, error) {
 		return "", err
 	}
 	if !asyncTask {
-		return "Container(s) stopped: " + strings.Join(resIDs, ", "), nil
+		return ContainerStoppedMessage + strings.Join(resIDs, ", "), nil
 	}
-	return "Container(s) are being stopped.", nil
+	return ContainerBeingStoppedMessage, nil
 }
 
 var containerRunCmd = &cobra.Command{
@@ -404,7 +419,7 @@ func RunContainerRun(args []string) (string, []error) {
 	)
 
 	if imageName, ok = ValidateArgsCount(args); !ok {
-		err := errors.New("Image name not provided.")
+		err := errors.New("Image not provided.")
 		return "", []error{err}
 	}
 
@@ -458,7 +473,7 @@ func RunContainerRun(args []string) (string, []error) {
 	}
 
 	if !asyncTask {
-		return "Container(s) provisioned: " + newID, errorArr
+		return ContainerProvisioned + newID, errorArr
 	}
-	return "Container(s) are being provisioned.", errorArr
+	return ContainerBeingProvisioned, errorArr
 }

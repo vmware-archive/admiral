@@ -27,6 +27,13 @@ var (
 	MissingNetworkNameError = errors.New("Network name not provided.")
 )
 
+const (
+	NetworkCreatedMessage      = "Network created: "
+	NetworkBeingCreatedMessage = "Network is being created."
+	NetworkRemovedMessage      = "Network(s) removed: "
+	NetworkBeingRemovedMessage = "Network(s) is being removed."
+)
+
 func init() {
 	initNetworkCreate()
 	initNetworkInspect()
@@ -75,15 +82,15 @@ func RunNetworkCreate(args []string) (string, error) {
 		return "", err
 	}
 	if !asyncTask {
-		return "Network created: " + id, nil
+		return NetworkCreatedMessage + id, nil
 
 	}
-	return "Network is being created.", nil
+	return NetworkBeingCreatedMessage, nil
 
 }
 
 var networkInspectCmd = &cobra.Command{
-	Use:   "inspect [NETWORK-ID]",
+	Use:   "inspect [NETWORK]",
 	Short: "Display detailed network information",
 	Long:  "Display detailed network information",
 
@@ -133,7 +140,7 @@ func RunNetworksList(args []string) (string, error) {
 }
 
 var networkRemoveCmd = &cobra.Command{
-	Use:   "rm [NETWORK-ID]",
+	Use:   "rm [NETWORK]",
 	Short: "Remove a network(s)",
 	Long:  "Remove a network(s)",
 
@@ -158,8 +165,8 @@ func RunNetworkRemove(args []string) (string, error) {
 		return "", err
 	}
 	if !asyncTask {
-		return "Network(s) removed: " + strings.Join(ids, ", "), nil
+		return NetworkRemovedMessage + strings.Join(ids, ", "), nil
 	}
-	return "Network(s) are being removed.", nil
+	return NetworkBeingRemovedMessage, nil
 
 }

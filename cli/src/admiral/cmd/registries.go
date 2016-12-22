@@ -25,6 +25,14 @@ var (
 	MissingRegistryNameError = errors.New("Registry name not provided.")
 )
 
+const (
+	RegistryAddedMessage    = "Registry added: "
+	RegistryRemovedMessage  = "Registry removed: "
+	RegistryUpdatedMessage  = "Registry updated: "
+	RegistryEnabledMessage  = "Registry enabled: "
+	RegistryDisabledMessage = "Registry disabled: "
+)
+
 func init() {
 	initRegistryAdd()
 	initRegistryList()
@@ -46,7 +54,7 @@ var registryAddCmd = &cobra.Command{
 
 var (
 	addressF     string
-	addressFDesc = "Address of registry."
+	addressFDesc = "Registry address."
 )
 
 func initRegistryAdd() {
@@ -74,7 +82,7 @@ func RunRegistryAdd(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Registry added: " + newID, err
+		return RegistryAddedMessage + newID, err
 	}
 }
 
@@ -101,7 +109,7 @@ func RunRegistryList(args []string) (string, error) {
 }
 
 var registryRemoveCmd = &cobra.Command{
-	Use:   "rm [REGISTRY-ID]",
+	Use:   "rm [REGISTRY]",
 	Short: "Remove existing registry.",
 	Long:  "Remove existing registry.",
 
@@ -131,12 +139,12 @@ func RunRegistryRemove(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Registry removed: " + newID, err
+		return RegistryRemovedMessage + newID, err
 	}
 }
 
 var registryDisableCmd = &cobra.Command{
-	Use:   "disable [REGISTRY-ID]",
+	Use:   "disable [REGISTRY]",
 	Short: "Disable registry.",
 	Long:  "Disable registry.",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -161,12 +169,12 @@ func RunRegistryDisable(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Registry disabled: " + newID, err
+		return RegistryDisabledMessage + newID, err
 	}
 }
 
 var registryEnableCmd = &cobra.Command{
-	Use:   "enable [REGISTRY-ID]",
+	Use:   "enable [REGISTRY]",
 	Short: "Enable registry.",
 	Run: func(cmd *cobra.Command, args []string) {
 		output, err := RunRegistryEnable(args)
@@ -190,7 +198,7 @@ func RunRegistryEnable(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Registry enabled: " + newID, err
+		return RegistryEnabledMessage + newID, err
 	}
 }
 
@@ -200,7 +208,7 @@ func initRegistryEnableDisable() {
 }
 
 var registryUpdateCmd = &cobra.Command{
-	Use:   "update [REGISTRY-ID]",
+	Use:   "update [REGISTRY]",
 	Short: "",
 	Long:  "",
 
@@ -234,6 +242,6 @@ func RunRegistryUpdate(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Registry updated: " + newID, err
+		return RegistryUpdatedMessage + newID, err
 	}
 }

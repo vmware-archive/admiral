@@ -26,6 +26,12 @@ var (
 	MissingRequiredFlagsError   = errors.New("Missing required flags.")
 )
 
+const (
+	CredentialsAddedMessage   = "Credentials added: "
+	CredentialsRemovedMessage = "Credentials removed: "
+	CredentialsUpdatedMessage = "Credentials updated: "
+)
+
 func init() {
 	initCredentialsAdd()
 	initCredentialsList()
@@ -73,7 +79,7 @@ func RunCredentialsAdd(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Credentials added: " + newID, err
+		return CredentialsAddedMessage + newID, err
 	}
 
 }
@@ -104,7 +110,7 @@ func RunCredentialsList(args []string) (string, error) {
 }
 
 var credentialsRemoveCmd = &cobra.Command{
-	Use:   "rm [CREDENTIALS-ID]",
+	Use:   "rm [CREDENTIALS]",
 	Short: "Removes existing credentials.",
 	Long:  "Removes existing credentials.",
 
@@ -134,12 +140,12 @@ func RunCredentialsRemove(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Credentials removed: " + newID, err
+		return CredentialsRemovedMessage + newID, err
 	}
 }
 
 var credentialsUpdateCmd = &cobra.Command{
-	Use:   "update [CREDENTIALS-ID]",
+	Use:   "update [CREDENTIALS]",
 	Short: "Update credentials.",
 	Long:  "Update credentials.",
 
@@ -173,6 +179,6 @@ func RunCredentialsUpdate(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Credentials updated: " + newID, err
+		return CredentialsUpdatedMessage + newID, err
 	}
 }

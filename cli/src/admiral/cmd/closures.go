@@ -21,6 +21,10 @@ import (
 
 var MissingClosureIdError = errors.New("Closure ID not provided.")
 
+const (
+	ClosureRemovedMessage = "Closure removed: "
+)
+
 func init() {
 	initClosuresList()
 	initClosuresRemove()
@@ -71,7 +75,7 @@ func RunClosureRemove(args []string) (string, error) {
 	if id, ok = ValidateArgsCount(args); !ok {
 		return "", MissingClosureIdError
 	}
-	id, err := closures.RemoveClosureID(id)
+	id, err := closures.RemoveClosure(id)
 
-	return "Closure removed: " + id, err
+	return ClosureRemovedMessage + id, err
 }

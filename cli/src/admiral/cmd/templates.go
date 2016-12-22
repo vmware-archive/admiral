@@ -26,12 +26,22 @@ var (
 	FileFormatNotSpecifiedError = errors.New("File format is not specified.")
 )
 
+const (
+	TemplateRemovedMessage        = "Template removed: "
+	TemplateImportedMessage       = "Template imported: "
+	TemplateExportedMessage       = "Template exported."
+	TemplateClosureRemovedMessage = "Closure description removed: "
+)
+
 func init() {
 	initTemplateList()
 	initTemplateRemove()
 	initTemplateImport()
 	initTemplateExport()
 	initTemplateInspect()
+
+	initTemplateClosureList()
+	initTemplateClosureRemove()
 }
 
 var templateListCmd = &cobra.Command{
@@ -66,7 +76,7 @@ func RunTemplatesList(args []string) (string, error) {
 }
 
 var templateRemoveCmd = &cobra.Command{
-	Use:   "rm [TEMPLATE-ID]",
+	Use:   "rm [TEMPLATE]",
 	Short: "Remove template.",
 	Long:  "Remove template.",
 
@@ -96,7 +106,7 @@ func RunTemplateRemove(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Template removed: " + newID, err
+		return TemplateRemovedMessage + newID, err
 	}
 }
 
@@ -128,12 +138,12 @@ func RunTemplateImport(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Template imported: " + id, err
+		return TemplateImportedMessage + id, err
 	}
 }
 
 var templateExportCmd = &cobra.Command{
-	Use:   "export [TEMPLATE-ID]",
+	Use:   "export [TEMPLATE]",
 	Short: "Download exported application.",
 	Long:  "Download exported application.",
 
@@ -164,7 +174,7 @@ func RunTemplateExport(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		return "Template exported: " + newID, err
+		return TemplateExportedMessage + newID, err
 	}
 }
 
@@ -178,7 +188,7 @@ func verifyFormat() (bool, error) {
 }
 
 var templateInspectCmd = &cobra.Command{
-	Use:   "inspect [TEMPLATE-ID]",
+	Use:   "inspect [TEMPLATE]",
 	Short: "Inspect template.",
 	Long:  "Inspect template.",
 
@@ -201,4 +211,54 @@ func RunTemplateInspect(args []string) (string, error) {
 		return "", MissingTemplateIdError
 	}
 	return templates.InspectID(id)
+}
+
+//-------> Closure descriptions.
+
+var templateClosureListCmd = &cobra.Command{
+	Use:   "ls",
+	Short: "List closure descriptions.",
+	Long:  "List closure descriptions.",
+
+	Run: func(cmd *cobra.Command, args []string) {
+		output, err := RunTemplateClosureList(args)
+		formatAndPrintOutput(output, err)
+	},
+}
+
+func initTemplateClosureList() {
+	TemplateClosureRootCmd.AddCommand(templateClosureListCmd)
+}
+
+func RunTemplateClosureList(args []string) (string, error) {
+	cdl := &templates.ClosureDescriptionList{}
+	_, err := cdl.FetchClosures()
+	return cdl.GetOutputString(), err
+}
+
+var templateClosureRemoveCmd = &cobra.Command{
+	Use:   "rm [CLOSURE-DESCRIPTION]",
+	Short: "Remove closure description.",
+	Long:  "Remove closure description.",
+
+	Run: func(cmd *cobra.Command, args []string) {
+		output, err := RunTemplateClosureRemove(args)
+		processOutput(output, err)
+	},
+}
+
+func initTemplateClosureRemove() {
+	TemplateClosureRootCmd.AddCommand(templateClosureRemoveCmd)
+}
+
+func RunTemplateClosureRemove(args []string) (string, error) {
+	var (
+		id string
+		ok bool
+	)
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", MissingTemplateIdError
+	}
+	id, err := templates.RemoveClosureDescription(id)
+	return TemplateClosureRemovedMessage + id, err
 }
