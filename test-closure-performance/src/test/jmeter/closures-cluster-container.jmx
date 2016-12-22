@@ -80,7 +80,7 @@ if (f.exists()) {
           <stringProp name="BeanShellSampler.query">import java.io.*;
 
 // in jenkins the path is /var/jenkins_home/workspace/Bellevue-performance/test-performance/target/jmeter/bin/
-String serverPemFile = &quot;../ci/tools/jenkins/coreos/cfssl/server.pem&quot;;
+String serverPemFile = &quot;ci/tools/jenkins/coreos/cfssl/server.pem&quot;;
 File f = new File(serverPemFile);
 log.info(&quot;Using pem file &quot; + serverPemFile);
 
@@ -92,7 +92,7 @@ for (String line; (line = in.readLine()) != null; ) {
 in.close();
 log.info(&quot;Server PEM:\n&quot; + serverPem);
 
-String clientPemFile = &quot;../ci/tools/jenkins/coreos/cfssl/client.pem&quot; ;
+String clientPemFile = &quot;ci/tools/jenkins/coreos/cfssl/client.pem&quot; ;
 f = new File(clientPemFile);
 in = new BufferedReader(new FileReader(f));
 String clientPem = &quot;&quot;;
@@ -102,7 +102,7 @@ for (String line; (line = in.readLine()) != null; ) {
 in.close();
 log.info(&quot;Client PEM:\n&quot; + clientPem);
 
-String clientKeyFile = &quot;../ci/tools/jenkins/coreos/cfssl/client-key.pem&quot; ;
+String clientKeyFile = &quot;ci/tools/jenkins/coreos/cfssl/client-key.pem&quot; ;
 f = new File(clientKeyFile);
 in = new BufferedReader(new FileReader(f));
 String clientKey = &quot;&quot;;
@@ -462,19 +462,10 @@ log.info(&quot;Sending task execution request N &quot; + counter);
             <collectionProp name="Arguments.arguments">
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">{&#xd;
-  &quot;runtime&quot;: &quot;nodejs_4.3.0&quot;,&#xd;
-  &quot;source&quot;: &quot;module.exports = function test(ctx, a, b) {&#xd;
-  	console.log(&apos;Hello numbers: a=&apos; + a + &apos; b=&apos; + b);&#xd;
-  	ctx.result = a + b;&#xd;
-   };&quot;,&#xd;
-  &quot;resources&quot;: {&#xd;
-    &quot;ramMB&quot;: 200,&#xd;
-    &quot;timeoutSeconds&quot;: 10&#xd;
-  },&#xd;
-  &quot;description&quot;: &quot;Test nodejs task definition.&quot;,&#xd;
-  &quot;name&quot;: &quot;test&quot;&#xd;
-}</stringProp>
+                <stringProp name="Argument.value">{&quot;runtime&quot;: &quot;nodejs_4.3.0&quot;,&quot;source&quot;: &quot;module.exports = function test(ctx, a, b){console.log(&apos;Hello numbers: a=&apos; + a + &apos; b=&apos; + b);ctx.result = a + b;};&quot;,&quot;resources&quot;:{&quot;ramMB&quot;: 200,&quot;timeoutSeconds&quot;: 10},&quot;description&quot;: &quot;Test nodejs task definition.&quot;,&quot;name&quot;: &quot;test&quot;}&#xd;
+&#xd;
+&#xd;
+</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
             </collectionProp>
@@ -510,9 +501,7 @@ log.info(&quot;Sending task execution request N &quot; + counter);
             <collectionProp name="Arguments.arguments">
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">{&#xd;
-&quot;descriptionLink&quot; : &quot;${descriptionLink}&quot;&#xd;
-}</stringProp>
+                <stringProp name="Argument.value">{&quot;descriptionLink&quot; : &quot;${descriptionLink}&quot;}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
             </collectionProp>
@@ -548,12 +537,7 @@ log.info(&quot;Sending task execution request N &quot; + counter);
             <collectionProp name="Arguments.arguments">
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">{&#xd;
-	&quot;inputs&quot; = {&#xd;
-    &quot;a&quot;: 222,&#xd;
-    &quot;b&quot;: 333&#xd;
-	}&#xd;
-}&#xd;
+                <stringProp name="Argument.value">{&quot;inputs&quot; = {&quot;a&quot;: 222,&quot;b&quot;: 333}}&#xd;
 </stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
