@@ -16,5 +16,7 @@ computeProfile:
       image: "ami-220f2b35"
     ubuntu-1604:
       image: "ami-40d28157"
+    photon:
+      image: "ami-d63c1ac1"
 storageProfile: {}
 networkProfile: {}

@@ -287,7 +287,7 @@ var HostCreateView = Vue.extend({
     },
     getImageTypeDescription: function(key) {
       if (!utils.isApplicationEmbedded()) {
-        return i18n.t(`app.environment.imageType.${this.endpoint.endpointType}.${key}`);
+        return i18n.t(`app.environment.imageType.${key}`);
       }
       return key;
     },

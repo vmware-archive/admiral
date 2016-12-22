@@ -1785,12 +1785,6 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
 
   //  Filter only actual compute hosts
   if (onlyContainerHosts === false) {
-    qOps['customProperties/__endpointType'] = [
-      {
-        op: 'ne',
-        val: '*'
-      }
-    ];
     qOps['customProperties/__computeContainerHost'] = [
       {
         op: 'ne',

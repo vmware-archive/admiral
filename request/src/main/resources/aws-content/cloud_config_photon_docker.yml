@@ -1,0 +1,8 @@
+#cloud-config
+
+runcmd:
+ - sudo systemctl start docker
+ - sudo sed -i -e 's|^ExecStart.*$|ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:{{ remote_api_port }} -H unix:///var/run/docker.sock -H fd:// --tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem -s overlay2 --log-driver=json-file --log-opt max-size=50m --log-opt max-file=10|g' /etc/systemd/system/docker.service
+ - sudo iptables -A INPUT -p tcp --dport {{ remote_api_port }} -j ACCEPT
+ - sudo systemctl daemon-reload
+ - sudo systemctl restart docker

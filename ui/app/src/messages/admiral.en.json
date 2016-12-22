@@ -459,22 +459,9 @@
         }
       },
       "imageType": {
-        "aws": {
-          "coreos": "CoreOS",
-          "ubuntu-1604": "Ubuntu"
-        },
-        "azure": {
-          "coreos": "CoreOS",
-          "ubuntu-1604": "Ubuntu"
-        },
-        "vsphere": {
-          "coreos": "CoreOS",
-          "photon": "Photon OS",
-          "ubuntu-1604": "Ubuntu"
-        },
-        "nimbus": {
-          "coreos": "CoreOS"
-        }
+        "coreos": "CoreOS",
+        "photon": "Photon OS",
+        "ubuntu-1604": "Ubuntu"
       }
     },
     "endpoint": {
