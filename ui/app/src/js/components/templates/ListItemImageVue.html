@@ -38,10 +38,10 @@
   </div>
   <div class="btn-group pull-right">
     <template v-if="readOnly">
-      <button type="button" class="btn admiral-btn select-image-btn">Continue</button>
+      <button type="button" class="btn btn-primary select-image-btn">Continue</button>
     </template>
     <template v-else>
-      <button v-if="model.provisioning" type="button" class="btn admiral-btn create-container-btn
+      <button v-if="model.provisioning" type="button" class="btn btn-primary create-container-btn
         loading">{{i18n ("app.template.list.provision")}}<i class="fa fa-spinner fa-spin loader"></i></button>
       <template v-else><div>
         <template v-if="showGroupForProvisioning">
@@ -53,15 +53,15 @@
               </option>
               <option v-if="clearSelectionSupported()" value="">{{i18n('noSelection')}}</option>
             </select>
-            <button type="button" class="btn admiral-btn create-container-with-group-btn"
+            <button type="button" class="btn btn-primary create-container-with-group-btn"
                     v-on:click="provisionContainer($event)">{{i18n("app.template.list.provision")}}</button>
           </div>
         </template>
         <template v-else>
           <div class="dropdown pull-right">
-            <button type="button" class="btn admiral-btn create-container-btn"
+            <button type="button" class="btn create-container-btn"
                     v-on:click="provisionContainer($event)">{{i18n("app.template.list.provision")}}</button>
-            <button type="button" class="btn admiral-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               <span class="caret"></span>
               <span class="sr-only">Toggle Dropdown</span>
             </button>

@@ -11,28 +11,6 @@
   font-size: 26px;
 }
 
-.container-definition-form .container-form-content {
-  background-color: #FFFFFF;
-  margin-top: 5px;
-}
-
-.container-definition-form .tab-content {
-  padding: 30px;
-}
-
-.container-form .control-btns {
-  margin-top: 20px;
-}
-
-.container-form .control-btns > * {
-  margin-left: 20px;
-}
-
-.container-form .control-btns .btn {
-  padding-left: 30px;
-  padding-right: 30px;
-}
-
 .tag-separator {
   position:absolute;
   left: -2px;
@@ -41,9 +19,10 @@
 
 .container-health-path-input .input-group {
   display: flex;
+  width: 100%;
 }
 
-.container-health-path-input .input-group > select {
+.container-health-path-input .input-group > .select {
   border-radius: 0;
   width: auto;
   min-width: 90px;

@@ -36,7 +36,8 @@ $brand-info: $main_color;
 $brand-hint-color: #636363;
 $brand-hint-background-color: #fff8be;
 
-$context-view-background-color: #f7f7f7;
+$main_background_color: #fafafa;
+$context-view-background-color: #fafafa;
 $modal-with-help-icon-left-padding: 40px;
 
 $status_running_color: #669900;
@@ -131,4 +132,5 @@ $search-result-list-max-height: 200px;
 .hint {
   color: $link_color;
   font-size: 20px;
+  height: 20px;
 }

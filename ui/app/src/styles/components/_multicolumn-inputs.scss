@@ -1,10 +1,9 @@
 $scrollbarOffset: 15px;
-$rightMarginInputs: 55px;
+$rightMarginInputs: 45px;
 
 .multicolumn-inputs-list {
   width: 100%;
   border-collapse: separate;
-  border: 1px solid #ccc;
 }
 
 .multicolumn-input {
@@ -13,7 +12,7 @@ $rightMarginInputs: 55px;
 }
 
 .multicolumn-input .multicolumn-input-controls {
-  margin-left: 15px;
+  margin-left: 0;
   margin-right: $rightMarginInputs;
 }
 
@@ -32,6 +31,8 @@ $rightMarginInputs: 55px;
  visibility: visible;
 }
 
+$multicolumn-inputs-padding: 5px;
+
 .multicolumn-inputs-list .multicolumn-input-controls > ul, .multicolumn-inputs-list .multicolumn-inputs-list-head > ul {
   display: table;
   width: 100%;
@@ -48,8 +49,8 @@ $rightMarginInputs: 55px;
   }
 
   > li {
-    padding-left: 5px;
-    padding-right: 5px;
+    padding-left: $multicolumn-inputs-padding;
+    padding-right: $multicolumn-inputs-padding;
     display: table-cell;
 
     input {
@@ -63,7 +64,7 @@ $rightMarginInputs: 55px;
     }
 
     .inline-input-holder {
-      margin: 0;
+      margin: 0 5px 0 5px;
 
       .help-block {
         margin-bottom: 0;
@@ -79,7 +80,7 @@ $rightMarginInputs: 55px;
 .multicolumn-input .multicolumn-input-toolbar {
   position: absolute;
   right: 0;
-  top: 0;
+  top: -5px;
 }
 
 .multicolumn-input .multicolumn-input-add, .multicolumn-input .multicolumn-input-remove {
@@ -112,12 +113,12 @@ $rightMarginInputs: 55px;
 
 .multicolumn-inputs-list-head {
   text-align: left;
-  color: #cbcbcb;
+  color: #565656;
   background-color: #fafafa;
   margin-bottom: 10px;
 
   .multicolumn-input-controls {
-    margin-left: 15px;
+    margin-left: 0;
     margin-right: $rightMarginInputs + $scrollbarOffset;
   }
 
@@ -128,10 +129,13 @@ $rightMarginInputs: 55px;
       letter-spacing: .03em;
       background-color: #fafafa;
       vertical-align: bottom;
-      border-bottom: 1px solid #ccc;
       border-top: 0 none;
+      cursor: not-allowed;
 
       .multicolumn-header-label {
+        padding: 0 6px;
+        border-bottom: 1px solid #ccc;
+        color: #ccc;
       }
     }
   }

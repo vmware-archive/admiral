@@ -59,7 +59,7 @@
                        v-on:cancel-delete="cancelRemoval($event)"></delete-confirmation>
   <div class="btn-group pull-right">
     <button v-if="model.provisioning" type="button"
-            class="btn admiral-btn create-container-btn loading"
+            class="btn btn-primary create-container-btn loading"
             disabled="disabled">{{i18n("app.template.list.provision")}}<i class="fa fa-spinner fa-spin loader"></i></button>
     <template v-else><div>
       <template v-if="showGroupForProvisioning">
@@ -71,12 +71,12 @@
             </option>
             <option v-if="clearSelectionSupported()" value="">{{i18n('noSelection')}}</option>
           </select>
-          <button type="button" class="btn admiral-btn create-container-with-group-btn"
+          <button type="button" class="btn btn-primary create-container-with-group-btn"
                   v-on:click="createTemplate($event)">{{i18n("app.template.list.provision")}}</button>
         </div>
       </template>
       <template v-else>
-        <button type="button" class="btn admiral-btn create-container-btn"
+        <button type="button" class="btn btn-primary create-container-btn"
                 v-on:click="createTemplate($event)">{{i18n("app.template.list.provision")}}</button>
     </template>
   </div></template>

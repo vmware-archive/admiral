@@ -79,29 +79,6 @@ textarea {
   border-radius: 2px;
 }
 
-::-webkit-input-placeholder {
-  color: $secondary_inactive_button_color;
-  font-weight:200;
-}
-
-:-moz-placeholder { /* Firefox 18- */
-  color: $secondary_inactive_button_color;
-  font-weight:200;
-}
-
-::-moz-placeholder {  /* Firefox 19+ */
-  color: $secondary_inactive_button_color;
-  font-weight:200;
-}
-
-:-ms-input-placeholder {
-  color: $secondary_inactive_button_color;
-  font-weight:200;
-}
-
-.checkbox-placehodler {
-}
-
 .scrollable-custom-properties {
   visibility: visible;
   overflow-y: scroll;
@@ -246,7 +223,7 @@ textarea {
 
         input {
           width: 100%;
-          padding-left: 30px;
+          padding-left: 25px;
         }
 
         .icon {
@@ -262,7 +239,6 @@ textarea {
 
 .btn {
   min-width: 0;
-  margin-right: 0;
 }
 
 .radio-inline {
@@ -355,12 +331,18 @@ textarea {
 .btn-circle .fa.fa-play {
   transform: translate(1px, 0);
 }
-.dropdown > .admiral-btn + .dropdown-toggle {
-  padding: 0 10px;
-  border-left: 1px dotted #ffffff;
-  // Fixes Bootstraps hover of the other part of the button z-index
-  z-index: 2;
-  margin-left: -6px;
+.btn-group .dropdown {
+  .btn {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  > .btn.dropdown-toggle {
+    padding: 0 10px;
+    border-left: 1px dotted #ffffff;
+    // Fixes Bootstraps hover of the other part of the button z-index
+    z-index: 2;
+    margin-left: -6px;
+  }
 }
 
 .homepage > .top .welcome .btn {
@@ -379,13 +361,6 @@ textarea {
 .host-view .control-btns .btn,
 .compute-view .control-btns .btn {
   font-size: 18px;
-}
-
-.host-view .control-btns .admiral-btn,
-.compute-view .control-btns .admiral-btn {
-  padding: 0 40px;
-  margin-left: 40px;
-  line-height: 40px;
 }
 
 .helpcenter-link {
@@ -467,7 +442,7 @@ $main-list-view-right: 10px;
   position: absolute;
   top: 100px;
   left: 50px;
-  right: 100px;
+  right: 50px;
   bottom: 50px;
 
   margin-top: 10px;
@@ -487,14 +462,9 @@ $main-list-view-right: 10px;
   position: absolute;
   top: 50px;
   left: 50px;
+  right: 50px;
   z-index: 2;
-  display: table;
-  width: 88%;
   height: 38px;
-}
-
-.view-title {
-  display: table-row;
 }
 
 .view-title .title {
@@ -510,8 +480,9 @@ $main-list-view-right: 10px;
 .view-title {
   .title-tab {
     @extend .btn;
-    display: table-cell;
     width: 50%;
+    margin: 0;
+    max-width: 1000px;
 
     font-size: 20px;
 
@@ -543,37 +514,15 @@ $main-list-view-right: 10px;
 .title-tab.single {
   border-radius: 20px;
 }
-.host-view .main-panel .host-form .form-group {
-  margin-bottom: 15px;
-}
-
-.host-view .main-panel .host-form.form-horizontal .control-label {
-  text-align: left;
-  font-size: 19px;
-  font-weight: 500;
-  width: 200px;
-}
-
-.host-view .main-panel .host-form div.col-sm-3 {
-  padding-left: 0;
-}
 
 .host-view .main-panel .host-form,
 .compute-view .main-panel .compute-form,
 .environment-form {
   .fa-question-circle {
-    color: $link_color;
-    margin-top: 0;
-    font-size: 20px;
-    padding-top: 5px;
-    padding-right: 10px;
+    @extend .hint;
     position: absolute;
     top: 2px;
     right: 5px;
-  }
-
-  .hostname-holder, .tags-holder {
-    margin-right: 30px;
   }
 }
 
@@ -702,10 +651,6 @@ $main-list-view-right: 10px;
   }
 }
 
-.host-form.form-horizontal .dropdown-menu .search-input input {
-  font-size: 15px;
-}
-
 .form-group .dropdown .dropdown-search {
   margin-left: 15px;
   margin-right: 15px;
@@ -753,8 +698,6 @@ $main-list-view-right: 10px;
 .host-view .main-panel .radio-label {
   margin-left: 10px;
   margin-right: 30px;
-  font-size: 16px;
-  color: #333;
   font-weight: normal;
 }
 
@@ -1051,7 +994,7 @@ text-shadow: 0px 0px 20px black;
     }
 
     .inline-editable-list-and-context-view .list-holder .inline-editable-list > .table {
-      background-color: #f7f7f7;
+      background-color: $main_background_color;
       margin-top: 20px;
     }
   }
@@ -1213,9 +1156,9 @@ text-shadow: 0px 0px 20px black;
   text-align: right;
 }
 
-.placementZoneEdit-toolbar .admiral-btn-circle, .credentialsEdit-toolbar .admiral-btn-circle,
-.certificatesEdit-toolbar .admiral-btn-circle, .deploymentPolicyEdit-toolbar .admiral-btn-circle,
-.resourceGroupEdit-toolbar .admiral-btn-circle {
+.placementZoneEdit-toolbar .btn-circle, .credentialsEdit-toolbar .btn-circle,
+.certificatesEdit-toolbar .btn-circle, .deploymentPolicyEdit-toolbar .btn-circle,
+.resourceGroupEdit-toolbar .btn-circle {
   margin: 0 4px;
 }
 
@@ -1655,11 +1598,6 @@ body > .loading, .container-details > .content .loading {
   color: $link_color;
   margin-left: 2px;
   font-size: 20px;
-}
-
-.placementEdit .form-horizontal .control-label {
-  text-align: left;
-  padding-top: 5px;
 }
 
 .placementRowEdit-inputs .help-block {
@@ -2316,14 +2254,7 @@ $alert-text-color: #ffffff;
 }
 
 .app-view .form-group {
-  position: relative;
-  margin-bottom: 15px;
-
-  .control-label {
-    text-align: left;
-    font-size: 17px;
-    font-weight: 500;
-  }
+    padding-right: 30px;
 
   .form-control.multicolumn-inputs {
     height: auto;
@@ -2337,14 +2268,14 @@ $alert-text-color: #ffffff;
   }
 
   input.checkbox-control {
-    margin-top: 14px;
+    margin-top: 10px;
   }
 
   > .fa-question-circle {
     @extend .hint;
     position: absolute;
     top: 6px;
-    right: -12px;
+    right: 0px;
   }
 }
 
@@ -2365,7 +2296,7 @@ $alert-text-color: #ffffff;
 
   .loader-inline, .search-hint {
     z-index: 1;
-    left: 4px;
+    left: 5px;
     bottom: 10px;
     position: absolute;
   }
@@ -2381,29 +2312,6 @@ $alert-text-color: #ffffff;
   }
   .search-hint {
     display: none;
-  }
-}
-
-.tags {
-
-  .form-control {
-    padding: 2px;
-    height: auto;
-  }
-
-  .tokenfield .token {
-    margin: 3px;
-  }
-
-  .twitter-typeahead {
-    .tt-input {
-      height: auto;
-      border: 0;
-      padding: 4px;
-    }
-    .tt-suggestion {
-      padding: 3px 9px;
-    }
   }
 }
 

@@ -24,82 +24,72 @@
 
     <div class="tab-content">
       <div role="tabpanel" class="tab-pane" id="basic">
-        <div class="form-horizontal">
+        <form>
           <div class="form-group container-image-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.image'}}</label>
-            <div class="col-sm-7">
-              <div class="search-input">
-                <input class="form-control">
-                <i class="fa fa-spinner fa-spin loader-inline form-control-feedback"></i>
-                <i class="fa fa-search search-hint form-control-feedback"></i>
+            <label class="control-label">{{i18n 'app.container.request.inputs.image'}}</label>
+            <div class="row">
+              <div class="col-sm-9">
+                <div class="search-input">
+                  <input class="form-control">
+                  <i class="fa fa-spinner fa-spin loader-inline form-control-feedback"></i>
+                  <i class="fa fa-search search-hint form-control-feedback"></i>
+                </div>
+                <span class="help-block"></span>
               </div>
-              <span class="help-block"></span>
-            </div>
-            <div class="col-sm-2">
-              <label class="tag-separator control-label">:</label>
-              <div class="image-tags-input">
-                <input class="form-control">
-                <i class="fa fa-spinner fa-spin loader-inline form-control-feedback"></i>
-                <i class="fa fa-search search-hint form-control-feedback"></i>
+              <div class="col-sm-3">
+                <label class="tag-separator control-label">:</label>
+                <div class="image-tags-input">
+                  <input class="form-control">
+                  <i class="fa fa-spinner fa-spin loader-inline form-control-feedback"></i>
+                  <i class="fa fa-search search-hint form-control-feedback"></i>
+                </div>
+                <span class="help-block"></span>
               </div>
-              <span class="help-block"></span>
             </div>
           </div>
           <div class="form-group container-name-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.name'}}</label>
-            <div class="col-sm-9">
-              <input class="form-control">
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.name'}}</label>
+            <input class="form-control">
+            <span class="help-block"></span>
           </div>
           <div class="form-group container-commands-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.commands'}}</label>
-            <div class="col-sm-9">
-              <div class="form-control"></div>
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.commands'}}</label>
+            <div class="form-control"></div>
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.commandsDescription'}}"></i>
           </div>
           <div class="form-group container-links-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.links'}}</label>
-            <div class="col-sm-9">
-              <div class="form-control"></div>
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.links'}}</label>
+            <div class="form-control"></div>
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.linksDescription'}}"></i>
           </div>
-        </div>
+        </form>
       </div>
       <div role="tabpanel" class="tab-pane" id="network">
-        <div class="form-horizontal">
+        <form>
           <div class="form-group container-ports-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.portBindings'}}</label>
-            <div class="col-sm-9">
-              <div class="form-control"></div>
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.portBindings'}}</label>
+            <div class="form-control"></div>
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.portBindingsDescription'}}"></i>
           </div>
           <div class="form-group container-ports-publish-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.publishAll'}}</label>
-            <div class="col-sm-9">
-              <input type="checkbox" class="checkbox-control" />
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.publishAll'}}</label>
+            <input type="checkbox" class="checkbox-control" />
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.publishAllDescription'}}"></i>
           </div>
           <div class="form-group container-hostname-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.hostname'}}</label>
-            <div class="col-sm-9">
-              <input class="form-control">
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.hostname'}}</label>
+            <input class="form-control">
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.hostnameDescription'}}"></i>
           </div>
           <div class="form-group container-network-mode-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.networkMode'}}</label>
-            <div class="col-sm-9">
-              <select class="form-control">
+            <label class="control-label">{{i18n 'app.container.request.inputs.networkMode'}}</label>
+            <div class="select">
+              <select>
                 <option value=""></option>
                 <option value="bridge">{{i18n 'app.container.request.inputs.networkModeTypes.bridge'}}</option>
                 <option value="none">{{i18n 'app.container.request.inputs.networkModeTypes.none'}}</option>
@@ -110,240 +100,209 @@
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.networkModeDescription'}}"></i>
           </div>
           <div class="form-group container-networks-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.networks'}}</label>
-            <div class="col-sm-9">
-              <div class="form-control"></div>
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.networks'}}</label>
+            <div class="form-control"></div>
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.networksDescription'}}"></i>
           </div>
-        </div>
+        </form>
       </div>
       <div role="tabpanel" class="tab-pane" id="storage">
-        <div class="form-horizontal">
+        <form>
           <div class="form-group container-volumes-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.volumes'}}</label>
-            <div class="col-sm-9">
-              <div class="form-control"></div>
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.volumes'}}</label>
+            <div class="form-control"></div>
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.volumesDescription'}}"></i>
           </div>
           <div class="form-group container-volumes-from-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.volumesFrom'}}</label>
-            <div class="col-sm-9">
-              <div class="form-control"></div>
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.volumesFrom'}}</label>
+            <div class="form-control"></div>
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.volumesFromDescription'}}"></i>
           </div>
           <div class="form-group container-working-directory-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.workingDirectory'}}</label>
-            <div class="col-sm-9">
-              <input class="form-control">
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.workingDirectory'}}</label>
+            <input class="form-control">
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.workingDirectoryDescription'}}"></i>
           </div>
-        </div>
+        </form>
       </div>
       <div role="tabpanel" class="tab-pane" id="policy">
-        <div class="form-horizontal">
+        <form>
           <div class="form-group deployment-policy-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.deploymentPolicy'}}</label>
-            <div class="col-sm-9">
-              <select class="form-control">
+            <label class="control-label">{{i18n 'app.container.request.inputs.deploymentPolicy'}}</label>
+            <div class="select">
+              <select>
               </select>
-              <span class="help-block"></span>
             </div>
+            <span class="help-block"></span>
           </div>
           <div class="form-group container-cluster-size-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.clusterSize'}}</label>
-            <div class="col-sm-9">
-              <input class="form-control" type="number" >
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.clusterSize'}}</label>
+            <input class="form-control" type="number" >
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.clusterSizeDescription'}}"></i>
           </div>
           <div class="form-group container-restart-policy-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.restartPolicy'}}</label>
-            <div class="col-sm-9">
-              <select class="form-control">
+            <label class="control-label">{{i18n 'app.container.request.inputs.restartPolicy'}}</label>
+            <div class="select">
+              <select>
                 <option value="no">{{i18n 'app.container.request.inputs.restartPolicyType.none'}}</option>
                 <option value="onFailure">{{i18n 'app.container.request.inputs.restartPolicyType.onFailure'}}</option>
                 <option value="always">{{i18n 'app.container.request.inputs.restartPolicyType.always'}}</option>
               </select>
-              <span class="help-block"></span>
             </div>
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.restartPolicyDescription'}}"></i>
           </div>
           <div class="form-group container-max-restarts-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.maxRestarts'}}</label>
-            <div class="col-sm-9">
-              <input class="form-control" type="number" >
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.maxRestarts'}}</label>
+            <input class="form-control" type="number" >
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.maxRestartsDescription'}}"></i>
           </div>
           <div class="form-group container-cpu-shares-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.cpuShares'}}</label>
-            <div class="col-sm-9">
-              <input class="form-control" type="number" >
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.cpuShares'}}</label>
+            <input class="form-control" type="number" >
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.cpuSharesDescription'}}"></i>
           </div>
           <div class="form-group container-memory-limit-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.memoryLimit'}}</label>
-            <div class="col-sm-9">
-              <input type="number"/>
+            <label class="control-label">{{i18n 'app.container.request.inputs.memoryLimit'}}</label>
+            <input type="number"/>
+            <div class="select">
               <select>
                 <option>kB</option>
                 <option selected="selected">MB</option>
                 <option>GB</option>
-                <span class="help-block"></span>
               </select>
               <span class="help-block"></span>
             </div>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.memoryLimitDescription'}}"></i>
           </div>
           <div class="form-group container-memory-swap-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.memorySwapLimit'}}</label>
-            <div class="col-sm-9">
-              <input type="number"/>
+            <label class="control-label">{{i18n 'app.container.request.inputs.memorySwapLimit'}}</label>
+            <input type="number"/>
+            <div class="select">
               <select>
                 <option>kB</option>
                 <option selected="selected">MB</option>
                 <option>GB</option>
               </select>
-              <span class="help-block"></span>
             </div>
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.memorySwapLimitDescription'}}"></i>
           </div>
           <div class="form-group container-affinity-constraints-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.affinityConstraints'}}</label>
-            <div class="col-sm-9">
-              <div class="form-control"></div>
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.affinityConstraints'}}</label>
+            <div class="form-control"></div>
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.affinityConstraintsDescription'}}"></i>
           </div>
-        </div>
+        </form>
       </div>
       <div role="tabpanel" class="tab-pane" id="environment">
-        <div class="form-horizontal">
+        <form>
           <div class="form-group container-environment-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.environmentVariables'}}</label>
-            <div class="col-sm-9">
-              <div class="form-control"></div>
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.environmentVariables'}}</label>
+            <div class="form-control"></div>
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.environmentVariablesDescription'}}"></i>
           </div>
           <div class="form-group container-custom-properties-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.customProperties'}}</label>
-            <div class="col-sm-9">
-              <div class="form-control"></div>
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.customProperties'}}</label>
+            <div class="form-control"></div>
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.customPropertiesDescription'}}"></i>
           </div>
-        </div>
+        </form>
       </div>
       <div role="tabpanel" class="tab-pane" id="health">
-        <div class="form-horizontal">
+        <form>
           <div class="form-group container-health-protocol-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.healthMode'}}</label>
-            <span class="col-sm-9 form-group">
-              <div class="radio-inline">
-                <input type="radio" name="health-protocol-radio" id="health-none" value="NONE">
-                <label for="health-none">{{i18n 'app.container.request.inputs.healthConfigNone'}}</label>
-              </div>
-              <div class="radio-inline">
-                <input type="radio" name="health-protocol-radio" id="http-health" value="HTTP">
-                <label for="http-health">{{i18n 'app.container.request.inputs.healthConfigHTTP'}}</label>
-              </div>
-              <div class="radio-inline">
-                <input type="radio" name="health-protocol-radio" id="tcp-health" value="TCP">
-                <label for="tcp-health">{{i18n 'app.container.request.inputs.healthConfigTCP'}}</label>
-              </div>
-              <div class="radio-inline">
-                <input type="radio" name="health-protocol-radio" id="command-health" value="COMMAND">
-                <label for="command-health">{{i18n 'app.container.request.inputs.healthConfigCommand'}}</label>
-              </div>
-            </span>
+            <label class="control-label">{{i18n 'app.container.request.inputs.healthMode'}}</label>
+            <div class="radio-inline">
+              <input type="radio" name="health-protocol-radio" id="health-none" value="NONE">
+              <label for="health-none">{{i18n 'app.container.request.inputs.healthConfigNone'}}</label>
+            </div>
+            <div class="radio-inline">
+              <input type="radio" name="health-protocol-radio" id="http-health" value="HTTP">
+              <label for="http-health">{{i18n 'app.container.request.inputs.healthConfigHTTP'}}</label>
+            </div>
+            <div class="radio-inline">
+              <input type="radio" name="health-protocol-radio" id="tcp-health" value="TCP">
+              <label for="tcp-health">{{i18n 'app.container.request.inputs.healthConfigTCP'}}</label>
+            </div>
+            <div class="radio-inline">
+              <input type="radio" name="health-protocol-radio" id="command-health" value="COMMAND">
+              <label for="command-health">{{i18n 'app.container.request.inputs.healthConfigCommand'}}</label>
+            </div>
           </div>
-          <span id="health-config">
+          <div id="health-config">
             <div class="form-group container-health-path-input collapse in" id="container-health-path-input">
-              <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.healthPath'}}</label>
-              <span class="col-sm-9">
-                <span class="input-group">
-                  <select class="selectpicker form-control" data-live-search="false">
-                    <option>GET</option>
-                    <option>POST</option>
-                    <option>OPTIONS</option>
-                  </select>
-                  <input class="form-control" type="text" >
-                  <select class="selectpicker form-control httpVersion" data-live-search="false">
-                    <option value="HTTP_v1_1">HTTP 1.1</option>
-                    <option value="HTTP_v2">HTTP 2</option>
-                  </select>
-                </span>
-                <span class="help-block"></span>
+              <label class="control-label">{{i18n 'app.container.request.inputs.healthPath'}}</label>
+              <span class="input-group">
+              <div class="select">
+                <select>
+                  <option>GET</option>
+                  <option>POST</option>
+                  <option>OPTIONS</option>
+                </select>
+              </div>
+              <input class="form-control" type="text" >
+              <div class="select httpVersion">
+                <select>
+                  <option value="HTTP_v1_1">HTTP 1.1</option>
+                  <option value="HTTP_v2">HTTP 2</option>
+                </select>
+              </div>
+              <span class="help-block"></span>
               </span>
               <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.healthPathDescription'}}"></i>
             </div>
             <div class="form-group container-health-port-input">
-              <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.healthPort'}}</label>
-              <div class="col-sm-9">
-                <input class="form-control" type="number">
-                <span class="help-block"></span>
-              </div>
+              <label class="control-label">{{i18n 'app.container.request.inputs.healthPort'}}</label>
+              <input class="form-control" type="number">
+              <span class="help-block"></span>
               <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.healthPortDescription'}}"></i>
             </div>
             <div class="form-group container-health-timeout-input">
-              <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.healthTimeout'}}</label>
-              <div class="col-sm-9">
-                <input class="form-control" type="number">
-                <span class="help-block"></span>
-              </div>
+              <label class="control-label">{{i18n 'app.container.request.inputs.healthTimeout'}}</label>
+              <input class="form-control" type="number">
+              <span class="help-block"></span>
               <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.healthTimeoutDescription'}}"></i>
             </div>
             <div class="form-group container-healthy-threshold-input">
-              <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.healthyThreshold'}}</label>
-              <div class="col-sm-9">
-                <input class="form-control" type="number">
-                <span class="help-block"></span>
-              </div>
+              <label class="control-label">{{i18n 'app.container.request.inputs.healthyThreshold'}}</label>
+              <input class="form-control" type="number">
+              <span class="help-block"></span>
               <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.healthyThresholdDescription'}}"></i>
             </div>
             <div class="form-group container-unhealthy-threshold-input">
-              <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.unhealthyThreshold'}}</label>
-              <div class="col-sm-9">
-                <input class="form-control" type="number">
-                <span class="help-block"></span>
-              </div>
+              <label class="control-label">{{i18n 'app.container.request.inputs.unhealthyThreshold'}}</label>
+              <input class="form-control" type="number">
+              <span class="help-block"></span>
               <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.unhealthyThresholdDescription'}}"></i>
             </div>
-          </span>
-          <span id="health-config-command">
+          </div>
+          <div id="health-config-command">
             <div class="form-group container-health-command-input">
-              <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.command'}}</label>
-              <div class="col-sm-9">
-                <textarea class="form-control" rows="5"></textarea>
-                <span class="help-block"></span>
-              </div>
+              <label class="control-label">{{i18n 'app.container.request.inputs.command'}}</label>
+              <textarea class="form-control" rows="5"></textarea>
+              <span class="help-block"></span>
               <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.commandDescription'}}"></i>
             </div>
           </span>
-        </div>
+        </form>
       </div>
       <div role="tabpanel" class="tab-pane" id="logconfig">
-        <div class="form-horizontal">
+        <form>
           <div class="form-group container-logconfig-driver-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.logConfigDriver'}}</label>
-            <div class="col-sm-9">
-              <select class="form-control">
+            <label class="control-label">{{i18n 'app.container.request.inputs.logConfigDriver'}}</label>
+            <div class="select">
+              <select>
                 <option></option>
                 <option>none</option>
                 <option>json-file</option>
@@ -356,19 +315,17 @@
                 <option>etwlogs</option>
                 <option>gcplogs</option>
               </select>
-              <span class="help-block"></span>
             </div>
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.logConfigDriverDescription'}}"></i>
           </div>
           <div class="form-group container-logconfig-options-input">
-            <label class="col-sm-3 control-label">{{i18n 'app.container.request.inputs.logConfigOptions'}}</label>
-            <div class="col-sm-9">
-              <div class="form-control"></div>
-              <span class="help-block"></span>
-            </div>
+            <label class="control-label">{{i18n 'app.container.request.inputs.logConfigOptions'}}</label>
+            <div class="form-control"></div>
+            <span class="help-block"></span>
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.container.request.inputs.logConfigOptionsDescription'}}"></i>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   </div>

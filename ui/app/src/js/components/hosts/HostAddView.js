@@ -360,8 +360,8 @@ var HostAddView = Vue.extend({
       });
     },
     disableInput: function(inputId, value) {
-      var inputEl = $(this.$el).find('#' + inputId + ' .col-sm-9');
-      inputEl.html('<label class="host-edit-value">' + value + '</label>');
+      var inputEl = $(this.$el).find('#' + inputId + ' input');
+      inputEl.replaceWith($('<label class="host-edit-value">' + value + '</label>'));
     },
 
     getHostData: function() {

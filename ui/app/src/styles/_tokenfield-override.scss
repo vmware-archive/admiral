@@ -19,6 +19,7 @@
 }
 
 .twitter-typeahead {
+  margin: 0;
   .tt-suggestion, .tt-options-hint {
     text-overflow: ellipsis;
     overflow: hidden;
@@ -26,6 +27,10 @@
   }
   .tt-options-hint {
     color: $secondary_hint_title_color;
+  }
+
+  .tt-input, .tt-hint {
+    height: 24px;
   }
 }
 
@@ -37,14 +42,31 @@
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fff5f5f5', endColorstr='#ffe8e8e8', GradientType=0);
 }
 
-.tokenfield .twitter-typeahead .tt-input, .tokenfield .twitter-typeahead .tt-hint {
+.tokenfield .twitter-typeahead, .tokenfield .twitter-typeahead .tt-hint {
   padding: 0;
+  margin: 0;
+  font-size: initial;
+}
+.tokenfield .twitter-typeahead .tt-input {
+  padding: 0 6px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.tokenfield {
+  min-height: 24px;
 }
 
 .tokenfield .token {
+  margin-bottom: 1px;
   height: auto;
   .close {
     vertical-align: middle;
+    margin-top: 1px;
+    margin-bottom: 0;
+  }
+  .token-label {
+    margin: 0;
   }
 }
 

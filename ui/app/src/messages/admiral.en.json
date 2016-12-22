@@ -39,6 +39,7 @@
           "edit": "Edit Host"
         },
         "address": "Address",
+        "addressPlaceholder": "Example: https://hostname:2376",
         "addressHint": "Please specify the appropriate scheme and port, e.g. https://myhost.com:2376. Default scheme: 'https'. Default ports: https/443, http/80.",
         "hostAlias": "Name",
         "hostAddress": "Address",
@@ -49,6 +50,7 @@
         "destinationPlaceholder": "Search for destination",
         "deploymentPolicy": "Deployment policy",
         "tags": "Tags",
+        "tagsPlaceholder": "Example: location:west",
         "tagsHint": "Enter key:value tags",
         "autoConfigure": "Auto configure",
         "autoConfigureInput":"Enable host auto configuration",
@@ -74,6 +76,7 @@
         "providerType": "Cloud type",
         "regionId": "Region ID",
         "name": "Name",
+        "namePlaceholder": "Example: host-name",
         "instanceType": "Instance type",
         "imageType": "OS",
         "port": "Port",

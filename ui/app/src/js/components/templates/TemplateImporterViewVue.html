@@ -23,7 +23,7 @@
     </div>
     <textarea v-model="templateContent" class="template-input" v-bind:disabled="model.isImportingTemplate" placeholder="{{i18n('app.template.import.contentPlaceholder')}}"></textarea>
     <div class="templateImport-toolbar">
-    <button type="submit" class="btn admiral-btn saveHost"
+    <button type="submit" class="btn btn-primary"
                 v-bind:class="{'disabled': !templateContent, 'loading': model.isImportingTemplate}"
                 v-on:click="importTemplate">{{i18n("app.template.import.importButton")}}<i class="fa fa-spinner fa-spin loader-inline"></i>
     </button>

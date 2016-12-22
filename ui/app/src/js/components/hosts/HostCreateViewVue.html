@@ -9,36 +9,32 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="host-form form-horizontal">
+<form class="host-form">
 
   <div id="name" class="form-group" v-bind:class="{'has-error': validationErrors.name}">
-    <label class="col-sm-3 control-label">
+    <label>
       {{i18n("app.host.details.name")}}
       <span class="requiredFieldMark">*</span>
     </label>
-    <div class="col-sm-9">
-      <input class="form-control" v-model="name">
-      <span class="help-block">{{i18n(validationErrors.name)}}</span>
-    </div>
+    <input class="form-control" v-model="name" v-bind:placeholder="i18n('app.host.details.namePlaceholder')">
+    <span class="help-block">{{i18n(validationErrors.name)}}</span>
   </div>
 
   <div id="endpoint" class="form-group" v-bind:class="{'has-error': validationErrors.endpoint}">
-    <label class="col-sm-3 control-label">
+    <label>
       {{i18n("app.host.details.endpoint")}}
       <span class="requiredFieldMark">*</span>
     </label>
-    <div class="col-sm-9">
-      <div class="form-control dropdown-holder"></div>
-      <span class="help-block">{{i18n(validationErrors.endpoint)}}</span>
-    </div>
+    <div class="form-control dropdown-holder"></div>
+    <span class="help-block">{{i18n(validationErrors.endpoint)}}</span>
   </div>
 
   <div id="instanceType" class="form-group" v-if="endpointEnvironment">
-    <label class="col-sm-3 control-label">
+    <label>
       {{i18n("app.host.details.instanceType")}}
       <span class="requiredFieldMark">*</span>
     </label>
-    <div class="col-sm-9">
+    <div class="select">
       <select v-model="instanceType" class="form-control">
         <option v-for="(key, value) in instanceTypes"
             value="{{key}}" track-by="$index">
@@ -49,11 +45,11 @@
   </div>
 
   <div id="imageType" class="form-group" v-if="endpointEnvironment">
-    <label class="col-sm-3 control-label">
+    <label>
       {{i18n("app.host.details.imageType")}}
       <span class="requiredFieldMark">*</span>
     </label>
-    <div class="col-sm-9">
+    <div class="select">
       <select v-model="imageType" class="form-control">
         <option v-for="(key, value) in imageTypes"
             value="{{key}}" track-by="$index">
@@ -64,35 +60,29 @@
   </div>
 
   <div id="destination" class="form-group" v-if="endpoint && endpoint.endpointType === 'vsphere'">
-    <label class="col-sm-3 control-label">
+    <label>
       {{i18n('app.host.details.destination')}}
       <span class="requiredFieldMark">*</span>
     </label>
-    <div class="col-sm-9">
-      <destination-search class="dropdown-holder" v-bind:resource-pool-link="endpoint.resourcePoolLink"
+    <destination-search class="dropdown-holder" v-bind:resource-pool-link="endpoint.resourcePoolLink"
         v-on:change="onDestinationChange"></destination-search>
-    </div>
   </div>
 
   <div id="port" class="form-group" v-bind:class="{'hide': endpoint === null || isNimbusEndpoint}">
-    <label class="col-sm-3 control-label">
+    <label>
       {{i18n("app.host.details.port")}}
     </label>
-    <div class="col-sm-9">
-      <input class="form-control" type="number" v-model="port">
-    </div>
+    <input class="form-control" type="number" v-model="port">
   </div>
 
   <div id="credential" class="form-group" v-bind:class="{'hide': endpoint === null || isNimbusEndpoint}">
-    <label class="col-sm-3 control-label">{{i18n("app.host.details.guestCredential")}}</label>
-    <div class="col-sm-9">
-      <div class="form-control dropdown-holder"></div>
-    </div>
+    <label>{{i18n("app.host.details.guestCredential")}}</label>
+    <div class="form-control dropdown-holder"></div>
   </div>
 
   <div id="clusterSize" class="form-group" v-bind:class="{'hide': endpoint === null}">
-    <label class="col-sm-3 control-label">{{i18n("app.host.details.clusterSize")}}</label>
-    <div class="clusterSizeInput col-sm-9">
+    <label>{{i18n("app.host.details.clusterSize")}}</label>
+    <div class="clusterSizeInput">
       <action-button v-bind:disabled="clusterSize == 1" name="decrementClusterSize" icon-name="minus"
                    v-on:click="modifyClusterSize($event, -1)"></action-button>
       <span>{{clusterSize}}</span>
@@ -102,31 +92,21 @@
   </div>
 
   <div id="tags" class="form-group tags" v-bind:class="{'hide': endpoint === null || isNimbusEndpoint}">
-    <label class="col-sm-3 control-label">{{i18n("app.host.details.tags")}}</label>
-    <div class="col-sm-9">
-      <div class="tags-holder">
-        <input class="tags-input">
-      </div>
-      <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
-         title="{{i18n ('app.host.details.tagsHint')}}"></i>
-    </div>
+    <label>{{i18n("app.host.details.tags")}}</label>
+    <input class="tags-input">
+    <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
+        title="{{i18n ('app.host.details.tagsHint')}}"></i>
   </div>
 
   <div id="customProperties" class="form-group" v-bind:class="{'hide': endpoint === null || isNimbusEndpoint}">
-    <label class="col-sm-3 control-label">{{i18n("app.host.details.customProperties")}}</label>
-    <div class="col-sm-9">
-      <div class="custom-prop-fields"></div>
-    </div>
+    <label>{{i18n("app.host.details.customProperties")}}</label>
+    <div class="custom-prop-fields"></div>
   </div>
 
-  <div class="form-group">
-    <div class="col-sm-12">
-      <div class="pull-right control-btns">
-        <button type="submit" class="btn admiral-btn saveHost"
-                v-bind:class="{'disabled': buttonsDisabled, 'loading': model.isSavingHost}"
-                v-on:click="createHost">{{i18n("app.host.details.create")}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
-        <span class="help-block"></span>
-      </div>
-    </div>
+  <div class="control-btns">
+    <button type="submit" class="btn btn-primary saveHost"
+            v-bind:class="{'disabled': buttonsDisabled, 'loading': model.isSavingHost}"
+            v-on:click="createHost">{{i18n("app.host.details.create")}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+    <span class="help-block"></span>
   </div>
-</div>
+</form>

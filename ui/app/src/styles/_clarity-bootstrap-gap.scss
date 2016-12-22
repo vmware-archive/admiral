@@ -16,18 +16,26 @@
   display: flex;
   flex-wrap: wrap;
   flex: 0 0 100%;
-  margin-right: -15px;
-  margin-left: -15px;
 
   .form-control {
     width: 100%;
   }
+
+  .row {
+    flex: 1 100%;
+  }
+}
+
+form .form-group > input:not([type]) {
+  margin-top: $clr_baselineRem_0_25;
+  margin-bottom: $clr_baselineRem_0_25;
 }
 
 input:not([type]) {
   @extend %custom-inputs;
   @extend %clr-form-fields-appearance;
   @include input-border-bottom-animation();
+  padding: 0 $clr_baselineRem_0_25;
 }
 
 /* Bootstrap has a native caret style that renders a triangle, while Clarity, has a caret but as an Angular component */
@@ -49,6 +57,11 @@ input:not([type]) {
 
 .dropdown .dropdown-menu li a {
   @extend .dropdown-item;
+  margin: 0;
+}
+
+.dropdown .dropdown-menu span {
+  margin: 0;
 }
 
 .dropdown .dropdown-menu .divider {

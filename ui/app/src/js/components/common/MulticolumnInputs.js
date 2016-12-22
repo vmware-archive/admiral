@@ -29,11 +29,11 @@ function createItem(object, model) {
   var $multicolumnInput = $('<div>', {
     class: 'multicolumn-input'
   });
-
   var $inputs = $('<ul>');
 
   for (var key in model) {
     if (model.hasOwnProperty(key)) {
+      var inputHolderClass = '';
       var type = model[key].type;
       var $input;
 
@@ -52,6 +52,8 @@ function createItem(object, model) {
         if (object && object[key]) {
           $input.val(object[key]);
         }
+
+        inputHolderClass = ' select';
       } else {
         $input = $('<input>', {
           class: 'inline-input',
@@ -79,7 +81,7 @@ function createItem(object, model) {
       }
 
       var $inputHolder = $('<div>', {
-        class: 'inline-input-holder',
+        class: 'inline-input-holder' + inputHolderClass,
         name: key
       });
 

@@ -231,8 +231,7 @@
 }
 
 .host-edit-value, .compute-edit-value {
-  font-size: 19px;
-  padding-top: 7px;
+  font-size: 20px;
 }
 
 .list-view .grid-item .title {
@@ -824,7 +823,7 @@
 
   .closable-view {
     border-left: 2px solid $main-border-color;
-    background-color: #f7f7f7;
+    background-color: $main_background_color;
   }
 
   .closable-view.expanded {
@@ -926,7 +925,7 @@
 
   .composite-child-containers-view {
     @extend .position-expand;
-    background-color: #f7f7f7;
+    background-color: $main_background_color;
 
     @include transition(background-color 0.4s);
 
@@ -945,7 +944,7 @@
 
   .composite-child-closures-view {
     @extend .position-expand;
-    background-color: #f7f7f7;
+    background-color: $main_background_color;
 
     @include transition(background-color 0.4s);
 

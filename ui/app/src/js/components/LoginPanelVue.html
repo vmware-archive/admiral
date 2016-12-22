@@ -28,7 +28,7 @@
            v-on:input="changeUNPW()"
            v-on:keyup.enter="login()"/>
   </div>
-  <button class="btn admiral-btn"
+  <button class="btn btn-primary"
       v-bind:class="{'loading': loading}"
       v-bind:disabled="loginDisabled"
       v-on:click="login()">{{i18n('loginPanel.login')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
