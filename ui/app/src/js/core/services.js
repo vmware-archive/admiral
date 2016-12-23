@@ -1483,6 +1483,15 @@ services.createContainerTemplateForDescription = function(name, descriptionLink)
     return post(links.COMPOSITE_DESCRIPTIONS, multiContainerDescription);
 };
 
+services.createNewContainerTemplate = function(name) {
+  var template = {
+    name: name,
+    descriptionLinks: []
+  };
+
+  return post(links.COMPOSITE_DESCRIPTIONS, template);
+};
+
 services.createClosureTemplate = function(closureDescription) {
     return services.createClosure(closureDescription)
       .then(function(createdClosureDescription) {

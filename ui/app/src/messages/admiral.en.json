@@ -258,6 +258,9 @@
         }
       },
       "details": {
+        "create": "Create Template",
+        "createNameHint": "Template Name",
+        "createProceed": "Proceed",
         "edit": "Edit Template",
         "newDefinition": {
           "newLabel": "Add Container",
@@ -552,6 +555,9 @@
               "managedByCatalog": "Managed by catalog"
             }
           }
+        },
+        "application": {
+          "create": "Create Application"
         },
         "closure": {
           "create": "Create Closure"

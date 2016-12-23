@@ -664,6 +664,13 @@ var TemplateDetailsView = Vue.extend({
         this.getExportLink(constants.TEMPLATES.EXPORT_FORMAT.DOCKER_COMPOSE));
     },
     operationSupported: function(op) {
+      if (op === 'PROVISION' || 'PUBLISH' || 'EXPORT') {
+        if (!this.model.templateDetails.listView.items
+              || this.model.templateDetails.listView.items.length === 0) {
+          return false;
+        }
+      }
+
       return utils.operationSupportedTemplate(op);
     },
     networksChanged: function(networks) {

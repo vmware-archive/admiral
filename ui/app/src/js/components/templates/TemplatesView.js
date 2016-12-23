@@ -72,7 +72,8 @@ var TemplatesViewVueComponent = Vue.extend({
       placeholderByCategory: placeholderByCategory,
       // this view behaves better if the target width is set before the width transition
       requiresPreTransitionWidth: true,
-      alert: alertData
+      alert: alertData,
+      createTemplateName: null
     };
   },
   computed: {
@@ -383,6 +384,13 @@ var TemplatesViewVueComponent = Vue.extend({
 
     refresh: function() {
       TemplateActions.openTemplates(this.queryOptions, true);
+    },
+
+    createNewTemplate: function($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+
+      TemplateActions.createNewTemplate(this.createTemplateName);
     },
 
     editClosureDescription: function(e) {

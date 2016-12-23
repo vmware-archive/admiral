@@ -115,11 +115,32 @@
       class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
     <div class="content">
+      <template v-if="model.selectedItemDetails.selectedForCreate">
+        <div class="template-details">
+          <div class="details-contents">
+            <div class="list-view">
+              <div class="template-details-header">
+                <div class="title">{{i18n('app.template.details.create')}}</div>
+                  <div style="clear: both;">
+                    <input id="createTemplateNameInput" class="form-control create-template-name-input"
+                           name="createTemplateNameInput" type="text"
+                           placeholder="{{i18n('app.template.details.createNameHint')}}"
+                           v-model="createTemplateName"/>
+                    <a class="btn btn-primary create-template-btn"
+                       v-on:click="createNewTemplate($event)">{{i18n("app.template.details.createProceed")}}</a>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
       <template-details-view v-ref:template-details v-if="model.selectedItemDetails.selectedForEdit"
                              v-bind:model="model.selectedItemDetails"></template-details-view>
       <container-request-form v-if="model.selectedItemDetails.selectedForRequest"
                              v-bind:model="model.selectedItemDetails"></container-request-form>
-      <closure-request-form class="template-details" v-if="!!model.selectedItemDetails.addClosureView && areClosuresAllowed" v-bind:model="model.selectedItemDetails"></closure-request-form>
+      <closure-request-form class="template-details"
+                            v-if="!!model.selectedItemDetails.addClosureView && areClosuresAllowed"
+                            v-bind:model="model.selectedItemDetails"></closure-request-form>
 
     </div>
 

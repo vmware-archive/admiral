@@ -145,6 +145,12 @@ crossroads.addRoute('/containers/new', function() {
   actions.ContainerActions.openCreateContainer();
 });
 
+crossroads.addRoute('/applications/new', function() {
+  actions.AppActions.openView(constants.VIEWS.TEMPLATES.name);
+  actions.TemplateActions.openTemplates({}, true);
+  actions.TemplateActions.openCreateNewTemplate();
+});
+
 crossroads.addRoute('/networks/new', function() {
   actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name);
   actions.ContainerActions.openContainers({

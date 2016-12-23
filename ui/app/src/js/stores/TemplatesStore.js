@@ -756,6 +756,7 @@ let TemplatesStore = Reflux.createStore({
           detailsObject.templateDetails.listView.networks = networkDescriptions;
           detailsObject.templateDetails.listView.networkLinks = networkLinks;
           detailsObject.templateDetails.listView.closures = closureDescriptions;
+
           this.setInData(['selectedItemDetails'], detailsObject);
           this.emitChange();
         });
@@ -1259,6 +1260,9 @@ let TemplatesStore = Reflux.createStore({
     services.createContainerDescription(containerDefinition).then((createdDefinition) => {
 
       services.loadContainerTemplate(templateId).then((template) => {
+        if (!template.descriptionLinks) {
+          template.descriptionLinks = [];
+        }
 
         template.descriptionLinks.push(createdDefinition.documentSelfLink);
 
@@ -1489,6 +1493,31 @@ let TemplatesStore = Reflux.createStore({
       actions.NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE,
         documentId);
 
+    }).catch(this.onGenericCreateError);
+  },
+
+  onOpenCreateNewTemplate: function() {
+    var detailsObject = {
+      type: constants.TEMPLATES.TYPES.TEMPLATE,
+      selectedForCreate: true,
+      selectedForEdit: false,
+      selectedForRequest: false
+    };
+
+    detailsObject.templateDetails = {};
+    detailsObject.templateDetails.listView = {};
+
+    this.setInData(['selectedItem'], detailsObject);
+    this.setInData(['selectedItemDetails'], detailsObject);
+    this.emitChange();
+  },
+
+  onCreateNewTemplate: function(templateName) {
+    services.createNewContainerTemplate(templateName).then((template) => {
+      var documentId = utils.getDocumentId(template.documentSelfLink);
+
+      actions.NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE,
+        documentId);
     }).catch(this.onGenericCreateError);
   },
 
