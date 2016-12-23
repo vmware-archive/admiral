@@ -9,17 +9,13 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.upgrade.version2;
+package com.vmware.admiral.test.upgrade.version1;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
-import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
-
-import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.test.upgrade.common.UpgradeUtil;
-import com.vmware.admiral.test.upgrade.version1.UpgradeOldService2;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -27,42 +23,44 @@ import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.Utils;
 
 /**
- * Represents the base service {@link UpgradeOldService2} with new required fields.
+ * Represents a base service that will be upgraded.
  */
-public class UpgradeNewService2 extends StatefulService {
+public class UpgradeOldService3 extends StatefulService {
 
-    public static final String FACTORY_LINK = UpgradeUtil.UPGRADE_SERVICE2_FACTORY_LINK;
+    public static final String FACTORY_LINK = UpgradeUtil.UPGRADE_SERVICE3_FACTORY_LINK;
 
-    public static class UpgradeNewService2State extends ServiceDocument {
+    public static class UpgradeOldService3State extends ServiceDocument {
 
-        public static final String KIND = UpgradeUtil.UPGRADE_SERVICE2_STATE_KIND;
+        public static final String KIND = UpgradeUtil.UPGRADE_SERVICE3_STATE_KIND;
 
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field1;
 
-        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
+        @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field2;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field3;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public Long field4;
+        public List<String> field4;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public List<String> field5;
+
+        @SuppressWarnings("rawtypes")
+        @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public Map field6;
     }
 
-    public UpgradeNewService2() {
-        super(UpgradeNewService2State.class);
+    public UpgradeOldService3() {
+        super(UpgradeOldService3State.class);
         toggleOption(ServiceOption.IDEMPOTENT_POST, true);
         toggleOption(ServiceOption.PERSISTENCE, true);
         toggleOption(ServiceOption.REPLICATION, true);
@@ -71,34 +69,11 @@ public class UpgradeNewService2 extends StatefulService {
 
     @Override
     public void handleStart(Operation post) {
-        UpgradeNewService2State body = post.getBody(UpgradeNewService2State.class);
+        UpgradeOldService3State body = post.getBody(UpgradeOldService3State.class);
         AssertUtil.assertNotNull(body, "body");
-
-        // upgrade the old entities accordingly...
-        handleStateUpgrade(body);
-
         // validate based on annotations
         Utils.validateState(getStateDescription(), body);
         super.handleCreate(post);
-    }
-
-    private void handleStateUpgrade(UpgradeNewService2State state) {
-
-        // field3 is required! set default value if it applies
-        if ((state.field3 == null) || (state.field3.isEmpty())) {
-            state.field3 = "default value";
-        }
-
-        // field4 is required! set default value if it applies
-        if (state.field4 == null) {
-            state.field4 = 42L;
-        }
-
-        // field5 is required! set default value if it applies
-        if ((state.field5 == null) || (state.field5.isEmpty())) {
-            state.field5 = Arrays.asList("a", "b", "c");
-        }
-
     }
 
 }

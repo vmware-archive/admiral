@@ -11,10 +11,13 @@
 
 package com.vmware.admiral.test.upgrade.version1;
 
+import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.test.upgrade.common.UpgradeUtil;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.Utils;
 
 /**
  * Represents a base service that will be upgraded.
@@ -42,6 +45,15 @@ public class UpgradeOldService2 extends StatefulService {
         toggleOption(ServiceOption.PERSISTENCE, true);
         toggleOption(ServiceOption.REPLICATION, true);
         toggleOption(ServiceOption.OWNER_SELECTION, true);
+    }
+
+    @Override
+    public void handleStart(Operation post) {
+        UpgradeOldService2State body = post.getBody(UpgradeOldService2State.class);
+        AssertUtil.assertNotNull(body, "body");
+        // validate based on annotations
+        Utils.validateState(getStateDescription(), body);
+        super.handleCreate(post);
     }
 
 }

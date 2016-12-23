@@ -16,6 +16,7 @@ import java.util.logging.Level;
 import com.vmware.admiral.test.upgrade.common.UpgradeHost;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService1.UpgradeOldService1State;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService2.UpgradeOldService2State;
+import com.vmware.admiral.test.upgrade.version1.UpgradeOldService3.UpgradeOldService3State;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -38,12 +39,14 @@ public class UpgradeOldHost extends UpgradeHost {
 
         Utils.registerKind(UpgradeOldService1State.class, UpgradeOldService1State.KIND);
         Utils.registerKind(UpgradeOldService2State.class, UpgradeOldService2State.KIND);
+        Utils.registerKind(UpgradeOldService3State.class, UpgradeOldService3State.KIND);
 
         this.log(Level.INFO, "Old services starting ...");
 
         startServiceFactories(this,
                 UpgradeOldService1.class,
-                UpgradeOldService2.class);
+                UpgradeOldService2.class,
+                UpgradeOldService3.class);
 
         this.log(Level.INFO, "Old services started.");
     }

@@ -15,22 +15,31 @@ import static com.vmware.xenon.common.CommandLineArgumentParser.ARGUMENT_ASSIGNM
 import static com.vmware.xenon.common.CommandLineArgumentParser.ARGUMENT_PREFIX;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
 
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
+import com.vmware.admiral.common.test.BaseTestCase;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.test.upgrade.common.UpgradeHost;
 import com.vmware.admiral.test.upgrade.common.UpgradeUtil;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldHost;
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewHost;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.QueryTaskClientHelper;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.test.TestContext;
+import com.vmware.xenon.services.common.QueryTask;
 
 public abstract class ManagementHostUpgradeBaseTest {
 
@@ -45,8 +54,6 @@ public abstract class ManagementHostUpgradeBaseTest {
 
     protected UpgradeHost startHost(Class<? extends UpgradeHost> type, int port, String sandboxPath)
             throws Throwable {
-
-        System.out.println("Starting host ('" + type.getSimpleName() + "')...");
 
         String[] hostArgs = new String[] {
                 ARGUMENT_PREFIX
@@ -68,13 +75,10 @@ public abstract class ManagementHostUpgradeBaseTest {
             host = UpgradeOldHost.createManagementHost(hostArgs);
         } else {
             host = UpgradeNewHost.createManagementHost(hostArgs);
-            // TODO - replace the sleep with something else...
-            Thread.sleep(TimeUnit.SECONDS.toMillis(10));
         }
 
-        System.out.println("Host ('" + type.getSimpleName() + "', '" + host.getPort() + "', '"
-                + host.getStorageSandbox().toString() + "') '" + host.getUri().toString()
-                + "' started.");
+        host.log(Level.INFO, "Host ('%s', '%s', '%s') '%s' started.", type.getSimpleName(),
+                host.getPort(), host.getStorageSandbox().toString(), host.getUri().toString());
 
         return host;
     }
@@ -86,11 +90,11 @@ public abstract class ManagementHostUpgradeBaseTest {
         }
 
         String hostname = host.getUri().toString();
-        System.out.println("Stopping host '" + hostname + "'...");
+        host.log(Level.INFO, "Stopping host '%s'...", hostname);
 
         try {
             host.stop();
-            System.out.println("Host '" + hostname + "' stopped.");
+            host.log(Level.INFO, "Host '%s' stopped.", hostname);
         } catch (Exception e) {
             throw new RuntimeException("Exception stopping host!", e);
         }
@@ -99,14 +103,12 @@ public abstract class ManagementHostUpgradeBaseTest {
     }
 
     protected Operation sendRequest(ServiceClient serviceClient, Operation op)
-            throws InterruptedException, ExecutionException,
-            TimeoutException {
+            throws InterruptedException, ExecutionException, TimeoutException {
         return sendRequest(serviceClient, op, DEFAULT_OPERATION_TIMEOUT_MILLIS);
     }
 
     private Operation sendRequest(ServiceClient serviceClient, Operation op, long timeoutMilis)
-            throws InterruptedException, ExecutionException,
-            TimeoutException {
+            throws InterruptedException, ExecutionException, TimeoutException {
 
         CompletableFuture<Operation> c = new CompletableFuture<>();
         serviceClient.send(op
@@ -123,9 +125,15 @@ public abstract class ManagementHostUpgradeBaseTest {
         return c.get(timeoutMilis, TimeUnit.MILLISECONDS);
     }
 
+    protected void waitForServiceAvailability(ServiceHost h, String serviceLink) throws Throwable {
+        TestContext ctx = BaseTestCase.testCreate(1);
+        h.registerForServiceAvailability(ctx.getCompletion(), serviceLink);
+        ctx.await();
+    }
+
     @SuppressWarnings("unchecked")
     protected <T extends ServiceDocument> T createUpgradeServiceInstance(T state) throws Exception {
-        URI uri = UriUtils.buildUri(upgradeHost, UpgradeUtil.UPGRADE_SERVICE1_FACTORY_LINK);
+        URI uri = UriUtils.buildUri(upgradeHost, UpgradeUtil.getFactoryLinkByDocumentKind(state));
         Operation op = sendRequest(serviceClient, Operation.createPost(uri).setBody(state));
         String link = op.getBody(state.getClass()).documentSelfLink;
         return (T) getUpgradeServiceInstance(link, state.getClass());
@@ -144,6 +152,30 @@ public abstract class ManagementHostUpgradeBaseTest {
         URI uri = UriUtils.buildUri(upgradeHost, link);
         Operation op = sendRequest(serviceClient, Operation.createGet(uri));
         return op.getBody(type);
+    }
+
+    public <T extends ServiceDocument> Collection<T> queryUpgradeServiceInstances(Class<T> type,
+            String key, String value) throws Throwable {
+
+        final Collection<T> instances = new ArrayList<>();
+
+        QueryTask q = QueryUtil.buildPropertyQuery(type, key, value);
+        q = QueryUtil.addExpandOption(q);
+
+        TestContext ctx = BaseTestCase.testCreate(1);
+        QueryTaskClientHelper.create(type).setQueryTask(q).setResultHandler((r, e) -> {
+            if (e != null) {
+                ctx.failIteration(e);
+                return;
+            } else if (r.hasResult()) {
+                instances.add(r.getResult());
+            } else {
+                ctx.completeIteration();
+            }
+        }).sendWith(upgradeHost);
+        ctx.await();
+
+        return instances;
     }
 
 }
