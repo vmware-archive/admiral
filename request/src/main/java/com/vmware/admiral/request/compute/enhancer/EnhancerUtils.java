@@ -11,15 +11,9 @@
 
 package com.vmware.admiral.request.compute.enhancer;
 
-import static com.vmware.admiral.compute.ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME;
-import static com.vmware.admiral.compute.ComputeConstants.OVF_COREOS_CLOUD_INIT_PROP;
-import static com.vmware.admiral.compute.ComputeConstants.OVF_LINUX_CLOUD_INIT_PROP;
-import static com.vmware.admiral.compute.ComputeConstants.OVF_PROP_PREFIX;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Base64;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -63,38 +57,6 @@ public class EnhancerUtils {
             return null;
         }
         return customProperties.get(propName);
-    }
-
-    public static String getCloudInit(ResourceState resource) {
-
-        String cloudInit = getCustomProperty(resource.customProperties,
-                OVF_PROP_PREFIX + OVF_COREOS_CLOUD_INIT_PROP);
-        if (cloudInit != null) {
-            return cloudInit;
-        }
-        cloudInit = getCustomProperty(resource.customProperties,
-                OVF_PROP_PREFIX + OVF_LINUX_CLOUD_INIT_PROP);
-        if (cloudInit != null) {
-            return cloudInit;
-        }
-
-        return getCustomProperty(resource.customProperties, COMPUTE_CONFIG_CONTENT_PROP_NAME);
-    }
-
-    public static void updateOvfCloudInit(ResourceState resource, String cloudInit) {
-
-        String val = getCustomProperty(resource.customProperties,
-                OVF_PROP_PREFIX + OVF_COREOS_CLOUD_INIT_PROP);
-        if (val != null) {
-            resource.customProperties.put(OVF_PROP_PREFIX + OVF_COREOS_CLOUD_INIT_PROP, cloudInit);
-            return;
-        }
-        val = getCustomProperty(resource.customProperties,
-                OVF_PROP_PREFIX + OVF_LINUX_CLOUD_INIT_PROP);
-        if (val != null) {
-            cloudInit = Base64.getEncoder().encodeToString(cloudInit.getBytes());
-            resource.customProperties.put(OVF_PROP_PREFIX + OVF_LINUX_CLOUD_INIT_PROP, cloudInit);
-        }
     }
 
     static boolean enableContainerHost(Map<String, String> customProperties) {

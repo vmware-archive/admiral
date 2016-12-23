@@ -90,10 +90,9 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
                         if (scheme != null
                                 && (scheme.startsWith("http") || scheme.startsWith("file"))) {
                             cd.customProperties.put(OVA_URI, imageUri.toString());
-                        } else {
-                            cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
-                                    imageId);
                         }
+                        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
+                                imageId);
                     } catch (Throwable t) {
                         callback.accept(cd, t);
                         return;

@@ -11,10 +11,6 @@
 
 package com.vmware.admiral.request.compute.enhancer;
 
-import static com.vmware.admiral.compute.ComputeConstants.OVA_URI;
-import static com.vmware.admiral.compute.ComputeConstants.OVF_COREOS_CLOUD_INIT_PROP;
-import static com.vmware.admiral.compute.ComputeConstants.OVF_LINUX_CLOUD_INIT_PROP;
-import static com.vmware.admiral.compute.ComputeConstants.OVF_PROP_PREFIX;
 import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.SSH_AUTHORIZED_KEYS;
 import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.objectMapper;
 
@@ -26,7 +22,6 @@ import java.util.logging.Level;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import com.vmware.admiral.compute.ComputeConstants;
-import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.ServiceHost;
 
@@ -52,20 +47,8 @@ public class CloudConfigSerializeEnhancer extends ComputeDescriptionEnhancer {
 
                 String cloudConfig = sb.toString();
                 host.log(Level.INFO, "Cloud config file to use [%s]", cloudConfig);
-
-                if (EndpointType.vsphere.name().equals(context.endpointType)
-                        && cd.customProperties.containsKey(OVA_URI)) {
-                    if (context.imageType.equals("coreos")) {
-                        cd.customProperties.put(OVF_PROP_PREFIX + OVF_COREOS_CLOUD_INIT_PROP,
-                                cloudConfig);
-                    } else {
-                        cd.customProperties.put(OVF_PROP_PREFIX + OVF_LINUX_CLOUD_INIT_PROP,
-                                cloudConfig);
-                    }
-                } else {
-                    cd.customProperties.put(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME,
-                            cloudConfig);
-                }
+                cd.customProperties.put(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME,
+                        cloudConfig);
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }

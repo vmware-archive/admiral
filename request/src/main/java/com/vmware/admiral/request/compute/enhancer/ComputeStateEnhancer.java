@@ -13,11 +13,9 @@ package com.vmware.admiral.request.compute.enhancer;
 
 import static com.vmware.admiral.compute.ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME;
 import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.WRITE_FILES_ELEMENT;
-import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.getCloudInit;
 import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.getCustomProperty;
 import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.loadResource;
 import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.objectMapper;
-import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.updateOvfCloudInit;
 
 import java.io.IOException;
 import java.net.URI;
@@ -52,13 +50,7 @@ public class ComputeStateEnhancer implements Enhancer<ComputeState> {
     @Override
     public void enhance(EnhanceContext context, ComputeState cs,
             BiConsumer<ComputeState, Throwable> callback) {
-        boolean shouldPatchDisk = false;
         String cloudInit = getCustomProperty(cs.customProperties, COMPUTE_CONFIG_CONTENT_PROP_NAME);
-        if (cloudInit != null) {
-            shouldPatchDisk = true;
-        } else {
-            cloudInit = getCloudInit(cs);
-        }
 
         if (enableSoftwareManagement(cs)) {
             try {
@@ -70,11 +62,10 @@ public class ComputeStateEnhancer implements Enhancer<ComputeState> {
         }
 
         host.log(Level.INFO, "Cloud config file to use [%s]", cloudInit);
-        if (shouldPatchDisk) {
+        if (cloudInit != null) {
             cs.customProperties.put(COMPUTE_CONFIG_CONTENT_PROP_NAME, cloudInit);
             updateDisks(cs, cloudInit, callback);
         } else {
-            updateOvfCloudInit(cs, cloudInit);
             callback.accept(cs, null);
         }
     }
