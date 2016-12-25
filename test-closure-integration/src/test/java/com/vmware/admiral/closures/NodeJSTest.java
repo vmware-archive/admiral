@@ -1738,6 +1738,11 @@ public class NodeJSTest extends BaseIntegrationTest {
         }
     }
 
+    @Override protected String getResourceDescriptionLink(boolean downloadImage,
+            RegistryType registryType) throws Exception {
+        return super.getResourceDescriptionLink(downloadImage, registryType);
+    }
+
     @Test
     public void executeJSLogConfigurationTest() throws Throwable {
         logger.info("Executing  against: " + serviceClient);

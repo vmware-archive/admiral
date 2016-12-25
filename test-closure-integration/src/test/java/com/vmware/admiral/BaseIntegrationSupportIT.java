@@ -115,7 +115,7 @@ public class BaseIntegrationSupportIT {
                 ContainerDescriptionService.FACTORY_LINK,
                 ContainerDescription.class, ContainerFactoryService.SELF_LINK,
                 ContainerState.class);
-        CompositeComponentRegistry.registerComponent(ResourceType.NETWORK_TYPE.getName(),
+        CompositeComponentRegistry.registerComponent(ResourceType.CONTAINER_NETWORK_TYPE.getName(),
                 ContainerNetworkDescriptionService.FACTORY_LINK, ContainerNetworkDescription.class,
                 ContainerNetworkService.FACTORY_LINK, ContainerNetworkState.class);
         CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_TYPE.getName(),
@@ -138,7 +138,9 @@ public class BaseIntegrationSupportIT {
     public void baseTearDown() throws Exception {
         while (!documentsForDeletion.isEmpty()) {
             try {
-                delete(documentsForDeletion.poll());
+                ServiceDocument docToDelete = documentsForDeletion.poll();
+                logger.info("Deleting document: %s", docToDelete.documentSelfLink);
+                delete(docToDelete);
             } catch (Exception e) {
                 e.printStackTrace();
             }
