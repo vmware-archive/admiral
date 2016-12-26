@@ -18,7 +18,7 @@
     <parent>
         <groupId>com.vmware.admiral</groupId>
         <artifactId>admiral</artifactId>
-        <version>0.9.2-SNAPSHOT</version>
+        <version>0.9.5-SNAPSHOT</version>
     </parent>
 
     <artifactId>admiral-compute</artifactId>
