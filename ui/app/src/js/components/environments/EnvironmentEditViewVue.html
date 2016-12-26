@@ -48,9 +48,8 @@
               <div class="form-horizontal">
 
                 <div class="form-group name">
-                  <label class="col-sm-3 control-label">
+                  <label class="col-sm-3 required">
                     {{i18n('app.environment.edit.nameLabel')}}
-                    <span class="requiredFieldMark">*</span>
                   </label>
                   <div class="col-sm-9">
                     <input class="form-control name-input"
@@ -60,7 +59,7 @@
                 </div>
 
                 <div class="form-group">
-                  <label class="col-sm-3 control-label">
+                  <label class="col-sm-3">
                     {{i18n("app.environment.edit.endpointLabel")}}
                   </label>
                   <div class="col-sm-9">
@@ -73,7 +72,7 @@
                 </div>
 
                 <div class="form-group tags" v-bind:class="{'has-error': validationErrors.tags}">
-                  <label class="col-sm-3 control-label">{{i18n("app.environment.edit.tagsLabel")}}</label>
+                  <label class="col-sm-3">{{i18n("app.environment.edit.tagsLabel")}}</label>
                   <div class="col-sm-9">
                     <div class="tags-holder">
                       <input class="tags-input">
@@ -90,7 +89,7 @@
               <div class="form-horizontal">
 
                 <div class="form-group instanceType">
-                  <label class="col-sm-3 control-label">
+                  <label class="col-sm-3">
                     {{i18n('app.environment.edit.instanceTypeLabel')}}
                   </label>
                   <div class="col-sm-9">
@@ -124,7 +123,7 @@
                 </div>
 
                 <div class="form-group imageType">
-                  <label class="col-sm-3 control-label">
+                  <label class="col-sm-3">
                     {{i18n('app.environment.edit.imageTypeLabel')}}
                   </label>
                   <div class="col-sm-9">

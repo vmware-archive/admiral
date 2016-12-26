@@ -28,14 +28,14 @@
 
     <div class="compute-form form-horizontal">
       <div id="hostAlias" class="form-group">
-        <label class="col-sm-3 control-label">{{i18n("app.host.details.hostAlias")}}</label>
+        <label class="col-sm-3">{{i18n("app.host.details.hostAlias")}}</label>
         <div class="col-sm-9">
           <label class="compute-edit-value">{{model.name}}</label>
         </div>
       </div>
 
       <div id="placementZone" class="form-group" v-bind:class="{'has-error': validationErrors.placementZone}">
-        <label class="col-sm-3 control-label">
+        <label class="col-sm-3">
           {{i18n("app.host.details.placementZone")}}
         </label>
         <div class="col-sm-9">
@@ -45,7 +45,7 @@
       </div>
 
       <div id="tags" class="form-group tags" v-bind:class="{'has-error': validationErrors.tags}">
-        <label class="col-sm-3 control-label">{{i18n("app.host.details.tags")}}</label>
+        <label class="col-sm-3">{{i18n("app.host.details.tags")}}</label>
         <div class="col-sm-9">
           <div class="tags-holder">
             <input class="tags-input">

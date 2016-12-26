@@ -12,27 +12,24 @@
 <form class="host-form">
 
   <div id="name" class="form-group" v-bind:class="{'has-error': validationErrors.name}">
-    <label>
+    <label class="required">
       {{i18n("app.host.details.name")}}
-      <span class="requiredFieldMark">*</span>
     </label>
     <input class="form-control" v-model="name" v-bind:placeholder="i18n('app.host.details.namePlaceholder')">
     <span class="help-block">{{i18n(validationErrors.name)}}</span>
   </div>
 
   <div id="endpoint" class="form-group" v-bind:class="{'has-error': validationErrors.endpoint}">
-    <label>
+    <label class="required">
       {{i18n("app.host.details.endpoint")}}
-      <span class="requiredFieldMark">*</span>
     </label>
     <div class="form-control dropdown-holder"></div>
     <span class="help-block">{{i18n(validationErrors.endpoint)}}</span>
   </div>
 
   <div id="instanceType" class="form-group" v-if="endpointEnvironment">
-    <label>
+    <label class="required">
       {{i18n("app.host.details.instanceType")}}
-      <span class="requiredFieldMark">*</span>
     </label>
     <div class="select">
       <select v-model="instanceType" class="form-control">
@@ -45,9 +42,8 @@
   </div>
 
   <div id="imageType" class="form-group" v-if="endpointEnvironment">
-    <label>
+    <label class="required">
       {{i18n("app.host.details.imageType")}}
-      <span class="requiredFieldMark">*</span>
     </label>
     <div class="select">
       <select v-model="imageType" class="form-control">
@@ -60,9 +56,8 @@
   </div>
 
   <div id="destination" class="form-group" v-if="endpoint && endpoint.endpointType === 'vsphere'">
-    <label>
+    <label class="required">
       {{i18n('app.host.details.destination')}}
-      <span class="requiredFieldMark">*</span>
     </label>
     <destination-search class="dropdown-holder" v-bind:resource-pool-link="endpoint.resourcePoolLink"
         v-on:change="onDestinationChange"></destination-search>

@@ -26,7 +26,7 @@
     <div class="title"></div>
     <div class="endpointEdit-inputs form-horizontal">
       <div class="form-group col-md-12">
-        <label class="col-md-4 control-label">
+        <label class="col-md-4">
           {{i18n('app.endpoint.edit.nameLabel')}}
           <span class="requiredFieldMark">*</span>
         </label>
@@ -35,7 +35,7 @@
         </div>
       </div>
       <div class="form-group col-md-12">
-        <label class="col-md-4 control-label">
+        <label class="col-md-4">
           {{i18n('app.endpoint.edit.typeLabel')}}
           <span class="requiredFieldMark">*</span>
         </label>
@@ -44,7 +44,7 @@
         </div>
       </div>
       <div class="form-group col-md-12" v-if="showInput('vsphere')">
-        <label class="col-md-4 control-label">
+        <label class="col-md-4">
           {{i18n('app.endpoint.edit.endpointHostLabel')}}
           <span class="requiredFieldMark">*</span>
         </label>
@@ -53,11 +53,11 @@
         </div>
       </div>
       <div class="form-group col-md-12" v-if="!showInput(null)">
-        <label class="col-md-4 control-label" v-if="showInput('vsphere') || showInput('nimbus')">
+        <label class="col-md-4" v-if="showInput('vsphere') || showInput('nimbus')">
           {{i18n('app.endpoint.edit.usernameLabel')}}
           <span class="requiredFieldMark">*</span>
         </label>
-        <label class="col-md-4 control-label" v-else>
+        <label class="col-md-4" v-else>
           {{i18n('app.endpoint.edit.accessKeyIdLabel')}}
           <span class="requiredFieldMark">*</span>
         </label>
@@ -66,11 +66,11 @@
         </div>
       </div>
       <div class="form-group col-md-12" v-if="!showInput('nimbus')">
-        <label class="col-md-4 control-label" v-if="showInput('vsphere')">
+        <label class="col-md-4" v-if="showInput('vsphere')">
           {{i18n('app.endpoint.edit.passwordLabel')}}
           <span class="requiredFieldMark">*</span>
         </label>
-        <label class="col-md-4 control-label" v-else>
+        <label class="col-md-4" v-else>
           {{i18n('app.endpoint.edit.secretAccessKeyLabel')}}
           <span class="requiredFieldMark">*</span>
         </label>
@@ -79,10 +79,10 @@
         </div>
       </div>
       <div class="form-group col-md-12" v-if="!showInput('nimbus')">
-        <label class="col-md-4 control-label" v-if="showInput('vsphere')">
+        <label class="col-md-4" v-if="showInput('vsphere')">
           {{i18n('app.endpoint.edit.datacenterIdLabel')}}
         </label>
-        <label class="col-md-4 control-label" v-else>
+        <label class="col-md-4" v-else>
           {{i18n('app.endpoint.edit.regionIdLabel')}}
           <span class="requiredFieldMark">*</span>
         </label>
@@ -91,7 +91,7 @@
         </div>
       </div>
       <div class="form-group col-md-12" v-if="showInput('azure')">
-        <label class="col-md-4 control-label">
+        <label class="col-md-4">
           {{i18n('app.endpoint.edit.subscriptionIdLabel')}}
           <span class="requiredFieldMark">*</span>
         </label>
@@ -100,7 +100,7 @@
         </div>
       </div>
       <div class="form-group col-md-12" v-if="showInput('azure')">
-        <label class="col-md-4 control-label">
+        <label class="col-md-4">
           {{i18n('app.endpoint.edit.tenantIdLabel')}}
           <span class="requiredFieldMark">*</span>
         </label>

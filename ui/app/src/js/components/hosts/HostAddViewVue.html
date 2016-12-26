@@ -11,9 +11,8 @@
 
 <form class="host-form">
   <div id="address" class="form-group" v-bind:class="{'has-error': validationErrors.address}">
-    <label>
+    <label class="required">
       {{i18n("app.host.details.address")}}
-      <span class="requiredFieldMark">*</span>
     </label>
     <input v-on:blur="onBlur" class="form-control" v-model="address" v-bind:placeholder="i18n('app.host.details.addressPlaceholder')">
     <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
@@ -38,7 +37,7 @@
     <span class="help-block">{{i18n(validationErrors.credential)}}</span>
   </div>
   <div v-if="isApplicationEmbedded()" id="deploymentPolicy" class="form-group">
-    <label class="col-sm-3 control-label">{{i18n("app.host.details.deploymentPolicy")}}</label>
+    <label class="col-sm-3">{{i18n("app.host.details.deploymentPolicy")}}</label>
     <div class="col-sm-9">
       <div class="form-control dropdown-holder"></div>
       <span class="help-block">{{i18n(validationErrors.deploymentPolicy)}}</span>
