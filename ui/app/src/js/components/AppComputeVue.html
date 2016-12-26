@@ -48,10 +48,7 @@
                    v-bind:model="model.centerView.data"
                    v-ref:center-view>
       </compute-view>
-      <div class = "core-build-number"
-           v-if="buildNumberSupported()">
-        Build number: {{buildNumber}}
-      </div>
+      <div class="core-build-number" v-if="buildNumberSupported()">{{i18n("buildNumber")}} {{buildNumber}}</div>
     </div>
   </div>
 </div>

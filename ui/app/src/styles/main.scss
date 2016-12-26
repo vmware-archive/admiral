@@ -62,11 +62,10 @@ button:focus {
 
 .core-build-number {
   position: fixed;
-  color: white;
   font-size: 13px;
   bottom: 0;
   text-align: right ;
-  right: 40px;
+  right: 10px;
 }
 
 textarea {
@@ -336,12 +335,19 @@ textarea {
     margin-left: 0;
     margin-right: 0;
   }
+  .btn:not(.dropdown-toggle) {
+    border-right: none;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
   > .btn.dropdown-toggle {
     padding: 0 10px;
-    border-left: 1px dotted #ffffff;
+    border-left-style: dotted;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
     // Fixes Bootstraps hover of the other part of the button z-index
     z-index: 2;
-    margin-left: -6px;
+    margin-left: -4px;
   }
 }
 
@@ -1458,6 +1464,7 @@ text-shadow: 0px 0px 20px black;
 
 .btn.loading {
   @extend .btn.disabled;
+  position: relative;
 }
 
 .btn.loading .fa.loader-inline {

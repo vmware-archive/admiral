@@ -998,6 +998,7 @@
     "unavailable": "N/A",
     "advanced": "Advanced",
     "noSelection": "No Selection",
+    "buildNumber": "Build number",
     "errors": {
       "hostIp": "Value must be hostname or IP address.",
       "urlPath": "URL path is invalid.",
