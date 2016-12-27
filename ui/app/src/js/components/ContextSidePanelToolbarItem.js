@@ -17,8 +17,6 @@ var ContextSidePanelToolbarItem = Vue.extend({
         <div v-show="showNotifications" transition="fade" class="toolbar-item-notification">
           {{notifications}}
         </div>
-        <i class="toolbar-item-expand fa fa-chevron-left"></i>
-        <i class="toolbar-item-collapse fa fa-chevron-right"></i>
         <div class="toolbar-item-title">{{label}}</div>
       </a>
     </div>

@@ -737,10 +737,6 @@ $main-list-view-right: 10px;
   vertical-align: middle;
 }
 
-.right-context-expanded > div:not(.closable-view) .toolbar-item:not(.active) {
-  display: none;
-}
-
 .right-context-panel {
   position: relative;
   z-index: 15;
@@ -750,117 +746,72 @@ $main-list-view-right: 10px;
 .right-context-panel > .toolbar {
   position: absolute;
   top: 0px;
-  bottom: 0;
-  width: 1px;
-  border-left: 2px solid #ccc;
+  bottom: 0px;
+  left: -42px;
+  width: 42px;
   z-index: 20;
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  &:after {
+    z-index: 1;
+    content: "";
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    width: 100%;
+    box-shadow: inset -2px 0px 3px 0px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+  }
 }
 
 .right-context-panel > .toolbar .toolbar-item {
-  margin-left: -$right-context-panel-toolbar-item-width;
-  margin-bottom: 2px;
+  display: inline-block;
+  white-space: nowrap;
+
+  transform: translate(0,100%) rotate(-90deg);
+  transform-origin: 0 0;
   position: relative;
-}
 
-.right-context-panel > .toolbar .toolbar-item:first-of-type {
-  margin-top: 40px;
-}
-
-.right-context-panel > .toolbar .toolbar-item.active {
-  margin-left: -28px;
-}
-
-.right-context-panel > .toolbar .toolbar-item.active > a {
-  width: 28px;
-  min-width: 28px;
+  &:after {
+    content: "";
+    float: left;
+    margin-top: 100%;
+  }
 }
 
 .right-context-panel > .toolbar .toolbar-item i {
   font-size: 24px;
-  padding-top: 18px;
-  padding-bottom: 18px;
-}
-
-.right-context-panel > .toolbar .toolbar-item i.toolbar-item-expand,
-.right-context-panel > .toolbar .toolbar-item i.toolbar-item-collapse{
-  font-size: 22px;
-  font-weight: bold;
-  padding-top: 15px;
+  vertical-align: middle;
 
 }
 
 .right-context-panel > .toolbar .toolbar-item > a {
-  padding: 0;
-  border-top-left-radius: 3px;
-  border-bottom-left-radius: 3px;
-  border-top-right-radius: 0px;
-  border-bottom-right-radius: 0px;
-  width: $right-context-panel-toolbar-item-width;
-  min-width: $right-context-panel-toolbar-item-width;
-  color: #FFFFFF;
-  background-color: #bababa;
-  height: 60px;
-  border: none;
-  margin: 0;
-}
+  @extend .btn;
+  color: $gray-darkest;
+  border-color: $gray-darkest;
+  border-bottom: none;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  box-shadow: 1px -2px 8px -7px rgba(0, 0, 0, 0.2),
+              -1px -2px 3px 0px rgba(0, 0, 0, 0.2);
+  border-color: transparent;
+  background-color: white;
 
-.right-context-panel > .toolbar .toolbar-item > a:focus {
-  background-color: #bababa;
-  color: #FFFFFF;
-}
-
-.right-context-panel > .toolbar .toolbar-item > a:hover {
-  color: #FFFFFF;
-}
-
-.right-context-panel > .toolbar .toolbar-item:hover {
-  .toolbar-item-icon {
-    opacity: 0.4;
-  }
-
-  .toolbar-item-notification {
-    opacity: 0.2;
+  &:visited {
+    color: $gray-darkest;
   }
 }
 
-.toolbar-item .toolbar-item-expand {
-  @extend .position-expand;
-  display: none;
-}
 
-.toolbar-item:hover .toolbar-item-collapse {
-text-shadow: 0px 0px 20px black;
+
+.right-context-panel > .toolbar .toolbar-item.active {
+  z-index: 2;
 }
 
 .toolbar-item .toolbar-item-title {
-  font-size: 0.6em;
-  margin-top: -17px;
-  color: $admiral-black;
-  word-wrap: break-word;
-  width: 100%;
-  white-space: pre-wrap;
-  line-height:0.9em;
-  position: relative;
-  top: -19px;
-  font-family: arial narrow;
-  letter-spacing: 0.04em;
-}
-
-.toolbar-item .toolbar-item-title, .toolbar-item.active:hover .toolbar-item-title {
-  display: none;
-}
-
-.toolbar-item:hover .toolbar-item-title {
-  display: inline-block;
-}
-
-.toolbar-item:hover .toolbar-item-expand {
-  display: block;
-  text-shadow: 0px 0px 20px rgba(0, 0, 0, 1);
-}
-
-.toolbar-item.active:hover .toolbar-item-expand {
-  display: none;
+  display: inline;
+  vertical-align: middle;
 }
 
 .toolbar-item .toolbar-item-notification {
@@ -885,22 +836,10 @@ text-shadow: 0px 0px 20px black;
 .toolbar-item .toolbar-item-notification[disabled] {
 }
 
-.right-context-panel > .toolbar .toolbar-item.active {
-  .toolbar-item-icon, .toolbar-item-notification {
-    display: none;
-  }
-}
-.toolbar-item .toolbar-item-collapse {
-  display: none;
-}
-
-.right-context-panel > .toolbar .toolbar-item .toolbar-item-icon, .toolbar-item.active .toolbar-item-collapse {
-  display: block;
-}
-
 .right-context-panel > .content {
   @extend .position-expand;
   overflow: auto;
+  background-color: white;
 }
 
 .app-view:not(.no-side) > .side-view:not(.notransition) {
