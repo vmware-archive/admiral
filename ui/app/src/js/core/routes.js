@@ -204,10 +204,6 @@ crossroads.addRoute('/closure/{closureId*}', function(closureId) {
   actions.ContainerActions.openClosureDetails(closureId);
 });
 
-crossroads.addRoute('/resource-pools', function() {
-  actions.AppActions.openView(computeConstants.VIEWS.PLACEMENT_ZONES.name);
-});
-
 crossroads.addRoute('/environments:?query:', function(query) {
   actions.AppActions.openView(computeConstants.VIEWS.ENVIRONMENTS.name);
   actions.EnvironmentsActions.openEnvironments(query);
@@ -375,6 +371,10 @@ actions.NavigationActions.showContainersPerPlacement.listen(function(placementId
 
 actions.NavigationActions.openPlacements.listen(function() {
   hasher.setHash('placements');
+});
+
+actions.NavigationActions.openEndpoints.listen(function() {
+  hasher.setHash('endpoints');
 });
 
 actions.NavigationActions.openEnvironments.listen(function() {

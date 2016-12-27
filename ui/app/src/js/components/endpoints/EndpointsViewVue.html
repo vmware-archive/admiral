@@ -89,13 +89,27 @@
                   <td class="truncateText primary-cell" title="{{item.name}}">{{item.name}}</td>
                   <!-- Actions column -->
                   <td class="table-actions">
-                    <div>
+                    <div v-bind:class="{hide: isDeleting(item)}">
                       <a href="#" class="btn item-edit" v-on:click="editItem(item, $event)">
                         <i class="fa fa-pencil"></i>
                       </a>
-                      <a href="#" class="btn item-delete" v-on:click="deleteItem(item, $event)">
+                      <a href="#" class="btn item-delete" v-on:click="confirmDelete(item, $event)">
                         <i class="fa fa-trash"></i>
                       </a>
+                    </div>
+                    <div v-bind:class="{hide: !isDeleting(item)}" class="delete-inline-item-confirmation-holder">
+                      <div v-if="isDeleting(item)" class="delete-inline-item-confirmation" transition="slide-and-fade">
+                        <a href="#" class="delete-inline-item-confirmation-cancel"
+                                    v-on:click="cancelDelete($event)"><span>{{i18n('cancel')}}</span></a>
+                        <a href="#" class="delete-inline-item-confirmation-confirm"
+                                    v-on:click="deleteItem($event)">
+                          <span v-bind:class="{'not-underlined': isDeleteConfirmationLoading}">
+                            {{i18n('delete')}}
+                            <i class="fa fa-spinner fa-spin loader-inline"
+                                v-bind:class="{hide: !isDeleteConfirmationLoading}"></i>
+                          </span>
+                        </a>
+                      </div>
                     </div>
                   </td>
                 </template>

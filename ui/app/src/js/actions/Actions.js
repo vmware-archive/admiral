@@ -186,5 +186,5 @@ export var NavigationActions = Reflux.createActions([
   'openTemplateDetails', 'showContainersPerPlacement', 'openPlacements', 'openEnvironments',
   'openAddEnvironment', 'editEnvironment', 'openMachines', 'openMachineDetails', 'openCompute',
   'editCompute', 'openClosures', 'openClosuresSilently', 'openAddClosure', 'openClosureDetails',
-  'openCompositeClosureDetails'
+  'openCompositeClosureDetails', 'openEndpoints'
 ]);

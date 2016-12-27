@@ -33,6 +33,7 @@ var EndpointsView = Vue.extend({
       endpointType: 1
     };
     return {
+      deleteConfirmationItem: null,
       sortKey: '',
       sortOrders: sortOrders
     };
@@ -42,6 +43,9 @@ var EndpointsView = Vue.extend({
       var items = this.model.items;
 
       return items ? Object.keys(items).length : 0;
+    },
+    isDeleteConfirmationLoading: function() {
+      return this.model.deleteConfirmationLoading;
     }
   },
   methods: {
@@ -65,6 +69,9 @@ var EndpointsView = Vue.extend({
     isEditingOrHighlightedItem: function(item) {
       return this.isEditingItem(item) || this.isHighlightedItem(item);
     },
+    isDeleting: function(item) {
+      return this.deleteConfirmationItem === item;
+    },
     addNewItem: function($event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
@@ -77,11 +84,23 @@ var EndpointsView = Vue.extend({
 
       EndpointsActions.editEndpoint(item);
     },
-    deleteItem: function(item, $event) {
+    confirmDelete: function(item, $event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
 
-      EndpointsActions.deleteEndpoint(item);
+      this.deleteConfirmationItem = item;
+    },
+    cancelDelete: function($event) {
+      $event.stopImmediatePropagation();
+      $event.preventDefault();
+
+      this.deleteConfirmationItem = null;
+    },
+    deleteItem: function($event) {
+      $event.stopImmediatePropagation();
+      $event.preventDefault();
+
+      EndpointsActions.deleteEndpoint(this.deleteConfirmationItem);
     },
     sortBy: function(key) {
       this.sortKey = key;

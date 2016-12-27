@@ -36,6 +36,10 @@ let EndpointsStore = Reflux.createStore({
   mixins: [CrudStoreMixin],
   listenables: [EndpointsActions],
 
+  init: function() {
+    this.setInData(['deleteConfirmationLoading'], false);
+  },
+
   onRetrieveEndpoints: function() {
     var operation = this.requestCancellableOperation(OPERATION.LIST);
     if (operation) {
@@ -127,18 +131,28 @@ let EndpointsStore = Reflux.createStore({
   },
 
   onDeleteEndpoint: function(endpoint) {
+    this.setInData(['deleteConfirmationLoading'], true);
+    this.emitChange();
 
     services.deleteEndpoint(endpoint).then(() => {
-      var endpoints = this.data.items.asMutable();
-
-      for (var i = endpoints.length - 1; i >= 0; i--) {
-        if (endpoints[i].documentSelfLink === endpoint.documentSelfLink) {
-          endpoints.splice(i, 1);
-        }
-      }
-
+      var endpoints = this.data.items.filter((item) =>
+          item.documentSelfLink !== endpoint.documentSelfLink);
       this.setInData(['items'], endpoints);
+      this.setInData(['deleteConfirmationLoading'], false);
       this.emitChange();
+    }).catch((e) => {
+      var validationErrors = utils.getValidationErrors(e);
+      this.setInData(['updatedItem'], endpoint);
+      this.setInData(['validationErrors'], validationErrors);
+      this.emitChange();
+
+      // After we notify listeners, the updated item is no logner actual
+      setTimeout(() => {
+        this.setInData(['updatedItem'], null);
+        this.setInData(['validationErrors'], null);
+        this.setInData(['deleteConfirmationLoading'], false);
+        this.emitChange();
+      }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
     });
   },
 
