@@ -40,6 +40,8 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.NumericRange;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 public abstract class ManagementHostUpgradeBaseTest {
 
@@ -155,12 +157,30 @@ public abstract class ManagementHostUpgradeBaseTest {
     }
 
     public <T extends ServiceDocument> Collection<T> queryUpgradeServiceInstances(Class<T> type,
-            String key, String value) throws Throwable {
+            String... keysAndValues) throws Throwable {
+
+        QueryTask q = QueryUtil.buildPropertyQuery(type, keysAndValues);
+
+        return queryUpgradeServiceInstances(type, q);
+    }
+
+    public <T extends ServiceDocument> Collection<T> queryUpgradeServiceInstances(Class<T> type,
+            String key, Number value) throws Throwable {
+
+        QueryTask.Query query = new QueryTask.Query().setTermMatchType(MatchType.TERM)
+                .setTermPropertyName(key)
+                .setNumericRange(NumericRange.createEqualRange(value));
+
+        QueryTask q = QueryUtil.buildQuery(type, true, query);
+
+        return queryUpgradeServiceInstances(type, q);
+    }
+
+    private <T extends ServiceDocument> Collection<T> queryUpgradeServiceInstances(Class<T> type,
+            QueryTask q) {
+        q = QueryUtil.addExpandOption(q);
 
         final Collection<T> instances = new ArrayList<>();
-
-        QueryTask q = QueryUtil.buildPropertyQuery(type, key, value);
-        q = QueryUtil.addExpandOption(q);
 
         TestContext ctx = BaseTestCase.testCreate(1);
         QueryTaskClientHelper.create(type).setQueryTask(q).setResultHandler((r, e) -> {
