@@ -13,6 +13,8 @@ package com.vmware.admiral.service.common;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -109,8 +111,15 @@ public class ConfigurationService extends StatefulService {
     }
 
     public static ConfigurationState[] getConfigurationProperties() {
+        Properties props = new Properties();
 
-        Properties props = FileUtil.getProperties(DEFAULT_CONFIGURATION_PROPERTIES_FILE_NAME, true);
+        try (InputStream is = FileUtil.class
+                .getResourceAsStream(DEFAULT_CONFIGURATION_PROPERTIES_FILE_NAME)) {
+            props.load(is);
+        } catch (IOException e) {
+            throw new RuntimeException(
+                    "Unable to load resource:" + DEFAULT_CONFIGURATION_PROPERTIES_FILE_NAME, e);
+        }
 
         // Override the default values with custom properties.
         // Properties starting with "core"are protected and cannot be overridden.

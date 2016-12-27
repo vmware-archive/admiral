@@ -107,7 +107,7 @@ public class PopularImagesService extends StatelessService {
     }
 
     private void getDefaultPopularImages(Operation get) {
-        get.setBody(FileUtil.getResourceAsString(POPULAR_IMAGES_FILE, true));
+        get.setBody(FileUtil.getClasspathResourceAsString(POPULAR_IMAGES_FILE));
         get.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON);
         get.complete();
     }

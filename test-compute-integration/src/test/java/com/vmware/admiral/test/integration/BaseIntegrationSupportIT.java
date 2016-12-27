@@ -107,7 +107,7 @@ public abstract class BaseIntegrationSupportIT {
     }
 
     @Rule
-    public Timeout globalTimeout = Timeout.seconds(TimeUnit.MINUTES.toSeconds(10));
+    public Timeout globalTimeout = Timeout.seconds(TimeUnit.MINUTES.toSeconds(15));
 
     @BeforeClass
     public static void baseBeforeClass() {

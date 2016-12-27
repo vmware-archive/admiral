@@ -6,8 +6,12 @@ coreos:
         [Unit]
         Description=softare agent
         After=network.service
+        Requires=network.service
 
         [Service]
         Restart=always
         ExecStart=/opt/vmware/agent/agent_bootstrap.sh
         WorkingDirectory=/opt/vmware/agent/
+
+        [Install]
+        WantedBy=multi-user.target

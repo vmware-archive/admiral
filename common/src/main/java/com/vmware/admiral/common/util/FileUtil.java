@@ -52,6 +52,16 @@ public class FileUtil {
         }
     }
 
+    public static String getClasspathResourceAsString(String resourceFile) {
+        try (InputStream is = FileUtil.class.getResourceAsStream(resourceFile);
+                BufferedReader buffer = new BufferedReader(new InputStreamReader(is))) {
+            return buffer.lines().collect(Collectors.joining(System.lineSeparator()));
+
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to load resources from disk", e);
+        }
+    }
+
     /**
      * @return a {@link String} representation of the {@link Path} specified. It is guaranteed that
      *         the result will contain only forward slashes (and no back slashes). If

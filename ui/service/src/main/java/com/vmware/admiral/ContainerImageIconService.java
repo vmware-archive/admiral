@@ -145,7 +145,8 @@ public class ContainerImageIconService extends StatelessService {
             String subPath = f.getAbsolutePath().replace(
                     iconResourcePath.toAbsolutePath().toString(), "");
 
-            Path servicePath = Paths.get(ManagementUriParts.CONTAINER_ICONS_RESOURCE_PATH, subPath);
+            Path servicePath = Paths
+                    .get(ManagementUriParts.CONTAINER_ICONS_RESOURCE_PATH.substring(1), subPath);
             String servicePathString = FileUtil.getForwardSlashesPathString(servicePath);
 
             Operation post = Operation

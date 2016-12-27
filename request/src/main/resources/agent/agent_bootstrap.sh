@@ -33,7 +33,6 @@ echo_d()
 stderr()
 {
     CURDATE=`date`
-    # CURDATE=`date +%y%m%d%H%M%S`
     echo -e $CURDATE  "$*" 1>&2
     echo $CURDATE >> $AGENT_FAILED_FLAG
     echo "$*" >> $AGENT_FAILED_FLAG
@@ -150,9 +149,6 @@ retrieveAgent()
     fi
 
     echo_d "Downloading $agent_url..."
-
-    # Critical to run in the WORKDIR
-    cd $WORKDIR
 
     cmdExistNoError "wget"
     ret=$?

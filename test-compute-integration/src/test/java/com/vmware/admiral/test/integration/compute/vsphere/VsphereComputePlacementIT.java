@@ -154,12 +154,11 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
 
         this.provisionRequest1 = provisionVm("placement-vm", 1, computes.subList(0, 1));
         validateReservations(reservationA, reservationB, 1, 0);
-
-        this.provisionRequest2 = provisionVm("placement-app", 3, computes.subList(1, 3));
-        validateReservations(reservationA, reservationB, 1, 3);
-
         removeVm(this.provisionRequest1);
         this.provisionRequest1 = null;
+        validateReservations(reservationA, reservationB, 0, 0);
+
+        this.provisionRequest2 = provisionVm("placement-app", 3, computes.subList(1, 3));
         validateReservations(reservationA, reservationB, 0, 3);
 
         removeVm(this.provisionRequest2);

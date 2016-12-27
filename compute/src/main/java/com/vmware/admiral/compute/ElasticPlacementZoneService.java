@@ -179,9 +179,6 @@ public class ElasticPlacementZoneService extends StatefulService {
         Map<String, Collection<Object>> itemsToRemove = new HashMap<>();
         itemsToRemove.put(ResourcePoolState.FIELD_NAME_PROPERTIES, propertiesToRemove);
 
-        // patch the resource pool
-        ResourcePoolState patchRpState = new ResourcePoolState();
-        patchRpState.properties = EnumSet.noneOf(ResourcePoolProperty.class);
         sendRequest(Operation
                 .createPatch(getHost(), epz.resourcePoolLink)
                 .setBody(ServiceStateCollectionUpdateRequest.create(null, itemsToRemove))

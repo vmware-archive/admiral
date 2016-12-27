@@ -45,7 +45,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
     private static final String DELETE_NETWORK_MISSING_ERROR = "error 404 for DELETE";
 
-    public static final List<String> DOCKER_PREDEFINED_NETWORKS = Arrays.asList("none", "host",
+    static final List<String> DOCKER_PREDEFINED_NETWORKS = Arrays.asList("none", "host",
             "bridge", "docker_gwbridge");
 
     private static final List<Integer> RETRIABLE_HTTP_STATUSES = Arrays.asList(
