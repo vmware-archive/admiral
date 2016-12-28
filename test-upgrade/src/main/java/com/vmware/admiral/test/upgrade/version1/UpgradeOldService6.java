@@ -11,9 +11,6 @@
 
 package com.vmware.admiral.test.upgrade.version1;
 
-import java.util.List;
-import java.util.Map;
-
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.test.upgrade.common.UpgradeUtil;
 import com.vmware.xenon.common.Operation;
@@ -25,13 +22,13 @@ import com.vmware.xenon.common.Utils;
 /**
  * Represents a base service that will be upgraded.
  */
-public class UpgradeOldService3 extends StatefulService {
+public class UpgradeOldService6 extends StatefulService {
 
-    public static final String FACTORY_LINK = UpgradeUtil.UPGRADE_SERVICE3_FACTORY_LINK;
+    public static final String FACTORY_LINK = UpgradeUtil.UPGRADE_SERVICE6_FACTORY_LINK;
 
-    public static class UpgradeOldService3State extends ServiceDocument {
+    public static class UpgradeOldService6State extends ServiceDocument {
 
-        public static final String KIND = UpgradeUtil.UPGRADE_SERVICE3_STATE_KIND;
+        public static final String KIND = UpgradeUtil.UPGRADE_SERVICE6_STATE_KIND;
 
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
@@ -40,27 +37,10 @@ public class UpgradeOldService3 extends StatefulService {
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field2;
-
-        @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
-                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public String field3;
-
-        @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
-                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public List<String> field4;
-
-        @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
-                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public List<String> field5;
-
-        @SuppressWarnings("rawtypes")
-        @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
-                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public Map field6;
     }
 
-    public UpgradeOldService3() {
-        super(UpgradeOldService3State.class);
+    public UpgradeOldService6() {
+        super(UpgradeOldService6State.class);
         toggleOption(ServiceOption.IDEMPOTENT_POST, true);
         toggleOption(ServiceOption.PERSISTENCE, true);
         toggleOption(ServiceOption.REPLICATION, true);
@@ -69,7 +49,7 @@ public class UpgradeOldService3 extends StatefulService {
 
     @Override
     public void handleStart(Operation post) {
-        UpgradeOldService3State body = post.getBody(UpgradeOldService3State.class);
+        UpgradeOldService6State body = post.getBody(UpgradeOldService6State.class);
         AssertUtil.assertNotNull(body, "body");
         // validate based on annotations
         Utils.validateState(getStateDescription(), body);

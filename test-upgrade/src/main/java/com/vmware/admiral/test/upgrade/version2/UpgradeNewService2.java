@@ -79,26 +79,34 @@ public class UpgradeNewService2 extends StatefulService {
 
         // validate based on annotations
         Utils.validateState(getStateDescription(), body);
-        super.handleCreate(post);
+        super.handleStart(post);
     }
 
     private void handleStateUpgrade(UpgradeNewService2State state) {
 
+        boolean upgraded = false;
+
         // field3 is required! set default value if it applies
         if ((state.field3 == null) || (state.field3.isEmpty())) {
             state.field3 = "default value";
+            upgraded = true;
         }
 
         // field4 is required! set default value if it applies
         if (state.field4 == null) {
             state.field4 = 42L;
+            upgraded = true;
         }
 
         // field5 is required! set default value if it applies
         if ((state.field5 == null) || (state.field5.isEmpty())) {
             state.field5 = Arrays.asList("a", "b", "c");
+            upgraded = true;
         }
 
+        if (upgraded) {
+            UpgradeUtil.forceLuceneIndexUpdate(getHost(), state);
+        }
     }
 
 }

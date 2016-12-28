@@ -107,10 +107,12 @@ public class UpgradeNewService5 extends StatefulService {
 
         // validate based on annotations
         Utils.validateState(getStateDescription(), body);
-        super.handleCreate(post);
+        super.handleStart(post);
     }
 
     private void handleStateUpgrade(UpgradeNewService5State state) {
+
+        boolean upgraded = false;
 
         if (state.field345 == null) {
             state.field345 = String.join("#",
@@ -118,6 +120,7 @@ public class UpgradeNewService5 extends StatefulService {
             state.field3 = null;
             state.field4 = null;
             state.field5 = null;
+            upgraded = true;
         }
 
         if (state.field678 != null) {
@@ -126,6 +129,11 @@ public class UpgradeNewService5 extends StatefulService {
             state.field7 = values[1];
             state.field8 = values[2];
             state.field678 = null;
+            upgraded = true;
+        }
+
+        if (upgraded) {
+            UpgradeUtil.forceLuceneIndexUpdate(getHost(), state);
         }
     }
 

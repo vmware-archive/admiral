@@ -159,7 +159,7 @@ public class UpgradeNewService3 extends StatefulService {
 
         // validate based on annotations
         Utils.validateState(getStateDescription(), body);
-        super.handleCreate(post);
+        super.handleStart(post);
     }
 
     private void handleStateUpgrade(UpgradeNewService3State state) {

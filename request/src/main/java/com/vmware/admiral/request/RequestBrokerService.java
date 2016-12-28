@@ -765,7 +765,6 @@ public class RequestBrokerService extends
             proceedTo(SubStage.RESERVED);
         } else if (isClosureType(state)) {
             // No reservation needed here, moving on...
-            // sendSelfPatch(createUpdateSubStageTask(state, SubStage.RESERVED));
             proceedTo(SubStage.RESERVED);
         } else {
             getContainerDescription(state, (cd) -> createReservationTasks(state, cd));

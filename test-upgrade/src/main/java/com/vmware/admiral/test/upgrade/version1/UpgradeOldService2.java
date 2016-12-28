@@ -53,7 +53,7 @@ public class UpgradeOldService2 extends StatefulService {
         AssertUtil.assertNotNull(body, "body");
         // validate based on annotations
         Utils.validateState(getStateDescription(), body);
-        super.handleCreate(post);
+        super.handleStart(post);
     }
 
 }

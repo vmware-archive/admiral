@@ -19,6 +19,7 @@ import com.vmware.admiral.test.upgrade.version2.UpgradeNewService2.UpgradeNewSer
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewService3.UpgradeNewService3State;
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewService4.UpgradeNewService4State;
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewService5.UpgradeNewService5State;
+import com.vmware.admiral.test.upgrade.version2.UpgradeNewService6.UpgradeNewService6State;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -44,15 +45,18 @@ public class UpgradeNewHost extends UpgradeHost {
         Utils.registerKind(UpgradeNewService3State.class, UpgradeNewService3State.KIND);
         Utils.registerKind(UpgradeNewService4State.class, UpgradeNewService4State.KIND);
         Utils.registerKind(UpgradeNewService5State.class, UpgradeNewService5State.KIND);
+        Utils.registerKind(UpgradeNewService6State.class, UpgradeNewService6State.KIND);
 
         this.log(Level.INFO, "New services starting ...");
 
         startServiceFactories(this,
+                BrandNewService.class,
                 UpgradeNewService1.class,
                 UpgradeNewService2.class,
                 UpgradeNewService3.class,
                 UpgradeNewService4.class,
-                UpgradeNewService5.class);
+                UpgradeNewService5.class,
+                UpgradeNewService6.class);
 
         this.log(Level.INFO, "New services started.");
     }

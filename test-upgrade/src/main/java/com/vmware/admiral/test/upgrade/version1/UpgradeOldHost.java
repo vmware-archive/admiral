@@ -19,6 +19,7 @@ import com.vmware.admiral.test.upgrade.version1.UpgradeOldService2.UpgradeOldSer
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService3.UpgradeOldService3State;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService4.UpgradeOldService4State;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService5.UpgradeOldService5State;
+import com.vmware.admiral.test.upgrade.version1.UpgradeOldService6.UpgradeOldService6State;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -44,6 +45,7 @@ public class UpgradeOldHost extends UpgradeHost {
         Utils.registerKind(UpgradeOldService3State.class, UpgradeOldService3State.KIND);
         Utils.registerKind(UpgradeOldService4State.class, UpgradeOldService4State.KIND);
         Utils.registerKind(UpgradeOldService5State.class, UpgradeOldService5State.KIND);
+        Utils.registerKind(UpgradeOldService6State.class, UpgradeOldService6State.KIND);
 
         this.log(Level.INFO, "Old services starting ...");
 
@@ -52,7 +54,8 @@ public class UpgradeOldHost extends UpgradeHost {
                 UpgradeOldService2.class,
                 UpgradeOldService3.class,
                 UpgradeOldService4.class,
-                UpgradeOldService5.class);
+                UpgradeOldService5.class,
+                UpgradeOldService6.class);
 
         this.log(Level.INFO, "Old services started.");
     }

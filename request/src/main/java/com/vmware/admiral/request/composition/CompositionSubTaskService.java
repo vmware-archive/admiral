@@ -425,7 +425,6 @@ public class CompositionSubTaskService
                         failTask("Failure creating resource provision task", e);
                         return;
                     }
-                    //                    sendSelfPatch(createUpdateSubStageTask(state, SubStage.EXECUTING));
                 }));
 
         proceedTo(SubStage.EXECUTING);

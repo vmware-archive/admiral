@@ -76,23 +76,30 @@ public class UpgradeNewService4 extends StatefulService {
 
         // validate based on annotations
         Utils.validateState(getStateDescription(), body);
-        super.handleCreate(post);
+        super.handleStart(post);
     }
 
     private void handleStateUpgrade(UpgradeNewService4State state) {
+
+        boolean upgraded = false;
 
         if ((state.field3 != null)
                 && (state.field3.startsWith(UpgradeNewService4State.FIELD3_PREFIX_DEPRECATED))) {
             state.field3 = state.field3.replaceFirst(
                     UpgradeNewService4State.FIELD3_PREFIX_DEPRECATED,
                     UpgradeNewService4State.FIELD3_PREFIX);
+            upgraded = true;
         }
 
         if ((state.field4 != null)
                 && (!state.field4.startsWith(UpgradeNewService4State.FIELD4_PREFIX))) {
             state.field4 = UpgradeNewService4State.FIELD4_PREFIX + state.field4;
+            upgraded = true;
         }
 
+        if (upgraded) {
+            UpgradeUtil.forceLuceneIndexUpdate(getHost(), state);
+        }
     }
 
 }
