@@ -422,6 +422,7 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
         CommandInput commandInput = new CommandInput().withDockerUri(dockerUri);
 
         if (authCredentialsState != null) {
+            checkAuthCredentialsSupportedType(authCredentialsState, true);
             commandInput.withCredentials(authCredentialsState);
         }
 

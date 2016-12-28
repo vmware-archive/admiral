@@ -12,12 +12,16 @@
 package com.vmware.admiral.adapter.docker.service;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
+import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
@@ -38,6 +42,9 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
             "dcp.management.docker.adapter.periodic.maintenance.period.micros",
             TimeUnit.SECONDS.toMicros(10));
     protected static final String NOT_FOUND_EXCEPTION_MESSAGE = "returned error 404";
+
+    private static final Set<String> UNSUPPORTED_CREDENTIALS_TYPES = new HashSet<>(Arrays.asList(
+                    AuthCredentialsType.Password.toString()));
 
     public AbstractDockerAdapterService() {
         super();
@@ -150,6 +157,15 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                             op.fail(r.getException());
                         }
                     } else if (r.hasResult()) {
+                        AuthCredentialsServiceState credentials = r.getResult();
+                        Throwable e = checkAuthCredentialsSupportedType(credentials, false);
+                        if (e != null) {
+                            if (op != null) {
+                                op.fail(e);
+                            }
+                            fail(request, e);
+                        }
+
                         commandInput.withCredentials(r.getResult());
 
                         credentialsFound.set(true);
@@ -170,6 +186,18 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
 
         getHost().log(Level.FINE, "Fetching AuthCredentials: %s %s", credentialsLink,
                 request.getRequestTrackingLog());
+    }
+
+    protected Throwable checkAuthCredentialsSupportedType(AuthCredentialsServiceState c,
+            boolean throwError) {
+        RuntimeException e = null;
+        if (UNSUPPORTED_CREDENTIALS_TYPES.contains(c.type)) {
+            e = new IllegalStateException("Unsupported credentials type");
+            if (throwError) {
+                throw e;
+            }
+        }
+        return e;
     }
 
     protected String getAuthCredentialLink(ComputeState hostComputeState) {

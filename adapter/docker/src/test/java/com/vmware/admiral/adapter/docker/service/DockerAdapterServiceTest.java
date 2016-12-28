@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.adapter.docker.mock.MockDockerCreateImageService.REGISTRY_PASSWORD;
 import static com.vmware.admiral.adapter.docker.mock.MockDockerCreateImageService.REGISTRY_USER;
@@ -610,6 +611,43 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
         createContainer(true /* expect error */);
 
         // The createContainer method will verify that the id has been collected
+    }
+
+    @Test
+    /**
+     * Validates that checkAuthCredentialsSupportedType throws or returns an error when credentials
+     * type is not supported.
+     */
+    public void testSupportedCredentialsType() {
+        AuthCredentialsServiceState credentials = new AuthCredentialsServiceState();
+        Throwable error;
+
+        // validate PublicKey type is supported
+        credentials.type = AuthCredentialsType.PublicKey.toString();
+        try {
+            error = dockerAdapterService.checkAuthCredentialsSupportedType(credentials, false);
+            assertNull(error);
+
+            error = dockerAdapterService.checkAuthCredentialsSupportedType(credentials, true);
+            assertNull(error);
+        } catch (Exception e) {
+            fail();
+        }
+
+        // validate Password type is not supported
+        credentials.type = AuthCredentialsType.Password.toString();
+        try {
+            error = dockerAdapterService.checkAuthCredentialsSupportedType(credentials, false);
+            assertNotNull(error);
+        } catch (Exception e) {
+            fail();
+        }
+
+        try {
+            dockerAdapterService.checkAuthCredentialsSupportedType(credentials, true);
+            fail();
+        } catch (Exception ignored) {
+        }
     }
 
     /**

@@ -385,6 +385,7 @@ public class ContainerHostService extends StatelessService {
                     } else {
                         if (ex != null) {
                             ServiceErrorResponse rsp = Utils.toServiceErrorResponse(ex);
+                            toReadableErrorMessage(ex, rsp);
                             rsp.message = String.format("Error connecting to %s : %s",
                                     cs.address, rsp.message);
 
@@ -399,6 +400,18 @@ public class ContainerHostService extends StatelessService {
                         callbackFunction.run();
                     }
                 }));
+    }
+
+    private void toReadableErrorMessage(Throwable e, ServiceErrorResponse response) {
+        if (e instanceof io.netty.handler.codec.DecoderException) {
+            if (response.message.contains("Received fatal alert: bad_certificate")) {
+                response.message = "Check login credentials";
+            }
+        } else if (e instanceof IllegalStateException) {
+            if (response.message.contains("Socket channel closed:")) {
+                response.message = "Check login credentials";
+            }
+        }
     }
 
     private void updateContainerHostInfo(String documentSelfLink) {
