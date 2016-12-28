@@ -58,7 +58,6 @@ import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
-import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
@@ -298,7 +297,8 @@ public class HostContainerListDataCollection extends StatefulService {
     @Override
     public void handlePatch(Operation op) {
         ContainerListCallback body = op.getBody(ContainerListCallback.class);
-        if (body.containerHostLink == null) {
+        String containerHostLink = body.containerHostLink;
+        if (containerHostLink == null) {
             logFine("'containerHostLink' is required");
             op.complete();
             return;
@@ -307,7 +307,7 @@ public class HostContainerListDataCollection extends StatefulService {
         HostContainerListDataCollectionState state = getState(op);
         if (body.unlockDataCollectionForHost) {
             // patch to mark that there is no active list containers data collection for a given host.
-            state.containerHostLinks.remove(body.containerHostLink);
+            state.containerHostLinks.remove(containerHostLink);
             op.complete();
             return;
         }
@@ -316,24 +316,24 @@ public class HostContainerListDataCollection extends StatefulService {
 
         if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
             logFine("Host container list callback invoked for host [%s] with container IDs: %s",
-                    body.containerHostLink, body.containerIdsAndNames.keySet().stream()
+                    containerHostLink, body.containerIdsAndNames.keySet().stream()
                             .collect(Collectors.toList()));
         }
 
         // the patch will succeed regardless of the synchronization process
-        if (state.containerHostLinks.get(body.containerHostLink) != null &&
+        if (state.containerHostLinks.get(containerHostLink) != null &&
                 Instant.now().isBefore(Instant.ofEpochMilli(
-                        (state.containerHostLinks.get(body.containerHostLink))))) {
+                        (state.containerHostLinks.get(containerHostLink))))) {
             if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
                 logFine("Host container list callback for host [%s] with container IDs: %s " +
                         "skipped, another instance is active",
-                        body.containerHostLink,
+                        containerHostLink,
                         body.containerIdsAndNames.keySet().stream().collect(Collectors.toList()));
             }
             op.complete();
             return;// return since there is an active data collection for this host.
         } else {
-            state.containerHostLinks.put(body.containerHostLink,
+            state.containerHostLinks.put(containerHostLink,
                     Instant.now().toEpochMilli() + DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS);
             op.complete();
             // continue with the data collection.
@@ -341,9 +341,8 @@ public class HostContainerListDataCollection extends StatefulService {
 
         List<ContainerState> containerStates = new ArrayList<ContainerState>();
         QueryTask queryTask = QueryUtil.buildPropertyQuery(ContainerState.class,
-                ContainerState.FIELD_NAME_PARENT_LINK, body.containerHostLink);
+                ContainerState.FIELD_NAME_PARENT_LINK, containerHostLink);
         QueryUtil.addExpandOption(queryTask);
-        final String hostId = Service.getId(body.containerHostLink);
 
         QueryUtil.addBroadcastOption(queryTask);
         new ServiceDocumentQuery<ContainerState>(getHost(), ContainerState.class)
@@ -355,7 +354,7 @@ public class HostContainerListDataCollection extends StatefulService {
                                         r.getException() instanceof CancellationException
                                                 ? r.getException().getMessage()
                                                 : Utils.toString(r.getException()));
-                                unlockCurrentDataCollectionForHost(body.containerHostLink);
+                                unlockCurrentDataCollectionForHost(containerHostLink);
                             } else if (r.hasResult()) {
                                 containerStates.add(r.getResult());
                             } else {
@@ -363,7 +362,7 @@ public class HostContainerListDataCollection extends StatefulService {
                                 request.operationTypeId = ContainerHostOperationType.LIST_CONTAINERS.id;
                                 request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
                                 request.resourceReference = UriUtils.buildUri(getHost(),
-                                        body.containerHostLink);
+                                        containerHostLink);
                                 sendRequest(Operation
                                         .createPatch(this, ManagementUriParts.ADAPTER_DOCKER_HOST)
                                         .setBody(request)
@@ -376,10 +375,10 @@ public class HostContainerListDataCollection extends StatefulService {
                                                                 .getBody(
                                                                         ContainerListCallback.class);
                                                         updateContainerStates(callback,
-                                                                containerStates, hostId);
+                                                                containerStates, containerHostLink);
                                                     } else {
                                                         unlockCurrentDataCollectionForHost(
-                                                                body.containerHostLink);
+                                                                containerHostLink);
                                                     }
                                                 }));
                             }
@@ -387,7 +386,7 @@ public class HostContainerListDataCollection extends StatefulService {
     }
 
     private void updateContainerStates(ContainerListCallback callback,
-            List<ContainerState> containerStates, String hostId) {
+            List<ContainerState> containerStates, String containerHostLink) {
         final List<String> systemContainersToInstall = SystemContainerDescriptions
                 .getSystemContainerNames();
         for (ContainerState containerState : containerStates) {
@@ -464,7 +463,7 @@ public class HostContainerListDataCollection extends StatefulService {
                                     /* need to build the full uri */
                                     containerState.documentSelfLink = SystemContainerDescriptions
                                             .getSystemContainerSelfLink(systemContainerName,
-                                                    hostId);
+                                                    Service.getId(containerHostLink));
                                     containerState.system = Boolean.TRUE;
                                     containerState.descriptionLink = SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK;
                                     containerState.volumes = SystemContainerDescriptions.AGENT_CONTAINER_VOLUMES;
@@ -490,7 +489,7 @@ public class HostContainerListDataCollection extends StatefulService {
                             }
 
                             for (String systemContainerName : systemContainersToInstall) {
-                                installSystemContainerToHost(hostId,
+                                installSystemContainerToHost(containerHostLink,
                                         systemContainerName, null);
                             }
 
@@ -502,8 +501,8 @@ public class HostContainerListDataCollection extends StatefulService {
                                         }
 
                                         for (ContainerState containerState : systemContainersToStart) {
-                                            handleDiscoveredSystemContainer(
-                                                    containerState, hostId, null);
+                                            handleDiscoveredSystemContainer(containerState,
+                                                    containerHostLink, null);
                                         }
 
                                         unlockCurrentDataCollectionForHost(
@@ -573,13 +572,14 @@ public class HostContainerListDataCollection extends StatefulService {
         put.setBody(putBody).complete();
     }
 
-    private void handleDiscoveredSystemContainer(ContainerState containerState, String hostId,
+    private void handleDiscoveredSystemContainer(ContainerState containerState,
+            String containerHostLink,
             ContainerDescription containerDesc) {
         if (containerDesc == null) {
             OperationUtil.getDocumentState(this, containerState.descriptionLink,
                     ContainerDescription.class,
                     (ContainerDescription contDesc) -> handleDiscoveredSystemContainer(
-                            containerState, hostId, contDesc));
+                            containerState, containerHostLink, contDesc));
             return;
         }
 
@@ -588,15 +588,17 @@ public class HostContainerListDataCollection extends StatefulService {
 
         if (containerVersion.compareTo(containerDescVersion) < 0) {
             // if container version is old, delete the container and create it again
-            recreateSystemContainer(containerState, hostId);
+            recreateSystemContainer(containerState, containerHostLink);
         } else {
             // check if system ContainerState exists. If not, start won't work as docker-adapter
             // will refer to missing ContainerState resulting in failure in starting operation.
-            checkIfSystemContainerStateExistsBeforeStartIt(containerState, containerDesc, hostId);
+            checkIfSystemContainerStateExistsBeforeStartIt(containerState, containerDesc,
+                    containerHostLink);
         }
     }
 
-    private void checkIfSystemContainerStateExistsBeforeStartIt(ContainerState containerState, ContainerDescription containerDesc, String hostId) {
+    private void checkIfSystemContainerStateExistsBeforeStartIt(ContainerState containerState,
+            ContainerDescription containerDesc, String containerHostLink) {
 
         QueryTask containerQuery = QueryUtil.buildPropertyQuery(ContainerState.class,
                 ContainerState.FIELD_NAME_DESCRIPTION_LINK,
@@ -625,7 +627,8 @@ public class HostContainerListDataCollection extends StatefulService {
                                 } else {
                                     // If System ContainerState does not exists, we create it before
                                     // start operation.
-                                    final ContainerState systemContainerState = createSystemContainerState(containerState, containerDesc, hostId);
+                                    final ContainerState systemContainerState = createSystemContainerState(
+                                            containerState, containerDesc, containerHostLink);
 
                                     sendRequest(OperationUtil
                                             .createForcedPost(this, ContainerFactoryService.SELF_LINK)
@@ -641,8 +644,7 @@ public class HostContainerListDataCollection extends StatefulService {
                                                         logInfo("Created system ContainerState: %s ",
                                                                 body.documentSelfLink);
                                                         createSystemContainerInstanceRequest(body, null);
-                                                        updateNumberOfContainers(UriUtils.buildUriPath(
-                                                                ComputeService.FACTORY_LINK, hostId));
+                                                        updateNumberOfContainers(containerHostLink);
                                                         startSystemContainer(containerState, null);
                                                     }));
 
@@ -652,7 +654,7 @@ public class HostContainerListDataCollection extends StatefulService {
     }
 
     private ContainerState createSystemContainerState(ContainerState containerState,
-            ContainerDescription containerDesc, String hostId) {
+            ContainerDescription containerDesc, String containerHostLink) {
 
         String systemContainerName = matchSystemContainerName(
                 SystemContainerDescriptions.getSystemContainerNames(), containerState.names);
@@ -662,8 +664,7 @@ public class HostContainerListDataCollection extends StatefulService {
         systemContainerState.names = new ArrayList<>();
         systemContainerState.names.add(systemContainerName);
         systemContainerState.descriptionLink = containerDesc.documentSelfLink;
-        systemContainerState.parentLink = UriUtils.buildUriPath(
-                ComputeService.FACTORY_LINK, hostId);
+        systemContainerState.parentLink = containerHostLink;
         systemContainerState.powerState = ContainerState.PowerState.PROVISIONING;
         systemContainerState.adapterManagementReference = containerDesc.instanceAdapterReference;
         systemContainerState.image = containerDesc.image;
@@ -676,7 +677,7 @@ public class HostContainerListDataCollection extends StatefulService {
         return systemContainerState;
     }
 
-    private void recreateSystemContainer(ContainerState containerState, String hostId) {
+    private void recreateSystemContainer(ContainerState containerState, String containerHostLink) {
         logFine("recreate system container %s", containerState.documentSelfLink);
         deleteSystemContainer(containerState,
                 (o, error) -> {
@@ -686,7 +687,8 @@ public class HostContainerListDataCollection extends StatefulService {
                         if (o.customProperties != null) {
                             String systemContainerName = o.customProperties
                                     .get(SYSTEM_CONTAINER_NAME);
-                            installSystemContainerToHost(hostId, systemContainerName, null);
+                            installSystemContainerToHost(containerHostLink, systemContainerName,
+                                    null);
                         }
                     }
                 }, null);
@@ -1031,7 +1033,7 @@ public class HostContainerListDataCollection extends StatefulService {
         }
     }
 
-    private void installSystemContainerToHost(String hostId,
+    private void installSystemContainerToHost(String containerHostLink,
             String systemContainerName, ContainerDescription containerDesc) {
         if (DeploymentProfileConfig.getInstance().isTest()) {
             logWarning("No system containers will be installed in test mode...");
@@ -1049,26 +1051,28 @@ public class HostContainerListDataCollection extends StatefulService {
             }
 
             OperationUtil.getDocumentState(this, descriptionLink, ContainerDescription.class,
-                    (ContainerDescription contDesc) -> installSystemContainerToHost(hostId,
+                    (ContainerDescription contDesc) -> installSystemContainerToHost(
+                            containerHostLink,
                             systemContainerName, contDesc));
             return;
         }
 
-        String hostLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, hostId);
-        OperationUtil.getDocumentState(this, hostLink, ComputeState.class,
+        OperationUtil.getDocumentState(this, containerHostLink, ComputeState.class,
                 (ComputeState host) -> {
                     if (ContainerHostUtil.isVicHost(host)) {
                         logInfo("VIC host detected, system containers will not be installed.");
                         return;
                     }
-                    createOrRetrieveSystemContainer(hostId, systemContainerName, containerDesc);
+                    createOrRetrieveSystemContainer(containerHostLink, systemContainerName,
+                            containerDesc);
                 });
     }
 
-    private void createOrRetrieveSystemContainer(String hostId, String systemContainerName,
+    private void createOrRetrieveSystemContainer(String containerHostLink,
+            String systemContainerName,
             ContainerDescription containerDesc) {
         String containerStateLink = SystemContainerDescriptions.getSystemContainerSelfLink(
-                systemContainerName, hostId);
+                systemContainerName, Service.getId(containerHostLink));
         ServiceDocumentQuery<ContainerState> query = new ServiceDocumentQuery<>(getHost(),
                 ContainerState.class);
         query.queryDocument(
@@ -1089,8 +1093,7 @@ public class HostContainerListDataCollection extends StatefulService {
                         containerState.names = new ArrayList<>();
                         containerState.names.add(systemContainerName);
                         containerState.descriptionLink = containerDesc.documentSelfLink;
-                        containerState.parentLink = UriUtils.buildUriPath(
-                                ComputeService.FACTORY_LINK, hostId);
+                        containerState.parentLink = containerHostLink;
                         containerState.powerState = ContainerState.PowerState.PROVISIONING;
                         containerState.adapterManagementReference = containerDesc.instanceAdapterReference;
                         containerState.image = containerDesc.image;
@@ -1113,8 +1116,7 @@ public class HostContainerListDataCollection extends StatefulService {
                                             logInfo("Created system ContainerState: %s ",
                                                     body.documentSelfLink);
                                             createSystemContainerInstanceRequest(body, null);
-                                            updateNumberOfContainers(UriUtils.buildUriPath(
-                                                    ComputeService.FACTORY_LINK, hostId));
+                                            updateNumberOfContainers(containerHostLink);
                                         }));
                     }
                 });

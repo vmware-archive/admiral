@@ -26,7 +26,6 @@ import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
-import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
@@ -253,23 +252,26 @@ public class ContainerHostService extends StatelessService {
         }
 
         Operation store = null;
+        // This should be the case only when using the addHost manually, e.g. unmanaged external
+        // host
         if (cs.documentSelfLink == null
                 || !cs.documentSelfLink.startsWith(ComputeService.FACTORY_LINK)) {
-            URI uri = UriUtils.buildUri(getHost(), ComputeService.FACTORY_LINK);
-            store = OperationUtil.createForcedPost(uri);
+            store = Operation.createPost(getHost(), ComputeService.FACTORY_LINK)
+                    .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE);
+
             if (cs.id == null) {
-                cs.id = ContainerHostUtil.buildHostId(hostSpec.hostState.tenantLinks,
-                        UUID.randomUUID().toString());
+                cs.id = UUID.randomUUID().toString();
             } else {
                 cs.id = ContainerHostUtil.buildHostId(hostSpec.hostState.tenantLinks, cs.id);
             }
-            cs.documentSelfLink = cs.id;
-            cs.powerState = com.vmware.photon.controller.model.resources.ComputeService.PowerState.ON;
+            cs.documentSelfLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, cs.id);
+            cs.powerState = ComputeService.PowerState.ON;
         } else {
-            URI uri = UriUtils.buildUri(getHost(), cs.documentSelfLink);
-            store = Operation.createPut(uri);
+            store = Operation.createPut(getHost(), cs.documentSelfLink);
         }
-
+        if (cs.creationTimeMicros == null) {
+            cs.creationTimeMicros = Utils.getNowMicrosUtc();
+        }
         if (cs.customProperties == null) {
             cs.customProperties = new HashMap<>();
         }
@@ -284,7 +286,7 @@ public class ContainerHostService extends StatelessService {
                         op.fail(e);
                         return;
                     }
-                    String documentSelfLink = cs.documentSelfLink;
+                    String documentSelfLink = o.getBody(ComputeState.class).documentSelfLink;
                     if (!documentSelfLink.startsWith(ComputeService.FACTORY_LINK)) {
                         documentSelfLink = UriUtils.buildUriPath(
                                 ComputeService.FACTORY_LINK, documentSelfLink);

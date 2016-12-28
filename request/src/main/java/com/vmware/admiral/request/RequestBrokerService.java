@@ -344,10 +344,17 @@ public class RequestBrokerService extends
     @Override
     protected void handleFailedStagePatch(RequestBrokerState state) {
         EventLogState eventLog = new EventLogState();
-        eventLog.description = state.taskInfo.failure.message;
-        if (eventLog.description == null) {
-            eventLog.description = "Unexpected error, status: " + state.taskInfo.failure.statusCode;
-            logWarning("Patch failure stack trace: %s", state.taskInfo.failure.stackTrace);
+        if (state.taskInfo.failure != null) {
+            eventLog.description = state.taskInfo.failure.message;
+            if (eventLog.description == null) {
+                eventLog.description = "Unexpected error, status: "
+                        + state.taskInfo.failure.statusCode;
+                logWarning("Patch failure stack trace: %s", state.taskInfo.failure.stackTrace);
+            }
+        } else {
+            eventLog.description = "Unexpected error, and empty failure body in substage: "
+                    + state.taskSubStage;
+            logWarning("Patch failure with unknown failure in substage: %s", state.taskSubStage);
         }
         eventLog.eventLogType = EventLogType.ERROR;
         eventLog.resourceType = getClass().getName();
@@ -976,8 +983,6 @@ public class RequestBrokerService extends
                     && !isClusteringOperation(state)) {
                 // deploy the default number of clustered compute nodes
                 allocationTask.resourceCount = Long.valueOf(clusterSize);
-            } else {
-                allocationTask.resourceCount = state.resourceCount;
             }
 
             allocationTask.resourceType = state.resourceType;
@@ -1473,7 +1478,7 @@ public class RequestBrokerService extends
                 Arrays.asList(ComputeAllocationTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
                 .put(ResourceType.CONTAINER_NETWORK_TYPE, new ArrayList<>(
-                Arrays.asList(ContainerNetworkProvisionTaskService.DISPLAY_NAME)));
+                        Arrays.asList(ContainerNetworkProvisionTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.VOLUME_TYPE, new ArrayList<>(
                 Arrays.asList(ContainerVolumeProvisionTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CLOSURE_TYPE, new ArrayList<>(
@@ -1497,8 +1502,8 @@ public class RequestBrokerService extends
                         ResourceNamePrefixTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
                 .put(ResourceType.CONTAINER_NETWORK_TYPE, new ArrayList<>(
-                Arrays.asList(ContainerNetworkAllocationTaskService.DISPLAY_NAME,
-                        ResourceNamePrefixTaskService.DISPLAY_NAME)));
+                        Arrays.asList(ContainerNetworkAllocationTaskService.DISPLAY_NAME,
+                                ResourceNamePrefixTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.VOLUME_TYPE, new ArrayList<>(
                 Arrays.asList(ContainerVolumeAllocationTaskService.DISPLAY_NAME,
                         ResourceNamePrefixTaskService.DISPLAY_NAME)));
