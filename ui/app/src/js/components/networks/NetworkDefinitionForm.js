@@ -232,7 +232,7 @@ var NetworkDefinitionForm = Vue.extend({
       }
     );
 
-    this.$networksSearch = $(this.$el).find('.network-name-search .form-control');
+    this.$networksSearch = $(this.$el).find('.network-name-search .search-input input');
 
     $(this.$networksSearch).on('change input', function() {
       toggleButtonsState.call(_this);

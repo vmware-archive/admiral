@@ -160,7 +160,7 @@
       <div class="sub-title">{{i18n('app.template.details.newDefinition.containerDefinitionInfo')}}</div>
       <container-definition-form v-ref:new-form v-bind:model="model.newContainerDefinition.definitionInstance">
       </container-definition-form>
-      <div class="pull-right control-btns">
+      <div class="control-btns">
         <button class="btn btn-primary add-container-definition"
                 v-bind:class="{'loading': addingContainer}"
                 v-bind:disabled="buttonsDisabled"
@@ -173,7 +173,7 @@
     <div class="sub-title">{{i18n('app.template.details.newDefinition.containerDefinitionInfo')}}</div>
     <container-definition-form v-ref:edit-form v-bind:model="model.editContainerDefinition.definitionInstance">
     </container-definition-form>
-    <div class="pull-right control-btns">
+    <div class="control-btns">
       <button class="btn btn-primary save-container-definition"
               v-bind:class="{'loading': savingContainer}"
               v-bind:disabled="buttonsDisabled"
@@ -188,7 +188,7 @@
                                v-bind:model="model.editNetwork.definitionInstance"
                                v-bind:allow-existing="true"
                                ></network-definition-form>
-      <div class="pull-right control-btns">
+      <div class="control-btns">
       <button class="btn btn-primary save-container-definition"
               v-bind:class="{'loading': savingNetwork}"
               v-bind:disabled="buttonNetworkDisabled"
