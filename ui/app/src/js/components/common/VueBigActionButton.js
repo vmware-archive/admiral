@@ -10,11 +10,12 @@
  */
 
 var VueBigActionButton = Vue.extend({
-  template: `<div class="big-action">
-           <a class="btn btn-circle-outline"
-              data-name="{{name}}"
+  template: `<div class="big-action" v-show="supported">
+           <a class="btn btn-circle-outline" title="{{label}}" data-name="{{name}}""
               v-on:mousedown="pressed()">
-             <i class="fa fa-{{iconName}}"></i></a>
+             <i v-if="iconName" class="fa fa-{{iconName}}"></i>
+             <img v-if="iconSrc" v-bind:src="iconSrc"/>
+             </a>
            <div class="big-action-label">{{label}}</div>
          </div>`,
   props: {
@@ -24,6 +25,10 @@ var VueBigActionButton = Vue.extend({
     },
     iconName: {
       required: true,
+      type: String
+    },
+    iconSrc: {
+      required: false,
       type: String
     },
     label: {
@@ -39,6 +44,11 @@ var VueBigActionButton = Vue.extend({
       required: false,
       type: Boolean,
       default: false
+    },
+    supported: {
+      required: false,
+      type: Boolean,
+      default: true
     }
   },
   methods: {

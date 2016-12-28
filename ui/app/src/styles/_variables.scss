@@ -132,3 +132,9 @@ $search-result-list-max-height: 200px;
   font-size: 20px;
   height: 20px;
 }
+
+.btn-outline-spin {
+  -webkit-animation-duration: 1s;
+  animation-duration: 1s;
+  transform-origin: 46% 46%;
+}

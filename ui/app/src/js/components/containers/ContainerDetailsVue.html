@@ -29,32 +29,32 @@
         </div>
       </template>
       <template v-else>
-        <toolbar-action-button id="stop" icon-name="stop" v-bind:label="i18n('app.container.actions.stop')"
+        <big-action-button name="stop" icon-name="stop" v-bind:label="i18n('app.container.actions.stop')"
                                v-bind:supported="operationSupported('STOP')"
-                               v-on:click="stopContainer($event)"></toolbar-action-button>
+                               v-on:click="stopContainer($event)"></big-action-button>
 
-        <toolbar-action-button id="start" icon-name="play" v-bind:label="i18n('app.container.actions.start')"
+        <big-action-button name="start" icon-name="play" v-bind:label="i18n('app.container.actions.start')"
                                v-bind:supported="operationSupported('START')"
-                               v-on:click="startContainer($event)"></toolbar-action-button>
+                               v-on:click="startContainer($event)"></big-action-button>
 
-        <toolbar-action-button id="remove" icon-name="trash" v-bind:label="i18n('app.container.actions.remove')"
+        <big-action-button name="remove" icon-name="trash" v-bind:label="i18n('app.container.actions.remove')"
                                v-bind:supported="operationSupported('REMOVE')"
                                v-on:click="askConfirmation($event, 'removeContainer')"
-                                ></toolbar-action-button>
+                                ></big-action-button>
 
-        <toolbar-action-button id="terminal" icon-name="terminal" v-bind:label="i18n('app.container.actions.terminal')"
+        <big-action-button name="terminal" icon-name="terminal" v-bind:label="i18n('app.container.actions.terminal')"
                                v-bind:supported="operationSupported('SHELL')"
-                               v-on:click="openShell($event)"></toolbar-action-button>
+                               v-on:click="openShell($event)"></big-action-button>
 
-        <toolbar-action-button id="openTemplate" icon-src="image-assets/templates-blue.png"
+        <big-action-button name="openTemplate" icon-src="image-assets/templates-blue.png"
                                v-bind:label="i18n('app.container.actions.openTemplate')"
                                v-bind:supported="!!model.templateLink"
-                               v-on:click="openTemplate($event)"></toolbar-action-button>
+                               v-on:click="openTemplate($event)"></big-action-button>
 
-        <toolbar-action-button id="createTemplate" icon-src="image-assets/templates-create.png"
+        <big-action-button name="createTemplate" icon-src="image-assets/templates-create.png"
                                v-bind:label="i18n('app.container.actions.createTemplate')"
                                v-bind:supported="!!model.descriptionLinkToConvertToTemplate"
-                               v-on:click="createTemplateFromContainer($event)"></toolbar-action-button>
+                               v-on:click="createTemplateFromContainer($event)"></big-action-button>
       </template>
     </div>
   </div>
