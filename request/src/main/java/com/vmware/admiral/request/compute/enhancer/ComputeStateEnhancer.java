@@ -163,7 +163,7 @@ public class ComputeStateEnhancer implements Enhancer<ComputeState> {
     }
 
     private String getSystemDContent() throws IOException {
-        return loadResource("/agent/systemd.yaml");
+        return loadResource("/agent/coreos_systemd.yaml");
     }
 
     private String cleanKey(String key) {

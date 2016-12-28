@@ -625,16 +625,13 @@ public class ComputeAllocationTaskService
         for (int i = 0; i < state.resourceCount; i++) {
             String name = namesIterator.next();
             String computeResourceId = buildResourceId(name);
-            String computeResourceLink = UriUtils.buildUriPath(
-                    ComputeService.FACTORY_LINK, computeResourceId);
 
             createComputeResource(
                     state,
                     computeDescription,
                     state.endpointComputeStateLink,
                     placementComputeLinkIterator.next(),
-                    computeResourceId,
-                    computeResourceLink, name,
+                    computeResourceId, name,
                     null, null, taskCallback);
         }
     }
@@ -645,20 +642,20 @@ public class ComputeAllocationTaskService
 
     private void createComputeResource(ComputeAllocationTaskState state, ComputeDescription cd,
             String parentLink, String placementLink,
-            String computeResourceId, String computeResourceLink, String computeName,
+            String computeResourceId, String computeName,
             List<String> diskLinks,
             List<String> networkLinks, ServiceTaskCallback taskCallback) {
         if (diskLinks == null) {
             createDiskResources(state, taskCallback, dl -> createComputeResource(
-                    state, cd, parentLink, placementLink, computeResourceId, computeResourceLink,
-                    computeName, dl, networkLinks, taskCallback));
+                    state, cd, parentLink, placementLink, computeResourceId, computeName, dl,
+                    networkLinks, taskCallback));
             return;
         }
 
         if (networkLinks == null) {
             createNetworkResources(state, cd, taskCallback, nl -> createComputeResource(
-                    state, cd, parentLink, placementLink, computeResourceId, computeResourceLink,
-                    computeName, diskLinks, nl, taskCallback));
+                    state, cd, parentLink, placementLink, computeResourceId, computeName, diskLinks,
+                    nl, taskCallback));
             return;
         }
 
@@ -666,14 +663,13 @@ public class ComputeAllocationTaskService
             createTags(state, cd, tl -> {
                 cd.tagLinks = tl;
                 createComputeResource(state, cd, parentLink, placementLink, computeResourceId,
-                        computeResourceLink, computeName, diskLinks, networkLinks, taskCallback);
+                        computeName, diskLinks, networkLinks, taskCallback);
             });
             return;
         }
 
-        createComputeHost(state, cd, parentLink, placementLink, computeResourceId,
-                computeResourceLink,
-                computeName, diskLinks, networkLinks, taskCallback);
+        createComputeHost(state, cd, parentLink, placementLink, computeResourceId, computeName,
+                diskLinks, networkLinks, taskCallback);
     }
 
     private void createTags(ComputeAllocationTaskState state, ComputeDescription cd,
@@ -723,13 +719,13 @@ public class ComputeAllocationTaskService
     }
 
     private void createComputeHost(ComputeAllocationTaskState state, ComputeDescription cd,
-            String parentLink, String placementLink,
-            String computeResourceId, String computeResourceLink, String computeName,
+            String parentLink, String placementLink, String computeResourceId, String computeName,
             List<String> diskLinks, List<String> networkLinks, ServiceTaskCallback taskCallback) {
         ComputeService.ComputeState resource = new ComputeService.ComputeState();
         resource.id = computeResourceId;
         resource.parentLink = parentLink;
         resource.name = computeName;
+        resource.type = ComputeType.VM_GUEST;
         resource.descriptionLink = state.resourceDescriptionLink;
         resource.resourcePoolLink = state.getCustomProperty(
                 ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK);
@@ -743,7 +739,6 @@ public class ComputeAllocationTaskService
         resource.customProperties.put(ComputeProperties.PLACEMENT_LINK, placementLink);
         resource.customProperties.put("__computeType", "VirtualMachine");
         resource.tenantLinks = state.tenantLinks;
-        resource.documentSelfLink = computeResourceLink;
         resource.powerState = ComputeService.PowerState.ON;
         resource.tagLinks = cd.tagLinks;
 

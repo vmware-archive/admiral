@@ -11,6 +11,7 @@ AGENT_RAN_FLAG=$WORKDIR/agent_ran
 AGENT_FAILED_FLAG=$WORKDIR/bootstrap_failed
 AGENT_PROP_FILE=appd.properties
 APPD_PROPERTIES=
+AGENT_DOWNLOAD_LOG=agent_download.log
 
 WGET_OPTIONS="--no-check-certificate --timeout=60 --tries=5 --wait=10 --random-wait --retry-connrefused --debug --append-output=$AGENT_DOWNLOAD_LOG"
 CURL_OPTIONS="-k --connect-timeout 60 --retry 5 --retry-delay 10 -# --stderr - -v"

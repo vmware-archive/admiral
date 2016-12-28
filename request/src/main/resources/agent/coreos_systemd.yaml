@@ -5,8 +5,8 @@ coreos:
       content: |
         [Unit]
         Description=softare agent
-        After=network.service
-        Requires=network.service
+        After=systemd-networkd.service
+        Requires=systemd-networkd.service
 
         [Service]
         Restart=always
