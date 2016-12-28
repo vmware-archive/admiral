@@ -512,7 +512,8 @@ var utils = {
     } else if (op === constants.CONTAINERS.OPERATION.SHELL) {
       return this.getConfigurationPropertyBoolean('allow.browser.ssh.console')
                 && !this.isApplicationSingleView()
-                && this.isContainerStatusOk(resource.powerState);
+                && this.isContainerStatusOk(resource.powerState)
+                && !this.isContainerStatusInactive(resource.powerState);
     }
 
     return true;
