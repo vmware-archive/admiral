@@ -305,18 +305,39 @@ public class ContainerRemovalTaskService
     }
 
     private void sendContainerDeleteRequest(ContainerState containerState, String subTaskLink) {
-        AdapterRequest adapterRequest = new AdapterRequest();
-        String selfLink = containerState.documentSelfLink;
-        adapterRequest.resourceReference = UriUtils.buildUri(getHost(), selfLink);
-        adapterRequest.serviceTaskCallback = ServiceTaskCallback.create(subTaskLink);
-        adapterRequest.operationTypeId = ContainerOperationType.DELETE.id;
-        sendRequest(Operation.createPatch(getHost(), containerState.adapterManagementReference.toString())
-                .setBody(adapterRequest)
-                .setContextId(getSelfId())
+        ContainerState ps = new ContainerState();
+        ps.isDeleted = true;
+        sendRequest(Operation.createPatch(getHost(), containerState.documentSelfLink)
+                .setBody(ps)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        failTask("AdapterRequest failed for container: " + selfLink, e);
+                        logWarning("Failed to modify container state isDeleted before container delete: " + containerState.documentSelfLink, e);
                         return;
+                    } else {
+                        AdapterRequest adapterRequest = new AdapterRequest();
+                        String selfLink = containerState.documentSelfLink;
+                        adapterRequest.resourceReference = UriUtils.buildUri(getHost(), selfLink);
+                        adapterRequest.serviceTaskCallback = ServiceTaskCallback.create(subTaskLink);
+                        adapterRequest.operationTypeId = ContainerOperationType.DELETE.id;
+                        sendRequest(Operation.createPatch(getHost(), containerState.adapterManagementReference.toString())
+                                .setBody(adapterRequest)
+                                .setContextId(getSelfId())
+                                .setCompletion((o1, e1) -> {
+                                    if (e1 != null) {
+                                        failTask("AdapterRequest failed for container: " + selfLink, e1);
+                                        ContainerState ps1 = new ContainerState();
+                                        ps1.isDeleted = false;
+                                        sendRequest(Operation.createPatch(getHost(), containerState.documentSelfLink)
+                                                .setBody(ps1)
+                                                .setCompletion((o2, e2) -> {
+                                                    if (e2 != null) {
+                                                        logWarning("Failed to modify container state  isDeleted after container delete: " + containerState.documentSelfLink, e);
+                                                        return;
+                                                    }
+                                                }));
+                                        return;
+                                    }
+                                }));
                     }
                 }));
     }

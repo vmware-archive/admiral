@@ -996,24 +996,39 @@ public class HostContainerListDataCollection extends StatefulService {
             return;
         }
 
-        // patch container status to RETIRED
-        ContainerState patchContainerState = new ContainerState();
-        patchContainerState.powerState = PowerState.RETIRED;
-        sendRequest(Operation
-                .createPatch(this, containerState.documentSelfLink)
-                .setBody(patchContainerState)
-                .setCompletion((o, ex) -> {
-                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                        logFine("Container %s not found to be marked as missing.",
-                                containerState.documentSelfLink);
-                    } else if (ex != null) {
-                        logWarning("Failed to mark container %s as missing: %s",
-                                containerState.documentSelfLink, Utils.toString(ex));
-                    } else {
-                        logInfo("Marked container as missing: %s",
-                                containerState.documentSelfLink);
-                    }
-                }));
+        if (containerState.isDeleted) {
+            // delete contaniner state
+            sendRequest(Operation
+                    .createDelete(this, containerState.documentSelfLink)
+                    .setBody(new ServiceDocument())
+                    .setCompletion(
+                            (op, ex) -> {
+                                if (ex != null) {
+                                    logWarning("Failed deleting ContainerState of missing container: " + containerState.documentSelfLink, ex);
+                                    return;
+                                }
+                                logInfo("Deleted ContainerState of missing container: " + containerState.documentSelfLink);
+                            }));
+        } else {
+            // patch container status to RETIRED
+            ContainerState patchContainerState = new ContainerState();
+            patchContainerState.powerState = PowerState.RETIRED;
+            sendRequest(Operation
+                    .createPatch(this, containerState.documentSelfLink)
+                    .setBody(patchContainerState)
+                    .setCompletion((o, ex) -> {
+                        if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                            logFine("Container %s not found to be marked as missing.",
+                                    containerState.documentSelfLink);
+                        } else if (ex != null) {
+                            logWarning("Failed to mark container %s as missing: %s",
+                                    containerState.documentSelfLink, Utils.toString(ex));
+                        } else {
+                            logInfo("Marked container as missing: %s",
+                                    containerState.documentSelfLink);
+                        }
+                    }));
+        }
     }
 
     private void installSystemContainerToHost(String hostId,

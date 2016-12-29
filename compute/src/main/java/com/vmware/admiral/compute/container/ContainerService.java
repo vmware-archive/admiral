@@ -19,9 +19,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.Composable;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
@@ -221,6 +223,14 @@ public class ContainerService extends StatefulService {
         @Documentation(description = "Is system container")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public Boolean system;
+
+        /** Mark a container service that the container it represents
+         * is deleted intentionally from admiral. This eliminates some
+         * race condition bugs.*/
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
+        @Documentation(description = "Is the docker container deleted by Admiral.")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public Boolean isDeleted = false;
 
         /**
          * Percentages of the relative CPU sharing in a given resource pool. This is not an actual
