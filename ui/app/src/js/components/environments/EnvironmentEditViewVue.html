@@ -18,7 +18,7 @@
            v-bind:show-alert="validationErrors._valid && (validationErrors._valid != null)"
            v-bind:alert-message="i18n('app.host.details.verified')"></alert>
 
-    <div class="environment-form form-horizontal">
+    <form class="environment-form form-horizontal">
       <div class="title">
         {{i18n(model.item.documentSelfLink ? 'app.environment.edit.editTitle' : 'app.environment.edit.addTitle')}}
       </div>
@@ -41,6 +41,11 @@
                 {{i18n('app.environment.edit.networkTab')}}
               </a>
             </li>
+            <li role="presentation" class="nav-item" v-bind:class="{'disabled': saveDisabled}">
+              <a href="#storage" class="nav-link" aria-controls="storage" role="tab" data-toggle="pill">
+                {{i18n('app.environment.edit.storageTab')}}
+              </a>
+            </li>
           </ul>
 
           <div class="tab-content">
@@ -48,22 +53,20 @@
               <div class="form-horizontal">
 
                 <div class="form-group name">
-                  <label class="col-sm-3 required">
+                  <label class="required">
                     {{i18n('app.environment.edit.nameLabel')}}
                   </label>
-                  <div class="col-sm-9">
-                    <input class="form-control name-input"
-                        v-bind:value="model.item.name" v-on:input="onNameChange()">
-                    <span class="help-block"></span>
-                  </div>
+                  <input class="form-control name-input"
+                      v-bind:value="model.item.name" v-on:input="onNameChange()">
                 </div>
 
-                <div class="form-group">
-                  <label class="col-sm-3">
+                <div class="form-group" v-if="!model.item.endpointType">
+                  <label>
                     {{i18n("app.environment.edit.endpointLabel")}}
                   </label>
-                  <div class="col-sm-9">
+                  <div class="form-control">
                     <dropdown-search
+                        v-bind:disabled="!!model.item.endpoint"
                         v-bind:entity="i18n('app.endpoint.entity')"
                         v-bind:filter="searchEndpoints"
                         v-bind:value="model.item.endpoint"
@@ -72,8 +75,8 @@
                 </div>
 
                 <div class="form-group tags" v-bind:class="{'has-error': validationErrors.tags}">
-                  <label class="col-sm-3">{{i18n("app.environment.edit.tagsLabel")}}</label>
-                  <div class="col-sm-9">
+                  <label>{{i18n("app.environment.edit.tagsLabel")}}</label>
+                  <div class="form-control">
                     <div class="tags-holder">
                       <input class="tags-input">
                     </div>
@@ -89,24 +92,24 @@
               <div class="form-horizontal">
 
                 <div class="form-group instanceType">
-                  <label class="col-sm-3">
+                  <label>
                     {{i18n('app.environment.edit.instanceTypeLabel')}}
                   </label>
-                  <div class="col-sm-9">
+                  <div class="form-control">
                     <multicolumn-inputs v-ref:instance-type v-if="endpointType === 'vsphere'"
                       v-bind:value="instanceTypeValue"
                       v-bind:model="{
                         name: {
                           header: i18n('app.environment.edit.nameLabel')
                         },
-                        cpu: {
-                          header: i18n('app.environment.edit.cpuLabel')
+                        cpuCount: {
+                          header: i18n('app.environment.edit.cpuCountLabel')
                         },
-                        disk: {
-                          header: i18n('app.environment.edit.diskLabel')
+                        diskSizeMb: {
+                          header: i18n('app.environment.edit.diskSizeMbLabel')
                         },
-                        mem: {
-                          header: i18n('app.environment.edit.memLabel')
+                        memoryMb: {
+                          header: i18n('app.environment.edit.memoryMbLabel')
                         }
                       }"></multicolumn-inputs>
                     <multicolumn-inputs v-ref:instance-type v-else
@@ -123,10 +126,10 @@
                 </div>
 
                 <div class="form-group imageType">
-                  <label class="col-sm-3">
+                  <label>
                     {{i18n('app.environment.edit.imageTypeLabel')}}
                   </label>
-                  <div class="col-sm-9">
+                  <div class="form-control">
                     <multicolumn-inputs v-ref:image-type
                       v-bind:value="imageTypeValue"
                       v-bind:model="{
@@ -144,27 +147,45 @@
             </div>
             <div role="tabpanel" class="tab-pane" id="network">
               <div class="form-horizontal">
-                <br><br><br><br><br><br>
+              </div>
+            </div>
+
+            <div role="tabpanel" class="tab-pane" id="storage">
+              <div class="form-horizontal" v-if="endpointType === 'azure'">
+                <div class="form-group bootDiskProperty">
+                  <label>
+                    {{i18n('app.environment.edit.bootDiskPropertyLabel')}}
+                  </label>
+                  <div class="form-control">
+                    <multicolumn-inputs v-ref:boot-disk-property
+                      v-bind:value="bootDiskPropertyValue"
+                      v-bind:model="{
+                        name: {
+                          header: i18n('app.environment.edit.nameLabel')
+                        },
+                        value: {
+                          header: i18n('app.environment.edit.valueLabel')
+                        }
+                      }"></multicolumn-inputs>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="form-group">
-        <div class="col-sm-12">
-          <div class="pull-right control-btns">
-            <button type="submit" class="btn btn-primary"
-                    v-bind:class="{'loading': model.saving}"
-                    v-bind:disabled="saveDisabled"
-                    v-on:click="saveEnvironment">
-              {{i18n("app.environment.edit.save")}}
-              <i class="fa fa-spinner fa-spin loader-inline"></i></button>
-            <span class="help-block"></span>
-          </div>
-        </div>
+      <div class="control-btns">
+        <button type="submit" class="btn btn-primary"
+                v-bind:class="{'loading': model.saving}"
+                v-bind:disabled="saveDisabled"
+                v-on:click="save($event)">
+          {{i18n("app.environment.edit.save")}}
+          <i class="fa fa-spinner fa-spin loader-inline"></i></button>
+        <span class="help-block"></span>
       </div>
-    </div>
+
+    </form>
 
     <div class="mask" v-bind:class="{'hide': !contextExpanded}"></div>
   </div>

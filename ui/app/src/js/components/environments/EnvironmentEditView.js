@@ -25,7 +25,6 @@ var EnvironmentEditView = Vue.extend({
   },
   data: function() {
     return {
-      endpointType: null,
       saveDisabled: true
     };
   },
@@ -40,6 +39,10 @@ var EnvironmentEditView = Vue.extend({
     contextExpanded: function() {
       return this.model.contextView && this.model.contextView.expanded;
     },
+    endpointType: function() {
+      return (this.model.item.endpoint && this.model.item.endpoint.endpointType) ||
+          this.model.item.endpointType;
+    },
     instanceTypeValue: function() {
       if (this.model.item.computeProfile) {
         var mappings = this.model.item.computeProfile.instanceTypeMapping;
@@ -47,9 +50,9 @@ var EnvironmentEditView = Vue.extend({
           if (this.endpointType === 'vsphere') {
             return {
               name: key,
-              cpu: mappings[key].cpuCount,
-              disk: mappings[key].diskSizeMb,
-              mem: mappings[key].memoryMb
+              cpuCount: mappings[key].cpuCount,
+              diskSizeMb: mappings[key].diskSizeMb,
+              memoryMb: mappings[key].memoryMb
             };
           } else {
             return {
@@ -69,6 +72,20 @@ var EnvironmentEditView = Vue.extend({
             name: key,
             value: mappings[key].image
           };
+        });
+      }
+      return {};
+    },
+    bootDiskPropertyValue: function() {
+      if (this.model.item.storageProfile) {
+        var mappings = this.model.item.storageProfile.bootDiskPropertyMapping;
+        return Object.keys(mappings).map((key) => {
+          if (this.endpointType === 'azure') {
+            return {
+              name: key,
+              value: mappings[key]
+            };
+          }
         });
       }
       return {};
@@ -92,7 +109,8 @@ var EnvironmentEditView = Vue.extend({
           this.tagsInput.setValue(model.item.tags);
           this.tags = this.tagsInput.getValue();
         }
-        this.saveDisabled = !this.model.item.name || !this.model.item.endpoint;
+        this.saveDisabled = !this.model.item.name ||
+          !(this.model.item.endpointType || this.model.item.endpoint);
     }, {immediate: true});
   },
   detached: function() {
@@ -102,7 +120,10 @@ var EnvironmentEditView = Vue.extend({
     goBack: function() {
       NavigationActions.openEnvironments();
     },
-    saveEnvironment: function() {
+    save: function($event) {
+      $event.stopImmediatePropagation();
+      $event.preventDefault();
+
       let model = this.getModel();
       let tags = this.tagsInput.getValue();
       if (model.documentSelfLink) {
@@ -123,31 +144,33 @@ var EnvironmentEditView = Vue.extend({
     onNameChange: function() {
       Vue.nextTick(() => {
         var model = this.getModel();
-        this.saveDisabled = !model.name || !this.endpoint;
+        this.saveDisabled = !model.name || !(model.endpointType || this.endpoint);
       });
     },
     onEndpointChange: function(endpoint) {
       this.endpoint = endpoint;
-      this.endpointType = endpoint ? endpoint.endpointType : null;
       Vue.nextTick(() => {
         var model = this.getModel();
-        this.saveDisabled = !model.name || !this.endpoint;
+        this.saveDisabled = !model.name || !(model.endpointType || this.endpoint);
       });
     },
     getModel: function() {
       var toSave = $.extend({ properties: {} }, this.model.item.asMutable({deep: true}));
 
       toSave.name = $(this.$el).find('.name input').val();
-      toSave.endpointType = this.endpoint && this.endpointType;
+      toSave.endpointLink = this.endpoint && this.endpoint.documentSelfLink;
+      toSave.computeProfile = toSave.computeProfile || {};
+      toSave.storageProfile = toSave.storageProfile || {};
+      toSave.networkProfile = toSave.networkProfile || {};
 
       if (this.$refs.instanceType) {
         var instanceType = this.$refs.instanceType.getData();
         toSave.computeProfile.instanceTypeMapping = instanceType.reduce((previous, current) => {
-          if (this.endpointType === 'vsphere') {
+          if (toSave.endpointType === 'vsphere') {
             previous[current.name] = {
-              cpuCount: current.cpu,
-              diskSizeMb: current.disk,
-              memoryMb: current.mem
+              cpuCount: current.cpuCount,
+              diskSizeMb: current.diskSizeMb,
+              memoryMb: current.memoryMb
             };
           } else {
             previous[current.name] = {

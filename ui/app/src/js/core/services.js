@@ -1048,6 +1048,30 @@ services.deleteEnvironment = function(environment) {
   return deleteEntity(environment.documentSelfLink);
 };
 
+services.createComputeProfile = function(profile) {
+  return post(links.COMPUTE_PROFILES, profile);
+};
+
+services.updateComputeProfile = function(profile) {
+  return put(profile.documentSelfLink, profile);
+};
+
+services.createNetworkProfile = function(profile) {
+  return post(links.NETWORK_PROFILES, profile);
+};
+
+services.updateNetworkProfile = function(profile) {
+  return put(profile.documentSelfLink, profile);
+};
+
+services.createStorageProfile = function(profile) {
+  return post(links.STORAGE_PROFILES, profile);
+};
+
+services.updateStorageProfile = function(profile) {
+  return put(profile.documentSelfLink, profile);
+};
+
 services.searchEndpoints = function(query, limit) {
   let filter = buildOdataQuery({
     name: [{

@@ -104,13 +104,26 @@ let EnvironmentsStore = Reflux.createStore({
       let data = $.extend({}, model, {
         tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
       });
-      services.createEnvironment(data).then(() => {
+      Promise.all([
+        services.createComputeProfile(data.computeProfile),
+        services.createNetworkProfile(data.networkProfile),
+        services.createStorageProfile(data.storageProfile)
+      ]).then(([computeProfile, networkProfile, storageProfile]) => {
+        data = $.extend(data, {
+          computeProfileLink: computeProfile.documentSelfLink,
+          networkProfileLink: networkProfile.documentSelfLink,
+          storageProfileLink: storageProfile.documentSelfLink
+        });
+        return services.createEnvironment(data);
+      }).then(() => {
         NavigationActions.openEnvironments();
         this.setInData(['editingItemData'], null);
         this.emitChange();
       }).catch(this.onGenericEditError);
     });
 
+    this.setInData(['editingItemData', 'item'], model);
+    this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
   },
@@ -123,13 +136,20 @@ let EnvironmentsStore = Reflux.createStore({
       let data = $.extend({}, model, {
         tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
       });
-      services.updateEnvironment(data).then(() => {
+      Promise.all([
+        services.updateComputeProfile(data.computeProfile),
+        services.updateNetworkProfile(data.networkProfile),
+        services.updateStorageProfile(data.storageProfile),
+        services.updateEnvironment(data)
+      ]).then(() => {
         NavigationActions.openEnvironments();
         this.setInData(['editingItemData'], null);
         this.emitChange();
       }).catch(this.onGenericEditError);
     });
 
+    this.setInData(['editingItemData', 'item'], model);
+    this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
   },

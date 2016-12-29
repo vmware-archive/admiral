@@ -45,6 +45,17 @@ var DropdownSearch = Vue.extend({
       });
       dropdownSearchMenu.setFilter(INITIAL_FILTER);
     }
+
+    this.unwatchDisabled = this.$watch('disabled', (disabled) => {
+      dropdownSearchMenu.setDisabled(disabled);
+    });
+    this.unwatchValue = this.$watch('value', (value) => {
+      dropdownSearchMenu.setSelectedOption(value);
+    });
+  },
+  detached: function() {
+    this.unwatchDisabled();
+    this.unwatchValue();
   }
 });
 

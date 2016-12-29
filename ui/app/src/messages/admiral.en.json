@@ -435,11 +435,12 @@
         "tagsLabel": "Tags",
         "endpointLabel": "Endpoint",
         "valueLabel": "Value",
-        "cpuLabel": "CPUs",
-        "diskLabel": "Disk size",
-        "memLabel": "Memory",
         "instanceTypeLabel": "Instance type",
-        "imageTypeLabel": "Image type"
+        "imageTypeLabel": "Image type",
+        "bootDiskPropertyLabel": "Boot Disk Property",
+        "cpuCountLabel": "CPUs",
+        "diskSizeMbLabel": "Disk size",
+        "memoryMbLabel": "Memory"
       },
       "instanceType": {
         "aws": {

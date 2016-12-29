@@ -24,6 +24,12 @@ var EnvironmentItem = Vue.extend({
     }
   },
   computed: {
+    endpointName: function() {
+      return (this.model.endpoint && this.model.endpoint.name) || '';
+    },
+    endpointType: function() {
+      return (this.model.endpoint && this.model.endpoint.endpointType) || this.model.endpointType;
+    }
   },
   attached: function() {
   },

@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="endpointEdit">
+<form class="endpointEdit">
   <alert alert-type="danger"
          v-bind:show-alert="model.validationErrors && model.validationErrors._generic"
          v-bind:alert-message="model.validationErrors && model.validationErrors._generic"></alert>
@@ -65,7 +65,7 @@
           <input class="form-control" v-bind:value="endpointProperties.privateKeyId" v-on:input="onInputChange()"/>
         </div>
       </div>
-      <div class="form-group col-md-12" v-if="!showInput('nimbus')">
+      <div class="form-group col-md-12" v-if="!showInput(null)">
         <label class="col-md-4" v-if="showInput('vsphere')">
           {{i18n('app.endpoint.edit.passwordLabel')}}
           <span class="requiredFieldMark">*</span>
@@ -78,7 +78,7 @@
           <input class="form-control" type="password" v-bind:value="endpointProperties.privateKey" v-on:input="onInputChange()"/>
         </div>
       </div>
-      <div class="form-group col-md-12" v-if="!showInput('nimbus')">
+      <div class="form-group col-md-12" v-if="!showInput(null)">
         <label class="col-md-4" v-if="showInput('vsphere')">
           {{i18n('app.endpoint.edit.datacenterIdLabel')}}
         </label>
@@ -110,4 +110,4 @@
       </div>
     </div>
   </div>
-</div>
+</form>
