@@ -45,45 +45,45 @@ public class UpgradeNewService5 extends StatefulService {
         public String field2;
 
         @Deprecated
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field3;
 
         @Deprecated
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field4;
 
         @Deprecated
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field5;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field345;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field6;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field7;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field8;
 
         @Deprecated
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field678;

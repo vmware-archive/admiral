@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.test.upgrade.version2;
 
+import static com.vmware.admiral.test.upgrade.common.UpgradeUtil.JSON_MAPPER;
+import static com.vmware.admiral.test.upgrade.common.UpgradeUtil.JSON_PARSER;
+
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +25,9 @@ import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonSyntaxException;
 
 import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.AssertUtil;
@@ -54,22 +59,22 @@ public class UpgradeNewService3 extends StatefulService {
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field2;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Long field3;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Set<String> field4;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Map<String, String> field5;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Map<String, String> field6;
@@ -79,63 +84,46 @@ public class UpgradeNewService3 extends StatefulService {
 
     static {
         Utils.registerCustomJsonMapper(UpgradeNewService3State.class,
-                new JsonMapper((b) -> {
-                    b.registerTypeAdapter(Long.class,
-                            UpdateNewService3StateLongConverter.INSTANCE);
-                    b.registerTypeAdapter(Map.class,
-                            UpdateNewService3StateMapConverter.INSTANCE);
-                }));
+                new JsonMapper((b) -> b.registerTypeAdapter(
+                        UpgradeNewService3State.class,
+                        UpdateNewService3StateConverter.INSTANCE)));
     }
 
-    private enum UpdateNewService3StateLongConverter implements JsonDeserializer<Long> {
+    private enum UpdateNewService3StateConverter
+            implements JsonDeserializer<UpgradeNewService3State> {
 
         INSTANCE;
 
+        @SuppressWarnings("unchecked")
         @Override
-        public Long deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-                throws JsonParseException {
-            /*
-             * The deserializer is applied to all the fields from UpgradeNewService3State of type
-             * Long, not only "field3" (i.e. "documentVersion", etc.). Maybe there's a better way...
-             */
-            try {
-                // it's already a Long
-                return json.getAsLong();
-            } catch (NumberFormatException e) {
-                String asString = json.getAsString();
-                // ---- custom transformation logic here ---
-                if ("fortytwo".equals(asString)) {
-                    return 42L;
-                } else {
-                    throw e;
-                }
-            }
-        }
-    }
-
-    private enum UpdateNewService3StateMapConverter
-            implements JsonDeserializer<Map<String, String>> {
-
-        INSTANCE;
-
-        @Override
-        public Map<String, String> deserialize(JsonElement json, Type typeOfT,
+        public UpgradeNewService3State deserialize(JsonElement json, Type typeOfT,
                 JsonDeserializationContext context) throws JsonParseException {
-            /*
-             * The deserializer is applied to all the fields from UpgradeNewService3State of type
-             * Map, not only "field5" (i.e. "field6", etc.). Maybe there's a better way...
-             */
-            if (json.isJsonObject()) {
-                // it's already a Map
-                return Utils.fromJson(json, typeOfT);
+            try {
+                return JSON_MAPPER.fromJson(json, UpgradeNewService3State.class);
+            } catch (JsonSyntaxException e) {
+                JsonObject jsonObject = json.getAsJsonObject();
+
+                // ---- custom transformation logic here ---
+
+                // "field3" upgrade: String -> Long
+
+                JsonElement field3 = jsonObject.remove("field3");
+                String oldField3Value = field3.getAsString();
+                Long newField3Value = ("fortytwo".equals(oldField3Value)) ? 42L : 0L;
+                jsonObject.addProperty("field3", newField3Value);
+
+                // "field5" upgrade: List ("a", "b", "c") -> Map ("a=a", "b=b", "c=c")
+
+                JsonElement field5 = jsonObject.remove("field5");
+                List<String> oldField5Value = Utils.fromJson(field5, List.class);
+                Map<String, String> newField5Value = oldField5Value.stream()
+                        .collect(Collectors.toMap(Function.identity(), Function.identity()));
+                jsonObject.add("field5", JSON_PARSER.parse(Utils.toJson(newField5Value)));
+
+                UpgradeUtil.trackStateUpgraded(jsonObject);
+
+                return JSON_MAPPER.fromJson(json, UpgradeNewService3State.class);
             }
-            // ---- custom transformation logic here ---
-            // e.g. "a", "b", "c" -> "a=a", "b=b", "c=c"
-            @SuppressWarnings("unchecked")
-            List<String> asList = Utils.fromJson(json, List.class);
-            Map<String, String> asMap = asList.stream()
-                    .collect(Collectors.toMap(Function.identity(), Function.identity()));
-            return asMap;
         }
     }
 
@@ -163,7 +151,10 @@ public class UpgradeNewService3 extends StatefulService {
     }
 
     private void handleStateUpgrade(UpgradeNewService3State state) {
-        // handle the case when a field becomes mandatory...
+        // update Lucene index if needed
+        if (UpgradeUtil.untrackStateUpgraded(state)) {
+            UpgradeUtil.forceLuceneIndexUpdate(getHost(), state);
+        }
     }
 
 }

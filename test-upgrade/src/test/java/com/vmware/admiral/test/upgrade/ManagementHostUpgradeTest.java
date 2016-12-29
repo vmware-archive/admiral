@@ -35,6 +35,8 @@ import com.vmware.admiral.test.upgrade.version1.UpgradeOldService3.UpgradeOldSer
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService4.UpgradeOldService4State;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService5.UpgradeOldService5State;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService6.UpgradeOldService6State;
+import com.vmware.admiral.test.upgrade.version1.UpgradeOldService7.UpgradeOldService7State;
+import com.vmware.admiral.test.upgrade.version1.UpgradeOldService8.UpgradeOldService8State;
 import com.vmware.admiral.test.upgrade.version2.BrandNewService.BrandNewServiceState;
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewHost;
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewService1.UpgradeNewService1State;
@@ -43,6 +45,8 @@ import com.vmware.admiral.test.upgrade.version2.UpgradeNewService3.UpgradeNewSer
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewService4.UpgradeNewService4State;
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewService5.UpgradeNewService5State;
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewService6.UpgradeNewService6State;
+import com.vmware.admiral.test.upgrade.version2.UpgradeNewService7.UpgradeNewService7State;
+import com.vmware.admiral.test.upgrade.version2.UpgradeNewService8.UpgradeNewService8State;
 
 public class ManagementHostUpgradeTest extends ManagementHostUpgradeBaseTest {
 
@@ -607,6 +611,150 @@ public class ManagementHostUpgradeTest extends ManagementHostUpgradeBaseTest {
         instances = queryUpgradeServiceInstances(UpgradeNewService6State.class,
                 "brandNewServiceLink", brandNewServiceInstance.documentSelfLink);
         assertEquals(2, instances.size());
+
+        stopHost(upgradeHost);
+    }
+
+    @Test
+    public void testService7ChangeFieldName() throws Throwable {
+
+        upgradeHost = startHost(UpgradeOldHost.class, hostPort, hostSandbox);
+
+        UpgradeOldService7State oldState = new UpgradeOldService7State();
+        oldState.field1 = "foo";
+        oldState.field2 = "bar";
+        oldState.field3 = "field3";
+
+        UpgradeOldService7State instance1 = createUpgradeServiceInstance(oldState);
+
+        assertNotNull(instance1);
+        assertEquals(oldState.field1, instance1.field1);
+        assertEquals(oldState.field2, instance1.field2);
+        assertEquals(oldState.field3, instance1.field3);
+
+        stopHost(upgradeHost);
+
+        /*
+         * ---- Upgrade occurs here ----
+         */
+
+        upgradeHost = startHost(UpgradeNewHost.class, hostPort, hostSandbox);
+        waitForServiceAvailability(upgradeHost, instance1.documentSelfLink);
+
+        // get old instance
+
+        UpgradeNewService7State instance2 = getUpgradeServiceInstance(instance1.documentSelfLink,
+                UpgradeNewService7State.class);
+        assertNotNull(instance2);
+        assertEquals(oldState.field1, instance2.field1);
+        assertEquals(oldState.field2, instance2.field2);
+        assertEquals(oldState.field3, instance2.upgradedField3);
+
+        Collection<UpgradeNewService7State> instances;
+        instances = queryUpgradeServiceInstances(UpgradeNewService7State.class, "field3",
+                "field3");
+        assertEquals(0, instances.size());
+        instances = queryUpgradeServiceInstances(UpgradeNewService7State.class, "upgradedField3",
+                "field3");
+        assertEquals(1, instances.size());
+
+        // update old instance
+
+        instance2.upgradedField3 = instance2.upgradedField3 + "-new";
+
+        instance2 = updateUpgradeServiceInstance(instance2);
+        assertNotNull(instance2);
+        assertEquals(oldState.field1, instance2.field1);
+        assertEquals(oldState.field2, instance2.field2);
+        assertEquals("field3-new", instance2.upgradedField3);
+
+        instances = queryUpgradeServiceInstances(UpgradeNewService7State.class, "upgradedField3",
+                "field3");
+        assertEquals(0, instances.size());
+        instances = queryUpgradeServiceInstances(UpgradeNewService7State.class, "upgradedField3",
+                "field3-new");
+        assertEquals(1, instances.size());
+
+        // CRU new instance
+
+        UpgradeNewService7State newState = new UpgradeNewService7State();
+        newState.field1 = "foo";
+        newState.field2 = "bar";
+        newState.upgradedField3 = "field3";
+
+        instance2 = createUpgradeServiceInstance(newState);
+
+        assertNotNull(instance2);
+        assertEquals(newState.field1, instance2.field1);
+        assertEquals(newState.field2, instance2.field2);
+        assertEquals(newState.upgradedField3, instance2.upgradedField3);
+
+        instances = queryUpgradeServiceInstances(UpgradeNewService7State.class, "upgradedField3",
+                "field3");
+        assertEquals(1, instances.size());
+
+        stopHost(upgradeHost);
+    }
+
+    @Test
+    public void testService8RemoveField() throws Throwable {
+
+        upgradeHost = startHost(UpgradeOldHost.class, hostPort, hostSandbox);
+
+        UpgradeOldService8State oldState = new UpgradeOldService8State();
+        oldState.field1 = "foo";
+        oldState.field2 = "bar";
+        oldState.field3 = "field3";
+
+        UpgradeOldService8State instance1 = createUpgradeServiceInstance(oldState);
+
+        assertNotNull(instance1);
+        assertEquals(oldState.field1, instance1.field1);
+        assertEquals(oldState.field2, instance1.field2);
+        assertEquals(oldState.field3, instance1.field3);
+
+        stopHost(upgradeHost);
+
+        /*
+         * ---- Upgrade occurs here ----
+         */
+
+        upgradeHost = startHost(UpgradeNewHost.class, hostPort, hostSandbox);
+        waitForServiceAvailability(upgradeHost, instance1.documentSelfLink);
+
+        // get old instance
+
+        UpgradeNewService8State instance2 = getUpgradeServiceInstance(instance1.documentSelfLink,
+                UpgradeNewService8State.class);
+        assertNotNull(instance2);
+        assertEquals(oldState.field1, instance2.field1);
+        assertEquals(oldState.field2, instance2.field2);
+
+        Collection<UpgradeNewService7State> instances;
+        instances = queryUpgradeServiceInstances(UpgradeNewService7State.class, "field3",
+                "field3");
+        assertEquals(0, instances.size());
+
+        // update old instance
+
+        instance2.field1 = instance2.field1 + "-new";
+
+        instance2 = updateUpgradeServiceInstance(instance2);
+        assertNotNull(instance2);
+        assertEquals("foo-new", instance2.field1);
+        assertEquals(oldState.field2, instance2.field2);
+
+        // CRU new instance
+
+        UpgradeNewService8State newState = new UpgradeNewService8State();
+        newState.field1 = "foo";
+        newState.field2 = "bar";
+
+        instance2 = createUpgradeServiceInstance(newState);
+
+        assertNotNull(instance2);
+        assertEquals(newState.field1, instance2.field1);
+        assertEquals(newState.field2, instance2.field2);
 
         stopHost(upgradeHost);
     }

@@ -14,7 +14,6 @@ package com.vmware.admiral.test.integration;
 import java.util.Properties;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
@@ -39,7 +38,6 @@ public class ContentCheckIT {
 
     private static final String AUTH_CREDENTIALS_NAME_KEY = "__authCredentialsName";
 
-    @Ignore("It fails in CI and not sure what it's supposed to be testing...")
     @Test
     public void test() throws Exception {
         // Credentials

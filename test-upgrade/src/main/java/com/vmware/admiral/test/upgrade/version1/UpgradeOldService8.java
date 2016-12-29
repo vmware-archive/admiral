@@ -9,14 +9,10 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.upgrade.version2;
+package com.vmware.admiral.test.upgrade.version1;
 
-import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
-
-import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.test.upgrade.common.UpgradeUtil;
-import com.vmware.admiral.test.upgrade.version1.UpgradeOldService4;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -24,15 +20,15 @@ import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.Utils;
 
 /**
- * Represents the base service {@link UpgradeOldService4} with new field link to a new service.
+ * Represents a base service that will be upgraded.
  */
-public class UpgradeNewService6 extends StatefulService {
+public class UpgradeOldService8 extends StatefulService {
 
-    public static final String FACTORY_LINK = UpgradeUtil.UPGRADE_SERVICE6_FACTORY_LINK;
+    public static final String FACTORY_LINK = UpgradeUtil.UPGRADE_SERVICE8_FACTORY_LINK;
 
-    public static class UpgradeNewService6State extends ServiceDocument {
+    public static class UpgradeOldService8State extends ServiceDocument {
 
-        public static final String KIND = UpgradeUtil.UPGRADE_SERVICE6_STATE_KIND;
+        public static final String KIND = UpgradeUtil.UPGRADE_SERVICE8_STATE_KIND;
 
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
@@ -42,14 +38,13 @@ public class UpgradeNewService6 extends StatefulService {
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field2;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
-        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
+        @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public String brandNewServiceLink;
+        public String field3;
     }
 
-    public UpgradeNewService6() {
-        super(UpgradeNewService6State.class);
+    public UpgradeOldService8() {
+        super(UpgradeOldService8State.class);
         toggleOption(ServiceOption.IDEMPOTENT_POST, true);
         toggleOption(ServiceOption.PERSISTENCE, true);
         toggleOption(ServiceOption.REPLICATION, true);
@@ -58,19 +53,11 @@ public class UpgradeNewService6 extends StatefulService {
 
     @Override
     public void handleStart(Operation post) {
-        UpgradeNewService6State body = post.getBody(UpgradeNewService6State.class);
+        UpgradeOldService8State body = post.getBody(UpgradeOldService8State.class);
         AssertUtil.assertNotNull(body, "body");
-
-        // upgrade the old entities accordingly...
-        handleStateUpgrade(body);
-
         // validate based on annotations
         Utils.validateState(getStateDescription(), body);
         super.handleStart(post);
-    }
-
-    private void handleStateUpgrade(UpgradeNewService6State state) {
-        // handle the case when a field becomes mandatory...
     }
 
 }

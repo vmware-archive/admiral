@@ -22,13 +22,13 @@ public final class ReleaseConstants {
     private ReleaseConstants() {
     }
 
-    public static final int RELEASE_VERSION_0_9_3 = 93;
+    public static final int RELEASE_VERSION_0_9_5 = 95;
 
     // Other examples:
-    // public static final int RELEASE_VERSION_0_9_4 = 94;
+    // public static final int RELEASE_VERSION_0_9_6 = 96;
     // public static final int RELEASE_VERSION_1_0_0 = 100;
 
     // Alternative, if we expect/want double digits, it could be something like:
-    // public static final int RELEASE_VERSION_5_10_4 = 5 * 10000 + 10 * 100 + 4;
+    // public static final int RELEASE_VERSION_4_12_3 = 4 * 10000 + 12 * 100 + 3;
 
 }

@@ -12,7 +12,13 @@
 package com.vmware.admiral.test.upgrade.common;
 
 import java.net.URI;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService1.UpgradeOldService1State;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService2.UpgradeOldService2State;
@@ -20,6 +26,8 @@ import com.vmware.admiral.test.upgrade.version1.UpgradeOldService3.UpgradeOldSer
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService4.UpgradeOldService4State;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService5.UpgradeOldService5State;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService6.UpgradeOldService6State;
+import com.vmware.admiral.test.upgrade.version1.UpgradeOldService7.UpgradeOldService7State;
+import com.vmware.admiral.test.upgrade.version1.UpgradeOldService8.UpgradeOldService8State;
 import com.vmware.admiral.test.upgrade.version2.BrandNewService.BrandNewServiceState;
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewService1.UpgradeNewService1State;
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewService2.UpgradeNewService2State;
@@ -27,16 +35,36 @@ import com.vmware.admiral.test.upgrade.version2.UpgradeNewService3.UpgradeNewSer
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewService4.UpgradeNewService4State;
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewService5.UpgradeNewService5State;
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewService6.UpgradeNewService6State;
+import com.vmware.admiral.test.upgrade.version2.UpgradeNewService7.UpgradeNewService7State;
+import com.vmware.admiral.test.upgrade.version2.UpgradeNewService8.UpgradeNewService8State;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.serialization.JsonMapper;
 
 public final class UpgradeUtil {
 
     private UpgradeUtil() {
     }
+
+    /*
+     * This set is used to track the states that have been upgraded through a customized
+     * JsonDeserializer so when the handleStart occurs for those states they can be automatically
+     * "refreshed" (i.e. do a self PUT to update their Lucene index) to allow queries based on
+     * upgraded fields to work right away.
+     * Alternative ways (e.g. using ThreadLocal flags) can be evaluated as well.
+     */
+    private static final Set<String> UPGRADED_STATES = ConcurrentHashMap.newKeySet();
+
+    /*
+     * WARNING! This default JSON_MAPPER ignores Xenon's Utils.CUSTOM_JSON customizations! This may
+     * be an issue if the mapped class attributes override their default mappers as well.
+     */
+    public static final JsonMapper JSON_MAPPER = new JsonMapper();
+
+    public static final JsonParser JSON_PARSER = new JsonParser();
 
     public static final String UPGRADE_SERVICE1_FACTORY_LINK = "/upgrade/service1-services";
     public static final String UPGRADE_SERVICE2_FACTORY_LINK = "/upgrade/service2-services";
@@ -44,6 +72,8 @@ public final class UpgradeUtil {
     public static final String UPGRADE_SERVICE4_FACTORY_LINK = "/upgrade/service4-services";
     public static final String UPGRADE_SERVICE5_FACTORY_LINK = "/upgrade/service5-services";
     public static final String UPGRADE_SERVICE6_FACTORY_LINK = "/upgrade/service6-services";
+    public static final String UPGRADE_SERVICE7_FACTORY_LINK = "/upgrade/service7-services";
+    public static final String UPGRADE_SERVICE8_FACTORY_LINK = "/upgrade/service8-services";
 
     public static final String UPGRADE_BRAND_NEW_SERVICE_FACTORY_LINK = "/upgrade/brand-new-service-services";
 
@@ -59,6 +89,10 @@ public final class UpgradeUtil {
             .buildKind(UpgradeOldService5State.class);
     public static final String UPGRADE_SERVICE6_STATE_KIND = Utils
             .buildKind(UpgradeOldService6State.class);
+    public static final String UPGRADE_SERVICE7_STATE_KIND = Utils
+            .buildKind(UpgradeOldService7State.class);
+    public static final String UPGRADE_SERVICE8_STATE_KIND = Utils
+            .buildKind(UpgradeOldService8State.class);
 
     public static String getFactoryLinkByDocumentKind(ServiceDocument doc) {
         if (doc instanceof BrandNewServiceState) {
@@ -81,6 +115,12 @@ public final class UpgradeUtil {
         } else if ((doc instanceof UpgradeOldService6State)
                 || (doc instanceof UpgradeNewService6State)) {
             return UPGRADE_SERVICE6_FACTORY_LINK;
+        } else if ((doc instanceof UpgradeOldService7State)
+                || (doc instanceof UpgradeNewService7State)) {
+            return UPGRADE_SERVICE7_FACTORY_LINK;
+        } else if ((doc instanceof UpgradeOldService8State)
+                || (doc instanceof UpgradeNewService8State)) {
+            return UPGRADE_SERVICE8_FACTORY_LINK;
         } else {
             throw new IllegalArgumentException(
                     "Unkown factory link for type '" + doc.getClass().getSimpleName() + "'!");
@@ -112,6 +152,31 @@ public final class UpgradeUtil {
                                 doc.documentSelfLink, Utils.toString(ex));
                     }
                 }));
+    }
+
+    /**
+     * Tracks an upgraded object (extending {@link ServiceDocument}) based on its documentSelfLink.
+     *
+     * @param jsonObject
+     *            {@link JsonObject}
+     */
+    public static void trackStateUpgraded(JsonObject jsonObject) {
+        JsonElement jsonElement = jsonObject.get("documentSelfLink");
+        if (jsonElement != null) {
+            UPGRADED_STATES.add(jsonElement.getAsString());
+        }
+    }
+
+    /**
+     * Untracks an upgraded object (extending {@link ServiceDocument}) based on its
+     * documentSelfLink.
+     *
+     * @param doc
+     *            {@link ServiceDocument}
+     * @return {@code true} if the specified object was being <b>still</b> tracked.
+     */
+    public static boolean untrackStateUpgraded(ServiceDocument doc) {
+        return UPGRADED_STATES.remove(doc.documentSelfLink);
     }
 
 }

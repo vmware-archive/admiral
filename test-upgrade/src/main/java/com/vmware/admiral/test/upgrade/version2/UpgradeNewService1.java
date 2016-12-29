@@ -44,17 +44,17 @@ public class UpgradeNewService1 extends StatefulService {
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field2;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String field3;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Long field4;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_3)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public List<String> field5;
