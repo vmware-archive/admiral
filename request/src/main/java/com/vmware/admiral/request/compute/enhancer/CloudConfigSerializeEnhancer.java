@@ -16,13 +16,13 @@ import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.objectMa
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
 import java.util.logging.Level;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.ServiceHost;
 
 public class CloudConfigSerializeEnhancer extends ComputeDescriptionEnhancer {
@@ -34,9 +34,8 @@ public class CloudConfigSerializeEnhancer extends ComputeDescriptionEnhancer {
     }
 
     @Override
-    public void enhance(EnhanceContext context,
-            ComputeDescription cd, BiConsumer<ComputeDescription, Throwable> callback) {
-
+    public DeferredResult<ComputeDescription> enhance(EnhanceContext context,
+            ComputeDescription cd) {
         if (context.content != null && !context.content.isEmpty()) {
             try {
                 context.content = order(context.content);
@@ -50,10 +49,11 @@ public class CloudConfigSerializeEnhancer extends ComputeDescriptionEnhancer {
                 cd.customProperties.put(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME,
                         cloudConfig);
             } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                host.log(Level.WARNING, "Error serializing cloud-config data, reason : %s",
+                        e.getMessage());
             }
         }
-        callback.accept(cd, null);
+        return DeferredResult.completed(cd);
     }
 
     private Map<String, Object> order(Map<String, Object> content) {

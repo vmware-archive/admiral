@@ -140,12 +140,13 @@ public class ComputeProvisionTaskService extends
             opsGetComputes.values().stream()
                     .map(op -> op.getBody(ComputeState.class))
                     .forEach(cs -> {
-                        enhancer.enhance(null, cs, (c, t) -> {
-                            comps.add(c);
-                            if (count.decrementAndGet() == 0) {
-                                updateComputes(comps);
-                            }
-                        });
+                        enhancer.enhance(null, cs)
+                                .whenComplete((c, t) -> {
+                                    comps.add(c);
+                                    if (count.decrementAndGet() == 0) {
+                                        updateComputes(comps);
+                                    }
+                                });
                     });
         };
 

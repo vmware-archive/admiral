@@ -209,12 +209,14 @@ public abstract class RequestBaseTest extends BaseTestCase {
         documentsForDeletion.add(doc);
     }
 
-    protected GroupResourcePlacementState createGroupResourcePlacement(ResourcePoolState resourcePool)
+    protected GroupResourcePlacementState createGroupResourcePlacement(
+            ResourcePoolState resourcePool)
             throws Throwable {
         return createGroupResourcePlacement(resourcePool, 10);
     }
 
-    protected GroupResourcePlacementState createGroupResourcePlacement(ResourcePoolState resourcePool,
+    protected GroupResourcePlacementState createGroupResourcePlacement(
+            ResourcePoolState resourcePool,
             int numberOfInstances) throws Throwable {
         synchronized (initializationLock) {
             if (groupPlacementState == null) {
@@ -336,7 +338,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected ComputeState createDockerHost(ComputeDescription computeDesc,
             ResourcePoolState resourcePool, Long availableMemory, boolean generateId)
             throws Throwable {
-        return createDockerHost(computeDesc, resourcePool, computeGroupPlacementState, availableMemory,
+        return createDockerHost(computeDesc, resourcePool, computeGroupPlacementState,
+                availableMemory,
                 null, generateId);
     }
 
@@ -349,8 +352,10 @@ public abstract class RequestBaseTest extends BaseTestCase {
             containerHost.id = UUID.randomUUID().toString();
         }
         containerHost.documentSelfLink = containerHost.id;
-        containerHost.resourcePoolLink = resourcePool.documentSelfLink;
+        containerHost.resourcePoolLink = resourcePool != null ? resourcePool.documentSelfLink
+                : null;
         containerHost.descriptionLink = computeDesc.documentSelfLink;
+        containerHost.powerState = com.vmware.photon.controller.model.resources.ComputeService.PowerState.ON;
 
         if (containerHost.customProperties == null) {
             containerHost.customProperties = new HashMap<>();

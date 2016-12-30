@@ -13,9 +13,9 @@ package com.vmware.admiral.request.compute.enhancer;
 
 import java.net.URI;
 import java.util.LinkedList;
-import java.util.function.BiConsumer;
 
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.ServiceHost;
 
 /**
@@ -45,21 +45,24 @@ public class ComputeDescriptionEnhancers extends ComputeDescriptionEnhancer {
     }
 
     @Override
-    public void enhance(EnhanceContext context, ComputeDescription resource,
-            BiConsumer<ComputeDescription, Throwable> callback) {
+    public DeferredResult<ComputeDescription> enhance(EnhanceContext context,
+            ComputeDescription cd) {
         ComputeDescriptionEnhancer enhancer = enhancers.poll();
-
         if (enhancer == null) {
-            callback.accept(resource, null);
-            return;
+            return DeferredResult.completed(cd);
         }
 
-        enhancer.enhance(context, resource, (cd, t) -> {
-            if (t != null) {
-                callback.accept(cd, t);
-                return;
-            }
-            enhance(context, cd, callback);
-        });
+        return doEnhance(context, cd, enhancer, enhancers.poll());
+    }
+
+    private DeferredResult<ComputeDescription> doEnhance(EnhanceContext context,
+            ComputeDescription cd, ComputeDescriptionEnhancer enhancer,
+            ComputeDescriptionEnhancer next) {
+
+        if (next != null) {
+            return enhancer.enhance(context, cd)
+                    .thenCompose(desc -> doEnhance(context, desc, next, enhancers.poll()));
+        }
+        return enhancer.enhance(context, cd);
     }
 }

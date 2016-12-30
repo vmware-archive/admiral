@@ -20,7 +20,6 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,6 +33,7 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.request.compute.enhancer.EnhancerUtils.WriteFiles;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
@@ -53,17 +53,19 @@ public class ContainerHostRemoteAPIComputeDescriptionEnhancer extends ComputeDes
     }
 
     @Override
-    public void enhance(EnhanceContext context, ComputeDescription cd,
-            BiConsumer<ComputeDescription, Throwable> callback) {
+    public DeferredResult<ComputeDescription> enhance(EnhanceContext context,
+            ComputeDescription cd) {
+        DeferredResult<ComputeDescription> result = new DeferredResult<>();
         String adapterType = getCustomProperty(cd,
                 ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME);
         if (adapterType == null || !DockerAdapterType.API.name().equals(adapterType)) {
-            callback.accept(cd, null);
-            return;
-        }
+            result.complete(cd);
+        } else {
 
-        applyPort(context, cd);
-        processCaCertSign(context, cd, callback);
+            applyPort(context, cd);
+            processCaCertSign(context, cd, result);
+        }
+        return result;
     }
 
     private void applyPort(EnhanceContext context, ComputeDescription cd) {
@@ -122,9 +124,8 @@ public class ContainerHostRemoteAPIComputeDescriptionEnhancer extends ComputeDes
         });
     }
 
-    private void processCaCertSign(EnhanceContext context,
-            ComputeDescription cd,
-            BiConsumer<ComputeDescription, Throwable> callback) {
+    private void processCaCertSign(EnhanceContext context, ComputeDescription cd,
+            DeferredResult<ComputeDescription> result) {
 
         Operation.createGet(host, ManagementUriParts.AUTH_CREDENTIALS_CA_LINK)
                 .setReferer(referer)
@@ -133,7 +134,7 @@ public class ContainerHostRemoteAPIComputeDescriptionEnhancer extends ComputeDes
                         host.log(Level.SEVERE,
                                 "Exception retrieving ca credentials. Error: %s",
                                 Utils.toString(e));
-                        callback.accept(cd, e);
+                        result.fail(e);
                         return;
                     }
                     AuthCredentialsServiceState caCred = o
@@ -141,7 +142,7 @@ public class ContainerHostRemoteAPIComputeDescriptionEnhancer extends ComputeDes
                     addServerCerts(context, caCred);
                     cd.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                             ManagementUriParts.AUTH_CREDENTIALS_CLIENT_LINK);
-                    callback.accept(cd, null);
+                    result.complete(cd);
                 })
                 .sendWith(host);
     }

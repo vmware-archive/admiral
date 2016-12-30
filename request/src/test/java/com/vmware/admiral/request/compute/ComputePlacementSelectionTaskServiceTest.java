@@ -14,6 +14,7 @@ package com.vmware.admiral.request.compute;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -55,7 +56,8 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
         ComputePlacementSelectionTaskState taskRequestState = new ComputePlacementSelectionTaskState();
         taskRequestState.computeDescriptionLink = computeDescription.documentSelfLink;
         taskRequestState.resourceCount = 1;
-        taskRequestState.resourcePoolLink = computeResourcePool.documentSelfLink;
+        taskRequestState.resourcePoolLinks = new ArrayList<>();
+        taskRequestState.resourcePoolLinks.add(computeResourcePool.documentSelfLink);
 
         ComputePlacementSelectionTaskState taskState = doPost(taskRequestState,
                 ComputePlacementSelectionTaskService.FACTORY_LINK);
@@ -64,11 +66,11 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
         taskState = waitForTaskSuccess(taskState.documentSelfLink,
                 ComputePlacementSelectionTaskState.class);
 
-        assertNotNull(taskState.selectedComputePlacementLinks);
-        assertEquals(taskState.selectedComputePlacementLinks.size(), 1);
+        assertNotNull(taskState.selectedComputePlacementHosts);
+        assertEquals(taskState.selectedComputePlacementHosts.size(), 1);
 
         ComputeState selectedComputeState = getDocument(ComputeState.class,
-                taskState.selectedComputePlacementLinks.iterator().next());
+                taskState.selectedComputePlacementHosts.iterator().next().hostLink);
         assertNotNull(selectedComputeState);
         assertEquals(selectedComputeState.documentSelfLink, vmGuestCompute.documentSelfLink);
     }

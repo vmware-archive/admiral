@@ -23,13 +23,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.request.compute.enhancer.EnhancerUtils.WriteFiles;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.DiskService;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceHost;
@@ -48,39 +48,39 @@ public class ComputeStateEnhancer implements Enhancer<ComputeState> {
     }
 
     @Override
-    public void enhance(EnhanceContext context, ComputeState cs,
-            BiConsumer<ComputeState, Throwable> callback) {
+    public DeferredResult<ComputeState> enhance(EnhanceContext context, ComputeState cs) {
         String cloudInit = getCustomProperty(cs.customProperties, COMPUTE_CONFIG_CONTENT_PROP_NAME);
 
+        DeferredResult<ComputeState> result = new DeferredResult<>();
         if (enableSoftwareManagement(cs)) {
             try {
                 cloudInit = applySoftwareServiceConfig(cloudInit, cs);
             } catch (IOException e) {
-                callback.accept(cs, e);
-                return;
+                return DeferredResult.failed(e);
             }
         }
 
         host.log(Level.INFO, "Cloud config file to use [%s]", cloudInit);
         if (cloudInit != null) {
             cs.customProperties.put(COMPUTE_CONFIG_CONTENT_PROP_NAME, cloudInit);
-            updateDisks(cs, cloudInit, callback);
+            updateDisks(cs, cloudInit, result);
         } else {
-            callback.accept(cs, null);
+            result.complete(cs);
         }
+        return result;
     }
 
     private void updateDisks(ComputeState cs, String cloudInit,
-            BiConsumer<ComputeState, Throwable> callback) {
+            DeferredResult<ComputeState> result) {
         if (cs.diskLinks == null || cs.diskLinks.isEmpty()) {
-            callback.accept(cs, null);
+            result.complete(cs);
             return;
         }
 
         OperationJoin.JoinedCompletionHandler getDisksCompletion = (opsGetDisks,
                 exsGetDisks) -> {
             if (exsGetDisks != null && !exsGetDisks.isEmpty()) {
-                callback.accept(cs, exsGetDisks.values().iterator().next());
+                result.fail(exsGetDisks.values().iterator().next());
                 return;
             }
 
@@ -97,15 +97,15 @@ public class ComputeStateEnhancer implements Enhancer<ComputeState> {
                     }).collect(Collectors.toList());
 
             if (updateOperations.isEmpty()) {
-                callback.accept(cs, null);
+                result.complete(cs);
                 return;
             }
             OperationJoin.create(updateOperations).setCompletion((opsUpdDisks, exsUpdDisks) -> {
                 if (exsUpdDisks != null && !exsUpdDisks.isEmpty()) {
-                    callback.accept(cs, exsUpdDisks.values().iterator().next());
+                    result.fail(exsGetDisks.values().iterator().next());
                     return;
                 }
-                callback.accept(cs, null);
+                result.complete(cs);
             }).sendWith(host);
         };
 

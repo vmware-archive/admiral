@@ -25,30 +25,18 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupR
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
-import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
-import com.vmware.photon.controller.model.resources.ResourcePoolService;
 
 public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
 
     @Override
     public void setUp() throws Throwable {
         startServices(host);
-        MockDockerAdapterService.resetContainers();
-
-        setUpDockerHostAuthentication();
         createEndpoint();
-        // setup Docker Host:
-        ResourcePoolService.ResourcePoolState resourcePool = createResourcePool();
+        createComputeResourcePool();
+        createVmGuestCompute(true);
         ComputeDescription dockerHostDesc = createDockerHostDescription();
-        createDockerHost(dockerHostDesc, resourcePool);
-
-        // clean the default reservation for the test below
-        try {
-            delete(DEFAULT_GROUP_RESOURCE_POLICY);
-        } catch (Throwable e) {
-            host.log("Exception during cleanup for: " + DEFAULT_GROUP_RESOURCE_POLICY);
-        }
+        createDockerHost(dockerHostDesc, null);
     }
 
     @Test
@@ -76,7 +64,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
                 .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         groupPlacementState.maxNumberInstances = 10;
-        groupPlacementState.resourcePoolLink = resourcePool.documentSelfLink;
+        groupPlacementState.resourcePoolLink = computeResourcePool.documentSelfLink;
         groupPlacementState.customProperties = new HashMap<>();
         groupPlacementState.customProperties.put("key1", "placement-value1");
         groupPlacementState.customProperties.put("key2", "placement-value2");
@@ -137,7 +125,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         GroupResourcePlacementState placementState = TestRequestStateFactory
                 .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         placementState.maxNumberInstances = 10;
-        placementState.resourcePoolLink = resourcePool.documentSelfLink;
+        placementState.resourcePoolLink = computeResourcePool.documentSelfLink;
         placementState.priority = 3;
         placementState = doPost(placementState, GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(placementState);
@@ -145,7 +133,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         GroupResourcePlacementState placementState1 = TestRequestStateFactory
                 .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         placementState1.maxNumberInstances = 10;
-        placementState1.resourcePoolLink = resourcePool.documentSelfLink;
+        placementState1.resourcePoolLink = computeResourcePool.documentSelfLink;
 
         placementState1.priority = 1;
         placementState1 = doPost(placementState1, GroupResourcePlacementService.FACTORY_LINK);
@@ -154,7 +142,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         GroupResourcePlacementState placementState2 = TestRequestStateFactory
                 .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         placementState2.maxNumberInstances = 10;
-        placementState2.resourcePoolLink = resourcePool.documentSelfLink;
+        placementState2.resourcePoolLink = computeResourcePool.documentSelfLink;
         placementState2.priority = 2;
         placementState2 = doPost(placementState2, GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(placementState2);
@@ -180,7 +168,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         GroupResourcePlacementState placementState = TestRequestStateFactory
                 .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         placementState.maxNumberInstances = 10;
-        placementState.resourcePoolLink = resourcePool.documentSelfLink;
+        placementState.resourcePoolLink = computeResourcePool.documentSelfLink;
         placementState.priority = 3;
         placementState = doPost(placementState, GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(placementState);

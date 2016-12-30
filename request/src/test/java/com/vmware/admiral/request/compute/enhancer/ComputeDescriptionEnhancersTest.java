@@ -48,6 +48,7 @@ import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
@@ -100,14 +101,16 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
     @Test
     public void testBaseEnhance() {
         TestContext ctx = testCreate(1);
-        ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                cd, (desc, t) -> {
-                    if (t != null) {
-                        ctx.failIteration(t);
-                        return;
-                    }
-                    ctx.completeIteration();
-                });
+        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
+                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
+                        cd);
+        result.whenComplete((desc, t) -> {
+            if (t != null) {
+                ctx.failIteration(t);
+                return;
+            }
+            ctx.completeIteration();
+        });
         ctx.await();
         assertNotNull("Expected to have content", context.content);
         assertTrue("Expected to empty content", context.content.isEmpty());
@@ -119,14 +122,16 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
                 "true");
 
         TestContext ctx = testCreate(1);
-        ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                cd, (desc, t) -> {
-                    if (t != null) {
-                        ctx.failIteration(t);
-                        return;
-                    }
-                    ctx.completeIteration();
-                });
+        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
+                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
+                        cd);
+        result.whenComplete((desc, t) -> {
+            if (t != null) {
+                ctx.failIteration(t);
+                return;
+            }
+            ctx.completeIteration();
+        });
         ctx.await();
 
         assertNotNull("Expected to have content", context.content);
@@ -148,14 +153,16 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
                 "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC1cbdZp...");
 
         TestContext ctx = testCreate(1);
-        ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                cd, (desc, t) -> {
-                    if (t != null) {
-                        ctx.failIteration(t);
-                        return;
-                    }
-                    ctx.completeIteration();
-                });
+        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
+                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
+                        cd);
+        result.whenComplete((desc, t) -> {
+            if (t != null) {
+                ctx.failIteration(t);
+                return;
+            }
+            ctx.completeIteration();
+        });
         ctx.await();
 
         assertNotNull("Expected to have content", context.content);
@@ -177,14 +184,16 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         cd.authCredentialsLink = getClientPublicKeyAuthAndSshKey().documentSelfLink;
 
         TestContext ctx = testCreate(1);
-        ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                cd, (desc, t) -> {
-                    if (t != null) {
-                        ctx.failIteration(t);
-                        return;
-                    }
-                    ctx.completeIteration();
-                });
+        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
+                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
+                        cd);
+        result.whenComplete((desc, t) -> {
+            if (t != null) {
+                ctx.failIteration(t);
+                return;
+            }
+            ctx.completeIteration();
+        });
         ctx.await();
 
         assertNotNull("Expected to have content", context.content);
@@ -206,14 +215,16 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         cd.authCredentialsLink = getClientPublicSshKeyAuth().documentSelfLink;
 
         TestContext ctx = testCreate(1);
-        ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                cd, (desc, t) -> {
-                    if (t != null) {
-                        ctx.failIteration(t);
-                        return;
-                    }
-                    ctx.completeIteration();
-                });
+        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
+                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
+                        cd);
+        result.whenComplete((desc, t) -> {
+            if (t != null) {
+                ctx.failIteration(t);
+                return;
+            }
+            ctx.completeIteration();
+        });
         ctx.await();
 
         assertNotNull("Expected to have content", context.content);
@@ -235,14 +246,16 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         cd.authCredentialsLink = getClientPublicKeyAuth().documentSelfLink;
 
         TestContext ctx = testCreate(1);
-        ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                cd, (desc, t) -> {
-                    if (t != null) {
-                        ctx.failIteration(t);
-                        return;
-                    }
-                    ctx.completeIteration();
-                });
+        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
+                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
+                        cd);
+        result.whenComplete((desc, t) -> {
+            if (t != null) {
+                ctx.failIteration(t);
+                return;
+            }
+            ctx.completeIteration();
+        });
         ctx.await();
 
         assertNotNull("Expected to have content", context.content);
@@ -265,14 +278,16 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
                 DockerAdapterType.API.name());
 
         TestContext ctx = testCreate(1);
-        ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                cd, (desc, t) -> {
-                    if (t != null) {
-                        ctx.failIteration(t);
-                        return;
-                    }
-                    ctx.completeIteration();
-                });
+        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
+                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
+                        cd);
+        result.whenComplete((desc, t) -> {
+            if (t != null) {
+                ctx.failIteration(t);
+                return;
+            }
+            ctx.completeIteration();
+        });
         ctx.await();
 
         assertNotNull("Expected to have content", context.content);
@@ -300,14 +315,16 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         cd.customProperties.put(ContainerHostService.DOCKER_HOST_PORT_PROP_NAME, "2376");
 
         TestContext ctx = testCreate(1);
-        ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                cd, (desc, t) -> {
-                    if (t != null) {
-                        ctx.failIteration(t);
-                        return;
-                    }
-                    ctx.completeIteration();
-                });
+        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
+                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
+                        cd);
+        result.whenComplete((desc, t) -> {
+            if (t != null) {
+                ctx.failIteration(t);
+                return;
+            }
+            ctx.completeIteration();
+        });
         ctx.await();
 
         assertNotNull("Expected to have content", context.content);
@@ -337,14 +354,16 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         cd.customProperties.put(ContainerHostService.DOCKER_HOST_PORT_PROP_NAME, "2376");
 
         TestContext ctx = testCreate(1);
-        ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                cd, (desc, t) -> {
-                    if (t != null) {
-                        ctx.failIteration(t);
-                        return;
-                    }
-                    ctx.completeIteration();
-                });
+        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
+                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
+                        cd);
+        result.whenComplete((desc, t) -> {
+            if (t != null) {
+                ctx.failIteration(t);
+                return;
+            }
+            ctx.completeIteration();
+        });
         ctx.await();
 
         assertNotNull("Expected to have content", context.content);
@@ -369,14 +388,16 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
                 DockerAdapterType.API.name());
 
         TestContext ctx = testCreate(1);
-        ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                cd, (desc, t) -> {
-                    if (t != null) {
-                        ctx.failIteration(t);
-                        return;
-                    }
-                    ctx.completeIteration();
-                });
+        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
+                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
+                        cd);
+        result.whenComplete((desc, t) -> {
+            if (t != null) {
+                ctx.failIteration(t);
+                return;
+            }
+            ctx.completeIteration();
+        });
         ctx.await();
 
         assertNotNull("Expected to have content", context.content);

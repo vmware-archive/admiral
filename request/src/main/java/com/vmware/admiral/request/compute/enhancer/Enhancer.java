@@ -12,10 +12,9 @@
 package com.vmware.admiral.request.compute.enhancer;
 
 import java.util.Map;
-import java.util.function.BiConsumer;
 
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.DeferredResult;
 
 /**
  * Enhancer is used to extend/adapt/enhance a specific Resource.
@@ -26,13 +25,16 @@ public interface Enhancer<T extends ResourceState> {
      * Enhance resource T. The callback will be invoke with the enhanced resource, in case of an
      * error the second parameter in the callback will be not null.
      */
-    void enhance(EnhanceContext context, T resource, BiConsumer<T, Throwable> callback);
+    DeferredResult<T> enhance(EnhanceContext context, T resource);
 
     static class EnhanceContext {
         public String environmentLink;
-        public ComputeDescription endpointComputeDescription;
+        public String regionId;
+        public String zoneId;
         public String endpointType;
         public String imageType;
         public Map<String, Object> content;
+        public boolean skipNetwork;
+
     }
 }

@@ -37,6 +37,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkService.Cont
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.ComputeProperties;
+import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
@@ -169,8 +170,13 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
     }
 
     public static ResourcePoolState createResourcePool() {
+        return createResourcePool(RESOURCE_POOL_ID,
+                UriUtils.buildUriPath(EndpointService.FACTORY_LINK, ENDPOINT_ID));
+    }
+
+    public static ResourcePoolState createResourcePool(String poolId, String endpointLink) {
         ResourcePoolState poolState = new ResourcePoolState();
-        poolState.name = RESOURCE_POOL_ID;
+        poolState.name = poolId;
         poolState.id = poolState.name;
         poolState.documentSelfLink = poolState.id;
         poolState.maxCpuCount = 1600L;
@@ -185,10 +191,9 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         poolState.customProperties = new HashMap<>(3);
         poolState.customProperties.put(ComputeConstants.ENDPOINT_AUTH_CREDNTIALS_PROP_NAME,
                 CommonTestStateFactory.AUTH_CREDENTIALS_ID);
-        poolState.customProperties.put(
-                ComputeProperties.ENDPOINT_LINK_PROP_NAME,
-                UriUtils.buildUriPath(EndpointService.FACTORY_LINK, ENDPOINT_ID));
-
+        if (endpointLink != null) {
+            poolState.customProperties.put(ComputeProperties.ENDPOINT_LINK_PROP_NAME, endpointLink);
+        }
         return poolState;
     }
 
@@ -266,7 +271,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         hostDescription.instanceType = "linux";
         hostDescription.customProperties = new HashMap<>();
         hostDescription.customProperties.put(
-                ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "linux");
+                ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
 
         return hostDescription;
     }
@@ -352,11 +357,16 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
     }
 
     public static EndpointState createEndpoint() {
+        EndpointState endpoint = createEndpoint(ENDPOINT_ID, EndpointType.aws);
+        return endpoint;
+    }
+
+    public static EndpointState createEndpoint(String endpointId, EndpointType type) {
         EndpointState endpoint = new EndpointState();
         endpoint.documentSelfLink = UriUtils.buildUriPath(EndpointService.FACTORY_LINK,
-                ENDPOINT_ID);
-        endpoint.endpointType = "aws";
-        endpoint.name = ENDPOINT_ID;
+                endpointId);
+        endpoint.endpointType = type.name();
+        endpoint.name = endpointId;
         endpoint.endpointProperties = new HashMap<>();
         endpoint.endpointProperties.put("privateKeyId", "testId");
         endpoint.endpointProperties.put("privateKey",

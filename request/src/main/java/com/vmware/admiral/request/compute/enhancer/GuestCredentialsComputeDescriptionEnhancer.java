@@ -28,6 +28,7 @@ import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.KeyUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
@@ -45,25 +46,22 @@ public class GuestCredentialsComputeDescriptionEnhancer extends ComputeDescripti
     }
 
     @Override
-    public void enhance(EnhanceContext context, ComputeDescription cd,
-            BiConsumer<ComputeDescription, Throwable> callback) {
-
+    public DeferredResult<ComputeDescription> enhance(EnhanceContext context,
+            ComputeDescription cd) {
         if (cd.authCredentialsLink == null && !cd.customProperties
                 .containsKey(ComputeConstants.CUSTOM_PROP_ENABLE_SSH_ACCESS_NAME)) {
-            callback.accept(cd, null);
-            return;
+            return DeferredResult.completed(cd);
         }
 
         String sshKey = getCustomProperty(cd, ComputeConstants.CUSTOM_PROP_SSH_AUTHORIZED_KEY_NAME);
         if (sshKey != null && !sshKey.isEmpty()) {
             addSshAuthorizedKeys(context, sshKey);
-            callback.accept(cd, null);
-            return;
+            return DeferredResult.completed(cd);
         }
-
+        DeferredResult<ComputeDescription> result = new DeferredResult<>();
         createClientCredentialsIfNeeded(cd, (c, t) -> {
             if (t != null) {
-                callback.accept(cd, t);
+                result.fail(t);
                 return;
             }
             cd.authCredentialsLink = c.documentSelfLink;
@@ -74,8 +72,9 @@ public class GuestCredentialsComputeDescriptionEnhancer extends ComputeDescripti
                 cd.customProperties.put(ComputeConstants.CUSTOM_PROP_SSH_AUTHORIZED_KEY_NAME,
                         sshAuthorizedKey);
             }
-            callback.accept(cd, null);
+            result.complete(cd);
         });
+        return result;
     }
 
     private void addSshAuthorizedKeys(EnhanceContext context, String sshKey) {

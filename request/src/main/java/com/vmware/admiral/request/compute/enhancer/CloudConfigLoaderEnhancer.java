@@ -19,17 +19,18 @@ import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.objectMa
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.Utils;
 
 public class CloudConfigLoaderEnhancer extends ComputeDescriptionEnhancer {
 
-    @SuppressWarnings("unchecked")
     @Override
-    public void enhance(EnhanceContext context, ComputeDescription cd,
-            BiConsumer<ComputeDescription, Throwable> callback) {
+    @SuppressWarnings("unchecked")
+    public DeferredResult<ComputeDescription> enhance(EnhanceContext context,
+            ComputeDescription cd) {
         String fileContent = getCustomProperty(cd,
                 ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME);
         if (fileContent == null) {
@@ -46,18 +47,20 @@ public class CloudConfigLoaderEnhancer extends ComputeDescriptionEnhancer {
                     context.content = new LinkedHashMap<>();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                Utils.logWarning("Error reading cloud-config data from %s, reason : %s",
+                        fileContent, e.getMessage());
             }
-            callback.accept(cd, null);
+            return DeferredResult.completed(cd);
         } else {
             try {
                 Map<String, Object> content = objectMapper().readValue(fileContent, Map.class);
 
                 context.content = content;
             } catch (IOException e) {
-                e.printStackTrace();
+                Utils.logWarning("Error reading cloud-config data from %s, reason : %s",
+                        fileContent, e.getMessage());
             }
-            callback.accept(cd, null);
+            return DeferredResult.completed(cd);
         }
     }
 }

@@ -49,6 +49,7 @@ import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
 import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentStateExpanded;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
+import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionEnhancers;
@@ -159,7 +160,7 @@ public class ComputeAllocationTaskService
         // the size of the collection equals the requested resource count
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
                 LINKS }, indexing = STORE_ONLY)
-        public Collection<String> selectedComputePlacementLinks;
+        public Collection<HostSelection> selectedComputePlacementHosts;
 
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
                 LINK }, indexing = STORE_ONLY)
@@ -469,14 +470,16 @@ public class ComputeAllocationTaskService
 
         EnhanceContext context = new EnhanceContext();
         context.environmentLink = state.environmentLink;
-        context.endpointComputeDescription = endpointComputeDescription;
+        context.regionId = endpointComputeDescription.regionId;
+        context.zoneId = endpointComputeDescription.zoneId;
         context.endpointType = state.endpointType;
         context.imageType = computeDesc.customProperties
                 .remove(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
 
         ComputeDescriptionEnhancers
                 .build(getHost(), UriUtils.buildUri(getHost().getPublicUri(), getSelfLink()))
-                .enhance(context, computeDesc, (cd, t) -> {
+                .enhance(context, computeDesc)
+                .whenComplete((cd, t) -> {
                     if (t != null) {
                         failTask("Failed patching compute description : "
                                 + Utils.toString(t), t);
@@ -545,12 +548,15 @@ public class ComputeAllocationTaskService
     private void selectPlacement(ComputeAllocationTaskState state) {
         String placementLink = state.customProperties.get(ComputeProperties.PLACEMENT_LINK);
         if (placementLink != null) {
-            ArrayList<String> placementLinks = new ArrayList<>(state.resourceCount.intValue());
+            ArrayList<HostSelection> placementLinks = new ArrayList<>(
+                    state.resourceCount.intValue());
             for (int i = 0; i < state.resourceCount; i++) {
-                placementLinks.add(placementLink);
+                HostSelection hostSelection = new HostSelection();
+                hostSelection.hostLink = placementLink;
+                placementLinks.add(hostSelection);
             }
             proceedTo(SubStage.START_COMPUTE_ALLOCATION, s -> {
-                s.selectedComputePlacementLinks = placementLinks;
+                s.selectedComputePlacementHosts = placementLinks;
             });
             return;
         }
@@ -560,7 +566,8 @@ public class ComputeAllocationTaskService
         computePlacementSelection.documentSelfLink = getSelfId();
         computePlacementSelection.computeDescriptionLink = state.resourceDescriptionLink;
         computePlacementSelection.resourceCount = state.resourceCount;
-        computePlacementSelection.resourcePoolLink = state.resourcePoolLink;
+        computePlacementSelection.resourcePoolLinks = new ArrayList<>();
+        computePlacementSelection.resourcePoolLinks.add(state.resourcePoolLink);
         computePlacementSelection.tenantLinks = state.tenantLinks;
         computePlacementSelection.contextId = getContextId(state);
         computePlacementSelection.customProperties = state.customProperties;
@@ -598,10 +605,10 @@ public class ComputeAllocationTaskService
 
         logInfo("Allocation request for %s machines", state.resourceCount);
 
-        if (state.selectedComputePlacementLinks.size() < state.resourceCount) {
+        if (state.selectedComputePlacementHosts.size() < state.resourceCount) {
             failTask(String.format(
                     "Not enough placement links provided (%d) for the requested resource count (%d)",
-                    state.selectedComputePlacementLinks.size(), state.resourceCount), null);
+                    state.selectedComputePlacementHosts.size(), state.resourceCount), null);
             return;
         }
 
@@ -619,7 +626,7 @@ public class ComputeAllocationTaskService
         logInfo("Creating %d provision tasks, reporting through sub task %s",
                 state.resourceCount, taskCallback.serviceSelfLink);
 
-        Iterator<String> placementComputeLinkIterator = state.selectedComputePlacementLinks
+        Iterator<HostSelection> placementComputeLinkIterator = state.selectedComputePlacementHosts
                 .iterator();
         Iterator<String> namesIterator = state.resourceNames.iterator();
         for (int i = 0; i < state.resourceCount; i++) {
@@ -630,7 +637,7 @@ public class ComputeAllocationTaskService
                     state,
                     computeDescription,
                     state.endpointComputeStateLink,
-                    placementComputeLinkIterator.next(),
+                    placementComputeLinkIterator.next().hostLink,
                     computeResourceId, name,
                     null, null, taskCallback);
         }

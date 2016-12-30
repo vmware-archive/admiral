@@ -20,7 +20,6 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -28,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
@@ -40,19 +38,13 @@ import com.vmware.admiral.request.compute.allocation.filter.FilterContext;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
-import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
-import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
-import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.util.ResourcePoolQueryHelper;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationSequence;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 
@@ -86,13 +78,13 @@ public class ComputePlacementSelectionTaskService extends
         public long resourceCount;
 
         @Documentation(description = "The resource pool to be used for this placement.")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED, LINK }, indexing = STORE_ONLY)
-        public String resourcePoolLink;
+        @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
+        public List<String> resourcePoolLinks;
 
         @Documentation(description = "Set by the task as result of the selection algorithm filters."
                 + " The number of selected computes matches the given resourceCount.")
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL, LINKS }, indexing = STORE_ONLY)
-        public Collection<String> selectedComputePlacementLinks;
+        public Collection<HostSelection> selectedComputePlacementHosts;
 
         @ServiceDocument.Documentation(description = "(Required) The overall contextId of this"
                 + "request (could be the same across multiple request - composite allocation)")
@@ -108,7 +100,7 @@ public class ComputePlacementSelectionTaskService extends
          * Set by the task as result of the selection algorithm filters. The number of selected
          * computes matches the given {@code resourceCount}.
          */
-        Collection<String> selectedComputePlacementLinks;
+        Collection<HostSelection> selectedComputePlacementHosts;
     }
 
     /**
@@ -151,7 +143,7 @@ public class ComputePlacementSelectionTaskService extends
             ComputePlacementSelectionTaskState state) {
         CallbackCompleteResponse finishedResponse = new CallbackCompleteResponse();
         finishedResponse.copy(state.serviceTaskCallback.getFinishedResponse());
-        finishedResponse.selectedComputePlacementLinks = state.selectedComputePlacementLinks;
+        finishedResponse.selectedComputePlacementHosts = state.selectedComputePlacementHosts;
         return finishedResponse;
     }
 
@@ -194,8 +186,8 @@ public class ComputePlacementSelectionTaskService extends
             ComputeDescription desc,
             Collection<String> computeDescriptionLinks, int maxRetries) {
 
-        ResourcePoolQueryHelper helper = ResourcePoolQueryHelper.createForResourcePool(getHost(),
-                state.resourcePoolLink);
+        ResourcePoolQueryHelper helper = ResourcePoolQueryHelper.createForResourcePools(getHost(),
+                state.resourcePoolLinks);
         helper.setExpandComputes(true);
         helper.setAdditionalQueryClausesProvider(qb -> {
             qb.addInClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK, computeDescriptionLinks)
@@ -209,7 +201,9 @@ public class ComputePlacementSelectionTaskService extends
             }
 
             if (qr.computesByLink.isEmpty()) {
-                selectByEndpointAsCompute(state, computeDescriptionLinks, null);
+                failTask(null, new IllegalStateException(
+                        "No powered-on compute placement candidates found in "
+                                + "placement zones: " + state.resourcePoolLinks));
                 return;
             }
 
@@ -221,8 +215,7 @@ public class ComputePlacementSelectionTaskService extends
             Map<String, HostSelection> filtered = filter(state, filterContext, hostSelectionMap,
                     affinityFilters.getQueue());
 
-            selection(state,
-                    filtered.values().stream().map(h -> h.hostLink).collect(Collectors.toList()));
+            selection(state, filtered);
         });
     }
 
@@ -234,8 +227,8 @@ public class ComputePlacementSelectionTaskService extends
 
         if (isNoSelection(hostSelectionMap)) {
             failTask(null, new IllegalStateException(
-                    "No compute placement candidates found in resource pool "
-                            + state.resourcePoolLink));
+                    "No compute placement candidates found in placement zones: "
+                            + state.resourcePoolLinks));
             return hostSelectionMap;
         }
 
@@ -262,23 +255,6 @@ public class ComputePlacementSelectionTaskService extends
         return filteredHostSelectionMap == null || filteredHostSelectionMap.isEmpty();
     }
 
-    private void selectByEndpointAsCompute(ComputePlacementSelectionTaskState state,
-            Collection<String> computeDescriptionLinks, ComputeState endpointCompute) {
-        if (endpointCompute == null) {
-            getEndpointCompute(state, (epc) -> selectByEndpointAsCompute(state,
-                    computeDescriptionLinks, epc));
-            return;
-        }
-
-        if (computeDescriptionLinks.contains(endpointCompute.descriptionLink)) {
-            selection(state, Arrays.asList(endpointCompute.documentSelfLink));
-        } else {
-            failTask(null, new IllegalStateException(
-                    "No powered-on compute placement candidates found in "
-                            + "resource pool " + state.resourcePoolLink));
-        }
-    }
-
     private Map<String, HostSelection> buildHostSelectionMap(
             ResourcePoolQueryHelper.QueryResult rpQueryResult) {
         Collection<ComputeState> computes = rpQueryResult.computesByLink.values();
@@ -298,15 +274,15 @@ public class ComputePlacementSelectionTaskService extends
     }
 
     private void selection(final ComputePlacementSelectionTaskState state,
-            final List<String> availableComputeLinks) {
-        if (availableComputeLinks.isEmpty()) {
+            final Map<String, HostSelection> filtered) {
+        if (filtered.isEmpty()) {
             failTask("No compute placements found", null);
             return;
         }
-        ArrayList<String> selectedComputeLinks = new ArrayList<>(availableComputeLinks);
-        Collections.shuffle(selectedComputeLinks);
+        ArrayList<HostSelection> selectedComputeHosts = new ArrayList<>(filtered.values());
+        Collections.shuffle(selectedComputeHosts);
 
-        int initialSize = selectedComputeLinks.size();
+        int initialSize = selectedComputeHosts.size();
         int diff = (int) (state.resourceCount - initialSize);
         if (diff > 0) {
             /*
@@ -315,17 +291,17 @@ public class ComputePlacementSelectionTaskService extends
              * B, C, A]
              */
             for (int i = 0; i < diff / initialSize; ++i) {
-                selectedComputeLinks.addAll(selectedComputeLinks.subList(0, initialSize));
+                selectedComputeHosts.addAll(selectedComputeHosts.subList(0, initialSize));
             }
 
-            selectedComputeLinks.addAll(selectedComputeLinks.subList(0, diff % initialSize));
+            selectedComputeHosts.addAll(selectedComputeHosts.subList(0, diff % initialSize));
         }
 
         logInfo("The following placements selected for provisioning %d resources: %s",
-                state.resourceCount, selectedComputeLinks);
+                state.resourceCount, selectedComputeHosts);
 
         proceedTo(DefaultSubStage.COMPLETED, s -> {
-            s.selectedComputePlacementLinks = selectedComputeLinks;
+            s.selectedComputePlacementHosts = selectedComputeHosts;
         });
     }
 
@@ -347,56 +323,5 @@ public class ComputePlacementSelectionTaskService extends
                     this.computeDescription = desc;
                     callbackFunction.accept(desc);
                 }));
-    }
-
-    private void getEndpointCompute(ComputePlacementSelectionTaskState state,
-            Consumer<ComputeState> callbackFunction) {
-
-        Operation poolOp = Operation.createGet(this, state.resourcePoolLink);
-        Operation endpointOp = Operation.createGet(null);
-        Operation computeOp = Operation.createGet(null);
-        OperationSequence.create(poolOp)
-                .setCompletion((ops, exs) -> {
-                    if (exs != null) {
-                        failTask("Failure retrieving ResourcePool: " + Utils.toString(exs),
-                                null);
-                        return;
-                    }
-                    ResourcePoolState pool = ops.get(poolOp.getId())
-                            .getBody(ResourcePoolState.class);
-                    if (pool.customProperties == null || !pool.customProperties
-                            .containsKey(ComputeProperties.ENDPOINT_LINK_PROP_NAME)) {
-                        failTask("ResourcePool:" + state.resourcePoolLink
-                                + ", is not associated with an Endpoint", null);
-                        return;
-                    }
-                    String endpointLink = pool.customProperties
-                            .get(ComputeProperties.ENDPOINT_LINK_PROP_NAME);
-                    endpointOp.setUri(UriUtils.buildUri(getHost(), endpointLink));
-                })
-                .next(endpointOp)
-                .setCompletion((ops, exs) -> {
-                    if (exs != null) {
-                        failTask("Failure retrieving Endpoint: " + Utils.toString(exs),
-                                null);
-                        return;
-                    }
-                    EndpointState endpoint = ops.get(endpointOp.getId())
-                            .getBody(EndpointState.class);
-
-                    computeOp.setUri(UriUtils.buildUri(getHost(), endpoint.computeLink));
-                })
-                .next(computeOp)
-                .setCompletion((ops, exs) -> {
-                    if (exs != null) {
-                        failTask("Failure retrieving ComputeState: " + Utils.toString(exs),
-                                null);
-                        return;
-                    }
-                    ComputeState compute = ops.get(computeOp.getId()).getBody(ComputeState.class);
-
-                    callbackFunction.accept(compute);
-                })
-                .sendWith(this);
     }
 }
