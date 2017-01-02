@@ -275,3 +275,18 @@
 .inline-editable-list .table > thead > tr > th:first-child, .table > thead > tr > td:first-child, .table > tbody > tr > th:first-child, .table > tbody > tr > td:first-child, .table > tfoot > tr > th:first-child, .table > tfoot > tr > td:first-child {
   padding-left: 12px;
 }
+
+.inline-editable-list.editing {
+  $disabled-opacity: 0.2;
+  table {
+    thead, td:not(.inline-edit-holder) {
+      opacity: $disabled-opacity;
+      pointer-events: none;
+    }
+  }
+
+  .toolbar {
+    opacity: $disabled-opacity;
+    pointer-events: none;
+  }
+}
