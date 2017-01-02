@@ -12,7 +12,7 @@
 <div class="placement-zones-view">
   <div class="main-panel">
     <div class="list-holder">
-      <div class="inline-editable-list">
+      <div class="inline-editable-list" v-bind:class="{'editing': !!model.editingItemData}">
         <list-title v-on:refresh-list="refresh()"
                       v-bind:has-search-query="false" v-bind:count="itemsCount"
                       v-bind:title="i18n('app.placementZone.list.title')">

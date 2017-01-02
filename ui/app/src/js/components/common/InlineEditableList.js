@@ -174,6 +174,7 @@ var clearEdittedRow = function() {
 
   this.rowEditor.getEl().detach();
   this.$el.find('.new-item').removeAttr('disabled');
+  this.$el.find('.inline-editable-list').removeClass('editing');
 };
 
 var startEditItem = function(itemData) {
@@ -204,6 +205,8 @@ var startEditItem = function(itemData) {
   this.$editItem = $item;
 
   this.$el.find('.new-item').attr('disabled', 'true');
+
+  this.$el.find('.inline-editable-list').addClass('editing');
 };
 
 var createRow = function(entity, isNew, isUpdated, validationErrors) {
