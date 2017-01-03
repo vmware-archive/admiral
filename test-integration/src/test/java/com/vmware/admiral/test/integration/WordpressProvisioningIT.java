@@ -52,6 +52,7 @@ import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.Utils;
 
@@ -140,7 +141,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         description.driver = useOverlayNetwork() ? "overlay" : "bridge";
         description.tenantLinks = TENANT;
         description.customProperties = new HashMap<>();
-        description.customProperties.put(CONTAINER_HOST_ID_CUSTOM_PROPERTY, getDockerHost().id);
+        description.customProperties.put(CONTAINER_HOST_ID_CUSTOM_PROPERTY,
+                Service.getId(getDockerHost().documentSelfLink));
 
         description = postDocument(ContainerNetworkDescriptionService.FACTORY_LINK, description);
 

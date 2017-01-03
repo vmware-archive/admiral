@@ -260,3 +260,44 @@ func TestAddAndUpdateHostWithTags(t *testing.T) {
 	_, err = credentials.RemoveCredentialsID(credentialsID)
 	CheckTestError(err, t)
 }
+
+func TestGetName(t *testing.T) {
+    custProps := make(map[string]*string)
+
+    host := &Host{
+        CustomProperties: custProps,
+        Address: "https://127.0.0.1:2376",
+    }
+
+    var newName, name string
+
+    newName = "127.0.0.1:2376"
+
+    name = host.GetName()
+    if name != newName {
+        t.Errorf("Expected host name: %s, actual name: %s", newName, name)
+    }
+    newName = "CustomPropName"
+    custProps["__Name"] = &newName
+
+    name = host.GetName()
+    if name != newName {
+        t.Errorf("Expected host name: %s, actual name: %s", newName, name)
+    }
+
+    newName = "CustomPropNameAlias"
+    custProps["__hostAlias"] = &newName;
+
+    name = host.GetName()
+    if name != "CustomPropNameAlias" {
+        t.Errorf("Expected host name: %s, actual name: %s", newName, name)
+    }
+
+    newName = "Name"
+    host.Name = newName
+
+    name = host.GetName()
+    if name != "Name" {
+        t.Errorf("Expected host name: %s, actual name: %s", newName, name)
+    }
+}

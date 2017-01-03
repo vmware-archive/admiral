@@ -84,9 +84,11 @@ function processContainerBuiltinNetworks(container) {
 
 function decorateContainerHostName(container, hosts) {
   let host = getHostByLink(hosts, container.parentLink);
-  container.hostName = host ? utils.getHostName(host) : null;
-  container.hostAddress = host && host.address;
-  container.hostDocumentId = host.id;
+  if (host) {
+    container.hostName = utils.getHostName(host);
+    container.hostAddress = host.address;
+    container.hostDocumentId = utils.getDocumentId(host.documentSelfLink);
+  }
   return container;
 }
 

@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
@@ -42,6 +43,7 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -405,8 +407,18 @@ public class ContainerNetworkAllocationTaskService extends
         if (hostId == null || hostId.isEmpty()) {
             return null;
         }
-        // Can be a a single id or comma separated values of ids
+        // Can be a a single id or comma separated values of ids (last part of the selfLink)
         return Arrays.asList(hostId.split(","));
+    }
+
+    public static List<String> getProvidedHostIdsAsSelfLinks(TaskServiceDocument<?> state) {
+        List<String> ids = getProvidedHostIds(state);
+        if (ids == null) {
+            return null;
+        }
+        return ids.stream()
+                .map((id) -> UriUtils.buildUriPath(ComputeService.FACTORY_LINK, id))
+                .collect(Collectors.toList());
     }
 
 }

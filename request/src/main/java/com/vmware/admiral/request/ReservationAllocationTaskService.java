@@ -38,9 +38,9 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService.Resource
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
-
 
 /**
  * Task implementing the reservation allocation request resource work flow.
@@ -84,8 +84,8 @@ public class ReservationAllocationTaskService extends
 
         /** Number of resources to provision. */
         @Documentation(description = "Number of resources to provision.")
-        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT },
-                indexing = { PropertyIndexingOption.STORE_ONLY })
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
+                PropertyIndexingOption.STORE_ONLY })
         public long resourceCount;
 
         /**
@@ -93,8 +93,8 @@ public class ReservationAllocationTaskService extends
          * request - composite allocation)
          */
         @Documentation(description = "The overall contextId of this request (could be the same across multiple request - composite allocation)")
-        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT },
-                indexing = { PropertyIndexingOption.STORE_ONLY })
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
+                PropertyIndexingOption.STORE_ONLY })
         public String contextId;
 
         /** Set by task. The link to the selected group placement. */
@@ -179,7 +179,8 @@ public class ReservationAllocationTaskService extends
         finishedResponse.copy(state.serviceTaskCallback.getFinishedResponse());
         finishedResponse.groupResourcePlacementLink = state.groupResourcePlacementLink;
         finishedResponse.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks;
-        if (state.groupResourcePlacementLink == null || state.groupResourcePlacementLink.isEmpty()) {
+        if (state.groupResourcePlacementLink == null
+                || state.groupResourcePlacementLink.isEmpty()) {
             logWarning("No GroupResourcePlacement found for reservated resources.");
         }
         return finishedResponse;
@@ -299,9 +300,18 @@ public class ReservationAllocationTaskService extends
 
         final ComputeState[] result = new ComputeState[1];
 
+        List<String> hostIds = ContainerNetworkAllocationTaskService.getProvidedHostIds(state);
+        if (hostIds.size() != 1) {
+            failTask(String.format(
+                    "Unexpected number of provided host ids [%s].",
+                    hostIds), null);
+            return;
+        }
+
+        String hostLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, hostIds.get(0));
+
         final QueryTask queryTask = QueryUtil.buildPropertyQuery(ComputeState.class,
-                ComputeState.FIELD_NAME_ID,
-                state.getCustomProperty(CONTAINER_HOST_ID_CUSTOM_PROPERTY));
+                ComputeState.FIELD_NAME_SELF_LINK, hostLink);
 
         QueryUtil.addExpandOption(queryTask);
 

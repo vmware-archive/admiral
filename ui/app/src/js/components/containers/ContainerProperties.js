@@ -60,7 +60,7 @@ var ContainerProperties = Vue.extend({
       $event.stopPropagation();
 
       let queryOptions = {
-        any: this.model.hostDocumentId
+        documentId: this.model.hostDocumentId
       };
 
       NavigationActions.openHosts(queryOptions);
