@@ -103,6 +103,7 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         test(getPasswordCredentials());
     }
 
+    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-960")
     @Test
     public void testWithPrivateKey() throws Throwable {
         test(getPrivateKeyCredentials());
