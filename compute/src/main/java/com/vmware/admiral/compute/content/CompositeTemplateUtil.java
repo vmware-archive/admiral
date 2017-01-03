@@ -44,6 +44,7 @@ import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.BindingUtils;
 import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.TemplateSerializationUtils;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.CompositeTemplateContainerDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -69,7 +70,7 @@ import com.vmware.xenon.common.Utils;
 
 /**
  * Utility class with methods for transforming Composite Templates from/to:
- * - Docker Compose (see {@link https://docs.docker.com/compose/compose-file/})
+ * - Docker Compose (see {@link "https://docs.docker.com/compose/compose-file/"})
  */
 public class CompositeTemplateUtil {
 
@@ -153,8 +154,7 @@ public class CompositeTemplateUtil {
             List<Binding.ComponentBinding> componentBindings = BindingUtils
                     .extractBindings(deserialized);
 
-            entity = YamlMapper.objectMapper()
-                    .convertValue(deserialized, CompositeTemplate.class);
+            entity = TemplateSerializationUtils.deserializeTemplate(deserialized);
 
             if (!isNullOrEmpty(entity.components)) {
                 for (Entry<String, ComponentTemplate<CompositeTemplateContainerDescription>> entry : filterComponentTemplates(
@@ -196,7 +196,8 @@ public class CompositeTemplateUtil {
             normalizeClosureDescriptions(entity);
         }
 
-        return YamlMapper.objectWriter().writeValueAsString(entity).trim();
+        Map<String, Object> stringObjectMap = TemplateSerializationUtils.serializeTemplate(entity);
+        return YamlMapper.objectWriter().writeValueAsString(stringObjectMap);
     }
 
     private static void normalizeContainerDescription(CompositeTemplate entity) {
@@ -518,7 +519,9 @@ public class CompositeTemplateUtil {
         description.user = service.user;
         description.workingDir = service.working_dir;
 
-        return fromDescriptionToComponentTemplate(description,
+        NestedState nestedState = new NestedState();
+        nestedState.object = description;
+        return fromDescriptionToComponentTemplate(nestedState,
                 ResourceType.CONTAINER_TYPE.getName());
     }
 
@@ -580,7 +583,9 @@ public class CompositeTemplateUtil {
     }
 
     public static ComponentTemplate<ResourceState> fromDescriptionToComponentTemplate(
-            ResourceState description, String resourceTypeName) {
+            NestedState nestedState, String resourceTypeName) {
+
+        ResourceState description = (ResourceState) nestedState.object;
         assertNotNull(description, "description");
 
         ComponentTemplate<ResourceState> template = new ComponentTemplate<>();
@@ -590,6 +595,8 @@ public class CompositeTemplateUtil {
         template.data = description;
 
         template.type = resourceType.getContentType();
+
+        template.children = nestedState.children;
 
         if (description instanceof ContainerDescription) {
             template.dependsOn = ((ContainerDescription) description).dependsOn;

@@ -45,7 +45,7 @@ public class ComponentTemplateDeserializer extends StdDeserializer<ComponentTemp
         Map<?, ?> templateMap = p.readValueAs(Map.class);
         String type = convertType(templateMap.get("type"));
         ComponentTemplate<?> template = createTemplate(type, templateMap.get("data"));
-        template.dependsOn = convertDepdensOn(templateMap.get("dependsOn"));
+        template.dependsOn = convertDependsOn(templateMap.get("dependsOn"));
         return template;
     }
 
@@ -67,7 +67,7 @@ public class ComponentTemplateDeserializer extends StdDeserializer<ComponentTemp
         return template;
     }
 
-    private static String[] convertDepdensOn(Object dependsOn) {
+    private static String[] convertDependsOn(Object dependsOn) {
         if (dependsOn == null) {
             return null;
         }

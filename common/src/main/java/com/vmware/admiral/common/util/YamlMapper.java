@@ -48,6 +48,7 @@ public class YamlMapper {
     private static ObjectMapper createObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+        objectMapper.setFilterProvider(filters);
         return objectMapper;
     }
 

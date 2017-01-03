@@ -33,28 +33,19 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.content.CompositeTemplateUtil.YamlType;
-import com.vmware.admiral.compute.content.TemplateComputeDescription.TemplateNetworkInterfaceDescription;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
-import com.vmware.photon.controller.model.resources.FirewallService;
-import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * Service for parsing a composite template and creating a CompositeDescription (and all its
@@ -106,57 +97,41 @@ public class CompositeDescriptionContentService extends StatelessService {
             CompositeDescription description = o.getBody(CompositeDescription.class);
             CompositeTemplate template = fromCompositeDescriptionToCompositeTemplate(description);
 
-            QueryTask componentDescriptionQueryTask = buildDescriptionQuery(description);
+            List<DeferredResult<NestedState>> components = description.descriptionLinks
+                    .stream()
+                    .map(link -> {
+                        CompositeComponentRegistry.ComponentMeta meta = CompositeComponentRegistry
+                                .metaByDescriptionLink(link);
+                        return NestedState.get(this, link, meta.descriptionClass);
+                    }).collect(Collectors.toList());
 
-            sendRequest(Operation
-                    .createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
-                    .setBody(componentDescriptionQueryTask)
-                    .setCompletion((oq, exq) -> {
-                        if (exq != null) {
-                            op.fail(ex);
-                        } else {
-                            QueryTask resultTask = oq.getBody(QueryTask.class);
-                            ServiceDocumentQueryResult result = resultTask.results;
-
-                            if (result != null && result.documents != null) {
-                                template.components = new HashMap<>();
-                                result.documents.forEach((link, document) -> {
-                                    handleResult(template, link, document);
-                                });
-                            }
-                            // done fetching descriptions, serialize the result to YAML
-                            // and complete the request
-                            serializeAndComplete(template, returnDocker, returnInline, op);
-                        }
-                    }));
+            DeferredResult.allOf(components).thenAccept(nestedStates -> {
+                if (nestedStates != null && !nestedStates.isEmpty()) {
+                    template.components = new HashMap<>();
+                    for (int i = 0; i < description.descriptionLinks.size(); i++) {
+                        String link = description.descriptionLinks.get(i);
+                        NestedState nestedState = nestedStates.get(i);
+                        handleResult(template, nestedState, link);
+                    }
+                }
+                // done fetching descriptions, serialize the result to YAML
+                // and complete the request
+                serializeAndComplete(template, returnDocker, returnInline, op);
+            }).exceptionally(e -> {
+                op.fail(e);
+                return null;
+            });
         }));
     }
 
-    private void handleResult(CompositeTemplate template, String link, Object document) {
+    private void handleResult(CompositeTemplate template, NestedState nestedState, String link) {
+
         CompositeComponentRegistry.ComponentMeta meta = CompositeComponentRegistry
                 .metaByDescriptionLink(link);
 
-        ResourceState componentDescription = Utils.fromJson(document, meta.descriptionClass);
-
         ComponentTemplate<?> component = fromDescriptionToComponentTemplate(
-                componentDescription, meta.resourceType);
-        template.components.put(componentDescription.name, component);
-    }
-
-    private QueryTask buildDescriptionQuery(
-            CompositeDescription description) {
-        QueryTask componentDescriptionQueryTask = new QueryTask();
-        componentDescriptionQueryTask.querySpec = new QueryTask.QuerySpecification();
-        componentDescriptionQueryTask.taskInfo.isDirect = true;
-        componentDescriptionQueryTask.documentExpirationTimeMicros = ServiceDocumentQuery
-                .getDefaultQueryExpiration();
-
-        QueryUtil.addExpandOption(componentDescriptionQueryTask);
-
-        QueryUtil.addListValueClause(componentDescriptionQueryTask,
-                ServiceDocument.FIELD_NAME_SELF_LINK,
-                description.descriptionLinks);
-        return componentDescriptionQueryTask;
+                nestedState, meta.resourceType);
+        template.components.put(((ResourceState) nestedState.object).name, component);
     }
 
     private void serializeAndComplete(CompositeTemplate template, boolean returnDocker,
@@ -227,124 +202,56 @@ public class CompositeDescriptionContentService extends StatelessService {
         }
 
         Operation createDescriptionOp = Operation.createPost(this,
-                CompositeDescriptionFactoryService.SELF_LINK).setReferer(getUri());
+                CompositeDescriptionFactoryService.SELF_LINK);
 
-        DeferredResult<List<Operation>> createComponentsOps = createComponents(template.components);
+        DeferredResult<List<Operation>> components = createComponents(template);
 
-        DeferredResult<Object> handle = createComponentsOps.thenAccept(ops -> {
+        DeferredResult<Object> handle = components.thenCompose((ops) -> {
             CompositeDescription description = fromCompositeTemplateToCompositeDescription(
                     template);
             description.descriptionLinks = ops.stream()
                     .map((o) -> o.getBody(ServiceDocument.class).documentSelfLink)
                     .collect(Collectors.toList());
-            createDescriptionOp.setBody(description);
-        })
-                .thenCompose(ops -> getHost().sendWithDeferredResult(createDescriptionOp))
-                .handle((o, e) -> {
-                    if (e != null) {
-                        op.fail(new IllegalStateException("Failed to create CompositeDescription: "
-                                + Utils.toString(e)));
-                    } else {
-                        CompositeDescription description = o.getBody(CompositeDescription.class);
-                        op.addResponseHeader(Operation.LOCATION_HEADER,
-                                description.documentSelfLink);
-                        op.complete();
-                    }
-                    return null;
-                });
+            createDescriptionOp.setBody(description).setReferer(getUri());
+            return getHost().sendWithDeferredResult(createDescriptionOp);
+        }).handle((o, e) -> {
+            if (e != null) {
+                op.fail(new IllegalStateException("Failed to create CompositeDescription: "
+                        + Utils.toString(e)));
+                return null;
+            } else {
+                CompositeDescription description = o.getBody(CompositeDescription.class);
+                op.addResponseHeader(Operation.LOCATION_HEADER,
+                        description.documentSelfLink);
+                op.complete();
+            }
+            return null;
+        });
 
         if (handle.isDone()) {
             //do something with the deferred result because findbugs complains
         }
     }
 
-    private DeferredResult<List<Operation>> createComponents(
-            Map<String, ComponentTemplate<?>> components) {
+    private DeferredResult<List<Operation>> createComponents(CompositeTemplate compositeTemplate) {
 
-        List<DeferredResult<Operation>> deferredResults = new ArrayList<>();
-        components.values().stream()
-                .forEach(component -> deferredResults.add(createComponent(component)));
+        List<DeferredResult<Operation>> results = new ArrayList<>();
+        compositeTemplate.components.values().stream()
+                .forEach(component -> results.add(persistComponent(component)));
 
-        return DeferredResult.allOf(deferredResults);
+        return DeferredResult.allOf(results);
     }
 
-    private DeferredResult<Operation> createComponent(ComponentTemplate<?> component) {
-        ResourceType resourceType = ResourceType
-                .fromContentType(component.type);
+    private DeferredResult<Operation> persistComponent(ComponentTemplate<?> component) {
+        NestedState nestedState = new NestedState();
+        nestedState.object = (ServiceDocument) component.data;
+        nestedState.children = component.children;
 
-        //TODO special case to handle ComputeDescription as it has nested objects. This should be made generic
-        if (resourceType == ResourceType.COMPUTE_TYPE) {
-            return handleComputeDescription(component);
-        }
+        ResourceType resourceType = ResourceType.fromContentType(component.type);
+        String factoryLink = CompositeComponentRegistry.factoryLinkByType(resourceType.getName());
+        nestedState.factoryLink = factoryLink;
 
-        return getHost()
-                .sendWithDeferredResult(Operation.createPost(this, CompositeComponentRegistry
-                        .factoryLinkByType(resourceType.getName()))
-                        .setBody(component.data).setReferer(getUri()));
-    }
-
-    private DeferredResult<Operation> handleComputeDescription(ComponentTemplate<?> component) {
-        TemplateComputeDescription computeDescription = (TemplateComputeDescription) component.data;
-
-        Operation createComputeDescOperation = Operation
-                .createPost(getHost(), ComputeDescriptionService.FACTORY_LINK).setReferer(getUri());
-
-        if (computeDescription.networkInterfaceDescriptions == null
-                || computeDescription.networkInterfaceDescriptions.isEmpty()) {
-            return getHost()
-                    .sendWithDeferredResult(createComputeDescOperation.setBody(computeDescription));
-        }
-
-        List<DeferredResult<String>> createNetworkInterfaceDescs = new ArrayList<>();
-        for (TemplateNetworkInterfaceDescription tnid : computeDescription.networkInterfaceDescriptions) {
-
-            Operation createNetworkInterfaceDescOperation = Operation
-                    .createPost(getHost(), NetworkInterfaceDescriptionService.FACTORY_LINK)
-                    .setReferer(getUri());
-
-            // create the firewalls
-            List<DeferredResult<String>> firewallsDeferred = new ArrayList<>();
-            if (tnid.firewalls != null && !tnid.firewalls.isEmpty()) {
-                List<FirewallService.FirewallState> firewalls = tnid.firewalls;
-
-                firewalls.forEach(firewall -> {
-                    DeferredResult<FirewallService.FirewallState> createFirewallState = getHost()
-                            .sendWithDeferredResult(
-                                    Operation.createPost(getHost(), FirewallService.FACTORY_LINK)
-                                            .setBody(firewall),
-                                    FirewallService.FirewallState.class);
-
-                    firewallsDeferred.add(createFirewallState.thenApply(a -> a.documentSelfLink));
-                });
-            }
-
-            DeferredResult<Void> createFirewalls = DeferredResult.allOf(firewallsDeferred)
-                    .thenAccept(links -> {
-                        tnid.firewallLinks = links;
-                        tnid.firewalls = null;
-                    });
-
-
-            // after all of these are persisted. POST the NetworkInterfaceDescription
-            DeferredResult<NetworkInterfaceDescriptionService.NetworkInterfaceDescription> createTnid = createFirewalls
-                    .thenCompose(a -> {
-                        return getHost().sendWithDeferredResult(
-                                createNetworkInterfaceDescOperation.setBody(tnid),
-                                NetworkInterfaceDescriptionService.NetworkInterfaceDescription.class);
-                    });
-
-            createNetworkInterfaceDescs.add(createTnid.thenApply(n -> n.documentSelfLink));
-
-        }
-
-        // after all NetworkInterfaceDescriptions are persisted. POST the ComputeDescription
-        return DeferredResult.allOf(createNetworkInterfaceDescs).thenCompose(descLinks -> {
-            computeDescription.networkInterfaceDescLinks = descLinks;
-            computeDescription.networkInterfaceDescriptions = null;
-
-            return getHost()
-                    .sendWithDeferredResult(createComputeDescOperation.setBody(computeDescription));
-        });
+        return nestedState.sendRequest(this, Action.POST);
     }
 
     private boolean isApplicationYamlContent(String contentType) {

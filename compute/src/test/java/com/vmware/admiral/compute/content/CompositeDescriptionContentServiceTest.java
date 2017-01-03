@@ -117,6 +117,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                 .getServiceDocument();
 
         assertEquals(1, wordpressComputeDescription.networkInterfaceDescLinks.size());
+        assertEquals(1, wordpressComputeDescription.tagLinks.size());
 
         assertEquals("public-wpnet", networkDescription.name);
         assertEquals(true, networkDescription.isPublic);
@@ -191,7 +192,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
 
         this.host.testStart(1);
         this.host.send(validateBadRequestOnImportOperation(getContent("composite.bad.yaml"),
-                "Can not deserialize instance of java.lang.String out of START_OBJECT token\n at [Source: N/A; line: -1, column: -1] (through reference chain: com.vmware.admiral.compute.container.ContainerDescriptionService$CompositeTemplateContainerDescription[\"logConfig\"]) (through reference chain: com.vmware.admiral.compute.content.CompositeTemplate[\"components\"]->java.util.LinkedHashMap[\"db\"])"));
+                "Can not deserialize instance of java.lang.String out of START_OBJECT token\n at [Source: N/A; line: -1, column: -1] (through reference chain: com.vmware.admiral.compute.container.ContainerDescriptionService$CompositeTemplateContainerDescription[\"logConfig\"])"));
         this.host.testWait();
 
         this.host.testStart(1);
@@ -211,8 +212,6 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                     if (e != null) {
                         if (e instanceof IllegalArgumentException) {
                             try {
-                                System.out.println(expectedMsg);
-                                System.out.println(e.getMessage());
                                 assertEquals(Operation.STATUS_CODE_BAD_REQUEST, o.getStatusCode());
                                 assertTrue(e.getMessage().contains(expectedMsg));
                                 assertTrue(o.getBody(ServiceErrorResponse.class).message
@@ -261,7 +260,8 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
             verifyOperation(Operation.createGet(UriUtils.buildUri(host, link)), (o) -> {
                 ResourceState cd = o.getBody(ResourceState.class);
                 assertTrue("unexpected name",
-                        Arrays.asList("wordpress", "mysql", "public-wpnet").contains(cd.name));
+                        Arrays.asList("wordpress", "mysql", "public-wpnet", "wpnet")
+                                .contains(cd.name));
             });
         }
     }
@@ -282,7 +282,6 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                 CompositeTemplate result = CompositeTemplateUtil
                         .deserializeCompositeTemplate(resultYaml);
 
-                //TODO these asserts are not enough
                 assertEquals(original.components.size(), result.components.size());
                 assertEquals(original.id, result.id);
                 assertEquals(original.description, result.description);

@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute.content;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
@@ -23,4 +25,6 @@ public class ComponentTemplate<T> {
     public String type;
     public T data;
     public String[] dependsOn;
+
+    public Map<String, NestedState> children;
 }

@@ -23,20 +23,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
-import com.vmware.photon.controller.model.resources.FirewallService;
-import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
 
 /**
  * This class exists for serialization/deserialization purposes only
  */
 @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
-@JsonIgnoreProperties({ "customProperties", "id" })
+@JsonIgnoreProperties({ "customProperties", "networkInterfaceDescLinks", "authCredentialsLink" })
 public class TemplateComputeDescription extends ComputeDescriptionService.ComputeDescription {
 
     public static final String CUSTOM_PROP_NAME_CLUSTER_SIZE = "_cluster";
-
-    @JsonProperty("networks")
-    public List<TemplateNetworkInterfaceDescription> networkInterfaceDescriptions;
 
     @JsonAnySetter
     private void putProperty(String key, String value) {
@@ -46,14 +41,17 @@ public class TemplateComputeDescription extends ComputeDescriptionService.Comput
         customProperties.put(key, value);
     }
 
+    @JsonProperty("networks")
+    public List<String> getNetworks() {
+        return networkInterfaceDescLinks;
+    }
+
+    public void setNetworks(List<String> networks) {
+        networkInterfaceDescLinks = networks;
+    }
+
     @JsonAnyGetter
     private Map<String, String> getProperties() {
         return customProperties;
-    }
-
-    public static class TemplateNetworkInterfaceDescription extends
-            NetworkInterfaceDescription {
-
-        public List<FirewallService.FirewallState> firewalls;
     }
 }
