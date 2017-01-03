@@ -131,7 +131,7 @@ let _createDto = function(placement) {
       dto.tenantLinks.push(tenantLink.substring(0, tenantLink.indexOf('/groups/')));
     }
 
-    let groups = this.selectFromData(['placements', 'groups']).get();
+    let groups = this.selectFromData(['placements', 'editingItemData', 'groups']).get();
     if (groups) {
       let group = _getGroup(dto.groupId, groups);
       if (group && group.documentSelfLink) {
