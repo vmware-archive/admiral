@@ -10,90 +10,98 @@
   -->
 
 <tr>
-  <td colspan="9" class="placementEditHolder">
-    <div class="placementEdit">
-      <div>
-        <div class="placementRowEdit-toolbar pull-right">
-          <a href="#" class="placementRowEdit-save btn btn-circle">
-            <i class="fa fa-check"></i>
-            <i class="fa fa-spinner fa-spin loader"></i>
-          </a>
-          <a href="#" class="placementRowEdit-cancel btn btn-circle">
-            <i class="fa fa-times"></i>
-          </a>
-        </div>
-        <div class="title"></div>
-        <div class="placementRowEdit-inputs form-group">
-          <div class="name form-group col-md-6">
-            <label class="col-lg-4">{{i18n "app.placement.edit.nameLabel"}}</label>
-            <div class="nameInput col-lg-8">
-              <input type="text" class="form-control">
+  <td colspan="9" class="inline-edit-holder placementEditHolder">
+    <div class="inline-edit">
+      <form class="inline-edit-properties placement-inline-edit-properties">
+        <section class="form-block">
+          <label class="title"></label>
+          <div class="row">
+            <div class="name form-group col-md-6">
+              <label>{{i18n "app.placement.edit.nameLabel"}}</label>
+              <div class="nameInput form-control">
+                <input type="text">
+              </div>
             </div>
-          </div>
-          <div class="group form-group col-md-6">
-            <label class="col-lg-4">{{i18n-appmode-aware "app.placement.edit.groupLabel" "app.placement.edit.businessGroupLabel"}}</label>
-            <div class="placementGroupInput col-lg-8">
+            <div class="group form-group col-md-6">
+              <label>{{i18n-appmode-aware "app.placement.edit.groupLabel" "app.placement.edit.businessGroupLabel"}}</label>
+              <div class="placementGroupInput form-control">
+              </div>
             </div>
-          </div>
-          <div class="placementZone form-group col-md-6">
-            <label class="col-lg-4">{{i18n "app.placement.edit.placementZoneLabel"}}<span class="requiredFieldMark">*</span></label>
-            <div class="col-lg-8">
-              <div class="form-control dropdown-holder"></div>
-              <span class="help-block"></span>
+            <div class="placementZone form-group col-md-6">
+              <label>{{i18n "app.placement.edit.placementZoneLabel"}}<span class="requiredFieldMark">*</span></label>
+              <div class="form-control">
+                <div class="dropdown-holder"></div>
+                <span class="help-block"></span>
+              </div>
             </div>
-          </div>
-          {{#if isEmbeded}}
-          <div class="deploymentPolicy form-group col-md-6">
-            <label class="col-lg-4">{{i18n "app.placement.edit.deploymentPolicyLabel"}}</label>
-            <div class="col-lg-8">
-              <div class="form-control dropdown-holder"></div>
-              <span class="help-block"></span>
+            {{#if isEmbeded}}
+            <div class="deploymentPolicy form-group col-md-6">
+              <label>{{i18n "app.placement.edit.deploymentPolicyLabel"}}</label>
+              <div class="form-control">
+                <div class="dropdown-holder"></div>
+                <span class="help-block"></span>
+              </div>
             </div>
-          </div>
-          {{else}}
-          <div class="placeholder form-group col-md-6">
-            <label class="col-lg-4"></label>
-            <div class="col-lg-8">
-              <div class="form-control dropdown-holder"></div>
+            {{else}}
+            <div class="placeholder form-group col-md-6">
+              <label></label>
+              <div class="form-control">
+                <div class="dropdown-holder"></div>
+              </div>
             </div>
-          </div>
-          {{/if}}
-          <div class="form-group col-md-6">
-            <label class="col-lg-4">{{i18n "app.placement.edit.priorityLabel"}}</label>
-            <div class="priorityInput col-lg-8">
-              <input type="number" placeholder="{{i18n 'app.placement.edit.priorityPlaceholder'}}" />
+            {{/if}}
+            <div class="form-group col-md-6">
+              <label>{{i18n "app.placement.edit.priorityLabel"}}</label>
+              <div class="priorityInput form-control">
+                <input type="number" placeholder="{{i18n 'app.placement.edit.priorityPlaceholder'}}" />
+                <span class="help-block"></span>
+              </div>
               <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="{{i18n 'app.placement.edit.priorityHint'}}"></i>
-              <span class="help-block"></span>
             </div>
-          </div>
-          <div class="form-group col-md-6">
-            <label class="col-lg-4">{{i18n "app.placement.edit.instancesLabel"}}</label>
-            <div class="maxInstancesInput col-lg-8">
-              <input type="number" placeholder="{{i18n 'app.placement.edit.instancesPlaceholder'}}"/>
+            <div class="form-group col-md-6">
+              <label>{{i18n "app.placement.edit.instancesLabel"}}</label>
+              <div class="maxInstancesInput form-control">
+                <input type="number" placeholder="{{i18n 'app.placement.edit.instancesPlaceholder'}}"/>
+                <span class="help-block"></span>
+              </div>
               <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="{{i18n 'app.placement.edit.instancesHint'}}"></i>
-              <span class="help-block"></span>
+            </div>
+            <div class="form-group col-md-6">
+              <label>{{i18n "app.placement.edit.memoryLimitLabel"}}</label>
+              <div class="memoryLimitInput form-control">
+                <div class="inline-input-group">
+                  <input type="number"/>
+                  <div class="select">
+                    <select>
+                      <option>kB</option>
+                      <option selected="selected">MB</option>
+                      <option>GB</option>
+                    </select>
+                  </div>
+                </div>
+                <span class="help-block"></span>
+              </div>
+            </div>
+            <div class="form-group col-md-6">
+              <label>{{i18n "app.placement.edit.cpuSharesLabel"}}</label>
+              <div class="cpuSharesInput form-control">
+                <div class="inline-input-group">
+                  <input type="number"/><span>%</span>
+                </div>
+                <span class="help-block"></span>
+              </div>
             </div>
           </div>
-          <div class="form-group col-md-6">
-            <label class="col-lg-4">{{i18n "app.placement.edit.memoryLimitLabel"}}</label>
-            <div class="memoryLimitInput col-lg-8">
-              <input type="number"/>
-              <select>
-                <option>kB</option>
-                <option selected="selected">MB</option>
-                <option>GB</option>
-              </select>
-              <span class="help-block"></span>
-            </div>
-          </div>
-          <div class="form-group col-md-6">
-            <label class="col-lg-4">{{i18n "app.placement.edit.cpuSharesLabel"}}</label>
-            <div class="cpuSharesInput col-lg-8">
-              <input type="number"/> %
-              <span class="help-block"></span>
-            </div>
-          </div>
-        </div>
+        </section>
+      </form>
+      <div class="inline-edit-toolbar">
+        <a href="#" class="inline-edit-save btn btn-circle placementRowEdit-save">
+          <i class="fa fa-check"></i>
+          <i class="fa fa-spinner fa-spin loader"></i>
+        </a>
+        <a href="#" class="inline-edit-cancel btn btn-circle">
+          <i class="fa fa-times"></i>
+        </a>
       </div>
     </div>
   </td>

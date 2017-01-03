@@ -58,7 +58,7 @@
           </thead>
           <tbody>
             <tr v-if="isEditingNewItem()">
-              <td colspan="5" class="placementZoneEditHolder">
+              <td colspan="5" class="inline-edit-holder placementZoneEditHolder">
                 <placement-zone-editor v-bind:model="model.editingItemData || {item:{}}"></placement-zone-editor>
               </td>
             </tr>
@@ -92,7 +92,7 @@
                 </td>
               </template>
               <template v-if="isEditingItem(item)">
-                <td colspan="5" class="placementZoneEditHolder">
+                <td colspan="5" class="inline-edit-holder placementZoneEditHolder">
                   <placement-zone-editor v-bind:model="model.editingItemData || {item:{}}"></placement-zone-editor>
                 </td>
               </template>

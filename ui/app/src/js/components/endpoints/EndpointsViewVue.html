@@ -45,7 +45,7 @@
             </thead>
             <tbody>
               <tr v-if="isEditingNewItem()">
-                <td colspan="3" class="endpointEditHolder">
+                <td colspan="3" class="inline-edit-holder">
                   <endpoint-editor v-bind:model="model.editingItemData"></endpoint-editor>
                 </td>
               </tr>
@@ -80,7 +80,7 @@
                   </td>
                 </template>
                 <template v-if="isEditingItem(item)">
-                  <td colspan="3" class="endpointEditHolder">
+                  <td colspan="3" class="inline-edit-holder">
                     <endpoint-editor v-bind:model="model.editingItemData"></endpoint-editor>
                   </td>
                 </template>

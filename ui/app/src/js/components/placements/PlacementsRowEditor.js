@@ -63,7 +63,7 @@ function PlacementsRowEditor() {
 
   this.$el.find('.fa-question-circle').tooltip();
 
-  this.alert = new Alert(this.$el, this.$el.find('.placementEdit'), true);
+  this.alert = new Alert(this.$el, this.$el.find('.inline-edit'), false);
 
   this.placementGroupInput = new GroupInput(this.$el.find('.placementGroupInput'), () =>
     toggleButtonsState.call(this));
@@ -108,7 +108,7 @@ function PlacementsRowEditor() {
   this.deploymentPolicyInput.setOptionSelectCallback(() => toggleButtonsState.call(this));
 
   if (!utils.isApplicationEmbedded()) {
-    this.$el.find('.placementEditHolder').prop('colspan', 8);
+    this.$el.find('.inline-edit-holder').prop('colspan', 8);
   }
   addEventListeners.call(this);
 }
@@ -227,7 +227,7 @@ PlacementsRowEditor.prototype.setData = function(data) {
 var addEventListeners = function() {
   var _this = this;
 
-  this.$el.find('.placementEditHolder').on('click', '.placementRowEdit-save', function(e) {
+  this.$el.find('.inline-edit-holder').on('click', '.inline-edit-save', function(e) {
     e.preventDefault();
 
     $(e.currentTarget).addClass('loading');
@@ -241,7 +241,7 @@ var addEventListeners = function() {
     }
   });
 
-  this.$el.find('.placementEditHolder').on('click', '.placementRowEdit-cancel', function(e) {
+  this.$el.find('.inline-edit-holder').on('click', '.inline-edit-cancel', function(e) {
     e.preventDefault();
     PlacementActions.cancelEditPlacement();
   });
@@ -293,10 +293,10 @@ var toggleButtonsState = function() {
   var memoryLimit = this.$el.find('.memoryLimitInput input').val();
   var cpuShares = this.$el.find('.cpuSharesInput input').val();
 
-  var $verifyBtn = this.$el.find('.placementRowEdit-verify');
+  var $verifyBtn = this.$el.find('.inline-edit-verify');
   $verifyBtn.removeClass('loading');
 
-  var $saveBtn = this.$el.find('.placementRowEdit-save');
+  var $saveBtn = this.$el.find('.inline-edit-save');
   $saveBtn.removeClass('loading');
 
   var groupClause = !utils.isApplicationEmbedded() || this.placementGroupInput.getValue();

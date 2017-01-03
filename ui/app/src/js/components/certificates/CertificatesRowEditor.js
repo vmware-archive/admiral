@@ -19,7 +19,7 @@ import constants from 'core/constants';
 function CertificatesRowEditor() {
   this.$el = $(CertificatesRowEditTemplate());
   this.$el.find('.fa-question-circle').tooltip();
-  this.alert = new Alert(this.$el, this.$el.find('.certificatesEdit-header'));
+  this.alert = new Alert(this.$el, this.$el.find('.inline-edit'), false);
 
   addEventListeners.call(this);
 }
@@ -35,7 +35,7 @@ CertificatesRowEditor.prototype.setData = function(data) {
   this.$el.find('.certificate-import-option').removeClass('hide');
   this.$el.find('.certificate-import-inputs').addClass('hide');
   this.$el.find('.certificate-import-button').removeClass('loading').removeAttr('disabled');
-  this.$el.find('.certificatesEdit-save').removeClass('loading').removeAttr('disabled');
+  this.$el.find('.inline-edit-save').removeClass('loading').removeAttr('disabled');
   this.$el.find('.certificate-input').removeAttr('readonly');
 
   if (this.certificateHolder) {
@@ -53,7 +53,7 @@ CertificatesRowEditor.prototype.setData = function(data) {
 var addEventListeners = function() {
   var _this = this;
 
-  this.$el.find('.certificatesEdit').on('click', '.certificatesEdit-save', function(e) {
+  this.$el.find('.inline-edit').on('click', '.inline-edit-save', function(e) {
     e.preventDefault();
 
     $(e.currentTarget).addClass('loading');
@@ -73,7 +73,7 @@ var addEventListeners = function() {
     }
   });
 
-  this.$el.find('.certificatesEdit').on('click', '.certificatesEdit-cancel', function(e) {
+  this.$el.find('.inline-edit').on('click', '.inline-edit-cancel', function(e) {
     e.preventDefault();
     _this.certificateHolder = null;
     CertificatesActions.cancelEditCertificate();
@@ -145,9 +145,9 @@ var applyValidationErrors = function($el, errors) {
 var toggleButtonsState = function($el) {
   var certificateValue = $el.find('.certificate-input').val();
   if (certificateValue) {
-    $el.find('.certificatesEdit-save').removeAttr('disabled').removeClass('loading');
+    $el.find('.inline-edit-save').removeAttr('disabled').removeClass('loading');
   } else {
-    $el.find('.certificatesEdit-save').attr('disabled', true);
+    $el.find('.inline-edit-save').attr('disabled', true);
   }
 
   var uriValue = $el.find('.uri-input').val();

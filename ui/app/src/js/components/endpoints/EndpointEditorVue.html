@@ -9,105 +9,80 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<form class="endpointEdit">
+<div class="inline-edit">
   <alert alert-type="danger"
          v-bind:show-alert="model.validationErrors && model.validationErrors._generic"
          v-bind:alert-message="model.validationErrors && model.validationErrors._generic"></alert>
-  <div>
-    <div class="endpointEdit-toolbar pull-right">
-      <a href="#" class="btn btn-circle" v-bind:class="{'loading': model.saving}" v-on:click="save($event)" v-bind:disabled="saveDisabled">
-        <i class="fa fa-check"></i>
-        <i class="fa fa-spinner fa-spin loader"></i>
-      </a>
-      <a href="#" class="btn btn-circle" v-on:click="cancel($event)">
-        <i class="fa fa-times"></i>
-      </a>
-    </div>
-    <div class="title"></div>
-    <div class="endpointEdit-inputs form-horizontal">
-      <div class="form-group col-md-12">
-        <label class="col-md-4">
+  <form class="inline-edit-properties">
+    <section class="form-block">
+      <label class="title" v-if="isEditMode">{{i18n('app.endpoint.edit.update')}}</label>
+      <label class="title" v-else>{{i18n('app.endpoint.edit.addNew')}}</label>
+      <div class="form-group nameInput">
+        <label class="required">
           {{i18n('app.endpoint.edit.nameLabel')}}
-          <span class="requiredFieldMark">*</span>
         </label>
-        <div class="nameInput col-md-8">
-          <input class="form-control" v-bind:value="model.item.name" v-on:input="onInputChange()"/>
-        </div>
+        <input v-bind:value="model.item.name" v-on:input="onInputChange()"/>
       </div>
-      <div class="form-group col-md-12">
-        <label class="col-md-4">
+      <div class="form-group typeInput">
+        <label class="required">
           {{i18n('app.endpoint.edit.typeLabel')}}
-          <span class="requiredFieldMark">*</span>
         </label>
-        <div class="typeInput col-md-8">
-          <div class="form-control dropdown-holder"></div>
-        </div>
+        <div class="form-control dropdown-holder"></div>
       </div>
-      <div class="form-group col-md-12" v-if="showInput('vsphere')">
-        <label class="col-md-4">
+      <div class="form-group endpointHostInput" v-if="showInput('vsphere')">
+        <label class="required">
           {{i18n('app.endpoint.edit.endpointHostLabel')}}
-          <span class="requiredFieldMark">*</span>
         </label>
-        <div class="endpointHostInput col-md-8">
-          <input class="form-control" v-bind:value="endpointProperties.hostName" v-on:input="onInputChange()"/>
-        </div>
+        <input v-bind:value="endpointProperties.hostName" v-on:input="onInputChange()"/>
       </div>
-      <div class="form-group col-md-12" v-if="!showInput(null)">
-        <label class="col-md-4" v-if="showInput('vsphere') || showInput('nimbus')">
+      <div class="form-group accessKeyId" v-if="!showInput(null)">
+        <label class="required" v-if="showInput('vsphere') || showInput('nimbus')">
           {{i18n('app.endpoint.edit.usernameLabel')}}
-          <span class="requiredFieldMark">*</span>
         </label>
-        <label class="col-md-4" v-else>
+        <label class="required" v-else>
           {{i18n('app.endpoint.edit.accessKeyIdLabel')}}
-          <span class="requiredFieldMark">*</span>
         </label>
-        <div class="accessKeyId col-md-8">
-          <input class="form-control" v-bind:value="endpointProperties.privateKeyId" v-on:input="onInputChange()"/>
-        </div>
+        <input v-bind:value="endpointProperties.privateKeyId" v-on:input="onInputChange()"/>
       </div>
-      <div class="form-group col-md-12" v-if="!showInput(null)">
-        <label class="col-md-4" v-if="showInput('vsphere')">
+      <div class="form-group secretAccessKey" v-if="!showInput('null')">
+        <label class="required" v-if="showInput('vsphere')">
           {{i18n('app.endpoint.edit.passwordLabel')}}
-          <span class="requiredFieldMark">*</span>
         </label>
-        <label class="col-md-4" v-else>
+        <label class="required" v-else>
           {{i18n('app.endpoint.edit.secretAccessKeyLabel')}}
-          <span class="requiredFieldMark">*</span>
         </label>
-        <div class="secretAccessKey col-md-8">
-          <input class="form-control" type="password" v-bind:value="endpointProperties.privateKey" v-on:input="onInputChange()"/>
-        </div>
+        <input type="password" v-bind:value="endpointProperties.privateKey" v-on:input="onInputChange()"/>
       </div>
-      <div class="form-group col-md-12" v-if="!showInput(null)">
-        <label class="col-md-4" v-if="showInput('vsphere')">
+      <div class="form-group regionIdInput" v-if="!showInput('null')">
+        <label v-if="showInput('vsphere')">
           {{i18n('app.endpoint.edit.datacenterIdLabel')}}
         </label>
-        <label class="col-md-4" v-else>
+        <label class="required" v-else>
           {{i18n('app.endpoint.edit.regionIdLabel')}}
-          <span class="requiredFieldMark">*</span>
         </label>
-        <div class="regionIdInput col-md-8">
-          <input class="form-control" v-bind:value="endpointProperties.regionId" v-on:input="onInputChange()"/>
-        </div>
+        <input v-bind:value="endpointProperties.regionId" v-on:input="onInputChange()"/>
       </div>
-      <div class="form-group col-md-12" v-if="showInput('azure')">
-        <label class="col-md-4">
+      <div class="form-group subscriptionIdInput" v-if="showInput('azure')">
+        <label class="required">
           {{i18n('app.endpoint.edit.subscriptionIdLabel')}}
-          <span class="requiredFieldMark">*</span>
         </label>
-        <div class="subscriptionIdInput col-md-8">
-          <input class="form-control" v-bind:value="endpointProperties.userLink" v-on:input="onInputChange()"/>
-        </div>
+        <input v-bind:value="endpointProperties.userLink" v-on:input="onInputChange()"/>
       </div>
-      <div class="form-group col-md-12" v-if="showInput('azure')">
-        <label class="col-md-4">
+      <div class="form-group tenantIdInput" v-if="showInput('azure')">
+        <label class="required">
           {{i18n('app.endpoint.edit.tenantIdLabel')}}
-          <span class="requiredFieldMark">*</span>
         </label>
-        <div class="tenantIdInput col-md-8">
-          <input class="form-control" v-bind:value="endpointProperties.azureTenantId" v-on:input="onInputChange()"/>
-        </div>
+        <input v-bind:value="endpointProperties.azureTenantId" v-on:input="onInputChange()"/>
       </div>
-    </div>
+    </section>
+  </form>
+  <div class="inline-edit-toolbar">
+    <a href="#" class="btn btn-circle" v-bind:class="{'loading': model.saving}" v-on:click="save($event)" v-bind:disabled="saveDisabled">
+      <i class="fa fa-check"></i>
+      <i class="fa fa-spinner fa-spin loader"></i>
+    </a>
+    <a href="#" class="btn btn-circle" v-on:click="cancel($event)">
+      <i class="fa fa-times"></i>
+    </a>
   </div>
-</form>
+</div>

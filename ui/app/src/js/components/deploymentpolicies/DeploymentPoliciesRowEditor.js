@@ -18,7 +18,7 @@ import constants from 'core/constants';
 function DeploymentPoliciesRowEditor() {
   this.$el = $(DeploymentPoliciesRowEditTemplate());
   this.$el.find('.fa-question-circle').tooltip();
-  this.alert = new Alert(this.$el, this.$el.find('.deploymentPolicyEdit-header'));
+  this.alert = new Alert(this.$el, this.$el.find('.inline-edit'), false);
 
   addEventListeners.call(this);
 }
@@ -30,7 +30,7 @@ DeploymentPoliciesRowEditor.prototype.getEl = function() {
 DeploymentPoliciesRowEditor.prototype.setData = function(data) {
   this.deploymentPolicy = data.item;
 
-  this.$el.find('.deploymentPolicyEdit-save').removeAttr('disabled').removeClass('loading');
+  this.$el.find('.inline-edit-save').removeAttr('disabled').removeClass('loading');
 
   if (this.deploymentPolicy) {
     this.$el.find('.title').html(i18n.t('app.deploymentPolicy.edit.update'));
@@ -54,7 +54,7 @@ DeploymentPoliciesRowEditor.prototype.setData = function(data) {
 var addEventListeners = function() {
   var _this = this;
 
-  this.$el.find('.deploymentPolicyEdit').on('click', '.deploymentPolicyEdit-save', function(e) {
+  this.$el.find('.inline-edit').on('click', '.inline-edit-save', function(e) {
     e.preventDefault();
 
     $(e.currentTarget).addClass('loading');
@@ -75,7 +75,7 @@ var addEventListeners = function() {
     }
   });
 
-  this.$el.find('.deploymentPolicyEdit').on('click', '.deploymentPolicyEdit-cancel', function(e) {
+  this.$el.find('.inline-edit').on('click', '.inline-edit-cancel', function(e) {
     e.preventDefault();
     _this.deploymentPolicy = null;
     DeploymentPolicyActions.cancelEditDeploymentPolicy();
@@ -95,9 +95,9 @@ var applyValidationErrors = function($el, errors) {
 var toggleButtonsState = function($el) {
   var nameValue = $el.find('.name-input').val();
   if (nameValue) {
-    $el.find('.deploymentPolicyEdit-save').removeAttr('disabled').removeClass('loading');
+    $el.find('.inline-edit-save').removeAttr('disabled').removeClass('loading');
   } else {
-    $el.find('.deploymentPolicyEdit-save').attr('disabled', true);
+    $el.find('.inline-edit-save').attr('disabled', true);
   }
 };
 

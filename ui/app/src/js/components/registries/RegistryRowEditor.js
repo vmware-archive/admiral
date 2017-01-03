@@ -34,7 +34,7 @@ const credentialManageOptions = [
 function RegistryRowEditor() {
   this.$el = $(RegistryRowEditTemplate());
 
-  this.alert = new Alert(this.$el, this.$el.find('.registryEdit'));
+  this.alert = new Alert(this.$el, this.$el.find('.inline-edit'), false);
 
   this.credentialInput = new DropdownSearchMenu(this.$el.find('#credential .form-control'), {
     title: i18n.t('dropdownSearchMenu.title', {
@@ -105,7 +105,7 @@ RegistryRowEditor.prototype.setData = function(data) {
 var addEventListeners = function() {
   var _this = this;
 
-  this.$el.find('.registryEditHolder').on('click', '.registryRowEdit-verify', function(e) {
+  this.$el.find('.inline-edit-holder').on('click', '.inline-edit-verify', function(e) {
     e.preventDefault();
 
     $(e.currentTarget).addClass('loading');
@@ -114,14 +114,14 @@ var addEventListeners = function() {
     RegistryActions.verifyRegistry(toReturn);
   });
 
-  this.$el.find('.registryEditHolder #hostname input').focusout(function(e) {
+  this.$el.find('.inline-edit-holder #hostname input').focusout(function(e) {
     e.preventDefault();
 
     var addressInput = $(e.currentTarget);
     addressInput.val(utils.populateDefaultSchemeAndPort(addressInput.val()));
   });
 
-  this.$el.find('.registryEditHolder').on('click', '.registryRowEdit-save', function(e) {
+  this.$el.find('.inline-edit-holder').on('click', '.inline-edit-save', function(e) {
     e.preventDefault();
 
     $(e.currentTarget).addClass('loading');
@@ -135,7 +135,7 @@ var addEventListeners = function() {
     }
   });
 
-  this.$el.find('.registryEditHolder').on('click', '.registryRowEdit-cancel', function(e) {
+  this.$el.find('.inline-edit-holder').on('click', '.inline-edit-cancel', function(e) {
     e.preventDefault();
     RegistryActions.cancelEditRegistry();
   });
@@ -188,10 +188,10 @@ var toggleButtonsState = function($el) {
   var address = $el.find('#hostname input').val();
   var name = $el.find('#name input').val();
 
-  var $verifyBtn = $el.find('.registryRowEdit-verify');
+  var $verifyBtn = $el.find('.inline-edit-verify');
   $verifyBtn.removeClass('loading');
 
-  var $saveBtn = $el.find('.registryRowEdit-save');
+  var $saveBtn = $el.find('.inline-edit-save');
   $saveBtn.removeClass('loading');
 
   if (!address || !name) {

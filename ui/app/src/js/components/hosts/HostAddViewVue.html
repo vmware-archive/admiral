@@ -37,11 +37,9 @@
     <span class="help-block">{{i18n(validationErrors.credential)}}</span>
   </div>
   <div v-if="isApplicationEmbedded()" id="deploymentPolicy" class="form-group">
-    <label class="col-sm-3">{{i18n("app.host.details.deploymentPolicy")}}</label>
-    <div class="col-sm-9">
-      <div class="form-control dropdown-holder"></div>
-      <span class="help-block">{{i18n(validationErrors.deploymentPolicy)}}</span>
-    </div>
+    <label>{{i18n("app.host.details.deploymentPolicy")}}</label>
+    <div class="form-control dropdown-holder"></div>
+    <span class="help-block">{{i18n(validationErrors.deploymentPolicy)}}</span>
   </div>
 
   <div id="tags" class="form-group tags" v-bind:class="{'has-error': validationErrors.tags}">
@@ -54,10 +52,12 @@
 
   <div id="hostAutoConfig" class="form-group auto-configure" v-if="autoConfigurationEnabled">
     <label>{{i18n("app.host.details.autoConfigure")}}</label>
-    <input class="checkbox-control" type="checkbox" name="hostAutoConfig" v-model="autoConfigure"/><label
-      class="radio-label" for="hostAutoConfig">{{i18n("app.host.details.autoConfigureInput")}}</label>
+    <div class="checkbox-inline">
+      <input class="checkbox-control" type="checkbox" name="hostAutoConfig" v-model="autoConfigure"/>
+      <label for="hostAutoConfig">{{i18n("app.host.details.autoConfigureInput")}}</label>
+    </div>
     <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
-        v-tooltip="i18n('app.host.details.autoConfigureHint')"></i>
+          v-tooltip="i18n('app.host.details.autoConfigureHint')"></i>
   </div>
   <div id="customProperties" class="form-group" v-bind:class="{'has-error': validationErrors.customProperties}">
     <label>{{i18n("app.host.details.customProperties")}}</label>

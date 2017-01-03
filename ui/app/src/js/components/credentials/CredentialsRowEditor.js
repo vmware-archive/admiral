@@ -19,7 +19,7 @@ import { CredentialsActions } from 'actions/Actions';
 function CredentialsRowEditor() {
   this.$el = $(CredentialsRowEditTemplate());
 
-  this.alert = new Alert(this.$el, this.$el.find('.credentialsEdit-header'));
+  this.alert = new Alert(this.$el, this.$el.find('.inline-edit'), false);
 
   this.customProperties = new MulticolumnInputs(this.$el.find('.custom-properties'), {
     name: {
@@ -68,7 +68,7 @@ CredentialsRowEditor.prototype.setData = function(data) {
   this.$el.find('#credentialTypeCertificate')[0].checked = false;
   this.$el.find('#credentialTypePublic')[0].checked = false;
 
-  this.$el.find('.credentialsEdit-save').removeClass('loading').removeAttr('disabled');
+  this.$el.find('.inline-edit-save').removeClass('loading').removeAttr('disabled');
 
   if (this.credentialsObject) {
     this.$el.find('.title').html(i18n.t('app.credential.edit.update'));
@@ -123,15 +123,15 @@ CredentialsRowEditor.prototype.setData = function(data) {
 var addEventListeners = function() {
   var _this = this;
 
-  this.$el.find('.credentialsEdit')
+  this.$el.find('.inline-edit')
     .on('change', 'input:radio[name="credentialsType"]', function() {
       var credentialsType = _this
-        .$el.find('.credentialsEdit input:radio[name="credentialsType"]:checked').val();
+        .$el.find('.inline-edit input:radio[name="credentialsType"]:checked').val();
       handleCredentialsTypeInputs(_this.$el, credentialsType);
       toggleButtonsState(_this.$el);
     });
 
-  this.$el.find('.credentialsEdit').on('click', '.credentialsEdit-save', function(e) {
+  this.$el.find('.inline-edit').on('click', '.inline-edit-save', function(e) {
     e.preventDefault();
 
     $(e.currentTarget).addClass('loading');
@@ -145,7 +145,7 @@ var addEventListeners = function() {
     }
 
     var credentialsType = _this
-      .$el.find('.credentialsEdit input:radio[name="credentialsType"]:checked').val();
+      .$el.find('.inline-edit input:radio[name="credentialsType"]:checked').val();
     if (credentialsType === constants.CREDENTIALS_TYPE.PASSWORD) {
       toReturn.username = validator.trim(_this.$el.find('.username-input').val());
       let usePassword = _this.$el.find('.private-key-input-holder').hasClass('hide');
@@ -180,7 +180,7 @@ var addEventListeners = function() {
     }
   });
 
-  this.$el.find('.credentialsEdit').on('click', '.credentialsEdit-cancel', function(e) {
+  this.$el.find('.inline-edit').on('click', '.inline-edit-cancel', function(e) {
     e.preventDefault();
     _this.credentialsObject = null;
 
@@ -249,14 +249,14 @@ var addEventListeners = function() {
 };
 
 var handleCredentialsTypeInputs = function($el, type) {
-  $el.find('.credentialsEdit-passwordInputs')
+  $el.find('.inline-edit-passwordInputs')
     .toggleClass('hide', type !== constants.CREDENTIALS_TYPE.PASSWORD
                            && type !== constants.CREDENTIALS_TYPE.PRIVATE_KEY);
 
-  $el.find('.credentialsEdit-certificateInputs')
+  $el.find('.inline-edit-certificateInputs')
     .toggleClass('hide', type !== constants.CREDENTIALS_TYPE.PUBLIC_KEY);
 
-  $el.find('.credentialsEdit-publicInputs')
+  $el.find('.inline-edit-publicInputs')
     .toggleClass('hide', type !== constants.CREDENTIALS_TYPE.PUBLIC);
 };
 
@@ -270,11 +270,11 @@ var toggleButtonsState = function($el) {
   let nameValue = $el.find('.name-input').val();
 
   if (!nameValue) {
-    $el.find('.credentialsEdit-save').attr('disabled', true);
+    $el.find('.inline-edit-save').attr('disabled', true);
     return;
   }
 
-  let credentialsType = $el.find('.credentialsEdit input:radio[name="credentialsType"]:checked')
+  let credentialsType = $el.find('.inline-edit input:radio[name="credentialsType"]:checked')
     .val();
   if (credentialsType === constants.CREDENTIALS_TYPE.PASSWORD) {
     let userName = $el.find('.username-input').val();
@@ -301,9 +301,9 @@ var toggleButtonsState = function($el) {
 
 var toggleSaveButtonState = function($el, enableCondition) {
   if (enableCondition) {
-    $el.find('.credentialsEdit-save').removeAttr('disabled').removeClass('loading');
+    $el.find('.inline-edit-save').removeAttr('disabled').removeClass('loading');
   } else {
-    $el.find('.credentialsEdit-save').attr('disabled', true);
+    $el.find('.inline-edit-save').attr('disabled', true);
   }
 };
 

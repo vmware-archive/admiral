@@ -95,7 +95,7 @@ describe('Placement zones integration test', function() {
       fillName($container, 'RP-test');
 
       // Trigger creation
-      $container.find('.placementZoneEdit .placementZoneEdit-save')[0].dispatchEvent(new Event('click'));
+      $container.find('.inline-edit .inline-edit-save')[0].dispatchEvent(new Event('click'));
 
       // Reset the data and wait for new data to be set
       lastPlacementZonesData = null;
@@ -148,7 +148,7 @@ describe('Placement zones integration test', function() {
       fillName($container, 'rp-edit-test-updated');
 
       // Trigger update
-      $container.find('.placementZoneEdit .placementZoneEdit-save')[0].dispatchEvent(new Event('click'));
+      $container.find('.inline-edit .inline-edit-save')[0].dispatchEvent(new Event('click'));
 
       // Reset the data and wait for new data to be set
       lastPlacementZonesData = null;
@@ -226,7 +226,7 @@ describe('Placement zones integration test', function() {
 
 var fillName = function($container, name) {
   // Fill the name value
-  var input = $container.find('.placementZoneEdit .placementZoneEdit-properties .name-input')[0];
+  var input = $container.find('.inline-edit .inline-edit-properties .name-input')[0];
   input.value = name;
   input.dispatchEvent(new Event('input'));
 };

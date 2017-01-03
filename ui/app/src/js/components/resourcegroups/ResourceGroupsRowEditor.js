@@ -18,7 +18,7 @@ import constants from 'core/constants';
 function ResourceGroupsRowEditor() {
   this.$el = $(ResourceGroupsRowEditTemplate());
   this.$el.find('.fa-question-circle').tooltip();
-  this.alert = new Alert(this.$el, this.$el.find('.resourceGroupEdit-header'));
+  this.alert = new Alert(this.$el, this.$el.find('.inline-edit'), false);
 
   addEventListeners.call(this);
 }
@@ -30,7 +30,7 @@ ResourceGroupsRowEditor.prototype.getEl = function() {
 ResourceGroupsRowEditor.prototype.setData = function(data) {
   this.group = data.item;
 
-  this.$el.find('.resourceGroupEdit-save').removeAttr('disabled').removeClass('loading');
+  this.$el.find('.inline-edit-save').removeAttr('disabled').removeClass('loading');
 
   if (this.group) {
     this.$el.find('.title').html(i18n.t('app.group.edit.update'));
@@ -53,7 +53,7 @@ ResourceGroupsRowEditor.prototype.setData = function(data) {
 var addEventListeners = function() {
   var _this = this;
 
-  this.$el.find('.resourceGroupEdit').on('click', '.resourceGroupEdit-save', function(e) {
+  this.$el.find('.inline-edit').on('click', '.inline-edit-save', function(e) {
     e.preventDefault();
 
     $(e.currentTarget).addClass('loading');
@@ -73,7 +73,7 @@ var addEventListeners = function() {
     }
   });
 
-  this.$el.find('.resourceGroupEdit').on('click', '.resourceGroupEdit-cancel', function(e) {
+  this.$el.find('.inline-edit').on('click', '.inline-edit-cancel', function(e) {
     e.preventDefault();
     _this.group = null;
     ResourceGroupsActions.cancelEditGroup();
@@ -93,9 +93,9 @@ var applyValidationErrors = function($el, errors) {
 var toggleButtonsState = function($el) {
   var nameValue = $el.find('.name-input').val();
   if (nameValue) {
-    $el.find('.resourceGroupEdit-save').removeAttr('disabled').removeClass('loading');
+    $el.find('.inline-edit-save').removeAttr('disabled').removeClass('loading');
   } else {
-    $el.find('.resourceGroupEdit-save').attr('disabled', true);
+    $el.find('.inline-edit-save').attr('disabled', true);
   }
 };
 

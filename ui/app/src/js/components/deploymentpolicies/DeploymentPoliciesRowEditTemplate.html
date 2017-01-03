@@ -10,19 +10,25 @@
   -->
 
 <tr>
-  <td colspan="3" class="deploymentPolicyEditHolder">
-    <div class="deploymentPolicyEdit">
-      <div class="deploymentPolicyEdit-properties">
-        <div class="title"></div>
-        <input class="name-input" placeholder="{{i18n 'app.deploymentPolicy.edit.nameTitle'}}">
-        <input class="description-input" placeholder="{{i18n 'app.deploymentPolicy.edit.descriptionTitle'}}">
-      </div>
-      <div class="deploymentPolicyEdit-toolbar">
-        <a href="#" class="deploymentPolicyEdit-save btn btn-circle">
+  <td colspan="3" class="inline-edit-holder deploymentPolicyEditHolder">
+    <div class="inline-edit">
+      <form class="inline-edit-properties">
+        <div class="form-block">
+          <label class="title"></label>
+          <div class="form-group row">
+            <input class="name-input" placeholder="{{i18n 'app.deploymentPolicy.edit.nameTitle'}}">
+          </div>
+          <div class="form-group row">
+            <input class="description-input" placeholder="{{i18n 'app.deploymentPolicy.edit.descriptionTitle'}}">
+          </div>
+        </div>
+      </form>
+      <div class="inline-edit-toolbar">
+        <a href="#" class="inline-edit-save btn btn-circle deploymentPolicyEdit-save">
           <i class="fa fa-check"></i>
           <i class="fa fa-spinner fa-spin loader"></i>
         </a>
-        <a href="#" class="deploymentPolicyEdit-cancel btn btn-circle">
+        <a href="#" class="inline-edit-cancel btn btn-circle">
           <i class="fa fa-times"></i>
         </a>
       </div>

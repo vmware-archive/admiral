@@ -84,12 +84,12 @@ describe('Certificates management integration test', function() {
       });
     }).then(function() {
       var certifcateInput =
-          $container.find('.certificatesEdit .certificatesEdit-properties .certificate-input');
+          $container.find('.inline-edit .inline-edit-properties .certificate-input');
       console.log('Set the certificate. Inputs length: ' + certifcateInput.length);
       certifcateInput.val(sampleCertificates.defaultCertificate);
 
       // Trigger creation
-      var certifcateSaveButton = $container.find('.certificatesEdit .certificatesEdit-save');
+      var certifcateSaveButton = $container.find('.inline-edit .inline-edit-save');
       console.log('Click save on button. Buttons length: ' + certifcateSaveButton.length);
       certifcateSaveButton.trigger('click');
 
@@ -123,19 +123,19 @@ describe('Certificates management integration test', function() {
         return lastCertificatesData && lastCertificatesData.editingItemData;
       });
     }).then(function() {
-      $container.find('.certificatesEdit .certificate-import-option-toggle').trigger('click');
+      $container.find('.inline-edit .certificate-import-option-toggle').trigger('click');
       $container.find('.uri-input').val(SELF_SIGNED_URI);
 
-      $container.find('.certificatesEdit .certificate-import-button').trigger('click');
+      $container.find('.inline-edit .certificate-import-button').trigger('click');
 
       return testUtils.waitFor(function() {
         var currentCertificate = $container.find(
-            '.certificatesEdit .certificatesEdit-properties .certificate-input').val();
+            '.inline-edit .inline-edit-properties .certificate-input').val();
         return currentCertificate && currentCertificate.indexOf(
             '-----BEGIN CERTIFICATE-----') !== -1;
       });
     }).then(function() {
-      $container.find('.certificatesEdit .certificatesEdit-save').trigger('click');
+      $container.find('.inline-edit .inline-edit-save').trigger('click');
 
       lastCertificatesData = null;
       return testUtils.waitFor(function() {
@@ -170,10 +170,10 @@ describe('Certificates management integration test', function() {
       });
     }).then(function() {
       $container.find(
-          '.certificatesEdit .certificatesEdit-properties .certificate-input').val(
+          '.inline-edit .inline-edit-properties .certificate-input').val(
             sampleCertificates.defaultCertificate);
 
-      $container.find('.certificatesEdit .certificatesEdit-save').trigger('click');
+      $container.find('.inline-edit .inline-edit-save').trigger('click');
 
       lastCertificatesData = null;
       return testUtils.waitFor(function() {
@@ -197,23 +197,23 @@ describe('Certificates management integration test', function() {
       });
     }).then(function() {
 
-      $container.find('.certificatesEdit .certificate-import-option-toggle').trigger('click');
+      $container.find('.inline-edit .certificate-import-option-toggle').trigger('click');
       $container.find('.uri-input').val(SELF_SIGNED_URI);
 
       var oldCertificate = $container.find(
-          '.certificatesEdit .certificatesEdit-properties .certificate-input').val();
+          '.inline-edit .inline-edit-properties .certificate-input').val();
 
-      $container.find('.certificatesEdit .certificate-import-button').trigger('click');
+      $container.find('.inline-edit .certificate-import-button').trigger('click');
 
       return testUtils.waitFor(function() {
         var currentCertificate = $container.find(
-            '.certificatesEdit .certificatesEdit-properties .certificate-input').val();
+            '.inline-edit .inline-edit-properties .certificate-input').val();
         return oldCertificate !== currentCertificate && currentCertificate &&
             currentCertificate.indexOf('-----BEGIN CERTIFICATE-----') !== -1;
       });
     }).then(function() {
       // Trigger creation
-      $container.find('.certificatesEdit .certificatesEdit-save').trigger('click');
+      $container.find('.inline-edit .inline-edit-save').trigger('click');
 
       lastCertificatesData = null;
       return testUtils.waitFor(function() {

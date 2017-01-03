@@ -10,45 +10,37 @@
   -->
 
 <tr>
-  <td colspan="4" class="registryEditHolder">
-    <div class="form-group registryEdit">
-      <div class="col-sm-9">
-        <div class="title"></div>
-        <div class="registryRowEdit-inputs form-group">
-          <div class="form-group col-sm-12">
-            <div id="hostname" class="col-sm-6">
-              <div class="hostname-holder">
-                <input type="text" placeholder="{{i18n 'app.registry.edit.addressTitle'}}">
-              </div>
-              <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="right"
-                 title="{{i18n 'app.registry.edit.addressHint'}}"></i>
-              <span class="help-block"></span>
-            </div>
-            <div id="name" class="col-sm-6">
-              <input type="text" placeholder="{{i18n 'app.registry.edit.nameTitle'}}">
-              <span class="help-block"></span>
-            </div>
+  <td colspan="4" class="inline-edit-holder registryEditHolder">
+    <div class="inline-edit registry-inline-edit">
+      <form class="inline-edit-properties">
+        <section class="form-block">
+          <label class="title"></label>
+          <div id="hostname" class="form-group row">
+            <input type="text" placeholder="{{i18n 'app.registry.edit.addressTitle'}}">
+            <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="right"
+              title="{{i18n 'app.registry.edit.addressHint'}}"></i>
+            <span class="help-block"></span>
           </div>
-          <div id="credential" class="form-group col-sm-12">
-            <label class="col-sm-3">{{i18n "app.registry.edit.credentialTitle"}}</label>
-            <div class="col-sm-9">
-              <div class="form-control dropdown-holder"></div>
-              <span class="help-block"></span>
-            </div>
+          <div id="name" class="form-group row">
+            <input type="text" placeholder="{{i18n 'app.registry.edit.nameTitle'}}">
+            <span class="help-block"></span>
           </div>
-        </div>
-      </div>
-      <div class="col-sm-3">
-        <div class="registryRowEdit-toolbar pull-right">
-          <a href="#" class="btn registryRowEdit-verify">{{i18n "app.registry.edit.verifyButton"}}<i class="fa fa-spinner fa-spin loader-inline"></i></a>
-          <a href="#" class="registryRowEdit-save btn btn-circle">
-            <i class="fa fa-check"></i>
-            <i class="fa fa-spinner fa-spin loader"></i>
-          </a>
-          <a href="#" class="registryRowEdit-cancel btn btn-circle">
-            <i class="fa fa-times"></i>
-          </a>
-        </div>
+          <div id="credential" class="form-group">
+            <label>{{i18n "app.registry.edit.credentialTitle"}}</label>
+            <div class="form-control dropdown-holder"></div>
+            <span class="help-block"></span>
+          </div>
+        </section>
+      </form>
+      <div class="inline-edit-toolbar">
+        <a href="#" class="btn inline-edit-verify registryRowEdit-verify">{{i18n "app.registry.edit.verifyButton"}}<i class="fa fa-spinner fa-spin loader-inline"></i></a>
+        <a href="#" class="inline-edit-save btn btn-circle registryRowEdit-save">
+          <i class="fa fa-check"></i>
+          <i class="fa fa-spinner fa-spin loader"></i>
+        </a>
+        <a href="#" class="inline-edit-cancel btn btn-circle">
+          <i class="fa fa-times"></i>
+        </a>
       </div>
     </div>
   </td>

@@ -10,33 +10,33 @@
   -->
 
 <tr>
-  <td colspan="5" class="certificatesEditHolder">
-    <div class="certificatesEdit">
-      <div class="certificatesEdit-header">
-        <div class="title"></div>
-        <div class="certificatesEdit-toolbar">
-          <a href="#" class="certificatesEdit-save btn btn-circle">
-            <i class="fa fa-check"></i>
-            <i class="fa fa-spinner fa-spin loader"></i>
-          </a>
-          <a href="#" class="certificatesEdit-cancel btn btn-circle">
-            <i class="fa fa-times"></i>
-          </a>
-        </div>
-      </div>
-      <div class="certificatesEdit-properties">
-        <div class="certificate-import-option">
-          <a href="#" class="certificate-import-option-toggle btn btn-sm btn-secondary">{{i18n "app.certificate.edit.importOptionTitle"}}</a>
-          <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="{{i18n 'app.certificate.edit.importOptionHint'}}"></i>
-        </div>
-        <div class="certificate-import-inputs row hide">
-          <div class="col-sm-6">
-            <input class="uri-input" placeholder="{{i18n 'app.certificate.edit.urlTitle'}}">
+  <td colspan="5" class="inline-edit-holder">
+    <div class="inline-edit">
+      <form class="inline-edit-properties">
+        <section class="form-block">
+          <label class="title"></label>
+          <div class="certificate-import-option">
+            <a href="#" class="certificate-import-option-toggle btn btn-sm btn-secondary">{{i18n "app.certificate.edit.importOptionTitle"}}</a>
+            <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="{{i18n 'app.certificate.edit.importOptionHint'}}"></i>
           </div>
-          <a class="certificate-import-button btn btn-sm btn-secondary col-sm-3">{{i18n "app.certificate.edit.importButton"}}<i class="fa fa-spinner fa-spin loader-inline"></i></a>
-          <a class="certificate-import-option-cancel btn btn-sm col-sm-3">{{i18n "cancel"}}</a>
-        </div>
-        <textarea class="certificate-input" placeholder="{{i18n 'app.certificate.edit.certificateTitle'}}"></textarea>
+          <div class="certificate-import-inputs hide">
+            <div>
+              <input class="uri-input" placeholder="{{i18n 'app.certificate.edit.urlTitle'}}">
+            </div>
+            <a class="certificate-import-button btn btn-sm btn-secondary">{{i18n "app.certificate.edit.importButton"}}<i class="fa fa-spinner fa-spin loader-inline"></i></a>
+            <a class="certificate-import-option-cancel btn btn-sm">{{i18n "cancel"}}</a>
+          </div>
+          <textarea class="certificate-input" placeholder="{{i18n 'app.certificate.edit.certificateTitle'}}"></textarea>
+        </section>
+      </form>
+      <div class="inline-edit-toolbar">
+        <a href="#" class="inline-edit-save btn btn-circle">
+          <i class="fa fa-check"></i>
+          <i class="fa fa-spinner fa-spin loader"></i>
+        </a>
+        <a href="#" class="inline-edit-cancel btn btn-circle">
+          <i class="fa fa-times"></i>
+        </a>
       </div>
     </div>
   </td>

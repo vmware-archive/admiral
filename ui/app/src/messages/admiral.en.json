@@ -119,7 +119,8 @@
         "endpointTitle": "Endpoint",
         "dynamicTitle": "Dynamically allocate resources to this zone",
         "tagsToMatchTitle": "Tags to match",
-        "tagsToMatchHint": "Enter key:value tags to match"
+        "tagsToMatchHint": "Enter key:value tags to match",
+        "tagsToMatchPlaceholder": "Example: location:west"
       },
       "contextPanelTooltip": "Placement Zones"
     },

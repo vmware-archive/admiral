@@ -1457,29 +1457,6 @@ $elements-side-margin: $elements-margin / 2;
   }
 }
 
-.environments-view {
-  > .main-panel {
-    @extend .position-expand;
-
-    .environmentEdit-inputs {
-      margin-right: 20px;
-    }
-    .environmentEdit-toolbar {
-      margin-top: 5px;
-    }
-    .environmentPropertyEdit-inputs {
-      margin: 10px 60px 5px 10px;
-      .name-input {
-        @extend .inline-editable-list-edit-input;
-        margin-bottom: 10px;
-      }
-    }
-    .environmentPropertyEdit-toolbar {
-      margin-top: 2px;
-    }
-  }
-}
-
 .container-template-item-stack {
   position: absolute;
   /* Neutralize borders */
