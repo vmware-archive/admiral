@@ -12,16 +12,14 @@
 package com.vmware.admiral.compute.container;
 
 import java.net.URI;
-import java.util.List;
 import java.util.function.Consumer;
 
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.util.ContainerUtil;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.StatelessService;
-import com.vmware.xenon.common.UriUtils;
 
 public class AbstractShellContainerService extends StatelessService {
 
@@ -30,28 +28,25 @@ public class AbstractShellContainerService extends StatelessService {
     }
 
     private void loadContainerShellURI(String hostLink, ComputeService.ComputeState host,
-            ContainerState shellContainer,
-            Operation op, Consumer<URI> callback) {
+            ContainerState shellContainer, Operation op, Consumer<URI> callback) {
 
         if (host == null) {
-            sendRequest(Operation.createGet(this, hostLink).setCompletion(
-                    (o, e) -> {
-                        if (e != null) {
-                            op.fail(e);
-                            return;
-                        }
-                        ComputeService.ComputeState computeState = o
-                                .getBody(ComputeService.ComputeState.class);
-                        loadContainerShellURI(hostLink, computeState, shellContainer, op,
-                                callback);
-                    }));
+            sendRequest(Operation.createGet(this, hostLink).setCompletion((o, e) -> {
+                if (e != null) {
+                    op.fail(e);
+                    return;
+                }
+                ComputeService.ComputeState computeState = o
+                        .getBody(ComputeService.ComputeState.class);
+                loadContainerShellURI(hostLink, computeState, shellContainer, op,
+                        callback);
+            }));
             return;
         }
 
         if (shellContainer == null) {
             String shellContainerLink = SystemContainerDescriptions.getSystemContainerSelfLink(
-                    SystemContainerDescriptions.AGENT_CONTAINER_NAME,
-                    Service.getId(hostLink));
+                    SystemContainerDescriptions.AGENT_CONTAINER_NAME, Service.getId(hostLink));
             sendRequest(Operation.createGet(this, shellContainerLink).setCompletion((o, e) -> {
                 if (e != null) {
                     op.fail(e);
@@ -64,27 +59,15 @@ public class AbstractShellContainerService extends StatelessService {
             return;
         }
 
-        String uriHost = UriUtilsExtended.extractHost(host.address);
-
-        PortBinding portBinding = getShellPortBinding(shellContainer.ports);
-
-        if (portBinding == null) {
-            op.fail(new IllegalStateException("Could not locale shell port"));
+        URI shellUri;
+        try {
+            shellUri = ContainerUtil.getShellUri(host, shellContainer);
+        } catch (Exception e) {
+            op.fail(e);
             return;
         }
 
-        URI shellUri = UriUtils.buildUri(UriUtils.HTTP_SCHEME, uriHost,
-                Integer.parseInt(portBinding.hostPort), null, null);
         callback.accept(shellUri);
     }
 
-    private PortBinding getShellPortBinding(List<PortBinding> ports) {
-        for (PortBinding portBinding : ports) {
-            if (SystemContainerDescriptions.CORE_AGENT_SHELL_PORT
-                    .equals(portBinding.containerPort)) {
-                return portBinding;
-            }
-        }
-        return null;
-    }
 }

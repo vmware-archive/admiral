@@ -57,6 +57,8 @@ import com.vmware.admiral.service.common.AbstractCallbackServiceHandler.Callback
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.admiral.service.common.SslTrustImportService;
+import com.vmware.admiral.service.common.SslTrustImportService.SslTrustImportRequest;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.FactoryService;
@@ -80,6 +82,11 @@ public class HostContainerListDataCollection extends StatefulService {
     private static final String SYSTEM_CONTAINER_NAME = "systemContainerName";
     protected static final long DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS = Long.getLong(
             "com.vmware.admiral.data.collection.lock.timeout.milliseconds", 30000);
+
+    private static final int SYSTEM_CONTAINER_SSL_RETRIES_COUNT = Integer.getInteger(
+            "com.vmware.admiral.system.container.ssl.retries", 3);
+    private static final long SYSTEM_CONTAINER_SSL_RETRIES_WAIT = Long.getLong(
+            "com.vmware.admiral.system.container.ssl.retries.wait.millis", 1000);
 
     public static class HostContainerListDataCollectionFactoryService extends FactoryService {
         public static final String SELF_LINK = ManagementUriParts.HOST_CONTAINER_LIST_DATA_COLLECTION;
@@ -306,7 +313,8 @@ public class HostContainerListDataCollection extends StatefulService {
 
         HostContainerListDataCollectionState state = getState(op);
         if (body.unlockDataCollectionForHost) {
-            // patch to mark that there is no active list containers data collection for a given host.
+            // patch to mark that there is no active list containers data collection for a given
+            // host.
             state.containerHostLinks.remove(containerHostLink);
             op.complete();
             return;
@@ -622,7 +630,8 @@ public class HostContainerListDataCollection extends StatefulService {
                                     // If System ContainerState exists we can start it.
                                     // if version is valid, although we don't know the power state,
                                     // start the containers anyway as start is idempotent
-                                    logFine("start existing system container %s", containerState.documentSelfLink);
+                                    logFine("start existing system container %s",
+                                            containerState.documentSelfLink);
                                     startSystemContainer(containerState, null);
                                 } else {
                                     // If System ContainerState does not exists, we create it before
@@ -631,19 +640,23 @@ public class HostContainerListDataCollection extends StatefulService {
                                             containerState, containerDesc, containerHostLink);
 
                                     sendRequest(OperationUtil
-                                            .createForcedPost(this, ContainerFactoryService.SELF_LINK)
+                                            .createForcedPost(this,
+                                                    ContainerFactoryService.SELF_LINK)
                                             .setBody(systemContainerState)
                                             .setCompletion(
                                                     (o, e) -> {
                                                         if (e != null) {
-                                                            logWarning("Failure creating system container: "
-                                                                    + Utils.toString(e));
+                                                            logWarning(
+                                                                    "Failure creating system container: "
+                                                                            + Utils.toString(e));
                                                             return;
                                                         }
-                                                        ContainerState body = o.getBody(ContainerState.class);
+                                                        ContainerState body = o
+                                                                .getBody(ContainerState.class);
                                                         logInfo("Created system ContainerState: %s ",
                                                                 body.documentSelfLink);
-                                                        createSystemContainerInstanceRequest(body, null);
+                                                        createSystemContainerInstanceRequest(body,
+                                                                null);
                                                         updateNumberOfContainers(containerHostLink);
                                                         startSystemContainer(containerState, null);
                                                     }));
@@ -698,7 +711,7 @@ public class HostContainerListDataCollection extends StatefulService {
             ContainerState container) {
         return (o, error) -> {
             if (error) {
-                logSevere("Failure deleting system container.");
+                logSevere("Failure creating system container.");
             } else {
                 // Upload trusted self-signed registry certificates to host
                 logFine("Distribute certificates for host %s", container.parentLink);
@@ -708,8 +721,73 @@ public class HostContainerListDataCollection extends StatefulService {
                 sendRequest(Operation.createPost(this,
                         HostConfigCertificateDistributionService.SELF_LINK)
                         .setBody(distState));
+
+                // Import agent SSL certificate
+                importAgentSslCertificate(container, null, SYSTEM_CONTAINER_SSL_RETRIES_COUNT);
             }
         };
+    }
+
+    private void importAgentSslCertificate(ContainerState container, ComputeState host,
+            int retryCount) {
+
+        if (container.ports == null) {
+            OperationUtil.getDocumentState(this, container.documentSelfLink, ContainerState.class,
+                    (ContainerState c) -> {
+                        if (c.ports == null) {
+                            logSevere("Couldn't get valid ports for system container %s",
+                                    container.documentSelfLink);
+                        } else {
+                            importAgentSslCertificate(c, host, retryCount);
+                        }
+                    });
+            return;
+        }
+
+        if (host == null) {
+            OperationUtil.getDocumentState(this, container.parentLink, ComputeState.class,
+                    (ComputeState h) -> {
+                        importAgentSslCertificate(container, h, retryCount);
+                    });
+            return;
+        }
+
+        logFine("Import SSL certificate for system container %s", container.documentSelfLink);
+
+        SslTrustImportRequest request = new SslTrustImportRequest();
+        request.acceptCertificate = true;
+
+        try {
+            request.hostUri = ContainerUtil.getShellUri(host, container);
+        } catch (Exception e) {
+            logSevere("Exception getting shell URI for system container %s:\n%s",
+                    container.documentSelfLink, Utils.toString(e));
+            return;
+        }
+
+        sendRequest(Operation.createPut(this, SslTrustImportService.SELF_LINK)
+                .setBody(request)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        if (retryCount > 0) {
+                            logWarning(
+                                    "Retrying with count %s after error importing system container SSL certificate from '%s':\n%s",
+                                    retryCount, request.hostUri, Utils.toString(e));
+                            try {
+                                Thread.sleep(SYSTEM_CONTAINER_SSL_RETRIES_WAIT);
+                                importAgentSslCertificate(container, host, retryCount - 1);
+                            } catch (Exception ex) {
+                                logWarning("Sleep interrupted!\n%s", Utils.toString(ex));
+                            }
+                        } else {
+                            logSevere(
+                                    "Exception importing system container SSL certificate from '%s':\n%s",
+                                    request.hostUri, Utils.toString(e));
+                        }
+                        return;
+                    }
+                    logInfo("System container SSL certificate imported from '%s'", request.hostUri);
+                }));
     }
 
     private void deleteSystemContainer(
@@ -896,9 +974,9 @@ public class HostContainerListDataCollection extends StatefulService {
                                         createDiscoveredContainer(callback, counter,
                                                 containerState);
                                     } else if (ex != null) {
-                                            logSevere("Failed to get container %s : %s",
-                                                    containerState.names, ex.getMessage());
-                                            callback.accept(ex);
+                                        logSevere("Failed to get container %s : %s",
+                                                containerState.names, ex.getMessage());
+                                        callback.accept(ex);
                                     } else {
                                         if (counter.decrementAndGet() == 0) {
                                             callback.accept(null);
@@ -1006,10 +1084,14 @@ public class HostContainerListDataCollection extends StatefulService {
                     .setCompletion(
                             (op, ex) -> {
                                 if (ex != null) {
-                                    logWarning("Failed deleting ContainerState of missing container: " + containerState.documentSelfLink, ex);
+                                    logWarning(
+                                            "Failed deleting ContainerState of missing container: "
+                                                    + containerState.documentSelfLink,
+                                            ex);
                                     return;
                                 }
-                                logInfo("Deleted ContainerState of missing container: " + containerState.documentSelfLink);
+                                logInfo("Deleted ContainerState of missing container: "
+                                        + containerState.documentSelfLink);
                             }));
         } else {
             // patch container status to RETIRED
@@ -1042,8 +1124,7 @@ public class HostContainerListDataCollection extends StatefulService {
 
         if (containerDesc == null) {
             String descriptionLink;
-            if (systemContainerName
-                    .equals(SystemContainerDescriptions.AGENT_CONTAINER_NAME)) {
+            if (systemContainerName.equals(SystemContainerDescriptions.AGENT_CONTAINER_NAME)) {
                 descriptionLink = SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK;
             } else {
                 throw new IllegalStateException("Unknown systemContainerName: "
@@ -1052,8 +1133,7 @@ public class HostContainerListDataCollection extends StatefulService {
 
             OperationUtil.getDocumentState(this, descriptionLink, ContainerDescription.class,
                     (ContainerDescription contDesc) -> installSystemContainerToHost(
-                            containerHostLink,
-                            systemContainerName, contDesc));
+                            containerHostLink, systemContainerName, contDesc));
             return;
         }
 
@@ -1069,8 +1149,7 @@ public class HostContainerListDataCollection extends StatefulService {
     }
 
     private void createOrRetrieveSystemContainer(String containerHostLink,
-            String systemContainerName,
-            ContainerDescription containerDesc) {
+            String systemContainerName, ContainerDescription containerDesc) {
         String containerStateLink = SystemContainerDescriptions.getSystemContainerSelfLink(
                 systemContainerName, Service.getId(containerHostLink));
         ServiceDocumentQuery<ContainerState> query = new ServiceDocumentQuery<>(getHost(),

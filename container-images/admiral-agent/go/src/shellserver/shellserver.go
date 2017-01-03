@@ -27,5 +27,5 @@ func main() {
 
 	http.HandleFunc(SHELL_ENDPOINT, StartOrUpdateShellProcess(ProxyToSocket))
 
-	log.Fatal(http.ListenAndServe("0.0.0.0:4200", nil))
+	log.Fatal(http.ListenAndServeTLS("0.0.0.0:4200", "/agent/server.crt", "/agent/server.key", nil))
 }

@@ -11,17 +11,20 @@
 
 package com.vmware.admiral.compute.container.util;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
+import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
@@ -43,7 +46,7 @@ public class ContainerUtil {
         containerDescription.documentSelfLink = state.descriptionLink;
         containerDescription.documentDescription = state.documentDescription;
         containerDescription.tenantLinks = state.tenantLinks;
-        //there are some corner cases (mostly in tests) when the state might be missing the image
+        // there are some corner cases (mostly in tests) when the state might be missing the image
         containerDescription.image = state.image == null ? NOT_KNOWN_IMAGE : state.image;
         containerDescription.cpuShares = state.cpuShares;
         containerDescription.instanceAdapterReference = state.adapterManagementReference;
@@ -136,6 +139,7 @@ public class ContainerUtil {
      * Method checks if ContainerState is mapped to ContainerDescription which is "Discovered". The
      * only difference between this method and the one in SystemContainerDescriptions is that this
      * one will return false if check is against system container.
+     *
      * @param containerState
      *            - ContainerState which will be checked.
      * @return
@@ -147,6 +151,32 @@ public class ContainerUtil {
                         .buildUriPath(
                                 SystemContainerDescriptions.DISCOVERED_DESCRIPTION_LINK));
 
+    }
+
+    public static URI getShellUri(ComputeState host, ContainerState shellContainer) {
+
+        PortBinding portBinding = getShellPortBinding(shellContainer);
+
+        if (portBinding == null) {
+            throw new IllegalStateException("Could not locate shell port");
+        }
+
+        String uriHost = UriUtilsExtended.extractHost(host.address);
+
+        return UriUtils.buildUri(UriUtils.HTTPS_SCHEME, uriHost,
+                Integer.parseInt(portBinding.hostPort), null, null);
+    }
+
+    private static PortBinding getShellPortBinding(ContainerState containerState) {
+        if (containerState.ports != null) {
+            for (PortBinding portBinding : containerState.ports) {
+                if (SystemContainerDescriptions.CORE_AGENT_SHELL_PORT
+                        .equals(portBinding.containerPort)) {
+                    return portBinding;
+                }
+            }
+        }
+        return null;
     }
 
     /**

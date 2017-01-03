@@ -23,7 +23,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 
 /**
- * Reverse proxy for container to it's shell, accessible through a shell agent on it's host.
+ * Reverse proxy for container to its shell, accessible through a shell agent on its host.
  */
 public class ContainerShellService extends AbstractShellContainerService {
 

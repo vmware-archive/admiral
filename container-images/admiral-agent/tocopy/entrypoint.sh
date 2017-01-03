@@ -13,6 +13,16 @@
 
 touch /var/log/shellserver.log
 
+if [ ! -f "/agent/server.key" ] && [ ! -f "/agent/server.crt" ]; then
+    #Generate Admiral Agent server certificate
+    openssl req -new -newkey rsa:2048 -days 3650 -nodes -sha256 -x509 -subj "/CN=admiral-agent" -keyout /agent/server.key -out /agent/server.crt
+    
+    echo "server.key"
+    cat /agent/server.key
+    echo "server.crt"
+    cat /agent/server.crt
+fi
+
 cat admiral_logo.txt
 echo "Admiral Agent started successfully!"
 
