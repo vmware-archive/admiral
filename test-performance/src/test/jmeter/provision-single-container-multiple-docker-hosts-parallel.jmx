@@ -238,12 +238,12 @@ props.put(&quot;client.key&quot;, clientKey);</stringProp>
         <hashTree/>
         <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">true</boolProp>
-          <stringProp name="LoopController.loops">20</stringProp>
+          <stringProp name="LoopController.loops">25</stringProp>
         </LoopController>
         <hashTree>
           <CounterConfig guiclass="CounterConfigGui" testclass="CounterConfig" testname="Counter" enabled="true">
             <stringProp name="CounterConfig.start">0</stringProp>
-            <stringProp name="CounterConfig.end">20</stringProp>
+            <stringProp name="CounterConfig.end">25</stringProp>
             <stringProp name="CounterConfig.incr">1</stringProp>
             <stringProp name="CounterConfig.name">counter</stringProp>
             <stringProp name="CounterConfig.format"></stringProp>
@@ -306,11 +306,11 @@ props.put(&quot;number&quot;, counter);
         <RecordingController guiclass="RecordController" testclass="RecordingController" testname="Recording Controller" enabled="false"/>
         <hashTree/>
       </hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Test - provision 4000 containers(2 x 2000 containers)" enabled="true">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Test - provision 5000 containers(2 x 5000 containers)" enabled="true">
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
-          <stringProp name="LoopController.loops">2000</stringProp>
+          <stringProp name="LoopController.loops">2500</stringProp>
         </elementProp>
         <stringProp name="ThreadGroup.num_threads">2</stringProp>
         <stringProp name="ThreadGroup.ramp_time">1</stringProp>
@@ -378,7 +378,7 @@ props.put(&quot;number&quot;, counter);
         <hashTree/>
         <CounterConfig guiclass="CounterConfigGui" testclass="CounterConfig" testname="Counter" enabled="true">
           <stringProp name="CounterConfig.start">0</stringProp>
-          <stringProp name="CounterConfig.end">4000</stringProp>
+          <stringProp name="CounterConfig.end">5000</stringProp>
           <stringProp name="CounterConfig.incr">1</stringProp>
           <stringProp name="CounterConfig.name">counter</stringProp>
           <stringProp name="CounterConfig.format"></stringProp>
@@ -978,9 +978,10 @@ log.info(&quot;Event logs after removing: &quot; + eventLogs);</stringProp>
           </com.atlantbh.jmeter.plugins.jsonutils.jsonpathextractor.JSONPathExtractor>
           <hashTree/>
           <BeanShellAssertion guiclass="BeanShellAssertionGui" testclass="BeanShellAssertion" testname="Assert container state number" enabled="true">
-            <stringProp name="BeanShellAssertion.query">String containers = vars.get(&quot;containersCount&quot;);
+            <stringProp name="BeanShellAssertion.query">int containers = Integer.parseInt(vars.get(&quot;containersCount&quot;));
 // After removing the containers only the system container should be left
-boolean error = !(containers.equals(&quot;20&quot;));
+int faultTolerance = 5;
+boolean error = containers &gt; (25 + faultTolerance);
 if (error){
 	log.error(&quot;Containers are not removed properly from admiral! Found containers number: &quot; + containers);
 	String containerDescriptions = vars.get(&quot;containerDescriptions&quot;);
@@ -996,12 +997,12 @@ if (error){
         </hashTree>
         <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="false">
           <boolProp name="LoopController.continue_forever">true</boolProp>
-          <stringProp name="LoopController.loops">20</stringProp>
+          <stringProp name="LoopController.loops">25</stringProp>
         </LoopController>
         <hashTree>
           <CounterConfig guiclass="CounterConfigGui" testclass="CounterConfig" testname="Counter" enabled="true">
             <stringProp name="CounterConfig.start">0</stringProp>
-            <stringProp name="CounterConfig.end">20</stringProp>
+            <stringProp name="CounterConfig.end">25</stringProp>
             <stringProp name="CounterConfig.incr">1</stringProp>
             <stringProp name="CounterConfig.name">counter</stringProp>
             <stringProp name="CounterConfig.format"></stringProp>
