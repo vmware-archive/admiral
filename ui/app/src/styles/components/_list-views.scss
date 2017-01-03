@@ -119,7 +119,7 @@
 
   a:hover {
     text-decoration: none;
-    color: #356f9b;
+    color: $link_color;
  }
   a.active, a.active:hover, a.active:focus {
     color: #000000;

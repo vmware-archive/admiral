@@ -12,7 +12,7 @@ $vmw_lightblue: #3888c5;
 $main_color: $clr-action-blue;
 $main-color-80: rgba(51, 153, 204, 0.80);
 $main-color-semi: rgba(51, 153, 204, 0.50);
-$link_color: #356f9b;
+$link_color: $main_color;
 
 $disabled_opacity: 0.5;
 

@@ -730,8 +730,8 @@ $main-list-view-right: 10px;
   position: absolute;
   top: 0px;
   bottom: 0px;
-  left: -42px;
-  width: 42px;
+  left: -47px;
+  width: 47px;
   z-index: 20;
   overflow-x: hidden;
   overflow-y: auto;
@@ -755,6 +755,7 @@ $main-list-view-right: 10px;
   transform: translate(0,100%) rotate(-90deg);
   transform-origin: 0 0;
   position: relative;
+  margin-left: 5px;
 
   &:after {
     content: "";
@@ -814,6 +815,7 @@ $main-list-view-right: 10px;
   left: -3px;
   overflow: hidden;
   text-overflow: ellipsis;
+  transform: rotate(90deg);
 }
 
 .toolbar-item .toolbar-item-notification[disabled] {
