@@ -42,6 +42,7 @@ public interface ManagementUriParts {
     String RESOURCE_GROUP_PLACEMENTS = RESOURCES + "/group-placements";
     String RESOURCE_NAME_PREFIXES = RESOURCES + "/name-prefixes";
     String DEPLOYMENT_POLICIES = RESOURCES + "/deployment-policies";
+    String HOST_PORT_PROFILES = RESOURCES + "/host-port-profiles";
     String ELASTIC_PLACEMENT_ZONES = RESOURCES + "/elastic-placement-zones";
     String ELASTIC_PLACEMENT_ZONE_CONFIGURATION = ELASTIC_PLACEMENT_ZONES + "-config";
     String PLACEMENT_CAPACITY_UPDATE = RESOURCES + "/placement-capacity-update";

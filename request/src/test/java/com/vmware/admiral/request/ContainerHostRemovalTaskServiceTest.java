@@ -30,6 +30,7 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
@@ -77,27 +78,7 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
         assertNotNull("task is null", state);
         waitForTaskSuccess(state.documentSelfLink, ContainerHostRemovalTaskState.class);
 
-        // verify that the container states were removed
-        containerStateLinks = findResourceLinks(ContainerState.class, containerStateLinks);
-        assertTrue("ContainerState not removed: " + containerStateLinks,
-                containerStateLinks.isEmpty());
-
-        // verify that the host was removed
-        Collection<String> computeSelfLinks = findResourceLinks(ComputeState.class,
-                Collections.singletonList(computeHost.documentSelfLink));
-
-        assertTrue("ComputeState was not deleted: " + computeSelfLinks, computeSelfLinks.isEmpty());
-
-        // verify that the containers where removed from the docker mock
-        Map<String, String> containerRefsByIds = MockDockerAdapterService
-                .getContainerIdsWithContainerReferences();
-        for (String containerRef : containerRefsByIds.values()) {
-            for (String containerLink : containerStateLinks) {
-                if (containerRef.endsWith(containerLink)) {
-                    fail("Container State not removed with link: " + containerLink);
-                }
-            }
-        }
+        validateHostRemoved(containerStateLinks);
     }
 
     @Test
@@ -123,27 +104,7 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
         request = startRequest(request);
         waitForRequestToComplete(request);
 
-        // verify that the container states were removed
-        containerStateLinks = findResourceLinks(ContainerState.class, containerStateLinks);
-        assertTrue("ContainerState not removed: " + containerStateLinks,
-                containerStateLinks.isEmpty());
-
-        // verify that the host was removed
-        Collection<String> computeSelfLinks = findResourceLinks(ComputeState.class,
-                Collections.singletonList(computeHost.documentSelfLink));
-
-        assertTrue("ComputeState was not deleted: " + computeSelfLinks, computeSelfLinks.isEmpty());
-
-        // verify that the containers where removed from the docker mock
-        Map<String, String> containerRefsByIds = MockDockerAdapterService
-                .getContainerIdsWithContainerReferences();
-        for (String containerRef : containerRefsByIds.values()) {
-            for (String containerLink : containerStateLinks) {
-                if (containerRef.endsWith(containerLink)) {
-                    fail("Container State not removed with link: " + containerLink);
-                }
-            }
-        }
+        validateHostRemoved(containerStateLinks);
     }
 
     @Test
@@ -178,27 +139,7 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
         request = startRequest(request);
         waitForRequestToComplete(request);
 
-        // verify that the container states were removed
-        containerStateLinks = findResourceLinks(ContainerState.class, containerStateLinks);
-        assertTrue("ContainerState not removed: " + containerStateLinks,
-                containerStateLinks.isEmpty());
-
-        // verify that the host was removed
-        Collection<String> computeSelfLinks = findResourceLinks(ComputeState.class,
-                Collections.singletonList(computeHost.documentSelfLink));
-
-        assertTrue("ComputeState was not deleted: " + computeSelfLinks, computeSelfLinks.isEmpty());
-
-        // verify that the containers where removed from the docker mock
-        Map<String, String> containerRefsByIds = MockDockerAdapterService
-                .getContainerIdsWithContainerReferences();
-        for (String containerRef : containerRefsByIds.values()) {
-            for (String containerLink : containerStateLinks) {
-                if (containerRef.endsWith(containerLink)) {
-                    fail("Container State not removed with link: " + containerLink);
-                }
-            }
-        }
+        validateHostRemoved(containerStateLinks);
     }
 
     @Test
@@ -256,6 +197,10 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
         assertTrue("ContainerNetworkState not removed: " + containerNetworkStateLinks,
                 containerNetworkStateLinks.isEmpty());
 
+        validateHostRemoved(containerStateLinks);
+    }
+
+    private void validateHostRemoved(List<String> containerStateLinks) throws Throwable {
         // verify that the container states were removed
         containerStateLinks = findResourceLinks(ContainerState.class, containerStateLinks);
         assertTrue("ContainerState not removed: " + containerStateLinks,
@@ -266,5 +211,23 @@ public class ContainerHostRemovalTaskServiceTest extends RequestBaseTest {
                 Collections.singletonList(computeHost.documentSelfLink));
 
         assertTrue("ComputeState was not deleted: " + computeSelfLinks, computeSelfLinks.isEmpty());
+
+        // verify that the containers where removed from the docker mock
+        Map<String, String> containerRefsByIds = MockDockerAdapterService
+                .getContainerIdsWithContainerReferences();
+        for (String containerRef : containerRefsByIds.values()) {
+            for (String containerLink : containerStateLinks) {
+                if (containerRef.endsWith(containerLink)) {
+                    fail("Container State not removed with link: " + containerLink);
+                }
+            }
+        }
+
+        List<String> portProfileStates = findResourceLinks(
+                HostPortProfileService.HostPortProfileState.class,
+                Arrays.asList(hostPortProfileState.documentSelfLink));
+
+        assertTrue("HostPortProfileState was not deleted: " + portProfileStates,
+                portProfileStates.isEmpty());
     }
 }

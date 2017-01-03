@@ -12,15 +12,23 @@
 package com.vmware.admiral.compute.container.util;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+
+import io.netty.util.internal.StringUtil;
 
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
@@ -148,8 +156,8 @@ public class ContainerUtil {
 
         return containerState.descriptionLink != null
                 && containerState.descriptionLink.contains(UriUtils
-                        .buildUriPath(
-                                SystemContainerDescriptions.DISCOVERED_DESCRIPTION_LINK));
+                .buildUriPath(
+                        SystemContainerDescriptions.DISCOVERED_DESCRIPTION_LINK));
 
     }
 
@@ -258,7 +266,84 @@ public class ContainerUtil {
                                                             containerState.documentSelfLink);
                                                 }));
                             }));
+        }
 
+        public void updateContainerPorts(ContainerState oldContainerState,
+                ContainerState newContainerState) {
+            oldContainerState.ports = oldContainerState.ports == null ?
+                    new ArrayList<>() : oldContainerState.ports;
+            // ports are not collected or no changes to unexposed ports
+            if (newContainerState.ports == null ||
+                    newContainerState.ports.isEmpty() && oldContainerState.ports.isEmpty()) {
+                service.logFine("Skipping updating ports for container [%s].",
+                        oldContainerState.documentSelfLink);
+                return;
+            }
+
+            // get port bindings host_ports
+            Set<Long> newContainerHostPorts = newContainerState.ports
+                    .stream()
+                    .filter(p -> !StringUtil.isNullOrEmpty(p.hostPort)
+                            && Integer.parseInt(p.hostPort) > 0)
+                    .map(k -> (long) Integer.parseInt(k.hostPort))
+                    .collect(Collectors.toSet());
+
+            String hostPortProfileLink = HostPortProfileService
+                    .getHostPortProfileLink(oldContainerState.parentLink);
+            service.sendRequest(Operation.createGet(service, hostPortProfileLink)
+                    .setCompletion((o, e) -> {
+                        if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND ||
+                                e instanceof CancellationException) {
+                            service.logWarning("Cannot find host port profile [%s]",
+                                    hostPortProfileLink);
+                            return;
+                        }
+                        if (e != null) {
+                            service.logWarning("Failed retrieving HostPortProfileState: "
+                                    + hostPortProfileLink, Utils.toString(e));
+                            return;
+                        }
+
+                        HostPortProfileService.HostPortProfileState profile =
+                                o.getBody(HostPortProfileService.HostPortProfileState.class);
+
+                        Set<Long> oldContainerHostPorts = profile.reservedPorts
+                                .entrySet()
+                                .stream()
+                                .filter(p -> oldContainerState.documentSelfLink
+                                        .equals(p.getValue()))
+                                .map(p -> p.getKey())
+                                .collect(Collectors.toSet());
+
+                        if (Arrays.equals(oldContainerHostPorts.toArray(), newContainerHostPorts.toArray())) {
+                            return;
+                        }
+
+                        HostPortProfileService.HostPortProfileReservationRequest request =
+                                new HostPortProfileService.HostPortProfileReservationRequest();
+                        request.mode = HostPortProfileService.HostPortProfileReservationRequestMode.UPDATE_ALLOCATION;
+                        request.specificHostPorts = newContainerHostPorts;
+                        request.containerLink = oldContainerState.documentSelfLink;
+
+                        service.sendRequest(
+                                Operation.createPatch(service, profile.documentSelfLink)
+                                        .setBody(request)
+                                        .setCompletion((op, ex) -> {
+                                            if (ex != null) {
+                                                service.logWarning(
+                                                        "Failed updating port allocation for profile [%s] and container [%s]. Error: [%s]",
+                                                        hostPortProfileLink,
+                                                        oldContainerState.documentSelfLink,
+                                                        Utils.toString(ex));
+                                                return;
+                                            }
+                                            service.logInfo(
+                                                    "Updated port allocation for profile [%s], container [%s] and ports [%s]",
+                                                    hostPortProfileLink,
+                                                    oldContainerState.documentSelfLink,
+                                                    newContainerHostPorts);
+                                        }));
+                    }));
         }
     }
 }

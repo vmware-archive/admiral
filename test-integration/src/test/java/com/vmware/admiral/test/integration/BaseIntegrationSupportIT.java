@@ -56,6 +56,7 @@ import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
+import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
@@ -193,6 +194,15 @@ public abstract class BaseIntegrationSupportIT {
         return Utils.fromJson(body, type);
     }
 
+    protected static <T extends ServiceDocument> T putDocument(String fabricLink, T document)
+            throws Exception {
+        String body = sendRequest(HttpMethod.PUT, fabricLink, Utils.toJson(document));
+        if (body == null || body.isEmpty()) {
+            return null;
+        }
+        return (T) Utils.fromJson(body, document.getClass());
+    }
+
     public static enum TestDocumentLifeCycle {
         FOR_DELETE,
         FOR_DELETE_AFTER_CLASS,
@@ -276,7 +286,20 @@ public abstract class BaseIntegrationSupportIT {
                     return host.powerState.equals(PowerState.ON);
                 });
 
-        return getDocument(computeStateLink, ComputeState.class);
+        ComputeState result = getDocument(computeStateLink, ComputeState.class);
+        HostPortProfileService.HostPortProfileState profileState = getDocument(
+                HostPortProfileService.getHostPortProfileLink(result.documentSelfLink),
+                HostPortProfileService.HostPortProfileState.class);
+        assertNotNull("expected port profile to be created", profileState);
+
+        // Update port range to be random to minimize the conflict with other tests
+        // executing at the same time and using the same Docker hosts
+        if (profileState.startPort == HostPortProfileService.HostPortProfileState.PROFILE_RANGE_START_PORT) {
+            profileState.startPort = (long) ((Math.random() * 20000 + profileState.startPort));
+            putDocument(profileState.documentSelfLink, profileState);
+        }
+
+        return result;
     }
 
     protected void removeHost(ComputeState computeState) throws Exception {

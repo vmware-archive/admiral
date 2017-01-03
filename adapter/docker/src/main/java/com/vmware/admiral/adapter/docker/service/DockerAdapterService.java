@@ -734,8 +734,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             createNetworkConfig(createCommandInput, context.containerState.networks.entrySet().iterator().next());
         }
 
-        if (context.containerDescription.portBindings != null) {
-            addPortBindings(createCommandInput, context.containerDescription.portBindings);
+        if (context.containerState.ports != null) {
+            addPortBindings(createCommandInput, context.containerState.ports);
         }
 
         if (context.containerDescription.logConfig != null) {
@@ -1008,8 +1008,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 .withProperty(DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id);
 
         // add port bindings
-        if (context.containerDescription.portBindings != null) {
-            addPortBindings(startCommandInput, context.containerDescription.portBindings);
+        if (context.containerState.ports != null) {
+            addPortBindings(startCommandInput, context.containerState.ports);
         }
 
         context.executor.startContainer(startCommandInput, (o, ex) -> {
@@ -1048,7 +1048,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
      * @param input
      * @param portBindings
      */
-    private void addPortBindings(CommandInput input, PortBinding[] portBindings) {
+    private void addPortBindings(CommandInput input, List<PortBinding> portBindings) {
         Map<String, Map<String, String>> exposedPortsMap = new HashMap<>();
         input.withProperty(DOCKER_CONTAINER_EXPOSED_PORTS_PROP_NAME, exposedPortsMap);
 

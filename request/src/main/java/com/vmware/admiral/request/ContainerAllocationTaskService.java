@@ -35,9 +35,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import io.netty.util.internal.StringUtil;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -52,6 +55,7 @@ import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.C
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.content.ServiceLinkSerializer;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage;
@@ -99,6 +103,8 @@ public class ContainerAllocationTaskService
             RESOURCES_LINKS_BUILT,
             PLACEMENT_HOST_SELECTED,
             PROCESSING_SERVICE_LINKS,
+            HOST_ALLOCATED,
+            ALLOCATE_PORTS,
             START_PROVISIONING,
             PROVISIONING,
             PROVISIONING_COMPLETED,
@@ -110,36 +116,53 @@ public class ContainerAllocationTaskService
                     Arrays.asList(PROVISIONING));
         }
 
-        /** The description that defines the requested resource. */
+        /**
+         * The description that defines the requested resource.
+         */
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
-        /** (Required) Type of resource to create. */
+        /**
+         * (Required) Type of resource to create.
+         */
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED }, indexing = STORE_ONLY)
         public String resourceType;
 
-        /** (Required) the groupResourcePlacementState that links to ResourcePool */
+        /**
+         * (Required) the groupResourcePlacementState that links to ResourcePool
+         */
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
         public String groupResourcePlacementLink;
 
-        /** (Required) Number of resources to provision. */
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        /**
+         * (Required) Number of resources to provision.
+         */
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT,
+                AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Long resourceCount;
 
-        /** Set by a Task with the links of the provisioned resources. */
+        /**
+         * Set by a Task with the links of the provisioned resources.
+         */
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
 
-        /** Indicating that it is in the second phase after allocation */
+        /**
+         * Indicating that it is in the second phase after allocation
+         */
         public boolean postAllocation;
 
         // Service use fields:
 
-        /** (Internal) Set by task after resource name prefixes requested. */
+        /**
+         * (Internal) Set by task after resource name prefixes requested.
+         */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Set<String> resourceNames;
 
-        /** (Internal) Set by task after the ComputeState is found to host the containers */
+        /**
+         * (Internal) Set by task after the ComputeState is found to host the containers
+         */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public List<HostSelection> hostSelections;
 
@@ -150,11 +173,15 @@ public class ContainerAllocationTaskService
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Map<String, HostSelection> resourceNameToHostSelection;
 
-        /** (Internal) Set by task */
+        /**
+         * (Internal) Set by task
+         */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public URI instanceAdapterReference;
 
-        /** (Internal) Set by task with ContainerDescription name. */
+        /**
+         * (Internal) Set by task with ContainerDescription name.
+         */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String descName;
     }
@@ -200,13 +227,24 @@ public class ContainerAllocationTaskService
         case PLACEMENT_HOST_SELECTED:
             proceedAfterHostSelection(state);
             break;
+        case HOST_ALLOCATED:
+            // this is composition provision request, skip directly to provisioning
+            if (state.postAllocation) {
+                proceedTo(SubStage.START_PROVISIONING);
+            } else {
+                createContainerStates(state, null, null);
+            }
+            break;
+        case ALLOCATE_PORTS:
+            allocatePorts(state, null);
+            break;
         case START_PROVISIONING:
-            provisionOrAllocateContainers(state, null, null);
+            provisionAllocatedContainers(state, null);
             break;
         case PROVISIONING:
             break;
         case COMPLETED:
-            completeAllocationTask(state);
+            completeTask(state);
             break;
         case ERROR:
             completeWithError();
@@ -281,7 +319,7 @@ public class ContainerAllocationTaskService
             if (state.instanceAdapterReference == null) {
                 // reload container description if null
                 getContainerDescription(state, (contDesc) -> {
-                    proceedTo(SubStage.START_PROVISIONING, s -> {
+                    proceedTo(SubStage.HOST_ALLOCATED, s -> {
                         s.instanceAdapterReference = contDesc.instanceAdapterReference;
                         s.resourceNameToHostSelection = resourceNameToHostSelection;
                         s.customProperties = mergeCustomProperties(state.customProperties,
@@ -289,14 +327,14 @@ public class ContainerAllocationTaskService
                     });
                 });
             } else {
-                proceedTo(SubStage.START_PROVISIONING, s -> {
+                proceedTo(SubStage.HOST_ALLOCATED, s -> {
                     s.resourceNameToHostSelection = resourceNameToHostSelection;
                 });
             }
         }
     }
 
-    private void completeAllocationTask(ContainerAllocationTaskState state) {
+    private void completeTask(ContainerAllocationTaskState state) {
         if (state.hostSelections != null) {
             try {
                 ContainerHostDataCollectionState body = new ContainerHostDataCollectionState();
@@ -503,15 +541,15 @@ public class ContainerAllocationTaskService
                 }));
     }
 
-    private void provisionOrAllocateContainers(ContainerAllocationTaskState state,
-            ContainerDescription containerDesc, ServiceTaskCallback taskCallback) {
+    private void createContainerStates(ContainerAllocationTaskState state,
+            ContainerDescription containerDesc,
+            ServiceTaskCallback taskCallback) {
         final boolean allocationRequest = isAllocationRequest(state);
-
         if (taskCallback == null) {
-            // create a counter subtask link first
+            // create a counter subtask link to move to ALLOCATE_PORTS state when finished
             createCounterSubTaskCallback(state, state.resourceCount, !allocationRequest,
-                    SubStage.COMPLETED,
-                    (serviceTask) -> provisionOrAllocateContainers(state,
+                    SubStage.ALLOCATE_PORTS,
+                    (serviceTask) -> createContainerStates(state,
                             this.containerDescription, serviceTask));
             return;
         }
@@ -519,7 +557,7 @@ public class ContainerAllocationTaskService
         if (containerDesc == null) {
             if (this.containerDescription == null) {
                 getContainerDescription(state, (contDesc) -> {
-                    provisionOrAllocateContainers(state, contDesc, taskCallback);
+                    createContainerStates(state, contDesc, taskCallback);
                 });
             } else {
                 containerDesc = this.containerDescription;
@@ -527,25 +565,34 @@ public class ContainerAllocationTaskService
         }
 
         if (allocationRequest) {
-            logInfo("Allocation request for %s containers", state.resourceCount);
-        } else if (state.postAllocation) {
-            logInfo("Post-allocation request for %s containers", state.resourceCount);
+            logInfo("Allocate request for %s containers", state.resourceCount);
         } else {
-            logInfo("Provisioning request for %s containers", state.resourceCount);
+            logInfo("Allocate and provision request for %s containers", state.resourceCount);
         }
 
-        if (state.postAllocation) {
-            for (String resourceLink : state.resourceLinks) {
-                createContainerInstanceRequests(state, taskCallback, resourceLink);
-            }
-        } else {
-            for (String resourceName : state.resourceNames) {
-                createContainerState(state, containerDesc, null, resourceName,
-                        allocationRequest, null,
-                        state.resourceNameToHostSelection.get(resourceName), taskCallback);
-            }
+        for (String resourceName : state.resourceNames) {
+            createContainerState(state, containerDesc, null, resourceName, null,
+                    state.resourceNameToHostSelection.get(resourceName), taskCallback);
+        }
+    }
+
+    private void provisionAllocatedContainers(ContainerAllocationTaskState state,
+            ServiceTaskCallback taskCallback) {
+        final boolean allocationRequest = isAllocationRequest(state);
+
+        if (taskCallback == null) {
+            // create a counter subtask link first
+            createCounterSubTaskCallback(state, state.resourceCount, !allocationRequest,
+                    SubStage.COMPLETED,
+                    (serviceTask) -> provisionAllocatedContainers(state, serviceTask));
+            return;
         }
 
+        logInfo("Provision request for %s containers", state.resourceCount);
+
+        for (String resourceLink : state.resourceLinks) {
+            createContainerInstanceRequests(state, taskCallback, resourceLink);
+        }
         proceedTo(SubStage.PROVISIONING);
     }
 
@@ -580,7 +627,7 @@ public class ContainerAllocationTaskService
     private void createContainerState(ContainerAllocationTaskState state,
             ContainerDescription containerDesc,
             Boolean isFromTemplate,
-            String resourceName, boolean allocationRequest,
+            String resourceName,
             GroupResourcePlacementState groupResourcePlacementState, HostSelection hostSelection,
             ServiceTaskCallback taskCallback) {
         try {
@@ -588,8 +635,9 @@ public class ContainerAllocationTaskService
             if (groupResourcePlacementState == null) {
                 getResourcePlacementState(
                         state,
-                        (resourcePlacementState) -> createContainerState(state, containerDesc, isFromTemplate,
-                                resourceName, allocationRequest, resourcePlacementState,
+                        (resourcePlacementState) -> createContainerState(state, containerDesc,
+                                isFromTemplate,
+                                resourceName, resourcePlacementState,
                                 hostSelection, taskCallback));
                 return;
             }
@@ -598,7 +646,7 @@ public class ContainerAllocationTaskService
             if (isFromTemplate == null && isClusteringOperation(state)) {
                 getCompositeComponent(state,
                         (isTemplate) -> createContainerState(state, containerDesc, isTemplate,
-                                resourceName, allocationRequest, groupResourcePlacementState,
+                                resourceName, groupResourcePlacementState,
                                 hostSelection, taskCallback));
                 return;
             }
@@ -687,17 +735,180 @@ public class ContainerAllocationTaskService
                                 ContainerState body = o.getBody(ContainerState.class);
                                 logInfo("Created ContainerState: %s ", body.documentSelfLink);
 
-                                if (allocationRequest) {
-                                    completeSubTasksCounter(taskCallback, null);
-                                } else {
-                                    createContainerInstanceRequests(state, taskCallback,
-                                            body.documentSelfLink);
-                                }
+                                completeSubTasksCounter(taskCallback, null);
                             }));
 
         } catch (Throwable e) {
             failTask("System failure creating ContainerStates", e);
         }
+    }
+
+    private void allocatePorts(ContainerAllocationTaskState state,
+            ServiceTaskCallback taskCallback) {
+        final boolean allocationRequest = isAllocationRequest(state);
+
+        if (taskCallback == null) {
+            // if it is composition allocation request, move to COMPLETED SubStage when complete
+            // if it is Admiral provisioning request, move to START_PROVISIONING SubStage when complete
+            SubStage completionStage = allocationRequest ?
+                    SubStage.COMPLETED :
+                    SubStage.START_PROVISIONING;
+            createCounterSubTaskCallback(state, state.resourceLinks.size(), !allocationRequest,
+                    completionStage,
+                    (serviceTask) -> allocatePorts(state, serviceTask));
+            return;
+        }
+
+        for (String containerLink : state.resourceLinks) {
+            allocatePortsForContainerLink(containerLink, taskCallback);
+        }
+    }
+
+    private void allocatePortsForContainerLink(String containerLink,
+            ServiceTaskCallback taskCallback) {
+        // first get container state
+        sendRequest(Operation.createGet(this, containerLink)
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                failTask("Failure retrieving ContainerState", e);
+                                return;
+                            }
+                            // allocate ports for container
+                            allocatePortsForContainerState(o.getBody(ContainerState.class),
+                                    taskCallback);
+                        }));
+    }
+
+    private void allocatePortsForContainerState(ContainerState containerState,
+            ServiceTaskCallback taskCallback) {
+        // create port allocation request based on container PortBindings
+        HostPortProfileService.HostPortProfileReservationRequest hostPortProfileRequest =
+                createHostPortProfileRequest(containerState);
+        if (hostPortProfileRequest == null) {
+            completeSubTasksCounter(taskCallback, null);
+            return;
+        }
+
+        // get HostPortProfile for container host
+        String hostPortProfileLink = HostPortProfileService
+                .getHostPortProfileLink(containerState.parentLink);
+        sendRequest(Operation.createGet(this, hostPortProfileLink)
+                .setCompletion((o, e) -> {
+                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND ||
+                            e instanceof CancellationException) {
+                        logWarning("Cannot find host port profile [%s]", hostPortProfileLink);
+                        completeSubTasksCounter(taskCallback, null);
+                        return;
+                    }
+                    if (e != null) {
+                        failTask("Failed retrieving HostPortProfileState: "
+                                + hostPortProfileLink, e);
+                        return;
+                    }
+                    // allocate ports
+                    sendRequest(Operation
+                            .createPatch(getHost(), hostPortProfileLink)
+                            .setBody(hostPortProfileRequest)
+                            .setCompletion(
+                                    (op, ex) -> {
+                                        if (ex != null) {
+                                            failTask("Failure allocating ports", ex);
+                                            return;
+                                        }
+                                        HostPortProfileService.HostPortProfileState response =
+                                                op.getBody(
+                                                        HostPortProfileService.HostPortProfileState.class);
+                                        // get all ports reserved for the container
+                                        Set<Long> allocatedPorts = response.reservedPorts.entrySet()
+                                                .stream()
+                                                .filter(p -> p.getValue().equals(containerState.documentSelfLink))
+                                                .map(k -> k.getKey())
+                                                .collect(Collectors.toSet());
+
+                                        logInfo("Allocated ports [%s] for container [%s] using profile [%s].",
+                                                allocatedPorts,
+                                                containerState.documentSelfLink,
+                                                response.documentSelfLink);
+                                        updateContainerPorts(containerState, allocatedPorts,
+                                                taskCallback);
+                                    }));
+                }));
+    }
+
+    private HostPortProfileService.HostPortProfileReservationRequest createHostPortProfileRequest(
+            ContainerState containerState) {
+        if (containerState.ports == null || containerState.ports.isEmpty()) {
+            return null;
+        }
+
+        // get port bindings with specified host_port
+        Set<Long> requestedPorts = containerState.ports
+                .stream()
+                .filter(p -> !StringUtil.isNullOrEmpty(p.hostPort)
+                        && Integer.parseInt(p.hostPort) > 0)
+                .map(k -> (long) Integer.parseInt(k.hostPort))
+                .collect(Collectors.toSet());
+        // get port bindings that do not specify host_port
+        long additionalPortCount = containerState.ports
+                .stream()
+                .filter((p) -> StringUtil.isNullOrEmpty(p.hostPort)
+                        || Integer.parseInt(p.hostPort) == 0)
+                .count();
+
+        // return null if there a no ports to allocate
+        if (requestedPorts.size() == 0 && additionalPortCount == 0) {
+            return null;
+        }
+
+        HostPortProfileService.HostPortProfileReservationRequest request =
+                new HostPortProfileService.HostPortProfileReservationRequest();
+        request.containerLink = containerState.documentSelfLink;
+        request.additionalHostPortCount = additionalPortCount;
+        request.specificHostPorts = requestedPorts;
+        request.mode = HostPortProfileService.HostPortProfileReservationRequestMode.ALLOCATE;
+        return request;
+    }
+
+    private void updateContainerPorts(ContainerState containerState, Set<Long> allocatedPorts,
+            ServiceTaskCallback taskCallback) {
+        // remove explicitly defined host_ports from reservedPorts
+        allocatedPorts
+                .removeIf(p -> containerState.ports
+                        .stream()
+                        .anyMatch(c -> !StringUtil.isNullOrEmpty(c.hostPort)
+                                && p.intValue() == (Integer.parseInt(c.hostPort))));
+        // assign allocated ports to container port bindings
+        Iterator<Long> hostPortStatesIterator = allocatedPorts.iterator();
+        containerState.ports
+                .stream()
+                .filter(p -> StringUtil.isNullOrEmpty(p.hostPort)
+                        || Integer.parseInt(p.hostPort) == 0)
+                .forEach(p -> {
+                    if (hostPortStatesIterator.hasNext()) {
+                        p.hostPort = hostPortStatesIterator.next().toString();
+                    } else {
+                        failTask("Not enough ports allocated",
+                                new IllegalStateException("Not enough ports allocated"));
+                        return;
+                    }
+                });
+
+        // update container state
+        sendRequest(Operation
+                .createPatch(getHost(), containerState.documentSelfLink)
+                .setBody(containerState)
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                completeSubTasksCounter(taskCallback, e);
+                                return;
+                            }
+                            ContainerState body = o.getBody(ContainerState.class);
+                            logInfo("Updated ContainerState: %s ", body.documentSelfLink);
+                            completeSubTasksCounter(taskCallback, null);
+                        }));
+
     }
 
     private void createContainerInstanceRequests(ContainerAllocationTaskState state,
@@ -776,12 +987,10 @@ public class ContainerAllocationTaskService
      * Takes volumes from ContainerDescription in format [/host-directory:/container-directory] or
      * [namedVolume:/container-directory] and puts the suffix for host part of the volume name.
      *
-     * @param cd
-     *            - ContainerDescription
-     * @param hostSelection
-     *            - HostSelection for resource.
+     * @param cd            - ContainerDescription
+     * @param hostSelection - HostSelection for resource.
      * @return new volume name equals to old one, but with suffix for host directory like:
-     *         [namedVolume-mcm376:/container-directory]
+     * [namedVolume-mcm376:/container-directory]
      */
     private static String[] mapVolumes(ContainerDescription cd, HostSelection hostSelection) {
 
