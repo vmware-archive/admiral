@@ -12,7 +12,6 @@
 import ComputeItemVue from 'components/compute/ComputeItemVue.html';
 import { NavigationActions } from 'actions/Actions';
 import constants from 'core/constants';
-import utils from 'core/utils';
 
 var ComputeItem = Vue.extend({
   template: ComputeItemVue,
@@ -48,10 +47,6 @@ var ComputeItem = Vue.extend({
       } else {
         return 'danger';
       }
-    },
-
-    extractId: function(hostId) {
-      return utils.extractHostId(hostId);
     },
 
     editCompute: function(event) {

@@ -31,7 +31,7 @@
   <div class="container-content">
     <div class="container-host-holder">
       <span class="container-label">{{i18n("app.container.list.hostLabel")}}</span>
-      <a class="navigation-link" href="#/hosts/{{model.hostDocumentId}}"
+      <a class="navigation-link" href="#/hosts?documentId={{model.hostDocumentId}}"
          v-on:click="showHost($event)">{{model.hostName}}</a>
     </div>
     <div class="container-created-holder">

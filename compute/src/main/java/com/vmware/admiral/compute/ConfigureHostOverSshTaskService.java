@@ -414,7 +414,7 @@ public class ConfigureHostOverSshTaskService extends
     }
 
     private String getHostId(ConfigureHostOverSshTaskServiceState state) {
-        return ContainerHostUtil.buildHostId(state.tenantLinks, state.address + ":" + state.port);
+        return state.address + ":" + state.port;
     }
 
     private URI getHostUri(ConfigureHostOverSshTaskServiceState state) {

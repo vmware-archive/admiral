@@ -993,16 +993,6 @@ var utils = {
     return result;
   },
 
-  extractHostId: function(hostId) {
-    var hostSeparator = '::';
-    var id = hostId;
-    var idx = id.indexOf(hostSeparator);
-    if (idx !== -1) {
-      id = id.substring(idx + hostSeparator.length);
-    }
-    return id;
-  },
-
   getObjectPropertyValue: function(obj, propertyName) {
     let value;
 
@@ -1049,17 +1039,15 @@ var utils = {
         return hostAlias;
       }
 
-      if (host.id.indexOf(host.address) > -1) {
-        // id and address have the same data
-        let name = this.getCustomPropertyValue(customProps, '__Name');
+      let name = this.getCustomPropertyValue(customProps, '__Name');
 
-        if (name) {
-          return name;
-        }
+      if (name) {
+        return name;
       }
     }
 
-    return this.extractHostId(host.id);
+    var urlParts = this.getURLParts(host.address);
+    return urlParts.host;
   },
 
   getDisplayableCustomProperties: function(customProperties) {

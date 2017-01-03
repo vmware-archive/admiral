@@ -13,6 +13,7 @@ import NetworkRequestFormVue from 'components/networks/NetworkRequestFormVue.htm
 import NetworkDefinitionForm from 'components/networks/NetworkDefinitionForm'; // eslint-disable-line
 import HostPicker from 'components/networks/HostPicker';
 import { ContainerActions } from 'actions/Actions';
+import utils from 'core/utils';
 
 var NetworkRequestForm = Vue.extend({
   template: NetworkRequestFormVue,
@@ -39,7 +40,7 @@ var NetworkRequestForm = Vue.extend({
         var network = networkForm.getNetworkDefinition();
 
         var hosts = this.$refs.hostPicker.getHosts();
-        var hostIds = hosts.map(h => h.id);
+        var hostIds = hosts.map(h => utils.getDocumentId(h.documentSelfLink));
 
         this.savingNetwork = true;
         ContainerActions.createNetwork(network, hostIds);

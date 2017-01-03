@@ -768,9 +768,6 @@ let HostsStore = Reflux.createStore({
     } else {
       this.setInData(['hostAddView', 'isSavingHost'], true);
 
-      var hostId = hostModel.selfLinkId ? hostModel.selfLinkId : hostModel.address;
-      hostId = hostId.replace(/\//g, '');
-
       // the only thing currently editable are the custom properties
       let customProperties = {};
       if (hostModel.customProperties) {

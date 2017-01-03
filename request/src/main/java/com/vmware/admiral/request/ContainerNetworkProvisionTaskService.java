@@ -479,11 +479,11 @@ public class ContainerNetworkProvisionTaskService
 
         // If hosts are provided use them directly to try to provision the network
         // (e.g. when External network CRUD operations)
-        List<String> providedHostIds = ContainerNetworkAllocationTaskService
-                .getProvidedHostIds(state);
+        List<String> providedHostLinks = ContainerNetworkAllocationTaskService
+                .getProvidedHostIdsAsSelfLinks(state);
 
-        if (providedHostIds != null) {
-            retrieveContainerHostsByIds(state, providedHostIds, (hosts) -> {
+        if (providedHostLinks != null) {
+            retrieveContainerHostsByLinks(state, providedHostLinks, (hosts) -> {
                 List<String> disabledHosts = hosts.stream().filter((host) -> {
                     return host.powerState != PowerState.ON;
                 })
@@ -527,34 +527,34 @@ public class ContainerNetworkProvisionTaskService
         });
     }
 
-    private void retrieveContainerHostsByIds(ContainerNetworkProvisionTaskState state,
-            List<String> hostIds,
+    private void retrieveContainerHostsByLinks(ContainerNetworkProvisionTaskState state,
+            List<String> hostLinks,
             Consumer<List<ComputeState>> callbackFunction) {
 
         final List<ComputeState> result = new ArrayList<>();
 
-        List<String> remainingHostIds = new ArrayList<>(hostIds);
+        List<String> remainingHostLinks = new ArrayList<>(hostLinks);
 
         final QueryTask queryTask = QueryUtil.buildQuery(ComputeState.class, true);
-        QueryUtil.addListValueClause(queryTask, ComputeState.FIELD_NAME_ID, hostIds);
+        QueryUtil.addListValueClause(queryTask, ComputeState.FIELD_NAME_SELF_LINK, hostLinks);
         QueryUtil.addExpandOption(queryTask);
 
         new ServiceDocumentQuery<ComputeState>(getHost(), ComputeState.class)
                 .query(queryTask, (r) -> {
                     if (r.hasException()) {
                         failTask(String.format(
-                                "Exception during retrieving hosts with ids [%s]. Error: [%s]",
-                                hostIds,
+                                "Exception during retrieving hosts with links [%s]. Error: [%s]",
+                                hostLinks,
                                 Utils.toString(r.getException())), r.getException());
                     } else if (r.hasResult()) {
                         ComputeState cs = r.getResult();
                         result.add(cs);
-                        remainingHostIds.remove(cs.id);
+                        remainingHostLinks.remove(cs.documentSelfLink);
                     } else {
-                        if (!remainingHostIds.isEmpty()) {
+                        if (!remainingHostLinks.isEmpty()) {
                             failTask(String.format(
                                     "Not all hosts were found! Remaining hosts: [%s]!",
-                                    remainingHostIds),
+                                    remainingHostLinks),
                                     r.getException());
                             return;
                         }

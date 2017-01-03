@@ -11,7 +11,6 @@
 
 import MachineItemVue from 'components/machines/MachineItemVue.html';
 import constants from 'core/constants';
-import utils from 'core/utils';
 
 var MachineItem = Vue.extend({
   template: MachineItemVue,
@@ -44,10 +43,6 @@ var MachineItem = Vue.extend({
       } else {
         return 'danger';
       }
-    },
-
-    extractId: function(hostId) {
-      return utils.extractHostId(hostId);
     }
   }
 });

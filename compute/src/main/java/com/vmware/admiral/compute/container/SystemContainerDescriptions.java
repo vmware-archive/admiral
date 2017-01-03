@@ -14,7 +14,6 @@ package com.vmware.admiral.compute.container;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.xenon.common.UriUtils;
@@ -75,7 +74,7 @@ public class SystemContainerDescriptions {
 
     public static String getSystemContainerSelfLink(String systemContainerName, String hostId) {
         return UriUtils.buildUriPath(ContainerFactoryService.SELF_LINK, systemContainerName
-                + AGENT_CONTAINER_ID_SEPARATOR + ContainerHostUtil.extractHostId(hostId));
+                + AGENT_CONTAINER_ID_SEPARATOR + hostId);
     }
 
     public static List<String> getSystemContainerNames() {
