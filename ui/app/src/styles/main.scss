@@ -153,9 +153,8 @@ textarea {
 }
 
 .homepage > .top .welcome .welcome-description, .loginpage .welcome .welcome-description {
-  margin-top: 8px;
+  margin-top: 20px;
   font-size: 18px;
-  letter-spacing: 0.01em;
   line-height: 1.6em;
 }
 
@@ -212,7 +211,6 @@ textarea {
 
     .login-panel {
       position: relative;
-      background-color: $context-view-background-color;
       padding: 30px;
       margin-top: 30px;
 
@@ -1709,7 +1707,7 @@ $alert-text-color: #ffffff;
   position: absolute;
   top: 0px;
   left: 5%;
-  width: 87%;
+  right: 5%;
   z-index: 200;
 
   margin-top: 0px;

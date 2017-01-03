@@ -113,6 +113,7 @@ input:not([type]) {
   .progress-bar {
     @extend .progress-meter;
     width: 0;
+    transition: width 0.3s ease;
   }
 
   .progress-bar-success {
