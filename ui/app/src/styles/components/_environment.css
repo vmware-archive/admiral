@@ -12,20 +12,11 @@
 }
 
 .environment-definition-form .environment-form-content {
-  background-color: #FFFFFF;
   margin-top: 5px;
-}
-
-.environment-definition-form .tab-content {
-  padding: 30px;
 }
 
 .environment-form .control-btns {
   margin-top: 20px;
-}
-
-.environment-form .control-btns > * {
-  margin-left: 20px;
 }
 
 .environment-form .control-btns .admiral-btn {

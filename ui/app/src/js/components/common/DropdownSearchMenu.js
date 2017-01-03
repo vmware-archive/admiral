@@ -48,51 +48,53 @@ function createItem(itemSpec, renderer) {
 }
 
 function DropdownSearchMenu($el, componentOptions) {
-  var _this = this;
-
   this.$el = $el;
   this.componentOptions = componentOptions;
 
   $el.html(DropdownSearchMenuTemplate(componentOptions));
 
-  $el.find('input').click(function(event) {
-    event.preventDefault();
+  $el.find('input').click(function(e) {
+    e.stopImmediatePropagation();
+    e.preventDefault();
     return false;
   });
 
   if (!componentOptions.searchDisabled) {
     var searchInput = $el.find('.dropdown-search input');
 
-    searchInput.bind('input change', function() {
-      _this.setFilter(searchInput.val());
+    searchInput.bind('input change', (e) => {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+
+      this.setFilter(searchInput.val());
     });
   }
 
-  $el.find('.dropdown').on('click', '.dropdown-options li', function(e) {
+  $el.find('.dropdown').on('click', '.dropdown-options li', (e) => {
     e.preventDefault();
 
     var option = $(e.currentTarget).data('spec');
-    _this.setSelectedOption(option);
+    this.setSelectedOption(option);
 
-    if (_this.optionSelectCallback) {
-      _this.optionSelectCallback(option);
+    if (this.optionSelectCallback) {
+      this.optionSelectCallback(option);
     }
   });
 
-  $el.find('.dropdown').on('click', '.dropdown-manage li', function(e) {
+  $el.find('.dropdown').on('click', '.dropdown-manage li', (e) => {
     e.preventDefault();
 
     var option = $(e.currentTarget).data('spec');
-    _this.setSelectedOption(null);
+    this.setSelectedOption(null);
 
     let isClearSelection = option.id === '_clear';
 
-    if (_this.manageOptionSelectCallback && !isClearSelection) {
-      _this.manageOptionSelectCallback(option);
+    if (this.manageOptionSelectCallback && !isClearSelection) {
+      this.manageOptionSelectCallback(option);
     }
 
-    if (isClearSelection && _this.clearOptionSelectCallback) {
-      _this.clearOptionSelectCallback();
+    if (isClearSelection && this.clearOptionSelectCallback) {
+      this.clearOptionSelectCallback();
     }
   });
 
@@ -194,15 +196,14 @@ DropdownSearchMenu.prototype.setSelectedOption = function(option) {
     });
 
     // Since this is not a typical input but a custom one, standard focus() and :focus don't work.
-    var _this = this;
     this.$el.addClass('focus');
 
-    setTimeout(function() {
-      _this.$el.removeClass('focus');
+    setTimeout(() => {
+      this.$el.removeClass('focus');
     }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
 
-    if (_this.optionSelectCallback) {
-      _this.optionSelectCallback(option);
+    if (this.optionSelectCallback) {
+      this.optionSelectCallback(option);
     }
 
     $dropDownManage.children().last().show();

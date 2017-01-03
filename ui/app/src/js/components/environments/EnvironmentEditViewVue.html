@@ -18,7 +18,7 @@
            v-bind:show-alert="validationErrors._valid && (validationErrors._valid != null)"
            v-bind:alert-message="i18n('app.host.details.verified')"></alert>
 
-    <form class="environment-form form-horizontal">
+    <div class="environment-form form-horizontal">
       <div class="title">
         {{i18n(model.item.documentSelfLink ? 'app.environment.edit.editTitle' : 'app.environment.edit.addTitle')}}
       </div>
@@ -146,8 +146,8 @@
               </form>
             </div>
             <div role="tabpanel" class="tab-pane" id="storage">
-              <form v-if="endpointType === 'azure'">
-                <div class="form-group bootDiskProperty">
+              <form>
+                <div class="form-group bootDiskProperty" v-if="endpointType === 'azure'">
                   <label>
                     {{i18n('app.environment.edit.bootDiskPropertyLabel')}}
                   </label>
@@ -179,7 +179,7 @@
           <i class="fa fa-spinner fa-spin loader-inline"></i></button>
         <span class="help-block"></span>
       </div>
-    </form>
+    </div>
 
     <div class="mask" v-bind:class="{'hide': !contextExpanded}"></div>
   </div>
