@@ -26,12 +26,14 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.PropertyMapping;
 import com.vmware.admiral.compute.env.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfile;
 import com.vmware.admiral.compute.env.StorageProfileService.StorageProfile;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.FileUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
@@ -50,15 +52,10 @@ public class EnvironmentService extends StatefulService {
      * Describes an environment - compute/storage/network configuration and mapping for a specific
      * endpoint that allows compute provisioning that is agnostic on the target endpoint type.
      */
-    public static class EnvironmentState extends ServiceDocument {
-        public static final String FIELD_NAME_NAME = "name";
+    public static class EnvironmentState extends ResourceState {
         public static final String FIELD_NAME_ENDPOINT_LINK = "endpointLink";
         public static final String FIELD_NAME_ENDPOINT_TYPE = "endpointType";
         public static final String FIELD_NAME_MISC = "misc";
-
-        @Documentation(description = "User-specified name of the environment")
-        @PropertyOptions(usage = { REQUIRED, AUTO_MERGE_IF_NOT_NULL })
-        public String name;
 
         @Documentation(description = "Link to the endpoint this environment is associated with")
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
@@ -102,11 +99,10 @@ public class EnvironmentService extends StatefulService {
         }
 
         @Override
-        public void copyTo(ServiceDocument target) {
+        public void copyTo(ResourceState target) {
             super.copyTo(target);
             if (target instanceof EnvironmentState) {
-                EnvironmentState targetState = (EnvironmentState)target;
-                targetState.name = this.name;
+                EnvironmentState targetState = (EnvironmentState) target;
                 targetState.endpointLink = this.endpointLink;
                 targetState.endpointType = this.endpointType;
                 targetState.computeProfileLink = this.computeProfileLink;
@@ -302,6 +298,7 @@ public class EnvironmentService extends StatefulService {
             throw new IllegalArgumentException("body is required");
         }
         EnvironmentState state = op.getBody(EnvironmentState.class);
+        AssertUtil.assertNotNull(state.name, "name");
         Utils.validateState(getStateDescription(), state);
         if (state.endpointLink == null && state.endpointType == null) {
             throw new IllegalArgumentException("Endpoint or endpoint type must be specified");
