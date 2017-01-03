@@ -190,6 +190,12 @@
   .status.FAILED {
     color: $status_stopped_color;
   }
+
+  .btn-group {
+    button {
+      margin: 0;
+    }
+  }
 }
 
 .list-view:not(.context-selected) > .grid-container {

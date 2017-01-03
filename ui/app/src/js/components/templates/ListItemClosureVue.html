@@ -51,9 +51,9 @@
                        v-bind:show="showDeleteConfirmation"
                        v-on:confirm-delete="removeClosureDescription($event)"
                        v-on:cancel-delete="cancelRemoval($event)"></delete-confirmation>
-  <div class="btn-group pull-right">
+  <div class="btn-group">
     <button v-if="model.provisioning" type="button"
-            class="btn btn-primary create-container-btn loading"
+            class="btn create-container-btn loading"
             disabled="disabled">{{i18n("app.closure.request.run")}}<i class="fa fa-spinner fa-spin loader"></i></button>
     <template v-else>
       <div>

@@ -15,7 +15,7 @@
     <!-- Dynamic form content will be inserted here -->
   </div>
   <div class="control-btns">
-    <div v-if="showGroupForProvisioning" class="provisionGroup" style="display: inline; margin: 0px; margin-right: -15px;">
+    <div v-if="showGroupForProvisioning" class="provisionGroup" style="display: inline;">
       <select v-model="preferredGroupId">
         <option v-for="option in groupOptions" track-by="id"
                 value="{{option.id}}">

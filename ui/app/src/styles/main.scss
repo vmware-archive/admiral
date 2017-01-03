@@ -1998,6 +1998,7 @@ $alert-text-color: #ffffff;
 .provisionGroup {
   margin-top: 0px;
   margin-bottom: 0px;
+  display: flex;
 
   label {
     color: $main_color;
@@ -2012,9 +2013,9 @@ $alert-text-color: #ffffff;
 
     height: $input-height-small;
     line-height: $input-height-small;
-    max-width: 140px;
 
-    margin-left: 4px;
+    flex: 0 1 50%;
+    margin: 3px 5px 0 0;
 
     background-color: #fff;
     border: 1px solid $main_color;
@@ -2023,6 +2024,11 @@ $alert-text-color: #ffffff;
     option {
       color: $main_color;
     }
+  }
+
+  button {
+    flex: 0 1 50%;
+    margin: 0;
   }
 
   .btn-circle {

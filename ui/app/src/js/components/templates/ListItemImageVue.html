@@ -36,12 +36,12 @@
     </div>
     <div class="image-description-text" title="{{model.description}}">{{model.description}}&nbsp;</div>
   </div>
-  <div class="btn-group pull-right">
+  <div class="btn-group">
     <template v-if="readOnly">
-      <button type="button" class="btn btn-primary select-image-btn">Continue</button>
+      <button type="button" class="btn select-image-btn">Continue</button>
     </template>
     <template v-else>
-      <button v-if="model.provisioning" type="button" class="btn btn-primary create-container-btn
+      <button v-if="model.provisioning" type="button" class="btn create-container-btn
         loading">{{i18n ("app.template.list.provision")}}<i class="fa fa-spinner fa-spin loader"></i></button>
       <template v-else><div>
         <template v-if="showGroupForProvisioning">
@@ -58,7 +58,7 @@
           </div>
         </template>
         <template v-else>
-          <div class="dropdown pull-right">
+          <div class="dropdown">
             <button type="button" class="btn create-container-btn"
                     v-on:click="provisionContainer($event)">{{i18n("app.template.list.provision")}}</button>
             <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
