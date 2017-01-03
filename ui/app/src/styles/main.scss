@@ -738,9 +738,10 @@ $main-list-view-right: 10px;
     z-index: 1;
     content: "";
     position: absolute;
-    top: 0px;
-    bottom: 0px;
-    width: 100%;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
     box-shadow: inset -2px 0px 3px 0px rgba(0, 0, 0, 0.2);
     pointer-events: none;
   }
@@ -1017,11 +1018,6 @@ $main-list-view-right: 10px;
 }
 .app-view > .side-view .nav-item.inner.active > span:not(.nav-item-image) {
   font-weight: bold;
-}
-
-.col-sm-0 {
-  width: 0;
-  float: left;
 }
 
 .inline-edit-holder {
