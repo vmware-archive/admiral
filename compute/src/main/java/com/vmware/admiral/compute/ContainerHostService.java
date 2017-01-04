@@ -244,9 +244,13 @@ public class ContainerHostService extends StatelessService {
             X509Certificate[] certificateChain = resolver.getCertificateChain();
 
             String s = CertificateUtil.generatePureFingerPrint(certificateChain);
+            if (hostSpec.hostState.customProperties == null) {
+                hostSpec.hostState.customProperties = new HashMap<>();
+            }
             hostSpec.hostState.customProperties.put(SSL_TRUST_ALIAS_PROP_NAME, s);
         } catch (Exception e) {
-            logInfo("Cannot connect to %s to get remote certificate", hostSpec.uri);
+            logWarning("Cannot connect to %s to get remote certificate for sslTrustAlias",
+                    hostSpec.uri);
         }
     }
 
@@ -472,18 +476,18 @@ public class ContainerHostService extends StatelessService {
     }
 
     private void createHost(ContainerHostSpec hostSpec, Operation op) {
+        setSslTrustAliasProperty(hostSpec);
+
         if (hostSpec.acceptHostAddress) {
             if (hostSpec.acceptCertificate) {
                 op.nestCompletion((o) -> {
                     EndpointCertificateUtil.validateSslTrust(this, hostSpec, o, op::complete);
-                    setSslTrustAliasProperty(hostSpec);
                 });
             }
 
             storeHost(hostSpec, op);
         } else {
             validateSslTrust(hostSpec, op, () -> {
-                setSslTrustAliasProperty(hostSpec);
                 pingHost(hostSpec, op, hostSpec.sslTrust, () -> storeHost(hostSpec, op));
             });
         }
