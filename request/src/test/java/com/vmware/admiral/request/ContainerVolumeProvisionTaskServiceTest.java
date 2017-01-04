@@ -120,7 +120,7 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
         // Volume must be provisioned on same host where ContainerDesc with volume is.
         if (cont1.descriptionLink.equals(container1DescLink)) {
             AssertUtil.assertTrue(
-                    volume.originatingHostReference.getPath().equals(cont1.parentLink),
+                    volume.originatingHostLink.equals(cont1.parentLink),
                     "Volume is provisioned on wrong host.");
 
             assertEquals(cont1.volumes.length, 1);
@@ -128,7 +128,7 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
 
         } else {
             AssertUtil.assertTrue(
-                    volume.originatingHostReference.getPath().equals(cont2.parentLink),
+                    volume.originatingHostLink.equals(cont2.parentLink),
                     "Volume is provisioned on wrong host.");
             assertEquals(cont2.volumes.length, 1);
             AssertUtil.assertTrue(cont2.volumes[0].contains(volume.name), "Host volume name is different than Container volume name.");

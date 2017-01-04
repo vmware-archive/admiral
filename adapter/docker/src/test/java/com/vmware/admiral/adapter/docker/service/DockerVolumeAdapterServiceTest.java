@@ -215,7 +215,7 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
 
         ContainerVolumeState volumeState = new ContainerVolumeState();
         assertNotNull("parentLink", parentComputeStateLink);
-        volumeState.originatingHostReference = UriUtils.buildUri(host, parentComputeStateLink);
+        volumeState.originatingHostLink = parentComputeStateLink;
         volumeState.descriptionLink = desc.documentSelfLink;
         volumeState.name = desc.name;
         volumeState.mountpoint = desc.mountpoint;

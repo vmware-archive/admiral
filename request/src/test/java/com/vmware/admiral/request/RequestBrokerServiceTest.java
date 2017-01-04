@@ -1287,7 +1287,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ContainerVolumeState volume = getDocument(ContainerVolumeState.class, volumeLink);
         assertTrue(volume.name.contains(sharedVolumeName));
 
-        String volumeHostPath = volume.originatingHostReference.getPath();
+        String volumeHostPath = volume.originatingHostLink;
 
         boolean volumeIsProvisionedOnAnyHosts = volumeHostPath.equals(dockerHost1.documentSelfLink)
                 || volumeHostPath.equals(dockerHost2.documentSelfLink);

@@ -13,7 +13,9 @@ package com.vmware.admiral.compute.container.volume;
 
 import java.io.File;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
@@ -43,9 +45,22 @@ public class ContainerVolumeService extends StatefulService {
         public static final String FIELD_NAME_NAME = "name";
         public static final String FIELD_NAME_DESCRIPTION_LINK = "descriptionLink";
         public static final String FIELD_NAME_DRIVER = "driver";
-        public static final String FIELD_NAME_ORIGINATIONG_HOST_REFERENCE = "originatingHostReference";
+        public static final String FIELD_NAME_PARENT_LINKS = "parentLinks";
+        public static final String FIELD_NAME_ORIGINATING_HOST_LINK = "originatingHostLink";
         public static final String FIELD_NAME_ADAPTER_MANAGEMENT_REFERENCE = "adapterManagementReference";
         public static final String FIELD_NAME_COMPOSITE_COMPONENT_LINK = "compositeComponentLink";
+
+        public static enum PowerState {
+            UNKNOWN,
+            PROVISIONING,
+            CONNECTED,
+            RETIRED,
+            ERROR;
+
+            public boolean isUnmanaged() {
+                return this == PROVISIONING || this == RETIRED;
+            }
+        }
 
         /** Defines the description of the volume */
         @Documentation(description = "Defines the description of the volume.")
@@ -55,7 +70,7 @@ public class ContainerVolumeService extends StatefulService {
         /** Reference to the host that this volume was created on. */
         @Documentation(description = "Reference to the host that this volume was created on.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public URI originatingHostReference;
+        public String originatingHostLink;
 
         @Documentation(description = "Link to CompositeComponent when a volume is part of App/Composition request.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK })
@@ -65,6 +80,17 @@ public class ContainerVolumeService extends StatefulService {
         @Documentation(description = "Defines which adapter will serve the provision request")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public URI adapterManagementReference;
+
+        /** Volume state indicating runtime state of a volume instance. */
+        @Documentation(description = "Volume state indicating runtime state of a volume instance.")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public PowerState powerState;
+
+        /** Container host links */
+        @Documentation(description = "Container host links")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public List<String> parentLinks;
 
         /** Name of the volume driver to use. Defaults to local for the name. */
         @Documentation(description = "Name of the volume driver to use. Defaults to local for the name.")
@@ -119,6 +145,10 @@ public class ContainerVolumeService extends StatefulService {
     @Override
     public void handleCreate(Operation create) {
         ContainerVolumeState body = getValidInputFrom(create, false);
+
+        if (body.powerState == null) {
+            body.powerState = ContainerVolumeState.PowerState.UNKNOWN;
+        }
 
         CompositeComponentNotifier.notifyCompositionComponent(this,
                 body.compositeComponentLink, create.getAction());
@@ -215,7 +245,7 @@ public class ContainerVolumeService extends StatefulService {
                 ContainerVolumeDescriptionService.FACTORY_LINK,
                 "docker-volume");
 
-        // ServiceDocumentTemplateUtil.indexCustomProperties(template);
+        template.powerState = ContainerVolumeState.PowerState.UNKNOWN;
 
         template.customProperties = new HashMap<>(1);
         template.customProperties.put("key (string)", "value (string)");
@@ -229,6 +259,8 @@ public class ContainerVolumeService extends StatefulService {
         // Default location according to official documents:
         // https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/inspect-a-volume
         template.mountpoint = FileUtils.getFile("/var/lib/docker/volumes/");
+
+        template.parentLinks = new ArrayList<String>(0);
 
         return template;
     }

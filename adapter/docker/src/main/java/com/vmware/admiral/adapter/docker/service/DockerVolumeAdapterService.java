@@ -18,6 +18,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.TaskState.TaskStage;
+import com.vmware.xenon.common.UriUtils;
 
 public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
 
@@ -80,8 +81,15 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
      * {@link RequestContext#commandInput} and {@link RequestContext#executor} properties.
      */
     private void processVolumeState(RequestContext context) {
-        getContainerHost(context.request, context.operation,
-                context.volumeState.originatingHostReference,
+        if (context.volumeState.originatingHostLink == null) {
+            fail(context.request, new IllegalArgumentException("originatingHostLink"));
+            return;
+        }
+
+        getContainerHost(
+                context.request,
+                context.operation,
+                UriUtils.buildUri(getHost(), context.volumeState.originatingHostLink),
                 (computeState, commandInput) -> {
                     context.commandInput = commandInput;
                     context.executor = getCommandExecutor();

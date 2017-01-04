@@ -144,6 +144,7 @@ public class ContainerVolumeRemovalTaskService extends
 
     private void deleteResourceInstances(ContainerVolumeRemovalTaskState state,
             Collection<String> resourceLinks, String subTaskLink) {
+
         if (state.removeOnly) {
             logFine("Skipping actual container volume removal by the adapter since the removeOnly "
                     + "flag was set: %s", state.documentSelfLink);
@@ -159,7 +160,7 @@ public class ContainerVolumeRemovalTaskService extends
         }
 
         try {
-            logInfo("Starting delete of %d container resources", resourceLinks.size());
+            logInfo("Starting delete of %d container volume resources", resourceLinks.size());
             for (String resourceLink : resourceLinks) {
                 sendRequest(Operation
                         .createGet(this, resourceLink)
@@ -173,8 +174,16 @@ public class ContainerVolumeRemovalTaskService extends
                                     }
                                     ContainerVolumeState volumeState = o
                                             .getBody(ContainerVolumeState.class);
-                                    sendContainerVolumeDeleteRequest(volumeState,
-                                            subTaskLink);
+                                    if (ContainerVolumeState.PowerState.RETIRED == volumeState.powerState) {
+                                        logWarning(
+                                                "Volume with name '%s' is retired. Deleting the state only.",
+                                                volumeState.name);
+                                        state.removeOnly = true;
+                                        deleteResourceInstances(state, resourceLinks, subTaskLink);
+                                    } else {
+                                        sendContainerVolumeDeleteRequest(volumeState,
+                                                subTaskLink);
+                                    }
                                 }));
             }
             proceedTo(SubStage.INSTANCES_REMOVING);

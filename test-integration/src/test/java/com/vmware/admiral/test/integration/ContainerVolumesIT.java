@@ -151,7 +151,7 @@ public class ContainerVolumesIT extends BaseProvisioningOnCoreOsIT {
             ComputeState host = getDocument(currentContainer.parentLink, ComputeState.class);
 
             // Assert that volumes & containers are provisioned on same host.
-            assertEquals(host.documentSelfLink, volume.originatingHostReference.getPath());
+            assertEquals(host.documentSelfLink, volume.originatingHostLink);
 
         }
 

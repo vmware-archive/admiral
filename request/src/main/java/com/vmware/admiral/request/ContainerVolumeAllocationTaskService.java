@@ -27,6 +27,7 @@ import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState.PowerState;
 import com.vmware.admiral.request.ContainerVolumeAllocationTaskService.ContainerVolumeAllocationTaskState.SubStage;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
@@ -315,6 +316,8 @@ public class ContainerVolumeAllocationTaskService extends
             volumeState.compositeComponentLink = UriUtils.buildUriPath(
                     CompositeComponentFactoryService.SELF_LINK, contextId);
         }
+
+        volumeState.powerState = PowerState.PROVISIONING;
 
         sendRequest(OperationUtil
                 .createForcedPost(this, ContainerVolumeService.FACTORY_LINK)

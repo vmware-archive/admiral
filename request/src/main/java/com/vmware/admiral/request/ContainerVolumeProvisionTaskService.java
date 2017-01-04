@@ -335,7 +335,7 @@ public class ContainerVolumeProvisionTaskService
             String originatingHostLink, Runnable callbackFunction) {
 
         ContainerVolumeState patch = new ContainerVolumeState();
-        patch.originatingHostReference = UriUtils.buildUri(getHost(), originatingHostLink);
+        patch.originatingHostLink = originatingHostLink;
 
         sendRequest(Operation
                 .createPatch(this, volumeSelfLink)
