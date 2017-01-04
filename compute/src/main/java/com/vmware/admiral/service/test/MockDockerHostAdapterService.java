@@ -13,6 +13,7 @@ package com.vmware.admiral.service.test;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +23,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
+import com.vmware.admiral.compute.container.HostVolumeListDataCollection.VolumeListCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -92,7 +94,17 @@ public class MockDockerHostAdapterService extends StatelessService {
             patchTaskStage(request, null, callbackResponse);
             op.setBody(callbackResponse);
             op.complete();
-
+        } else if (ContainerHostOperationType.LIST_VOLUMES.id == request.operationTypeId) {
+            VolumeListCallback callbackResponse = new VolumeListCallback();
+            callbackResponse.containerHostLink = request.resourceReference.getPath();
+            String hostId = Service.getId(request.resourceReference.getPath());
+            callbackResponse.volumeNames = new ArrayList<>();
+            for (String name: MockDockerVolumeAdapterService.getVolumeNames(hostId)) {
+                callbackResponse.addName(name);
+            }
+            patchTaskStage(request, null, callbackResponse);
+            op.setBody(callbackResponse);
+            op.complete();
         } else {
             op.setStatusCode(Operation.STATUS_CODE_ACCEPTED).complete();
 

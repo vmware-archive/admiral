@@ -29,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 
 /**
@@ -151,6 +152,23 @@ public class VolumeUtil {
                 s.stream().forEach(cn -> addAffinity(maxCont, containers.get(cn)));
             }
         }
+    }
+
+    public static ContainerVolumeDescription createContainerVolumeDescription(
+            ContainerVolumeState state) {
+
+        ContainerVolumeDescription volumeDescription = new ContainerVolumeDescription();
+
+        volumeDescription.documentSelfLink = state.descriptionLink;
+        volumeDescription.documentDescription = state.documentDescription;
+        volumeDescription.tenantLinks = state.tenantLinks;
+        volumeDescription.instanceAdapterReference = state.adapterManagementReference;
+        volumeDescription.name = state.name;
+        volumeDescription.customProperties = state.customProperties;
+
+        // TODO - fill in other volume settings
+
+        return volumeDescription;
     }
 
     private static void addAffinity(String affinityTo, ContainerDescription cd) {

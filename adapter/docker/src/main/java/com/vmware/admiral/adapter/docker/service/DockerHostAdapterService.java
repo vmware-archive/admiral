@@ -16,6 +16,8 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NAMES_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_ID_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_VOLUMES_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerNetworkAdapterService.DOCKER_PREDEFINED_NETWORKS;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_CERT_PROP_NAME;
@@ -35,6 +37,7 @@ import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
+import com.vmware.admiral.compute.container.HostVolumeListDataCollection.VolumeListCallback;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -78,6 +81,11 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             getContainerHost(request, op, request.resourceReference,
                     (computeState, commandInput) ->
                     directListNetworks(request, op, computeState, commandInput));
+        } else if (ContainerHostOperationType.LIST_VOLUMES == request.getOperationType()
+                && request.serviceTaskCallback.isEmpty()) {
+            getContainerHost(request, op, request.resourceReference,
+                    (computeState, commandInput) ->
+                    directListVolumes(request, op, computeState, commandInput));
         } else {
             getContainerHost(request, op, request.resourceReference,
                     (computeState, commandInput) ->
@@ -103,6 +111,9 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             break;
         case LIST_NETWORKS:
             doListNetworks(request, computeState, commandInput);
+            break;
+        case LIST_VOLUMES:
+            doListVolumes(request, computeState, commandInput);
             break;
         case STATS:
             doStats(request, computeState);
@@ -341,6 +352,71 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                 callbackResponse.addIdAndNames(id, name);
             }
         }
+        return callbackResponse;
+    }
+
+    private void doListVolumes(ContainerHostRequest request, ComputeState computeState,
+            CommandInput commandInput) {
+
+        updateSslTrust(request, commandInput);
+
+        getCommandExecutor().listVolumes(
+                commandInput,
+                (o, ex) -> {
+                    if (ex != null) {
+                        fail(request, o, ex);
+                    } else {
+                        VolumeListCallback callbackResponse = createVolumeListCallback(
+                                computeState, o);
+
+                        if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
+                            logFine("Collection returned volume names: %s %s",
+                                    callbackResponse.volumeNames,
+                                    request.getRequestTrackingLog());
+                        }
+
+                        patchTaskStage(request, TaskStage.FINISHED, null, callbackResponse);
+                    }
+                });
+    }
+
+    // get containers within the current operation without using callback
+    private void directListVolumes(ContainerHostRequest request, Operation op,
+            ComputeState computeState, CommandInput commandInput) {
+        updateSslTrust(request, commandInput);
+
+        getCommandExecutor().listVolumes(
+                commandInput,
+                (o, ex) -> {
+                    if (ex != null) {
+                        op.fail(ex);
+                    } else {
+                        VolumeListCallback callbackResponse = createVolumeListCallback(
+                                computeState, o);
+                        if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
+                            logFine("Collection returned volume names: %s %s",
+                                    callbackResponse.volumeNames,
+                                    request.getRequestTrackingLog());
+                        }
+                        op.setBody(callbackResponse);
+                        op.complete();
+                    }
+                });
+    }
+
+    @SuppressWarnings("unchecked")
+    private VolumeListCallback createVolumeListCallback(ComputeState computeState,
+            Operation o) {
+        Map<String, List<Object>> volumesResponse = o.getBody(Map.class);
+
+        VolumeListCallback callbackResponse = new VolumeListCallback();
+        callbackResponse.containerHostLink = computeState.documentSelfLink;
+
+        for (Object volumeData : volumesResponse.get(DOCKER_CONTAINER_VOLUMES_PROP_NAME)) {
+            String name = ((Map<String, String>) volumeData).get(DOCKER_VOLUME_NAME_PROP_NAME);
+            callbackResponse.addName(name);
+        }
+
         return callbackResponse;
     }
 
