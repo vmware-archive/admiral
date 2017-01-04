@@ -25,6 +25,7 @@ import (
 	"admiral/client"
 	"admiral/config"
 	"admiral/utils"
+	"admiral/utils/urlutils"
 )
 
 var (
@@ -44,7 +45,7 @@ func Login(username, password, configUrl string) (string, error) {
 		config.SetProperty("Url", configUrl)
 	}
 	os.Remove(utils.TokenPath())
-	url := config.URL + "/core/authn/basic"
+	url := urlutils.BuildUrl(urlutils.LoginOut, nil, true)
 	login := &LogInOut{
 		RequestType: "LOGIN",
 	}
@@ -71,24 +72,27 @@ func Login(username, password, configUrl string) (string, error) {
 	return successLoginMsg, nil
 }
 
-func Logout() {
-	url := config.URL + "/core/authn/basic"
+func Logout() (string, error) {
+	var err error
+	if !utils.IsVraMode {
+		err = logoutStandalone()
+	}
+	if err != nil {
+		return "", err
+	}
+	os.Remove(utils.TokenPath())
+	return "Logged out.", nil
+}
+
+func logoutStandalone() error {
 	logout := &LogInOut{
-		RequestType: "LOGOOUT",
+		RequestType: "LOGOUT",
 	}
 	jsonBody, _ := json.Marshal(logout)
-
+	url := urlutils.BuildUrl(urlutils.LoginOut, nil, true)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-
 	_, _, respErr := client.ProcessRequest(req)
-	utils.CheckResponse(respErr, url)
-
-	err := os.Remove(utils.TokenPath())
-
-	utils.CheckBlockingError(err)
-
-	fmt.Println("Logged out.")
-
+	return respErr
 }
 
 func GetInfo() string {

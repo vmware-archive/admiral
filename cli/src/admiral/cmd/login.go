@@ -112,7 +112,8 @@ var logoutCmd = &cobra.Command{
 	Long:  "Logout user",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		RunLogout()
+		output, err := RunLogout()
+		processOutput(output, err)
 	},
 }
 
@@ -120,6 +121,6 @@ func initLogout() {
 	RootCmd.AddCommand(logoutCmd)
 }
 
-func RunLogout() {
-	loginout.Logout()
+func RunLogout() (string, error) {
+	return loginout.Logout()
 }

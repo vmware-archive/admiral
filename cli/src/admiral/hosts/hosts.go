@@ -51,17 +51,17 @@ type Host struct {
 	TagLinks         []string           `json:"tagLinks,omitempty"`
 	Name             string             `json:"name,omitempty"`
 
-	CreationTimeMicros           int64  `json:"creationTimeMicros,omitempty"`
-	DescriptionLink              string `json:"descriptionLink,omitempty"`
-	DocumentSelfLink             string `json:"documentSelfLink,omitempty"`
-	DocumentVersion              int    `json:"documentVersion,omitempty"`
-	DocumentEpoch                int    `json:"documentEpoch,omitempty"`
-	DocumentKind                 string `json:"documentKind,omitempty"`
-	DocumentUpdateTimeMicros     int64  `json:"documentUpdateTimeMicros,omitempty"`
-	DocumentUpdateAction         string `json:"documentUpdateAction,omitempty"`
-	DocumentExpirationTimeMicros int64  `json:"documentExpirationTimeMicros,omitempty"`
-	DocumentOwner                string `json:"documentOwner,omitempty"`
-	DocumentAuthPrincipalLink    string `json:"documentAuthPrincipalLink,omitempty"`
+	CreationTimeMicros           interface{} `json:"creationTimeMicros,omitempty"`
+	DescriptionLink              string      `json:"descriptionLink,omitempty"`
+	DocumentSelfLink             string      `json:"documentSelfLink,omitempty"`
+	DocumentVersion              int         `json:"documentVersion,omitempty"`
+	DocumentEpoch                int         `json:"documentEpoch,omitempty"`
+	DocumentKind                 string      `json:"documentKind,omitempty"`
+	DocumentUpdateTimeMicros     interface{} `json:"documentUpdateTimeMicros,omitempty"`
+	DocumentUpdateAction         string      `json:"documentUpdateAction,omitempty"`
+	DocumentExpirationTimeMicros interface{} `json:"documentExpirationTimeMicros,omitempty"`
+	DocumentOwner                string      `json:"documentOwner,omitempty"`
+	DocumentAuthPrincipalLink    string      `json:"documentAuthPrincipalLink,omitempty"`
 }
 
 func (h *Host) GetName() string {

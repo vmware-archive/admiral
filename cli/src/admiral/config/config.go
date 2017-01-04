@@ -137,6 +137,7 @@ func SetProperty(key, val string) bool {
 		fmt.Println(err.Error())
 		return false
 	}
+	removeTokenOnUrlChange(key)
 	return true
 }
 
@@ -156,4 +157,10 @@ func Inspect() []byte {
 	jsonBody, err := json.MarshalIndent(cfg, "", "    ")
 	utils.CheckBlockingError(err)
 	return jsonBody
+}
+
+func removeTokenOnUrlChange(key string) {
+	if key == "Url" {
+		os.Remove(utils.TokenPath())
+	}
 }

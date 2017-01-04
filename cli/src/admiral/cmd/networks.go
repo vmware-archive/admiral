@@ -165,7 +165,7 @@ func RunNetworkRemove(args []string) (string, error) {
 		return "", err
 	}
 	if !asyncTask {
-		return NetworkRemovedMessage + strings.Join(ids, ", "), nil
+		return NetworkRemovedMessage + strings.Join(ids, " "), nil
 	}
 	return NetworkBeingRemovedMessage, nil
 

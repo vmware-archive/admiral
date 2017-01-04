@@ -76,6 +76,8 @@ func (rt ResourceType) GetBaseUrl() string {
 		return "/resources/elastic-placement-zones-config"
 	case Registry:
 		return "/config/registries"
+	case LoginOut:
+		return "/core/authn/basic"
 	default:
 		return ""
 	}
@@ -109,6 +111,7 @@ const (
 	ElasticPlacementZone
 	Registry
 	ClosureDescription
+	LoginOut
 )
 
 func BuildUrl(resType ResourceType, queryParameters map[string]interface{}, includeAdmiralUrl bool) string {
