@@ -48,12 +48,29 @@ import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 public class ElasticPlacementZoneService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.ELASTIC_PLACEMENT_ZONES;
 
+    public static enum PlacementPolicy {
+
+        /** place on random host. */
+        DEFAULT,
+
+        /** place on host with minimum resources - either computes or containers. */
+        SPREAD,
+
+        /** place on most loaded host until it reach the limit of resource. */
+        BINPACK
+    }
+
     /**
      * Represents a document associated with a {@link ElasticPlacementZoneService}.
      */
     public static class ElasticPlacementZoneState extends MultiTenantDocument {
         public static final String FIELD_NAME_RESOURCE_POOL_LINK = "resourcePoolLink";
         public static final String FIELD_NAME_TAG_LINKS_TO_MATCH = "tagLinksToMatch";
+
+        @Documentation(description = "Advanced placement policy.")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
+        public PlacementPolicy placementPolicy;
 
         @Documentation(description = "Link to the elastic resource pool")
         @UsageOption(option = PropertyUsageOption.REQUIRED)

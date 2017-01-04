@@ -62,7 +62,7 @@ public final class AffinityFilters {
         } else if (ComponentDescription.class.isInstance(desc)) {
             initialize(host, ((ComponentDescription) desc));
         } else if (ContainerVolumeDescription.class.isInstance(desc)) {
-            //TODO initialize(host, (ContainerVolumeDescription) desc)
+            // TODO initialize(host, (ContainerVolumeDescription) desc)
         } else if (ClosureDescription.class.isInstance(desc)) {
             initialize(host, (ClosureDescription) desc);
         } else {
@@ -112,6 +112,9 @@ public final class AffinityFilters {
         // non host related dependency only
         filters.add(new DependsOnAffinityHostFilter(desc));
         filters.add(new NamedVolumeAffinityHostFilter(host, desc));
+
+        // advanced policy filters
+        filters.add(new BinpackAffinityHostFilter(host, desc));
 
     }
 
@@ -171,7 +174,7 @@ public final class AffinityFilters {
                     .filter(b -> b.isProvisioningTimeBinding())
                     .map(b -> BindingUtils
                             .extractComponentNameFromBindingExpression(
-                            b.placeholder.bindingExpression))
+                                    b.placeholder.bindingExpression))
                     .distinct()
                     .collect(Collectors.toMap(
                             Function.identity(), AffinityConstraint::new));
