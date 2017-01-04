@@ -22,6 +22,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -85,6 +86,7 @@ public class BaseIntegrationSupportIT {
     private static final String TEST_DCP_URL_PROP_NAME = "test.dcp.url";
     private static final String TEST_DCP_HOST_PROP_NAME = "test.dcp.host";
     private static final String TEST_DCP_PORT_PROP_NAME = "test.dcp.port";
+    private static final int MAX_RETRYING_REMOVAL_COUNT = 3;
 
     protected static final int STATE_CHANGE_WAIT_POLLING_RETRY_COUNT = Integer.getInteger(
             "test.state.change.wait.retry.count", 300);
@@ -125,26 +127,12 @@ public class BaseIntegrationSupportIT {
 
     @AfterClass
     public static void baseAfterClass() throws Exception {
-        while (!documentsForDeletionAfterClass.isEmpty()) {
-            try {
-                delete(documentsForDeletionAfterClass.poll());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        deleteDocuments(documentsForDeletionAfterClass);
     }
 
     @After
     public void baseTearDown() throws Exception {
-        while (!documentsForDeletion.isEmpty()) {
-            try {
-                ServiceDocument docToDelete = documentsForDeletion.poll();
-                logger.info("Deleting document: %s", docToDelete.documentSelfLink);
-                delete(docToDelete);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        deleteDocuments(documentsForDeletion);
     }
 
     protected static void cleanUpAfterClass(ServiceDocument document) {
@@ -468,5 +456,28 @@ public class BaseIntegrationSupportIT {
 
             return instance;
         }
+    }
+
+    private static void deleteDocuments(Queue<ServiceDocument> documents) throws Exception {
+        for (int i = 0; i < MAX_RETRYING_REMOVAL_COUNT; i++) {
+            Iterator<ServiceDocument> it = documents.iterator();
+            ServiceDocument docToDelete = null;
+
+            while (it.hasNext()) {
+                try {
+                    docToDelete = it.next();
+                    delete(docToDelete);
+                    it.remove();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (documents.isEmpty()) {
+                return;
+            }
+        }
+
+        throw new Exception("Deletion of documents failed! %d documents left" + documents.size());
     }
 }
