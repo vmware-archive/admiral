@@ -50,10 +50,10 @@
     <span class="help-block">{{i18n(validationErrors.tags)}}</span>
   </div>
 
-  <div id="hostAutoConfig" class="form-group auto-configure" v-if="autoConfigurationEnabled">
+  <div class="form-group auto-configure" v-if="autoConfigurationEnabled">
     <label>{{i18n("app.host.details.autoConfigure")}}</label>
     <div class="checkbox-inline">
-      <input class="checkbox-control" type="checkbox" name="hostAutoConfig" v-model="autoConfigure"/>
+      <input class="checkbox-control" type="checkbox" id="hostAutoConfig" v-model="autoConfigure"/>
       <label for="hostAutoConfig">{{i18n("app.host.details.autoConfigureInput")}}</label>
     </div>
     <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
