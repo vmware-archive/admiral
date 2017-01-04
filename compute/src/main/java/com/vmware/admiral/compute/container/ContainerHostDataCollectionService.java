@@ -46,6 +46,8 @@ import com.vmware.admiral.compute.container.HostContainerListDataCollection.Cont
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
+import com.vmware.admiral.compute.container.HostVolumeListDataCollection.HostVolumeListDataCollectionFactoryService;
+import com.vmware.admiral.compute.container.HostVolumeListDataCollection.VolumeListCallback;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
@@ -219,6 +221,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                                         body.remove);
                                 updateContainerHostContainers(computeState.documentSelfLink);
                                 updateContainerHostNetworks(computeState.documentSelfLink);
+                                updateContainerHostVolumes(computeState.documentSelfLink);
                                 updateHostStats(computeState.documentSelfLink);
                             }
                         }, null);
@@ -695,6 +698,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 if (PowerState.ON.equals(compute.powerState)) {
                     updateContainerHostContainers(compute.documentSelfLink);
                     updateContainerHostNetworks(compute.documentSelfLink);
+                    updateContainerHostVolumes(compute.documentSelfLink);
                 }
             }
 
@@ -768,6 +772,23 @@ public class ContainerHostDataCollectionService extends StatefulService {
                         this,
                         HostNetworkListDataCollectionFactoryService
                                 .DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK)
+                .setBody(body)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logWarning(Utils.toString(ex));
+                        return;
+                    }
+                }));
+    }
+
+    private void updateContainerHostVolumes(String documentSelfLink) {
+        VolumeListCallback body = new VolumeListCallback();
+        body.containerHostLink = documentSelfLink;
+        sendRequest(Operation
+                .createPatch(
+                        this,
+                        HostVolumeListDataCollectionFactoryService
+                                .DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK)
                 .setBody(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {

@@ -20,6 +20,7 @@ public enum ContainerHostOperationType {
     PING("Host.Container.Ping"),
     LIST_CONTAINERS("Host.Container.ListContainers"),
     LIST_NETWORKS("Host.Network.ListNetworks"),
+    LIST_VOLUMES("Host.Volume.ListVolumes"),
     STATS("Host.Container.Stats");
 
     ContainerHostOperationType(String id) {

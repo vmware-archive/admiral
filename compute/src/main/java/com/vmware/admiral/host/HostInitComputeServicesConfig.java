@@ -42,6 +42,7 @@ import com.vmware.admiral.compute.container.DeploymentPolicyService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionFactoryService;
+import com.vmware.admiral.compute.container.HostVolumeListDataCollection.HostVolumeListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.admiral.compute.container.TemplateSearchService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
@@ -78,6 +79,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 EndpointAdapterService.class,
                 HostContainerListDataCollectionFactoryService.class,
                 HostNetworkListDataCollectionFactoryService.class,
+                HostVolumeListDataCollectionFactoryService.class,
                 RegistryHostConfigService.class,
                 CompositeDescriptionFactoryService.class,
                 CompositeDescriptionCloneService.class,

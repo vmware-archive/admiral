@@ -46,6 +46,11 @@ public class ContainerVolumeDescriptionService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CONTAINER_VOLUMES_DESC;
 
+    /* Instance to link to when existing volumes are discovered on a host */
+    public static final String DISCOVERED_INSTANCE = "discovered";
+    public static final String DISCOVERED_DESCRIPTION_LINK = UriUtils.buildUriPath(FACTORY_LINK,
+            DISCOVERED_INSTANCE);
+
     public static final String DEFAULT_VOLUME_DRIVER = "local";
 
     @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)

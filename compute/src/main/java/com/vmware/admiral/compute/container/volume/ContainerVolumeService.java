@@ -96,6 +96,15 @@ public class ContainerVolumeService extends StatefulService {
         public String driver;
 
         /**
+         * If set to true, specifies that this volume exists independently of any application.
+         */
+        @Documentation(description = "If set to true, specifies that this volume exists independently "
+                + "of any application.")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public Boolean external;
+
+        /**
          * Scope describes the level at which the volume exists, can be one of global for
          * cluster-wide or local for machine level. The default is local.
          */
