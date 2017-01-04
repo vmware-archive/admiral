@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
@@ -37,6 +38,15 @@ public class CommonContinuousQueries {
      * continuous queries are not persisted.
      */
     private static final String QUERY_TASK_SELF_LINK_PREFIX = UUID.randomUUID().toString();
+
+    /**
+     * Default query expiration is 10 minutes and cannot be set to infinite. Here we choose a very
+     * long expiration period which should be fine for all practical reasons.
+     *
+     * Note that since local query tasks are not persistent, this expiration interval restarts at
+     * every host start.
+     */
+    private static final long QUERY_TASK_EXPIRATION_DAYS = 5 * 365; // 5 years
 
     /**
      * Supported common queries.
@@ -96,6 +106,9 @@ public class CommonContinuousQueries {
         }
 
         task.documentSelfLink = getTaskSelfLink(queryId);
+        task.documentExpirationTimeMicros = Utils.fromNowMicrosUtc(
+                TimeUnit.DAYS.toMicros(QUERY_TASK_EXPIRATION_DAYS));
+
         return task;
     }
 
