@@ -16,8 +16,8 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import java.util.Map;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.Utils;
 
@@ -27,7 +27,7 @@ import com.vmware.xenon.common.Utils;
 public class ComputeProfileService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.COMPUTE_PROFILES;
 
-    public static class ComputeProfile extends ServiceDocument {
+    public static class ComputeProfile extends MultiTenantDocument {
         /**
          * Instance types provided by the particular endpoint. Keyed by global instance type
          * identifiers used to unify instance types among heterogeneous set of endpoint types.

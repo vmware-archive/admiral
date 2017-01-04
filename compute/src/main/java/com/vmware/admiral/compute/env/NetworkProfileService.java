@@ -12,8 +12,8 @@
 package com.vmware.admiral.compute.env;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.Utils;
 
@@ -23,7 +23,7 @@ import com.vmware.xenon.common.Utils;
 public class NetworkProfileService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.NETWORK_PROFILES;
 
-    public static class NetworkProfile extends ServiceDocument {
+    public static class NetworkProfile extends MultiTenantDocument {
         // TODO
     }
 
