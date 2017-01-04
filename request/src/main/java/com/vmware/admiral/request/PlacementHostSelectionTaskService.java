@@ -18,6 +18,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -28,17 +29,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
+
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState.SubStage;
 import com.vmware.admiral.request.allocation.filter.AffinityFilters;
+import com.vmware.admiral.request.allocation.filter.BinpackAffinityHostFilter;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelectionFilterException;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
-import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -54,8 +59,7 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
  */
 public class PlacementHostSelectionTaskService
         extends
-        AbstractTaskStatefulService<PlacementHostSelectionTaskService.PlacementHostSelectionTaskState,
-        DefaultSubStage> {
+        AbstractTaskStatefulService<PlacementHostSelectionTaskService.PlacementHostSelectionTaskState, PlacementHostSelectionTaskService.PlacementHostSelectionTaskState.SubStage> {
 
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_PROVISION_PLACEMENT_TASKS;
     public static final String DISPLAY_NAME = "Host Selection";
@@ -66,7 +70,14 @@ public class PlacementHostSelectionTaskService
     private volatile ContainerDescription containerDescription;
 
     public static class PlacementHostSelectionTaskState extends
-            com.vmware.admiral.service.common.TaskServiceDocument<DefaultSubStage> {
+            com.vmware.admiral.service.common.TaskServiceDocument<PlacementHostSelectionTaskState.SubStage> {
+
+        public static enum SubStage {
+            CREATED,
+            FILTER,
+            COMPLETED,
+            ERROR;
+        }
 
         /** (Required) The description that defines the requested resource. */
         @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
@@ -96,10 +107,18 @@ public class PlacementHostSelectionTaskService
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Collection<HostSelection> hostSelections;
 
+        /**
+         * HostLink to HostSelection map. It is passed from CREATED to FILTER stage in order to
+         * track result from hosts query.
+         */
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public Map<String, HostSelection> hostSelectionMap;
+
     }
 
     public PlacementHostSelectionTaskService() {
-        super(PlacementHostSelectionTaskState.class, DefaultSubStage.class, DISPLAY_NAME);
+        super(PlacementHostSelectionTaskState.class, SubStage.class, DISPLAY_NAME);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
@@ -111,6 +130,9 @@ public class PlacementHostSelectionTaskService
         switch (state.taskSubStage) {
         case CREATED:
             selectBasedOnDescAndResourcePool(state, containerDescription, QUERY_RETRY_COUNT);
+            break;
+        case FILTER:
+            selection(state, null);
             break;
         case COMPLETED:
             complete();
@@ -141,6 +163,7 @@ public class PlacementHostSelectionTaskService
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
         Collection<HostSelection> hostSelections;
+        Map<String, HostSelection> hostSelectionMap;
     }
 
     private void selectBasedOnDescAndResourcePool(PlacementHostSelectionTaskState state,
@@ -224,7 +247,11 @@ public class PlacementHostSelectionTaskService
             }
 
             Map<String, HostSelection> initHostSelectionMap = buildHostSelectionMap(qr);
-            selection(state, initHostSelectionMap, desc);
+
+            proceedTo(SubStage.FILTER, s -> {
+                s.hostSelectionMap = initHostSelectionMap;
+            });
+
         });
     }
 
@@ -242,7 +269,7 @@ public class PlacementHostSelectionTaskService
             hostSelection.availableMemory = getPropertyLong(
                     computeState.customProperties,
                     ContainerHostService.DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME)
-                    .orElse(Long.MAX_VALUE);
+                            .orElse(Long.MAX_VALUE);
             hostSelection.clusterStore = computeState.customProperties
                     .get(ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME);
             hostSelection.plugins = computeState.customProperties
@@ -252,19 +279,43 @@ public class PlacementHostSelectionTaskService
         return initHostSelectionMap;
     }
 
+    @SuppressWarnings("rawtypes")
     private void selection(final PlacementHostSelectionTaskState state,
-            final Map<String, HostSelection> initHostSelectionMap, final ContainerDescription desc) {
+            final ContainerDescription desc) {
         if (desc == null) {
             getContainerDescription(state,
-                    (contDesc) -> this.selection(state, initHostSelectionMap, contDesc));
+                    (contDesc) -> this.selection(state, contDesc));
             return;
         }
 
         Map<String, HostSelection> filteredByMemory = filterHostsByMemory(desc,
-                initHostSelectionMap);
+                state.hostSelectionMap);
 
         final AffinityFilters filters = AffinityFilters.build(getHost(), desc);
-        filter(state, desc, filteredByMemory, filters.getQueue());
+
+        Queue<HostSelectionFilter> filtersQueue = filters.getQueue();
+
+        String serviceLink = state.serviceTaskCallback.serviceSelfLink;
+
+        if (serviceLink.startsWith(ReservationTaskFactoryService.SELF_LINK)) {
+            ignoreAffinityFilters(filtersQueue);
+        }
+
+        filter(state, desc, filteredByMemory, filtersQueue);
+    }
+
+    @SuppressWarnings("rawtypes")
+    private void ignoreAffinityFilters(Queue<HostSelectionFilter> filters) {
+        List<Class<?>> filtersToIgnoreOnReservationStage = Arrays.asList(BinpackAffinityHostFilter.class);
+        filters.stream().forEach(f -> {
+            if (containsInstance(filtersToIgnoreOnReservationStage, f.getClass())) {
+                filters.remove(f);
+            }
+        });
+    }
+
+    public static <E> boolean containsInstance(Collection<Class<?>> filtersToIgnore, Class<?> class1) {
+        return filtersToIgnore.stream().anyMatch(e -> class1.equals(e));
     }
 
     private Map<String, HostSelection> filterHostsByMemory(
@@ -324,8 +375,11 @@ public class PlacementHostSelectionTaskService
         int initialSize = hostSelections.size();
         int diff = (int) (state.resourceCount - initialSize);
         if (diff > 0) {
-            /* Cycle the list of host selections until we reach resourceCount number of entries i.e.
-            if we have 3 hosts: [A, B, C] and resourceCount is 7 we will have [A, B, C, A, B, C, A] */
+            /*
+             * Cycle the list of host selections until we reach resourceCount number of entries i.e.
+             * if we have 3 hosts: [A, B, C] and resourceCount is 7 we will have [A, B, C, A, B, C,
+             * A]
+             */
             for (int i = 0; i < diff / initialSize; ++i) {
                 hostSelections.addAll(hostSelections.subList(0, initialSize));
             }
@@ -333,7 +387,7 @@ public class PlacementHostSelectionTaskService
             hostSelections.addAll(hostSelections.subList(0, diff % initialSize));
         }
 
-        proceedTo(DefaultSubStage.COMPLETED, s -> {
+        proceedTo(SubStage.COMPLETED, s -> {
             s.hostSelections = hostSelections;
         });
     }

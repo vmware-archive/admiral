@@ -58,6 +58,7 @@ public class BaseAffinityHostFilterTest extends RequestBaseTest {
         state.resourceCount = 1;
         state.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY,
                 UUID.randomUUID().toString());
+        state.resourcePoolLinks = Collections.singletonList(createResourcePool().documentSelfLink);
 
         initialHostLinks = new ArrayList<>();
         initialHostLinks.add(createDockerHost(
