@@ -621,6 +621,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         ComputeState compute = IntegratonTestStateFactory.createDockerComputeHost();
         if (id != null) {
             compute.id = id;
+            compute.documentSelfLink = id;
         }
         compute.address = address;
         compute.customProperties.put(ContainerHostService.DOCKER_HOST_PORT_PROP_NAME, port);

@@ -287,6 +287,9 @@ public class ContainerHostService extends StatelessService {
         }
 
         Operation store = null;
+        if (cs.id == null) {
+            cs.id = UUID.randomUUID().toString();
+        }
         // This should be the case only when using the addHost manually, e.g. unmanaged external
         // host
         if (cs.documentSelfLink == null
@@ -294,12 +297,6 @@ public class ContainerHostService extends StatelessService {
             store = Operation.createPost(getHost(), ComputeService.FACTORY_LINK)
                     .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE);
 
-            if (cs.id == null) {
-                cs.id = UUID.randomUUID().toString();
-            } else {
-                cs.id = ContainerHostUtil.buildHostId(hostSpec.hostState.tenantLinks, cs.id);
-            }
-            cs.documentSelfLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, cs.id);
             cs.powerState = ComputeService.PowerState.ON;
         } else {
             store = Operation.createPut(getHost(), cs.documentSelfLink);
@@ -383,9 +380,8 @@ public class ContainerHostService extends StatelessService {
         request.operationTypeId = ContainerHostOperationType.PING.id;
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         request.resourceReference = UriUtils.buildUri(getHost(), ComputeService.FACTORY_LINK);
-        request.customProperties = cs.customProperties == null ?
-                new HashMap<>() :
-                new HashMap<>(cs.customProperties);
+        request.customProperties = cs.customProperties == null ? new HashMap<>()
+                : new HashMap<>(cs.customProperties);
         request.customProperties.putIfAbsent(ContainerHostService.DOCKER_HOST_ADDRESS_PROP_NAME,
                 cs.address);
 
