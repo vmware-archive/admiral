@@ -231,13 +231,17 @@ public abstract class BaseTestCase {
         setPrivateField(failure, host, null);
     }
 
-    protected void waitForServiceAvailability(String serviceLink) throws Throwable {
-        waitForServiceAvailability(host, serviceLink);
+    protected void waitForServiceAvailability(String... serviceLinks) throws Throwable {
+        waitForServiceAvailability(host, serviceLinks);
     }
 
-    protected void waitForServiceAvailability(ServiceHost h, String serviceLink) throws Throwable {
-        TestContext ctx = testCreate(1);
-        h.registerForServiceAvailability(ctx.getCompletion(), serviceLink);
+    protected void waitForServiceAvailability(ServiceHost h, String... serviceLinks)
+            throws Throwable {
+        if (serviceLinks == null || serviceLinks.length == 0) {
+            throw new IllegalArgumentException("null or empty serviceLinks");
+        }
+        TestContext ctx = testCreate(serviceLinks.length);
+        h.registerForServiceAvailability(ctx.getCompletion(), serviceLinks);
         ctx.await();
     }
 

@@ -66,7 +66,8 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
                 CaSigningCertService.FACTORY_LINK);
         HostInitServiceHelper.startServices(host,
                 TestInitialBootService.class);
-        HostInitServiceHelper.startServiceFactories(host, CaSigningCertService.class, EnvironmentService.class,
+        HostInitServiceHelper.startServiceFactories(host,
+                CaSigningCertService.class, EnvironmentService.class,
                 ComputeProfileService.class, StorageProfileService.class,
                 NetworkProfileService.class);
         waitForServiceAvailability(EnvironmentService.FACTORY_LINK);
@@ -79,9 +80,13 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
                 .setBody(new ServiceDocument()));
 
         String awsEndpointType = EndpointType.aws.name();
-        String awsEnvLink = UriUtils.buildUriPath(EnvironmentService.FACTORY_LINK,
-                awsEndpointType);
-        waitForServiceAvailability(awsEnvLink);
+        String[] awsLinks = new String[] {
+                UriUtils.buildUriPath(EnvironmentService.FACTORY_LINK, awsEndpointType),
+                UriUtils.buildUriPath(NetworkProfileService.FACTORY_LINK, awsEndpointType),
+                UriUtils.buildUriPath(StorageProfileService.FACTORY_LINK, awsEndpointType),
+                UriUtils.buildUriPath(ComputeProfileService.FACTORY_LINK, awsEndpointType)
+        };
+        waitForServiceAvailability(awsLinks);
 
         cd = new ComputeDescription();
         cd.customProperties = new HashMap<>();
@@ -89,7 +94,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         context = new EnhanceContext();
         context.imageType = "ubuntu-1604";
         context.endpointType = awsEndpointType;
-        context.environmentLink = awsEnvLink;
+        context.environmentLink = awsLinks[0];
     }
 
     @Test
