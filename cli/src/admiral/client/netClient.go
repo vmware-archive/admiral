@@ -69,7 +69,6 @@ func (re *ResponseError) Error() string {
 
 var (
 	skipSSLVerification bool
-	loadedTrustCerts    []*x509.Certificate
 
 	netClient    *http.Client
 	netClientErr error
@@ -83,6 +82,7 @@ var (
 func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 	token, from := utils.GetAuthToken()
 	if netClient == nil {
+		validateConnection(req.URL)
 		netClient, netClientErr = buildHttpClient()
 		if netClientErr != nil {
 			return nil, nil, netClientErr
@@ -93,13 +93,8 @@ func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 	utils.CheckVerboseRequest(req)
 
 	resp, err := netClient.Do(req)
-	redo, err := checkForCertErrors(req.URL.Host, err)
 	if err != nil {
 		return nil, nil, err
-	}
-	if redo {
-		resp, respBody, err := ProcessRequest(req)
-		return resp, respBody, err
 	}
 	admiralHostUrl := req.URL.Scheme + "://" + req.URL.Host
 	utils.CheckResponse(err, admiralHostUrl)
@@ -203,82 +198,6 @@ func buildHttpClient() (*http.Client, error) {
 	return netClient, nil
 }
 
-//setupCaPool is taking the system CA's plus certificates
-//from admiral directory which the user already accepted.
-//It returns the created cert pool and error if occurred anywhere.
-func setupCAPool() (*x509.CertPool, error) {
-	caCertPool, _ := x509.SystemCertPool()
-	if caCertPool == nil {
-		caCertPool = x509.NewCertPool()
-	}
-
-	if _, err := os.Stat(utils.TrustedCertsPath()); os.IsNotExist(err) {
-		os.Create(utils.TrustedCertsPath())
-	}
-	trustedCerts, err := ioutil.ReadFile(utils.TrustedCertsPath())
-
-	if err != nil {
-		return nil, err
-	}
-	caCertPool.AppendCertsFromPEM(trustedCerts)
-	return caCertPool, nil
-}
-
-// checkForCertErrors checks if response error is related
-// to x509 certificate errors. In case the error is about,
-// selfsigned certificate, it prompts the user to accept it.
-// In case it's other x509 related error it loads already accepted
-// certificates and if the problematic one is included there it
-// turns off SSL verification of the http client, otherwise, prompts
-// the user to accept the certificate. In both cases if the user
-// decline the prompted certificates, the program execution is aborted.
-func checkForCertErrors(urlA string, errA error) (bool, error) {
-	if errA == nil {
-		return false, errA
-	}
-	if strings.Contains(errA.Error(), "x509") {
-		loadCertsFromFile()
-		skipVerify := checkCertInLoadedCerts(urlA)
-		if skipVerify {
-			skipSSLVerification = skipVerify
-			netClient, netClientErr = buildHttpClient()
-			return true, netClientErr
-		}
-	}
-	return false, errA
-}
-
-// checkCertInLoadedCerts first loads already trusted certificates from the user.
-// then it makes tls dial to the url to fetch the certificates and checks if
-// they are contained in the slice of already loaded. If they are not, it prompts the
-// user to accept them.
-func checkCertInLoadedCerts(url string) bool {
-	url = urlAppendDefaultPort(url)
-	conn, err := tls.Dial("tcp", url, &tls.Config{InsecureSkipVerify: true})
-	if err != nil {
-		return false
-	}
-	cs := conn.ConnectionState()
-	result := false
-	for _, cert := range cs.PeerCertificates {
-		if containsCert(cert) {
-			result = true
-			continue
-		}
-		answer := promptCertAgreement(cert)
-		if answer {
-			cert.IsCA = true
-			saveTrustedCert(cert)
-			result = true
-			continue
-		} else {
-			result = false
-			break
-		}
-	}
-	return result
-}
-
 // promptAllCerts makes tls dial to fetch server certificates,
 // and then prompts all of them to the user.
 func promptAllCerts(url string) bool {
@@ -288,7 +207,6 @@ func promptAllCerts(url string) bool {
 		return false
 	}
 	cs := conn.ConnectionState()
-	fmt.Println(cs.HandshakeComplete)
 	answer := false
 	for _, cert := range cs.PeerCertificates {
 		if promptCertAgreement(cert) {
@@ -303,24 +221,6 @@ func promptAllCerts(url string) bool {
 	return answer
 }
 
-// promptCertAgreement takes x509 certificate as parameter and prompts the user
-// If the user accept it, the function returns true, otherwise returns false.
-func promptCertAgreement(cert *x509.Certificate) bool {
-	var buf bytes.Buffer
-	buf.WriteString(fmt.Sprintf("Common Name: %s\n", cert.Issuer.CommonName))
-	buf.WriteString(fmt.Sprintf("Serial: %s\n", cert.SerialNumber))
-	buf.WriteString(fmt.Sprintf("Valid since: %s\n", cert.NotBefore))
-	buf.WriteString(fmt.Sprintf("Valid to: %s", cert.NotAfter))
-	fmt.Println(buf.String())
-	fmt.Println("Are you sure you want to connect to this site? (y/n)?")
-	answer := utils.PromptAgreement()
-
-	if !answer {
-		return false
-	}
-	return true
-}
-
 // saveTrustedCert takes x509 certificate as parameter, encode it,
 // and finally saves it to file where other user trusted certificates
 // are being saved.
@@ -332,40 +232,6 @@ func saveTrustedCert(cert *x509.Certificate) {
 	trustedCerts, err := os.OpenFile(utils.TrustedCertsPath(), os.O_APPEND|os.O_WRONLY, 0600)
 	utils.CheckBlockingError(err)
 	trustedCerts.Write(pemCert)
-}
-
-// loadCertsFromFile loads the user trusted certificates, into
-// slice of x509 certificates.
-func loadCertsFromFile() error {
-	certBytes, err := ioutil.ReadFile(utils.TrustedCertsPath())
-	if err != nil {
-		return err
-	}
-	if certBytes == nil {
-		return nil
-	}
-	blocks, _ := pem.Decode(certBytes)
-	if blocks == nil {
-		return nil
-	}
-	certs, err := x509.ParseCertificates(blocks.Bytes)
-	if err != nil {
-		return err
-	}
-	loadedTrustCerts = certs
-	return nil
-}
-
-// containsCert takes x509 certificate as parameter
-// and checks if this certificate is included into
-// the slice of already loaded user trusted certificates.
-func containsCert(cert *x509.Certificate) bool {
-	for i := range loadedTrustCerts {
-		if cert.Equal(loadedTrustCerts[i]) {
-			return true
-		}
-	}
-	return false
 }
 
 // urlRemoveTrailingSlash takes url string as parameter

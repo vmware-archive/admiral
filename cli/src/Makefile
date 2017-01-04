@@ -24,6 +24,7 @@ TEST_INTEGRATION=env GOPATH=$(CURDIR)/.. go test -v -p=1 -tags=integration admir
 TEST_E2E=env GOPATH=$(CURDIR)/.. go test -v -p=1 -tags=e2e admiral/...
 
 all:
+	make clean
 	make linux
 	make darwin
 	make windows
@@ -52,3 +53,6 @@ windows:
 test:
 	${TEST_INTEGRATION}
 	${TEST_E2E}
+    
+clean:
+	$(shell rm -rf ../bin)
