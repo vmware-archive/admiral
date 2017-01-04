@@ -37,7 +37,7 @@ components:
       volumes:
       - myvolume:/var
   volumes:
-    type: Volume.Docker
+    type: App.Volume
     data:
       name: myvolume
       driver: local

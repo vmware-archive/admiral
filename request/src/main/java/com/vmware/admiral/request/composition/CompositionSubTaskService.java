@@ -390,7 +390,7 @@ public class CompositionSubTaskService
         } else if (ResourceType.CONTAINER_NETWORK_TYPE.getName()
                 .equalsIgnoreCase(state.resourceType)) {
             createContainerNetworkProvisionTaskState(state);
-        } else if (ResourceType.VOLUME_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
+        } else if (ResourceType.CONTAINER_VOLUME_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createContainerVolumeProvisionTaskState(state);
         } else if (ResourceType.COMPUTE_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createComputeProvisionTaskState(state);

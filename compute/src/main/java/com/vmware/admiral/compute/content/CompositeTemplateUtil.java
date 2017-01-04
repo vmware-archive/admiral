@@ -620,7 +620,7 @@ public class CompositeTemplateUtil {
         assertNotNull(description, "description");
 
         ComponentTemplate<ContainerVolumeDescription> template = new ComponentTemplate<>();
-        template.type = ResourceType.VOLUME_TYPE.getContentType();
+        template.type = ResourceType.CONTAINER_VOLUME_TYPE.getContentType();
         template.data = description;
         template.data.id = null;
         return template;

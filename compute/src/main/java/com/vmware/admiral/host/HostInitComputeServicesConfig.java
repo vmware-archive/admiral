@@ -133,7 +133,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ComputeState.class,
                 com.vmware.admiral.compute.content.TemplateComputeState.class);
 
-        CompositeComponentRegistry.registerComponent(ResourceType.VOLUME_TYPE.getName(),
+        CompositeComponentRegistry.registerComponent(ResourceType.CONTAINER_VOLUME_TYPE.getName(),
                 ContainerVolumeDescriptionService.FACTORY_LINK, ContainerVolumeDescription.class,
                 ContainerVolumeService.FACTORY_LINK, ContainerVolumeState.class);
 

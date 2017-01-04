@@ -22,7 +22,7 @@ public enum ResourceType {
     COMPUTE_TYPE("COMPUTE", "Compute"),
     CONTAINER_HOST_TYPE("CONTAINER_HOST", ""),
     CONTAINER_NETWORK_TYPE("NETWORK", "App.Network"),
-    VOLUME_TYPE("VOLUME", "Volume.Docker"),
+    CONTAINER_VOLUME_TYPE("CONTAINER_VOLUME", "App.Volume"),
     CLOSURE_TYPE("CLOSURE", "App.Closure"),
     CONFIGURE_HOST_TYPE("CONFIGURE_HOST", ""),
     COMPUTE_NETWORK_TYPE("COMPUTE_NETWORK", "Compute.Network");

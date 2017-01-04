@@ -2,7 +2,7 @@
 name: "Docker Compose 2016-09-13 16.06.12.219 GMT"
 components:
   database:
-    type: "Volume.Docker"
+    type: "App.Volume"
     data:
       name: "database"
       driver: "database-driver-1"
@@ -36,7 +36,7 @@ components:
     dependsOn:
     - "db"
   phpconf:
-    type: "Volume.Docker"
+    type: "App.Volume"
     data:
       name: "phpconf"
       driver: "phpconf-driver-2"

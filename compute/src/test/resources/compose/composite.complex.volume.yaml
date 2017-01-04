@@ -26,12 +26,12 @@ components:
       volumes:
       - "pgvolume:/var/lib/postgresql/data"
   pgvolume:
-    type: "Volume.Docker"
+    type: "App.Volume"
     data:
       name: "pgvolume"
       external: true
   hadata:
-    type: "Volume.Docker"
+    type: "App.Volume"
     data:
       name: "hadata"
       driver: "custom-driver-2"
@@ -39,7 +39,7 @@ components:
         foo: "bar"
         baz: "1"
   phpconf:
-    type: "Volume.Docker"
+    type: "App.Volume"
     data:
       name: "phpconf"
       external_name: "my-pre-existing-volume"

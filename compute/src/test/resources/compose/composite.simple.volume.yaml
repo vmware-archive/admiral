@@ -16,14 +16,14 @@ components:
       volumes:
       - "phpconf:/etc/php/conf.d"
   database:
-    type: "Volume.Docker"
+    type: "App.Volume"
     data:
       name: "database"
       driver: "custom-driver-1"
       options:
         mountpoint: "/data/local/data"
   phpconf:
-    type: "Volume.Docker"
+    type: "App.Volume"
     data:
       name: "phpconf"
       driver: "custom-driver-2"
