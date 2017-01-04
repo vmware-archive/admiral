@@ -70,7 +70,7 @@
         <m2e.lifecycle-mapping>1.0.0</m2e.lifecycle-mapping>
 
         <!-- xenon -->
-        <xenon.version>1.3.3</xenon.version>
+        <xenon.version>1.3.4</xenon.version>
         <xenon.common.version>${xenon.version}</xenon.common.version>
         <xenon.ui.version>${xenon.version}</xenon.ui.version>
         <xenon.group>com.vmware.xenon</xenon.group>
