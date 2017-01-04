@@ -187,7 +187,7 @@ class ClosureDefinitionForm extends Component {
 
     rawInput.name = this.$el.find('.closure-name-input .form-control').val();
     rawInput.description = this.$el.find('.closure-description-input .form-control').val();
-    rawInput.runtime = this.$el.find('.closure-runtime-input .form-control').val();
+    rawInput.runtime = this.$el.find('.closure-runtime-input select').val();
     rawInput.entrypoint = this.$el.find('.closure-entrypoint-input .form-control').val();
 
     let sourceConfig = {};

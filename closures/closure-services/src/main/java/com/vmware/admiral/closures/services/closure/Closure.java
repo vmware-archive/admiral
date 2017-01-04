@@ -48,7 +48,8 @@ public class Closure extends ResourceState {
     @UsageOption(option = PropertyUsageOption.SERVICE_USE)
     public String descriptionLink;
 
-    @Documentation(description = "Link to CompositeComponent when a network is part of App/Composition request.")
+    @Documentation(description = "Link to CompositeComponent when a closure is part of "
+            + "App/Composition request.")
     @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK })
     @UsageOption(option = PropertyUsageOption.SERVICE_USE)
     public String compositeComponentLink;

@@ -181,7 +181,7 @@ public class BaseIntegrationTest extends BaseProvisioningOnCoreOsIT {
             throws Exception {
         Closure fetchedClosure = getClosure(taskLink, serviceClient);
         long startTime = System.currentTimeMillis();
-        while (state != fetchedClosure.state && !isTimeoutElapsed(startTime, 120)) {
+        while (state != fetchedClosure.state && !isTimeoutElapsed(startTime, 300)) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -189,6 +189,7 @@ public class BaseIntegrationTest extends BaseProvisioningOnCoreOsIT {
             }
             fetchedClosure = getClosure(taskLink, serviceClient);
         }
+        logger.info("Closure state: %s", fetchedClosure.state);
     }
 
     protected void verifyJsonArrayInts(Object[] javaArray, JsonArray jsArray) {
