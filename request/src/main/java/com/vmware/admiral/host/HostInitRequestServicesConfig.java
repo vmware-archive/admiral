@@ -42,6 +42,7 @@ import com.vmware.admiral.request.compute.ComputeOperationTaskService;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
+import com.vmware.admiral.request.compute.ComputeRemovalWatchService;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService;
 import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService;
 import com.vmware.admiral.request.notification.NotificationsService;
@@ -62,7 +63,8 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 CompositionSubTaskFactoryService.class,
                 CompositionTaskFactoryService.class,
                 RequestStatusFactoryService.class,
-                NotificationsService.class);
+                NotificationsService.class,
+                ComputeRemovalWatchService.class);
 
         startServiceFactories(host,
                 ProvisionContainerHostsTaskService.class,

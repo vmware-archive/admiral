@@ -17,6 +17,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,6 +40,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.tasks.ResourceRemovalTaskService;
 import com.vmware.photon.controller.model.tasks.ResourceRemovalTaskService.ResourceRemovalTaskState;
+import com.vmware.photon.controller.model.tasks.TaskOption;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
@@ -69,7 +71,11 @@ public class ComputeRemovalTaskService extends
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
 
-        @Documentation(description = "whether to skip the associated reservation or not")
+        @Documentation(description = "Optional resource removal options")
+        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
+        public EnumSet<TaskOption> resourceRemovalOptions;
+
+        @Documentation(description = "Whether to skip the associated reservation or not")
         @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
         public boolean skipReleaseResourceQuota;
 
@@ -93,7 +99,6 @@ public class ComputeRemovalTaskService extends
 
     public ComputeRemovalTaskService() {
         super(ComputeRemovalTaskState.class, SubStage.class, DISPLAY_NAME);
-        super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
@@ -304,7 +309,7 @@ public class ComputeRemovalTaskService extends
             ResourceRemovalTaskState removalServiceState = new ResourceRemovalTaskState();
             removalServiceState.documentSelfLink = getSelfId();
             removalServiceState.resourceQuerySpec = qSpec;
-            // removalServiceState.options = EnumSet.of(TaskOption.DOCUMENT_CHANGES_ONLY);
+            removalServiceState.options = state.resourceRemovalOptions;
             removalServiceState.isMockRequest = DeploymentProfileConfig.getInstance().isTest();
             removalServiceState.tenantLinks = state.tenantLinks;
 

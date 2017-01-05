@@ -17,6 +17,7 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ComputeService.LifecycleState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
@@ -55,7 +56,12 @@ public class CommonContinuousQueries {
         /**
          * Query for all {@link ComputeState}s.
          */
-        COMPUTES
+        COMPUTES,
+
+        /**
+         * Query for all {@link ComputeState}s in {@link LifecycleState.RETIRED} state.
+         */
+        RETIRED_COMPUTES
     }
 
     /**
@@ -94,12 +100,21 @@ public class CommonContinuousQueries {
 
         switch (queryId) {
         case COMPUTES:
-            Query query = Query.Builder.create()
+            Query computeQuery = Query.Builder.create()
                     .addKindFieldClause(ComputeState.class)
                     .addFieldClause(ServiceDocument.FIELD_NAME_OWNER, host.getId())
                     .build();
             task = QueryTask.Builder.create().addOption(QueryOption.CONTINUOUS)
-                    .setQuery(query).build();
+                    .setQuery(computeQuery).build();
+            break;
+        case RETIRED_COMPUTES:
+            Query retiredComputesQuery = Query.Builder.create()
+                    .addKindFieldClause(ComputeState.class)
+                    .addFieldClause(ServiceDocument.FIELD_NAME_OWNER, host.getId())
+                    .addFieldClause(ComputeState.FIELD_NAME_LIFECYCLE_STATE, LifecycleState.RETIRED)
+                    .build();
+            task = QueryTask.Builder.create().addOption(QueryOption.CONTINUOUS)
+                    .setQuery(retiredComputesQuery).build();
             break;
         default:
             throw new IllegalArgumentException("Unrecognized common query: " + queryId);

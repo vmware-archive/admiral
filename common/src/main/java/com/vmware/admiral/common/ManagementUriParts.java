@@ -50,6 +50,7 @@ public interface ManagementUriParts {
     String EPZ_COMPUTE_ENUMERATION_TASKS = RESOURCES + "/epz-compute-enumeration-tasks";
     String EPZ_PERIODIC_ENUMERATION = RESOURCES + "/epz-periodic-enumeration";
     String PLACEMENT_PERIODIC_UPDATE = RESOURCES + "/placement-periodic-update";
+    String COMPUTE_REMOVAL_WATCH = RESOURCES + "/compute-removal-watch";
 
     String CONTAINERS = RESOURCES + "/containers";
     String CONTAINER_LOGS = RESOURCES + "/container-logs";

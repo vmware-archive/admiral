@@ -122,6 +122,7 @@ public class EndpointAdapterService extends StatelessService {
         eats.taskInfo.isDirect = true;
         eats.options = EnumSet.noneOf(TaskOption.class);
 
+        eats.options.add(TaskOption.PRESERVE_MISSING_RESOUCES);
         if (DeploymentProfileConfig.getInstance().isTest()) {
             eats.options.add(TaskOption.IS_MOCK);
         }
