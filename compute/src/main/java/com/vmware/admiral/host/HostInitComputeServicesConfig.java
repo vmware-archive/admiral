@@ -55,6 +55,7 @@ import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.content.TemplateComputeDescription;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.admiral.compute.env.ComputeProfileService;
+import com.vmware.admiral.compute.env.EnvironmentMappingService;
 import com.vmware.admiral.compute.env.EnvironmentService;
 import com.vmware.admiral.compute.env.NetworkProfileService;
 import com.vmware.admiral.compute.env.StorageProfileService;
@@ -90,7 +91,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 HostConfigCertificateDistributionService.class,
                 RegistryConfigCertificateDistributionService.class,
                 ComputeInitialBootService.class,
-                ElasticPlacementZoneConfigurationService.class);
+                ElasticPlacementZoneConfigurationService.class,
+                EnvironmentMappingService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
                 ContainerDescriptionService.class,
