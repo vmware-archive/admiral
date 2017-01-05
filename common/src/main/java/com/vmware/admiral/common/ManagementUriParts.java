@@ -25,6 +25,7 @@ public interface ManagementUriParts {
     String SSL_TRUST_CERTS_IMPORT = CONFIG + "/trust-certs-import";
     String USER_INITIALIZATION_SERVICE = CONFIG + "/user-init-service";
     String ENVIRONMENTS = CONFIG + "/environments";
+    String ENVIRONMENT_MAPPINGS = CONFIG + "/environment-mappings";
     String COMPUTE_PROFILES = CONFIG + "/compute-profiles";
     String STORAGE_PROFILES = CONFIG + "/storage-profiles";
     String NETWORK_PROFILES = CONFIG + "/network-profiles";
