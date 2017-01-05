@@ -41,6 +41,10 @@ public class ContainerVolumeAllocationTaskServiceTest extends RequestBaseTest {
         assertTrue(volumeState.name.contains(containerVolumeDesc.name));
         assertEquals(allocationTask.resourceLinks.iterator().next(), volumeState.documentSelfLink);
 
+        String volumeDescProp = allocationTask.customProperties.get("volume propKey string");
+        assertNotNull(volumeDescProp);
+        assertEquals("volume customPropertyValue string", volumeDescProp);
+        assertEquals(allocationTask.customProperties, volumeState.customProperties);
     }
 
     private ContainerVolumeAllocationTaskState createContainerVolumeAllocationTask(
@@ -50,7 +54,9 @@ public class ContainerVolumeAllocationTaskServiceTest extends RequestBaseTest {
         allocationTask.resourceDescriptionLink = volumeDocSelfLink;
         allocationTask.resourceCount = resourceCount;
         allocationTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-        allocationTask.customProperties = new HashMap<>();
+        allocationTask.customProperties = new HashMap<>(1);
+        allocationTask.customProperties.put("volume propKey string",
+                "volume customPropertyValue string");
         return allocationTask;
     }
 
