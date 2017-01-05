@@ -2,6 +2,24 @@
 
 ## 0.9.5-SNAPSHOT
 
+* Add ability to provision and manage Docker hosts on AWS, Azure and vSphere.
+
+* Simplify adding of existing hosts, by auto configure them over SSH.
+
+* Add a new configuration and runtime element - Closure. Ability to execute code in a stateless manner using different programming languages. Integrated in the container template and can be used to tweak the containers and their configuration at provisioning time.
+
+* Redesigned the UI and integrating [Clarity](https://vmware.github.io/clarity/).
+
+* Added UI for listing tags of images.
+
+* Communication to the agent is now over SSL.
+
+* Reduced the size of the Admiral agent.
+
+* Reduced memory footprint.
+
+* Various bug fixes and improvements.
+
 ## 0.9.1
 
 * Added Admiral CLI, **a command line tool to manage and automate Admiral**. More information [here] (https://github.com/vmware/admiral/blob/master/cli/README.md).
