@@ -16,6 +16,7 @@ import static java.lang.Boolean.TRUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.host.HostInitAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doRestrictedOperation;
@@ -42,7 +43,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -266,27 +266,33 @@ public abstract class BaseManagementHostClusterIT {
     private <T extends ServiceDocument> void validateDefaultContentInSync(
             List<ManagementHost> allHostsInstances, String token, String documentSelfLink,
             Class<T> type) {
-        ManagementHost host = allHostsInstances.get(0);
-        T firstState = doGet(host, documentSelfLink, type, token);
+        ManagementHost firstHost = allHostsInstances.get(0);
+        T firstState = doGet(firstHost, documentSelfLink, type, token);
         assertNotNull(
-                "State with link " + documentSelfLink + " was not found on host " + host.getId(),
+                "State with link " + documentSelfLink + " was not found on host "
+                        + firstHost.getUri().toString(),
                 firstState);
 
-        for (int i = 0; i < 10; i++) {
-            host = allHostsInstances.get(i % allHostsInstances.size());
+        for (ManagementHost host : allHostsInstances) {
             logger.log(Level.INFO,
                     "Finding state with link " + documentSelfLink + " on host %s", host.getId());
             T state = doGet(host, documentSelfLink, type, token);
             logger.log(Level.INFO, "State with link " + documentSelfLink + " was not found on host "
                     + host.getId(), state);
 
-            assertTrue(
-                    "States with link " + documentSelfLink
-                            + " were are not the same on different hosts",
-                    equals(firstState, state, type));
-
             logger.log(Level.INFO,
                     "Found state with link " + documentSelfLink + " on host " + host.getId());
+
+            if (!equals(firstState, state, type)) {
+                System.out.println(" - first state");
+                System.out.println(Utils.toJsonHtml(firstState));
+
+                System.out.println(" - current state");
+                System.out.println(Utils.toJsonHtml(state));
+
+                fail("States with link " + documentSelfLink
+                        + " are not the same on different hosts");
+            }
         }
     }
 
@@ -295,6 +301,12 @@ public abstract class BaseManagementHostClusterIT {
         EnumSet<ServiceOption> options = EnumSet.noneOf(ServiceOption.class);
         ServiceDocumentDescription buildDescription = Builder.create().buildDescription(type,
                 options);
+
+        documentA.documentUpdateTimeMicros = 0;
+        documentA.documentExpirationTimeMicros = 0;
+
+        documentB.documentUpdateTimeMicros = 0;
+        documentB.documentExpirationTimeMicros = 0;
 
         return ServiceDocument.equals(buildDescription, documentA, documentB);
     }
@@ -310,7 +322,8 @@ public abstract class BaseManagementHostClusterIT {
         QueryUtil.addExpandOption(q);
 
         host.sendRequest(Operation
-                .createPost(UriUtils.buildUri(host, ServiceUriPaths.CORE_QUERY_TASKS))
+                .createGet(UriUtils.buildUri(host, ServiceUriPaths.CORE_DOCUMENT_INDEX,
+                        "documentSelfLink=" + selfLink))
                 .addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, token)
                 .setBody(q)
                 .setReferer(host.getUri())
@@ -318,16 +331,8 @@ public abstract class BaseManagementHostClusterIT {
                     if (e != null) {
                         ctx.failIteration(e);
                     } else {
-                        QueryTask qrt = o.getBody(QueryTask.class);
-                        if (qrt.results.documents.size() != 1) {
-                            // Unexpected number of documents
-                            ctx.completeIteration();
-                        } else {
-                            result.set(
-                                    Utils.fromJson(qrt.results.documents.values().iterator().next(),
-                                            type));
-                            ctx.completeIteration();
-                        }
+                        result.set(o.getBody(type));
+                        ctx.completeIteration();
                     }
                 }));
 
@@ -336,13 +341,15 @@ public abstract class BaseManagementHostClusterIT {
         return result.get();
     }
 
-    protected void waitWhilePortIsListening(ManagementHost host) throws TimeoutException, InterruptedException {
+    protected void waitWhilePortIsListening(ManagementHost host)
+            throws TimeoutException, InterruptedException {
 
         SSLSocketFactory factory = ManagementHostAuthUsersTest.getUnsecuredSSLSocketFactory();
         boolean portListening = true;
         while (portListening) {
             try (Socket s = factory.createSocket((String) null, host.getSecurePort())) {
-                logger.log(Level.INFO, "Wait while port '" + host.getSecurePort() + "' is listening...");
+                logger.log(Level.INFO,
+                        "Wait while port '" + host.getSecurePort() + "' is listening...");
             } catch (Exception e) {
                 portListening = false;
             } finally {
@@ -393,7 +400,8 @@ public abstract class BaseManagementHostClusterIT {
                             return true;
                         }
                     } catch (IOException e) {
-                        host.log(Level.WARNING, "Exception while getting token from host: %s", host.getUri());
+                        host.log(Level.WARNING, "Exception while getting token from host: %s",
+                                host.getUri());
                     }
                     return false;
                 }
@@ -449,7 +457,8 @@ public abstract class BaseManagementHostClusterIT {
                                 .doGet(uri, headers);
                         assertEquals(HttpURLConnection.HTTP_OK, (int) response.getKey());
 
-                        NodesStatusJSONResponseMapper nodeDocument = Utils.fromJson(response.getValue(), NodesStatusJSONResponseMapper.class);
+                        NodesStatusJSONResponseMapper nodeDocument = Utils
+                                .fromJson(response.getValue(), NodesStatusJSONResponseMapper.class);
 
                         for (ManagementHost currentHost : hosts) {
                             nodeDocument.assertProperty(currentHost.getId(), "status", "AVAILABLE");
@@ -490,7 +499,8 @@ public abstract class BaseManagementHostClusterIT {
      *            - ServiceHost
      * @throws Exception
      */
-    private void startContextCreationWithResourcePool(Map<String, String> headers, ManagementHost host)
+    private void startContextCreationWithResourcePool(Map<String, String> headers,
+            ManagementHost host)
             throws Exception {
 
         checkHostAccess(headers, host);
@@ -506,7 +516,8 @@ public abstract class BaseManagementHostClusterIT {
             @Override
             public boolean isReady() {
                 try {
-                    SimpleEntry<Integer, String> response = ManagementHostAuthUsersTest.doPost(uri, headers, body);
+                    SimpleEntry<Integer, String> response = ManagementHostAuthUsersTest.doPost(uri,
+                            headers, body);
                     assertEquals(HttpURLConnection.HTTP_OK, (int) response.getKey());
 
                     createGroupResourcePlacement(headers, host, RESOURCE_POOL_LINK);
@@ -528,24 +539,29 @@ public abstract class BaseManagementHostClusterIT {
         });
     }
 
-    private void createGroupResourcePlacement(Map<String, String> headers, ManagementHost host, String resourcePoolLink) throws IOException {
+    private void createGroupResourcePlacement(Map<String, String> headers, ManagementHost host,
+            String resourcePoolLink) throws IOException {
 
         GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
                 .createGroupResourcePlacementState(ResourceType.CONTAINER_TYPE);
         groupResourcePlacementState = groupPlacementState;
         groupPlacementState.maxNumberInstances = 100;
-        groupPlacementState.resourcePoolLink = UriUtils.buildUriPath(ResourcePoolService.FACTORY_LINK,
+        groupPlacementState.resourcePoolLink = UriUtils.buildUriPath(
+                ResourcePoolService.FACTORY_LINK,
                 resourcePoolLink);
         groupPlacementState.documentSelfLink = GROUP_RESOURCE_STATEMENT_LINK;
         String body = Utils.toJson(groupPlacementState);
         URI uri = UriUtils.buildUri(host, GroupResourcePlacementService.FACTORY_LINK);
-        SimpleEntry<Integer, String> response = ManagementHostAuthUsersTest.doPost(uri, headers, body);
+        SimpleEntry<Integer, String> response = ManagementHostAuthUsersTest.doPost(uri, headers,
+                body);
         assertEquals(HttpURLConnection.HTTP_OK, (int) response.getKey());
-        logger.log(Level.INFO, "############### RESOURCE POOL PLACEMENT HAS BEEN CREATED ###################");
+        logger.log(Level.INFO,
+                "############### RESOURCE POOL PLACEMENT HAS BEEN CREATED ###################");
         createComputeDescription(headers, host);
     }
 
-    private void createComputeDescription(Map<String, String> headers, ManagementHost host) throws IOException {
+    private void createComputeDescription(Map<String, String> headers, ManagementHost host)
+            throws IOException {
 
         ComputeDescription hostDesc = TestRequestStateFactory.createDockerHostDescription();
         hostDesc.documentSelfLink = COMPUTE_DESCRIPTION_LINK;
@@ -553,21 +569,25 @@ public abstract class BaseManagementHostClusterIT {
                 MockComputeHostInstanceAdapter.SELF_LINK);
         String body = Utils.toJson(hostDesc);
         URI uri = UriUtils.buildUri(host, ComputeDescriptionService.FACTORY_LINK);
-        SimpleEntry<Integer, String> response = ManagementHostAuthUsersTest.doPost(uri, headers, body);
+        SimpleEntry<Integer, String> response = ManagementHostAuthUsersTest.doPost(uri, headers,
+                body);
         assertEquals(HttpURLConnection.HTTP_OK, (int) response.getKey());
-        logger.log(Level.INFO, "############### COMPUTE DESCRIPTION HAS BEEN CREATED ###################");
+        logger.log(Level.INFO,
+                "############### COMPUTE DESCRIPTION HAS BEEN CREATED ###################");
 
         createComputeState(headers, host, RESOURCE_POOL_LINK, GROUP_RESOURCE_STATEMENT_LINK);
 
     }
 
-    private void createComputeState(Map<String, String> headers, ManagementHost host, String resourcePoolLink, String groupResourcePlacementLink) throws IOException {
+    private void createComputeState(Map<String, String> headers, ManagementHost host,
+            String resourcePoolLink, String groupResourcePlacementLink) throws IOException {
 
         ComputeState containerHost = TestRequestStateFactory.createDockerComputeHost();
         containerHost.documentSelfLink = containerHost.id;
         containerHost.resourcePoolLink = UriUtils.buildUriPath(ResourcePoolService.FACTORY_LINK,
                 resourcePoolLink);
-        containerHost.descriptionLink = UriUtils.buildUriPath(ComputeDescriptionService.FACTORY_LINK,
+        containerHost.descriptionLink = UriUtils.buildUriPath(
+                ComputeDescriptionService.FACTORY_LINK,
                 COMPUTE_DESCRIPTION_LINK);
 
         if (containerHost.customProperties == null) {
@@ -586,21 +606,26 @@ public abstract class BaseManagementHostClusterIT {
 
         String body = Utils.toJson(containerHost);
         URI uri = UriUtils.buildUri(host, ComputeService.FACTORY_LINK);
-        SimpleEntry<Integer, String> response = ManagementHostAuthUsersTest.doPost(uri, headers, body);
+        SimpleEntry<Integer, String> response = ManagementHostAuthUsersTest.doPost(uri, headers,
+                body);
         assertEquals(HttpURLConnection.HTTP_OK, (int) response.getKey());
-        logger.log(Level.INFO, "############### COMPUTE STATE HAS BEEN CREATED ###################");
+        logger.log(Level.INFO,
+                "############### COMPUTE STATE HAS BEEN CREATED ###################");
 
     }
 
-    protected void startRequest(Map<String, String> headers, ManagementHost host, RequestBrokerState requestState) throws IOException {
+    protected void startRequest(Map<String, String> headers, ManagementHost host,
+            RequestBrokerState requestState) throws IOException {
         String body = Utils.toJson(requestState);
         URI uri = UriUtils.buildUri(host, RequestBrokerFactoryService.SELF_LINK);
-        SimpleEntry<Integer, String> response = ManagementHostAuthUsersTest.doPost(uri, headers, body);
+        SimpleEntry<Integer, String> response = ManagementHostAuthUsersTest.doPost(uri, headers,
+                body);
         assertEquals(HttpURLConnection.HTTP_OK, (int) response.getKey());
         logger.log(Level.INFO, "############### REQUEST STARTED ###################");
     }
 
-    protected String getResource(ManagementHost host, Map<String, String> headers, URI uri) throws IOException {
+    protected String getResource(ManagementHost host, Map<String, String> headers, URI uri)
+            throws IOException {
 
         SimpleEntry<Integer, String> result = ManagementHostAuthUsersTest.doGet(uri, headers);
 
@@ -614,7 +639,9 @@ public abstract class BaseManagementHostClusterIT {
 
     }
 
-    protected RequestJSONResponseMapper waitTaskToCompleteAndGetResponse(Map<String, String> headers, ManagementHost host, URI uri) throws InterruptedException, TimeoutException {
+    protected RequestJSONResponseMapper waitTaskToCompleteAndGetResponse(
+            Map<String, String> headers, ManagementHost host, URI uri)
+            throws InterruptedException, TimeoutException {
 
         final RequestJSONResponseMapper[] result = new RequestJSONResponseMapper[1];
 
@@ -625,10 +652,12 @@ public abstract class BaseManagementHostClusterIT {
                 try {
                     // From response in JSON format we will get provisioned resources.
                     String resourceAsJson = getResource(host, headers, uri);
-                    RequestJSONResponseMapper response = Utils.fromJson(resourceAsJson, RequestJSONResponseMapper.class);
+                    RequestJSONResponseMapper response = Utils.fromJson(resourceAsJson,
+                            RequestJSONResponseMapper.class);
                     assertNotNull(response);
 
-                    if (response.taskSubStage == null || !response.taskSubStage.equals(RequestBrokerState.SubStage.COMPLETED.toString())) {
+                    if (response.taskSubStage == null || !response.taskSubStage
+                            .equals(RequestBrokerState.SubStage.COMPLETED.toString())) {
                         return false;
                     }
 
@@ -660,7 +689,8 @@ public abstract class BaseManagementHostClusterIT {
         return headers;
     }
 
-    private static void checkHostAccess(Map<String, String> headers, ManagementHost host) throws InterruptedException, TimeoutException {
+    private static void checkHostAccess(Map<String, String> headers, ManagementHost host)
+            throws InterruptedException, TimeoutException {
         // Assert restricted operation access before provisioning.
         waitFor(new Condition() {
             @Override
@@ -690,7 +720,8 @@ public abstract class BaseManagementHostClusterIT {
 
     }
 
-    protected static void waitFor(Condition condition) throws InterruptedException, TimeoutException {
+    protected static void waitFor(Condition condition)
+            throws InterruptedException, TimeoutException {
         long start = System.currentTimeMillis();
         long end = start + TIMEOUT_FOR_WAIT_CONDITION; // Wait 1 minute.
 
@@ -729,11 +760,14 @@ public abstract class BaseManagementHostClusterIT {
 
     }
 
-    protected CompositeDescriptionService.CompositeDescription createCompositeDesc(Map<String, String> headers, ManagementHost host, ServiceDocument... descs) throws Throwable {
+    protected CompositeDescriptionService.CompositeDescription createCompositeDesc(
+            Map<String, String> headers, ManagementHost host, ServiceDocument... descs)
+            throws Throwable {
 
         CompositeDescriptionService.CompositeDescription compositeDesc = TestRequestStateFactory
                 .createCompositeDescription();
-        compositeDesc.documentSelfLink = CompositeDescriptionFactoryService.SELF_LINK + "/" + UUID.randomUUID().toString();
+        compositeDesc.documentSelfLink = CompositeDescriptionFactoryService.SELF_LINK + "/"
+                + UUID.randomUUID().toString();
 
         for (ServiceDocument desc : descs) {
 
@@ -752,14 +786,16 @@ public abstract class BaseManagementHostClusterIT {
                         "Unknown description type: " + desc.getClass().getSimpleName());
             }
 
-            SimpleEntry<Integer, String> response = ManagementHostAuthUsersTest.doPost(uri, headers, Utils.toJson(desc));
+            SimpleEntry<Integer, String> response = ManagementHostAuthUsersTest.doPost(uri, headers,
+                    Utils.toJson(desc));
             assertEquals(HttpURLConnection.HTTP_OK, (int) response.getKey());
 
             compositeDesc.descriptionLinks.add(uri.getPath() + "/" + desc.documentSelfLink);
         }
 
         URI uri = UriUtils.buildUri(host, CompositeDescriptionFactoryService.SELF_LINK);
-        SimpleEntry<Integer, String> response = ManagementHostAuthUsersTest.doPost(uri, headers, Utils.toJson(compositeDesc));
+        SimpleEntry<Integer, String> response = ManagementHostAuthUsersTest.doPost(uri, headers,
+                Utils.toJson(compositeDesc));
         assertEquals(HttpURLConnection.HTTP_OK, (int) response.getKey());
 
         return compositeDesc;
