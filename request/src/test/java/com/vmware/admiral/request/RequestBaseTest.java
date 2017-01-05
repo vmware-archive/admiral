@@ -24,6 +24,7 @@ import java.util.UUID;
 
 import org.junit.Before;
 
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -207,6 +208,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         waitForServiceAvailability(
                 h,
                 HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
+        waitForServiceAvailability(ManagementUriParts.AUTH_CREDENTIALS_CA_LINK);
     }
 
     protected void addForDeletion(ServiceDocument doc) {
