@@ -71,8 +71,8 @@
         </div>
       </template>
       <template v-else>
-        <div class="btn-group pull-right">
-          <button type="button" class="btn btn-primary create-container-btn"
+        <div class="dropdown pull-right">
+          <button type="button" class="btn create-container-btn"
                   v-on:click="runClosure($event)">{{i18n("app.closure.request.run")}}</button>
           <button type="button" class="btn dropdown-toggle" data-toggle="dropdown"
                   aria-haspopup="true" aria-expanded="false">
@@ -88,5 +88,5 @@
     </div>
   </template>
   </div>
-  <div style="clear: both;"></div>
+  <div style="clear: both;display: none;"></div>
 </div>
