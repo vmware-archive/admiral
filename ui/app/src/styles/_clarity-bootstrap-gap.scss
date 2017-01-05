@@ -30,6 +30,11 @@ form .form-group > input:not([type]) {
   margin-bottom: $clr_baselineRem_0_25;
 }
 
+form .form-group .ace_editor span {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 input:not([type]) {
   @extend %custom-inputs;
   @extend %clr-form-fields-appearance;

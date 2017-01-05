@@ -167,7 +167,8 @@ class ClosureDefinitionForm extends Component {
             validateNameInput(e);
     });
 
-
+    this.$el.find('.nav-item a[href="#closure-definition"]').tab('show');
+    this.$el.find('#closure-definition.tab-pane').addClass('active');
   }
 
   setData(data) {

@@ -12,36 +12,30 @@
 <div class="closure-definition-form">
 
   <div class="container-form-content">
-    <ul class="nav nav-pills nav-justified" role="tablist">
-      <li role="presentation" class="active"><a href="#definition" aria-controls="definition" role="tab" data-toggle="pill">{{i18n 'app.closure.request.tabs.definition'}}</a></li>
-      <li role="presentation"><a href="#code" aria-controls="code" role="tab" data-toggle="pill">{{i18n 'app.closure.request.tabs.code'}}</a></li>
-      <li role="presentation"><a href="#configuration" aria-controls="configuration" role="tab" data-toggle="pill">{{i18n 'app.closure.request.tabs.config'}}</a></li>
+    <ul class="nav" role="tablist">
+      <li role="presentation" class="nav-item"><a href="#closure-definition"    class="nav-link" aria-controls="closure-definition"    role="tab" data-toggle="tab">{{i18n 'app.closure.request.tabs.definition'}}</a></li>
+      <li role="presentation" class="nav-item"><a href="#closure-code"          class="nav-link" aria-controls="closure-code"          role="tab" data-toggle="tab">{{i18n 'app.closure.request.tabs.code'}}</a></li>
+      <li role="presentation" class="nav-item"><a href="#closure-configuration" class="nav-link" aria-controls="closure-configuration" role="tab" data-toggle="tab">{{i18n 'app.closure.request.tabs.config'}}</a></li>
     </ul>
 
     <div class="tab-content">
-      <div role="tabpanel" class="tab-pane active" id="definition">
-        <div class="form-horizontal">
-          <div class="form-group closure-name-input">
-            <label class="col-sm-3">{{i18n 'app.closure.request.inputs.name'}}</label>
-            <div class="col-sm-9">
+      <div role="tabpanel" class="tab-pane" id="closure-definition">
+        <form>
+          <section class="form-block">
+            <div class="form-group closure-name-input">
+              <label class="required">{{i18n 'app.closure.request.inputs.name'}}</label>
               <input class="form-control">
-              <i class="fa fa-spinner fa-spin loader-inline"></i>
               <span class="help-block"></span>
+              <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.nameDescription'}}"></i>
             </div>
-            <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.nameDescription'}}"></i>
-          </div>
-          <div class="form-group closure-description-input">
-            <label class="col-sm-3">{{i18n 'app.closure.request.inputs.description'}}</label>
-            <div class="col-sm-9">
+            <div class="form-group closure-description-input">
+              <label>{{i18n 'app.closure.request.inputs.description'}}</label>
               <input class="form-control">
-              <i class="fa fa-spinner fa-spin loader-inline"></i>
               <span class="help-block"></span>
+              <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.descriptionDescription'}}"></i>
             </div>
-            <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.descriptionDescription'}}"></i>
-          </div>
-          <div class="form-group closure-runtime-input">
-            <label class="col-sm-3">{{i18n 'app.closure.request.inputs.runtime'}}</label>
-            <div class="col-sm-9">
+            <div class="form-group closure-runtime-input">
+              <label>{{i18n 'app.closure.request.inputs.runtime'}}</label>
               <div class="select">
                 <select>
                   <option value="nodejs_4.3.0">{{i18n 'app.closure.request.inputs.runtimeTypes.nodejs'}}</option>
@@ -49,137 +43,113 @@
                 </select>
               </div>
             </div>
-          </div>
-          <div class="form-group closure-entrypoint-input">
-            <label class="col-sm-3">{{i18n 'app.closure.request.inputs.entrypoint'}}</label>
-            <div class="col-sm-9">
+            <div class="form-group closure-entrypoint-input">
+              <label>{{i18n 'app.closure.request.inputs.entrypoint'}}</label>
               <input class="form-control" placeholder="file_name.function_name">
               <span class="help-block"></span>
+              <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.entrypointDescription'}}"></i>
             </div>
-            <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.entrypointDescription'}}"></i>
-          </div>
-        </div>
+          </section>
+        </form>
       </div>
-      <div role="tabpanel" class="tab-pane" id="code">
-        <div class="form-horizontal">
-          <div class="form-group closure-source-mode-input">
-            <label class="col-sm-3">{{i18n 'app.closure.request.inputs.sourceMode'}}</label>
-            <span class="col-sm-9">
+      <div role="tabpanel" class="tab-pane" id="closure-code">
+        <form>
+          <section class="form-block">
+            <div class="form-group closure-source-mode-input">
+              <label>{{i18n 'app.closure.request.inputs.sourceMode'}}</label>
               <div class="radio-inline">
                 <input type="radio" name="health-protocol-radio" id="source-provided" value="Source">
                 <label for="source-provided">{{i18n 'app.closure.request.inputs.sourceProvided'}}</label>
               </div>
               <div class="radio-inline">
                 <input type="radio" name="health-protocol-radio" id="source-url" value="SourceURL">
-                 <label for="source-url">{{i18n 'app.closure.request.inputs.sourceFromURL'}}</label>
+                <label for="source-url">{{i18n 'app.closure.request.inputs.sourceFromURL'}}</label>
               </div>
-            </span>
-          </div>
-          <div class="form-group closure-source-code-input">
-            <label class="col-sm-3">{{i18n 'app.closure.request.inputs.source'}}</label>
-            <div class="col-sm-9">
-              <div class="source-edit-area"></div>
             </div>
-            <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.sourceDescription'}}"></i>
-          </div>
-          <div class="form-group closure-source-url-input">
-            <label class="col-sm-3">{{i18n 'app.closure.request.inputs.sourceURL'}}</label>
-            <div class="col-sm-9">
+            <div class="form-group closure-source-code-input">
+              <label>{{i18n 'app.closure.request.inputs.source'}}</label>
+              <div class="source-edit-area form-control"></div>
+              <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.sourceDescription'}}"></i>
+            </div>
+            <div class="form-group closure-source-url-input">
+              <label>{{i18n 'app.closure.request.inputs.sourceURL'}}</label>
               <input class="form-control">
-              <i class="fa fa-spinner fa-spin loader-inline"></i>
               <span class="help-block"></span>
+              <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.sourceURLDescription'}}"></i>
             </div>
-            <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.sourceURLDescription'}}"></i>
-          </div>
-          <div class="form-group closure-inputs">
-            <label class="col-sm-3">{{i18n 'app.closure.request.inputs.inputs'}}</label>
-            <div class="col-sm-9">
+            <div class="form-group closure-inputs">
+              <label>{{i18n 'app.closure.request.inputs.inputs'}}</label>
               <div class="form-control"></div>
               <span class="help-block"></span>
-            </div>
               <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.inputDescription'}}"></i>
-          </div>
-          <div class="form-group closure-outputs">
-            <label class="col-sm-3">{{i18n 'app.closure.request.inputs.outputs'}}</label>
-            <div class="col-sm-9">
+            </div>
+            <div class="form-group closure-outputs">
+              <label>{{i18n 'app.closure.request.inputs.outputs'}}</label>
               <div class="form-control"></div>
               <span class="help-block"></span>
-            </div>
               <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.outputDescription'}}"></i>
-          </div>
-          <div class="form-group closure-dependencies-check">
-            <label class="col-sm-3">{{i18n 'app.closure.request.inputs.dependencies'}}</label>
-            <div class="col-sm-6">
+            </div>
+            <div class="form-group closure-dependencies-check">
+              <label>{{i18n 'app.closure.request.inputs.dependencies'}}</label>
               <input class="checkbox-control" type="checkbox"/>
               <span class="help-block"></span>
             </div>
-          </div>
-          <span id="form-dependecies">
             <div class="form-group closure-dependencies-input">
-              <label class="col-sm-3"></label>
-              <div class="col-sm-9">
-                <div class="dependencies-edit-area"></div>
-              </div>
+              <label></label>
+              <div class="dependencies-edit-area form-control"></div>
               <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.dependenciesDescription'}}"></i>
             </div>
-          </span>
-        </div>
+          </section>
+        </form>
       </div>
-      <div role="tabpanel" class="tab-pane" id="configuration">
-        <div class="form-horizontal">
-          <div class="form-group closure-memory-limit-input">
-            <label class="col-sm-3">{{i18n 'app.closure.request.inputs.memoryLimit'}}</label>
-            <div class="col-sm-9">
+      <div role="tabpanel" class="tab-pane" id="closure-configuration">
+        <form>
+          <section>
+            <div class="form-group closure-memory-limit-input">
+              <label>{{i18n 'app.closure.request.inputs.memoryLimit'}}</label>
               <input class="form-control" type="number" >
               <span class="help-block"></span>
+              <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.memoryLimitDescription'}}"></i>
             </div>
-            <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.memoryLimitDescription'}}"></i>
-          </div>
-          <div class="form-group closure-timeout-input">
-            <label class="col-sm-3">{{i18n 'app.closure.request.inputs.timeout'}}</label>
-            <div class="col-sm-9">
+            <div class="form-group closure-timeout-input">
+              <label>{{i18n 'app.closure.request.inputs.timeout'}}</label>
               <input class="form-control" type="number" >
               <span class="help-block"></span>
+              <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.timeoutDescription'}}"></i>
             </div>
-            <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.timeoutDescription'}}"></i>
-          </div>
-          <div class="form-group placementZone">
-            <label class="col-sm-3">{{i18n 'app.host.details.placementZone'}}</label>
-            <div class="col-sm-9">
+            <div class="form-group placementZone">
+              <label>{{i18n 'app.host.details.placementZone'}}</label>
               <div class="form-control dropdown-holder"></div>
               <span class="help-block"></span>
             </div>
-          </div>
-          <div class="form-group closure-logconfig-driver-input">
-            <label class="col-sm-3">{{i18n 'app.closure.request.inputs.logConfigDriver'}}</label>
-            <div class="col-sm-9">
-              <select class="form-control">
-                <option></option>
-                <option>none</option>
-                <option>json-file</option>
-                <option>syslog</option>
-                <option>journald</option>
-                <option>gelf</option>
-                <option>fluentd</option>
-                <option>awslogs</option>
-                <option>splunk</option>
-                <option>etwlogs</option>
-                <option>gcplogs</option>
-              </select>
+            <div class="form-group closure-logconfig-driver-input">
+              <label>{{i18n 'app.closure.request.inputs.logConfigDriver'}}</label>
+              <div class="select">
+                <select class="form-control">
+                  <option></option>
+                  <option>none</option>
+                  <option>json-file</option>
+                  <option>syslog</option>
+                  <option>journald</option>
+                  <option>gelf</option>
+                  <option>fluentd</option>
+                  <option>awslogs</option>
+                  <option>splunk</option>
+                  <option>etwlogs</option>
+                  <option>gcplogs</option>
+                </select>
+              </div>
               <span class="help-block"></span>
+              <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.logDriverDescription'}}"></i>
             </div>
-            <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.logDriverDescription'}}"></i>
-          </div>
-          <div class="form-group closure-logconfig-options-input">
-            <label class="col-sm-3">{{i18n 'app.closure.request.inputs.logConfigOptions'}}</label>
-            <div class="col-sm-9">
+            <div class="form-group closure-logconfig-options-input">
+              <label>{{i18n 'app.closure.request.inputs.logConfigOptions'}}</label>
               <div class="form-control"></div>
               <span class="help-block"></span>
+              <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.logConfigOptionsDescription'}}"></i>
             </div>
-            <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.logConfigOptionsDescription'}}"></i>
-          </div>
-        </div>
-      </div>
+          </section>
+        </form>
       </div>
     </div>
   </div>
