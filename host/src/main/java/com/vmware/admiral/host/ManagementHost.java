@@ -175,10 +175,10 @@ public class ManagementHost extends ServiceHost {
     protected void startCommonServices() throws Throwable {
         this.log(Level.INFO, "Common service starting ...");
 
+        HostInitCommonServiceConfig.startServices(this);
+
         registerForServiceAvailability(AuthBootstrapService.startTask(this), true,
                 AuthBootstrapService.FACTORY_LINK);
-
-        HostInitCommonServiceConfig.startServices(this);
 
         this.log(Level.INFO, "Common services started.");
     }
@@ -363,7 +363,6 @@ public class ManagementHost extends ServiceHost {
 
     private ServiceClient createServiceClient(SSLContext sslContext,
             int requestPayloadSizeLimit) {
-        ServiceClient serviceClient;
         try {
             // Use the class name and prefix of GIT commit ID as the user agent name and version
             String commitID = (String) getState().codeProperties
@@ -373,8 +372,8 @@ public class ManagementHost extends ServiceHost {
             }
             commitID = commitID.substring(0, 8);
             String userAgent = ServiceHost.class.getSimpleName() + "/" + commitID;
-            serviceClient = NettyHttpServiceClient.create(userAgent,
-                    getExecutor(),
+            ServiceClient serviceClient = NettyHttpServiceClient.create(userAgent,
+                    null,
                     getScheduledExecutor(),
                     this);
             if (requestPayloadSizeLimit > 0) {
@@ -383,7 +382,6 @@ public class ManagementHost extends ServiceHost {
             serviceClient.setSSLContext(sslContext);
 
             return serviceClient;
-
         } catch (URISyntaxException e) {
             throw new RuntimeException("Failed to create ServiceClient", e);
         }
