@@ -52,7 +52,8 @@ public class BaseIntegrationTest extends BaseProvisioningOnCoreOsIT {
     protected static final String TEST_WEB_SERVER_URL_PROP_NAME = "test.webserver.url";
 
     @Override
-    protected String getResourceDescriptionLink(boolean downloadImage, RegistryType registryType) throws Exception {
+    protected String getResourceDescriptionLink(boolean downloadImage, RegistryType registryType)
+            throws Exception {
         return null;
     }
 
@@ -68,7 +69,8 @@ public class BaseIntegrationTest extends BaseProvisioningOnCoreOsIT {
         return response;
     }
 
-    protected Closure createClosure(ClosureDescription closureDescription, ServiceClient serviceClient)
+    protected Closure createClosure(ClosureDescription closureDescription,
+            ServiceClient serviceClient)
             throws InterruptedException, ExecutionException, TimeoutException {
         Closure closureState = new Closure();
         closureState.descriptionLink = closureDescription.documentSelfLink;
@@ -79,7 +81,8 @@ public class BaseIntegrationTest extends BaseProvisioningOnCoreOsIT {
         return op.getBody(Closure.class);
     }
 
-    protected ClosureDescription createClosureDescription(String taskDefPayload, ServiceClient serviceClient)
+    protected ClosureDescription createClosureDescription(String taskDefPayload,
+            ServiceClient serviceClient)
             throws InterruptedException, ExecutionException, TimeoutException {
         URI targetUri = URI.create(getBaseUrl()
                 + buildServiceUri(ClosureDescriptionFactoryService.FACTORY_LINK));
@@ -88,7 +91,8 @@ public class BaseIntegrationTest extends BaseProvisioningOnCoreOsIT {
         return op.getBody(ClosureDescription.class);
     }
 
-    protected void executeClosure(Closure createdClosure, Closure closureRequest, ServiceClient serviceClient)
+    protected void executeClosure(Closure createdClosure, Closure closureRequest,
+            ServiceClient serviceClient)
             throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException,
             KeyManagementException, InterruptedException, ExecutionException, TimeoutException {
         URI targetUri = URI.create(getBaseUrl() + buildServiceUri(createdClosure.documentSelfLink));
@@ -97,10 +101,10 @@ public class BaseIntegrationTest extends BaseProvisioningOnCoreOsIT {
         Assert.assertNotNull(op);
     }
 
-    protected Closure getClosure(String taskLink, ServiceClient serviceClient)
+    protected Closure getClosure(String link, ServiceClient serviceClient)
             throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException,
             KeyManagementException, InterruptedException, ExecutionException, TimeoutException {
-        URI targetUri = URI.create(getBaseUrl() + buildServiceUri(taskLink));
+        URI targetUri = URI.create(getBaseUrl() + buildServiceUri(link));
         Operation op = sendRequest(serviceClient, Operation.createGet(targetUri));
 
         return op.getBody(Closure.class);
@@ -177,19 +181,25 @@ public class BaseIntegrationTest extends BaseProvisioningOnCoreOsIT {
         return System.currentTimeMillis() - startTime > TimeUnit.SECONDS.toMillis(timeout);
     }
 
-    protected void waitForTaskState(String taskLink, TaskState.TaskStage state, ServiceClient serviceClient)
+    protected void waitForTaskState(String link, TaskState.TaskStage state,
+            ServiceClient serviceClient, int timeout)
             throws Exception {
-        Closure fetchedClosure = getClosure(taskLink, serviceClient);
+        Closure fetchedClosure = getClosure(link, serviceClient);
         long startTime = System.currentTimeMillis();
-        while (state != fetchedClosure.state && !isTimeoutElapsed(startTime, 300)) {
+        while (state != fetchedClosure.state && !isTimeoutElapsed(startTime, timeout)) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            fetchedClosure = getClosure(taskLink, serviceClient);
+            fetchedClosure = getClosure(link, serviceClient);
         }
         logger.info("Closure state: %s", fetchedClosure.state);
+    }
+
+    protected void waitForTaskState(String link, TaskState.TaskStage state,
+            ServiceClient serviceClient) throws Exception {
+        waitForTaskState(link, state, serviceClient, 300);
     }
 
     protected void verifyJsonArrayInts(Object[] javaArray, JsonArray jsArray) {

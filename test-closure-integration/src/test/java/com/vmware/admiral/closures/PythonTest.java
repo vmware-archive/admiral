@@ -786,7 +786,7 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.CANCELLED, serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -799,7 +799,7 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.CANCELLED, serviceClient);
 
         fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -874,7 +874,7 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.CANCELLED, serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -1114,7 +1114,8 @@ public class PythonTest extends BaseIntegrationTest {
             logger.info("Expected to fail");
         }
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FAILED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FAILED,
+                serviceClient, 400);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
