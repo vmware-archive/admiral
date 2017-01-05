@@ -47,6 +47,7 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
@@ -1106,14 +1107,22 @@ public class RequestBrokerService extends
                 }));
     }
 
-    private void createContainerVolumeAllocationTask(RequestBrokerState state) {
+    private void createContainerVolumeAllocationTask(RequestBrokerState state,
+            ContainerVolumeDescription volumeDescription) {
+
+        if (volumeDescription == null) {
+            getContainerVolumeDescription(state,
+                    (vd) -> createContainerVolumeAllocationTask(state, vd));
+            return;
+        }
 
         ContainerVolumeAllocationTaskState allocationTask = new ContainerVolumeAllocationTaskState();
         allocationTask.documentSelfLink = getSelfId();
         allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
                 getSelfLink(), TaskStage.STARTED, SubStage.ALLOCATED,
                 TaskStage.STARTED, SubStage.ERROR);
-        allocationTask.customProperties = state.customProperties;
+        allocationTask.customProperties = mergeCustomProperties(
+                state.customProperties, volumeDescription.customProperties);
         allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
 
         allocationTask.tenantLinks = state.tenantLinks;
@@ -1145,6 +1154,7 @@ public class RequestBrokerService extends
 
         provisionTask.tenantLinks = state.tenantLinks;
         provisionTask.requestTrackerLink = state.requestTrackerLink;
+        provisionTask.resourceType = state.resourceType;
         provisionTask.resourceLinks = state.resourceLinks;
         provisionTask.resourceCount = state.resourceCount;
         provisionTask.resourceDescriptionLink = state.resourceDescriptionLink;
@@ -1185,7 +1195,7 @@ public class RequestBrokerService extends
             }
         } else if (isContainerVolumeType(state)) {
             if (!isPostAllocationOperation(state)) {
-                createContainerVolumeAllocationTask(state);
+                createContainerVolumeAllocationTask(state, null);
             } else {
                 createContainerVolumeProvisioningTask(state);
             }
@@ -1692,6 +1702,24 @@ public class RequestBrokerService extends
                     }
 
                     ContainerDescription desc = o.getBody(ContainerDescription.class);
+                    callbackFunction.accept(desc);
+                }));
+    }
+
+    private void getContainerVolumeDescription(RequestBrokerState state,
+            Consumer<ContainerVolumeDescription> callbackFunction) {
+
+        sendRequest(Operation.createGet(this, state.resourceDescriptionLink)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        String errMsg = String.format(
+                                "Failure retrieving container volume description state: %s ",
+                                state.resourceDescriptionLink);
+                        failTask(errMsg, e);
+                        return;
+                    }
+
+                    ContainerVolumeDescription desc = o.getBody(ContainerVolumeDescription.class);
                     callbackFunction.accept(desc);
                 }));
     }

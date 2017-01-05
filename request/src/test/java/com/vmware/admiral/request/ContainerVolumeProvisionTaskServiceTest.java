@@ -116,6 +116,9 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
                 "Containers should be on different hosts.");
 
         ContainerVolumeState volume = getDocument(ContainerVolumeState.class, volumeLink);
+        String volumeDescProp = volume.customProperties.get("volume propKey string");
+        assertNotNull(volumeDescProp);
+        assertEquals("volume customPropertyValue string", volumeDescProp);
 
         // Volume must be provisioned on same host where ContainerDesc with volume is.
         if (cont1.descriptionLink.equals(container1DescLink)) {

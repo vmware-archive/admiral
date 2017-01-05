@@ -165,7 +165,8 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         desc.documentSelfLink = "test-volume-" + name;
         desc.name = name;
         desc.tenantLinks = Collections.singletonList("test-group");
-        desc.customProperties = new HashMap<>();
+        desc.customProperties = new HashMap<>(1);
+        desc.customProperties.put("volume propKey string", "volume customPropertyValue string");
         return desc;
     }
 
