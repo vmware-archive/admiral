@@ -154,7 +154,7 @@ class ClosureDefinitionForm extends Component {
       updateDependenciesFormater(this.value, depEditor);
     });
 
-    let tabsToDeactivate = ['code', 'configuration'];
+    let tabsToDeactivate = ['closure-code', 'closure-configuration'];
     let thisEl = $(this.$el);
     tabsToDeactivate.forEach(function(el) {
       thisEl.find('.container-form-content .nav a[href="#' + el + '"]')
