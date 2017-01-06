@@ -16,12 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
-import com.vmware.admiral.closures.drivers.DriverConstants;
 import com.vmware.admiral.closures.drivers.DriverRegistry;
 import com.vmware.admiral.closures.drivers.DriverRegistryImpl;
 import com.vmware.admiral.closures.drivers.docker.ClosureDockerClientFactoryImpl;
 import com.vmware.admiral.closures.drivers.docker.DockerDriverBase;
-import com.vmware.admiral.closures.drivers.nashorn.EmbeddedNashornJSDriver;
 import com.vmware.admiral.closures.services.adapter.AdmiralAdapterFactoryService;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
@@ -65,18 +63,18 @@ public class HostInitClosureServiceConfig extends HostInitServiceHelper {
                         return image;
                     }
                 }));
-
-        driverRegistry.register(DriverConstants.RUNTIME_NASHORN, new EmbeddedNashornJSDriver(host));
     }
 
-    private static void startFactoryServices(ServiceHost host, List<FactoryService> factoryServices) {
+    private static void startFactoryServices(ServiceHost host,
+            List<FactoryService> factoryServices) {
         for (Service factoryService : factoryServices) {
             host.startService(
                     Operation.createPost(UriUtils.buildFactoryUri(host, factoryService.getClass()))
                             .setCompletion((o, ex) -> {
                                 if (ex != null) {
                                     // shutdown the server when encountering an error
-                                    host.log(Level.SEVERE, "Failed to start service {}: {}", o.getUri(),
+                                    host.log(Level.SEVERE, "Failed to start service {}: {}",
+                                            o.getUri(),
                                             Utils.toString(ex));
                                     host.stop();
                                 }

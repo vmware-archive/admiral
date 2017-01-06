@@ -21,12 +21,12 @@ public final class ResourcesConstants {
     public static final Integer MAX_MEMORY_MB_RES_CONSTRAINT = 1536;
 
     public static final Integer MIN_EXEC_TIMEOUT_SECONDS = 1;
-    public static final Integer MAX_EXEC_TIMEOUT_SECONDS = 300;
+    public static final Integer MAX_EXEC_TIMEOUT_SECONDS = 600;
 
     public static final Integer MIN_CPU_SHARES = 50;
     public static final Integer DEFAULT_CPU_SHARES = 1024;
 
-    public static final Integer DEFAULT_EXEC_TIMEOUT_SECONDS = 60;
+    public static final Integer DEFAULT_EXEC_TIMEOUT_SECONDS = 180;
     public static final Integer DEFAULT_MEMORY_MB_RES_CONSTRAINT = MIN_MEMORY_MB_RES_CONSTRAINT;
 
     private ResourcesConstants() {
