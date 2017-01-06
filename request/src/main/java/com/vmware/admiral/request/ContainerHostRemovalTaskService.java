@@ -31,9 +31,11 @@ import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState.SubStage;
 import com.vmware.admiral.request.ContainerNetworkRemovalTaskService.ContainerNetworkRemovalTaskState;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState;
+import com.vmware.admiral.request.ContainerVolumeRemovalTaskService.ContainerVolumeRemovalTaskState;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.CounterSubTaskService;
 import com.vmware.admiral.service.common.CounterSubTaskService.CounterSubTaskState;
@@ -81,13 +83,15 @@ public class ContainerHostRemovalTaskService extends
             REMOVED_CONTAINERS,
             REMOVING_NETWORKS,
             REMOVED_NETWORKS,
+            REMOVING_VOLUMES,
+            REMOVED_VOLUMES,
             REMOVING_HOSTS,
             COMPLETED,
             ERROR;
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(REMOVING_HOSTS, SUSPENDING_HOSTS, REMOVING_CONTAINERS,
-                            REMOVING_NETWORKS));
+                            REMOVING_NETWORKS, REMOVING_VOLUMES));
         }
     }
 
@@ -119,6 +123,11 @@ public class ContainerHostRemovalTaskService extends
         case REMOVING_NETWORKS:
             break;
         case REMOVED_NETWORKS:
+            queryVolumes(state);
+            break;
+        case REMOVING_VOLUMES:
+            break;
+        case REMOVED_VOLUMES:
             removeHosts(state, null);
             break;
         case REMOVING_HOSTS:
@@ -255,7 +264,7 @@ public class ContainerHostRemovalTaskService extends
                         }
                     } else {
                         if (networkLinks.isEmpty()) {
-                            removeHosts(state, null);
+                            queryVolumes(state);
                             return;
                         }
 
@@ -313,6 +322,56 @@ public class ContainerHostRemovalTaskService extends
                     }
 
                     proceedTo(SubStage.REMOVING_NETWORKS);
+                });
+        sendRequest(startPost);
+    }
+
+    private void queryVolumes(ContainerHostRemovalTaskState state) {
+        QueryTask volumeQuery = QueryUtil.buildQuery(ContainerVolumeState.class, false);
+
+        QueryUtil.addListValueClause(volumeQuery,
+                ContainerVolumeState.FIELD_NAME_ORIGINATING_HOST_LINK, state.resourceLinks);
+
+        Set<String> volumeLinks = new HashSet<>();
+        new ServiceDocumentQuery<ContainerVolumeState>(getHost(), ContainerVolumeState.class).query(
+                volumeQuery, (r) -> {
+                    if (r.hasException()) {
+                        failTask("Failure retrieving query results", r.getException());
+                        return;
+                    } else if (r.hasResult()) {
+                        volumeLinks.add(r.getDocumentSelfLink());
+                    } else {
+                        if (volumeLinks.isEmpty()) {
+                            removeHosts(state, null);
+                            return;
+                        }
+
+                        removeVolumes(state, volumeLinks);
+                    }
+                });
+    }
+
+    private void removeVolumes(ContainerHostRemovalTaskState state, Set<String> volumeSelfLinks) {
+        // run a sub task for removing the volumes
+        ContainerVolumeRemovalTaskState volumeRemovalTask = new ContainerVolumeRemovalTaskState();
+        volumeRemovalTask.resourceLinks = volumeSelfLinks;
+        volumeRemovalTask.removeOnly = true;
+        volumeRemovalTask.serviceTaskCallback = ServiceTaskCallback.create(
+                getSelfLink(),
+                TaskStage.STARTED, SubStage.REMOVED_VOLUMES,
+                TaskStage.STARTED, SubStage.ERROR);
+        volumeRemovalTask.requestTrackerLink = state.requestTrackerLink;
+
+        Operation startPost = Operation
+                .createPost(this, ContainerVolumeRemovalTaskService.FACTORY_LINK)
+                .setBody(volumeRemovalTask)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating container volume removal task", e);
+                        return;
+                    }
+
+                    proceedTo(SubStage.REMOVING_VOLUMES);
                 });
         sendRequest(startPost);
     }

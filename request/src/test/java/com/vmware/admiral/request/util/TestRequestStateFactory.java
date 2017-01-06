@@ -35,6 +35,7 @@ import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
@@ -350,6 +351,16 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
                 UriUtils.buildUriPath(ComputeService.FACTORY_LINK, DOCKER_COMPUTE_ID)));
 
         return net;
+    }
+
+    public static ContainerVolumeState createVolume(String name) {
+        ContainerVolumeState volume = new ContainerVolumeState();
+        volume.name = name;
+        String parentLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, DOCKER_COMPUTE_ID);
+        volume.originatingHostLink = parentLink;
+        volume.parentLinks = new ArrayList<>(Arrays.asList(parentLink));
+
+        return volume;
     }
 
     public static ComputeState createCompute() {
