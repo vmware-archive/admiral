@@ -31,6 +31,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.adapter.docker.service.DockerHostAdapterService;
 import com.vmware.admiral.common.test.BaseTestCase;
+import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
 import com.vmware.admiral.compute.ContainerHostService;
@@ -62,6 +63,9 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
 
     @Before
     public void setup() throws Throwable {
+        // initialize trust manager
+        ServerX509TrustManager.init(host);
+
         // Pool Services
         host.startFactory(new ResourcePoolService());
         host.startService(new ElasticPlacementZoneConfigurationService());
@@ -106,7 +110,6 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         test(getPasswordCredentials());
     }
 
-    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-960")
     @Test
     public void testWithPrivateKey() throws Throwable {
         test(getPrivateKeyCredentials());
@@ -118,11 +121,12 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         ResourcePoolState resourcePool = new ResourcePoolState();
         resourcePool.name = "test";
 
-        ElasticPlacementZoneConfigurationState placementZone = new ElasticPlacementZoneConfigurationState();
+        ElasticPlacementZoneConfigurationState placementZone =
+                new ElasticPlacementZoneConfigurationState();
         placementZone.resourcePoolState = resourcePool;
         placementZone = doPost(placementZone, ElasticPlacementZoneConfigurationService.SELF_LINK);
 
-        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState();
+        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskServiceState();
         state.address = SSH_HOST;
         state.port = 2376;
         state.authCredentialsLink = sshCreds.documentSelfLink;
@@ -147,7 +151,7 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         List<ComputeState> hosts = getHosts();
         Assert.assertEquals("Only 1 host expected", 1, hosts.size());
         ComputeState h = hosts.get(0);
-        Assert.assertEquals("Incorrect adress", "https://" + state.address + ":" + state.port,
+        Assert.assertEquals("Incorrect address", "https://" + state.address + ":" + state.port,
                 h.address);
         Assert.assertEquals(state.placementZoneLink,
                 h.resourcePoolLink);
@@ -167,11 +171,12 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         ResourcePoolState resourcePool = new ResourcePoolState();
         resourcePool.name = "test";
 
-        ElasticPlacementZoneConfigurationState placementZone = new ElasticPlacementZoneConfigurationState();
+        ElasticPlacementZoneConfigurationState placementZone =
+                new ElasticPlacementZoneConfigurationState();
         placementZone.resourcePoolState = resourcePool;
         placementZone = doPost(placementZone, ElasticPlacementZoneConfigurationService.SELF_LINK);
 
-        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState();
+        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskServiceState();
         state.port = 2376;
         state.authCredentialsLink = sshCreds.documentSelfLink;
         state.placementZoneLink = placementZone.documentSelfLink;
@@ -192,11 +197,12 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         ResourcePoolState resourcePool = new ResourcePoolState();
         resourcePool.name = "test";
 
-        ElasticPlacementZoneConfigurationState placementZone = new ElasticPlacementZoneConfigurationState();
+        ElasticPlacementZoneConfigurationState placementZone =
+                new ElasticPlacementZoneConfigurationState();
         placementZone.resourcePoolState = resourcePool;
         placementZone = doPost(placementZone, ElasticPlacementZoneConfigurationService.SELF_LINK);
 
-        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState();
+        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskServiceState();
         state.address = SSH_HOST;
         state.authCredentialsLink = sshCreds.documentSelfLink;
         state.placementZoneLink = placementZone.documentSelfLink;
@@ -217,11 +223,12 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         ResourcePoolState resourcePool = new ResourcePoolState();
         resourcePool.name = "test";
 
-        ElasticPlacementZoneConfigurationState placementZone = new ElasticPlacementZoneConfigurationState();
+        ElasticPlacementZoneConfigurationState placementZone =
+                new ElasticPlacementZoneConfigurationState();
         placementZone.resourcePoolState = resourcePool;
         placementZone = doPost(placementZone, ElasticPlacementZoneConfigurationService.SELF_LINK);
 
-        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState();
+        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskServiceState();
         state.address = SSH_HOST;
         state.port = 2376;
         state.authCredentialsLink = sshCreds.documentSelfLink;
@@ -245,11 +252,12 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         ResourcePoolState resourcePool = new ResourcePoolState();
         resourcePool.name = "test";
 
-        ElasticPlacementZoneConfigurationState placementZone = new ElasticPlacementZoneConfigurationState();
+        ElasticPlacementZoneConfigurationState placementZone =
+                new ElasticPlacementZoneConfigurationState();
         placementZone.resourcePoolState = resourcePool;
         placementZone = doPost(placementZone, ElasticPlacementZoneConfigurationService.SELF_LINK);
 
-        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState();
+        ConfigureHostOverSshTaskServiceState state = new ConfigureHostOverSshTaskServiceState();
         state.address = "127.0.1.4";
         state.port = 2376;
         state.authCredentialsLink = sshCreds.documentSelfLink;
