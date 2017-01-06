@@ -16,15 +16,14 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,13 +34,14 @@ import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 
-
 public class ContainerVolumeServiceTest extends ComputeBaseTest {
 
-    private static final File tempVolumeDir = FileUtils.getTempDirectory();
+    private static final String MOUNTPOINT_DIR = "/tmp";
     private static final String CONTAINER_VOLUME_SCOPE = "local";
     private static final String CONTAINER_VOLUME_FLOCKER_DRIVER = "flocker";
     private static final String CONTAINER_VOLUME_VMDK_DRIVER = "vmdk";
+
+    private List<String> volumesForDeletion;
 
     @SuppressWarnings("serial")
     private static Map<String, String> testCustomProperties = new HashMap<String, String>() {
@@ -53,14 +53,14 @@ public class ContainerVolumeServiceTest extends ComputeBaseTest {
 
     @Before
     public void setUp() throws Throwable {
-
         waitForServiceAvailability(ContainerVolumeService.FACTORY_LINK);
+        volumesForDeletion = new ArrayList<>();
     }
 
     @After
     public void tearDown() throws Throwable {
-        if (tempVolumeDir.exists()) {
-            tempVolumeDir.delete();
+        for (String selfLink : volumesForDeletion) {
+            delete(selfLink);
         }
     }
 
@@ -72,7 +72,7 @@ public class ContainerVolumeServiceTest extends ComputeBaseTest {
                 (prefix, index) -> {
                     ContainerVolumeState containerVolumeDesc = new ContainerVolumeState();
                     containerVolumeDesc.name = prefix + "name" + index;
-                    containerVolumeDesc.mountpoint = tempVolumeDir;
+                    containerVolumeDesc.mountpoint = MOUNTPOINT_DIR;
                     containerVolumeDesc.customProperties = testCustomProperties;
                     containerVolumeDesc.scope = CONTAINER_VOLUME_SCOPE;
                     containerVolumeDesc.driver = CONTAINER_VOLUME_FLOCKER_DRIVER;
@@ -82,10 +82,7 @@ public class ContainerVolumeServiceTest extends ComputeBaseTest {
                     ContainerVolumeState contVolumeDesc = (ContainerVolumeState) serviceDocument;
                     assertNotNull(contVolumeDesc);
                     assertTrue(contVolumeDesc.name.startsWith(prefix + "name"));
-                    assertEquals(contVolumeDesc.mountpoint.getName(), tempVolumeDir.getName());
-                    assertTrue(contVolumeDesc.mountpoint.getAbsolutePath()
-                            .contains(tempVolumeDir.getAbsolutePath()));
-                    assertEquals(contVolumeDesc.mountpoint.getName(), tempVolumeDir.getName());
+                    assertEquals(contVolumeDesc.mountpoint, MOUNTPOINT_DIR);
                     assertNotNull(contVolumeDesc.customProperties);
                     assertEquals(contVolumeDesc.customProperties, testCustomProperties);
                     assertEquals(contVolumeDesc.scope, CONTAINER_VOLUME_SCOPE);
@@ -134,6 +131,7 @@ public class ContainerVolumeServiceTest extends ComputeBaseTest {
         volumeState.tenantLinks = Collections.singletonList(group);
 
         volumeState = doPost(volumeState, ContainerVolumeService.FACTORY_LINK);
+        volumesForDeletion.add(volumeState.documentSelfLink);
 
         return volumeState;
     }

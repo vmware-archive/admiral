@@ -203,7 +203,7 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
     protected ContainerVolumeDescription createVolumeDescription(String name) throws Throwable {
         ContainerVolumeDescription volumeDescription = new ContainerVolumeDescription();
         volumeDescription.name = name;
-        volumeDescription.mountpoint = new File(TEST_VOLUME_MOUNTPOINT);
+        volumeDescription.mountpoint = TEST_VOLUME_MOUNTPOINT;
         volumeDescription.driver = TEST_VOLUME_DRIVER;
         volumeDescription.documentSelfLink = UUID.randomUUID().toString();
 

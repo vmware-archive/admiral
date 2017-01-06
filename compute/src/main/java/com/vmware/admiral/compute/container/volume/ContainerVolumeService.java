@@ -11,14 +11,11 @@
 
 package com.vmware.admiral.compute.container.volume;
 
-import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.commons.io.FileUtils;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
@@ -113,15 +110,7 @@ public class ContainerVolumeService extends StatefulService {
         @Documentation(description = "Mount path of the volume on the host.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.OPTIONAL })
-        public File mountpoint;
-
-        /**
-         * Labels to set on the volume, specified as a map: {"key":"value","key2":"value2"}
-         */
-        @Documentation(description = "Labels to set on the volume, specified as a map: {\"key\":\"value\",\"key2\":\"value2\"}")
-        @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
-                PropertyUsageOption.OPTIONAL })
-        public Map<String, String> labels;
+        public String mountpoint;
 
         /**
          * Low-level details about the volume, provided by the volume driver. Details are returned
@@ -131,7 +120,6 @@ public class ContainerVolumeService extends StatefulService {
         @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
                 PropertyUsageOption.OPTIONAL })
         public Map<String, String> status;
-
     }
 
     public ContainerVolumeService() {
@@ -250,15 +238,12 @@ public class ContainerVolumeService extends StatefulService {
         template.customProperties = new HashMap<>(1);
         template.customProperties.put("key (string)", "value (string)");
 
-        template.labels = new HashMap<>(1);
-        template.labels.put("key (string)", "value (string)");
-
         template.status = new HashMap<>(1);
         template.status.put("key (string)", "value (string)");
 
         // Default location according to official documents:
         // https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/inspect-a-volume
-        template.mountpoint = FileUtils.getFile("/var/lib/docker/volumes/");
+        template.mountpoint = "/var/lib/docker/volumes/";
 
         template.parentLinks = new ArrayList<String>(0);
 

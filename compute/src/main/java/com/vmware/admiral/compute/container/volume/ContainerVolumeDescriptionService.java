@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.compute.container.volume;
 
-import java.io.File;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -110,15 +108,7 @@ public class ContainerVolumeDescriptionService extends StatefulService {
         @Documentation(description = "Mount path of the volume on the host.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.OPTIONAL })
-        public File mountpoint;
-
-        /**
-         * Labels to set on the volume, specified as a map: {"key":"value","key2":"value2"}
-         */
-        @Documentation(description = "Labels to set on the volume, specified as a map: {\"key\":\"value\",\"key2\":\"value2\"}")
-        @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
-                PropertyUsageOption.OPTIONAL })
-        public Map<String, String> labels;
+        public String mountpoint;
 
         /** Link to the parent volume description */
         @JsonProperty("parent_description_link")
@@ -193,9 +183,6 @@ public class ContainerVolumeDescriptionService extends StatefulService {
         PropertyUtils.mergeCustomProperties(currentState.customProperties,
                 patchBody.customProperties);
 
-        PropertyUtils.mergeCustomProperties(currentState.labels,
-                patchBody.labels);
-
         String newSignature = Utils.computeSignature(currentState, docDesc);
 
         boolean changed = !newSignature.equals(currentSignature);
@@ -254,16 +241,13 @@ public class ContainerVolumeDescriptionService extends StatefulService {
         template.customProperties = new HashMap<>(1);
         template.customProperties.put("key (string)", "value (string)");
 
-        template.labels = new HashMap<>(1);
-        template.labels.put("key (string)", "value (string)");
-
         template.options = new HashMap<>(1);
         template.options.put("mountpoint (string)",
                 "/var/lib/docker/volumes/ (string)");
 
         // Default location according to official documents:
         // https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/inspect-a-volume
-        template.mountpoint = FileUtils.getFile("/var/lib/docker/volumes/");
+        template.mountpoint = "/var/lib/docker/volumes/";
 
         return template;
     }
