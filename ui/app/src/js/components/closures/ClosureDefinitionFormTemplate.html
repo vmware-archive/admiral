@@ -37,7 +37,7 @@
             <div class="form-group closure-runtime-input">
               <label>{{i18n 'app.closure.request.inputs.runtime'}}</label>
               <div class="select">
-                <select>
+                <select class="form-control">
                   <option value="nodejs_4.3.0">{{i18n 'app.closure.request.inputs.runtimeTypes.nodejs'}}</option>
                   <option value="python_3.4.3">{{i18n 'app.closure.request.inputs.runtimeTypes.python'}}</option>
                 </select>
@@ -67,12 +67,12 @@
               </div>
             </div>
             <div class="form-group closure-source-code-input">
-              <label>{{i18n 'app.closure.request.inputs.source'}}</label>
+              <label class="required">{{i18n 'app.closure.request.inputs.source'}}</label>
               <div class="source-edit-area form-control"></div>
               <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.sourceDescription'}}"></i>
             </div>
             <div class="form-group closure-source-url-input">
-              <label>{{i18n 'app.closure.request.inputs.sourceURL'}}</label>
+              <label class="required">{{i18n 'app.closure.request.inputs.sourceURL'}}</label>
               <input class="form-control">
               <span class="help-block"></span>
               <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left" title="{{i18n 'app.closure.request.inputs.sourceURLDescription'}}"></i>

@@ -1290,8 +1290,13 @@ $elements-side-margin: $elements-margin / 2;
 .template-details .edit-container-definition-view,
 .template-details .edit-existing-container-definition-view,
 .template-details .new-container-definition-view,
-.template-details .edit-network {
+.template-details .edit-network{
   margin-right: $template-details-right;
+  overflow: auto;
+  z-index: 102;
+}
+
+.images-view .template-details.closure-form {
   overflow: auto;
   z-index: 102;
 }

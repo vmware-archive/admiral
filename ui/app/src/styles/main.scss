@@ -2165,6 +2165,9 @@ $alert-text-color: #ffffff;
 
 .closure-logs .centeredLabel {
   text-align: center;
+}
+
+.right-context-panel > .content .closure-logs {
   margin: 20px;
 }
 
@@ -2175,7 +2178,7 @@ $alert-text-color: #ffffff;
   white-space: pre-wrap;
   word-wrap: break-word;
   bottom: 25px;
-  min-height: 300px;
+  min-height: 400px;
 }
 
 .closable-view .closure-logs {

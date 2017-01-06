@@ -822,33 +822,33 @@ let TemplatesStore = Reflux.createStore({
     }
   },
 
-  onCancelAddClosure: function(templateId) {
-    services.loadContainerTemplate(templateId).then((template) => {
-      var descriptionPromises = [];
-      for (let i = 0; i < template.descriptionLinks.length; i++) {
-        descriptionPromises.push(services.loadDocument(template.descriptionLinks[i]));
+  onCancelAddClosure: function(templateId, updatedClosure) {
+    if (updatedClosure) {
+      var closures = utils.getIn(this.getData(), ['selectedItemDetails',
+        'templateDetails', 'listView', 'closures'
+      ]);
+
+      var updated = false;
+      closures = closures.map((n) => {
+        if (n.documentSelfLink === updatedClosure.documentSelfLink) {
+          updated = true;
+          return updatedClosure;
+        } else {
+          return n;
+        }
+      });
+
+      if (!updated) {
+        closures = closures.asMutable();
+        closures.push(updatedClosure);
       }
 
-      Promise.all(descriptionPromises).then((descriptions) => {
-        var closureDescriptions = [];
-        for (let i = 0; i < descriptions.length; i++) {
-          var desc = descriptions[i];
-          if (desc.documentSelfLink.indexOf(links.CLOSURE_DESCRIPTIONS) !==
-            -1) {
-            closureDescriptions.push(desc);
-          }
-        }
+      this.setInData(
+        ['selectedItemDetails', 'templateDetails', 'listView', 'closures'], closures);
+    }
 
-        let detailsObject = utils.getIn(this.getData(), ['selectedItemDetails']);
-
-        detailsObject.templateDetails.name = template.name;
-        detailsObject.templateDetails.documentSelfLink = template.documentSelfLink;
-        detailsObject.templateDetails.listView.closures = closureDescriptions;
-        this.setInData(['selectedItemDetails'], detailsObject);
-        this.setInData(['selectedItemDetails', 'addClosureView'], null);
-        this.emitChange();
-      });
-    });
+    this.setInData(['selectedItemDetails', 'addClosureView'], null);
+    this.emitChange();
   },
 
   loadClosurePlacementZone: function(closureDescription) {

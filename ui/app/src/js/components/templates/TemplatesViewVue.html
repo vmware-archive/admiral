@@ -189,16 +189,16 @@
         <div class="centeredLabel">
           <label>{{i18n('app.closure.monitoredTask.runStatus')}}</label>
         </div>
-        <table style="width: 95%">
+        <table style="width: 100%">
             <tr>
             <td colspan="2">
               <table style="width: 100%">
                 <tr>
-                  <td align="right" style="width: 20%">{{i18n('app.closure.monitoredTask.runId')}}</td>
-                  <td align="right" style="width: 80%">{{model.tasks.monitoredTask.taskId}}</td>
+                  <td style="width: 20%">{{i18n('app.closure.monitoredTask.runId')}}</td>
+                  <td style="width: 80%">{{model.tasks.monitoredTask.taskId}}</td>
                 </tr>
                 <tr>
-                  <td align="right" style="width: 20%">{{i18n('app.closure.monitoredTask.runState')}}</td>
+                  <td style="width: 20%">{{i18n('app.closure.monitoredTask.runState')}}</td>
                   <td style="width: 80%">{{model.tasks.monitoredTask.state}}</td>
                 </tr>
               </table>
@@ -206,14 +206,14 @@
           </tr>
           <tr><td colspan="2"><br><br></td></tr>
           <tr>
-            <td class="col-sm-2" align="right" style="vertical-align:top; width: 20%">{{i18n('app.closure.request.logs.title')}}</td>
+            <td class="col-sm-2" style="vertical-align:top; width: 20%">{{i18n('app.closure.request.logs.title')}}</td>
             <td style="width: 80%">
               <textarea class="form-control closure-logs-content" rows="30" readonly>{{model.tasks.monitoredTask.taskLogs}}</textarea>
               <span class="help-block"></span>
             </td>
           </tr>
           <tr>
-            <td align="right" style="vertical-align:top; width: 20%;">{{i18n('app.closure.monitoredTask.outputs')}}</td>
+            <td style="vertical-align:top; width: 20%;">{{i18n('app.closure.monitoredTask.outputs')}}</td>
             <td style="width: 80%">
               <table style="width: 100%">
                 <tr class="item" v-for="output in model.tasks.monitoredTask.outputs">

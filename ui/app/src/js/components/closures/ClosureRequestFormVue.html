@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="closure-form closable-view">
+<div class="closure-form">
   <alert alert-type="danger"
          v-bind:show-alert="$alert.show"
          v-bind:alert-message="alert.message"></alert>
@@ -23,6 +23,7 @@
             v-on:click="createClosureDescription()">{{i18n('app.closure.request.save')}}<i
             class="fa fa-spinner fa-spin loader-inline"></i></button>
     <button class="btn btn-secondary save-container-template"
+            v-if="!model.documentId"
             v-bind:class="{'loading': savingTemplate}"
             v-on:click="saveClosureTemplate()">{{i18n('app.container.request.saveTemplate')}}<i
                 class="fa fa-spinner fa-spin loader-inline"></i></button>

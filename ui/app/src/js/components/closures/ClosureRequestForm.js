@@ -68,7 +68,7 @@ var ClosureRequestForm = Vue.extend({
         } else {
           closureDefinition.documentSelfLink = this.model.tasks.
           editingItemData.item.documentSelfLink;
-          ClosureActions.editClosure(closureDefinition);
+          ClosureActions.editClosure(this.model.documentId, closureDefinition);
         }
       }
     },

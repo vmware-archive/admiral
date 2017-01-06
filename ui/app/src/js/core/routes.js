@@ -33,8 +33,11 @@ crossroads.addRoute('/home', function() {
 });
 
 crossroads.addRoute('/closures/new', function() {
-  actions.AppActions.openView(constants.VIEWS.TEMPLATES.name);
-  actions.TemplateActions.openAddClosure();
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CLOSURES.name);
+  actions.ContainerActions.openContainers({
+    '$category': 'closures'
+  }, true);
+  actions.ContainerActions.openCreateClosure();
 });
 
 crossroads.addRoute('/home/newHost', function() {

@@ -85,13 +85,17 @@ let ClosuresStore = Reflux.createStore({
       _this.loadTaskData(closureDescription);
     }
   },
-  onEditClosure: function(closureDescription) {
+  onEditClosure: function(templateId, closureDescription) {
     console.log('Executing edit on closure: ' + closureDescription.name);
     services.editClosure(closureDescription).then((request) => {
       console.log('Closure changed successfully!' + request);
 
       this.setInData(['tasks', 'editingItemData', 'item'], request);
       this.emitChange();
+
+      if (templateId) {
+        actions.TemplateActions.cancelAddClosure(templateId, request);
+      }
     }).catch(this.onGenericCreateError);
   },
 
@@ -114,7 +118,6 @@ let ClosuresStore = Reflux.createStore({
           this.setInData(['tasks', 'editingItemData', 'item'], createdClosure);
           this.setInData(['creatingResource', 'tasks', 'editingItemData', 'item'], createdClosure);
           this.emitChange();
-          actions.TemplateActions.openAddClosure(createdClosure);
       }).catch(this.onGenericCreateError);
     } else {
       services.createClosure(closureDescription).then((createdClosure) => {
@@ -130,7 +133,7 @@ let ClosuresStore = Reflux.createStore({
           this.setInData(['tasks', 'editingItemData', 'item'], createdClosure);
           this.setInData(['creatingResource', 'tasks', 'editingItemData', 'item'], createdClosure);
           this.emitChange();
-          actions.TemplateActions.openAddClosure(createdClosure);
+          actions.TemplateActions.cancelAddClosure(templateId, createdClosure);
         }).catch(this.onGenericEditError);
       }).catch(this.onGenericCreateError);
     }
