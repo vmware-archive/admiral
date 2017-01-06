@@ -97,11 +97,7 @@ public class BaseIntegrationSupportIT {
 
     protected static final Queue<ServiceDocument> documentsForDeletionAfterClass = new LinkedBlockingQueue<>();
     protected static final Queue<ServiceDocument> documentsForDeletion = new LinkedBlockingQueue<>();
-    protected final TestLogger logger;
-
-    protected BaseIntegrationSupportIT() {
-        logger = new TestLogger(getClass());
-    }
+    protected static final TestLogger logger =  new TestLogger(BaseIntegrationSupportIT.class);
 
     @Rule
     public Timeout globalTimeout = Timeout.seconds(TimeUnit.MINUTES.toSeconds(5));
@@ -127,12 +123,12 @@ public class BaseIntegrationSupportIT {
 
     @AfterClass
     public static void baseAfterClass() throws Exception {
-        deleteDocuments(documentsForDeletionAfterClass);
+        deleteDocuments(documentsForDeletionAfterClass, "baseAfterClass");
     }
 
     @After
     public void baseTearDown() throws Exception {
-        deleteDocuments(documentsForDeletion);
+        deleteDocuments(documentsForDeletion, "baseTearDown");
     }
 
     protected static void cleanUpAfterClass(ServiceDocument document) {
@@ -458,7 +454,7 @@ public class BaseIntegrationSupportIT {
         }
     }
 
-    private static void deleteDocuments(Queue<ServiceDocument> documents) throws Exception {
+    private static void deleteDocuments(Queue<ServiceDocument> documents, String fromMethod) throws Exception {
         for (int i = 0; i < MAX_RETRYING_REMOVAL_COUNT; i++) {
             Iterator<ServiceDocument> it = documents.iterator();
             ServiceDocument docToDelete = null;
@@ -466,6 +462,8 @@ public class BaseIntegrationSupportIT {
             while (it.hasNext()) {
                 try {
                     docToDelete = it.next();
+                    logger.info("Deleting document from %s: %s", fromMethod, docToDelete.documentSelfLink);
+
                     delete(docToDelete);
                     it.remove();
                 } catch (Exception e) {
@@ -478,6 +476,6 @@ public class BaseIntegrationSupportIT {
             }
         }
 
-        throw new Exception("Deletion of documents failed! %d documents left" + documents.size());
+        throw new Exception(String.format("Deletion of documents failed from %s! %d documents left", fromMethod, documents.size()));
     }
 }
