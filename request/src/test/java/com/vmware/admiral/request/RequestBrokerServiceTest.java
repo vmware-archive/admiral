@@ -881,12 +881,14 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         container1Desc.name = "container1";
         container1Desc.networks = new HashMap<>();
         container1Desc.networks.put(networkName, new ServiceNetwork());
+        container1Desc.portBindings = null;
 
         ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
         container2Desc.name = "container2";
         container2Desc.networks = new HashMap<>();
         container2Desc.networks.put(networkName, new ServiceNetwork());
+        container2Desc.portBindings = null;
 
         CompositeDescription compositeDesc = createCompositeDesc(networkDesc, container1Desc,
                 container2Desc);
@@ -1061,15 +1063,13 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 .createContainerNetworkDescription(networkName);
         networkDesc.documentSelfLink = UUID.randomUUID().toString();
 
-        ContainerDescription container1Desc = TestRequestStateFactory
-                .createContainerDescriptionWithPortBindingsHostPortSet();
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
         container1Desc.name = "container1";
         container1Desc.networks = new HashMap<>();
         container1Desc.networks.put(networkName, new ServiceNetwork());
 
-        ContainerDescription container2Desc = TestRequestStateFactory
-                .createContainerDescriptionWithPortBindingsHostPortSet();
+        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
         container2Desc.name = "container2";
         container2Desc.networks = new HashMap<>();

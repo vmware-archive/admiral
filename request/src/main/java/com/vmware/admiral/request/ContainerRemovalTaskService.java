@@ -27,7 +27,6 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -40,7 +39,6 @@ import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
-import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState.SubStage;
 import com.vmware.admiral.request.ReservationRemovalTaskService.ReservationRemovalTaskState;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
@@ -351,7 +349,6 @@ public class ContainerRemovalTaskService
                     (link) -> removeResources(state, link));
             return;
         }
-
         AtomicBoolean isRemoveHost = new AtomicBoolean(state.serviceTaskCallback.serviceSelfLink
                 .startsWith(ManagementUriParts.REQUEST_HOST_REMOVAL_OPERATIONS));
 
@@ -389,7 +386,9 @@ public class ContainerRemovalTaskService
         }
     }
 
-    private void doDeleteResource(ContainerRemovalTaskState state, String subTaskLink, ContainerState cs) {
+    private void doDeleteResource(ContainerRemovalTaskState state, String subTaskLink,
+            ContainerState cs) {
+
         QueryTask compositeQueryTask = QueryUtil.buildQuery(ContainerState.class, true);
 
         String containerDescriptionLink = UriUtils.buildUriPath(
@@ -409,14 +408,10 @@ public class ContainerRemovalTaskService
                     } else if (r.hasResult()) {
                         resourcesSharingDesc.add(r.getDocumentSelfLink());
                     } else {
-                        AtomicLong skipDeleteDescriptionOperationException = new AtomicLong();
-                        AtomicLong skipHostPortProfileNotFoundException = new AtomicLong();
-                        List<AtomicLong> skipOperationExceptions = Arrays.asList(
-                                skipDeleteDescriptionOperationException, skipHostPortProfileNotFoundException);
+                        AtomicLong skipOperationException = new AtomicLong();
 
                         Operation delContainerOpr = deleteContainer(cs);
                         Operation placementOpr = releaseResourcePlacement(state, cs, subTaskLink);
-                        Operation releasePortsOpr = releasePorts(cs, skipHostPortProfileNotFoundException);
 
                         // list of operations to execute to release container resources
                         List<Operation> operations = new ArrayList<>();
@@ -428,26 +423,20 @@ public class ContainerRemovalTaskService
                             // if ReservationRemovalTask is not started, count it as finished
                             completeSubTasksCounter(subTaskLink, null);
                         }
-                        if (releasePortsOpr != null) {
-                            operations.add(releasePortsOpr);
-                        }
                         // delete container description when deleting all its containers
                         if (state.resourceLinks.containsAll(resourcesSharingDesc)) {
                             // there could be a race condition when containers are in cluster and
                             // the same description tries to be deleted multiple times, that's why
                             // we need to skipOperationException is the description is NOT FOUND
                             Operation deleteContainerDescription = deleteContainerDescription(cs,
-                                    skipDeleteDescriptionOperationException);
+                                    skipOperationException);
                             operations.add(deleteContainerDescription);
                         }
 
                         OperationJoin.create(operations).setCompletion((ops, exs) -> {
                             // remove skipped exceptions
-                            if (exs != null) {
-                                skipOperationExceptions
-                                        .stream()
-                                        .filter(p -> p.get() != 0)
-                                        .forEach(p -> exs.remove(p.get()));
+                            if (exs != null && skipOperationException.get() != 0) {
+                                exs.remove(skipOperationException.get());
                             }
                             // fail the task is there are exceptions in the children operations
                             if (exs != null && !exs.isEmpty()) {
@@ -482,7 +471,7 @@ public class ContainerRemovalTaskService
     private Operation deleteContainerDescription(ContainerState cs,
             AtomicLong skipOperationException) {
 
-        Operation deleteContainerDesc = Operation
+        Operation deleteContanerDesc = Operation
                 .createGet(this, cs.descriptionLink)
                 .setCompletion(
                         (o, e) -> {
@@ -521,7 +510,7 @@ public class ContainerRemovalTaskService
                                             }));
                         });
 
-        return deleteContainerDesc;
+        return deleteContanerDesc;
     }
 
     private Operation releaseResourcePlacement(ContainerRemovalTaskState state, ContainerState cs,
@@ -556,58 +545,5 @@ public class ContainerRemovalTaskService
                         return;
                     }
                 });
-    }
-
-    private Operation releasePorts(ContainerState cs, AtomicLong skipOperationException) {
-        String hostPortProfileLink = HostPortProfileService.getHostPortProfileLink(cs.parentLink);
-        Operation operation = Operation
-                .createGet(this, hostPortProfileLink)
-                .setCompletion(
-                        (o, e) -> {
-                            if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND ||
-                                    e instanceof CancellationException) {
-                                logWarning("Cannot find host port profile [%s]", hostPortProfileLink);
-                                skipOperationException.set(o.getId());
-                            }
-
-                            if (e != null) {
-                                logWarning("Failed retrieving HostPortProfileState: "
-                                        + hostPortProfileLink, e);
-                                return;
-                            }
-                            HostPortProfileService.HostPortProfileState profile =
-                                    o.getBody(HostPortProfileService.HostPortProfileState.class);
-
-                            Set<Long> allocatedPorts = profile.reservedPorts.entrySet()
-                                    .stream()
-                                    .filter(p -> p.getValue().equals(cs.documentSelfLink))
-                                    .map(k -> k.getKey())
-                                    .collect(Collectors.toSet());
-
-                            if (allocatedPorts.isEmpty()) {
-                                return;
-                            }
-                            // release all ports of the container
-                            HostPortProfileService.HostPortProfileReservationRequest request =
-                                    new HostPortProfileService.HostPortProfileReservationRequest();
-                            request.containerLink = cs.documentSelfLink;
-                            request.mode = HostPortProfileService.HostPortProfileReservationRequestMode.RELEASE;
-
-                            sendRequest(Operation
-                                    .createPatch(getHost(), profile.documentSelfLink)
-                                    .setBody(request)
-                                    .setCompletion(
-                                            (op, ex) -> {
-                                                if (ex != null) {
-                                                    logWarning("Failed releasing container ports: " + cs.documentSelfLink, ex);
-                                                    return;
-                                                }
-                                                logInfo("Released ports [%s] for container [%s] for profile [%s].",
-                                                        allocatedPorts,
-                                                        cs.documentSelfLink,
-                                                        profile.documentSelfLink);
-                                            }));
-                        });
-        return operation;
     }
 }
