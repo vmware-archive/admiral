@@ -951,7 +951,7 @@ log.info(&quot;Event logs after removing: &quot; + eventLogs);</stringProp>
           <stringProp name="HTTPSampler.response_timeout"></stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.contentEncoding"></stringProp>
-          <stringProp name="HTTPSampler.path">/resources/containers?expand=true</stringProp>
+          <stringProp name="HTTPSampler.path">/resources/containers</stringProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
@@ -970,8 +970,8 @@ log.info(&quot;Event logs after removing: &quot; + eventLogs);</stringProp>
           </com.atlantbh.jmeter.plugins.jsonutils.jsonpathextractor.JSONPathExtractor>
           <hashTree/>
           <com.atlantbh.jmeter.plugins.jsonutils.jsonpathextractor.JSONPathExtractor guiclass="com.atlantbh.jmeter.plugins.jsonutils.jsonpathextractor.gui.JSONPathExtractorGui" testclass="com.atlantbh.jmeter.plugins.jsonutils.jsonpathextractor.JSONPathExtractor" testname="jp@gc - JSON Path Extractor" enabled="true">
-            <stringProp name="VAR">containerDescriptions</stringProp>
-            <stringProp name="JSONPATH">$.documents</stringProp>
+            <stringProp name="VAR">containerLinks</stringProp>
+            <stringProp name="JSONPATH">$.documentLinks</stringProp>
             <stringProp name="DEFAULT"></stringProp>
             <stringProp name="VARIABLE"></stringProp>
             <stringProp name="SUBJECT">BODY</stringProp>
@@ -985,7 +985,7 @@ boolean error = containers &gt; (30 + faultTolerance);
 if (error){
 	log.error(&quot;Containers are not removed properly from admiral! Found containers number: &quot; + containers);
 	String containerDescriptions = vars.get(&quot;containerDescriptions&quot;);
-     log.error(&quot;Container descriptions left after removal: &quot; + containerDescriptions);
+     log.error(&quot;Container descriptions left after removal: &quot; + containerLinks);
 	Failure=true;
 	FailureMessage=&quot;Containers are not removed properly from admiral!&quot;;
 }</stringProp>
