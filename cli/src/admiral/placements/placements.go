@@ -15,9 +15,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
+	"admiral/businessgroups"
 	"admiral/client"
 	"admiral/config"
 	"admiral/deplPolicy"
@@ -26,7 +28,6 @@ import (
 	"admiral/utils"
 	"admiral/utils/selflink"
 	"admiral/utils/urlutils"
-	"fmt"
 )
 
 var (
@@ -69,23 +70,93 @@ func (p *Placement) GetFormattedMemoryLimit() string {
 	return fmt.Sprintf("%d", p.MemoryLimit)
 }
 
+func (p *Placement) GetTenantOrProjectName() string {
+	tenantId := p.GetTenantId()
+	if utils.IsVraMode {
+		return businessgroups.GetBusinessGroupName(tenantId)
+	} else {
+		return projects.GetProjectName(tenantId)
+	}
+}
+
+func (p *Placement) GetTenantId() string {
+	for _, t := range p.TenantLinks {
+		if utils.IsVraMode {
+			if strings.Contains(t, fmt.Sprintf("/tenants/%s/groups/", config.TENANT)) {
+				return utils.GetResourceID(t)
+			}
+		} else {
+			if strings.Contains(t, urlutils.Project.GetBaseUrl()) {
+				return utils.GetResourceID(t)
+			}
+		}
+	}
+	return ""
+}
+
+func (p *Placement) GetDeploymentPolicyName() string {
+	if p.DeploymentPolicyLink == "" {
+		return ""
+	}
+	dpName := deplPolicy.GetDPName(utils.GetResourceID(p.DeploymentPolicyLink))
+	return dpName
+}
+
 type PlacementToAdd struct {
-	Name                 string   `json:"name,omitempty"`
-	ResourcePoolLink     string   `json:"resourcePoolLink,omitempty"`
-	Priority             string   `json:"priority,omitempty"`
-	ResourceType         string   `json:"resourceType,omitempty"`
-	MaxNumberInstances   string   `json:"maxNumberInstances,omitempty"`
-	MemoryLimit          int64    `json:"memoryLimit,omitmepty"`
-	StorageLimit         string   `json:"storageLimit,omitempty"`
-	CpuShares            string   `json:"cpuShares,omitempty"`
-	DeploymentPolicyLink string   `json:"deploymentPolicyLink,omitempty"`
-	TenantLinks          []string `json:"tenantLinks,omitempty"`
-	DocumentKind         string   `json:"documentKind,omitempty"`
+	Name                 string          `json:"name,omitempty"`
+	ResourcePoolLink     string          `json:"resourcePoolLink,omitempty"`
+	Priority             string          `json:"priority,omitempty"`
+	ResourceType         string          `json:"resourceType,omitempty"`
+	MaxNumberInstances   int64           `json:"maxNumberInstances"`
+	MemoryLimit          int64           `json:"memoryLimit"`
+	StorageLimit         string          `json:"storageLimit,omitempty"`
+	CpuShares            string          `json:"cpuShares,omitempty"`
+	DeploymentPolicyLink utils.NilString `json:"deploymentPolicyLink,omitempty"`
+	TenantLinks          []string        `json:"tenantLinks,omitempty"`
+	DocumentKind         string          `json:"documentKind,omitempty"`
 
 	AvailableInstancesCount      int32            `json:"availableInstancesCount,omitempty"`
-	AllocatedInstancesCount      int32            `json:"allocatedInstancesCount"`
+	AllocatedInstancesCount      int32            `json:"allocatedInstancesCount,omitempty"`
 	AvailableMemory              int32            `json:"availableMemory,omitempty"`
-	ResourceQuotaPerResourceDesc map[string]int32 `json:"resourceQuotaPerResourceDesc"`
+	ResourceQuotaPerResourceDesc map[string]int32 `json:"resourceQuotaPerResourceDesc,omitempty"`
+}
+
+func (pta *PlacementToAdd) SetTenantLinks(tenantLink string) {
+	if tenantLink == "" {
+		return
+	}
+	if utils.IsVraMode {
+		fullBusinessGroupId, err := businessgroups.GetFullId(tenantLink)
+		utils.CheckBlockingError(err)
+		businessGroupLink := utils.CreateResLinkForBusinessGroup(fullBusinessGroupId, config.TENANT)
+		tenantLinks := make([]string, 0)
+		tenantLinks = append(tenantLinks, businessGroupLink)
+		tenantLinks = append(tenantLinks, utils.CreateResLinkForTenant(config.TENANT))
+		pta.TenantLinks = tenantLinks
+	} else {
+		fullProjectId, err := selflink.GetFullId(tenantLink, new(projects.ProjectList), utils.PROJECT)
+		utils.CheckBlockingError(err)
+		projectLink := utils.CreateResLinkForProject(fullProjectId)
+		pta.TenantLinks = []string{projectLink}
+	}
+}
+
+func (pta *PlacementToAdd) SetDeploymentPolicy(dpId string) {
+	dpLink := utils.NilString{}
+	if dpId == "" {
+		dpLink.Value = ""
+	} else {
+		fullDpId, err := selflink.GetFullId(dpId, new(deplPolicy.DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
+		utils.CheckBlockingError(err)
+		dpLink.Value = utils.CreateResLinkForDeploymentPolicies(fullDpId)
+	}
+	pta.DeploymentPolicyLink = dpLink
+}
+
+func (pta *PlacementToAdd) SetResourcePool(rpId string) {
+	fullRpId, err := selflink.GetFullId(rpId, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
+	utils.CheckBlockingError(err)
+	pta.ResourcePoolLink = utils.CreateResLinkForResourcePool(fullRpId)
 }
 
 type PlacementToUpdate struct {
@@ -93,8 +164,8 @@ type PlacementToUpdate struct {
 	ResourcePoolLink     string   `json:"resourcePoolLink,omitempty"`
 	Priority             int32    `json:"priority,omitempty"`
 	ResourceType         string   `json:"resourceType,omitempty"`
-	MaxNumberInstances   int32    `json:"maxNumberInstances,omitempty"`
-	MemoryLimit          int64    `json:"memoryLimit,omitmepty"`
+	MaxNumberInstances   int32    `json:"maxNumberInstances"`
+	MemoryLimit          int64    `json:"memoryLimit"`
 	StorageLimit         int32    `json:"storageLimit,omitempty"`
 	CpuShares            int32    `json:"cpuShares,omitempty"`
 	DeploymentPolicyLink string   `json:"deploymentPolicyLink,omitempty"`
@@ -105,6 +176,26 @@ type PlacementToUpdate struct {
 	AllocatedInstancesCount      int32            `json:"allocatedInstancesCount"`
 	AvailableMemory              int32            `json:"availableMemory,omitempty"`
 	ResourceQuotaPerResourceDesc map[string]int32 `json:"resourceQuotaPerResourceDesc"`
+}
+
+func (pta *PlacementToUpdate) SetTenantLinks(tenantLink string) {
+	if tenantLink == "" {
+		return
+	}
+	if utils.IsVraMode {
+		fullBusinessGroupId, err := businessgroups.GetFullId(tenantLink)
+		utils.CheckBlockingError(err)
+		businessGroupLink := utils.CreateResLinkForBusinessGroup(fullBusinessGroupId, config.TENANT)
+		tenantLinks := make([]string, 0)
+		tenantLinks = append(tenantLinks, businessGroupLink)
+		tenantLinks = append(tenantLinks, utils.CreateResLinkForTenant(config.TENANT))
+		pta.TenantLinks = tenantLinks
+	} else {
+		fullProjectId, err := selflink.GetFullId(tenantLink, new(projects.ProjectList), utils.PROJECT)
+		utils.CheckBlockingError(err)
+		projectLink := utils.CreateResLinkForProject(fullProjectId)
+		pta.TenantLinks = []string{projectLink}
+	}
 }
 
 type PlacementList struct {
@@ -143,43 +234,36 @@ func (pl *PlacementList) GetOutputString() string {
 		return utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer
-	buffer.WriteString("ID\tNAME\tPROJECT\tPLACEMENT ZONE\tPRIORITY\tINSTANCES\tCPU SHARES\tMEMORY LIMIT")
-	buffer.WriteString("\n")
+	if utils.IsVraMode {
+		buffer.WriteString("ID\tNAME\tBUSINESS GROUP\tPLACEMENT ZONE\tDEPLOYMENT POLICY\tPRIORITY\tINSTANCES\tCPU SHARES\tMEMORY LIMIT")
+		buffer.WriteString("\n")
+	} else {
+		buffer.WriteString("ID\tNAME\tPROJECT\tPLACEMENT ZONE\tPRIORITY\tINSTANCES\tCPU SHARES\tMEMORY LIMIT")
+		buffer.WriteString("\n")
+	}
 	for _, link := range pl.DocumentLinks {
 		val := pl.Documents[link]
-		var (
-			pz      string
-			project string
-		)
+		var placementZone string
 
 		if strings.TrimSpace(val.ResourcePoolLink) == "" {
-			pz = ""
+			placementZone = ""
 		} else {
-			pz, _ = placementzones.GetPZName(val.ResourcePoolLink)
+			placementZone, _ = placementzones.GetPZName(val.ResourcePoolLink)
 		}
 
-		// Currently disabled!
-		//if strings.TrimSpace(val.DeploymentPolicyLink) == "" {
-		//	dp = ""
-		//} else {
-		//	dp, _ = deplPolicy.GetDPName(val.DeploymentPolicyLink)
-		//}
-
-		if len(val.TenantLinks) < 1 {
-			project = ""
+		if utils.IsVraMode {
+			businessGroup := val.GetTenantOrProjectName()
+			deploymentPolicy := val.GetDeploymentPolicyName()
+			output := utils.GetTabSeparatedString(val.GetID(), val.Name, businessGroup, placementZone, deploymentPolicy, val.Priority,
+				val.AvailableInstancesCount, val.CpuShares, val.GetFormattedMemoryLimit())
+			buffer.WriteString(output)
+			buffer.WriteString("\n")
 		} else {
-			projectIndex := GetProjectLinkIndex(val.TenantLinks)
-			if projectIndex != -1 && val.TenantLinks[projectIndex] != "" {
-				project, _ = projects.GetProjectName(val.TenantLinks[0])
-			} else {
-				project = ""
-			}
+			output := utils.GetTabSeparatedString(val.GetID(), val.Name, val.GetTenantOrProjectName(), placementZone, val.Priority,
+				val.AvailableInstancesCount, val.CpuShares, val.GetFormattedMemoryLimit())
+			buffer.WriteString(output)
+			buffer.WriteString("\n")
 		}
-		output := utils.GetTabSeparatedString(val.GetID(), val.Name, project, pz, val.Priority,
-			val.AvailableInstancesCount, val.CpuShares, val.GetFormattedMemoryLimit())
-		buffer.WriteString(output)
-		buffer.WriteString("\n")
-
 	}
 	return strings.TrimSpace(buffer.String())
 }
@@ -209,50 +293,26 @@ func RemovePlacementID(id string) (string, error) {
 	return fullId, nil
 }
 
-func AddPlacement(namePol, cpuShares, instances, priority, projectId, placementZoneId, deplPolId string, memoryLimit int64) (string, error) {
+func AddPlacement(namePol, cpuShares, priority, projectId, placementZoneId, deplPolId string, memoryLimit, instances int64) (string, error) {
 	url := urlutils.BuildUrl(urlutils.Placement, nil, true)
 	var (
-		err         error
-		dpLink      string
-		rpLink      string
-		projectLink string
+		err error
 	)
-
 	if !haveNeeded(placementZoneId) {
 		return "", PlacementZoneRequiredError
 	}
 
-	if deplPolId != "" {
-		var fullDpId string
-		fullDpId, err = selflink.GetFullId(deplPolId, new(deplPolicy.DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
-		utils.CheckBlockingError(err)
-		dpLink = utils.CreateResLinkForDP(fullDpId)
-	}
-
-	fullRpId, err := selflink.GetFullId(placementZoneId, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
-
-	utils.CheckBlockingError(err)
-	rpLink = utils.CreateResLinkForResourcePool(fullRpId)
-
-	if projectId != "" {
-		var fullProjectId string
-		fullProjectId, err = selflink.GetFullId(projectId, new(projects.ProjectList), utils.PROJECT)
-		utils.CheckBlockingError(err)
-		projectLink = utils.CreateResLinkForProject(fullProjectId)
-	}
-
 	placement := PlacementToAdd{
-		//Must
-		Name:                 namePol,
-		MaxNumberInstances:   instances,
-		ResourcePoolLink:     rpLink,
-		DeploymentPolicyLink: dpLink,
-		TenantLinks:          []string{projectLink},
-		//Optional
-		CpuShares:   cpuShares,
-		MemoryLimit: memoryLimit,
-		Priority:    priority,
+		Name:               namePol,
+		MaxNumberInstances: instances,
+		ResourceType:       "DOCKER_CONTAINER",
+		CpuShares:          cpuShares,
+		MemoryLimit:        memoryLimit,
+		Priority:           priority,
 	}
+	placement.SetTenantLinks(projectId)
+	placement.SetDeploymentPolicy(deplPolId)
+	placement.SetResourcePool(placementZoneId)
 
 	jsonBody, err := json.Marshal(placement)
 	utils.CheckBlockingError(err)
@@ -309,16 +369,6 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, 
 	if priority != -1 {
 		oldPlacement.Priority = priority
 	}
-	if projectId != "" {
-		if len(oldPlacement.TenantLinks) == 0 || cap(oldPlacement.TenantLinks) == 0 {
-			oldPlacement.TenantLinks = make([]string, 1)
-		}
-		projectLinkIndex := GetProjectLinkIndex(oldPlacement.TenantLinks)
-		fullProjectId, err := selflink.GetFullId(projectId, new(projects.ProjectList), utils.PROJECT)
-		utils.CheckBlockingError(err)
-		projectLink := utils.CreateResLinkForProject(fullProjectId)
-		oldPlacement.TenantLinks[projectLinkIndex] = projectLink
-	}
 	if placementZoneID != "" {
 		fullPzId, err := selflink.GetFullId(placementZoneID, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
 		utils.CheckBlockingError(err)
@@ -327,11 +377,13 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, 
 	if deplPolId != "" {
 		fullDpId, err := selflink.GetFullId(deplPolId, new(deplPolicy.DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
 		utils.CheckBlockingError(err)
-		oldPlacement.DeploymentPolicyLink = utils.CreateResLinkForDP(fullDpId)
+		oldPlacement.DeploymentPolicyLink = utils.CreateResLinkForDeploymentPolicies(fullDpId)
 	}
 	if memoryLimit != 0 {
 		oldPlacement.MemoryLimit = memoryLimit
 	}
+
+	oldPlacement.SetTenantLinks(projectId)
 
 	jsonBody, err := json.Marshal(oldPlacement)
 	utils.CheckBlockingError(err)

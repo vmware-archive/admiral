@@ -66,7 +66,7 @@ func CreateResLinkForCredentials(id string) string {
 }
 
 //Function to create resource links from the provided ID as parameter.
-func CreateResLinkForDP(id string) string {
+func CreateResLinkForDeploymentPolicies(id string) string {
 	if id == "" {
 		return ""
 	}
@@ -122,11 +122,18 @@ func CreateResLinkForTemplate(id string) string {
 }
 
 //Function to create resource links from the provided ID as parameter.
-func CreateResLinkForBusinessGroup(id string) string {
+func CreateResLinkForBusinessGroup(id, tenant string) string {
 	if id == "" {
 		return ""
 	}
-	return fmt.Sprintf("/tenants/%s/groups/%s", GetTenant(), id)
+	return fmt.Sprintf("/tenants/%s/groups/%s", tenant, id)
+}
+
+func CreateResLinkForTenant(tenant string) string {
+	if tenant == "" {
+		return ""
+	}
+	return fmt.Sprintf("/tenants/%s", tenant)
 }
 
 func CreateResLinkForContainerDescription(id string) string {
@@ -245,7 +252,7 @@ func GetIdFilterUrl(shortId string, restype ResourceType) string {
 		shortSelfLink := CreateResLinkForCredentials(shortId)
 		url = CredentialsFilterID + createIdFilter(shortSelfLink)
 	case DEPLOYMENT_POLICY:
-		shortSelfLink := CreateResLinkForDP(shortId)
+		shortSelfLink := CreateResLinkForDeploymentPolicies(shortId)
 		url = DeploymentPolicyFilterID + createIdFilter(shortSelfLink)
 	case HOST:
 		shortSelfLink := CreateResLinksForHosts(shortId)

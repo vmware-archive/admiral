@@ -20,6 +20,7 @@ import (
 	"admiral/help"
 	"admiral/placements"
 
+	"admiral/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -55,12 +56,16 @@ var placementAddCmd = &cobra.Command{
 
 func initPlacementAdd() {
 	placementAddCmd.Flags().StringVar(&cpuShares, "cpu-shares", "", cpuSharesDesc)
-	placementAddCmd.Flags().StringVar(&instances, "instances", "", instancesDesc)
+	placementAddCmd.Flags().Int64Var(&instances, "instances", 0, instancesDesc)
 	placementAddCmd.Flags().StringVar(&priority, "priority", "", priorityDesc)
-	placementAddCmd.Flags().StringVar(&projectF, "project", "", projectFDesc)
 	placementAddCmd.Flags().StringVar(&placementZoneId, "placement-zone", "", required+placementZoneIdDesc)
-	placementAddCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", deplPolicyFDesc)
 	placementAddCmd.Flags().StringVar(&memoryLimitStr, "memory-limit", "0kb", memoryLimitDesc)
+	if !utils.IsVraMode {
+		placementAddCmd.Flags().StringVar(&projectF, "project", "", projectFDesc)
+	} else {
+		placementAddCmd.Flags().StringVar(&projectF, "business-group", "", vraOptional+required+businessGroupIdDesc)
+		placementAddCmd.Flags().StringVar(&deplPolicyF, "deployment-policy", "", deplPolicyFDesc)
+	}
 	PlacementsRootCmd.AddCommand(placementAddCmd)
 }
 
@@ -101,7 +106,7 @@ func RunPlacementAdd(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	newID, err = placements.AddPlacement(name, cpuShares, instances, priority, projectF, placementZoneId, deplPolicyF, memoryLimit)
+	newID, err = placements.AddPlacement(name, cpuShares, priority, projectF, placementZoneId, deplPolicyF, memoryLimit, instances)
 	if err != nil {
 		return "", err
 	} else {

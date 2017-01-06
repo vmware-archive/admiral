@@ -20,6 +20,7 @@ import (
 
 	"admiral/businessgroups"
 	"admiral/client"
+	"admiral/config"
 	"admiral/images"
 	"admiral/projects"
 	"admiral/track"
@@ -287,9 +288,9 @@ func (rc *RunContainer) setTenantLink(tenantLinkId string) {
 	} else {
 		fullBusinessGroupId, err := businessgroups.GetFullId(tenantLinkId)
 		utils.CheckBlockingError(err)
-		businessGroupLink := utils.CreateResLinkForBusinessGroup(fullBusinessGroupId)
+		businessGroupLink := utils.CreateResLinkForBusinessGroup(fullBusinessGroupId, config.TENANT)
 		tenantLinks = append(tenantLinks, businessGroupLink)
-		tenantLinks = append(tenantLinks, "/tenants/"+utils.GetTenant())
+		tenantLinks = append(tenantLinks, utils.CreateResLinkForTenant(config.TENANT))
 	}
 	rc.TenantLinks = tenantLinks
 }

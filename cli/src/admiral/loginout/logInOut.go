@@ -60,6 +60,11 @@ func Login(username, password, configUrl string) (string, error) {
 	if token == "" {
 		return "", LoginFailedError
 	}
+
+	if utils.Quiet {
+		return token, nil
+	}
+
 	if utils.Verbose {
 		fmt.Printf("%s: %s\n", "x-xenon-aut-token", token)
 	}
@@ -153,14 +158,18 @@ func Loginvra(username, password, tenant, urlF string) (string, error) {
 	if err != nil || respLogin.Id == "" {
 		return "", LoginFailedError
 	}
+	config.SetProperty("Tenant", tenant)
 
-	utils.MkCliDir()
-	tokenFile, err := os.Create(utils.TokenPath())
+	if !utils.Quiet {
+		utils.MkCliDir()
+		tokenFile, err := os.Create(utils.TokenPath())
+		utils.CheckBlockingError(err)
+		tokenFile.Write([]byte("Bearer " + respLogin.Id))
+		tokenFile.Close()
+	} else {
+		return "Bearer " + respLogin.Id, nil
+	}
 
-	utils.CheckBlockingError(err)
-	tokenFile.Write([]byte(tenant))
-	tokenFile.Write([]byte("&Bearer " + respLogin.Id))
-	tokenFile.Close()
 	return successLoginMsg, nil
 }
 

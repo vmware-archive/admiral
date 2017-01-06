@@ -156,3 +156,16 @@ func buildIdError(idError, nameError error, idOrName string, resType utils.Resou
 		return nil
 	}
 }
+
+func GetBusinessGroupName(id string) string {
+	fullId, err := GetFullId(id)
+	utils.CheckBlockingError(err)
+	bgl := &BusinessGroupList{}
+	bgl.FetchBusinessGroups()
+	for _, bg := range *bgl {
+		if fullId == utils.GetResourceID(bg.Id) {
+			return bg.Label
+		}
+	}
+	return ""
+}

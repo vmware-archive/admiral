@@ -198,7 +198,7 @@ var (
 	// Placements flags
 	cpuShares          string
 	cpuSharesDesc      = "CPU shares."
-	instances          string
+	instances          int64
 	instancesDesc      = "Instances."
 	priority           string
 	priorityDesc       = "Priority."
@@ -352,6 +352,9 @@ func urlRemoveTrailingSlash(url string) string {
 }
 
 func makeQuietOutput(output string) string {
+	if !strings.Contains(output, ": ") {
+		return output
+	}
 	outputArr := strings.Split(output, ": ")
 	if len(outputArr) < 2 {
 		return ""
