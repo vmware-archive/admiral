@@ -927,7 +927,7 @@
           "descriptionDescription": "Description of the closure",
           "sourceDescription": "Source code to execute",
           "sourceURLDescription": "Source code accessible via URL. The content could be the code itself or a zip file. If source URL is used the field source code won't be used.",
-          "memoryLimitDescription": "Memory limit in megabytes",
+          "memoryLimitDescription": "Memory limit in megabytes. Max allowed value is 1536 MB.",
           "timeoutDescription": "Execution timeout in seconds. If execution exceeds the timeout the task execution is cancelled.",
           "entrypointDescription": "Main function to be called in the form: file_name.function_name",
           "logDriverDescription": "Logging driver for the closure task",
