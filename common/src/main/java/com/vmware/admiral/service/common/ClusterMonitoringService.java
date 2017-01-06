@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.service.common;
 
+import static com.vmware.xenon.services.common.NodeState.NodeStatus.AVAILABLE;
 import static com.vmware.xenon.services.common.NodeState.NodeStatus.UNAVAILABLE;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -135,6 +136,7 @@ public class ClusterMonitoringService extends StatelessService {
 
             int nowUnavailable = countNodesWithStatus(ngs, UNAVAILABLE, true);
             int beforeUnavailable = countNodesWithStatus(currentState, UNAVAILABLE, true);
+            int nowAvailable = countNodesWithStatus(ngs, AVAILABLE, true);
 
             if ((nowUnavailable > 0) // some node is unavailable now
                     && (nowUnavailable > beforeUnavailable) // it wasn't unavailable before
@@ -143,7 +145,11 @@ public class ClusterMonitoringService extends StatelessService {
                 // One working node left now and it's me... setting quorum to 1. Other scenarios
                 // should be handled by Xenon.
 
-                updateQuorumOperation = createUpdateQuorumOperation();
+                updateQuorumOperation = createUpdateQuorumOperation(nowAvailable);
+
+            // xenon removes unavailable nodes before excution of this task
+            } else if (beforeUnavailable > nowUnavailable) {
+                updateQuorumOperation = createUpdateQuorumOperation(nowAvailable);
             }
         } else {
             logInfo("Quorum update: %d", quorumUpdate.membershipQuorum);
@@ -206,12 +212,14 @@ public class ClusterMonitoringService extends StatelessService {
         return false;
     }
 
-    private Operation createUpdateQuorumOperation() {
+    private Operation createUpdateQuorumOperation(int availableNodes) {
 
         UpdateQuorumRequest request = new UpdateQuorumRequest();
         request.isGroupUpdate = true;
         request.kind = UpdateQuorumRequest.KIND;
-        request.membershipQuorum = 1;
+        request.membershipQuorum = (availableNodes / 2) + 1;
+
+        logInfo("Updating membershipQuorum to %d", request.membershipQuorum);
 
         return Operation.createPatch(this, this.cachedState.nodeGroupLink)
                 .setBody(request)
