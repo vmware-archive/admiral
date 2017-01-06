@@ -27,6 +27,7 @@ type Config struct {
 	User          string `json:"user"`
 	TaskTimeout   string `json:"taskTimeout"`
 	ClientTimeout string `json:"clientTimeout"`
+	Tenant        string `json:"tenant,omitempty"`
 }
 
 //Default Values
@@ -43,6 +44,7 @@ var (
 	USER           string
 	TASK_TIMEOUT   int
 	CLIENT_TIMEOUT int
+	TENANT         string
 )
 
 //GetCfg is trying to load configurable properties from the config file.
@@ -84,6 +86,10 @@ func GetCfg() {
 	} else {
 		CLIENT_TIMEOUT, err = strconv.Atoi(cfg.ClientTimeout)
 		utils.CheckBlockingError(err)
+	}
+
+	if strings.TrimSpace(cfg.Tenant) != "" {
+		TENANT = cfg.Tenant
 	}
 }
 

@@ -209,15 +209,18 @@ func GetProjectLinks(name string) ([]string, error) {
 
 //GetProjectName takes self link of project as parameter and returns
 //the name of that project.
-func GetProjectName(link string) (string, error) {
-	url := config.URL + link
+func GetProjectName(link string) string {
+	if link == "" {
+		return ""
+	}
+	fullId, err := selflink.GetFullId(link, new(ProjectList), utils.PROJECT)
+	utils.CheckBlockingError(err)
+	url := config.URL + utils.CreateResLinkForProject(fullId)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
-	if respErr != nil {
-		return "", respErr
-	}
+	utils.CheckBlockingError(respErr)
 	project := &Project{}
-	err := json.Unmarshal(respBody, project)
+	err = json.Unmarshal(respBody, project)
 	utils.CheckBlockingError(err)
-	return project.Name, nil
+	return project.Name
 }

@@ -138,7 +138,7 @@ func (h *Host) SetCustomProperties(ipF, deplPolicyID, name, credID,
 	if deplPolicyID != "" {
 		fullDpId, err := selflink.GetFullId(deplPolicyID, new(deplPolicy.DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
 		utils.CheckBlockingError(err)
-		dpLink = utils.CreateResLinkForDP(fullDpId)
+		dpLink = utils.CreateResLinkForDeploymentPolicies(fullDpId)
 	}
 
 	properties.ParseCustomProperties(custProps, h.CustomProperties)

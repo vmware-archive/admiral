@@ -110,7 +110,7 @@ func RemoveDP(name string) (string, error) {
 func RemoveDPID(id string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
 	utils.CheckBlockingError(err)
-	link := utils.CreateResLinkForDP(fullId)
+	link := utils.CreateResLinkForDeploymentPolicies(fullId)
 	url := config.URL + link
 	req, _ := http.NewRequest("DELETE", url, nil)
 	_, _, respErr := client.ProcessRequest(req)
@@ -171,7 +171,7 @@ func EditDP(dpName, newName, newDescription string) (string, error) {
 func EditDPID(id, newName, newDescription string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
 	utils.CheckBlockingError(err)
-	url := config.URL + utils.CreateResLinkForDP(fullId)
+	url := config.URL + utils.CreateResLinkForDeploymentPolicies(fullId)
 	dp := &DeploymentPolicy{
 		Name:             newName,
 		Description:      newDescription,
@@ -215,16 +215,16 @@ func GetDPLinks(name string) []string {
 }
 
 //GetDPName takes deployment policy self link as parameter and returns it's name.
-func GetDPName(link string) (string, error) {
-	url := config.URL + link
+func GetDPName(link string) string {
+	fullId, err := selflink.GetFullId(link, new(DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
+	utils.CheckBlockingError(err)
+	url := config.URL + utils.CreateResLinkForDeploymentPolicies(fullId)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
-	if respErr != nil {
-		return "", respErr
-	}
-	dp := DeploymentPolicy{}
+	utils.CheckBlockingError(respErr)
+	dp := &DeploymentPolicy{}
 	//Ignoring error, because default deployment policy is crashing
 	_ = json.Unmarshal(respBody, dp)
 	//functions.CheckJson(err)
-	return dp.Name, nil
+	return dp.Name
 }
