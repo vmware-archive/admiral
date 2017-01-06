@@ -31,7 +31,6 @@ import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
-import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
@@ -57,7 +56,6 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         waitForServiceAvailability(ComputeService.FACTORY_LINK);
         waitForServiceAvailability(ComputeDescriptionService.FACTORY_LINK);
         waitForServiceAvailability(ContainerHostService.SELF_LINK);
-        waitForServiceAvailability(HostPortProfileService.FACTORY_LINK);
         waitForServiceAvailability(SslTrustCertificateService.FACTORY_LINK);
         ServerX509TrustManager.init(host);
 

@@ -41,7 +41,6 @@ import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
-import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
@@ -303,7 +302,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
     }
 
     @Test
-    public void testRemovingOfCompositeDescriptionAndContainerRemovals() throws Throwable {
+    public void testRemovingOfCompositeDescritionAndContainerRemovals() throws Throwable {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
         desc2.affinity = new String[] { desc1.name };
@@ -643,48 +642,6 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         assertNull(createdCompDesc);
         compositeComp = searchForDocument(CompositeComponent.class, compositeComp.documentSelfLink);
         assertNull(compositeComp);
-    }
-
-    /**
-     * Validate ports are released when container is removed
-     */
-    @Test
-    public void testReleasePortsWhenRemoveContainer() throws Throwable {
-        ContainerDescription desc = TestRequestStateFactory.createContainerDescription("name",
-                false, true);
-        desc = doPost(desc, ContainerDescriptionService.FACTORY_LINK);
-
-        // create container
-        RequestBrokerState request = TestRequestStateFactory.createRequestState();
-        request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceDescriptionLink = desc.documentSelfLink;
-        request = startRequest(request);
-        request = waitForRequestToComplete(request);
-        String documentLink = request.resourceLinks.iterator().next();
-        hostPortProfileState = getDocument(HostPortProfileService.HostPortProfileState.class,
-                hostPortProfileState.documentSelfLink);
-        // ports allocated
-        assertTrue(hostPortProfileState.reservedPorts
-                .entrySet()
-                .stream()
-                .allMatch(p -> documentLink.equals(p.getValue())));
-
-        // remove Container
-        request = TestRequestStateFactory.createRequestState();
-        request.tenantLinks = groupPlacementState.tenantLinks;
-        request.resourceLinks = new HashSet<String>();
-        request.resourceLinks.add(documentLink);
-        request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
-        request = startRequest(request);
-
-        waitForRequestToComplete(request);
-        hostPortProfileState = getDocument(HostPortProfileService.HostPortProfileState.class,
-                hostPortProfileState.documentSelfLink);
-        // ports allocated
-        assertTrue(hostPortProfileState.reservedPorts
-                .entrySet()
-                .stream()
-                .noneMatch(p -> documentLink.equals(p.getValue())));
     }
 
     private ContainerState createContainer(CompositeComponent component) throws Throwable {

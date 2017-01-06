@@ -221,6 +221,7 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
         ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
         container2Desc.name = "container2";
+        container2Desc.portBindings = null;
 
         if (overlay) {
             container2Desc.affinity = new String[] { "!container1:hard" };

@@ -43,7 +43,6 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState.Powe
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
-import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
@@ -99,7 +98,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected ComputeDescription vmGuestComputeDescription;
     protected ComputeState vmGuestComputeState;
     protected ContainerDescription containerDesc;
-    protected HostPortProfileService.HostPortProfileState hostPortProfileState;
     protected ContainerNetworkDescription containerNetworkDesc;
     protected ContainerVolumeDescription containerVolumeDesc;
     protected GroupResourcePlacementState groupPlacementState;
@@ -123,7 +121,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
         groupPlacementState = createGroupResourcePlacement(resourcePool);
         ComputeDescription dockerHostDesc = createDockerHostDescription();
         createDockerHost(dockerHostDesc, resourcePool);
-        createHostPortProfile();
 
         // setup Container desc:
         createContainerDescription();
@@ -170,8 +167,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 ConfigurationFactoryService.SELF_LINK,
                 EventLogService.FACTORY_LINK,
                 CounterSubTaskService.FACTORY_LINK,
-                ReservationAllocationTaskService.FACTORY_LINK,
-                HostPortProfileService.FACTORY_LINK));
+                ReservationAllocationTaskService.FACTORY_LINK));
 
         // admiral states:
         services.addAll(Arrays.asList(
@@ -403,20 +399,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected ComputeState createDockerHost(ComputeDescription computeDesc,
             ResourcePoolState resourcePool, boolean generateId) throws Throwable {
         return createDockerHost(computeDesc, resourcePool, Integer.MAX_VALUE - 100L, generateId);
-    }
-
-    protected void createHostPortProfile() throws Throwable {
-        if (hostPortProfileState != null) {
-            return;
-        }
-        hostPortProfileState = new HostPortProfileService.HostPortProfileState();
-        hostPortProfileState.hostLink = computeHost.documentSelfLink;
-        hostPortProfileState.id = computeHost.id;
-        hostPortProfileState.documentSelfLink = hostPortProfileState.id;
-        hostPortProfileState = getOrCreateDocument(hostPortProfileState,
-                HostPortProfileService.FACTORY_LINK);
-        assertNotNull(hostPortProfileState);
-        documentsForDeletion.add(hostPortProfileState);
     }
 
     protected ComputeState createVmGuestCompute(boolean generateId) throws Throwable {

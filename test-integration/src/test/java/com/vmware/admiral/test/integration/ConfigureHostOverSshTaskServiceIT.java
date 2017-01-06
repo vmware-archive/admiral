@@ -38,7 +38,6 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
-import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.host.CaSigningCertService;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
@@ -84,13 +83,11 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         host.startFactory(new SslTrustCertificateService());
         host.startService(new SslTrustImportService());
         host.startService(new ContainerHostService());
-        host.startFactory(new HostPortProfileService());
         waitForServiceAvailability(ComputeService.FACTORY_LINK);
         waitForServiceAvailability(ComputeDescriptionService.FACTORY_LINK);
         waitForServiceAvailability(SslTrustCertificateService.FACTORY_LINK);
         waitForServiceAvailability(SslTrustImportService.SELF_LINK);
         waitForServiceAvailability(ContainerHostService.SELF_LINK);
-        waitForServiceAvailability(HostPortProfileService.FACTORY_LINK);
 
         // Others
         host.startService(new DockerHostAdapterService());
