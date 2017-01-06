@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_NAME_PROP_NAME;
+
+import java.util.Map;
 import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.common.VolumeOperationType;
@@ -118,7 +121,7 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
                 break;
 
             case INSPECT:
-                processInspectVolume(context);
+                inspectAndUpdateVolume(context);
                 break;
 
             case LIST_VOLUMES:
@@ -172,21 +175,56 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
         });
     }
 
-    private void processInspectVolume(RequestContext context) {
-        CommandInput inspectCommandInput = context.commandInput.withPropertyIfNotNull(
-                DockerAdapterCommandExecutor.DOCKER_VOLUME_NAME_PROP_NAME,
-                context.volumeState.name);
+    @SuppressWarnings("unchecked")
+    private void inspectAndUpdateVolume(RequestContext context) {
+        CommandInput inspectCommandInput = context.commandInput.withProperty(
+                DOCKER_VOLUME_NAME_PROP_NAME, context.volumeState.name);
 
-        context.executor.inspectVolume(inspectCommandInput, (op, ex) -> {
-            if (ex != null) {
-                context.operation.fail(ex);
-            } else {
-                if (op.hasBody()) {
-                    context.operation.setBody(op.getBody(String.class));
-                }
-                context.operation.complete();
-            }
-        });
+        getHost().log(Level.FINE, "Executing inspect volume: %s %s",
+                context.volumeState.documentSelfLink, context.request.getRequestTrackingLog());
+
+        context.executor.inspectVolume(
+                inspectCommandInput,
+                (o, ex) -> {
+                    if (ex != null) {
+                        fail(context.request, o, ex);
+                    } else {
+                        handleExceptions(context.request,
+                                context.operation,
+                                () -> {
+                                    Map<String, Object> properties = o.getBody(Map.class);
+
+                                    patchVolumeState(context.request, context.volumeState,
+                                            properties, context);
+                                });
+                    }
+                });
+    }
+
+    private void patchVolumeState(ContainerVolumeRequest request,
+            ContainerVolumeState volumeState, Map<String, Object> properties,
+            RequestContext context) {
+
+        ContainerVolumeState newVolumeState = new ContainerVolumeState();
+        newVolumeState.documentSelfLink = volumeState.documentSelfLink;
+        newVolumeState.documentExpirationTimeMicros = -1; // make sure the expiration is reset.
+        newVolumeState.adapterManagementReference = volumeState.adapterManagementReference;
+
+        ContainerVolumeStateMapper.propertiesToContainerVolumeState(newVolumeState, properties);
+
+        getHost().log(Level.FINE, "Patching ContainerVolumeState: %s %s",
+                newVolumeState.documentSelfLink,
+                request.getRequestTrackingLog());
+        sendRequest(Operation
+                .createPatch(request.getVolumeStateReference())
+                .setBody(newVolumeState)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        fail(context.request, o, ex);
+                    } else {
+                        patchTaskStage(request, TaskStage.FINISHED, ex);
+                    }
+                }));
     }
 
     private void processListVolume(RequestContext context) {

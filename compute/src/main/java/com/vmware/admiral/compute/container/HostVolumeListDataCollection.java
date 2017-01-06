@@ -291,7 +291,7 @@ public class HostVolumeListDataCollection extends StatefulService {
                                 volumeState.originatingHostLink = callback.containerHostLink;
 
                                 volumeState.adapterManagementReference = UriUtils
-                                        .buildUri(ManagementUriParts.ADAPTER_DOCKER_NETWORK);
+                                        .buildUri(ManagementUriParts.ADAPTER_DOCKER_VOLUME);
 
                                 volumesLeft.add(volumeState);
                             }

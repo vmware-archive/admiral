@@ -19,6 +19,7 @@ import java.util.Map;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.compute.container.maintenance.ContainerVolumeMaintenance;
 import com.vmware.admiral.compute.container.util.CompositeComponentNotifier;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
@@ -36,6 +37,8 @@ import com.vmware.xenon.common.Utils;
 public class ContainerVolumeService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CONTAINER_VOLUMES;
+
+    private volatile ContainerVolumeMaintenance containerVolumeMaintenance;
 
     public static class ContainerVolumeState extends ResourceState {
 
@@ -137,6 +140,8 @@ public class ContainerVolumeService extends StatefulService {
         toggleOption(ServiceOption.PERSISTENCE, true);
         toggleOption(ServiceOption.REPLICATION, true);
         toggleOption(ServiceOption.OWNER_SELECTION, true);
+        toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
+        super.setMaintenanceIntervalMicros(ContainerVolumeMaintenance.MAINTENANCE_INTERVAL_MICROS);
     }
 
     @Override
@@ -146,6 +151,9 @@ public class ContainerVolumeService extends StatefulService {
         if (body.powerState == null) {
             body.powerState = ContainerVolumeState.PowerState.UNKNOWN;
         }
+
+        // start the monitoring service instance for this network
+        startMonitoringContainerVolumeState(body);
 
         CompositeComponentNotifier.notifyCompositionComponent(this,
                 body.compositeComponentLink, create.getAction());
@@ -197,6 +205,43 @@ public class ContainerVolumeService extends StatefulService {
                 currentState.compositeComponentLink, delete.getAction());
 
         super.handleDelete(delete);
+    }
+
+    @Override
+    public void handlePeriodicMaintenance(Operation post) {
+        if (getProcessingStage() != ProcessingStage.AVAILABLE) {
+            logFine("Skipping maintenance since service is not available: %s ", getUri());
+            return;
+        }
+
+        if (containerVolumeMaintenance == null) {
+            sendRequest(Operation.createGet(getUri()).setCompletion((o, e) -> {
+                if (e == null) {
+                    ContainerVolumeState currentState = o.getBody(ContainerVolumeState.class);
+                    containerVolumeMaintenance = ContainerVolumeMaintenance.create(getHost(),
+                            getSelfLink(),
+                            currentState.descriptionLink != null
+                                    && !currentState.descriptionLink.startsWith(
+                                            ContainerVolumeDescriptionService.DISCOVERED_DESCRIPTION_LINK));
+                    containerVolumeMaintenance.handlePeriodicMaintenance(post);
+                }
+            }));
+            return;
+        }
+        containerVolumeMaintenance.handlePeriodicMaintenance(post);
+    }
+
+    private void startMonitoringContainerVolumeState(ContainerVolumeState body) {
+        // perform maintenance on startup to refresh the volume attributes
+        // but only for volumes that already exist
+        getHost().registerForServiceAvailability((o, ex) -> {
+            if (ex != null) {
+                logWarning("Skipping maintenance because service failed to start: "
+                        + ex.getMessage());
+            } else {
+                handlePeriodicMaintenance(o);
+            }
+        }, getSelfLink());
     }
 
     /**
