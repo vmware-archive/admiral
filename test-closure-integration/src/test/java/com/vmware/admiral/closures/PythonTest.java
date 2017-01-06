@@ -33,7 +33,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 import junit.framework.TestCase;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -83,11 +82,6 @@ public class PythonTest extends BaseIntegrationTest {
         SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildImageLink);
         SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildBaseImageLink);
         serviceClient.stop();
-    }
-
-    @Override
-    @After
-    public void provisioningTearDown() throws Exception {
     }
 
     @Before

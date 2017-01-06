@@ -36,7 +36,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -89,11 +88,6 @@ public class NodeJSTest extends BaseIntegrationTest {
         SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildImageLink);
         SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildBaseImageLink);
         serviceClient.stop();
-    }
-
-    @Override
-    @After
-    public void provisioningTearDown() throws Exception {
     }
 
     @Before
