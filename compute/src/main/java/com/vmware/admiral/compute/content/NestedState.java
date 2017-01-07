@@ -88,6 +88,7 @@ public class NestedState {
     /**
      * Send a request recursively through all objects in the hierarchy
      */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public DeferredResult<Operation> sendRequest(Service sender, Service.Action action) {
 
         Map<String, Class<? extends ServiceDocument>> fields = getLinkFields(object.getClass());
@@ -190,6 +191,7 @@ public class NestedState {
         return object.documentSelfLink;
     }
 
+    @SuppressWarnings("unchecked")
     public static DeferredResult<NestedState> get(Service sender, String documentLink,
             Class<? extends ServiceDocument> type) {
         //get the document

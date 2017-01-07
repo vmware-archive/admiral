@@ -69,8 +69,8 @@ import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Utils;
 
 /**
- * Utility class with methods for transforming Composite Templates from/to:
- * - Docker Compose (see {@link "https://docs.docker.com/compose/compose-file/"})
+ * Utility class with methods for transforming Composite Templates from/to: - Docker Compose (see
+ * {@link "https://docs.docker.com/compose/compose-file/"})
  */
 public class CompositeTemplateUtil {
 
@@ -80,14 +80,16 @@ public class CompositeTemplateUtil {
             .ofPattern("yyyy-MM-dd HH.mm.ss.SSS O");
 
     public enum YamlType {
-        DOCKER_COMPOSE, COMPOSITE_TEMPLATE, UNKNOWN
+        DOCKER_COMPOSE,
+        COMPOSITE_TEMPLATE,
+        UNKNOWN
     }
 
     /**
      * Returns the {@link YamlType} of the provided YAML.
      *
-     //     * @param yaml
-     *            The YAML content to process.
+     * // * @param yaml The YAML content to process.
+     *
      * @return {@link YamlType} of the provided YAML
      */
     public static YamlType getYamlType(String yaml) throws IOException {
@@ -156,26 +158,6 @@ public class CompositeTemplateUtil {
 
             entity = TemplateSerializationUtils.deserializeTemplate(deserialized);
 
-            if (!isNullOrEmpty(entity.components)) {
-                for (Entry<String, ComponentTemplate<CompositeTemplateContainerDescription>> entry : filterComponentTemplates(
-                        entity.components, CompositeTemplateContainerDescription.class)
-                                .entrySet()) {
-
-                    ComponentTemplate<CompositeTemplateContainerDescription> component = entry
-                            .getValue();
-
-                    if (component.data.networksList != null) {
-                        component.data.networks = component.data.networksList.stream()
-                                .collect(Collectors.toMap(n -> n.name, n -> n));
-                        component.data.networks.entrySet().stream().forEach(e -> {
-                            e.getValue().name = null;
-                        });
-
-                        component.data.networksList = null;
-                    }
-                }
-            }
-
             entity.bindings = new ArrayList<>(componentBindings);
         } catch (JsonProcessingException e) {
             String format = "Error processing Blueprint YAML content: %s";
@@ -184,33 +166,22 @@ public class CompositeTemplateUtil {
                     Level.INFO, format, e.getMessage());
             throw new IllegalArgumentException(String.format(format, e.getOriginalMessage()));
         }
-        sanitizeCompositeTemplate(entity);
+        sanitizeCompositeTemplate(entity, false);
         return entity;
     }
 
     public static String serializeCompositeTemplate(CompositeTemplate entity) throws IOException {
-        sanitizeCompositeTemplate(entity);
-
-        if (!isNullOrEmpty(entity.components)) {
-            normalizeContainerDescription(entity);
-            normalizeClosureDescriptions(entity);
-        }
+        sanitizeCompositeTemplate(entity, true);
 
         Map<String, Object> stringObjectMap = TemplateSerializationUtils.serializeTemplate(entity);
         return YamlMapper.objectWriter().writeValueAsString(stringObjectMap);
     }
 
-    private static void normalizeContainerDescription(CompositeTemplate entity) {
-        for (Entry<String, ComponentTemplate<ContainerDescription>> entry : filterComponentTemplates(
-                entity.components, ContainerDescription.class).entrySet()) {
-
-            ComponentTemplate<ContainerDescription> component = entry.getValue();
-
-            CompositeTemplateContainerDescription newData =
-                    new CompositeTemplateContainerDescription();
-
+    private static void normalizeContainerDescription(
+            ComponentTemplate<ContainerDescription> component, boolean serialize) {
+        if (serialize) {
+            CompositeTemplateContainerDescription newData = new CompositeTemplateContainerDescription();
             PropertyUtils.mergeServiceDocuments(newData, component.data);
-
             if (newData.networks != null) {
                 newData.networks.entrySet().forEach((e -> {
                     if (e.getValue() instanceof Map) {
@@ -225,15 +196,29 @@ public class CompositeTemplateUtil {
                 newData.networksList = newData.networks.entrySet().stream()
                         .map(Entry::getValue)
                         .collect(Collectors.toList());
-
                 newData.networks = null;
             }
-
             component.data = newData;
+        } else {
+            // During deserialization the actual type is CompositeTemplateContainerDescription.
+            CompositeTemplateContainerDescription templateDescription = (CompositeTemplateContainerDescription) component.data;
+            if (templateDescription.networksList != null) {
+                templateDescription.networks = templateDescription.networksList.stream()
+                        .collect(Collectors.toMap(n -> n.name, n -> n));
+                templateDescription.networks.entrySet().stream().forEach(e -> {
+                    e.getValue().name = null;
+                });
+
+                templateDescription.networksList = null;
+            }
         }
     }
 
-    private static void normalizeClosureDescriptions(CompositeTemplate entity) {
+    private static void normalizeClosureDescriptions(CompositeTemplate entity, boolean serialize) {
+        if (!serialize) {
+            return;
+        }
+
         for (Entry<String, ComponentTemplate<ClosureDescription>> entry : filterComponentTemplates(
                 entity.components, ClosureDescription.class).entrySet()) {
 
@@ -313,50 +298,60 @@ public class CompositeTemplateUtil {
         public Map<String, Object> serializedLogConfiguration;
     }
 
-    private static void sanitizeCompositeTemplate(CompositeTemplate entity) {
+    private static void sanitizeCompositeTemplate(CompositeTemplate entity, boolean serialize) {
         assertNotNull(entity, "entity");
 
         entity.id = null;
         entity.status = null;
 
         if (!isNullOrEmpty(entity.components)) {
-            for (Entry<String, ComponentTemplate<ContainerDescription>> entry : filterComponentTemplates(
-                    entity.components, ContainerDescription.class).entrySet()) {
+            sanitizeContainerComponents(entity, serialize);
+            sanitizeContainerNerworkComponents(entity);
+            normalizeClosureDescriptions(entity, serialize);
+        }
+    }
 
-                ComponentTemplate<ContainerDescription> component = entry.getValue();
+    private static void sanitizeContainerNerworkComponents(CompositeTemplate entity) {
+        for (Entry<String, ComponentTemplate<ContainerNetworkDescription>> entry : filterComponentTemplates(
+                entity.components, ContainerNetworkDescription.class).entrySet()) {
 
-                if (!entry.getKey().equals(component.data.name)) {
-                    Utils.log(CompositeTemplateUtil.class,
-                            CompositeTemplateUtil.class.getSimpleName(),
-                            Level.WARNING,
-                            "Container name '%s' differs from component name '%s' and "
-                                    + "it will be overriden with the component name!",
-                            component.data.name, entry.getKey());
-                    component.data.name = entry.getKey();
-                }
+            ComponentTemplate<ContainerNetworkDescription> component = entry.getValue();
 
-                component.data.tenantLinks = null;
+            component.data.id = null;
+            component.data.tenantLinks = null;
+        }
+    }
 
-                // this could be a new serializer...
-                HealthConfig hc = component.data.healthConfig;
-                if (hc != null && hc.protocol == null) {
-                    component.data.healthConfig = null;
-                }
+    private static void sanitizeContainerComponents(CompositeTemplate entity, boolean serialize) {
+        for (Entry<String, ComponentTemplate<ContainerDescription>> entry : filterComponentTemplates(
+                entity.components, ContainerDescription.class).entrySet()) {
 
-                // this could be a new serializer...
-                LogConfig lc = component.data.logConfig;
-                if (lc != null && lc.type == null && isNullOrEmpty(lc.config)) {
-                    component.data.logConfig = null;
-                }
+            ComponentTemplate<ContainerDescription> component = entry.getValue();
+
+            normalizeContainerDescription(component, serialize);
+
+            if (!entry.getKey().equals(component.data.name)) {
+                Utils.log(CompositeTemplateUtil.class,
+                        CompositeTemplateUtil.class.getSimpleName(),
+                        Level.WARNING,
+                        "Container name '%s' differs from component name '%s' and "
+                                + "it will be overriden with the component name!",
+                        component.data.name, entry.getKey());
+                component.data.name = entry.getKey();
             }
 
-            for (Entry<String, ComponentTemplate<ContainerNetworkDescription>> entry : filterComponentTemplates(
-                    entity.components, ContainerNetworkDescription.class).entrySet()) {
+            component.data.tenantLinks = null;
 
-                ComponentTemplate<ContainerNetworkDescription> component = entry.getValue();
+            // this could be a new serializer...
+            HealthConfig hc = component.data.healthConfig;
+            if (hc != null && hc.protocol == null) {
+                component.data.healthConfig = null;
+            }
 
-                component.data.id = null;
-                component.data.tenantLinks = null;
+            // this could be a new serializer...
+            LogConfig lc = component.data.logConfig;
+            if (lc != null && lc.type == null && isNullOrEmpty(lc.config)) {
+                component.data.logConfig = null;
             }
         }
     }
@@ -364,16 +359,11 @@ public class CompositeTemplateUtil {
     @SuppressWarnings("unchecked")
     public static <T> Map<String, ComponentTemplate<T>> filterComponentTemplates(
             Map<String, ComponentTemplate<?>> templates, Class<T> type) {
-        Map<String, ComponentTemplate<T>> templatesFiltered = new LinkedHashMap<>();
 
-        for (Entry<String, ComponentTemplate<?>> template : templates.entrySet()) {
-            if (type.isAssignableFrom(template.getValue().data.getClass())) {
-                templatesFiltered.put(template.getKey(),
-                        (ComponentTemplate<T>) template.getValue());
-            }
-        }
-
-        return templatesFiltered;
+        return templates.entrySet().stream()
+                .filter(e -> type.isAssignableFrom(e.getValue().data.getClass()))
+                .collect(Collectors.toMap(e -> e.getKey(),
+                        e -> (ComponentTemplate<T>) e.getValue()));
     }
 
     public static CompositeTemplate fromDockerComposeToCompositeTemplate(DockerCompose compose) {
@@ -439,47 +429,17 @@ public class CompositeTemplateUtil {
         // properties from Docker Compose NOT AVAILABLE in Container Description
 
         /*
-         * -- Service specific --
-         * build
-         * context
-         * dockerfile
-         * args
-         * cgroup_parent
-         * tmpfs
-         * env_file
-         * expose
-         * extends
-         * external_links
-         * labels (~ our custom properties?)
-         * aliases
-         * security_opt
-         * stop_signal
-         * ulimits
-         * cpu_quota
-         * cpuset
-         * ipc
-         * mac_address
-         * read_only
-         * shm_size
-         * stdin_open
-         * tty
+         * -- Service specific -- build context dockerfile args cgroup_parent tmpfs env_file expose
+         * extends external_links labels (~ our custom properties?) aliases security_opt stop_signal
+         * ulimits cpu_quota cpuset ipc mac_address read_only shm_size stdin_open tty
          */
 
         // properties from Container Description NOT AVAILABLE in Docker Compose
 
         /*
-         * parentDescriptionLink
-         * imageReference
-         * instanceAdapterReference
-         * zoneId
-         * pod
-         * affinity
-         * _cluster
-         * publishAll
-         * binds (vs volumes?)
-         * exposeService
-         * deploymentPolicyId
-         * customProperties (~ Docker's labels?)
+         * parentDescriptionLink imageReference instanceAdapterReference zoneId pod affinity
+         * _cluster publishAll binds (vs volumes?) exposeService deploymentPolicyId customProperties
+         * (~ Docker's labels?)
          */
 
         // properties mapping:

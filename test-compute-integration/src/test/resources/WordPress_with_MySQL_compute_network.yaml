@@ -1,19 +1,16 @@
 ---
 name: "wordPressWithMySqlCompute"
-properties:
-  _leaseDays: "3"
 components:
   mysql:
     type: "Compute"
     data:
       name: "mysql"
-      environmentName: "On premise"
       instanceType: small
-      imageType: "ubuntu-server-1604"
+      imageType: "ubuntu-1604"
       networks:
         - name: "wpnet"
           address: 10.0.0.6
-          ports: [5432]
+          ports: 5432
       __computeConfigContent: |
           #cloud-config
           repo_update: true
@@ -31,13 +28,12 @@ components:
     type: "Compute"
     data:
       name: "wordpress"
-      environmentName: "On premise"
       instanceType: small
-      imageType: "ubuntu-server-1604"
+      imageType: "ubuntu-1604"
       networks:
         - name: "wpnet"
         - name: public-wpnet
-          ports: [443]
+          ports: 443
       __computeConfigContent: |
           #cloud-config
           repo_update: true
@@ -62,7 +58,7 @@ components:
     type: "Compute.Network"
     data:
       name: wpnet
-      assigment: static
+      assignment: static
   public-wpnet:
     type: "Compute.Network"
     data:

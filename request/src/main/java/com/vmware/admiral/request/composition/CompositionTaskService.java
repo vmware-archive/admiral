@@ -292,7 +292,7 @@ public class CompositionTaskService
 
         try {
             state.resourceNodes = compositionGraph
-                    .calculateGraph(compositeDesc)
+                    .calculateGraph(getHost(), compositeDesc)
                     .stream().collect(Collectors.toMap(
                             (r) -> buildCompositionSubTaskLink(r.name), Function.identity()));
 

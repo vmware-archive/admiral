@@ -155,6 +155,6 @@ public class WordpressProvisionIT extends BaseComputeProvisionIT {
 
     @Override
     protected String getResourceDescriptionLink() throws Exception {
-        return importTemplate("WordPress_with_MySQL_compute.yaml");
+        return importTemplate("WordPress_with_MySQL_compute_network.yaml");
     }
 }

@@ -91,6 +91,10 @@ public interface ManagementUriParts {
     String REQUEST_REMOVAL_OPERATIONS = REQUEST + "/resource-removal-operations";
     String REQUEST_ALLOCATION_TASKS = REQUEST + "/allocation-tasks";
     String REQUEST_COMPUTE_ALLOCATION_TASKS = REQUEST + "/compute-allocation-tasks";
+    String REQUEST_COMPUTE_NETWORK_ALLOCATION_TASKS = REQUEST
+            + "/compute-network-allocation-tasks";
+    String REQUEST_PROVISION_COMPUTE_NETWORK_TASKS = REQUEST
+            + "/provision-compute-network-tasks";
     String REQUEST_CONTAINER_NETWORK_ALLOCATION_TASKS = REQUEST
             + "/container-network-allocation-tasks";
     String REQUEST_CONTAINER_NETWORK_REMOVAL_TASKS = REQUEST + "/container-network-removal-tasks";

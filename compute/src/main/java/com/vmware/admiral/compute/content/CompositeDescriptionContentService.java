@@ -229,7 +229,7 @@ public class CompositeDescriptionContentService extends StatelessService {
         });
 
         if (handle.isDone()) {
-            //do something with the deferred result because findbugs complains
+            // do something with the deferred result because findbugs complains
         }
     }
 

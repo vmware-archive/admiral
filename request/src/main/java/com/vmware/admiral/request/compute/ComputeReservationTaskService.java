@@ -408,6 +408,8 @@ public class ComputeReservationTaskService
                         proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED,
                                 s -> {
                                     // Use a LinkedHashMap to preserve the order
+                                    logInfo("ResourcePoolsPerPlacement after filtering:"
+                                            + resourcePoolsPerGroupPlacementLinks);
                                     s.resourcePoolsPerGroupPlacementLinks = resourcePoolsPerGroupPlacementLinks;
 
                                 });

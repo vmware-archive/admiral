@@ -53,6 +53,7 @@ public class TemplateSerializationUtils {
         YamlMapper.objectMapper().addMixIn(ResourceState.class, ResourceStateMixin.class);
     }
 
+    @SuppressWarnings("unchecked")
     public static CompositeTemplate deserializeTemplate(Map<String, Object> initialMap) {
 
         Map<String, ComponentTemplate<?>> compositeTemplateComponents = new HashMap<>();
@@ -60,7 +61,7 @@ public class TemplateSerializationUtils {
         Map<String, Object> components = (Map<String, Object>) initialMap
                 .remove(BindingUtils.COMPONENTS);
         for (Map.Entry<String, Object> ce : components.entrySet()) {
-            ComponentTemplate componentTemplate = deserializeComponent(
+            ComponentTemplate<?> componentTemplate = deserializeComponent(
                     (Map<String, Object>) ce.getValue());
             compositeTemplateComponents.put(ce.getKey(), componentTemplate);
         }
@@ -73,6 +74,7 @@ public class TemplateSerializationUtils {
         return compositeTemplate;
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static Map<String, Object> serializeTemplate(CompositeTemplate template)
             throws IOException {
 
@@ -110,6 +112,7 @@ public class TemplateSerializationUtils {
         return result;
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static Map<String, Object> serializeNestedState(NestedState nestedState)
             throws IOException {
         Map<String, NestedState> children = nestedState.children;
@@ -158,19 +161,19 @@ public class TemplateSerializationUtils {
         return converted;
     }
 
-    private static ComponentTemplate deserializeComponent(Map<String, Object> obj) {
+    @SuppressWarnings("unchecked")
+    private static ComponentTemplate<?> deserializeComponent(Map<String, Object> obj) {
 
         String contentType = (String) obj.get("type");
-
-        Map<String, Object> data = (Map<String, Object>) obj.get("data");
 
         ResourceType resourceType = ResourceType.fromContentType(contentType);
         Class<? extends ResourceState> descriptionClass = CompositeComponentRegistry
                 .metaByType(resourceType.getName()).descriptionClass;
 
+        Map<String, Object> data = (Map<String, Object>) obj.get("data");
         Map<String, NestedState> children = deserializeChildren(data, descriptionClass);
 
-        ComponentTemplate componentTemplate = objectMapper()
+        ComponentTemplate<?> componentTemplate = objectMapper()
                 .convertValue(obj, ComponentTemplate.class);
 
         componentTemplate.children = children;
@@ -178,7 +181,7 @@ public class TemplateSerializationUtils {
         return componentTemplate;
     }
 
-    private static NestedState deserializeTemplate(
+    private static NestedState deserializeServiceDocument(
             Map<String, Object> value, Class<? extends ServiceDocument> type) {
 
         Map<String, NestedState> children = deserializeChildren(value, type);
@@ -198,6 +201,7 @@ public class TemplateSerializationUtils {
         return state;
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private static Map<String, NestedState> deserializeChildren(Map<String, Object> value,
             Class<? extends ServiceDocument> type) {
         Map<String, NestedState> children = new HashMap<>();
@@ -216,7 +220,7 @@ public class TemplateSerializationUtils {
             if (childType != null) {
 
                 if (nestedValue instanceof Map) {
-                    NestedState nestedState = deserializeTemplate(
+                    NestedState nestedState = deserializeServiceDocument(
                             (Map<String, Object>) nestedValue, childType);
                     children.put(nestedState.object.documentSelfLink, nestedState);
                     entry.setValue(nestedState.object.documentSelfLink);
@@ -227,7 +231,7 @@ public class TemplateSerializationUtils {
 
                     while (listIterator.hasNext()) {
                         Object next = listIterator.next();
-                        NestedState nestedState = deserializeTemplate(
+                        NestedState nestedState = deserializeServiceDocument(
                                 (Map<String, Object>) next, childType);
                         children.put(nestedState.object.documentSelfLink, nestedState);
                         listIterator.set(nestedState.object.documentSelfLink);
