@@ -30,6 +30,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.volume.VolumeUtil;
 import com.vmware.admiral.request.allocation.filter.AffinityFilters;
 import com.vmware.admiral.request.allocation.filter.ImplicitDependencyFilters;
+import com.vmware.xenon.common.ServiceHost;
 
 public class CompositionGraph {
     private final Map<String, ResourceNode> resourceNodesByName;
@@ -41,6 +42,8 @@ public class CompositionGraph {
     /**
      * Calculate the dependency order of the {@link ContainerDescription}s.
      *
+     * @param host
+     *            - serviceHost, optional
      * @param compositeDescription
      *            - list of {@link ContainerDescription}s to be provisioned.
      * @return list of {@link ResourceNode} order based on dependencies.
@@ -49,14 +52,12 @@ public class CompositionGraph {
      *             If there are nodes with same name, missing nodes or the graph has cyclic
      *             dependencies.
      */
-    public List<ResourceNode> calculateGraph(
-            final CompositeDescriptionExpanded compositeDescription)
-            throws IllegalArgumentException {
-
+    public List<ResourceNode> calculateGraph(ServiceHost host,
+            CompositeDescriptionExpanded compositeDescription) {
         AssertUtil.assertNotEmpty(compositeDescription.componentDescriptions, "serviceDocuments");
 
         populateResourceNodesByName(compositeDescription.componentDescriptions);
-        calculateResourceDependsOnNodes(compositeDescription);
+        calculateResourceDependsOnNodes(host, compositeDescription);
         addNamedVolumeConstraints(compositeDescription.componentDescriptions);
         calculateResourceNodeDependents();
 
@@ -83,6 +84,24 @@ public class CompositionGraph {
         }
 
         return processed;
+    }
+
+    /**
+     * Calculate the dependency order of the {@link ContainerDescription}s.
+     *
+     * @param compositeDescription
+     *            - list of {@link ContainerDescription}s to be provisioned.
+     * @return list of {@link ResourceNode} order based on dependencies.
+     *
+     * @throws IllegalArgumentException
+     *             If there are nodes with same name, missing nodes or the graph has cyclic
+     *             dependencies.
+     */
+    public List<ResourceNode> calculateGraph(
+            final CompositeDescriptionExpanded compositeDescription)
+            throws IllegalArgumentException {
+
+        return calculateGraph(null, compositeDescription);
     }
 
     private void addNamedVolumeConstraints(
@@ -259,10 +278,10 @@ public class CompositionGraph {
      * Use the Placement Selection filter to find out the needed dependencies for which the node
      * that a current node is dependent. <code>resourceNode.dependsOn</code> will be calculated.
      */
-    public void calculateResourceDependsOnNodes(
+    public void calculateResourceDependsOnNodes(ServiceHost host,
             CompositeDescriptionExpanded compositeDescription) {
         for (final ComponentDescription cd : compositeDescription.componentDescriptions) {
-            final AffinityFilters filters = AffinityFilters.build(null, cd);
+            final AffinityFilters filters = AffinityFilters.build(host, cd);
             final ResourceNode resourceNode = resourceNodesByName.get(cd.name);
             final Set<String> dependencies = filters.getUniqueDependencies();
             if (!dependencies.isEmpty()) {

@@ -73,6 +73,10 @@ import com.vmware.admiral.request.composition.CompositionTaskFactoryService;
 import com.vmware.admiral.request.composition.CompositionTaskService.CompositionTaskState;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
+import com.vmware.admiral.request.compute.ComputeNetworkAllocationTaskService;
+import com.vmware.admiral.request.compute.ComputeNetworkAllocationTaskService.ComputeNetworkAllocationTaskState;
+import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService;
+import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState;
 import com.vmware.admiral.request.compute.ComputeOperationTaskService;
 import com.vmware.admiral.request.compute.ComputeOperationTaskService.ComputeOperationTaskState;
 import com.vmware.admiral.request.compute.ComputeOperationType;
@@ -179,7 +183,8 @@ public class RequestBrokerService extends
 
         if (!(isContainerType(state) || isContainerHostType(state) || isContainerNetworkType(state)
                 || isContainerVolumeType(state)
-                || isComputeType(state) || isCompositeComponentType(state) || isClosureType(state)
+                || isComputeType(state) || isComputeNetworkType(state)
+                || isCompositeComponentType(state) || isClosureType(state)
                 || isConfigureHostType(state))) {
             throw new IllegalArgumentException(
                     String.format("Only [ %s ] resource types are supported.",
@@ -767,6 +772,9 @@ public class RequestBrokerService extends
     private void createReservationTasks(RequestBrokerState state) {
         if (isComputeType(state)) {
             getComputeDescription(state, (cd) -> createComputeReservationTasks(state, cd));
+        } else if (isComputeNetworkType(state)) {
+            // No reservation for now, moving on...
+            proceedTo(SubStage.RESERVED);
         } else if (isContainerNetworkType(state) || isContainerVolumeType(state)) {
             // No reservation needed here, moving on...
             proceedTo(SubStage.RESERVED);
@@ -966,6 +974,60 @@ public class RequestBrokerService extends
                 }));
     }
 
+    private void createComputeNetworkAllocationTask(RequestBrokerState state) {
+        // 1. allocate the network
+        ComputeNetworkAllocationTaskState allocationTask = new ComputeNetworkAllocationTaskState();
+        allocationTask.documentSelfLink = getSelfId();
+        allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
+                getSelfLink(), TaskStage.STARTED, SubStage.ALLOCATED,
+                TaskStage.STARTED, SubStage.ERROR);
+        allocationTask.customProperties = state.customProperties;
+        allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
+
+        allocationTask.tenantLinks = state.tenantLinks;
+        allocationTask.requestTrackerLink = state.requestTrackerLink;
+        allocationTask.resourceCount = state.resourceCount;
+
+        sendRequest(Operation
+                .createPost(this, ComputeNetworkAllocationTaskService.FACTORY_LINK)
+                .setBody(allocationTask)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating compute network allocation task", e);
+                        return;
+                    }
+                    proceedTo(SubStage.ALLOCATING);
+                }));
+    }
+
+    private void createComputeNetworkProvisioningTask(RequestBrokerState state) {
+        // 2. provision the network
+        ComputeNetworkProvisionTaskState provisionTask = new ComputeNetworkProvisionTaskState();
+        provisionTask.documentSelfLink = getSelfId();
+        provisionTask.serviceTaskCallback = ServiceTaskCallback.create(
+                getSelfLink(), TaskStage.STARTED, SubStage.COMPLETED,
+                TaskStage.STARTED, SubStage.REQUEST_FAILED);
+        provisionTask.customProperties = state.customProperties;
+
+        provisionTask.tenantLinks = state.tenantLinks;
+        provisionTask.requestTrackerLink = state.requestTrackerLink;
+        provisionTask.resourceLinks = state.resourceLinks;
+        provisionTask.resourceCount = state.resourceCount;
+        provisionTask.resourceDescriptionLink = state.resourceDescriptionLink;
+
+        sendRequest(Operation
+                .createPost(this, ComputeNetworkProvisionTaskService.FACTORY_LINK)
+                .setBody(provisionTask)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating compute network provision task", e);
+                        return;
+                    }
+                }));
+    }
+
     private void createComputeAllocationTask(RequestBrokerState state) {
         getComputeDescription(state, (computeDesc) -> {
             ComputeAllocationTaskState allocationTask = new ComputeAllocationTaskState();
@@ -1114,6 +1176,12 @@ public class RequestBrokerService extends
                 createComputeAllocationTask(state);
             } else {
                 createComputeProvisioningTask(state);
+            }
+        } else if (isComputeNetworkType(state)) {
+            if (!isPostAllocationOperation(state)) {
+                createComputeNetworkAllocationTask(state);
+            } else {
+                createComputeNetworkProvisioningTask(state);
             }
         } else if (isContainerVolumeType(state)) {
             if (!isPostAllocationOperation(state)) {
@@ -1448,6 +1516,10 @@ public class RequestBrokerService extends
 
     private boolean isComputeType(RequestBrokerState state) {
         return ResourceType.COMPUTE_TYPE.getName().equals(state.resourceType);
+    }
+
+    private boolean isComputeNetworkType(RequestBrokerState state) {
+        return ResourceType.COMPUTE_NETWORK_TYPE.getName().equals(state.resourceType);
     }
 
     private boolean isClusteringOperation(RequestBrokerState state) {

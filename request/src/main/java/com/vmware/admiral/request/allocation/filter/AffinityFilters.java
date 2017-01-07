@@ -24,10 +24,12 @@ import java.util.stream.Collectors;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.compute.BindingUtils;
 import com.vmware.admiral.compute.ComponentDescription;
+import com.vmware.admiral.compute.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.request.compute.allocation.filter.ComputeClusterAntiAffinityHostFilter;
+import com.vmware.admiral.request.compute.allocation.filter.ComputeToNetworkAffinityHostFilter;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.ServiceHost;
 
@@ -53,6 +55,8 @@ public final class AffinityFilters {
             initialize(host, (ContainerDescription) desc);
         } else if (ComputeDescription.class.isInstance(desc)) {
             initialize(host, (ComputeDescription) desc);
+        } else if (ComputeNetworkDescription.class.isInstance(desc)) {
+            // TODO initialize(host, (ComputeNetworkDescription) desc)
         } else if (ContainerNetworkDescription.class.isInstance(desc)) {
             initialize(host, (ContainerNetworkDescription) desc);
         } else if (ComponentDescription.class.isInstance(desc)) {
@@ -72,7 +76,7 @@ public final class AffinityFilters {
 
     private void initialize(ServiceHost host, ComputeDescription desc) {
         filters.add(new ComputeClusterAntiAffinityHostFilter(host, desc));
-
+        filters.add(new ComputeToNetworkAffinityHostFilter(host, desc));
     }
 
     private void initialize(ServiceHost host, ComponentDescription desc) {
