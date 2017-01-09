@@ -64,8 +64,11 @@ let _enhanceContainerTemplate = function(containerTemplate, listViewPath) {
       let icons = new Set();
       for (var key in result.descriptionImages) {
         if (result.descriptionImages.hasOwnProperty(key)) {
-          var icon = imageUtils.getImageIconLink(result.descriptionImages[key]);
-          icons.add(icon);
+          if (key.indexOf(links.CLOSURE_DESCRIPTIONS) === 0) {
+            icons.add(utils.getClosureIcon(result.descriptionImages[key]));
+          } else {
+            icons.add(imageUtils.getImageIconLink(result.descriptionImages[key]));
+          }
         }
       }
       var selector = this.selectFromData(listViewPath);
@@ -572,9 +575,10 @@ let TemplatesStore = Reflux.createStore({
     });
 
     PlacementZonesStore.listen((placementZonesData) => {
-      this.setInData(['selectedItemDetails', 'placementZones'], placementZonesData.items);
-
-      this.emitChange();
+      if (this.data.selectedItemDetails) {
+        this.setInData(['selectedItemDetails', 'placementZones'], placementZonesData.items);
+        this.emitChange();
+      }
     });
   },
 
@@ -582,7 +586,6 @@ let TemplatesStore = Reflux.createStore({
     actions.TemplateActions,
     actions.RegistryActions,
     actions.TemplatesContextToolbarActions,
-    actions.ClosureContextToolbarActions,
     actions.NavigationActions,
     actions.PlacementZoneActions
   ],
@@ -639,8 +642,7 @@ let TemplatesStore = Reflux.createStore({
   },
 
   onOpenToolbarClosureResults: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.PLACEMENT_ZONES, PlacementZonesStore.getData(),
-      false);
+    this.openToolbarItem(constants.CONTEXT_PANEL.CLOSURES, null, false);
   },
 
   onOpenContainerRequest: function(type, itemId) {
@@ -822,31 +824,7 @@ let TemplatesStore = Reflux.createStore({
     }
   },
 
-  onCancelAddClosure: function(templateId, updatedClosure) {
-    if (updatedClosure) {
-      var closures = utils.getIn(this.getData(), ['selectedItemDetails',
-        'templateDetails', 'listView', 'closures'
-      ]);
-
-      var updated = false;
-      closures = closures.map((n) => {
-        if (n.documentSelfLink === updatedClosure.documentSelfLink) {
-          updated = true;
-          return updatedClosure;
-        } else {
-          return n;
-        }
-      });
-
-      if (!updated) {
-        closures = closures.asMutable();
-        closures.push(updatedClosure);
-      }
-
-      this.setInData(
-        ['selectedItemDetails', 'templateDetails', 'listView', 'closures'], closures);
-    }
-
+  onCancelAddClosure: function() {
     this.setInData(['selectedItemDetails', 'addClosureView'], null);
     this.emitChange();
   },
@@ -915,26 +893,108 @@ let TemplatesStore = Reflux.createStore({
     }).catch(this.onGenericEditError);
   },
 
-  runClosure: function(closureDescription, inputs) {
+  createClosure: function(templateId, closureDescription) {
+    if (!templateId) {
+      return services.createClosure(closureDescription);
+    }
+
+    return services.createClosure(closureDescription).then((createdClosure) => {
+      return services.loadContainerTemplate(templateId).then((template) => {
+        console.log('Updating template ID: ' + templateId + ' with: '
+          + createdClosure.documentSelfLink);
+
+        template.descriptionLinks.push(createdClosure.documentSelfLink);
+
+        return services.updateContainerTemplate(template);
+      }).then(() => {
+        var closures = utils.getIn(this.getData(), ['selectedItemDetails',
+          'templateDetails', 'listView', 'closures'
+        ]);
+
+        closures = closures.asMutable();
+        closures.push(createdClosure);
+        this.setInData(
+          ['selectedItemDetails', 'templateDetails', 'listView', 'closures'], closures);
+        this.emitChange();
+
+        return createdClosure;
+      });
+    });
+  },
+
+  saveClosure: function(templateId, closureDescription) {
+    if (!closureDescription.documentSelfLink) {
+      this.createClosure(templateId, closureDescription)
+        .then(() => {
+          if (templateId) {
+            this.onCancelAddClosure();
+          } else {
+            let queryOptions = this.selectFromData(['listView', 'queryOptions']).get();
+            // Refresh view
+            this.onOpenTemplates(queryOptions, true);
+          }
+        }).catch(this.onGenericEditError);
+    } else {
+      services.editClosure(closureDescription).then((updatedClosure) => {
+        if (templateId) {
+          var closures = utils.getIn(this.getData(), ['selectedItemDetails',
+            'templateDetails', 'listView', 'closures'
+          ]).map((n) => n.documentSelfLink === updatedClosure.documentSelfLink ?
+            updatedClosure : n);
+
+          this.setInData(
+            ['selectedItemDetails', 'templateDetails', 'listView', 'closures'], closures);
+
+          this.emitChange();
+          this.onCancelAddClosure();
+        } else {
+          let queryOptions = this.selectFromData(['listView', 'queryOptions']).get();
+          // Refresh view
+          this.onOpenTemplates(queryOptions, true);
+        }
+      }).catch(this.onGenericEditError);
+    }
+  },
+
+  runClosure: function(templateId, closureDescription, inputs) {
+    var createRun = (closureDescription) => {
+      return services.runClosure(closureDescription, inputs).then((request) => {
+        this.setInData(['tasks', 'monitoredTask'], request);
+        this.setInData(['selectedItemDetails', 'tasks', 'monitoredTask', 'isRunning'], {});
+
+        if (templateId) {
+          var closures = utils.getIn(this.getData(), ['selectedItemDetails',
+            'templateDetails', 'listView', 'closures'
+          ]).map((n) => n.documentSelfLink === request.documentSelfLink ? request : n);
+
+          this.setInData(
+            ['selectedItemDetails', 'templateDetails', 'listView', 'closures'], closures);
+          this.emitChange();
+        }
+        if (!this.requestCheckInterval) {
+          this.requestCheckInterval = setInterval(this.refreshMonitoredTask,
+            CHECK_INTERVAL_MS);
+        }
+      });
+    };
+
     this.setInData(['tasks', 'monitoredTask'], null);
     this.emitChange();
 
-    console.log('Calling run on: ' + closureDescription.documentSelfLink);
-    services.runClosure(closureDescription, inputs).then((request) => {
-      this.setInData(['tasks', 'monitoredTask'], request);
-      this.setInData(['selectedItemDetails', 'tasks', 'monitoredTask', 'isRunning'], {});
-      this.emitChange();
-      if (!this.requestCheckInterval) {
-        this.requestCheckInterval = setInterval(this.refreshMonitoredTask,
-          CHECK_INTERVAL_MS);
-      }
-    }).catch(this.onGenericCreateError);
+    if (!closureDescription.documentSelfLink) {
+      this.createClosure(templateId, closureDescription).then((createdClosure) => {
+        this.openAddClosure(createdClosure);
+        createRun(createdClosure);
+      }).catch(this.onGenericEditError);
+    } else {
+      createRun(closureDescription).catch(this.onGenericEditError);
+    }
   },
   refreshMonitoredTask: function() {
     var task = this.data.tasks.monitoredTask;
     if (task) {
       if (task.state === 'FINISHED' || task.state === 'FAILED' || task.state === 'CANCELLED') {
-        this.stopTaskRefresh(this.requestCheckInterval);
+        this.stopTaskRefresh();
         this.fetchLogs();
 
         this.setInData(['selectedItemDetails', 'tasks', 'monitoredTask', 'isRunning'], null);
@@ -959,13 +1019,13 @@ let TemplatesStore = Reflux.createStore({
   resetMonitoredClosure: function() {
     if (this.data.tasks) {
       console.log('Resetting monitored closure...');
-      this.data.tasks.monitoredTask = null;
+      this.setInData(['tasks', 'monitoredTask'], null);
       this.emitChange();
     }
   },
-  stopTaskRefresh: function(refreshCheckInterval) {
-    if (refreshCheckInterval) {
-      clearInterval(refreshCheckInterval);
+  stopTaskRefresh: function() {
+    if (this.requestCheckInterval) {
+      clearInterval(this.requestCheckInterval);
       this.requestCheckInterval = null;
     }
   },

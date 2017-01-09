@@ -11,10 +11,10 @@
 
 import ClosureRequestFormVue from 'components/closures/ClosureRequestFormVue.html';
 import ClosureDefinitionForm from 'components/closures/ClosureDefinitionForm';
-import PlacementZonesView from 'components/placementzones/PlacementZonesView'; //eslint-disable-line
-import ClosureFieldsMixin from 'components/closures/ClosureFieldsMixin';
+import CustomDropdownSearchMenu from 'components/common/CustomDropdownSearchMenu';
+import constants from 'core/constants';
 import {
-  ClosureActions, TemplateActions, TemplatesContextToolbarActions
+  TemplateActions, TemplatesContextToolbarActions, ContainerActions, ContainersContextToolbarActions
 }
 from 'actions/Actions';
 
@@ -32,10 +32,11 @@ var ClosureRequestForm = Vue.extend({
           placementZones: {}
         };
       }
+    },
+    shownInTemplates: {
+      type: Boolean
     }
   },
-
-  mixins: [ClosureFieldsMixin],
 
   data: function() {
     return {
@@ -45,11 +46,8 @@ var ClosureRequestForm = Vue.extend({
   },
   computed: {
     runningTask: function() {
-      if (this.model.tasks.monitoredTask.isRunning) {
-        return true;
-      }
-
-      return false;
+      return this.model.tasks && this.model.tasks.monitoredTask &&
+        this.model.tasks.monitoredTask.isRunning;
     }
   },
   methods: {
@@ -63,12 +61,14 @@ var ClosureRequestForm = Vue.extend({
         if (this.placementZone) {
           closureDefinition.placementZoneId = this.placementZone.id;
         }
-        if (this.model.tasks.editingItemData == null) {
-          ClosureActions.createClosure(this.model.documentId, closureDefinition);
+        if (this.model.tasks.editingItemData) {
+          closureDefinition.documentSelfLink =
+            this.model.tasks.editingItemData.item.documentSelfLink;
+        }
+        if (this.shownInTemplates) {
+          TemplateActions.saveClosure(this.model.documentId, closureDefinition);
         } else {
-          closureDefinition.documentSelfLink = this.model.tasks.
-          editingItemData.item.documentSelfLink;
-          ClosureActions.editClosure(this.model.documentId, closureDefinition);
+          ContainerActions.saveClosure(closureDefinition);
         }
       }
     },
@@ -83,25 +83,17 @@ var ClosureRequestForm = Vue.extend({
         if (this.placementZone) {
           closureDefinition.placementZoneId = this.placementZone.id;
         }
-        if (this.model.tasks.editingItemData == null) {
-          ClosureActions.createAndRunClosure(this.model.documentId, closureDefinition, inputs);
-        } else {
-          this.runClosure();
+        if (this.model.tasks.editingItemData) {
+          closureDefinition.documentSelfLink =
+            this.model.tasks.editingItemData.item.documentSelfLink;
         }
-      }
-    },
-    runClosure: function() {
-      console.log('Executing closure...');
-      var validationErrors = this.definitionForm.validate();
-      if (!validationErrors) {
-        var closureDefinition = this.definitionForm.getClosureDefinition();
-        var inputs = this.definitionForm.getClosureInputs();
-        closureDefinition.documentSelfLink = this.model.tasks.editingItemData.item.documentSelfLink;
-        console.log('Executing closure with description: ' + closureDefinition.documentSelfLink);
-        TemplateActions.runClosure(closureDefinition, inputs);
-        TemplatesContextToolbarActions.openToolbarClosureResults();
-      } else {
-        console.log('Validation error detected: ' + validationErrors);
+        if (this.shownInTemplates) {
+          TemplateActions.runClosure(this.model.documentId, closureDefinition, inputs);
+          TemplatesContextToolbarActions.openToolbarClosureResults();
+        } else {
+          ContainerActions.runClosure(closureDefinition, inputs);
+          ContainersContextToolbarActions.openToolbarClosureResults();
+        }
       }
     },
     saveClosureTemplate: function() {
@@ -119,6 +111,40 @@ var ClosureRequestForm = Vue.extend({
     },
     getEl: function() {
       return $(this.$el);
+    },
+    initializeClosureFields: function() {
+      // Resource pool input
+      var elemPlacementZone = $(this.$el).find('.placementZone .form-control');
+      this.placementZoneInput = new CustomDropdownSearchMenu(elemPlacementZone, {
+        title: i18n.t('dropdownSearchMenu.title', {
+          entity: i18n.t('app.placementZone.entity')
+        }),
+        searchPlaceholder: i18n.t('dropdownSearchMenu.searchPlaceholder', {
+          entity: i18n.t('app.placementZone.entity')
+        })
+      });
+
+      var _this = this;
+      this.placementZoneInput.setOptionSelectCallback(function(option) {
+        _this.placementZone = option;
+      });
+
+      this.unwatchPlacementZones = this.$watch('model.placementZones', () => {
+        if (this.model.placementZones === constants.LOADING) {
+          this.placementZoneInput.setLoading(true);
+        } else {
+          this.placementZoneInput.setLoading(false);
+          this.placementZoneInput.setOptions(
+          (this.model.placementZones || []).map((config) => config.resourcePoolState));
+        }
+      }, {immediate: true});
+
+      this.unwatchPlacementZone = this.$watch('model.placementZone', () => {
+        if (this.model.placementZone) {
+          this.placementZoneInput.setSelectedOption(this.model.placementZone);
+        }
+      }, {immediate: true});
+
     }
   },
   attached: function() {
@@ -149,9 +175,10 @@ var ClosureRequestForm = Vue.extend({
   },
   detached: function() {
     this.unwatchModel();
-    ClosureActions.resetMonitoredClosure();
     this.unwatchPlacementZones();
     this.unwatchPlacementZone();
+    TemplateActions.resetMonitoredClosure();
+    ContainerActions.resetMonitoredClosure();
   }
 });
 

@@ -140,6 +140,7 @@
                              v-bind:model="model.selectedItemDetails"></container-request-form>
       <closure-request-form class="template-details"
                             v-if="!!model.selectedItemDetails.addClosureView && areClosuresAllowed"
+                            v-bind:shown-in-templates="true"
                             v-bind:model="model.selectedItemDetails"></closure-request-form>
 
     </div>
@@ -177,7 +178,7 @@
 
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
-        v-bind:active="activeContextItem === 'placementZones'"
+        v-bind:active="activeContextItem === 'closures'"
         v-bind:icon-class="'fa fa-tasks'"
         v-bind:label="i18n('app.closure.resultStatus')"
         v-on:open="openToolbarClosureResults()" v-on:close="closeToolbar()">

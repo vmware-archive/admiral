@@ -234,7 +234,7 @@
                      v-bind:class="{'right-context-expanded': innerContextExpanded}">
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
-        v-bind:active="activeContextItem === 'placementZones'"
+        v-bind:active="activeContextItem === 'closures'"
         v-bind:icon-class="'fa fa-tasks'"
         v-bind:label="i18n('app.closure.resultStatus')"
         v-on:open="openToolbarClosureResults()" v-on:close="closeToolbar()">
