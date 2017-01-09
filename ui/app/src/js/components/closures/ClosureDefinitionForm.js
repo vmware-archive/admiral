@@ -133,7 +133,7 @@ class ClosureDefinitionForm extends Component {
       enableBasicAutocompletion: true
     });
 
-    $('.closure-dependencies-input').hide();
+    this.$el.find('.closure-dependencies-input').hide();
     this.$el.find('.closure-dependencies-check .checkbox-control').click(function() {
       $('.closure-dependencies-input').toggle(this.checked);
     });
