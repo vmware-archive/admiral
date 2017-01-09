@@ -35,6 +35,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -52,6 +55,7 @@ import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.C
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.compute.container.HealthChecker;
 import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.content.ServiceLinkSerializer;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage;
@@ -60,10 +64,13 @@ import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePref
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -77,9 +84,14 @@ public class ContainerAllocationTaskService
         AbstractTaskStatefulService<ContainerAllocationTaskService.ContainerAllocationTaskState, ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage> {
 
     public static final String DISPLAY_NAME = "Container Allocation";
+    public static final String HEALTH_CHECK_TIMEOUT_PARAM_NAME = "provision.container.health.check.timeout.ms";
+    public static final String HEALTH_CHECK_DELAY_PARAM_NAME = "provision.container.health.check.delay.ms";
 
     // cached container description
     private volatile ContainerDescription containerDescription;
+
+    private long healthCheckDelay;
+    private long healthCheckTimeout;
 
     public static class ContainerAllocationTaskState
             extends
@@ -104,6 +116,7 @@ public class ContainerAllocationTaskService
             START_PROVISIONING,
             PROVISIONING,
             PROVISIONING_COMPLETED,
+            WAITING_FOR_HEALTH_CHECK,
             PROCESSING_PUBLIC_SERVICE_ALIAS,
             COMPLETED,
             ERROR;
@@ -217,6 +230,9 @@ public class ContainerAllocationTaskService
             provisionAllocatedContainers(state, null);
             break;
         case PROVISIONING:
+            break;
+        case WAITING_FOR_HEALTH_CHECK:
+            waitForHealthCheck(state);
             break;
         case COMPLETED:
             completeTask(state);
@@ -558,7 +574,7 @@ public class ContainerAllocationTaskService
         if (taskCallback == null) {
             // create a counter subtask link first
             createCounterSubTaskCallback(state, state.resourceCount, !allocationRequest,
-                    SubStage.COMPLETED,
+                    !allocationRequest || state.postAllocation ? SubStage.WAITING_FOR_HEALTH_CHECK : SubStage.COMPLETED,
                     (serviceTask) -> provisionAllocatedContainers(state, serviceTask));
             return;
         }
@@ -765,6 +781,87 @@ public class ContainerAllocationTaskService
                 }));
     }
 
+    private void waitForHealthCheck(ContainerAllocationTaskState state) {
+        AtomicInteger expectedSuccessfullHealthCheckCount = new AtomicInteger(
+                state.resourceLinks.size());
+        AtomicBoolean proceededToError = new AtomicBoolean(false);
+
+        if (this.containerDescription.healthConfig == null) {
+            logFine("Skipping health check.");
+            proceedTo(SubStage.COMPLETED);
+
+            return;
+        }
+
+        DeferredResult.allOf(Arrays.asList(getProperty(HEALTH_CHECK_DELAY_PARAM_NAME),
+                getProperty(HEALTH_CHECK_TIMEOUT_PARAM_NAME)))
+                .whenComplete((props, ex) -> {
+                    if (ex != null) {
+                        failTask(
+                                "Error retrieving health configuration environment variables: ",
+                                ex);
+                        return;
+                    }
+
+                    Map<String, Long> propsMap = props.stream().collect(
+                            Collectors.toMap(s -> s.key, s -> Long.parseLong(s.value)));
+                    this.healthCheckTimeout = propsMap.get(HEALTH_CHECK_TIMEOUT_PARAM_NAME);
+                    this.healthCheckDelay = propsMap.get(HEALTH_CHECK_DELAY_PARAM_NAME);
+
+                    Iterator<String> it = state.resourceLinks.iterator();
+                    while (it.hasNext()) {
+                        String resourceLink = it.next();
+                        fetchContainerState(resourceLink, (cs) -> {
+                            doHealthCheck(state, cs, expectedSuccessfullHealthCheckCount, proceededToError, System.currentTimeMillis());
+                        });
+                    }
+                });
+    }
+
+    private void doHealthCheck(ContainerAllocationTaskState state, ContainerState containerState,
+            AtomicInteger expectedSuccessfullHealthCheckCount, AtomicBoolean proceededToError, long startTime) {
+
+        if ((System.currentTimeMillis() - startTime) > this.healthCheckTimeout) {
+            if (this.containerDescription.healthConfig.continueProvisioningOnError) {
+                if (expectedSuccessfullHealthCheckCount.decrementAndGet() == 0) {
+                    proceedTo(SubStage.COMPLETED);
+                }
+
+                return;
+            }
+
+            if (proceededToError.get()) {
+                return;
+            }
+
+            proceededToError.set(true);
+            proceedTo(SubStage.ERROR, (s) -> {
+                s.taskInfo.failure = Utils.toServiceErrorResponse(
+                        new Exception(String.format("Health check failed for %s",
+                                containerState.documentSelfLink)));
+            });
+
+            return;
+        }
+
+        new HealthChecker(getHost()).doHealthCheckRequest(containerState,
+                this.containerDescription.healthConfig, (containerStats) -> {
+                    if (containerStats != null
+                            && Boolean.TRUE.equals(containerStats.healthCheckSuccess)) {
+                        if (expectedSuccessfullHealthCheckCount.decrementAndGet() == 0) {
+                            proceedTo(SubStage.COMPLETED);
+                            return;
+                        }
+
+                    } else {
+                        getHost().schedule(() -> {
+                            doHealthCheck(state, containerState,
+                                    expectedSuccessfullHealthCheckCount, proceededToError, startTime);
+                        }, this.healthCheckDelay, TimeUnit.MILLISECONDS);
+                    }
+                });
+    }
+
     /**
      * Returns the minimum. Handles nulls and treats 0 as no limit
      */
@@ -779,6 +876,20 @@ public class ContainerAllocationTaskService
         } else {
             return Math.min(placementLimit, descLimit.longValue());
         }
+    }
+
+    private void fetchContainerState(String containerSelfLink, Consumer<ContainerState> callback) {
+
+        sendRequest(Operation.createGet(getHost(), containerSelfLink)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Cannot retrieve the container state: " + containerSelfLink, e);
+                        return;
+                    }
+
+                    ContainerState containerState = o.getBody(ContainerState.class);
+                    callback.accept(containerState);
+                }));
     }
 
     private static Map<String, ServiceNetwork> mapNetworks(ContainerDescription cd,
@@ -861,5 +972,15 @@ public class ContainerAllocationTaskService
         }
 
         return mappedServices.toArray(new String[mappedServices.size()]);
+    }
+
+    private DeferredResult<ConfigurationState> getProperty(String propName) {
+        String propUrl = UriUtils.buildUriPath(
+                ConfigurationFactoryService.SELF_LINK,
+                propName);
+        Operation op = Operation.createGet(this, propUrl).setReferer(this.getUri());
+
+        return getHost()
+                .sendWithDeferredResult(op, ConfigurationState.class);
     }
 }

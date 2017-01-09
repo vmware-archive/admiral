@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.request;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
@@ -42,6 +44,8 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
+import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestProtocol;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
@@ -65,6 +69,7 @@ import com.vmware.admiral.request.composition.CompositionTaskFactoryService;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.CounterSubTaskService;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
@@ -93,6 +98,11 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 public abstract class RequestBaseTest extends BaseTestCase {
 
+    protected static final String DEFAULT_GROUP_RESOURCE_POLICY = GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
+    protected static final int HEALTH_CHECK_PORT = 8800;
+    protected static final String DEFAULT_HEALTH_CHECK_TIMEOUT = "5000";
+    protected static final String DEFAULT_HEALTH_CHECK_DELAY = "1000";
+
     protected ResourcePoolState resourcePool;
     protected ResourcePoolState computeResourcePool;
     protected EndpointState endpoint;
@@ -104,12 +114,12 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected HostPortProfileService.HostPortProfileState hostPortProfileState;
     protected ContainerNetworkDescription containerNetworkDesc;
     protected ContainerVolumeDescription containerVolumeDesc;
+    protected CompositeDescription compositeDescription;
     protected GroupResourcePlacementState groupPlacementState;
     protected GroupResourcePlacementState computeGroupPlacementState;
-    private final List<ServiceDocument> documentsForDeletion = new ArrayList<>();
     protected final Object initializationLock = new Object();
+    private final List<ServiceDocument> documentsForDeletion = new ArrayList<>();
 
-    protected static final String DEFAULT_GROUP_RESOURCE_POLICY = GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
 
     static {
         System.setProperty(ContainerPortsAllocationTaskService.CONTAINER_PORT_ALLOCATION_ENABLED,
@@ -643,6 +653,17 @@ public abstract class RequestBaseTest extends BaseTestCase {
         return compositeDesc;
     }
 
+    protected HealthConfig createHealthConfigTcp() {
+        HealthConfig healthConfig = new HealthConfig();
+        healthConfig.protocol = RequestProtocol.TCP;
+        healthConfig.port = RequestBaseTest.HEALTH_CHECK_PORT;
+        healthConfig.healthyThreshold = 2;
+        healthConfig.unhealthyThreshold = 2;
+        healthConfig.timeoutMillis = 2000;
+
+        return healthConfig;
+    }
+
     protected List<ComputeState> queryComputeByCompositeComponentLink(
             String compositeComponentLink) {
         String contextId = compositeComponentLink
@@ -688,5 +709,33 @@ public abstract class RequestBaseTest extends BaseTestCase {
         pluginsInfo.put(ContainerHostService.DOCKER_HOST_PLUGINS_VOLUME_PROP_NAME,
                 drivers.toArray(new String[drivers.size()]));
         return Utils.toJson(pluginsInfo);
+    }
+
+    protected void configureHealthCheckTimeout(String timeoutInMs) throws Throwable {
+        String healthCheckTimeoutLink = UriUtils.buildUriPath(
+                ConfigurationFactoryService.SELF_LINK,
+                ContainerAllocationTaskService.HEALTH_CHECK_TIMEOUT_PARAM_NAME);
+        ConfigurationState healthCheckTimeout = new ConfigurationState();
+        healthCheckTimeout.documentSelfLink = healthCheckTimeoutLink;
+        healthCheckTimeout.key = ContainerAllocationTaskService.HEALTH_CHECK_TIMEOUT_PARAM_NAME;
+        healthCheckTimeout.value = timeoutInMs;
+        doPut(healthCheckTimeout);
+        healthCheckTimeout = getDocument(ConfigurationState.class, healthCheckTimeoutLink);
+        assertEquals(ContainerAllocationTaskService.HEALTH_CHECK_TIMEOUT_PARAM_NAME, healthCheckTimeout.key);
+        assertEquals(timeoutInMs, healthCheckTimeout.value);
+    }
+
+    protected void configureHealthCheckDelay(String delayInMs) throws Throwable {
+        String healthCheckDelayLink = UriUtils.buildUriPath(
+                ConfigurationFactoryService.SELF_LINK,
+                ContainerAllocationTaskService.HEALTH_CHECK_DELAY_PARAM_NAME);
+        ConfigurationState healthCheckDelay = new ConfigurationState();
+        healthCheckDelay.documentSelfLink = healthCheckDelayLink;
+        healthCheckDelay.key = ContainerAllocationTaskService.HEALTH_CHECK_DELAY_PARAM_NAME;
+        healthCheckDelay.value = delayInMs;
+        doPut(healthCheckDelay);
+        healthCheckDelay = getDocument(ConfigurationState.class, healthCheckDelayLink);
+        assertEquals(ContainerAllocationTaskService.HEALTH_CHECK_DELAY_PARAM_NAME, healthCheckDelay.key);
+        assertEquals(delayInMs, healthCheckDelay.value);
     }
 }
