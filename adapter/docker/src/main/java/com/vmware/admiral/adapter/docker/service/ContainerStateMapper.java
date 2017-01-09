@@ -222,7 +222,7 @@ public class ContainerStateMapper {
     }
 
     /**
-     * Process the NetworSettings.IpAddress
+     * Process the NetworkSettings.IpAddress
      *
      * @param containerState
      * @param networkSettings

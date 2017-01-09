@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute.container;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -131,6 +132,7 @@ public class HostNetworkListDataCollection extends StatefulService {
 
     public static class NetworkListCallback extends ServiceTaskCallbackResponse {
         public String containerHostLink;
+        public URI hostAdapterReference;
         public Map<String, String> networkIdsAndNames = new HashMap<>();
         public boolean unlockDataCollectionForHost;
 
@@ -151,6 +153,10 @@ public class HostNetworkListDataCollection extends StatefulService {
     @Override
     public void handlePatch(Operation op) {
         NetworkListCallback body = op.getBody(NetworkListCallback.class);
+        if (body.hostAdapterReference == null) {
+            body.hostAdapterReference =
+                    ContainerHostDataCollectionService.getDefaultHostAdapter(getHost());
+        }
         if (body.containerHostLink == null) {
             logFine("'containerHostLink' is required");
             op.complete();
@@ -235,7 +241,7 @@ public class HostNetworkListDataCollection extends StatefulService {
                                 request.resourceReference = UriUtils.buildUri(getHost(),
                                         body.containerHostLink);
                                 sendRequest(Operation
-                                        .createPatch(this, ManagementUriParts.ADAPTER_DOCKER_HOST)
+                                        .createPatch(body.hostAdapterReference)
                                         .setBody(request)
                                         .addPragmaDirective(
                                                 Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
@@ -244,6 +250,10 @@ public class HostNetworkListDataCollection extends StatefulService {
                                                     if (ex == null) {
                                                         NetworkListCallback callback = o
                                                                 .getBody(NetworkListCallback.class);
+                                                        if (callback.hostAdapterReference == null) {
+                                                            callback.hostAdapterReference =
+                                                                    ContainerHostDataCollectionService.getDefaultHostAdapter(getHost());
+                                                        }
                                                         updateContainerNetworkStates(callback,
                                                                 networkStates,
                                                                 body.containerHostLink);
@@ -337,8 +347,8 @@ public class HostNetworkListDataCollection extends StatefulService {
                                 networkState.parentLinks = new ArrayList<>(
                                         Arrays.asList(callback.containerHostLink));
 
-                                networkState.adapterManagementReference = UriUtils
-                                        .buildUri(ManagementUriParts.ADAPTER_DOCKER_NETWORK);
+                                networkState.adapterManagementReference =
+                                        getNetworkAdapterReference(callback.hostAdapterReference);
 
                                 networksLeft.add(networkState);
                             }
@@ -352,6 +362,18 @@ public class HostNetworkListDataCollection extends StatefulService {
                         });
 
         sendRequest(operation);
+    }
+
+    private URI getNetworkAdapterReference(URI hostAdapter) {
+        switch (hostAdapter.getPath()) {
+        case ManagementUriParts.ADAPTER_DOCKER_HOST:
+            return UriUtils.buildUri(ManagementUriParts.ADAPTER_DOCKER_NETWORK);
+        case ManagementUriParts.ADAPTER_KUBERNETES_HOST:
+            return UriUtils.buildUri(ManagementUriParts.ADAPTER_KUBERNETES_NETWORK);
+        default:
+            throw new IllegalArgumentException(
+                    String.format("No network adapter for %s", hostAdapter.getPath()));
+        }
     }
 
     @Override

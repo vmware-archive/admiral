@@ -48,7 +48,7 @@ public class ProvisionContainerHostsTaskService
         AbstractTaskStatefulService<ProvisionContainerHostsTaskService.ProvisionContainerHostsTaskState, ProvisionContainerHostsTaskService.ProvisionContainerHostsTaskState.SubStage> {
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_PROVISION_COMPUTE_CONTAINER_HOSTS;
     public static final String DISPLAY_NAME = "AWS Container Hosts";
-    public static final String PROVISION_CONTAINER_HOSTS_OPERATITON = "PROVISION_CONTAINER_HOSTS";
+    public static final String PROVISION_CONTAINER_HOSTS_OPERATION = "PROVISION_CONTAINER_HOSTS";
 
     private volatile EndpointState endpointState;
 

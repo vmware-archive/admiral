@@ -51,6 +51,7 @@ import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.CloneableResource;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
@@ -409,6 +410,14 @@ public class ContainerDescriptionService extends StatefulService {
                 dockerHostAddress = hostComputeState.address;
             }
 
+            if (dockerHostAddress == null && hostComputeState.customProperties != null) {
+                dockerHostAddress = hostComputeState.customProperties.get(ComputeConstants.DOCKER_URI_PROP_NAME);
+            }
+
+            if (dockerHostAddress == null && hostComputeState.customProperties != null) {
+                dockerHostAddress = hostComputeState.customProperties.get(ComputeConstants.HOST_URI_PROP_NAME);
+            }
+
             AssertUtil.assertNotNull(dockerHostAddress, "address");
 
             URI uri = UriUtilsExtended.buildDockerUri(dockerHostScheme,
@@ -417,7 +426,17 @@ public class ContainerDescriptionService extends StatefulService {
                     ContainerHostService.DOCKER_HOST_SCHEME_PROP_NAME, uri.getScheme());
             hostComputeState.customProperties.put(
                     ContainerHostService.DOCKER_HOST_PORT_PROP_NAME, String.valueOf(uri.getPort()));
+            URI hostUri = UriUtils.buildUri(uri.getScheme(), uri.getHost(), uri.getPort(),
+                    null, null);
+            hostComputeState.customProperties.putIfAbsent(ComputeConstants.HOST_URI_PROP_NAME,
+                    hostUri.toString());
             return uri;
+        }
+
+        public static URI getHostUri(ComputeState computeState) {
+            URI dockerUri = getDockerHostUri(computeState);
+            return UriUtils.buildUri(
+                    dockerUri.getScheme(), dockerUri.getHost(), dockerUri.getPort(), null, null);
         }
 
         @Override

@@ -30,7 +30,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 
-public class HostInitAdapterServiceConfig {
+public class HostInitDockerAdapterServiceConfig {
     public static final String FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE = "startMockHostAdapterInstance";
 
     public static void startServices(ServiceHost host, boolean startMockHostAdapterInstance) {

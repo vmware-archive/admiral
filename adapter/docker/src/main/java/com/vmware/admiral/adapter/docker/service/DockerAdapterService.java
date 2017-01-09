@@ -340,7 +340,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                                 if (Operation.MEDIA_TYPE_APPLICATION_OCTET_STREAM.equals(
                                         operation.getContentType())) {
 
-                                    log = operation.getBody(new byte[0].getClass());
+                                    log = operation.getBody(byte[].class);
 
                                 } else {
                                     /* TODO check for encoding header */
@@ -606,7 +606,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         return;
                     }
 
-                    byte[] imageData = o.getBody(new byte[0].getClass());
+                    byte[] imageData = o.getBody(byte[].class);
                     if (!tempFile.delete()) {
                         this.logWarning("Failed to delete temp file: %s %s", tempFile,
                                 context.request.getRequestTrackingLog());

@@ -67,6 +67,7 @@ import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -76,6 +77,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -983,6 +985,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         day2OperationClustering.resourceCount = 1 + SCALE_SIZE;
         day2OperationClustering.documentDescription = containerDesc.documentDescription;
         day2OperationClustering.customProperties = cont1.customProperties;
+        day2OperationClustering.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY,
+                Service.getId(cc.documentSelfLink));
 
         host.log("########  Start of request ######## ");
         request = startRequest(day2OperationClustering);

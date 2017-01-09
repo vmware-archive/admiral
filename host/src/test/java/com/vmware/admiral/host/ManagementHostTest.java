@@ -68,7 +68,7 @@ public class ManagementHostTest {
         public TestManagementHost(boolean startMockHostAdapterInstance, String... extraArgs) throws Throwable {
             List<String> args = new ArrayList<>(Arrays.asList(
                     // start mock host adapter instance
-                    ARGUMENT_PREFIX + HostInitAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE
+                    ARGUMENT_PREFIX + HostInitDockerAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE
                     + ARGUMENT_ASSIGNMENT + startMockHostAdapterInstance,
                     // generate a random sandbox
                     ARGUMENT_PREFIX + "sandbox" + ARGUMENT_ASSIGNMENT + SANDBOX.getRoot().toPath(),

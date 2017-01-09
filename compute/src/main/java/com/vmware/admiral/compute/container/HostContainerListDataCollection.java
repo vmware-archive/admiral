@@ -152,8 +152,9 @@ public class HostContainerListDataCollection extends StatefulService {
     }
 
     public static class ContainerListCallback extends ServiceTaskCallbackResponse {
-        private static final String NAME_SEPERATOR = ",";
+        private static final String NAME_SEPARATOR = ",";
         public String containerHostLink;
+        public URI hostAdapterReference;
         public Map<String, String> containerIdsAndNames = new HashMap<>();
         public Map<String, String> containerIdsAndImage = new HashMap<>();
         public boolean unlockDataCollectionForHost;
@@ -166,7 +167,7 @@ public class HostContainerListDataCollection extends StatefulService {
                 StringBuilder sb = new StringBuilder();
                 for (String name : names) {
                     sb.append(name.startsWith("/") ? name.substring(1) : name);
-                    sb.append(NAME_SEPERATOR);
+                    sb.append(NAME_SEPARATOR);
                 }
                 sb.deleteCharAt(sb.length() - 1);
                 namesValue = sb.toString();
@@ -304,6 +305,12 @@ public class HostContainerListDataCollection extends StatefulService {
     @Override
     public void handlePatch(Operation op) {
         ContainerListCallback body = op.getBody(ContainerListCallback.class);
+
+        if (body.hostAdapterReference == null) {
+            body.hostAdapterReference =
+                    ContainerHostDataCollectionService.getDefaultHostAdapter(getHost());
+        }
+
         String containerHostLink = body.containerHostLink;
         if (containerHostLink == null) {
             logFine("'containerHostLink' is required");
@@ -339,7 +346,7 @@ public class HostContainerListDataCollection extends StatefulService {
                         body.containerIdsAndNames.keySet().stream().collect(Collectors.toList()));
             }
             op.complete();
-            return;// return since there is an active data collection for this host.
+            return; // return since there is an active data collection for this host.
         } else {
             state.containerHostLinks.put(containerHostLink,
                     Instant.now().toEpochMilli() + DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS);
@@ -372,7 +379,7 @@ public class HostContainerListDataCollection extends StatefulService {
                                 request.resourceReference = UriUtils.buildUri(getHost(),
                                         containerHostLink);
                                 sendRequest(Operation
-                                        .createPatch(this, ManagementUriParts.ADAPTER_DOCKER_HOST)
+                                        .createPatch(body.hostAdapterReference)
                                         .setBody(request)
                                         .addPragmaDirective(
                                                 Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
@@ -382,6 +389,10 @@ public class HostContainerListDataCollection extends StatefulService {
                                                         ContainerListCallback callback = o
                                                                 .getBody(
                                                                         ContainerListCallback.class);
+                                                        if (callback.hostAdapterReference == null) {
+                                                            callback.hostAdapterReference =
+                                                                    ContainerHostDataCollectionService.getDefaultHostAdapter(getHost());
+                                                        }
                                                         updateContainerStates(callback,
                                                                 containerStates, containerHostLink);
                                                     } else {
@@ -459,7 +470,7 @@ public class HostContainerListDataCollection extends StatefulService {
                                 containerState.id = entry.getKey();
                                 containerState.names = entry.getValue() == null ? null
                                         : new ArrayList<>(Arrays.asList(entry.getValue()
-                                                .split(ContainerListCallback.NAME_SEPERATOR)));
+                                                .split(ContainerListCallback.NAME_SEPARATOR)));
 
                                 String systemContainerName = matchSystemContainerName(
                                         systemContainersToInstall,
@@ -489,9 +500,8 @@ public class HostContainerListDataCollection extends StatefulService {
                                             .get(containerState.id);
                                 }
                                 containerState.parentLink = callback.containerHostLink;
-
-                                containerState.adapterManagementReference = UriUtils
-                                        .buildUri(ManagementUriParts.ADAPTER_DOCKER);
+                                containerState.adapterManagementReference =
+                                        getContainerAdapterReference(callback.hostAdapterReference);
 
                                 containersLeft.add(containerState);
                             }
@@ -521,12 +531,24 @@ public class HostContainerListDataCollection extends StatefulService {
         sendRequest(operation);
     }
 
+    private URI getContainerAdapterReference(URI hostAdapter) {
+        switch (hostAdapter.getPath()) {
+        case ManagementUriParts.ADAPTER_DOCKER_HOST:
+            return UriUtils.buildUri(ManagementUriParts.ADAPTER_DOCKER);
+        case ManagementUriParts.ADAPTER_KUBERNETES_HOST:
+            return UriUtils.buildUri(ManagementUriParts.ADAPTER_KUBERNETES);
+        default:
+            throw new IllegalArgumentException(
+                    String.format("No container adapter for %s", hostAdapter.getPath()));
+        }
+    }
+
     private String containerNamesToString(List<String> names) {
         if (names != null && names.size() > 0) {
             StringBuilder sb = new StringBuilder();
             for (String name : names) {
                 sb.append(name.startsWith("/") ? name.substring(1) : name);
-                sb.append(ContainerListCallback.NAME_SEPERATOR);
+                sb.append(ContainerListCallback.NAME_SEPARATOR);
             }
             sb.deleteCharAt(sb.length() - 1);
             return sb.toString();

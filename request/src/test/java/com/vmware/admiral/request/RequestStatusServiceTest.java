@@ -239,6 +239,7 @@ public class RequestStatusServiceTest extends RequestBaseTest {
     public void testRequestStatusShouldBeFailedAfterErrorInOneOfTheComponents() throws Throwable {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
+        desc2.portBindings = null;
         desc2.customProperties.put(MockDockerAdapterService.FAILURE_EXPECTED, "simulate failure");
         CompositeDescription compositeDesc = createCompositeDesc(desc1, desc2);
 

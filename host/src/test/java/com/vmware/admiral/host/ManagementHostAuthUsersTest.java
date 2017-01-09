@@ -80,7 +80,7 @@ public class ManagementHostAuthUsersTest extends ManagementHostBaseTest {
                 .getPath();
         host = ManagementHostBaseTest.createManagementHost(new String[] {
                 CommandLineArgumentParser.ARGUMENT_PREFIX
-                        + HostInitAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE
+                        + HostInitDockerAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE
                         + CommandLineArgumentParser.ARGUMENT_ASSIGNMENT
                         + Boolean.TRUE.toString(),
                 CommandLineArgumentParser.ARGUMENT_PREFIX

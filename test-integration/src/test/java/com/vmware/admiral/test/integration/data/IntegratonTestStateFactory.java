@@ -54,6 +54,8 @@ public class IntegratonTestStateFactory extends CommonTestStateFactory {
     public static final String DOCKER_COMPUTE_DESC_ID = "test-docker-host-compute-desc-id";
     public static final String GROUP = "test-group";
 
+    public static final String KUBERNETES_COMPUTE_ID = "test-kubernetes-host-compute-id";
+
     public static void addDefaultDocumentTimeout(ServiceDocument serviceDocument) {
         serviceDocument.documentExpirationTimeMicros = Utils.getNowMicrosUtc()
                 + IntegratonTestStateFactory.DEFAULT_DOCUMENT_EXPIRATION_MICROS;
@@ -97,6 +99,23 @@ public class IntegratonTestStateFactory extends CommonTestStateFactory {
     public static ComputeState createDockerComputeHost() {
         ComputeState cs = new ComputeState();
         cs.id = DOCKER_COMPUTE_ID;
+        cs.documentSelfLink = cs.id;
+        cs.primaryMAC = UUID.randomUUID().toString();
+        cs.address = "ssh://somehost:22"; // this will be used for ssh to access the host
+        cs.powerState = PowerState.ON;
+        cs.resourcePoolLink = GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK;
+        cs.adapterManagementReference = URI.create("http://localhost:8081"); // not real reference
+        cs.customProperties = new HashMap<>();
+        cs.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
+                ContainerHostService.DockerAdapterType.API.name());
+
+        addDefaultDocumentTimeout(cs);
+        return cs;
+    }
+
+    public static ComputeState createKubernetesComputeHost() {
+        ComputeState cs = new ComputeState();
+        cs.id = KUBERNETES_COMPUTE_ID;
         cs.documentSelfLink = cs.id;
         cs.primaryMAC = UUID.randomUUID().toString();
         cs.address = "ssh://somehost:22"; // this will be used for ssh to access the host

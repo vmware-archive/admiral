@@ -214,7 +214,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         poolState.minDiskCapacityBytes = poolState.maxDiskCapacityBytes = 1024L * 1024L * 1024L
                 * 1024L;
         poolState.customProperties = new HashMap<>(3);
-        poolState.customProperties.put(ComputeConstants.ENDPOINT_AUTH_CREDNTIALS_PROP_NAME,
+        poolState.customProperties.put(ComputeConstants.ENDPOINT_AUTH_CREDENTIALS_PROP_NAME,
                 CommonTestStateFactory.AUTH_CREDENTIALS_ID);
         if (endpointLink != null) {
             poolState.customProperties.put(ComputeProperties.ENDPOINT_LINK_PROP_NAME, endpointLink);
@@ -311,7 +311,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
                 DOCKER_COMPUTE_DESC_ID);
         cs.resourcePoolLink = UriUtils.buildUriPath(ResourcePoolService.FACTORY_LINK,
                 RESOURCE_POOL_ID);
-        cs.adapterManagementReference = URI.create("http://localhost:8081");
+        cs.adapterManagementReference = null;
         cs.customProperties = new HashMap<>();
         cs.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 UriUtils.buildUriPath(

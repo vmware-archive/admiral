@@ -41,8 +41,8 @@ public class ContainerMaintenance {
 
     private final ServiceHost host;
     private final String containerSelfLink;
-    private long lastInspectMaintainanceInMicros;
-    private long lastStatsMaintainanceInMicros;
+    private long lastInspectMaintenanceInMicros;
+    private long lastStatsMaintenanceInMicros;
 
     public static ContainerMaintenance create(ServiceHost host, String containerSelfLink) {
         return new ContainerMaintenance(host, containerSelfLink);
@@ -98,9 +98,9 @@ public class ContainerMaintenance {
                 ? MAINTENANCE_PERIOD_MICROS : MAINTENANCE_SLOW_DOWN_PERIOD_MICROS;
 
         // check whether the update period has passed
-        if (lastInspectMaintainanceInMicros + updatePeriod < nowMicrosUtc) {
+        if (lastInspectMaintenanceInMicros + updatePeriod < nowMicrosUtc) {
             // schedule next period and request inspect
-            lastInspectMaintainanceInMicros = nowMicrosUtc;
+            lastInspectMaintenanceInMicros = nowMicrosUtc;
             processContainerInspect(post, containerState);
             return true;
         } else {
@@ -121,9 +121,9 @@ public class ContainerMaintenance {
                 ? 0 : MAINTENANCE_PERIOD_MICROS;
 
         // check whether the update period has passed
-        if (lastStatsMaintainanceInMicros + updatePeriod < nowMicrosUtc) {
+        if (lastStatsMaintenanceInMicros + updatePeriod < nowMicrosUtc) {
             // schedule next period and request stats collection
-            lastStatsMaintainanceInMicros = nowMicrosUtc;
+            lastStatsMaintenanceInMicros = nowMicrosUtc;
             performStatsInspection(post, containerState);
             return true;
         } else {
