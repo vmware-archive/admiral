@@ -43,6 +43,7 @@ public interface ManagementUriParts {
     String RESOURCE_GROUP_PLACEMENTS = RESOURCES + "/group-placements";
     String RESOURCE_NAME_PREFIXES = RESOURCES + "/name-prefixes";
     String DEPLOYMENT_POLICIES = RESOURCES + "/deployment-policies";
+    String HOST_PORT_PROFILES = RESOURCES + "/host-port-profiles";
     String ELASTIC_PLACEMENT_ZONES = RESOURCES + "/elastic-placement-zones";
     String ELASTIC_PLACEMENT_ZONE_CONFIGURATION = ELASTIC_PLACEMENT_ZONES + "-config";
     String PLACEMENT_CAPACITY_UPDATE = RESOURCES + "/placement-capacity-update";
@@ -134,6 +135,7 @@ public interface ManagementUriParts {
     String REQUEST_PROVISION_SERVICE_LINKS_TASKS = REQUEST + "/service-link-processing-tasks";
     String REQUEST_PROVISION_EXPOSE_SERVICE_TASKS = REQUEST + "/expose-service-processing-tasks";
     String REQUEST_CALLBACK_HANDLER_TASKS = REQUEST + "/callback-handler/";
+    String REQUEST_CONTAINER_PORTS_ALLOCATION_TASKS = REQUEST + "/container-ports-allocation-tasks";
 
     String CONFIGURE_HOST = REQUEST + "/configure-host/";
 

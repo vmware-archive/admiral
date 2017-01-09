@@ -31,8 +31,8 @@ public class ExposedPortsHostFilterTest extends BaseAffinityHostFilterTest {
     public void testFilterHostsWithExposedPorts() throws Throwable {
         assertEquals(3, initialHostLinks.size());
 
-        ContainerDescription desc = createDescription(true);
-        assertNotNull(desc.portBindings);
+        ContainerDescription desc = TestRequestStateFactory
+                .createContainerDescriptionWithPortBindingsHostPortSet();
         ContainerState c1 = createContainer(desc, initialHostLinks.get(0));
         assertEquals(PowerState.RUNNING, c1.powerState);
         ContainerState c2 = createContainer(desc, initialHostLinks.get(1));
@@ -49,7 +49,8 @@ public class ExposedPortsHostFilterTest extends BaseAffinityHostFilterTest {
     public void testFailOnNoHostsFound() throws Throwable {
         assertEquals(3, initialHostLinks.size());
 
-        ContainerDescription desc = createDescription(true);
+        ContainerDescription desc = TestRequestStateFactory
+                .createContainerDescriptionWithPortBindingsHostPortSet();
         createContainer(desc, initialHostLinks.get(0));
         createContainer(desc, initialHostLinks.get(1));
         createContainer(desc, initialHostLinks.get(2));

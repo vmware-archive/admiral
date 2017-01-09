@@ -31,6 +31,7 @@ import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -95,7 +96,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
     // there is already created host with tenant links "[/tenants/tenant1]"
     // and we won't be able to add a host with tenant links "[/tenants/tenant1]"
     @Test
-    public void testPutFromSameTennat() throws Throwable {
+    public void testPutFromSameTenant() throws Throwable {
         List<String> tenantLinks = Arrays.asList(
                 FIRST_TENANT_ID);
 
@@ -119,7 +120,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
     // there is already created host with tenant links "[/tenants/tenant1]"
     // and we will be able to add a host with tenant links "[/tenants/tenant2]"
     @Test
-    public void testPutFromDifferentTennat() throws Throwable {
+    public void testPutFromDifferentTenant() throws Throwable {
         List<String> tenantLinks = Arrays.asList(
                 FIRST_TENANT_ID);
 
@@ -140,7 +141,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
     // there is already created host with tenant links "[/tenants/tenant1, /groups/subtenant1]"
     // and we won't be able to add a host with tenant links "[/tenants/tenant1, /groups/subtenant1]"
     @Test
-    public void testPutFromSameTennatSameGroup() throws Throwable {
+    public void testPutFromSameTenantSameGroup() throws Throwable {
         List<String> tenantLinks = Arrays.asList(
                 FIRST_TENANT_ID,
                 FIRST_SUB_TENANT_ID);
@@ -165,7 +166,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
     // there is already created host with tenant links "[/tenants/tenant1, /groups/subtenant1]"
     // and we will be able to add a host with tenant links "[/tenants/tenant1, /groups/subtenant2]"
     @Test
-    public void testPutFromSameTennaDifferntGroup() throws Throwable {
+    public void testPutFromSameTenantDifferentGroup() throws Throwable {
         List<String> tenantLinks = Arrays.asList(
                 FIRST_TENANT_ID,
                 FIRST_SUB_TENANT_ID);
@@ -189,7 +190,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
     // there is already created host with tenant links "[/tenants/tenant1, /users/user1]"
     // and we won't be able to add a host with tenant links "[/tenants/tenant1, /users/user1]"
     @Test
-    public void testPutFromSameTennatSameUser() throws Throwable {
+    public void testPutFromSameTenantSameUser() throws Throwable {
         List<String> tenantLinks = Arrays.asList(
                 FIRST_TENANT_ID,
                 FIRST_USER_ID);
@@ -214,7 +215,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
     // there is already created host with tenant links "[/tenants/tenant1, /users/user1]"
     // and we will be able to add a host with tenant links "[/tenants/tenant1, /users/user2]"
     @Test
-    public void testPutFromSameTennatDifferntUsers() throws Throwable {
+    public void testPutFromSameTenantDifferentUsers() throws Throwable {
         List<String> tenantLinks = Arrays.asList(
                 FIRST_TENANT_ID,
                 FIRST_USER_ID);
@@ -238,7 +239,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
     // there is already created host with tenant links "[/tenants/tenant1, /users/user1]"
     // and we will be able to add a host with tenant links "[/tenants/tenant2, /users/user1]"
     @Test
-    public void testPutFromDifferentTennatSameUsers() throws Throwable {
+    public void testPutFromDifferentTenantSameUsers() throws Throwable {
         List<String> tenantLinks = Arrays.asList(
                 FIRST_TENANT_ID,
                 FIRST_USER_ID);
@@ -361,20 +362,52 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
     private void assertComputeStateExists(ContainerHostSpec hostSpec) {
         QueryTask queryTask = QueryUtil.buildPropertyQuery(ComputeState.class,
                 ComputeState.FIELD_NAME_DESCRIPTION_LINK, hostSpec.hostState.descriptionLink);
-
+        List<String> computeStates = new ArrayList<>();
         host.testStart(1);
         new ServiceDocumentQuery<>(host, ComputeState.class)
                 .query(queryTask,
                         (r) -> {
                             if (r.hasException()) {
-                                host.log("Exception while gettion the compute state.");
+                                host.log("Exception while getting the compute state.");
                                 host.failIteration(r.getException());
                             } else if (r.hasResult()) {
+                                computeStates.add(r.getDocumentSelfLink());
                                 host.completeIteration();
                             } else {
                                 host.log("No compute state with description link {}",
                                         hostSpec.hostState.descriptionLink);
                                 host.failIteration(r.getException());
+                            }
+                        });
+        host.testWait();
+        assertHostPortProfileStateExists(computeStates.get(0));
+    }
+
+    private void assertHostPortProfileStateExists(String computeStateLink) {
+        QueryTask queryTask = QueryUtil.buildPropertyQuery(
+                HostPortProfileService.HostPortProfileState.class,
+                HostPortProfileService.HostPortProfileState.FIELD_HOST_LINK,
+                computeStateLink);
+
+        host.testStart(1);
+        List<HostPortProfileService.HostPortProfileState> profiles = new ArrayList<>();
+        new ServiceDocumentQuery<>(host, HostPortProfileService.HostPortProfileState.class)
+                .query(queryTask,
+                        (r) -> {
+                            if (r.hasException()) {
+                                host.log("Exception while getting the host port profile state.");
+                                host.failIteration(r.getException());
+                            } else if (r.hasResult()) {
+                                profiles.add(r.getResult());
+                                host.completeIteration();
+                            } else {
+                                if (profiles.size() != 1) {
+                                    host.log("Expected 1 host port profile state, found [%s].",
+                                            profiles.size());
+                                    host.failIteration(r.getException());
+                                } else {
+                                    host.completeIteration();
+                                }
                             }
                         });
         host.testWait();

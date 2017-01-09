@@ -25,18 +25,22 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 import org.junit.internal.ComparisonCriteria;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
+import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
+import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
@@ -76,7 +80,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         assertNotNull(containerState.id);
         assertTrue(containerState.documentSelfLink.contains(containerDesc.name));
 
-        assertPortBindingsEquals(containerDesc.portBindings, containerState.ports);
+        validatePorts(containerDesc, containerState);
         assertArrayEquals(containerDesc.command, containerState.command);
         assertEquals(containerDesc.image, containerState.image);
         assertEquals(containerDesc.volumeDriver, containerState.volumeDriver);
@@ -500,6 +504,73 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
                 containerState.adapterManagementReference.getPath());
 
         waitForContainerPowerState(PowerState.RUNNING, containerState.documentSelfLink);
+    }
+
+    @Test
+    public void testAllocationOfContainerLinksWithPorts() throws Throwable {
+        ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription();
+        desc1.documentSelfLink = UUID.randomUUID().toString();
+        desc1.name = "linked-service";
+        desc1._cluster = 2;
+        desc1.portBindings = Arrays.stream(new String[] {
+                "80"})
+                .map((s) -> PortBinding.fromDockerPortMapping(DockerPortMapping.fromString(s)))
+                .collect(Collectors.toList())
+                .toArray(new PortBinding[0]);
+        desc1 = doPost(desc1, ContainerDescriptionService.FACTORY_LINK);
+        assertNotNull(desc1);
+        addForDeletion(desc1);
+
+        String contextId = UUID.randomUUID().toString();
+        ContainerAllocationTaskState allocationTask1 = createContainerAllocationTask(
+                desc1.documentSelfLink, 2);
+        allocationTask1.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        allocationTask1 = allocate(allocationTask1);
+
+        ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription();
+        desc2.documentSelfLink = UUID.randomUUID().toString();
+        desc2.name = "service";
+        desc2.portBindings = Arrays.stream(new String[] {
+                "5008:80",
+                "443" })
+                .map((s) -> PortBinding.fromDockerPortMapping(DockerPortMapping.fromString(s)))
+                .collect(Collectors.toList())
+                .toArray(new PortBinding[0]);
+        desc2 = doPost(desc2, ContainerDescriptionService.FACTORY_LINK);
+        assertNotNull(desc2);
+        addForDeletion(desc2);
+
+        ContainerAllocationTaskState allocationTask2 = createContainerAllocationTask(
+                desc2.documentSelfLink, 1);
+        allocationTask2.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        allocationTask2 = allocate(allocationTask2);
+
+        Iterator<String> resourceIterator = allocationTask1.resourceLinks.iterator();
+        validatePorts(desc1, getDocument(ContainerState.class, resourceIterator.next()));
+        validatePorts(desc1, getDocument(ContainerState.class, resourceIterator.next()));
+        validatePorts(desc2,
+                getDocument(ContainerState.class, allocationTask2.resourceLinks.iterator().next()));
+    }
+
+    private void validatePorts(ContainerDescription containerDescription,
+            ContainerState containerState) throws Throwable {
+        // get latest ports
+        hostPortProfileState = getDocument(HostPortProfileService.HostPortProfileState.class,
+                hostPortProfileState.documentSelfLink);
+        Set<String> reservedPorts = hostPortProfileState.reservedPorts == null ? new HashSet<>() :
+                hostPortProfileState.reservedPorts
+                        .entrySet()
+                        .stream()
+                        .filter(p -> containerState.documentSelfLink.equals(p.getValue()))
+                        .map(p -> p.getKey().toString())
+                        .collect(Collectors.toSet());
+
+        assertEquals(containerDescription.portBindings.length, reservedPorts.size());
+        assertPortBindingsEquals(containerDescription.portBindings, containerState.ports);
+
+        for (PortBinding requestedPort : containerState.ports) {
+            assertTrue(reservedPorts.contains(requestedPort.hostPort));
+        }
     }
 
     private ContainerAllocationTaskState allocate(ContainerAllocationTaskState allocationTask)

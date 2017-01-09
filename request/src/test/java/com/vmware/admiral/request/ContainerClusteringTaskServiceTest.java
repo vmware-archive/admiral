@@ -861,7 +861,7 @@ public class ContainerClusteringTaskServiceTest extends RequestBaseTest {
         assertEquals(0, containersNumberBeforeProvisioning);
 
         ContainerDescriptionService.ContainerDescription desc1 = TestRequestStateFactory
-                .createContainerDescription("name1");
+                .createContainerDescriptionWithPortBindingsHostPortSet();
         desc1._cluster = 3;
         desc1 = doPost(desc1, ContainerDescriptionService.FACTORY_LINK);
 

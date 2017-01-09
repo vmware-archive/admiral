@@ -67,7 +67,8 @@ public class RequestStatusServiceTest extends RequestBaseTest {
             ContainerAllocationTaskService.DISPLAY_NAME,
             ReservationTaskService.DISPLAY_NAME,
             PlacementHostSelectionTaskService.DISPLAY_NAME,
-            ResourceNamePrefixTaskService.DISPLAY_NAME
+            ResourceNamePrefixTaskService.DISPLAY_NAME,
+            ContainerPortsAllocationTaskService.DISPLAY_NAME
             );
 
     private String requestId;

@@ -1621,7 +1621,8 @@ public class RequestBrokerService extends
                         Arrays.asList(ContainerAllocationTaskService.DISPLAY_NAME,
                                 ReservationTaskService.DISPLAY_NAME,
                                 PlacementHostSelectionTaskService.DISPLAY_NAME,
-                                ResourceNamePrefixTaskService.DISPLAY_NAME)));
+                                ResourceNamePrefixTaskService.DISPLAY_NAME,
+                                ContainerPortsAllocationTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_TYPE, new ArrayList<>(
                 Arrays.asList(ComputeAllocationTaskService.DISPLAY_NAME,
                         ReservationTaskService.DISPLAY_NAME,

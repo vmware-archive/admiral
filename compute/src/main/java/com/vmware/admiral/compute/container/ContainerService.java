@@ -321,6 +321,9 @@ public class ContainerService extends StatefulService {
                     .updateDiscoveredContainerDesc(currentState, patchBody);
         }
 
+        ContainerUtil.ContainerDescriptionHelper.createInstance(this)
+                .updateContainerPorts(currentState, patchBody);
+
         patch.complete();
     }
 

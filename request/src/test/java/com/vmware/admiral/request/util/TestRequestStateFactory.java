@@ -94,6 +94,19 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return createCompositeDescription(false);
     }
 
+    public static ContainerDescription createContainerDescriptionWithPortBindingsHostPortSet() {
+        ContainerDescription containerDesc = createContainerDescription("admiral-test");
+        containerDesc.portBindings = Arrays.stream(new String[] {
+                "5000:5000",
+                "127.0.0.1::20080",
+                "127.0.0.1:20080:80",
+                "1234:1234/tcp" })
+                .map((s) -> PortBinding.fromDockerPortMapping(DockerPortMapping.fromString(s)))
+                .collect(Collectors.toList())
+                .toArray(new PortBinding[0]);
+        return containerDesc;
+    }
+
     public static ContainerDescription createContainerDescription() {
         return createContainerDescription("admiral-test");
     }
@@ -113,10 +126,10 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
 
         if (exposePorts) {
             containerDesc.portBindings = Arrays.stream(new String[] {
-                    "5000:5000",
+                    "5000",
                     "127.0.0.1::20080",
-                    "127.0.0.1:20080:80",
-                    "1234:1234/tcp" })
+                    "127.0.0.1::80",
+                    "1234/tcp" })
                     .map((s) -> PortBinding.fromDockerPortMapping(DockerPortMapping.fromString(s)))
                     .collect(Collectors.toList())
                     .toArray(new PortBinding[0]);
