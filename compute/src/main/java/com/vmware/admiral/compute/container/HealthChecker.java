@@ -93,6 +93,8 @@ public class HealthChecker {
         public Integer unhealthyThreshold;
 
         public String command;
+
+        public boolean continueProvisioningOnError;
     }
 
     private final ServiceHost host;
@@ -102,6 +104,10 @@ public class HealthChecker {
     }
 
     public void doHealthCheck(URI healthConfigLink) {
+        doHealthCheck(healthConfigLink, null);
+    }
+
+    public void doHealthCheck(URI healthConfigLink, Consumer<ContainerStats> callback) {
         host.sendRequest(Operation
                 .createGet(healthConfigLink)
                 .setReferer(host.getPublicUri())
@@ -113,13 +119,47 @@ public class HealthChecker {
                     } else {
                         ContainerDescription containerDescription = o
                                 .getBody(ContainerDescription.class);
-                        processContainerHealth(containerDescription);
+                        processContainerHealth(containerDescription, callback);
                     }
                 }));
 
     }
 
-    private void processContainerHealth(ContainerDescription containerDescription) {
+    public void doHealthCheckRequest(ContainerState containerState,
+            HealthConfig healthConfig, Consumer<ContainerStats> callback) {
+        if (healthConfig == null || healthConfig.protocol == null) {
+            return;
+        }
+        if (containerState.powerState == PowerState.PAUSED ||
+                containerState.powerState == PowerState.RETIRED ||
+                containerState.powerState == PowerState.PROVISIONING ||
+                containerState.powerState == PowerState.STOPPED) {
+
+            if (callback != null) {
+                callback.accept(null);
+            }
+
+            return;
+        }
+
+        switch (healthConfig.protocol) {
+        case HTTP:
+            healthCheckHttp(containerState, healthConfig, null, callback);
+            break;
+        case TCP:
+            healthCheckTcp(containerState, healthConfig, null, callback);
+            break;
+        case COMMAND:
+            healthCheckExec(containerState, healthConfig, callback);
+            break;
+        default:
+            host.log(Level.WARNING, "Health config protocol not supported: %s",
+                    healthConfig.protocol);
+            break;
+        }
+    }
+
+    private void processContainerHealth(ContainerDescription containerDescription, Consumer<ContainerStats> callback) {
 
         QueryTask compositeQueryTask = QueryUtil.buildQuery(ContainerState.class, true);
 
@@ -139,43 +179,12 @@ public class HealthChecker {
                                 "Failed to retrieve container's health config: %s - %s",
                                 r.getDocumentSelfLink(), r.getException());
                     } else if (r.hasResult()) {
-                        doHealthCheckRequest(r.getResult(), containerDescription.healthConfig);
+                        doHealthCheckRequest(r.getResult(), containerDescription.healthConfig, callback);
                     }
                 });
     }
 
-    private void doHealthCheckRequest(ContainerState containerState,
-            HealthConfig healthConfig) {
-
-        if (healthConfig == null || healthConfig.protocol == null) {
-            return;
-        }
-        if (containerState.powerState == PowerState.PAUSED ||
-                containerState.powerState == PowerState.RETIRED ||
-                containerState.powerState == PowerState.PROVISIONING ||
-                containerState.powerState == PowerState.STOPPED) {
-            return;
-        }
-
-        switch (healthConfig.protocol) {
-        case HTTP:
-            healthCheckHttp(containerState, healthConfig, null);
-            break;
-        case TCP:
-            healthCheckTcp(containerState, healthConfig, null);
-            break;
-        case COMMAND:
-            healthCheckExec(containerState, healthConfig);
-            break;
-        default:
-            host.log(Level.WARNING, "Health config protocol not supported: %s",
-                    healthConfig.protocol);
-            break;
-        }
-
-    }
-
-    private void healthCheckExec(ContainerState containerState, HealthConfig healthConfig) {
+    private void healthCheckExec(ContainerState containerState, HealthConfig healthConfig, Consumer<ContainerStats> callback) {
 
         ShellContainerExecutorState executorState = new ShellContainerExecutorState();
         executorState.command = healthConfig.command.split(" ");
@@ -199,17 +208,17 @@ public class HealthChecker {
                                 String.format("Health check failed: %s",
                                         o.getBody(String.class)));
                     }
-                    handleHealthResponse(containerState, e);
+                    handleHealthResponse(containerState, e, callback);
                 }));
 
     }
 
     private void healthCheckTcp(ContainerState containerState, HealthConfig healthConfig,
-            String[] hostPortBindings) {
+            String[] hostPortBindings, Consumer<ContainerStats> callback) {
         if (hostPortBindings == null) {
             determineContainerHostPort(containerState, healthConfig,
                     (bindings) -> healthCheckTcp(containerState, healthConfig,
-                            bindings));
+                            bindings, callback));
             return;
         }
 
@@ -232,7 +241,7 @@ public class HealthChecker {
 
             @Override
             public void operationComplete(ChannelFuture result) throws Exception {
-                handleHealthResponse(containerState, result.cause());
+                handleHealthResponse(containerState, result.cause(), callback);
                 result.channel().close();
             }
 
@@ -240,12 +249,12 @@ public class HealthChecker {
     }
 
     private void healthCheckHttp(ContainerState containerState, HealthConfig healthConfig,
-            String[] hostPortBindings) {
+            String[] hostPortBindings, Consumer<ContainerStats> callback) {
 
         if (hostPortBindings == null) {
             determineContainerHostPort(containerState, healthConfig,
                     (bindings) -> healthCheckHttp(containerState, healthConfig,
-                            bindings));
+                            bindings, callback));
             return;
         }
 
@@ -279,7 +288,7 @@ public class HealthChecker {
                 .setReferer(host.getPublicUri())
                 .setCompletion(
                         (o, ex) -> {
-                            handleHealthResponse(containerState, ex);
+                            handleHealthResponse(containerState, ex, callback);
                         });
 
         if (healthConfig.httpVersion == HttpVersion.HTTP_v2) {
@@ -343,17 +352,17 @@ public class HealthChecker {
 
     }
 
-    private void handleHealthResponse(ContainerState containerState, Throwable ex) {
+    private void handleHealthResponse(ContainerState containerState, Throwable ex, Consumer<ContainerStats> callback) {
         if (ex != null) {
             host.log(Level.WARNING, "Health check status is failed for container %s : %s",
                     containerState, ex);
+
         }
 
         /* if ex != null, the health check is failed */
         ContainerStats containerStats = new ContainerStats();
         containerStats.healthCheckSuccess = (ex == null);
         containerStats.containerStopped = containerState.powerState == PowerState.STOPPED;
-
         URI uri = UriUtils.buildUri(host, containerState.documentSelfLink);
         host.sendRequest(Operation.createPatch(uri)
                 .setBody(containerStats)
@@ -364,6 +373,15 @@ public class HealthChecker {
                                 "Failed to patch health status on periodic maintenance: %s",
                                 containerState.documentSelfLink);
 
+                        if (callback != null) {
+                            callback.accept(null);
+                        }
+
+                        return;
+                    }
+                    ContainerStats stats = ob.getBody(ContainerStats.class);
+                    if (callback != null) {
+                        callback.accept(stats);
                     }
                 }));
     }

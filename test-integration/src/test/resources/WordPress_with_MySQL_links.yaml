@@ -23,6 +23,12 @@ components:
         alias: mysql
       ports:
       - container_port: "80"
+      health_config:
+        protocol: "TCP"
+        port: 80
+        timeout_millis: 2000
+        healthy_threshold: 2
+        unhealthy_threshold: 2
   mysql:
     type: App.Container
     data:
@@ -33,3 +39,9 @@ components:
         value: pass@word01
       ports:
       - container_port: "3306"
+      health_config:
+        protocol: "TCP"
+        port: 3306
+        timeout_millis: 2000
+        healthy_threshold: 2
+        unhealthy_threshold: 2

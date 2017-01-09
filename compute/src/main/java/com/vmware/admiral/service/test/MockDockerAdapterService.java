@@ -65,7 +65,7 @@ public class MockDockerAdapterService extends StatelessService {
 
     public static final String MOCK_CURRENT_EXECUTED_OPERATION_KEY = "MOCK_CURRENT_EXECUTED_OPERATION_KEY";
     public static final String FAILURE_EXPECTED = "FAILURE_EXPECTED";
-    public static final String MOCK_HOST_ASSIGNED_ADDRESS = "192.168.1.129";
+    public static final String MOCK_HOST_ASSIGNED_ADDRESS = "127.0.0.1";
 
     public boolean isFailureExpected;
     public String computeHostIpAddress = MOCK_HOST_ASSIGNED_ADDRESS;

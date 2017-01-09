@@ -18,6 +18,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -43,10 +44,10 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState.Powe
 import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.ServiceNetwork;
+
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
-import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
@@ -162,28 +163,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
                 Boolean.TRUE.toString());
         allocationTask = allocate(allocationTask);
 
-        ContainerState containerState = getDocument(ContainerState.class,
-                allocationTask.resourceLinks.iterator().next());
-        assertTrue(containerState.names.get(0).startsWith(containerDesc.name));
-        assertNull(containerState.id);
-        assertTrue(containerState.documentSelfLink.contains(containerDesc.name));
-        assertEquals(containerDesc.documentSelfLink, containerState.descriptionLink);
-        assertNull(containerState.created);
-        assertEquals(allocationTask.hostSelections.get(0).hostLink, containerState.parentLink);
-        assertEquals(groupPlacementState.documentSelfLink,
-                containerState.groupResourcePlacementLink);
-        assertEquals(allocationTask.tenantLinks, containerState.tenantLinks);
-        assertEquals(containerDesc.instanceAdapterReference.getPath(),
-                containerState.adapterManagementReference.getPath());
-        assertEquals(ContainerState.CONTAINER_ALLOCATION_STATUS, containerState.status);
-        assertArrayEquals(containerDesc.command, containerState.command);
-        assertEquals(containerDesc.image, containerState.image);
-        assertTrue(containerState.documentExpirationTimeMicros > 0);
-        waitForContainerPowerState(PowerState.PROVISIONING, containerState.documentSelfLink);
-
-        // make sure the host is not update with the new container.
-        assertFalse("should not be provisioned container: " + containerState.documentSelfLink,
-                MockDockerAdapterService.isContainerProvisioned(containerState.documentSelfLink));
+        assertContainerStateAfterAllocation(allocationTask);
 
         // Request provisioning after allocation:
         RequestBrokerState provisioningRequest = new RequestBrokerState();
@@ -195,38 +175,175 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         provisioningRequest = doPost(provisioningRequest, RequestBrokerFactoryService.SELF_LINK);
         assertNotNull(provisioningRequest);
 
-        waitForTaskSuccess(provisioningRequest.documentSelfLink, RequestBrokerState.class);
+        waitForTaskSuccess(allocationTask.documentSelfLink, ContainerAllocationTaskState.class);
+    }
 
-        // verify container state is provisioned and patched:
-        containerState = getDocument(ContainerState.class,
-                provisioningRequest.resourceLinks.iterator().next());
-        assertNotNull(containerState);
-        provisioningRequest = getDocument(RequestBrokerState.class,
-                provisioningRequest.documentSelfLink);
+    @Test
+    public void testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncluded() throws Throwable {
+        host.log(">>>>>>Start: testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncluded <<<<< ");
+        containerDesc.healthConfig = createHealthConfigTcp();
+        doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
+                false, Action.PUT);
 
-        containerState = getDocument(ContainerState.class,
-                allocationTask.resourceLinks.iterator().next());
-        assertTrue(containerState.names.get(0).startsWith(containerDesc.name));
-        assertNotNull(containerState.id);
-        assertTrue(containerState.documentSelfLink.contains(containerDesc.name));
-        assertPortBindingsEquals(containerDesc.portBindings, containerState.ports);
-        assertArrayEquals(containerDesc.command, containerState.command);
-        assertEquals(containerDesc.image, containerState.image);
-        assertEquals(containerDesc.documentSelfLink, containerState.descriptionLink);
-        assertEquals(containerDesc.instanceAdapterReference.getPath(),
-                containerState.adapterManagementReference.getPath());
-        assertNotNull(containerState.created);
-        assertEquals(groupPlacementState.documentSelfLink,
-                containerState.groupResourcePlacementLink);
+        ContainerAllocationTaskState allocationTask = createContainerAllocationTask();
+        allocationTask.customProperties = new HashMap<>();
+        allocationTask.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST,
+                Boolean.TRUE.toString());
+        allocationTask = allocate(allocationTask);
 
-        assertFalse(ContainerState.CONTAINER_ALLOCATION_STATUS.equals(containerState.status));
-        assertEquals(0, containerState.documentExpirationTimeMicros);
-        waitForContainerPowerState(PowerState.RUNNING, containerState.documentSelfLink);
+        assertContainerStateAfterAllocation(allocationTask);
 
-        // verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, provisioningRequest.requestTrackerLink);
-        assertNotNull(rs);
-        assertEquals(Integer.valueOf(100), rs.progress);
+        // Request provisioning after allocation:
+        RequestBrokerState provisioningRequest = new RequestBrokerState();
+        provisioningRequest.resourceType = allocationTask.resourceType;
+        provisioningRequest.resourceLinks = allocationTask.resourceLinks;
+        provisioningRequest.resourceDescriptionLink = containerDesc.documentSelfLink;
+        provisioningRequest.operation = ContainerOperationType.CREATE.id;
+
+        // start listener
+        try (ServerSocket serverSocket = new ServerSocket(RequestBaseTest.HEALTH_CHECK_PORT)) {
+            provisioningRequest = doPost(provisioningRequest, RequestBrokerFactoryService.SELF_LINK);
+            assertNotNull(provisioningRequest);
+
+            waitForTaskSuccess(allocationTask.documentSelfLink, ContainerAllocationTaskState.class);
+        }
+    }
+
+    @Test
+    public void testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedShouldFail() throws Throwable {
+        host.log(">>>>>>Start: testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedShouldFail <<<<< ");
+        containerDesc.healthConfig = createHealthConfigTcp();
+        doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
+                false, Action.PUT);
+
+        ContainerAllocationTaskState allocationTask = createContainerAllocationTask();
+        allocationTask.customProperties = new HashMap<>();
+        allocationTask.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST,
+                Boolean.TRUE.toString());
+        allocationTask = allocate(allocationTask);
+
+        assertContainerStateAfterAllocation(allocationTask);
+
+        // Request provisioning after allocation:
+        RequestBrokerState provisioningRequest = new RequestBrokerState();
+        provisioningRequest.resourceType = allocationTask.resourceType;
+        provisioningRequest.resourceLinks = allocationTask.resourceLinks;
+        provisioningRequest.resourceDescriptionLink = containerDesc.documentSelfLink;
+        provisioningRequest.operation = ContainerOperationType.CREATE.id;
+
+        configureHealthCheckTimeout(DEFAULT_HEALTH_CHECK_TIMEOUT);
+
+        configureHealthCheckDelay(DEFAULT_HEALTH_CHECK_DELAY);
+
+        // should fail because there is no listener to handle the health check request
+        provisioningRequest = doPost(provisioningRequest, RequestBrokerFactoryService.SELF_LINK);
+        assertNotNull(provisioningRequest);
+
+        waitForRequestToFail(provisioningRequest);
+    }
+
+    @Test
+    public void testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedWhichFailsContinueProvisioning() throws Throwable {
+        host.log(">>>>>>Start: testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedShouldFail <<<<< ");
+        containerDesc.healthConfig = createHealthConfigTcp();
+        containerDesc.healthConfig.continueProvisioningOnError = true;
+
+        doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
+                false, Action.PUT);
+
+        ContainerAllocationTaskState allocationTask = createContainerAllocationTask();
+        allocationTask.customProperties = new HashMap<>();
+        allocationTask.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST,
+                Boolean.TRUE.toString());
+        allocationTask = allocate(allocationTask);
+
+        assertContainerStateAfterAllocation(allocationTask);
+
+        // Request provisioning after allocation:
+        RequestBrokerState provisioningRequest = new RequestBrokerState();
+        provisioningRequest.resourceType = allocationTask.resourceType;
+        provisioningRequest.resourceLinks = allocationTask.resourceLinks;
+        provisioningRequest.resourceDescriptionLink = containerDesc.documentSelfLink;
+        provisioningRequest.operation = ContainerOperationType.CREATE.id;
+
+        configureHealthCheckTimeout(DEFAULT_HEALTH_CHECK_TIMEOUT);
+
+        configureHealthCheckDelay(DEFAULT_HEALTH_CHECK_DELAY);
+
+        // should fail because there is no listener to handle the health check request
+        provisioningRequest = doPost(provisioningRequest, RequestBrokerFactoryService.SELF_LINK);
+        assertNotNull(provisioningRequest);
+
+        waitForRequestToComplete(provisioningRequest);
+    }
+
+    @Test
+    public void testClusteredContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncluded() throws Throwable {
+        host.log(">>>>>>Start: testClusteredContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncluded <<<<< ");
+        final int clusterSize = 5;
+        containerDesc.healthConfig = createHealthConfigTcp();
+        containerDesc._cluster = clusterSize;
+        doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
+                false, Action.PUT);
+
+        ContainerAllocationTaskState allocationTask = createContainerAllocationTask(containerDesc.documentSelfLink, clusterSize);
+        allocationTask.customProperties = new HashMap<>();
+        allocationTask.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST,
+                Boolean.TRUE.toString());
+        allocationTask = allocate(allocationTask);
+
+        assertContainerStateAfterAllocation(allocationTask);
+
+        // Request provisioning after allocation:
+        RequestBrokerState provisioningRequest = new RequestBrokerState();
+        provisioningRequest.resourceType = allocationTask.resourceType;
+        provisioningRequest.resourceLinks = allocationTask.resourceLinks;
+        provisioningRequest.resourceCount = clusterSize;
+        provisioningRequest.resourceDescriptionLink = containerDesc.documentSelfLink;
+        provisioningRequest.operation = ContainerOperationType.CREATE.id;
+
+        // start listener
+        try (ServerSocket serverSocket = new ServerSocket(RequestBaseTest.HEALTH_CHECK_PORT)) {
+            provisioningRequest = doPost(provisioningRequest, RequestBrokerFactoryService.SELF_LINK);
+            assertNotNull(provisioningRequest);
+
+            waitForTaskSuccess(allocationTask.documentSelfLink, ContainerAllocationTaskState.class);
+        }
+    }
+
+    @Test
+    public void testClusteredContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedShoudFail() throws Throwable {
+        host.log(">>>>>>Start: testClusteredContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedShoudFail <<<<< ");
+        final int clusterSize = 5;
+        containerDesc.healthConfig = createHealthConfigTcp();
+        containerDesc._cluster = clusterSize;
+        doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
+                false, Action.PUT);
+
+        ContainerAllocationTaskState allocationTask = createContainerAllocationTask(containerDesc.documentSelfLink, clusterSize);
+        allocationTask.customProperties = new HashMap<>();
+        allocationTask.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST,
+                Boolean.TRUE.toString());
+        allocationTask = allocate(allocationTask);
+
+        assertContainerStateAfterAllocation(allocationTask);
+
+        configureHealthCheckTimeout(DEFAULT_HEALTH_CHECK_TIMEOUT);
+
+        configureHealthCheckDelay(DEFAULT_HEALTH_CHECK_DELAY);
+
+        // Request provisioning after allocation:
+        RequestBrokerState provisioningRequest = new RequestBrokerState();
+        provisioningRequest.resourceType = allocationTask.resourceType;
+        provisioningRequest.resourceLinks = allocationTask.resourceLinks;
+        provisioningRequest.resourceCount = clusterSize;
+        provisioningRequest.resourceDescriptionLink = containerDesc.documentSelfLink;
+        provisioningRequest.operation = ContainerOperationType.CREATE.id;
+
+        // should fail because there is no listener to handle the health check request
+        provisioningRequest = doPost(provisioningRequest, RequestBrokerFactoryService.SELF_LINK);
+        assertNotNull(provisioningRequest);
+        waitForRequestToFail(provisioningRequest);
     }
 
     @Test
@@ -646,4 +763,37 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         }.arrayEquals(null, expecteds.toArray(), actuals.toArray());
     }
 
+    private void assertContainerStateAfterAllocation(ContainerAllocationTaskState allocationTask) throws Throwable {
+        assertContainerStateAfterAllocation(allocationTask, null);
+    }
+
+    private void assertContainerStateAfterAllocation(ContainerAllocationTaskState allocationTask, ContainerDescription containerDesc) throws Throwable {
+        ContainerState containerState = getDocument(ContainerState.class,
+                    allocationTask.resourceLinks.iterator().next());
+
+        if (containerDesc == null) {
+            containerDesc = this.containerDesc;
+        }
+
+        assertTrue(containerState.names.get(0).startsWith(containerDesc.name));
+        assertNull(containerState.id);
+        assertTrue(containerState.documentSelfLink.contains(containerDesc.name));
+        assertEquals(containerDesc.documentSelfLink, containerState.descriptionLink);
+        assertNull(containerState.created);
+        assertEquals(allocationTask.hostSelections.get(0).hostLink, containerState.parentLink);
+        assertEquals(groupPlacementState.documentSelfLink,
+                containerState.groupResourcePlacementLink);
+        assertEquals(allocationTask.tenantLinks, containerState.tenantLinks);
+        assertEquals(containerDesc.instanceAdapterReference.getPath(),
+                containerState.adapterManagementReference.getPath());
+        assertEquals(ContainerState.CONTAINER_ALLOCATION_STATUS, containerState.status);
+        assertArrayEquals(containerDesc.command, containerState.command);
+        assertEquals(containerDesc.image, containerState.image);
+        assertTrue(containerState.documentExpirationTimeMicros > 0);
+        waitForContainerPowerState(PowerState.PROVISIONING, containerState.documentSelfLink);
+
+        // make sure the host is not update with the new container.
+        assertFalse("should not be provisioned container: " + containerState.documentSelfLink,
+                MockDockerAdapterService.isContainerProvisioned(containerState.documentSelfLink));
+    }
 }
