@@ -330,7 +330,6 @@ var TemplatesViewVueComponent = Vue.extend({
             $event.preventDefault();
           }
 
-          // ClosureActions.openAddClosure(this.model);
           TemplateActions.openAddClosure(this.model);
         },
         removeClosureDescription: function($event) {

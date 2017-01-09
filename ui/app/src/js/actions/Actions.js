@@ -44,7 +44,8 @@ export var TemplateActions = Reflux.createActions([
   'removeTemplate', 'saveTemplateName', 'copyTemplate', 'publishTemplate', 'openImportTemplate',
   'importTemplate', 'openEditNetwork', 'cancelEditNetwork', 'attachNetwork', 'detachNetwork',
   'attachDetachNetwork', 'saveNetwork', 'removeNetwork',
-  'openAddClosure', 'removeClosure', 'runClosure', 'cancelAddClosure', 'createClosureTemplate',
+  'openAddClosure', 'removeClosure', 'saveClosure', 'runClosure', 'cancelAddClosure',
+  'createClosureTemplate', 'resetMonitoredClosure',
   'openCreateNewTemplate', 'createNewTemplate'
 ]);
 
@@ -61,7 +62,8 @@ export var ContainerActions = Reflux.createActions([
   'closeContainers', 'openShell', 'closeShell',
   'batchOpContainers', 'batchOpCompositeContainers', 'batchOpNetworks', 'batchOpClosures',
   'openCreateContainer', 'openCreateNetwork', 'createContainer', 'createNetwork',
-  'removeClosureRun', 'openCreateClosure', 'openClosureDetails', 'openCompositeClosureDetails'
+  'removeClosureRun', 'openCreateClosure', 'saveClosure', 'runClosure', 'openClosureDetails',
+  'openCompositeClosureDetails', 'resetMonitoredClosure'
 ]);
 
 export var NetworkActions = Reflux.createActions([
@@ -163,16 +165,6 @@ export var NotificationsActions = Reflux.createActions([
 
 export var StorageDescriptionsActions = Reflux.createActions([
   'retrieveStorageDescriptions'
-]);
-
-export var ClosureActions = Reflux.createActions([
-  'openClosures', 'openAddClosure', 'createClosure', 'deleteClosure', 'editClosure', 'runClosure',
-   'resetMonitoredClosure', 'createAndRunClosure'
-]);
-
-export var ClosureContextToolbarActions = Reflux.createActions([
-  'openToolbarPlacementZones', 'closeToolbar',
-  'createPlacementZone', 'managePlacementZones'
 ]);
 
 /*

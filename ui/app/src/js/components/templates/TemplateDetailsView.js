@@ -395,7 +395,6 @@ var TemplateDetailsView = Vue.extend({
               e.preventDefault();
           }
 
-          // ClosureActions.openAddClosure(this.model);
           TemplateActions.openAddClosure(this.model);
         },
 
@@ -587,7 +586,6 @@ var TemplateDetailsView = Vue.extend({
       }
     },
     openAddNewClosure: function() {
-      // ClosureActions.openAddClosure();
       TemplateActions.openAddClosure();
     },
 
@@ -596,8 +594,6 @@ var TemplateDetailsView = Vue.extend({
     },
 
     editClosureDescription: function(e) {
-
-      console.log('$$$$$$$$$$$$$$$4 Editing from TemplateDetailsView...');
       TemplateActions.openAddClosure(e.model);
     },
     searchForImage: function(queryOptions) {

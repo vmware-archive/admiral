@@ -13,7 +13,6 @@ import HostsStore from 'stores/HostsStore';
 import PlacementsStore from 'stores/PlacementsStore';
 import TemplatesStore from 'stores/TemplatesStore';
 import ContainersStore from 'stores/ContainersStore';
-import ClosuresStore from 'stores/ClosuresStore';
 import * as actions from 'actions/Actions';
 import routes from 'core/routes';
 import constants from 'core/constants';
@@ -106,15 +105,6 @@ let initializeStoreListeners = function() {
       this.emitChange();
     }
   });
-
-  ClosuresStore.listen((closuresData) => {
-    if (this.data.centerView && this.data.centerView.name === constants.VIEWS.CLOSURES.name) {
-      console.log('AppStore setting data: ' + closuresData);
-      this.setInData(['centerView', 'data'], closuresData);
-      this.emitChange();
-    }
-  });
-
 };
 
 AppStore = Reflux.createStore({

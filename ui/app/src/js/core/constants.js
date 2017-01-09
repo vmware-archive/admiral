@@ -13,6 +13,7 @@ var constants = Immutable({
   LOADING: {},
   CONTEXT_PANEL: {
     PLACEMENT_ZONES: 'placementZones',
+    CLOSURES: 'closures',
     CREDENTIALS: 'credentials',
     CERTIFICATES: 'certificates',
     RESOURCE_GROUPS: 'resourceGroups',

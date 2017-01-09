@@ -22,6 +22,8 @@ import utils from 'core/utils';
 import imageUtils from 'core/imageUtils';
 import links from 'core/links';
 
+const CHECK_INTERVAL_MS = 1000;
+
 function getContainersImageIcons(containers) {
   let icons = new Set();
   for (var c in containers) {
@@ -383,9 +385,10 @@ let ContainersStore = Reflux.createStore({
     });
 
     PlacementZonesStore.listen((placementZonesData) => {
-      this.setInData(['selectedItemDetails', 'placementZones'], placementZonesData.items);
-
-      this.emitChange();
+      if (this.data.creatingResource) {
+        this.setInData(['creatingResource', 'placementZones'], placementZonesData.items);
+        this.emitChange();
+      }
     });
   },
 
@@ -700,6 +703,8 @@ let ContainersStore = Reflux.createStore({
     this.setInData(['creatingResource', 'tasks'], {});
     this.setInData(['listView', 'queryOptions', '$category'],
                    constants.RESOURCES.SEARCH_CATEGORY.CLOSURES);
+
+    actions.PlacementZonesActions.retrievePlacementZones();
     this.emitChange();
   },
 
@@ -721,6 +726,13 @@ let ContainersStore = Reflux.createStore({
       this.navigateContainersListViewAndOpenRequests(request);
     }).catch(this.onGenericCreateError);
   },
+
+  onCreateClosure: function(closureDescription) {
+    services.createClosure(closureDescription).then(() => {
+        this.navigateToContainersListView();
+    }).catch(this.onGenericCreateError);
+  },
+
 
   onRefreshContainer: function() {
     var selectedContainerDetails = getSelectedContainerDetailsCursor.call(this).get();
@@ -829,14 +841,7 @@ let ContainersStore = Reflux.createStore({
 
 
   onRemoveClosureRun: function(closureRunlink) {
-
-    services.deleteClosureRun(closureRunlink)
-      .then((removalRequest) => {
-
-        console.log('---- Removed closure run: ' + removalRequest);
-        // this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
-        // actions.RequestsActions.requestCreated(removalRequest);
-      });
+    services.deleteClosureRun(closureRunlink);
   },
 
   onRemoveNetwork: function(networkId) {
@@ -1651,8 +1656,108 @@ let ContainersStore = Reflux.createStore({
   },
 
   onOpenToolbarClosureResults: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.PLACEMENT_ZONES, PlacementZonesStore.getData(),
-      false);
+    this.openToolbarItem(constants.CONTEXT_PANEL.CLOSURES, null, false);
+  },
+  createClosure: function(closureDescription) {
+    return services.createClosure(closureDescription);
+  },
+
+  saveClosure: function(closureDescription) {
+    if (!closureDescription.documentSelfLink) {
+      this.createClosure(closureDescription)
+        .then(() => {
+          this.navigateToContainersListView(true);
+        }).catch(this.onGenericEditError);
+    } else {
+      services.editClosure(closureDescription)
+        .then(() => {
+          this.navigateToContainersListView(true);
+        }).catch(this.onGenericEditError);
+    }
+  },
+
+  runClosure: function(closureDescription, inputs) {
+    var createRun = (closureDescription) => {
+      return services.runClosure(closureDescription, inputs).then((request) => {
+        this.setInData(['tasks', 'monitoredTask'], request);
+        this.setInData(['creatingResource', 'tasks', 'monitoredTask', 'isRunning'], {});
+        this.emitChange();
+
+        if (!this.requestCheckInterval) {
+          this.requestCheckInterval = setInterval(this.refreshMonitoredTask,
+            CHECK_INTERVAL_MS);
+        }
+      });
+    };
+
+    this.setInData(['tasks', 'monitoredTask'], null);
+    this.emitChange();
+
+    if (!closureDescription.documentSelfLink) {
+      this.createClosure(closureDescription).then((createdClosure) => {
+        this.setInData(['creatingResource', 'tasks', 'editingItemData', 'item'], createdClosure);
+        this.emitChange();
+
+        createRun(createdClosure);
+      }).catch(this.onGenericEditError);
+    } else {
+      createRun(closureDescription).catch(this.onGenericEditError);
+    }
+  },
+  refreshMonitoredTask: function() {
+    var task = this.data.tasks.monitoredTask;
+    if (task) {
+      if (task.state === 'FINISHED' || task.state === 'FAILED' || task.state === 'CANCELLED') {
+        this.stopTaskRefresh();
+        this.fetchLogs();
+
+        this.setInData(['creatingResource', 'tasks', 'monitoredTask', 'isRunning'], null);
+        this.emitChange();
+        return;
+      } else {
+        console.log('Monitoring closure: ' + task.documentSelfLink);
+      }
+      services.getClosure(task.documentSelfLink).then((fetchedTask) => {
+        this.setInData(['tasks', 'monitoredTask'], fetchedTask);
+        this.setInData(['tasks', 'monitoredTask', 'taskId'],
+          fetchedTask.documentSelfLink.split('/').pop());
+        this.emitChange();
+        if (fetchedTask.resourceLinks && fetchedTask.resourceLinks.length > 0) {
+          this.fetchLogs();
+        }
+      });
+    } else {
+      console.warn('No available closure to monitor!');
+    }
+  },
+  resetMonitoredClosure: function() {
+    if (this.data.tasks) {
+      console.log('Resetting monitored closure...');
+      this.setInData(['tasks', 'monitoredTask'], null);
+      this.emitChange();
+    }
+  },
+  stopTaskRefresh: function() {
+    if (this.requestCheckInterval) {
+      clearInterval(this.requestCheckInterval);
+      this.requestCheckInterval = null;
+    }
+  },
+  fetchLogs: function() {
+    var task = this.data.tasks.monitoredTask;
+    if (typeof task.resourceLinks === 'undefined' || task.resourceLinks.length <= 0) {
+      console.log('No resources to fetch logs...');
+      this.setInData(['tasks', 'monitoredTask', 'taskLogs'], task.errorMsg);
+      this.emitChange();
+      return;
+    }
+
+    var taskLogResource = task.resourceLinks[0].split('/').pop();
+    console.log('Requesting logs from: ' + taskLogResource);
+    services.getClosureLogs(taskLogResource).then((fetchedLogs) => {
+      this.setInData(['tasks', 'monitoredTask', 'taskLogs'], atob(fetchedLogs.logs));
+      this.emitChange();
+    });
   },
 
   onCloseToolbar: function() {
