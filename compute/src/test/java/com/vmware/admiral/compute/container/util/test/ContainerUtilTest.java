@@ -14,23 +14,34 @@ package com.vmware.admiral.compute.container.util.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
+import org.junit.internal.ComparisonCriteria;
 
+import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
+import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.compute.container.util.ContainerUtil;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
+import com.vmware.photon.controller.model.resources.ComputeService;
+import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 
@@ -46,7 +57,7 @@ public class ContainerUtilTest extends ComputeBaseTest {
     @Test
     public void testCreateContainerDesc() throws Throwable {
 
-        ContainerState containerState = createContainerState();
+        ContainerState containerState = createContainerState(null);
         ContainerDescription containerDesc = ContainerUtil
                 .createContainerDescription(containerState);
         assertEquals(containerState.descriptionLink, containerDesc.documentSelfLink);
@@ -67,7 +78,7 @@ public class ContainerUtilTest extends ComputeBaseTest {
 
     @Test
     public void testUpdateDiscoverContainerDescription() throws Throwable {
-        ContainerState containerState = createContainerState();
+        ContainerState containerState = createContainerState(null);
         ContainerDescription containerDesc = ContainerUtil
                 .createContainerDescription(containerState);
         containerDesc = doPost(containerDesc, ContainerDescriptionService.FACTORY_LINK);
@@ -103,7 +114,58 @@ public class ContainerUtilTest extends ComputeBaseTest {
 
     }
 
-    private ContainerState createContainerState() throws Throwable {
+    @Test
+    public void testUpdateContainerPorts() throws Throwable {
+        ComputeService.ComputeState computeState = createComputeHost();
+        ContainerState containerState = createContainerState(computeState.documentSelfLink);
+        HostPortProfileService.HostPortProfileState profile = createHostPortProfile(computeState,
+                containerState, new Long[] {new Long(5000), new Long(3045)});
+        final String profileDescrLink = profile.documentSelfLink;
+
+        ContainerState patch = new ContainerState();
+        patch.ports = Arrays.stream(new String[] {
+                "5000:5000",
+                "20080:80" })
+                .map((s) -> PortBinding.fromDockerPortMapping(DockerPortMapping.fromString(s)))
+                .collect(Collectors.toList());
+        String configValue = String.format(
+                "{\"Hostname\":\"%s\", \"Domainname\":\"%s\", \"User\":\"%s\", \"WorkingDir\":\"%s\"}",
+                HOSTNAME, DOMAIN_NAME, USERNAME, WORKING_DIR);
+
+        patch.attributes = new HashMap<String, String>();
+
+        patch.attributes.put("Config", configValue);
+
+        doOperation(patch, UriUtils.buildUri(host, containerState.documentSelfLink),
+                false, Action.PATCH);
+
+        waitFor(() -> {
+
+            HostPortProfileService.HostPortProfileState document = getDocument(
+                    HostPortProfileService.HostPortProfileState.class, profileDescrLink);
+
+            return document.reservedPorts.containsKey(new Long(20080));
+        });
+
+        Map<Long, String> actualPorts = new HashMap<>();
+        actualPorts.put(new Long(20080), containerState.documentSelfLink);
+        actualPorts.put(new Long(5000), containerState.documentSelfLink);
+
+        HostPortProfileService.HostPortProfileState document = getDocument(
+                HostPortProfileService.HostPortProfileState.class, profileDescrLink);
+        new ComparisonCriteria() {
+            @Override
+            protected void assertElementsEqual(Object expected, Object actual) {
+                Map.Entry<Long, String> expectedMapping = (Map.Entry<Long, String>) expected;
+                Map.Entry<Long, String> actualMapping = (Map.Entry<Long, String>) actual;
+
+                assertEquals("port", expectedMapping.getKey(), actualMapping.getKey());
+                assertEquals("containerLink", expectedMapping.getValue(), actualMapping.getValue());
+            }
+        }.arrayEquals(null, document.reservedPorts.entrySet(), actualPorts.entrySet());
+    }
+
+    private ContainerState createContainerState(String parentLink) throws Throwable {
 
         ContainerState containerState = new ContainerState();
         containerState.descriptionLink = String.format("%s-%s",
@@ -114,6 +176,7 @@ public class ContainerUtilTest extends ComputeBaseTest {
         containerState.command = new String[] { CONTAINER_COMMAND };
         containerState.id = UUID.randomUUID().toString();
         containerState.names = new ArrayList<>(Arrays.asList("name_" + containerState.id));
+        containerState.parentLink = parentLink;
         containerState = doPost(containerState, ContainerFactoryService.SELF_LINK);
         PortBinding[] ports = new PortBinding[1];
         PortBinding port = new PortBinding();
@@ -125,4 +188,41 @@ public class ContainerUtilTest extends ComputeBaseTest {
 
     }
 
+    ComputeService.ComputeState createComputeHost() throws Throwable {
+        ComputeService.ComputeState cs = new ComputeService.ComputeState();
+        cs.id = UUID.randomUUID().toString();
+        cs.primaryMAC = UUID.randomUUID().toString();
+        cs.address = "somehost";
+        cs.powerState = ComputeService.PowerState.ON;
+        cs.descriptionLink = UriUtils.buildUriPath(ComputeDescriptionService.FACTORY_LINK,
+                "test-host-compute-desc-id");
+        cs.resourcePoolLink = UriUtils.buildUriPath(ResourcePoolService.FACTORY_LINK,
+                "test-host-resource-pool");
+        cs.adapterManagementReference = URI.create("http://localhost:8081");
+        cs.customProperties = new HashMap<>();
+        cs.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
+                "API");
+        cs.customProperties.put(ComputeConstants.DOCKER_URI_PROP_NAME,
+                ContainerDescription.getDockerHostUri(cs).toString());
+        cs.documentSelfLink = cs.id;
+
+        cs.tenantLinks = new ArrayList<>();
+        return doPost(cs, ComputeService.FACTORY_LINK);
+    }
+
+    HostPortProfileService.HostPortProfileState createHostPortProfile(
+            ComputeService.ComputeState computeHost, ContainerState containerState,
+            Long[] allocatedPorts) throws Throwable {
+        HostPortProfileService.HostPortProfileState hostPortProfileState =
+                new HostPortProfileService.HostPortProfileState();
+        hostPortProfileState.hostLink = computeHost.documentSelfLink;
+        hostPortProfileState.id = computeHost.id;
+        hostPortProfileState.documentSelfLink = hostPortProfileState.id;
+        hostPortProfileState.reservedPorts = new HashMap<>();
+        for (Long port : allocatedPorts) {
+            hostPortProfileState.reservedPorts.put(port, containerState.documentSelfLink);
+        }
+        hostPortProfileState = doPost(hostPortProfileState, HostPortProfileService.FACTORY_LINK);
+        return hostPortProfileState;
+    }
 }

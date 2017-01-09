@@ -99,6 +99,8 @@ public class ContainerAllocationTaskService
             RESOURCES_LINKS_BUILT,
             PLACEMENT_HOST_SELECTED,
             PROCESSING_SERVICE_LINKS,
+            HOST_ALLOCATED,
+            ALLOCATE_PORTS,
             START_PROVISIONING,
             PROVISIONING,
             PROVISIONING_COMPLETED,
@@ -200,13 +202,24 @@ public class ContainerAllocationTaskService
         case PLACEMENT_HOST_SELECTED:
             proceedAfterHostSelection(state);
             break;
+        case HOST_ALLOCATED:
+            // this is composition provision request, skip directly to provisioning
+            if (state.postAllocation) {
+                proceedTo(SubStage.START_PROVISIONING);
+            } else {
+                createContainerStates(state, null, null);
+            }
+            break;
+        case ALLOCATE_PORTS:
+            allocatePorts(state);
+            break;
         case START_PROVISIONING:
-            provisionOrAllocateContainers(state, null, null);
+            provisionAllocatedContainers(state, null);
             break;
         case PROVISIONING:
             break;
         case COMPLETED:
-            completeAllocationTask(state);
+            completeTask(state);
             break;
         case ERROR:
             completeWithError();
@@ -281,7 +294,7 @@ public class ContainerAllocationTaskService
             if (state.instanceAdapterReference == null) {
                 // reload container description if null
                 getContainerDescription(state, (contDesc) -> {
-                    proceedTo(SubStage.START_PROVISIONING, s -> {
+                    proceedTo(SubStage.HOST_ALLOCATED, s -> {
                         s.instanceAdapterReference = contDesc.instanceAdapterReference;
                         s.resourceNameToHostSelection = resourceNameToHostSelection;
                         s.customProperties = mergeCustomProperties(state.customProperties,
@@ -289,14 +302,14 @@ public class ContainerAllocationTaskService
                     });
                 });
             } else {
-                proceedTo(SubStage.START_PROVISIONING, s -> {
+                proceedTo(SubStage.HOST_ALLOCATED, s -> {
                     s.resourceNameToHostSelection = resourceNameToHostSelection;
                 });
             }
         }
     }
 
-    private void completeAllocationTask(ContainerAllocationTaskState state) {
+    private void completeTask(ContainerAllocationTaskState state) {
         if (state.hostSelections != null) {
             try {
                 ContainerHostDataCollectionState body = new ContainerHostDataCollectionState();
@@ -503,15 +516,15 @@ public class ContainerAllocationTaskService
                 }));
     }
 
-    private void provisionOrAllocateContainers(ContainerAllocationTaskState state,
-            ContainerDescription containerDesc, ServiceTaskCallback taskCallback) {
+    private void createContainerStates(ContainerAllocationTaskState state,
+            ContainerDescription containerDesc,
+            ServiceTaskCallback taskCallback) {
         final boolean allocationRequest = isAllocationRequest(state);
-
         if (taskCallback == null) {
-            // create a counter subtask link first
+            // create a counter subtask link to move to ALLOCATE_PORTS state when finished
             createCounterSubTaskCallback(state, state.resourceCount, !allocationRequest,
-                    SubStage.COMPLETED,
-                    (serviceTask) -> provisionOrAllocateContainers(state,
+                    SubStage.ALLOCATE_PORTS,
+                    (serviceTask) -> createContainerStates(state,
                             this.containerDescription, serviceTask));
             return;
         }
@@ -519,7 +532,7 @@ public class ContainerAllocationTaskService
         if (containerDesc == null) {
             if (this.containerDescription == null) {
                 getContainerDescription(state, (contDesc) -> {
-                    provisionOrAllocateContainers(state, contDesc, taskCallback);
+                    createContainerStates(state, contDesc, taskCallback);
                 });
             } else {
                 containerDesc = this.containerDescription;
@@ -527,25 +540,34 @@ public class ContainerAllocationTaskService
         }
 
         if (allocationRequest) {
-            logInfo("Allocation request for %s containers", state.resourceCount);
-        } else if (state.postAllocation) {
-            logInfo("Post-allocation request for %s containers", state.resourceCount);
+            logInfo("Allocate request for %s containers", state.resourceCount);
         } else {
-            logInfo("Provisioning request for %s containers", state.resourceCount);
+            logInfo("Allocate and provision request for %s containers", state.resourceCount);
         }
 
-        if (state.postAllocation) {
-            for (String resourceLink : state.resourceLinks) {
-                createContainerInstanceRequests(state, taskCallback, resourceLink);
-            }
-        } else {
-            for (String resourceName : state.resourceNames) {
-                createContainerState(state, containerDesc, null, resourceName,
-                        allocationRequest, null,
-                        state.resourceNameToHostSelection.get(resourceName), taskCallback);
-            }
+        for (String resourceName : state.resourceNames) {
+            createContainerState(state, containerDesc, null, resourceName, null,
+                    state.resourceNameToHostSelection.get(resourceName), taskCallback);
+        }
+    }
+
+    private void provisionAllocatedContainers(ContainerAllocationTaskState state,
+            ServiceTaskCallback taskCallback) {
+        final boolean allocationRequest = isAllocationRequest(state);
+
+        if (taskCallback == null) {
+            // create a counter subtask link first
+            createCounterSubTaskCallback(state, state.resourceCount, !allocationRequest,
+                    SubStage.COMPLETED,
+                    (serviceTask) -> provisionAllocatedContainers(state, serviceTask));
+            return;
         }
 
+        logInfo("Provision request for %s containers", state.resourceCount);
+
+        for (String resourceLink : state.resourceLinks) {
+            createContainerInstanceRequests(state, taskCallback, resourceLink);
+        }
         proceedTo(SubStage.PROVISIONING);
     }
 
@@ -580,7 +602,7 @@ public class ContainerAllocationTaskService
     private void createContainerState(ContainerAllocationTaskState state,
             ContainerDescription containerDesc,
             Boolean isFromTemplate,
-            String resourceName, boolean allocationRequest,
+            String resourceName,
             GroupResourcePlacementState groupResourcePlacementState, HostSelection hostSelection,
             ServiceTaskCallback taskCallback) {
         try {
@@ -589,7 +611,7 @@ public class ContainerAllocationTaskService
                 getResourcePlacementState(
                         state,
                         (resourcePlacementState) -> createContainerState(state, containerDesc, isFromTemplate,
-                                resourceName, allocationRequest, resourcePlacementState,
+                                resourceName, resourcePlacementState,
                                 hostSelection, taskCallback));
                 return;
             }
@@ -598,7 +620,7 @@ public class ContainerAllocationTaskService
             if (isFromTemplate == null && isClusteringOperation(state)) {
                 getCompositeComponent(state,
                         (isTemplate) -> createContainerState(state, containerDesc, isTemplate,
-                                resourceName, allocationRequest, groupResourcePlacementState,
+                                resourceName, groupResourcePlacementState,
                                 hostSelection, taskCallback));
                 return;
             }
@@ -687,17 +709,40 @@ public class ContainerAllocationTaskService
                                 ContainerState body = o.getBody(ContainerState.class);
                                 logInfo("Created ContainerState: %s ", body.documentSelfLink);
 
-                                if (allocationRequest) {
-                                    completeSubTasksCounter(taskCallback, null);
-                                } else {
-                                    createContainerInstanceRequests(state, taskCallback,
-                                            body.documentSelfLink);
-                                }
+                                completeSubTasksCounter(taskCallback, null);
                             }));
 
         } catch (Throwable e) {
             failTask("System failure creating ContainerStates", e);
         }
+    }
+
+    private void allocatePorts(ContainerAllocationTaskState state) {
+        final boolean allocationRequest = isAllocationRequest(state);
+
+        // if it is composition allocation request, move to COMPLETED SubStage when complete
+        // if it is Admiral provisioning request, move to START_PROVISIONING SubStage when complete
+        SubStage completionStage = allocationRequest ?
+                SubStage.COMPLETED :
+                SubStage.START_PROVISIONING;
+
+        ContainerPortsAllocationTaskService.ContainerPortsAllocationTaskState portsAllocationTask =
+                new ContainerPortsAllocationTaskService.ContainerPortsAllocationTaskState();
+        portsAllocationTask.containerStateLinks = state.resourceLinks;
+        portsAllocationTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
+                TaskStage.STARTED, completionStage,
+                TaskStage.STARTED, SubStage.ERROR);
+        portsAllocationTask.documentSelfLink = getSelfId();
+        portsAllocationTask.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation.createPost(this, ContainerPortsAllocationTaskService.FACTORY_LINK)
+                .setBody(portsAllocationTask)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating port allocation task", e);
+                        return;
+                    }
+                }));
     }
 
     private void createContainerInstanceRequests(ContainerAllocationTaskState state,
@@ -776,12 +821,10 @@ public class ContainerAllocationTaskService
      * Takes volumes from ContainerDescription in format [/host-directory:/container-directory] or
      * [namedVolume:/container-directory] and puts the suffix for host part of the volume name.
      *
-     * @param cd
-     *            - ContainerDescription
-     * @param hostSelection
-     *            - HostSelection for resource.
+     * @param cd            - ContainerDescription
+     * @param hostSelection - HostSelection for resource.
      * @return new volume name equals to old one, but with suffix for host directory like:
-     *         [namedVolume-mcm376:/container-directory]
+     * [namedVolume-mcm376:/container-directory]
      */
     private static String[] mapVolumes(ContainerDescription cd, HostSelection hostSelection) {
 

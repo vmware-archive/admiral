@@ -43,6 +43,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState.Powe
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
+import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
@@ -100,6 +101,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected ComputeDescription vmGuestComputeDescription;
     protected ComputeState vmGuestComputeState;
     protected ContainerDescription containerDesc;
+    protected HostPortProfileService.HostPortProfileState hostPortProfileState;
     protected ContainerNetworkDescription containerNetworkDesc;
     protected ContainerVolumeDescription containerVolumeDesc;
     protected GroupResourcePlacementState groupPlacementState;
@@ -108,6 +110,11 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected final Object initializationLock = new Object();
 
     protected static final String DEFAULT_GROUP_RESOURCE_POLICY = GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
+
+    static {
+        System.setProperty(ContainerPortsAllocationTaskService.CONTAINER_PORT_ALLOCATION_ENABLED,
+                Boolean.TRUE.toString());
+    }
 
     @Before
     public void setUp() throws Throwable {
@@ -123,6 +130,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         groupPlacementState = createGroupResourcePlacement(resourcePool);
         ComputeDescription dockerHostDesc = createDockerHostDescription();
         createDockerHost(dockerHostDesc, resourcePool);
+        createHostPortProfile();
 
         // setup Container desc:
         createContainerDescription();
@@ -169,7 +177,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 ConfigurationFactoryService.SELF_LINK,
                 EventLogService.FACTORY_LINK,
                 CounterSubTaskService.FACTORY_LINK,
-                ReservationAllocationTaskService.FACTORY_LINK));
+                ReservationAllocationTaskService.FACTORY_LINK,
+                HostPortProfileService.FACTORY_LINK));
 
         // admiral states:
         services.addAll(Arrays.asList(
@@ -432,6 +441,20 @@ public abstract class RequestBaseTest extends BaseTestCase {
             documentsForDeletion.add(vmHostComputeState);
         }
         return vmHostComputeState;
+    }
+
+    protected void createHostPortProfile() throws Throwable {
+        if (hostPortProfileState != null) {
+            return;
+        }
+        hostPortProfileState = new HostPortProfileService.HostPortProfileState();
+        hostPortProfileState.hostLink = computeHost.documentSelfLink;
+        hostPortProfileState.id = computeHost.id;
+        hostPortProfileState.documentSelfLink = hostPortProfileState.id;
+        hostPortProfileState = getOrCreateDocument(hostPortProfileState,
+                HostPortProfileService.FACTORY_LINK);
+        assertNotNull(hostPortProfileState);
+        documentsForDeletion.add(hostPortProfileState);
     }
 
     protected ComputeState createVmComputeWithRandomComputeDescription(boolean generateId, ComputeType type)

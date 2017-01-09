@@ -30,6 +30,7 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.CertificateUtil;
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.SslCertificateResolver;
@@ -37,6 +38,7 @@ import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostO
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
+import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
@@ -166,8 +168,8 @@ public class ContainerHostService extends StatelessService {
 
         boolean validateHostTypeAndConnection = op.getUri().getQuery() != null
                 && op.getUri().getQuery()
-                        .contains(
-                                ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
+                .contains(
+                        ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
 
         if (hostSpec.isConfigureOverSsh) {
             configureOverSsh(op, hostSpec, validateHostTypeAndConnection);
@@ -334,7 +336,8 @@ public class ContainerHostService extends StatelessService {
                             completeOperationSuccess(op);
                         } else {
                             logInfo("VIC host verification failed for %s", computeAddress);
-                            op.fail(new IllegalArgumentException(CONTAINER_HOST_IS_NOT_VIC_MESSAGE));
+                            op.fail(new IllegalArgumentException(
+                                    CONTAINER_HOST_IS_NOT_VIC_MESSAGE));
                         }
                     });
         });
@@ -449,8 +452,9 @@ public class ContainerHostService extends StatelessService {
                         documentSelfLink = UriUtils.buildUriPath(
                                 ComputeService.FACTORY_LINK, documentSelfLink);
                     }
+
                     op.addResponseHeader(Operation.LOCATION_HEADER, documentSelfLink);
-                    completeOperationSuccess(op);
+                    createHostPortProfile(storedHost, op);
                     updateContainerHostInfo(documentSelfLink);
                     triggerEpzEnumeration();
                 }));
@@ -490,7 +494,8 @@ public class ContainerHostService extends StatelessService {
                     } else if (r.hasResult()) {
                         if (isScheduler(r.getResult())) {
                             schedulerFound.set(true);
-                            op.fail(new IllegalArgumentException(PLACEMENT_ZONE_CONTAINS_SCHEDULERS_MESSAGE));
+                            op.fail(new IllegalArgumentException(
+                                    PLACEMENT_ZONE_CONTAINS_SCHEDULERS_MESSAGE));
                         }
                     } else {
                         if (!schedulerFound.get()) {
@@ -531,7 +536,7 @@ public class ContainerHostService extends StatelessService {
                                                                 "Default docker description can't be created. Exception: %s",
                                                                 e instanceof CancellationException
                                                                         ? e.getMessage() : Utils
-                                                                                .toString(e));
+                                                                        .toString(e));
                                                         return;
                                                     }
                                                     logInfo("Default docker description created with self link: "
@@ -647,6 +652,32 @@ public class ContainerHostService extends StatelessService {
                 }));
     }
 
+    private void createHostPortProfile(ComputeState computeState, Operation operation) {
+        HostPortProfileService.HostPortProfileState hostPortProfileState =
+                new HostPortProfileService.HostPortProfileState();
+        hostPortProfileState.hostLink = computeState.documentSelfLink;
+        // Make sure there is only one HostPortProfile per Host by generating profile id based on host id
+        hostPortProfileState.id = computeState.id;
+        hostPortProfileState.documentSelfLink = HostPortProfileService.getHostPortProfileLink(
+                computeState.documentSelfLink);
+
+        // POST will be converted to PUT if profile with this id already exists
+        sendRequest(OperationUtil
+                .createForcedPost(this, HostPortProfileService.FACTORY_LINK)
+                .setBody(hostPortProfileState)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        operation.fail(ex);
+                        return;
+                    }
+                    HostPortProfileService.HostPortProfileState result = o.getBody(
+                            HostPortProfileService.HostPortProfileState.class);
+                    logInfo("Created HostPortProfile for host %s with port range %s-%s.",
+                            result.hostLink, result.startPort, result.endPort);
+                    completeOperationSuccess(operation);
+                }));
+    }
+
     private void triggerEpzEnumeration() {
         EpzComputeEnumerationTaskService.triggerForAllResourcePools(this);
     }
@@ -683,7 +714,7 @@ public class ContainerHostService extends StatelessService {
                         op.fail(e);
                         return;
                     }
-                    completeOperationSuccess(op);
+                    createHostPortProfile(cs, op);
                     updateContainerHostInfo(cs.documentSelfLink);
                     triggerEpzEnumeration();
                 }));

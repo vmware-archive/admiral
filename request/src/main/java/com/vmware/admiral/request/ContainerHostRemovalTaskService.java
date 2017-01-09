@@ -30,6 +30,7 @@ import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState.SubStage;
@@ -85,13 +86,15 @@ public class ContainerHostRemovalTaskService extends
             REMOVED_NETWORKS,
             REMOVING_VOLUMES,
             REMOVED_VOLUMES,
+            REMOVING_PORT_PROFILES,
+            REMOVED_PORT_PROFILES,
             REMOVING_HOSTS,
             COMPLETED,
             ERROR;
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(REMOVING_HOSTS, SUSPENDING_HOSTS, REMOVING_CONTAINERS,
-                            REMOVING_NETWORKS, REMOVING_VOLUMES));
+                            REMOVING_NETWORKS, REMOVING_VOLUMES, REMOVING_PORT_PROFILES));
         }
     }
 
@@ -128,6 +131,11 @@ public class ContainerHostRemovalTaskService extends
         case REMOVING_VOLUMES:
             break;
         case REMOVED_VOLUMES:
+            queryPortProfiles(state);
+            break;
+        case REMOVING_PORT_PROFILES:
+            break;
+        case REMOVED_PORT_PROFILES:
             removeHosts(state, null);
             break;
         case REMOVING_HOSTS:
@@ -342,7 +350,7 @@ public class ContainerHostRemovalTaskService extends
                         volumeLinks.add(r.getDocumentSelfLink());
                     } else {
                         if (volumeLinks.isEmpty()) {
-                            removeHosts(state, null);
+                            queryPortProfiles(state);
                             return;
                         }
 
@@ -374,6 +382,54 @@ public class ContainerHostRemovalTaskService extends
                     proceedTo(SubStage.REMOVING_VOLUMES);
                 });
         sendRequest(startPost);
+    }
+
+    private void queryPortProfiles(ContainerHostRemovalTaskState state) {
+        QueryTask q = QueryUtil.buildQuery(HostPortProfileService.HostPortProfileState.class, false);
+        QueryUtil.addListValueClause(q, HostPortProfileService.HostPortProfileState.FIELD_HOST_LINK, state.resourceLinks);
+        ServiceDocumentQuery<HostPortProfileService.HostPortProfileState> query = new ServiceDocumentQuery<>(
+                getHost(), HostPortProfileService.HostPortProfileState.class);
+        QueryUtil.addBroadcastOption(q);
+        ArrayList<String> hostPortProfileLinks = new ArrayList<>();
+        query.query(q, (r) -> {
+            if (r.hasException()) {
+                failTask("Failure retrieving query results", r.getException());
+                return;
+            } else if (r.hasResult()) {
+                hostPortProfileLinks.add(r.getDocumentSelfLink());
+            } else {
+                // if there are no host port profiles, go to the next stage
+                if (hostPortProfileLinks.isEmpty()) {
+                    proceedTo(SubStage.REMOVED_PORT_PROFILES);
+                    return;
+                }
+
+                removePortProfiles(state, hostPortProfileLinks, null);
+                proceedTo(SubStage.REMOVING_PORT_PROFILES);
+            }
+        });
+    }
+
+    private void removePortProfiles(ContainerHostRemovalTaskState state, ArrayList<String> hostPortProfileLinks,
+                                    String subTaskLink) {
+        if (subTaskLink == null) {
+            // create counter subtask to remove every host port profile. Go to REMOVED_PORT_PROFILES when complete
+            createCounterSubTask(state, hostPortProfileLinks.size(), SubStage.REMOVED_PORT_PROFILES,
+                    (link) -> removePortProfiles(state, hostPortProfileLinks, link));
+            return;
+        }
+
+        // delete host port profiles
+        for (String profileLink : hostPortProfileLinks) {
+            sendRequest(Operation.createDelete(this, profileLink)
+                    .setCompletion((o, ex) -> {
+                        if (ex != null) {
+                            failTask("Failed to delete host port profile: %s", ex);
+                            return;
+                        }
+                        completeSubTasksCounter(subTaskLink, null);
+                    }));
+        }
     }
 
     private void removeHosts(ContainerHostRemovalTaskState state, String subTaskLink) {
@@ -420,7 +476,6 @@ public class ContainerHostRemovalTaskService extends
                                     }));
                         }
                     }));
-
             proceedTo(SubStage.REMOVING_HOSTS);
         } catch (Throwable e) {
             failTask("Unexpected exception while deleting container host instances", e);
