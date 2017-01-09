@@ -43,7 +43,7 @@ public class CommandInput {
     private URI dockerUri;
 
     /**
-     * Contains the client private key and certificate to authenticat the client to the docker
+     * Contains the client private key and certificate to authenticate the client to the docker
      * server
      */
     private AuthCredentialsServiceState credentials;

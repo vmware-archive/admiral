@@ -74,6 +74,10 @@ public class ContainerNetworkStateMapper {
 
     private static void mapIpamConfiguration(ContainerNetworkState networkState,
             Map<String, Object> ipamProperties) {
+        if (ipamProperties == null) {
+            return;
+        }
+
         if (networkState.ipam == null) {
             networkState.ipam = new Ipam();
         }

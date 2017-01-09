@@ -67,6 +67,7 @@ import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceErrorResponse;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -206,7 +207,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                     if (!body.remove) {
                         // if we're adding a host we need to wait for the host info to be populated
                         // first
-                        updateContainerHostInfo(computeState.documentSelfLink, (o, error) -> {
+                        updateContainerHostInfo(computeState, (o, error) -> {
                             if (error != null) {
                                 handleHostNotAvailable(computeState, error);
                                 if (scheduled.getAndSet(true) == false) {
@@ -219,10 +220,10 @@ public class ContainerHostDataCollectionService extends StatefulService {
                                 updateResourcePool(computeState,
                                         qr.rpLinksByComputeLink.get(computeState.documentSelfLink),
                                         body.remove);
-                                updateContainerHostContainers(computeState.documentSelfLink);
-                                updateContainerHostNetworks(computeState.documentSelfLink);
+                                updateContainerHostContainers(computeState);
+                                updateContainerHostNetworks(computeState);
                                 updateContainerHostVolumes(computeState.documentSelfLink);
-                                updateHostStats(computeState.documentSelfLink);
+                                updateHostStats(computeState);
                             }
                         }, null);
                     } else {
@@ -576,12 +577,12 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 }));
     }
 
-    private void updateHostStats(String computeHostLink) {
+    private void updateHostStats(ComputeState computeHost) {
         AdapterRequest request = new AdapterRequest();
         request.operationTypeId = ContainerHostOperationType.STATS.id;
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-        request.resourceReference = UriUtils.buildUri(getHost(), computeHostLink);
-        sendRequest(Operation.createPatch(this, ManagementUriParts.ADAPTER_DOCKER_HOST)
+        request.resourceReference = UriUtils.buildUri(getHost(), computeHost.documentSelfLink);
+        sendRequest(Operation.createPatch(computeHost.adapterManagementReference)
                 .setBody(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -685,7 +686,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
             }
 
             for (ComputeState compute : qr.computesByLink.values()) {
-                updateContainerHostInfo(compute.documentSelfLink, (o, error) -> {
+                updateContainerHostInfo(compute, (o, error) -> {
                     // we complete maintOp here, not waiting for container update
                     maintOp.complete();
                     if (error != null) {
@@ -696,8 +697,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 }, null);
 
                 if (PowerState.ON.equals(compute.powerState)) {
-                    updateContainerHostContainers(compute.documentSelfLink);
-                    updateContainerHostNetworks(compute.documentSelfLink);
+                    updateContainerHostContainers(compute);
+                    updateContainerHostNetworks(compute);
                     updateContainerHostVolumes(compute.documentSelfLink);
                 }
             }
@@ -722,22 +723,45 @@ public class ContainerHostDataCollectionService extends StatefulService {
         return q;
     }
 
+    static URI getDefaultHostAdapter(ServiceHost host) {
+        return UriUtils.buildUri(host, ManagementUriParts.ADAPTER_DOCKER_HOST);
+    }
+
     private void updateContainerHostInfo(
-            String documentSelfLink,
+            ComputeState computeState,
             BiConsumer<CallbackServiceHandlerState, ServiceErrorResponse> consumer,
             ServiceTaskCallback serviceTaskCallback) {
 
-        if (serviceTaskCallback == null) {
-            startAndCreateCallbackHandlerService(consumer,
-                    (callback) -> updateContainerHostInfo(documentSelfLink, consumer, callback));
+        if (computeState.adapterManagementReference == null) {
+            ComputeState patchState = new ComputeState();
+            patchState.adapterManagementReference = getDefaultHostAdapter(getHost());
+            computeState.adapterManagementReference = patchState.adapterManagementReference;
+            sendRequest(
+                    Operation.createPatch(this, computeState.documentSelfLink)
+                            .setBody(patchState)
+                            .setCompletion((op, ex) -> {
+                                if (ex != null) {
+                                    logSevere(ex);
+                                } else {
+                                    updateContainerHostInfo(computeState, consumer, serviceTaskCallback);
+                                }
+                            }));
             return;
         }
+
+        if (serviceTaskCallback == null) {
+            startAndCreateCallbackHandlerService(consumer,
+                    (callback) -> updateContainerHostInfo(computeState, consumer, callback));
+            return;
+        }
+
+        String documentSelfLink = computeState.documentSelfLink;
 
         AdapterRequest request = new AdapterRequest();
         request.operationTypeId = ContainerHostOperationType.INFO.id;
         request.serviceTaskCallback = serviceTaskCallback;
         request.resourceReference = UriUtils.buildUri(getHost(), documentSelfLink);
-        sendRequest(Operation.createPatch(this, ManagementUriParts.ADAPTER_DOCKER_HOST)
+        sendRequest(Operation.createPatch(computeState.adapterManagementReference)
                 .setBody(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -747,9 +771,10 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 }));
     }
 
-    private void updateContainerHostContainers(String documentSelfLink) {
+    private void updateContainerHostContainers(ComputeState cs) {
         ContainerListCallback body = new ContainerListCallback();
-        body.containerHostLink = documentSelfLink;
+        body.containerHostLink = cs.documentSelfLink;
+        body.hostAdapterReference = cs.adapterManagementReference;
         sendRequest(Operation
                 .createPatch(
                         this,
@@ -764,9 +789,10 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 }));
     }
 
-    private void updateContainerHostNetworks(String documentSelfLink) {
+    private void updateContainerHostNetworks(ComputeState cs) {
         NetworkListCallback body = new NetworkListCallback();
-        body.containerHostLink = documentSelfLink;
+        body.containerHostLink = cs.documentSelfLink;
+        body.hostAdapterReference = cs.adapterManagementReference;
         sendRequest(Operation
                 .createPatch(
                         this,
@@ -798,6 +824,17 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 }));
     }
 
+    private void getAdapterReference(String documentSelfLink, BiConsumer<URI, Throwable> actualCallback) {
+        sendRequest(Operation.createGet(this, documentSelfLink).setCompletion((op, ex) -> {
+            if (ex != null) {
+                actualCallback.accept(null, ex);
+            } else {
+                ComputeState state = op.getBody(ComputeState.class);
+                actualCallback.accept(state.adapterManagementReference, null);
+            }
+        }));
+    }
+
     private void startAndCreateCallbackHandlerService(
             BiConsumer<CallbackServiceHandlerState, ServiceErrorResponse> actualCallback,
             Consumer<ServiceTaskCallback> caller) {
@@ -819,7 +856,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                                 Utils.toString(e));
                         return;
                     }
-                    logInfo("Callbacktask created with uri: %s, %s", callbackUri, o.getUri());
+                    logInfo("Callback task created with uri: %s, %s", callbackUri, o.getUri());
                     caller.accept(ServiceTaskCallback.create(callbackUri.toString()));
                 });
 

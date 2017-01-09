@@ -161,8 +161,12 @@ public interface ManagementUriParts {
     String ADAPTER_DOCKER_OPERATIONS = ADAPTER_DOCKER + "/operations";
     String ADAPTER_REGISTRY = ADAPTERS + "/registry-service";
     String ADAPTER_DOCKER_VOLUME = ADAPTERS + "/volume-docker-service";
-
     String ADAPTER_DOCKER_NETWORK = ADAPTERS + "/network-docker-service";
+
+    String ADAPTER_KUBERNETES = ADAPTERS + "/kubernetes-service";
+    String ADAPTER_KUBERNETES_HOST = ADAPTERS + "/host-kubernetes-service";
+    String ADAPTER_KUBERNETES_NETWORK = ADAPTERS + "/kubernetes-docker-service";
+
     String ADAPTER_ETCD_KV = "/v2/keys";
     String ADAPTER_ETCD_MEMBERS = "/v2/members";
 

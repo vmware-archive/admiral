@@ -70,7 +70,7 @@ public class RegistryService extends StatefulService {
             host.registerForServiceAvailability((o, e) -> {
                 host.log(Level.INFO, "registerForServiceAvailability: %s",
                         RegistryService.FACTORY_LINK);
-                deleteDefaulRegistry(host);
+                deleteDefaultRegistry(host);
             }, true, RegistryService.FACTORY_LINK);
 
             return null;
@@ -79,7 +79,7 @@ public class RegistryService extends StatefulService {
         return state;
     }
 
-    private static void deleteDefaulRegistry(ServiceHost host) {
+    private static void deleteDefaultRegistry(ServiceHost host) {
         new ServiceDocumentQuery<RegistryState>(host, RegistryState.class)
                 .queryDocument(DEFAULT_INSTANCE_LINK, (r) -> {
                     if (r.hasException()) {

@@ -448,7 +448,7 @@ public class SelfProvisioningTaskService extends
         RequestBrokerState requestBrokerState = new RequestBrokerState();
         requestBrokerState.documentSelfLink = getSelfLink() + "-compute";
         requestBrokerState.resourceType = ResourceType.CONTAINER_HOST_TYPE.getName();
-        requestBrokerState.operation = ProvisionContainerHostsTaskService.PROVISION_CONTAINER_HOSTS_OPERATITON;
+        requestBrokerState.operation = ProvisionContainerHostsTaskService.PROVISION_CONTAINER_HOSTS_OPERATION;
         requestBrokerState.resourceCount = state.clusterSize;
         requestBrokerState.resourceDescriptionLink = state.computeDescriptionLink;
         requestBrokerState.customProperties = state.customProperties;

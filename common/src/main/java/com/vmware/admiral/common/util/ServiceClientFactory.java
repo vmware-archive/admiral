@@ -32,7 +32,7 @@ public class ServiceClientFactory {
      * Create a ServiceClient instance using the given TrustManager and KeyManager
      *
      * @param trustManager
-     * @param keyStore
+     * @param keyManager
      * @return
      */
     public static ServiceClient createServiceClient(TrustManager trustManager,
@@ -46,7 +46,7 @@ public class ServiceClientFactory {
      * Create a ServiceClient instance using the given TrustManager, KeyManager and requestPayloadSizeLimit
      *
      * @param trustManager
-     * @param keyStore
+     * @param keyManager
      * @param requestPayloadSizeLimit
      * @return
      */

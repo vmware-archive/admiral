@@ -197,7 +197,8 @@ public class ManagementHost extends ServiceHost {
         HostInitRequestServicesConfig.startServices(this);
         HostInitImageServicesConfig.startServices(this);
         HostInitUiServicesConfig.startServices(this);
-        HostInitAdapterServiceConfig.startServices(this, startMockHostAdapterInstance);
+        HostInitDockerAdapterServiceConfig.startServices(this, startMockHostAdapterInstance);
+        HostInitKubernetesAdapterServiceConfig.startServices(this, startMockHostAdapterInstance);
         HostInitRegistryAdapterServiceConfig.startServices(this);
         HostInitEtcdAdapterServiceConfig.startServices(this, startEtcdEmulator);
         HostInitContinuousDeliveryServicesConfig.startServices(this);

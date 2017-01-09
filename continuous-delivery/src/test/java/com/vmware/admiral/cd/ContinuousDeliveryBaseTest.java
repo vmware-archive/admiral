@@ -22,11 +22,11 @@ import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
-import com.vmware.admiral.host.HostInitAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeBackgroundServicesConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitContinuousDeliveryServicesConfig;
+import com.vmware.admiral.host.HostInitDockerAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.host.HostInitRequestServicesConfig;
 import com.vmware.admiral.request.ClusteringTaskService;
@@ -66,7 +66,7 @@ public abstract class ContinuousDeliveryBaseTest extends BaseTestCase {
         HostInitComputeServicesConfig.startServices(serviceHost, false);
         HostInitComputeBackgroundServicesConfig.startServices(serviceHost);
         HostInitRequestServicesConfig.startServices(serviceHost);
-        HostInitAdapterServiceConfig.startServices(serviceHost, true);
+        HostInitDockerAdapterServiceConfig.startServices(serviceHost, true);
         HostInitContinuousDeliveryServicesConfig.startServices(serviceHost);
 
         // request tasks:

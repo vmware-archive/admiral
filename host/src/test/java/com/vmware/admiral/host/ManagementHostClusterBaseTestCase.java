@@ -18,7 +18,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import static com.vmware.admiral.host.HostInitAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE;
+import static com.vmware.admiral.host.HostInitDockerAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doGet;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doRestrictedOperation;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.login;

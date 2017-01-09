@@ -22,7 +22,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.test.BaseTestCase;
-import com.vmware.admiral.host.HostInitAdapterServiceConfig;
+import com.vmware.admiral.host.HostInitDockerAdapterServiceConfig;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 
@@ -30,7 +30,7 @@ public class DockerOperationTypesServiceTest extends BaseTestCase {
 
     @Before
     public void setUp() throws Throwable {
-        HostInitAdapterServiceConfig.startServices(host, false);
+        HostInitDockerAdapterServiceConfig.startServices(host, false);
         waitForServiceAvailability(DockerOperationTypesService.SELF_LINK);
     }
 

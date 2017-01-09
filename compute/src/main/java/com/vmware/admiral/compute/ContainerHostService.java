@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute;
 
+import static com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription.getDockerHostUri;
+
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.security.cert.X509Certificate;
@@ -35,10 +37,10 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.SslCertificateResolver;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
-import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
 import com.vmware.admiral.compute.container.HostPortProfileService;
+import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
@@ -76,6 +78,10 @@ public class ContainerHostService extends StatelessService {
     public static final String DOCKER_COMPUTE_DESC_LINK = UriUtils.buildUriPath(
             ComputeDescriptionService.FACTORY_LINK, DOCKER_COMPUTE_DESC_ID);
 
+    public static final String VIC_COMPUTE_DESC_ID = "vic-host-compute-desc-id";
+    public static final String VIC_COMPUTE_DESC_LINK = UriUtils.buildUriPath(
+            ComputeDescriptionService.FACTORY_LINK, VIC_COMPUTE_DESC_ID);
+
     public static final String CONTAINER_HOST_TYPE_PROP_NAME = "__containerHostType";
     public static final String HOST_DOCKER_ADAPTER_TYPE_PROP_NAME = "__adapterDockerType";
     public static final String NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME = "__Containers";
@@ -108,7 +114,8 @@ public class ContainerHostService extends StatelessService {
 
     public enum ContainerHostType {
         DOCKER,
-        VIC;
+        VIC,
+        KUBERNETES;
 
         public static ContainerHostType getDefaultHostType() {
             return DOCKER;
@@ -152,7 +159,10 @@ public class ContainerHostService extends StatelessService {
 
     @Override
     public void handleStart(Operation startPost) {
-        checkForDefaultDockerHostDescription();
+        checkForDefaultHostDescription(DOCKER_COMPUTE_DESC_LINK, DOCKER_COMPUTE_DESC_ID);
+        checkForDefaultHostDescription(VIC_COMPUTE_DESC_LINK, VIC_COMPUTE_DESC_ID);
+        checkForDefaultHostDescription(KubernetesHostConstants.KUBERNETES_COMPUTE_DESC_LINK,
+                KubernetesHostConstants.KUBERNETES_COMPUTE_DESC_ID);
         super.handleStart(startPost);
     }
 
@@ -166,10 +176,11 @@ public class ContainerHostService extends StatelessService {
         ContainerHostSpec hostSpec = op.getBody(ContainerHostSpec.class);
         validate(hostSpec);
 
-        boolean validateHostTypeAndConnection = op.getUri().getQuery() != null
-                && op.getUri().getQuery()
-                .contains(
-                        ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
+        hostSpec.uri = getDockerHostUri(hostSpec.hostState);
+
+        String query = op.getUri().getQuery();
+        boolean validateHostTypeAndConnection = query != null
+                && query.contains(ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
 
         if (hostSpec.isConfigureOverSsh) {
             configureOverSsh(op, hostSpec, validateHostTypeAndConnection);
@@ -282,7 +293,51 @@ public class ContainerHostService extends StatelessService {
         AssertUtil.assertNotNull(adapterType, "adapterType");
 
         cs.address = cs.address.trim();
-        hostSpec.uri = getHostUri(cs);
+
+        String kubernetesNamespace = cs.customProperties.get(
+                KubernetesHostConstants.KUBERNETES_HOST_NAMESPACE_PROP_NAME);
+        if (kubernetesNamespace == null || kubernetesNamespace.isEmpty()) {
+            cs.customProperties.put(
+                    KubernetesHostConstants.KUBERNETES_HOST_NAMESPACE_PROP_NAME,
+                    KubernetesHostConstants.KUBERNETES_HOST_DEFAULT_NAMESPACE);
+        } else {
+            kubernetesNamespace = kubernetesNamespace.trim();
+            AssertUtil.assertTrue(!kubernetesNamespace.contains("/") &&
+                    !kubernetesNamespace.contains("\\"), "Namespace cannot contain"
+                            + " slashes.");
+            AssertUtil.assertTrue(kubernetesNamespace.matches(
+                    KubernetesHostConstants.KUBERNETES_NAMESPACE_REGEX),
+                    "Invalid namespace.");
+            cs.customProperties.put(
+                    KubernetesHostConstants.KUBERNETES_HOST_NAMESPACE_PROP_NAME,
+                    kubernetesNamespace);
+        }
+    }
+
+    protected String getDescriptionForType(ContainerHostType type) {
+        switch (type) {
+        case DOCKER:
+            return DOCKER_COMPUTE_DESC_LINK;
+        case VIC:
+            return VIC_COMPUTE_DESC_LINK;
+        case KUBERNETES:
+            return KubernetesHostConstants.KUBERNETES_COMPUTE_DESC_LINK;
+        default:
+            throw new IllegalArgumentException("Unknown type " + type);
+        }
+    }
+
+    private URI getAdapterManagementReferenceForType(ContainerHostType type) {
+        switch (type) {
+        case DOCKER:
+            return UriUtils.buildUri(getHost(), ManagementUriParts.ADAPTER_DOCKER_HOST);
+        case VIC:
+            return UriUtils.buildUri(getHost(), ManagementUriParts.ADAPTER_DOCKER_HOST);
+        case KUBERNETES:
+            return UriUtils.buildUri(getHost(), ManagementUriParts.ADAPTER_KUBERNETES_HOST);
+        default:
+            throw new IllegalArgumentException("Unknown type " + type);
+        }
     }
 
     protected void validateConfigureOverSsh(ConfigureHostOverSshTaskServiceState state,
@@ -351,7 +406,11 @@ public class ContainerHostService extends StatelessService {
      * @see ContainerHostType#getDefaultHostType()
      */
     private ContainerHostType getHostTypeFromSpec(ContainerHostSpec hostSpec) {
-        Map<String, String> customProperties = hostSpec.hostState.customProperties;
+        return getHostTypeFromState(hostSpec.hostState);
+    }
+
+    private ContainerHostType getHostTypeFromState(ComputeState hostState) {
+        Map<String, String> customProperties = hostState.customProperties;
         String hostTypeProperty = customProperties.get(CONTAINER_HOST_TYPE_PROP_NAME);
 
         // Retrieve host type from custom properties. If none is set, use the default type
@@ -385,6 +444,10 @@ public class ContainerHostService extends StatelessService {
             verifyPlacementZoneIsEmpty(hostSpec, op, () -> {
                 storeVicHost(hostSpec, op, triggerDataCollection);
             });
+            break;
+        case KUBERNETES:
+            verifyPlacementZoneIsEmpty(hostSpec, op,
+                    () -> storeKubernetesHost(hostSpec, op, triggerDataCollection));
             break;
 
         default:
@@ -425,12 +488,24 @@ public class ContainerHostService extends StatelessService {
         });
     }
 
+    private void storeKubernetesHost(ContainerHostSpec hostSpec, Operation op,
+            boolean triggerDataCollection) {
+        // Kubernetes hosts are validated by a ping call.
+        pingHost(hostSpec, op, hostSpec.sslTrust,
+                () -> doStoreHost(hostSpec, op, triggerDataCollection));
+    }
+
     private void doStoreHost(ContainerHostSpec hostSpec, Operation op,
             boolean triggerDataCollection) {
         ComputeState cs = hostSpec.hostState;
+
+        ContainerHostType hostType = getHostTypeFromSpec(hostSpec);
+
         if (cs.descriptionLink == null) {
-            cs.descriptionLink = DOCKER_COMPUTE_DESC_LINK;
+            cs.descriptionLink = getDescriptionForType(hostType);
         }
+
+        cs.adapterManagementReference = getAdapterManagementReferenceForType(hostType);
 
         Operation store = null;
         if (cs.id == null) {
@@ -546,10 +621,10 @@ public class ContainerHostService extends StatelessService {
         return ContainerHostUtil.isVicHost(computeState);
     }
 
-    private void checkForDefaultDockerHostDescription() {
+    private void checkForDefaultHostDescription(String descriptionLink, String descriptionId) {
         new ServiceDocumentQuery<>(getHost(), ComputeDescription.class)
                 .queryDocument(
-                        DOCKER_COMPUTE_DESC_LINK,
+                        descriptionLink,
                         (r) -> {
                             if (r.hasException()) {
                                 r.throwRunTimeException();
@@ -561,8 +636,8 @@ public class ContainerHostService extends StatelessService {
                                 desc.supportedChildren = new ArrayList<>(
                                         Collections.singletonList(ComputeType.DOCKER_CONTAINER
                                                 .name()));
-                                desc.documentSelfLink = DOCKER_COMPUTE_DESC_ID;
-                                desc.id = DOCKER_COMPUTE_DESC_ID;
+                                desc.documentSelfLink = descriptionId;
+                                desc.id = descriptionId;
                                 sendRequest(Operation
                                         .createPost(this, ComputeDescriptionService.FACTORY_LINK)
                                         .setBody(desc)
@@ -570,21 +645,19 @@ public class ContainerHostService extends StatelessService {
                                                 (o, e) -> {
                                                     if (e != null) {
                                                         logWarning(
-                                                                "Default docker description can't be created. Exception: %s",
+                                                                "Default host description can't "
+                                                                        + "be created. Exception: %s",
                                                                 e instanceof CancellationException
                                                                         ? e.getMessage() : Utils
-                                                                        .toString(e));
+                                                                                .toString(e));
                                                         return;
                                                     }
-                                                    logInfo("Default docker description created with self link: "
-                                                            + DOCKER_COMPUTE_DESC_LINK);
+                                                    logInfo("Default host description created "
+                                                            + "with self link: "
+                                                            + descriptionLink);
                                                 }));
                             }
                         });
-    }
-
-    private URI getHostUri(ComputeState hostState) {
-        return ContainerDescription.getDockerHostUri(hostState);
     }
 
     private AdapterRequest prepareAdapterRequest(ContainerHostOperationType operationType,
@@ -595,7 +668,7 @@ public class ContainerHostService extends StatelessService {
         request.resourceReference = UriUtils.buildUri(getHost(), ComputeService.FACTORY_LINK);
         request.customProperties = cs.customProperties == null ? new HashMap<>()
                 : new HashMap<>(cs.customProperties);
-        request.customProperties.putIfAbsent(ContainerHostService.DOCKER_HOST_ADDRESS_PROP_NAME,
+        request.customProperties.putIfAbsent(ComputeConstants.HOST_URI_PROP_NAME,
                 cs.address);
 
         if (sslTrust != null) {
@@ -618,8 +691,12 @@ public class ContainerHostService extends StatelessService {
 
     private <T> void sendAdapterRequest(AdapterRequest request, ComputeState cs, Operation op,
             Consumer<T> callbackFunction, Class<T> callbackResultClass) {
+
+        URI adapterManagementReference = getAdapterManagementReferenceForType(
+                getHostTypeFromState(cs));
+
         sendRequest(Operation
-                .createPatch(this, ManagementUriParts.ADAPTER_DOCKER_HOST)
+                .createPatch(adapterManagementReference)
                 .setBody(request)
                 .setContextId(Service.getId(getSelfLink()))
                 .setCompletion((o, ex) -> {
@@ -690,8 +767,7 @@ public class ContainerHostService extends StatelessService {
     }
 
     private void createHostPortProfile(ComputeState computeState, Operation operation) {
-        HostPortProfileService.HostPortProfileState hostPortProfileState =
-                new HostPortProfileService.HostPortProfileState();
+        HostPortProfileService.HostPortProfileState hostPortProfileState = new HostPortProfileService.HostPortProfileState();
         hostPortProfileState.hostLink = computeState.documentSelfLink;
         // Make sure there is only one HostPortProfile per Host by generating profile id based on host id
         hostPortProfileState.id = computeState.id;

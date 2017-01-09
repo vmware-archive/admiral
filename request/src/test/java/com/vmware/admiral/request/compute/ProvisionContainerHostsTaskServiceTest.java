@@ -76,7 +76,7 @@ public class ProvisionContainerHostsTaskServiceTest extends RequestBaseTest {
     public static RequestBrokerState createRequestState(String resourceDescLink) {
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_HOST_TYPE.getName();
-        request.operation = ProvisionContainerHostsTaskService.PROVISION_CONTAINER_HOSTS_OPERATITON;
+        request.operation = ProvisionContainerHostsTaskService.PROVISION_CONTAINER_HOSTS_OPERATION;
         request.resourceDescriptionLink = resourceDescLink;
         request.resourceCount = 3;
 

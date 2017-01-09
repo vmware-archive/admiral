@@ -18,7 +18,7 @@ public class ComputeConstants {
 
     public static final String HOST_AUTH_CREDENTIALS_PROP_NAME = "__authCredentialsLink";
 
-    public static final String ENDPOINT_AUTH_CREDNTIALS_PROP_NAME = "__endpointAuthCredentialsLink";
+    public static final String ENDPOINT_AUTH_CREDENTIALS_PROP_NAME = "__endpointAuthCredentialsLink";
 
     public static final String COMPUTE_HOST_PROP_NAME = "__computeHost";
 
@@ -45,6 +45,10 @@ public class ComputeConstants {
     public static final String CUSTOM_PROP_ENABLE_SSH_ACCESS_NAME = "enableSSH";
 
     public static final String CUSTOM_PROP_TAGS_KEY = "tags";
+
+    public static final String HOST_URI_PROP_NAME = "__hostURI";
+
+    public static final String HOST_TYPE_HEADER_NAME = "HOST_TYPE";
 
     public static final String OVA_URI = "ova.uri";
     public static final String OVF_PROP_PREFIX = "ovf.prop:";

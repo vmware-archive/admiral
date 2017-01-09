@@ -1587,7 +1587,7 @@ public class RequestBrokerService extends
     }
 
     private boolean isProvisioningContainerHostsOperation(RequestBrokerState state) {
-        return ProvisionContainerHostsTaskService.PROVISION_CONTAINER_HOSTS_OPERATITON
+        return ProvisionContainerHostsTaskService.PROVISION_CONTAINER_HOSTS_OPERATION
                 .equals(state.operation);
     }
 
