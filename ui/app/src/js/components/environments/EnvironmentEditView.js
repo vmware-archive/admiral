@@ -25,6 +25,7 @@ var EnvironmentEditView = Vue.extend({
   },
   data: function() {
     return {
+      endpointType: null,
       saveDisabled: true
     };
   },
@@ -38,10 +39,6 @@ var EnvironmentEditView = Vue.extend({
     },
     contextExpanded: function() {
       return this.model.contextView && this.model.contextView.expanded;
-    },
-    endpointType: function() {
-      return (this.model.item.endpoint && this.model.item.endpoint.endpointType) ||
-          this.model.item.endpointType;
     },
     instanceTypeValue: function() {
       if (this.model.item.computeProfile) {
@@ -109,8 +106,11 @@ var EnvironmentEditView = Vue.extend({
           this.tagsInput.setValue(model.item.tags);
           this.tags = this.tagsInput.getValue();
         }
+        this.endpointType =
+            (this.model.item.endpoint && this.model.item.endpoint.endpointType) ||
+            this.model.item.endpointType;
         this.saveDisabled = !this.model.item.name ||
-          !(this.model.item.endpointType || this.model.item.endpoint);
+            !(this.model.item.endpointType || this.model.item.endpoint);
     }, {immediate: true});
   },
   detached: function() {
@@ -151,6 +151,7 @@ var EnvironmentEditView = Vue.extend({
       this.endpoint = endpoint;
       Vue.nextTick(() => {
         var model = this.getModel();
+        this.endpointType = this.endpoint.endpointType;
         this.saveDisabled = !model.name || !(model.endpointType || this.endpoint);
       });
     },
