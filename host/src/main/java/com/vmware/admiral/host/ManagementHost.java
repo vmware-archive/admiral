@@ -218,6 +218,7 @@ public class ManagementHost extends ServiceHost {
         swagger.setExcludedPrefixes(
                 "/core/transactions",
                 "/core/node-groups");
+        swagger.setExcludeUtilities(true);
 
         // Provide API metainfo
         Info apiInfo = new Info();
