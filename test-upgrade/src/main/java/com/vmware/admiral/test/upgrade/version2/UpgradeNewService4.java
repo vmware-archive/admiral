@@ -14,6 +14,7 @@ package com.vmware.admiral.test.upgrade.version2;
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 
 import com.vmware.admiral.common.serialization.ReleaseConstants;
+import com.vmware.admiral.common.serialization.ThreadLocalVersionHolder;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.test.upgrade.common.UpgradeUtil;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService4;
@@ -35,7 +36,7 @@ public class UpgradeNewService4 extends StatefulService {
         public static final String KIND = UpgradeUtil.UPGRADE_SERVICE4_STATE_KIND;
 
         public static final String FIELD3_PREFIX = "/new-field3/";
-        private static final String FIELD3_PREFIX_DEPRECATED = "/field3/";
+        static final String FIELD3_PREFIX_DEPRECATED = "/field3/";
 
         public static final String FIELD4_PREFIX = "/new-field3/";
 
@@ -66,40 +67,27 @@ public class UpgradeNewService4 extends StatefulService {
         toggleOption(ServiceOption.OWNER_SELECTION, true);
     }
 
+    static {
+        UpgradeNewService4StateConverter.INSTANCE.init();
+    }
+
+    @Override
+    public void handleRequest(Operation request) {
+        ThreadLocalVersionHolder.setVersion(request);
+        try {
+            super.handleRequest(request);
+        } finally {
+            ThreadLocalVersionHolder.clearVersion();
+        }
+    }
+
     @Override
     public void handleStart(Operation post) {
         UpgradeNewService4State body = post.getBody(UpgradeNewService4State.class);
         AssertUtil.assertNotNull(body, "body");
-
-        // upgrade the old entities accordingly...
-        handleStateUpgrade(body);
-
         // validate based on annotations
         Utils.validateState(getStateDescription(), body);
         super.handleStart(post);
-    }
-
-    private void handleStateUpgrade(UpgradeNewService4State state) {
-
-        boolean upgraded = false;
-
-        if ((state.field3 != null)
-                && (state.field3.startsWith(UpgradeNewService4State.FIELD3_PREFIX_DEPRECATED))) {
-            state.field3 = state.field3.replaceFirst(
-                    UpgradeNewService4State.FIELD3_PREFIX_DEPRECATED,
-                    UpgradeNewService4State.FIELD3_PREFIX);
-            upgraded = true;
-        }
-
-        if ((state.field4 != null)
-                && (!state.field4.startsWith(UpgradeNewService4State.FIELD4_PREFIX))) {
-            state.field4 = UpgradeNewService4State.FIELD4_PREFIX + state.field4;
-            upgraded = true;
-        }
-
-        if (upgraded) {
-            UpgradeUtil.forceLuceneIndexUpdate(getHost(), state);
-        }
     }
 
 }

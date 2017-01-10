@@ -68,6 +68,10 @@ public class UpgradeNewService1 extends StatefulService {
         toggleOption(ServiceOption.OWNER_SELECTION, true);
     }
 
+    static {
+        Utils.registerKind(UpgradeNewService1State.class, UpgradeNewService1State.KIND);
+    }
+
     @Override
     public void handleStart(Operation post) {
         UpgradeNewService1State body = post.getBody(UpgradeNewService1State.class);

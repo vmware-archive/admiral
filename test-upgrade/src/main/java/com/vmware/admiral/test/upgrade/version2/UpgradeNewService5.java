@@ -11,11 +11,10 @@
 
 package com.vmware.admiral.test.upgrade.version2;
 
-import java.util.Arrays;
-
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 
 import com.vmware.admiral.common.serialization.ReleaseConstants;
+import com.vmware.admiral.common.serialization.ThreadLocalVersionHolder;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.test.upgrade.common.UpgradeUtil;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService4;
@@ -97,44 +96,27 @@ public class UpgradeNewService5 extends StatefulService {
         toggleOption(ServiceOption.OWNER_SELECTION, true);
     }
 
+    static {
+        UpgradeNewService5StateConverter.INSTANCE.init();
+    }
+
+    @Override
+    public void handleRequest(Operation request) {
+        ThreadLocalVersionHolder.setVersion(request);
+        try {
+            super.handleRequest(request);
+        } finally {
+            ThreadLocalVersionHolder.clearVersion();
+        }
+    }
+
     @Override
     public void handleStart(Operation post) {
         UpgradeNewService5State body = post.getBody(UpgradeNewService5State.class);
         AssertUtil.assertNotNull(body, "body");
-
-        // upgrade the old entities accordingly...
-        handleStateUpgrade(body);
-
         // validate based on annotations
         Utils.validateState(getStateDescription(), body);
         super.handleStart(post);
-    }
-
-    private void handleStateUpgrade(UpgradeNewService5State state) {
-
-        boolean upgraded = false;
-
-        if (state.field345 == null) {
-            state.field345 = String.join("#",
-                    Arrays.asList(state.field3, state.field4, state.field5));
-            state.field3 = null;
-            state.field4 = null;
-            state.field5 = null;
-            upgraded = true;
-        }
-
-        if (state.field678 != null) {
-            String[] values = state.field678.split("/");
-            state.field6 = values[0];
-            state.field7 = values[1];
-            state.field8 = values[2];
-            state.field678 = null;
-            upgraded = true;
-        }
-
-        if (upgraded) {
-            UpgradeUtil.forceLuceneIndexUpdate(getHost(), state);
-        }
     }
 
 }

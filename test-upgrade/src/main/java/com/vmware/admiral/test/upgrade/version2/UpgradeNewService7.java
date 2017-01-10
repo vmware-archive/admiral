@@ -11,18 +11,10 @@
 
 package com.vmware.admiral.test.upgrade.version2;
 
-import static com.vmware.admiral.test.upgrade.common.UpgradeUtil.JSON_MAPPER;
-
-import java.lang.reflect.Type;
-
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 
 import com.vmware.admiral.common.serialization.ReleaseConstants;
+import com.vmware.admiral.common.serialization.ThreadLocalVersionHolder;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.test.upgrade.common.UpgradeUtil;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService4;
@@ -31,7 +23,6 @@ import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.common.serialization.JsonMapper;
 
 /**
  * Represents the base service {@link UpgradeOldService4} with changed field name.
@@ -58,44 +49,6 @@ public class UpgradeNewService7 extends StatefulService {
         public String upgradedField3;
     }
 
-    // ---- Example based on com.vmware.xenon.common.TestGsonConfiguration ----
-
-    static {
-        Utils.registerCustomJsonMapper(UpgradeNewService7State.class,
-                new JsonMapper((b) -> b.registerTypeAdapter(
-                        UpgradeNewService7State.class,
-                        UpdateNewService7StateConverter.INSTANCE)));
-    }
-
-    private enum UpdateNewService7StateConverter
-            implements JsonDeserializer<UpgradeNewService7State> {
-
-        INSTANCE;
-
-        @Override
-        public UpgradeNewService7State deserialize(JsonElement json, Type typeOfT,
-                JsonDeserializationContext context) throws JsonParseException {
-            JsonObject jsonObject = json.getAsJsonObject();
-
-            // ---- custom transformation logic here ---
-
-            if (jsonObject.has("field3")) {
-
-                // "field3" renamed to "upgradedField3"
-
-                JsonElement field3 = jsonObject.remove("field3");
-                String field3Value = field3.getAsString();
-                jsonObject.addProperty("upgradedField3", field3Value);
-
-                UpgradeUtil.trackStateUpgraded(jsonObject);
-            }
-
-            return JSON_MAPPER.fromJson(json, UpgradeNewService7State.class);
-        }
-    }
-
-    // ---- ----
-
     public UpgradeNewService7() {
         super(UpgradeNewService7State.class);
         toggleOption(ServiceOption.IDEMPOTENT_POST, true);
@@ -104,24 +57,27 @@ public class UpgradeNewService7 extends StatefulService {
         toggleOption(ServiceOption.OWNER_SELECTION, true);
     }
 
+    static {
+        UpgradeNewService7StateConverter.INSTANCE.init();
+    }
+
+    @Override
+    public void handleRequest(Operation request) {
+        ThreadLocalVersionHolder.setVersion(request);
+        try {
+            super.handleRequest(request);
+        } finally {
+            ThreadLocalVersionHolder.clearVersion();
+        }
+    }
+
     @Override
     public void handleStart(Operation post) {
         UpgradeNewService7State body = post.getBody(UpgradeNewService7State.class);
         AssertUtil.assertNotNull(body, "body");
-
-        // upgrade the old entities accordingly...
-        handleStateUpgrade(body);
-
         // validate based on annotations
         Utils.validateState(getStateDescription(), body);
         super.handleStart(post);
-    }
-
-    private void handleStateUpgrade(UpgradeNewService7State state) {
-        // update Lucene index if needed
-        if (UpgradeUtil.untrackStateUpgraded(state)) {
-            UpgradeUtil.forceLuceneIndexUpdate(getHost(), state);
-        }
     }
 
 }

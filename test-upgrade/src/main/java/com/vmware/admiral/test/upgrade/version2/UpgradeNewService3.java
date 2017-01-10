@@ -11,25 +11,13 @@
 
 package com.vmware.admiral.test.upgrade.version2;
 
-import static com.vmware.admiral.test.upgrade.common.UpgradeUtil.JSON_MAPPER;
-import static com.vmware.admiral.test.upgrade.common.UpgradeUtil.JSON_PARSER;
-
-import java.lang.reflect.Type;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSyntaxException;
 
 import com.vmware.admiral.common.serialization.ReleaseConstants;
+import com.vmware.admiral.common.serialization.ThreadLocalVersionHolder;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.test.upgrade.common.UpgradeUtil;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService3;
@@ -38,7 +26,6 @@ import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.common.serialization.JsonMapper;
 
 /**
  * Represents the base service {@link UpgradeOldService3} with new field types.
@@ -69,65 +56,16 @@ public class UpgradeNewService3 extends StatefulService {
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Set<String> field4;
 
-        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
-        @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
-                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public Map<String, String> field5;
+        // @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
+        // @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
+        // PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        // public Map<String, String> field5;
 
         @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Map<String, String> field6;
     }
-
-    // ---- Example based on com.vmware.xenon.common.TestGsonConfiguration ----
-
-    static {
-        Utils.registerCustomJsonMapper(UpgradeNewService3State.class,
-                new JsonMapper((b) -> b.registerTypeAdapter(
-                        UpgradeNewService3State.class,
-                        UpdateNewService3StateConverter.INSTANCE)));
-    }
-
-    private enum UpdateNewService3StateConverter
-            implements JsonDeserializer<UpgradeNewService3State> {
-
-        INSTANCE;
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public UpgradeNewService3State deserialize(JsonElement json, Type typeOfT,
-                JsonDeserializationContext context) throws JsonParseException {
-            try {
-                return JSON_MAPPER.fromJson(json, UpgradeNewService3State.class);
-            } catch (JsonSyntaxException e) {
-                JsonObject jsonObject = json.getAsJsonObject();
-
-                // ---- custom transformation logic here ---
-
-                // "field3" upgrade: String -> Long
-
-                JsonElement field3 = jsonObject.remove("field3");
-                String oldField3Value = field3.getAsString();
-                Long newField3Value = ("fortytwo".equals(oldField3Value)) ? 42L : 0L;
-                jsonObject.addProperty("field3", newField3Value);
-
-                // "field5" upgrade: List ("a", "b", "c") -> Map ("a=a", "b=b", "c=c")
-
-                JsonElement field5 = jsonObject.remove("field5");
-                List<String> oldField5Value = Utils.fromJson(field5, List.class);
-                Map<String, String> newField5Value = oldField5Value.stream()
-                        .collect(Collectors.toMap(Function.identity(), Function.identity()));
-                jsonObject.add("field5", JSON_PARSER.parse(Utils.toJson(newField5Value)));
-
-                UpgradeUtil.trackStateUpgraded(jsonObject);
-
-                return JSON_MAPPER.fromJson(json, UpgradeNewService3State.class);
-            }
-        }
-    }
-
-    // ---- ----
 
     public UpgradeNewService3() {
         super(UpgradeNewService3State.class);
@@ -137,24 +75,27 @@ public class UpgradeNewService3 extends StatefulService {
         toggleOption(ServiceOption.OWNER_SELECTION, true);
     }
 
+    static {
+        UpgradeNewService3StateConverter.INSTANCE.init();
+    }
+
+    @Override
+    public void handleRequest(Operation request) {
+        ThreadLocalVersionHolder.setVersion(request);
+        try {
+            super.handleRequest(request);
+        } finally {
+            ThreadLocalVersionHolder.clearVersion();
+        }
+    }
+
     @Override
     public void handleStart(Operation post) {
         UpgradeNewService3State body = post.getBody(UpgradeNewService3State.class);
         AssertUtil.assertNotNull(body, "body");
-
-        // upgrade the old entities accordingly...
-        handleStateUpgrade(body);
-
         // validate based on annotations
         Utils.validateState(getStateDescription(), body);
         super.handleStart(post);
-    }
-
-    private void handleStateUpgrade(UpgradeNewService3State state) {
-        // update Lucene index if needed
-        if (UpgradeUtil.untrackStateUpgraded(state)) {
-            UpgradeUtil.forceLuceneIndexUpdate(getHost(), state);
-        }
     }
 
 }

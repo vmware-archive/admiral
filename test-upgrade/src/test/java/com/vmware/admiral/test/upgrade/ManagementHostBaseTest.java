@@ -26,9 +26,12 @@ import java.util.logging.Level;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.test.upgrade.common.UpgradeHost;
+import com.vmware.admiral.test.upgrade.common.UpgradeTaskService;
+import com.vmware.admiral.test.upgrade.common.UpgradeTaskService.UpgradeServiceRequest;
 import com.vmware.admiral.test.upgrade.common.UpgradeUtil;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldHost;
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewHost;
@@ -43,7 +46,7 @@ import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.NumericRange;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
-public abstract class ManagementHostUpgradeBaseTest {
+public abstract class ManagementHostBaseTest {
 
     private static final long DEFAULT_OPERATION_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(30);
 
@@ -127,32 +130,76 @@ public abstract class ManagementHostUpgradeBaseTest {
         return c.get(timeoutMilis, TimeUnit.MILLISECONDS);
     }
 
+    protected void upgradeService(ServiceHost h, String factoryLink,
+            Class<? extends ServiceDocument> clazz) throws Throwable {
+        waitForServiceAvailability(h, UpgradeTaskService.SELF_LINK);
+        waitForServiceAvailability(h, factoryLink);
+
+        UpgradeServiceRequest request = new UpgradeServiceRequest();
+        request.version = ReleaseConstants.API_VERSION_0_9_1;
+        request.clazz = clazz.getName();
+
+        TestContext ctx = BaseTestCase.testCreate(1);
+        h.sendRequest(Operation.createPost(UriUtils.buildUri(h, UpgradeTaskService.SELF_LINK))
+                .setBody(request)
+                .setReferer("/")
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        ctx.fail(e);
+                        return;
+                    }
+                    ctx.complete();
+                }));
+        ctx.await();
+    }
+
     protected void waitForServiceAvailability(ServiceHost h, String serviceLink) throws Throwable {
         TestContext ctx = BaseTestCase.testCreate(1);
         h.registerForServiceAvailability(ctx.getCompletion(), serviceLink);
         ctx.await();
     }
 
-    @SuppressWarnings("unchecked")
     protected <T extends ServiceDocument> T createUpgradeServiceInstance(T state) throws Exception {
-        URI uri = UriUtils.buildUri(upgradeHost, UpgradeUtil.getFactoryLinkByDocumentKind(state));
-        Operation op = sendRequest(serviceClient, Operation.createPost(uri).setBody(state));
-        String link = op.getBody(state.getClass()).documentSelfLink;
-        return (T) getUpgradeServiceInstance(link, state.getClass());
+        return createUpgradeServiceInstance(state, null);
     }
 
     @SuppressWarnings("unchecked")
-    protected <T extends ServiceDocument> T updateUpgradeServiceInstance(T state) throws Exception {
-        URI uri = UriUtils.buildUri(upgradeHost, state.documentSelfLink);
-        Operation op = sendRequest(serviceClient, Operation.createPut(uri).setBody(state));
+    protected <T extends ServiceDocument> T createUpgradeServiceInstance(T state, String apiVersion)
+            throws Exception {
+        URI uri = UriUtils.buildUri(upgradeHost, UpgradeUtil.getFactoryLinkByDocumentKind(state));
+        Operation op = Operation.createPost(uri).setBody(state);
+        UpgradeUtil.setOperationRequestApiVersion(op, apiVersion);
+        op = sendRequest(serviceClient, op);
         String link = op.getBody(state.getClass()).documentSelfLink;
-        return (T) getUpgradeServiceInstance(link, state.getClass());
+        return (T) getUpgradeServiceInstance(link, state.getClass(), apiVersion);
+    }
+
+    protected <T extends ServiceDocument> T updateUpgradeServiceInstance(T state) throws Exception {
+        return updateUpgradeServiceInstance(state, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected <T extends ServiceDocument> T updateUpgradeServiceInstance(T state, String apiVersion)
+            throws Exception {
+        URI uri = UriUtils.buildUri(upgradeHost, state.documentSelfLink);
+        Operation op = Operation.createPut(uri).setBody(state);
+        UpgradeUtil.setOperationRequestApiVersion(op, apiVersion);
+        op = sendRequest(serviceClient, op);
+        String link = op.getBody(state.getClass()).documentSelfLink;
+        return (T) getUpgradeServiceInstance(link, state.getClass(), apiVersion);
     }
 
     protected <T extends ServiceDocument> T getUpgradeServiceInstance(String link, Class<T> type)
             throws Exception {
+        return getUpgradeServiceInstance(link, type, null);
+    }
+
+    protected <T extends ServiceDocument> T getUpgradeServiceInstance(String link, Class<T> type,
+            String apiVersion) throws Exception {
         URI uri = UriUtils.buildUri(upgradeHost, link);
-        Operation op = sendRequest(serviceClient, Operation.createGet(uri));
+        Operation op = Operation.createGet(uri);
+        UpgradeUtil.setOperationRequestApiVersion(op, apiVersion);
+        op = sendRequest(serviceClient, op);
         return op.getBody(type);
     }
 
