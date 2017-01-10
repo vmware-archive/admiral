@@ -32,7 +32,7 @@ let EnvironmentsStore = Reflux.createStore({
       this.setInData(['listView', 'itemsLoading'], true);
       this.emitChange();
 
-      operation.forPromise(services.loadEnvironments()).then((result) => {
+      operation.forPromise(services.loadEnvironments(queryOptions)).then((result) => {
         let nextPageLink = result.nextPageLink;
         let itemsCount = result.totalCount;
 
