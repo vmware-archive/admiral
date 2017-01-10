@@ -347,7 +347,7 @@ var TemplatesViewVueComponent = Vue.extend({
           TemplateActions.openAddClosure(this.model);
 
           this.handleGroup(TemplateActions.runClosure,
-             [this.model, this.model.inputs]);
+             [null, this.model, this.model.inputs]);
           TemplatesContextToolbarActions.openToolbarClosureResults();
         },
         operationSupported: function(op) {

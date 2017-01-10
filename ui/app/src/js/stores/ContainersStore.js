@@ -1698,10 +1698,12 @@ let ContainersStore = Reflux.createStore({
         this.setInData(['creatingResource', 'tasks', 'editingItemData', 'item'], createdClosure);
         this.emitChange();
 
-        createRun(createdClosure);
+        return createRun(createdClosure);
       }).catch(this.onGenericEditError);
     } else {
-      createRun(closureDescription).catch(this.onGenericEditError);
+      services.editClosure(closureDescription).then(() => {
+        return createRun(closureDescription);
+      }).catch(this.onGenericEditError);
     }
   },
   refreshMonitoredTask: function() {
