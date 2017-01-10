@@ -984,10 +984,12 @@ let TemplatesStore = Reflux.createStore({
     if (!closureDescription.documentSelfLink) {
       this.createClosure(templateId, closureDescription).then((createdClosure) => {
         this.openAddClosure(createdClosure);
-        createRun(createdClosure);
+        return createRun(createdClosure);
       }).catch(this.onGenericEditError);
     } else {
-      createRun(closureDescription).catch(this.onGenericEditError);
+      services.editClosure(closureDescription).then(() => {
+        return createRun(closureDescription);
+      }).catch(this.onGenericEditError);
     }
   },
   refreshMonitoredTask: function() {
