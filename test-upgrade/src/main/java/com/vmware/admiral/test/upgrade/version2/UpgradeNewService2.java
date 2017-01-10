@@ -11,12 +11,12 @@
 
 package com.vmware.admiral.test.upgrade.version2;
 
-import java.util.Arrays;
 import java.util.List;
 
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 
 import com.vmware.admiral.common.serialization.ReleaseConstants;
+import com.vmware.admiral.common.serialization.ThreadLocalVersionHolder;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.test.upgrade.common.UpgradeUtil;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService2;
@@ -69,44 +69,36 @@ public class UpgradeNewService2 extends StatefulService {
         toggleOption(ServiceOption.OWNER_SELECTION, true);
     }
 
+    static {
+        UpgradeNewService2StateConverter.INSTANCE.init();
+    }
+
+    @Override
+    public void handleRequest(Operation request) {
+        ThreadLocalVersionHolder.setVersion(request);
+        try {
+            super.handleRequest(request);
+        } finally {
+            ThreadLocalVersionHolder.clearVersion();
+        }
+    }
+
     @Override
     public void handleStart(Operation post) {
         UpgradeNewService2State body = post.getBody(UpgradeNewService2State.class);
         AssertUtil.assertNotNull(body, "body");
-
-        // upgrade the old entities accordingly...
-        handleStateUpgrade(body);
-
         // validate based on annotations
         Utils.validateState(getStateDescription(), body);
         super.handleStart(post);
     }
 
-    private void handleStateUpgrade(UpgradeNewService2State state) {
-
-        boolean upgraded = false;
-
-        // field3 is required! set default value if it applies
-        if ((state.field3 == null) || (state.field3.isEmpty())) {
-            state.field3 = "default value";
-            upgraded = true;
-        }
-
-        // field4 is required! set default value if it applies
-        if (state.field4 == null) {
-            state.field4 = 42L;
-            upgraded = true;
-        }
-
-        // field5 is required! set default value if it applies
-        if ((state.field5 == null) || (state.field5.isEmpty())) {
-            state.field5 = Arrays.asList("a", "b", "c");
-            upgraded = true;
-        }
-
-        if (upgraded) {
-            UpgradeUtil.forceLuceneIndexUpdate(getHost(), state);
-        }
+    @Override
+    public void handlePut(Operation put) {
+        UpgradeNewService2State body = put.getBody(UpgradeNewService2State.class);
+        AssertUtil.assertNotNull(body, "body");
+        // validate based on annotations
+        Utils.validateState(getStateDescription(), body);
+        super.handlePut(put);
     }
 
 }

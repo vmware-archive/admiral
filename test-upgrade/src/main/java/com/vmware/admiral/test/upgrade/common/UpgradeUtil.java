@@ -11,15 +11,12 @@
 
 package com.vmware.admiral.test.upgrade.common;
 
-import java.net.URI;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService1.UpgradeOldService1State;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService2.UpgradeOldService2State;
 import com.vmware.admiral.test.upgrade.version1.UpgradeOldService3.UpgradeOldService3State;
@@ -38,9 +35,8 @@ import com.vmware.admiral.test.upgrade.version2.UpgradeNewService6.UpgradeNewSer
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewService7.UpgradeNewService7State;
 import com.vmware.admiral.test.upgrade.version2.UpgradeNewService8.UpgradeNewService8State;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.serialization.JsonMapper;
 
@@ -50,21 +46,14 @@ public final class UpgradeUtil {
     }
 
     /*
-     * This set is used to track the states that have been upgraded through a customized
-     * JsonDeserializer so when the handleStart occurs for those states they can be automatically
-     * "refreshed" (i.e. do a self PUT to update their Lucene index) to allow queries based on
-     * upgraded fields to work right away.
-     * Alternative ways (e.g. using ThreadLocal flags) can be evaluated as well.
-     */
-    private static final Set<String> UPGRADED_STATES = ConcurrentHashMap.newKeySet();
-
-    /*
      * WARNING! This default JSON_MAPPER ignores Xenon's Utils.CUSTOM_JSON customizations! This may
      * be an issue if the mapped class attributes override their default mappers as well.
      */
     public static final JsonMapper JSON_MAPPER = new JsonMapper();
 
     public static final JsonParser JSON_PARSER = new JsonParser();
+
+    public static final String UPGRADE_TASK_SERVICE_FACTORY_LINK = "/upgrade/task-services";
 
     public static final String UPGRADE_SERVICE1_FACTORY_LINK = "/upgrade/service1-services";
     public static final String UPGRADE_SERVICE2_FACTORY_LINK = "/upgrade/service2-services";
@@ -127,56 +116,50 @@ public final class UpgradeUtil {
         }
     }
 
-    /**
-     * Forces the update of the Lucene index for the provided document by sending a self PUT request
-     * with the document itself.
-     *
-     * If the index is not updated, queries referencing new values added/modified during the upgrade
-     * won't return the expected results until some update (e.g. PUT or PATCH) is actually done to
-     * the document.
-     *
-     * @param host
-     *            {@link ServiceHost}
-     * @param doc
-     *            {@link ServiceDocument}
-     */
-    public static void forceLuceneIndexUpdate(ServiceHost host, ServiceDocument doc) {
-        URI uri = UriUtils.buildUri(host, doc.documentSelfLink);
-        host.log(Level.INFO, "Forcing index update for '%s'...", doc.documentSelfLink);
-        host.sendRequest(Operation.createPut(uri)
-                .setReferer(host.getUri())
-                .setBody(doc)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        host.log(Level.WARNING, "Index update failed for '%s': %s",
-                                doc.documentSelfLink, Utils.toString(ex));
-                    }
-                }));
-    }
-
-    /**
-     * Tracks an upgraded object (extending {@link ServiceDocument}) based on its documentSelfLink.
-     *
-     * @param jsonObject
-     *            {@link JsonObject}
-     */
-    public static void trackStateUpgraded(JsonObject jsonObject) {
-        JsonElement jsonElement = jsonObject.get("documentSelfLink");
-        if (jsonElement != null) {
-            UPGRADED_STATES.add(jsonElement.getAsString());
+    public static void setOperationRequestApiVersion(Operation op, String apiVersion) {
+        if ((apiVersion != null) && (!apiVersion.isEmpty())) {
+            String acceptHeader = op.getRequestHeader(Operation.ACCEPT_HEADER);
+            if ((acceptHeader != null) && (!acceptHeader.isEmpty())) {
+                acceptHeader += ";" + ReleaseConstants.VERSION_PREFIX + apiVersion;
+            } else {
+                acceptHeader = ReleaseConstants.VERSION_PREFIX + apiVersion;
+            }
+            op.addRequestHeader(Operation.ACCEPT_HEADER, acceptHeader);
         }
     }
 
-    /**
-     * Untracks an upgraded object (extending {@link ServiceDocument}) based on its
-     * documentSelfLink.
-     *
-     * @param doc
-     *            {@link ServiceDocument}
-     * @return {@code true} if the specified object was being <b>still</b> tracked.
-     */
-    public static boolean untrackStateUpgraded(ServiceDocument doc) {
-        return UPGRADED_STATES.remove(doc.documentSelfLink);
+    public static <T extends ServiceDocument> void upgradeState(Service service, String link,
+            Class<T> clazz, String oldVersion, Consumer<T> callbackFunction) {
+
+        Operation get = Operation.createGet(service, link).setCompletion((o, e) -> {
+            if (e != null) {
+                service.getHost().log(Level.WARNING,
+                        "Failure retrieving document '%s': %s",
+                        link, Utils.toString(e));
+                return;
+            }
+
+            // Force the deserialization!
+            String body = o.getBody(String.class);
+
+            Operation put = Operation.createPut(service, link)
+                    .setReferer(service.getHost().getUri())
+                    .setBody(body)
+                    .setCompletion((o2, e2) -> {
+                        if (e2 != null) {
+                            service.getHost().log(Level.WARNING,
+                                    "Index update failed for document '%s': %s",
+                                    link, Utils.toString(e2));
+                        }
+                        callbackFunction.accept(null);
+                    });
+
+            setOperationRequestApiVersion(put, oldVersion);
+            put.sendWith(service);
+        });
+
+        setOperationRequestApiVersion(get, oldVersion);
+        get.sendWith(service);
     }
 
 }

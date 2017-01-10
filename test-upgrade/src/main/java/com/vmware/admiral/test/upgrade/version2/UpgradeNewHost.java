@@ -14,15 +14,7 @@ package com.vmware.admiral.test.upgrade.version2;
 import java.util.logging.Level;
 
 import com.vmware.admiral.test.upgrade.common.UpgradeHost;
-import com.vmware.admiral.test.upgrade.version2.UpgradeNewService1.UpgradeNewService1State;
-import com.vmware.admiral.test.upgrade.version2.UpgradeNewService2.UpgradeNewService2State;
-import com.vmware.admiral.test.upgrade.version2.UpgradeNewService3.UpgradeNewService3State;
-import com.vmware.admiral.test.upgrade.version2.UpgradeNewService4.UpgradeNewService4State;
-import com.vmware.admiral.test.upgrade.version2.UpgradeNewService5.UpgradeNewService5State;
-import com.vmware.admiral.test.upgrade.version2.UpgradeNewService6.UpgradeNewService6State;
-import com.vmware.admiral.test.upgrade.version2.UpgradeNewService7.UpgradeNewService7State;
-import com.vmware.admiral.test.upgrade.version2.UpgradeNewService8.UpgradeNewService8State;
-import com.vmware.xenon.common.Utils;
+import com.vmware.admiral.test.upgrade.common.UpgradeTaskService;
 
 /**
  * Represents an Admiral host after an upgrade.
@@ -41,17 +33,10 @@ public class UpgradeNewHost extends UpgradeHost {
 
     @Override
     protected void startServices() {
-
-        Utils.registerKind(UpgradeNewService1State.class, UpgradeNewService1State.KIND);
-        Utils.registerKind(UpgradeNewService2State.class, UpgradeNewService2State.KIND);
-        Utils.registerKind(UpgradeNewService3State.class, UpgradeNewService3State.KIND);
-        Utils.registerKind(UpgradeNewService4State.class, UpgradeNewService4State.KIND);
-        Utils.registerKind(UpgradeNewService5State.class, UpgradeNewService5State.KIND);
-        Utils.registerKind(UpgradeNewService6State.class, UpgradeNewService6State.KIND);
-        Utils.registerKind(UpgradeNewService7State.class, UpgradeNewService7State.KIND);
-        Utils.registerKind(UpgradeNewService8State.class, UpgradeNewService8State.KIND);
-
         this.log(Level.INFO, "New services starting ...");
+
+        startServices(this,
+                UpgradeTaskService.class);
 
         startServiceFactories(this,
                 BrandNewService.class,

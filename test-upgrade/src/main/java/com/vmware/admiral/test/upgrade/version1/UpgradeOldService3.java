@@ -49,9 +49,9 @@ public class UpgradeOldService3 extends StatefulService {
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public List<String> field4;
 
-        @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
-                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public List<String> field5;
+        // @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
+        // PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        // public List<String> field5;
 
         @SuppressWarnings("rawtypes")
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,

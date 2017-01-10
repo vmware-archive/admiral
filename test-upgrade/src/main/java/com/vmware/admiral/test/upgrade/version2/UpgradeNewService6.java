@@ -56,21 +56,17 @@ public class UpgradeNewService6 extends StatefulService {
         toggleOption(ServiceOption.OWNER_SELECTION, true);
     }
 
+    static {
+        Utils.registerKind(UpgradeNewService6State.class, UpgradeNewService6State.KIND);
+    }
+
     @Override
     public void handleStart(Operation post) {
         UpgradeNewService6State body = post.getBody(UpgradeNewService6State.class);
         AssertUtil.assertNotNull(body, "body");
-
-        // upgrade the old entities accordingly...
-        handleStateUpgrade(body);
-
         // validate based on annotations
         Utils.validateState(getStateDescription(), body);
         super.handleStart(post);
-    }
-
-    private void handleStateUpgrade(UpgradeNewService6State state) {
-        // handle the case when a field becomes mandatory...
     }
 
 }
