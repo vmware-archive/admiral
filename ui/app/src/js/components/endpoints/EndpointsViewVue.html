@@ -30,15 +30,15 @@
             <thead>
               <tr>
                 <th is="thsort"
-                    v-bind:active="sortKey === 'endpointType'"
-                    v-bind:sort-order="sortOrders.endpointType"
-                    v-on:click="sortBy('endpointType')"
-                    style="width: 25%">{{i18n('app.endpoint.list.typeColumn')}}</th>
-                <th is="thsort"
                     v-bind:active="sortKey === 'name'"
                     v-bind:sort-order="sortOrders.name"
                     v-on:click="sortBy('name')"
-                    style="width: 60%">{{i18n('app.endpoint.list.nameColumn')}}</th>
+                    style="width: 40%">{{i18n('app.endpoint.list.nameColumn')}}</th>
+                <th is="thsort"
+                    v-bind:active="sortKey === 'endpointType'"
+                    v-bind:sort-order="sortOrders.endpointType"
+                    v-on:click="sortBy('endpointType')"
+                    style="width: 45%">{{i18n('app.endpoint.list.typeColumn')}}</th>
                 <!-- Actions column -->
                 <th style="width: 15%"></th>
               </tr>
@@ -63,15 +63,15 @@
                       <table class="table">
                         <thead>
                           <tr>
-                            <th style="width: 25%"></th>
-                            <th style="width: 60%"></th>
+                            <th style="width: 40%"></th>
+                            <th style="width: 45%"></th>
                             <!-- Actions column -->
                             <th style="width: 15%"></th>
                           </tr>
                         </thead>
                         <tbody>
-                          <td title="{{item.endpointType}}"><img class="endpoint-icon" v-bind:src="'image-assets/endpoints/' + item.endpointType + '.png'"/><span class="truncateText">{{item.endpointType}}</span></td>
                           <td class="truncateText primary-cell" title="{{item.name}}">{{item.name}}</td>
+                          <td title="{{item.endpointType}}"><img class="endpoint-icon" v-bind:src="'image-assets/endpoints/' + item.endpointType + '.png'"/><span class="truncateText">{{item.endpointType}}</span></td>
                           <!-- Actions column -->
                           <td></td>
                         </tbody>
@@ -85,8 +85,8 @@
                   </td>
                 </template>
                 <template v-if="!isEditingOrHighlightedItem(item)">
-                  <td title="{{item.endpointType}}"><img class="endpoint-icon" v-bind:src="'image-assets/endpoints/' + item.endpointType + '.png'"/><span class="truncateText">{{item.endpointType}}</span></td>
                   <td class="truncateText primary-cell" title="{{item.name}}">{{item.name}}</td>
+                  <td title="{{item.endpointType}}"><img class="endpoint-icon" v-bind:src="'image-assets/endpoints/' + item.endpointType + '.png'"/><span class="truncateText">{{item.endpointType}}</span></td>
                   <!-- Actions column -->
                   <td class="table-actions">
                     <div v-bind:class="{hide: isDeleting(item)}">

@@ -167,7 +167,7 @@ var EnvironmentEditView = Vue.extend({
       if (this.$refs.instanceType) {
         var instanceType = this.$refs.instanceType.getData();
         toSave.computeProfile.instanceTypeMapping = instanceType.reduce((previous, current) => {
-          if (toSave.endpointType === 'vsphere') {
+          if (this.endpointType === 'vsphere') {
             previous[current.name] = {
               cpuCount: current.cpuCount,
               diskSizeMb: current.diskSizeMb,

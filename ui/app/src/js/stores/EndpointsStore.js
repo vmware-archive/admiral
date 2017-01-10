@@ -15,7 +15,7 @@ import utils from 'core/utils';
 import constants from 'core/constants';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 
-const ENUMERATION_RETRIES = 20;
+const ENUMERATION_RETRIES = 10;
 const OPERATION = {
   LIST: 'list'
 };
