@@ -1,0 +1,19 @@
+---
+name: "nginx-mysql"
+components:
+  nginx:
+    type: "App.Container"
+    data:
+      name: "nginx"
+      image: "nginx"
+      ports:
+      - host_port: "85"
+        container_port: "80"
+  mysql:
+    type: "App.Container"
+    data:
+      name: "mysql"
+      image: "mysql"
+      ports:
+      - host_port: "3306"
+        container_port: "3306"

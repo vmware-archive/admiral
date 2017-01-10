@@ -14,6 +14,7 @@ package com.vmware.admiral.compute.container;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
+import com.vmware.admiral.compute.content.kubernetes.PodContainerPort;
 
 /**
  * Port binding for a container
@@ -39,6 +40,16 @@ public class PortBinding {
         portBinding.containerPort = mapping.getContainerPort();
         portBinding.hostIp = mapping.getHostIp();
         portBinding.hostPort = mapping.getHostPort();
+
+        return portBinding;
+    }
+
+    public static PortBinding fromPodContainerPort(PodContainerPort podContainerPort) {
+        PortBinding portBinding = new PortBinding();
+        portBinding.protocol = podContainerPort.protocol;
+        portBinding.containerPort = podContainerPort.containerPort;
+        portBinding.hostIp = podContainerPort.hostIp;
+        portBinding.hostPort = podContainerPort.hostPort;
 
         return portBinding;
     }

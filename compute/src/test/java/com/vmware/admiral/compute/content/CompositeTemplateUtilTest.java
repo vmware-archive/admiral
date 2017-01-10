@@ -785,7 +785,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         return s.replace("\r\n", "\n");
     }
 
-    private static void assertContainersComponents(String type, int expected,
+    public static void assertContainersComponents(String type, int expected,
             Map<String, ComponentTemplate<?>> components) {
         assertNotNull(components);
 
