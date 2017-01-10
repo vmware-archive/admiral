@@ -145,9 +145,9 @@ props.put(&quot;client.key&quot;, clientKey);</stringProp>
               <stringProp name="Argument.value">${__P(DOCKER_PORT, 2376)}</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
-            <elementProp name="TASKS_NUMBERS_PER_THREAD" elementType="Argument">
-              <stringProp name="Argument.name">TASKS_NUMBERS_PER_THREAD</stringProp>
-              <stringProp name="Argument.value">200</stringProp>
+            <elementProp name="CLOSURES_NUMBERS_PER_THREAD" elementType="Argument">
+              <stringProp name="Argument.name">CLOSURES_NUMBERS_PER_THREAD</stringProp>
+              <stringProp name="Argument.value">${__P(CLOSURES_NUMBERS_PER_THREAD, 200)}</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
             <elementProp name="NUMBER_OF__THREADS" elementType="Argument">
@@ -741,7 +741,7 @@ log.info(&quot;Sending task execution request N &quot; + counter);
           </com.atlantbh.jmeter.plugins.jsonutils.jsonpathextractor.JSONPathExtractor>
           <hashTree/>
           <BeanShellAssertion guiclass="BeanShellAssertionGui" testclass="BeanShellAssertion" testname="Assert container state number" enabled="true">
-            <stringProp name="BeanShellAssertion.query">taskNumber = ${TASKS_NUMBERS_PER_THREAD} * ${NUMBER_OF__THREADS};
+            <stringProp name="BeanShellAssertion.query">taskNumber = ${CLOSURES_NUMBERS_PER_THREAD} * ${NUMBER_OF__THREADS};
 log.info(&quot;Number of tasks executed: &quot; + taskNumber);
 String tasksSize = vars.get(&quot;tasksCount&quot;);
 //101 - 100 provisioned + 1 system container
