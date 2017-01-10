@@ -380,8 +380,8 @@ actions.NavigationActions.openEndpoints.listen(function() {
   hasher.setHash('endpoints');
 });
 
-actions.NavigationActions.openEnvironments.listen(function() {
-  hasher.setHash('environments');
+actions.NavigationActions.openEnvironments.listen(function(queryOptions) {
+  hasher.setHash(getHashWithQuery('environments', queryOptions));
 });
 
 actions.NavigationActions.openAddEnvironment.listen(function() {

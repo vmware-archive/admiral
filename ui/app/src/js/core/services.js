@@ -1024,7 +1024,7 @@ services.deletePlacement = function(placement) {
 };
 
 services.loadEnvironments = function(queryOptions) {
-  let filter = buildOdataQuery(queryOptions);
+  let filter = buildSearchQuery(queryOptions);
   let url = buildPaginationUrl(links.ENVIRONMENTS, filter, true,
       'documentExpirationTimeMicros desc');
   return get(url).then(function(result) {
@@ -2136,10 +2136,54 @@ var buildContainersSearchQuery = function(queryOptions) {
         });
       }
     }
-
   }
- return buildOdataQuery(newQueryOptions);
+  return buildOdataQuery(newQueryOptions);
+};
 
+var buildSearchQuery = function(queryOptions) {
+
+  if (!queryOptions) {
+    return;
+  }
+
+  var userQueryOps = {};
+
+  var anyArray = toArrayIfDefined(queryOptions.any);
+  if (anyArray) {
+    userQueryOps[FILTER_VALUE_ALL_FIELDS] = anyArray.map((any) => {
+      return {
+        val: '*' + any + '*',
+        op: 'eq'
+      };
+    });
+  }
+
+  var nameArray = toArrayIfDefined(queryOptions.name);
+  if (nameArray) {
+    userQueryOps.name = nameArray.map((name) => {
+      return {
+        val: '*' + name + '*',
+        op: 'eq'
+      };
+    });
+  }
+
+  var typeArray = toArrayIfDefined(queryOptions.type);
+  if (typeArray) {
+    userQueryOps.type = typeArray.map((type) => {
+      return {
+        val: '*' + type + '*',
+        op: 'eq'
+      };
+    });
+  }
+
+  var queryOptionsOccurrence = queryOptions[constants.SEARCH_OCCURRENCE.PARAM];
+  if (queryOptionsOccurrence) {
+    userQueryOps[constants.SEARCH_OCCURRENCE.PARAM] = queryOptionsOccurrence;
+  }
+
+  return buildOdataQuery(userQueryOps);
 };
 
 export default services;

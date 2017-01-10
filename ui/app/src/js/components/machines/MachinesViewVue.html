@@ -23,6 +23,14 @@
           <search v-bind:suggestion-properties="searchSuggestions"
                   v-bind:placeholder="i18n('app.machine.list.searchPlaceholder')"
                   v-bind:query-options="model.listView.queryOptions"
+                  v-bind:occurrence-properties="
+                      [{
+                        name: constants.SEARCH_OCCURRENCE.ALL,
+                        label: i18n('occurrence.all')
+                      }, {
+                        name: constants.SEARCH_OCCURRENCE.ANY,
+                        label: i18n('occurrence.any')
+                      }]"
                   v-on:search-change="search">
             </search>
         </div>
