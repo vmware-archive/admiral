@@ -881,15 +881,15 @@ public class CompositeTemplateUtil {
         });
     }
 
-    private static <T> boolean isNullOrEmpty(T[] array) {
+    public static <T> boolean isNullOrEmpty(T[] array) {
         return (array == null || array.length == 0);
     }
 
-    private static boolean isNullOrEmpty(Map<?, ?> map) {
+    public static boolean isNullOrEmpty(Map<?, ?> map) {
         return (map == null || map.isEmpty());
     }
 
-    private static boolean isNullOrEmpty(String s) {
+    public static boolean isNullOrEmpty(String s) {
         return (s == null || s.trim().isEmpty());
     }
 
