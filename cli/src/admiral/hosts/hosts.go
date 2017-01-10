@@ -299,7 +299,7 @@ func (hl *HostsList) GetOutputString() string {
 	for _, val := range hl.Documents {
 		pzName, _ := placementzones.GetPZName(val.ResourcePoolLink)
 		tagsStr := tags.TagsToString(val.TagLinks)
-		output := utils.GetTabSeparatedString(val.Id, val.Address, val.GetName(), val.PowerState,
+		output := utils.GetTabSeparatedString(val.GetID(), val.Address, val.GetName(), val.PowerState,
 			val.GetContainersCount(), pzName, tagsStr)
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
@@ -376,7 +376,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 			addedHost := &Host{}
 			err = json.Unmarshal(respBody, addedHost)
 			utils.CheckBlockingError(err)
-			return addedHost.Id, nil
+			return addedHost.GetID(), nil
 		}
 		removeNewCredentials(host.GetCredentialsID(), isNewCred)
 		return "", NewCertNotAddedError
@@ -392,7 +392,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 		addedHost := &Host{}
 		err = json.Unmarshal(respBody, addedHost)
 		utils.CheckBlockingError(err)
-		return addedHost.Id, nil
+		return addedHost.GetID(), nil
 	}
 	return "", respErr
 }
