@@ -11,10 +11,7 @@
 
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
 
-const INITIAL_FILTER = '';
-const RESULT_LIMIT = 10;
-
-export default Vue.component('dropdown-search', {
+export default Vue.component('dropdown', {
   template: `
     <div class="dropdown-holder"></div>
   `,
@@ -27,10 +24,6 @@ export default Vue.component('dropdown-search', {
     entity: {
       required: true,
       type: String
-    },
-    filter: {
-      required: false,
-      type: Function
     },
     loading: {
       default: false,
@@ -52,9 +45,7 @@ export default Vue.component('dropdown-search', {
       title: i18n.t('dropdownSearchMenu.title', {
         entity: this.entity
       }),
-      searchPlaceholder: i18n.t('dropdownSearchMenu.searchPlaceholder', {
-        entity: this.entity
-      })
+      searchDisabled: true
     });
     dropdownSearchMenu.setOptionSelectCallback(() =>
         this.$dispatch('change', dropdownSearchMenu.getSelectedOption()));
@@ -62,14 +53,6 @@ export default Vue.component('dropdown-search', {
         this.$dispatch('change', dropdownSearchMenu.getSelectedOption()));
     dropdownSearchMenu.setDisabled(this.disabled);
     dropdownSearchMenu.setLoading(this.loading);
-    if (this.filter) {
-      dropdownSearchMenu.setFilterCallback((q, callback) => {
-        this.filter.call(this, q || INITIAL_FILTER, RESULT_LIMIT).then((result) => {
-          callback(result);
-        });
-      });
-      dropdownSearchMenu.setFilter(INITIAL_FILTER);
-    }
     dropdownSearchMenu.setOptions(this.options);
     dropdownSearchMenu.setSelectedOption(this.value);
 

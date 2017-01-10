@@ -1795,6 +1795,14 @@ services.loadPopularImages = function() {
   return list(links.POPULAR_IMAGES);
 };
 
+services.searchRegionIds = function(host, username, password) {
+  return patch('/provisioning/vsphere/dc-enumerator', {
+    host,
+    username,
+    password
+  });
+};
+
 var toArrayIfDefined = function(obj) {
   if ($.isArray(obj)) {
     return obj;
@@ -2185,5 +2193,6 @@ var buildSearchQuery = function(queryOptions) {
 
   return buildOdataQuery(userQueryOps);
 };
+
 
 export default services;

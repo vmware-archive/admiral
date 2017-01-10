@@ -484,18 +484,23 @@
         "update": "Edit Endpoint",
         "nameLabel": "Name",
         "typeLabel": "Type",
-        "accessKeyIdLabel": "Access key ID",
-        "usernameLabel": "Username",
-        "passwordLabel": "Password",
-        "secretAccessKeyLabel": "Secret access key",
+        "privateKeyIdLabel": "Access key ID",
+        "privateKeyLabel": "Secret access key",
         "regionIdLabel": "Region ID",
-        "endpointHostLabel": "Host name or IP",
-        "subscriptionIdLabel": "Subscription ID",
-        "tenantIdLabel": "Tenant ID",
-        "datacenterIdLabel": "Datacenter name"
+        "azure": {
+          "userLinkLabel": "Subscription ID",
+          "tenantIdLabel": "Tenant ID"
+        },
+        "vsphere": {
+          "hostNameLabel": "Host name or IP",
+          "privateKeyIdLabel": "Username",
+          "privateKeyLabel": "Password",
+          "regionIdLabel": "Datacenter"
+        }
       },
       "entity": "endpoint",
       "typeEntity": "type",
+      "datacenterEntity": "datacenter",
       "createNew": "New Endpoint",
       "manage": "Manage Endpoints",
       "contextPanelTooltip": "Endpoints"

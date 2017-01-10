@@ -11,69 +11,48 @@
 
 <div class="inline-edit">
   <alert alert-type="danger"
-         v-bind:show-alert="model.validationErrors && model.validationErrors._generic"
-         v-bind:alert-message="model.validationErrors && model.validationErrors._generic"></alert>
+         :show-alert="validationErrors"
+         :alert-message="validationErrors"></alert>
   <form class="inline-edit-properties">
     <section class="form-block">
-      <label class="title" v-if="isEditMode">{{i18n('app.endpoint.edit.update')}}</label>
+      <label class="title" v-if="model.item.documentSelfLink">{{i18n('app.endpoint.edit.update')}}</label>
       <label class="title" v-else>{{i18n('app.endpoint.edit.addNew')}}</label>
-      <div class="form-group nameInput">
-        <label class="required">
-          {{i18n('app.endpoint.edit.nameLabel')}}
-        </label>
-        <input v-bind:value="model.item.name" v-on:input="onInputChange()"/>
-      </div>
-      <div class="form-group typeInput">
-        <label class="required">
-          {{i18n('app.endpoint.edit.typeLabel')}}
-        </label>
-        <div class="form-control dropdown-holder"></div>
-      </div>
-      <div class="form-group endpointHostInput" v-if="showInput('vsphere')">
-        <label class="required">
-          {{i18n('app.endpoint.edit.endpointHostLabel')}}
-        </label>
-        <input v-bind:value="endpointProperties.hostName" v-on:input="onInputChange()"/>
-      </div>
-      <div class="form-group accessKeyId" v-if="!showInput(null)">
-        <label class="required" v-if="showInput('vsphere') || showInput('nimbus')">
-          {{i18n('app.endpoint.edit.usernameLabel')}}
-        </label>
-        <label class="required" v-else>
-          {{i18n('app.endpoint.edit.accessKeyIdLabel')}}
-        </label>
-        <input v-bind:value="endpointProperties.privateKeyId" v-on:input="onInputChange()"/>
-      </div>
-      <div class="form-group secretAccessKey" v-if="!showInput('null')">
-        <label class="required" v-if="showInput('vsphere')">
-          {{i18n('app.endpoint.edit.passwordLabel')}}
-        </label>
-        <label class="required" v-else>
-          {{i18n('app.endpoint.edit.secretAccessKeyLabel')}}
-        </label>
-        <input type="password" v-bind:value="endpointProperties.privateKey" v-on:input="onInputChange()"/>
-      </div>
-      <div class="form-group regionIdInput" v-if="!showInput('null')">
-        <label v-if="showInput('vsphere')">
-          {{i18n('app.endpoint.edit.datacenterIdLabel')}}
-        </label>
-        <label class="required" v-else>
-          {{i18n('app.endpoint.edit.regionIdLabel')}}
-        </label>
-        <input v-bind:value="endpointProperties.regionId" v-on:input="onInputChange()"/>
-      </div>
-      <div class="form-group subscriptionIdInput" v-if="showInput('azure')">
-        <label class="required">
-          {{i18n('app.endpoint.edit.subscriptionIdLabel')}}
-        </label>
-        <input v-bind:value="endpointProperties.userLink" v-on:input="onInputChange()"/>
-      </div>
-      <div class="form-group tenantIdInput" v-if="showInput('azure')">
-        <label class="required">
-          {{i18n('app.endpoint.edit.tenantIdLabel')}}
-        </label>
-        <input v-bind:value="endpointProperties.azureTenantId" v-on:input="onInputChange()"/>
-      </div>
+      <text-input
+        :label="i18n('app.endpoint.edit.nameLabel')"
+        :required="true"
+        :value="model.item.name"
+        @change="onNameChange">
+      </text-input>
+      <dropdown-input
+        :disabled="model.item.documentSelfLink"
+        :entity="i18n('app.endpoint.typeEntity')"
+        :label="i18n('app.endpoint.edit.typeLabel')"
+        :options="supportedEndpointTypes"
+        :required="true"
+        :value="convertToObject(model.item.endpointType)"
+        @change="onEndpointTypeChange">
+      </dropdown-input>
+      <aws-endpoint-editor
+        v-bind:model="model.item"
+        v-if="endpointType === 'aws'"
+        v-on:change="onPropertiesChange">
+      </aws-endpoint-editor>
+      <azure-endpoint-editor
+        v-bind:model="model.item"
+        v-if="endpointType === 'azure'"
+        v-on:change="onPropertiesChange">
+      </azure-endpoint-editor>
+      <nimbus-endpoint-editor
+        v-bind:model="model.item"
+        v-if="endpointType === 'nimbus'"
+        v-on:change="onPropertiesChange">
+      </nimbus-endpoint-editor>
+      <vsphere-endpoint-editor
+        v-bind:model="model.item"
+        v-if="endpointType === 'vsphere'"
+        v-on:change="onPropertiesChange"
+        v-on:error="onPropertiesError">
+      </vsphere-endpoint-editor>
     </section>
   </form>
   <div class="inline-edit-toolbar">

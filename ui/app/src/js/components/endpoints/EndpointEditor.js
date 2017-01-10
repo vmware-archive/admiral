@@ -9,9 +9,15 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import VueDropdownInput from 'components/common/VueDropdownInput'; //eslint-disable-line
+import VuePasswordInput from 'components/common/VuePasswordInput'; //eslint-disable-line
+import VueTextInput from 'components/common/VueTextInput'; //eslint-disable-line
+import AwsEndpointEditor from 'components/endpoints/aws/EndpointEditor'; //eslint-disable-line
+import AzureEndpointEditor from 'components/endpoints/azure/EndpointEditor'; //eslint-disable-line
+import NimbusEndpointEditor from 'components/endpoints/nimbus/EndpointEditor'; //eslint-disable-line
+import VsphereEndpointEditor from 'components/endpoints/vsphere/EndpointEditor'; //eslint-disable-line
 import EndpointEditorVue from 'components/endpoints/EndpointEditorVue.html';
 import { EndpointsActions } from 'actions/Actions';
-import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
 import utils from 'core/utils';
 
 const OOTB_TYPES = [
@@ -41,15 +47,8 @@ var EndpointEditor = Vue.extend({
     }
   },
   computed: {
-    isEditMode: function() {
-      return this.model.item.documentSelfLink;
-    },
-    endpointProperties: function() {
-      return this.model.item.endpointProperties || {};
-    },
-    supportedEndpointTypes: function() {
+    supportedEndpointTypes() {
       var supportedTypes = OOTB_TYPES.slice();
-
       if (utils.isNimbusEnabled()) {
         supportedTypes.push({
           id: 'nimbus',
@@ -57,135 +56,87 @@ var EndpointEditor = Vue.extend({
           iconSrc: 'image-assets/endpoints/nimbus.png'
         });
       }
-
       return supportedTypes;
+    },
+    validationErrors() {
+      return (this.model.validationErrors && this.model.validationErrors._generic) ||
+          (this.propertiesErrors && this.propertiesErrors._generic);
     }
   },
-  data: function() {
+  data() {
     return {
-      saveDisabled: true,
-      currentEndpointType: null
+      endpointType: this.model.item.endpointType,
+      name: this.model.item.name,
+      properties: this.model.item.endpointProperties || {},
+      propertiesErrors: null,
+      saveDisabled: !this.model.item.documentSelfLink
     };
   },
   methods: {
-    showInput: function(etype) {
-      return this.currentEndpointType === etype;
-    },
-    cancel: function($event) {
+    cancel($event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
 
       EndpointsActions.cancelEditEndpoint();
     },
-    save: function($event) {
+    save($event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
 
-      var toSave = this.getModel();
-
+      let toSave = this.getModel();
       if (toSave.documentSelfLink) {
         EndpointsActions.updateEndpoint(toSave);
       } else {
         EndpointsActions.createEndpoint(toSave);
       }
     },
-    onInputChange: function() {
-      Vue.nextTick(() => {
-        var model = this.getModel();
-
-        this.saveDisabled = !model.name || !model.endpointType || !model.endpointProperties;
-        if (!this.saveDisabled) {
-          // check specific properties
-          //  - region
-          let isRegionSupported = !this.isSelected('vsphere') && !this.isSelected('nimbus');
-          let noRegion = (isRegionSupported && !model.endpointProperties.regionId);
-          //  - authn properties
-          // username === privateKeyId
-          let isPasswordSupported = !this.isSelected('nimbus');
-          let noAuthData = !model.endpointProperties.privateKeyId
-                            || (isPasswordSupported && !model.endpointProperties.privateKey);
-
-          this.saveDisabled = noRegion || noAuthData;
-        }
+    onNameChange(name) {
+      this.name = name;
+      this.saveDisabled = this.isSaveDisabled();
+    },
+    onEndpointTypeChange(endpointType) {
+      this.endpointType = endpointType.id;
+      this.saveDisabled = this.isSaveDisabled();
+    },
+    onPropertiesChange(properties) {
+      this.properties = properties;
+      this.saveDisabled = this.isSaveDisabled();
+    },
+    onPropertiesError(errors) {
+      this.propertiesErrors = errors;
+    },
+    isSaveDisabled() {
+      let model = this.getModel();
+      if (!model.name || !model.endpointType) {
+        return true;
+      }
+      let properties = model.endpointProperties;
+      if (!properties.privateKeyId || !properties.privateKey || !properties.regionId) {
+        return true;
+      }
+      if (model.endpointType === 'azure' && (!properties.userLink || !properties.azureTenantId)) {
+          return true;
+      }
+      if (model.endpointType === 'vsphere' && !properties.hostName) {
+          return true;
+      }
+      return false;
+    },
+    getModel() {
+      return $.extend({}, this.model.item, {
+        endpointProperties: $.extend(this.model.item.endpointProperties || {}, this.properties),
+        endpointType: this.endpointType,
+        name: this.name
       });
     },
-    isSelected: function(endpointType) {
-      let selectedEndpointType = this.typeInputDropdown.getSelectedOption();
-      let selectedEndpointTypeId = selectedEndpointType && selectedEndpointType.id;
-
-      return selectedEndpointTypeId === endpointType;
-    },
-    getModel: function() {
-      var toSave = $.extend({}, this.model.item);
-
-      toSave.name = $(this.$el).find('.nameInput > input').val();
-      var selectedType = this.typeInputDropdown.getSelectedOption();
-      toSave.endpointType = selectedType && selectedType.id;
-
-      var props = {};
-
-      if (toSave.endpointProperties) {
-        props = toSave.endpointProperties.asMutable();
+    convertToObject(value) {
+      if (value) {
+        return {
+          id: value,
+          name: value
+        };
       }
-
-      props.privateKey = $(this.$el).find('.secretAccessKey > input').val();
-      let privateKeyId = $(this.$el).find('.accessKeyId > input').val();
-      if (this.isSelected('nimbus')) {
-        props.userEmail = privateKeyId;
-      }
-
-      props.privateKeyId = privateKeyId;
-
-      props.regionId = $(this.$el).find('.regionIdInput > input').val();
-      props.hostName = $(this.$el).find('.endpointHostInput > input').val();
-      props.userLink = $(this.$el).find('.subscriptionIdInput > input').val();
-      props.azureTenantId = $(this.$el).find('.tenantIdInput > input').val();
-
-      toSave.endpointProperties = props;
-
-      return toSave;
     }
-  },
-  attached: function() {
-    var typeHolder = $(this.$el).find('.typeInput .dropdown-holder');
-    this.typeInputDropdown = new DropdownSearchMenu(typeHolder, {
-      title: i18n.t('dropdownSearchMenu.title', {
-        entity: i18n.t('app.endpoint.typeEntity')
-      }),
-      searchDisabled: true
-    });
-
-    this.typeInputDropdown.setOptions(this.supportedEndpointTypes);
-    this.typeInputDropdown.setOptionSelectCallback(() => {
-      var selectedType = this.typeInputDropdown.getSelectedOption();
-      this.currentEndpointType = selectedType && selectedType.id;
-      this.onInputChange();
-    });
-
-    this.unwatchType = this.$watch('model.item.endpointType', (type) => {
-      var typeInstance = null;
-      if (type) {
-        for (var i = 0; i < this.supportedEndpointTypes.length; i++) {
-          if (this.supportedEndpointTypes[i].id === type) {
-            typeInstance = this.supportedEndpointTypes[i];
-            break;
-          }
-        }
-
-        this.currentEndpointType = type;
-      }
-      this.typeInputDropdown.setSelectedOption(typeInstance);
-    }, {immediate: true});
-
-    this.unwatchIsEditMode = this.$watch('isEditMode', (isEditMode) => {
-      this.typeInputDropdown.setDisabled(isEditMode);
-    }, {immediate: true});
-  },
-
-  detached: function() {
-    this.unwatchType();
-    this.unwatchIsEditMode();
-    this.typeInputDropdown = null;
   }
 });
 
