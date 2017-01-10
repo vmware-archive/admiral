@@ -4,13 +4,15 @@
 
 * Add ability to provision and manage Docker hosts on AWS, Azure and vSphere.
 
-* Simplify adding of existing hosts, by auto configure them over SSH.
+* Simplify adding of existing hosts, by auto configure them over SSH. More information [here](https://github.com/vmware/admiral/wiki/User-guide#automatic-configuration-over-ssh)
 
 * Add a new configuration and runtime element - Closure. Ability to execute code in a stateless manner using different programming languages. Integrated in the container template and can be used to tweak the containers and their configuration at provisioning time.
 
 * Redesigned the UI and integrating [Clarity](https://vmware.github.io/clarity/).
 
 * Added UI for listing tags of images.
+
+* Add the administrative Xenon UI
 
 * Communication to the agent is now over SSL.
 
