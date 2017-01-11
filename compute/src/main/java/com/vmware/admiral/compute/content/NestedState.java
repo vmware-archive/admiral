@@ -18,6 +18,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.TagService;
 import com.vmware.xenon.common.DeferredResult;
@@ -49,12 +52,30 @@ public class NestedState {
         computeDescriptionMap.put("networkInterfaceDescLinks",
                 TemplateNetworkInterfaceDescription.class);
         serviceDocuments
-                .put(TemplateComputeDescription.class, computeDescriptionMap);
+                .put(ComputeDescriptionService.ComputeDescription.class, computeDescriptionMap);
+
+        Map<String, Class<? extends ServiceDocument>> computeStateMap = new HashMap<>();
+        computeStateMap.put("networks", NetworkInterfaceService.NetworkInterfaceState.class);
+        computeStateMap
+                .put("networkInterfaceLinks", NetworkInterfaceService.NetworkInterfaceState.class);
+        serviceDocuments.put(ComputeState.class, computeStateMap);
     }
 
     public ServiceDocument object;
     public Map<String /** self link */, NestedState> children = new HashMap<>();
     public String factoryLink;
+
+    public NestedState() {
+    }
+
+    public NestedState(ServiceDocument serviceDocument) {
+        this.object = serviceDocument;
+    }
+
+    public NestedState(ServiceDocument serviceDocument, Map<String, NestedState> children) {
+        this.object = serviceDocument;
+        this.children = children;
+    }
 
     /**
      * Get the fields that are links and their respective types
@@ -62,7 +83,7 @@ public class NestedState {
     public static Map<String, Class<? extends ServiceDocument>> getLinkFields(Class<?> type) {
 
         return serviceDocuments.entrySet().stream()
-                .filter(entry -> type.isAssignableFrom(entry.getKey()))
+                .filter(entry -> entry.getKey().isAssignableFrom(type))
                 .map(entry -> entry.getValue()).reduce((m1, m2) -> {
                     Map<String, Class<? extends ServiceDocument>> all = new HashMap<>();
                     all.putAll(m1);

@@ -13,6 +13,7 @@ package com.vmware.admiral.request.composition;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
+import static com.vmware.admiral.compute.content.CompositeTemplateUtil.convertCompositeDescriptionToCompositeTemplate;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
@@ -41,6 +42,7 @@ import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
+import com.vmware.admiral.compute.content.NestedState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService;
@@ -54,8 +56,10 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -601,35 +605,46 @@ public class CompositionTaskService
             uri = UriUtils.extendUriWithQuery(uri, UriUtils.URI_PARAM_ODATA_EXPAND,
                     Boolean.TRUE.toString());
         }
-        sendRequest(Operation.createGet(uri)
+        final URI getUri = uri;
+        sendRequest(Operation.createGet(getUri)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         failTask("Failure retrieving composite description state", e);
                         return;
                     }
-                    try {
-                        CompositeDescriptionExpanded desc = o
-                                .getBody(CompositeDescriptionExpanded.class);
-
-                        if (desc.bindings != null && expanded) {
-                            BindingEvaluator.evaluateBindings(desc);
-                            Operation.createPut(this, desc.documentSelfLink).setBody(desc)
-                                    .setCompletion((op, ex) -> {
-                                        if (ex != null) {
-                                            failTask(
-                                                    "Failure updating evaluated composite description",
-                                                    ex);
-                                            return;
-                                        }
-                                        callbackFunction.accept(desc);
-                                    }).sendWith(this);
-                        } else {
-                            callbackFunction.accept(desc);
-                        }
-                    } catch (Exception ex) {
-                        failTask("Failure updating evaluated composite description", ex);
-                    }
+                    CompositeDescriptionExpanded description = o
+                            .getBody(CompositeDescriptionExpanded.class);
+                    handleBindings(expanded, callbackFunction, getUri, description);
                 }));
+    }
+
+    private void handleBindings(boolean expanded,
+            Consumer<CompositeDescriptionExpanded> callbackFunction,
+            URI uri, CompositeDescriptionExpanded description) {
+
+        if (description.bindings == null || !expanded) {
+            callbackFunction.accept(description);
+            return;
+        }
+        convertCompositeDescriptionToCompositeTemplate(this, description).thenApply(template -> {
+            BindingEvaluator.evaluateBindings(template);
+            return template;
+        }).thenAccept(template ->
+                DeferredResult.allOf(template.components.values().stream()
+                        .map(t -> new NestedState((ServiceDocument) t.data, t.children))
+                        .map(n -> n.sendRequest(this, Action.PUT))
+                        .collect(Collectors.toList()))
+        ).thenCompose(nothing -> this.sendWithDeferredResult(
+                Operation.createGet(uri),
+                CompositeDescriptionExpanded.class)
+        ).whenComplete((result, ex) -> {
+            if (ex != null) {
+                failTask("Error while updating evaluated", ex);
+                return;
+            }
+            callbackFunction.accept(result);
+        });
+
     }
 
     private void cleanResource(CompositionTaskState state) {

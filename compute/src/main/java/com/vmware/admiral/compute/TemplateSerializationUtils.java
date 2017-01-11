@@ -11,9 +11,6 @@
 
 package com.vmware.admiral.compute;
 
-import static com.vmware.admiral.common.util.YamlMapper.objectMapper;
-import static com.vmware.admiral.common.util.YamlMapper.objectWriter;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,6 +21,8 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
@@ -54,7 +53,8 @@ public class TemplateSerializationUtils {
     }
 
     @SuppressWarnings("unchecked")
-    public static CompositeTemplate deserializeTemplate(Map<String, Object> initialMap) {
+    public static CompositeTemplate deserializeTemplate(Map<String, Object> initialMap,
+            ObjectMapper objectMapper) {
 
         Map<String, ComponentTemplate<?>> compositeTemplateComponents = new HashMap<>();
 
@@ -62,11 +62,11 @@ public class TemplateSerializationUtils {
                 .remove(BindingUtils.COMPONENTS);
         for (Map.Entry<String, Object> ce : components.entrySet()) {
             ComponentTemplate<?> componentTemplate = deserializeComponent(
-                    (Map<String, Object>) ce.getValue());
+                    (Map<String, Object>) ce.getValue(), objectMapper);
             compositeTemplateComponents.put(ce.getKey(), componentTemplate);
         }
 
-        CompositeTemplate compositeTemplate = objectMapper()
+        CompositeTemplate compositeTemplate = objectMapper
                 .convertValue(initialMap, CompositeTemplate.class);
 
         compositeTemplate.components = compositeTemplateComponents;
@@ -74,13 +74,17 @@ public class TemplateSerializationUtils {
         return compositeTemplate;
     }
 
+    public static CompositeTemplate deserializeTemplate(Map<String, Object> initialMap) {
+        return deserializeTemplate(initialMap, YamlMapper.objectMapper());
+    }
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static Map<String, Object> serializeTemplate(CompositeTemplate template)
+    public static Map<String, Object> serializeTemplate(CompositeTemplate template,
+            ObjectMapper objectMapper, ObjectWriter objectWriter)
             throws IOException {
 
-        // TODO figure out why directly deserializing to Map doesn't work
-        Map result = objectMapper().readValue(
-                objectWriter().writeValueAsString(template), Map.class);
+        //TODO figure out why directly deserializing to Map doesn't work
+        Map result = objectMapper.readValue(objectWriter.writeValueAsString(template), Map.class);
 
         Map<String, Object> components = new HashMap<>();
         result.put("components", components);
@@ -89,44 +93,62 @@ public class TemplateSerializationUtils {
             String componentKey = entry.getKey();
             ComponentTemplate<?> componentTemplate = entry.getValue();
 
-            // We have a special deserializer for the ComponentTemplate
-            Map serializedComponentTemplate = objectMapper()
-                    .readValue(objectWriter().writeValueAsString(componentTemplate), Map.class);
-            serializedComponentTemplate.remove("children");
+            Map serializedComponentTemplate = serializeComponentTemplate(componentTemplate,
+                    objectMapper, objectWriter);
 
             components.put(componentKey, serializedComponentTemplate);
-
-            if (componentTemplate.children == null || componentTemplate.children.isEmpty()) {
-                continue;
-            }
-
-            NestedState state = new NestedState();
-            state.object = (ServiceDocument) componentTemplate.data;
-            state.children = componentTemplate.children;
-
-            Map<String, Object> serializedDataComponentTemplate = serializeNestedState(state);
-
-            serializedComponentTemplate.put("data", serializedDataComponentTemplate);
         }
 
         return result;
     }
 
+    public static Map<String, Object> serializeComponentTemplate(
+            ComponentTemplate<?> componentTemplate,
+            ObjectMapper objectMapper,
+            ObjectWriter objectWriter)
+            throws IOException {
+        //We have a special deserializer for the ComponentTemplate
+        Map serializedComponentTemplate = objectMapper
+                .readValue(objectWriter.writeValueAsString(componentTemplate), Map.class);
+        serializedComponentTemplate.remove("children");
+
+        if (componentTemplate.children == null || componentTemplate.children.isEmpty()) {
+            return serializedComponentTemplate;
+        }
+
+        NestedState state = new NestedState();
+        state.object = (ServiceDocument) componentTemplate.data;
+        state.children = componentTemplate.children;
+
+        Map<String, Object> serializedDataComponentTemplate = serializeNestedState(state,
+                objectMapper, objectWriter);
+
+        serializedComponentTemplate.put("data", serializedDataComponentTemplate);
+        return serializedComponentTemplate;
+    }
+
+    public static Map<String, Object> serializeTemplate(CompositeTemplate template)
+            throws IOException {
+        return serializeTemplate(template, YamlMapper.objectMapper(), YamlMapper.objectWriter());
+    }
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static Map<String, Object> serializeNestedState(NestedState nestedState)
+    public static Map<String, Object> serializeNestedState(NestedState nestedState,
+            ObjectMapper objectMapper, ObjectWriter objectWriter)
             throws IOException {
         Map<String, NestedState> children = nestedState.children;
 
         // if there are no children we can serialize right away
         if (children == null || children.isEmpty()) {
-            return objectMapper()
-                    .readValue(objectWriter().writeValueAsString(nestedState.object), Map.class);
+            return objectMapper
+                    .readValue(objectWriter.writeValueAsString(nestedState.object), Map.class);
         }
 
         // serialize the children recursively
         Map<String, Map<String, Object>> serializedChildren = new HashMap<>();
         for (Map.Entry<String, NestedState> entry : children.entrySet()) {
-            Map<String, Object> serializedChild = serializeNestedState(entry.getValue());
+            Map<String, Object> serializedChild = serializeNestedState(entry.getValue(),
+                    objectMapper, objectWriter);
             serializedChildren.put(entry.getKey(), serializedChild);
         }
 
@@ -134,8 +156,8 @@ public class TemplateSerializationUtils {
         Map<String, Class<? extends ServiceDocument>> fields = NestedState.getLinkFields(
                 nestedState.object.getClass());
 
-        Map converted = objectMapper()
-                .readValue(objectWriter().writeValueAsString(nestedState.object), Map.class);
+        Map converted = objectMapper
+                .readValue(objectWriter.writeValueAsString(nestedState.object), Map.class);
 
         for (String fieldName : fields.keySet()) {
             Object fieldValue = converted.get(fieldName);
@@ -161,8 +183,17 @@ public class TemplateSerializationUtils {
         return converted;
     }
 
+    public static Map<String, Object> serializeNestedState(NestedState nestedState)
+            throws IOException {
+
+        return serializeNestedState(nestedState, YamlMapper.objectMapper(),
+                YamlMapper.objectWriter());
+    }
+
+
     @SuppressWarnings("unchecked")
-    private static ComponentTemplate<?> deserializeComponent(Map<String, Object> obj) {
+    public static ComponentTemplate<?> deserializeComponent(Map<String, Object> obj,
+            ObjectMapper objectMapper) {
 
         String contentType = (String) obj.get("type");
 
@@ -173,7 +204,7 @@ public class TemplateSerializationUtils {
         Map<String, Object> data = (Map<String, Object>) obj.get("data");
         Map<String, NestedState> children = deserializeChildren(data, descriptionClass);
 
-        ComponentTemplate<?> componentTemplate = objectMapper()
+        ComponentTemplate<?> componentTemplate = objectMapper
                 .convertValue(obj, ComponentTemplate.class);
 
         componentTemplate.children = children;
@@ -181,12 +212,13 @@ public class TemplateSerializationUtils {
         return componentTemplate;
     }
 
-    private static NestedState deserializeServiceDocument(
-            Map<String, Object> value, Class<? extends ServiceDocument> type) {
+    public static NestedState deserializeServiceDocument(
+            Map<String, Object> value, Class<? extends ServiceDocument> type,
+            ObjectMapper objectMapper) {
 
         Map<String, NestedState> children = deserializeChildren(value, type);
 
-        ServiceDocument serviceDocument = objectMapper().convertValue(value, type);
+        ServiceDocument serviceDocument = objectMapper.convertValue(value, type);
 
         if (serviceDocument.documentSelfLink == null) {
             // set some documentSelfLink so that we can wire the objects together, we will remove it
@@ -199,6 +231,11 @@ public class TemplateSerializationUtils {
         state.children = children;
 
         return state;
+    }
+
+    public static NestedState deserializeServiceDocument(
+            Map<String, Object> value, Class<? extends ServiceDocument> type) {
+        return deserializeServiceDocument(value, type, YamlMapper.objectMapper());
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
