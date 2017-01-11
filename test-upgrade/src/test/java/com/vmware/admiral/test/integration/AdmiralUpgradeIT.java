@@ -108,6 +108,16 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         // wait for the admiral container to start
         URI uri = URI.create(getBaseUrl() + NodeHealthCheckService.SELF_LINK);
         waitForStatusCode(uri, Operation.STATUS_CODE_OK);
+        // wait for the services and the data to be loaded
+        uri = URI.create(getBaseUrl() + ManagementUriParts.CONTAINERS);
+        waitForStatusCode(uri, Operation.STATUS_CODE_OK);
+        uri = URI.create(getBaseUrl() + ManagementUriParts.CONTAINER_HOSTS);
+        waitForStatusCode(uri, Operation.STATUS_CODE_OK);
+        uri = URI.create(getBaseUrl() + dockerHostSelfLink);
+        waitForStatusCode(uri, Operation.STATUS_CODE_OK);
+        uri = URI.create(getBaseUrl() + credentialsSelfLink);
+        waitForStatusCode(uri, Operation.STATUS_CODE_OK);
+
         ComputeState dockerHost = getDocument(dockerHostSelfLink, ComputeState.class);
         Assert.assertTrue(dockerHost != null);
         AuthCredentialsServiceState credentials = getDocument(credentialsSelfLink,

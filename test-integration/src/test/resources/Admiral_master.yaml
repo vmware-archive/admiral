@@ -8,7 +8,7 @@ components:
       image: "vmware/bellevue:upgrade"
       _cluster: 1
       volumes:
-      - "/usr/tmp/admiral:/var/admiral/"
+      - "/usr/tmp/admiral:/var/admiral"
       publish_all: true
       UseLocalImageWithPriority: "true"
       restart_policy: "no"
