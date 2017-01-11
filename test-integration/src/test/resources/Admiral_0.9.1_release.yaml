@@ -8,6 +8,6 @@ components:
       image: "registry.hub.docker.com/vmware/admiral:0.9.1"
       _cluster: 1
       volumes:
-      - "/usr/tmp/admiral:/var/admiral/"
+      - "/usr/tmp/admiral:/var/admiral"
       publish_all: true
       restart_policy: "no"
