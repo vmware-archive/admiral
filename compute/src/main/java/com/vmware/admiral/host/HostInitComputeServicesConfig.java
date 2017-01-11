@@ -125,6 +125,17 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
             startServiceFactories(host, ConfigureHostOverSshTaskService.class);
         }
 
+        initCompositeComponentRegistry();
+
+        // start initialization of system documents
+        host.sendRequest(Operation.createPost(
+                UriUtils.buildUri(host, ComputeInitialBootService.class))
+                .setReferer(host.getUri())
+                .setBody(new ServiceDocument()));
+
+    }
+
+    public static void initCompositeComponentRegistry() {
         // register a well-know Components
         CompositeComponentRegistry.registerComponent(ResourceType.CONTAINER_TYPE.getName(),
                 ContainerDescriptionService.FACTORY_LINK,
@@ -151,12 +162,5 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_NETWORK_TYPE.getName(),
                 ComputeNetworkDescriptionService.FACTORY_LINK, ComputeNetworkDescription.class,
                 ComputeNetworkService.FACTORY_LINK, ComputeNetwork.class);
-
-        // start initialization of system documents
-        host.sendRequest(Operation.createPost(
-                UriUtils.buildUri(host, ComputeInitialBootService.class))
-                .setReferer(host.getUri())
-                .setBody(new ServiceDocument()));
-
     }
 }

@@ -37,12 +37,13 @@ import com.google.gson.JsonPrimitive;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.YamlMapper;
-import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.content.Binding;
 import com.vmware.admiral.compute.content.Binding.ComponentBinding;
+import com.vmware.admiral.compute.content.ComponentTemplate;
+import com.vmware.admiral.compute.content.CompositeTemplate;
+import com.vmware.admiral.compute.content.NestedState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.LocalizableValidationException;
-import com.vmware.xenon.common.ServiceDocument;
 
 /**
  * Utility class for working with Strings on a Composite description level, that have bindings in
@@ -114,20 +115,20 @@ public class BindingEvaluator {
      * Basically go through each binding and try to get the source value and set the target value.
      * If the source value happens to be bound to another value recurse.
      */
-    public static void evaluateBindings(CompositeDescriptionExpanded compositeDescription) {
+    public static void evaluateBindings(CompositeTemplate compositeTemplate) {
 
-        if (compositeDescription.bindings == null) {
+        if (compositeTemplate.bindings == null || compositeTemplate.bindings.isEmpty()) {
             return;
         }
 
-        Map<String, ComponentDescription> componentNameToDescription = getComponentNameToDescription(
-                compositeDescription);
+        Map<String, ComponentTemplate<?>> componentNameToTemplate = getComponentNameToDescription(
+                compositeTemplate);
 
         Map<String, ComponentBinding> bindingByComponentName = getBindingByComponentName(
-                compositeDescription.bindings);
+                compositeTemplate.bindings);
 
         for (Binding.ComponentBinding componentBinding : bindingByComponentName.values()) {
-            ComponentDescription description = componentNameToDescription
+            ComponentTemplate componentTemplate = componentNameToTemplate
                     .get(componentBinding.componentName);
 
             for (Binding binding : componentBinding.bindings) {
@@ -136,7 +137,8 @@ public class BindingEvaluator {
                 }
 
                 try {
-                    evaluateBinding(binding, description, componentNameToDescription,
+                    evaluateBinding(binding, componentBinding.componentName, componentTemplate,
+                            componentNameToTemplate,
                             bindingByComponentName,
                             new HashSet<>());
                 } catch (ReflectiveOperationException | IOException e) {
@@ -151,11 +153,11 @@ public class BindingEvaluator {
      * Applies the binding on a Component, after a dependent component is provisioned.
      */
 
-    public static Object evaluateProvisioningTimeBindings(
-            Object state,
+    public static NestedState evaluateProvisioningTimeBindings(
+            NestedState state,
             List<Binding> bindings,
-            Map<String, Object> provisionedResources) {
-        Object result = state;
+            Map<String, NestedState> provisionedResources) {
+        NestedState result = state;
         Map<String, Object> evaluatedBindingMap = new HashMap<>();
         for (Binding binding : bindings) {
             if (!binding.isProvisioningTimeBinding()) {
@@ -169,10 +171,12 @@ public class BindingEvaluator {
         }
 
         try {
-            Map<String, Object> resultBindingMap = serializeToMap(state);
+            Map<String, Object> resultBindingMap = TemplateSerializationUtils
+                    .serializeNestedState(state, objectMapper, objectAsStringWriter);
             applyEvaluatedState(resultBindingMap, evaluatedBindingMap, bindings);
             if (!evaluatedBindingMap.isEmpty()) {
-                result = deserializeFromMap(resultBindingMap, state.getClass());
+                result = TemplateSerializationUtils.deserializeServiceDocument(resultBindingMap,
+                        state.object.getClass());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -203,13 +207,13 @@ public class BindingEvaluator {
     }
 
     private static void evaluateProvisioningTimeBinding(Binding binding,
-            Map<String, Object> provisionedResources, Map<String, Object> evaluatedBindings)
+            Map<String, NestedState> provisionedResources, Map<String, Object> evaluatedBindings)
             throws ReflectiveOperationException, IOException {
 
         String componentName = BindingUtils
                 .extractComponentNameFromBindingExpression(binding.placeholder.bindingExpression);
 
-        Object provisionedResource = provisionedResources.get(componentName);
+        NestedState provisionedResource = provisionedResources.get(componentName);
         if (provisionedResource == null) {
             return;
         }
@@ -224,32 +228,40 @@ public class BindingEvaluator {
 
     private static void evaluateBinding(
             Binding binding,
-            ComponentDescription targetDescription,
-            Map<String, ComponentDescription> componentNameToDescription,
+            String componentName,
+            ComponentTemplate componentTemplate,
+            Map<String, ComponentTemplate<?>> componentNameToTemplate,
             Map<String, Binding.ComponentBinding> allBindings,
             Set<String> visited) throws ReflectiveOperationException, IOException {
 
-        Object rootSourceValue = resolveValue(binding, targetDescription,
-                componentNameToDescription, allBindings, visited);
+        Object rootSourceValue = resolveValue(binding, componentName, componentTemplate,
+                componentNameToTemplate, allBindings, visited);
 
         if (rootSourceValue != null) {
-            Map<String, Object> serializedDescription = serializeToMap(
-                    targetDescription.getServiceDocument());
-            setValue(serializedDescription, binding.targetFieldPath, rootSourceValue);
-            targetDescription.updateServiceDocument((ServiceDocument) deserializeFromMap(
-                    serializedDescription, targetDescription.getServiceDocument().getClass()));
+            Map<String, Object> serializedComponentTemplate = TemplateSerializationUtils
+                    .serializeComponentTemplate(componentTemplate, objectMapper,
+                            objectAsStringWriter);
+            setValue((Map<String, Object>) serializedComponentTemplate.get("data"),
+                    binding.targetFieldPath, rootSourceValue);
+            ComponentTemplate<?> updatedComponentTemplate = TemplateSerializationUtils
+                    .deserializeComponent(serializedComponentTemplate, objectMapper);
+            componentTemplate.data = updatedComponentTemplate.data;
+            componentTemplate.children = updatedComponentTemplate.children;
+            componentTemplate.type = updatedComponentTemplate.type;
+            componentTemplate.dependsOn = updatedComponentTemplate.dependsOn;
         }
 
     }
 
-    private static Object resolveValue(Binding binding, ComponentDescription targetDescription,
-            Map<String, ComponentDescription> componentNameToDescription,
+    private static Object resolveValue(Binding binding, String templateName,
+            ComponentTemplate targetTemplate,
+            Map<String, ComponentTemplate<?>> componentNameToDescription,
             Map<String, Binding.ComponentBinding> allBindings, Set<String> visited)
             throws ReflectiveOperationException {
 
         // Assume the <<description>>.name is the same as the component name because of
         // CompositeTemplateUtil#sanitizeCompositeTemplate
-        String componentName = targetDescription.name;
+        String componentName = templateName;
 
         if (visited.contains(componentName)) {
             throw new LocalizableValidationException("Cyclic bindings cannot be evaluated", "compute.cyclic.bindings");
@@ -261,11 +273,9 @@ public class BindingEvaluator {
         String sourceComponentName = BindingUtils
                 .extractComponentNameFromBindingExpression(bindingExpression);
 
-        ComponentDescription sourceDescription = componentNameToDescription
-                .get(sourceComponentName);
+        ComponentTemplate sourceTemplate = componentNameToDescription.get(sourceComponentName);
 
-        Object rootSourceValue = getFieldValueByPath(sourceFieldPath,
-                sourceDescription.getServiceDocument());
+        Object rootSourceValue = getFieldValueByPath(sourceFieldPath, sourceTemplate.data);
 
         // if the source value is null it may be bound to something else
         if (rootSourceValue == null) {
@@ -274,25 +284,13 @@ public class BindingEvaluator {
                     allBindings);
             if (isSourceValueABinding.isPresent()) {
                 Binding nestedBinding = isSourceValueABinding.get();
-                rootSourceValue = resolveValue(nestedBinding, sourceDescription,
+                rootSourceValue = resolveValue(nestedBinding, sourceComponentName, sourceTemplate,
                         componentNameToDescription,
                         allBindings, visited);
             }
         }
 
         return BindingUtils.valueForBinding(binding, rootSourceValue);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> serializeToMap(Object object) throws IOException {
-
-        String yaml = objectAsStringWriter.writeValueAsString(object);
-        Map<String, Object> serializedObject = objectMapper.readValue(yaml, Map.class);
-        return serializedObject;
-    }
-
-    private static Object deserializeFromMap(Map<String, Object> map, Class<?> type) {
-        return objectMapper.convertValue(map, type);
     }
 
     private static Map<String, Binding.ComponentBinding> getBindingByComponentName(
@@ -401,31 +399,75 @@ public class BindingEvaluator {
     private static Object getFieldValueByPath(List<String> fieldPath, Object startObject)
             throws ReflectiveOperationException {
 
-        Object value = startObject;
-        for (String fieldName : fieldPath) {
+        boolean isCurrentFieldLink = false;
+        boolean isParentFieldLink = false;
+
+        NestedState currentNestedState = null;
+        Object value = null;
+
+        if (startObject instanceof NestedState) {
+            value = ((NestedState) startObject).object;
+            currentNestedState = (NestedState) startObject;
+        } else {
+            value = startObject;
+        }
+
+        for (int i = 0; i < fieldPath.size(); ++i) {
+            String fieldName = fieldPath.get(i);
             if (value == null) {
                 return null;
             }
 
+            // this field contains links
+            isCurrentFieldLink =
+                    NestedState.getNestedObjectType(value.getClass(), fieldName) != null;
+
             // special case for a map
             if (value instanceof Map) {
                 value = ((Map) value).get(fieldName);
+
+                if (isCurrentFieldLink) {
+                    String link = (String) value;
+                    value = currentNestedState.children.get(link).object;
+                    currentNestedState = currentNestedState.children.get(link);
+                }
+
                 continue;
             }
 
             if (value instanceof List) {
                 value = ((List) value).get(Integer.parseInt(fieldName));
+
+                /**
+                 * Here we have an index e.g. "0". We have to know if the List is a list of links
+                 * in order to take the corresponding child of the NestedState if needed. So we keep
+                 * a flag if the "parent" field is a link field
+                 */
+                if (isParentFieldLink) {
+                    String link = (String) value;
+                    value = currentNestedState.children.get(link).object;
+                    currentNestedState = currentNestedState.children.get(link);
+                }
+
                 continue;
             }
 
             if (value.getClass().isArray()) {
                 value = ((Object[]) value)[Integer.parseInt(fieldName)];
+
+                if (isParentFieldLink) {
+                    String link = (String) value;
+                    value = currentNestedState.children.get(link).object;
+                    currentNestedState = currentNestedState.children.get(link);
+                }
+
                 continue;
             }
 
             // if the value is a string, then check it's key=value
             if (value instanceof String) {
                 value = valueFromMapString((String) value, fieldName);
+
                 if (value == null) {
                     return null;
                 }
@@ -444,15 +486,20 @@ public class BindingEvaluator {
                     value = fromClosureMap(value, field);
                 } else {
                     value = field.get(value);
-                }
 
+                    if (value instanceof String && isCurrentFieldLink) {
+                        String link = (String) value;
+                        value = currentNestedState.children.get(link).object;
+                        currentNestedState = currentNestedState.children.get(link);
+                    }
+                }
             } else {
                 // handle special case, as we implicitly put any not know property into
                 // customProperties.
                 value = tryGetValueFromCustomProperties(type, value, fieldName);
             }
+            isParentFieldLink = isCurrentFieldLink;
         }
-
         return value;
     }
 
@@ -489,12 +536,11 @@ public class BindingEvaluator {
         return result;
     }
 
-    private static Map<String, ComponentDescription> getComponentNameToDescription(
-            CompositeDescriptionExpanded compositeDescription) {
-        if (compositeDescription.componentDescriptions == null) {
+    private static Map<String, ComponentTemplate<?>> getComponentNameToDescription(
+            CompositeTemplate compositeTemplate) {
+        if (compositeTemplate.components == null) {
             return Collections.emptyMap();
         }
-        return compositeDescription.componentDescriptions.stream()
-                .collect(Collectors.toMap(cd -> cd.name, cd -> cd));
+        return compositeTemplate.components;
     }
 }

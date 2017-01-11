@@ -22,20 +22,30 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.google.gson.JsonPrimitive;
-
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.vmware.admiral.closures.services.closure.Closure;
-import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.content.Binding;
 import com.vmware.admiral.compute.content.Binding.BindingPlaceholder;
+import com.vmware.admiral.compute.content.ComponentTemplate;
+import com.vmware.admiral.compute.content.CompositeTemplate;
+import com.vmware.admiral.compute.content.NestedState;
+import com.vmware.admiral.compute.content.TemplateComputeState;
+import com.vmware.admiral.host.HostInitComputeServicesConfig;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.LocalizableValidationException;
 
 public class BindingEvaluatorTest {
+
+    @BeforeClass
+    public static void setUp() {
+        HostInitComputeServicesConfig.initCompositeComponentRegistry();
+    }
 
     @Test
     public void testEvaluateSingleBindingSimple() {
@@ -50,15 +60,13 @@ public class BindingEvaluatorTest {
                 binding(Arrays.asList("_cluster"), "A~_cluster"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                 .asList(firstDescription, secondDescription), Arrays.asList(componentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
 
-        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).getServiceDocument();
-        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).getServiceDocument();
+        firstDescription = (ContainerDescription) compositeTemplate.components.get("A").data;
+        secondDescription = (ContainerDescription) compositeTemplate.components.get("B").data;
 
         assertEquals(firstDescription._cluster, secondDescription._cluster);
     }
@@ -79,15 +87,14 @@ public class BindingEvaluatorTest {
                 binding(Arrays.asList("hostname"), "Closure~inputs~hostname"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("Container", bindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                 .asList(closure, secondDescription), Arrays.asList(componentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
 
-        closure = (Closure) compositeDescription.componentDescriptions
-                .get(0).getServiceDocument();
-        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).getServiceDocument();
+        closure = (Closure) compositeTemplate.components.get("Closure").data;
+        secondDescription = (ContainerDescription) compositeTemplate.components
+                .get("Container").data;
 
         assertEquals(closure.inputs.get("hostname").getAsString(), secondDescription.hostname);
     }
@@ -107,15 +114,13 @@ public class BindingEvaluatorTest {
                 binding(Arrays.asList("memory_limit"), "A~memory_limit"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                 .asList(firstDescription, secondDescription), Arrays.asList(componentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
 
-        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).getServiceDocument();
-        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).getServiceDocument();
+        firstDescription = (ContainerDescription) compositeTemplate.components.get("A").data;
+        secondDescription = (ContainerDescription) compositeTemplate.components.get("B").data;
 
         assertEquals(firstDescription._cluster, secondDescription._cluster);
         assertEquals(firstDescription.memoryLimit, secondDescription.memoryLimit);
@@ -135,15 +140,13 @@ public class BindingEvaluatorTest {
                 .asList(binding(Arrays.asList("hostname"), "A~logConfig~type"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                 .asList(firstDescription, secondDescription), Arrays.asList(componentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
 
-        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).getServiceDocument();
-        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).getServiceDocument();
+        firstDescription = (ContainerDescription) compositeTemplate.components.get("A").data;
+        secondDescription = (ContainerDescription) compositeTemplate.components.get("B").data;
 
         assertEquals(firstDescription.logConfig.type, secondDescription.hostname);
     }
@@ -162,15 +165,13 @@ public class BindingEvaluatorTest {
                 binding(Arrays.asList("hostname"), "A~customProperties~key"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                 .asList(firstDescription, secondDescription), Arrays.asList(componentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
 
-        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).getServiceDocument();
-        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).getServiceDocument();
+        firstDescription = (ContainerDescription) compositeTemplate.components.get("A").data;
+        secondDescription = (ContainerDescription) compositeTemplate.components.get("B").data;
 
         assertEquals(firstDescription.customProperties.get("key"), secondDescription.hostname);
     }
@@ -189,15 +190,13 @@ public class BindingEvaluatorTest {
                 binding(Arrays.asList("log_config", "type"), "B~hostname"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("A", bindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                 .asList(firstDescription, secondDescription), Arrays.asList(componentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
 
-        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).getServiceDocument();
-        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).getServiceDocument();
+        firstDescription = (ContainerDescription) compositeTemplate.components.get("A").data;
+        secondDescription = (ContainerDescription) compositeTemplate.components.get("B").data;
 
         assertEquals(firstDescription.logConfig.type, secondDescription.hostname);
     }
@@ -218,15 +217,13 @@ public class BindingEvaluatorTest {
                 binding(Arrays.asList("hostname"), "A~_cluster"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                 .asList(firstDescription, secondDescription), Arrays.asList(componentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
 
-        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).getServiceDocument();
-        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).getServiceDocument();
+        firstDescription = (ContainerDescription) compositeTemplate.components.get("A").data;
+        secondDescription = (ContainerDescription) compositeTemplate.components.get("B").data;
 
         assertNotNull(secondDescription.hostname);
         assertEquals(firstDescription._cluster.toString(), secondDescription.hostname);
@@ -246,15 +243,13 @@ public class BindingEvaluatorTest {
                 binding(Arrays.asList("_cluster"), "A~hostname"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                 .asList(firstDescription, secondDescription), Arrays.asList(componentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
 
-        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).getServiceDocument();
-        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).getServiceDocument();
+        firstDescription = (ContainerDescription) compositeTemplate.components.get("A").data;
+        secondDescription = (ContainerDescription) compositeTemplate.components.get("B").data;
 
         assertNotNull(secondDescription._cluster);
         assertEquals(firstDescription.hostname, secondDescription._cluster.toString());
@@ -275,11 +270,11 @@ public class BindingEvaluatorTest {
         List<Binding> aBindings = Arrays.asList(binding(Arrays.asList("_cluster"), "B~_cluster"));
         Binding.ComponentBinding aComponentBinding = new Binding.ComponentBinding("A", aBindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                         .asList(firstDescription, secondDescription),
                 Arrays.asList(bComponentBinding, aComponentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
     }
 
     @Test
@@ -303,16 +298,14 @@ public class BindingEvaluatorTest {
                 .asList(binding(Arrays.asList("memory_limit"), "B~memory_limit"));
         Binding.ComponentBinding aComponentBinding = new Binding.ComponentBinding("A", aBindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                         .asList(firstDescription, secondDescription),
                 Arrays.asList(bComponentBinding, aComponentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
 
-        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).getServiceDocument();
-        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).getServiceDocument();
+        firstDescription = (ContainerDescription) compositeTemplate.components.get("A").data;
+        secondDescription = (ContainerDescription) compositeTemplate.components.get("B").data;
 
         assertEquals(firstDescription.hostname, secondDescription.hostname);
         assertEquals(firstDescription.memoryLimit, secondDescription.memoryLimit);
@@ -342,18 +335,15 @@ public class BindingEvaluatorTest {
                 .asList(binding(Arrays.asList("memory_swap_limit"), "C~memory_limit"));
         Binding.ComponentBinding bComponentBinding = new Binding.ComponentBinding("B", bBindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                         .asList(firstDescription, secondDescription, thirdDescription),
                 Arrays.asList(bComponentBinding, aComponentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
 
-        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).getServiceDocument();
-        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).getServiceDocument();
-        thirdDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(2).getServiceDocument();
+        firstDescription = (ContainerDescription) compositeTemplate.components.get("A").data;
+        secondDescription = (ContainerDescription) compositeTemplate.components.get("B").data;
+        thirdDescription = (ContainerDescription) compositeTemplate.components.get("C").data;
 
         assertEquals(firstDescription.memoryLimit, thirdDescription.memoryLimit);
         assertEquals(secondDescription.memorySwapLimit, thirdDescription.memoryLimit);
@@ -383,18 +373,15 @@ public class BindingEvaluatorTest {
                 .asList(binding(Arrays.asList("memory_limit"), "C~memory_limit"));
         Binding.ComponentBinding bComponentBinding = new Binding.ComponentBinding("B", bBindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                         .asList(firstDescription, secondDescription, thirdDescription),
                 Arrays.asList(bComponentBinding, aComponentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
 
-        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).getServiceDocument();
-        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).getServiceDocument();
-        thirdDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(2).getServiceDocument();
+        firstDescription = (ContainerDescription) compositeTemplate.components.get("A").data;
+        secondDescription = (ContainerDescription) compositeTemplate.components.get("B").data;
+        thirdDescription = (ContainerDescription) compositeTemplate.components.get("C").data;
 
         assertEquals(firstDescription.memoryLimit, thirdDescription.memoryLimit);
         assertEquals(secondDescription.memoryLimit, thirdDescription.memoryLimit);
@@ -413,15 +400,13 @@ public class BindingEvaluatorTest {
                 .asList(binding(Arrays.asList("memory_limit"), "A~_cluster"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                 .asList(firstDescription, secondDescription), Arrays.asList(componentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
 
-        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).getServiceDocument();
-        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).getServiceDocument();
+        firstDescription = (ContainerDescription) compositeTemplate.components.get("A").data;
+        secondDescription = (ContainerDescription) compositeTemplate.components.get("B").data;
 
         assertNotNull(secondDescription.memoryLimit);
         assertEquals(firstDescription._cluster.toString(),
@@ -434,32 +419,95 @@ public class BindingEvaluatorTest {
         List<Binding> bindings = Arrays
                 .asList(binding(Arrays.asList("parentLink"), "_resource~A~parentLink"));
 
-        Map<String, Object> containers = new HashMap<>();
+        Map<String, NestedState> containers = new HashMap<>();
         ContainerState containerState = new ContainerState();
         containerState.parentLink = "some-host";
-        containers.put("A", containerState);
+        containers.put("A", new NestedState(containerState));
 
         ContainerState containerStateE = new ContainerState();
-        Object evalObj = BindingEvaluator
-                .evaluateProvisioningTimeBindings(containerStateE, bindings, containers);
+        NestedState evalObj = BindingEvaluator
+                .evaluateProvisioningTimeBindings(new NestedState(containerStateE), bindings,
+                        containers);
         assertNotNull(evalObj);
-        assertEquals(((ContainerState) evalObj).parentLink, containerState.parentLink);
+        assertEquals(((ContainerState) evalObj.object).parentLink, containerState.parentLink);
 
     }
 
-    public static CompositeDescriptionExpanded createCompositeDesc(
-            List<ResourceState> containerDescriptions,
+    @Test
+    public void testEvaluateSimpleBindingToObjectWithLinks() {
+
+        List<Binding> bindings = Arrays
+                .asList(binding(Arrays.asList("networks", "0", "address"),
+                        "_resource~A~parentLink"));
+
+        Map<String, NestedState> computes = new HashMap<>();
+        TemplateComputeState computeStateA = new TemplateComputeState();
+        computeStateA.parentLink = "some-host";
+
+        computes.put("A", new NestedState(computeStateA));
+
+        TemplateComputeState computeState = new TemplateComputeState();
+
+        computeState.networkInterfaceLinks = Arrays.asList("nis-link");
+        NetworkInterfaceState nis = new NetworkInterfaceState();
+        nis.documentSelfLink = "nis-link";
+
+        NestedState nestedState = new NestedState(computeState);
+        nestedState.children.put(nis.documentSelfLink, new NestedState(nis));
+
+        NestedState evalObj = BindingEvaluator
+                .evaluateProvisioningTimeBindings(nestedState, bindings, computes);
+        assertNotNull(evalObj);
+        assertEquals(((NetworkInterfaceState) evalObj.children.get("nis-link").object).address,
+                computeStateA.parentLink);
+
+    }
+
+    @Test
+    public void testEvaluateSimpleBindingFromObjectWithLinks() {
+
+        List<Binding> bindings = Arrays
+                .asList(binding(Arrays.asList("parentLink"),
+                        "_resource~A~networkInterfaceLinks~0~address"));
+
+        Map<String, NestedState> computes = new HashMap<>();
+        TemplateComputeState computeStateA = new TemplateComputeState();
+        computeStateA.parentLink = "some-host";
+
+        computeStateA.networkInterfaceLinks = Arrays.asList("nis-link");
+        NetworkInterfaceState nis = new NetworkInterfaceState();
+        nis.documentSelfLink = "nis-link";
+        nis.address = "some-address";
+
+        NestedState nestedStateA = new NestedState(computeStateA);
+        nestedStateA.children.put("nis-link", new NestedState(nis));
+
+        computes.put("A", nestedStateA);
+
+        TemplateComputeState computeState = new TemplateComputeState();
+
+        NestedState nestedState = new NestedState(computeState);
+
+        NestedState evalObj = BindingEvaluator
+                .evaluateProvisioningTimeBindings(nestedState, bindings, computes);
+        assertNotNull(evalObj);
+        assertEquals(nis.address, ((TemplateComputeState) evalObj.object).parentLink);
+
+    }
+
+    public static CompositeTemplate createCompositeTemplate(
+            List<? extends ResourceState> containerDescriptions,
             List<Binding.ComponentBinding> componentBindings) {
-        CompositeDescriptionExpanded compositeDescription = new CompositeDescriptionExpanded();
-        compositeDescription.componentDescriptions = containerDescriptions.stream()
-                .map(cd -> new ComponentDescription(cd,
-                        ResourceType.CONTAINER_TYPE.getName(), cd.name,
-                        componentBindings.stream().filter(cb -> cb.componentName.equals(cd.name))
-                                .flatMap(cb -> cb.bindings.stream())
-                                .collect(Collectors.toList())))
-                .collect(Collectors.toList());
-        compositeDescription.bindings = componentBindings;
-        return compositeDescription;
+        CompositeTemplate compositeTemplate = new CompositeTemplate();
+        compositeTemplate.components = containerDescriptions.stream()
+                .collect(Collectors.toMap(cd -> cd.name, cd -> {
+                    ComponentTemplate componentTemplate = new ComponentTemplate();
+                    componentTemplate.type = ResourceType.CONTAINER_TYPE.getContentType();
+                    componentTemplate.data = cd;
+                    return componentTemplate;
+                }));
+        compositeTemplate.bindings = componentBindings;
+        return compositeTemplate;
     }
 
     @Test
@@ -475,15 +523,13 @@ public class BindingEvaluatorTest {
         List<Binding> bindings = Arrays.asList(binding(Arrays.asList("_cluster"), "A~key"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                 .asList(firstDescription, secondDescription), Arrays.asList(componentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
 
-        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).getServiceDocument();
-        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).getServiceDocument();
+        firstDescription = (ContainerDescription) compositeTemplate.components.get("A").data;
+        secondDescription = (ContainerDescription) compositeTemplate.components.get("B").data;
 
         assertEquals(new Integer(20), secondDescription._cluster);
     }
@@ -500,15 +546,13 @@ public class BindingEvaluatorTest {
                 binding(Arrays.asList("_cluster"), "A~_cluster", "5"));
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                 .asList(firstDescription, secondDescription), Arrays.asList(componentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
 
-        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).getServiceDocument();
-        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).getServiceDocument();
+        firstDescription = (ContainerDescription) compositeTemplate.components.get("A").data;
+        secondDescription = (ContainerDescription) compositeTemplate.components.get("B").data;
 
         assertNull(firstDescription._cluster);
         assertEquals(new Integer(5), secondDescription._cluster);
@@ -529,15 +573,13 @@ public class BindingEvaluatorTest {
 
         Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("B", bindings);
 
-        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+        CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                 .asList(firstDescription, secondDescription), Arrays.asList(componentBinding));
 
-        BindingEvaluator.evaluateBindings(compositeDescription);
+        BindingEvaluator.evaluateBindings(compositeTemplate);
 
-        firstDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(0).getServiceDocument();
-        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
-                .get(1).getServiceDocument();
+        firstDescription = (ContainerDescription) compositeTemplate.components.get("A").data;
+        secondDescription = (ContainerDescription) compositeTemplate.components.get("B").data;
 
         assertNotNull(secondDescription.hostname);
         assertEquals("10.0.0.1:2376", secondDescription.hostname);

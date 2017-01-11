@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
+import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.CompositeTemplateContainerDescription;
@@ -63,7 +64,7 @@ public class ComponentTemplateDeserializer extends StdDeserializer<ComponentTemp
         if (descriptionClass.equals(ContainerDescription.class)) {
             descriptionClass = CompositeTemplateContainerDescription.class;
         }
-        template.data = (T) new ObjectMapper().convertValue(data, descriptionClass);
+        template.data = (T) YamlMapper.objectMapper().convertValue(data, descriptionClass);
         return template;
     }
 
@@ -71,7 +72,7 @@ public class ComponentTemplateDeserializer extends StdDeserializer<ComponentTemp
         if (dependsOn == null) {
             return null;
         }
-        return new ObjectMapper().convertValue(dependsOn, String[].class);
+        return YamlMapper.objectMapper().convertValue(dependsOn, String[].class);
     }
 
     public static Class<?> getDescriptionClass(String type) {

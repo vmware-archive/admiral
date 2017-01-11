@@ -13,6 +13,7 @@ package com.vmware.admiral.compute.content;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
+import static com.vmware.admiral.compute.container.CompositeComponentRegistry.metaByDescriptionLink;
 import static com.vmware.admiral.compute.container.PortBinding.fromDockerPortMapping;
 
 import java.io.IOException;
@@ -45,6 +46,7 @@ import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.BindingUtils;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.TemplateSerializationUtils;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.CompositeTemplateContainerDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -65,6 +67,7 @@ import com.vmware.admiral.compute.content.compose.NetworkExternal;
 import com.vmware.admiral.compute.content.compose.ServiceNetworks;
 import com.vmware.admiral.compute.content.compose.VolumeExternal;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Utils;
@@ -852,6 +855,7 @@ public class CompositeTemplateUtil {
         template.name = description.name;
         template.status = description.status;
         template.properties = description.customProperties;
+        template.bindings = description.bindings;
         return template;
     }
 
@@ -884,6 +888,43 @@ public class CompositeTemplateUtil {
                         componentName, component.type);
             }
         });
+    }
+
+    public static DeferredResult<CompositeTemplate> convertCompositeDescriptionToCompositeTemplate(
+            Service service, CompositeDescription compositeDescription) {
+
+        //get each component recursively
+        List<DeferredResult<NestedState>> components = compositeDescription.descriptionLinks
+                .stream()
+                .map(link -> {
+                    ComponentMeta meta = metaByDescriptionLink(link);
+                    return NestedState.get(service, link, meta.descriptionClass);
+                }).collect(Collectors.toList());
+
+        //creat the ComponentTemplate objects
+        return DeferredResult.allOf(components).thenApply(nestedStates -> {
+                    CompositeTemplate template = fromCompositeDescriptionToCompositeTemplate(
+                            compositeDescription);
+                    if (nestedStates == null || nestedStates.isEmpty()) {
+                        return template;
+                    }
+                    template.components = new HashMap<>();
+                    for (int i = 0; i < compositeDescription.descriptionLinks.size(); i++) {
+                        String link = compositeDescription.descriptionLinks.get(i);
+                        NestedState nestedState = nestedStates.get(i);
+
+                        ComponentMeta meta = metaByDescriptionLink(link);
+
+                        ComponentTemplate<?> component = fromDescriptionToComponentTemplate(
+                                nestedState, meta.resourceType);
+                        template.components
+                                .put(((ResourceState) nestedState.object).name,
+                                        component);
+                    }
+                    return template;
+                }
+
+        );
     }
 
     public static <T> boolean isNullOrEmpty(T[] array) {

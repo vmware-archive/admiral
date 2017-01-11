@@ -22,6 +22,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +43,7 @@ import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.content.Binding;
+import com.vmware.admiral.compute.content.NestedState;
 import com.vmware.admiral.request.ClosureProvisionTaskService;
 import com.vmware.admiral.request.ClosureProvisionTaskService.ClosureProvisionTaskState;
 import com.vmware.admiral.request.ContainerAllocationTaskFactoryService;
@@ -62,14 +64,15 @@ import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputePro
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
-import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationJoin;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * Task service tracking the progress of parallel progressing composition tasks. CompositionSubTask
@@ -145,8 +148,10 @@ public class CompositionSubTaskService
         /** The current composition request Id transferred as context through the tasks */
         public String requestId;
 
-        /** Set by the Task with the links of the provisioned resources.
-         * If the task is not provisionining, the resource links needs to be set from outside. */
+        /**
+         * Set by the Task with the links of the provisioned resources.
+         * If the task is not provisionining, the resource links needs to be set from outside.
+         */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
 
@@ -271,10 +276,11 @@ public class CompositionSubTaskService
     @Override
     protected void validateStateOnStart(CompositionSubTaskState state)
             throws IllegalArgumentException {
-        boolean descAndResourcesEmpty = (state.resourceDescriptionLink == null || state.resourceDescriptionLink
-                .isEmpty())
-                &&
-                (state.resourceLinks == null || state.resourceLinks.isEmpty());
+        boolean descAndResourcesEmpty =
+                (state.resourceDescriptionLink == null || state.resourceDescriptionLink
+                        .isEmpty())
+                        &&
+                        (state.resourceLinks == null || state.resourceLinks.isEmpty());
 
         assertTrue(!descAndResourcesEmpty, "resourceDescriptionLink and resourceLinks are empty");
     }
@@ -393,7 +399,8 @@ public class CompositionSubTaskService
         } else if (ResourceType.CONTAINER_NETWORK_TYPE.getName()
                 .equalsIgnoreCase(state.resourceType)) {
             createContainerNetworkProvisionTaskState(state);
-        } else if (ResourceType.CONTAINER_VOLUME_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
+        } else if (ResourceType.CONTAINER_VOLUME_TYPE.getName()
+                .equalsIgnoreCase(state.resourceType)) {
             createContainerVolumeProvisionTaskState(state);
         } else if (ResourceType.COMPUTE_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createComputeProvisionTaskState(state);
@@ -698,7 +705,7 @@ public class CompositionSubTaskService
         componentDescriptionQueryTask.documentExpirationTimeMicros = ServiceDocumentQuery
                 .getDefaultQueryExpiration();
 
-        QueryUtil.addExpandOption(componentDescriptionQueryTask);
+        //QueryUtil.addExpandOption(componentDescriptionQueryTask);
 
         dependsOnDescriptionLinks.add(descLink);
         QueryUtil.addListValueClause(componentDescriptionQueryTask,
@@ -712,66 +719,70 @@ public class CompositionSubTaskService
         // TODO Is this enough to get _only_ the provisioned stuff we need? ContainerStates have a
         // contextId, but ComputeStates don't. Descriptions are cloned, so it looks like this should
         // be enough
+        Operation query = Operation.createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
+                .setBody(componentDescriptionQueryTask);
+        DeferredResult<QueryTask> queryTaskDeferredResult = this
+                .sendWithDeferredResult(query, QueryTask.class);
 
-        Map<String, Object> provisionedResources = new HashMap<>();
-        Map<String, Object> statesToUpdate = new HashMap<>();
-        new ServiceDocumentQuery<>(
-                getHost(), null).query(componentDescriptionQueryTask,
-                        (r) -> {
-                            try {
-                                if (r.hasException()) {
-                                    failTask(
-                                            "Error getting provisioned resources while evaluating bindings",
-                                            r.getException());
-                                } else if (r.hasResult()) {
-                                    ComponentMeta meta = CompositeComponentRegistry
-                                            .metaByStateLink(r.getDocumentSelfLink());
-                                    if (meta != null) {
-                                        ResourceState state = Utils.fromJson(r.getRawResult(),
-                                                meta.stateTemplateClass);
-                                        String descriptionLink = PropertyUtils.getValue(state,
-                                                DESCRIPTION_LINK_FIELD_NAME);
-                                        ComponentDescription componentDescription = selfLinkToComponent
-                                                .get(descriptionLink);
-                                        provisionedResources.put(componentDescription.name, state);
+        queryTaskDeferredResult
+                // Get all provisioned resources recursively
+                .thenCompose(resultTask -> {
+                    ServiceDocumentQueryResult result = resultTask.results;
 
-                                        if (descLink.equals(descriptionLink)) {
-                                            statesToUpdate.put(r.getDocumentSelfLink(), state);
-                                        }
-                                    } else {
-                                        logWarning("Unexpected result type: %s",
-                                                r.getDocumentSelfLink());
-                                    }
-                                } else {
+                    if (result == null || result.documentLinks == null || result.documentLinks
+                            .isEmpty()) {
+                        return DeferredResult.completed(Collections.emptyList());
+                    }
 
-                                    List<Operation> updates = new ArrayList<>();
-                                    for (Map.Entry<String, Object> entry : statesToUpdate
-                                            .entrySet()) {
-                                        Object evaluated = BindingEvaluator
-                                                .evaluateProvisioningTimeBindings(entry.getValue(),
-                                                        provisioningTimeBindings,
-                                                        provisionedResources);
-                                        updates.add(
-                                                Operation.createPut(this, entry.getKey())
-                                                        .setBody(evaluated));
-                                    }
+                    List<DeferredResult<NestedState>> nestedResources = new ArrayList<>();
+                    for (String link : result.documentLinks) {
+                        ComponentMeta meta = CompositeComponentRegistry.metaByStateLink(link);
+                        if (meta == null) {
+                            logWarning("Unexpected result type: %s", link);
+                            continue;
+                        }
+                        nestedResources.add(NestedState.get(this, link, meta.stateTemplateClass));
+                    }
 
-                                    if (!updates.isEmpty()) {
-                                        OperationJoin.create(updates).setCompletion((ops, exs) -> {
-                                            if (exs != null && exs.size() > 0) {
-                                                failTask(
-                                                        "Failure updating evaluated state",
-                                                        exs.values().iterator().next());
-                                                return;
-                                            }
-                                            callback.run();
-                                        }).sendWith(this);
-                                    }
-                                }
-                            } catch (Exception ex) {
-                                failTask("Failure updating evaluated state", ex);
-                            }
-                        });
+                    return DeferredResult.allOf(nestedResources);
+                })
+                // evaluate the bindings
+                .thenCompose(nestedStates -> {
+                    Map<String, NestedState> nameToResource = new HashMap<>();
+                    Map<String, NestedState> statesToUpdate = new HashMap<>();
+
+                    for (NestedState nestedState : nestedStates) {
+                        String descriptionLink = PropertyUtils.getValue(nestedState.object,
+                                DESCRIPTION_LINK_FIELD_NAME);
+                        ComponentDescription componentDescription = selfLinkToComponent
+                                .get(descriptionLink);
+                        nameToResource.put(componentDescription.name, nestedState);
+
+                        if (descriptionLink.equals(descLink)) {
+                            statesToUpdate.put(nestedState.object.documentSelfLink, nestedState);
+                        }
+
+                    }
+
+                    List<DeferredResult<Operation>> updates = new ArrayList<>();
+                    for (Map.Entry<String, NestedState> entry : statesToUpdate.entrySet()) {
+                        NestedState evaluated = BindingEvaluator.evaluateProvisioningTimeBindings(
+                                entry.getValue(),
+                                provisioningTimeBindings,
+                                nameToResource);
+
+                        //This will do a PUT on the whole tree
+                        evaluated.sendRequest(this, Action.PUT);
+                    }
+                    return DeferredResult.allOf(updates);
+                })
+                .whenComplete((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure evaluating bindings", e);
+                        return;
+                    }
+                    callback.run();
+                });
     }
 
     private boolean hasDependencies(CompositionSubTaskState state) {

@@ -15,19 +15,17 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
 import static com.vmware.admiral.common.util.ValidationUtils.handleValidationException;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.assertContainersComponentsOnly;
+import static com.vmware.admiral.compute.content.CompositeTemplateUtil.convertCompositeDescriptionToCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deserializeCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deserializeDockerCompose;
-import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromCompositeDescriptionToCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromCompositeTemplateToCompositeDescription;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromCompositeTemplateToDockerCompose;
-import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromDescriptionToComponentTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromDockerComposeToCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.getYamlType;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeDockerCompose;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -39,7 +37,6 @@ import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.content.CompositeTemplateUtil.YamlType;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
-import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -96,43 +93,13 @@ public class CompositeDescriptionContentService extends StatelessService {
             }
 
             CompositeDescription description = o.getBody(CompositeDescription.class);
-            CompositeTemplate template = fromCompositeDescriptionToCompositeTemplate(description);
-
-            List<DeferredResult<NestedState>> components = description.descriptionLinks
-                    .stream()
-                    .map(link -> {
-                        CompositeComponentRegistry.ComponentMeta meta = CompositeComponentRegistry
-                                .metaByDescriptionLink(link);
-                        return NestedState.get(this, link, meta.descriptionClass);
-                    }).collect(Collectors.toList());
-
-            DeferredResult.allOf(components).thenAccept(nestedStates -> {
-                if (nestedStates != null && !nestedStates.isEmpty()) {
-                    template.components = new HashMap<>();
-                    for (int i = 0; i < description.descriptionLinks.size(); i++) {
-                        String link = description.descriptionLinks.get(i);
-                        NestedState nestedState = nestedStates.get(i);
-                        handleResult(template, nestedState, link);
-                    }
-                }
-                // done fetching descriptions, serialize the result to YAML
-                // and complete the request
-                serializeAndComplete(template, returnDocker, returnInline, op);
-            }).exceptionally(e -> {
-                op.fail(e);
-                return null;
-            });
+            convertCompositeDescriptionToCompositeTemplate(this, description).thenAccept(
+                    template -> serializeAndComplete(template, returnDocker, returnInline, op))
+                    .exceptionally(e -> {
+                        op.fail(e);
+                        return null;
+                    });
         }));
-    }
-
-    private void handleResult(CompositeTemplate template, NestedState nestedState, String link) {
-
-        CompositeComponentRegistry.ComponentMeta meta = CompositeComponentRegistry
-                .metaByDescriptionLink(link);
-
-        ComponentTemplate<?> component = fromDescriptionToComponentTemplate(
-                nestedState, meta.resourceType);
-        template.components.put(((ResourceState) nestedState.object).name, component);
     }
 
     private void serializeAndComplete(CompositeTemplate template, boolean returnDocker,

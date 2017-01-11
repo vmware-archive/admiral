@@ -12,12 +12,14 @@
 package com.vmware.admiral.compute.content;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -26,8 +28,17 @@ import com.vmware.photon.controller.model.resources.ComputeService;
  * This class exists for serialization/deserialization purposes only
  */
 @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
-@JsonIgnoreProperties({ "customProperties" })
+@JsonIgnoreProperties({ "customProperties", "networkInterfaceLinks" })
 public class TemplateComputeState extends ComputeService.ComputeState {
+
+    @JsonProperty("networks")
+    public List<String> getNetworkInterfaceLinks() {
+        return networkInterfaceLinks;
+    }
+
+    public void setNetworkInterfaceLinks(List<String> links) {
+        this.networkInterfaceLinks = links;
+    }
 
     @JsonAnySetter
     private void putProperty(String key, String value) {
