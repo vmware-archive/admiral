@@ -36,6 +36,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
@@ -154,6 +155,15 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
 
     public static ContainerNetworkDescription createContainerNetworkDescription(String name) {
         ContainerNetworkDescription desc = new ContainerNetworkDescription();
+        desc.documentSelfLink = "test-network-" + name;
+        desc.name = name;
+        desc.tenantLinks = Collections.singletonList("test-group");
+        desc.customProperties = new HashMap<>();
+        return desc;
+    }
+
+    public static ComputeNetworkDescription createComputeNetworkDescription(String name) {
+        ComputeNetworkDescription desc = new ComputeNetworkDescription();
         desc.documentSelfLink = "test-network-" + name;
         desc.name = name;
         desc.tenantLinks = Collections.singletonList("test-group");

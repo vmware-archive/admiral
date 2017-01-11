@@ -16,7 +16,6 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -24,8 +23,10 @@ import java.util.function.Consumer;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.ComputeConstants;
-import com.vmware.admiral.compute.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
+import com.vmware.admiral.compute.network.ComputeNetworkService;
+import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.compute.ComputeNetworkAllocationTaskService.ComputeNetworkAllocationTaskState.SubStage;
@@ -35,8 +36,6 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
-import com.vmware.photon.controller.model.resources.NetworkService;
-import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -52,8 +51,6 @@ public class ComputeNetworkAllocationTaskService extends
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_COMPUTE_NETWORK_ALLOCATION_TASKS;
 
     public static final String DISPLAY_NAME = "Compute Network Allocation";
-
-    private static final String FAKE_SUBNET_CIDR = "0.0.0.0/0";
 
     // cached network description
     private volatile ComputeNetworkDescription networkDescription;
@@ -290,24 +287,13 @@ public class ComputeNetworkAllocationTaskService extends
         assertNotEmpty(resourceName, "resourceName");
         assertNotNull(taskCallback, "taskCallback");
 
-        if (Boolean.TRUE.equals(networkDescription.external)) {
-            completeSubTasksCounter(taskCallback, null);
-            return;
-        }
-
         try {
-            final NetworkState networkState = new NetworkState();
+            final ComputeNetwork networkState = new ComputeNetwork();
             networkState.documentSelfLink = buildNetworkLink(resourceName);
             networkState.name = resourceName;
             networkState.tenantLinks = state.tenantLinks;
+            networkState.descriptionLink = networkDescription.documentSelfLink;
             networkState.customProperties = state.customProperties;
-            networkState.regionId = networkDescription.regionId;
-            networkState.instanceAdapterReference = networkDescription.instanceAdapterReference;
-
-            // TODO: add logic configure below fields
-            networkState.subnetCIDR = FAKE_SUBNET_CIDR;
-            networkState.authCredentialsLink = null;
-            networkState.resourcePoolLink = null;
 
             String contextId;
             if (state.customProperties != null
@@ -321,12 +307,12 @@ public class ComputeNetworkAllocationTaskService extends
             }
 
             sendRequest(OperationUtil
-                    .createForcedPost(this, NetworkService.FACTORY_LINK)
+                    .createForcedPost(this, ComputeNetworkService.FACTORY_LINK)
                     .setBody(networkState)
                     .setCompletion(
                             (o, e) -> {
                                 if (e == null) {
-                                    NetworkState body = o.getBody(NetworkState.class);
+                                    ComputeNetwork body = o.getBody(ComputeNetwork.class);
                                     logInfo("Created ComputeNetworkState: %s ",
                                             body.documentSelfLink);
                                 }
@@ -342,10 +328,7 @@ public class ComputeNetworkAllocationTaskService extends
         getComputeNetworkDescription(state,
                 (networkDescription) -> {
                     complete(SubStage.COMPLETED, s -> {
-                        s.resourceLinks = buildResourceLinks(
-                                Boolean.TRUE.equals(networkDescription.external)
-                                        ? Collections.singleton(networkDescription.name)
-                                        : state.resourceNames);
+                        s.resourceLinks = buildResourceLinks(state.resourceNames);
                     });
                 });
     }
@@ -371,7 +354,7 @@ public class ComputeNetworkAllocationTaskService extends
     }
 
     private static String buildNetworkLink(String name) {
-        return UriUtils.buildUriPath(NetworkService.FACTORY_LINK, buildNetworkId(name));
+        return UriUtils.buildUriPath(ComputeNetworkService.FACTORY_LINK, buildNetworkId(name));
     }
 
     private static String buildNetworkId(String name) {

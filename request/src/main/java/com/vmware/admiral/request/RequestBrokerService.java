@@ -78,6 +78,8 @@ import com.vmware.admiral.request.compute.ComputeNetworkAllocationTaskService;
 import com.vmware.admiral.request.compute.ComputeNetworkAllocationTaskService.ComputeNetworkAllocationTaskState;
 import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService;
 import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState;
+import com.vmware.admiral.request.compute.ComputeNetworkRemovalTaskService;
+import com.vmware.admiral.request.compute.ComputeNetworkRemovalTaskService.ComputeNetworkRemovalTaskState;
 import com.vmware.admiral.request.compute.ComputeOperationTaskService;
 import com.vmware.admiral.request.compute.ComputeOperationTaskService.ComputeOperationTaskState;
 import com.vmware.admiral.request.compute.ComputeOperationType;
@@ -243,6 +245,8 @@ public class RequestBrokerService extends
             } else if (isPostAllocationOperation(state)) {
                 if (isComputeType(state)) {
                     createComputeRemovalTask(state);
+                } else if (isComputeNetworkType(state)) {
+                    createComputeNetworkRemovalTask(state);
                 } else if (isContainerNetworkType(state)) {
                     createContainerNetworkRemovalTask(state, true);
                 } else if (isContainerVolumeType(state)) {
@@ -431,6 +435,13 @@ public class RequestBrokerService extends
             } else {
                 createComputeOperationTasks(state);
             }
+        } else if (isComputeNetworkType(state)) {
+            if (isRemoveOperation(state)) {
+                createComputeNetworkRemovalTask(state);
+            } else {
+                failTask(null, new IllegalArgumentException("Not supported operation: "
+                        + state.operation));
+            }
         } else if (isContainerNetworkType(state)) {
             if (isRemoveOperation(state)) {
                 createContainerNetworkRemovalTask(state);
@@ -574,6 +585,40 @@ public class RequestBrokerService extends
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         failRequest(state, "Failed to create compute removal operation task", ex);
+                        return;
+                    }
+                    proceedTo(SubStage.ALLOCATING);
+                }));
+    }
+
+    private void createComputeNetworkRemovalTask(RequestBrokerState state) {
+
+        boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED
+                || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
+
+        if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
+            proceedTo(errorState ? SubStage.ERROR : SubStage.ALLOCATED);
+            return;
+        }
+        ComputeNetworkRemovalTaskState removalState = new ComputeNetworkRemovalTaskState();
+        removalState.resourceLinks = state.resourceLinks;
+        removalState.serviceTaskCallback = ServiceTaskCallback.create(
+                getSelfLink(),
+                TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
+                TaskStage.FAILED, SubStage.ERROR);
+        removalState.documentSelfLink = getSelfId();
+        removalState.customProperties = state.customProperties;
+        if (!errorState) {
+            removalState.requestTrackerLink = state.requestTrackerLink;
+        }
+
+        sendRequest(Operation.createPost(this, ComputeNetworkRemovalTaskService.FACTORY_LINK)
+                .setBody(removalState)
+                .setContextId(getSelfId())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        failRequest(state,
+                                "Failed to create compute network removal operation task", ex);
                         return;
                     }
                     proceedTo(SubStage.ALLOCATING);

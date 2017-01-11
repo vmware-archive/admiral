@@ -9,34 +9,32 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute;
+package com.vmware.admiral.compute.network;
 
-import java.net.URI;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonFilter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.photon.controller.model.resources.SecurityGroupService;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.Utils;
 
-/**
- * The purpose of the ComputeNetworkDescription is to hold network information that later in the
- * allocation will be merged with the NetworkInterfaceDescription
- */
-public class ComputeNetworkDescriptionService extends StatefulService {
+public class ComputeNetworkService extends StatefulService {
 
-    public static final String FACTORY_LINK = ManagementUriParts.COMPUTE_NETWORK_DESC;
+    public static final String FACTORY_LINK = ManagementUriParts.COMPUTE_NETWORKS;
 
-    public ComputeNetworkDescriptionService() {
-        super(ComputeNetworkDescription.class);
+    public ComputeNetworkService() {
+        super(ComputeNetwork.class);
         toggleOption(ServiceOption.IDEMPOTENT_POST, true);
         toggleOption(ServiceOption.PERSISTENCE, true);
         toggleOption(ServiceOption.REPLICATION, true);
@@ -44,7 +42,7 @@ public class ComputeNetworkDescriptionService extends StatefulService {
     }
 
     @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
-    public static class ComputeNetworkDescription extends ResourceState {
+    public static class ComputeNetwork extends ResourceState {
         public String assignment;
 
         @JsonProperty("public")
@@ -60,31 +58,50 @@ public class ComputeNetworkDescriptionService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public Boolean external = Boolean.TRUE;
 
-        /**
-         * URI reference to the adapter used to create an instance of this host.
-         */
-        @JsonIgnore
-        @Documentation(description = "URI reference to the adapter used to create an instance of this host")
-        @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
-        public URI instanceAdapterReference;
+        /** Defines the description of the network */
+        @Documentation(description = "Defines the description of the network.")
+        @UsageOption(option = PropertyUsageOption.REQUIRED)
+        public String descriptionLink;
 
         /**
-         * Region identifier of this description service instance.
+         * Link to the network profile.
          */
-        @JsonIgnore
-        @Documentation(description = "Region identifier of this description service instance")
+        @Documentation(description = "Link to the network profile")
         @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
-        public String regionId;
+        public String networkProfileLink;
+
+        /**
+         * Link to the Subnet to which this Compute network will be connect.
+         */
+        @Documentation(description = "Link to the Subnet to which this Compute network will be connect")
+        @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
+        private String subnetLink;
+
+        @Documentation(description = "Security grouops to apply to all instances connected to this network")
+        @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
+        public Set<String> securityGroupLinks;
     }
 
     @Override
     public void handleCreate(Operation post) {
-        validateState(post.getBody(ComputeNetworkDescription.class));
+        if (!post.hasBody()) {
+            throw (new IllegalArgumentException("body is required"));
+        }
+        validateState(post.getBody(ComputeNetwork.class));
 
         post.complete();
     }
 
-    private void validateState(ComputeNetworkDescription desc) {
-        AssertUtil.assertNotEmpty(desc.name, "name");
+    private void validateState(ComputeNetwork desc) {
+        Utils.validateState(getStateDescription(), desc);
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ComputeNetwork nd = (ComputeNetwork) super.getDocumentTemplate();
+        nd.name = "My Network";
+        nd.securityGroupLinks = new HashSet<>();
+        nd.securityGroupLinks.add(SecurityGroupService.FACTORY_LINK + "/my-sec-group");
+        return nd;
     }
 }

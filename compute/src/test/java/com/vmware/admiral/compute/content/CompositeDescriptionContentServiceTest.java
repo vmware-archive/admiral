@@ -18,7 +18,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
-import static com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 
 import java.io.IOException;
 import java.net.URI;
@@ -40,10 +39,11 @@ import org.junit.runners.Parameterized;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.compute.ComponentDescription;
-import com.vmware.admiral.compute.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
@@ -293,14 +293,6 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
             }
 
         });
-    }
-
-    private static String toUnixLineEnding(String s) {
-        if (s == null) {
-            return null;
-        }
-
-        return s.replace("\r\n", "\n");
     }
 
 }
