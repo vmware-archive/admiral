@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
@@ -62,12 +63,15 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
  */
 public class ContainerHostService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.CONTAINER_HOSTS;
+    public static final String HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT = "Container host type is not supported: %s";
     public static final String CONTAINER_HOST_ALREADY_EXISTS_MESSAGE = "Container host already exists";
+    public static final String CONTAINER_HOST_IS_NOT_VIC_MESSAGE = "Not a VIC host";
 
     public static final String DOCKER_COMPUTE_DESC_ID = "docker-host-compute-desc-id";
     public static final String DOCKER_COMPUTE_DESC_LINK = UriUtils.buildUriPath(
             ComputeDescriptionService.FACTORY_LINK, DOCKER_COMPUTE_DESC_ID);
 
+    public static final String CONTAINER_HOST_TYPE_PROP_NAME = "__containerHostType";
     public static final String HOST_DOCKER_ADAPTER_TYPE_PROP_NAME = "__adapterDockerType";
     public static final String NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME = "__Containers";
     public static final String NUMBER_OF_SYSTEM_CONTAINERS_PROP_NAME = "__systemContainers";
@@ -96,6 +100,15 @@ public class ContainerHostService extends StatelessService {
     public static final String DOCKER_HOST_PLUGINS_PROP_NAME = "__Plugins";
     public static final String DOCKER_HOST_PLUGINS_VOLUME_PROP_NAME = "Volume";
     public static final String DOCKER_HOST_PLUGINS_NETWORK_PROP_NAME = "Network";
+
+    public enum ContainerHostType {
+        DOCKER,
+        VIC;
+
+        public static ContainerHostType getDefaultHostType() {
+            return DOCKER;
+        }
+    }
 
     public enum DockerAdapterType {
         API
@@ -148,20 +161,19 @@ public class ContainerHostService extends StatelessService {
         ContainerHostSpec hostSpec = op.getBody(ContainerHostSpec.class);
         validate(hostSpec);
 
-        boolean validateHostConnection = op.getUri().getQuery() != null
+        boolean validateHostTypeAndConnection = op.getUri().getQuery() != null
                 && op.getUri().getQuery()
                         .contains(
                                 ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
 
         if (hostSpec.isConfigureOverSsh) {
-            configureOverSsh(op, hostSpec, validateHostConnection);
-        } else if (validateHostConnection) {
-            validateConnection(hostSpec, op);
+            configureOverSsh(op, hostSpec, validateHostTypeAndConnection);
+        } else if (validateHostTypeAndConnection) {
+            validateHostTypeAndConnection(hostSpec, op);
         } else if (hostSpec.isUpdateOperation != null
                 && hostSpec.isUpdateOperation.booleanValue()) {
             updateHost(hostSpec, op);
         } else {
-
             QueryTask q = QueryUtil.buildPropertyQuery(ComputeState.class,
                     QuerySpecification.buildCompositeFieldName(
                             ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
@@ -280,7 +292,115 @@ public class ContainerHostService extends StatelessService {
         });
     }
 
+    private void validateHostTypeAndConnection(ContainerHostSpec hostSpec, Operation op) {
+        ContainerHostType hostType;
+        try {
+            hostType = getHostTypeFromSpec(hostSpec);
+        } catch (IllegalArgumentException ex) {
+            logWarning(ex.getMessage());
+            op.fail(ex);
+            return;
+        }
+
+        // Apply the appropriate validation for each host type
+        switch (hostType) {
+        case DOCKER:
+            validateConnection(hostSpec, op);
+            break;
+
+        case VIC:
+            validateVicHost(hostSpec, op);
+            break;
+
+        default:
+            String error = String.format(HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT,
+                    hostType.toString());
+            op.fail(new IllegalArgumentException(error));
+            break;
+        }
+    }
+
+    private void validateVicHost(ContainerHostSpec hostSpec, Operation op) {
+        String computeAddress = hostSpec.hostState.address;
+        validateSslTrust(hostSpec, op, () -> {
+            setSslTrustAliasProperty(hostSpec);
+            getHostInfo(hostSpec, op, hostSpec.sslTrust,
+                    (computeState) -> {
+                        if (ContainerHostUtil.isVicHost(computeState)) {
+                            logInfo("VIC host verification passed for %s", computeAddress);
+                            completeOperationSuccess(op);
+                        } else {
+                            logInfo("VIC host verification failed for %s", computeAddress);
+                            op.fail(new IllegalArgumentException(CONTAINER_HOST_IS_NOT_VIC_MESSAGE));
+                        }
+                    });
+        });
+
+    }
+
+    /**
+     * @return the {@link ContainerHostType} of the host. The result is based on the custom property
+     *         {@value #CONTAINER_HOST_TYPE_PROP_NAME}. If this property was not set, the default
+     *         host type will be returned
+     * @see ContainerHostType#getDefaultHostType()
+     */
+    private ContainerHostType getHostTypeFromSpec(ContainerHostSpec hostSpec) {
+        Map<String, String> customProperties = hostSpec.hostState.customProperties;
+        String hostTypeProperty = customProperties.get(CONTAINER_HOST_TYPE_PROP_NAME);
+
+        // Retrieve host type from custom properties. If none is set, use the default type
+        ContainerHostType hostType;
+        if (hostTypeProperty == null) {
+            hostType = ContainerHostType.getDefaultHostType();
+        } else {
+            try {
+                hostType = ContainerHostType.valueOf(hostTypeProperty);
+            } catch (IllegalArgumentException ex) {
+                String error = String.format(HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT,
+                        hostTypeProperty);
+                throw new IllegalArgumentException(error, ex);
+            }
+        }
+
+        return hostType;
+    }
+
     protected void storeHost(ContainerHostSpec hostSpec, Operation op) {
+        ContainerHostType hostType = getHostTypeFromSpec(hostSpec);
+        switch (hostType) {
+        case DOCKER:
+            storeDockerHost(hostSpec, op);
+            break;
+
+        case VIC:
+            storeVicHost(hostSpec, op);
+            break;
+
+        default:
+            String error = String.format(HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT,
+                    hostType.toString());
+            op.fail(new IllegalArgumentException(error));
+            break;
+        }
+    }
+
+    private void storeVicHost(ContainerHostSpec hostSpec, Operation op) {
+        // VIC verification relies on data gathered by a docker info command
+        getHostInfo(hostSpec, op, hostSpec.sslTrust, (computeState) -> {
+            if (ContainerHostUtil.isVicHost(computeState)) {
+                doStoreHost(hostSpec, op);
+            } else {
+                op.fail(new IllegalArgumentException(CONTAINER_HOST_IS_NOT_VIC_MESSAGE));
+            }
+        });
+    }
+
+    private void storeDockerHost(ContainerHostSpec hostSpec, Operation op) {
+        // Docker hosts are validated by a ping call.
+        pingHost(hostSpec, op, hostSpec.sslTrust, () -> doStoreHost(hostSpec, op));
+    }
+
+    private void doStoreHost(ContainerHostSpec hostSpec, Operation op) {
         ComputeState cs = hostSpec.hostState;
         if (cs.descriptionLink == null) {
             cs.descriptionLink = DOCKER_COMPUTE_DESC_LINK;
@@ -310,6 +430,8 @@ public class ContainerHostService extends StatelessService {
         cs.customProperties.put(ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
         cs.customProperties.put(ComputeConstants.COMPUTE_HOST_PROP_NAME, "true");
         cs.customProperties.put(ComputeConstants.DOCKER_URI_PROP_NAME, hostSpec.uri.toString());
+        cs.customProperties.put(CONTAINER_HOST_TYPE_PROP_NAME,
+                getHostTypeFromSpec(hostSpec).toString());
 
         sendRequest(store
                 .setBody(cs)
@@ -371,13 +493,10 @@ public class ContainerHostService extends StatelessService {
         return ContainerDescription.getDockerHostUri(hostState);
     }
 
-    private void pingHost(ContainerHostSpec hostSpec, Operation op,
-            SslTrustCertificateState sslTrust, Runnable callbackFunction) {
-
-        ComputeState cs = hostSpec.hostState;
-
+    private AdapterRequest prepareAdapterRequest(ContainerHostOperationType operationType,
+            ComputeState cs, SslTrustCertificateState sslTrust) {
         AdapterRequest request = new AdapterRequest();
-        request.operationTypeId = ContainerHostOperationType.PING.id;
+        request.operationTypeId = operationType.id;
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         request.resourceReference = UriUtils.buildUri(getHost(), ComputeService.FACTORY_LINK);
         request.customProperties = cs.customProperties == null ? new HashMap<>()
@@ -391,49 +510,63 @@ public class ContainerHostService extends StatelessService {
                     SslTrustCertificateFactoryService.generateSelfLink(sslTrust));
         }
 
+        return request;
+    }
+
+    private void sendAdapterRequest(AdapterRequest request, ComputeState cs, Operation op,
+            Runnable callbackFunction) {
+        Consumer<Void> callback = (v) -> {
+            callbackFunction.run();
+        };
+
+        sendAdapterRequest(request, cs, op, callback, Void.class);
+    }
+
+    private <T> void sendAdapterRequest(AdapterRequest request, ComputeState cs, Operation op,
+            Consumer<T> callbackFunction, Class<T> callbackResultClass) {
         sendRequest(Operation
                 .createPatch(this, ManagementUriParts.ADAPTER_DOCKER_HOST)
                 .setBody(request)
                 .setContextId(Service.getId(getSelfLink()))
                 .setCompletion((o, ex) -> {
-                    if (o.getStatusCode() == HttpURLConnection.HTTP_BAD_GATEWAY) {
-                        logFine("Got bad gateway response for %s", o.getUri());
-                        @SuppressWarnings("unchecked")
-                        Map<String, String> identification = o.getBody(Map.class);
+                    if (ex != null) {
+                        ServiceErrorResponse rsp = Utils.toServiceErrorResponse(ex);
+                        toReadableErrorMessage(ex, rsp);
+                        rsp.message = String.format("Error connecting to %s : %s",
+                                cs.address, rsp.message);
 
-                        // update the ComputeState with the new identification and try to ping again
-                        if (hostSpec.acceptCertificate) {
+                        logWarning(rsp.message);
+                        postEventlogError(cs, rsp.message);
+                        op.setStatusCode(o.getStatusCode());
+                        op.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON);
+                        op.fail(ex, rsp);
+                        return;
+                    }
 
-                            // the host is not stored yet so just add the custom property the object
-                            logInfo("Updating SSH host key: %s", cs.documentSelfLink);
-
-                            pingHost(hostSpec, op, sslTrust, callbackFunction);
-
+                    if (callbackFunction != null) {
+                        if (callbackResultClass != null) {
+                            callbackFunction.accept(o.getBody(callbackResultClass));
                         } else {
-                            logWarning("Untrusted server, returning to client for approval: %s",
-                                    cs.documentSourceLink);
-                            op.setStatusCode(HttpURLConnection.HTTP_BAD_GATEWAY);
-                            op.setBody(identification);
-                            op.complete();
+                            callbackFunction.accept(null);
                         }
-                    } else {
-                        if (ex != null) {
-                            ServiceErrorResponse rsp = Utils.toServiceErrorResponse(ex);
-                            toReadableErrorMessage(ex, rsp);
-                            rsp.message = String.format("Error connecting to %s : %s",
-                                    cs.address, rsp.message);
-
-                            logWarning(rsp.message);
-                            postEventlogError(cs, rsp.message);
-                            op.setStatusCode(o.getStatusCode());
-                            op.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON);
-                            op.fail(ex, rsp);
-                            return;
-                        }
-
-                        callbackFunction.run();
                     }
                 }));
+    }
+
+    private void pingHost(ContainerHostSpec hostSpec, Operation op,
+            SslTrustCertificateState sslTrust, Runnable callbackFunction) {
+        ComputeState cs = hostSpec.hostState;
+        AdapterRequest request = prepareAdapterRequest(ContainerHostOperationType.PING, cs,
+                sslTrust);
+        sendAdapterRequest(request, cs, op, callbackFunction);
+    }
+
+    private void getHostInfo(ContainerHostSpec hostSpec, Operation op,
+            SslTrustCertificateState sslTrust, Consumer<ComputeState> callbackFunction) {
+        ComputeState cs = hostSpec.hostState;
+        AdapterRequest request = prepareAdapterRequest(ContainerHostOperationType.INFO, cs,
+                sslTrust);
+        sendAdapterRequest(request, cs, op, callbackFunction, ComputeState.class);
     }
 
     private void toReadableErrorMessage(Throwable e, ServiceErrorResponse response) {
@@ -483,9 +616,7 @@ public class ContainerHostService extends StatelessService {
 
             storeHost(hostSpec, op);
         } else {
-            validateSslTrust(hostSpec, op, () -> {
-                pingHost(hostSpec, op, hostSpec.sslTrust, () -> storeHost(hostSpec, op));
-            });
+            validateSslTrust(hostSpec, op, () -> storeHost(hostSpec, op));
         }
     }
 

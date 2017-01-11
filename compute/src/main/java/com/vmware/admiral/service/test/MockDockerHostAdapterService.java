@@ -21,6 +21,7 @@ import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection.VolumeListCallback;
@@ -36,6 +37,14 @@ import com.vmware.xenon.common.Utils;
 
 public class MockDockerHostAdapterService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER_HOST;
+
+    /**
+     * The real type of the host (not the one that was specified by the user)
+     */
+    public static final String CONTAINER_HOST_TYPE_PROP_NAME = "__mockContainerHostType";
+    public static final String DOCKER_INFO_STORAGE_DRIVER_PROP_NAME = "__Driver";
+    public static final String VIC_STORAGE_DRIVER_PROP_VALUE = "vSphere Integrated Containers "
+            + "v0.8.0-7540-aaae251 Backend Engine";
 
     @Override
     public void handleRequest(Operation op) {
@@ -105,26 +114,35 @@ public class MockDockerHostAdapterService extends StatelessService {
             patchTaskStage(request, null, callbackResponse);
             op.setBody(callbackResponse);
             op.complete();
-        } else {
-            op.setStatusCode(Operation.STATUS_CODE_ACCEPTED).complete();
-
+        } else if (ContainerHostOperationType.INFO.id == request.operationTypeId) {
             sendRequest(Operation
                     .createGet(request.resourceReference)
                     .setCompletion(
                             (o, e) -> {
                                 ComputeState cs = o.getBody(ComputeState.class);
-                                Map<String, Object> properties = null;
-                                if (ContainerHostOperationType.INFO.id == request.operationTypeId) {
-                                    properties = new HashMap<>();
-                                    properties
-                                            .put(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME,
-                                                    MockDockerAdapterService
-                                                            .getNumberOfContainers());
-                                }
+                                Map<String, Object> properties = getHostInfoResponse(request);
                                 patchHostState(request, cs, properties);
+                                op.setBody(cs);
+                                op.complete();
                             }));
-
+        } else {
+            op.setStatusCode(Operation.STATUS_CODE_ACCEPTED).complete();
         }
+    }
+
+    private Map<String, Object> getHostInfoResponse(AdapterRequest mockRequest) {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME,
+                MockDockerAdapterService.getNumberOfContainers());
+
+        if (mockRequest != null && mockRequest.customProperties != null) {
+            String hostType = mockRequest.customProperties.get(CONTAINER_HOST_TYPE_PROP_NAME);
+            if (hostType != null && hostType.equals(ContainerHostType.VIC.toString())) {
+                properties.put(DOCKER_INFO_STORAGE_DRIVER_PROP_NAME, VIC_STORAGE_DRIVER_PROP_VALUE);
+            }
+        }
+
+        return properties;
     }
 
     private void patchHostState(AdapterRequest request,
