@@ -160,6 +160,7 @@ public interface DockerAdapterCommandExecutor {
 
     String DOCKER_VOLUME_NAME_PROP_NAME = "Name";
     String DOCKER_VOLUME_DRIVER_PROP_NAME = "Driver";
+    String DOCKER_VOLUME_DRIVER_OPTS_PROP_NAME = "DriverOpts";
     String DOCKER_VOLUME_MOUNTPOINT_PROP_NAME = "Mountpoint";
     String DOCKER_VOLUME_SCOPE_PROP_NAME = "Scope";
     String DOCKER_VOLUME_STATUS_PROP_NAME = "Status";

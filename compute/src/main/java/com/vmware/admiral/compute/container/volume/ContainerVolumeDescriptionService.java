@@ -60,11 +60,6 @@ public class ContainerVolumeDescriptionService extends StatefulService {
 
         public static final String FIELD_NAME_NAME = "name";
         public static final String FIELD_NAME_DRIVER = "driver";
-        public static final String COMPOSITE_DESCRIPTION_LINK = "compositeDescriptionLink";
-
-        @Documentation(description = "Link to CompositeComponent when a volume is part of App/Composition request.")
-        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK })
-        public String compositeDescriptionLink;
 
         /** Defines which adapter will serve the provision request */
         @Documentation(description = "Defines which adapter will serve the provision request")
@@ -106,14 +101,6 @@ public class ContainerVolumeDescriptionService extends StatefulService {
         @JsonProperty("external_name")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public String externalName;
-
-        /**
-         * Mount path of the volume on the host.
-         */
-        @Documentation(description = "Mount path of the volume on the host.")
-        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
-                PropertyUsageOption.OPTIONAL })
-        public String mountpoint;
 
         /** Link to the parent volume description */
         @JsonProperty("parent_description_link")
@@ -242,18 +229,12 @@ public class ContainerVolumeDescriptionService extends StatefulService {
         ContainerVolumeDescription template = (ContainerVolumeDescription) super.getDocumentTemplate();
 
         template.name = "name (string)";
-        template.compositeDescriptionLink = "compositeDescriptionLink (string) (optional)";
         template.customProperties = new HashMap<>(1);
         template.customProperties.put("key (string)", "value (string)");
 
         template.options = new HashMap<>(1);
         template.options.put("mountpoint (string)",
                 "/var/lib/docker/volumes/ (string)");
-
-        // Default location according to official documents:
-        // https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/inspect-a-volume
-        template.mountpoint = "/var/lib/docker/volumes/";
-
         return template;
     }
 
