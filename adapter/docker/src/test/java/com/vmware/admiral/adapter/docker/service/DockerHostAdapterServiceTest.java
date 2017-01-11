@@ -115,20 +115,8 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
     public void testHostDirectPing() throws Throwable {
         mockDockerHost.waitForServiceAvailable(MockDockerHostService.SELF_LINK
                 + MockDockerPathConstants._PING);
-
-        ContainerHostRequest request = new ContainerHostRequest();
-        request.resourceReference = UriUtils.buildUri(host, ComputeService.FACTORY_LINK);
-        request.operationTypeId = ContainerHostOperationType.PING.id;
-        request.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
-        request.customProperties = new HashMap<>();
-        request.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
-                testDockerCredentialsLink);
-        request.customProperties.put(ContainerHostService.DOCKER_HOST_ADDRESS_PROP_NAME,
-                dockerUri.toString());
-        request.customProperties.put(
-                ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
-                ContainerHostService.DockerAdapterType.API.name());
-
+        ContainerHostRequest request = prepareDirectHostOperationRequest(
+                ContainerHostOperationType.PING);
         sendContainerHostRequest(request);
     }
 
@@ -181,6 +169,15 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         // operation
         dockerHostState = retrieveDockerHostState();
         assertEquals(PowerState.SUSPEND, dockerHostState.powerState);
+    }
+
+    @Test
+    public void testDirectHostInfo() throws Throwable {
+        mockDockerHost.waitForServiceAvailable(MockDockerHostService.SELF_LINK
+                + MockDockerPathConstants.INFO);
+        ContainerHostRequest request = prepareDirectHostOperationRequest(
+                ContainerHostOperationType.INFO);
+        sendContainerHostRequest(request);
     }
 
     @Test
@@ -446,6 +443,25 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         host.startService(Operation.createPost(dockerHostAdapterServiceUri),
                 new DockerHostAdapterService());
 
+    }
+
+    private ContainerHostRequest prepareDirectHostOperationRequest(
+            ContainerHostOperationType opType) {
+        ContainerHostRequest request = new ContainerHostRequest();
+
+        request.resourceReference = UriUtils.buildUri(host, ComputeService.FACTORY_LINK);
+        request.operationTypeId = opType.id;
+        request.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
+        request.customProperties = new HashMap<>();
+        request.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
+                testDockerCredentialsLink);
+        request.customProperties.put(ContainerHostService.DOCKER_HOST_ADDRESS_PROP_NAME,
+                dockerUri.toString());
+        request.customProperties.put(
+                ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
+                ContainerHostService.DockerAdapterType.API.name());
+
+        return request;
     }
 
     private void sendContainerHostRequest(ContainerHostOperationType type, URI computeStateReference)
