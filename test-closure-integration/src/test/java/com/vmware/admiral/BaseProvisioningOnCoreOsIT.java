@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
+import org.junit.AfterClass;
 
 import com.vmware.admiral.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.SimpleHttpsClient.HttpResponse;
@@ -82,11 +83,11 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
     private static final String TEST_REGISTRY_NAME = "test-registry";
     private static final long DEFAULT_OPERATION_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(30);
 
-    protected ComputeState dockerHostCompute;
-    protected List<ComputeState> dockerHostsInCluster;
+    protected static ComputeState dockerHostCompute;
+    protected static List<ComputeState> dockerHostsInCluster;
 
-    private AuthCredentialsServiceState dockerHostAuthCredentials;
-    private SslTrustCertificateState dockerHostSslTrust;
+    private static AuthCredentialsServiceState dockerHostAuthCredentials;
+    private static SslTrustCertificateState dockerHostSslTrust;
 
     private final Set<String> containersToDelete = new HashSet<>();
     private final Set<String> externalNetworksToDelete = new HashSet<>();
@@ -136,15 +137,18 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
             }
         }
 
-        // remove the host
-        if (dockerHostCompute != null) {
-            removeHost(dockerHostCompute);
-        }
-
         if (dockerHostsInCluster != null) {
             for (ComputeState dockerHost : dockerHostsInCluster) {
                 removeHost(dockerHost);
             }
+        }
+    }
+
+    @AfterClass
+    public static void afterClassTearDown() throws Exception {
+        // remove the host
+        if (dockerHostCompute != null) {
+            removeHost(dockerHostCompute);
         }
     }
 
@@ -174,7 +178,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         setupCoreOsHost(adapterType, false);
     }
 
-    protected void setupCoreOsHost(DockerAdapterType adapterType, boolean setupOnCluster)
+    protected static void setupCoreOsHost(DockerAdapterType adapterType, boolean setupOnCluster)
             throws Exception {
         logger.info("********************************************************************");
         logger.info("----------  Setup: Add CoreOS VM as DockerHost ComputeState --------");
@@ -199,7 +203,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         }
 
         dockerHostAuthCredentials = postDocument(AuthCredentialsService.FACTORY_LINK,
-                dockerHostAuthCredentials);
+                dockerHostAuthCredentials, TestDocumentLifeCycle.FOR_DELETE_AFTER_CLASS);
 
         assertNotNull("Failed to create host credentials", dockerHostAuthCredentials);
 
@@ -228,7 +232,8 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
                 getTestRequiredProp("docker.host.ssl.trust.file"),
                 CommonTestStateFactory.REGISTRATION_DOCKER_ID);
 
-        postDocument(SslTrustCertificateService.FACTORY_LINK, dockerHostSslTrust);
+        postDocument(SslTrustCertificateService.FACTORY_LINK, dockerHostSslTrust,
+                TestDocumentLifeCycle.FOR_DELETE_AFTER_CLASS);
     }
 
     protected abstract String getResourceDescriptionLink(boolean downloadImage,

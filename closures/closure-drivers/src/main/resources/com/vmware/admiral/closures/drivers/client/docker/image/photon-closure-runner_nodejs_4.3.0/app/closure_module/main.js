@@ -301,10 +301,13 @@ function proceedWithTask(closureUri, internalCtx, context) {
     restler.get(closureUri, {
         headers: headers
       }).on('complete', function(data, response) {
-            if (response.statusCode !== 200) {
-                console.error("Unable to get closure source from URI: " + closureUri + " code: " + response.statusCode);
-
-                throw "Unable to get closure source from URI: " + closureUri + " code: " + response.statusCode;
+            if (!response || response.statusCode !== 200) {
+                var msg = "Unable to get closure source from URI: " + closureUri;
+                if (response) {
+                    msg += " code: " + response.statusCode;
+                }
+                console.error(msg);
+                throw msg;
             }
 
             // semaphore fetched ...assign the value

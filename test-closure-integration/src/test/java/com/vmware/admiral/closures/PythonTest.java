@@ -33,6 +33,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 import junit.framework.TestCase;
+
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -56,7 +57,8 @@ public class PythonTest extends BaseIntegrationTest {
 
     protected static String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
 
-    private static final String IMAGE_NAME = IMAGE_NAME_PREFIX + DriverConstants.RUNTIME_PYTHON_3_4_3;
+    private static final String IMAGE_NAME =
+            IMAGE_NAME_PREFIX + DriverConstants.RUNTIME_PYTHON_3_4_3;
 
     private static String testWebserverUri;
 
@@ -68,10 +70,17 @@ public class PythonTest extends BaseIntegrationTest {
     private static String dockerBuildBaseImageLink;
 
     @BeforeClass
-    public static void beforeClass() {
-
+    public static void beforeClass() throws Exception {
         serviceClient = ServiceClientFactory.createServiceClient(null);
         testWebserverUri = getTestWebServerUrl();
+
+        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
+        dockerBuildImageLink = getBaseUrl()
+                + createImageBuildRequestUri(IMAGE_NAME + ":latest", dockerHostCompute
+                .documentSelfLink);
+        dockerBuildBaseImageLink = getBaseUrl()
+                + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
+                .documentSelfLink);
     }
 
     @AfterClass
@@ -85,20 +94,12 @@ public class PythonTest extends BaseIntegrationTest {
     }
 
     @Before
-    public void setup() throws Exception {
-        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
-        dockerBuildImageLink = getBaseUrl()
-                + createImageBuildRequestUri(IMAGE_NAME + ":latest", dockerHostCompute
-                .documentSelfLink);
-        dockerBuildBaseImageLink = getBaseUrl()
-                + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
-                .documentSelfLink);
+    public void init() {
+        logger.info("Executing against docker host: %s ", dockerHostCompute.address);
     }
 
     @Test
     public void executePythonNumberParametersTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -119,7 +120,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
 
         // Create Closure
         Closure createdClosure = createClosure(closureDescription, serviceClient);
@@ -135,7 +137,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
         TestCase.assertNotNull(closure);
@@ -152,8 +155,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonArrayOfNumberParametersTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -176,7 +177,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
 
         // Create Closure
         Closure createdClosure = createClosure(closureDescription, serviceClient);
@@ -197,7 +199,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure finishedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -213,8 +216,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonStringParametersTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -235,7 +236,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
@@ -254,7 +256,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -270,8 +273,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonArrayOfStringParametersTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -295,7 +296,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
@@ -319,14 +321,16 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
 
         verifyJsonArrayStrings(expectedInVar, fetchedClosure.inputs.get("a").getAsJsonArray());
-        verifyJsonArrayStrings(expectedResult, fetchedClosure.outputs.get("result").getAsJsonArray());
+        verifyJsonArrayStrings(expectedResult,
+                fetchedClosure.outputs.get("result").getAsJsonArray());
 
         cleanResource(createdClosure.documentSelfLink, serviceClient);
         cleanResource(closureDescription.documentSelfLink, serviceClient);
@@ -334,8 +338,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonBooleanParametersTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -354,7 +356,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
@@ -373,7 +376,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -389,8 +393,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonArrayOfBooleanParametersTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -412,7 +414,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
@@ -436,14 +439,16 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
         verifyJsonArrayBooleans(expectedInVar, fetchedClosure.inputs.get("a").getAsJsonArray());
-        verifyJsonArrayBooleans(expectedResult, fetchedClosure.outputs.get("result").getAsJsonArray());
+        verifyJsonArrayBooleans(expectedResult,
+                fetchedClosure.outputs.get("result").getAsJsonArray());
 
         cleanResource(createdClosure.documentSelfLink, serviceClient);
         cleanResource(closureDescription.documentSelfLink, serviceClient);
@@ -464,8 +469,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonObjectParametersTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -493,7 +496,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
@@ -513,7 +517,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -541,8 +546,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonArrayOfObjectParametersTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -569,7 +572,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
@@ -591,7 +595,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -606,7 +611,8 @@ public class PythonTest extends BaseIntegrationTest {
         assertEquals(expectedInVar.intTest, deserialObj.intTest);
         assertEquals(expectedInVar.boolTest, deserialObj.boolTest);
 
-        JsonObject jsonResultObj = fetchedClosure.outputs.get("result").getAsJsonArray().get(0).getAsJsonObject();
+        JsonObject jsonResultObj = fetchedClosure.outputs.get("result").getAsJsonArray().get(0)
+                .getAsJsonObject();
         TestObject resultObj = json.fromJson(jsonResultObj, TestObject.class);
 
         assertEquals(expectedResult, resultObj.strTest);
@@ -619,8 +625,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonNestedObjectParametersTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -652,7 +656,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
@@ -672,7 +677,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -701,8 +707,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executeTimeoutedPythonScriptTaskTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -720,7 +724,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
@@ -734,7 +739,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.CANCELLED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.CANCELLED,
+                serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -747,8 +753,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void completeOrFailOutdatedJSScriptTaskTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -766,7 +770,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
@@ -780,7 +785,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.CANCELLED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.CANCELLED,
+                serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -793,7 +799,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.CANCELLED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.CANCELLED,
+                serviceClient);
 
         fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -804,10 +811,12 @@ public class PythonTest extends BaseIntegrationTest {
         try {
             fetchedClosure.state = TaskState.TaskStage.FINISHED;
             SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
-                    .execute(SimpleHttpsClient.HttpMethod.PATCH, fetchedClosure.documentSelfLink, Utils
-                            .toJson(fetchedClosure));
+                    .execute(SimpleHttpsClient.HttpMethod.PATCH, fetchedClosure.documentSelfLink,
+                            Utils
+                                    .toJson(fetchedClosure));
             if (response != null) {
-                assertNotEquals("Closure is not allowed to complete once it is CANCELLED", 200, response.statusCode);
+                assertNotEquals("Closure is not allowed to complete once it is CANCELLED", 200,
+                        response.statusCode);
             } else {
                 fail("Closure is not allowed to complete once it is cancelled");
             }
@@ -819,10 +828,12 @@ public class PythonTest extends BaseIntegrationTest {
         try {
             fetchedClosure.state = TaskState.TaskStage.FAILED;
             SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
-                    .execute(SimpleHttpsClient.HttpMethod.PATCH, fetchedClosure.documentSelfLink, Utils
-                            .toJson(fetchedClosure));
+                    .execute(SimpleHttpsClient.HttpMethod.PATCH, fetchedClosure.documentSelfLink,
+                            Utils
+                                    .toJson(fetchedClosure));
             if (response != null) {
-                assertNotEquals("Closure is not allowed to complete once it is CANCELLED", 200, response.statusCode);
+                assertNotEquals("Closure is not allowed to complete once it is CANCELLED", 200,
+                        response.statusCode);
             } else {
                 fail("Closure is not allowed to complete once it is cancelled");
             }
@@ -836,8 +847,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void completeFailTimeoutedJSScriptTaskTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -854,7 +863,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
@@ -868,7 +878,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.CANCELLED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.CANCELLED,
+                serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -880,10 +891,12 @@ public class PythonTest extends BaseIntegrationTest {
 
         try {
             SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
-                    .execute(SimpleHttpsClient.HttpMethod.PATCH, fetchedClosure.documentSelfLink, Utils
-                            .toJson(fetchedClosure));
+                    .execute(SimpleHttpsClient.HttpMethod.PATCH, fetchedClosure.documentSelfLink,
+                            Utils
+                                    .toJson(fetchedClosure));
             if (response != null) {
-                assertNotEquals("Closure is not allowed to complete once it is cancelled", 200, response.statusCode);
+                assertNotEquals("Closure is not allowed to complete once it is cancelled", 200,
+                        response.statusCode);
             } else {
                 fail("Closure is not allowed to complete once it is cancelled");
             }
@@ -896,10 +909,12 @@ public class PythonTest extends BaseIntegrationTest {
 
         try {
             SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
-                    .execute(SimpleHttpsClient.HttpMethod.PATCH, fetchedClosure.documentSelfLink, Utils
-                            .toJson(fetchedClosure));
+                    .execute(SimpleHttpsClient.HttpMethod.PATCH, fetchedClosure.documentSelfLink,
+                            Utils
+                                    .toJson(fetchedClosure));
             if (response != null) {
-                assertNotEquals("Closure is not allowed to complete once it is cancelled", 200, response.statusCode);
+                assertNotEquals("Closure is not allowed to complete once it is cancelled", 200,
+                        response.statusCode);
             } else {
                 fail("Closure is not allowed to complete once it is cancelled");
             }
@@ -912,8 +927,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executeInvalidPythonScriptTaskTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -928,7 +941,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
@@ -944,7 +958,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FAILED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FAILED,
+                serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -958,8 +973,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonScriptFailureParametersTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -978,7 +991,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
 
         // Create Closure
         Closure createdClosure = createClosure(closureDescription, serviceClient);
@@ -994,7 +1008,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FAILED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FAILED,
+                serviceClient);
 
         Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
         assertNotNull(closure);
@@ -1008,8 +1023,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonExtSourceAsZIPTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -1028,7 +1041,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
@@ -1047,7 +1061,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -1064,8 +1079,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonNonExistingZIPTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -1084,7 +1097,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
@@ -1122,8 +1136,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonWithEntrypointParametersTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -1146,7 +1158,8 @@ public class PythonTest extends BaseIntegrationTest {
 
         String taskDefPayload = Utils.toJson(closureDescState);
 
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
 
         // Create Closure
         Closure createdClosure = createClosure(closureDescription, serviceClient);
@@ -1162,7 +1175,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
         assertNotNull(closure);
@@ -1179,8 +1193,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonWithInvalidEntrypointParametersTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -1202,7 +1214,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
 
         // Create Closure
         Closure createdClosure = createClosure(closureDescription, serviceClient);
@@ -1218,7 +1231,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FAILED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FAILED,
+                serviceClient);
 
         Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
         assertNotNull(closure);
@@ -1232,8 +1246,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonWithEntrypointAsZIPTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -1253,7 +1265,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
         assertNotNull(closureDescription);
 
         // Create Closure
@@ -1272,7 +1285,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
 
@@ -1290,8 +1304,6 @@ public class PythonTest extends BaseIntegrationTest {
     @Test
     @Ignore
     public void executePythonWithKeyringDependencyTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -1341,7 +1353,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
 
         // Create Closure
         Closure createdClosure = createClosure(closureDescription, serviceClient);
@@ -1357,7 +1370,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
         assertNotNull(closure);
@@ -1376,8 +1390,6 @@ public class PythonTest extends BaseIntegrationTest {
     @Test
     @Ignore
     public void executePythonWithNumpyDependencyTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -1408,7 +1420,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
 
         // Create Closure
         Closure createdClosure = createClosure(closureDescription, serviceClient);
@@ -1424,7 +1437,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
         assertNotNull(closure);
@@ -1442,8 +1456,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonWithBilliardDependencyTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -1479,7 +1491,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
 
         // Create Closure
         Closure createdClosure = createClosure(closureDescription, serviceClient);
@@ -1495,7 +1508,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
         assertNotNull(closure);
@@ -1513,8 +1527,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonWithMissingDependencyTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -1563,7 +1575,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
 
         // Create Closure
         Closure createdClosure = createClosure(closureDescription, serviceClient);
@@ -1579,7 +1592,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FAILED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FAILED,
+                serviceClient);
 
         Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
         assertNotNull(closure);
@@ -1587,8 +1601,9 @@ public class PythonTest extends BaseIntegrationTest {
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FAILED, closure.state);
 
-        Assert.assertTrue("Not expected error: " + closure.errorMsg, closure.errorMsg.contains("ImportError(\"No "
-                + "module named 'keyring'\",)"));
+        Assert.assertTrue("Not expected error: " + closure.errorMsg,
+                closure.errorMsg.contains("ImportError(\"No "
+                        + "module named 'keyring'\",)"));
 
         cleanResource(imageRequestLink, serviceClient);
         cleanResource(createdClosure.documentSelfLink, serviceClient);
@@ -1597,8 +1612,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonWithDependencyUsingSourceURLasZIPTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -1616,7 +1629,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
 
         // Create Closure
         Closure createdClosure = createClosure(closureDescription, serviceClient);
@@ -1632,7 +1646,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
         assertNotNull(closure);
@@ -1650,8 +1665,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonNumbersWithWebhookTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -1673,7 +1686,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
 
         // Create Closure
         Closure createdClosure = createClosure(closureDescription, serviceClient);
@@ -1689,7 +1703,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
         assertNotNull(closure);
@@ -1702,7 +1717,8 @@ public class PythonTest extends BaseIntegrationTest {
 
         // verify test service was notified and consumed the closure state
         SimpleHttpsClient.HttpResponse consumedContent = SimpleHttpsClient
-                .execute(SimpleHttpsClient.HttpMethod.GET, getBaseUrl() + closureDescState.notifyUrl + closure.documentSelfLink);
+                .execute(SimpleHttpsClient.HttpMethod.GET,
+                        getBaseUrl() + closureDescState.notifyUrl + closure.documentSelfLink);
         assertNotNull(consumedContent);
         assertEquals(TaskState.TaskStage.FINISHED, closure.state);
 
@@ -1712,8 +1728,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonNumbersWithInvalidWebhookTest() throws Throwable {
-        logger.info("Executing  against: " + serviceClient);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
@@ -1735,7 +1749,8 @@ public class PythonTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
-        ClosureDescription closureDescription = createClosureDescription(taskDefPayload, serviceClient);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
 
         // Create Closure
         Closure createdClosure = createClosure(closureDescription, serviceClient);
@@ -1751,7 +1766,8 @@ public class PythonTest extends BaseIntegrationTest {
         // Wait for the completion timeout
         waitForBuildCompletion(IMAGE_NAME, closureDescription);
 
-        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED, serviceClient);
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
 
         Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
         assertNotNull(closure);
@@ -1763,7 +1779,8 @@ public class PythonTest extends BaseIntegrationTest {
         assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
 
         SimpleHttpsClient.HttpResponse consumedContent = SimpleHttpsClient
-                .execute(SimpleHttpsClient.HttpMethod.GET, getBaseUrl() + closureDescState.notifyUrl + closure.documentSelfLink);
+                .execute(SimpleHttpsClient.HttpMethod.GET,
+                        getBaseUrl() + closureDescState.notifyUrl + closure.documentSelfLink);
         assertNotNull(consumedContent);
         assertEquals(404, consumedContent.statusCode);
 
@@ -1841,8 +1858,6 @@ public class PythonTest extends BaseIntegrationTest {
 
     @Test
     public void executePythonWithDependencyUsingSourceURLTest() throws Throwable {
-        logger.info("Executing  against: " + serviceHostUri);
-
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
