@@ -9,6 +9,9 @@ components:
       ports:
       - host_port: "85"
         container_port: "80"
+      env:
+      - var: "MESSAGE"
+        value: "hello nginx"
   mysql:
     type: "App.Container"
     data:
@@ -17,3 +20,6 @@ components:
       ports:
       - host_port: "3306"
         container_port: "3306"
+      env:
+      - var: "MESSAGE"
+        value: "hello mysql"

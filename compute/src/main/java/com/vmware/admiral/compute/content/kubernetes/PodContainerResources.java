@@ -11,15 +11,7 @@
 
 package com.vmware.admiral.compute.content.kubernetes;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class PodContainerPort {
-    public String name;
-    @JsonProperty("hostIP")
-    public String hostIp;
-    public String hostPort;
-    public String containerPort;
-    public String protocol;
+public class PodContainerResources {
+    public String memory;
+    public String cpu;
 }

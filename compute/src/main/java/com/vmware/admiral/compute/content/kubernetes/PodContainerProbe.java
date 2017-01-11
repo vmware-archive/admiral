@@ -16,4 +16,6 @@ public class PodContainerProbe {
     public PodContainerProbeHTTPGetAction httpGet;
     public PodContainerProbeTCPSocketAction tcpSocket;
     public Long timeoutSeconds;
+    public Integer successThreshold;
+    public Integer failureThreshold;
 }
