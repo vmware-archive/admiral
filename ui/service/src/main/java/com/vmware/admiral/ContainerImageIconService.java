@@ -61,6 +61,7 @@ public class ContainerImageIconService extends StatelessService {
         sendRequest(Operation
                 .createGet(getHost(), UriUtils.buildUriPath(ManagementUriParts.CONFIG_PROPS,
                         FileUtil.USER_RESOURCES_PATH_VARIABLE))
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                 .setCompletion((res, ex) -> {
                     if (ex == null && res.hasBody()) {
                         ConfigurationState body = res.getBody(ConfigurationState.class);
