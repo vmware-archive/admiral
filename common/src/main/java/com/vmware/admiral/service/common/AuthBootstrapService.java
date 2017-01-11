@@ -358,6 +358,8 @@ public class AuthBootstrapService extends StatefulService {
             return false;
         }
 
+        host.log(Level.WARNING, "Waiting for user '%s' completed successful", user.email);
+
         return true;
     }
 
