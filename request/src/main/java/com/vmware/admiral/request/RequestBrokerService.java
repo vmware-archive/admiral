@@ -1442,7 +1442,7 @@ public class RequestBrokerService extends
 
     private boolean isPostAllocationOperation(RequestBrokerState state) {
         return (isContainerType(state) || isContainerNetworkType(state) || isComputeType(state)
-                || isContainerVolumeType(state))
+                || isContainerVolumeType(state) || isComputeNetworkType(state))
                 && (ContainerOperationType.CREATE.id.equals(state.operation)
                         || NetworkOperationType.CREATE.id.equals(state.operation)
                         || ComputeOperationType.CREATE.id.equals(state.operation)
