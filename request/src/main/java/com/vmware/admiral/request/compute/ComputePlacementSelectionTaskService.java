@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
@@ -297,8 +298,9 @@ public class ComputePlacementSelectionTaskService extends
             selectedComputeHosts.addAll(selectedComputeHosts.subList(0, diff % initialSize));
         }
 
-        logInfo("The following placements selected for provisioning %d resources: %s",
-                state.resourceCount, selectedComputeHosts);
+        logInfo("The following computes selected for provisioning %d resources: %s",
+                state.resourceCount,
+                selectedComputeHosts.stream().map(hs -> hs.hostLink).collect(Collectors.toList()));
 
         proceedTo(DefaultSubStage.COMPLETED, s -> {
             s.selectedComputePlacementHosts = selectedComputeHosts;

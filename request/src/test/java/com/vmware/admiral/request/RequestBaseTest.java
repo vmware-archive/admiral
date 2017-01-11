@@ -51,6 +51,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.admiral.host.CaSigningCertService;
 import com.vmware.admiral.host.CompositeComponentNotificationProcessingChain;
+import com.vmware.admiral.host.ComputeInitialBootService;
 import com.vmware.admiral.host.HostInitAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
@@ -205,6 +206,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 h,
                 HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
         waitForServiceAvailability(ManagementUriParts.AUTH_CREDENTIALS_CA_LINK);
+
+        waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
     }
 
     protected void addForDeletion(ServiceDocument doc) {

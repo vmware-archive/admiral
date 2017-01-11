@@ -79,23 +79,16 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
                 UriUtils.buildUri(host, TestInitialBootService.class))
                 .setReferer(host.getUri())
                 .setBody(new ServiceDocument()));
-
-        String awsEndpointType = EndpointType.aws.name();
-        String[] awsLinks = new String[] {
-                UriUtils.buildUriPath(EnvironmentService.FACTORY_LINK, awsEndpointType),
-                UriUtils.buildUriPath(NetworkProfileService.FACTORY_LINK, awsEndpointType),
-                UriUtils.buildUriPath(StorageProfileService.FACTORY_LINK, awsEndpointType),
-                UriUtils.buildUriPath(ComputeProfileService.FACTORY_LINK, awsEndpointType)
-        };
-        waitForServiceAvailability(awsLinks);
+        waitForInitialBootServiceToBeSelfStopped(TestInitialBootService.SELF_LINK);
 
         cd = new ComputeDescription();
         cd.customProperties = new HashMap<>();
 
+        String awsEndpointType = EndpointType.aws.name();
         context = new EnhanceContext();
         context.imageType = "ubuntu-1604";
         context.endpointType = awsEndpointType;
-        context.environmentLink = awsLinks[0];
+        context.environmentLink = UriUtils.buildUriPath(EnvironmentService.FACTORY_LINK, awsEndpointType);
     }
 
     @Test
@@ -420,7 +413,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         public void handlePost(Operation post) {
             ArrayList<ServiceDocument> states = new ArrayList<>();
             states.addAll(EnvironmentService.getAllDefaultDocuments());
-            initInstances(post, false, false, states.toArray(new ServiceDocument[states.size()]));
+            initInstances(post, false, true, states.toArray(new ServiceDocument[states.size()]));
         }
     }
 
