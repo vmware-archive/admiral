@@ -15,8 +15,6 @@ import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
-import com.vmware.admiral.compute.ComputeNetworkDescriptionService;
-import com.vmware.admiral.compute.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
@@ -60,6 +58,9 @@ import com.vmware.admiral.compute.env.ComputeProfileService;
 import com.vmware.admiral.compute.env.EnvironmentService;
 import com.vmware.admiral.compute.env.NetworkProfileService;
 import com.vmware.admiral.compute.env.StorageProfileService;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
+import com.vmware.admiral.compute.network.ComputeNetworkService;
 import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskServiceWithoutValidate;
 import com.vmware.admiral.service.test.MockContainerHostService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -103,6 +104,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ContainerNetworkService.class,
                 ContainerNetworkDescriptionService.class,
                 ComputeNetworkDescriptionService.class,
+                ComputeNetworkService.class,
                 ContainerVolumeDescriptionService.class,
                 ContainerVolumeService.class,
                 ContainerVolumeDescriptionService.class,

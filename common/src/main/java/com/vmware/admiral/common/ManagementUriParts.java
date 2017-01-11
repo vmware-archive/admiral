@@ -81,6 +81,7 @@ public interface ManagementUriParts {
     String CONTAINER_VOLUMES = RESOURCES + "/container-volumes";
     String CONTAINER_VOLUMES_DESC = RESOURCES + "/container-volume" + DESCRIPTION_SUFFIX;
 
+    String COMPUTE_NETWORKS = RESOURCES + "/compute-networks";
     String COMPUTE_NETWORK_DESC = RESOURCES + "/compute-network" + DESCRIPTION_SUFFIX;
 
     // Request tasks:
@@ -95,6 +96,7 @@ public interface ManagementUriParts {
             + "/compute-network-allocation-tasks";
     String REQUEST_PROVISION_COMPUTE_NETWORK_TASKS = REQUEST
             + "/provision-compute-network-tasks";
+    String REQUEST_COMPUTE_NETWORK_REMOVAL_TASKS = REQUEST + "/compute-network-removal-tasks";
     String REQUEST_CONTAINER_NETWORK_ALLOCATION_TASKS = REQUEST
             + "/container-network-allocation-tasks";
     String REQUEST_CONTAINER_NETWORK_REMOVAL_TASKS = REQUEST + "/container-network-removal-tasks";

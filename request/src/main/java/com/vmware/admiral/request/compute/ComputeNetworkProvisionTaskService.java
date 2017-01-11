@@ -21,8 +21,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.compute.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;

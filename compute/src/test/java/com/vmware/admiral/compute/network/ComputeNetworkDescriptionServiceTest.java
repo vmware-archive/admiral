@@ -9,14 +9,15 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute;
+package com.vmware.admiral.compute.network;
 
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.vmware.admiral.compute.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.xenon.common.FactoryService;
 
 public class ComputeNetworkDescriptionServiceTest extends ComputeBaseTest {

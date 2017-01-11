@@ -37,7 +37,6 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.common.util.YamlMapper;
-import com.vmware.admiral.compute.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription.Status;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
@@ -46,6 +45,7 @@ import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.content.CompositeTemplateUtil.YamlType;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 
 public class CompositeTemplateUtilTest extends ComputeBaseTest {
 
