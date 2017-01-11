@@ -370,7 +370,7 @@ props.put(&quot;number&quot;, counter);
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
-          <stringProp name="LoopController.loops">${TASKS_NUMBERS_PER_THREAD}</stringProp>
+          <stringProp name="LoopController.loops">${CLOSURES_NUMBERS_PER_THREAD}</stringProp>
         </elementProp>
         <stringProp name="ThreadGroup.num_threads">${NUMBER_OF__THREADS}</stringProp>
         <stringProp name="ThreadGroup.ramp_time">1</stringProp>
