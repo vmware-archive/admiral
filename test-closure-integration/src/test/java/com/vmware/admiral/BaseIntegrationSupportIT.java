@@ -263,7 +263,7 @@ public class BaseIntegrationSupportIT {
         return getDocument(computeStateLink, ComputeState.class);
     }
 
-    protected void removeHost(ComputeState computeState) throws Exception {
+    protected static void removeHost(ComputeState computeState) throws Exception {
         logger.info("---------- Request remove host. --------");
         if (computeState != null && computeState.id != null) {
             String documentSelfLink = buildServiceUri(ComputeService.FACTORY_LINK,
@@ -296,7 +296,7 @@ public class BaseIntegrationSupportIT {
         return httpResponse.responseBody;
     }
 
-    protected void waitForTaskToComplete(final String documentSelfLink) throws Exception {
+    protected static void waitForTaskToComplete(final String documentSelfLink) throws Exception {
         String propName = TaskServiceDocument.FIELD_NAME_TASK_SUB_STAGE;
         String successPropValue = DefaultSubStage.COMPLETED.name();
         String errorPropValue = DefaultSubStage.ERROR.name();
