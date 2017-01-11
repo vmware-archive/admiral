@@ -26,6 +26,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -71,6 +72,11 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             ComputeState hostComputeState = new ComputeState();
             hostComputeState.customProperties = request.customProperties;
             directPing(request, op, hostComputeState);
+        } else if (ContainerHostOperationType.INFO == request.getOperationType()
+                && ComputeService.FACTORY_LINK.equals(request.resourceReference.getPath())) {
+            ComputeState hostComputeState = new ComputeState();
+            hostComputeState.customProperties = request.customProperties;
+            directHostInfo(request, op, hostComputeState);
         } else if (ContainerHostOperationType.LIST_CONTAINERS == request.getOperationType()
                 && request.serviceTaskCallback.isEmpty()) {
             getContainerHost(request, op, request.resourceReference,
@@ -132,6 +138,37 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             CommandInput commandInput) {
         getCommandExecutor().hostInfo(commandInput,
                 getHostPatchCompletionHandler(request));
+    }
+
+    private void directHostInfo(ContainerHostRequest request, Operation op,
+            ComputeState hostComputeState) {
+        directHostOperationWithCredentials(op, hostComputeState, (authCredentialsState) -> {
+            directHostInfo(request, op, hostComputeState, authCredentialsState);
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    private void directHostInfo(ContainerHostRequest request, Operation op,
+            ComputeState hostComputeState, AuthCredentialsServiceState authCredentialsState) {
+
+        CommandInput commandInput = prepareDirectHostOperationCommand(hostComputeState,
+                authCredentialsState);
+        updateSslTrust(request, commandInput);
+        getCommandExecutor().hostInfo(
+                commandInput,
+                (o, ex) -> {
+                    if (ex != null) {
+                        op.fail(ex);
+                    } else {
+                        updateHostStateCustomProperties(hostComputeState, o.getBody(Map.class));
+                        if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
+                            logFine("Compute state was updated with output of docker info. Request: %s",
+                                    request.getRequestTrackingLog());
+                        }
+                        op.setBody(hostComputeState);
+                        op.complete();
+                    }
+                });
     }
 
     private void doStats(ContainerHostRequest request, ComputeState computeState) {
@@ -420,11 +457,8 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
         return callbackResponse;
     }
 
-    private void patchHostState(ContainerHostRequest request, Map<String, Object> properties,
-            CompletionHandler callback) {
-        ComputeState computeState = new ComputeState();
-
-        if (properties != null && !properties.isEmpty()) {
+    private void updateHostStateCustomProperties(ComputeState computeState, Map<String, Object> properties) {
+        if (computeState != null && properties != null && !properties.isEmpty()) {
             computeState.customProperties = new HashMap<>();
 
             properties.entrySet().stream()
@@ -442,7 +476,12 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             computeState.customProperties.remove(
                     ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
         }
+    }
 
+    private void patchHostState(ContainerHostRequest request, Map<String, Object> properties,
+            CompletionHandler callback) {
+        ComputeState computeState = new ComputeState();
+        updateHostStateCustomProperties(computeState, properties);
         sendRequest(Operation
                 .createPatch(request.resourceReference)
                 .setBody(computeState)
@@ -464,47 +503,15 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
 
     private void directPing(ContainerHostRequest request, Operation op,
             ComputeState hostComputeState) {
-
-        try {
-            String credentialsLink = getAuthCredentialLink(hostComputeState);
-            if (credentialsLink == null) {
-                directPing(request, op, hostComputeState, null);
-            } else {
-                sendRequest(Operation
-                        .createGet(this, credentialsLink)
-                        .setCompletion(
-                                (o, ex) -> {
-                                    if (ex != null) {
-                                        op.fail(ex);
-                                    } else {
-                                        try {
-                                            AuthCredentialsServiceState authCredentialsState =
-                                                    o.getBody(AuthCredentialsServiceState.class);
-                                            directPing(request, op, hostComputeState,
-                                                    authCredentialsState);
-                                        } catch (Throwable eInner) {
-                                            op.fail(eInner);
-                                        }
-                                    }
-                                }));
-            }
-        } catch (Throwable e) {
-            op.fail(e);
-        }
+        directHostOperationWithCredentials(op, hostComputeState, (authCredentialsState) -> {
+            directPing(request, op, hostComputeState, authCredentialsState);
+        });
     }
 
     private void directPing(ContainerHostRequest request, Operation op,
             ComputeState hostComputeState, AuthCredentialsServiceState authCredentialsState) {
-        URI dockerUri = ContainerDescription.getDockerHostUri(hostComputeState);
-        CommandInput commandInput = new CommandInput().withDockerUri(dockerUri);
-
-        if (authCredentialsState != null) {
-            checkAuthCredentialsSupportedType(authCredentialsState, true);
-            commandInput
-                    .withCredentials(authCredentialsState)
-                    .withProperty(SSL_TRUST_ALIAS_PROP_NAME,
-                            ContainerHostUtil.getTrustAlias(hostComputeState));
-        }
+        CommandInput commandInput = prepareDirectHostOperationCommand(hostComputeState,
+                authCredentialsState);
 
         updateSslTrust(request, commandInput);
         getCommandExecutor()
@@ -517,6 +524,50 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                                 op.complete();
                             }
                         });
+    }
+
+    private void directHostOperationWithCredentials(Operation op,
+            ComputeState hostComputeState, Consumer<AuthCredentialsServiceState> operation) {
+        try {
+            String credentialsLink = getAuthCredentialLink(hostComputeState);
+            if (credentialsLink == null) {
+                operation.accept(null);
+            } else {
+                sendRequest(Operation
+                        .createGet(this, credentialsLink)
+                        .setCompletion(
+                                (o, ex) -> {
+                                    if (ex != null) {
+                                        op.fail(ex);
+                                    } else {
+                                        try {
+                                            AuthCredentialsServiceState authCredentialsState =
+                                                    o.getBody(AuthCredentialsServiceState.class);
+                                            operation.accept(authCredentialsState);
+                                        } catch (Throwable eInner) {
+                                            op.fail(eInner);
+                                        }
+                                    }
+                                }));
+            }
+        } catch (Throwable e) {
+            op.fail(e);
+        }
+    }
+
+    private CommandInput prepareDirectHostOperationCommand(ComputeState hostComputeState,
+            AuthCredentialsServiceState authCredentialsState) {
+        URI dockerUri = ContainerDescription.getDockerHostUri(hostComputeState);
+        CommandInput commandInput = new CommandInput().withDockerUri(dockerUri);
+
+        if (authCredentialsState != null) {
+            checkAuthCredentialsSupportedType(authCredentialsState, true);
+            commandInput
+                    .withCredentials(authCredentialsState)
+                    .withProperty(SSL_TRUST_ALIAS_PROP_NAME,
+                            ContainerHostUtil.getTrustAlias(hostComputeState));
+        }
+        return commandInput;
     }
 
     private void updateSslTrust(ContainerHostRequest request, CommandInput commandInput) {
