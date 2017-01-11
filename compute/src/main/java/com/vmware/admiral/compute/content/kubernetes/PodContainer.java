@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute.content.kubernetes;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -24,4 +26,5 @@ public class PodContainer {
     public PodContainerEnvVar[] env;
     public PodContainerSecurityContext securityContext;
     public PodContainerProbe livenessProbe;
+    public Map<String, PodContainerResources> resources;
 }
