@@ -182,7 +182,8 @@
                                 <filter>
                                     <artifact>${project.groupId}:${project.artifactId}</artifact>
                                     <excludes>
-                                        <exclude>admiral_agent.tar</exclude>
+                                        <exclude>admiral_agent.tar.xz</exclude>
+                                        <exclude>*closure*.tar.xz</exclude>
                                     </excludes>
                                 </filter>
                             </filters>
