@@ -220,7 +220,7 @@ public abstract class BaseManagementHostClusterIT {
         }
 
         String hostname = host.getUri().toString();
-        logger.log(Level.INFO, "Stopping host '%s'", hostname);
+        logger.log(Level.INFO, String.format("Stopping host '%s'", hostname));
 
         try {
             ServiceRequestListener secureListener = host.getSecureListener();
@@ -228,7 +228,7 @@ public abstract class BaseManagementHostClusterIT {
             secureListener.stop();
             waitWhilePortIsListening(host);
             FileUtils.deleteDirectory(new File(host.getStorageSandbox().getPath()));
-            logger.log(Level.INFO, "Host '%s' stopped", hostname);
+            logger.log(Level.INFO, String.format("Host '%s' stopped", hostname));
         } catch (Exception e) {
             throw new RuntimeException("Exception stopping host!", e);
         }

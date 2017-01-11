@@ -26,6 +26,7 @@ import java.util.Random;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -84,6 +85,7 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
         assertEquals(HttpURLConnection.HTTP_FORBIDDEN, doRestrictedOperation(hostThree, null));
     }
 
+    @Ignore("VBV-984")
     @Test
     public void testRestrictedOperationWithOneNodeRestarted() throws Throwable {
 
