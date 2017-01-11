@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
  */
 public class VolumeBinding {
 
-    private static final String RX_HOSTDIR = "(?:/(?:[a-zA-Z0-9_.-]+))+";
+    private static final String RX_HOSTDIR = "(?:(?:/(?:[a-zA-Z0-9_.-]+))+/?)|/";
     private static final String RX_NAME = "[a-zA-Z0-9_.-]+";
     private static final String RX_SOURCE = "(?:(?<src>(?:" + RX_HOSTDIR + ")|(?:" + RX_NAME + ")):)?";
     private static final String RX_DESTINATION = "(?<dst>" + RX_HOSTDIR + ")";

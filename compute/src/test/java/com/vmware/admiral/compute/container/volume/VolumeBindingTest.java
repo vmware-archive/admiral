@@ -34,13 +34,19 @@ public class VolumeBindingTest {
     @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
+                { "/", null, "/", false, false },
+                { "/:/", "/", "/", false, false },
                 { "/tmp/var1", null, "/tmp/var1", false, false },
+                { "/tmp/var1/", null, "/tmp/var1/", false, false },
                 { "/tmp/var1:ro", null, "/tmp/var1", true, false },
                 { "/var/log:/tmp/var1", "/var/log", "/tmp/var1", false, false },
+                { "/var/log/:/tmp/var1/", "/var/log/", "/tmp/var1/", false, false },
                 { "/var/log:/tmp/var1:ro", "/var/log", "/tmp/var1", true, false },
                 { "named_volume:/tmp/var1", "named_volume", "/tmp/var1", false, false },
                 { "named_volume:/tmp/var1:ro", "named_volume", "/tmp/var1", true, false },
                 // negative test cases
+                { "//", null, null, false, true },
+                { "/tmp//", null, null, false, true },
                 { ":/tmp", null, null, false, true },
                 { "/tmp/var1:ro:", null, null, false, true },
                 { ":/tmp/var1:rw", null, null, false, true },
