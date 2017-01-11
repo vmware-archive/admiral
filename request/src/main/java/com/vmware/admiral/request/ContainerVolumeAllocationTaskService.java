@@ -16,6 +16,7 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -304,20 +305,22 @@ public class ContainerVolumeAllocationTaskService extends
         volumeState.tenantLinks = state.tenantLinks;
         volumeState.descriptionLink = state.resourceDescriptionLink;
         volumeState.customProperties = state.customProperties;
-
         volumeState.driver = volumeDescription.driver;
-        // volumeState.options = volumeDescription.options;
+        volumeState.options = volumeDescription.options;
         volumeState.documentExpirationTimeMicros = ServiceUtils
                 .getDefaultTaskExpirationTimeInMicros();
 
         String contextId;
         if (state.customProperties != null && (contextId = state.customProperties
                 .get(FIELD_NAME_CONTEXT_ID_KEY)) != null) {
-            volumeState.compositeComponentLink = UriUtils.buildUriPath(
-                    CompositeComponentFactoryService.SELF_LINK, contextId);
+            volumeState.compositeComponentLinks = new ArrayList<>();
+            volumeState.compositeComponentLinks.add(UriUtils.buildUriPath(
+                    CompositeComponentFactoryService.SELF_LINK, contextId));
         }
 
         volumeState.powerState = PowerState.PROVISIONING;
+
+        volumeState.options = volumeDescription.options;
 
         sendRequest(OperationUtil
                 .createForcedPost(this, ContainerVolumeService.FACTORY_LINK)

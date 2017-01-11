@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_DRIVER_OPTS_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_DRIVER_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_NAME_PROP_NAME;
 
 import java.util.Map;
@@ -144,12 +146,18 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
                 context.volumeState.name);
         if (context.volumeState.driver != null && !context.volumeState.driver.isEmpty()) {
             createCommandInput.withProperty(
-                    DockerAdapterCommandExecutor.DOCKER_VOLUME_DRIVER_PROP_NAME,
+                    DOCKER_VOLUME_DRIVER_PROP_NAME,
                     context.volumeState.driver);
         } else {
             createCommandInput.withProperty(
-                    DockerAdapterCommandExecutor.DOCKER_VOLUME_DRIVER_PROP_NAME,
+                    DOCKER_VOLUME_DRIVER_PROP_NAME,
                     DOCKER_VOLUME_DRIVER_TYPE_DEFAULT);
+        }
+
+        if (context.volumeState.options != null && !context.volumeState.options.isEmpty()) {
+            createCommandInput.withProperty(
+                    DOCKER_VOLUME_DRIVER_OPTS_PROP_NAME,
+                    context.volumeState.options);
         }
 
         context.executor.createVolume(createCommandInput, (op, ex) -> {

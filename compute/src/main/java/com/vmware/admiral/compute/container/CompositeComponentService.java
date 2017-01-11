@@ -28,6 +28,8 @@ import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
@@ -160,9 +162,10 @@ public class CompositeComponentService extends StatefulService {
 
     @Override
     public void handleDelete(Operation delete) {
-        // Start updating external networks composite components,
+        // Start updating external network and volume composite components,
         // but do not wait for the updates to finish
         updateExternalNetworksIfNeeded(getState(delete));
+        updateExternalVolumesIfNeeded(getState(delete));
         delete.complete();
     }
 
@@ -175,15 +178,15 @@ public class CompositeComponentService extends StatefulService {
                 .filter(link -> link.startsWith(ContainerNetworkService.FACTORY_LINK))
                 .collect(Collectors.toList());
 
-        QueryTask credentialsQuery = QueryUtil.buildQuery(ContainerNetworkState.class, false);
+        QueryTask networksQuery = QueryUtil.buildQuery(ContainerNetworkState.class, false);
 
-        QueryUtil.addListValueClause(credentialsQuery,
+        QueryUtil.addListValueClause(networksQuery,
                 ContainerNetworkState.FIELD_NAME_SELF_LINK, networkLinks);
-        QueryUtil.addExpandOption(credentialsQuery);
+        QueryUtil.addExpandOption(networksQuery);
 
         new ServiceDocumentQuery<ContainerNetworkState>(getHost(),
                 ContainerNetworkState.class).query(
-                        credentialsQuery, (r) -> {
+                        networksQuery, (r) -> {
                             if (r.hasResult()) {
                                 if (r.getResult().external) {
                                     ContainerNetworkState networkState = r.getResult();
@@ -192,8 +195,34 @@ public class CompositeComponentService extends StatefulService {
                                 }
                             }
                         });
+    }
 
+    private void updateExternalVolumesIfNeeded(CompositeComponent composite) {
+        if (composite.componentLinks == null) {
+            return;
+        }
 
+        List<String> volumeLinks = composite.componentLinks.stream()
+                .filter(link -> link.startsWith(ContainerVolumeService.FACTORY_LINK))
+                .collect(Collectors.toList());
+
+        QueryTask volumesQuery = QueryUtil.buildQuery(ContainerVolumeState.class, false);
+
+        QueryUtil.addListValueClause(volumesQuery,
+                ContainerVolumeState.FIELD_NAME_SELF_LINK, volumeLinks);
+        QueryUtil.addExpandOption(volumesQuery);
+
+        new ServiceDocumentQuery<ContainerVolumeState>(getHost(),
+                ContainerVolumeState.class).query(
+                        volumesQuery, (r) -> {
+                            if (r.hasResult()) {
+                                if (r.getResult().external) {
+                                    ContainerVolumeState volumeState = r.getResult();
+                                    volumeState.compositeComponentLinks.remove(composite.documentSelfLink);
+                                    updateVolumeState(volumeState);
+                                }
+                            }
+                        });
     }
 
     private void updateNetworkState(ContainerNetworkState patch) {
@@ -201,10 +230,19 @@ public class CompositeComponentService extends StatefulService {
                 .setBody(patch)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        getHost().log(Level.WARNING, "Could not update the number of template for network %s", patch.name);
+                        getHost().log(Level.WARNING, "Could not update the component links of network %s", patch.name);
                     }
                 }));
+    }
 
+    private void updateVolumeState(ContainerVolumeState patch) {
+        sendRequest(Operation.createPatch(getHost(), patch.documentSelfLink)
+                .setBody(patch)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        getHost().log(Level.WARNING, "Could not update the component links of volume %s", patch.name);
+                    }
+                }));
     }
 
     private void deleteDocumentIfNeeded(List<String> componentLinks, Runnable deleteCallback) {

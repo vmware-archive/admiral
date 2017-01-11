@@ -114,12 +114,20 @@ public class NamedVolumeAffinityHostFilter
     }
 
     private void findContainerVolumes(PlacementHostSelectionTaskState state,
-            Map<String, HostSelection> hostSelectionMap, Map<String, DescName> descLinksWithNames,
+            Map<String, HostSelection> hostSelectionMap,
+            Map<String, DescName> descLinksWithNames,
             HostSelectionFilterCompletion callback) {
 
-        QueryTask q = QueryUtil.buildPropertyQuery(ContainerVolumeState.class,
-                ContainerVolumeState.FIELD_NAME_COMPOSITE_COMPONENT_LINK, UriUtils.buildUriPath(
-                        CompositeComponentFactoryService.SELF_LINK, state.contextId));
+        QueryTask q = QueryUtil.buildQuery(ContainerVolumeState.class, false);
+
+        String compositeComponentLinksItemField = QueryTask.QuerySpecification
+                .buildCollectionItemName(
+                        ContainerVolumeState.FIELD_NAME_COMPOSITE_COMPONENT_LINKS);
+        List<String> cclValues = new ArrayList<>(
+                Arrays.asList(UriUtils.buildUriPath(CompositeComponentFactoryService.SELF_LINK,
+                        state.contextId)));
+        QueryUtil.addListValueClause(q, compositeComponentLinksItemField, cclValues);
+
         q.taskInfo.isDirect = false;
         QueryUtil.addExpandOption(q);
 

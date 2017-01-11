@@ -70,24 +70,30 @@ public class ContainerVolumeServiceTest extends ComputeBaseTest {
                 FactoryService.create(ContainerVolumeService.class),
                 ContainerVolumeState.class,
                 (prefix, index) -> {
-                    ContainerVolumeState containerVolumeDesc = new ContainerVolumeState();
-                    containerVolumeDesc.name = prefix + "name" + index;
-                    containerVolumeDesc.mountpoint = MOUNTPOINT_DIR;
-                    containerVolumeDesc.customProperties = testCustomProperties;
-                    containerVolumeDesc.scope = CONTAINER_VOLUME_SCOPE;
-                    containerVolumeDesc.driver = CONTAINER_VOLUME_FLOCKER_DRIVER;
-                    return containerVolumeDesc;
+                    ContainerVolumeState volumeState = new ContainerVolumeState();
+                    volumeState.name = prefix + "name" + index;
+                    volumeState.mountpoint = MOUNTPOINT_DIR;
+                    volumeState.customProperties = testCustomProperties;
+                    volumeState.scope = CONTAINER_VOLUME_SCOPE;
+                    volumeState.driver = CONTAINER_VOLUME_FLOCKER_DRIVER;
+
+                    String key = prefix + "option" + index;
+                    String value = prefix + "value" + index;
+                    volumeState.options = new HashMap<>();
+                    volumeState.options.put(key, value);
+
+                    return volumeState;
                 },
                 (prefix, serviceDocument) -> {
-                    ContainerVolumeState contVolumeDesc = (ContainerVolumeState) serviceDocument;
-                    assertNotNull(contVolumeDesc);
-                    assertTrue(contVolumeDesc.name.startsWith(prefix + "name"));
-                    assertEquals(contVolumeDesc.mountpoint, MOUNTPOINT_DIR);
-                    assertNotNull(contVolumeDesc.customProperties);
-                    assertEquals(contVolumeDesc.customProperties, testCustomProperties);
-                    assertEquals(contVolumeDesc.scope, CONTAINER_VOLUME_SCOPE);
-                    assertEquals(contVolumeDesc.driver, CONTAINER_VOLUME_FLOCKER_DRIVER);
-
+                    ContainerVolumeState volumeState = (ContainerVolumeState) serviceDocument;
+                    assertNotNull(volumeState);
+                    assertTrue(volumeState.name.startsWith(prefix + "name"));
+                    assertEquals(volumeState.mountpoint, MOUNTPOINT_DIR);
+                    assertNotNull(volumeState.options);
+                    assertNotNull(volumeState.customProperties);
+                    assertEquals(volumeState.customProperties, testCustomProperties);
+                    assertEquals(volumeState.scope, CONTAINER_VOLUME_SCOPE);
+                    assertEquals(volumeState.driver, CONTAINER_VOLUME_FLOCKER_DRIVER);
                 });
     }
 
@@ -120,6 +126,16 @@ public class ContainerVolumeServiceTest extends ComputeBaseTest {
         assertNotEquals(volume.name, updatedVolume.name);
         assertEquals(updatedVolume.name, newName);
 
+        // Update component links
+        patch.compositeComponentLinks = new ArrayList<>();
+        patch.compositeComponentLinks.add("app-1");
+        patch.compositeComponentLinks.add("app-2");
+        updatedVolume = updateVolume(patch, volumeUri, volume.documentSelfLink);
+        assertEquals(2, updatedVolume.compositeComponentLinks.size());
+
+        patch.compositeComponentLinks.remove("app-1");
+        updatedVolume = updateVolume(patch, volumeUri, volume.documentSelfLink);
+        assertEquals(1, updatedVolume.compositeComponentLinks.size());
     }
 
     private ContainerVolumeState createVolume(String group)

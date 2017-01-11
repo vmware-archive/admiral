@@ -48,7 +48,7 @@ public class ContainerVolumeService extends StatefulService {
         public static final String FIELD_NAME_PARENT_LINKS = "parentLinks";
         public static final String FIELD_NAME_ORIGINATING_HOST_LINK = "originatingHostLink";
         public static final String FIELD_NAME_ADAPTER_MANAGEMENT_REFERENCE = "adapterManagementReference";
-        public static final String FIELD_NAME_COMPOSITE_COMPONENT_LINK = "compositeComponentLink";
+        public static final String FIELD_NAME_COMPOSITE_COMPONENT_LINKS = "compositeComponentLinks";
 
         public static enum PowerState {
             UNKNOWN,
@@ -72,9 +72,9 @@ public class ContainerVolumeService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public String originatingHostLink;
 
-        @Documentation(description = "Link to CompositeComponent when a volume is part of App/Composition request.")
-        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK })
-        public String compositeComponentLink;
+        @Documentation(description = "Links to CompositeComponents when a volume is part of App/Composition request.")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL })
+        public List<String> compositeComponentLinks;
 
         /** Defines which adapter will serve the provision request */
         @Documentation(description = "Defines which adapter will serve the provision request")
@@ -125,6 +125,16 @@ public class ContainerVolumeService extends StatefulService {
         public String mountpoint;
 
         /**
+         * A map of field-value pairs for a given volume. These are used to specify volume option
+         * that are to be used by the volume drivers.
+         */
+        @Documentation(description = "A map of field-value pairs for a given volume. These are used"
+                + "to specify volume options that are used by the volume drivers.")
+        @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
+                PropertyUsageOption.OPTIONAL, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public Map<String, String> options;
+
+        /**
          * Low-level details about the volume, provided by the volume driver. Details are returned
          * as a map with key/value pairs: {"key":"value","key2":"value2"}
          */
@@ -155,8 +165,8 @@ public class ContainerVolumeService extends StatefulService {
         // start the monitoring service instance for this network
         startMonitoringContainerVolumeState(body);
 
-        CompositeComponentNotifier.notifyCompositionComponent(this,
-                body.compositeComponentLink, create.getAction());
+        CompositeComponentNotifier.notifyCompositionComponents(this,
+                body.compositeComponentLinks, create.getAction());
 
         create.complete();
     }
@@ -180,7 +190,7 @@ public class ContainerVolumeService extends StatefulService {
 
         ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
         String currentSignature = Utils.computeSignature(currentState, docDesc);
-        String currentCompositeComponentLink = currentState.compositeComponentLink;
+        List<String> currentCompositeComponentLinks = currentState.compositeComponentLinks;
 
         PropertyUtils.mergeServiceDocuments(currentState, patchBody);
 
@@ -191,8 +201,8 @@ public class ContainerVolumeService extends StatefulService {
         if (!changed) {
             patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
         } else {
-            CompositeComponentNotifier.notifyCompositionComponentOnChange(this, patch.getAction(),
-                    currentState.compositeComponentLink, currentCompositeComponentLink);
+            CompositeComponentNotifier.notifyCompositionComponentsOnChange(this, patch.getAction(),
+                    currentState.compositeComponentLinks, currentCompositeComponentLinks);
         }
 
         patch.complete();
@@ -201,8 +211,8 @@ public class ContainerVolumeService extends StatefulService {
     @Override
     public void handleDelete(Operation delete) {
         ContainerVolumeState currentState = getState(delete);
-        CompositeComponentNotifier.notifyCompositionComponent(this,
-                currentState.compositeComponentLink, delete.getAction());
+        CompositeComponentNotifier.notifyCompositionComponents(this,
+                currentState.compositeComponentLinks, delete.getAction());
 
         super.handleDelete(delete);
     }
@@ -295,10 +305,14 @@ public class ContainerVolumeService extends StatefulService {
         template.status = new HashMap<>(1);
         template.status.put("key (string)", "value (string)");
 
+        template.options = new HashMap<>(1);
+        template.options.put("type (string)", "tmpfs (string)");
+
         // Default location according to official documents:
         // https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/inspect-a-volume
         template.mountpoint = "/var/lib/docker/volumes/";
 
+        template.compositeComponentLinks = new ArrayList<String>(0);
         template.parentLinks = new ArrayList<String>(0);
 
         return template;

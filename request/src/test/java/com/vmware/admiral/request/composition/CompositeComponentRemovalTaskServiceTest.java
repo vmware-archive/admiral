@@ -38,6 +38,10 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService.CompositionSubTaskState;
@@ -100,6 +104,7 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
         ContainerState container1 = createContainer(composite1);
         ContainerState container2 = createContainer(composite1);
         ContainerNetworkState network = createNetwork(composite1);
+        ContainerVolumeState volume = createVolume(composite1);
 
         // TODO: uncomment when composite component starts handles compute
         // ComputeState compute = createCompute(composite1);
@@ -117,14 +122,16 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
         verifyRemoved(container1);
         verifyRemoved(container2);
         verifyRemoved(network);
+        verifyRemoved(volume);
 
         List<CompositionSubTaskState> queryCompositionSubTasks = queryCompositionSubTasks();
 
-        // 1 for container, 1 for network
-        assertEquals(2, queryCompositionSubTasks.size());
+        // 1 for container, 1 for network, 1 for volume
+        assertEquals(3, queryCompositionSubTasks.size());
 
         CompositionSubTaskState containerSubTaskState = null;
         CompositionSubTaskState networkSubTaskState = null;
+        CompositionSubTaskState volumeSubTaskState = null;
         for (CompositionSubTaskState compositionSubTaskState : queryCompositionSubTasks) {
             if (compositionSubTaskState.documentSelfLink
                     .endsWith(ResourceType.CONTAINER_TYPE.getName())) {
@@ -132,6 +139,9 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
             } else if (compositionSubTaskState.documentSelfLink
                     .endsWith(ResourceType.CONTAINER_NETWORK_TYPE.getName())) {
                 networkSubTaskState = compositionSubTaskState;
+            } else if (compositionSubTaskState.documentSelfLink
+                    .endsWith(ResourceType.CONTAINER_VOLUME_TYPE.getName())) {
+                volumeSubTaskState = compositionSubTaskState;
             } else {
                 fail("Unexpected compositionSubTaskState: "
                         + compositionSubTaskState.documentSelfLink);
@@ -140,6 +150,7 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
 
         assertNotNull(containerSubTaskState);
         assertNotNull(networkSubTaskState);
+        assertNotNull(volumeSubTaskState);
 
         assertNull(containerSubTaskState.dependsOnLinks);
         assertTrue(containerSubTaskState.dependentLinks
@@ -207,6 +218,27 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
         network = doPost(network, ContainerNetworkService.FACTORY_LINK);
         addForDeletion(network);
         return network;
+    }
+
+    private ContainerVolumeState createVolume(CompositeComponent composite) throws Throwable {
+        return createVolume(composite, false);
+    }
+
+    private ContainerVolumeState createVolume(CompositeComponent composite, boolean isExternal) throws Throwable {
+        ContainerVolumeDescription volumeDesc = TestRequestStateFactory
+                .createContainerVolumeDescription("test-volume");
+        volumeDesc = doPost(volumeDesc, ContainerVolumeDescriptionService.FACTORY_LINK);
+        addForDeletion(volumeDesc);
+
+        ContainerVolumeState volume = TestRequestStateFactory.createVolume("test-volume-003");
+        volume.compositeComponentLinks = new ArrayList<>();
+        volume.compositeComponentLinks.add(composite.documentSelfLink);
+        volume.adapterManagementReference = volumeDesc.instanceAdapterReference;
+        volume.descriptionLink = volumeDesc.documentSelfLink;
+        volume.external = isExternal;
+        volume = doPost(volume, ContainerVolumeService.FACTORY_LINK);
+        addForDeletion(volume);
+        return volume;
     }
 
     private void verifyRemoved(ServiceDocument doc) throws Throwable {

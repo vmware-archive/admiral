@@ -19,6 +19,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -272,8 +273,9 @@ public class NamedVolumeAffinityHostFilterTest extends BaseAffinityHostFilterTes
         containerVolume.descriptionLink = desc.documentSelfLink;
         containerVolume.name = desc.name + UUID.randomUUID().toString();
         containerVolume.driver = desc.driver;
-        containerVolume.compositeComponentLink = UriUtils.buildUriPath(
-                CompositeComponentFactoryService.SELF_LINK, state.contextId);
+        containerVolume.compositeComponentLinks = new ArrayList<>();
+        containerVolume.compositeComponentLinks.add(UriUtils.buildUriPath(
+                CompositeComponentFactoryService.SELF_LINK, state.contextId));
         containerVolume = doPost(containerVolume, ContainerVolumeService.FACTORY_LINK);
         assertNotNull(containerVolume);
         addForDeletion(containerVolume);
