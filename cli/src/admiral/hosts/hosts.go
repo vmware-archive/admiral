@@ -550,7 +550,7 @@ func EditHost(id, name, placementZoneId, deplPolicyF, credId string,
 	tagsToAdd, tagsToRemove []string) (string, error) {
 	url := urlutils.BuildUrl(urlutils.Host, nil, true)
 
-	oldHost, err := getHost(id)
+	oldHost, err := GetHost(id)
 	if err != nil {
 		return "", err
 	}
@@ -598,7 +598,7 @@ func removeNewCredentials(credID string, isNewCred bool) {
 	credentials.RemoveCredentialsID(credID)
 }
 
-func getHost(id string) (*Host, error) {
+func GetHost(id string) (*Host, error) {
 	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinksForHosts(fullId)
