@@ -11,6 +11,10 @@
 
 package com.vmware.admiral.compute.env;
 
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+
+import java.util.List;
+
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.xenon.common.Operation;
@@ -24,7 +28,13 @@ public class NetworkProfileService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.NETWORK_PROFILES;
 
     public static class NetworkProfile extends MultiTenantDocument {
-        // TODO
+        @Documentation(description = "The name that can be used to refer to this network profile")
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
+        public String name;
+
+        @Documentation(description = "Subnets included in this network profile")
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
+        public List<String> subnetLinks;
     }
 
     public NetworkProfileService() {
