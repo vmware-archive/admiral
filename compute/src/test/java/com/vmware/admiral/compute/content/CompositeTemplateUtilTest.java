@@ -47,6 +47,8 @@ import com.vmware.admiral.compute.content.CompositeTemplateUtil.YamlType;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 
+import com.vmware.xenon.common.LocalizableValidationException;
+
 public class CompositeTemplateUtilTest extends ComputeBaseTest {
 
     @Test
@@ -324,7 +326,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         try {
             deserializeDockerCompose(getContent("composite.wordpress.yaml"));
             fail("wrong content!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             // Docker Compose YAMLs have no top-level property 'name'
             assertTrue(
                     e.getMessage().startsWith("Error processing Docker Compose v2 YAML content:"));
@@ -333,7 +335,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         try {
             deserializeDockerCompose(getContent("docker.redis.v1.yaml"));
             fail("wrong content!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             // Docker Compose YAMLs is not version 2
             assertTrue(
                     e.getMessage().startsWith("Error processing Docker Compose v2 YAML content:"));
@@ -342,42 +344,42 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         try {
             deserializeCompositeTemplate("");
             fail("wrong content!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("cannot be empty"));
         }
 
         try {
             deserializeCompositeTemplate(null);
             fail("wrong content!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("cannot be empty"));
         }
 
         try {
             deserializeCompositeTemplate("abc");
             fail("wrong content!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().startsWith("Error processing Blueprint YAML content:"));
         }
 
         try {
             deserializeDockerCompose("");
             fail("wrong content!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("cannot be empty"));
         }
 
         try {
             deserializeDockerCompose(null);
             fail("wrong content!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("cannot be empty"));
         }
 
         try {
             deserializeDockerCompose("abc");
             fail("wrong content!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(
                     e.getMessage().startsWith("Error processing Docker Compose v2 YAML content:"));
         }
@@ -388,14 +390,14 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         try {
             serializeCompositeTemplate(null);
             fail("wrong content!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("is required"));
         }
 
         try {
             serializeDockerCompose(null);
             fail("wrong content!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("is required"));
         }
     }
@@ -435,7 +437,7 @@ public class CompositeTemplateUtilTest extends ComputeBaseTest {
         try {
             getYamlType(getContent("../docker-host-private-key.PEM"));
             fail("With invalid content should fail!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().startsWith("Error processing YAML content:"));
         }
     }

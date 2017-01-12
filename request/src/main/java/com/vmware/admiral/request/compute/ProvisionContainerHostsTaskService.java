@@ -11,9 +11,6 @@
 
 package com.vmware.admiral.request.compute;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
-import static com.vmware.admiral.common.util.AssertUtil.assertState;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -36,6 +33,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
@@ -119,13 +117,16 @@ public class ProvisionContainerHostsTaskService
     protected void validateStateOnStart(ProvisionContainerHostsTaskState state)
             throws IllegalArgumentException {
         if (state.computeDescriptionLink == null && state.hostDescription == null) {
-            throw new IllegalArgumentException(
-                    "'computeDescriptionLink' or 'hostDescription' is required");
+            throw new LocalizableValidationException(
+                    "'computeDescriptionLink' or 'hostDescription' is required", "request.provision.links.empty");
         }
-        if (state.hostDescription != null) {
-            assertNotEmpty(state.endpointLink, "endpointLink");
+        if (state.hostDescription != null && (state.endpointLink == null || state.endpointLink.isEmpty())) {
+            throw new LocalizableValidationException("'endpointLink' must not be empty", "request.provision.endpoint-link.empty");
         }
-        assertState(state.resourceCount > 0, "'resourceCount' must be greather than zero.");
+
+        if (state.resourceCount > 0) {
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
+        }
     }
 
     @Override

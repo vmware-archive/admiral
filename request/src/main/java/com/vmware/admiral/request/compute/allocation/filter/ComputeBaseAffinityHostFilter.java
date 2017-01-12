@@ -180,12 +180,14 @@ public abstract class ComputeBaseAffinityHostFilter
             final String errMsg = String.format(
                     "No computes found for filter and value of [%s] for contextId [%s].",
                     getAffinity(), state.contextId);
-            throw new HostSelectionFilterException(errMsg);
+            throw new HostSelectionFilterException(errMsg, "request.affinity.computes.not.found",
+                    getAffinity(), state.contextId);
         } else if (filteredHostSelectionMap.size() > 1) {
             final String errMsg = String
                     .format("Compute host selection size [%s] based on filter: [links] with values: [%s] and contextId [%s] is not expected to be more than 1.",
                             filteredHostSelectionMap.size(), getAffinity(), state.contextId);
-            throw new HostSelectionFilterException(errMsg);
+            throw new HostSelectionFilterException(errMsg, "request.affinity.multiple.selections",
+                    filteredHostSelectionMap.size(), getAffinity(), state.contextId);
         }
 
         return filteredHostSelectionMap;
@@ -196,7 +198,7 @@ public abstract class ComputeBaseAffinityHostFilter
             final Map<String, HostSelection> filteredHostSelectionMap,
             final Map<String, DescName> computeDescLinksWithNames) {
         final String errMsg = String.format("No compute descriptions with [%s].", getAffinity());
-        return DeferredResult.failed(new HostSelectionFilterException(errMsg));
+        return DeferredResult.failed(new HostSelectionFilterException(errMsg, "request.affinity.no.compute-doesc", getAffinity()));
     }
 
     protected static QueryTask getBidirectionalDescQuery(String fieldName, String value,

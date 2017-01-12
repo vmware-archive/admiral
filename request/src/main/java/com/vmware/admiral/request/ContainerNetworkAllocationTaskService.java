@@ -44,6 +44,7 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -131,7 +132,8 @@ public class ContainerNetworkAllocationTaskService extends
     @Override
     protected void validateStateOnStart(ContainerNetworkAllocationTaskState state) {
         if (state.resourceCount < 1) {
-            throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.",
+                    "request.resource-count.zero");
         }
 
         List<String> providedHostIds = getProvidedHostIds(state);

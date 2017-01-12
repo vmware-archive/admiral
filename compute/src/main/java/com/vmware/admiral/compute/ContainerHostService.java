@@ -54,6 +54,7 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceErrorResponse;
@@ -212,8 +213,8 @@ public class ContainerHostService extends StatelessService {
                                     op.fail(r.getException());
                                 } else if (r.hasResult()) {
                                     found.set(true);
-                                    op.fail(new IllegalArgumentException(
-                                            CONTAINER_HOST_ALREADY_EXISTS_MESSAGE));
+                                    op.fail(new LocalizableValidationException(
+                                            CONTAINER_HOST_ALREADY_EXISTS_MESSAGE, "compute.host.already.exists"));
                                 } else if (!found.get()) {
                                     createHost(hostSpec, op);
                                 }
@@ -443,7 +444,7 @@ public class ContainerHostService extends StatelessService {
             // use tags
             AssertUtil.assertNotEmpty(hostSpec.hostState.resourcePoolLink, "resourcePoolLink");
             AssertUtil.assertEmpty(hostSpec.hostState.tagLinks, "tagLinks");
-        } catch (IllegalArgumentException ex) {
+        } catch (LocalizableValidationException ex) {
             op.fail(ex);
             return;
         }

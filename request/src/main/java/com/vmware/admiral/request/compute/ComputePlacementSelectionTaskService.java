@@ -48,6 +48,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.util.ResourcePoolQueryHelper;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.services.common.QueryTask;
@@ -153,7 +154,7 @@ public class ComputePlacementSelectionTaskService extends
     @Override
     protected void validateStateOnStart(ComputePlacementSelectionTaskState state) {
         if (state.resourceCount < 1) {
-            throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
         }
     }
 
@@ -189,8 +190,9 @@ public class ComputePlacementSelectionTaskService extends
                 hostToAvailableMemory.put(r.getDocumentSelfLink(), r.getResult().totalMemoryBytes);
             } else {
                 if (computeDescriptionLinks.isEmpty()) {
-                    failTask(null, new IllegalStateException(
-                            "No ComputeDescription found for compute placement"));
+                    failTask(null, new LocalizableValidationException(
+                            "No ComputeDescription found for compute placement",
+                            "request.compute.placement.compute-description.missing"));
                     return;
                 }
                 proceedComputeSelection(state, computeDescriptionLinks, hostToAvailableMemory);
@@ -217,9 +219,10 @@ public class ComputePlacementSelectionTaskService extends
             }
 
             if (qr.computesByLink.isEmpty()) {
-                failTask(null, new IllegalStateException(
+                failTask(null, new LocalizableValidationException(
                         "No powered-on compute placement candidates found in "
-                                + "placement zones: " + state.resourcePoolLinks));
+                                + "placement zones: " + state.resourcePoolLinks,
+                                "request.compute.placement.powered-on.placements.unavailable", state.resourcePoolLinks));
                 return;
             }
 
@@ -254,9 +257,10 @@ public class ComputePlacementSelectionTaskService extends
             final Queue<HostSelectionFilter> filters) {
 
         if (isNoSelection(hostSelectionMap)) {
-            failTask(null, new IllegalStateException(
+            failTask(null, new LocalizableValidationException(
                     "No compute placement candidates found in placement zones: "
-                            + state.resourcePoolLinks));
+                            + state.resourcePoolLinks,
+                            "request.compute.placement.placements.unavailable", state.resourcePoolLinks));
             return;
         }
 

@@ -115,17 +115,17 @@ public class ResourceNamePrefixServiceTest extends ComputeBaseTest {
         NamePrefixRequest request = new NamePrefixRequest();
         request.resourceCount = -1;
 
-        validateIllegalArgument(() -> {
+        validateLocalizableException(() -> {
             patch(state, request, true);
         }, "must not be negative.");
 
         request.resourceCount = 0;
-        validateIllegalArgument(() -> {
+        validateLocalizableException(() -> {
             patch(state, request, true);
         }, "must not be zero.");
 
         request.resourceCount = state.getRange() + 1;
-        validateIllegalArgument(() -> {
+        validateLocalizableException(() -> {
             patch(state, request, true);
         }, "must be bigger than the range.");
     }
@@ -212,7 +212,7 @@ public class ResourceNamePrefixServiceTest extends ComputeBaseTest {
 
     private void validateIllegalArgument(ResourceNamePrefixState state, String expecation)
             throws Throwable {
-        validateIllegalArgument(() -> {
+        validateLocalizableException(() -> {
             doPost(state, UriUtils.buildUri(host, ResourceNamePrefixService.FACTORY_LINK), true);
         }, expecation);
 

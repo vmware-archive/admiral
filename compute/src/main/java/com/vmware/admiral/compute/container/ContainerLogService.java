@@ -20,6 +20,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.LogService.LogServiceState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.StatelessService;
@@ -63,7 +64,8 @@ public class ContainerLogService extends StatelessService {
                                 containerId, Utils.toString(e));
                         logWarning(errMsg);
                         if (get != null) {
-                            get.fail(new IllegalArgumentException(errMsg));
+                            get.fail(new LocalizableValidationException(errMsg, "compute.container.log.container.unavailable",
+                                    containerId, Utils.toString(e)));
                         }
                         return;
                     }

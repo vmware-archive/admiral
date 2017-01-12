@@ -79,6 +79,7 @@ import com.vmware.photon.controller.model.resources.TagFactoryService;
 import com.vmware.photon.controller.model.resources.TagService;
 import com.vmware.photon.controller.model.resources.TagService.TagState;
 import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.OperationSequence;
@@ -231,12 +232,13 @@ public class ComputeAllocationTaskService
     protected void validateStateOnStart(ComputeAllocationTaskState state)
             throws IllegalArgumentException {
         if (state.groupResourcePlacementLink == null && state.resourcePoolLink == null) {
-            throw new IllegalArgumentException(
-                    "'groupResourcePlacementLink' and 'resourcePoolLink' cannot be both empty.");
+            throw new LocalizableValidationException(
+                    "'groupResourcePlacementLink' and 'resourcePoolLink' cannot be both empty.",
+                    "request.compute.allocation.links.empty");
         }
 
         if (state.resourceCount < 1) {
-            throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
         }
     }
 
@@ -917,8 +919,8 @@ public class ComputeAllocationTaskService
                     GroupResourcePlacementState placementState = o
                             .getBody(GroupResourcePlacementState.class);
                     if (placementState.resourcePoolLink == null) {
-                        failTask(null, new IllegalStateException(
-                                "Placement state has no resourcePoolLink"));
+                        failTask(null, new LocalizableValidationException("Placement state has no resourcePoolLink",
+                                "request.compute.allocation.resource-pool.missing"));
                         return;
                     }
                     opRP.setUri(UriUtils.buildUri(getHost(), placementState.resourcePoolLink));

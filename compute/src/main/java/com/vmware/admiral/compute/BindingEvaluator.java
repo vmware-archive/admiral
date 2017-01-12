@@ -41,6 +41,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.content.Binding;
 import com.vmware.admiral.compute.content.Binding.ComponentBinding;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.ServiceDocument;
 
 /**
@@ -251,7 +252,7 @@ public class BindingEvaluator {
         String componentName = targetDescription.name;
 
         if (visited.contains(componentName)) {
-            throw new IllegalArgumentException("Cyclic bindings cannot be evaluated");
+            throw new LocalizableValidationException("Cyclic bindings cannot be evaluated", "compute.cyclic.bindings");
         }
         visited.add(componentName);
 

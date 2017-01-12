@@ -24,6 +24,7 @@ import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentStateExpande
 import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfile;
 import com.vmware.admiral.compute.env.StorageProfileService.StorageProfile;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
 
@@ -128,7 +129,7 @@ public class EnvironmentServiceTest extends ComputeBaseTest {
         assertEquals(network.documentSelfLink, retrievedExpandedEnv.networkProfile.documentSelfLink);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = LocalizableValidationException.class)
     public void testMissingEndpointParams() throws Throwable {
         EnvironmentState env = new EnvironmentState();
         env.name = "test env";
@@ -138,7 +139,7 @@ public class EnvironmentServiceTest extends ComputeBaseTest {
         doPost(env, EnvironmentService.FACTORY_LINK);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = LocalizableValidationException.class)
     public void testBothEndpointLinkAndTypeParams() throws Throwable {
         EnvironmentState env = new EnvironmentState();
         env.name = "test env";

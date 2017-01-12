@@ -30,6 +30,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.FactoryService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 
@@ -112,7 +113,7 @@ public class DeploymentPolicyServiceTest extends ComputeBaseTest {
         try {
             doDelete(UriUtils.buildUri(host, deploymentPolicy.documentSelfLink), true);
             fail("expect validation error during deletion");
-        } catch (IllegalStateException e) {
+        } catch (LocalizableValidationException e) {
             assertEquals("Deployment Policy is in use", e.getMessage());
         }
         doDelete(UriUtils.buildUri(host, compute.documentSelfLink), false);
@@ -120,7 +121,7 @@ public class DeploymentPolicyServiceTest extends ComputeBaseTest {
         try {
             doDelete(UriUtils.buildUri(host, deploymentPolicy.documentSelfLink), true);
             fail("expect validation error during deletion");
-        } catch (IllegalStateException e) {
+        } catch (LocalizableValidationException e) {
             assertEquals("Deployment Policy is in use", e.getMessage());
         }
         doDelete(UriUtils.buildUri(host, resourcePlacement.documentSelfLink), false);

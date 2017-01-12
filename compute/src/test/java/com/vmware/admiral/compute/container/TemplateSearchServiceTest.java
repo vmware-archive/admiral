@@ -30,6 +30,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.TemplateSearchService.Response;
 import com.vmware.admiral.compute.container.TemplateSpec.TemplateType;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 
@@ -182,7 +183,7 @@ public class TemplateSearchServiceTest extends ComputeBaseTest {
         });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = LocalizableValidationException.class)
     public void testImagesOnlyAndTemplatesOnlyNotAllowed() throws Throwable {
         verifyTemplateSearchResult(TEST_COMPOSITE_DESC_NAME, true, false, true, null, (o) -> {
         });

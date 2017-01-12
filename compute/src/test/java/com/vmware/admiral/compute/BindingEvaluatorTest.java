@@ -33,6 +33,7 @@ import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.content.Binding;
 import com.vmware.admiral.compute.content.Binding.BindingPlaceholder;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.LocalizableValidationException;
 
 public class BindingEvaluatorTest {
 
@@ -259,7 +260,7 @@ public class BindingEvaluatorTest {
         assertEquals(firstDescription.hostname, secondDescription._cluster.toString());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = LocalizableValidationException.class)
     public void testEvaluateBindingsCyclicDependency() {
         ContainerDescription firstDescription = new ContainerDescription();
         firstDescription.name = "A";

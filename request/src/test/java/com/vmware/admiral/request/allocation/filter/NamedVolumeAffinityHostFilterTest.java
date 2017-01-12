@@ -42,6 +42,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeService.Contai
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.UriUtils;
 
 public class NamedVolumeAffinityHostFilterTest extends BaseAffinityHostFilterTest {
@@ -212,7 +213,12 @@ public class NamedVolumeAffinityHostFilterTest extends BaseAffinityHostFilterTes
             fail("Expected exception");
         }
 
-        assertThat(e.getMessage(), startsWith("Detected multiple containers sharing local"));
+        if (e instanceof LocalizableValidationException) {
+            LocalizableValidationException le = (LocalizableValidationException) e;
+            assertThat(le.getMessage(), startsWith("Detected multiple containers sharing local"));
+        } else {
+            fail("Expected LocalizableValidationException");
+        }
     }
 
     @Test
@@ -236,7 +242,12 @@ public class NamedVolumeAffinityHostFilterTest extends BaseAffinityHostFilterTes
             fail("Expected exception");
         }
 
-        assertThat(e.getMessage(), startsWith("Unable to place containers sharing local volumes"));
+        if (e instanceof LocalizableValidationException) {
+            LocalizableValidationException le = (LocalizableValidationException) e;
+            assertThat(le.getMessage(), startsWith("Unable to place containers sharing local volumes"));
+        } else {
+            fail("Expected LocalizableValidationException");
+        }
     }
 
     private ContainerDescription createContainerDescription(String[] volumes)

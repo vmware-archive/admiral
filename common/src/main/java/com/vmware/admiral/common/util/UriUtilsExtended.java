@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import com.vmware.admiral.service.common.ReverseProxyService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.UriUtils;
 
 public class UriUtilsExtended {
@@ -56,8 +57,9 @@ public class UriUtilsExtended {
 
         if (!scheme.equalsIgnoreCase(UriUtils.HTTP_SCHEME)
                 && !scheme.equalsIgnoreCase(UriUtils.HTTPS_SCHEME)) {
-            throw new IllegalArgumentException(
-                    "Unsupported scheme, must be http or https: " + scheme);
+            throw new LocalizableValidationException(
+                    "Unsupported scheme, must be http or https: " + scheme,
+                    "common.unsupported.scheme", scheme);
         }
 
         String servicePort = matcher.group("port");
@@ -93,8 +95,9 @@ public class UriUtilsExtended {
 
         if (!scheme.equalsIgnoreCase(UriUtils.HTTP_SCHEME)
                 && !scheme.equalsIgnoreCase(UriUtils.HTTPS_SCHEME)) {
-            throw new IllegalArgumentException(
-                    "Unsupported scheme, must be http or https: " + scheme);
+            throw new LocalizableValidationException(
+                    "Unsupported scheme, must be http or https: " + scheme,
+                    "common.unsupported.scheme", scheme);
         }
 
         String servicePort = matcher.group("port");
@@ -152,7 +155,7 @@ public class UriUtilsExtended {
     private static Matcher addressPatternMatcher(String address) {
         Matcher matcher = PATTERN_HOST_URL.matcher(address.trim());
         if (!matcher.matches()) {
-            throw new IllegalArgumentException("Invalid host address: " + address);
+            throw new LocalizableValidationException("Invalid host address: " + address, "common.host.address.invalid", address);
         }
         return matcher;
     }
@@ -309,7 +312,8 @@ public class UriUtilsExtended {
 
         URI targetUri = UriUtils.buildUri(decodedUri);
         if (targetUri == null) {
-            throw new IllegalArgumentException("Invalid target URI: " + decodedUri);
+            throw new LocalizableValidationException("Invalid target URI: " + decodedUri,
+                    "common.invalid.uri", decodedUri);
         }
 
         Map<String, String> queryParams = UriUtils.parseUriQueryParams(targetUri);

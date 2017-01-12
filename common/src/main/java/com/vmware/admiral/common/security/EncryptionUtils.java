@@ -14,6 +14,8 @@ package com.vmware.admiral.common.security;
 import java.io.File;
 import java.nio.file.Files;
 
+import com.vmware.xenon.common.LocalizableValidationException;
+
 /**
  * Simple encryption utility class that provides methods to encrypt and decrypt strings based on the
  * {@link EncryptorService} and the encryption key file provided via a system property. If no
@@ -42,7 +44,7 @@ public class EncryptionUtils {
             try {
                 encryptionService.encrypt(ENCRYPTION_PREFIX);
             } catch (Exception e) {
-                throw new IllegalStateException("Error validating the encryption key!", e);
+                throw new LocalizableValidationException(e, "Error validating the encryption key!", "common.encryption.file.validation");
             }
         }
     }
@@ -63,11 +65,13 @@ public class EncryptionUtils {
                 try {
                     Files.write(encryptionKeyFile.toPath(), EncryptorService.generateKey());
                 } catch (Exception e) {
-                    throw new IllegalStateException(
-                            "Error initializing the encryption key file '" + param + "'!", e);
+                    throw new LocalizableValidationException(e,
+                            "Error initializing the encryption key file '" + param + "'!",
+                            "common.encryption.file.init", param);
                 }
             } else {
-                throw new IllegalArgumentException("File '" + param + "' does not exist!");
+                throw new LocalizableValidationException("File '" + param + "' does not exist!",
+                        "common.encryption.file.missing", param);
             }
         }
 

@@ -33,6 +33,7 @@ import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
@@ -166,7 +167,7 @@ public class ContainerUtil {
         PortBinding portBinding = getShellPortBinding(shellContainer);
 
         if (portBinding == null) {
-            throw new IllegalStateException("Could not locate shell port");
+            throw new LocalizableValidationException("Could not locate shell port", "compute.shell.port");
         }
 
         String uriHost = UriUtilsExtended.extractHost(host.address);

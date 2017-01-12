@@ -54,6 +54,7 @@ import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.adapterapi.EndpointConfigRequest;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -182,7 +183,7 @@ public class ComputeReservationTaskService
     @Override
     protected void validateStateOnStart(ComputeReservationTaskState state) {
         if (state.resourceCount < 1) {
-            throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
         }
     }
 
@@ -340,7 +341,7 @@ public class ComputeReservationTaskService
             List<GroupResourcePlacementState> placements, List<String> tenantLinks,
             ComputeDescription computeDesc) {
         if (placements == null) {
-            failTask(null, new IllegalStateException("No placements found"));
+            failTask(null, new LocalizableValidationException("No placements found", "request.compute.reservation.placements.missing"));
             return;
         }
 
@@ -444,8 +445,9 @@ public class ComputeReservationTaskService
     private void selectReservation(ComputeReservationTaskState state,
             LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks) {
         if (resourcePoolsPerGroupPlacementLinks.isEmpty()) {
-            failTask(null, new IllegalStateException(
-                    "resourcePoolsPerGroupPlacementLinks must not be empty"));
+            failTask(null, new LocalizableValidationException(
+                    "resourcePoolsPerGroupPlacementLinks must not be empty",
+                    "request.compute.reservation.resource-pools.empty"));
             return;
         }
 

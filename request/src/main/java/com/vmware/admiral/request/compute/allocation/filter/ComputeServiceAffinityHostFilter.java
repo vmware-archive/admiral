@@ -88,7 +88,8 @@ public class ComputeServiceAffinityHostFilter extends ComputeBaseAffinityHostFil
             final String errMsg = String.format(
                     "No computes found for filter and value of [%s] for contextId [%s].",
                     getAffinity(), state.contextId);
-            throw new HostSelectionFilterException(errMsg);
+            throw new HostSelectionFilterException(errMsg, "request.affinity.computes.not.found",
+                    getAffinity(), state.contextId);
 
         } else if (filteredHostSelectionMap.isEmpty() && !hasOutgoingAffinities()) {
             return initHostSelectionMap;
@@ -102,7 +103,8 @@ public class ComputeServiceAffinityHostFilter extends ComputeBaseAffinityHostFil
                 final String errMsg = String
                         .format("Compute host selection size [%s] based on filter: [links] with values: [%s] and contextId [%s] is not expected to be more than 1.",
                                 filteredHostSelectionMap.size(), getAffinity(), state.contextId);
-                throw new HostSelectionFilterException(errMsg);
+                throw new HostSelectionFilterException(errMsg, "request.affinity.multiple.selections",
+                        filteredHostSelectionMap.size(), getAffinity(), state.contextId);
             } else if (hardAffinityHosts.size() == 1) {
                 return hardAffinityHosts;
             } else {
@@ -206,7 +208,8 @@ public class ComputeServiceAffinityHostFilter extends ComputeBaseAffinityHostFil
             final Map<String, DescName> containerDescLinksWithNames) {
         final String errMsg = String.format("No compute descriptions with [%s].", getAffinity());
         if (hasOutgoingAffinities()) {
-            return DeferredResult.failed(new HostSelectionFilterException(errMsg));
+            return DeferredResult.failed(new HostSelectionFilterException(errMsg, "request.affinity.no.compute-doesc",
+                    getAffinity()));
         } else {
             return DeferredResult.completed(filteredHostSelectionMap);
         }

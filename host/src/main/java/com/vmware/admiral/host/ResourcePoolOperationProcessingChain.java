@@ -25,6 +25,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.FactoryService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationProcessingChain;
 import com.vmware.xenon.common.Service.Action;
@@ -99,7 +100,7 @@ public class ResourcePoolOperationProcessingChain extends OperationProcessingCha
                     } else {
                         ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
                         if (result.documentCount != 0) {
-                            op.fail(new IllegalStateException(PLACEMENT_ZONE_IN_USE_MESSAGE));
+                            op.fail(new LocalizableValidationException(PLACEMENT_ZONE_IN_USE_MESSAGE, "host.resource-pool.in.use"));
                         } else {
                             resumeProcessingRequest(op, invokingFilter);
                         }
@@ -118,7 +119,7 @@ public class ResourcePoolOperationProcessingChain extends OperationProcessingCha
         try {
             AssertUtil.assertEmpty(placementZone.tagLinks, "tagLinks");
             return true;
-        } catch (IllegalArgumentException ex) {
+        } catch (LocalizableValidationException ex) {
             op.fail(ex);
             return false;
         }
@@ -159,7 +160,7 @@ public class ResourcePoolOperationProcessingChain extends OperationProcessingCha
                     try {
                         // shcedulers can have no tags
                         AssertUtil.assertEmpty(unifiedState.tagLinks, "tagLinks");
-                    } catch (IllegalArgumentException ex) {
+                    } catch (LocalizableValidationException ex) {
                         op.fail(ex);
                         return;
                     }

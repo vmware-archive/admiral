@@ -121,6 +121,7 @@ import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.FileUtils;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.Service;
@@ -628,7 +629,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     fileName,
                     context.request.getRequestTrackingLog());
             this.logSevere(errMsg);
-            imageCompletionHandler.handle(null, new IllegalStateException(errMsg));
+            imageCompletionHandler.handle(null, new LocalizableValidationException(errMsg, "adapter.load.image.empty", fileName,
+                    context.request.getRequestTrackingLog()));
             return;
         }
 
@@ -1110,8 +1112,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         String command = context.request.customProperties
                 .get(ShellContainerExecutorService.COMMAND_KEY);
         if (command == null) {
-            context.operation.fail(new IllegalArgumentException("Command not provided"
-                    + context.request.getRequestTrackingLog()));
+            context.operation.fail(new LocalizableValidationException("Command not provided"
+                    + context.request.getRequestTrackingLog(), "adapter.exec.container.command.missing",
+                    context.request.getRequestTrackingLog()));
         }
 
         String[] commandArr = command

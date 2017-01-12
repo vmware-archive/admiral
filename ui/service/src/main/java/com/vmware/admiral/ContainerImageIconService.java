@@ -24,6 +24,7 @@ import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.xenon.common.FileUtils;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -79,10 +80,11 @@ public class ContainerImageIconService extends StatelessService {
         Map<String, String> params = UriUtils.parseUriQueryParams(get.getUri());
         String containerImageIcon = params.remove(CONTAINER_IMAGE_QUERY_PARAM);
         if (containerImageIcon == null || containerImageIcon.isEmpty()) {
-            get.fail(new IllegalArgumentException(
-                    String.format(
-                            "URL parameter '%s' expected with container image name as value.",
-                            CONTAINER_IMAGE_QUERY_PARAM)));
+            String errorMsg = String.format(
+                    "URL parameter '%s' expected with container image name as value.",
+                    CONTAINER_IMAGE_QUERY_PARAM);
+            get.fail(new LocalizableValidationException(errorMsg, "ui.container-image.container.name.missing",
+                    CONTAINER_IMAGE_QUERY_PARAM));
             return;
         }
 

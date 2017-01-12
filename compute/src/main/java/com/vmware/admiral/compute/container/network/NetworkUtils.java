@@ -28,6 +28,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ConnectedContainersCountIncrement;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState.PowerState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
@@ -131,7 +132,7 @@ public class NetworkUtils {
             String error = String.format(
                     FORMAT_CIDR_NOTATION_VALIDATION_ERROR,
                     subnet);
-            throw new IllegalArgumentException(error);
+            throw new LocalizableValidationException(error, "compute.network.validate.cidr", subnet);
         }
     }
 
@@ -139,13 +140,13 @@ public class NetworkUtils {
         if (!StringUtil.isNullOrEmpty(gateway) && !gateway.matches(REGEXP_IP_ADDRESS)) {
             String error = String.format(FORMAT_IP_VALIDATION_ERROR,
                     gateway);
-            throw new IllegalArgumentException(error);
+            throw new LocalizableValidationException(error, "compute.network.validate.ip", gateway);
         }
     }
 
     public static void validateNetworkName(String name) {
         if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException(ERROR_NETWORK_NAME_IS_REQUIRED);
+            throw new LocalizableValidationException(ERROR_NETWORK_NAME_IS_REQUIRED, "compute.network.validate.name");
         }
         // currently, it looks like there are no restrictions on the network name from docker side.
         // Numbers-only names and even space-delimited words are supported. We can add some

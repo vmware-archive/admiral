@@ -20,6 +20,7 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService.Resour
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 
@@ -63,7 +64,7 @@ public class ReservationRemovalTaskService
     @Override
     protected void validateStateOnStart(ReservationRemovalTaskState state) {
         if (state.resourceCount < 1) {
-            throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
         }
     }
 

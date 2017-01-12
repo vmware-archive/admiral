@@ -54,6 +54,7 @@ import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.TestServerX509TrustManager;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.FactoryService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationProcessingChain;
 import com.vmware.xenon.common.Service;
@@ -931,12 +932,12 @@ public abstract class BaseTestCase {
         field.set(instance, newValue);
     }
 
-    protected void validateIllegalArgument(IllegalArgumentHandler handler, String expectation)
+    protected void validateLocalizableException(LocalizableExceptionHandler handler, String expectation)
             throws Throwable {
         try {
             handler.call();
-            fail("IllegalArgumentException expected: " + expectation);
-        } catch (IllegalArgumentException e) {
+            fail("LocalizableValidationException expected: " + expectation);
+        } catch (LocalizableValidationException e) {
             // expected
         }
     }
@@ -976,7 +977,7 @@ public abstract class BaseTestCase {
     }
 
     @FunctionalInterface
-    protected static interface IllegalArgumentHandler {
+    protected static interface LocalizableExceptionHandler {
         void call() throws Throwable;
     }
 

@@ -62,7 +62,7 @@ public class ServiceDocumentDeleteTaskService
             handleQueryServices(state);
             break;
         default:
-            failTask(String.format("Unexpected sub stage: %s", state.taskSubStage), new IllegalStateException());
+            failTask(String.format("Unexpected sub stage: %s", state.taskSubStage), null);
             break;
         }
     }

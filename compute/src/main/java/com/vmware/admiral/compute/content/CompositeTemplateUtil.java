@@ -65,6 +65,7 @@ import com.vmware.admiral.compute.content.compose.NetworkExternal;
 import com.vmware.admiral.compute.content.compose.ServiceNetworks;
 import com.vmware.admiral.compute.content.compose.VolumeExternal;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Utils;
 
@@ -99,8 +100,9 @@ public class CompositeTemplateUtil {
         try {
             template = YamlMapper.objectMapper().readValue(yaml, CommonDescriptionEntity.class);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException(
-                    "Error processing YAML content: " + e.getOriginalMessage());
+            throw new LocalizableValidationException(
+                    "Error processing YAML content: " + e.getOriginalMessage(),
+                    "compute.template.yaml.content.error", e.getOriginalMessage());
         }
 
         if (DOCKER_COMPOSE_VERSION_2.equals(template.version)
@@ -120,8 +122,9 @@ public class CompositeTemplateUtil {
             entity = YamlMapper.objectMapper().readValue(yaml.trim(),
                     DockerCompose.class);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException(
-                    "Error processing Docker Compose v2 YAML content: " + e.getOriginalMessage());
+            throw new LocalizableValidationException(
+                    "Error processing Docker Compose v2 YAML content: " + e.getOriginalMessage(),
+                    "compute.template.yaml.compose2.error", e.getOriginalMessage());
         }
         sanitizeDockerCompose(entity);
         return entity;
@@ -164,7 +167,8 @@ public class CompositeTemplateUtil {
             Utils.log(CompositeTemplateUtil.class,
                     CompositeTemplateUtil.class.getSimpleName(),
                     Level.INFO, format, e.getMessage());
-            throw new IllegalArgumentException(String.format(format, e.getOriginalMessage()));
+            throw new LocalizableValidationException(String.format(format, e.getOriginalMessage()),
+                    "compute.template.yaml.error", e.getOriginalMessage());
         }
         sanitizeCompositeTemplate(entity, false);
         return entity;
@@ -874,9 +878,10 @@ public class CompositeTemplateUtil {
 
         components.forEach((componentName, component) -> {
             if (!yamlLiterals.contains(component.type)) {
-                throw new IllegalArgumentException(String.format(
-                        "Component '%s' has an unsupported type '%s'",
-                        componentName, component.type));
+                String errorMessage = String.format("Component '%s' has an unsupported type '%s'",
+                        componentName, component.type);
+                throw new LocalizableValidationException(errorMessage, "compute.template.components.unsupported.type",
+                        componentName, component.type);
             }
         });
     }

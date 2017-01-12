@@ -29,6 +29,7 @@ import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZo
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
@@ -120,7 +121,7 @@ public class ElasticPlacementZoneConfigurationServiceTest extends ComputeBaseTes
         assertEquals(tagSet("tag1"), state2.epzState.tagLinksToMatch);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = LocalizableValidationException.class)
     public void testDeleteNoLinkInUrl() throws Throwable {
         String rpLink = createRp().documentSelfLink;
 

@@ -177,7 +177,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
         this.host.testWait();
 
         this.host.testStart(1);
-        this.host.send(validateBadRequestOnImportOperation("", "'yaml' cannot be empty"));
+        this.host.send(validateBadRequestOnImportOperation("", "yaml cannot be empty"));
         this.host.testWait();
 
         this.host.testStart(1);
@@ -210,20 +210,16 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                 .setBody(body)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        if (e instanceof IllegalArgumentException) {
-                            try {
-                                assertEquals(Operation.STATUS_CODE_BAD_REQUEST, o.getStatusCode());
-                                assertTrue(e.getMessage().contains(expectedMsg));
-                                assertTrue(o.getBody(ServiceErrorResponse.class).message
-                                        .contains(expectedMsg));
-                            } catch (Throwable t) {
-                                host.failIteration(t);
-                                return;
-                            }
-                            host.completeIteration();
+                        try {
+                            assertEquals(Operation.STATUS_CODE_BAD_REQUEST, o.getStatusCode());
+                            assertTrue(e.getMessage().contains(expectedMsg));
+                            assertTrue(o.getBody(ServiceErrorResponse.class).message
+                                    .contains(expectedMsg));
+                        } catch (Throwable t) {
+                            host.failIteration(t);
                             return;
                         }
-                        host.failIteration(e);
+                        host.completeIteration();
                     } else {
                         host.failIteration(new IllegalStateException("Test should have failed!"));
                     }

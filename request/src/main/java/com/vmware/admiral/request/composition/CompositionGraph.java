@@ -30,6 +30,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.volume.VolumeUtil;
 import com.vmware.admiral.request.allocation.filter.AffinityFilters;
 import com.vmware.admiral.request.allocation.filter.ImplicitDependencyFilters;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.ServiceHost;
 
 public class CompositionGraph {
@@ -70,7 +71,7 @@ public class CompositionGraph {
 
         // At least one node that has no dependency is needed to start
         if (queue.isEmpty()) {
-            throw new IllegalArgumentException("Cyclic dependency detected.");
+            throw new LocalizableValidationException("Cyclic dependency detected.", "request.composition.cyclic.dependency");
         }
 
         // Store all nodes that are currently processed to check for cyclic dependencies
@@ -80,7 +81,8 @@ public class CompositionGraph {
         topologicalSortProcessingByBreathFirstSearch(queue, dependsOn, processed);
 
         if (processed.size() != resourceNodesByName().size()) {
-            throw new IllegalArgumentException("Cyclic dependency detected after processing.");
+            throw new LocalizableValidationException("Cyclic dependency detected after processing.",
+                    "request.composition.cyclic.dependency.processing");
         }
 
         return processed;
@@ -185,8 +187,9 @@ public class CompositionGraph {
                     dependent.level = top.level + 1;
                     // detect cyclic dependency if any
                     if (processed.contains(dependent)) {
-                        throw new IllegalArgumentException(
-                                "Cyclic dependency detected during processing.");
+                        throw new LocalizableValidationException(
+                                "Cyclic dependency detected during processing.",
+                                "request.composition.cyclic.dependency.during.process");
                     }
                 }
             }
@@ -267,7 +270,8 @@ public class CompositionGraph {
                         .format("Components with duplicate name [%s] detected for resources [%s] and [%s].",
                                 resourceNode.name, resourceNode.resourceDescLink,
                                 previousNode.resourceDescLink);
-                throw new IllegalArgumentException(errMsg);
+                throw new LocalizableValidationException(errMsg, "request.composition.duplicate.names",
+                        resourceNode.name, resourceNode.resourceDescLink, previousNode.resourceDescLink);
             }
         }
 
@@ -292,7 +296,8 @@ public class CompositionGraph {
                         String errMsg = String.format(
                                 "Dependency on name: [%s] can't be resolved in component: [%s].",
                                 name, resourceNode.name);
-                        throw new IllegalArgumentException(errMsg);
+                        throw new LocalizableValidationException(errMsg, "request.composition.dependency.not.resolved",
+                                name, resourceNode.name);
                     } else {
                         resourceNode.dependsOn.add(rn.name);
                     }

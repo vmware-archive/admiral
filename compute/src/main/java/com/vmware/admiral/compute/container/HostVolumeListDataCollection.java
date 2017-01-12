@@ -44,6 +44,7 @@ import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallback
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.FactoryService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
@@ -85,8 +86,9 @@ public class HostVolumeListDataCollection extends StatefulService {
             if (initState.documentSelfLink == null
                     || !initState.documentSelfLink
                             .endsWith(DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_ID)) {
-                post.fail(new IllegalArgumentException(
-                        "Only one instance of list containers data collection can be started"));
+                post.fail(new LocalizableValidationException(
+                        "Only one instance of list containers data collection can be started",
+                        "compute.volumes.data-collection.single"));
                 return;
             }
 

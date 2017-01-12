@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import com.vmware.admiral.compute.content.Binding;
 import com.vmware.admiral.compute.content.Binding.BindingPlaceholder;
 import com.vmware.admiral.compute.content.Binding.ComponentBinding;
+import com.vmware.xenon.common.LocalizableValidationException;
 
 public class BindingUtils {
     /** Prefix for placeholders: "${" */
@@ -162,8 +163,8 @@ public class BindingUtils {
                 binding = new Binding(currentFieldPath,
                         fieldExpression, new BindingPlaceholder(placeholder, defaultValue));
             } else {
-                throw new IllegalArgumentException(
-                        "Incomplete binding expression, missing closing bracket: " + strVal);
+                throw new LocalizableValidationException(
+                        "Incomplete binding expression, missing closing bracket: " + strVal, "compute.binding.incomplete", strVal);
             }
         }
 

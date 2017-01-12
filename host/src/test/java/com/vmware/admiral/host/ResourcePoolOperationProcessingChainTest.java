@@ -32,6 +32,7 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationProcessingChain;
 import com.vmware.xenon.common.Service;
@@ -112,7 +113,7 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
         try {
             createPlacementZone(resourcePoolState);
             Assert.fail("Should fail to create a scheduler placement zone with tags");
-        } catch (IllegalArgumentException ex) {
+        } catch (LocalizableValidationException ex) {
             verifyExceptionMessage(ex.getMessage(), TAG_LINKS_MUST_BE_EMPTY_MESSAGE);
         }
     }
@@ -142,7 +143,7 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
         try {
             doPut(createdPlacementZone);
             Assert.fail("PUT should fail for scheduler placement zone with tags");
-        } catch (IllegalArgumentException ex) {
+        } catch (LocalizableValidationException ex) {
             verifyExceptionMessage(ex.getMessage(), TAG_LINKS_MUST_BE_EMPTY_MESSAGE);
         }
     }
@@ -173,7 +174,7 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
         try {
             doPatch(patchState, createdPlacementZone.documentSelfLink);
             Assert.fail("PATCH should fail to set tags for scheduler placement zone");
-        } catch (IllegalArgumentException ex) {
+        } catch (LocalizableValidationException ex) {
             verifyExceptionMessage(ex.getMessage(), TAG_LINKS_MUST_BE_EMPTY_MESSAGE);
         }
     }
@@ -192,7 +193,7 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
         try {
             doPatch(patchState, createdPlacementZone.documentSelfLink);
             Assert.fail("PATCH should fail to set tags for scheduler placement zone");
-        } catch (IllegalArgumentException ex) {
+        } catch (LocalizableValidationException ex) {
             verifyExceptionMessage(ex.getMessage(), TAG_LINKS_MUST_BE_EMPTY_MESSAGE);
         }
     }

@@ -173,7 +173,8 @@ public class NamedVolumeAffinityHostFilter
         if (hostSelectionMap.isEmpty()) {
             String errMsg = String.format("No hosts found supporting the '%s' volume drivers.",
                     requiredDrivers.toString());
-            callback.complete(null, new HostSelectionFilterException(errMsg));
+            callback.complete(null, new HostSelectionFilterException(errMsg,
+                    "request.volumes.filter.hosts.unavailable", requiredDrivers.toString()));
             return;
         }
 
@@ -217,7 +218,9 @@ public class NamedVolumeAffinityHostFilter
                                         + " with local volume names %s. Error: [%s]",
                                         volumeNames.toString(),
                                         r.getException().getMessage());
-                                callback.complete(null, new HostSelectionFilterException(errMsg));
+                                callback.complete(null, new HostSelectionFilterException(errMsg,
+                                        "request.volumes.filter.container-descriptions.query",
+                                        volumeNames.toString(), r.getException().getMessage()));
                             } else if (r.hasResult()) {
                                 containersDescLinks.add(r.getResult().documentSelfLink);
                             } else {
@@ -271,13 +274,15 @@ public class NamedVolumeAffinityHostFilter
                             // but are placed on different hosts -> placement is impossible
                             callback.complete(null, new HostSelectionFilterException(
                                     "Detected multiple containers sharing local volumes"
-                                            + " but placed on different hosts."));
+                                            + " but placed on different hosts.",
+                                            "request.volumes.filter.multiple.containers"));
                         } else {
                             HostSelection host = hostSelectionMap.get(parentLinks.get(0));
                             if (host == null) {
                                 callback.complete(null, new HostSelectionFilterException(
                                         "Unable to place containers sharing local volumes"
-                                                + " on the same host."));
+                                                + " on the same host.",
+                                                "request.volumes.filter.no.host"));
                             } else {
                                 callback.complete(Collections.singletonMap(
                                         parentLinks.get(0), host), null);

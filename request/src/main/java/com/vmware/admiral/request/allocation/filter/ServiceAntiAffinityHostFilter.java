@@ -73,7 +73,8 @@ public class ServiceAntiAffinityHostFilter extends ServiceAffinityHostFilter {
                 final String errMsg = String.format(
                         "No host from %s matches anti-affinity rules %s.",
                         initHostSelectionMap.keySet(), Arrays.asList(affinityNames));
-                throw new HostSelectionFilterException(errMsg);
+                throw new HostSelectionFilterException(errMsg, "request.service.anti-affinity.filter.no.host",
+                        initHostSelectionMap.keySet(), Arrays.asList(affinityNames));
             }
 
             for (HostSelection hostSelection : softAfinitiHosts.values()) {
@@ -99,6 +100,7 @@ public class ServiceAntiAffinityHostFilter extends ServiceAffinityHostFilter {
         callback.complete(filteredHostSelectionMap, null);
     }
 
+    @Override
     protected boolean hasOutgoingAffinities() {
         if (affinityNames == null || affinityNames.length == 0) {
             return false;

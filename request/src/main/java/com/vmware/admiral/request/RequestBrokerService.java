@@ -97,6 +97,7 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceErrorResponse;
@@ -189,9 +190,10 @@ public class RequestBrokerService extends
                 || isComputeType(state) || isComputeNetworkType(state)
                 || isCompositeComponentType(state) || isClosureType(state)
                 || isConfigureHostType(state))) {
-            throw new IllegalArgumentException(
+            throw new LocalizableValidationException(
                     String.format("Only [ %s ] resource types are supported.",
-                            ResourceType.getAllTypesAsString()));
+                            ResourceType.getAllTypesAsString()),
+                            "request.supported.resource-types", ResourceType.getAllTypesAsString());
         }
 
         if (state.resourceCount <= 0) {
@@ -424,8 +426,8 @@ public class RequestBrokerService extends
             } else if (isProvisioningContainerHostsOperation(state)) {
                 createProvisioningContainerHostsTask(state);
             } else {
-                failTask(null, new IllegalArgumentException("Not supported operation: "
-                        + state.operation));
+                failTask(null, new LocalizableValidationException("Not supported operation: "
+                        + state.operation, "request.operation.not.supported", state.operation));
             }
         } else if (isComputeType(state)) {
             if (isRemoveOperation(state)) {
@@ -446,28 +448,28 @@ public class RequestBrokerService extends
             if (isRemoveOperation(state)) {
                 createContainerNetworkRemovalTask(state);
             } else {
-                failTask(null, new IllegalArgumentException("Not supported operation: "
-                        + state.operation));
+                failTask(null, new LocalizableValidationException("Not supported operation: "
+                        + state.operation, "request.operation.not.supported", state.operation));
             }
         } else if (isContainerVolumeType(state)) {
             if (isRemoveOperation(state)) {
                 createContainerVolumeRemovalTask(state);
             } else {
-                failTask(null, new IllegalArgumentException("Not supported operation: "
-                        + state.operation));
+                failTask(null, new LocalizableValidationException("Not supported operation: "
+                        + state.operation, "request.operation.not.supported", state.operation));
             }
         } else if (isClosureType(state)) {
             if (isRemoveOperation(state)) {
                 // createClosureRemovalTask(state);
                 createClosureRemovalTasks(state);
             } else {
-                failTask(null, new IllegalArgumentException(
+                failTask(null, new LocalizableValidationException(
                         "Not supported operation for closure type: "
-                                + state.operation));
+                                + state.operation, "request.closure.operation.not.supported", state.operation));
             }
         } else {
-            failTask(null, new IllegalArgumentException("Not supported resourceType: "
-                    + state.resourceType));
+            failTask(null, new LocalizableValidationException("Not supported resourceType: "
+                    + state.resourceType, "request.resource-type.not.supported", state.resourceType));
         }
     }
 
@@ -1262,8 +1264,8 @@ public class RequestBrokerService extends
                 createClosureProvisionTask(state);
             }
         } else {
-            failTask(null, new IllegalArgumentException("Not supported resourceType: "
-                    + state.resourceType));
+            failTask(null, new LocalizableValidationException("Not supported resourceType: "
+                    + state.resourceType, "request.resource-type.not.supported", state.resourceType));
         }
     }
 
@@ -1339,8 +1341,8 @@ public class RequestBrokerService extends
                         proceedTo(SubStage.ALLOCATING);
                     }));
         } else {
-            failTask(null, new IllegalArgumentException("Not supported resourceType: "
-                    + state.resourceType));
+            failTask(null, new LocalizableValidationException("Not supported resourceType: "
+                    + state.resourceType, "request.resource-type.not.supported", state.resourceType));
         }
     }
 

@@ -54,13 +54,13 @@ public class ConfigurationServiceTest extends ComputeBaseTest {
     @Test
     public void testValidateOnStart() throws Throwable {
         configurationState.key = null;
-        validateIllegalArgument(() -> {
+        validateLocalizableException(() -> {
             postForValidation(configurationState);
         }, "key must not be null.");
 
         configurationState.key = key1;
         configurationState.value = null;
-        validateIllegalArgument(() -> {
+        validateLocalizableException(() -> {
             postForValidation(configurationState);
         }, "value is not valid.");
     }

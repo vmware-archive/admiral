@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationProcessingChain;
 import com.vmware.xenon.common.Service.Action;
@@ -54,7 +55,7 @@ class AuthCredentialsOperationProcessingChain extends OperationProcessingChain {
                             }
                             ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
                             if (result.documentCount != 0) {
-                                op.fail(new IllegalStateException("Auth Credentials are in use"));
+                                op.fail(new LocalizableValidationException("Auth Credentials are in use", "host.credentials.in.use"));
                             }
                             resumeProcessingRequest(op, this);
                         }));

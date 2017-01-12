@@ -16,21 +16,24 @@ import java.text.ParsePosition;
 import java.util.Collection;
 import java.util.Map;
 
+import com.vmware.xenon.common.LocalizableValidationException;
+
 public class AssertUtil {
 
-    public static final String PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT = "'%s' cannot be empty";
-    public static final String PROPERTY_MUST_BE_EMPTY_MESSAGE_FORMAT = "'%s' must be empty";
+    public static final String PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT = "%s cannot be empty";
+    public static final String PROPERTY_MUST_BE_EMPTY_MESSAGE_FORMAT = "%s must be empty";
 
     public static void assertNotNull(Object value, String propertyName) {
         if (value == null) {
-            throw new IllegalArgumentException("'" + propertyName + "' is required");
+            throw new LocalizableValidationException("'" + propertyName + "' is required",
+                    "common.assertion.property.required", propertyName);
         }
     }
 
     public static void assertNotEmpty(String value, String propertyName) {
         if (value == null || value.isEmpty()) {
-            throw new IllegalArgumentException(
-                    String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, propertyName));
+            throw new LocalizableValidationException(String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, propertyName),
+                    "common.assertion.property.not.empty", propertyName);
         }
     }
 
@@ -41,29 +44,31 @@ public class AssertUtil {
 
     public static void assertNotEmpty(Map<?, ?> value, String propertyName) {
         if (value == null || value.isEmpty()) {
-            throw new IllegalArgumentException(
-                    String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, propertyName));
+            throw new LocalizableValidationException(String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, propertyName),
+                    "common.assertion.property.not.empty", propertyName);
         }
     }
 
     public static void assertNotEmpty(Collection<?> value, String propertyName) {
         if (value == null || value.isEmpty()) {
-            throw new IllegalArgumentException(
-                    String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, propertyName));
+            throw new LocalizableValidationException(String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, propertyName),
+                    "common.assertion.property.not.empty", propertyName);
         }
     }
 
     public static void assertNotEmpty(Object[] value, String propertyName) {
         if (value == null || value.length == 0) {
-            throw new IllegalArgumentException(
-                    String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, propertyName));
+            throw new LocalizableValidationException(String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, propertyName),
+                    "common.assertion.property.not.empty", propertyName);
+
         }
     }
 
     public static void assertEmpty(Collection<?> value, String propertyName) {
         if (value != null && !value.isEmpty()) {
-            throw new IllegalArgumentException(
-                    String.format(PROPERTY_MUST_BE_EMPTY_MESSAGE_FORMAT, propertyName));
+            throw new LocalizableValidationException(
+                    String.format(PROPERTY_MUST_BE_EMPTY_MESSAGE_FORMAT, propertyName),
+                    "common.assertion.property.empty", propertyName);
         }
     }
 

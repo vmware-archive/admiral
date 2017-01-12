@@ -37,6 +37,7 @@ import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.StatelessService;
@@ -134,7 +135,7 @@ public class ContainerImageService extends StatelessService {
             String tenantLink) {
 
         if (searchRegistryLinks.isEmpty()) {
-            op.fail(new IllegalStateException("No registries found"));
+            op.fail(new LocalizableValidationException("No registries found", "compute.registries.not.found"));
             return;
         }
 

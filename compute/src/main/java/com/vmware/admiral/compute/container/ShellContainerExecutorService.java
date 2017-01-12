@@ -28,6 +28,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.StatelessService;
@@ -59,8 +60,9 @@ public class ShellContainerExecutorService extends StatelessService {
 
         if (containerLink == null) {
             if (hostLink == null) {
-                post.fail(new IllegalArgumentException(String.format("%s or %s is required",
-                        HOST_LINK_URI_PARAM, CONTAINER_LINK_URI_PARAM)));
+                post.fail(new LocalizableValidationException(String.format("%s or %s is required",
+                        HOST_LINK_URI_PARAM, CONTAINER_LINK_URI_PARAM),
+                        "compute.shell.container.links.required", HOST_LINK_URI_PARAM, CONTAINER_LINK_URI_PARAM));
                 return;
             }
 

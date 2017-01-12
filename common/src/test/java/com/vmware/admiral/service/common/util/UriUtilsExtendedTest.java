@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.service.common.ReverseProxyService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.UriUtils;
 
 public class UriUtilsExtendedTest {
@@ -299,7 +300,7 @@ public class UriUtilsExtendedTest {
         try {
             uri = UriUtilsExtended.getReverseProxyTargetUri(opUri);
             fail("URI should be invalid!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().startsWith("Invalid target URI:"));
         }
     }
@@ -323,14 +324,14 @@ public class UriUtilsExtendedTest {
         try {
             UriUtilsExtended.buildDockerUri("ftp", "a.b.c", 21, "/path");
             fail("ftp protocol should not be supported!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertEquals("Unsupported scheme, must be http or https: ftp", e.getMessage());
         }
 
         try {
             UriUtilsExtended.buildDockerUri(null, "ftp://a.b.c", -1, "/path");
             fail("ftp protocol should not be supported!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertEquals("Unsupported scheme, must be http or https: ftp", e.getMessage());
         }
     }
@@ -352,7 +353,7 @@ public class UriUtilsExtendedTest {
         try {
             UriUtilsExtended.buildDockerRegistryUri("ftp://a.b.c");
             fail("ftp protocol should not be supported!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertEquals("Unsupported scheme, must be http or https: ftp", e.getMessage());
         }
     }

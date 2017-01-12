@@ -202,9 +202,14 @@ public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
                 .setBody(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        assertNotNull("Error message expected", ex.getMessage());
-                        assertTrue(ex.getMessage().contains("Unsupported registry version"));
-                        host.completeIteration();
+                        try {
+                            assertNotNull("Error message expected", ex.getMessage());
+                            assertTrue(ex.getMessage().contains("Unsupported registry version"));
+                            host.completeIteration();
+                        } catch (AssertionError e) {
+                            host.failIteration(e);
+                        }
+
                         return;
                     }
 

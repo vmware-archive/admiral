@@ -109,7 +109,7 @@ public class HostPortProfileServiceTest extends ComputeBaseTest {
 
         request.containerLink = UUID.randomUUID().toString();
 
-        validateIllegalArgument(() -> {
+        validateLocalizableException(() -> {
             patch(result, request, true);
         }, "Requested port is already allocated");
     }
@@ -128,7 +128,7 @@ public class HostPortProfileServiceTest extends ComputeBaseTest {
         request.mode = HostPortProfileService.HostPortProfileReservationRequestMode.ALLOCATE;
         request.additionalHostPortCount = 1;
 
-        validateIllegalArgument(() -> {
+        validateLocalizableException(() -> {
             patch(result, request, true);
         }, "There are no available ports left");
     }

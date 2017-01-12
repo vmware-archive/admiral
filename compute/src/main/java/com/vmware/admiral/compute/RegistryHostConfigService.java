@@ -40,6 +40,7 @@ import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -255,8 +256,9 @@ public class RegistryHostConfigService extends StatelessService {
         try {
             certificate = KeyUtil.decodeCertificate(sslTrust.certificate);
         } catch (CertificateException e1) {
-            throw new IllegalArgumentException(
-                    String.format("Invalid certificate provided from host: %s", hostname));
+            throw new LocalizableValidationException(
+                    String.format("Invalid certificate provided from host: %s", hostname),
+                    "compute.registry.host.address.invalid.certificate", hostname);
         }
 
         try {
@@ -265,7 +267,8 @@ public class RegistryHostConfigService extends StatelessService {
             String errorMessage = String.format(
                     "Registry hostname (%s) does not match certificates CN (%s).",
                     hostname, sslTrust.commonName);
-            throw new IllegalArgumentException(errorMessage);
+            throw new LocalizableValidationException(errorMessage,
+                    "compute.registry.host.name.mismatch", hostname, sslTrust.commonName);
         }
 
     }

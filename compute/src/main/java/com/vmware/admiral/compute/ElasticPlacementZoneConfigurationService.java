@@ -24,6 +24,7 @@ import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZo
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.OperationSequence;
@@ -109,13 +110,14 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
 
     private ElasticPlacementZoneConfigurationState validateState(Operation op) {
         if (!op.hasBody()) {
-            throw new IllegalArgumentException("Body is required");
+            throw new LocalizableValidationException("Body is required", "compute.elastic.placement.body.required");
         }
 
         ElasticPlacementZoneConfigurationState state = op.getBody(
                 ElasticPlacementZoneConfigurationState.class);
         if (state.resourcePoolState == null) {
-            throw new IllegalArgumentException("Resource pool state is required");
+            throw new LocalizableValidationException("Resource pool state is required",
+                    "compute.elastic.placement.resource-pool.required");
         }
         return state;
     }
@@ -127,7 +129,8 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
         }
 
         if (failIfMissing && (resourcePoolLink == null || resourcePoolLink.isEmpty())) {
-            throw new IllegalArgumentException("Resource pool link is required in the URL");
+            throw new LocalizableValidationException("Resource pool link is required in the URL",
+                    "compute.elastic.placement.resource-pool.in.url");
         }
 
         return resourcePoolLink;
@@ -373,7 +376,8 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
     private void doUpdate(Operation originalOp, ElasticPlacementZoneConfigurationState state) {
         // validation
         if (state.resourcePoolState.documentSelfLink == null) {
-            originalOp.fail(new IllegalArgumentException("Resource pool link is required"));
+            originalOp.fail(new LocalizableValidationException("Resource pool link is required",
+                    "compute.elastic.placement.resource-pool.missing"));
             return;
         }
 

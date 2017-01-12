@@ -18,6 +18,7 @@ import java.util.logging.Level;
 
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.LifecycleState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
@@ -117,7 +118,7 @@ public class CommonContinuousQueries {
                     .setQuery(retiredComputesQuery).build();
             break;
         default:
-            throw new IllegalArgumentException("Unrecognized common query: " + queryId);
+            throw new LocalizableValidationException("Unrecognized common query: " + queryId, "compute.quieries.unrecognized", queryId);
         }
 
         task.documentSelfLink = getTaskSelfLink(queryId);

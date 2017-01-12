@@ -20,6 +20,7 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
@@ -74,7 +75,8 @@ public class DeploymentPolicyService extends StatefulService {
                                 return;
                             } else if (r.hasResult() && r.getCount() != 0) {
                                 delete.fail(
-                                        new IllegalStateException("Deployment Policy is in use"));
+                                        new LocalizableValidationException("Deployment Policy is in use",
+                                                "compute.deployment-policy.in.use"));
 
                             } else {
                                 if (ac.decrementAndGet() <= 0) {
@@ -92,8 +94,8 @@ public class DeploymentPolicyService extends StatefulService {
                                 return;
                             } else if (r.hasResult() && r.getCount() != 0) {
                                 delete.fail(
-                                        new IllegalStateException("Deployment Policy is in use"));
-
+                                        new LocalizableValidationException("Deployment Policy is in use",
+                                                "compute.deployment-policy.in.use"));
                             } else {
                                 if (ac.decrementAndGet() <= 0) {
                                     super.handleDelete(delete);

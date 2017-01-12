@@ -25,6 +25,7 @@ import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService.En
 import com.vmware.photon.controller.model.tasks.EndpointRemovalTaskService;
 import com.vmware.photon.controller.model.tasks.EndpointRemovalTaskService.EndpointRemovalTaskState;
 import com.vmware.photon.controller.model.tasks.TaskOption;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.StatelessService;
@@ -174,7 +175,7 @@ public class EndpointAdapterService extends StatelessService {
         if (validateConnection) {
             eats.options.add(TaskOption.VALIDATE_ONLY);
         } else if (state.documentSelfLink == null) {
-            put.fail(new IllegalArgumentException("Invalid state passed for update"));
+            put.fail(new LocalizableValidationException("Invalid state passed for update", "compute.endpoint.adapter.invalid.state"));
         }
 
         Operation.createPost(this, EndpointAllocationTaskService.FACTORY_LINK)
@@ -202,8 +203,9 @@ public class EndpointAdapterService extends StatelessService {
         String endpointLink = extractEndpointLink(delete);
 
         if (endpointLink == null || endpointLink.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "No endpoint link given in the DELETE path: " + delete.getUri().getPath());
+            throw new LocalizableValidationException(
+                    "No endpoint link given in the DELETE path: " + delete.getUri().getPath(),
+                    "compute.endpoint.adapter.delete.endpoint.missing", delete.getUri().getPath());
         }
 
         EndpointRemovalTaskState state = new EndpointRemovalTaskState();
@@ -229,13 +231,13 @@ public class EndpointAdapterService extends StatelessService {
 
     private EndpointState validateState(Operation op) {
         if (!op.hasBody()) {
-            throw new IllegalArgumentException("Body is required");
+            throw new LocalizableValidationException("Body is required", "compute.endpoint.adapter.body.required");
         }
 
         EndpointState state = op.getBody(EndpointState.class);
 
         if (state.endpointType == null) {
-            throw new IllegalArgumentException("Endpoint type is required");
+            throw new LocalizableValidationException("Endpoint type is required", "compute.endpoint.adapter.enpoint.type.required");
         }
         return state;
     }

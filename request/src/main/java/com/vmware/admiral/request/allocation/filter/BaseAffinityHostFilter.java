@@ -177,12 +177,14 @@ public abstract class BaseAffinityHostFilter
             final String errMsg = String.format(
                     "No containers found for filter [%s] and value of [%s] for contextId [%s].",
                     affinityPropertyName, getAffinity(), state.contextId);
-            throw new HostSelectionFilterException(errMsg);
+            throw new HostSelectionFilterException(errMsg, "request.base.affinity.filter.no.containers",
+                    affinityPropertyName, getAffinity(), state.contextId);
         } else if (filteredHostSelectionMap.size() > 1) {
             final String errMsg = String
                     .format("Container host selection size [%s] based on filter: [links] with values: [%s] and contextId [%s] is not expected to be more than 1.",
                             filteredHostSelectionMap.size(), getAffinity(), state.contextId);
-            throw new HostSelectionFilterException(errMsg);
+            throw new HostSelectionFilterException(errMsg, "request.base.affinity.filter.many.containers",
+                    filteredHostSelectionMap.size(), getAffinity(), state.contextId);
         }
 
         return filteredHostSelectionMap;
@@ -196,7 +198,9 @@ public abstract class BaseAffinityHostFilter
         final String errMsg = String.format(
                 "No container descriptions with %s [%s].",
                 affinityPropertyName, getAffinity());
-        callback.complete(null, new HostSelectionFilterException(errMsg));
+        callback.complete(null, new HostSelectionFilterException(errMsg,
+                "request.base.affinity.filter.container-descriptions.unavailable",
+                affinityPropertyName, getAffinity()));
     }
 
     protected static QueryTask getBidirectionalDescQuery(String fieldName, String value,
