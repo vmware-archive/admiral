@@ -86,7 +86,8 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         String admiralContainerLink = cc.componentLinks.stream()
                 .filter((l) -> l.contains(ADMIRAL_NAME))
                 .collect(Collectors.toList()).get(0);
-
+        waitForStatusCode(URI.create(getBaseUrl() + admiralContainerLink),
+                Operation.STATUS_CODE_OK);
         ContainerState admiralContainer = getDocument(admiralContainerLink, ContainerState.class);
         if (!dataInitialized) {
             addContentToTheProvisionedAdmiral(admiralContainer);
@@ -107,6 +108,10 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         changeBaseURI(admiralContainer);
         // wait for the admiral container to start
         URI uri = URI.create(getBaseUrl() + NodeHealthCheckService.SELF_LINK);
+        waitForStatusCode(uri, Operation.STATUS_CODE_OK);
+        uri = URI.create(getBaseUrl() + ManagementUriParts.CONTAINERS);
+        waitForStatusCode(uri, Operation.STATUS_CODE_OK);
+        uri = URI.create(getBaseUrl() + ManagementUriParts.CONTAINER_HOSTS);
         waitForStatusCode(uri, Operation.STATUS_CODE_OK);
         ComputeState dockerHost = getDocument(dockerHostSelfLink, ComputeState.class);
         Assert.assertTrue(dockerHost != null);
@@ -137,6 +142,7 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         // create entities to check for after upgrade
         dockerHostSelfLink = getDockerHost().documentSelfLink;
         credentialsSelfLink = getDockerHostAuthCredentials().documentSelfLink;
+        stopContainer(admiralContainer.documentSelfLink);
         setBaseURI(null);
         dataInitialized = true;
     }
