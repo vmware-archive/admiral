@@ -358,6 +358,17 @@ public class ContainerRemovalTaskService
                         .createGet(this, resourceLink)
                         .setCompletion(
                                 (o, e) -> {
+                                    // Don't fail on host removal for container that is still
+                                    // collected but has already been removed.
+                                    if (isRemoveHost.get() && o.getStatusCode() == Operation
+                                            .STATUS_CODE_NOT_FOUND) {
+                                        logFine("Resource [%s] not found, it should have "
+                                                        + "already been removed!",
+                                                resourceLink);
+                                        completeSubTasksCounter(subTaskLink, null);
+                                        completeSubTasksCounter(subTaskLink, null);
+                                        return;
+                                    }
                                     if (e != null) {
                                         failTask("Failed retrieving Container State: "
                                                 + resourceLink, e);

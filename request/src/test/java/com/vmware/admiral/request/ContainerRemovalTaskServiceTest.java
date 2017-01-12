@@ -25,11 +25,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
@@ -45,9 +47,11 @@ import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTa
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
+import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
 
 public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
@@ -82,7 +86,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         assertEquals(request.resourceCount, containerStateLinks.size());
         // verify the placements has been reserved:
-        GroupResourcePlacementState groupResourcePlacement = getDocument(GroupResourcePlacementState.class,
+        GroupResourcePlacementState groupResourcePlacement = getDocument(
+                GroupResourcePlacementState.class,
                 request.groupResourcePlacementLink);
         assertNotNull(groupResourcePlacement);
         assertEquals(groupResourcePlacement.allocatedInstancesCount, request.resourceCount);
@@ -92,7 +97,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
                     computeHost.documentSelfLink);
             String containers = computeState.customProperties == null ? null
                     : computeState.customProperties
-                            .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
+                    .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
             return "2".equals(containers);
         });
 
@@ -138,7 +143,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
                     computeHost.documentSelfLink);
             String containers = computeState.customProperties == null ? null
                     : computeState.customProperties
-                            .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
+                    .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
             host.log("Container count waiting for 0 is currently: %s", containers);
             return "0".equals(containers);
         });
@@ -169,7 +174,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         }
 
         // verify the placements has been reserved:
-        GroupResourcePlacementState groupResourcePlacement = getDocument(GroupResourcePlacementState.class,
+        GroupResourcePlacementState groupResourcePlacement = getDocument(
+                GroupResourcePlacementState.class,
                 request.groupResourcePlacementLink);
         assertNotNull(groupResourcePlacement);
         assertEquals(groupResourcePlacement.allocatedInstancesCount, request.resourceCount);
@@ -302,6 +308,37 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
     }
 
     @Test
+    public void testRemoveOfStaleContainerOperation() throws Throwable {
+        ContainerState container = TestRequestStateFactory.createContainer();
+        container.descriptionLink = containerDesc.documentSelfLink;
+        container.adapterManagementReference = containerDesc.instanceAdapterReference;
+        container.groupResourcePlacementLink = groupPlacementState.documentSelfLink;
+        container.system = Boolean.FALSE;
+        container = doPost(container, ContainerFactoryService.SELF_LINK);
+
+        Set<String> containerStateLinks = new HashSet<>(1);
+        containerStateLinks.add(container.documentSelfLink);
+
+        // the container is removed.
+        delete(container.documentSelfLink);
+
+        // try to remove the container as part of host removal as well.
+        ContainerRemovalTaskState containerRemovalTask = new ContainerRemovalTaskState();
+        containerRemovalTask.taskSubStage = ContainerRemovalTaskState.SubStage.INSTANCES_REMOVED;
+        containerRemovalTask.resourceLinks = containerStateLinks;
+        containerRemovalTask.removeOnly = true;
+        containerRemovalTask.serviceTaskCallback = ServiceTaskCallback.create(ManagementUriParts
+                        .REQUEST_HOST_REMOVAL_OPERATIONS,
+                TaskState.TaskStage.STARTED,
+                ContainerHostRemovalTaskService.ContainerHostRemovalTaskState.SubStage.REMOVED_CONTAINERS,
+                TaskState.TaskStage.STARTED,
+                ContainerHostRemovalTaskService.ContainerHostRemovalTaskState.SubStage.ERROR);
+
+        containerRemovalTask = startRequest(containerRemovalTask);
+        waitForRequestToComplete(containerRemovalTask);
+    }
+
+    @Test
     public void testRemovingOfCompositeDescritionAndContainerRemovals() throws Throwable {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
@@ -316,7 +353,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         assertEquals(1, request.resourceLinks.size());
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
+        CompositeComponent cc = getDocument(CompositeComponent.class,
+                request.resourceLinks.iterator().next());
 
         assertEquals(compositeDesc.descriptionLinks.size(), cc.componentLinks.size());
 
@@ -349,7 +387,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
     }
 
     @Test
-    public void testRemovingOfNotClonedContainerDescriptionsAndContainerRemovals() throws Throwable {
+    public void testRemovingOfNotClonedContainerDescriptionsAndContainerRemovals()
+            throws Throwable {
         ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
         ContainerDescription desc2 = TestRequestStateFactory.createContainerDescription("name2");
         desc2.affinity = new String[] { desc1.name };
@@ -363,7 +402,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         assertEquals(1, request.resourceLinks.size());
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
+        CompositeComponent cc = getDocument(CompositeComponent.class,
+                request.resourceLinks.iterator().next());
 
         assertEquals(compositeDesc.descriptionLinks.size(), cc.componentLinks.size());
 
@@ -424,7 +464,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         assertEquals(1, request.resourceLinks.size());
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
+        CompositeComponent cc = getDocument(CompositeComponent.class,
+                request.resourceLinks.iterator().next());
 
         assertEquals(compositeDesc.descriptionLinks.size(), cc.componentLinks.size());
 
@@ -489,7 +530,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         assertEquals(1, request.resourceLinks.size());
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
+        CompositeComponent cc = getDocument(CompositeComponent.class,
+                request.resourceLinks.iterator().next());
 
         ContainerState container1 = getDocument(ContainerState.class, cc.componentLinks.get(0));
         ContainerState container2 = getDocument(ContainerState.class, cc.componentLinks.get(1));
@@ -598,7 +640,8 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         assertEquals(1, request.resourceLinks.size());
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
+        CompositeComponent cc = getDocument(CompositeComponent.class,
+                request.resourceLinks.iterator().next());
 
         assertEquals(desc1._cluster + 1, cc.componentLinks.size());
 
