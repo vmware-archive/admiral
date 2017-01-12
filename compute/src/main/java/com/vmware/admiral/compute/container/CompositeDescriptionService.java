@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,12 +45,10 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
-import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * Describes multiple container instances deployed at the same time. It represents a template
@@ -295,42 +294,37 @@ public class CompositeDescriptionService extends StatefulService {
 
         Map<String, String> images = new HashMap<>();
         CompositeDescriptionImages imagesResult = new CompositeDescriptionImages();
-        sendRequest(Operation
-                .createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
-                .setBody(queryTask)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        op.fail(ex);
-                    } else {
-                        QueryTask resultTask = o.getBody(QueryTask.class);
-                        ServiceDocumentQueryResult result = resultTask.results;
-
-                        if (result == null || result.documents == null) {
-                            imagesResult.descriptionImages = images;
-                            op.setBody(imagesResult).complete();
-                            return;
-                        }
-                        result.documents.forEach((link, document) -> {
-                            if (link.startsWith(ContainerDescriptionService.FACTORY_LINK)) {
-                                ContainerDescription containerDescription = Utils.fromJson(document,
-                                        ContainerDescription.class);
-                                images.put(containerDescription.documentSelfLink, containerDescription.image);
-                                imagesResult.tenantLinks = containerDescription.tenantLinks;
-                            } else if (link.startsWith(ClosureDescriptionFactoryService.FACTORY_LINK)) {
-                                ClosureDescription closureDescription = Utils.fromJson(document,
-                                        ClosureDescription.class);
-                                images.put(closureDescription.documentSelfLink, closureDescription.runtime);
-                                imagesResult.tenantLinks = closureDescription.tenantLinks;
+        new ServiceDocumentQuery<>(
+                getHost(), null).query(queryTask,
+                        (r) -> {
+                            if (r.hasException()) {
+                                op.fail(r.getException());
+                            } else if (r.hasResult()) {
+                                if (r.getDocumentSelfLink()
+                                        .startsWith(ContainerDescriptionService.FACTORY_LINK)) {
+                                    ContainerDescription containerDescription = Utils.fromJson(
+                                            r.getRawResult(),
+                                            ContainerDescription.class);
+                                    images.put(containerDescription.documentSelfLink,
+                                            containerDescription.image);
+                                    imagesResult.tenantLinks = containerDescription.tenantLinks;
+                                } else if (r.getDocumentSelfLink().startsWith(
+                                        ClosureDescriptionFactoryService.FACTORY_LINK)) {
+                                    ClosureDescription closureDescription = Utils.fromJson(
+                                            r.getRawResult(),
+                                            ClosureDescription.class);
+                                    images.put(closureDescription.documentSelfLink,
+                                            closureDescription.runtime);
+                                    imagesResult.tenantLinks = closureDescription.tenantLinks;
+                                } else {
+                                    logWarning("Unexpected result type: %s",
+                                            r.getDocumentSelfLink());
+                                }
                             } else {
-                                logWarning("Unexpected result type: %s", link);
+                                imagesResult.descriptionImages = images;
+                                op.setBody(imagesResult).complete();
                             }
                         });
-
-                        imagesResult.descriptionImages = images;
-                        op.setBody(imagesResult).complete();
-
-                    }
-                }));
     }
 
     private void retrieveComponentDescriptions(CompositeDescription compositeDescription,
@@ -350,42 +344,32 @@ public class CompositeDescriptionService extends StatefulService {
                 ServiceDocument.FIELD_NAME_SELF_LINK,
                 componentDescriptionLinks);
 
-        sendRequest(Operation
-                .createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
-                .setBody(componentDescriptionQueryTask)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        get.fail(ex);
-                    } else {
-                        QueryTask resultTask = o.getBody(QueryTask.class);
-                        ServiceDocumentQueryResult result = resultTask.results;
-
-                        if (result == null || result.documents == null) {
-                            return;
-                        }
-
-                        List<ComponentDescription> componentDescriptions = new ArrayList<>();
-                        result.documents.forEach((link, document) -> {
-                            ComponentMeta meta = CompositeComponentRegistry
-                                    .metaByDescriptionLink(link);
-                            ResourceState description = Utils.fromJson(document,
-                                    meta.descriptionClass);
-                            if (description != null) {
-                                ComponentDescription cd = new ComponentDescription(
-                                        description,
-                                        meta.resourceType,
-                                        description.name,
-                                        getBindingsForComponent(description.name, cdExpanded));
-                                componentDescriptions.add(cd);
-                            } else {
-                                logWarning("Unexpected result type: %s", link);
-                            }
-                        });
-
-                        cdExpanded.componentDescriptions = componentDescriptions;
-                        get.setBody(cdExpanded).complete();
-                    }
-                }));
+        List<ComponentDescription> componentDescriptions = new LinkedList<>();
+        new ServiceDocumentQuery<>(
+                                getHost(), null).query(componentDescriptionQueryTask,
+                                        (r) -> {
+                                            if (r.hasException()) {
+                                                get.fail(r.getException());
+                                            } else if (r.hasResult()) {
+                                                    ComponentMeta meta = CompositeComponentRegistry
+                                                            .metaByDescriptionLink(r.getDocumentSelfLink());
+                                                    ResourceState description = Utils.fromJson(r.getRawResult(),
+                                                            meta.descriptionClass);
+                                                    if (description != null) {
+                                                        ComponentDescription cd = new ComponentDescription(
+                                                                description,
+                                                                meta.resourceType,
+                                                                description.name,
+                                                                getBindingsForComponent(description.name, cdExpanded));
+                                                        componentDescriptions.add(cd);
+                                                    } else {
+                                                        logWarning("Unexpected result type: %s", r.getDocumentSelfLink());
+                                                    }
+                                                } else {
+                                                cdExpanded.componentDescriptions = componentDescriptions;
+                                                get.setBody(cdExpanded).complete();
+                                            }
+                                        });
     }
 
     private List<Binding> getBindingsForComponent(String componentName,

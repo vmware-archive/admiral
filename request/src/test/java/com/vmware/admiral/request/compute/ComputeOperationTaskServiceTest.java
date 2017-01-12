@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -36,14 +37,11 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
-import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
-import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class ComputeOperationTaskServiceTest extends ComputeRequestBaseTest {
 
@@ -162,27 +160,22 @@ public class ComputeOperationTaskServiceTest extends ComputeRequestBaseTest {
         query.querySpec.query.addBooleanClause(resourceLinkClause);
         query.querySpec.options = EnumSet.of(QueryOption.EXPAND_CONTENT);
 
-        QueryTask[] result = new QueryTask[] { null };
-        Operation post = Operation
-                .createPost(UriUtils.buildUri(host, ServiceUriPaths.CORE_QUERY_TASKS))
-                .setBody(query).setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                host.failIteration(e);
+        List<ComputeState> computes = new ArrayList<>();
+        new ServiceDocumentQuery<>(
+                host, ComputeState.class).query(query,
+                        (r) -> {
+                            if (r.hasException()) {
+                                host.failIteration(r.getException());
                                 return;
+                            } else if (r.hasResult()) {
+                                computes.add(r.getResult());
+                            } else {
+                                host.completeIteration();
                             }
-                            result[0] = o.getBody(QueryTask.class);
-                            host.completeIteration();
                         });
         host.testStart(1);
-        host.send(post);
         host.testWait();
 
-        List<ComputeState> computes = new ArrayList<>();
-        for (Object json : result[0].results.documents.values()) {
-            ComputeState container = Utils.fromJson(json, ComputeState.class);
-            computes.add(container);
-        }
         return computes;
     }
 

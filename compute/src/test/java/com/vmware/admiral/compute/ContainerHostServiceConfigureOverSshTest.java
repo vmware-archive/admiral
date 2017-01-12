@@ -25,6 +25,7 @@ import org.junit.Test;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
@@ -37,7 +38,6 @@ import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskService;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.QueryTaskClientHelper;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
@@ -189,21 +189,21 @@ public class ContainerHostServiceConfigureOverSshTest extends ComputeBaseTest {
         QueryTask qt = QueryTask.create(qs);
         QuerySpecification.addExpandOption(qt);
 
-        QueryTaskClientHelper.create(ComputeState.class)
-                .setQueryTask(qt)
-                .setResultHandler((queryElementResult, failure) -> {
-                    if (failure != null) {
-                        ctx.fail(failure);
-                        return;
-                    }
+        new ServiceDocumentQuery<ComputeState>(
+                host, ComputeState.class).query(qt,
+                        (r) -> {
+                            if (r.hasException()) {
+                                ctx.fail(r.getException());
+                                return;
+                            }
 
-                    if (queryElementResult.getResult() != null) {
-                        result.add(queryElementResult.getResult());
-                        return;
-                    }
+                            if (r.hasResult()) {
+                                result.add(r.getResult());
+                                return;
+                            }
 
-                    ctx.completeIteration();
-                }).sendWith(host);
+                            ctx.completeIteration();
+                        });
         ctx.await();
 
         Assert.assertNull("Failed to fetch hosts", t.get());

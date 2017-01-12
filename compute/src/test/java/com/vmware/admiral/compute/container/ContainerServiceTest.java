@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
@@ -123,6 +124,23 @@ public class ContainerServiceTest extends ComputeBaseTest {
         queryContainers("$filter=parentLink eq '/parent/1' or parentLink eq '/parent/2'", 4);
 
         queryContainers("$filter=parentLink ne '/parent/x' and parentLink ne '/parent/1'", 4);
+    }
+
+    @Test
+    @Ignore
+    public void testODataWithManyEntities() throws Throwable {
+        int numberOfContainers = 6000;
+        for (int i = 0; i <= numberOfContainers; i++) {
+            createContainer("/parent/1", "tenant1");
+        }
+
+        for (int i = 0; i <= numberOfContainers; i++) {
+            ContainerState containerState = new ContainerState();
+            containerState.customProperties = new HashMap<String, String>();
+            containerState.customProperties.put("keyTestProp", "valueTestProp");
+            doPatch(containerState, containersForDeletion.get(i));
+        }
+        queryContainers("", numberOfContainers + 1);
     }
 
     @Test

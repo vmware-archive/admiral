@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +41,7 @@ import java.util.stream.Stream;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
@@ -79,9 +81,7 @@ import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.OperationSequence;
-import com.vmware.xenon.common.QueryTaskClientHelper;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -90,7 +90,6 @@ import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
-import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class ComputeAllocationTaskService
         extends
@@ -412,12 +411,10 @@ public class ComputeAllocationTaskService
         QueryTask q = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
 
         Set<String> computeResourceLinks = new HashSet<>(state.resourceCount.intValue());
-        QueryTaskClientHelper
-                .create(ComputeState.class)
-                .setQueryTask(q)
-                .setResultHandler((r, e) -> {
-                    if (e != null) {
-                        failTask("Failed to query for provisioned resources", e);
+        new ServiceDocumentQuery<ComputeState>(
+                getHost(), ComputeState.class).query(q, (r) -> {
+                    if (r.hasException()) {
+                        failTask("Failed to query for provisioned resources", r.getException());
                         return;
                     } else if (r.hasResult()) {
                         computeResourceLinks.add(r.getDocumentSelfLink());
@@ -427,7 +424,7 @@ public class ComputeAllocationTaskService
                         });
                     }
 
-                }).sendWith(getHost());
+                });
     }
 
     private void configureComputeDescription(ComputeAllocationTaskState state,
@@ -952,41 +949,38 @@ public class ComputeAllocationTaskService
                 .build();
         task.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
 
-        sendRequest(Operation.createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
-                .setBody(task)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure while quering for enviroment mappings", e);
-                        return;
-                    }
-
-                    ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
-                    if (result == null || result.documentLinks == null
-                            || result.documentLinks.isEmpty()) {
-                        if (tenantLinks != null && !tenantLinks.isEmpty()) {
-                            ArrayList<String> subLinks = new ArrayList<>(tenantLinks);
-                            subLinks.remove(tenantLinks.size() - 1);
-                            queryEnvironment(state, endpoint, subLinks, callbackFunction);
-                        } else {
-                            failTask(String.format(
-                                    "No available environments for endpoint %s of type %s",
-                                    endpoint.documentSelfLink, endpoint.endpointType), null);
-                        }
-                        return;
-                    }
-
-                    List<EnvironmentState> foundEnvs = result.documents.values().stream()
-                            .map(json -> Utils.fromJson(json, EnvironmentState.class))
-                            .collect(Collectors.toList());
-                    EnvironmentState envForTheEndpoint = foundEnvs.stream()
-                            .filter(env -> endpoint.documentSelfLink.equals(env.endpointLink))
-                            .findFirst().orElse(null);
-                    if (envForTheEndpoint != null) {
-                        callbackFunction.accept(envForTheEndpoint.documentSelfLink);
-                    } else {
-                        callbackFunction.accept(result.documentLinks.get(0));
-                    }
-                }));
+        List<EnvironmentState> foundEnvs = new LinkedList<EnvironmentState>();
+        new ServiceDocumentQuery<>(
+                getHost(), EnvironmentState.class).query(task,
+                        (r) -> {
+                            if (r.hasException()) {
+                                failTask("Failure while quering for enviroment mappings", r.getException());
+                                return;
+                            } else if (r.hasResult()) {
+                                foundEnvs.add(r.getResult());
+                            } else {
+                                if (foundEnvs.isEmpty()) {
+                                    if (tenantLinks != null && !tenantLinks.isEmpty()) {
+                                        ArrayList<String> subLinks = new ArrayList<>(tenantLinks);
+                                        subLinks.remove(tenantLinks.size() - 1);
+                                        queryEnvironment(state, endpoint, subLinks, callbackFunction);
+                                    } else {
+                                        failTask(String.format(
+                                                "No available environments for endpoint %s of type %s",
+                                                endpoint.documentSelfLink, endpoint.endpointType), null);
+                                    }
+                                } else {
+                                    EnvironmentState envForTheEndpoint = foundEnvs.stream()
+                                            .filter(env -> endpoint.documentSelfLink.equals(env.endpointLink))
+                                            .findFirst().orElse(null);
+                                    if (envForTheEndpoint != null) {
+                                        callbackFunction.accept(envForTheEndpoint.documentSelfLink);
+                                    } else {
+                                        callbackFunction.accept(foundEnvs.get(0).documentSelfLink);
+                                    }
+                                }
+                            }
+                        });
     }
 
     private void getComputeDescription(String uriLink,

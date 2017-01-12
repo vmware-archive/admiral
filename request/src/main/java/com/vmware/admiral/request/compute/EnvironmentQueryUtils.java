@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
@@ -33,6 +34,7 @@ import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Builder;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
@@ -155,34 +157,36 @@ public class EnvironmentQueryUtils {
                         .build())
                 .build();
 
-        QueryUtils.QueryByPages<EnvironmentState> queryByPage = new QueryUtils.QueryByPages<>(host,
-                query, EnvironmentState.class, tenantLinks);
+        QueryTask queryTask = QueryUtil.buildQuery(EnvironmentState.class, true, query);
+        queryTask.tenantLinks = tenantLinks;
 
         DeferredResult<List<EnvEntry>> result = new DeferredResult<>();
-        queryByPage.queryLinks(envLink -> applyEnvLink(envLink, entries))
-                .whenComplete((r, e) -> {
-                    if (e != null) {
-                        result.fail(e);
-                    } else {
-                        if (entry.envLinks.isEmpty()) {
-                            if (tenantLinks != null && !tenantLinks.isEmpty()) {
-                                queryEnvironments(host, entries, null).whenComplete((envs, t) -> {
-                                    if (t != null) {
-                                        result.fail(t);
-                                    } else {
-                                        result.complete(envs);
-                                    }
-                                });
+        new ServiceDocumentQuery<>(
+                host, EnvironmentState.class).query(queryTask,
+                        (r) -> {
+                            if (r.hasException()) {
+                                result.fail(r.getException());
                                 return;
+                            } else if (r.hasResult()) {
+                                entries.forEach(e -> e.addEnvLink(r.getDocumentSelfLink()));
+                            } else {
+                                if (entry.envLinks.isEmpty()) {
+                                    if (tenantLinks != null && !tenantLinks.isEmpty()) {
+                                        queryEnvironments(host, entries, null)
+                                                .whenComplete((envs, t) -> {
+                                                    if (t != null) {
+                                                        result.fail(t);
+                                                    } else {
+                                                        result.complete(envs);
+                                                    }
+                                                });
+                                        return;
+                                    }
+                                }
+                                result.complete(entries);
                             }
-                        }
-                        result.complete(entries);
-                    }
-                });
+                        });
         return result;
     }
-
-    private static void applyEnvLink(String envLink, List<EnvEntry> entries) {
-        entries.forEach(e -> e.addEnvLink(envLink));
-    }
 }
+

@@ -32,6 +32,7 @@ import org.junit.Test;
 import com.vmware.admiral.adapter.docker.service.DockerHostAdapterService;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
 import com.vmware.admiral.compute.ContainerHostService;
@@ -50,7 +51,6 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
-import com.vmware.xenon.common.QueryTaskClientHelper;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.services.common.AuthCredentialsService;
@@ -326,21 +326,20 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         QueryTask qt = QueryTask.create(qs);
         QuerySpecification.addExpandOption(qt);
 
-        QueryTaskClientHelper.create(ComputeState.class)
-                .setQueryTask(qt)
-                .setResultHandler((queryElementResult, failure) -> {
-                    if (failure != null) {
-                        ctx.fail(failure);
+        new ServiceDocumentQuery<ComputeState>(
+                host, ComputeState.class).query(qt, (r) -> {
+                    if (r.hasException()) {
+                        ctx.fail(r.getException());
                         return;
                     }
 
-                    if (queryElementResult.getResult() != null) {
-                        result.add(queryElementResult.getResult());
+                    if (r.hasResult()) {
+                        result.add(r.getResult());
                         return;
                     }
 
                     ctx.completeIteration();
-                }).sendWith(host);
+                });
         ctx.await();
 
         Assert.assertNull("Failed to fetch hosts", t.get());

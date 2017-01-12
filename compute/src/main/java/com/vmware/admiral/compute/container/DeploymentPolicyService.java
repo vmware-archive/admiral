@@ -11,22 +11,21 @@
 
 package com.vmware.admiral.compute.container;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationJoin;
-import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
-import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
-import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * Help service to add a container host and validate container host address.
@@ -53,28 +52,54 @@ public class DeploymentPolicyService extends StatefulService {
 
     @Override
     public void handleDelete(Operation delete) {
-        Operation[] ops = new Operation[] {
-            createReferenceCountOperation(ComputeState.class, QuerySpecification.buildCompositeFieldName(
-                    ComputeState.FIELD_NAME_CUSTOM_PROPERTIES, ContainerHostService.CUSTOM_PROPERTY_DEPLOYMENT_POLICY)),
-            createReferenceCountOperation(GroupResourcePlacementState.class,
-                    GroupResourcePlacementState.FIELD_NAME_DEPLOYMENT_POLICY_LINK)
-        };
+        QueryTask computeTask = QueryUtil.buildPropertyQuery(ComputeState.class,
+                QuerySpecification.buildCompositeFieldName(
+                        ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                        ContainerHostService.CUSTOM_PROPERTY_DEPLOYMENT_POLICY),
+                getSelfLink());
+        QueryUtil.addCountOption(computeTask);
 
-        OperationJoin.create(ops).setCompletion((os, es) -> {
-            if (es != null && !es.isEmpty()) {
-                logWarning(Utils.toString(es));
-                delete.fail(es.values().iterator().next());
-                return;
-            }
-            for (Operation o : os.values()) {
-                ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
-                if (result.documentCount != 0) {
-                    delete.fail(new IllegalStateException("Deployment Policy is in use"));
-                    return;
-                }
-            }
-            super.handleDelete(delete);
-        }).sendWith(getHost());
+        QueryTask groupResourcePlacementTask = QueryUtil.buildPropertyQuery(
+                GroupResourcePlacementState.class,
+                GroupResourcePlacementState.FIELD_NAME_DEPLOYMENT_POLICY_LINK, getSelfLink());
+        QueryUtil.addCountOption(computeTask);
+
+        AtomicInteger ac = new AtomicInteger(2);
+        new ServiceDocumentQuery<>(
+                getHost(), ComputeState.class).query(computeTask,
+                        (r) -> {
+                            if (r.hasException()) {
+                                logWarning(Utils.toString(r.getException()));
+                                delete.fail(r.getException());
+                                return;
+                            } else if (r.hasResult() && r.getCount() != 0) {
+                                delete.fail(
+                                        new IllegalStateException("Deployment Policy is in use"));
+
+                            } else {
+                                if (ac.decrementAndGet() <= 0) {
+                                    super.handleDelete(delete);
+                                }
+                            }
+                        });
+
+        new ServiceDocumentQuery<>(
+                getHost(), GroupResourcePlacementState.class).query(groupResourcePlacementTask,
+                        (r) -> {
+                            if (r.hasException()) {
+                                logWarning(Utils.toString(r.getException()));
+                                delete.fail(r.getException());
+                                return;
+                            } else if (r.hasResult() && r.getCount() != 0) {
+                                delete.fail(
+                                        new IllegalStateException("Deployment Policy is in use"));
+
+                            } else {
+                                if (ac.decrementAndGet() <= 0) {
+                                    super.handleDelete(delete);
+                                }
+                            }
+                        });
     }
 
     @Override
@@ -105,13 +130,6 @@ public class DeploymentPolicyService extends StatefulService {
             currentState.description = patchBody.description;
         }
         patch.setBody(currentState).complete();
-    }
-
-    private Operation createReferenceCountOperation(Class<? extends ServiceDocument> stateClass, String propertyName) {
-        QueryTask computeTask = QueryUtil.buildPropertyQuery(stateClass, propertyName, getSelfLink());
-        QueryUtil.addCountOption(computeTask);
-        return Operation.createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
-                .setBody(computeTask).setReferer(getUri());
     }
 
     @Override

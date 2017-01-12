@@ -23,6 +23,7 @@ import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -69,7 +70,6 @@ import com.vmware.xenon.common.test.VerificationHost;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public abstract class BaseTestCase {
 
@@ -850,22 +850,23 @@ public abstract class BaseTestCase {
         QueryTask query = QueryUtil.buildQuery(type, true);
         QueryUtil.addListValueClause(query, ServiceDocument.FIELD_NAME_SELF_LINK, resourceLinks);
 
-        QueryTask[] result = new QueryTask[] { null };
-        Operation post = Operation
-                .createPost(UriUtils.buildUri(host, ServiceUriPaths.CORE_QUERY_TASKS))
-                .setBody(query).setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                ctx.failIteration(e);
+        List<String> result = new LinkedList<>();
+        new ServiceDocumentQuery<>(
+                host, type).query(query,
+                        (r) -> {
+                            if (r.hasException()) {
+                                ctx.failIteration(r.getException());
                                 return;
                             }
-                            result[0] = o.getBody(QueryTask.class);
+                            if (r.hasResult()) {
+                                result.add(r.getDocumentSelfLink());
+                                return;
+                            }
                             ctx.completeIteration();
                         });
-        host.send(post);
         ctx.await();
 
-        return result[0].results.documentLinks;
+        return result;
     }
 
     protected void stopService(Service s) throws Throwable {
