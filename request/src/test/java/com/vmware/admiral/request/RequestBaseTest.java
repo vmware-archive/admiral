@@ -482,6 +482,23 @@ public abstract class RequestBaseTest extends BaseTestCase {
         return waitForTaskSuccess(requestState.documentSelfLink, RequestBrokerState.class);
     }
 
+    protected ContainerRemovalTaskService.ContainerRemovalTaskState waitForRequestToComplete(
+            ContainerRemovalTaskService.ContainerRemovalTaskState requestState)
+            throws Throwable {
+        host.log("wait for request: " + requestState.documentSelfLink);
+        return waitForTaskSuccess(requestState.documentSelfLink,
+                ContainerRemovalTaskService.ContainerRemovalTaskState.class);
+    }
+
+    protected ContainerRemovalTaskService.ContainerRemovalTaskState startRequest(
+            ContainerRemovalTaskService.ContainerRemovalTaskState request) throws
+            Throwable {
+        ContainerRemovalTaskService.ContainerRemovalTaskState requestState = doPost(request,
+                ContainerRemovalTaskFactoryService.SELF_LINK);
+        assertNotNull(requestState);
+        return requestState;
+    }
+
     protected RequestBrokerState waitForRequestToFail(RequestBrokerState requestState)
             throws Throwable {
         host.log("wait for request to fail: " + requestState.documentSelfLink);
