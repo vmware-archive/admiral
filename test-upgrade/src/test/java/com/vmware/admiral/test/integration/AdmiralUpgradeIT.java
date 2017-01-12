@@ -142,7 +142,6 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         // create entities to check for after upgrade
         dockerHostSelfLink = getDockerHost().documentSelfLink;
         credentialsSelfLink = getDockerHostAuthCredentials().documentSelfLink;
-        stopContainer(admiralContainer.documentSelfLink);
         setBaseURI(null);
         dataInitialized = true;
     }
