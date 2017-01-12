@@ -48,7 +48,6 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
 
     public ServiceDocumentQuery(ServiceHost host, Class<T> type) {
         AssertUtil.assertNotNull(host, "host");
-        AssertUtil.assertNotNull(type, "type");
         this.host = host;
         this.type = type;
     }
@@ -96,6 +95,7 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
             String documentSelfLink,
             Consumer<ServiceDocumentQueryElementResult<T>> completionHandler) {
         AssertUtil.assertNotEmpty(documentSelfLink, "documentSelfLink");
+        AssertUtil.assertNotNull(type, "type");
         AssertUtil.assertNotNull(completionHandler, "completionHandler");
         QueryTask q = QueryUtil.buildPropertyQuery(type,
                 ServiceDocument.FIELD_NAME_SELF_LINK, documentSelfLink);
@@ -150,6 +150,7 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
      */
     public void queryUpdatedSince(long documentSinceUpdateTimeMicros,
             Consumer<ServiceDocumentQueryElementResult<T>> completionHandler) {
+        AssertUtil.assertNotNull(type, "type");
         AssertUtil.assertNotNull(completionHandler, "completionHandler");
         long nowMicrosUtc = Utils.getNowMicrosUtc();
         AssertUtil.assertState(nowMicrosUtc > documentSinceUpdateTimeMicros,
@@ -350,8 +351,13 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
 
     public ServiceDocumentQueryElementResult<T> result(Object json, long count) {
         ServiceDocumentQueryElementResult<T> r = new ServiceDocumentQueryElementResult<>();
-        r.result = Utils.fromJson(json, type);
-        r.documentSelfLink = r.result.documentSelfLink;
+        if (type != null) {
+            r.result = Utils.fromJson(json, type);
+            r.documentSelfLink = r.result.documentSelfLink;
+        } else {
+            r.rawResult = json;
+            r.documentSelfLink = Utils.fromJson(json, ServiceDocument.class).documentSelfLink;
+        }
         r.count = count;
         return r;
     }
@@ -388,6 +394,7 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
     public static class ServiceDocumentQueryElementResult<T extends ServiceDocument> {
         private Throwable exception;
         private T result;
+        private Object rawResult;
         private String documentSelfLink;
         private long count;
 
@@ -396,7 +403,7 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
         }
 
         public boolean hasResult() {
-            return result != null || documentSelfLink != null || count > 0;
+            return result != null || rawResult != null || documentSelfLink != null || count > 0;
         }
 
         public Throwable getException() {
@@ -405,6 +412,10 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
 
         public T getResult() {
             return result;
+        }
+
+        public Object getRawResult() {
+            return rawResult;
         }
 
         public String getDocumentSelfLink() {

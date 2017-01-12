@@ -66,9 +66,9 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
     private static final int CONCURRENT_REQUESTS_COUNT = Integer.getInteger(
             "test.cluster.performance.concurrent.requests.count", 1);
     private static final int ITERATIONS_COUNT = Integer.getInteger(
-            "test.cluster.performance.count", 5);
+            "test.cluster.performance.count", 6000);
     private static final int DOCKER_HOST_COUNT = Integer.getInteger(
-            "test.cluster.performance.docker.host.count", 10);
+            "test.cluster.performance.docker.host.count", 30);
     private final Object initializationLock = new Object();
 
     private final ExecutorService executor = Executors

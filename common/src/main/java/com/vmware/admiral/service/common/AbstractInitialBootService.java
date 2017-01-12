@@ -12,12 +12,11 @@
 package com.vmware.admiral.service.common;
 
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.QueryTaskClientHelper;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -111,27 +110,23 @@ public abstract class AbstractInitialBootService extends StatelessService {
      * @param callback
      */
     private void ensureInstanceExists(ServiceDocument state, Consumer<Throwable> callback) {
-        final AtomicBoolean documentExists = new AtomicBoolean();
-        QueryTaskClientHelper.create(state.getClass())
-                .setDocumentLink(state.documentSelfLink)
-                .setResultHandler((r, e) -> {
-                    if (e != null) {
+        new ServiceDocumentQuery<>(getHost(), state.getClass())
+                .queryDocument(state.documentSelfLink, (r) -> {
+                    if (r.hasException()) {
                         logSevere("Can't query for system document: %s. Error: %s",
-                                state.documentSelfLink, (e instanceof CancellationException)
-                                        ? e.getClass().getName() : Utils.toString(e));
-                        callback.accept(e);
+                                state.documentSelfLink,
+                                (r.getException() instanceof CancellationException)
+                                        ? r.getException().getClass().getName()
+                                        : Utils.toString(r.getException()));
+                        callback.accept(r.getException());
                         return;
                     } else if (r.hasResult()) {
-                        documentExists.set(true);
                         logFine("Document %s already exists.", state.documentSelfLink);
+                        callback.accept(null);
                     } else {
-                        if (!documentExists.get()) {
-                            createDefaultInstance(state, callback, RETRIES_COUNT);
-                        } else {
-                            callback.accept(null);
-                        }
+                        createDefaultInstance(state, callback, RETRIES_COUNT);
                     }
-                }).sendWith(getHost());
+                });
     }
 
     /**

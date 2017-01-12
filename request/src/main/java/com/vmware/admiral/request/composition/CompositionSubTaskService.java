@@ -62,12 +62,10 @@ import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallback
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
-import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * Task service tracking the progress of parallel progressing composition tasks. CompositionSubTask
@@ -665,70 +663,66 @@ public class CompositionSubTaskService
         // TODO Is this enough to get _only_ the provisioned stuff we need? ContainerStates have a
         // contextId, but ComputeStates don't. Descriptions are cloned, so it looks like this should
         // be enough
-        Operation.createPost(this, ServiceUriPaths.CORE_QUERY_TASKS)
-                .setBody(componentDescriptionQueryTask)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Error getting provisioned resources while evaluating bindings",
-                                e);
-                    } else {
-                        try {
-                            QueryTask resultTask = o.getBody(QueryTask.class);
-                            ServiceDocumentQueryResult result = resultTask.results;
 
-                            if (result == null || result.documents == null) {
-                                callback.run();
-                                return;
-                            }
+        Map<String, Object> provisionedResources = new HashMap<>();
+        Map<String, Object> statesToUpdate = new HashMap<>();
+        new ServiceDocumentQuery<>(
+                getHost(), null).query(componentDescriptionQueryTask,
+                        (r) -> {
+                            try {
+                                if (r.hasException()) {
+                                    failTask(
+                                            "Error getting provisioned resources while evaluating bindings",
+                                            r.getException());
+                                } else if (r.hasResult()) {
+                                    ComponentMeta meta = CompositeComponentRegistry
+                                            .metaByStateLink(r.getDocumentSelfLink());
+                                    if (meta != null) {
+                                        ResourceState state = Utils.fromJson(r.getRawResult(),
+                                                meta.stateTemplateClass);
+                                        String descriptionLink = PropertyUtils.getValue(state,
+                                                DESCRIPTION_LINK_FIELD_NAME);
+                                        ComponentDescription componentDescription = selfLinkToComponent
+                                                .get(descriptionLink);
+                                        provisionedResources.put(componentDescription.name, state);
 
-                            Map<String, Object> provisionedResources = new HashMap<>();
-                            Map<String, Object> statesToUpdate = new HashMap<>();
-                            result.documents.forEach((link, document) -> {
-                                ComponentMeta meta = CompositeComponentRegistry
-                                        .metaByStateLink(link);
-                                if (meta != null) {
-                                    ResourceState state = Utils.fromJson(document,
-                                            meta.stateTemplateClass);
-                                    String descriptionLink = PropertyUtils.getValue(state,
-                                            DESCRIPTION_LINK_FIELD_NAME);
-                                    ComponentDescription componentDescription = selfLinkToComponent
-                                            .get(descriptionLink);
-                                    provisionedResources.put(componentDescription.name, state);
-
-                                    if (descLink.equals(descriptionLink)) {
-                                        statesToUpdate.put(link, state);
+                                        if (descLink.equals(descriptionLink)) {
+                                            statesToUpdate.put(r.getDocumentSelfLink(), state);
+                                        }
+                                    } else {
+                                        logWarning("Unexpected result type: %s",
+                                                r.getDocumentSelfLink());
                                     }
                                 } else {
-                                    logWarning("Unexpected result type: %s", link);
-                                }
-                            });
 
-                            List<Operation> updates = new ArrayList<>();
-                            for (Map.Entry<String, Object> entry : statesToUpdate.entrySet()) {
-                                Object evaluated = BindingEvaluator
-                                        .evaluateProvisioningTimeBindings(entry.getValue(),
-                                                provisioningTimeBindings, provisionedResources);
-                                updates.add(
-                                        Operation.createPut(this, entry.getKey())
-                                                .setBody(evaluated));
-                            }
-
-                            if (!updates.isEmpty()) {
-                                OperationJoin.create(updates).setCompletion((ops, exs) -> {
-                                    if (exs != null && exs.size() > 0) {
-                                        failTask(
-                                                "Failure updating evaluated state",
-                                                exs.values().iterator().next());
-                                        return;
+                                    List<Operation> updates = new ArrayList<>();
+                                    for (Map.Entry<String, Object> entry : statesToUpdate
+                                            .entrySet()) {
+                                        Object evaluated = BindingEvaluator
+                                                .evaluateProvisioningTimeBindings(entry.getValue(),
+                                                        provisioningTimeBindings,
+                                                        provisionedResources);
+                                        updates.add(
+                                                Operation.createPut(this, entry.getKey())
+                                                        .setBody(evaluated));
                                     }
-                                    callback.run();
-                                }).sendWith(this);
+
+                                    if (!updates.isEmpty()) {
+                                        OperationJoin.create(updates).setCompletion((ops, exs) -> {
+                                            if (exs != null && exs.size() > 0) {
+                                                failTask(
+                                                        "Failure updating evaluated state",
+                                                        exs.values().iterator().next());
+                                                return;
+                                            }
+                                            callback.run();
+                                        }).sendWith(this);
+                                    }
+                                }
+                            } catch (Exception ex) {
+                                failTask("Failure updating evaluated state", ex);
                             }
-                        } catch (Exception ex) {
-                            failTask("Failure updating evaluated state", ex);
-                        }
-                    }
-                }).sendWith(this);
+                        });
     }
 
     private boolean hasDependencies(CompositionSubTaskState state) {

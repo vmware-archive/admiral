@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService;
@@ -42,14 +43,12 @@ import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
-import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class ContainerOperationTaskServiceTest extends RequestBaseTest {
 
@@ -269,27 +268,24 @@ public class ContainerOperationTaskServiceTest extends RequestBaseTest {
         query.querySpec.query.addBooleanClause(resourceLinkClause);
         query.querySpec.options = EnumSet.of(QueryOption.EXPAND_CONTENT);
 
-        QueryTask[] result = new QueryTask[] { null };
-        Operation post = Operation
-                .createPost(UriUtils.buildUri(host, ServiceUriPaths.CORE_QUERY_TASKS))
-                .setBody(query).setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                host.failIteration(e);
+        List<ContainerState> containers = new ArrayList<>();
+        new ServiceDocumentQuery<>(
+                host, null).query(query,
+                        (r) -> {
+                            if (r.hasException()) {
+                                host.failIteration(r.getException());
                                 return;
+                            } else if (r.hasResult()) {
+                                ContainerState container = Utils.fromJson(r.getRawResult(),
+                                        ContainerState.class);
+                                containers.add(container);
+                            } else {
+                                host.completeIteration();
                             }
-                            result[0] = o.getBody(QueryTask.class);
-                            host.completeIteration();
                         });
         host.testStart(1);
-        host.send(post);
         host.testWait();
 
-        List<ContainerState> containers = new ArrayList<>();
-        for (Object json : result[0].results.documents.values()) {
-            ContainerState container = Utils.fromJson(json, ContainerState.class);
-            containers.add(container);
-        }
         return containers;
     }
 
