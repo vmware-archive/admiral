@@ -23,6 +23,7 @@ import java.util.function.Consumer;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.OperationUtil;
@@ -152,6 +153,7 @@ public class TemplateSearchServiceTest extends ComputeBaseTest {
         });
     }
 
+    @Ignore
     @Test
     public void testContainedContainerDescNameTest() throws Throwable {
         verifyTemplateSearchResult(TEST_CONTAINER_DESC_NAME);
