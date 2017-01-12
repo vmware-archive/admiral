@@ -57,6 +57,12 @@ public class ComputeToNetworkAffinityHostFilter
     public void filter(final FilterContext filterContext,
             final Map<String, HostSelection> hostSelectionMap,
             final HostSelectionFilterCompletion callback) {
+
+        if (!isActive()) {
+            callback.complete(hostSelectionMap, null);
+            return;
+        }
+
         // sort the map in order to return consistent result no matter the order
         Map<String, HostSelection> sortedHostSelectionMap;
         if (hostSelectionMap != null) {
@@ -65,9 +71,7 @@ public class ComputeToNetworkAffinityHostFilter
             sortedHostSelectionMap = null;
         }
 
-        if (isActive()) {
-            callback.complete(sortedHostSelectionMap, null);
-        }
+        callback.complete(sortedHostSelectionMap, null);
     }
 
     @Override

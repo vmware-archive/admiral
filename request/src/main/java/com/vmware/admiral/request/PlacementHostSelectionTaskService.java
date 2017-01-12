@@ -18,7 +18,6 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -39,7 +38,6 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState.SubStage;
 import com.vmware.admiral.request.allocation.filter.AffinityFilters;
-import com.vmware.admiral.request.allocation.filter.BinpackAffinityHostFilter;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelectionFilterException;
@@ -279,7 +277,6 @@ public class PlacementHostSelectionTaskService
         return initHostSelectionMap;
     }
 
-    @SuppressWarnings("rawtypes")
     private void selection(final PlacementHostSelectionTaskState state,
             final ContainerDescription desc) {
         if (desc == null) {
@@ -293,29 +290,7 @@ public class PlacementHostSelectionTaskService
 
         final AffinityFilters filters = AffinityFilters.build(getHost(), desc);
 
-        Queue<HostSelectionFilter> filtersQueue = filters.getQueue();
-
-        String serviceLink = state.serviceTaskCallback.serviceSelfLink;
-
-        if (serviceLink.startsWith(ReservationTaskFactoryService.SELF_LINK)) {
-            ignoreAffinityFilters(filtersQueue);
-        }
-
-        filter(state, desc, filteredByMemory, filtersQueue);
-    }
-
-    @SuppressWarnings("rawtypes")
-    private void ignoreAffinityFilters(Queue<HostSelectionFilter> filters) {
-        List<Class<?>> filtersToIgnoreOnReservationStage = Arrays.asList(BinpackAffinityHostFilter.class);
-        filters.stream().forEach(f -> {
-            if (containsInstance(filtersToIgnoreOnReservationStage, f.getClass())) {
-                filters.remove(f);
-            }
-        });
-    }
-
-    public static <E> boolean containsInstance(Collection<Class<?>> filtersToIgnore, Class<?> class1) {
-        return filtersToIgnore.stream().anyMatch(e -> class1.equals(e));
+        filter(state, desc, filteredByMemory, filters.getQueue());
     }
 
     private Map<String, HostSelection> filterHostsByMemory(

@@ -21,11 +21,19 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
+import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
+import com.vmware.admiral.compute.ElasticPlacementZoneService;
+import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
 import com.vmware.admiral.compute.ResourceType;
+
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.UriUtils;
+
 
 /**
  * Tests for the {@link ComputePlacementSelectionTaskService} service.
@@ -75,6 +83,50 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
         assertEquals(selectedComputeState.documentSelfLink, vmHostCompute.documentSelfLink);
     }
 
+    @Test
+    public void testComputePlacementWithBinpackPolicy() throws Throwable {
+
+        setBinpackPolicyToEPZS();
+
+        ComputeDescription computeDescription = doPost(createComputeDescription(),
+                ComputeDescriptionService.FACTORY_LINK);
+
+        // Create two more Compute hosts.
+        ComputeState computeHost2 = createVmGuestComputeWithRandomComputeDescription(true);
+        ComputeState computeHost3 = createVmGuestComputeWithRandomComputeDescription(true);
+
+        // Update descriptions with memory.
+        ComputeDescription computeDesc1 = getDocument(ComputeDescription.class,
+                computeHost2.descriptionLink);
+        computeDesc1.totalMemoryBytes = 9000000000L;
+        doPatch(computeDesc1, computeDesc1.documentSelfLink);
+
+        ComputeDescription computeDesc3 = getDocument(ComputeDescription.class,
+                computeHost3.descriptionLink);
+        computeDesc3.totalMemoryBytes = 5000000000L;
+        doPatch(computeDesc3, computeDesc3.documentSelfLink);
+
+        ComputePlacementSelectionTaskState taskRequestState = new ComputePlacementSelectionTaskState();
+        taskRequestState.computeDescriptionLink = computeDescription.documentSelfLink;
+        taskRequestState.resourceCount = 1;
+        taskRequestState.resourcePoolLinks = new ArrayList<>();
+        taskRequestState.resourcePoolLinks.add(computeResourcePool.documentSelfLink);
+
+        ComputePlacementSelectionTaskState taskState = doPost(taskRequestState,
+                ComputePlacementSelectionTaskService.FACTORY_LINK);
+        assertNotNull(taskState);
+
+        taskState = waitForTaskSuccess(taskState.documentSelfLink,
+                ComputePlacementSelectionTaskState.class);
+
+        assertNotNull(taskState.selectedComputePlacementHosts);
+        assertEquals(taskState.selectedComputePlacementHosts.size(), 1);
+
+        // Verify that placement has happened on most loaded host - computeHost3.
+        assertEquals(computeHost3.documentSelfLink,
+                taskState.selectedComputePlacementHosts.stream().findFirst().get().hostLink);
+    }
+
     private ComputeDescription createComputeDescription() {
         ComputeDescription cd = new ComputeDescription();
         cd.id = UUID.randomUUID().toString();
@@ -82,4 +134,26 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
         cd.customProperties = new HashMap<>();
         return cd;
     }
+
+    private void setBinpackPolicyToEPZS() throws Throwable {
+
+        // Create ElasticPlacementZoneState which follows BINPACK deployment policy.
+        ElasticPlacementZoneState epzState = new ElasticPlacementZoneState();
+        epzState.placementPolicy = ElasticPlacementZoneService.PlacementPolicy.BINPACK;
+        epzState.resourcePoolLink = resourcePool.documentSelfLink;
+
+        ElasticPlacementZoneConfigurationState epz = new ElasticPlacementZoneConfigurationState();
+        epz.documentSelfLink = resourcePool.documentSelfLink;
+        epz.resourcePoolState = resourcePool;
+        epz.epzState = epzState;
+
+        epz = doOperation(epz,
+                UriUtils.buildUri(host, ElasticPlacementZoneConfigurationService.SELF_LINK),
+                ElasticPlacementZoneConfigurationState.class, false, Action.PATCH);
+
+        assertEquals(epz.epzState.placementPolicy,
+                ElasticPlacementZoneService.PlacementPolicy.BINPACK);
+
+    }
+
 }
