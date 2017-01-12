@@ -29,15 +29,19 @@ import java.util.Queue;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
+
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.serialization.ReleaseConstants;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.request.allocation.filter.AffinityFilters;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
+import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState.SubStage;
 import com.vmware.admiral.request.compute.allocation.filter.FilterContext;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
-import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
@@ -54,12 +58,10 @@ import com.vmware.xenon.services.common.QueryTask.Query;
  * {@link ComputeDescription}.
  */
 public class ComputePlacementSelectionTaskService extends
-        AbstractTaskStatefulService<ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState, DefaultSubStage> {
+        AbstractTaskStatefulService<ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState, ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState.SubStage> {
 
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_PROVISION_COMPUTE_PLACEMENT_TASKS;
     public static final String DISPLAY_NAME = "Compute Placement Selection";
-    private static final int QUERY_RETRY_COUNT = Integer.getInteger(
-            "com.vmware.admiral.service.placement.query.retries", 2);
 
     // cached description of the requested compute resource
     private volatile ComputeDescription computeDescription;
@@ -67,8 +69,12 @@ public class ComputePlacementSelectionTaskService extends
     /**
      * Task parameters and internal state.
      */
-    public static class ComputePlacementSelectionTaskState
-            extends com.vmware.admiral.service.common.TaskServiceDocument<DefaultSubStage> {
+    public static class ComputePlacementSelectionTaskState extends
+            com.vmware.admiral.service.common.TaskServiceDocument<ComputePlacementSelectionTaskState.SubStage> {
+
+        public static enum SubStage {
+            CREATED, FILTER, COMPLETED, ERROR;
+        }
 
         @Documentation(description = "The description that defines the requested resource.")
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED, LINK }, indexing = STORE_ONLY)
@@ -84,13 +90,22 @@ public class ComputePlacementSelectionTaskService extends
 
         @Documentation(description = "Set by the task as result of the selection algorithm filters."
                 + " The number of selected computes matches the given resourceCount.")
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL, LINKS }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
+                LINKS }, indexing = STORE_ONLY)
         public Collection<HostSelection> selectedComputePlacementHosts;
 
         @ServiceDocument.Documentation(description = "(Required) The overall contextId of this"
                 + "request (could be the same across multiple request - composite allocation)")
         @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
         public String contextId;
+
+        /**
+         * HostLink to HostSelection map. It is passed from CREATED to FILTER stage in order to
+         * track result from hosts query.
+         */
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public Map<String, HostSelection> hostSelectionMap;
     }
 
     /**
@@ -108,7 +123,7 @@ public class ComputePlacementSelectionTaskService extends
      * Constructs a new instance.
      */
     public ComputePlacementSelectionTaskService() {
-        super(ComputePlacementSelectionTaskState.class, DefaultSubStage.class, DISPLAY_NAME);
+        super(ComputePlacementSelectionTaskState.class, SubStage.class, DISPLAY_NAME);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
@@ -119,7 +134,10 @@ public class ComputePlacementSelectionTaskService extends
     protected void handleStartedStagePatch(ComputePlacementSelectionTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            selectPlacement(state, computeDescription, QUERY_RETRY_COUNT);
+            selectPlacement(state);
+            break;
+        case FILTER:
+            filter(state, computeDescription);
             break;
         case COMPLETED:
             complete();
@@ -148,13 +166,7 @@ public class ComputePlacementSelectionTaskService extends
         return finishedResponse;
     }
 
-    private void selectPlacement(ComputePlacementSelectionTaskState state,
-            ComputeDescription desc, int maxRetries) {
-        if (desc == null) {
-            getComputeDescription(state,
-                    (description) -> this.selectPlacement(state, description, maxRetries));
-            return;
-        }
+    private void selectPlacement(ComputePlacementSelectionTaskState state) {
 
         Query.Builder queryBuilder = Query.Builder.create()
                 .addKindFieldClause(ComputeDescription.class)
@@ -163,8 +175,10 @@ public class ComputePlacementSelectionTaskService extends
                         ComputeType.VM_GUEST.toString());
 
         QueryTask queryTask = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
+        QueryUtil.addExpandOption(queryTask);
 
         final List<String> computeDescriptionLinks = new ArrayList<>();
+        Map<String, Long> hostToAvailableMemory = new LinkedHashMap<>();
         ServiceDocumentQuery<ComputeDescription> query = new ServiceDocumentQuery<ComputeDescription>(
                 getHost(), ComputeDescription.class);
         query.query(queryTask, (r) -> {
@@ -172,20 +186,20 @@ public class ComputePlacementSelectionTaskService extends
                 failTask("Error querying for placement compute description.", r.getException());
             } else if (r.hasResult()) {
                 computeDescriptionLinks.add(r.getDocumentSelfLink());
+                hostToAvailableMemory.put(r.getDocumentSelfLink(), r.getResult().totalMemoryBytes);
             } else {
                 if (computeDescriptionLinks.isEmpty()) {
                     failTask(null, new IllegalStateException(
                             "No ComputeDescription found for compute placement"));
                     return;
                 }
-                proceedComputeSelection(state, desc, computeDescriptionLinks, maxRetries);
+                proceedComputeSelection(state, computeDescriptionLinks, hostToAvailableMemory);
             }
         });
     }
 
     private void proceedComputeSelection(ComputePlacementSelectionTaskState state,
-            ComputeDescription desc,
-            Collection<String> computeDescriptionLinks, int maxRetries) {
+            Collection<String> computeDescriptionLinks, Map<String, Long> hostToAvailableMemory) {
 
         ResourcePoolQueryHelper helper = ResourcePoolQueryHelper.createForResourcePools(getHost(),
                 state.resourcePoolLinks);
@@ -209,20 +223,32 @@ public class ComputePlacementSelectionTaskService extends
                 return;
             }
 
-            Map<String, HostSelection> hostSelectionMap = buildHostSelectionMap(qr);
+            Map<String, HostSelection> hostSelectionMap = buildHostSelectionMap(qr,
+                    hostToAvailableMemory);
 
-            AffinityFilters affinityFilters = AffinityFilters.build(this.getHost(), desc);
-
-            FilterContext filterContext = FilterContext.from(state);
-            Map<String, HostSelection> filtered = filter(state, filterContext, hostSelectionMap,
-                    affinityFilters.getQueue());
-
-            selection(state, filtered);
+            proceedTo(SubStage.FILTER, s -> {
+                s.hostSelectionMap = hostSelectionMap;
+            });
         });
     }
 
+    private void filter(ComputePlacementSelectionTaskState state, ComputeDescription desc) {
+        if (desc == null) {
+            getComputeDescription(state,
+                    (description) -> this.filter(state, description));
+            return;
+        }
+
+        AffinityFilters affinityFilters = AffinityFilters.build(this.getHost(), desc);
+
+        FilterContext filterContext = FilterContext.from(state);
+
+        filter(state, filterContext, state.hostSelectionMap,
+                affinityFilters.getQueue());
+    }
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private Map<String, HostSelection> filter(ComputePlacementSelectionTaskState state,
+    private void filter(ComputePlacementSelectionTaskState state,
             FilterContext filterContext,
             final Map<String, HostSelection> hostSelectionMap,
             final Queue<HostSelectionFilter> filters) {
@@ -231,12 +257,12 @@ public class ComputePlacementSelectionTaskService extends
             failTask(null, new IllegalStateException(
                     "No compute placement candidates found in placement zones: "
                             + state.resourcePoolLinks));
-            return hostSelectionMap;
+            return;
         }
 
         final HostSelectionFilter<FilterContext> filter = filters.poll();
         if (filter == null) {
-            return hostSelectionMap;
+            selection(state, hostSelectionMap);
         } else {
             filter.filter(filterContext, hostSelectionMap, (filteredHostSelectionMap, e) -> {
                 if (e != null) {
@@ -250,7 +276,6 @@ public class ComputePlacementSelectionTaskService extends
                 filter(state, filterContext, filteredHostSelectionMap, filters);
             });
         }
-        return hostSelectionMap;
     }
 
     private static boolean isNoSelection(Map<String, HostSelection> filteredHostSelectionMap) {
@@ -258,7 +283,8 @@ public class ComputePlacementSelectionTaskService extends
     }
 
     private Map<String, HostSelection> buildHostSelectionMap(
-            ResourcePoolQueryHelper.QueryResult rpQueryResult) {
+            ResourcePoolQueryHelper.QueryResult rpQueryResult,
+            Map<String, Long> hostToAvailableMemory) {
         Collection<ComputeState> computes = rpQueryResult.computesByLink.values();
         final Map<String, HostSelection> initHostSelectionMap = new LinkedHashMap<>(
                 computes.size());
@@ -269,7 +295,10 @@ public class ComputePlacementSelectionTaskService extends
                     .get(computeState.documentSelfLink);
             hostSelection.deploymentPolicyLink = computeState.customProperties
                     .get(ContainerHostService.CUSTOM_PROPERTY_DEPLOYMENT_POLICY);
-            //TODO populate available memory
+            if (hostToAvailableMemory.containsKey(computeState.descriptionLink)) {
+                hostSelection.availableMemory = hostToAvailableMemory
+                        .get(computeState.descriptionLink);
+            }
             initHostSelectionMap.put(hostSelection.hostLink, hostSelection);
         }
         return initHostSelectionMap;
@@ -303,7 +332,7 @@ public class ComputePlacementSelectionTaskService extends
                 state.resourceCount,
                 selectedComputeHosts.stream().map(hs -> hs.hostLink).collect(Collectors.toList()));
 
-        proceedTo(DefaultSubStage.COMPLETED, s -> {
+        proceedTo(SubStage.COMPLETED, s -> {
             s.selectedComputePlacementHosts = selectedComputeHosts;
         });
     }

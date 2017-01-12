@@ -13,6 +13,8 @@ package com.vmware.admiral.request.compute.allocation.filter;
 
 import static com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 
+import java.util.List;
+
 import com.vmware.admiral.request.utils.RequestUtils;
 
 /**
@@ -21,6 +23,8 @@ import com.vmware.admiral.request.utils.RequestUtils;
  */
 public class FilterContext {
     public String contextId;
+    public String serviceLink;
+    public List<String> resourcePoolLinks;
     public long resourceCount;
     public boolean isClustering;
 
@@ -28,9 +32,13 @@ public class FilterContext {
         FilterContext filterContext = new FilterContext();
 
         filterContext.contextId = state.contextId;
+        filterContext.resourcePoolLinks = state.resourcePoolLinks;
         filterContext.resourceCount = state.resourceCount;
-        filterContext.isClustering =
-                state.getCustomProperty(RequestUtils.CLUSTERING_OPERATION_CUSTOM_PROP) == null;
+        filterContext.isClustering = state
+                .getCustomProperty(RequestUtils.CLUSTERING_OPERATION_CUSTOM_PROP) == null;
+        if (state.serviceTaskCallback != null) {
+            filterContext.serviceLink = state.serviceTaskCallback.serviceSelfLink;
+        }
 
         return filterContext;
     }

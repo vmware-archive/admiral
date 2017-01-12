@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.request.allocation.filter;
+package com.vmware.admiral.request.compute.allocation.filter;
 
 import java.net.URI;
 import java.util.Collections;
@@ -23,10 +23,10 @@ import java.util.logging.Level;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
-import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
-import com.vmware.admiral.request.PlacementHostSelectionTaskService;
-import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
-import com.vmware.admiral.request.ReservationTaskFactoryService;
+import com.vmware.admiral.request.allocation.filter.AffinityConstraint;
+import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
+import com.vmware.admiral.request.compute.ComputeReservationTaskService;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
@@ -46,9 +46,7 @@ import com.vmware.xenon.common.Utils;
 *   Constraint (3) means there is exactly one host such that P(h)  is true.
 *
 */
-public class BinpackAffinityHostFilter
-        implements
-        HostSelectionFilter<PlacementHostSelectionTaskService.PlacementHostSelectionTaskState> {
+public class ComputeBinpackAffinityHostFilter implements HostSelectionFilter<FilterContext> {
 
     private static final Long MINIMAL_AVAILABLE_MEMORY_IN_BYTES = 3000000000L; // 3 GB
 
@@ -56,7 +54,7 @@ public class BinpackAffinityHostFilter
 
     private Map<String, Long> dockerHostToMemory = new ConcurrentHashMap<>();
 
-    public BinpackAffinityHostFilter(ServiceHost host, ContainerDescription desc) {
+    public ComputeBinpackAffinityHostFilter(ServiceHost host, ComputeDescription desc) {
         this.host = host;
     }
 
@@ -68,6 +66,29 @@ public class BinpackAffinityHostFilter
     @Override
     public Map<String, AffinityConstraint> getAffinityConstraints() {
         return Collections.emptyMap();
+    }
+
+    @Override
+    public void filter(FilterContext state,
+            Map<String, HostSelection> hostSelectionMap,
+            HostSelectionFilterCompletion callback) {
+
+        // Nothing to filter here.
+        if (hostSelectionMap.size() <= 1) {
+            callback.complete(hostSelectionMap, null);
+            return;
+        }
+
+        String serviceLink = state.serviceLink;
+        // Filter should be ignored on Reservation stage.
+        if (serviceLink != null
+                && serviceLink.startsWith(ComputeReservationTaskService.FACTORY_LINK)) {
+            callback.complete(hostSelectionMap, null);
+            return;
+        }
+
+        String resourcePoolLink = state.resourcePoolLinks.get(0);
+        filterBasedOnBinpackPolicy(resourcePoolLink, hostSelectionMap, callback);
     }
 
     private void filterBasedOnBinpackPolicy(String resourcePoolLink,
@@ -136,32 +157,6 @@ public class BinpackAffinityHostFilter
 
         result.put(mostLoadedHost, hostSelectionMap.get(mostLoadedHost));
         callback.complete(result, null);
-    }
-
-    @Override
-    public void filter(PlacementHostSelectionTaskState state,
-            Map<String, HostSelection> hostSelectionMap,
-            HostSelectionFilterCompletion callback) {
-
-        // Nothing to filter here.
-        if (hostSelectionMap.size() <= 1) {
-            callback.complete(hostSelectionMap, null);
-            return;
-        }
-
-        String serviceLink = state.serviceTaskCallback != null
-                ? state.serviceTaskCallback.serviceSelfLink
-                : null;
-        // Filter should be ignored on Reservation stage.
-        if (serviceLink != null
-                && serviceLink.startsWith(ReservationTaskFactoryService.SELF_LINK)) {
-            callback.complete(hostSelectionMap, null);
-            return;
-        }
-        String resourcePoolLink = state.resourcePoolLinks.get(0);
-
-        filterBasedOnBinpackPolicy(resourcePoolLink, hostSelectionMap, callback);
-
     }
 
 }

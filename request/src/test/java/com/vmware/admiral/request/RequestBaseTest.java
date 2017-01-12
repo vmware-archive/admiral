@@ -331,6 +331,18 @@ public abstract class RequestBaseTest extends BaseTestCase {
         }
     }
 
+    protected ComputeDescription createVmGuestComputeDescriptionWithRandomSelfLink()
+            throws Throwable {
+
+        ComputeDescription computeDescription = TestRequestStateFactory
+                .createVmGuestComputeDescription(true);
+        computeDescription.authCredentialsLink = endpoint.authCredentialsLink;
+        computeDescription = getOrCreateDocument(computeDescription,
+                ComputeDescriptionService.FACTORY_LINK);
+        assertNotNull(vmGuestComputeDescription);
+        return computeDescription;
+    }
+
     protected ComputeState createDockerHost(ComputeDescription computeDesc,
             ResourcePoolState resourcePool) throws Throwable {
         synchronized (initializationLock) {
@@ -422,6 +434,24 @@ public abstract class RequestBaseTest extends BaseTestCase {
         return vmHostComputeState;
     }
 
+    protected ComputeState createVmGuestComputeWithRandomComputeDescription(boolean generateId)
+            throws Throwable {
+        ComputeState vmGuestComputeState = TestRequestStateFactory.createVmHostComputeState();
+        if (generateId) {
+            vmGuestComputeState.id = UUID.randomUUID().toString();
+        }
+        vmGuestComputeState.documentSelfLink = vmGuestComputeState.id;
+        vmGuestComputeState.resourcePoolLink = createComputeResourcePool().documentSelfLink;
+        vmGuestComputeState.descriptionLink = createVmGuestComputeDescriptionWithRandomSelfLink().documentSelfLink;
+        vmGuestComputeState.type = ComputeType.VM_HOST;
+        vmGuestComputeState = getOrCreateDocument(vmGuestComputeState, ComputeService.FACTORY_LINK);
+        assertNotNull(vmGuestComputeState);
+        if (generateId) {
+            documentsForDeletion.add(vmGuestComputeState);
+        }
+        return vmGuestComputeState;
+    }
+
     protected synchronized ResourcePoolState createResourcePool() throws Throwable {
         synchronized (initializationLock) {
             if (resourcePool == null) {
@@ -493,8 +523,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
     }
 
     protected ContainerRemovalTaskService.ContainerRemovalTaskState startRequest(
-            ContainerRemovalTaskService.ContainerRemovalTaskState request) throws
-            Throwable {
+            ContainerRemovalTaskService.ContainerRemovalTaskState request) throws Throwable {
         ContainerRemovalTaskService.ContainerRemovalTaskState requestState = doPost(request,
                 ContainerRemovalTaskFactoryService.SELF_LINK);
         assertNotNull(requestState);

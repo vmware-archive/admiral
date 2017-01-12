@@ -330,6 +330,15 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return computeDescription;
     }
 
+
+    public static ComputeDescription createVmGuestComputeDescription(boolean generateDocSelfLink) {
+        ComputeDescription computeDescription = createComputeDescriptionForVmGuestChildren();
+        if (generateDocSelfLink) {
+            computeDescription.documentSelfLink = UUID.randomUUID().toString();
+        }
+        return computeDescription;
+    }
+
     public static ComputeState createVmHostComputeState() {
         ComputeState cs = new ComputeState();
         cs.id = UUID.randomUUID().toString();
