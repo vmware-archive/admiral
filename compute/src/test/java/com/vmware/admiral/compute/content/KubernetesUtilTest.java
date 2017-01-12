@@ -19,13 +19,16 @@ import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deseriali
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtilTest.assertContainersComponents;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtilTest.getContent;
+import static com.vmware.admiral.compute.content.kubernetes.ContainerDescriptionToPodContainerConverter.RESOURCES_LIMITS;
+import static com.vmware.admiral.compute.content.kubernetes.ContainerDescriptionToPodContainerConverter.fromPodContainerProbeToContainerDescriptionHealthConfig;
+import static com.vmware.admiral.compute.content.kubernetes.ContainerDescriptionToPodContainerConverter.parsePodContainerCpuShares;
+import static com.vmware.admiral.compute.content.kubernetes.ContainerDescriptionToPodContainerConverter.parsePodContainerMemoryLimit;
+import static com.vmware.admiral.compute.content.kubernetes.ContainerDescriptionToPodContainerConverter.setContainerDescriptionResourcesToPodContainerResources;
+import static com.vmware.admiral.compute.content.kubernetes.ContainerDescriptionToPodContainerConverter.setPodContainerResourcesToContainerDescriptionResources;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.deserializeKubernetesEntity;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromCompositeTemplateToPod;
-import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromPodContainerProbeToContainerDescriptionHealthConfig;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromPodToCompositeTemplate;
-import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.parsePodContainerMemoryLimit;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.serializeKubernetesEntity;
-import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.setPodContainerResourcesToContainerDescriptionResources;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -172,12 +175,35 @@ public class KubernetesUtilTest extends ComputeBaseTest {
 
     @Test
     public void testParsePodContainerMemoryLimit() {
-        String[] in = new String[] { "100M", "100Mi", "100K", "100Ki", "Invalid" };
-        Long[] out = new Long[] { 100000000L, 104857600L, 100000L, 102400L, 0L };
+        String[] in = new String[] { "100M", "100Mi", "100K", "100Ki" };
+        Long[] out = new Long[] { 100000000L, 104857600L, 100000L, 102400L };
         for (int i = 0; i < in.length; i++) {
             Long actual = parsePodContainerMemoryLimit(in[i]);
-            assertEquals(out[i], actual);
+            assertEquals("Failed on iteration: " + i, out[i], actual);
         }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testParsePodContainerMemoryLimitInvalidValue() {
+        String failIn = "52x34Li";
+        parsePodContainerMemoryLimit(failIn);
+    }
+
+    @Test
+    public void testParsePodContainerCpuShares() {
+        String[] in = new String[] { "500m", "2300m", "1000m", "3700m" };
+        Integer[] out = new Integer[] { 1, 2, 1, 3 };
+
+        for (int i = 0; i < in.length; i++) {
+            Integer actual = parsePodContainerCpuShares(in[i]);
+            assertEquals("Failed on iteration: " + i, out[i], actual);
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testParsePodContainerCpuSharesInvalidValue() {
+        String failIn = "500z";
+        parsePodContainerCpuShares(failIn);
     }
 
     @Test
@@ -186,7 +212,8 @@ public class KubernetesUtilTest extends ComputeBaseTest {
         podContainer.resources = new HashMap<>();
         PodContainerResources podContainerResources = new PodContainerResources();
         podContainerResources.memory = "100M";
-        podContainer.resources.put("limits", podContainerResources);
+        podContainerResources.cpu = "500m";
+        podContainer.resources.put(RESOURCES_LIMITS, podContainerResources);
 
         ContainerDescription containerDescription = new ContainerDescription();
 
@@ -195,6 +222,30 @@ public class KubernetesUtilTest extends ComputeBaseTest {
         Long expectedMemoryLimit = 100000000L;
         Long actualMemoryLimit = containerDescription.memoryLimit;
 
+        Integer expectedCpuShares = 1;
+        Integer actualCpuShares = containerDescription.cpuShares;
+
         assertEquals(expectedMemoryLimit, actualMemoryLimit);
+        assertEquals(expectedCpuShares, actualCpuShares);
+    }
+
+    @Test
+    public void testSetContainerDescriptionResourcesToPodContainerResources() {
+        ContainerDescription description = new ContainerDescription();
+        description.memoryLimit = 100000L;
+        description.cpuShares = 3;
+
+        PodContainer podContainer = new PodContainer();
+
+        setContainerDescriptionResourcesToPodContainerResources(description, podContainer);
+
+        String expectedPodContainerMemoryLimit = "100000";
+        String expectedPodContainerCpuShares = "3";
+
+        String actualPodContainerMemoryLimit = podContainer.resources.get(RESOURCES_LIMITS).memory;
+        String actualPodContainerCpuShares = podContainer.resources.get(RESOURCES_LIMITS).cpu;
+
+        assertEquals(expectedPodContainerMemoryLimit, actualPodContainerMemoryLimit);
+        assertEquals(expectedPodContainerCpuShares, actualPodContainerCpuShares);
     }
 }
