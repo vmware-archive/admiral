@@ -27,6 +27,7 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState.ResourcePoolProperty;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.ServiceStateCollectionUpdateRequest;
@@ -164,7 +165,7 @@ public class ElasticPlacementZoneService extends StatefulService {
 
     private ElasticPlacementZoneState processInput(Operation op) {
         if (!op.hasBody()) {
-            throw (new IllegalArgumentException("body is required"));
+            throw (new LocalizableValidationException("body is required", "compute.elastic.placement.body.required"));
         }
         ElasticPlacementZoneState state = op.getBody(ElasticPlacementZoneState.class);
         Utils.validateState(getStateDescription(), state);

@@ -11,12 +11,11 @@
 
 package com.vmware.admiral.common.util;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertTrue;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.regex.Pattern;
 
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 
 public class ValidationUtils {
@@ -25,15 +24,18 @@ public class ValidationUtils {
 
     public static void validateContainerName(String name) {
         if ((name != null) && !NAME_PATTERN.matcher(name).matches()) {
-            throw new IllegalArgumentException("Invalid container name '" + name + "', only "
-                    + NAME_PATTERN.pattern() + " are allowed.");
+            throw new LocalizableValidationException("Invalid container name '" + name + "', only "
+                    + NAME_PATTERN.pattern() + " are allowed.",
+                    "common.validate.container.name", name, NAME_PATTERN.pattern());
         }
     }
 
     public static void validatePort(String port) {
         int portNumber = Integer.parseInt(port);
-        assertTrue(0 <= portNumber && portNumber <= 65535,
-                String.format("'%s' is not a valid port number.", port));
+        if (!(0 <= portNumber && portNumber <= 65535)) {
+            throw new LocalizableValidationException(String.format("'%s' is not a valid port number.", port),
+                        "common.validation.port", port);
+        }
     }
 
     public static void validateHost(String host) {
@@ -43,7 +45,7 @@ public class ValidationUtils {
             }
         } catch (URISyntaxException e) {
         }
-        throw new IllegalArgumentException("Host [" + host + "] is not valid.");
+        throw new LocalizableValidationException("Host [" + host + "] is not valid.", "common.validation.host", host);
     }
 
     public static boolean validate(Operation op, ValidateOperationHandler validateHandler) {
@@ -58,7 +60,7 @@ public class ValidationUtils {
 
     public static void handleValidationException(Operation op, Throwable e) {
         Throwable ex = e;
-        if (!(e instanceof IllegalArgumentException)) {
+        if (!(e instanceof IllegalArgumentException) && !(e instanceof LocalizableValidationException)) {
             ex = new IllegalArgumentException(e.getMessage());
         }
         op.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST);

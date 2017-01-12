@@ -44,6 +44,7 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
@@ -110,7 +111,7 @@ public class ClusteringTaskService extends
     protected void validateStateOnStart(ClusteringTaskState state)
             throws IllegalArgumentException {
         if (state.resourceCount < 1) {
-            throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
         }
     }
 
@@ -212,8 +213,9 @@ public class ClusteringTaskService extends
                 .filter(r -> r instanceof ContainerState)
                 .map(r -> ((ContainerState) r))
                 .anyMatch(c -> isSystemContainer(c))) {
-            failTask(null, new IllegalArgumentException(
-                    "Day2 operations are not supported for system container"));
+            failTask(null, new LocalizableValidationException(
+                    "Day2 operations are not supported for system container",
+                    "request.system.container.day2"));
             return false;
         }
         return true;

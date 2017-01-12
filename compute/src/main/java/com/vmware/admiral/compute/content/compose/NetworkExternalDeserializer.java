@@ -20,6 +20,8 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.util.ClassUtil;
 
+import com.vmware.xenon.common.LocalizableValidationException;
+
 /**
  * See {@link NetworkExternal} serialization/deserialization particularities.
  */
@@ -50,8 +52,9 @@ public class NetworkExternalDeserializer extends StdDeserializer<NetworkExternal
             Map<String, String> map = (Map<String, String>) object;
             external.name = map.get("name");
         } else {
-            throw new IllegalArgumentException("Invalid external object class '"
-                    + ClassUtil.getClassDescription(object) + "'!");
+            throw new LocalizableValidationException("Invalid external object class '"
+                    + ClassUtil.getClassDescription(object) + "'!",
+                    "compute.external.deserialization.error", ClassUtil.getClassDescription(object));
         }
 
         return external;

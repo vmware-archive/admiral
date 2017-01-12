@@ -29,6 +29,8 @@ import java.util.Date;
 
 import org.junit.Test;
 
+import com.vmware.xenon.common.LocalizableValidationException;
+
 /**
  * The encryption and decryption operations from the {@link EncryptorService} can be validated
  * and/or combined with the commands openssl-encrypt.sh and openssl-decrypt.sh from the folder
@@ -120,7 +122,7 @@ public class EncryptorServiceTest {
         try {
             serviceBad.encrypt(plainText);
             fail("It shouldn't get here");
-        } catch (Exception e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().equalsIgnoreCase("Encryption error!"));
         }
 
@@ -130,7 +132,7 @@ public class EncryptorServiceTest {
         try {
             serviceBad.decrypt(encryptedString);
             fail("It shouldn't get here");
-        } catch (Exception e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().equalsIgnoreCase("Decryption error!"));
         }
     }
@@ -161,7 +163,7 @@ public class EncryptorServiceTest {
             if (Arrays.equals(plainBytesOne, decryptedBytesWrong)) {
                 fail("It shouldn't get here, really");
             }
-        } catch (Exception e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().equalsIgnoreCase("Decryption error!"));
         }
 
@@ -183,7 +185,7 @@ public class EncryptorServiceTest {
         try {
             serviceBad.encrypt(plainText);
             fail("It shouldn't get here");
-        } catch (Exception e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().equalsIgnoreCase("Encryption error!"));
         }
 
@@ -193,7 +195,7 @@ public class EncryptorServiceTest {
         try {
             serviceBad.decrypt(encryptedString);
             fail("It shouldn't get here");
-        } catch (Exception e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().equalsIgnoreCase("Decryption error!"));
         }
     }
@@ -206,7 +208,7 @@ public class EncryptorServiceTest {
         try {
             new EncryptorService(keyFile);
             fail("It shouldn't get here");
-        } catch (Exception e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().equalsIgnoreCase("Invalid encryption key file!"));
         }
     }

@@ -69,7 +69,7 @@ public class SslTrustCertificateServiceTest extends ComputeBaseTest {
     @Test
     public void testValidateOnStart() throws Throwable {
         sslTrustCert.certificate = null;
-        validateIllegalArgument(() -> {
+        validateLocalizableException(() -> {
             postForValidation(sslTrustCert);
         }, "certificate must not be null.");
 

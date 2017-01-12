@@ -17,6 +17,7 @@ import static org.junit.Assert.fail;
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.ValidationUtils;
+import com.vmware.xenon.common.LocalizableValidationException;
 
 public class ValidationUtilsTest {
 
@@ -25,28 +26,28 @@ public class ValidationUtilsTest {
         try {
             ValidationUtils.validateHost("a b");
             fail("expected to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("is not valid"));
         }
 
         try {
             ValidationUtils.validateHost("a&b");
             fail("expected to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("is not valid"));
         }
 
         try {
             ValidationUtils.validateHost("a%b");
             fail("expected to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("is not valid"));
         }
 
         try {
             ValidationUtils.validateHost("a_b");
             fail("expected to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("is not valid"));
         }
 
@@ -60,35 +61,35 @@ public class ValidationUtilsTest {
         try {
             ValidationUtils.validateContainerName("a");
             fail("expected to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("Invalid container name"));
         }
 
         try {
             ValidationUtils.validateContainerName("a b");
             fail("expected to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("Invalid container name"));
         }
 
         try {
             ValidationUtils.validateContainerName("a&b");
             fail("expected to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("Invalid container name"));
         }
 
         try {
             ValidationUtils.validateContainerName("a%b");
             fail("expected to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("Invalid container name"));
         }
 
         try {
             ValidationUtils.validateContainerName("_ab");
             fail("expected to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("Invalid container name"));
         }
 

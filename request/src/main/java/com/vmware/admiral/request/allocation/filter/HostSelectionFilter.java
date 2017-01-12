@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.vmware.xenon.common.LocalizableValidationException;
+
 /**
  * Host selection interface to be used by all filters implementing host selection algorithms
  */
@@ -125,11 +127,15 @@ public interface HostSelectionFilter<T> extends AffinityFilter {
         }
     }
 
-    class HostSelectionFilterException extends IllegalStateException {
+    class HostSelectionFilterException extends LocalizableValidationException {
         private static final long serialVersionUID = 1L;
 
-        public HostSelectionFilterException(String s) {
-            super(s);
+        public HostSelectionFilterException(String systemMessage, String msgKey, Object... args) {
+            this(null, systemMessage, msgKey, args);
+        }
+
+        public HostSelectionFilterException(Throwable e, String systemMessage, String msgKey, Object... args) {
+            super(e, systemMessage, msgKey, args);
         }
     }
 }

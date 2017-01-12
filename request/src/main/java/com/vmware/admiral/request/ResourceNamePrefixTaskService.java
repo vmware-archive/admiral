@@ -32,6 +32,7 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService.NamePrefixReq
 import com.vmware.admiral.service.common.ResourceNamePrefixService.NamePrefixResponse;
 import com.vmware.admiral.service.common.ResourceNamePrefixService.ResourceNamePrefixState;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.services.common.QueryTask;
 
@@ -79,7 +80,7 @@ public class ResourceNamePrefixTaskService
     @Override
     protected void validateStateOnStart(ResourceNamePrefixTaskState state) {
         if (state.resourceCount < 1) {
-            throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
         }
     }
 

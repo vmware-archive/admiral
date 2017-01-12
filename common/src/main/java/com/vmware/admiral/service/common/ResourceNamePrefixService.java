@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -150,26 +151,26 @@ public class ResourceNamePrefixService extends StatefulService {
     private static void validateStateOnStart(ResourceNamePrefixState state) {
         assertNotEmpty(state.prefix, "prefix");
         if (state.prefix.length() > MAX_PREFIX_LENGTH) {
-            throw new IllegalArgumentException("'prefix' must be less characters than "
-                    + MAX_PREFIX_LENGTH + 1);
+            throw new LocalizableValidationException("'prefix' must be less characters than "
+                    + MAX_PREFIX_LENGTH + 1, "common.resource-name.characters", MAX_PREFIX_LENGTH + 1);
         }
 
         if (state.numberOfDigits < 0) {
-            throw new IllegalArgumentException("'numberOfDigits' must be positive.");
+            throw new LocalizableValidationException("'numberOfDigits' must be positive.", "common.resource-name.digits.positive");
         } else if (state.numberOfDigits == 0) {
             state.numberOfDigits = DEFAULT_NUMBER_OF_DIGITS;
         } else if (state.numberOfDigits > MAX_NUMBER_OF_DIGITS) {
-            throw new IllegalArgumentException("'numberOfDigits' must be less than: "
-                    + MAX_NUMBER_OF_DIGITS);
+            throw new LocalizableValidationException("'numberOfDigits' must be less than: "
+                    + MAX_NUMBER_OF_DIGITS, "common.resource-name.digits.range", MAX_NUMBER_OF_DIGITS);
         }
 
         if (state.nextNumber < 0) {
-            throw new IllegalArgumentException("'nextNumber' must be positive.");
+            throw new LocalizableValidationException("'nextNumber' must be positive.", "common.resource-name.next-number.positive");
         } else if (state.nextNumber == 0) {
             state.nextNumber = DEFAULT_NEXT_NUMBER;
         } else if (state.nextNumber >= state.getMaxNumber()) {
-            throw new IllegalArgumentException("'nextNumber' must be less than the max number of "
-                    + state.getMaxNumber());
+            throw new LocalizableValidationException("'nextNumber' must be less than the max number of "
+                    + state.getMaxNumber(), "common.resource-name.next-number.max", state.getMaxNumber());
         }
 
         if (state.currentCount == -1) { // initialize the counter only on initial start up.
@@ -192,12 +193,12 @@ public class ResourceNamePrefixService extends StatefulService {
         NamePrefixRequest request = patch.getBody(NamePrefixRequest.class);
         ResourceNamePrefixState state = getState(patch);
         if (request.resourceCount <= 0) {
-            patch.fail(new IllegalArgumentException(
-                    "Requested resource count must be positive number."));
+            patch.fail(new LocalizableValidationException(
+                    "Requested resource count must be positive number.", "common.name-prefix.count.positive"));
             return;
         } else if (request.resourceCount > state.getRange()) {
-            patch.fail(new IllegalArgumentException(
-                    "Requested resource count must be less than the range."));
+            patch.fail(new LocalizableValidationException(
+                    "Requested resource count must be less than the range.", "common.name-prefix.count.range"));
             return;
         }
 

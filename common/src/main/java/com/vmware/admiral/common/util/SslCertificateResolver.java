@@ -32,6 +32,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -103,7 +104,7 @@ public class SslCertificateResolver {
             }
         } catch (KeyManagementException | NoSuchAlgorithmException e) {
             logger.throwing(logger.getName(), "connect", e);
-            throw new IllegalStateException("Failed to initialize SSL context.", e);
+            throw new LocalizableValidationException(e, "Failed to initialize SSL context.", "common.ssh.context.init");
         }
 
         SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
@@ -125,8 +126,8 @@ public class SslCertificateResolver {
 
 
         if (connectionCertificates.size() == 0) {
-            IllegalArgumentException e = new IllegalArgumentException(
-                    "Importing ssl certificate failed for server: " + uri);
+            LocalizableValidationException e = new LocalizableValidationException(
+                    "Importing ssl certificate failed for server: " + uri, "common.certificate.import.failed", uri);
 
             logger.throwing(logger.getName(), "connect", e);
             throw e;

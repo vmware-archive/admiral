@@ -75,6 +75,7 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 import com.vmware.admiral.common.security.EncryptionUtils;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -418,7 +419,7 @@ public class CertificateUtil {
                     | NoSuchProviderException e) {
                 throw new IllegalArgumentException(e);
             } catch (SignatureException e) {
-                throw new IllegalArgumentException("Certificate chain is not valid.");
+                throw new LocalizableValidationException("Certificate chain is not valid.", "common.certificate.invalid");
             }
             current = next;
         }
@@ -431,9 +432,11 @@ public class CertificateUtil {
 
         for (X509Certificate currentcert : certificates) {
             if (certificate.equals(currentcert) && exists >= 1) {
-                throw new IllegalArgumentException(String.format(
+                String errorMsg = String.format(
                         "Certificate with subject: %s exists in more than one place in chain.",
-                        certificate.getSubjectX500Principal().getName()));
+                        certificate.getSubjectX500Principal().getName());
+                throw new LocalizableValidationException(errorMsg,
+                        "common.certificate.exists.in.chain", certificate.getSubjectX500Principal().getName());
             } else if (certificate.equals(currentcert)) {
                 exists++;
             }
@@ -470,7 +473,7 @@ public class CertificateUtil {
     public static String computeCertificateThumbprint(X509Certificate cert,
             ThumbprintAlgorithm thumbprintAlgorithm) {
         if (cert == null) {
-            throw new IllegalArgumentException("certificate must not be null.");
+            throw new LocalizableValidationException("certificate must not be null.", "common.certificate.null");
         }
         byte[] digest;
         try {

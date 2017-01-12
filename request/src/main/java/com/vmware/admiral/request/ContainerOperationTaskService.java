@@ -32,6 +32,7 @@ import com.vmware.admiral.request.ContainerOperationTaskService.ContainerOperati
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
@@ -109,8 +110,9 @@ public class ContainerOperationTaskService extends
                 failTask("Failure retrieving query results", r.getException());
             } else if (r.hasResult()) {
                 if (isSystemContainer(r.getResult())) {
-                    failTask(null, new IllegalArgumentException(
-                            "Day2 operations are not supported for system container"));
+                    failTask(null, new LocalizableValidationException(
+                            "Day2 operations are not supported for system container",
+                            "request.system.container.day2"));
                 }
                 documents.add(r.getResult());
             } else {

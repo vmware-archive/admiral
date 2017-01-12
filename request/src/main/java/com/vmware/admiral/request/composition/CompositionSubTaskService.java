@@ -63,6 +63,7 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -253,7 +254,8 @@ public class CompositionSubTaskService
         if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
             String errMsg = "No resourceLinks found for allocated resources.";
             logWarning(errMsg);
-            return state.serviceTaskCallback.getFailedResponse(new IllegalStateException(errMsg));
+            return state.serviceTaskCallback.getFailedResponse(new LocalizableValidationException(errMsg,
+                    "request.composition.resource-links.missing"));
         } else {
             CallbackCompleteResponse finishedResponse = new CallbackCompleteResponse();
             finishedResponse.copy(state.serviceTaskCallback.getFinishedResponse());
@@ -401,11 +403,15 @@ public class CompositionSubTaskService
         } else if (ResourceType.CLOSURE_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createClosureProvisionTask(state);
         } else {
-            throw new IllegalArgumentException(
-                    String.format("Unsupported type. Must be: %s, %s, %s, %s or %s",
+            String exMsg = String.format("Unsupported type. Must be: %s, %s, %s, %s or %s",
                     ResourceType.CONTAINER_TYPE, ResourceType.COMPUTE_TYPE,
                     ResourceType.CONTAINER_NETWORK_TYPE, ResourceType.COMPUTE_NETWORK_TYPE,
-                    ResourceType.CLOSURE_TYPE));
+                    ResourceType.CLOSURE_TYPE);
+            throw new LocalizableValidationException(exMsg,
+                    "request.composition.unsupported.type",
+                    ResourceType.CONTAINER_TYPE, ResourceType.COMPUTE_TYPE,
+                    ResourceType.CONTAINER_NETWORK_TYPE,
+                    ResourceType.COMPUTE_NETWORK_TYPE, ResourceType.CLOSURE_TYPE);
         }
     }
 

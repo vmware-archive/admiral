@@ -47,6 +47,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.TemplateSpec.TemplateType;
 import com.vmware.admiral.image.service.ContainerImageService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatelessService;
@@ -97,7 +98,8 @@ public class TemplateSearchService extends StatelessService {
             queryClosures(get, queryParams, query);
         } else {
             if (templatesOnly && imagesOnly) {
-                throw new IllegalArgumentException("Can't use both templatesOnly and imagesOnly");
+                throw new LocalizableValidationException("Can't use both templatesOnly and imagesOnly",
+                        "compute.template.search.options");
             }
 
             Set<TemplateSpec> results = Collections.newSetFromMap(new ConcurrentHashMap<>());

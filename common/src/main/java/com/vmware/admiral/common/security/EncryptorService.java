@@ -32,6 +32,8 @@ import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 
+import com.vmware.xenon.common.LocalizableValidationException;
+
 /**
  * Simple encryption service that provides methods to encrypt and decrypt byte arrays and strings
  * based on the provided symmetric key. The key can be provided directly as a byte array or through
@@ -63,7 +65,7 @@ public final class EncryptorService {
         try {
             this.keyBytes = Files.readAllBytes(Paths.get(encryptionKeyFile.toURI()));
         } catch (IOException e) {
-            throw new IllegalArgumentException("Invalid encryption key file!", e);
+            throw new LocalizableValidationException(e, "Invalid encryption key file!", "common.ecryptor.file.invalid");
         }
     }
 
@@ -104,7 +106,7 @@ public final class EncryptorService {
 
             return Base64.getEncoder().encode(Arrays.copyOfRange(output, 0, length));
         } catch (Exception e) {
-            throw new IllegalStateException("Encryption error!", e);
+            throw new LocalizableValidationException(e, "Encryption error!", "common.ecryption.error");
         }
     }
 
@@ -147,7 +149,7 @@ public final class EncryptorService {
 
             return Arrays.copyOfRange(output, 0, length);
         } catch (Exception e) {
-            throw new IllegalStateException("Decryption error!", e);
+            throw new LocalizableValidationException(e, "Decryption error!", "common.dercyption.error");
         }
     }
 

@@ -26,6 +26,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509KeyManager;
 
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -98,7 +99,7 @@ public class DelegatingX509KeyManager extends X509ExtendedKeyManager {
         if (!alias.equals(alias.toLowerCase())) {
             // aliases given by the SSL engine are case insensitive so make sure
             // they are normalized
-            throw new IllegalArgumentException("Aliases must be all lowercase");
+            throw new LocalizableValidationException("Aliases must be all lowercase", "common.certificate.aliases.lowercase");
         }
         delegates.put(alias, newDelegate);
     }

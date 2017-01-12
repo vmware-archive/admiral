@@ -33,6 +33,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState.PowerState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
@@ -51,11 +52,11 @@ public class VolumeUtil {
 
     public static void validateVolumeName(String name) {
         if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException(ERROR_VOLUME_NAME_IS_REQUIRED);
+            throw new LocalizableValidationException(ERROR_VOLUME_NAME_IS_REQUIRED, "compute.volumes.name.required");
         }
 
         if (name.contains("/")) {
-            throw new IllegalArgumentException(ERROR_VOLUME_NAME_IS_PATH);
+            throw new LocalizableValidationException(ERROR_VOLUME_NAME_IS_PATH, "compute.volumes.name.is.path");
         }
     }
 
@@ -80,7 +81,7 @@ public class VolumeUtil {
         String[] hostContainerDir = volume.split(HOST_CONTAINER_DIR_DELIMITER);
 
         if (hostContainerDir.length != 2) {
-            throw new IllegalArgumentException("Invalid volume directory.");
+            throw new LocalizableValidationException("Invalid volume directory.", "compute.volumes.invalid.directory");
         }
 
         String hostDir = hostContainerDir[0];

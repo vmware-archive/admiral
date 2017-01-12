@@ -99,6 +99,7 @@ public class VolumesFromAffinityHostFilter extends BaseAffinityHostFilter {
         return volumesFrom != null && volumesFrom.length > 0;
     }
 
+    @Override
     protected Map<String, HostSelection> applyAffinityConstraints(
             final PlacementHostSelectionTaskService.PlacementHostSelectionTaskState state,
             final Map<String, HostSelection> initHostSelectionMap,
@@ -107,12 +108,14 @@ public class VolumesFromAffinityHostFilter extends BaseAffinityHostFilter {
             final String errMsg = String.format(
                     "No containers found for filter [%s] and value of [%s] for contextId [%s].",
                     affinityPropertyName, getAffinity(), state.contextId);
-            throw new HostSelectionFilterException(errMsg);
+            throw new HostSelectionFilterException(errMsg, "request.volumes.from.filter.no.containers",
+                    affinityPropertyName, getAffinity(), state.contextId);
         } else if (filteredHostSelectionMap.size() > 1) {
             final String errMsg = String
                     .format("Container host selection size [%s] based on filter: [links] with values: [%s] and contextId [%s] is not expected to be more than 1.",
                             filteredHostSelectionMap.size(), getAffinity(), state.contextId);
-            throw new HostSelectionFilterException(errMsg);
+            throw new HostSelectionFilterException(errMsg, "request.volumes.from.filter.many.hosts",
+                    filteredHostSelectionMap.size(), getAffinity(), state.contextId);
         }
 
         return filteredHostSelectionMap;
@@ -128,7 +131,9 @@ public class VolumesFromAffinityHostFilter extends BaseAffinityHostFilter {
                 "No container descriptions with %s [%s].",
                 affinityPropertyName, getAffinity());
         if (hasOutgoingAffinities()) {
-            callback.complete(null, new HostSelectionFilterException(errMsg));
+            callback.complete(null, new HostSelectionFilterException(errMsg,
+                    "request.volumes.from.filter.no.container-descriptions",
+                    affinityPropertyName, getAffinity()));
         } else {
             callback.complete(filteredHostSelectionMap, null);
         }

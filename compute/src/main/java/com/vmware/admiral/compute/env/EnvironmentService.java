@@ -35,6 +35,7 @@ import com.vmware.admiral.compute.env.StorageProfileService.StorageProfile;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.FileUtils;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
@@ -301,11 +302,12 @@ public class EnvironmentService extends StatefulService {
         AssertUtil.assertNotNull(state.name, "name");
         Utils.validateState(getStateDescription(), state);
         if (state.endpointLink == null && state.endpointType == null) {
-            throw new IllegalArgumentException("Endpoint or endpoint type must be specified");
+            throw new LocalizableValidationException("Endpoint or endpoint type must be specified", "compute.endpoint.type.required");
         }
         if (state.endpointLink != null && state.endpointType != null) {
-            throw new IllegalArgumentException(
-                    "Only one of endpoint link or endpoint type must be specified");
+            throw new LocalizableValidationException(
+                    "Only one of endpoint link or endpoint type must be specified",
+                    "compute.endpoint.link.or.type.only");
         }
         return state;
     }

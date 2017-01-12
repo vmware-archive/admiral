@@ -24,6 +24,7 @@ import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.OperationSequence;
@@ -153,7 +154,8 @@ public class CompositeDescriptionCloneService extends StatelessService {
             String factoryLink = CompositeComponentRegistry
                     .factoryLinkByDescriptionLink(component.documentSelfLink);
             if (factoryLink == null) {
-                throw new IllegalArgumentException("Cannot clone unsupported type " + resourceType);
+                throw new LocalizableValidationException("Cannot clone unsupported type " + resourceType,
+                        "compute.clone.unsupported.type", resourceType);
             }
             ResourceState cloned = Utils.clone((ResourceState) component);
             if (cloned.customProperties == null) {
@@ -164,7 +166,8 @@ public class CompositeDescriptionCloneService extends StatelessService {
             cloned.documentSelfLink = null;
             return Operation.createPost(this, factoryLink).setBody(cloned);
         }
-        throw new IllegalArgumentException("Cannot clone unsupported type " + resourceType);
+        throw new LocalizableValidationException("Cannot clone unsupported type " + resourceType,
+                "compute.clone.unsupported.type", resourceType);
     }
 
     private void getCompositeDesc(String compDescLink,

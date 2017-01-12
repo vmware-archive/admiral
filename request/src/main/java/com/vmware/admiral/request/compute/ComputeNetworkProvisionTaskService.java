@@ -19,6 +19,7 @@ import java.util.Set;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 
@@ -92,7 +93,7 @@ public class ComputeNetworkProvisionTaskService
         state.resourceCount = (long) state.resourceLinks.size();
 
         if (state.resourceCount < 1) {
-            throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
         }
     }
 

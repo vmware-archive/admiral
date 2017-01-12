@@ -41,6 +41,7 @@ import com.vmware.admiral.compute.content.CompositeTemplateUtil.YamlType;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
@@ -162,7 +163,7 @@ public class CompositeDescriptionContentService extends StatelessService {
     @Override
     public void handlePost(Operation op) {
         if (!op.hasBody()) {
-            op.fail(new IllegalArgumentException("body is required"));
+            op.fail(new LocalizableValidationException("body is required", "compute.body.required"));
             return;
         }
 
@@ -180,8 +181,9 @@ public class CompositeDescriptionContentService extends StatelessService {
                     template = fromDockerComposeToCompositeTemplate(compose);
                     break;
                 default:
-                    throw new IllegalArgumentException(
-                            "Unknown YAML content type! Only Blueprint and Docker Compose v2 formats are supported.");
+                    throw new LocalizableValidationException(
+                            "Unknown YAML content type! Only Blueprint and Docker Compose v2 formats are supported.",
+                            "compute.content.unknown.yaml.type");
                 }
             } else {
                 try {
@@ -189,8 +191,9 @@ public class CompositeDescriptionContentService extends StatelessService {
                 } catch (Exception e) {
                     logWarning("Failed to deserialize CompositeTemplate serialized content! %s",
                             Utils.toString(e));
-                    throw new IllegalArgumentException(
-                            "Failed to deserialize CompositeTemplate serialized content!");
+                    throw new LocalizableValidationException(
+                            "Failed to deserialize CompositeTemplate serialized content!",
+                            "compute.content.deserialize.template");
                 }
             }
 
@@ -212,13 +215,16 @@ public class CompositeDescriptionContentService extends StatelessService {
             description.descriptionLinks = ops.stream()
                     .map((o) -> o.getBody(ServiceDocument.class).documentSelfLink)
                     .collect(Collectors.toList());
+
             createDescriptionOp.setBody(description).setReferer(getUri());
             return getHost().sendWithDeferredResult(createDescriptionOp);
         }).handle((o, e) -> {
             if (e != null) {
                 logWarning("Failed to create CompositeDescription: %s", Utils.toString(e));
-                op.fail(new IllegalStateException("Failed to create CompositeDescription: "
-                        + Utils.toString(e)));
+                LocalizableValidationException ex = new LocalizableValidationException(e,
+                                "Failed to create CompositeDescription: " + Utils.toString(e),
+                                "compute.composite-description.create.failed");
+                op.fail(ex);
                 return null;
             } else {
                 CompositeDescription description = o.getBody(CompositeDescription.class);

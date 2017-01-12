@@ -36,6 +36,7 @@ import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.service.common.RegistryService.ApiVersion;
 import com.vmware.admiral.service.common.RegistryService.RegistryAuthState;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.StatelessService;
@@ -251,8 +252,8 @@ public class RegistryAdapterService extends StatelessService {
         } else if (ApiVersion.V2.toString().equals(apiVersion)) {
             processV2SearchRequest(context);
         } else {
-            context.operation.fail(new IllegalStateException(
-                    String.format("Unsupported registry version '%s'.", apiVersion)));
+            String errorMsg = String.format("Unsupported registry version '%s'.", apiVersion);
+            context.operation.fail(new LocalizableValidationException(errorMsg, "adapter.unsupported.registry.version", apiVersion));
         }
     }
 
@@ -374,8 +375,8 @@ public class RegistryAdapterService extends StatelessService {
                         if (linkHeader != null) {
                             String nextPagePath = extractUrl(linkHeader);
                             if (nextPagePath == null) {
-                                context.operation.fail(new IllegalStateException(
-                                        "Unexpected link header format: " + linkHeader));
+                                context.operation.fail(new LocalizableValidationException(
+                                        "Unexpected link header format: " + linkHeader, "adapter.link.header.format", linkHeader));
                                 return;
                             }
                             URI nextPageUri = UriUtils.extendUri(
@@ -500,8 +501,8 @@ public class RegistryAdapterService extends StatelessService {
         } else if (ApiVersion.V2.toString().equals(apiVersion)) {
             processV2ListImageTagsRequest(context);
         } else {
-            context.operation.fail(new IllegalStateException(
-                    String.format("Unsupported registry version '%s'.", apiVersion)));
+            String errorMsg = String.format("Unsupported registry version '%s'.", apiVersion);
+            context.operation.fail(new LocalizableValidationException(errorMsg, "adapter.unsupported.registry.version", apiVersion));
         }
     }
 

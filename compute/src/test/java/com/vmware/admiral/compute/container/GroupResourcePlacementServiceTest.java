@@ -47,6 +47,7 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService.Resour
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.FactoryService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocument;
@@ -599,7 +600,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
             doOperation(placementState, UriUtils.buildUri(host, placementState.documentSelfLink),
                     expectedFailure, Action.PUT);
             fail("expect maxNumberInstances validation error");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             // expected
         }
 
@@ -610,7 +611,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
             doOperation(placementState, UriUtils.buildUri(host, placementState.documentSelfLink),
                     expectedFailure, Action.PUT);
             fail("expect resourcePoolLink can't be changed validation error");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             // expected
         } finally {
             doDelete(UriUtils.buildUri(host, placementState.resourcePoolLink), false);
@@ -623,7 +624,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
             doOperation(placementState, UriUtils.buildUri(host, placementState.documentSelfLink),
                     expectedFailure, Action.PUT);
             fail("expect storageLimit can't be changed validation error");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             // expect resourcePoolLink validation error
         }
 
@@ -634,7 +635,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
             doOperation(placementState, UriUtils.buildUri(host, placementState.documentSelfLink),
                     expectedFailure, Action.PUT);
             fail("expect cpuShares can't be changed validation error");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             // expect resourcePoolLink validation error
         }
 
@@ -679,7 +680,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
             DeploymentProfileConfig.getInstance().setTest(false);
             doDelete(UriUtils.buildUri(host, placementState.documentSelfLink), expectedFailure);
             fail("expect validation error during deletion");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             // expected
         } finally {
             DeploymentProfileConfig.getInstance().setTest(true);

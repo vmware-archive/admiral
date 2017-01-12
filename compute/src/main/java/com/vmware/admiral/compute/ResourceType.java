@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
+import com.vmware.xenon.common.LocalizableValidationException;
 
 public enum ResourceType {
     CONTAINER_TYPE(ComputeType.DOCKER_CONTAINER.toString(), "App.Container"),
@@ -45,26 +46,27 @@ public enum ResourceType {
 
     public static ResourceType fromName(String name) {
         if (name == null || "".equals(name)) {
-            throw new IllegalArgumentException("Name cannot be null or empty!");
+            throw new LocalizableValidationException("Name cannot be null or empty!", "common.resource-type.name.empty");
         }
         for (ResourceType r : ResourceType.values()) {
             if (r.name.equals(name)) {
                 return r;
             }
         }
-        throw new IllegalArgumentException("No matching type for:" + name);
+        throw new LocalizableValidationException("No matching type for:" + name, "common.resource-type.name.mismatch", name);
     }
 
     public static ResourceType fromContentType(String contentType) {
         if (contentType == null || "".equals(contentType)) {
-            throw new IllegalArgumentException("ContentType cannot be null or empty!");
+            throw new LocalizableValidationException("ContentType cannot be null or empty!", "common.resource-type.content-type.empty");
         }
         for (ResourceType r : ResourceType.values()) {
             if (r.contentType.equals(contentType)) {
                 return r;
             }
         }
-        throw new IllegalArgumentException("No matching type for:" + contentType);
+        throw new LocalizableValidationException("No matching type for:" + contentType,
+                "common.resource-type.content-type.mismatch", contentType);
     }
 
     public static String getAllTypesAsString() {

@@ -29,6 +29,8 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import com.vmware.xenon.common.LocalizableValidationException;
+
 public class EncryptionUtilsInitTest {
 
     @ClassRule
@@ -58,7 +60,7 @@ public class EncryptionUtilsInitTest {
         try {
             EncryptionUtils.initEncryptionService();
             fail("File actually does not exist!");
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("does not exist"));
         }
     }
@@ -71,7 +73,7 @@ public class EncryptionUtilsInitTest {
         try {
             EncryptionUtils.initEncryptionService();
             fail("File actually does not contain a valid key!");
-        } catch (IllegalStateException e) {
+        } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().contains("validating the encryption key"));
         }
     }

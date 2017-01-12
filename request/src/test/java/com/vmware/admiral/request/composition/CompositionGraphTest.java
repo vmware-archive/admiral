@@ -39,6 +39,7 @@ import com.vmware.admiral.compute.content.Binding;
 import com.vmware.admiral.compute.content.Binding.BindingPlaceholder;
 import com.vmware.admiral.compute.content.Binding.ComponentBinding;
 import com.vmware.admiral.request.composition.CompositionGraph.ResourceNode;
+import com.vmware.xenon.common.LocalizableValidationException;
 
 public class CompositionGraphTest {
     private CompositionGraph graph;
@@ -70,7 +71,7 @@ public class CompositionGraphTest {
         assertNull(resourceNode.dependents);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = LocalizableValidationException.class)
     public void failWhenSingleNodeWithDependency() {
         ContainerDescription desc = createContainerDescription();
         desc.volumesFrom = new String[] { "non_existing_container_name" };
@@ -81,7 +82,7 @@ public class CompositionGraphTest {
         // expect error for not finding dependencies.
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = LocalizableValidationException.class)
     public void failWhenTwoComponentsWithSameName() {
         String sameName = "sameName";
         ContainerDescription desc1 = createContainerDescription(sameName);
@@ -125,7 +126,7 @@ public class CompositionGraphTest {
         assertTrue(nodes.get(2).dependents == null || nodes.get(0).dependents.isEmpty());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = LocalizableValidationException.class)
     public void failWhenInitialCyclicDependecies() {
         ContainerDescription desc1 = createContainerDescription("name1");
         ContainerDescription desc2 = createContainerDescription("name2");
@@ -141,7 +142,7 @@ public class CompositionGraphTest {
         // expect error for cyclic dependencies
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = LocalizableValidationException.class)
     public void failWhenInnerCyclicDependecies() {
         ContainerDescription desc1 = createContainerDescription("name1");
         ContainerDescription desc2 = createContainerDescription("name2");

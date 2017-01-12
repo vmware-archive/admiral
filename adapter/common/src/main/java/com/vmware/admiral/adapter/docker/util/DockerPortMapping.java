@@ -19,6 +19,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.vmware.xenon.common.LocalizableValidationException;
+
 /**
  * Docker port mapping parsing utility
  */
@@ -61,7 +63,8 @@ public class DockerPortMapping {
         DockerPortMapping portMapping = new DockerPortMapping();
         Matcher matcher = PORT_PATTERN.matcher(portMappingStr);
         if (!matcher.matches()) {
-            throw new IllegalArgumentException("Invalid format for port mapping: " + portMappingStr);
+            throw new LocalizableValidationException("Invalid format for port mapping: " + portMappingStr,
+                    "adapter.docker.port.mapping.invalid", portMappingStr);
         }
 
         portMapping.hostIp = matcher.group(1);

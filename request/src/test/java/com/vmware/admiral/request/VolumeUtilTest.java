@@ -27,6 +27,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.VolumeUtil;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.ServiceDocument;
 
 public class VolumeUtilTest {
@@ -51,7 +52,7 @@ public class VolumeUtilTest {
         String invalidVolumeName = "host-dir:/container-dir:/some-other-dir";
         try {
             VolumeUtil.parseVolumeHostDirectory(invalidVolumeName);
-        } catch (Exception e) {
+        } catch (LocalizableValidationException e) {
             assertEquals("Invalid volume directory.", e.getMessage());
         }
     }

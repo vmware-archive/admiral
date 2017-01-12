@@ -43,6 +43,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.LoaderFactoryService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
@@ -242,7 +243,7 @@ public class ManagementHostTest {
             try {
                 doDelete(host, UriUtils.buildUri(host, credentials.documentSelfLink));
                 fail("expect validation error during deletion");
-            } catch (IllegalStateException e) {
+            } catch (LocalizableValidationException e) {
                 assertEquals("Auth Credentials are in use", e.getMessage());
             }
             doDelete(host, UriUtils.buildUri(host, compute.documentSelfLink));
@@ -279,7 +280,7 @@ public class ManagementHostTest {
             try {
                 doDelete(host, UriUtils.buildUri(host, resourcePool.documentSelfLink));
                 fail("expect validation error during deletion");
-            } catch (IllegalStateException e) {
+            } catch (LocalizableValidationException e) {
                 assertEquals("Placement zone is in use", e.getMessage());
             }
 

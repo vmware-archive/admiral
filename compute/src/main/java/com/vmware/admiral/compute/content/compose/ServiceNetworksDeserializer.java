@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.util.ClassUtil;
 
 import com.vmware.admiral.compute.container.ServiceNetwork;
+import com.vmware.xenon.common.LocalizableValidationException;
 
 public class ServiceNetworksDeserializer extends StdDeserializer<ServiceNetworks> {
 
@@ -52,8 +53,9 @@ public class ServiceNetworksDeserializer extends StdDeserializer<ServiceNetworks
             Map<String, ServiceNetwork> map = (Map<String, ServiceNetwork>) object;
             networks.valuesMap = new ObjectMapper().convertValue(map, LinkedHashMap.class);
         } else {
-            throw new IllegalArgumentException("Invalid networks object class '"
-                    + ClassUtil.getClassDescription(object) + "'!");
+            throw new LocalizableValidationException("Invalid networks object class '"
+                    + ClassUtil.getClassDescription(object) + "'!",
+                    "compute.service.network.deserialization.error", ClassUtil.getClassDescription(object));
         }
 
         return networks;

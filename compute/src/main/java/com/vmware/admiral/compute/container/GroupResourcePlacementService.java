@@ -29,6 +29,7 @@ import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
@@ -305,8 +306,9 @@ public class GroupResourcePlacementService extends StatefulService {
             long reserved = currentState.allocatedInstancesCount;
             if (putBody.maxNumberInstances != UNLIMITED_NUMBER_INSTANCES
                     && putBody.maxNumberInstances < reserved) {
-                put.fail(new IllegalArgumentException("'maxNumberInstances' cannot be less than the"
-                        + " currently reserved number of instances: " + reserved));
+                put.fail(new LocalizableValidationException("'maxNumberInstances' cannot be less than the"
+                        + " currently reserved number of instances: " + reserved,
+                        "compute.placements.too.few.max-instances", reserved));
                 return;
             }
             currentState.maxNumberInstances = putBody.maxNumberInstances;
@@ -318,8 +320,9 @@ public class GroupResourcePlacementService extends StatefulService {
                 if (currentState.cpuShares != putBody.cpuShares
                         || currentState.storageLimit != putBody.storageLimit
                         || !currentState.resourcePoolLink.equals(putBody.resourcePoolLink)) {
-                    put.fail(new IllegalArgumentException(
-                            "'cpuShares' or 'placement zones' can't be modified while there are active instances for the placement"));
+                    put.fail(new LocalizableValidationException(
+                            "'cpuShares' or 'placement zones' can't be modified while there are active instances for the placement",
+                            "compute.placements.active.instances"));
                     return;
                 }
             }
@@ -332,9 +335,10 @@ public class GroupResourcePlacementService extends StatefulService {
 
             long reservedMemory = currentState.memoryLimit - currentState.availableMemory;
             if (reservedMemory > putBody.memoryLimit) {
-                put.fail(new IllegalArgumentException(
+                put.fail(new LocalizableValidationException(
                         "'Memory limit cannot be less than the currently reserved memory: "
-                                + reserved));
+                                + reserved,
+                        "compute.placements.memory.limit.too.little", reserved));
                 return;
             }
             currentState.memoryLimit = putBody.memoryLimit;
@@ -374,9 +378,10 @@ public class GroupResourcePlacementService extends StatefulService {
                 request.resourceDescriptionLink);
 
         if (currentCount < 0) {
-            patch.fail(new IllegalArgumentException(
+            patch.fail(new LocalizableValidationException(
                     "Requested instances are more than the available resource placement: "
-                            + state.availableInstancesCount));
+                            + state.availableInstancesCount,
+                            "compute.placements.requested.too.many.instances", state.availableInstancesCount));
             return;
         } else if (currentCount > state.maxNumberInstances) {
             logWarning(
@@ -386,7 +391,7 @@ public class GroupResourcePlacementService extends StatefulService {
             return;
         } else if (request.resourceDescriptionLink == null
                 || request.resourceDescriptionLink.isEmpty()) {
-            patch.fail(new IllegalArgumentException("'resourceDescriptionLink' is required."));
+            patch.fail(new LocalizableValidationException("'resourceDescriptionLink' is required.", "compute.placements.resource-desc.required"));
             return;
         }
 
@@ -398,9 +403,10 @@ public class GroupResourcePlacementService extends StatefulService {
                 .get(request.resourceDescriptionLink);
         if (countPerDesc == null) {
             if (request.resourceCount < 0) {
-                patch.fail(new IllegalArgumentException(
+                patch.fail(new LocalizableValidationException(
                         "Releasing placement do not exist for requested resourceDescriptionLink: "
-                                + request.resourceDescriptionLink));
+                                + request.resourceDescriptionLink,
+                                "compute.placements.resource.not.exists", request.resourceDescriptionLink));
                 return;
             }
             state.resourceQuotaPerResourceDesc.put(request.resourceDescriptionLink,
@@ -408,9 +414,10 @@ public class GroupResourcePlacementService extends StatefulService {
         } else {
             long currentCountPerDesc = countPerDesc + request.resourceCount;
             if (currentCountPerDesc < 0) {
-                patch.fail(new IllegalArgumentException(
+                patch.fail(new LocalizableValidationException(
                         "Releasing placement is more than previously requested for the resourceDescriptionLink: "
-                                + request.resourceDescriptionLink));
+                                + request.resourceDescriptionLink,
+                                "compute.placements.release.too.much", request.resourceDescriptionLink));
                 return;
             }
             state.resourceQuotaPerResourceDesc.put(request.resourceDescriptionLink,
@@ -433,9 +440,10 @@ public class GroupResourcePlacementService extends StatefulService {
                                 return;
                             }
                             if (e != null) {
-                                patch.fail(new IllegalStateException(
-                                        "Unable to get the resource description with link: "
-                                                + request.resourceDescriptionLink));
+                                patch.fail(new LocalizableValidationException(
+                                            "Unable to get the resource description with link: " + request.resourceDescriptionLink,
+                                            "compute.resource-placement.unavailable",
+                                            new String[] { request.resourceDescriptionLink }));
                                 return;
                             }
 
@@ -476,9 +484,10 @@ public class GroupResourcePlacementService extends StatefulService {
 
         if (state.memoryLimit != 0) {
             if (currentMemory < 0) {
-                patch.fail(new IllegalArgumentException(
+                patch.fail(new LocalizableValidationException(
                         "Requested memory is more than the available memory placement: "
-                                + state.availableMemory));
+                                + state.availableMemory,
+                                "compute.placements.too.much.memory.requested", state.availableMemory));
                 return false;
             }
 
@@ -510,8 +519,9 @@ public class GroupResourcePlacementService extends StatefulService {
         }
 
         if (state.allocatedInstancesCount > 0) {
-            throw new IllegalArgumentException(
-                    "Can't delete with active reservations: " + state.allocatedInstancesCount);
+            throw new LocalizableValidationException(
+                    "Can't delete with active reservations: " + state.allocatedInstancesCount,
+                    "compute.placements.delete.with.active.reservation", state.allocatedInstancesCount);
         }
 
         super.handleDelete(delete);
@@ -545,12 +555,12 @@ public class GroupResourcePlacementService extends StatefulService {
         assertNotEmpty(state.resourcePoolLink, "placement zone");
 
         if (state.priority < 0) {
-            throw new IllegalArgumentException(
-                    "'priority' must be greater or equal to zero.");
+            throw new LocalizableValidationException("'priority' must be greater or equal to zero.",
+                    "compute.placements.validation.priority");
         }
         if (state.maxNumberInstances < 0) {
-            throw new IllegalArgumentException(
-                    "'maxNumberInstances' must be greater or eq to zero.");
+            throw new LocalizableValidationException(
+                    "'maxNumberInstances' must be greater or eq to zero.", "compute.placements.validation.max-instances");
         }
 
         if (state.resourceType == null) {
@@ -558,14 +568,15 @@ public class GroupResourcePlacementService extends StatefulService {
         }
 
         if (state.memoryLimit != 0 && state.memoryLimit < MIN_MEMORY_LIMIT) {
-            throw new IllegalArgumentException(
+            throw new LocalizableValidationException(
                     String.format("'memoryLimit' must be 0 (no limit) or at least %s bytes. (%sMB).",
-                            MIN_MEMORY_LIMIT, (MIN_MEMORY_LIMIT / 1024) / 1024));
+                            MIN_MEMORY_LIMIT, (MIN_MEMORY_LIMIT / 1024) / 1024),
+                    "compute.placements.validation.memory", MIN_MEMORY_LIMIT, (MIN_MEMORY_LIMIT / 1024) / 1024);
         }
 
         if (state.cpuShares < 0) {
-            throw new IllegalArgumentException(
-                    "'cpuShares' must be greater than or equal to zero.");
+            throw new LocalizableValidationException(
+                    "'cpuShares' must be greater than or equal to zero.", "compute.placements.validation.cpu");
         }
 
         validatePlacementSize(state, operation, (o) -> {
@@ -599,10 +610,11 @@ public class GroupResourcePlacementService extends StatefulService {
                             }
 
                             if (state.memoryLimit > totalMemory) {
-                                operation.fail(new IllegalArgumentException(
-                                        "Not enough memory in this placement zone. Total memory in placement zone: "
-                                                + totalMemory + ", requested: "
-                                                + state.memoryLimit));
+                                String errorMesg = String.format("Not enough memory in this placement zone. Total memory in placement zone: "
+                                        + "%s, requested: %s",
+                                        totalMemory, state.memoryLimit);
+                                operation.fail(new LocalizableValidationException(errorMesg,
+                                        "compute.placements.not.enough.memory.in.zone", totalMemory, state.memoryLimit));
                                 return;
                             }
 
@@ -639,9 +651,10 @@ public class GroupResourcePlacementService extends StatefulService {
 
                 long availableMemory = totalMemory - allPlacementMemory;
                 if (availableMemory > 0 && availableMemory < state.memoryLimit) {
-                    operation.fail(new IllegalArgumentException(
-                            "Memory already reserved by other placements. Available memory: "
-                                    + availableMemory + ", requested: " + state.memoryLimit));
+                    String errorMsg = String.format("Memory already reserved by other placements. Available memory: %s, requested: %s",
+                                    availableMemory, state.memoryLimit);
+                    operation.fail(new LocalizableValidationException(errorMsg,
+                            "compute.placement.memory.unavailable", availableMemory, state.memoryLimit));
                     return;
                 }
 

@@ -36,6 +36,7 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.OperationSequence;
@@ -186,10 +187,10 @@ public class ConfigureHostOverSshTaskService extends
     public static void validate(ServiceHost host, ConfigureHostOverSshTaskServiceState state,
             Consumer<Throwable> consumer) {
         if (state.address == null || state.address.equals("")) {
-            consumer.accept(new IllegalArgumentException(ADDRESS_NOT_SET_ERROR_MESSAGE));
+            consumer.accept(new LocalizableValidationException(ADDRESS_NOT_SET_ERROR_MESSAGE, "compute.configure.host.address.missing"));
         }
         if (state.port == null || state.port < 0) {
-            consumer.accept(new IllegalArgumentException(PORT_NOT_SET_ERROR_MESSAGE));
+            consumer.accept(new LocalizableValidationException(PORT_NOT_SET_ERROR_MESSAGE, "compute.configure.host.port.missing"));
         }
 
         // Verify connectivity and that the user is root or another sudoer

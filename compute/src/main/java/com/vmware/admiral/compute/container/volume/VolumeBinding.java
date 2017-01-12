@@ -14,6 +14,8 @@ package com.vmware.admiral.compute.container.volume;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.vmware.xenon.common.LocalizableValidationException;
+
 /*
  * Volume binding parsing utility. A volume binding is a string in the following form:
  * [volume-name|host-src:]container-dest[:ro]. Both host-src, and container-dest must be
@@ -48,7 +50,8 @@ public class VolumeBinding {
         Matcher matcher = VOLUME_STRING_PATTERN.matcher(volume);
 
         if (!matcher.matches()) {
-            throw new IllegalArgumentException("Volume must be [host_path|named_volume:]container_path[:ro]");
+            throw new LocalizableValidationException("Volume must be [host_path|named_volume:]container_path[:ro]",
+                    "compute.volume-binding.format");
         }
 
         VolumeBinding volumeString = new VolumeBinding();

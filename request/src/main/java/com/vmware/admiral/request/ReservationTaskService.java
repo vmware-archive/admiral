@@ -45,6 +45,7 @@ import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSele
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -186,7 +187,7 @@ public class ReservationTaskService
     @Override
     protected void validateStateOnStart(ReservationTaskState state) {
         if (state.resourceCount < 1) {
-            throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
         }
         if (state.resourceType == null || state.resourceType.isEmpty()) {
             state.resourceType = ResourceType.CONTAINER_TYPE.getName();

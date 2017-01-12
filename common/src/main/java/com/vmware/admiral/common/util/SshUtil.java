@@ -33,6 +33,7 @@ import net.schmizz.sshj.transport.verification.HostKeyVerifier;
 import net.schmizz.sshj.userauth.keyprovider.OpenSSHKeyFile;
 
 import com.vmware.admiral.common.security.EncryptionUtils;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class SshUtil {
@@ -256,7 +257,7 @@ public class SshUtil {
         public Result toResult() {
             Result result = new Result();
             if (!isDone()) {
-                result.error = new IllegalStateException("The command has not terminated yet!");
+                result.error = new LocalizableValidationException("The command has not terminated yet!", "common.ssh.command.not.finished");
             } else {
                 if (this.error != null) {
                     result.error = this.error;

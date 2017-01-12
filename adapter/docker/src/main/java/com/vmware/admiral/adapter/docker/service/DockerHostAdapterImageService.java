@@ -32,6 +32,7 @@ import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.resources.ComputeService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.TaskState;
 
@@ -124,7 +125,7 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
         if (imageData == null || imageData.length == 0) {
             String errMsg = String.format("No content loaded for file: %s ", fileName);
             this.logSevere(errMsg);
-            imageCompletionHandler.handle(null, new IllegalStateException(errMsg));
+            imageCompletionHandler.handle(null, new LocalizableValidationException(errMsg, "adapter.load.image.empty", fileName, ""));
             return;
         }
 

@@ -33,6 +33,7 @@ import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -179,9 +180,10 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                         callbackFunction.accept(hostComputeState, commandInput);
                     } else {
                         if (!credentialsFound.get()) {
-                            Throwable t = new IllegalArgumentException(
-                                    "AuthCredentialsState not found with link: "
-                                            + credentialsLink + request.getRequestTrackingLog());
+                            String errorMag = String.format("AuthCredentialsState not found with link: %s %s",
+                                    credentialsLink, request.getRequestTrackingLog());
+                            Throwable t = new LocalizableValidationException(errorMag, "adapter.auth.not.found",
+                                    credentialsLink, request.getRequestTrackingLog());
                             if (op != null) {
                                 op.fail(t);
                             }
@@ -198,7 +200,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
             boolean throwError) {
         RuntimeException e = null;
         if (UNSUPPORTED_CREDENTIALS_TYPES.contains(c.type)) {
-            e = new IllegalStateException("Unsupported credentials type");
+            e = new LocalizableValidationException("Unsupported credentials type", "adapter.unsuported.auth.credentials.type");
             if (throwError) {
                 throw e;
             }

@@ -33,6 +33,7 @@ import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LoaderFactoryService;
 import com.vmware.xenon.common.LoaderService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.OperationProcessingChain;
@@ -377,7 +378,7 @@ public class ManagementHost extends ServiceHost {
             String commitID = (String) getState().codeProperties
                     .get(GIT_COMMIT_SOURCE_PROPERTY_COMMIT_ID);
             if (commitID == null) {
-                throw new IllegalStateException("CommitID code property not found!");
+                throw new LocalizableValidationException("CommitID code property not found!", "host.commit.id.not.found");
             }
             commitID = commitID.substring(0, 8);
             String userAgent = ServiceHost.class.getSimpleName() + "/" + commitID;

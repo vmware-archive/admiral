@@ -79,7 +79,8 @@ public class ExposedPortsHostFilter
         QueryUtil.addBroadcastOption(q);
         query.query(q, (r) -> {
             if (r.hasException()) {
-                throw new HostSelectionFilterException("Error querying for container states.");
+                throw new HostSelectionFilterException("Error querying for container states.",
+                        "request.exposed-ports.filter.containers.query.error");
             } else if (r.hasResult()) {
                 containerStates.add(r.getResult());
             } else {
@@ -91,7 +92,8 @@ public class ExposedPortsHostFilter
                     String errMsg = String.format(
                             "No compute hosts found with unexposed ports %s.",
                             descExposedPorts.toString());
-                    callback.complete(null, new HostSelectionFilterException(errMsg));
+                    callback.complete(null, new HostSelectionFilterException(errMsg,
+                            "request.exposed-ports.filter.compute-hosts.unavailable", descExposedPorts.toString()));
                 } else {
                     callback.complete(hostSelectionMap, null);
                 }

@@ -22,6 +22,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.vmware.xenon.common.LocalizableValidationException;
+
 @RunWith(Parameterized.class)
 public class VolumeBindingTest {
 
@@ -78,7 +80,7 @@ public class VolumeBindingTest {
             try {
                 VolumeBinding.fromString(volume);
                 fail("Validation should have failed!");
-            } catch (IllegalArgumentException e) {
+            } catch (LocalizableValidationException e) {
                 // Test succeeded!
             }
         } else {

@@ -48,6 +48,8 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState.Powe
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.ServiceNetwork;
 
+import com.vmware.xenon.common.LocalizableValidationException;
+
 /**
  * Map properties into ContainerState
  */
@@ -296,8 +298,8 @@ public class ContainerStateMapper {
             try {
                 return sdf.parse(str).getTime();
             } catch (ParseException e1) {
-                throw new IllegalArgumentException("Invalid datetime '" + str + "'; "
-                        + e1.getMessage());
+                throw new LocalizableValidationException(e1, "Invalid datetime '" + str + "'; "
+                        + e1.getMessage(), "adapter.container.mapper.invalid.date", str);
             }
         }
 

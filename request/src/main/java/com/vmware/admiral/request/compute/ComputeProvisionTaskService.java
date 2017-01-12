@@ -42,6 +42,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.tasks.ProvisionComputeTaskService;
 import com.vmware.photon.controller.model.tasks.ServiceTaskCallback;
 import com.vmware.photon.controller.model.tasks.SubTaskService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
@@ -174,7 +175,7 @@ public class ComputeProvisionTaskService extends
         try {
             Set<String> resourceLinks = state.resourceLinks;
             if (resourceLinks == null || resourceLinks.isEmpty()) {
-                throw new IllegalStateException("No compute instances to provision");
+                throw new LocalizableValidationException("No compute instances to provision", "request.compute.provision.empty");
             }
             if (subTaskLink == null) {
                 // recurse after creating a sub task

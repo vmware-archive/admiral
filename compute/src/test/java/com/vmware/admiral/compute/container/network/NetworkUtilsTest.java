@@ -14,6 +14,8 @@ package com.vmware.admiral.compute.container.network;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.vmware.xenon.common.LocalizableValidationException;
+
 public class NetworkUtilsTest {
 
     private class TestEntry {
@@ -155,7 +157,7 @@ public class NetworkUtilsTest {
                             entry.testValue);
                     Assert.fail(message);
                 }
-            } catch (IllegalArgumentException e) {
+            } catch (LocalizableValidationException e) {
                 String errorMessage = e.getMessage();
                 String expectedError = String.format(NetworkUtils.FORMAT_IP_VALIDATION_ERROR,
                         entry.testValue);
@@ -184,7 +186,7 @@ public class NetworkUtilsTest {
                             entry.testValue);
                     Assert.fail(message);
                 }
-            } catch (IllegalArgumentException e) {
+            } catch (LocalizableValidationException e) {
                 String errorMessage = e.getMessage();
                 String expectedError = String.format(
                         NetworkUtils.FORMAT_CIDR_NOTATION_VALIDATION_ERROR,
@@ -214,7 +216,7 @@ public class NetworkUtilsTest {
                             entry.testValue);
                     Assert.fail(message);
                 }
-            } catch (IllegalArgumentException e) {
+            } catch (LocalizableValidationException e) {
                 String errorMessage = e.getMessage();
                 String expectedError = NetworkUtils.ERROR_NETWORK_NAME_IS_REQUIRED;
                 if (!errorMessage.equals(expectedError)) {

@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
@@ -208,9 +209,10 @@ public class HostPortProfileService extends StatefulService {
                 }
             }
             if (allocatedPort == null) {
-                IllegalArgumentException exception =
-                        new IllegalArgumentException(
-                                "Unable to allocate hostPort. There are no available ports left.");
+                LocalizableValidationException exception =
+                        new LocalizableValidationException(
+                                "Unable to allocate hostPort. There are no available ports left.",
+                                "compute.host.port.unavailable");
                 throw exception;
             }
         }
@@ -227,9 +229,10 @@ public class HostPortProfileService extends StatefulService {
         for (long requestedPort : request.specificHostPorts) {
             // check port is not already allocated
             if (state.reservedPorts.containsKey(requestedPort) && !force) {
-                IllegalArgumentException exception = new IllegalArgumentException(
+                LocalizableValidationException exception = new LocalizableValidationException(
                         "Unable to allocate hostPort. Requested port is already allocated: "
-                                + requestedPort);
+                                + requestedPort,
+                        "compute.host.port.allocated", requestedPort);
                 throw exception;
             }
 

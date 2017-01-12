@@ -39,6 +39,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -117,7 +118,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
             createContainerHostSpec(hostSpec);
             fail("Should've thrown IllegalArgumentException - "
                     + ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE);
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertNotNull(e);
             assertEquals(ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE,
                     e.getMessage());
@@ -163,7 +164,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
             createContainerHostSpec(hostSpec);
             fail("Should've thrown IllegalArgumentException - "
                     + ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE);
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertNotNull(e);
             assertEquals(ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE,
                     e.getMessage());
@@ -212,7 +213,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
             createContainerHostSpec(hostSpec);
             fail("Should've thrown IllegalArgumentException - "
                     + ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE);
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             assertNotNull(e);
             assertEquals(ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE,
                     e.getMessage());

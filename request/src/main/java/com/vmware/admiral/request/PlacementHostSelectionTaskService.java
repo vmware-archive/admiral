@@ -48,6 +48,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.util.ResourcePoolQueryHelper;
 import com.vmware.photon.controller.model.resources.util.ResourcePoolQueryHelper.QueryResult;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
@@ -146,7 +147,7 @@ public class PlacementHostSelectionTaskService
     @Override
     protected void validateStateOnStart(PlacementHostSelectionTaskState state) {
         if (state.resourceCount < 1) {
-            throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
         }
     }
 
@@ -197,9 +198,10 @@ public class PlacementHostSelectionTaskService
                 computeDescriptionLinks.add(r.getDocumentSelfLink());
             } else {
                 if (computeDescriptionLinks.isEmpty()) {
-                    failTask(null, new IllegalStateException(
+                    failTask(null, new LocalizableValidationException(
                             "Available host ComputeDescription not found supporting the type: "
-                                    + state.resourceType));
+                                    + state.resourceType,
+                                    "request.placement.compute-description.unsupported", state.resourceType));
                     return;
                 }
                 proceedComputeSelection(state, desc, computeDescriptionLinks, retries);
@@ -237,9 +239,10 @@ public class PlacementHostSelectionTaskService
                             QueryUtil.QUERY_RETRY_INTERVAL_MILLIS,
                             TimeUnit.MILLISECONDS);
                 } else {
-                    failTask(null, new IllegalStateException(
+                    failTask(null, new LocalizableValidationException(
                             "No powered-on container hosts found in placement zones: "
-                                    + state.resourcePoolLinks));
+                                    + state.resourcePoolLinks,
+                            "request.placement.hosts.missing", state.resourcePoolLinks));
                 }
                 return;
             }
@@ -316,7 +319,7 @@ public class PlacementHostSelectionTaskService
             final Map<String, HostSelection> hostSelectionMap,
             final Queue<HostSelectionFilter> filters) {
         if (isNoSelection(hostSelectionMap)) {
-            failTask(null, new IllegalStateException("Compute state not found"));
+            failTask(null, new LocalizableValidationException("Compute state not found", "request.placement.compute.missing"));
             return;
         } else {
             final HostSelectionFilter filter = filters.poll();
