@@ -108,10 +108,8 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         // wait for the admiral container to start
         URI uri = URI.create(getBaseUrl() + NodeHealthCheckService.SELF_LINK);
         waitForStatusCode(uri, Operation.STATUS_CODE_OK);
-        // TODO sometimes the host is not loaded/created. May be this will be fixed when the host
-        // ids are changed
-        // ComputeState dockerHost = getDocument(dockerHostSelfLink, ComputeState.class);
-        // Assert.assertTrue(dockerHost != null);
+        ComputeState dockerHost = getDocument(dockerHostSelfLink, ComputeState.class);
+        Assert.assertTrue(dockerHost != null);
         AuthCredentialsServiceState credentials = getDocument(credentialsSelfLink,
                 AuthCredentialsServiceState.class);
         Assert.assertTrue(credentials != null);
@@ -129,7 +127,7 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
             throws Exception {
         changeBaseURI(admiralContainer);
         // wait for the admiral container to start. In 0.9.1 health check service is not available
-        Thread.sleep(10000);
+        Thread.sleep(20000);
         URI uri = URI.create(getBaseUrl() + ManagementUriParts.CONTAINERS);
         waitForStatusCode(uri, Operation.STATUS_CODE_OK);
         uri = URI.create(getBaseUrl() + ManagementUriParts.CONTAINER_HOSTS);
