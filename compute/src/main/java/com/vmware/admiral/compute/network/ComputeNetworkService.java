@@ -71,9 +71,9 @@ public class ComputeNetworkService extends StatefulService {
         public String networkProfileLink;
 
         /**
-         * Link to the Subnet to which this Compute network will be connect.
+         * Link to the Subnet to which this Compute network will be connected.
          */
-        @Documentation(description = "Link to the Subnet to which this Compute network will be connect")
+        @Documentation(description = "Link to the Subnet to which this Compute network will be connected")
         @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
         private String subnetLink;
 
