@@ -82,8 +82,8 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
         assertFalse(entries.isEmpty());
         assertEquals(2, entries.size());
         entries.forEach(e -> {
-            assertEquals(endpoint.documentSelfLink, e.endpointLink);
-            assertEquals(EndpointType.aws.name(), e.endpointType);
+            assertEquals(endpoint.documentSelfLink, e.endpoint.documentSelfLink);
+            assertEquals(EndpointType.aws.name(), e.endpoint.endpointType);
             assertNotNull(e.envLinks);
             assertEquals(4, e.envLinks.size());
         });

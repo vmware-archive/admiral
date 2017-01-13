@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute.env;
 
+import java.util.Map;
+
 import com.vmware.xenon.common.SystemHostInfo.OsFamily;
 
 /**
@@ -22,6 +24,13 @@ public class ComputeImageDescription {
      * endpoint this description is created for.
      */
     public String image;
+
+    /**
+     * Specifies different image identifiers by region; useful (and only applicable) to environments
+     * defined for all endpoints of a given type. The {@link #image} field must be {@code null} in
+     * order for this field to be used.
+     */
+    public Map<String, String> imageByRegion;
 
     /**
      * Optional OS family.
