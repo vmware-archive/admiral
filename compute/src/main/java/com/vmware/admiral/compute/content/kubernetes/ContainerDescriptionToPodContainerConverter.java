@@ -24,6 +24,16 @@ import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.HttpVersion;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestProtocol;
 import com.vmware.admiral.compute.container.PortBinding;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainer;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerEnvVar;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerPort;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbe;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeExecAction;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeHTTPGetAction;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeTCPSocketAction;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerResources;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerSecurityContext;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodSpec;
 import com.vmware.xenon.common.Service.Action;
 
 public class ContainerDescriptionToPodContainerConverter {

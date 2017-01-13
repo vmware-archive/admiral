@@ -9,8 +9,10 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.content.kubernetes;
+package com.vmware.admiral.compute.content.kubernetes.deployments;
 
-public class PodContainerProbeExecAction {
-    public String[] command;
+import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
+
+public class Deployment extends CommonKubernetesEntity {
+    public DeploymentSpec spec;
 }

@@ -16,6 +16,7 @@ import static org.junit.Assert.assertNotNull;
 
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.assertContainersComponentsOnly;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deserializeCompositeTemplate;
+import static com.vmware.admiral.compute.content.CompositeTemplateUtil.filterComponentTemplates;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtilTest.assertContainersComponents;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtilTest.getContent;
@@ -27,6 +28,7 @@ import static com.vmware.admiral.compute.content.kubernetes.ContainerDescription
 import static com.vmware.admiral.compute.content.kubernetes.ContainerDescriptionToPodContainerConverter.setPodContainerResourcesToContainerDescriptionResources;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.deserializeKubernetesEntity;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromCompositeTemplateToPod;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromDeploymentToCompositeTemplate;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromPodToCompositeTemplate;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.serializeKubernetesEntity;
 
@@ -41,17 +43,45 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.HttpVersion;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestProtocol;
-import com.vmware.admiral.compute.content.kubernetes.Pod;
-import com.vmware.admiral.compute.content.kubernetes.PodContainer;
-import com.vmware.admiral.compute.content.kubernetes.PodContainerEnvVar;
-import com.vmware.admiral.compute.content.kubernetes.PodContainerPort;
-import com.vmware.admiral.compute.content.kubernetes.PodContainerProbe;
-import com.vmware.admiral.compute.content.kubernetes.PodContainerProbeHTTPGetAction;
-import com.vmware.admiral.compute.content.kubernetes.PodContainerProbeTCPSocketAction;
-import com.vmware.admiral.compute.content.kubernetes.PodContainerResources;
+import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
+import com.vmware.admiral.compute.content.kubernetes.pods.Pod;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainer;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerEnvVar;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerPort;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbe;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeHTTPGetAction;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeTCPSocketAction;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerResources;
 import com.vmware.xenon.common.Service.Action;
 
 public class KubernetesUtilTest extends ComputeBaseTest {
+
+    @Test
+    public void testConvertKubernetesDeploymentToCompositeTemplate() throws IOException {
+        CompositeTemplate expectedTemplate = deserializeCompositeTemplate(
+                getContent("composite.nginx-mysql.yaml"));
+
+        Deployment deployment = (Deployment) deserializeKubernetesEntity(getContent(
+                "kubernetes.deployment.nginx-mysql.yaml"));
+
+        CompositeTemplate actualTemplate = fromDeploymentToCompositeTemplate(deployment);
+
+        assertContainersComponentsOnly(actualTemplate.components);
+
+        assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 2,
+                actualTemplate.components);
+        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 0,
+                actualTemplate.components);
+        assertContainersComponents(ResourceType.CONTAINER_VOLUME_TYPE.getContentType(), 0,
+                actualTemplate.components);
+
+        for (ComponentTemplate<ContainerDescription> component :
+                filterComponentTemplates(actualTemplate.components, ContainerDescription.class)
+                        .values()) {
+            assertEquals(deployment.spec.replicas, component.data._cluster);
+        }
+
+    }
 
     @Test
     public void testConvertKubernetesPodToCompositeTemplate() throws IOException {
@@ -60,7 +90,7 @@ public class KubernetesUtilTest extends ComputeBaseTest {
 
         String expectedTemplateYaml = serializeCompositeTemplate(expectedTemplate);
 
-        Pod pod = (Pod) deserializeKubernetesEntity(getContent("kubernetes.nginx-mysql.yaml"));
+        Pod pod = (Pod) deserializeKubernetesEntity(getContent("kubernetes.pod.nginx-mysql.yaml"));
         CompositeTemplate actualTemplate = fromPodToCompositeTemplate(pod);
 
         assertContainersComponentsOnly(actualTemplate.components);
@@ -80,7 +110,7 @@ public class KubernetesUtilTest extends ComputeBaseTest {
     @Test
     public void testConvertCompositeTemplateToKubernetesPod() throws IOException {
         Pod expectedPod = (Pod) deserializeKubernetesEntity(
-                getContent("kubernetes.nginx-mysql.yaml"));
+                getContent("kubernetes.pod.nginx-mysql.yaml"));
         String expectedPodYaml = serializeKubernetesEntity(expectedPod);
 
         CompositeTemplate template = deserializeCompositeTemplate(

@@ -9,11 +9,12 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.content.kubernetes;
+package com.vmware.admiral.compute.content.kubernetes.pods;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class Pod extends CommonKubernetesEntity {
-    public PodSpec spec;
+@JsonInclude(value = Include.NON_NULL)
+public class PodContainerSecurityContext {
+    public Boolean privileged;
 }

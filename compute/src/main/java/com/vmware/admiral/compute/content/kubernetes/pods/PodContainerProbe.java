@@ -9,12 +9,13 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.content.kubernetes;
+package com.vmware.admiral.compute.content.kubernetes.pods;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class PodContainerEnvVar {
-    public String name;
-    public String value;
+public class PodContainerProbe {
+    public PodContainerProbeExecAction exec;
+    public PodContainerProbeHTTPGetAction httpGet;
+    public PodContainerProbeTCPSocketAction tcpSocket;
+    public Long timeoutSeconds;
+    public Integer successThreshold;
+    public Integer failureThreshold;
 }

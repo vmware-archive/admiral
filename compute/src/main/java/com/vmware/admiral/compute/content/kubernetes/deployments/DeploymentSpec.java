@@ -9,8 +9,11 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.content.kubernetes;
+package com.vmware.admiral.compute.content.kubernetes.deployments;
 
-public class PodContainerProbeTCPSocketAction {
-    public String port;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodTemplateSpec;
+
+public class DeploymentSpec {
+    public Integer replicas;
+    public PodTemplateSpec template;
 }
