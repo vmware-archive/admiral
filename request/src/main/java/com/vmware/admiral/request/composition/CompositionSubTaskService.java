@@ -54,6 +54,8 @@ import com.vmware.admiral.request.ContainerVolumeProvisionTaskService.ContainerV
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService.CompositionSubTaskState.SubStage;
+import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService;
+import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
@@ -392,12 +394,16 @@ public class CompositionSubTaskService
             createContainerVolumeProvisionTaskState(state);
         } else if (ResourceType.COMPUTE_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createComputeProvisionTaskState(state);
+        } else if (ResourceType.COMPUTE_NETWORK_TYPE.getName()
+                .equalsIgnoreCase(state.resourceType)) {
+            createComputeNetworkProvisionTaskState(state);
         } else if (ResourceType.CLOSURE_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createClosureProvisionTask(state);
         } else {
-            throw new IllegalArgumentException(String.format("Unsupported type. Must be: %s, %s, %s or %s",
+            throw new IllegalArgumentException(
+                    String.format("Unsupported type. Must be: %s, %s, %s, %s or %s",
                     ResourceType.CONTAINER_TYPE, ResourceType.COMPUTE_TYPE,
-                    ResourceType.CONTAINER_NETWORK_TYPE,
+                    ResourceType.CONTAINER_NETWORK_TYPE, ResourceType.COMPUTE_NETWORK_TYPE,
                     ResourceType.CLOSURE_TYPE));
         }
     }
@@ -523,6 +529,31 @@ public class CompositionSubTaskService
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         failTask("Failure creating compute provision task", e);
+                        return;
+                    }
+                }));
+
+        proceedTo(SubStage.EXECUTING);
+    }
+
+    private void createComputeNetworkProvisionTaskState(CompositionSubTaskState state) {
+        ComputeNetworkProvisionTaskState task = new ComputeNetworkProvisionTaskState();
+        task.documentSelfLink = getSelfId();
+        task.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
+                TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
+        task.customProperties = state.customProperties;
+        task.resourceCount = Long.valueOf(state.resourceLinks.size());
+        task.tenantLinks = state.tenantLinks;
+        task.requestTrackerLink = state.requestTrackerLink;
+        task.resourceLinks = state.resourceLinks;
+        task.resourceDescriptionLink = state.resourceDescriptionLink;
+
+        sendRequest(Operation.createPost(this, ComputeNetworkProvisionTaskService.FACTORY_LINK)
+                .setBody(task)
+                .setContextId(state.requestId)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating compute network provision task", e);
                         return;
                     }
                 }));

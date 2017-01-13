@@ -61,7 +61,7 @@ public class ComputeNetworkDescriptionService extends StatefulService {
         @Documentation(description = "Composite Template use only. If set to true, specifies that "
                 + "this network exists outside of the Composite Template.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public Boolean external = Boolean.TRUE;
+        public Boolean external = Boolean.FALSE;
 
         /**
          * Link to the network profile.

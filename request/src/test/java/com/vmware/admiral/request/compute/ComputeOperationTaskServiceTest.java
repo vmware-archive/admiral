@@ -160,20 +160,19 @@ public class ComputeOperationTaskServiceTest extends ComputeRequestBaseTest {
         query.querySpec.query.addBooleanClause(resourceLinkClause);
         query.querySpec.options = EnumSet.of(QueryOption.EXPAND_CONTENT);
 
+        host.testStart(1);
         List<ComputeState> computes = new ArrayList<>();
         new ServiceDocumentQuery<>(
                 host, ComputeState.class).query(query,
                         (r) -> {
                             if (r.hasException()) {
                                 host.failIteration(r.getException());
-                                return;
                             } else if (r.hasResult()) {
                                 computes.add(r.getResult());
                             } else {
                                 host.completeIteration();
                             }
                         });
-        host.testStart(1);
         host.testWait();
 
         return computes;
