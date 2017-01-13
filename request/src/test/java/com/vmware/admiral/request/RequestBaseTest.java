@@ -72,6 +72,7 @@ import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
@@ -316,11 +317,11 @@ public abstract class RequestBaseTest extends BaseTestCase {
         }
     }
 
-    protected ComputeDescription createVmGuestComputeDescription() throws Throwable {
+    protected ComputeDescription createComputeDescriptionForVmGuestChildren() throws Throwable {
         synchronized (initializationLock) {
             if (vmGuestComputeDescription == null) {
                 vmGuestComputeDescription = TestRequestStateFactory
-                        .createVmGuestComputeDescription();
+                        .createComputeDescriptionForVmGuestChildren();
                 vmGuestComputeDescription.authCredentialsLink = endpoint.authCredentialsLink;
                 vmGuestComputeDescription = getOrCreateDocument(vmGuestComputeDescription,
                         ComputeDescriptionService.FACTORY_LINK);
@@ -404,20 +405,21 @@ public abstract class RequestBaseTest extends BaseTestCase {
         return createDockerHost(computeDesc, resourcePool, Integer.MAX_VALUE - 100L, generateId);
     }
 
-    protected ComputeState createVmGuestCompute(boolean generateId) throws Throwable {
-        ComputeState vmGuestComputeState = TestRequestStateFactory.createVmGuestComputeState();
+    protected ComputeState createVmHostCompute(boolean generateId) throws Throwable {
+        ComputeState vmHostComputeState = TestRequestStateFactory.createVmHostComputeState();
         if (generateId) {
-            vmGuestComputeState.id = UUID.randomUUID().toString();
+            vmHostComputeState.id = UUID.randomUUID().toString();
         }
-        vmGuestComputeState.documentSelfLink = vmGuestComputeState.id;
-        vmGuestComputeState.resourcePoolLink = createComputeResourcePool().documentSelfLink;
-        vmGuestComputeState.descriptionLink = createVmGuestComputeDescription().documentSelfLink;
-        vmGuestComputeState = getOrCreateDocument(vmGuestComputeState, ComputeService.FACTORY_LINK);
-        assertNotNull(vmGuestComputeState);
+        vmHostComputeState.documentSelfLink = vmHostComputeState.id;
+        vmHostComputeState.resourcePoolLink = createComputeResourcePool().documentSelfLink;
+        vmHostComputeState.descriptionLink = createComputeDescriptionForVmGuestChildren().documentSelfLink;
+        vmHostComputeState.type = ComputeType.VM_HOST;
+        vmHostComputeState = getOrCreateDocument(vmHostComputeState, ComputeService.FACTORY_LINK);
+        assertNotNull(vmHostComputeState);
         if (generateId) {
-            documentsForDeletion.add(vmGuestComputeState);
+            documentsForDeletion.add(vmHostComputeState);
         }
-        return vmGuestComputeState;
+        return vmHostComputeState;
     }
 
     protected synchronized ResourcePoolState createResourcePool() throws Throwable {

@@ -32,7 +32,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
  */
 public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBaseTest {
 
-    private ComputeState vmGuestCompute;
+    private ComputeState vmHostCompute;
 
     @Override
     protected ResourceType placementResourceType() {
@@ -45,7 +45,7 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
         super.setUp();
 
         // create a single powered-on compute available for placement
-        vmGuestCompute = createVmGuestCompute(true);
+        vmHostCompute = createVmHostCompute(true);
     }
 
     @Test
@@ -72,7 +72,7 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
         ComputeState selectedComputeState = getDocument(ComputeState.class,
                 taskState.selectedComputePlacementHosts.iterator().next().hostLink);
         assertNotNull(selectedComputeState);
-        assertEquals(selectedComputeState.documentSelfLink, vmGuestCompute.documentSelfLink);
+        assertEquals(selectedComputeState.documentSelfLink, vmHostCompute.documentSelfLink);
     }
 
     private ComputeDescription createComputeDescription() {

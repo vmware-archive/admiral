@@ -48,7 +48,7 @@ public class ComputeClusteringTaskServiceTest extends ComputeRequestBaseTest {
     @Override
     public void setUp() throws Throwable {
         super.setUp();
-        createVmGuestCompute(true);
+        createVmHostCompute(true);
         description = createComputeDescription();
         description = doPost(description, ComputeDescriptionService.FACTORY_LINK);
 

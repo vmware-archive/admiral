@@ -38,7 +38,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
 
     private static final String TEST_VM_NAME = "testVM";
 
-    protected ComputeState vmGuestCompute;
+    protected ComputeState vmHostCompute;
 
     @Override
     protected ResourceType placementResourceType() {
@@ -51,7 +51,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         super.setUp();
 
         // create a single powered-on compute available for placement
-        vmGuestCompute = createVmGuestCompute(true);
+        vmHostCompute = createVmHostCompute(true);
     }
 
     @Test
@@ -69,7 +69,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
 
         assertEquals(computeDescription.documentSelfLink, computeState.descriptionLink);
         assertEquals(resourcePool.documentSelfLink, computeState.resourcePoolLink);
-        // assertEquals(vmGuestCompute.documentSelfLink, computeState.parentLink);
+        // assertEquals(vmHostCompute.documentSelfLink, computeState.parentLink);
     }
 
     @Test
@@ -105,7 +105,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
 
         assertNotNull(computeState.id);
         assertEquals(computeDescription.documentSelfLink, computeState.descriptionLink);
-        // assertEquals(vmGuestCompute.documentSelfLink, computeState.parentLink);
+        // assertEquals(vmHostCompute.documentSelfLink, computeState.parentLink);
     }
 
     private ComputeDescription createComputeDescription() {

@@ -34,7 +34,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         startServices(host);
         createEndpoint();
         createComputeResourcePool();
-        createVmGuestCompute(true);
+        createVmHostCompute(true);
         ComputeDescription dockerHostDesc = createDockerHostDescription();
         createDockerHost(dockerHostDesc, null);
     }

@@ -57,7 +57,7 @@ public class ComputeOperationTaskServiceTest extends ComputeRequestBaseTest {
         DeploymentProfileConfig.getInstance().setTest(true);
 
         // create a single powered-on compute available for placement
-        createVmGuestCompute(true);
+        createVmHostCompute(true);
 
         request = TestRequestStateFactory.createRequestState(ResourceType.COMPUTE_TYPE.getName(),
                 hostDesc.documentSelfLink);

@@ -306,7 +306,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return cs;
     }
 
-    public static ComputeDescription createVmGuestComputeDescription() {
+    public static ComputeDescription createComputeDescriptionForVmGuestChildren() {
         ComputeDescription computeDescription = new ComputeDescription();
 
         // create compute host descriptions first, then link them in the compute host state
@@ -330,7 +330,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return computeDescription;
     }
 
-    public static ComputeState createVmGuestComputeState() {
+    public static ComputeState createVmHostComputeState() {
         ComputeState cs = new ComputeState();
         cs.id = UUID.randomUUID().toString();
         cs.primaryMAC = UUID.randomUUID().toString();
