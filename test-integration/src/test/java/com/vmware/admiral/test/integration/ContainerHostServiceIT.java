@@ -25,6 +25,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.adapter.common.AdapterRequest;
+import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
@@ -34,6 +36,7 @@ import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.request.RequestBaseTest;
+import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
@@ -45,8 +48,11 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class ContainerHostServiceIT extends RequestBaseTest {
-    private static final String VALID_DOCKER_HOST_ADDRESS = String.format("%s:%s",
-            getSystemOrTestProp("docker.host.address"),
+    private static final String VALID_DOCKER_HOST_NODE1_ADDRESS = String.format("%s:%s",
+            getSystemOrTestProp("docker.host.cluster.node1.address"),
+            getSystemOrTestProp("docker.host.port.API"));
+    private static final String VALID_DOCKER_HOST_NODE2_ADDRESS = String.format("%s:%s",
+            getSystemOrTestProp("docker.host.cluster.node2.address"),
             getSystemOrTestProp("docker.host.port.API"));
 
     private ComputeState computeState;
@@ -109,7 +115,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
 
     @Test
     public void testValidateSelfSignNotAccepted() throws Throwable {
-        computeState.address = VALID_DOCKER_HOST_ADDRESS;
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
 
         Operation op = Operation.createPut(getContainerHostValidateUri())
                 .setBody(containerHostSpec)
@@ -141,7 +147,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
 
     @Test
     public void testValidateSelfSignWhenAccepted() throws Throwable {
-        computeState.address = VALID_DOCKER_HOST_ADDRESS;
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
         containerHostSpec.acceptCertificate = true;
 
         Operation op = Operation
@@ -176,7 +182,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
     @Test
     public void testValidateShouldPassForVicHost() throws Throwable {
         vicHostSpec.acceptCertificate = true;
-        vicHostState.address = VALID_DOCKER_HOST_ADDRESS;
+        vicHostState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
         markHostForVicValidation(vicHostState);
 
         Operation op = Operation.createPut(getContainerHostValidateUri())
@@ -202,7 +208,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
     @Test
     public void testValidateShouldFailWhenDockerHostClaimsToBeVic() throws Throwable {
         containerHostSpec.acceptCertificate = true;
-        computeState.address = VALID_DOCKER_HOST_ADDRESS;
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
         markHostForVicValidation(computeState);
 
         Operation op = Operation.createPut(getContainerHostValidateUri())
@@ -237,7 +243,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
 
     @Test
     public void testAddHostWhenSelfSignNotAccepted() throws Throwable {
-        computeState.address = VALID_DOCKER_HOST_ADDRESS;
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
 
         Operation op = Operation
                 .createPut(containerHostUri)
@@ -271,7 +277,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
 
     @Test
     public void testAddHostWhenSelfSignAccepted() throws Throwable {
-        computeState.address = VALID_DOCKER_HOST_ADDRESS;
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
         containerHostSpec.acceptCertificate = true;
 
         Operation op = Operation
@@ -307,7 +313,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
 
     @Test
     public void testAddHostWhenSelfSignNotAcceptedInitially() throws Throwable {
-        computeState.address = VALID_DOCKER_HOST_ADDRESS;
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
 
         Operation op = Operation
                 .createPut(containerHostUri)
@@ -361,7 +367,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
 
     @Test
     public void testStoreHostSelfSignedCertificateAndAddHost() throws Throwable {
-        computeState.address = VALID_DOCKER_HOST_ADDRESS;
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
         SslTrustCertificateState[] certs = new SslTrustCertificateState[] { null };
         Operation op = Operation
                 .createPut(containerHostUri)
@@ -432,7 +438,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
 
     @Test
     public void testAddHostWithoutValidation() throws Throwable {
-        computeState.address = VALID_DOCKER_HOST_ADDRESS;
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
         containerHostSpec.acceptHostAddress = true;
         String[] result = new String[] { null };
         Operation op = Operation
@@ -476,63 +482,91 @@ public class ContainerHostServiceIT extends RequestBaseTest {
     @Test
     public void testAddShouldPassForVicHost() throws Throwable {
         vicHostSpec.acceptCertificate = true;
-        vicHostState.address = VALID_DOCKER_HOST_ADDRESS;
+        vicHostState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
         markHostForVicValidation(vicHostState);
 
-        Operation op = Operation.createPut(containerHostUri)
-                .setBody(vicHostSpec)
-                .setCompletion((o, e) -> {
-                    if (o.getStatusCode() != HttpURLConnection.HTTP_NO_CONTENT) {
-                        if (e != null) {
-                            host.log("Unexpected exception: %s", Utils.toString(e));
-                        }
-                        host.failIteration(
-                                new IllegalStateException("Status code 200 was expected"));
-                        return;
-                    } else {
-                        host.completeIteration();
-                    }
-                });
-
-        host.testStart(1);
-        host.send(op);
-        host.testWait();
+        addHost(vicHostSpec);
     }
 
     @Test
     public void testAddShouldFailWhenDockerHostClaimsToBeVic() throws Throwable {
         containerHostSpec.acceptCertificate = true;
-        computeState.address = VALID_DOCKER_HOST_ADDRESS;
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
         markHostForVicValidation(computeState);
 
-        Operation op = Operation.createPut(containerHostUri)
-                .setBody(containerHostSpec)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        if (o.getStatusCode() != Operation.STATUS_CODE_BAD_REQUEST) {
-                            host.log("Unexpected exception: %s", Utils.toString(e));
-                            host.failIteration(new IllegalStateException(
-                                    "Validation exception expected"));
-                            return;
-                        }
-                        String error = e.getMessage();
-                        if (error.equals(ContainerHostService.CONTAINER_HOST_IS_NOT_VIC_MESSAGE)) {
-                            host.completeIteration();
-                        } else {
-                            String message = String.format(
-                                    "Error message should be '%s' but was '%s'",
-                                    ContainerHostService.CONTAINER_HOST_IS_NOT_VIC_MESSAGE, error);
-                            host.failIteration(new IllegalStateException(message));
-                        }
-                    } else {
-                        host.failIteration(new IllegalStateException(
-                                "Should fail when docker host claims to be a VIC host"));
-                    }
-                });
+        addHost(containerHostSpec, ContainerHostService.CONTAINER_HOST_IS_NOT_VIC_MESSAGE);
+    }
 
-        host.testStart(1);
-        host.send(op);
-        host.testWait();
+    @Test
+    public void testAddSecondDockerHostShouldPass() throws Throwable {
+        // First add a docker host
+        containerHostSpec.acceptCertificate = true;
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
+        addHost(containerHostSpec);
+
+        // Adding a second docker host should pass
+        ComputeState hostState2 = createDockerHostState();
+        hostState2.address = VALID_DOCKER_HOST_NODE2_ADDRESS;
+        ContainerHostSpec hostSpec2 = new ContainerHostSpec();
+        hostSpec2.acceptCertificate = true;
+        hostSpec2.hostState = hostState2;
+        addHost(hostSpec2);
+    }
+
+    @Test
+    public void testAddDockerHostToPlacementZoneWithVicHostShouldFail() throws Throwable {
+        // First add a VIC host
+        vicHostSpec.acceptCertificate = true;
+        vicHostState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
+        markHostForVicValidation(vicHostState);
+        addHost(vicHostSpec);
+        // data collection is needed to patch the host state with the data that marks it as VIC
+        dataCollectHost(vicHostState);
+
+        // Adding a Docker host should now fail because there is a scheduler in the placement zone
+        ComputeState dockerHostState = createDockerHostState();
+        dockerHostState.address = VALID_DOCKER_HOST_NODE2_ADDRESS;
+        ContainerHostSpec dockerHostSpec = new ContainerHostSpec();
+        dockerHostSpec.acceptCertificate = true;
+        dockerHostSpec.hostState = dockerHostState;
+        addHost(dockerHostSpec, ContainerHostService.PLACEMENT_ZONE_CONTAINS_SCHEDULERS_MESSAGE);
+    }
+
+    @Test
+    public void testAddVicHostToPlacementZoneWithVicHostShouldFail() throws Throwable {
+        // First add a VIC host
+        vicHostSpec.acceptCertificate = true;
+        vicHostState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
+        markHostForVicValidation(vicHostState);
+        addHost(vicHostSpec);
+        // data collection is needed to patch the host state with the data that marks it as VIC
+        dataCollectHost(vicHostState);
+
+        // Adding another VIC host should now fail because the placement zone is not empty
+        ComputeState vicHostState2 = createVicHostState();
+        vicHostState2.address = VALID_DOCKER_HOST_NODE2_ADDRESS;
+        markHostForVicValidation(vicHostState2);
+        ContainerHostSpec vicHostSpec2 = new ContainerHostSpec();
+        vicHostSpec2.acceptCertificate = true;
+        vicHostSpec2.hostState = vicHostState2;
+        addHost(vicHostSpec2, ContainerHostService.PLACEMENT_ZONE_NOT_EMPTY_MESSAGE);
+    }
+
+    @Test
+    public void testAddVicHostToPlacementZoneWithDockerHostShouldFail() throws Throwable {
+        // First add the docker host
+        containerHostSpec.acceptCertificate = true;
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
+        addHost(containerHostSpec);
+
+        // Adding a VIC host should now fail because the placement zone is not empty
+        ComputeState vicHostState = createVicHostState();
+        vicHostState.address = VALID_DOCKER_HOST_NODE2_ADDRESS;
+        markHostForVicValidation(vicHostState);
+        ContainerHostSpec vicHostSpec = new ContainerHostSpec();
+        vicHostSpec.acceptCertificate = true;
+        vicHostSpec.hostState = vicHostState;
+        addHost(vicHostSpec, ContainerHostService.PLACEMENT_ZONE_NOT_EMPTY_MESSAGE);
     }
 
     private URI getContainerHostValidateUri() {
@@ -540,9 +574,89 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                 ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
     }
 
+    private void addHost(ContainerHostSpec hostSpec) {
+        addHost(hostSpec, null);
+    }
+
+    private void addHost(ContainerHostSpec hostSpec, String expectedError) {
+        Operation op = Operation.createPut(containerHostUri)
+                .setBody(hostSpec)
+                .setCompletion((o, e) -> {
+                    if (expectedError == null) {
+                        // add should succeed
+                        if (o.getStatusCode() != Operation.STATUS_CODE_OK) {
+                            if (e != null) {
+                                host.log("Unexpected exception: %s", Utils.toString(e));
+                            }
+                            String error = String.format("Status code 200 was expected but was %d",
+                                    o.getStatusCode());
+                            host.failIteration(
+                                    new IllegalStateException(error));
+                            return;
+                        } else {
+                            ComputeState storedHost = o.getBody(ComputeState.class);
+                            hostSpec.hostState.documentSelfLink = storedHost.documentSelfLink;
+                            host.completeIteration();
+                        }
+                    } else {
+                        // add should fail
+                        if (e != null) {
+                            if (o.getStatusCode() != Operation.STATUS_CODE_BAD_REQUEST) {
+                                host.log("Unexpected exception: %s", Utils.toString(e));
+                                host.failIteration(new IllegalStateException(
+                                        "Validation exception expected"));
+                                return;
+                            }
+                            String error = e.getMessage();
+                            if (error.equals(expectedError)) {
+                                host.completeIteration();
+                            } else {
+                                String message = String.format(
+                                        "Error message should be '%s' but was '%s'",
+                                        expectedError, error);
+                                host.failIteration(new IllegalStateException(message));
+                            }
+                        } else {
+                            String error = String.format("Should fail with '%s'", expectedError);
+                            host.failIteration(new IllegalStateException(error));
+                        }
+                    }
+                });
+
+        host.testStart(1);
+        host.send(op);
+        host.testWait();
+    }
+
     private void markHostForVicValidation(ComputeState cs) {
         cs.customProperties.put(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME,
                 ContainerHostType.VIC.toString());
+    }
+
+    private void dataCollectHost(ComputeState cs) {
+        AdapterRequest request = new AdapterRequest();
+        request.operationTypeId = ContainerHostOperationType.INFO.id;
+        request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        request.resourceReference = UriUtils.buildUri(host, cs.documentSelfLink);
+        request.customProperties = new HashMap<>();
+        request.customProperties.put(MockDockerHostAdapterService.CONTAINER_HOST_TYPE_PROP_NAME,
+                cs.customProperties.get(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME));
+
+        Operation op = Operation.createPatch(host, ManagementUriParts.ADAPTER_DOCKER_HOST)
+                .setBody(request)
+                .setReferer("/")
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.failIteration(e);
+                    } else {
+                        host.completeIteration();
+                    }
+                });
+
+        // wait for data collection to complete
+        host.testStart(1);
+        op.sendWith(host);
+        host.testWait();
     }
 
     private ComputeState createDockerHostState() {
