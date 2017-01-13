@@ -66,6 +66,9 @@ public class ContainerHostService extends StatelessService {
     public static final String HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT = "Container host type is not supported: %s";
     public static final String CONTAINER_HOST_ALREADY_EXISTS_MESSAGE = "Container host already exists";
     public static final String CONTAINER_HOST_IS_NOT_VIC_MESSAGE = "Not a VIC host";
+    public static final String PLACEMENT_ZONE_NOT_EMPTY_MESSAGE = "Placement zone is not empty";
+    public static final String PLACEMENT_ZONE_CONTAINS_SCHEDULERS_MESSAGE = "Placement zone is not empty "
+            + "or does not contain only docker hosts";
 
     public static final String DOCKER_COMPUTE_DESC_ID = "docker-host-compute-desc-id";
     public static final String DOCKER_COMPUTE_DESC_LINK = UriUtils.buildUriPath(
@@ -369,11 +372,11 @@ public class ContainerHostService extends StatelessService {
         ContainerHostType hostType = getHostTypeFromSpec(hostSpec);
         switch (hostType) {
         case DOCKER:
-            storeDockerHost(hostSpec, op);
+            verifyNoSchedulersInPlacementZone(hostSpec, op, () -> storeDockerHost(hostSpec, op));
             break;
 
         case VIC:
-            storeVicHost(hostSpec, op);
+            verifyPlacementZoneIsEmpty(hostSpec, op, () -> storeVicHost(hostSpec, op));
             break;
 
         default:
@@ -440,16 +443,65 @@ public class ContainerHostService extends StatelessService {
                         op.fail(e);
                         return;
                     }
-                    String documentSelfLink = o.getBody(ComputeState.class).documentSelfLink;
+                    ComputeState storedHost = o.getBody(ComputeState.class);
+                    String documentSelfLink = storedHost.documentSelfLink;
                     if (!documentSelfLink.startsWith(ComputeService.FACTORY_LINK)) {
                         documentSelfLink = UriUtils.buildUriPath(
                                 ComputeService.FACTORY_LINK, documentSelfLink);
                     }
                     op.addResponseHeader(Operation.LOCATION_HEADER, documentSelfLink);
-                    completeOperationSuccess(op, o.getBody(ComputeState.class));
+                    completeOperationSuccess(op, storedHost);
                     updateContainerHostInfo(documentSelfLink);
                     triggerEpzEnumeration();
                 }));
+    }
+
+    private void verifyPlacementZoneIsEmpty(ContainerHostSpec hostSpec, Operation op,
+            Runnable successCallback) {
+        AtomicBoolean emptyZone = new AtomicBoolean(true);
+        QueryTask queryTask = QueryUtil.buildPropertyQuery(ComputeState.class,
+                ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, hostSpec.hostState.resourcePoolLink);
+        QueryUtil.addCountOption(queryTask);
+        new ServiceDocumentQuery<>(getHost(), ComputeState.class)
+                .query(queryTask, (r) -> {
+                    if (r.hasException()) {
+                        op.fail(r.getException());
+                    } else if (r.getCount() > 0) {
+                        emptyZone.set(false);
+                        op.fail(new IllegalArgumentException(PLACEMENT_ZONE_NOT_EMPTY_MESSAGE));
+                    } else {
+                        if (emptyZone.get()) {
+                            successCallback.run();
+                        }
+                    }
+                });
+    }
+
+    private void verifyNoSchedulersInPlacementZone(ContainerHostSpec hostSpec, Operation op,
+            Runnable successCallback) {
+        AtomicBoolean schedulerFound = new AtomicBoolean(false);
+        QueryTask queryTask = QueryUtil.buildPropertyQuery(ComputeState.class,
+                ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, hostSpec.hostState.resourcePoolLink);
+        QueryUtil.addExpandOption(queryTask);
+        new ServiceDocumentQuery<>(getHost(), ComputeState.class)
+                .query(queryTask, (r) -> {
+                    if (r.hasException()) {
+                        op.fail(r.getException());
+                    } else if (r.hasResult()) {
+                        if (isScheduler(r.getResult())) {
+                            schedulerFound.set(true);
+                            op.fail(new IllegalArgumentException(PLACEMENT_ZONE_CONTAINS_SCHEDULERS_MESSAGE));
+                        }
+                    } else {
+                        if (!schedulerFound.get()) {
+                            successCallback.run();
+                        }
+                    }
+                });
+    }
+
+    private boolean isScheduler(ComputeState computeState) {
+        return ContainerHostUtil.isVicHost(computeState);
     }
 
     private void checkForDefaultDockerHostDescription() {
