@@ -63,17 +63,17 @@ public class MockDockerNetworkAdapterService extends StatelessService {
         // network state (rather than requesting it through the request broker), and in such way the
         // MockDockerNetworkAdapterService is not properly initialized.
 
-        addNetworkId("qe::test-docker-host-compute", "test-external-network",
+        addNetworkId("test-docker-host-compute", "test-external-network",
                 "test-external-network");
-        addNetworkNames("qe::test-docker-host-compute", "test-external-network",
+        addNetworkNames("test-docker-host-compute", "test-external-network",
                 "test-external-network");
-        addNetworkId("qe::test-docker-host-compute2", "test-external-network",
+        addNetworkId("test-docker-host-compute2", "test-external-network",
                 "test-external-network");
-        addNetworkNames("qe::test-docker-host-compute2", "test-external-network",
+        addNetworkNames("test-docker-host-compute2", "test-external-network",
                 "test-external-network");
-        addNetworkId("qe::test-docker-host-compute3", "test-external-network",
+        addNetworkId("test-docker-host-compute3", "test-external-network",
                 "test-external-network");
-        addNetworkNames("qe::test-docker-host-compute3", "test-external-network",
+        addNetworkNames("test-docker-host-compute3", "test-external-network",
                 "test-external-network");
     }
 
