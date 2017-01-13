@@ -21,6 +21,7 @@ import java.net.URI;
 import java.util.HashMap;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -211,18 +212,21 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                         host.failIteration(e);
                         return;
                     }
-                    if (o.getStatusCode() != HttpURLConnection.HTTP_NO_CONTENT) {
+                    if (o.getStatusCode() != HttpURLConnection.HTTP_OK) {
                         host.failIteration(new IllegalStateException(
-                                "Expected status code 204 when ssl cert accepted. Status: "
+                                "Expected status code 200 when ssl cert accepted. Status: "
                                         + o.getStatusCode()));
                         return;
                     }
 
-                    if (o.getBodyRaw() != null) {
+                    if (o.getBodyRaw() == null) {
                         host.failIteration(new IllegalStateException(
-                                "No body expected when ssl cert accepted."));
+                                "Body should contain the created compute state."));
                         return;
                     }
+
+                    Assert.assertEquals("Compute state address does not match",
+                            computeState.address, o.getBody(ComputeState.class).address);
 
                     host.completeIteration();
                 });
@@ -258,18 +262,22 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                                             host.failIteration(retryE);
                                             return;
                                         }
-                                        if (retryO.getStatusCode() != HttpURLConnection.HTTP_NO_CONTENT) {
+                                        if (retryO
+                                                .getStatusCode() != HttpURLConnection.HTTP_OK) {
                                             host.failIteration(new IllegalStateException(
-                                                    "Expected status code 204 when ssl cert accepted. Status: "
+                                                    "Expected status code 200 when ssl cert accepted. Status: "
                                                             + retryO.getStatusCode()));
                                             return;
                                         }
 
-                                        if (retryO.getBodyRaw() != null) {
+                                        if (retryO.getBodyRaw() == null) {
                                             host.failIteration(new IllegalStateException(
-                                                    "No body expected when ssl cert accepted."));
+                                                    "Body should contain the created compute state."));
                                             return;
                                         }
+
+                                        Assert.assertEquals("Compute state address does not match",
+                                                computeState.address, retryO.getBody(ComputeState.class).address);
 
                                         host.completeIteration();
                                     });
@@ -320,18 +328,23 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                                                                         host.failIteration(retryE);
                                                                         return;
                                                                     }
-                                                                    if (retryO.getStatusCode() != HttpURLConnection.HTTP_NO_CONTENT) {
-                                                                        host.failIteration(new IllegalStateException(
-                                                                                "Expected status code 204 when ssl cert accepted. Status: "
-                                                                                        + retryO.getStatusCode()));
+                                                                    if (retryO
+                                                                            .getStatusCode() != HttpURLConnection.HTTP_OK) {
+                                                                        host.failIteration(
+                                                                                new IllegalStateException(
+                                                                                        "Expected status code 200 when ssl cert accepted. Status: "
+                                                                                                + retryO.getStatusCode()));
                                                                         return;
                                                                     }
 
-                                                                    if (retryO.getBodyRaw() != null) {
+                                                                    if (retryO.getBodyRaw() == null) {
                                                                         host.failIteration(new IllegalStateException(
-                                                                                "No body expected when ssl cert accepted."));
+                                                                                "Body should contain the created compute state."));
                                                                         return;
                                                                     }
+
+                                                                    Assert.assertEquals("Compute state address does not match",
+                                                                            computeState.address, retryO.getBody(ComputeState.class).address);
 
                                                                     host.completeIteration();
                                                                 });
@@ -360,18 +373,21 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                         host.failIteration(e);
                         return;
                     }
-                    if (o.getStatusCode() != HttpURLConnection.HTTP_NO_CONTENT) {
+                    if (o.getStatusCode() != HttpURLConnection.HTTP_OK) {
                         host.failIteration(new IllegalStateException(
-                                "Expected status code 204 when ssl cert accepted. Status: "
+                                "Expected status code 200 when ssl cert accepted. Status: "
                                         + o.getStatusCode()));
                         return;
                     }
 
-                    if (o.getBodyRaw() != null) {
+                    if (o.getBodyRaw() == null) {
                         host.failIteration(new IllegalStateException(
-                                "No body expected when ssl cert accepted."));
+                                "Body should contain the created compute state."));
                         return;
                     }
+
+                    Assert.assertEquals("Compute state address does not match",
+                            computeState.address, o.getBody(ComputeState.class).address);
 
                     result[0] = o.getResponseHeader(Operation.LOCATION_HEADER);
                     host.completeIteration();

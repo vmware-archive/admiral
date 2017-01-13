@@ -16,6 +16,7 @@ import java.net.URI;
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -119,12 +120,26 @@ public class ConfigureHostOverSshTaskService extends
                 PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
                         PropertyIndexingOption.STORE_ONLY })
         public Set<String> tagLinks;
+
+        @Documentation(description = "Link to configured host")
+        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL }, indexing = {
+                        PropertyIndexingOption.STORE_ONLY })
+        public String hostLink;
     }
 
     @Override
     protected TaskStatusState fromTask(TaskServiceDocument<SubStage> state) {
         TaskStatusState statusTask = super.fromTask(state);
         statusTask.name = ContainerOperationType.extractDisplayName(DISPLAY_NAME);
+        String hostLink = ((ConfigureHostOverSshTaskServiceState) state).hostLink;
+        if (hostLink != null) {
+            if (statusTask.resourceLinks == null) {
+                statusTask.resourceLinks = new HashSet<>();
+            }
+
+            statusTask.resourceLinks.add(hostLink);
+        }
         return statusTask;
     }
 
@@ -356,6 +371,7 @@ public class ConfigureHostOverSshTaskService extends
 
     public void addHost(ConfigureHostOverSshTaskServiceState state) {
         ComputeState cs = new ComputeState();
+        cs.id = getHostId(state);
         cs.address = getHostUri(state).toString();
         cs.name = cs.address;
         cs.resourcePoolLink = state.placementZoneLink;
@@ -389,9 +405,15 @@ public class ConfigureHostOverSshTaskService extends
                         return;
                     }
 
-                    proceedTo(SubStage.COMPLETED);
+                    proceedTo(SubStage.COMPLETED, (s) -> {
+                        s.hostLink = completedOp.getBody(ComputeState.class).documentSelfLink;
+                    });
                 })
                 .sendWith(getHost());
+    }
+
+    private String getHostId(ConfigureHostOverSshTaskServiceState state) {
+        return ContainerHostUtil.buildHostId(state.tenantLinks, state.address + ":" + state.port);
     }
 
     private URI getHostUri(ConfigureHostOverSshTaskServiceState state) {

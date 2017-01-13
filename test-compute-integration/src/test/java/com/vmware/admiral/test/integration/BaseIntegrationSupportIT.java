@@ -302,7 +302,7 @@ public abstract class BaseIntegrationSupportIT {
                 getBaseUrl() + buildServiceUri(ContainerHostService.SELF_LINK),
                 Utils.toJson(hostSpec));
 
-        if (HttpURLConnection.HTTP_NO_CONTENT != httpResponse.statusCode) {
+        if (HttpURLConnection.HTTP_OK != httpResponse.statusCode) {
             throw new IllegalArgumentException("Add host failed with status code: "
                     + httpResponse.statusCode);
         }
