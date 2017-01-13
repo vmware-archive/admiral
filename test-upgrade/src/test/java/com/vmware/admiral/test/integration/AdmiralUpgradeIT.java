@@ -142,6 +142,9 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         // create entities to check for after upgrade
         dockerHostSelfLink = getDockerHost().documentSelfLink;
         credentialsSelfLink = getDockerHostAuthCredentials().documentSelfLink;
+        // Give some time to the container before removing it. If container is deleted directly
+        // after post request it is possible to have corrupted data.
+        Thread.sleep(5000);
         setBaseURI(null);
         dataInitialized = true;
     }
