@@ -14,7 +14,10 @@ package com.vmware.admiral.test.integration.compute;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,24 +25,32 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
+import com.vmware.admiral.compute.env.ComputeProfileService.ComputeProfile;
+import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfile;
+import com.vmware.admiral.compute.env.StorageProfileService.StorageProfile;
 import com.vmware.admiral.request.RequestBrokerService;
 import com.vmware.admiral.test.integration.SimpleHttpsClient;
+import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.test.integration.compute.aws.AwsComputeProvisionIT;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 @RunWith(Parameterized.class)
-@Ignore
 public class WordpressProvisionIT extends BaseComputeProvisionIT {
 
     private static final String WP_PATH = "mywordpresssite";
@@ -74,6 +85,35 @@ public class WordpressProvisionIT extends BaseComputeProvisionIT {
     @Override
     protected void doSetUp() throws Exception {
         setUp.run();
+
+        createEnvironment(loadComputeProfile(), createNetworkProfile(), new StorageProfile());
+    }
+
+    private NetworkProfile createNetworkProfile() throws Exception {
+        Query query = QueryTask.Query.Builder.create()
+                .addFieldClause(SubnetState.FIELD_NAME_ID, "subnet-ce01b5e4")
+                .build();
+        QueryTask qt = QueryTask.Builder.createDirectTask().setQuery(query).build();
+        String responseJson = sendRequest(HttpMethod.POST, ServiceUriPaths.CORE_QUERY_TASKS,
+                Utils.toJson(qt));
+        QueryTask result = Utils.fromJson(responseJson, QueryTask.class);
+
+        String subnetLink = result.results.documentLinks.get(0);
+        NetworkProfile np = new NetworkProfile();
+        np.subnetLinks = new ArrayList<>();
+        np.subnetLinks.add(subnetLink);
+        return np;
+    }
+
+    private ComputeProfile loadComputeProfile() {
+        URL r = getClass().getClassLoader().getResource("test-aws-compute-profile.yaml");
+        try (InputStream is = r.openStream()) {
+            return YamlMapper.objectMapper().readValue(is, ComputeProfile.class);
+        } catch (Exception e) {
+            logger.error("Failure reading default environment: %s, reason: %s", r,
+                    e.getMessage());
+            return null;
+        }
     }
 
     protected String importTemplate(String filePath) throws Exception {

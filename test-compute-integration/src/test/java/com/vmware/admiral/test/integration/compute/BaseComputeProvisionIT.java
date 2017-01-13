@@ -17,11 +17,13 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -48,6 +50,14 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupR
 import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
+import com.vmware.admiral.compute.env.ComputeProfileService;
+import com.vmware.admiral.compute.env.ComputeProfileService.ComputeProfile;
+import com.vmware.admiral.compute.env.EnvironmentService;
+import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
+import com.vmware.admiral.compute.env.NetworkProfileService;
+import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfile;
+import com.vmware.admiral.compute.env.StorageProfileService;
+import com.vmware.admiral.compute.env.StorageProfileService.StorageProfile;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.ReservationRemovalTaskFactoryService;
@@ -65,6 +75,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -332,6 +343,41 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     private ResourcePoolState createResourcePoolOfVMs(EndpointType endpointType,
             TestDocumentLifeCycle documentLifeCycle) throws Exception {
         return createResourcePool(endpointType, null, VMS_RESOURCE_POOL_ID, documentLifeCycle);
+    }
+
+    protected void createEnvironment(ComputeProfile computeProfile, NetworkProfile networkProfile,
+            StorageProfile storageProfile) {
+        List<ServiceDocument> docs = new ArrayList<>();
+        String id = UUID.randomUUID().toString();
+        EnvironmentState env = new EnvironmentState();
+        env.name = "wordpressEnv";
+        env.documentSelfLink = UriUtils.buildUriPath(EnvironmentService.FACTORY_LINK, id);
+        env.endpointLink = endpoint.documentSelfLink;
+        docs.add(env);
+
+        if (computeProfile != null) {
+            env.computeProfileLink = UriUtils.buildUriPath(ComputeProfileService.FACTORY_LINK, id);
+            computeProfile.documentSelfLink = env.computeProfileLink;
+            docs.add(computeProfile);
+        }
+        if (networkProfile != null) {
+            env.networkProfileLink = UriUtils.buildUriPath(NetworkProfileService.FACTORY_LINK, id);
+            networkProfile.documentSelfLink = env.networkProfileLink;
+            docs.add(networkProfile);
+        }
+        if (storageProfile != null) {
+            env.storageProfileLink = UriUtils.buildUriPath(StorageProfileService.FACTORY_LINK, id);
+            storageProfile.documentSelfLink = env.storageProfileLink;
+            docs.add(storageProfile);
+        }
+
+        docs.forEach(d -> {
+            try {
+                postDocument(UriUtils.getParentPath(d.documentSelfLink), d);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     protected String getResourceDescriptionLink() throws Exception {

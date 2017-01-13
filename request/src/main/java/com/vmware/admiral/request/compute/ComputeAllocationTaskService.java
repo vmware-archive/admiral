@@ -49,6 +49,7 @@ import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
 import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentStateExpanded;
+import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfile;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
@@ -210,7 +211,7 @@ public class ComputeAllocationTaskService
             selectPlacement(state);
             break;
         case START_COMPUTE_ALLOCATION:
-            allocateComputeState(state, this.computeDescription, null);
+            allocateComputeState(state, this.computeDescription, null, null);
             break;
         case COMPUTE_ALLOCATION_COMPLETED:
             queryForAllocatedResources(state);
@@ -585,18 +586,25 @@ public class ComputeAllocationTaskService
     }
 
     private void allocateComputeState(ComputeAllocationTaskState state,
-            ComputeDescription computeDescription, ServiceTaskCallback taskCallback) {
+            ComputeDescription computeDescription, EnvironmentStateExpanded environment,
+            ServiceTaskCallback taskCallback) {
 
         if (computeDescription == null) {
             getComputeDescription(state.resourceDescriptionLink,
-                    (compDesc) -> allocateComputeState(state, compDesc, taskCallback));
+                    (compDesc) -> allocateComputeState(state, compDesc, environment, taskCallback));
+            return;
+        }
+        if (environment == null) {
+            getServiceState(state.environmentLink, EnvironmentStateExpanded.class, true,
+                    env -> allocateComputeState(state, computeDescription, env, taskCallback));
             return;
         }
         if (taskCallback == null) {
             // recurse after creating a sub task
             createCounterSubTaskCallback(state, state.resourceCount, false,
                     SubStage.COMPUTE_ALLOCATION_COMPLETED,
-                    (serviceTask) -> allocateComputeState(state, computeDescription, serviceTask));
+                    (serviceTask) -> allocateComputeState(state, computeDescription, environment,
+                            serviceTask));
             return;
         }
 
@@ -630,13 +638,9 @@ public class ComputeAllocationTaskService
             String name = namesIterator.next();
             String computeResourceId = buildResourceId(name);
 
-            createComputeResource(
-                    state,
-                    computeDescription,
-                    state.endpointComputeStateLink,
-                    placementComputeLinkIterator.next().hostLink,
-                    computeResourceId, name,
-                    null, null, taskCallback);
+            createComputeResource(state, computeDescription, environment,
+                    state.endpointComputeStateLink, placementComputeLinkIterator.next().hostLink,
+                    computeResourceId, name, null, null, taskCallback);
         }
     }
 
@@ -645,28 +649,28 @@ public class ComputeAllocationTaskService
     }
 
     private void createComputeResource(ComputeAllocationTaskState state, ComputeDescription cd,
-            String parentLink, String placementLink,
+            EnvironmentStateExpanded env, String parentLink, String placementLink,
             String computeResourceId, String computeName,
             List<String> diskLinks,
             List<String> networkLinks, ServiceTaskCallback taskCallback) {
         if (diskLinks == null) {
             createDiskResources(state, taskCallback, dl -> createComputeResource(
-                    state, cd, parentLink, placementLink, computeResourceId, computeName, dl,
+                    state, cd, env, parentLink, placementLink, computeResourceId, computeName, dl,
                     networkLinks, taskCallback));
             return;
         }
 
         if (networkLinks == null) {
-            createNetworkResources(state, cd, taskCallback, nl -> createComputeResource(
-                    state, cd, parentLink, placementLink, computeResourceId, computeName, diskLinks,
-                    nl, taskCallback));
+            createNetworkResources(state, cd, env, placementLink, taskCallback,
+                    nl -> createComputeResource(state, cd, env, parentLink, placementLink,
+                            computeResourceId, computeName, diskLinks, nl, taskCallback));
             return;
         }
 
         if (cd.tagLinks == null) {
             createTags(state, cd, tl -> {
                 cd.tagLinks = tl;
-                createComputeResource(state, cd, parentLink, placementLink, computeResourceId,
+                createComputeResource(state, cd, env, parentLink, placementLink, computeResourceId,
                         computeName, diskLinks, networkLinks, taskCallback);
             });
             return;
@@ -817,7 +821,8 @@ public class ComputeAllocationTaskService
     }
 
     private void createNetworkResources(ComputeAllocationTaskState state, ComputeDescription cd,
-            ServiceTaskCallback taskCallback, Consumer<List<String>> networkLinksConsumer) {
+            EnvironmentStateExpanded env, String placementLink, ServiceTaskCallback taskCallback,
+            Consumer<List<String>> networkLinksConsumer) {
         if (cd.networkInterfaceDescLinks == null
                 || cd.networkInterfaceDescLinks.isEmpty()) {
             networkLinksConsumer.accept(new ArrayList<>());
@@ -835,18 +840,7 @@ public class ComputeAllocationTaskService
                                     NetworkInterfaceDescription.class);
                         })
                         .map(dr -> dr.thenCompose(nid -> {
-                            NetworkInterfaceState nic = new NetworkInterfaceState();
-                            nic.id = UUID.randomUUID().toString();
-                            nic.documentSelfLink = nic.id;
-                            nic.customProperties = nid.customProperties;
-                            nic.firewallLinks = nid.firewallLinks;
-                            nic.groupLinks = nid.groupLinks;
-                            nic.name = nid.name;
-                            nic.networkInterfaceDescriptionLink = nid.documentSelfLink;
-                            nic.networkLink = nid.networkLink;
-                            nic.subnetLink = nid.subnetLink;
-                            nic.tagLinks = nid.tagLinks;
-                            nic.tenantLinks = state.tenantLinks;
+                            NetworkInterfaceState nic = createNicState(state, nid, env);
 
                             return this.sendWithDeferredResult(Operation
                                     .createPost(this, NetworkInterfaceService.FACTORY_LINK)
@@ -865,6 +859,31 @@ public class ComputeAllocationTaskService
             }
             networkLinksConsumer.accept(all);
         });
+    }
+
+    private NetworkInterfaceState createNicState(ComputeAllocationTaskState state,
+            NetworkInterfaceDescription nid, EnvironmentStateExpanded env) {
+        String subnetLink = nid.subnetLink;
+
+        NetworkProfile networkProfile = env.networkProfile;
+        if (networkProfile != null) {
+            if (networkProfile.subnetLinks != null && !networkProfile.subnetLinks.isEmpty()) {
+                subnetLink = networkProfile.subnetLinks.get(0);
+            }
+        }
+        NetworkInterfaceState nic = new NetworkInterfaceState();
+        nic.id = UUID.randomUUID().toString();
+        nic.documentSelfLink = nic.id;
+        nic.customProperties = nid.customProperties;
+        nic.firewallLinks = nid.firewallLinks;
+        nic.groupLinks = nid.groupLinks;
+        nic.name = nid.name;
+        nic.networkInterfaceDescriptionLink = nid.documentSelfLink;
+        nic.networkLink = nid.networkLink;
+        nic.subnetLink = subnetLink;
+        nic.tagLinks = nid.tagLinks;
+        nic.tenantLinks = state.tenantLinks;
+        return nic;
     }
 
     private void getResourcePool(ComputeAllocationTaskState state,

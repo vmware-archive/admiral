@@ -78,7 +78,7 @@ public class TemplateSerializationUtils {
     public static Map<String, Object> serializeTemplate(CompositeTemplate template)
             throws IOException {
 
-        //TODO figure out why directly deserializing to Map doesn't work
+        // TODO figure out why directly deserializing to Map doesn't work
         Map result = objectMapper().readValue(
                 objectWriter().writeValueAsString(template), Map.class);
 
@@ -89,7 +89,7 @@ public class TemplateSerializationUtils {
             String componentKey = entry.getKey();
             ComponentTemplate<?> componentTemplate = entry.getValue();
 
-            //We have a special deserializer for the ComponentTemplate
+            // We have a special deserializer for the ComponentTemplate
             Map serializedComponentTemplate = objectMapper()
                     .readValue(objectWriter().writeValueAsString(componentTemplate), Map.class);
             serializedComponentTemplate.remove("children");
@@ -189,8 +189,8 @@ public class TemplateSerializationUtils {
         ServiceDocument serviceDocument = objectMapper().convertValue(value, type);
 
         if (serviceDocument.documentSelfLink == null) {
-            //set some documentSelfLink so that we can wire the objects together, we will remove it
-            //before persisting
+            // set some documentSelfLink so that we can wire the objects together, we will remove it
+            // before persisting
             serviceDocument.documentSelfLink = UUID.randomUUID().toString();
         }
 
@@ -214,7 +214,8 @@ public class TemplateSerializationUtils {
             String fieldName = entry.getKey();
             Object nestedValue = entry.getValue();
 
-            //handle just top level fields: String field = link and Collection<String> field = links
+            // handle just top level fields: String field = link and Collection<String> field =
+            // links
             Class<? extends ServiceDocument> childType = NestedState
                     .getNestedObjectType(type, fieldName);
             if (childType != null) {
@@ -231,10 +232,12 @@ public class TemplateSerializationUtils {
 
                     while (listIterator.hasNext()) {
                         Object next = listIterator.next();
-                        NestedState nestedState = deserializeServiceDocument(
-                                (Map<String, Object>) next, childType);
-                        children.put(nestedState.object.documentSelfLink, nestedState);
-                        listIterator.set(nestedState.object.documentSelfLink);
+                        if (next instanceof Map) {
+                            NestedState nestedState = deserializeServiceDocument(
+                                    (Map<String, Object>) next, childType);
+                            children.put(nestedState.object.documentSelfLink, nestedState);
+                            listIterator.set(nestedState.object.documentSelfLink);
+                        }
                     }
                 }
             }

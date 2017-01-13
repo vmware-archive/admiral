@@ -9,7 +9,6 @@ components:
       imageType: "ubuntu-1604"
       networks:
         - name: "wpnet"
-          address: 10.0.0.6
           ports: 5432
       __computeConfigContent: |
           #cloud-config
@@ -32,8 +31,6 @@ components:
       imageType: "ubuntu-1604"
       networks:
         - name: "wpnet"
-        - name: public-wpnet
-          ports: 443
       __computeConfigContent: |
           #cloud-config
           repo_update: true

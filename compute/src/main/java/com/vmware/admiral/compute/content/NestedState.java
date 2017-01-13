@@ -18,8 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
-import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.TagService;
 import com.vmware.xenon.common.DeferredResult;
@@ -47,12 +45,11 @@ public class NestedState {
         serviceDocuments.put(ResourceState.class, resourceStateMap);
 
         Map<String, Class<? extends ServiceDocument>> computeDescriptionMap = new HashMap<>();
-        computeDescriptionMap.put("networks",
-                NetworkInterfaceDescriptionService.NetworkInterfaceDescription.class);
+        computeDescriptionMap.put("networks", TemplateNetworkInterfaceDescription.class);
         computeDescriptionMap.put("networkInterfaceDescLinks",
-                NetworkInterfaceDescriptionService.NetworkInterfaceDescription.class);
+                TemplateNetworkInterfaceDescription.class);
         serviceDocuments
-                .put(ComputeDescriptionService.ComputeDescription.class, computeDescriptionMap);
+                .put(TemplateComputeDescription.class, computeDescriptionMap);
     }
 
     public ServiceDocument object;
@@ -65,7 +62,7 @@ public class NestedState {
     public static Map<String, Class<? extends ServiceDocument>> getLinkFields(Class<?> type) {
 
         return serviceDocuments.entrySet().stream()
-                .filter(entry -> entry.getKey().isAssignableFrom(type))
+                .filter(entry -> type.isAssignableFrom(entry.getKey()))
                 .map(entry -> entry.getValue()).reduce((m1, m2) -> {
                     Map<String, Class<? extends ServiceDocument>> all = new HashMap<>();
                     all.putAll(m1);
@@ -182,11 +179,21 @@ public class NestedState {
                 return factoryLink;
             }
 
-            try {
-                return (String) object.getClass().getEnclosingClass().getField("FACTORY_LINK")
-                        .get(null);
-            } catch (IllegalAccessException | NoSuchFieldException e) {
+            Class<?> searchType = object.getClass();
+            while (ServiceDocument.class != searchType && searchType != null) {
+                Class<?> enclosingClass = searchType.getEnclosingClass();
+                if (enclosingClass != null) {
+                    try {
+                        Field field = enclosingClass.getField("FACTORY_LINK");
+                        if (field != null) {
+                            return (String) field.get(null);
+                        }
+                    } catch (IllegalAccessException | NoSuchFieldException e) {
+                    }
+                }
+                searchType = searchType.getSuperclass();
             }
+            return null;
         }
         return object.documentSelfLink;
     }

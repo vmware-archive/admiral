@@ -63,6 +63,7 @@ import com.vmware.admiral.compute.env.StorageProfileService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService;
+import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskServiceWithoutValidate;
 import com.vmware.admiral.service.test.MockContainerHostService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -149,7 +150,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
 
         CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_NETWORK_TYPE.getName(),
                 ComputeNetworkDescriptionService.FACTORY_LINK, ComputeNetworkDescription.class,
-                "" /* state factory link */, null /* state class */);
+                ComputeNetworkService.FACTORY_LINK, ComputeNetwork.class);
 
         // start initialization of system documents
         host.sendRequest(Operation.createPost(
