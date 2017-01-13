@@ -46,7 +46,11 @@ public class EnvironmentServiceTest extends ComputeBaseTest {
         assertEquals(EndpointType.aws.name(), env.endpointType);
         assertNotNull(env.computeProfile);
         assertEquals("t2.micro", env.computeProfile.instanceTypeMapping.get("small").instanceType);
-        assertEquals("ami-220f2b35", env.computeProfile.imageMapping.get("coreos").image);
+        assertNull(env.computeProfile.imageMapping.get("coreos").image);
+        assertEquals("ami-220f2b35",
+                env.computeProfile.imageMapping.get("coreos").imageByRegion.get("us-east-1"));
+        assertEquals("ami-5f52183f",
+                env.computeProfile.imageMapping.get("coreos").imageByRegion.get("us-west-1"));
     }
 
     @Test

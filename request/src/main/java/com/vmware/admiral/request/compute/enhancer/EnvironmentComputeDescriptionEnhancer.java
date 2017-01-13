@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 
 import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.compute.env.ComputeImageDescription;
 import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentStateExpanded;
 import com.vmware.admiral.compute.env.InstanceTypeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -73,7 +74,13 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
                         String imageId = null;
                         if (env.computeProfile != null && env.computeProfile.imageMapping != null
                                 && env.computeProfile.imageMapping.containsKey(absImageId)) {
-                            imageId = env.computeProfile.imageMapping.get(absImageId).image;
+                            ComputeImageDescription imageDesc = env.computeProfile.imageMapping
+                                    .get(absImageId);
+                            if (imageDesc.image != null) {
+                                imageId = imageDesc.image;
+                            } else if (imageDesc.imageByRegion != null) {
+                                imageId = imageDesc.imageByRegion.get(context.regionId);
+                            }
                         }
                         if (imageId == null) {
                             imageId = absImageId;

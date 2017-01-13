@@ -51,6 +51,7 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.ComputeProperties;
+import com.vmware.photon.controller.model.adapterapi.EndpointConfigRequest;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
@@ -343,52 +344,53 @@ public class ComputeReservationTaskService
             return;
         }
 
-        HashMap<String, List<GroupResourcePlacementState>> poolsToPlacement = new HashMap<>();
-        placements.forEach(p -> poolsToPlacement
+        HashMap<String, List<GroupResourcePlacementState>> placementsByRpLink = new HashMap<>();
+        placements.forEach(p -> placementsByRpLink
                 .computeIfAbsent(p.resourcePoolLink, k -> new ArrayList<>()).add(p));
         String endpointLink = getProp(computeDesc.customProperties,
                 ComputeProperties.ENDPOINT_LINK_PROP_NAME);
 
         EnvironmentQueryUtils.queryEnvironments(getHost(),
-                UriUtils.buildUri(getHost(), getSelfLink()), poolsToPlacement.keySet(),
+                UriUtils.buildUri(getHost(), getSelfLink()), placementsByRpLink.keySet(),
                 endpointLink, tenantLinks, (envs, e) -> {
                     if (e != null) {
                         failTask("Error retrieving environments for the selected placements: ", e);
                         return;
                     }
 
-                    EnvironmentComputeDescriptionEnhancer enhancer = new EnvironmentComputeDescriptionEnhancer(
-                            getHost(), UriUtils.buildUri(getHost().getPublicUri(), getSelfLink()));
-                    Map<String, List<EnvEntry>> envToEntryList = new HashMap<>();
-                    envs.forEach(env -> env.envLinks.forEach(envLink -> envToEntryList
-                            .computeIfAbsent(envLink, l -> new ArrayList<>()).add(env)));
-
-                    List<DeferredResult<Pair<ComputeDescription, List<EnvEntry>>>> list = envToEntryList
-                            .entrySet().stream()
-                            .map(en -> {
+                    EnvironmentComputeDescriptionEnhancer enhancer =
+                            new EnvironmentComputeDescriptionEnhancer(getHost(),
+                                    UriUtils.buildUri(getHost().getPublicUri(), getSelfLink()));
+                    List<DeferredResult<Pair<ComputeDescription, EnvEntry>>> list = envs
+                            .stream()
+                            .flatMap(envEntry -> envEntry.envLinks.stream().map(envLink -> {
                                 ComputeDescription cloned = Utils.cloneObject(computeDesc);
                                 EnhanceContext context = new EnhanceContext();
-                                context.environmentLink = en.getKey();
+                                context.environmentLink = envLink;
                                 context.imageType = cloned.customProperties
                                         .remove(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
                                 context.skipNetwork = true;
-                                DeferredResult<Pair<ComputeDescription, List<EnvEntry>>> r = new DeferredResult<>();
+                                context.regionId = envEntry.endpoint.endpointProperties
+                                        .get(EndpointConfigRequest.REGION_KEY);
+
+                                DeferredResult<Pair<ComputeDescription, EnvEntry>> r =
+                                        new DeferredResult<>();
                                 enhancer.enhance(context, cloned).whenComplete((cd, t) -> {
                                     if (t != null) {
-                                        r.complete(Pair.of(cd, new ArrayList<>()));
+                                        r.complete(Pair.of(cd, null));
                                         return;
                                     }
                                     String enhancedImage = cd.customProperties
                                             .get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
                                     if (enhancedImage != null
                                             && context.imageType.equals(enhancedImage)) {
-                                        r.complete(Pair.of(cd, new ArrayList<>()));
+                                        r.complete(Pair.of(cd, null));
                                         return;
                                     }
-                                    r.complete(Pair.of(cd, en.getValue()));
+                                    r.complete(Pair.of(cd, envEntry));
                                 });
                                 return r;
-                            }).collect(Collectors.toList());
+                            })).collect(Collectors.toList());
 
                     DeferredResult.allOf(list).whenComplete((all, t) -> {
                         if (t != null) {
@@ -398,8 +400,8 @@ public class ComputeReservationTaskService
                         }
                         LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks = all
                                 .stream()
-                                .filter(p -> !p.getRight().isEmpty())
-                                .flatMap(p -> supportsCD(state, poolsToPlacement, p))
+                                .filter(p -> p.getRight() != null)
+                                .flatMap(p -> supportsCD(state, placementsByRpLink, p))
                                 .sorted((g1, g2) -> g1.priority - g2.priority)
                                 .collect(Collectors.toMap(gp -> gp.documentSelfLink,
                                         gp -> gp.resourcePoolLink,
@@ -411,16 +413,15 @@ public class ComputeReservationTaskService
                                     logInfo("ResourcePoolsPerPlacement after filtering:"
                                             + resourcePoolsPerGroupPlacementLinks);
                                     s.resourcePoolsPerGroupPlacementLinks = resourcePoolsPerGroupPlacementLinks;
-
                                 });
                     });
                 });
     }
 
     private Stream<GroupResourcePlacementState> supportsCD(ComputeReservationTaskState state,
-            HashMap<String, List<GroupResourcePlacementState>> poolsToPlacement,
-            Pair<ComputeDescription, List<EnvEntry>> pair) {
-        return pair.getRight().stream().flatMap(e -> poolsToPlacement.get(e.rp).stream())
+            HashMap<String, List<GroupResourcePlacementState>> placementsByRpLink,
+            Pair<ComputeDescription, EnvEntry> pair) {
+        return placementsByRpLink.get(pair.getRight().rpLink).stream()
                 .filter(p -> {
                     if (p.memoryLimit == 0) {
                         return true;

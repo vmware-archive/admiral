@@ -42,15 +42,13 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 public class EnvironmentQueryUtils {
 
     public static class EnvEntry {
-        public String rp;
-        public String endpointLink;
-        public String endpointType;
+        public String rpLink;
+        public EndpointState endpoint;
         public Set<String> envLinks = new HashSet<>();
 
-        public EnvEntry(String rp, String endpointLink, String endpointType) {
-            this.rp = rp;
-            this.endpointLink = endpointLink;
-            this.endpointType = endpointType;
+        public EnvEntry(String rpLink, EndpointState endpoint) {
+            this.rpLink = rpLink;
+            this.endpoint = endpoint;
         }
 
         void addEnvLink(String link) {
@@ -83,7 +81,7 @@ public class EnvironmentQueryUtils {
             String epl = rp.customProperties.get(ComputeProperties.ENDPOINT_LINK_PROP_NAME);
 
             entriesPerEndpoint.computeIfAbsent(epl, k -> new ArrayList<>())
-                    .add(new EnvEntry(rp.documentSelfLink, epl, null));
+                    .add(new EnvEntry(rp.documentSelfLink, null));
         }).whenComplete((v, e) -> {
             if (e != null) {
                 consumer.accept(null, e);
@@ -92,8 +90,7 @@ public class EnvironmentQueryUtils {
 
             List<DeferredResult<List<EnvEntry>>> list = entriesPerEndpoint.keySet().stream()
                     .map(epl -> host.sendWithDeferredResult(
-                            Operation.createGet(host, epl).setReferer(referer),
-                            EndpointState.class)
+                            Operation.createGet(host, epl).setReferer(referer), EndpointState.class)
                             .thenApply(ep -> applyEndpointType(ep,
                                     entriesPerEndpoint.get(ep.documentSelfLink)))
                             .thenCompose(entries -> queryEnvironments(host, entries, tenantLinks)))
@@ -117,7 +114,7 @@ public class EnvironmentQueryUtils {
         if (entries == null) {
             return new ArrayList<>();
         }
-        entries.forEach(entry -> entry.endpointType = e.endpointType);
+        entries.forEach(entry -> entry.endpoint = e);
         return entries;
     }
 
@@ -134,11 +131,11 @@ public class EnvironmentQueryUtils {
         if (tenantLinks == null || tenantLinks.isEmpty()) {
             host.log(Level.INFO,
                     "Quering for global environments for endpoint [%s] of type [%s]...",
-                    entry.endpointLink, entry.endpointType);
+                    entry.endpoint.documentSelfLink, entry.endpoint.endpointType);
         } else {
             host.log(Level.INFO,
                     "Quering for group [%s] environments for endpoint [%s] of type [%s]...",
-                    tenantLinks, entry.endpointLink, entry.endpointType);
+                    tenantLinks, entry.endpoint.documentSelfLink, entry.endpoint.endpointType);
         }
         Query tenantLinksQuery = QueryUtil.addTenantClause(tenantLinks);
 
@@ -148,12 +145,12 @@ public class EnvironmentQueryUtils {
                 .addClause(tenantLinksQuery)
                 .addClause(Query.Builder.create()
                         .addFieldClause(EnvironmentState.FIELD_NAME_ENDPOINT_LINK,
-                                entry.endpointLink, Occurance.SHOULD_OCCUR)
+                                entry.endpoint.documentSelfLink, Occurance.SHOULD_OCCUR)
                         .addClause(Query.Builder.create(Occurance.SHOULD_OCCUR)
                                 .addFieldClause(EnvironmentState.FIELD_NAME_ENDPOINT_LINK,
                                         "", MatchType.PREFIX, Occurance.MUST_NOT_OCCUR)
                                 .addFieldClause(EnvironmentState.FIELD_NAME_ENDPOINT_TYPE,
-                                        entry.endpointType)
+                                        entry.endpoint.endpointType)
                                 .build())
                         .build())
                 .build();
