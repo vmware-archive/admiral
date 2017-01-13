@@ -18,6 +18,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.http.HttpStatus;
+
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
@@ -26,6 +28,7 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.CounterSubTaskService.CounterSubTaskState;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.Utils;
@@ -135,8 +138,15 @@ public class ComputeNetworkRemovalTaskService extends
                         .createGet(this, resourceLink)
                         .setCompletion((o, e) -> {
                             if (e != null) {
-                                failTask("Failed retrieving Compute Network State: "
-                                        + resourceLink, e);
+                                if (e instanceof ServiceHost.ServiceNotFoundException
+                                        && o.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+                                    logWarning("Compute Network is not found at link: %s ",
+                                            resourceLink);
+                                    completeSubTasksCounter(subTaskLink, null);
+                                } else {
+                                    failTask("Failed retrieving Compute Network State: "
+                                            + resourceLink, e);
+                                }
                                 return;
                             }
 
