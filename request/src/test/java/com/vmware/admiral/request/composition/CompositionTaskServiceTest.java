@@ -57,7 +57,7 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         super.setUp();
 
         // create a single powered-on compute available for placement
-        createVmGuestCompute(true);
+        createVmHostCompute(true);
     }
 
     @Test

@@ -63,7 +63,7 @@ public class BaseComputeAffinityHostFilterTest extends ComputeRequestBaseTest {
                 createDockerHostDescription(), createResourcePool(), true).documentSelfLink);
         initialHostLinks.add(createDockerHost(
                 createDockerHostDescription(), createResourcePool(), true).documentSelfLink);
-        vmGuestComputeDescription = TestRequestStateFactory.createVmGuestComputeDescription();
+        vmGuestComputeDescription = TestRequestStateFactory.createComputeDescriptionForVmGuestChildren();
         filter = new ComputeClusterAntiAffinityHostFilter(host, vmGuestComputeDescription);
         expectedLinks = new ArrayList<>(initialHostLinks);
     }

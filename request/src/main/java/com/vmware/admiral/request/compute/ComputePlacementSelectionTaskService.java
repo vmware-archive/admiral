@@ -192,7 +192,8 @@ public class ComputePlacementSelectionTaskService extends
         helper.setExpandComputes(true);
         helper.setAdditionalQueryClausesProvider(qb -> {
             qb.addInClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK, computeDescriptionLinks)
-                    .addFieldClause(ComputeState.FIELD_NAME_POWER_STATE, PowerState.ON.toString());
+                    .addFieldClause(ComputeState.FIELD_NAME_POWER_STATE, PowerState.ON.toString())
+                    .addFieldClause(ComputeState.FIELD_NAME_TYPE, ComputeType.VM_HOST);
         });
 
         helper.query(qr -> {
