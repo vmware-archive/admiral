@@ -158,6 +158,7 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
                 h.customProperties.get(testCustomPropertyKey));
 
         Assert.assertEquals(hosts.get(0).tagLinks.toArray(new String[0])[0], testTagLink);
+        Assert.assertEquals("Invalid compute link", h.documentSelfLink, state.hostLink);
     }
 
     @Test
