@@ -35,6 +35,10 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.content.ComponentTemplate;
 import com.vmware.admiral.compute.content.CompositeTemplate;
 import com.vmware.admiral.compute.content.NestedState;
+import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
+import com.vmware.admiral.compute.content.kubernetes.pods.Pod;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainer;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodSpec;
 import com.vmware.photon.controller.model.resources.ResourceState;
 
 public class KubernetesUtil {
@@ -57,7 +61,7 @@ public class KubernetesUtil {
             } else if (REPLICATION_CONTROLLER.equals(entity.kind)) {
                 throw new IllegalArgumentException("Not implemented.");
             } else if (DEPLOYMENT.equals(entity.kind)) {
-                throw new IllegalArgumentException("Not implemented.");
+                entity = YamlMapper.objectMapper().readValue(yaml.trim(), Deployment.class);
             } else {
                 throw new IllegalArgumentException("Invalid kubernetes kind.");
             }
@@ -108,6 +112,21 @@ public class KubernetesUtil {
 
     }
 
+    public static ComponentTemplate<ResourceState> fromPodContainerToCompositeComponent(PodContainer
+            podContainer, PodSpec podSpec, Deployment deployment) {
+
+        ContainerDescription description = fromPodContainerToContainerDescription(podContainer,
+                podSpec);
+
+        description._cluster = deployment.spec.replicas;
+
+        NestedState nestedState = new NestedState();
+        nestedState.object = description;
+
+        return fromDescriptionToComponentTemplate(nestedState, ResourceType.CONTAINER_TYPE
+                .getName());
+    }
+
     public static Pod fromCompositeTemplateToPod(CompositeTemplate template) {
         Pod pod = new Pod();
         pod.metadata = new ObjectMeta();
@@ -136,6 +155,28 @@ public class KubernetesUtil {
         }
 
         return podContainers.toArray(new PodContainer[podContainers.size()]);
+    }
+
+    public static CompositeTemplate fromDeploymentToCompositeTemplate(Deployment deployment) {
+        assertNotNull(deployment, "deployment");
+        assertNotNull(deployment.spec, "spec");
+        assertNotNull(deployment.spec.template, "template");
+        assertNotNull(deployment.spec.template.spec, "podtemplate spec");
+
+        CompositeTemplate template = new CompositeTemplate();
+        template.name = deployment.metadata.name;
+
+        if (!isNullOrEmpty(deployment.spec.template.spec.containers)) {
+            template.components = new LinkedHashMap<>();
+            for (PodContainer podContainer : deployment.spec.template.spec.containers) {
+                ComponentTemplate<ResourceState> component = fromPodContainerToCompositeComponent
+                        (podContainer, deployment.spec.template.spec, deployment);
+                component.data.name = podContainer.name;
+
+                template.components.put(podContainer.name, component);
+            }
+        }
+        return template;
     }
 
 }

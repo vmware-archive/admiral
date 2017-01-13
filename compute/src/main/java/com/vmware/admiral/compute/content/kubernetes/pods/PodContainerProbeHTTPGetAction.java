@@ -9,22 +9,14 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.content.kubernetes;
-
-import java.util.Map;
+package com.vmware.admiral.compute.content.kubernetes.pods;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PodContainer {
-    public String name;
-    public String image;
-    public String[] command;
-    public String[] args;
-    public String workingDir;
-    public PodContainerPort[] ports;
-    public PodContainerEnvVar[] env;
-    public PodContainerSecurityContext securityContext;
-    public PodContainerProbe livenessProbe;
-    public Map<String, PodContainerResources> resources;
+public class PodContainerProbeHTTPGetAction {
+    public String path;
+    public String port;
+    public String host;
+    public String scheme;
 }

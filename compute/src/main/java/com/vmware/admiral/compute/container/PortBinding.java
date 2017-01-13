@@ -14,7 +14,7 @@ package com.vmware.admiral.compute.container;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
-import com.vmware.admiral.compute.content.kubernetes.PodContainerPort;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerPort;
 
 /**
  * Port binding for a container
