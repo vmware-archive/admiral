@@ -37,7 +37,7 @@ public class ClosureProvisionTaskService extends
 
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_CLOSURE_PROVISION_TASKS;
 
-    public static final String DISPLAY_NAME = "Closure Provisioning";
+    public static final String DISPLAY_NAME = "Closure Execution";
 
     public static class ClosureProvisionTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ClosureProvisionTaskState.SubStage> {
@@ -50,7 +50,8 @@ public class ClosureProvisionTaskService extends
         }
 
         @Documentation(description = "The description that defines the closure description.")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, LINK, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, LINK,
+                AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
         /** Set by a Task with the links of the provisioned resources. */
@@ -70,15 +71,10 @@ public class ClosureProvisionTaskService extends
     }
 
     @Override
-    protected void validateStateOnStart(ClosureProvisionTaskState state) throws IllegalArgumentException {
+    protected void validateStateOnStart(ClosureProvisionTaskState state)
+            throws IllegalArgumentException {
         assertNotNull(state.resourceDescriptionLink, "resourceDescriptionLink");
         assertNotNull(state.resourceLinks, "resourceLinks");
-    }
-
-    @Override
-    protected boolean validateStateOnStart(ClosureProvisionTaskState state, Operation startOpr) {
-        validateStateOnStart(state);
-        return createRequestTrackerIfNoneProvided(state, startOpr);
     }
 
     @Override
@@ -112,7 +108,8 @@ public class ClosureProvisionTaskService extends
         return finishedResponse;
     }
 
-    protected static class CallbackCompleteResponse extends ServiceTaskCallback.ServiceTaskCallbackResponse {
+    protected static class CallbackCompleteResponse
+            extends ServiceTaskCallback.ServiceTaskCallbackResponse {
         Set<String> resourceLinks;
     }
 
@@ -122,13 +119,15 @@ public class ClosureProvisionTaskService extends
         }
     }
 
-    private boolean createRequestTrackerIfNoneProvided(ClosureProvisionTaskState state, Operation op) {
+    private boolean createRequestTrackerIfNoneProvided(ClosureProvisionTaskState state,
+            Operation op) {
         if (state.requestTrackerLink != null && !state.requestTrackerLink.isEmpty()) {
             logFine("Request tracker link provided: %s", state.requestTrackerLink);
             return false;
         }
 
-        RequestStatusService.RequestStatus requestStatus = fromTask(new RequestStatusService.RequestStatus(), state);
+        RequestStatusService.RequestStatus requestStatus = fromTask(
+                new RequestStatusService.RequestStatus(), state);
         requestStatus.addTrackedTasks(DISPLAY_NAME);
 
         sendRequest(Operation.createPost(this, RequestStatusFactoryService.SELF_LINK)
@@ -141,7 +140,8 @@ public class ClosureProvisionTaskService extends
                         return;
                     }
                     logFine("Created request tracker: %s", requestStatus.documentSelfLink);
-                    state.requestTrackerLink = o.getBody(RequestStatusService.RequestStatus.class).documentSelfLink;
+                    state.requestTrackerLink = o
+                            .getBody(RequestStatusService.RequestStatus.class).documentSelfLink;
                     op.complete();
                 }));
         return true;

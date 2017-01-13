@@ -47,11 +47,14 @@ import com.vmware.xenon.common.Utils;
  * Represents closure service
  *
  */
-public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>> extends StatefulService {
+public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
+        extends StatefulService {
 
-    private static final int RETRIES_COUNT = Integer.getInteger("com.vmware.admiral.service.tasks.retries", 3);
-    private static final int MAX_LOG_SIZE_BYTES = Integer.getInteger("com.vmware.admiral.closures.max.log.size.bytes",
-            200 * 1024);
+    private static final int RETRIES_COUNT = Integer
+            .getInteger("com.vmware.admiral.service.tasks.retries", 3);
+    private static final int MAX_LOG_SIZE_BYTES = Integer
+            .getInteger("com.vmware.admiral.closures.max.log.size.bytes",
+                    200 * 1024);
 
     private final transient DriverRegistry driverRegistry;
 
@@ -89,20 +92,25 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                                 .createGet(this, closure.descriptionLink)
                                 .setCompletion((o, e) -> {
                                     if (e != null) {
-                                        logWarning("Failed to fetch closure definition. Reason: ", e);
+                                        logWarning("Failed to fetch closure definition. Reason: ",
+                                                e);
 
                                         sendRequest(Operation
                                                 .createDelete(getUri())
                                                 .setCompletion((dop, dex) -> {
                                                     if (ex != null) {
-                                                        logWarning("Self delete failed: {}", Utils.toString(ex));
+                                                        logWarning("Self delete failed: {}",
+                                                                Utils.toString(ex));
                                                     }
                                                 }));
 
                                         post.fail(
-                                                new Exception("Unable to fetch closure definition: " + e.getMessage()));
+                                                new Exception(
+                                                        "Unable to fetch closure definition: " + e
+                                                                .getMessage()));
                                     } else {
-                                        ClosureDescription taskDef = o.getBody(ClosureDescription.class);
+                                        ClosureDescription taskDef = o
+                                                .getBody(ClosureDescription.class);
 
                                         processMaintenance(post, closure, taskDef);
                                     }
@@ -119,7 +127,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         }
 
         Closure closure = startOp.getBody(Closure.class);
-        logInfo("Closure state: %s, closure definition: %s", closure.state, closure.descriptionLink);
+        logInfo("Closure state: %s, closure definition: %s", closure.state,
+                closure.descriptionLink);
         if (isNotValid(startOp, closure)) {
             return;
         }
@@ -137,7 +146,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         Closure requestedState = patchOp.getBody(Closure.class);
         Closure currentState = this.getState(patchOp);
 
-        ServiceTaskCallbackResponse callbackResponse = patchOp.getBody(ServiceTaskCallbackResponse.class);
+        ServiceTaskCallbackResponse callbackResponse = patchOp
+                .getBody(ServiceTaskCallbackResponse.class);
         TaskState taskInfo = callbackResponse.taskInfo;
         if (TaskState.isFailed(taskInfo) || TaskState.isCancelled(taskInfo)) {
             logWarning("Infrastructure failure detected: state: %s reason: %s", taskInfo.stage,
@@ -152,40 +162,50 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
 
         try {
             verifyPatchRequest(currentState, requestedState);
-
+            Closure currentClosure = null;
             if (isDone(currentState)) {
-                Closure currentClosure = this.getState(patchOp);
+                currentClosure = this.getState(patchOp);
                 currentClosure.logs = requestedState.logs;
 
                 this.setState(patchOp, currentClosure);
                 patchOp.setBody(currentClosure).complete();
             } else {
-
-                Closure currentClosure = updateState(patchOp, requestedState);
+                currentClosure = updateState(patchOp, requestedState);
                 logInfo("Closure state: %s, closure definition: %s", currentClosure.state,
                         currentClosure.descriptionLink);
 
                 this.setState(patchOp, currentClosure);
                 patchOp.setBody(currentClosure).complete();
 
-                updateRequestTracker(adapt(currentClosure));
-
                 handleStateChanged(currentClosure);
             }
+
+            updateRequestTracker(fromClosure(currentClosure));
+
         } catch (Exception ex) {
             logSevere("Error while patching closure: ", ex);
             patchOp.fail(ex);
         }
     }
 
-    private ClosureTaskState adapt(Closure currentClosure) {
+    private ClosureTaskState fromClosure(Closure currentClosure) {
+        ClosureTaskState closureTaskState = new ClosureTaskState();
+        closureTaskState.taskInfo = new TaskState();
+        closureTaskState.taskInfo.stage = currentClosure.state;
+        closureTaskState.tenantLinks = currentClosure.tenantLinks;
 
-        ClosureTaskState closureState = new ClosureTaskState();
-        closureState.taskInfo = new TaskState();
-        closureState.taskInfo.stage = currentClosure.state;
-        closureState.tenantLinks = currentClosure.tenantLinks;
+        if (currentClosure.state == TaskStage.CREATED) {
+            closureTaskState.taskSubStage = ClosureTaskState.SubStage.CREATED;
+        } else if (currentClosure.state == TaskStage.STARTED) {
+            closureTaskState.taskSubStage = ClosureTaskState.SubStage.CLOSURE_EXECUTING;
+        } else if (currentClosure.state == TaskStage.FINISHED) {
+            closureTaskState.taskSubStage = ClosureTaskState.SubStage.COMPLETED;
+        } else if (currentClosure.state == TaskStage.FAILED
+                || currentClosure.state == TaskStage.CANCELLED) {
+            closureTaskState.taskSubStage = ClosureTaskState.SubStage.ERROR;
+        }
 
-        return closureState;
+        return closureTaskState;
     }
 
     public static class ClosureTaskState extends
@@ -199,7 +219,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         }
 
         @Documentation(description = "The description that defines the closure description.")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, LINK, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, LINK,
+                AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
         /** Set by a Task with the links of the provisioned resources. */
@@ -252,7 +273,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
 
     protected <S extends TaskStatusState> S fromTask(S taskStatus, ClosureTaskState state) {
         taskStatus.documentSelfLink = getSelfId();
-        taskStatus.phase = "Closure execution";
+        taskStatus.phase = "Closure Execution";
         taskStatus.taskInfo = state.taskInfo;
         taskStatus.subStage = state.taskSubStage.name();
         taskStatus.tenantLinks = state.tenantLinks;
@@ -284,22 +305,27 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                     .setCompletion((op, ex) -> {
                         if (ex != null) {
                             logWarning(
-                                    "Failed to fetch definition of closure: " + closure.documentSelfLink + " Reason: ",
+                                    "Failed to fetch definition of closure: "
+                                            + closure.documentSelfLink + " Reason: ",
                                     ex);
                         } else {
                             ClosureDescription closureDesc = op.getBody(ClosureDescription.class);
 
                             getHost().schedule(() -> fetchLogs(closure, () -> {
-                                if (!ClosureProps.IS_KEEP_ON_COMPLETION_ON && closure.state != TaskStage.CANCELLED) {
+                                if (!ClosureProps.IS_KEEP_ON_COMPLETION_ON
+                                        && closure.state != TaskStage.CANCELLED) {
                                     // clean execution container
-                                    logInfo("Cleaning execution container for closure: " + closure.documentSelfLink);
+                                    logInfo("Cleaning execution container for closure: "
+                                            + closure.documentSelfLink);
                                     getExecutionDriver(closureDesc).cleanClosure(closure,
-                                            (error) -> logWarning("Unable to clean resources for %s",
+                                            (error) -> logWarning(
+                                                    "Unable to clean resources for %s",
                                                     closure.documentSelfLink));
                                 }
                             }), 3, TimeUnit.SECONDS);
 
-                            if (closureDesc.notifyUrl != null && closureDesc.notifyUrl.length() > 0) {
+                            if (closureDesc.notifyUrl != null
+                                    && closureDesc.notifyUrl.length() > 0) {
                                 // Call webhook posting closure state
                                 callWebhook(closureDesc.notifyUrl, closure);
                             }
@@ -323,28 +349,32 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
             return;
         }
         if (closureState.serviceTaskCallback.isExternal()) {
-            sendRequestStateToExternalUrl(closureState.serviceTaskCallback.serviceSelfLink, closureState);
+            sendRequestStateToExternalUrl(closureState.serviceTaskCallback.serviceSelfLink,
+                    closureState);
         } else {
             ClosureCallbackCompleteResponse callbackResponse = new ClosureCallbackCompleteResponse();
             if (closureState.state == TaskStage.FINISHED) {
                 callbackResponse.copy(closureState.serviceTaskCallback.getFinishedResponse());
             } else {
-                callbackResponse.copy(closureState.serviceTaskCallback.getFailedResponse(new Exception(
-                        closureState.errorMsg)));
+                callbackResponse
+                        .copy(closureState.serviceTaskCallback.getFailedResponse(new Exception(
+                                closureState.errorMsg)));
             }
 
-            sendRequest(Operation.createPatch(this, closureState.serviceTaskCallback.serviceSelfLink)
-                    .setBody(callbackResponse)
-                    .setCompletion((o, e) -> {
-                        if (e != null) {
-                            logWarning("Notifying parent task %s failed: %s", o.getUri(),
-                                    Utils.toString(e));
-                        }
-                    }));
+            sendRequest(
+                    Operation.createPatch(this, closureState.serviceTaskCallback.serviceSelfLink)
+                            .setBody(callbackResponse)
+                            .setCompletion((o, e) -> {
+                                if (e != null) {
+                                    logWarning("Notifying parent task %s failed: %s", o.getUri(),
+                                            Utils.toString(e));
+                                }
+                            }));
         }
     }
 
-    private static class ClosureCallbackCompleteResponse extends ServiceTaskCallback.ServiceTaskCallbackResponse {
+    private static class ClosureCallbackCompleteResponse
+            extends ServiceTaskCallback.ServiceTaskCallbackResponse {
         //        List<String> resourceLinks;
     }
 
@@ -375,12 +405,16 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         sendRequest(Operation
                 .createPost(webHookUri)
                 .setReferer(this.getUri())
-                .setExpiration(TimeUnit.SECONDS.toMicros(ClosureProps.DEFAULT_WEB_HOOK_EXPIRATION_TIMEOUT) + Utils
-                        .getNowMicrosUtc())
+                .setExpiration(
+                        TimeUnit.SECONDS.toMicros(ClosureProps.DEFAULT_WEB_HOOK_EXPIRATION_TIMEOUT)
+                                + Utils
+                                .getNowMicrosUtc())
                 .setBody(closure)
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
-                        logWarning("Unable to send closure state to: " + webHookUriStr + " Reason: ", ex);
+                        logWarning(
+                                "Unable to send closure state to: " + webHookUriStr + " Reason: ",
+                                ex);
                     } else {
                         logInfo("Successfully sent closure state to: %s", webHookUri);
                     }
@@ -421,7 +455,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
             return;
         }
 
-        logInfo("Closure state: %s, closure definition: %s", closure.state, closure.descriptionLink);
+        logInfo("Closure state: %s, closure definition: %s", closure.state,
+                closure.descriptionLink);
         sendRequest(Operation
                 .createGet(this, closure.descriptionLink)
                 .setCompletion((op, ex) -> {
@@ -455,10 +490,12 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                 .createGet(this, logsURI)
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
-                        logWarning("Failed to fetch logs for closure! %s Reason: %s", closure.documentSelfLink,
+                        logWarning("Failed to fetch logs for closure! %s Reason: %s",
+                                closure.documentSelfLink,
                                 ex.getMessage());
                     } else {
-                        logInfo("Logs fetched successfully for closure: %s", closure.documentSelfLink);
+                        logInfo("Logs fetched successfully for closure: %s",
+                                closure.documentSelfLink);
 
                         LogServiceState logState = op.getBody(LogServiceState.class);
                         byte[] fetchedLogs = shrinkToMaxAllowedSize(logState.logs);
@@ -504,7 +541,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                 .createGet(this, closure.descriptionLink)
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
-                        logWarning("Failed to fetch closure definition closure! Reason:" + ex.getMessage());
+                        logWarning("Failed to fetch closure definition closure! Reason:" + ex
+                                .getMessage());
                         post.fail(new Exception("Unable to fetch script source."));
                     } else {
                         initTask(closure, op);
@@ -537,7 +575,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
 
         getExecutionDriver(taskDef)
                 .cleanClosure(closure,
-                        (error) -> logWarning("Unable to clean resources for %s", closure.documentSelfLink));
+                        (error) -> logWarning("Unable to clean resources for %s",
+                                closure.documentSelfLink));
     }
 
     private boolean isTaskExpired(Closure closure, ClosureDescription taskDef) {
@@ -554,8 +593,9 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
 
         long timeElapsed = System.currentTimeMillis() - closure.lastLeasedTimeMillis;
         if (timeElapsed > (taskDef.resources.timeoutSeconds * 1000)) {
-            logInfo("Timeout elapsed=%s, timeout=%s of closure=%s", timeElapsed, taskDef.resources.timeoutSeconds *
-                    1000, closure.documentSelfLink);
+            logInfo("Timeout elapsed=%s, timeout=%s of closure=%s", timeElapsed,
+                    taskDef.resources.timeoutSeconds *
+                            1000, closure.documentSelfLink);
             return true;
         }
 
@@ -595,7 +635,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         //                    "Invalid state change requested: " + requestedState.state + " was: " + currentState.state);
         default:
             throw new IllegalArgumentException(
-                    "Unexpected state change requested: " + requestedState.state + " was: " + currentState.state);
+                    "Unexpected state change requested: " + requestedState.state + " was: "
+                            + currentState.state);
         }
     }
 
@@ -644,11 +685,14 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
 
         if (requestedState.state == TaskStage.CREATED) {
             throw new IllegalArgumentException(
-                    "Invalid state change requested: " + requestedState.state + " was: " + currentState.state);
+                    "Invalid state change requested: " + requestedState.state + " was: "
+                            + currentState.state);
         } else if (currentState.closureSemaphore != null && !currentState.closureSemaphore
-                .equals(requestedState.closureSemaphore) && currentState.state != TaskStage.CREATED) {
+                .equals(requestedState.closureSemaphore)
+                && currentState.state != TaskStage.CREATED) {
             throw new IllegalArgumentException("Unexpected version state on patch request: "
-                    + requestedState.closureSemaphore + " expected: " + currentState.closureSemaphore);
+                    + requestedState.closureSemaphore + " expected: "
+                    + currentState.closureSemaphore);
         }
     }
 
@@ -662,12 +706,14 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
             if (requestedState.state == currentState.state) {
                 return;
             }
-            if (currentState.state == TaskStage.CREATED && requestedState.state == TaskStage.FAILED) {
+            if (currentState.state == TaskStage.CREATED
+                    && requestedState.state == TaskStage.FAILED) {
                 // failed on start
                 return;
             }
             throw new IllegalArgumentException(
-                    "Invalid state change requested: " + requestedState.state + " was: " + currentState.state);
+                    "Invalid state change requested: " + requestedState.state + " was: "
+                            + currentState.state);
         }
     }
 
@@ -749,7 +795,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         if (body.descriptionLink == null || body.descriptionLink.isEmpty()) {
             op.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST);
             op.fail(new IllegalArgumentException(
-                    String.format("Closure definition reference is required: %s", body.documentSelfLink)));
+                    String.format("Closure definition reference is required: %s",
+                            body.documentSelfLink)));
             return true;
         }
 

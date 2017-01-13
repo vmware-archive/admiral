@@ -29,6 +29,7 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.request.RequestBrokerService;
+import com.vmware.admiral.request.RequestStatusService;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 
@@ -100,13 +101,23 @@ public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
         Closure closureState = getDocument(closureLink, Closure.class);
         assertEquals(TaskState.TaskStage.FINISHED, closureState.state);
         assertEquals(expectedClosureResult, closureState.outputs.get("resultInt").getAsInt());
-        assertEquals(expectedClosureResult, closureState.outputs.get("resultObj").getAsJsonObject().get("a").getAsInt
-                ());
+        assertEquals(expectedClosureResult,
+                closureState.outputs.get("resultObj").getAsJsonObject().get("a").getAsInt
+                        ());
 
         ContainerState afterClosureContainer = findProvisionedResource(provisionedContainers,
                 "kitematicAfterClosure");
-        assertEquals("input_obj={\"a\":" + expectedClosureResult + "}", afterClosureContainer.env[0]);
-        assertEquals(expectedClosureResult, Integer.parseInt(afterClosureContainer.customProperties.get("input_int")));
+        assertEquals("input_obj={\"a\":" + expectedClosureResult + "}",
+                afterClosureContainer.env[0]);
+        assertEquals(expectedClosureResult,
+                Integer.parseInt(afterClosureContainer.customProperties.get("input_int")));
+
+        // Verify request status
+        RequestStatusService.RequestStatus rs = getDocument(request.requestTrackerLink,
+                RequestStatusService.RequestStatus.class);
+        assertNotNull(rs);
+
+        assertEquals(Integer.valueOf(100), rs.progress);
 
         waitForClosureContainerCleanUp(
                 closureState.resourceLinks.iterator().next(),
@@ -139,8 +150,9 @@ public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
 
         String body = null;
         for (int i = 0; i < STATE_CHANGE_WAIT_POLLING_RETRY_COUNT; i++) {
-            SimpleHttpsClient.HttpResponse response = SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.GET,
-                    getBaseUrl() + buildServiceUri(documentSelfLink), null);
+            SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
+                    .execute(SimpleHttpsClient.HttpMethod.GET,
+                            getBaseUrl() + buildServiceUri(documentSelfLink), null);
             if (predicate.test(response)) {
                 return;
             }

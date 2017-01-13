@@ -1636,7 +1636,7 @@ public class RequestBrokerService extends
                         ResourceNamePrefixTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CLOSURE_TYPE, new ArrayList<>(
                 Arrays.asList(ClosureAllocationTaskService.DISPLAY_NAME,
-                        ResourceNamePrefixTaskService.DISPLAY_NAME)));
+                        ClosureProvisionTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CONTAINER_HOST_TYPE,
                 new ArrayList<>(
                         Arrays.asList(ProvisionContainerHostsTaskService.DISPLAY_NAME,
