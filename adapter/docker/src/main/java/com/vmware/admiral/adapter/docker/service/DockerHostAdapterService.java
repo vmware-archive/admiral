@@ -449,9 +449,12 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
         VolumeListCallback callbackResponse = new VolumeListCallback();
         callbackResponse.containerHostLink = computeState.documentSelfLink;
 
-        for (Object volumeData : volumesResponse.get(DOCKER_CONTAINER_VOLUMES_PROP_NAME)) {
-            String name = ((Map<String, String>) volumeData).get(DOCKER_VOLUME_NAME_PROP_NAME);
-            callbackResponse.addName(name);
+        List<Object> volumesList = volumesResponse.get(DOCKER_CONTAINER_VOLUMES_PROP_NAME);
+        if (volumesList != null) {
+            for (Object volumeData : volumesList) {
+                String name = ((Map<String, String>) volumeData).get(DOCKER_VOLUME_NAME_PROP_NAME);
+                callbackResponse.addName(name);
+            }
         }
 
         return callbackResponse;
