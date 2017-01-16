@@ -27,11 +27,16 @@ import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
+import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
+import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.service.common.NodeHealthCheckService;
+import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
@@ -142,10 +147,26 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         // create entities to check for after upgrade
         dockerHostSelfLink = getDockerHost().documentSelfLink;
         credentialsSelfLink = getDockerHostAuthCredentials().documentSelfLink;
-        // Give some time to the container before removing it. If container is deleted directly
-        // after post request it is possible to have corrupted data.
-        Thread.sleep(5000);
+        // send stop request to the admiral container before deleting it
+        delete("/core/management");
         setBaseURI(null);
+
+        ContainerListCallback dataCollectionBody = new ContainerListCallback();
+        dataCollectionBody.containerHostLink = dockerHostSelfLink;
+        waitForStateChange(
+                admiralContainer.documentSelfLink,
+                t -> {
+                    ContainerState container = Utils.fromJson(t,
+                            ContainerState.class);
+                    try {
+                        sendRequest(HttpMethod.PATCH,
+                                HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK,
+                                Utils.toJson(dataCollectionBody));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    return container.powerState.equals(PowerState.STOPPED);
+                });
         dataInitialized = true;
     }
 }
