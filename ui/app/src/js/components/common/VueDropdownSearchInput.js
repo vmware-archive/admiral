@@ -22,6 +22,7 @@ export default Vue.component('dropdown-search-input', {
           :entity="entity"
           :filter="filter"
           :loading="loading"
+          :manage="manage"
           :options="options"
           :value="value"
           @change="onChange">
@@ -51,12 +52,17 @@ export default Vue.component('dropdown-search-input', {
       required: false,
       type: Boolean
     },
+    manage: {
+      default: () => [],
+      required: false,
+      type: Array
+    },
     name: {
       required: false,
       type: String
     },
     options: {
-      default: [],
+      default: () => [],
       required: false,
       type: Array
     },
@@ -67,7 +73,7 @@ export default Vue.component('dropdown-search-input', {
     },
     value: {
       required: false,
-      type: String
+      type: Object
     }
   },
   methods: {

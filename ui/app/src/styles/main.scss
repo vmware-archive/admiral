@@ -786,8 +786,6 @@ $main-list-view-right: 10px;
   }
 }
 
-
-
 .right-context-panel > .toolbar .toolbar-item.active {
   z-index: 2;
 }
@@ -824,6 +822,15 @@ $main-list-view-right: 10px;
   @extend .position-expand;
   overflow: auto;
   background-color: white;
+  form .form-group {
+    padding-left: 168px;
+    > label:first-child {
+      width: 144px;
+    }
+  }
+  form .form-group.row {
+    padding-left: 0;
+  }
 }
 
 .app-view:not(.no-side) > .side-view:not(.notransition) {
@@ -846,6 +853,7 @@ $main-list-view-right: 10px;
 
 .host-view,
 .compute-edit-view,
+.environment-edit-view,
 .registry-view {
   > .main-panel {
     @extend .position-expand;
@@ -863,6 +871,7 @@ $main-list-view-right: 10px;
 
 .host-view.right-context-expanded,
 .compute-edit-view.right-context-expanded,
+.environment-edit-view.right-context-expanded,
 .registry-view.right-context-expanded {
   > .main-panel {
     > .mask {
@@ -882,25 +891,9 @@ $main-list-view-right: 10px;
     > .mask {
       display: none;
     }
-  }
-  > .right-context-panel {
-    @extend .position-expand;
-    z-index: 2;
-    left: 100%;
-  }
-  .title {
-    font-size: 26px;
-  }
-}
-
-.environment-edit-view.right-context-expanded {
-  > .main-panel {
-    > .mask {
-      display: block;
+    .title {
+      font-size: 26px;
     }
-  }
-  > .right-context-panel {
-    left: 55%;
   }
 }
 

@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="environment-edit-view">
+<div class="environment-edit-view" v-bind:class="{'right-context-expanded': contextExpanded}">
   <div class="main-panel">
     <alert alert-type="danger"
            v-bind:show-alert="validationErrors._generic && (validationErrors._generic != null)"
@@ -67,7 +67,17 @@
                     <dropdown-search
                         v-bind:disabled="!!model.item.endpoint"
                         v-bind:entity="i18n('app.endpoint.entity')"
-                        v-bind:filter="searchEndpoints"
+                        v-bind:loading="!model.endpoints"
+                        v-bind:manage="[{
+                          action: createEndpoint,
+                          icon: 'plus',
+                          name: i18n('app.endpoint.createNew')
+                        }, {
+                          action: manageEndpoints,
+                          icon: 'pencil',
+                          name: i18n('app.endpoint.manage')
+                        }]"
+                        v-bind:options="model.endpoints"
                         v-bind:value="model.item.endpoint"
                         v-on:change="onEndpointChange"></endpoint-search>
                   </div>
@@ -183,5 +193,20 @@
 
     <div class="mask" v-bind:class="{'hide': !contextExpanded}"></div>
   </div>
+
+  <context-sidepanel class="right-context-panel" v-on:close="closeToolbar()">
+    <div slot="toolbar" class="toolbar">
+      <context-sidepanel-toolbar-item
+        v-bind:active="activeContextItem === 'endpoints'"
+        v-bind:icon-class="'fa fa-cloud'"
+        v-bind:label="i18n('app.endpoint.contextPanelTooltip')"
+        v-on:open="manageEndpoints()" v-on:close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+    </div>
+    <div slot="content" class="content">
+      <endpoints-list v-if="activeContextItem === 'endpoints'"
+        v-bind:model="model.contextView.activeItem.data"></endpoints-list>
+    </div>
+  </context-sidepanel>
 
 </div>

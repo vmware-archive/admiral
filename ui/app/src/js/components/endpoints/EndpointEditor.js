@@ -39,7 +39,7 @@ const OOTB_TYPES = [
   }
 ];
 
-var EndpointEditor = Vue.extend({
+export default Vue.component('endpoint-editor', {
   template: EndpointEditorVue,
   props: {
     model: {
@@ -49,7 +49,7 @@ var EndpointEditor = Vue.extend({
   },
   computed: {
     supportedEndpointTypes() {
-      var supportedTypes = OOTB_TYPES.slice();
+      let supportedTypes = OOTB_TYPES.slice();
       if (utils.isNimbusEnabled()) {
         supportedTypes.push({
           id: 'nimbus',
@@ -64,7 +64,6 @@ var EndpointEditor = Vue.extend({
           iconSrc: 'image-assets/endpoints/openstack.png'
         });
       }
-
       return supportedTypes;
     },
     validationErrors() {
@@ -85,13 +84,11 @@ var EndpointEditor = Vue.extend({
     cancel($event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
-
       EndpointsActions.cancelEditEndpoint();
     },
     save($event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
-
       let toSave = this.getModel();
       if (toSave.documentSelfLink) {
         EndpointsActions.updateEndpoint(toSave);
@@ -104,7 +101,7 @@ var EndpointEditor = Vue.extend({
       this.saveDisabled = this.isSaveDisabled();
     },
     onEndpointTypeChange(endpointType) {
-      this.endpointType = endpointType.id;
+      this.endpointType = endpointType && endpointType.id;
       this.saveDisabled = this.isSaveDisabled();
     },
     onPropertiesChange(properties) {
@@ -148,7 +145,3 @@ var EndpointEditor = Vue.extend({
     }
   }
 });
-
-Vue.component('endpoint-editor', EndpointEditor);
-
-export default EndpointEditor;

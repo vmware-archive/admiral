@@ -12,35 +12,39 @@
 import { EnvironmentsActions, NavigationActions } from 'actions/Actions';
 import VueDropdownSearch from 'components/common/VueDropdownSearch'; //eslint-disable-line
 import VueMulticolumnInputs from 'components/common/VueMulticolumnInputs'; //eslint-disable-line
+import EndpointsList from 'components/endpoints/EndpointsList'; //eslint-disable-line
 import EnvironmentEditViewVue from 'components/environments/EnvironmentEditViewVue.html';
 import Tags from 'components/common/Tags';
-import services from 'core/services';
 
-var EnvironmentEditView = Vue.extend({
+export default Vue.component('environment-edit-view', {
   template: EnvironmentEditViewVue,
   props: {
     model: {
-      required: true
+      default: () => ({
+        contextView: {}
+      }),
+      required: true,
+      type: Object
     }
   },
-  data: function() {
+  data: () => {
     return {
       endpointType: null,
       saveDisabled: true
     };
   },
   computed: {
-    validationErrors: function() {
+    validationErrors() {
       return this.model.validationErrors || {};
     },
-    activeContextItem: function() {
+    activeContextItem() {
       return this.model.contextView && this.model.contextView.activeItem &&
         this.model.contextView.activeItem.name;
     },
-    contextExpanded: function() {
+    contextExpanded() {
       return this.model.contextView && this.model.contextView.expanded;
     },
-    instanceTypeValue: function() {
+    instanceTypeValue() {
       if (this.model.item.computeProfile) {
         var mappings = this.model.item.computeProfile.instanceTypeMapping;
         return Object.keys(mappings).map((key) => {
@@ -61,7 +65,7 @@ var EnvironmentEditView = Vue.extend({
       }
       return {};
     },
-    imageTypeValue: function() {
+    imageTypeValue() {
       if (this.model.item.computeProfile) {
         var mappings = this.model.item.computeProfile.imageMapping;
         return Object.keys(mappings).map((key) => {
@@ -73,7 +77,7 @@ var EnvironmentEditView = Vue.extend({
       }
       return {};
     },
-    bootDiskPropertyValue: function() {
+    bootDiskPropertyValue() {
       if (this.model.item.storageProfile) {
         var mappings = this.model.item.storageProfile.bootDiskPropertyMapping;
         return Object.keys(mappings).map((key) => {
@@ -88,8 +92,8 @@ var EnvironmentEditView = Vue.extend({
       return {};
     }
   },
-  attached: function() {
-    $(this.$el).find('.nav a[data-toggle=pill]').on('click', function(e) {
+  attached() {
+    $(this.$el).find('.nav a[data-toggle=pill]').on('click', (e) => {
       if ($(e.target).parent().hasClass('disabled')) {
         e.preventDefault();
         return false;
@@ -113,14 +117,14 @@ var EnvironmentEditView = Vue.extend({
             !(this.model.item.endpointType || this.model.item.endpoint);
     }, {immediate: true});
   },
-  detached: function() {
+  detached() {
     this.unwatchModel();
   },
   methods: {
-    goBack: function() {
+    goBack() {
       NavigationActions.openEnvironments();
     },
-    save: function($event) {
+    save($event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
 
@@ -132,30 +136,30 @@ var EnvironmentEditView = Vue.extend({
         EnvironmentsActions.createEnvironment(model, tags);
       }
     },
-    searchEndpoints: function(...args) {
-      return new Promise((resolve, reject) => {
-        services.searchEndpoints.apply(null, args).then((result) => {
-          result.items.forEach((item) =>
-            item.iconSrc = `image-assets/endpoints/${item.endpointType}.png`);
-          resolve(result);
-        }).catch(reject);
-      });
+    createEndpoint() {
+      EnvironmentsActions.createEndpoint();
     },
-    onNameChange: function() {
+    manageEndpoints() {
+      EnvironmentsActions.manageEndpoints();
+    },
+    closeToolbar() {
+      EnvironmentsActions.closeToolbar();
+    },
+    onNameChange() {
       Vue.nextTick(() => {
         var model = this.getModel();
         this.saveDisabled = !model.name || !(model.endpointType || this.endpoint);
       });
     },
-    onEndpointChange: function(endpoint) {
+    onEndpointChange(endpoint) {
       this.endpoint = endpoint;
       Vue.nextTick(() => {
         var model = this.getModel();
-        this.endpointType = this.endpoint.endpointType;
+        this.endpointType = this.endpoint && this.endpoint.endpointType;
         this.saveDisabled = !model.name || !(model.endpointType || this.endpoint);
       });
     },
-    getModel: function() {
+    getModel() {
       var toSave = $.extend({ properties: {} }, this.model.item.asMutable({deep: true}));
 
       toSave.name = $(this.$el).find('.name input').val();
@@ -196,7 +200,3 @@ var EnvironmentEditView = Vue.extend({
     }
   }
 });
-
-Vue.component('environment-edit-view', EnvironmentEditView);
-
-export default EnvironmentEditView;

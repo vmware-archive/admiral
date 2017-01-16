@@ -10,7 +10,10 @@
  */
 
 import { EndpointsActions, EnvironmentsActions, NavigationActions } from 'actions/Actions';
+import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
+import EndpointsStore from 'stores/EndpointsStore';
+import constants from 'core/constants';
 import services from 'core/services';
 import utils from 'core/utils';
 
@@ -18,11 +21,65 @@ const OPERATION = {
   LIST: 'list'
 };
 
+function isContextPanelActive(name) {
+  var activeItem = this.data.editingItemData.contextView &&
+      this.data.editingItemData.contextView.activeItem;
+  return activeItem && activeItem.name === name;
+}
+
+function onOpenToolbarItem(name, data, shouldSelectAndComplete) {
+  var contextViewData = {
+    expanded: true,
+    activeItem: {
+      name: name,
+      data: data
+    },
+    shouldSelectAndComplete: shouldSelectAndComplete
+  };
+
+  this.setInData(['editingItemData', 'contextView'], contextViewData);
+  this.emitChange();
+}
+
 let EnvironmentsStore = Reflux.createStore({
-  mixins: [CrudStoreMixin],
+  mixins: [ContextPanelStoreMixin, CrudStoreMixin],
+  init() {
+    EndpointsStore.listen((endpointsData) => {
+      if (!this.data.editingItemData) {
+        return;
+      }
+
+      let endpoints = (endpointsData.items || []).map((item) =>
+        $.extend({
+          iconSrc: `image-assets/endpoints/${item.endpointType}.png`
+        }, item));
+      this.setInData(['editingItemData', 'endpoints'], endpoints);
+
+      if (isContextPanelActive.call(this, constants.CONTEXT_PANEL.ENDPOINTS)) {
+        this.setInData(['editingItemData', 'contextView', 'activeItem', 'data'],
+          endpointsData);
+
+        let itemToSelect = endpointsData.newItem || endpointsData.updatedItem;
+        if (itemToSelect && this.data.editingItemData.contextView.shouldSelectAndComplete) {
+          itemToSelect = endpoints.find((item) =>
+              item.documentSelfLink === itemToSelect.documentSelfLink);
+          clearTimeout(this.itemSelectTimeout);
+          this.itemSelectTimeout = setTimeout(() => {
+            console.log(3, itemToSelect);
+            console.log(4, endpoints.find((item) => item === itemToSelect));
+            this.setInData(['editingItemData', 'item', 'endpoint'], itemToSelect);
+            this.onCloseToolbar();
+          }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
+        }
+      }
+
+      this.emitChange();
+    });
+  },
+
   listenables: [EnvironmentsActions],
 
-  onOpenEnvironments: function(queryOptions) {
+  onOpenEnvironments(queryOptions) {
     this.setInData(['listView', 'queryOptions'], queryOptions);
     this.setInData(['editingItemData'], null);
     this.setInData(['validationErrors'], null);
@@ -51,12 +108,14 @@ let EnvironmentsStore = Reflux.createStore({
     }
   },
 
-  onOpenAddEnvironment: function() {
+  onOpenAddEnvironment() {
+    EndpointsActions.retrieveEndpoints();
+
     this.setInData(['editingItemData', 'item'], {});
     this.emitChange();
   },
 
-  onEditEnvironment: function(environmentId) {
+  onEditEnvironment(environmentId) {
     services.loadEnvironment(environmentId).then((document) => {
       var promises = [];
 
@@ -87,16 +146,17 @@ let EnvironmentsStore = Reflux.createStore({
     }).catch(this.onGenericEditError);
 
     EndpointsActions.retrieveEndpoints();
+
     this.setInData(['editingItemData', 'item'], {});
     this.emitChange();
   },
 
-  onCancelEditEnvironment: function() {
+  onCancelEditEnvironment() {
     this.setInData(['editingItemData'], null);
     this.emitChange();
   },
 
-  onCreateEnvironment: function(model, tags) {
+  onCreateEnvironment(model, tags) {
     Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
       return Promise.all(tags.map((tag, i) =>
         result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
@@ -128,7 +188,7 @@ let EnvironmentsStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onUpdateEnvironment: function(model, tags) {
+  onUpdateEnvironment(model, tags) {
     Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
       return Promise.all(tags.map((tag, i) =>
         result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
@@ -154,7 +214,7 @@ let EnvironmentsStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onDeleteEnvironment: function(environment) {
+  onDeleteEnvironment(environment) {
     services.deleteEnvironment(environment).then(() => {
       var environments = this.data.listView.items.asMutable().filter((item) =>
           item.documentSelfLink !== environment.documentSelfLink);
@@ -165,7 +225,7 @@ let EnvironmentsStore = Reflux.createStore({
     });
   },
 
-  onGenericEditError: function(e) {
+  onGenericEditError(e) {
     var validationErrors = utils.getValidationErrors(e);
     this.setInData(['editingItemData', 'validationErrors'], validationErrors);
     this.setInData(['editingItemData', 'saving'], false);
@@ -173,22 +233,34 @@ let EnvironmentsStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onEditEnvironmentProperty: function(property) {
-    this.setInData(['editingItemData', 'property'], property);
-    this.emitChange();
+  onOpenToolbarEndpoints() {
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.ENDPOINTS,
+      EndpointsStore.getData(), false);
   },
 
-  onCancelEditEnvironmentProperty: function() {
-    this.setInData(['editingItemData', 'property'], null);
-    this.emitChange();
+  onCloseToolbar() {
+    if (!this.data.editingItemData) {
+      this.closeToolbar();
+    } else {
+      var contextViewData = {
+        expanded: false,
+        activeItem: null
+      };
+      this.setInData(['editingItemData', 'contextView'], contextViewData);
+      this.emitChange();
+    }
   },
 
-  onUpdateEnvironmentProperties: function(properties) {
-    this.setInData(['editingItemData', 'item', 'properties'], properties);
-    this.setInData(['editingItemData', 'property'], null);
-    this.emitChange();
+  onCreateEndpoint() {
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.ENDPOINTS,
+        EndpointsStore.getData(), true);
+    EndpointsActions.editEndpoint({});
+  },
+
+  onManageEndpoints() {
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.ENDPOINTS,
+        EndpointsStore.getData(), true);
   }
-
 });
 
 export default EnvironmentsStore;
