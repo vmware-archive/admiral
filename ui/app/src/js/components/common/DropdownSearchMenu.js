@@ -89,8 +89,12 @@ function DropdownSearchMenu($el, componentOptions) {
 
     let isClearSelection = option.id === '_clear';
 
-    if (this.manageOptionSelectCallback && !isClearSelection) {
-      this.manageOptionSelectCallback(option);
+    if (!isClearSelection) {
+      if (option.action) {
+        option.action();
+      } else if (this.manageOptionSelectCallback) {
+        this.manageOptionSelectCallback(option);
+      }
     }
 
     if (isClearSelection && this.clearOptionSelectCallback) {

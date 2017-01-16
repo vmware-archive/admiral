@@ -10,7 +10,7 @@
  */
 
 import HostCreateViewVue from 'components/hosts/HostCreateViewVue.html';
-import EndpointsView from 'components/endpoints/EndpointsView'; //eslint-disable-line
+import EndpointsList from 'components/endpoints/EndpointsList'; //eslint-disable-line
 import MulticolumnInputs from 'components/common/MulticolumnInputs';
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
 import Tags from 'components/common/Tags';

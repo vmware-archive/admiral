@@ -21,6 +21,7 @@ export default Vue.component('dropdown-input', {
           :disabled="disabled"
           :entity="entity"
           :loading="loading"
+          :manage="manage"
           :options="options"
           :value="value"
           @change="onChange">
@@ -46,12 +47,17 @@ export default Vue.component('dropdown-input', {
       required: false,
       type: Boolean
     },
+    manage: {
+      default: () => [],
+      required: false,
+      type: Array
+    },
     name: {
       required: false,
       type: String
     },
     options: {
-      default: [],
+      default: () => [],
       required: false,
       type: Array
     },
@@ -62,7 +68,7 @@ export default Vue.component('dropdown-input', {
     },
     value: {
       required: false,
-      type: String
+      type: Object
     }
   },
   methods: {

@@ -30,14 +30,19 @@ export default Vue.component('dropdown', {
       required: false,
       type: Boolean
     },
+    manage: {
+      default: () => [],
+      required: false,
+      type: Array
+    },
     options: {
-      default: [],
+      default: () => [],
       required: false,
       type: Array
     },
     value: {
       required: false,
-      type: String
+      type: Object
     }
   },
   attached: function() {
@@ -54,22 +59,21 @@ export default Vue.component('dropdown', {
     dropdownSearchMenu.setDisabled(this.disabled);
     dropdownSearchMenu.setLoading(this.loading);
     dropdownSearchMenu.setOptions(this.options);
+    if (this.manage) {
+      dropdownSearchMenu.setManageOptions(this.manage);
+    }
     dropdownSearchMenu.setSelectedOption(this.value);
 
     this.unwatchDisabled = this.$watch('disabled', (disabled) => {
-      this.disabled = disabled;
       dropdownSearchMenu.setDisabled(disabled);
     });
     this.unwatchLoading = this.$watch('loading', (loading) => {
-      this.loading = loading;
       dropdownSearchMenu.setLoading(loading);
     });
     this.unwatchOptions = this.$watch('options', (options) => {
-      this.options = options;
       dropdownSearchMenu.setOptions(options);
     });
     this.unwatchValue = this.$watch('value', (value) => {
-      this.value = value;
       dropdownSearchMenu.setSelectedOption(value);
     });
   },

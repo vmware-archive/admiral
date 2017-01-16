@@ -94,8 +94,8 @@
         v-bind:model="model.contextView.activeItem.data"></certificates-list>
       <deployment-policies-list v-if="activeContextItem === 'deploymentPolicies'"
         v-bind:model="model.contextView.activeItem.data"></deployment-policies-list>
-      <endpoints-view v-if="activeContextItem === 'endpoints'"
-        v-bind:model="model.contextView.activeItem.data"></endpoints-view>
+      <endpoints-list v-if="activeContextItem === 'endpoints'"
+        v-bind:model="model.contextView.activeItem.data"></endpoints-list>
     </div>
 
   </context-sidepanel>
