@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -256,8 +257,8 @@ public class CompositeComponentService extends StatefulService {
             return;
         }
 
-        // if the component links are only external networks then it's possible to delete the
-        // composite component
+        // if the component links are only external networks or volumes then it's possible to delete
+        // the composite component
 
         List<String> containers = componentLinks.stream()
                 .filter((c) -> c.startsWith(ContainerFactoryService.SELF_LINK))
@@ -267,7 +268,29 @@ public class CompositeComponentService extends StatefulService {
                 .filter((c) -> c.startsWith(ContainerNetworkService.FACTORY_LINK))
                 .collect(Collectors.toList());
 
-        if (containers.isEmpty() && !networks.isEmpty()) {
+        List<String> volumes = componentLinks.stream()
+                .filter((c) -> c.startsWith(ContainerVolumeService.FACTORY_LINK))
+                .collect(Collectors.toList());
+
+        if (containers.isEmpty() && (!networks.isEmpty() || !volumes.isEmpty())) {
+            queryExternalComponents(networks, volumes, deleteCallback);
+        }
+    }
+
+    private void queryExternalComponents(List<String> networks, List<String> volumes,
+            Runnable deleteCallback) {
+
+        queryExternalNetworks(networks, (allNetworksExternal) -> {
+            queryExternalVolumes(volumes, (allVolumesExternal) -> {
+                if (allNetworksExternal && allVolumesExternal) {
+                    deleteCallback.run();
+                }
+            });
+        });
+    }
+
+    private void queryExternalNetworks(List<String> networks, Consumer<Boolean> resultCallback) {
+        if (!networks.isEmpty()) {
 
             QueryTask networkQuery = QueryUtil.buildQuery(ContainerNetworkState.class, false);
             QueryUtil.addListValueClause(networkQuery, ServiceDocument.FIELD_NAME_SELF_LINK,
@@ -288,13 +311,51 @@ public class CompositeComponentService extends StatefulService {
                             && r.getResult().external);
                 } else {
                     if (allNetworksExternal.get()) {
-                        deleteCallback.run();
+                        resultCallback.accept(true);
                     } else {
                         logWarning(
                                 "Non-external networks still associated to this composite component!");
+                        resultCallback.accept(false);
                     }
                 }
             });
+        } else {
+            resultCallback.accept(true);
+        }
+    }
+
+    private void queryExternalVolumes(List<String> volumes, Consumer<Boolean> resultCallback) {
+        if (!volumes.isEmpty()) {
+
+            QueryTask volumeQuery = QueryUtil.buildQuery(ContainerVolumeState.class, false);
+            QueryUtil.addListValueClause(volumeQuery, ServiceDocument.FIELD_NAME_SELF_LINK,
+                    volumes);
+            QueryUtil.addBroadcastOption(volumeQuery);
+            QueryUtil.addExpandOption(volumeQuery);
+
+            AtomicBoolean allVolumeExternal = new AtomicBoolean(true);
+
+            ServiceDocumentQuery<ContainerVolumeState> query = new ServiceDocumentQuery<>(
+                    getHost(), ContainerVolumeState.class);
+            query.query(volumeQuery, (r) -> {
+                if (r.hasException()) {
+                    logWarning("Can't find container volume states. Error: %s",
+                            Utils.toString(r.getException()));
+                } else if (r.hasResult()) {
+                    allVolumeExternal.set(allVolumeExternal.get() && r.getResult().external != null
+                            && r.getResult().external);
+                } else {
+                    if (allVolumeExternal.get()) {
+                        resultCallback.accept(true);
+                    } else {
+                        logWarning(
+                                "Non-external volumes still associated to this composite component!");
+                        resultCallback.accept(false);
+                    }
+                }
+            });
+        } else {
+            resultCallback.accept(true);
         }
     }
 

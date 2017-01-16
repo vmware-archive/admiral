@@ -26,6 +26,10 @@ import org.junit.Test;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 
@@ -195,6 +199,96 @@ public class CompositeComponentServiceTest extends ComputeBaseTest {
         });
     }
 
+    @Test
+    public void testShouldSelfDeleteIfOnlyExternalComponentsLeft() throws Throwable {
+        compositeComponent = createCompositeComponent();
+        ContainerState containerState = createContainer(compositeComponent.documentSelfLink);
+
+        // add a new container:
+        waitFor(() -> {
+            compositeComponent = getDocument(CompositeComponent.class,
+                    compositeComponent.documentSelfLink);
+            if (compositeComponent.componentLinks == null
+                    || compositeComponent.componentLinks.isEmpty()) {
+                return false;
+            }
+
+            if (compositeComponent.componentLinks.size() != 1) {
+                return false;
+            }
+            String containerLink = compositeComponent.componentLinks.get(0);
+
+            return containerState.documentSelfLink.equals(containerLink);
+        });
+
+        // add a new network
+        ContainerNetworkState networkState = createNetwork(compositeComponent.documentSelfLink,
+                true);
+
+        waitFor(() -> {
+            compositeComponent = getDocument(CompositeComponent.class,
+                    compositeComponent.documentSelfLink);
+
+            int count = 0;
+            for (String componentLink : compositeComponent.componentLinks) {
+                if (componentLink.equals(containerState.documentSelfLink)
+                        || componentLink.equals(networkState.documentSelfLink)) {
+                    count++;
+                    continue;
+                }
+                return false;
+            }
+
+            return count == 2;
+        });
+
+        // add a new volume
+        ContainerVolumeState volumeState = createVolume(compositeComponent.documentSelfLink, true);
+
+        waitFor(() -> {
+            compositeComponent = getDocument(CompositeComponent.class,
+                    compositeComponent.documentSelfLink);
+
+            int count = 0;
+            for (String componentLink : compositeComponent.componentLinks) {
+                if (componentLink.equals(containerState.documentSelfLink)
+                        || componentLink.equals(networkState.documentSelfLink)
+                        || componentLink.equals(volumeState.documentSelfLink)) {
+                    count++;
+                    continue;
+                }
+                return false;
+            }
+
+            return count == 3;
+        });
+
+        // delete the container
+        delete(containerState.documentSelfLink);
+
+        //test if the CompositeComponent has been deleted.
+        waitFor(() -> {
+            ServiceDocumentQuery<CompositeComponent> query = new ServiceDocumentQuery<>(host,
+                    CompositeComponent.class);
+            AtomicBoolean deleted = new AtomicBoolean();
+            host.testStart(1);
+            query.queryDocument(compositeComponent.documentSelfLink, (r) -> {
+                if (r.hasException()) {
+                    host.failIteration(r.getException());
+                } else if (r.hasResult()) {
+                    deleted.set(false);
+                    host.completeIteration();
+                } else {
+                    deleted.set(true);
+                    host.completeIteration();
+                }
+            });
+            host.testWait();
+            return deleted.get();
+        });
+
+    }
+
     private CompositeComponent createCompositeComponent() throws Throwable {
         compositeComponent = new CompositeComponent();
         compositeComponent.name = "test-name";
@@ -213,5 +307,33 @@ public class CompositeComponentServiceTest extends ComputeBaseTest {
         forDeletion.add(containerState.documentSelfLink);
 
         return containerState;
+    }
+
+    private ContainerNetworkState createNetwork(String compositeComponentLink, boolean external) throws Throwable {
+        ContainerNetworkState networkState = new ContainerNetworkState();
+        networkState.id = UUID.randomUUID().toString();
+        networkState.name = "name_" + networkState.id;
+        networkState.compositeComponentLinks = new ArrayList<>();
+        networkState.compositeComponentLinks.add(compositeComponentLink);
+        networkState.external = external;
+
+        networkState = doPost(networkState, ContainerNetworkService.FACTORY_LINK);
+        forDeletion.add(networkState.documentSelfLink);
+
+        return networkState;
+    }
+
+    private ContainerVolumeState createVolume(String compositeComponentLink, boolean external) throws Throwable {
+        ContainerVolumeState volumeState = new ContainerVolumeState();
+        volumeState.id = UUID.randomUUID().toString();
+        volumeState.name = "name_" + volumeState.id;
+        volumeState.compositeComponentLinks = new ArrayList<>();
+        volumeState.compositeComponentLinks.add(compositeComponentLink);
+        volumeState.external = external;
+
+        volumeState = doPost(volumeState, ContainerVolumeService.FACTORY_LINK);
+        forDeletion.add(volumeState.documentSelfLink);
+
+        return volumeState;
     }
 }
