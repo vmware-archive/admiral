@@ -18,6 +18,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.common.ManagementUriParts.CLOSURES_CONTAINER_DESC_LINK_NAME;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,6 +45,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -333,6 +337,37 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
                 ContainerHostRemovalTaskService.ContainerHostRemovalTaskState.SubStage.REMOVED_CONTAINERS,
                 TaskState.TaskStage.STARTED,
                 ContainerHostRemovalTaskService.ContainerHostRemovalTaskState.SubStage.ERROR);
+
+        containerRemovalTask = startRequest(containerRemovalTask);
+        waitForRequestToComplete(containerRemovalTask);
+    }
+
+    @Test
+    public void testRemoveOfClosureContainerOperation() throws Throwable {
+        GroupResourcePlacementState ulimitedPlacementState = TestRequestStateFactory
+                .createGroupResourcePlacementState(placementResourceType());
+        ulimitedPlacementState.maxNumberInstances = GroupResourcePlacementService.UNLIMITED_NUMBER_INSTANCES;
+        ulimitedPlacementState.resourcePoolLink = resourcePool.documentSelfLink;
+        ulimitedPlacementState = getOrCreateDocument(ulimitedPlacementState,
+                GroupResourcePlacementService.FACTORY_LINK);
+        assertNotNull(ulimitedPlacementState);
+
+        ContainerState container = TestRequestStateFactory.createContainer();
+        container.descriptionLink =
+                CLOSURES_CONTAINER_DESC_LINK_NAME + "-" + UUID.randomUUID().toString();
+        container.adapterManagementReference = containerDesc.instanceAdapterReference;
+        container.groupResourcePlacementLink = ulimitedPlacementState.documentSelfLink;
+        container.system = Boolean.FALSE;
+        container = doPost(container, ContainerFactoryService.SELF_LINK);
+
+        Set<String> containerStateLinks = new HashSet<>(1);
+        containerStateLinks.add(container.documentSelfLink);
+
+        // try to remove the container
+        ContainerRemovalTaskState containerRemovalTask = new ContainerRemovalTaskState();
+        containerRemovalTask.taskSubStage = ContainerRemovalTaskState.SubStage.INSTANCES_REMOVED;
+        containerRemovalTask.resourceLinks = containerStateLinks;
+        containerRemovalTask.removeOnly = true;
 
         containerRemovalTask = startRequest(containerRemovalTask);
         waitForRequestToComplete(containerRemovalTask);

@@ -19,6 +19,7 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_IMAGE_NAME_PROP_NAME;
 import static com.vmware.admiral.closures.util.ClosureUtils.loadDockerImageData;
+import static com.vmware.admiral.common.ManagementUriParts.CLOSURES_CONTAINER_DESC_LINK_NAME;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.ServiceDocumentQuery.error;
@@ -94,7 +95,6 @@ public class AdmiralAdapterService extends
 
     public static final String DISPLAY_NAME = "Closure Container Provisioning";
 
-    private static final String CONTAINER_DESC_LINK_NAME = "closure-execution-docker-desc";
     private static final String CLOSURE_PLACEMENT_NAME = "closures-resource-placement";
     private static final String MAX_LOG_FILE_SIZE = "200k";
 
@@ -1111,8 +1111,7 @@ public class AdmiralAdapterService extends
             Consumer<ContainerDescription> callbackFunction) {
         String checksum = ClosureUtils.calculateHash(state.configuration.envVars);
 
-        String containerDescriptionLink = ContainerDescriptionService.FACTORY_LINK + "/" +
-                CONTAINER_DESC_LINK_NAME + "-" + checksum;
+        String containerDescriptionLink = CLOSURES_CONTAINER_DESC_LINK_NAME + "-" + checksum;
         URI containerDescriptionURI = UriUtils.buildUri(getHost(), containerDescriptionLink);
         logInfo("Getting container desc: {}", containerDescriptionURI);
 
@@ -1194,7 +1193,8 @@ public class AdmiralAdapterService extends
             ContainerConfiguration configuration, String configChecksum) {
         ContainerDescription containerDesc = new ContainerDescription();
 
-        containerDesc.documentSelfLink = CONTAINER_DESC_LINK_NAME + "-" + configChecksum;
+        containerDesc.documentSelfLink = CLOSURES_CONTAINER_DESC_LINK_NAME + "-" +
+                configChecksum;
         containerDesc.name = configuration.name;
         containerDesc.image = imageName + ":" + imageTag;
         containerDesc.memoryLimit = ClosureUtils.toBytes(configuration.memoryMB);
