@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.request;
 
+import static com.vmware.admiral.common.ManagementUriParts.CLOSURES_CONTAINER_DESC_LINK_NAME;
+import static com.vmware.admiral.common.ManagementUriParts.CONTAINER_DESC;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isDiscoveredContainer;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isSystemContainer;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
@@ -266,7 +268,7 @@ public class ContainerRemovalTaskService
     private boolean isAllocatedOnlyContainer(ContainerState containerState) {
         return PowerState.PROVISIONING == containerState.powerState
                 && ContainerState.CONTAINER_ALLOCATION_STATUS
-                        .equals(containerState.status);
+                .equals(containerState.status);
     }
 
     private void completeSubTasksCounter(String subTaskLink, Throwable ex) {
@@ -311,27 +313,36 @@ public class ContainerRemovalTaskService
                 .setBody(ps)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning("Failed to modify container state isDeleted before container delete: " + containerState.documentSelfLink, e);
+                        logWarning(
+                                "Failed to modify container state isDeleted before container delete: "
+                                        + containerState.documentSelfLink, e);
                         return;
                     } else {
                         AdapterRequest adapterRequest = new AdapterRequest();
                         String selfLink = containerState.documentSelfLink;
                         adapterRequest.resourceReference = UriUtils.buildUri(getHost(), selfLink);
-                        adapterRequest.serviceTaskCallback = ServiceTaskCallback.create(subTaskLink);
+                        adapterRequest.serviceTaskCallback = ServiceTaskCallback
+                                .create(subTaskLink);
                         adapterRequest.operationTypeId = ContainerOperationType.DELETE.id;
-                        sendRequest(Operation.createPatch(getHost(), containerState.adapterManagementReference.toString())
+                        sendRequest(Operation.createPatch(getHost(),
+                                containerState.adapterManagementReference.toString())
                                 .setBody(adapterRequest)
                                 .setContextId(getSelfId())
                                 .setCompletion((o1, e1) -> {
                                     if (e1 != null) {
-                                        failTask("AdapterRequest failed for container: " + selfLink, e1);
+                                        failTask("AdapterRequest failed for container: " + selfLink,
+                                                e1);
                                         ContainerState ps1 = new ContainerState();
                                         ps1.isDeleted = false;
-                                        sendRequest(Operation.createPatch(getHost(), containerState.documentSelfLink)
+                                        sendRequest(Operation.createPatch(getHost(),
+                                                containerState.documentSelfLink)
                                                 .setBody(ps1)
                                                 .setCompletion((o2, e2) -> {
                                                     if (e2 != null) {
-                                                        logWarning("Failed to modify container state  isDeleted after container delete: " + containerState.documentSelfLink, e);
+                                                        logWarning(
+                                                                "Failed to modify container state  isDeleted after container delete: "
+                                                                        + containerState.documentSelfLink,
+                                                                e);
                                                         return;
                                                     }
                                                 }));
@@ -403,7 +414,7 @@ public class ContainerRemovalTaskService
         QueryTask compositeQueryTask = QueryUtil.buildQuery(ContainerState.class, true);
 
         String containerDescriptionLink = UriUtils.buildUriPath(
-                ManagementUriParts.CONTAINER_DESC,
+                CONTAINER_DESC,
                 Service.getId(cs.descriptionLink));
         QueryUtil.addListValueClause(compositeQueryTask,
                 ContainerState.FIELD_NAME_DESCRIPTION_LINK,
@@ -514,10 +525,13 @@ public class ContainerRemovalTaskService
                                     .setCompletion(
                                             (op, ex) -> {
                                                 if (ex != null) {
-                                                    logWarning("Failed deleting ContainerDescription: " + cd.documentSelfLink, ex);
+                                                    logWarning(
+                                                            "Failed deleting ContainerDescription: "
+                                                                    + cd.documentSelfLink, ex);
                                                     return;
                                                 }
-                                                logInfo("Deleted ContainerDescription: " + cd.documentSelfLink);
+                                                logInfo("Deleted ContainerDescription: "
+                                                        + cd.documentSelfLink);
                                             }));
                         });
 
@@ -539,6 +553,12 @@ public class ContainerRemovalTaskService
             return null;
         }
 
+        if (isClosureContainer(cs)) {
+            logFine("Skipping releasing placement because container is related to closures: %s",
+                    cs.documentSelfLink);
+            return null;
+        }
+
         ReservationRemovalTaskState rsrvTask = new ReservationRemovalTaskState();
         rsrvTask.resourceCount = 1;
         rsrvTask.resourceDescriptionLink = cs.descriptionLink;
@@ -556,5 +576,10 @@ public class ContainerRemovalTaskService
                         return;
                     }
                 });
+    }
+
+    private boolean isClosureContainer(ContainerState cs) {
+        return cs.descriptionLink != null && cs.descriptionLink
+                .startsWith(CLOSURES_CONTAINER_DESC_LINK_NAME);
     }
 }
