@@ -406,7 +406,8 @@ public class ConfigureHostOverSshTaskService extends
                     }
 
                     proceedTo(SubStage.COMPLETED, (s) -> {
-                        s.hostLink = completedOp.getBody(ComputeState.class).documentSelfLink;
+
+                        s.hostLink = completedOp.getResponseHeader(Operation.LOCATION_HEADER);
                     });
                 })
                 .sendWith(getHost());

@@ -138,7 +138,7 @@ let getHostSpec = function(hostModel) {
 let getHostAutoConfigSpec = function(hostModel) {
   var hostAutoConfigSpec = {
     __address: hostModel.address,
-    __resourcePoolLink: hostModel.resourcePoolLink,
+    __placementZoneLink: hostModel.resourcePoolLink,
     __tagLinks: hostModel.tagLinks
   };
 
