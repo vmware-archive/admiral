@@ -15,6 +15,7 @@ import VueTextInput from 'components/common/VueTextInput'; //eslint-disable-line
 import AwsEndpointEditor from 'components/endpoints/aws/EndpointEditor'; //eslint-disable-line
 import AzureEndpointEditor from 'components/endpoints/azure/EndpointEditor'; //eslint-disable-line
 import NimbusEndpointEditor from 'components/endpoints/nimbus/EndpointEditor'; //eslint-disable-line
+import OpenstackEndpointEditor from 'components/endpoints/openstack/EndpointEditor'; //eslint-disable-line
 import VsphereEndpointEditor from 'components/endpoints/vsphere/EndpointEditor'; //eslint-disable-line
 import EndpointEditorVue from 'components/endpoints/EndpointEditorVue.html';
 import { EndpointsActions } from 'actions/Actions';
@@ -56,6 +57,14 @@ var EndpointEditor = Vue.extend({
           iconSrc: 'image-assets/endpoints/nimbus.png'
         });
       }
+      if (utils.isOpenstackEnabled()) {
+        supportedTypes.push({
+          id: 'openstack',
+          name: 'OpenStack',
+          iconSrc: 'image-assets/endpoints/openstack.png'
+        });
+      }
+
       return supportedTypes;
     },
     validationErrors() {
