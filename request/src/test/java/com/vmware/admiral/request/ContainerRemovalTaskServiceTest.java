@@ -18,7 +18,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import static com.vmware.admiral.common.ManagementUriParts.CLOSURES_CONTAINER_DESC_LINK_NAME;
+import static com.vmware.admiral.common.ManagementUriParts.CLOSURES_CONTAINER_DESC;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -354,7 +354,7 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
 
         ContainerState container = TestRequestStateFactory.createContainer();
         container.descriptionLink =
-                CLOSURES_CONTAINER_DESC_LINK_NAME + "-" + UUID.randomUUID().toString();
+                CLOSURES_CONTAINER_DESC + "-" + UUID.randomUUID().toString();
         container.adapterManagementReference = containerDesc.instanceAdapterReference;
         container.groupResourcePlacementLink = ulimitedPlacementState.documentSelfLink;
         container.system = Boolean.FALSE;

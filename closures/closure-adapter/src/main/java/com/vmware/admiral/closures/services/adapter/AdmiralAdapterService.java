@@ -19,7 +19,7 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_IMAGE_NAME_PROP_NAME;
 import static com.vmware.admiral.closures.util.ClosureUtils.loadDockerImageData;
-import static com.vmware.admiral.common.ManagementUriParts.CLOSURES_CONTAINER_DESC_LINK_NAME;
+import static com.vmware.admiral.common.ManagementUriParts.CLOSURES_CONTAINER_DESC;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.ServiceDocumentQuery.error;
@@ -1111,7 +1111,7 @@ public class AdmiralAdapterService extends
             Consumer<ContainerDescription> callbackFunction) {
         String checksum = ClosureUtils.calculateHash(state.configuration.envVars);
 
-        String containerDescriptionLink = CLOSURES_CONTAINER_DESC_LINK_NAME + "-" + checksum;
+        String containerDescriptionLink = CLOSURES_CONTAINER_DESC + "-" + checksum;
         URI containerDescriptionURI = UriUtils.buildUri(getHost(), containerDescriptionLink);
         logInfo("Getting container desc: {}", containerDescriptionURI);
 
@@ -1193,7 +1193,7 @@ public class AdmiralAdapterService extends
             ContainerConfiguration configuration, String configChecksum) {
         ContainerDescription containerDesc = new ContainerDescription();
 
-        containerDesc.documentSelfLink = CLOSURES_CONTAINER_DESC_LINK_NAME + "-" +
+        containerDesc.documentSelfLink = CLOSURES_CONTAINER_DESC + "-" +
                 configChecksum;
         containerDesc.name = configuration.name;
         containerDesc.image = imageName + ":" + imageTag;
