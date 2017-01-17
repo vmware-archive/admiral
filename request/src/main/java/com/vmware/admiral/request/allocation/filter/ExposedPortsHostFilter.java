@@ -116,7 +116,7 @@ public class ExposedPortsHostFilter
 
         Set<String> result = new HashSet<>();
         for (PortBinding port : exposedPorts) {
-            if (port.hostPort != null) {
+            if (port != null && port.hostPort != null && !port.hostPort.isEmpty()) {
                 result.add(port.hostPort);
             }
         }
