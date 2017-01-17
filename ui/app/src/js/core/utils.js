@@ -611,6 +611,10 @@ var utils = {
     return this.getConfigurationPropertyBoolean('allow.nimbus');
   },
 
+  isOpenstackEnabled: function() {
+    return this.getConfigurationPropertyBoolean('allow.openstack');
+  },
+
   isRequestRunning: function(request) {
     var stage = request.taskInfo.stage;
     const STAGES = constants.REQUESTS.STAGES;
