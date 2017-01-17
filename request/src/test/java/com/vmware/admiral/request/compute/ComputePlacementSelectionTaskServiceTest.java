@@ -26,14 +26,14 @@ import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.Elast
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
 import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
 import com.vmware.admiral.compute.ResourceType;
-
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
+import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
-
 
 /**
  * Tests for the {@link ComputePlacementSelectionTaskService} service.
@@ -86,14 +86,14 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
     @Test
     public void testComputePlacementWithBinpackPolicy() throws Throwable {
 
-        setBinpackPolicyToEPZS();
+        setAdvancedPlacementPolicyToEPZS(ElasticPlacementZoneService.PlacementPolicy.BINPACK);
 
         ComputeDescription computeDescription = doPost(createComputeDescription(),
                 ComputeDescriptionService.FACTORY_LINK);
 
         // Create two more Compute hosts.
-        ComputeState computeHost2 = createVmGuestComputeWithRandomComputeDescription(true);
-        ComputeState computeHost3 = createVmGuestComputeWithRandomComputeDescription(true);
+        ComputeState computeHost2 = createVmComputeWithRandomComputeDescription(true, ComputeType.VM_HOST);
+        ComputeState computeHost3 = createVmComputeWithRandomComputeDescription(true, ComputeType.VM_HOST);
 
         // Update descriptions with memory.
         ComputeDescription computeDesc1 = getDocument(ComputeDescription.class,
@@ -127,6 +127,46 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
                 taskState.selectedComputePlacementHosts.stream().findFirst().get().hostLink);
     }
 
+    @Test
+    public void testComputePlacementWithSpreadPolicy() throws Throwable {
+
+        setAdvancedPlacementPolicyToEPZS(ElasticPlacementZoneService.PlacementPolicy.SPREAD);
+
+        ComputeDescription computeDescription = doPost(createComputeDescription(),
+                ComputeDescriptionService.FACTORY_LINK);
+
+        // Create two more Compute hosts of type VM_HOST.
+        ComputeState computeHost1 = createVmComputeWithRandomComputeDescription(true,
+                ComputeType.VM_HOST);
+        ComputeState computeHost2 = createVmComputeWithRandomComputeDescription(true,
+                ComputeType.VM_HOST);
+
+        // Create multiple Compute hosts of type VM_GUEST.
+        assignComputesToHost(computeHost1.documentSelfLink, 6);
+        assignComputesToHost(computeHost2.documentSelfLink, 2);
+        assignComputesToHost(vmHostCompute.documentSelfLink, 4);
+
+        ComputePlacementSelectionTaskState taskRequestState = new ComputePlacementSelectionTaskState();
+        taskRequestState.computeDescriptionLink = computeDescription.documentSelfLink;
+        taskRequestState.resourceCount = 1;
+        taskRequestState.resourcePoolLinks = new ArrayList<>();
+        taskRequestState.resourcePoolLinks.add(computeResourcePool.documentSelfLink);
+
+        ComputePlacementSelectionTaskState taskState = doPost(taskRequestState,
+                ComputePlacementSelectionTaskService.FACTORY_LINK);
+        assertNotNull(taskState);
+
+        taskState = waitForTaskSuccess(taskState.documentSelfLink,
+                ComputePlacementSelectionTaskState.class);
+
+        assertNotNull(taskState.selectedComputePlacementHosts);
+        assertEquals(taskState.selectedComputePlacementHosts.size(), 1);
+
+        // Verify that placement has happened on most loaded host - computeHost3.
+        assertEquals(computeHost2.documentSelfLink,
+                taskState.selectedComputePlacementHosts.stream().findFirst().get().hostLink);
+    }
+
     private ComputeDescription createComputeDescription() {
         ComputeDescription cd = new ComputeDescription();
         cd.id = UUID.randomUUID().toString();
@@ -135,11 +175,12 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
         return cd;
     }
 
-    private void setBinpackPolicyToEPZS() throws Throwable {
+    private void setAdvancedPlacementPolicyToEPZS(ElasticPlacementZoneService.PlacementPolicy policy)
+            throws Throwable {
 
         // Create ElasticPlacementZoneState which follows BINPACK deployment policy.
         ElasticPlacementZoneState epzState = new ElasticPlacementZoneState();
-        epzState.placementPolicy = ElasticPlacementZoneService.PlacementPolicy.BINPACK;
+        epzState.placementPolicy = policy;
         epzState.resourcePoolLink = resourcePool.documentSelfLink;
 
         ElasticPlacementZoneConfigurationState epz = new ElasticPlacementZoneConfigurationState();
@@ -152,8 +193,17 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
                 ElasticPlacementZoneConfigurationState.class, false, Action.PATCH);
 
         assertEquals(epz.epzState.placementPolicy,
-                ElasticPlacementZoneService.PlacementPolicy.BINPACK);
+                policy);
 
+    }
+
+    private void assignComputesToHost(String hostLink, int instances) throws Throwable {
+        for (int i = 0; i <= instances; i++) {
+            ComputeState computeHost = createVmComputeWithRandomComputeDescription(true, ComputeType.VM_GUEST);
+            computeHost.parentLink = hostLink;
+            computeHost = doPost(computeHost, ComputeService.FACTORY_LINK);
+            assertEquals(hostLink, computeHost.parentLink);
+        }
     }
 
 }

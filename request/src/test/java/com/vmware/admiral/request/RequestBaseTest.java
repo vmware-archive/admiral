@@ -434,7 +434,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         return vmHostComputeState;
     }
 
-    protected ComputeState createVmGuestComputeWithRandomComputeDescription(boolean generateId)
+    protected ComputeState createVmComputeWithRandomComputeDescription(boolean generateId, ComputeType type)
             throws Throwable {
         ComputeState vmGuestComputeState = TestRequestStateFactory.createVmHostComputeState();
         if (generateId) {
@@ -443,7 +443,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         vmGuestComputeState.documentSelfLink = vmGuestComputeState.id;
         vmGuestComputeState.resourcePoolLink = createComputeResourcePool().documentSelfLink;
         vmGuestComputeState.descriptionLink = createVmGuestComputeDescriptionWithRandomSelfLink().documentSelfLink;
-        vmGuestComputeState.type = ComputeType.VM_HOST;
+        vmGuestComputeState.type = type;
         vmGuestComputeState = getOrCreateDocument(vmGuestComputeState, ComputeService.FACTORY_LINK);
         assertNotNull(vmGuestComputeState);
         if (generateId) {
