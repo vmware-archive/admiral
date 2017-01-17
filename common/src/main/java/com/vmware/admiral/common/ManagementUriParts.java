@@ -167,9 +167,9 @@ public interface ManagementUriParts {
     String KV_STORE = "/kv-store";
     // UI Service:
     String UI_SERVICE = System.getProperty("dcp.management.ui.path", "/");
-    String CONTAINER_ICONS_RESOURCE_PATH = "/container-icons";
-    String CONTAINER_IDENTICONS_RESOURCE_PATH = "/container-identicons";
-    String CONTAINER_IMAGE_ICONS = "/container-image-icons";
+    String CONTAINER_ICONS_RESOURCE_PATH = UI_SERVICE + "/container-icons";
+    String CONTAINER_IDENTICONS_RESOURCE_PATH = UI_SERVICE + "/container-identicons";
+    String CONTAINER_IMAGE_ICONS = UI_SERVICE + "/container-image-icons";
 
     String REVERSE_PROXY = "/rp";
 
