@@ -371,11 +371,14 @@ public class ContainerHostService extends StatelessService {
         return hostType;
     }
 
-    protected void storeHost(ContainerHostSpec hostSpec, Operation op) {
+    protected void storeHost(ContainerHostSpec hostSpec, Operation op,
+            boolean triggerDataCollection) {
         ContainerHostType hostType = getHostTypeFromSpec(hostSpec);
         switch (hostType) {
         case DOCKER:
-            verifyNoSchedulersInPlacementZone(hostSpec, op, () -> storeDockerHost(hostSpec, op));
+            verifyNoSchedulersInPlacementZone(hostSpec, op, () -> {
+                storeDockerHost(hostSpec, op, triggerDataCollection);
+            });
             break;
 
         case VIC:
@@ -385,7 +388,9 @@ public class ContainerHostService extends StatelessService {
             if (hostSpec.hostState.tagLinks != null) {
                 hostSpec.hostState.tagLinks.clear();
             }
-            verifyPlacementZoneIsEmpty(hostSpec, op, () -> storeVicHost(hostSpec, op));
+            verifyPlacementZoneIsEmpty(hostSpec, op, () -> {
+                storeVicHost(hostSpec, op, triggerDataCollection);
+            });
             break;
 
         default:
@@ -396,23 +401,28 @@ public class ContainerHostService extends StatelessService {
         }
     }
 
-    private void storeVicHost(ContainerHostSpec hostSpec, Operation op) {
+    private void storeVicHost(ContainerHostSpec hostSpec, Operation op,
+            boolean triggerDataCollection) {
         // VIC verification relies on data gathered by a docker info command
         getHostInfo(hostSpec, op, hostSpec.sslTrust, (computeState) -> {
             if (ContainerHostUtil.isVicHost(computeState)) {
-                doStoreHost(hostSpec, op);
+                doStoreHost(hostSpec, op, triggerDataCollection);
             } else {
                 op.fail(new IllegalArgumentException(CONTAINER_HOST_IS_NOT_VIC_MESSAGE));
             }
         });
     }
 
-    private void storeDockerHost(ContainerHostSpec hostSpec, Operation op) {
+    private void storeDockerHost(ContainerHostSpec hostSpec, Operation op,
+            boolean triggerDataCollection) {
         // Docker hosts are validated by a ping call.
-        pingHost(hostSpec, op, hostSpec.sslTrust, () -> doStoreHost(hostSpec, op));
+        pingHost(hostSpec, op, hostSpec.sslTrust, () -> {
+            doStoreHost(hostSpec, op, triggerDataCollection);
+        });
     }
 
-    private void doStoreHost(ContainerHostSpec hostSpec, Operation op) {
+    private void doStoreHost(ContainerHostSpec hostSpec, Operation op,
+            boolean triggerDataCollection) {
         ComputeState cs = hostSpec.hostState;
         if (cs.descriptionLink == null) {
             cs.descriptionLink = DOCKER_COMPUTE_DESC_LINK;
@@ -461,8 +471,11 @@ public class ContainerHostService extends StatelessService {
 
                     op.addResponseHeader(Operation.LOCATION_HEADER, documentSelfLink);
                     createHostPortProfile(storedHost, op);
-                    updateContainerHostInfo(documentSelfLink);
-                    triggerEpzEnumeration();
+
+                    if (triggerDataCollection) {
+                        updateContainerHostInfo(documentSelfLink);
+                        triggerEpzEnumeration();
+                    }
                 }));
     }
 
@@ -710,16 +723,24 @@ public class ContainerHostService extends StatelessService {
     private void createHost(ContainerHostSpec hostSpec, Operation op) {
         setSslTrustAliasProperty(hostSpec);
 
+        boolean triggerDataCollection = true;
         if (hostSpec.acceptHostAddress) {
             if (hostSpec.acceptCertificate) {
+                // data collection will be 'manually triggered' after certificate is stored
+                triggerDataCollection = false;
                 op.nestCompletion((o) -> {
-                    EndpointCertificateUtil.validateSslTrust(this, hostSpec, o, op::complete);
+                    EndpointCertificateUtil.validateSslTrust(this, hostSpec, o, () -> {
+                        updateContainerHostInfo(hostSpec.hostState.documentSelfLink);
+                        triggerEpzEnumeration();
+
+                        op.complete();
+                    });
                 });
             }
 
-            storeHost(hostSpec, op);
+            storeHost(hostSpec, op, triggerDataCollection);
         } else {
-            validateSslTrust(hostSpec, op, () -> storeHost(hostSpec, op));
+            validateSslTrust(hostSpec, op, () -> storeHost(hostSpec, op, true));
         }
     }
 
