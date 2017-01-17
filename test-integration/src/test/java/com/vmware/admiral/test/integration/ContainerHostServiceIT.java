@@ -96,13 +96,13 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                 .setBody(containerHostSpec)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        if (o.getStatusCode() != Operation.STATUS_CODE_BAD_REQUEST) {
-                            host.log("Unexpected exception: %s", Utils.toString(e));
-                            host.failIteration(new IllegalStateException(
-                                    "Validation exception expected"));
-                            return;
+                        try {
+                            verifyStatusCode(o.getStatusCode(), Operation.STATUS_CODE_BAD_REQUEST);
+                            host.completeIteration();
+                        } catch (IllegalStateException ex) {
+                            host.log("Expected validation exception but got %s", Utils.toString(e));
+                            host.failIteration(ex);
                         }
-                        host.completeIteration();
                     } else {
                         host.failIteration(new IllegalStateException(
                                 "Should fail when address not valid"));
@@ -125,20 +125,20 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                         host.failIteration(e);
                         return;
                     }
-                    if (o.getStatusCode() != HttpURLConnection.HTTP_OK) {
-                        host.failIteration(new IllegalStateException(
-                                "Expected status code 200 when ssl cert not accepted."));
-                        return;
-                    }
-                    SslTrustCertificateState body = o
-                            .getBody(SslTrustCertificateState.class);
-                    if (body == null) {
-                        host.failIteration(new IllegalStateException(
-                                "Expected SslTrustCertificateState in the body to be accepted."));
-                        return;
+                    try {
+                        verifyStatusCode(o.getStatusCode(), Operation.STATUS_CODE_OK);
+                        SslTrustCertificateState body = o
+                                .getBody(SslTrustCertificateState.class);
+                        if (body == null) {
+                            host.failIteration(new IllegalStateException(
+                                    "Expected SslTrustCertificateState in the body to be accepted."));
+                        } else {
+                            host.completeIteration();
+                        }
+                    } catch (IllegalStateException ex) {
+                        host.failIteration(ex);
                     }
 
-                    host.completeIteration();
                 });
 
         host.testStart(1);
@@ -159,20 +159,18 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                         host.failIteration(e);
                         return;
                     }
-                    if (o.getStatusCode() != HttpURLConnection.HTTP_NO_CONTENT) {
-                        host.failIteration(new IllegalStateException(
-                                "Expected status code 204 when ssl cert accepted. Status: "
-                                        + o.getStatusCode()));
-                        return;
+                    try {
+                        verifyStatusCode(o.getStatusCode(), HttpURLConnection.HTTP_NO_CONTENT);
+                        if (o.getBodyRaw() != null) {
+                            host.failIteration(new IllegalStateException(
+                                    "No body expected when ssl cert accepted."));
+                        } else {
+                            host.completeIteration();
+                        }
+                    } catch (IllegalStateException ex) {
+                        host.failIteration(ex);
                     }
 
-                    if (o.getBodyRaw() != null) {
-                        host.failIteration(new IllegalStateException(
-                                "No body expected when ssl cert accepted."));
-                        return;
-                    }
-
-                    host.completeIteration();
                 });
 
         host.testStart(1);
@@ -189,15 +187,14 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         Operation op = Operation.createPut(getContainerHostValidateUri())
                 .setBody(vicHostSpec)
                 .setCompletion((o, e) -> {
-                    if (o.getStatusCode() != HttpURLConnection.HTTP_NO_CONTENT) {
+                    try {
+                        verifyStatusCode(o.getStatusCode(), HttpURLConnection.HTTP_NO_CONTENT);
+                        host.completeIteration();
+                    } catch (IllegalStateException ex) {
                         if (e != null) {
                             host.log("Unexpected exception: %s", Utils.toString(e));
                         }
-                        host.failIteration(
-                                new IllegalStateException("Status code 200 was expected"));
-                        return;
-                    } else {
-                        host.completeIteration();
+                        host.failIteration(ex);
                     }
                 });
 
@@ -216,20 +213,22 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                 .setBody(containerHostSpec)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        if (o.getStatusCode() != Operation.STATUS_CODE_BAD_REQUEST) {
+                        try {
+                            verifyStatusCode(o.getStatusCode(), Operation.STATUS_CODE_BAD_REQUEST);
+                            String error = e.getMessage();
+                            if (error.equals(
+                                    ContainerHostService.CONTAINER_HOST_IS_NOT_VIC_MESSAGE)) {
+                                host.completeIteration();
+                            } else {
+                                String message = String.format(
+                                        "Error message should be '%s' but was '%s'",
+                                        ContainerHostService.CONTAINER_HOST_IS_NOT_VIC_MESSAGE,
+                                        error);
+                                host.failIteration(new IllegalStateException(message));
+                            }
+                        } catch (IllegalStateException ex) {
                             host.log("Unexpected exception: %s", Utils.toString(e));
-                            host.failIteration(new IllegalStateException(
-                                    "Validation exception expected"));
-                            return;
-                        }
-                        String error = e.getMessage();
-                        if (error.equals(ContainerHostService.CONTAINER_HOST_IS_NOT_VIC_MESSAGE)) {
-                            host.completeIteration();
-                        } else {
-                            String message = String.format(
-                                    "Error message should be '%s' but was '%s'",
-                                    ContainerHostService.CONTAINER_HOST_IS_NOT_VIC_MESSAGE, error);
-                            host.failIteration(new IllegalStateException(message));
+                            host.failIteration(ex);
                         }
                     } else {
                         host.failIteration(new IllegalStateException(
@@ -254,21 +253,20 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                         host.failIteration(e);
                         return;
                     }
-                    if (o.getStatusCode() != HttpURLConnection.HTTP_OK) {
-                        host.failIteration(new IllegalStateException(
-                                "Expected status code 200 when ssl cert not accepted. Status: "
-                                        + o.getStatusCode()));
-                        return;
-                    }
-                    SslTrustCertificateState body = o
-                            .getBody(SslTrustCertificateState.class);
-                    if (body == null) {
-                        host.failIteration(new IllegalStateException(
-                                "Expected SslTrustCertificateState in the body to be accepted."));
-                        return;
+                    try {
+                        verifyStatusCode(o.getStatusCode(), Operation.STATUS_CODE_OK);
+                        SslTrustCertificateState body = o
+                                .getBody(SslTrustCertificateState.class);
+                        if (body == null) {
+                            host.failIteration(new IllegalStateException(
+                                    "Expected SslTrustCertificateState in the body to be accepted."));
+                        } else {
+                            host.completeIteration();
+                        }
+                    } catch (IllegalStateException ex) {
+                        host.failIteration(ex);
                     }
 
-                    host.completeIteration();
                 });
 
         host.testStart(1);
@@ -289,20 +287,18 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                         host.failIteration(e);
                         return;
                     }
-                    if (o.getStatusCode() != HttpURLConnection.HTTP_NO_CONTENT) {
-                        host.failIteration(new IllegalStateException(
-                                "Expected status code 204 when ssl cert accepted. Status: "
-                                        + o.getStatusCode()));
-                        return;
+                    try {
+                        verifyStatusCode(o.getStatusCode(), HttpURLConnection.HTTP_NO_CONTENT);
+                        if (o.getBodyRaw() != null) {
+                            host.failIteration(new IllegalStateException(
+                                    "No body expected when ssl cert accepted."));
+                        } else {
+                            host.completeIteration();
+                        }
+                    } catch (IllegalStateException ex) {
+                        host.failIteration(ex);
                     }
 
-                    if (o.getBodyRaw() != null) {
-                        host.failIteration(new IllegalStateException(
-                                "No body expected when ssl cert accepted."));
-                        return;
-                    }
-
-                    host.completeIteration();
                 });
         host.testStart(1);
         host.send(op);
@@ -336,20 +332,18 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                                             host.failIteration(retryE);
                                             return;
                                         }
-                                        if (retryO.getStatusCode() != HttpURLConnection.HTTP_NO_CONTENT) {
-                                            host.failIteration(new IllegalStateException(
-                                                    "Expected status code 204 when ssl cert accepted. Status: "
-                                                            + retryO.getStatusCode()));
-                                            return;
+                                        try {
+                                            verifyStatusCode(retryO.getStatusCode(),
+                                                    HttpURLConnection.HTTP_NO_CONTENT);
+                                            if (retryO.getBodyRaw() != null) {
+                                                host.failIteration(new IllegalStateException(
+                                                        "No body expected when ssl cert accepted."));
+                                            } else {
+                                                host.completeIteration();
+                                            }
+                                        } catch (IllegalStateException ex) {
+                                            host.failIteration(ex);
                                         }
-
-                                        if (retryO.getBodyRaw() != null) {
-                                            host.failIteration(new IllegalStateException(
-                                                    "No body expected when ssl cert accepted."));
-                                            return;
-                                        }
-
-                                        host.completeIteration();
                                     });
                     host.send(retryOp);
 
@@ -398,20 +392,22 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                                                                         host.failIteration(retryE);
                                                                         return;
                                                                     }
-                                                                    if (retryO.getStatusCode() != HttpURLConnection.HTTP_NO_CONTENT) {
-                                                                        host.failIteration(new IllegalStateException(
-                                                                                "Expected status code 204 when ssl cert accepted. Status: "
-                                                                                        + retryO.getStatusCode()));
-                                                                        return;
+                                                                    try {
+                                                                        verifyStatusCode(
+                                                                                retryO.getStatusCode(),
+                                                                                HttpURLConnection.HTTP_NO_CONTENT);
+                                                                        if (retryO
+                                                                                .getBodyRaw() != null) {
+                                                                            host.failIteration(
+                                                                                    new IllegalStateException(
+                                                                                            "No body expected when ssl cert accepted."));
+                                                                        } else {
+                                                                            host.completeIteration();
+                                                                        }
+                                                                    } catch (IllegalStateException ex) {
+                                                                        host.failIteration(ex);
                                                                     }
 
-                                                                    if (retryO.getBodyRaw() != null) {
-                                                                        host.failIteration(new IllegalStateException(
-                                                                                "No body expected when ssl cert accepted."));
-                                                                        return;
-                                                                    }
-
-                                                                    host.completeIteration();
                                                                 });
                                                 host.send(retryOp);
                                             });
@@ -438,21 +434,18 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                         host.failIteration(e);
                         return;
                     }
-                    if (o.getStatusCode() != HttpURLConnection.HTTP_NO_CONTENT) {
-                        host.failIteration(new IllegalStateException(
-                                "Expected status code 204 when ssl cert accepted. Status: "
-                                        + o.getStatusCode()));
-                        return;
+                    try {
+                        verifyStatusCode(o.getStatusCode(), HttpURLConnection.HTTP_NO_CONTENT);
+                        if (o.getBodyRaw() != null) {
+                            host.failIteration(new IllegalStateException(
+                                    "No body expected when ssl cert accepted."));
+                        } else {
+                            result[0] = o.getResponseHeader(Operation.LOCATION_HEADER);
+                            host.completeIteration();
+                        }
+                    } catch (IllegalStateException ex) {
+                        host.failIteration(ex);
                     }
-
-                    if (o.getBodyRaw() != null) {
-                        host.failIteration(new IllegalStateException(
-                                "No body expected when ssl cert accepted."));
-                        return;
-                    }
-
-                    result[0] = o.getResponseHeader(Operation.LOCATION_HEADER);
-                    host.completeIteration();
                 });
         host.testStart(1);
         host.send(op);
@@ -570,37 +563,36 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                 .setCompletion((o, e) -> {
                     if (expectedError == null) {
                         // add should succeed
-                        if (o.getStatusCode() != HttpURLConnection.HTTP_NO_CONTENT) {
-                            if (e != null) {
-                                host.log("Unexpected exception: %s", Utils.toString(e));
-                            }
-                            String error = String.format("Status code 200 was expected but was %d",
-                                    o.getStatusCode());
-                            host.failIteration(
-                                    new IllegalStateException(error));
-                            return;
-                        } else {
-                            hostSpec.hostState.documentSelfLink = o.getResponseHeader(Operation.LOCATION_HEADER);
+                        try {
+                            verifyStatusCode(o.getStatusCode(), HttpURLConnection.HTTP_NO_CONTENT);
+                            hostSpec.hostState.documentSelfLink = o
+                                    .getResponseHeader(Operation.LOCATION_HEADER);
                             host.completeIteration();
+                        } catch (IllegalStateException ex) {
+                            host.log("Unexpected exception: %s", Utils.toString(e));
+                            host.failIteration(ex);
                         }
                     } else {
                         // add should fail
                         if (e != null) {
-                            if (o.getStatusCode() != Operation.STATUS_CODE_BAD_REQUEST) {
-                                host.log("Unexpected exception: %s", Utils.toString(e));
-                                host.failIteration(new IllegalStateException(
-                                        "Validation exception expected"));
-                                return;
+                            try {
+                                verifyStatusCode(o.getStatusCode(),
+                                        Operation.STATUS_CODE_BAD_REQUEST);
+                                String error = e.getMessage();
+                                if (error.equals(expectedError)) {
+                                    host.completeIteration();
+                                } else {
+                                    String message = String.format(
+                                            "Error message should be '%s' but was '%s'",
+                                            expectedError, error);
+                                    host.failIteration(new IllegalStateException(message));
+                                }
+                            } catch (IllegalStateException ex) {
+                                host.log("Expected validation exception but got: %s",
+                                        Utils.toString(e));
+                                host.failIteration(ex);
                             }
-                            String error = e.getMessage();
-                            if (error.equals(expectedError)) {
-                                host.completeIteration();
-                            } else {
-                                String message = String.format(
-                                        "Error message should be '%s' but was '%s'",
-                                        expectedError, error);
-                                host.failIteration(new IllegalStateException(message));
-                            }
+
                         } else {
                             String error = String.format("Should fail with '%s'", expectedError);
                             host.failIteration(new IllegalStateException(error));
@@ -611,6 +603,15 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         host.testStart(1);
         host.send(op);
         host.testWait();
+    }
+
+    private void verifyStatusCode(int statusCode, int expectedStatusCode) {
+        if (statusCode != expectedStatusCode) {
+            String errorMessage = String.format("Expected status code %d but was %d",
+                    expectedStatusCode, statusCode);
+            throw new IllegalStateException(errorMessage);
+        }
+
     }
 
     private void markHostForVicValidation(ComputeState cs) {
