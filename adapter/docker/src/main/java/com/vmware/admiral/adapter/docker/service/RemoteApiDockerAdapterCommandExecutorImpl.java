@@ -347,11 +347,16 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     @Override
     public void hostInfo(CommandInput input, CompletionHandler completionHandler) {
         createOrUpdateTargetSsl(input);
-        // Make sure that the trusted certificate is loaded before proceeding to avoid
-        // SSLHandshakeException and getting hosts in DISABLED state
-        ensureTrustDelegateExists(input, SSL_TRUST_RETRIES_COUNT, () -> {
+
+        if (isSecure(input.getDockerUri())) {
+            // Make sure that the trusted certificate is loaded before proceeding to avoid
+            // SSLHandshakeException and getting hosts in DISABLED state
+            ensureTrustDelegateExists(input, SSL_TRUST_RETRIES_COUNT, () -> {
+                sendGet(UriUtils.extendUri(input.getDockerUri(), "/info"), null, completionHandler);
+            });
+        } else {
             sendGet(UriUtils.extendUri(input.getDockerUri(), "/info"), null, completionHandler);
-        });
+        }
     }
 
     @Override
