@@ -379,6 +379,12 @@ public class ContainerHostService extends StatelessService {
             break;
 
         case VIC:
+            // Schedulers can be added to placements zones explicitly, it is not possible to use
+            // tags
+            AssertUtil.assertNotEmpty(hostSpec.hostState.resourcePoolLink, "resourcePoolLink");
+            if (hostSpec.hostState.tagLinks != null) {
+                hostSpec.hostState.tagLinks.clear();
+            }
             verifyPlacementZoneIsEmpty(hostSpec, op, () -> storeVicHost(hostSpec, op));
             break;
 
@@ -462,9 +468,16 @@ public class ContainerHostService extends StatelessService {
 
     private void verifyPlacementZoneIsEmpty(ContainerHostSpec hostSpec, Operation op,
             Runnable successCallback) {
+        String placementZoneLink = hostSpec.hostState.resourcePoolLink;
+        if (placementZoneLink == null || placementZoneLink.isEmpty()) {
+            // no placement zone to verify
+            successCallback.run();
+            return;
+        }
+
         AtomicBoolean emptyZone = new AtomicBoolean(true);
         QueryTask queryTask = QueryUtil.buildPropertyQuery(ComputeState.class,
-                ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, hostSpec.hostState.resourcePoolLink);
+                ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, placementZoneLink);
         QueryUtil.addCountOption(queryTask);
         new ServiceDocumentQuery<>(getHost(), ComputeState.class)
                 .query(queryTask, (r) -> {
@@ -483,9 +496,16 @@ public class ContainerHostService extends StatelessService {
 
     private void verifyNoSchedulersInPlacementZone(ContainerHostSpec hostSpec, Operation op,
             Runnable successCallback) {
+        String placementZoneLink = hostSpec.hostState.resourcePoolLink;
+        if (placementZoneLink == null || placementZoneLink.isEmpty()) {
+            // no placement zone => no schedulers
+            successCallback.run();
+            return;
+        }
+
         AtomicBoolean schedulerFound = new AtomicBoolean(false);
         QueryTask queryTask = QueryUtil.buildPropertyQuery(ComputeState.class,
-                ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, hostSpec.hostState.resourcePoolLink);
+                ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, placementZoneLink);
         QueryUtil.addExpandOption(queryTask);
         new ServiceDocumentQuery<>(getHost(), ComputeState.class)
                 .query(queryTask, (r) -> {
