@@ -450,7 +450,7 @@ public class ContainerHostService extends StatelessService {
                                 ComputeService.FACTORY_LINK, documentSelfLink);
                     }
                     op.addResponseHeader(Operation.LOCATION_HEADER, documentSelfLink);
-                    completeOperationSuccess(op, storedHost);
+                    completeOperationSuccess(op);
                     updateContainerHostInfo(documentSelfLink);
                     triggerEpzEnumeration();
                 }));
@@ -699,12 +699,6 @@ public class ContainerHostService extends StatelessService {
     protected void completeOperationSuccess(Operation op) {
         op.setStatusCode(HttpURLConnection.HTTP_NO_CONTENT);
         op.setBody(null);
-        op.complete();
-    }
-
-    protected void completeOperationSuccess(Operation op, Object body) {
-        op.setStatusCode(HttpURLConnection.HTTP_OK);
-        op.setBody(body);
         op.complete();
     }
 
