@@ -11,7 +11,7 @@
 
 package com.vmware.admiral.request;
 
-import static com.vmware.admiral.common.ManagementUriParts.CLOSURES_CONTAINER_DESC_LINK_NAME;
+import static com.vmware.admiral.common.ManagementUriParts.CLOSURES_CONTAINER_DESC;
 import static com.vmware.admiral.common.ManagementUriParts.CONTAINER_DESC;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isDiscoveredContainer;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isSystemContainer;
@@ -580,6 +580,6 @@ public class ContainerRemovalTaskService
 
     private boolean isClosureContainer(ContainerState cs) {
         return cs.descriptionLink != null && cs.descriptionLink
-                .startsWith(CLOSURES_CONTAINER_DESC_LINK_NAME);
+                .startsWith(CLOSURES_CONTAINER_DESC);
     }
 }

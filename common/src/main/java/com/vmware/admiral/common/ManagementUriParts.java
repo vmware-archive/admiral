@@ -66,8 +66,7 @@ public interface ManagementUriParts {
     String CLOSURES = RESOURCES + "/closures";
     String CLOSURES_DESC = RESOURCES + "/closure" + DESCRIPTION_SUFFIX;
     String CLOSURES_IMAGES = RESOURCES + "/closure-images";
-    String CLOSURES_CONTAINER_DESC_LINK_NAME = CONTAINER_DESC +
-            "/closure-execution-container-desc";
+    String CLOSURES_CONTAINER_DESC = CONTAINER_DESC + "/closure-container-desc";
 
     String CONTAINER_HOSTS = RESOURCES + "/hosts";
     String CONTAINER_HOST_DATA_COLLECTION = RESOURCES + "/hosts-data-collections";
