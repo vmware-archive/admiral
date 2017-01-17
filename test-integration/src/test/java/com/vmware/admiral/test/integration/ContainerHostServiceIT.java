@@ -548,6 +548,14 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         addHost(vicHostSpec, ContainerHostService.PLACEMENT_ZONE_NOT_EMPTY_MESSAGE);
     }
 
+    @Test
+    public void testAddHostWithNoPlacementZoneShouldPass() throws Throwable {
+        containerHostSpec.acceptCertificate = true;
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
+        computeState.resourcePoolLink = null;
+        addHost(containerHostSpec);
+    }
+
     private URI getContainerHostValidateUri() {
         return UriUtils.buildUri(host, ContainerHostService.SELF_LINK,
                 ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
