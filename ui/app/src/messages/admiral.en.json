@@ -54,7 +54,7 @@
         "tagsHint": "Enter key:value tags",
         "autoConfigure": "Auto configure",
         "autoConfigureInput":"Enable host auto configuration",
-        "autoConfigureHint": "The host will be automatically configured",
+        "autoConfigureHint": "This option will configure the docker remote API on the provided address and port with generated self signed certificates. It will be done once, over SSH. Supported operating systems are: CoreOS, PhotonOS, Ubuntu Server 16.04 or greater.",
         "reservationPolicy": "Reservation policy",
         "endpoint": "Endpoint",
         "connectionType": "Connection type",
