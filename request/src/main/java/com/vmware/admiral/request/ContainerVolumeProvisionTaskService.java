@@ -16,14 +16,17 @@ import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.VolumeOperationType;
@@ -39,10 +42,13 @@ import com.vmware.admiral.compute.container.volume.VolumeUtil;
 import com.vmware.admiral.request.ContainerVolumeProvisionTaskService.ContainerVolumeProvisionTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 
 /**
@@ -118,15 +124,11 @@ public class ContainerVolumeProvisionTaskService
     @Override
     protected void validateStateOnStart(ContainerVolumeProvisionTaskState state)
             throws IllegalArgumentException {
+        state.resourceCount = (long) state.resourceLinks.size();
+
         if (state.resourceCount < 1) {
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
         }
-
-        if (state.resourceCount != state.resourceLinks.size()) {
-            throw new IllegalArgumentException(
-                    "Size of 'resourceLinks' must be equal to 'resourcesCount'");
-        }
-
     }
 
     @Override
@@ -155,9 +157,24 @@ public class ContainerVolumeProvisionTaskService
 
         createTaskCallbackAndGetVolumeDescription(state, (taskCallback, volumeDescription) -> {
             state.instanceAdapterReference = volumeDescription.instanceAdapterReference;
-            selectHostLink(state, volumeDescription, (hostLink) -> {
-                for (String volumeLink : state.resourceLinks) {
-                    provisionVolume(state, volumeLink, hostLink, taskCallback);
+            selectHosts(state, volumeDescription, (hosts) -> {
+
+                if (hosts.size() == 1
+                        || state.resourceLinks.size() == hosts.size()) {
+                    Iterator<ComputeState> hostIt = hosts.iterator();
+                    ComputeState host = hostIt.next();
+                    for (String volumeLink : state.resourceLinks) {
+                        provisionVolume(state, volumeLink, host, taskCallback);
+
+                        if (hostIt.hasNext()) {
+                            host = hostIt.next();
+                        }
+                    }
+                } else {
+                    String err = String.format(
+                            "Unexpected size of resource links and hosts, hosts should be one or equal to resource links! Actual resources - [%s], hosts - [%s]",
+                            state.resourceLinks.size(), hosts.size());
+                    failTask(err, null);
                 }
             });
         });
@@ -214,29 +231,6 @@ public class ContainerVolumeProvisionTaskService
                             this.volumeDescription = desc;
                             callbackFunction.accept(desc);
                         }));
-    }
-
-    private void selectHostLink(ContainerVolumeProvisionTaskState state,
-            ContainerVolumeDescription volumeDescription, Consumer<String> callback) {
-        getContextContainerStates(
-                state,
-                (states) -> {
-                    getContextContainerDescriptions(
-                            states,
-                            (descriptions) -> {
-                                List<ContainerState> containerStatesForVolume = getDependantContainerStates(
-                                        descriptions, states, volumeDescription);
-                                if (containerStatesForVolume.isEmpty()) {
-                                    String err = String
-                                            .format("No container states depending on volume description [%s] found.",
-                                                    volumeDescription.name);
-                                    failTask(err, null);
-                                } else {
-                                    String hostLink = containerStatesForVolume.get(0).parentLink;
-                                    callback.accept(hostLink);
-                                }
-                            });
-                });
     }
 
     private void getContextContainerStates(ContainerVolumeProvisionTaskState state,
@@ -326,16 +320,17 @@ public class ContainerVolumeProvisionTaskService
     }
 
     private void provisionVolume(ContainerVolumeProvisionTaskState state,
-            String volumeLink, String hostLink, ServiceTaskCallback taskCallback) {
-        updateContainerVolumeStateWithContainerHostLink(volumeLink, hostLink,
+            String volumeLink, ComputeState host, ServiceTaskCallback taskCallback) {
+        updateContainerVolumeStateWithContainerHostLink(volumeLink, host,
                 () -> createAndSendContainerVolumeRequest(state, taskCallback, volumeLink));
     }
 
     private void updateContainerVolumeStateWithContainerHostLink(String volumeSelfLink,
-            String originatingHostLink, Runnable callbackFunction) {
+            ComputeState host, Runnable callbackFunction) {
 
         ContainerVolumeState patch = new ContainerVolumeState();
-        patch.originatingHostLink = originatingHostLink;
+        patch.originatingHostLink = host.documentSelfLink;
+        patch.parentLinks = new ArrayList<>(Arrays.asList(host.documentSelfLink));
 
         sendRequest(Operation
                 .createPatch(this, volumeSelfLink)
@@ -374,4 +369,104 @@ public class ContainerVolumeProvisionTaskService
                 }));
     }
 
+    private void selectHosts(ContainerVolumeProvisionTaskState state,
+            ContainerVolumeDescription volumeDescription, Consumer<List<ComputeState>> callback) {
+
+        // If hosts are provided use them directly to try to provision the volume
+        // (e.g. when External volume CRUD operations)
+        List<String> providedHostLinks = ContainerVolumeAllocationTaskService
+                .getProvidedHostIdsAsSelfLinks(state);
+
+        if (providedHostLinks != null) {
+            retrieveContainerHostsByLinks(state, providedHostLinks, (hosts) -> {
+                List<String> disabledHosts = hosts.stream().filter((host) -> {
+                    return host.powerState != PowerState.ON;
+                }).map(host -> host.address).collect(Collectors.toList());
+
+                if (disabledHosts.isEmpty()) {
+                    callback.accept(hosts);
+                } else {
+                    String err = String.format(
+                            "Requested volume provisioning for disabled hosts: [%s].",
+                            disabledHosts);
+                    failTask(err, null);
+                }
+            });
+            return;
+        }
+
+        selectHost(state, (host) -> {
+            callback.accept(Collections.singletonList(host));
+        });
+    }
+
+    private void selectHost(ContainerVolumeProvisionTaskState state,
+            Consumer<ComputeState> callback) {
+        getContextContainerStates(state, (states) -> {
+            getContextContainerDescriptions(states, (descriptions) -> {
+                List<ContainerState> containerStatesForNetwork = getDependantContainerStates(
+                        descriptions, states, volumeDescription);
+                if (containerStatesForNetwork.isEmpty()) {
+                    String err = String.format(
+                            "No container states depending on network description [%s] found.",
+                            volumeDescription.name);
+                    failTask(err, null);
+                } else {
+                    String hostLink = containerStatesForNetwork.get(0).parentLink;
+                    getHost(hostLink, (host) -> {
+                        callback.accept(host);
+                    });
+                }
+            });
+        });
+    }
+
+    private void getHost(String hostLink, Consumer<ComputeState> callback) {
+        Operation.createGet(this, hostLink).setCompletion((op, ex) -> {
+            if (ex != null) {
+                failTask("Failed retrieving host: " + Utils.toString(ex), null);
+                return;
+            }
+
+            ComputeState host = op.getBody(ComputeState.class);
+            callback.accept(host);
+        }).sendWith(this);
+    }
+
+    private void retrieveContainerHostsByLinks(ContainerVolumeProvisionTaskState state,
+            List<String> hostLinks,
+            Consumer<List<ComputeState>> callbackFunction) {
+
+        final List<ComputeState> result = new ArrayList<>();
+
+        List<String> remainingHostLinks = new ArrayList<>(hostLinks);
+
+        final QueryTask queryTask = QueryUtil.buildQuery(ComputeState.class, true);
+        QueryUtil.addListValueClause(queryTask, ComputeState.FIELD_NAME_SELF_LINK, hostLinks);
+        QueryUtil.addExpandOption(queryTask);
+
+        new ServiceDocumentQuery<ComputeState>(getHost(), ComputeState.class)
+                .query(queryTask, (r) -> {
+                    if (r.hasException()) {
+                        failTask(String.format(
+                                "Exception during retrieving hosts with links [%s]. Error: [%s]",
+                                hostLinks,
+                                Utils.toString(r.getException())), r.getException());
+                    } else if (r.hasResult()) {
+                        ComputeState cs = r.getResult();
+                        result.add(cs);
+                        remainingHostLinks.remove(cs.documentSelfLink);
+                    } else {
+                        if (!remainingHostLinks.isEmpty()) {
+                            failTask(String.format(
+                                    "Not all hosts were found! Remaining hosts: [%s]!",
+                                    remainingHostLinks),
+                                    r.getException());
+                            return;
+                        }
+
+                        callbackFunction.accept(result);
+                    }
+                });
+    }
 }
