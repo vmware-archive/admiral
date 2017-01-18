@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509TrustManager;
@@ -341,7 +340,16 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         prepareRequest(op, false);
         op.setExpiration(ServiceUtils.getExpirationTimeFromNowInMicros(
                 TimeUnit.SECONDS.toMicros(10)));
-        serviceClient.send(op);
+
+        if (isSecure(input.getDockerUri())) {
+            // Make sure that the trusted certificate is loaded before proceeding to avoid
+            // SSLHandshakeException and getting hosts in DISABLED state
+            ensureTrustDelegateExists(input, SSL_TRUST_RETRIES_COUNT, () -> {
+                serviceClient.send(op);
+            });
+        } else {
+            serviceClient.send(op);
+        }
     }
 
     @Override
