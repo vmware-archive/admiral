@@ -32,14 +32,14 @@
             </div>
           </div>
         </td>
-        <td v-if="isEnabled(model)" width="110">
+        <td v-if="isEnabled(model)" width="40">
           <div class="request-status-actions" v-if="isEnabled(model)">
-            <div v-if="model.errorMessage" class="btn btn-circle-outline"
-                 v-on:click="redirect($event)">{{i18n('app.request.actions.details.show')}}</div>
-            <div v-else class="btn btn-circle-outline"
-                 v-on:click="redirect($event)">{{i18n('app.request.actions.open')}}</div>
-            <div v-if="isDeleteEnabled(model)" href="#" class="btn btn-circle-outline"
-                 v-on:click="deleteRequest($event)">{{i18n('delete')}}</div>
+            <div v-if="model.errorMessage" class="btn"
+                 v-on:click="redirect($event)" title="{{i18n('app.request.actions.details.show')}}"><i class="fa fa-warning"></i></div>
+            <div v-else class="btn"
+                 v-on:click="redirect($event)" title="{{i18n('app.request.actions.open')}}"><i class="fa fa-eye"></i></div>
+            <div v-if="isDeleteEnabled(model)" href="#" class="btn"
+                 v-on:click="deleteRequest($event)" title="{{i18n('delete')}}"><i class="fa fa-trash"></i></div>
           </div>
         </td>
       </tr>

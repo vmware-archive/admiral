@@ -181,13 +181,9 @@ var RequestsListVueComponent = Vue.extend({
           $event.preventDefault();
 
           let $requestItemHolder = $(this.$el);
-          let $requestItem = $requestItemHolder.children('.request-item');
-
+          let $requestItem = $requestItemHolder.find('.request-item');
           let $deleteConfirmationHolder = $(InlineDeleteConfirmationTemplate());
           $deleteConfirmationHolder.height($requestItem.outerHeight(true));
-
-          let $actions = $requestItem.find('.request-status-actions');
-          $actions.addClass('hide');
           $deleteConfirmationHolder.insertAfter($requestItem);
 
           let $deleteConfirmation = $deleteConfirmationHolder
