@@ -215,7 +215,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
     }
 
     protected void fail(AdapterRequest request, Throwable e) {
-        if (e.getMessage().contains(NOT_FOUND_EXCEPTION_MESSAGE)) {
+        if (e.getMessage() != null && e.getMessage().contains(NOT_FOUND_EXCEPTION_MESSAGE)) {
             logWarning(e.getMessage());
         } else {
             logWarning(Utils.toString(e));
