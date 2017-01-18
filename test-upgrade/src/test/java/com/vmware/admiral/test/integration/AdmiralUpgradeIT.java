@@ -16,6 +16,7 @@ import static org.junit.Assert.assertEquals;
 import java.net.URI;
 import java.util.stream.Collectors;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -66,6 +67,11 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE_BRANCH);
     }
 
+    @After
+    public void cleanUp() {
+        setBaseURI(null);
+    }
+
     @Test
     public void testProvision() throws Exception {
         doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
@@ -96,6 +102,7 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         ContainerState admiralContainer = getDocument(admiralContainerLink, ContainerState.class);
         if (!dataInitialized) {
             addContentToTheProvisionedAdmiral(admiralContainer);
+            shutDownAdmiralContainer(admiralContainer);
         } else {
             validateContent(admiralContainer);
             removeData(admiralContainer);
@@ -147,6 +154,12 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         // create entities to check for after upgrade
         dockerHostSelfLink = getDockerHost().documentSelfLink;
         credentialsSelfLink = getDockerHostAuthCredentials().documentSelfLink;
+
+        dataInitialized = true;
+    }
+
+    private void shutDownAdmiralContainer(ContainerState admiralContainer) throws Exception {
+
         // send stop request to the admiral container before deleting it
         delete("/core/management");
         setBaseURI(null);
@@ -167,6 +180,5 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
                     }
                     return container.powerState.equals(PowerState.STOPPED);
                 });
-        dataInitialized = true;
     }
 }
