@@ -181,7 +181,7 @@ public final class ImplicitDependencyFilters {
                     }
 
                     for (PortBinding port : containerDescription.portBindings) {
-                        if (port.hostPort == null) {
+                        if (port.hostPort == null || port.hostPort.isEmpty()) {
                             continue;
                         }
 
