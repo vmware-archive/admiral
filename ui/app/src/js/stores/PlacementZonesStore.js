@@ -130,10 +130,10 @@ let PlacementZonesStore = Reflux.createStore({
       return Promise.all(tags.map((tag, i) =>
         result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
     }).then((createdTags) => {
-      if (tags.length !== 0) {
-        config.epzState = {
+      if (config.epzState) {
+        config.epzState = $.extend(config.epzState, {
           tagLinksToMatch: createdTags.map((tag) => tag.documentSelfLink)
-        };
+        });
       }
       return services.createPlacementZone(config);
     }).then((createdConfig) => {
@@ -176,12 +176,10 @@ let PlacementZonesStore = Reflux.createStore({
         result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
     }).then((updatedTags) => {
       if (config.epzState) {
-        config.epzState.tagLinksToMatch = updatedTags.map((tag) => tag.documentSelfLink);
-      } else if (tags.length !== 0) {
-        config.epzState = {
+        config.epzState = $.extend(config.epzState, {
           resourcePoolLink: config.resourcePoolState.documentSelfLink,
           tagLinksToMatch: updatedTags.map((tag) => tag.documentSelfLink)
-        };
+        });
       }
       return services.updatePlacementZone(config);
     }).then((updatedConfig) => {
