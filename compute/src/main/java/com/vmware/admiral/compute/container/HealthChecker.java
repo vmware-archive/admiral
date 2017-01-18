@@ -92,9 +92,10 @@ public class HealthChecker {
         @JsonProperty("unhealthy_threshold")
         public Integer unhealthyThreshold;
 
-        public String command;
-
+        @JsonProperty("continue_provisioning_on_error")
         public boolean continueProvisioningOnError;
+
+        public String command;
     }
 
     private final ServiceHost host;

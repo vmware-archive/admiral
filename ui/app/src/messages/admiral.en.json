@@ -796,6 +796,8 @@
           },
           "customProperties": "Custom Properties",
           "customPropertiesDescription": "Custom Properties allow to add attributes to the containers that will be provisioned.",
+          "healthContinueProvisionigOnError": "Ignore health check failures on provision",
+          "healthContinueProvisionigOnErrorDescription": "If health check is configured, in addition to when the service is up and running, it will also be used on provisioning. The containers will not be considered provisioned until one successful health check passes. Check this option to be able to provision even without successful health check.",
           "healthMode": "Mode",
           "healthConfigNone": "None",
           "healthConfigTCP": "TCP connection",
