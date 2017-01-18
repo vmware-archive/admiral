@@ -1427,6 +1427,25 @@ body > .loading, .container-details > .content .loading {
   font-size: 16px;
 }
 
+.side-tab-item-actions {
+  display: inline;
+  margin: 0px;
+
+  .btn {
+    border-color: transparent;
+    font-size: 16px;
+    display: inline;
+    margin: 0px 1px 0px 1px;
+    padding: 2px;
+    min-width: 30px;
+    min-height: 20px;
+    color: $secondary_hint_title_color;
+  }
+  .btn:hover {
+    background-color: #ffffff;
+    color: $main_color;
+  }
+}
 
 .requests-list {
   @extend .position-expand;
@@ -1486,7 +1505,7 @@ body > .loading, .container-details > .content .loading {
             margin-left: auto;
             margin-right: auto;
             text-align: center;
-            color: #FFFFFF;
+            color: #ffffff;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -1494,15 +1513,7 @@ body > .loading, .container-details > .content .loading {
         }
 
         .request-status-actions {
-          display: inline;
-          margin: 0px;
-          .btn.btn-circle-outline {
-            border-radius: 3px;
-            font-size: 9px;
-            min-width: 50px;
-            display: inline-block;
-            margin-left: 2px;
-          }
+          @extend .side-tab-item-actions;
         }
 
         .stage {
@@ -1554,24 +1565,17 @@ body > .loading, .container-details > .content .loading {
     }
 
     .eventlog-actions {
+      @extend .side-tab-item-actions;
+
       position: absolute;
       top: 10px;
       right: 4px;
       z-index: 10;
-      display: inline-block;
-      width: 110px;
-      text-align: right;
-      background-color: rgb(247, 247, 247);
-      padding-bottom: 2px;
 
-      .btn.btn-circle-outline {
-        border-radius: 3px;
-        font-size: 9px;
-        width: 50px;
-        float: right;
-        display: inline;
-        margin: 0px 2px 0px 2px;
-      }
+      display: inline-block;
+
+      text-align: right;
+      padding-bottom: 2px;
     }
 
     .delete-inline-item-confirmation-holder {
@@ -1582,14 +1586,17 @@ body > .loading, .container-details > .content .loading {
     }
 
     .eventlog-item {
+      position: relative;
+      display: block;
+
       margin-left: 10px;
       margin-right: 10px;
+
       padding-bottom: 10px;
       padding-top: 10px;
-      display: block;
-      border-bottom: 1px solid #ccc;
+
+      border-bottom: 1px solid $secondary_hint_title_color;
       text-decoration: none;
-      position: relative;
       line-height: 16px;
 
       .content {
@@ -1599,7 +1606,7 @@ body > .loading, .container-details > .content .loading {
         border-width: 0px 0px 0px 3px;
         padding-left: 5px;
         overflow-wrap: break-word;
-        width: 74%;
+        width: 85%;
 
         .timestamp {
           font-size: 12px;
