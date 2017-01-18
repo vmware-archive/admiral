@@ -216,6 +216,7 @@ public class CompositeDescriptionContentService extends StatelessService {
             return getHost().sendWithDeferredResult(createDescriptionOp);
         }).handle((o, e) -> {
             if (e != null) {
+                logWarning("Failed to create CompositeDescription: %s", Utils.toString(e));
                 op.fail(new IllegalStateException("Failed to create CompositeDescription: "
                         + Utils.toString(e)));
                 return null;

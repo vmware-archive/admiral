@@ -32,7 +32,9 @@ import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.gson.JsonPrimitive;
 
+import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
@@ -437,7 +439,12 @@ public class BindingEvaluator {
             }
 
             if (field != null) {
-                value = field.get(value);
+                if (value instanceof Closure) {
+                    value = fromClosureMap(value, field);
+                } else {
+                    value = field.get(value);
+                }
+
             } else {
                 // handle special case, as we implicitly put any not know property into
                 // customProperties.
@@ -446,6 +453,23 @@ public class BindingEvaluator {
         }
 
         return value;
+    }
+
+    private static Object fromClosureMap(Object value, Field field) throws IllegalAccessException {
+        Map values = (Map) field.get(value);
+        Map convertedMap = new HashMap(values.size());
+
+        values.forEach((k, v) -> {
+            Object objVal;
+            if (v instanceof JsonPrimitive) {
+                objVal = ((JsonPrimitive) v).getAsString();
+            } else {
+                objVal = v.toString();
+            }
+            convertedMap.put(k, objVal);
+        });
+
+        return convertedMap;
     }
 
     @SuppressWarnings("unchecked")
