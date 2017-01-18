@@ -21,14 +21,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.google.gson.JsonPrimitive;
+
 import org.junit.Test;
 
+import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.content.Binding;
 import com.vmware.admiral.compute.content.Binding.BindingPlaceholder;
+import com.vmware.photon.controller.model.resources.ResourceState;
 
 public class BindingEvaluatorTest {
 
@@ -56,6 +60,35 @@ public class BindingEvaluatorTest {
                 .get(1).getServiceDocument();
 
         assertEquals(firstDescription._cluster, secondDescription._cluster);
+    }
+
+    @Test
+    public void testEvaluateSingleClosureBinding() {
+        Closure closure = new Closure();
+        closure.name = "Closure";
+
+        JsonPrimitive inStr = new JsonPrimitive("localhost");
+        closure.inputs = new HashMap<>();
+        closure.inputs.put("hostname", inStr);
+
+        ContainerDescription secondDescription = new ContainerDescription();
+        secondDescription.name = "Container";
+
+        List<Binding> bindings = Arrays.asList(
+                binding(Arrays.asList("hostname"), "Closure~inputs~hostname"));
+        Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("Container", bindings);
+
+        CompositeDescriptionExpanded compositeDescription = createCompositeDesc(Arrays
+                .asList(closure, secondDescription), Arrays.asList(componentBinding));
+
+        BindingEvaluator.evaluateBindings(compositeDescription);
+
+        closure = (Closure) compositeDescription.componentDescriptions
+                .get(0).getServiceDocument();
+        secondDescription = (ContainerDescription) compositeDescription.componentDescriptions
+                .get(1).getServiceDocument();
+
+        assertEquals(closure.inputs.get("hostname").getAsString(), secondDescription.hostname);
     }
 
     @Test
@@ -414,7 +447,7 @@ public class BindingEvaluatorTest {
     }
 
     public static CompositeDescriptionExpanded createCompositeDesc(
-            List<ContainerDescription> containerDescriptions,
+            List<ResourceState> containerDescriptions,
             List<Binding.ComponentBinding> componentBindings) {
         CompositeDescriptionExpanded compositeDescription = new CompositeDescriptionExpanded();
         compositeDescription.componentDescriptions = containerDescriptions.stream()

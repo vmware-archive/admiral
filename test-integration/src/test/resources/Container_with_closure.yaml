@@ -33,11 +33,13 @@ components:
           ctx.outputs.resultObj.a = m.p + ctx.inputs.b;
           console.log('Hello int result: ' + ctx.outputs.resultInt);
           console.log('Hello obj result: ' + ctx.outputs.resultObj);
+          ctx.outputs.address = ctx.inputs.address;
         };
 
       outputNames:
         - resultInt
         - resultObj
+        - address
       logConfiguration:
         type: "json-file"
         config:
@@ -46,6 +48,8 @@ components:
       inputs:
         a: ${_resource~kitematicBeforeClosure~a}
         b: ${_resource~kitematicBeforeClosure~b}
+        address: ${_resource~kitematicBeforeClosure~address}
+        invalid: ${_resource~kitematicBeforeClosure~invalid-property}
   kitematicAfterClosure:
     type: App.Container
     data:
@@ -56,4 +60,5 @@ components:
           value: ${_resource~test~outputs~resultObj}
       customProperties:
         input_int: ${_resource~test~outputs~resultInt}
+        address: ${_resource~test~outputs~address}
 

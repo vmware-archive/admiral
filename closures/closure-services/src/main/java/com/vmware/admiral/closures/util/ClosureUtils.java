@@ -118,7 +118,7 @@ public final class ClosureUtils {
 
         if (!fieldsIterator.hasNext()) {
             com.google.gson.JsonParser parser = new com.google.gson.JsonParser();
-            return parser.parse(node.textValue());
+            return parser.parse(node.asText());
         }
 
         while (fieldsIterator.hasNext()) {

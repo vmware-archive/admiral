@@ -13,10 +13,13 @@ package com.vmware.admiral.test.integration;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -111,6 +114,10 @@ public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
                 afterClosureContainer.env[0]);
         assertEquals(expectedClosureResult,
                 Integer.parseInt(afterClosureContainer.customProperties.get("input_int")));
+        String firstContainerIPAddress = afterClosureContainer.customProperties.get("address");
+        assertNotNull(firstContainerIPAddress);
+        assertTrue("Address for first container is not valid: " + firstContainerIPAddress,
+                isValidIP(firstContainerIPAddress));
 
         // Verify request status
         RequestStatusService.RequestStatus rs = getDocument(request.requestTrackerLink,
@@ -122,6 +129,12 @@ public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
         waitForClosureContainerCleanUp(
                 closureState.resourceLinks.iterator().next(),
                 r -> r.statusCode == 404);
+    }
+
+    public static boolean isValidIP(String ipAddr) {
+        Pattern ptn = Pattern.compile("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$");
+        Matcher mtch = ptn.matcher(ipAddr);
+        return mtch.find();
     }
 
     private ContainerState findProvisionedResource(List<ContainerState> provisionedResources,
