@@ -32,11 +32,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+
 import javax.net.ssl.SSLContext;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import org.junit.After;
 import org.junit.Before;
 import org.objenesis.Objenesis;
@@ -81,7 +83,7 @@ public abstract class BaseTestCase {
             "dcp.management.test.wait.thread.sleep.millis", 500);
     private static final int HOST_TIMEOUT_SECONDS = 60;
 
-    protected static final int MAINTENANCE_INTERVAL_MILLIS = 250;
+    protected static final int MAINTENANCE_INTERVAL_MILLIS = 50;
     protected VerificationHost host;
 
     private static class CustomizationVerificationHost extends VerificationHost {
@@ -761,13 +763,13 @@ public abstract class BaseTestCase {
     @SuppressWarnings("unchecked")
     protected <T extends ServiceDocument> T doOperation(T inState, URI uri,
             boolean expectFailure, Action action) throws Throwable {
-        return (T)doOperation(inState, uri, ServiceDocument.class, expectFailure, action);
+        return (T) doOperation(inState, uri, ServiceDocument.class, expectFailure, action);
     }
 
     protected <T extends ServiceDocument> T doOperation(T inState, URI uri, Class<T> type,
             boolean expectFailure, Action action) throws Throwable {
         host.log("Executing operation %s for resource: %s ...", action.name(), uri);
-        final List<T> doc = Arrays.asList((T)null);
+        final List<T> doc = Arrays.asList((T) null);
         final Throwable[] error = { null };
         TestContext ctx = testCreate(1);
 
