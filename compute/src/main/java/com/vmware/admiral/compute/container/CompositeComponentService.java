@@ -188,7 +188,9 @@ public class CompositeComponentService extends StatefulService {
                 ContainerNetworkState.class).query(
                         networksQuery, (r) -> {
                             if (r.hasResult()) {
-                                if (r.getResult().external) {
+                                boolean external = r.getResult().external != null
+                                        ? r.getResult().external : false;
+                                if (external) {
                                     ContainerNetworkState networkState = r.getResult();
                                     networkState.compositeComponentLinks.remove(composite.documentSelfLink);
                                     updateNetworkState(networkState);
@@ -216,7 +218,9 @@ public class CompositeComponentService extends StatefulService {
                 ContainerVolumeState.class).query(
                         volumesQuery, (r) -> {
                             if (r.hasResult()) {
-                                if (r.getResult().external) {
+                                boolean external = r.getResult().external != null
+                                        ? r.getResult().external : false;
+                                if (external) {
                                     ContainerVolumeState volumeState = r.getResult();
                                     volumeState.compositeComponentLinks.remove(composite.documentSelfLink);
                                     updateVolumeState(volumeState);

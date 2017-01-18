@@ -178,17 +178,21 @@ public class ContainerVolumeRemovalTaskService extends
                                         logWarning(
                                                 "Volume with name '%s' is retired. Deleting the state only.",
                                                 volumeState.name);
-                                        state.removeOnly = true;
-                                        deleteResourceInstances(state, resourceLinks, subTaskLink);
+                                        completeSubTasksCounter(subTaskLink, null);
+                                    } else if (volumeState.originatingHostLink == null
+                                            || volumeState.originatingHostLink.isEmpty()) {
+                                        logWarning(
+                                                "No originatingHostLink set for volume state [%s].",
+                                                volumeState.documentSelfLink);
+                                        completeSubTasksCounter(subTaskLink, null);
                                     } else {
-                                        sendContainerVolumeDeleteRequest(volumeState,
-                                                subTaskLink);
+                                        sendContainerVolumeDeleteRequest(volumeState, subTaskLink);
                                     }
                                 }));
             }
             proceedTo(SubStage.INSTANCES_REMOVING);
         } catch (Throwable e) {
-            failTask("Unexpected exception while deleting container instances", e);
+            failTask("Unexpected exception while deleting container volume instances", e);
         }
     }
 
