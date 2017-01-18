@@ -35,7 +35,7 @@ public class FilterContext {
         filterContext.resourcePoolLinks = state.resourcePoolLinks;
         filterContext.resourceCount = state.resourceCount;
         filterContext.isClustering = state
-                .getCustomProperty(RequestUtils.CLUSTERING_OPERATION_CUSTOM_PROP) == null;
+                .getCustomProperty(RequestUtils.CLUSTERING_OPERATION_CUSTOM_PROP) != null;
         if (state.serviceTaskCallback != null) {
             filterContext.serviceLink = state.serviceTaskCallback.serviceSelfLink;
         }

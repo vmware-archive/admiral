@@ -439,6 +439,8 @@ public class ReservationTaskService
             return;
         }
 
+        logInfo("Hosts selected " + state.hostSelections);
+
         final Set<String> resourcePools = new HashSet<>();
         state.hostSelections.forEach(hs -> resourcePools.addAll(hs.resourcePoolLinks));
 

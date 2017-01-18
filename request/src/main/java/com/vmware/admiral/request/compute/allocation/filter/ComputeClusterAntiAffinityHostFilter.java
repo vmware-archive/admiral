@@ -115,8 +115,8 @@ public class ComputeClusterAntiAffinityHostFilter
             Map<String, HostSelection> hostSelectionMap,
             HostSelectionFilterCompletion callback) {
 
-        //In case this is a clustering operation we want to continue even if cluster size <= 1
-        if (!isActive() && filterContext.resourceCount <= 1 && filterContext.isClustering) {
+        //In case this is a clustering operation we want to continue filtering even if resourceCount <= 1
+        if (!isActive() && filterContext.resourceCount <= 1 && !filterContext.isClustering) {
             callback.complete(hostSelectionMap, null);
             return;
         }

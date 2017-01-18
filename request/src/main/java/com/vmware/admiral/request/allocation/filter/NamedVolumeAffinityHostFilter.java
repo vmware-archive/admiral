@@ -147,7 +147,7 @@ public class NamedVolumeAffinityHostFilter
                         ContainerVolumeState volumeState = r.getResult();
                         final DescName descName = descLinksWithNames
                                 .get(volumeState.descriptionLink);
-                        descName.addContainerNames(
+                        descName.addResourceNames(
                                 Collections.singletonList(volumeState.name));
                         requiredDrivers.computeIfAbsent(volumeState.driver, v -> new HashSet<>())
                                 .add(descName.descriptionName);

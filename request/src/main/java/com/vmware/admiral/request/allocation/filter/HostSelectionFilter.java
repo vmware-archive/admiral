@@ -80,8 +80,8 @@ public interface HostSelectionFilter<T> extends AffinityFilter {
                 String[] split = names[i].split(SPLIT_REGEX, 2);
                 String name = split[0];
                 DescName descName = descNames.get(name);
-                if (descName != null && !descName.containerNames.isEmpty()) {
-                    for (String containerName: descName.containerNames) {
+                if (descName != null && !descName.resourceNames.isEmpty()) {
+                    for (String containerName : descName.resourceNames) {
                         if (split.length == 2) {
                             containerName = containerName + SPLIT_REGEX + split[1];
                         }
@@ -100,7 +100,7 @@ public interface HostSelectionFilter<T> extends AffinityFilter {
         public String descLink;
         public String descriptionName;
         public String[] affinities;
-        public Set<String> containerNames;
+        public Set<String> resourceNames;
 
         public DescName() {
         }
@@ -109,19 +109,19 @@ public interface HostSelectionFilter<T> extends AffinityFilter {
             this.descLink = descName.descLink;
             this.descriptionName = descName.descriptionName;
             this.affinities = descName.affinities != null ? descName.affinities.clone() : null;
-            this.containerNames =
-                    descName.containerNames != null ? new HashSet<>(descName.containerNames) : null;
+            this.resourceNames =
+                    descName.resourceNames != null ? new HashSet<>(descName.resourceNames) : null;
         }
 
-        public void addContainerNames(List<String> names) {
+        public void addResourceNames(List<String> names) {
             if (names == null) {
                 return;
             }
 
-            if (containerNames == null) {
-                containerNames = new HashSet<>();
+            if (resourceNames == null) {
+                resourceNames = new HashSet<>();
             }
-            containerNames.addAll(names);
+            resourceNames.addAll(names);
         }
     }
 
