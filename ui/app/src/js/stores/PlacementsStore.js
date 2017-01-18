@@ -452,7 +452,7 @@ let PlacementsStore = Reflux.createStore({
   onCreatePlacementZone: function() {
     this.openToolbarItem(constants.CONTEXT_PANEL.PLACEMENT_ZONES, PlacementZonesStore.getData(),
       true);
-    actions.PlacementZonesActions.editPlacementZone();
+    actions.PlacementZonesActions.editPlacementZone({});
   },
 
   onManagePlacementZones: function() {

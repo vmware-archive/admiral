@@ -117,6 +117,8 @@
         "update": "Edit Placement Zone",
         "nameTitle": "Placement zone name",
         "endpointTitle": "Endpoint",
+        "placementPolicy": "Advanced Placement Policy",
+        "placementPolicyHint": "By default resources are placed on random hosts. One of the following strategies can be optionally applied:<br><br><b>BINPACK</b> - place on most loaded host until it reach the limit of resource<br><br><b>SPREAD</b> - place on host with minimum resources",
         "dynamicTitle": "Dynamically allocate resources to this zone",
         "tagsToMatchTitle": "Tags to match",
         "tagsToMatchHint": "Enter key:value tags to match",

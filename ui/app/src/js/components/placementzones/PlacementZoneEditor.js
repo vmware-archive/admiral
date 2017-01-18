@@ -25,23 +25,24 @@ var PlacementZoneEditor = Vue.extend({
     }
   },
   computed: {
-    showEndpoint: function() {
+    showEndpoint: () => {
       return utils.isApplicationCompute();
     }
   },
-  data: function() {
+  data() {
     return {
+      placementPolicy: null,
       saveDisabled: !this.model.item.name
     };
   },
   methods: {
-    cancel: function($event) {
+    cancel($event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
 
       PlacementZonesActions.cancelEditPlacementZone();
     },
-    save: function($event) {
+    save($event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
 
@@ -76,13 +77,23 @@ var PlacementZoneEditor = Vue.extend({
         return prev;
       }, []);
 
+      if (tags.length) {
+        item.epzState = item.epzState || {};
+      }
+
+      if (this.placementPolicy) {
+        item.epzState = $.extend(item.epzState || {}, {
+          placementPolicy: this.placementPolicy
+        });
+      }
+
       if (item.documentSelfLink) {
         PlacementZonesActions.updatePlacementZone(item, tags);
       } else {
         PlacementZonesActions.createPlacementZone(item, tags);
       }
     },
-    searchEndpoints: function(...args) {
+    searchEndpoints(...args) {
       return new Promise((resolve, reject) => {
         services.searchEndpoints.apply(null, args).then((result) => {
           result.items.forEach((item) =>
@@ -91,14 +102,17 @@ var PlacementZoneEditor = Vue.extend({
         }).catch(reject);
       });
     },
-    onEndpointChange: function(endpoint) {
+    onEndpointChange(endpoint) {
       this.endpoint = endpoint;
     },
-    onNameChange: function() {
+    onNameChange() {
       this.name = (this.nameInput.val() || '').trim();
       this.saveDisabled = !this.name;
     },
-    onDynamicChange: function() {
+    onPlacementPolicyChange(value) {
+      this.placementPolicy = value && value.name;
+    },
+    onDynamicChange() {
       if (this.dynamicInput.is(':checked')) {
         this.tagsContainer.show();
       } else {
@@ -107,7 +121,7 @@ var PlacementZoneEditor = Vue.extend({
       this.tags.setValue([]);
     }
   },
-  attached: function() {
+  attached() {
     this.name = this.model.item.name;
     this.nameInput = $('.name-input', this.$el);
     this.dynamicInput = $('.dynamic-input', this.$el);
