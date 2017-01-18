@@ -19,6 +19,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 
 import com.vmware.xenon.common.ServiceClient;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.http.netty.NettyHttpServiceClient;
 
 /**
@@ -78,10 +79,13 @@ public class ServiceClientFactory {
             int requestPayloadSizeLimit) {
         ServiceClient serviceClient;
         try {
+            // supply a scheduled executor for re-use by the client, but do not supply our
+            // regular executor, since the I/O threads might take up all threads
             serviceClient = NettyHttpServiceClient.create(
                     ServiceClientFactory.class.getCanonicalName(),
-                    Executors.newFixedThreadPool(4),
-                    Executors.newScheduledThreadPool(1));
+                    null,
+                    Executors.newScheduledThreadPool(Utils.DEFAULT_THREAD_COUNT, r -> new Thread(
+                            r, ServiceClientFactory.class.getSimpleName())));
 
             if (requestPayloadSizeLimit > 0) {
                 serviceClient.setRequestPayloadSizeLimit(requestPayloadSizeLimit);
