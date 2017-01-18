@@ -19,6 +19,7 @@ import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOr
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.junit.After;
 import org.junit.Before;
@@ -28,6 +29,7 @@ import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
@@ -549,11 +551,33 @@ public class ContainerHostServiceIT extends RequestBaseTest {
     }
 
     @Test
-    public void testAddHostWithNoPlacementZoneShouldPass() throws Throwable {
+    public void testAddDockerHostWithNoPlacementZoneShouldPass() throws Throwable {
         containerHostSpec.acceptCertificate = true;
         computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
         computeState.resourcePoolLink = null;
         addHost(containerHostSpec);
+    }
+
+    @Test
+    public void testAddVicHostWithNoPlacementZoneShouldFail() throws Throwable {
+        vicHostSpec.acceptCertificate = true;
+        vicHostState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
+        vicHostState.resourcePoolLink = null;
+        markHostForVicValidation(vicHostState);
+        addHost(vicHostSpec, String.format(AssertUtil.PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT,
+                "resourcePoolLink"));
+    }
+
+    @Test
+    public void testAddVicHostWithTagsShouldFail() throws Throwable {
+        vicHostSpec.acceptCertificate = true;
+        vicHostState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
+        vicHostState.tagLinks = new HashSet<>();
+        vicHostState.tagLinks.add("sample-tag-link");
+        markHostForVicValidation(vicHostState);
+
+        addHost(vicHostSpec,
+                String.format(AssertUtil.PROPERTY_MUST_BE_EMPTY_MESSAGE_FORMAT, "tagLinks"));
     }
 
     private URI getContainerHostValidateUri() {
@@ -573,9 +597,26 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                         // add should succeed
                         try {
                             verifyStatusCode(o.getStatusCode(), HttpURLConnection.HTTP_NO_CONTENT);
+                            // store the self link of the added ComputeState instance
                             hostSpec.hostState.documentSelfLink = o
                                     .getResponseHeader(Operation.LOCATION_HEADER);
-                            host.completeIteration();
+
+                            // do some verification of the added ComputeState instance
+                            Operation.createGet(host, hostSpec.hostState.documentSelfLink)
+                                    .setReferer("/")
+                                    .setCompletion((verificationOp, verificationEx) -> {
+                                        if (verificationEx != null) {
+                                            host.failIteration(verificationEx);
+                                            return;
+                                        }
+                                        try {
+                                            verifyAddedComputeState(hostSpec.hostState,
+                                                    verificationOp.getBody(ComputeState.class));
+                                            host.completeIteration();
+                                        } catch (IllegalArgumentException ex) {
+                                            host.failIteration(ex);
+                                        }
+                                    }).sendWith(host);
                         } catch (IllegalStateException ex) {
                             host.log("Unexpected exception: %s", Utils.toString(e));
                             host.failIteration(ex);
@@ -619,7 +660,15 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                     expectedStatusCode, statusCode);
             throw new IllegalStateException(errorMessage);
         }
+    }
 
+    private void verifyAddedComputeState(ComputeState expectedState, ComputeState resultState) {
+        AssertUtil.assertNotNull(resultState, "resultState");
+        if (expectedState.resourcePoolLink != null) {
+            AssertUtil.assertTrue(
+                    expectedState.resourcePoolLink.equals(resultState.resourcePoolLink),
+                    "resourcePoolLinks don't match");
+        }
     }
 
     private void markHostForVicValidation(ComputeState cs) {

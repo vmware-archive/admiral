@@ -382,12 +382,6 @@ public class ContainerHostService extends StatelessService {
             break;
 
         case VIC:
-            // Schedulers can be added to placements zones explicitly, it is not possible to use
-            // tags
-            AssertUtil.assertNotEmpty(hostSpec.hostState.resourcePoolLink, "resourcePoolLink");
-            if (hostSpec.hostState.tagLinks != null) {
-                hostSpec.hostState.tagLinks.clear();
-            }
             verifyPlacementZoneIsEmpty(hostSpec, op, () -> {
                 storeVicHost(hostSpec, op, triggerDataCollection);
             });
@@ -403,6 +397,16 @@ public class ContainerHostService extends StatelessService {
 
     private void storeVicHost(ContainerHostSpec hostSpec, Operation op,
             boolean triggerDataCollection) {
+        try {
+            // Schedulers can be added to placements zones only explicitly, it is not possible to
+            // use tags
+            AssertUtil.assertNotEmpty(hostSpec.hostState.resourcePoolLink, "resourcePoolLink");
+            AssertUtil.assertEmpty(hostSpec.hostState.tagLinks, "tagLinks");
+        } catch (IllegalArgumentException ex) {
+            op.fail(ex);
+            return;
+        }
+
         // VIC verification relies on data gathered by a docker info command
         getHostInfo(hostSpec, op, hostSpec.sslTrust, (computeState) -> {
             if (ContainerHostUtil.isVicHost(computeState)) {

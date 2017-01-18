@@ -18,6 +18,9 @@ import java.util.Map;
 
 public class AssertUtil {
 
+    public static final String PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT = "'%s' cannot be empty";
+    public static final String PROPERTY_MUST_BE_EMPTY_MESSAGE_FORMAT = "'%s' must be empty";
+
     public static void assertNotNull(Object value, String propertyName) {
         if (value == null) {
             throw new IllegalArgumentException("'" + propertyName + "' is required");
@@ -26,7 +29,8 @@ public class AssertUtil {
 
     public static void assertNotEmpty(String value, String propertyName) {
         if (value == null || value.isEmpty()) {
-            throw new IllegalArgumentException("'" + propertyName + "' cannot be empty");
+            throw new IllegalArgumentException(
+                    String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, propertyName));
         }
     }
 
@@ -37,19 +41,29 @@ public class AssertUtil {
 
     public static void assertNotEmpty(Map<?, ?> value, String propertyName) {
         if (value == null || value.isEmpty()) {
-            throw new IllegalArgumentException("'" + propertyName + "' cannot be empty");
+            throw new IllegalArgumentException(
+                    String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, propertyName));
         }
     }
 
     public static void assertNotEmpty(Collection<?> value, String propertyName) {
         if (value == null || value.isEmpty()) {
-            throw new IllegalArgumentException("'" + propertyName + "' cannot be empty");
+            throw new IllegalArgumentException(
+                    String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, propertyName));
         }
     }
 
     public static void assertNotEmpty(Object[] value, String propertyName) {
         if (value == null || value.length == 0) {
-            throw new IllegalArgumentException("'" + propertyName + "' cannot be empty");
+            throw new IllegalArgumentException(
+                    String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, propertyName));
+        }
+    }
+
+    public static void assertEmpty(Collection<?> value, String propertyName) {
+        if (value != null && !value.isEmpty()) {
+            throw new IllegalArgumentException(
+                    String.format(PROPERTY_MUST_BE_EMPTY_MESSAGE_FORMAT, propertyName));
         }
     }
 
