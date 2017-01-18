@@ -31,6 +31,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.UriUtils;
 
 /**
  * Utility class for docker volume related operations.
@@ -169,6 +170,14 @@ public class VolumeUtil {
         // TODO - fill in other volume settings
 
         return volumeDescription;
+    }
+
+    public static String buildVolumeLink(String name) {
+        return UriUtils.buildUriPath(ContainerVolumeService.FACTORY_LINK, buildVolumeId(name));
+    }
+
+    public static String buildVolumeId(String resourceName) {
+        return resourceName.replaceAll(" ", "-");
     }
 
     private static void addAffinity(String affinityTo, ContainerDescription cd) {

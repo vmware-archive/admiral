@@ -13,13 +13,18 @@ package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
+import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
+import static com.vmware.admiral.request.ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
@@ -29,6 +34,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState.PowerState;
+import com.vmware.admiral.compute.container.volume.VolumeUtil;
 import com.vmware.admiral.request.ContainerVolumeAllocationTaskService.ContainerVolumeAllocationTaskState.SubStage;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
@@ -37,6 +43,7 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -62,6 +69,7 @@ public class ContainerVolumeAllocationTaskService extends
 
         public static enum SubStage {
             CREATED,
+            CONTEXT_PREPARED,
             RESOURCES_NAMED,
             COMPLETED,
             ERROR
@@ -122,21 +130,31 @@ public class ContainerVolumeAllocationTaskService extends
             throw new IllegalArgumentException("'resourceCount' must be greater than 0.");
         }
 
+        List<String> providedHostIds = getProvidedHostIds(state);
+
+        if (providedHostIds != null) {
+            state.resourceCount = state.resourceCount * providedHostIds.size();
+        }
     }
 
     @Override
     protected void handleStartedStagePatch(ContainerVolumeAllocationTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            prepareContextAndCreateResourcePrefixNameSelectionTask(state, null);
+            prepareContext(state, null);
+            break;
+        case CONTEXT_PREPARED:
+            if (state.resourceNames == null || state.resourceNames.isEmpty()) {
+                createResourcePrefixNameSelectionTask(state, volumeDescription);
+            } else {
+                proceedTo(SubStage.RESOURCES_NAMED);
+            }
             break;
         case RESOURCES_NAMED:
             createContainerVolumeStates(state, null, null);
             break;
         case COMPLETED:
-            complete(SubStage.COMPLETED, s -> {
-                s.resourceLinks = buildResourceLinks(state);
-            });
+            updateResourcesAndComplete(state);
             break;
         case ERROR:
             completeWithError();
@@ -144,7 +162,6 @@ public class ContainerVolumeAllocationTaskService extends
         default:
             break;
         }
-
     }
 
     @Override
@@ -181,61 +198,36 @@ public class ContainerVolumeAllocationTaskService extends
         return statusTask;
     }
 
-    private void prepareContextAndCreateResourcePrefixNameSelectionTask(
-            ContainerVolumeAllocationTaskState state,
-            ContainerVolumeDescription volumeDescription) {
-        if (volumeDescription == null) {
-            getContainerVolumeDescription(state,
-                    (volumeDesc) -> this.prepareContextAndCreateResourcePrefixNameSelectionTask(
-                            state,
-                            volumeDesc));
-            return;
+    private Set<String> buildResourceLinks(Set<String> resourceNames) {
+        logInfo("Generate provisioned resourceLinks");
+        Set<String> resourceLinks = new HashSet<>(resourceNames.size());
+        for (String resourceName : resourceNames) {
+            String volumeLink = VolumeUtil.buildVolumeLink(resourceName);
+            resourceLinks.add(volumeLink);
         }
-
-        // prepare context
-        prepareContext(state, volumeDescription);
-
-        // create ResourcePrefixNameSelectionTask in order to populate resourceNames.
-        if (state.resourceNames == null || state.resourceNames.isEmpty()) {
-            createResourcePrefixNameSelectionTask(state, volumeDescription);
-        } else {
-            proceedTo(SubStage.RESOURCES_NAMED);
-        }
-    }
-
-    private void getContainerVolumeDescription(ContainerVolumeAllocationTaskState state,
-            Consumer<ContainerVolumeDescription> callbackFunction) {
-        if (volumeDescription != null) {
-            callbackFunction.accept(volumeDescription);
-            return;
-        }
-
-        sendRequest(Operation.createGet(this, state.resourceDescriptionLink)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure retrieving container volume description.", e);
-                        return;
-                    }
-
-                    ContainerVolumeDescription desc = o.getBody(ContainerVolumeDescription.class);
-                    this.volumeDescription = desc;
-                    callbackFunction.accept(desc);
-                }));
+        return resourceLinks;
     }
 
     private void prepareContext(ContainerVolumeAllocationTaskState state,
             ContainerVolumeDescription volumeDescription) {
         assertNotNull(state, "state");
-        assertNotNull(volumeDescription, "volumeDescription");
 
-        // merge request/allocation properties over the volume description properties
-        state.customProperties = mergeProperty(volumeDescription.customProperties,
-                state.customProperties);
-
-        if (state.getCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY) == null) {
-            state.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, getSelfId());
+        if (volumeDescription == null) {
+            getContainerVolumeDescription(state,
+                    (volumeDesc) -> this.prepareContext(state, volumeDesc));
+            return;
         }
-        state.descName = volumeDescription.name;
+
+        proceedTo(SubStage.CONTEXT_PREPARED, s -> {
+            // merge request/allocation properties over the network description properties
+            s.customProperties = mergeCustomProperties(volumeDescription.customProperties,
+                    state.customProperties);
+
+            if (s.getCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY) == null) {
+                s.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, getSelfId());
+            }
+            s.descName = volumeDescription.name;
+        });
     }
 
     private void createResourcePrefixNameSelectionTask(ContainerVolumeAllocationTaskState state,
@@ -299,65 +291,106 @@ public class ContainerVolumeAllocationTaskService extends
         assertNotEmpty(resourceName, "resourceName");
         assertNotNull(taskCallback, "taskCallback");
 
-        final ContainerVolumeState volumeState = new ContainerVolumeState();
-        volumeState.documentSelfLink = buildResourceId(resourceName);
-        volumeState.name = resourceName;
-        volumeState.tenantLinks = state.tenantLinks;
-        volumeState.descriptionLink = state.resourceDescriptionLink;
-        volumeState.customProperties = state.customProperties;
-        volumeState.driver = volumeDescription.driver;
-        volumeState.options = volumeDescription.options;
-        volumeState.documentExpirationTimeMicros = ServiceUtils
-                .getDefaultTaskExpirationTimeInMicros();
-
-        String contextId;
-        if (state.customProperties != null && (contextId = state.customProperties
-                .get(FIELD_NAME_CONTEXT_ID_KEY)) != null) {
-            volumeState.compositeComponentLinks = new ArrayList<>();
-            volumeState.compositeComponentLinks.add(UriUtils.buildUriPath(
-                    CompositeComponentFactoryService.SELF_LINK, contextId));
+        if (Boolean.TRUE.equals(volumeDescription.external)) {
+            completeSubTasksCounter(taskCallback, null);
+            return;
         }
 
-        volumeState.powerState = PowerState.PROVISIONING;
+        try {
+            final ContainerVolumeState volumeState = new ContainerVolumeState();
+            volumeState.documentSelfLink = VolumeUtil.buildVolumeId(resourceName);
+            volumeState.name = resourceName;
+            volumeState.tenantLinks = state.tenantLinks;
+            volumeState.descriptionLink = state.resourceDescriptionLink;
+            volumeState.customProperties = state.customProperties;
+            volumeState.driver = volumeDescription.driver;
+            volumeState.options = volumeDescription.options;
 
-        volumeState.options = volumeDescription.options;
+            volumeState.external = (getProvidedHostIds(state) != null);
 
-        sendRequest(OperationUtil
-                .createForcedPost(this, ContainerVolumeService.FACTORY_LINK)
-                .setBody(volumeState)
-                .setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                failTask("System failure creating ContainerVolumeStates", e);
-                                return;
-                            }
+            volumeState.powerState = PowerState.PROVISIONING;
 
-                            ContainerVolumeState body = o
-                                    .getBody(ContainerVolumeState.class);
-                            logInfo("Created ContainerVolumeState: %s ",
-                                    body.documentSelfLink);
+            volumeState.documentExpirationTimeMicros = ServiceUtils
+                    .getDefaultTaskExpirationTimeInMicros();
+            volumeState.adapterManagementReference = volumeDescription.instanceAdapterReference;
 
-                            completeSubTasksCounter(taskCallback, e);
-                        }));
-    }
+            String contextId;
+            if (!volumeState.external && state.customProperties != null
+                    && (contextId = state.customProperties
+                            .get(FIELD_NAME_CONTEXT_ID_KEY)) != null) {
+                volumeState.compositeComponentLinks = new ArrayList<>();
+                volumeState.compositeComponentLinks.add(UriUtils.buildUriPath(
+                        CompositeComponentFactoryService.SELF_LINK, contextId));
+            }
 
-    private Set<String> buildResourceLinks(ContainerVolumeAllocationTaskState state) {
-        logInfo("Generate provisioned resourceLinks");
-        Set<String> resourceLinks = new HashSet<>(state.resourceNames.size());
-        for (String resourceName : state.resourceNames) {
-            String volumeLink = buildResourceLink(resourceName);
-            resourceLinks.add(volumeLink);
+            sendRequest(OperationUtil
+                    .createForcedPost(this, ContainerVolumeService.FACTORY_LINK)
+                    .setBody(volumeState)
+                    .setCompletion(
+                            (o, e) -> {
+                                if (e == null) {
+                                    ContainerVolumeState body = o
+                                            .getBody(ContainerVolumeState.class);
+                                    logInfo("Created ContainerVolumeState: %s ",
+                                            body.documentSelfLink);
+                                }
+                                completeSubTasksCounter(taskCallback, e);
+                            }));
+
+        } catch (Throwable e) {
+            failTask("System failure creating ContainerVolumeState", e);
         }
-        return resourceLinks;
     }
 
-    private String buildResourceLink(String resourceName) {
-        return UriUtils.buildUriPath(ContainerVolumeService.FACTORY_LINK,
-                buildResourceId(resourceName));
+    private void updateResourcesAndComplete(ContainerVolumeAllocationTaskState state) {
+        getContainerVolumeDescription(state,
+                (volumeDescription) -> {
+                    complete(SubStage.COMPLETED, s -> {
+                        s.resourceLinks = buildResourceLinks(
+                                Boolean.TRUE.equals(volumeDescription.external)
+                                        ? Collections.singleton(volumeDescription.name)
+                                        : state.resourceNames);
+                    });
+                });
     }
 
-    private String buildResourceId(String resourceName) {
-        return resourceName.replaceAll(" ", "-");
+    private void getContainerVolumeDescription(ContainerVolumeAllocationTaskState state,
+            Consumer<ContainerVolumeDescription> callbackFunction) {
+        if (volumeDescription != null) {
+            callbackFunction.accept(volumeDescription);
+            return;
+        }
+
+        sendRequest(Operation.createGet(this, state.resourceDescriptionLink)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure retrieving container volume description.", e);
+                        return;
+                    }
+
+                    ContainerVolumeDescription desc = o.getBody(ContainerVolumeDescription.class);
+                    this.volumeDescription = desc;
+                    callbackFunction.accept(desc);
+                }));
+    }
+
+    public static List<String> getProvidedHostIds(TaskServiceDocument<?> state) {
+        String hostId = state.getCustomProperty(CONTAINER_HOST_ID_CUSTOM_PROPERTY);
+        if (hostId == null || hostId.isEmpty()) {
+            return null;
+        }
+        // Can be a a single id or comma separated values of ids (last part of the selfLink)
+        return Arrays.asList(hostId.split(","));
+    }
+
+    public static List<String> getProvidedHostIdsAsSelfLinks(TaskServiceDocument<?> state) {
+        List<String> ids = getProvidedHostIds(state);
+        if (ids == null) {
+            return null;
+        }
+        return ids.stream()
+                .map((id) -> UriUtils.buildUriPath(ComputeService.FACTORY_LINK, id))
+                .collect(Collectors.toList());
     }
 
 }
