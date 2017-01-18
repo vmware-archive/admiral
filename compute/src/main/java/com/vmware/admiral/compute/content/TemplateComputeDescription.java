@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute.content;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
+import com.vmware.xenon.common.Utils;
 
 /**
  * This class exists for serialization/deserialization purposes only
@@ -32,6 +34,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 public class TemplateComputeDescription extends ComputeDescriptionService.ComputeDescription {
 
     public static final String CUSTOM_PROP_NAME_CLUSTER_SIZE = "_cluster";
+    public static final String CUSTOM_PROP_NAME_AFFINITY = "affinity";
 
     @JsonAnySetter
     private void putProperty(String key, String value) {
@@ -53,5 +56,26 @@ public class TemplateComputeDescription extends ComputeDescriptionService.Comput
     @JsonAnyGetter
     private Map<String, String> getProperties() {
         return customProperties;
+    }
+
+    public static List<String> getAffinityNames(ComputeDescriptionService.ComputeDescription desc) {
+        if (desc.customProperties == null) {
+            return Collections.emptyList();
+        }
+
+        String affinitiesAsString = desc.customProperties
+                .getOrDefault(CUSTOM_PROP_NAME_AFFINITY, "");
+
+        return Utils.fromJson(affinitiesAsString, List.class);
+    }
+
+    public static void setAffinityNames(ComputeDescriptionService.ComputeDescription desc,
+            List<String> affinityNames) {
+        if (desc.customProperties == null) {
+            desc.customProperties = new HashMap<>();
+        }
+
+        String affinityNamesAsString = Utils.toJson(affinityNames);
+        desc.customProperties.put(CUSTOM_PROP_NAME_AFFINITY, affinityNamesAsString);
     }
 }

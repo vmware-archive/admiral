@@ -30,6 +30,8 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.request.compute.allocation.filter.ComputeBinpackAffinityHostFilter;
 import com.vmware.admiral.request.compute.allocation.filter.ComputeClusterAntiAffinityHostFilter;
+import com.vmware.admiral.request.compute.allocation.filter.ComputeServiceAffinityHostFilter;
+import com.vmware.admiral.request.compute.allocation.filter.ComputeServiceAntiAffinityHostFilter;
 import com.vmware.admiral.request.compute.allocation.filter.ComputeSpreadAffinityHostFilter;
 import com.vmware.admiral.request.compute.allocation.filter.ComputeToNetworkAffinityHostFilter;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -77,7 +79,11 @@ public final class AffinityFilters {
     }
 
     private void initialize(ServiceHost host, ComputeDescription desc) {
+        filters.add(new ComputeServiceAffinityHostFilter(host, desc));
+
+        filters.add(new ComputeServiceAntiAffinityHostFilter(host, desc));
         filters.add(new ComputeClusterAntiAffinityHostFilter(host, desc));
+
         filters.add(new ComputeToNetworkAffinityHostFilter(host, desc));
         filters.add(new ComputeBinpackAffinityHostFilter(host, desc));
         filters.add(new ComputeSpreadAffinityHostFilter(host, desc));

@@ -100,6 +100,7 @@ public class BaseComputeAffinityHostFilterTest extends ComputeRequestBaseTest {
         List<String> hosts = new ArrayList<>(initialHostLinks);
         Collections.shuffle(hosts);
         compute.parentLink = hostLink;
+        compute.name = desc.name + "-" + UUID.randomUUID();
         compute.powerState = ComputeService.PowerState.ON;
         compute.customProperties = new HashMap<>();
         compute.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, state.contextId);

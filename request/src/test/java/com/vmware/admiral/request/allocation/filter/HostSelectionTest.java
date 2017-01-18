@@ -56,7 +56,7 @@ public class HostSelectionTest {
     private DescName createName(String name, String containerName) {
         DescName descName = new DescName();
         descName.descriptionName = name;
-        descName.addContainerNames(Arrays.asList(containerName));
+        descName.addResourceNames(Arrays.asList(containerName));
 
         return descName;
     }

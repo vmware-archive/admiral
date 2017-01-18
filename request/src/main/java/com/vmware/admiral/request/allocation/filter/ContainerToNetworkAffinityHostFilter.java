@@ -142,7 +142,7 @@ public class ContainerToNetworkAffinityHostFilter
                                 final DescName descName = descLinksWithNames
                                         .get(networkState.descriptionLink);
                                 if (descName != null) {
-                                    descName.addContainerNames(
+                                    descName.addResourceNames(
                                             Collections.singletonList(networkState.name));
                                     for (HostSelection hs : hostSelectionMap.values()) {
                                         hs.addDesc(descName);
@@ -167,8 +167,8 @@ public class ContainerToNetworkAffinityHostFilter
             if (hs.descNames != null) {
                 for (DescName dn : hs.descNames.values()) {
                     if (descName.descriptionName.equals(dn.descriptionName)
-                            && (dn.containerNames != null) && (!dn.containerNames.isEmpty())) {
-                        return dn.containerNames.iterator().next();
+                            && (dn.resourceNames != null) && (!dn.resourceNames.isEmpty())) {
+                        return dn.resourceNames.iterator().next();
                     }
                 }
             }
