@@ -208,15 +208,15 @@ public class ContainerNetworkRemovalTaskService extends
                                         completeSubTasksCounter(subTaskLink, null);
                                     } else if (networkState.originatingHostLink == null
                                             || networkState.originatingHostLink.isEmpty()) {
-                                        logWarning("No originatingHostLink set.");
-                                        state.removeOnly = true;
-                                        deleteResourceInstances(state, resourceLinks, subTaskLink);
+                                        logWarning(
+                                                "No originatingHostLink set for network state [%s].",
+                                                networkState.documentSelfLink);
+                                        completeSubTasksCounter(subTaskLink, null);
                                     } else if (ContainerNetworkState.PowerState.RETIRED == networkState.powerState) {
                                         logWarning(
                                                 "Network with id '%s' is retired. Deleting the state only.",
                                                 networkState.id);
-                                        state.removeOnly = true;
-                                        deleteResourceInstances(state, resourceLinks, subTaskLink);
+                                        completeSubTasksCounter(subTaskLink, null);
                                     } else {
                                         sendContainerNetworkDeleteRequest(state, networkState,
                                                 subTaskLink);
