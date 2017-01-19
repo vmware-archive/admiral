@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -112,58 +112,76 @@ public final class ImplicitDependencyFilters {
 
                 nodes.sort((a, b) -> {
                     if (a.dependsOn == null) {
-                        return b.dependsOn == null ? 0 : -1;
+                        return b.dependsOn == null ? 0 : 1;
                     }
 
                     if (b.dependsOn == null) {
-                        return 1;
+                        return -1;
                     }
 
-                    return (int) (a.dependsOn.stream().filter((n) -> {
-                        return nodeNames.contains(n);
-                    }).count()
-                            - b.dependsOn.stream().filter((n) -> {
-                                return nodeNames.contains(n);
-                            }).count());
+                    return (int) (b.dependsOn.stream().filter((n) -> nodeNames.contains(n)).count()
+                            - a.dependsOn.stream().filter((n) -> nodeNames.contains(n)).count());
                 });
 
                 ResourceNode current = nodes.get(0);
+                ResourceNode lastToDeploy = new ResourceNode();
+                lastToDeploy.name = current.name;
+
+                // if no dependencies at all, we need to start
+                // setting them from somewhere
+                if (current.dependsOn == null) {
+                    current.dependsOn = new HashSet<>();
+                    current.dependsOn.add(nodes.get(1).name);
+                }
+
                 while (nodes.size() > 1) {
                     nodes.remove(current);
+                    ResourceNode newNode = null;
+                    // Select the new node from nodes this node depends on - we don't want to add more dependencies unnecessarily
                     if (current.dependsOn != null && current.dependsOn.size() > 0) {
+                        List<String> currentNodeNames = nodes.stream().map((n) -> n.name).collect(Collectors.toList());
                         List<String> nodesForSelection = current.dependsOn.stream()
                                 .filter((n) -> {
-                                    return nodeNames.contains(n);
+                                    return currentNodeNames.contains(n);
                                 })
                                 .collect(Collectors.toList());
 
                         if (!nodesForSelection.isEmpty()) {
-                            current = nodes.stream()
-                                    .filter((n) -> n.name
-                                            .equals(nodesForSelection.iterator().next()))
+                            // No need to add a dependency - it already exists as we chose
+                            // among current node's dependencies
+                            newNode = nodes.stream()
+                                    .filter((n) -> nodesForSelection.contains(n.name))
                                     .collect(Collectors.toList()).get(0);
-                        } else {
-                            current = selectRandomNode(nodes, current);
                         }
+                    }
 
+                    if (newNode == null) {
+                        current = selectNextNode(nodes, current, lastToDeploy);
                     } else {
-                        current = selectRandomNode(nodes, current);
+                        current = newNode;
                     }
                 }
             }
         }
 
-        private ResourceNode selectRandomNode(List<ResourceNode> nodes, ResourceNode current) {
-            String nextNode = nodes.get(0).name;
-            ResourceNode newNode = nodes.stream()
-                    .filter((n) -> n.name.equals(nextNode))
-                    .collect(Collectors.toList()).get(0);
+        /*
+         * Select the next node to handle an populate dependencies for the current node.
+         * At this point the current not should have no dependencies (or we wouldn't choose the next node randomly).
+         * If the next node in the nodes list also has no dependencies, attach it as the last node to deploy -
+         * that is, add to it a dependency on the last processed node nobody depends on.
+         */
+        private ResourceNode selectNextNode(List<ResourceNode> nodes, ResourceNode current, ResourceNode lastToDeploy) {
+            ResourceNode newNode = nodes.get(0);
 
             if (newNode.dependsOn != null && !newNode.dependsOn.contains(current.name)) {
                 if (current.dependsOn == null) {
                     current.dependsOn = new HashSet<>();
                 }
-                current.dependsOn.add(nextNode);
+                current.dependsOn.add(newNode.name);
+            } else if (newNode.dependsOn == null && current.dependsOn == null) {
+                newNode.dependsOn = new HashSet<>();
+                newNode.dependsOn.add(lastToDeploy.name);
+                lastToDeploy.name = newNode.name;
             }
 
             return newNode;
@@ -177,7 +195,7 @@ public final class ImplicitDependencyFilters {
                 if (resourceState instanceof ContainerDescription) {
                     ContainerDescription containerDescription = (ContainerDescription) resourceState;
                     if (containerDescription.portBindings == null) {
-                        return exposedHostPorts;
+                        continue;
                     }
 
                     for (PortBinding port : containerDescription.portBindings) {
