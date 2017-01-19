@@ -232,12 +232,14 @@ crossroads.addRoute('/machines:?query:', function(query) {
   actions.MachineActions.openMachines(query, true);
 });
 
+crossroads.addRoute('/machines/new', function() {
+  actions.AppActions.openView(computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name);
+  actions.MachineActions.openAddMachine();
+});
 
-crossroads.addRoute('/machines/{machineId*}', function() {
-  // not yet supported
-  // actions.AppActions.openView(computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name);
-  // actions.MachineActions.openMachines();
-  // actions.MachineActions.openMachineDetails(machineId);
+crossroads.addRoute('/machines/{machineId*}', function(machineId) {
+  actions.AppActions.openView(computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name);
+  actions.MachineActions.editMachine(machineId);
 });
 
 crossroads.addRoute('/compute:?query:', function(query) {
@@ -396,17 +398,20 @@ actions.NavigationActions.openMachines.listen(function(queryOptions) {
   hasher.setHash(getHashWithQuery('machines', queryOptions));
 });
 
+actions.NavigationActions.openAddMachine.listen(function() {
+  hasher.setHash('machines/new');
+});
+
+actions.NavigationActions.editMachine.listen(function(machineId) {
+  hasher.setHash('machines/' + machineId);
+});
+
 actions.NavigationActions.openCompute.listen(function(queryOptions) {
   hasher.setHash(getHashWithQuery('compute', queryOptions));
 });
 
-actions.NavigationActions.editCompute.listen(function(hostId) {
-  hasher.setHash('compute/' + hostId);
-});
-
-actions.NavigationActions.openMachineDetails.listen(function() {
-  // not yet supported
-  // hasher.setHash('machines/' + machineId);
+actions.NavigationActions.editCompute.listen(function(computeId) {
+  hasher.setHash('compute/' + computeId);
 });
 
 actions.NavigationActions.openClosuresSilently.listen(function() {

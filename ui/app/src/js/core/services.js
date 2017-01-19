@@ -741,6 +741,10 @@ services.loadMachines = function(queryOptions) {
   });
 };
 
+services.updateMachine = function(id, data) {
+  return put(links.COMPUTE_RESOURCES + '/' + id, data);
+};
+
 services.loadCompute = function(queryOptions) {
   let filter = buildHostsQuery(queryOptions, false, true);
   let url = buildPaginationUrl(links.COMPUTE_RESOURCES, filter, true, 'creationTimeMicros asc');
@@ -1561,6 +1565,20 @@ services.createRequest = function(resourceDescriptionLink, tenantLinks, group, r
     }
   }
 
+  return post(links.REQUESTS, request).then(function(createdRequest) {
+    return createdRequest;
+  });
+};
+
+services.createComputeRequest = function(resourceDescription) {
+  var request = {};
+  request.resourceCount = 1;
+  request.resourceType = COMPOSITE_COMPONENT_TYPE;
+  request.resourceDescriptionLink = resourceDescription.documentSelfLink;
+  request.tenantLinks = resourceDescription.tenantLinks;
+  request.customProperties = {
+    __allocation_request: true
+  };
   return post(links.REQUESTS, request).then(function(createdRequest) {
     return createdRequest;
   });

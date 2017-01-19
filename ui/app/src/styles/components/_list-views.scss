@@ -6,10 +6,9 @@
 }
 
 .list-view .toolbar .query-search-input {
-  margin-right: 280px;
+  margin-right: 310px;
 }
 
-.machines-view .list-view .toolbar .query-search-input,
 .compute-view .list-view .toolbar .query-search-input {
   margin-right: 0;
 }
@@ -21,12 +20,13 @@
   position: absolute;
   top: 0;
   right: 0;
+  margin: 0;
   padding: 0 20px;
   font-size: 17px;
   letter-spacing: 0.02em;
   line-height: 36px;
   height: 36px;
-  width: 250px;
+  width: 280px;
   text-align: center;
 }
 

@@ -11,32 +11,28 @@
 
 import MachinesViewVue from 'components/machines/MachinesViewVue.html';
 import MachineItem from 'components/machines/MachineItem'; //eslint-disable-line
-import MachineDetails from 'components/machines/MachineDetails'; //eslint-disable-line
+import MachineEditView from 'components/machines/MachineEditView'; //eslint-disable-line
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
 import { MachineActions, NavigationActions } from 'actions/Actions';
 
-var MachinesViewVueComponent = Vue.extend({
+export default Vue.component('machines-view', {
   template: MachinesViewVue,
-
   props: {
     model: {
       required: true,
       type: Object
     }
   },
-
-  data: function() {
+  data() {
     return {
       constants: constants,
       // this view behaves better if the target width is set before the width transition
       requiresPreTransitionWidth: true
     };
   },
-
   mixins: [GridHolderMixin],
-
-  attached: function() {
+  attached() {
     var $mainPanel = $(this.$el).find('.list-holder > .main-panel');
     $mainPanel.on('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd',
       (e) => {
@@ -46,37 +42,33 @@ var MachinesViewVueComponent = Vue.extend({
       }
     );
   },
-
-  detached: function() {
+  detached() {
     var $mainPanel = $(this.$el).find('.list-holder > .main-panel');
     $mainPanel.off('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd');
   },
-
   computed: {
-    searchSuggestions: function() {
+    searchSuggestions() {
       return constants.MACHINES.SEARCH_SUGGESTIONS;
     }
   },
-
   methods: {
-    search: function(queryOptions) {
+    goBack() {
+      NavigationActions.openMachines(this.model.listView && this.model.listView.queryOptions);
+    },
+    search(queryOptions) {
       NavigationActions.openMachines(queryOptions);
     },
-    refresh: function() {
+    refresh() {
       MachineActions.openMachines(this.model.listView.queryOptions, true);
     },
-    loadMore: function() {
+    loadMore() {
       if (this.model.listView.nextPageLink) {
         MachineActions.openMachinesNext(this.model.listView.queryOptions,
           this.model.listView.nextPageLink);
       }
     },
-    openMachineDetails: function(machine) {
-      NavigationActions.openMachineDetails(machine.id);
+    addMachine() {
+      NavigationActions.openAddMachine();
     }
   }
 });
-
-Vue.component('machines-view', MachinesViewVueComponent);
-
-export default MachinesViewVueComponent;

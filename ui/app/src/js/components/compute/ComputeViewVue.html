@@ -65,11 +65,11 @@
     </div>
   </div>
 
-  <div v-if="model.computeEditView" transition="slide-and-fade" class="closable-view">
+  <div v-if="model.editingItemData" transition="slide-and-fade" class="closable-view">
     <a class="close-button" v-on:click="goBack($event)"><i
       class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
-    <compute-edit-view v-bind:model="model.computeEditView" class="content"></compute-edit-view>
+    <compute-edit-view v-bind:model="model.editingItemData" class="content"></compute-edit-view>
   </div>
 
 </div>

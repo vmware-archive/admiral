@@ -9,16 +9,25 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { ComputeActions, ComputeContextToolbarActions } from 'actions/Actions';
+import { MachineActions, MachinesContextToolbarActions } from 'actions/Actions';
 import Tags from 'components/common/Tags';
-import ComputeEditViewVue from 'components/compute/ComputeEditViewVue.html';
+import MachineEditViewVue from 'components/machines/MachineEditViewVue.html';
 
-export default Vue.component('compute-edit-view', {
-  template: ComputeEditViewVue,
+export default Vue.component('machine-edit-view', {
+  template: MachineEditViewVue,
   props: {
     model: {
-      required: true
+      default: () => ({
+        contextView: {}
+      }),
+      required: true,
+      type: Object
     }
+  },
+  data: function() {
+    return {
+      templateContent: ''
+    };
   },
   computed: {
     validationErrors() {
@@ -46,21 +55,47 @@ export default Vue.component('compute-edit-view', {
     this.unwatchModel();
   },
   methods: {
+    browseFile: function($event) {
+      $event.preventDefault();
+      $event.stopImmediatePropagation();
+
+      $(this.$el).find('input.upload').trigger('click');
+    },
+    onFileChange: function($event) {
+      var files = $event.target.files;
+      if (!files.length) {
+        return;
+      }
+      this.loadFromFile(files[0]);
+    },
+    loadFromFile: function(file) {
+      var reader = new FileReader();
+      reader.onload = (e) => {
+        this.templateContent = e.target.result;
+      };
+      reader.readAsText(file);
+    },
+    importTemplate: function() {
+      if (this.templateContent) {
+        MachineActions.createMachine(this.templateContent);
+      }
+    },
     onPlacementZoneChange(placementZone) {
       this.placementZone = placementZone;
     },
-    saveCompute() {
+    saveMachine() {
       let model = {
         dto: this.model.item.dto,
         resourcePoolLink: this.placementZone ? this.placementZone.documentSelfLink : null,
         selfLinkId: this.model.item.selfLinkId
       };
       let tags = this.tagsInput.getValue();
-      ComputeActions.updateCompute(model, tags);
+      MachineActions.updateMachine(model, tags);
     },
-    openToolbarPlacementZones: ComputeContextToolbarActions.openToolbarPlacementZones,
-    closeToolbar: ComputeContextToolbarActions.closeToolbar,
-    createPlacementZone: ComputeContextToolbarActions.createPlacementZone,
-    managePlacementZones: ComputeContextToolbarActions.managePlacementZones
+    openToolbarPlacementZones: MachinesContextToolbarActions.openToolbarPlacementZones,
+    closeToolbar: MachinesContextToolbarActions.closeToolbar,
+    createPlacementZone: MachinesContextToolbarActions.createPlacementZone,
+    managePlacementZones: MachinesContextToolbarActions.managePlacementZones
+
   }
 });

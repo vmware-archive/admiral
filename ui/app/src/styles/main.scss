@@ -452,13 +452,13 @@ $main-list-view-right: 10px;
   margin-top: 10px;
 }
 
-.compute-view .main-panel .compute-form {
+.compute-view .main-panel .compute-form,
+.machines-view .main-panel .machine-form {
   position: absolute;
   top: 100px;
   left: 50px;
   right: 100px;
   bottom: 50px;
-
   margin-top: 10px;
 }
 
@@ -854,6 +854,7 @@ $main-list-view-right: 10px;
 .host-view,
 .compute-edit-view,
 .environment-edit-view,
+.machine-edit-view,
 .registry-view {
   > .main-panel {
     @extend .position-expand;
@@ -872,6 +873,7 @@ $main-list-view-right: 10px;
 .host-view.right-context-expanded,
 .compute-edit-view.right-context-expanded,
 .environment-edit-view.right-context-expanded,
+.machine-edit-view.right-context-expanded,
 .registry-view.right-context-expanded {
   > .main-panel {
     > .mask {
@@ -880,6 +882,35 @@ $main-list-view-right: 10px;
   }
   > .right-context-panel {
     left: 55%;
+  }
+}
+
+.machine-edit-view {
+  .template-input {
+    margin-top: 10px;
+  }
+
+  textarea {
+    @extend .font-mono;
+    resize: vertical;
+    min-height: 300px;
+  }
+
+  .template-import-option {
+    .fileUpload {
+      float: left;
+    }
+
+    input.upload {
+      display: none;
+    }
+
+    > .fa-question-circle {
+      @extend .hint;
+      margin-left: 5px;
+      margin-top: 7px;
+      float: left;
+    }
   }
 }
 
