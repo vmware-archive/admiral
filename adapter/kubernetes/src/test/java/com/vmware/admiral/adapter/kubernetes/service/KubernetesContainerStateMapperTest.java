@@ -9,12 +9,17 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.kubernetes.service.apiobject;
+package com.vmware.admiral.adapter.kubernetes.service;
 
-public class Pod {
-    // public String kind;
-    // public String apiVersion;
-    public ObjectMeta metadata;
-    public PodSpec spec;
-    public PodStatus status;
+import org.junit.Assert;
+import org.junit.Test;
+
+public class KubernetesContainerStateMapperTest {
+    @Test
+    public void TestCorrectContainerIdExtract() {
+        String realId = "some-test-id-83f80ae29bc734";
+        String id = "docker://" + realId;
+        String extracted = KubernetesContainerStateMapper.getId(id);
+        Assert.assertEquals(realId, extracted);
+    }
 }

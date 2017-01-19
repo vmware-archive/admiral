@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
-import com.vmware.admiral.adapter.kubernetes.service.apiobject.Container;
+import com.vmware.admiral.adapter.kubernetes.service.apiobject.ContainerStatus;
 import com.vmware.admiral.adapter.kubernetes.service.apiobject.Pod;
 import com.vmware.admiral.adapter.kubernetes.service.apiobject.PodList;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -175,9 +175,10 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
         c.createNamespaceIfMissing(context, (ex) -> {
             if (ex != null) {
                 logSevere(ex);
+            } else {
+                c.doInfo(context, getHostPatchCompletionHandler(request));
             }
         });
-        c.doInfo(context, getHostPatchCompletionHandler(request));
     }
 
     private void directListContainers(AdapterRequest request, KubernetesContext context,
@@ -236,16 +237,12 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
             return result;
         }
         for (Pod pod: podList.items) {
-            if (pod.spec == null || pod.spec.containers == null) {
+            if (pod.status == null || pod.status.containerStatuses == null) {
                 continue;
             }
-            int podContainers = 0;
-            for (Container container: pod.spec.containers) {
-                // Containers don't have ids, but pods do
-                String id = pod.metadata.uid + String.format("-%x", podContainers);
-                result.containerIdsAndNames.put(id, container.name);
-                result.containerIdsAndImage.put(id, container.image);
-                podContainers += 1;
+            for (ContainerStatus status: pod.status.containerStatuses) {
+                result.containerIdsAndNames.put(status.containerID, status.name);
+                result.containerIdsAndImage.put(status.containerID, status.image);
             }
         }
         return result;

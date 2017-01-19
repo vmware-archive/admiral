@@ -165,7 +165,7 @@ public interface ManagementUriParts {
 
     String ADAPTER_KUBERNETES = ADAPTERS + "/kubernetes-service";
     String ADAPTER_KUBERNETES_HOST = ADAPTERS + "/host-kubernetes-service";
-    String ADAPTER_KUBERNETES_NETWORK = ADAPTERS + "/kubernetes-docker-service";
+    String ADAPTER_KUBERNETES_NETWORK = ADAPTERS + "/network-kubernetes-service";
 
     String ADAPTER_ETCD_KV = "/v2/keys";
     String ADAPTER_ETCD_MEMBERS = "/v2/members";

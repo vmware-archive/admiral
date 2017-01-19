@@ -18,6 +18,6 @@ public class PodStatus {
     public String reason;
     public String hostIP;
     public String podIP;
-    public String startTime;   //date-time
-    public ContainerStatus[] containerStatuses;*/
+    public String startTime;   //date-time*/
+    public ContainerStatus[] containerStatuses;
 }
