@@ -16,8 +16,8 @@ export default Vue.component('openstack-endpoint-editor', {
         :disabled="model.documentSelfLink"
         :label="i18n('app.endpoint.edit.openstack.url')"
         :required="true"
-        :value="hostName"
-        @change="onHostNameChange">
+        :value="host"
+        @change="onHostChange">
       </text-input>
       <text-input
         :disabled="model.documentSelfLink"
@@ -56,7 +56,7 @@ export default Vue.component('openstack-endpoint-editor', {
   data() {
     let properties = this.model.endpointProperties || {};
     return {
-      hostName: properties.hostName,
+      host: properties.host,
       regionId: properties.regionId,
       privateKeyId: properties.privateKeyId,
       privateKey: properties.privateKey,
@@ -64,8 +64,8 @@ export default Vue.component('openstack-endpoint-editor', {
     };
   },
   methods: {
-    onHostNameChange(hostName) {
-        this.hostName = hostName;
+    onHostChange(host) {
+        this.host = host;
         this.dispatchChangeIfNeeded();
     },
     onDomainChange(domain) {
@@ -85,9 +85,9 @@ export default Vue.component('openstack-endpoint-editor', {
       this.dispatchChangeIfNeeded();
     },
     dispatchChangeIfNeeded() {
-      if (this.privateKeyId && this.privateKey && this.regionId && this.hostName) {
+      if (this.privateKeyId && this.privateKey && this.regionId && this.host) {
         this.$dispatch('change', {
-          'sdk.host': this.hostName,
+          host: this.host,
           regionId: this.regionId,
           openstackDomain: this.regionId,
           privateKeyId: this.privateKeyId,
