@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -619,6 +619,12 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     private void ensureTrustDelegateExists(CommandInput input, int retryCount, Runnable callback) {
         if (trustManager != null) {
             String trustAlias = (String) input.getProperties().get(SSL_TRUST_ALIAS_PROP_NAME);
+            if (trustAlias == null) {
+                // trustAlias not defined, continue anyways, might fail later
+                logger.warning("Trust alias not defined");
+                callback.run();
+                return;
+            }
             X509TrustManager delegate = trustManager.getDelegate(trustAlias);
             if (delegate != null) {
                 callback.run();
