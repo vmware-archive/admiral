@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -40,6 +40,8 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
+import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
@@ -727,10 +729,36 @@ public class ContainerHostDataCollectionService extends StatefulService {
         return UriUtils.buildUri(host, ManagementUriParts.ADAPTER_DOCKER_HOST);
     }
 
+    private void forceTrustAliasUpdate(ComputeState computeState) {
+        ContainerHostSpec spec = new ContainerHostSpec();
+        spec.hostState = computeState;
+        spec.isUpdateOperation = true;
+        sendRequest(Operation.createPut(getHost(), ContainerHostService.SELF_LINK)
+                .setBody(spec)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Forcing trust alias update failed: %s", Utils.toString(e));
+                        return;
+                    }
+                    logInfo("Forcing trust alias update completed!");
+                }));
+    }
+
     private void updateContainerHostInfo(
             ComputeState computeState,
             BiConsumer<CallbackServiceHandlerState, ServiceErrorResponse> consumer,
             ServiceTaskCallback serviceTaskCallback) {
+
+        if (ContainerHostUtil.isTrustAliasMissing(computeState) &&
+                !DeploymentProfileConfig.getInstance().isTest()) {
+            // Check whether the host has the custom property "__sslTrustAlias" set (after 7.2) or
+            // not (before 7.2). Without that property any attempt to connect to host which require
+            // client side certificate authentication will fail. Because of that, if missing, we
+            // trigger an update to set it expecting the next SSL certificate refresh to load it.
+            // In case of test we do nothing since it won't be set anyway.
+            forceTrustAliasUpdate(computeState);
+            return;
+        }
 
         if (computeState.adapterManagementReference == null) {
             ComputeState patchState = new ComputeState();
@@ -822,17 +850,6 @@ public class ContainerHostDataCollectionService extends StatefulService {
                         return;
                     }
                 }));
-    }
-
-    private void getAdapterReference(String documentSelfLink, BiConsumer<URI, Throwable> actualCallback) {
-        sendRequest(Operation.createGet(this, documentSelfLink).setCompletion((op, ex) -> {
-            if (ex != null) {
-                actualCallback.accept(null, ex);
-            } else {
-                ComputeState state = op.getBody(ComputeState.class);
-                actualCallback.accept(state.adapterManagementReference, null);
-            }
-        }));
     }
 
     private void startAndCreateCallbackHandlerService(

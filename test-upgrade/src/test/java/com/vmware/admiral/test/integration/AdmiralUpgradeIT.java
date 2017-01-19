@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -12,6 +12,9 @@
 package com.vmware.admiral.test.integration;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -19,7 +22,6 @@ import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,6 +29,7 @@ import org.junit.Test;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
+import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
@@ -126,11 +129,19 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         waitForStatusCode(uri, Operation.STATUS_CODE_OK);
         uri = URI.create(getBaseUrl() + ManagementUriParts.CONTAINER_HOSTS);
         waitForStatusCode(uri, Operation.STATUS_CODE_OK);
-        ComputeState dockerHost = getDocument(dockerHostSelfLink, ComputeState.class);
-        Assert.assertTrue(dockerHost != null);
+
+        waitForStateChange(dockerHostSelfLink, (body) -> {
+            if (body == null) {
+                return false;
+            }
+            ComputeState dockerHost = Utils.fromJson(body, ComputeState.class);
+            // trust alias custom property must be set eventually after upgrade
+            return (ContainerHostUtil.getTrustAlias(dockerHost) != null);
+        });
+
         AuthCredentialsServiceState credentials = getDocument(credentialsSelfLink,
                 AuthCredentialsServiceState.class);
-        Assert.assertTrue(credentials != null);
+        assertTrue(credentials != null);
         setBaseURI(null);
     }
 
@@ -155,6 +166,12 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         // create entities to check for after upgrade
         dockerHostSelfLink = getDockerHost().documentSelfLink;
         credentialsSelfLink = getDockerHostAuthCredentials().documentSelfLink;
+
+        ComputeState dockerHost = getDocument(dockerHostSelfLink, ComputeState.class);
+        assertNotNull(dockerHost);
+        assertNotNull(dockerHost.customProperties);
+        // trust alias custom property is not set by default before upgrade
+        assertNull(ContainerHostUtil.getTrustAlias(dockerHost));
 
         dataInitialized = true;
     }

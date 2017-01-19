@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,7 +11,11 @@
 
 package com.vmware.admiral.compute;
 
+import java.net.URI;
+
+import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.UriUtils;
 
 public class ContainerHostUtil {
 
@@ -22,7 +26,8 @@ public class ContainerHostUtil {
     /**
      * Check if docker is running on VMware Integrated Container host.
      *
-     * @param computeState host to check
+     * @param computeState
+     *            host to check
      * @return boolean value
      */
     public static boolean isVicHost(ComputeState computeState) {
@@ -46,6 +51,16 @@ public class ContainerHostUtil {
                     .get(ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME);
         }
         return null;
+    }
+
+    /**
+     * Returns whether the trust alias should be set and it is not (e.g. because the upgrade of an
+     * instance with hosts already configured)
+     */
+    public static boolean isTrustAliasMissing(ComputeState computeState) {
+        URI hostUri = ContainerDescription.getDockerHostUri(computeState);
+        return UriUtils.HTTPS_SCHEME.equalsIgnoreCase(hostUri.getScheme())
+                && (getTrustAlias(computeState) == null);
     }
 
 }
