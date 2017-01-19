@@ -14,6 +14,7 @@ package com.vmware.admiral.test.integration;
 import static org.junit.Assert.assertEquals;
 
 import java.net.URI;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.junit.After;
@@ -166,17 +167,24 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
 
         ContainerListCallback dataCollectionBody = new ContainerListCallback();
         dataCollectionBody.containerHostLink = dockerHostSelfLink;
+        AtomicInteger counter = new AtomicInteger();
         waitForStateChange(
                 admiralContainer.documentSelfLink,
                 t -> {
                     ContainerState container = Utils.fromJson(t,
                             ContainerState.class);
+                    if (counter.getAndIncrement() == 10) {
+                        logger.warning(
+                                "Container power state was not changed to STOPPED after 10 second");
+                        return true;
+                    }
                     try {
                         sendRequest(HttpMethod.PATCH,
                                 HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK,
                                 Utils.toJson(dataCollectionBody));
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        logger.error(String.format("Unable to trigger data collection: %s",
+                                e.getMessage()));
                     }
                     return container.powerState.equals(PowerState.STOPPED);
                 });
