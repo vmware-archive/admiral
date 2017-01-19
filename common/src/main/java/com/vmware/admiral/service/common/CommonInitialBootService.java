@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -30,7 +29,6 @@ public class CommonInitialBootService extends AbstractInitialBootService {
     public void handlePost(Operation post) {
         ConfigurationState[] configs = ConfigurationService.getConfigurationProperties();
         initInstances(Operation.createGet(null), false, false, configs);
-        ConfigurationUtil.initialize(configs);
 
         List<ServiceDocument> resources = new ArrayList<>();
         resources.add(ResourceNamePrefixService.buildDefaultStateInstance());

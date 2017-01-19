@@ -958,12 +958,17 @@ $main-list-view-right: 10px;
 }
 
 .endpoint-icon,
-.dropdown-holder .dropdown-options img {
-  display: block;
-  float: left;
-  width: 16px;
-  height: 16px;
-  margin-right: 10px;
+.dropdown-holder .dropdown-options {
+  img {
+    display: block;
+    float: left;
+    width: 16px;
+    height: 16px;
+    margin-right: 10px;
+  }
+  .spinner {
+    margin-right: 8px;
+  }
 }
 
 .dropdown-holder .dropdown-options img {

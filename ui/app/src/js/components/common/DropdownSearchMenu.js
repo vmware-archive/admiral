@@ -21,6 +21,10 @@ function DEFAULT_RENDERER(itemSpec) {
     result += `<img src="${itemSpec.iconSrc}">`;
   }
 
+  if (itemSpec.isBusy) {
+    result += `<span class="spinner spinner-inline"></span>`;
+  }
+
   result += `<span>${itemSpec.name}</span>`;
 
   return result;
@@ -29,7 +33,8 @@ function DEFAULT_RENDERER(itemSpec) {
 function createItem(itemSpec, renderer) {
   var anchor = $('<a>', {
     role: 'menuitem',
-    href: '#'
+    href: '#',
+    disabled: !!itemSpec.isBusy
   });
   anchor.attr('data-name', itemSpec.name);
 
@@ -40,7 +45,8 @@ function createItem(itemSpec, renderer) {
   }
 
   var item = $('<li>', {
-    role: 'presentation'
+    role: 'presentation',
+    disabled: !!itemSpec.isBusy
   }).append(anchor);
   item.data('spec', itemSpec);
 
@@ -73,7 +79,13 @@ function DropdownSearchMenu($el, componentOptions) {
   $el.find('.dropdown').on('click', '.dropdown-options li', (e) => {
     e.preventDefault();
 
-    var option = $(e.currentTarget).data('spec');
+    var $target = $(e.currentTarget);
+    if ($target.attr('disabled')) {
+      return;
+    }
+
+    var option = $target.data('spec');
+
     this.setSelectedOption(option);
 
     if (this.optionSelectCallback) {

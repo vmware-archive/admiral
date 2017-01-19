@@ -23,8 +23,11 @@ import javax.net.ssl.SSLContext;
 import io.swagger.models.Info;
 
 import com.vmware.admiral.common.util.CertificateUtil;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.service.common.AuthBootstrapService;
+import com.vmware.admiral.service.common.ConfigurationService;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.FactoryService;
@@ -149,6 +152,10 @@ public class ManagementHost extends ServiceHost {
         }
         ServiceHost h = super.initialize(args, baseArgs);
         validatePeerArgs();
+
+        ConfigurationState[] configs = ConfigurationService.getConfigurationProperties();
+        ConfigurationUtil.initialize(configs);
+
         return h;
     }
 

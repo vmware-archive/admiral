@@ -620,8 +620,8 @@ var utils = {
     return this.getConfigurationPropertyBoolean('allow.nimbus');
   },
 
-  isOpenstackEnabled: function() {
-    return this.getConfigurationPropertyBoolean('allow.openstack');
+  isExternalPhotonAdaptersEnabled: function() {
+    return this.getConfigurationPropertyBoolean('allow.external.photon.adapters');
   },
 
   isRequestRunning: function(request) {
