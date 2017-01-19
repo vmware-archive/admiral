@@ -13,9 +13,11 @@ package com.vmware.admiral.host;
 
 import java.util.logging.Level;
 
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.photon.controller.model.PhotonModelServices;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSAdapters;
 import com.vmware.photon.controller.model.adapters.azure.AzureAdapters;
+import com.vmware.photon.controller.model.adapters.registry.PhotonModelAdaptersRegistryAdapters;
 import com.vmware.photon.controller.model.adapters.vsphere.VSphereAdapters;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.tasks.PhotonModelTaskServices;
@@ -24,6 +26,8 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.serialization.JsonMapper;
 
 public class HostInitPhotonModelServiceConfig {
+
+    private static final String ALLOW_EXTERNAL_ADAPTERS = "allow.external.photon.adapters";
 
     public static void startServices(ServiceHost host) throws Throwable {
 
@@ -41,6 +45,16 @@ public class HostInitPhotonModelServiceConfig {
         PhotonModelServices.startServices(host);
         PhotonModelTaskServices.startServices(host);
 
+        // adapter registry adapters:
+        if (Boolean.parseBoolean(ConfigurationUtil.getProperty(ALLOW_EXTERNAL_ADAPTERS))) {
+            try {
+                PhotonModelAdaptersRegistryAdapters.startServices(host);
+
+            } catch (Throwable e) {
+                host.log(Level.WARNING, "Exception staring photon model adapter registry: %s",
+                        Utils.toString(e));
+            }
+        }
         // aws adapters:
         try {
             // start the aws instance service

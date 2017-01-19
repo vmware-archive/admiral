@@ -33,6 +33,10 @@
 
         <dependency>
             <groupId>com.vmware.photon.controller</groupId>
+            <artifactId>photon-model-adapters-registry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.vmware.photon.controller</groupId>
             <artifactId>photon-aws-adapter</artifactId>
         </dependency>
         <dependency>

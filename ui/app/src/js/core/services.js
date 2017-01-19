@@ -1891,6 +1891,10 @@ services.searchRegionIds = function(host, username, password) {
   });
 };
 
+services.loadAdapters = function() {
+  return list(links.ADAPTERS, true);
+};
+
 var toArrayIfDefined = function(obj) {
   if ($.isArray(obj)) {
     return obj;

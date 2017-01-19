@@ -168,6 +168,11 @@
             </dependency>
             <dependency>
                 <groupId>com.vmware.photon.controller</groupId>
+                <artifactId>photon-model-adapters-registry</artifactId>
+                <version>${photon.model.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vmware.photon.controller</groupId>
                 <artifactId>photon-azure-adapter</artifactId>
                 <version>${photon.model.version}</version>
             </dependency>

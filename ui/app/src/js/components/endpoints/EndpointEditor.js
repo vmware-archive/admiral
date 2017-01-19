@@ -20,6 +20,7 @@ import VsphereEndpointEditor from 'components/endpoints/vsphere/EndpointEditor';
 import EndpointEditorVue from 'components/endpoints/EndpointEditorVue.html';
 import { EndpointsActions } from 'actions/Actions';
 import utils from 'core/utils';
+import services from 'core/services';
 
 const OOTB_TYPES = [
   {
@@ -39,6 +40,50 @@ const OOTB_TYPES = [
   }
 ];
 
+var externalAdapters = null;
+
+var loadExternalTypes = function() {
+  return services.loadAdapters().then((adapters) => {
+    externalAdapters = [];
+    if (adapters) {
+      for (var k in adapters) {
+        if (!adapters.hasOwnProperty(k)) {
+          continue;
+        }
+        var doc = adapters[k];
+
+        var icon = doc.customProperties && doc.customProperties.icon;
+        if (icon && icon[0] === '/') {
+          // Remove slash, as UI is not always served at /, e.g. in CAFE embedded.
+          // So instead use relative path.
+          icon = icon.substring(1);
+        }
+
+        externalAdapters.push({
+          id: doc.id,
+          name: doc.name,
+          iconSrc: icon
+        });
+      }
+    }
+  });
+};
+
+var getAvailableAdapters = function() {
+  let supportedTypes = OOTB_TYPES.slice();
+  if (utils.isNimbusEnabled()) {
+    supportedTypes.push({
+      id: 'nimbus',
+      name: 'Nimbus',
+      iconSrc: 'image-assets/endpoints/nimbus.png'
+    });
+  }
+  if (externalAdapters) {
+    supportedTypes = supportedTypes.concat(externalAdapters);
+  }
+  return supportedTypes;
+};
+
 export default Vue.component('endpoint-editor', {
   template: EndpointEditorVue,
   props: {
@@ -48,28 +93,34 @@ export default Vue.component('endpoint-editor', {
     }
   },
   computed: {
-    supportedEndpointTypes() {
-      let supportedTypes = OOTB_TYPES.slice();
-      if (utils.isNimbusEnabled()) {
-        supportedTypes.push({
-          id: 'nimbus',
-          name: 'Nimbus',
-          iconSrc: 'image-assets/endpoints/nimbus.png'
-        });
-      }
-      if (utils.isOpenstackEnabled()) {
-        supportedTypes.push({
-          id: 'openstack',
-          name: 'OpenStack',
-          iconSrc: 'image-assets/endpoints/openstack.png'
-        });
-      }
-      return supportedTypes;
-    },
     validationErrors() {
       return (this.model.validationErrors && this.model.validationErrors._generic) ||
           (this.propertiesErrors && this.propertiesErrors._generic);
     }
+  },
+  attached: function() {
+    let supportedTypes = getAvailableAdapters();
+
+    if (!externalAdapters) {
+      if (utils.isExternalPhotonAdaptersEnabled()) {
+        var loading = {
+          id: 'loading',
+          name: 'Loading',
+          isBusy: true
+        };
+
+        supportedTypes.push(loading);
+        loadExternalTypes().then(() => {
+          this.supportedEndpointTypes = getAvailableAdapters();
+        }).catch(() => {
+          this.supportedEndpointTypes = getAvailableAdapters();
+        });
+      } else {
+        externalAdapters = [];
+      }
+    }
+
+    this.supportedEndpointTypes = supportedTypes;
   },
   data() {
     return {
@@ -77,7 +128,8 @@ export default Vue.component('endpoint-editor', {
       name: this.model.item.name,
       properties: this.model.item.endpointProperties || {},
       propertiesErrors: null,
-      saveDisabled: !this.model.item.documentSelfLink
+      saveDisabled: !this.model.item.documentSelfLink,
+      supportedEndpointTypes: []
     };
   },
   methods: {
