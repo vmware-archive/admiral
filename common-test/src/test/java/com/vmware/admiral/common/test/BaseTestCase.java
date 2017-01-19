@@ -81,7 +81,7 @@ public abstract class BaseTestCase {
             "dcp.management.test.wait.thread.sleep.millis", 500);
     private static final int HOST_TIMEOUT_SECONDS = 60;
 
-    protected static final int MAINTENANCE_INTERVAL_MILLIS = 20;
+    protected static final int MAINTENANCE_INTERVAL_MILLIS = 250;
     protected VerificationHost host;
 
     private static class CustomizationVerificationHost extends VerificationHost {
