@@ -83,7 +83,7 @@
     </module>
 
     <module name="RegexpHeader">
-        <property name="header" value="^/\*\n^ \* Copyright \(c\) (\d\d\d\d) VMware, Inc\. All Rights Reserved\.\n^ \*\n^ \* This product is licensed to you under the Apache License, Version 2\.0 \(the .License.\)\.\n^ \* You may not use this product except in compliance with the License\.\n^ \*\n^ \* This product may include a number of subcomponents with separate copyright notices\n^ \* and license terms\. Your use of these subcomponents is subject to the terms and\n^ \* conditions of the subcomponent's license, as noted in the LICENSE file\.\n^ \*/\n\n^package"/>
+        <property name="header" value="^/\*\n^ \* Copyright \(c\) (\d\d\d\d)(-\d\d\d\d)? VMware, Inc\. All Rights Reserved\.\n^ \*\n^ \* This product is licensed to you under the Apache License, Version 2\.0 \(the .License.\)\.\n^ \* You may not use this product except in compliance with the License\.\n^ \*\n^ \* This product may include a number of subcomponents with separate copyright notices\n^ \* and license terms\. Your use of these subcomponents is subject to the terms and\n^ \* conditions of the subcomponent's license, as noted in the LICENSE file\.\n^ \*/\n\n^package"/>
         <property name="fileExtensions" value="java"/>
     </module>
 
