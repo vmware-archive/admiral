@@ -75,55 +75,52 @@ let onOpenToolbarItem = function(name, data, shouldSelectAndComplete) {
     shouldSelectAndComplete: shouldSelectAndComplete
   };
 
-  this.setInData(['computeEditView', 'contextView'], contextViewData);
+  this.setInData(['editingItemData', 'contextView'], contextViewData);
   this.emitChange();
 };
 
 let isContextPanelActive = function(name) {
-  var activeItem = this.data.computeEditView.contextView &&
-      this.data.computeEditView.contextView.activeItem;
+  var activeItem = this.data.editingItemData.contextView &&
+      this.data.editingItemData.contextView.activeItem;
   return activeItem && activeItem.name === name;
 };
 
 let ComputeStore = Reflux.createStore({
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
-
-  init: function() {
-
+  init() {
     PlacementZonesStore.listen((placementZonesData) => {
-      if (!this.data.computeEditView) {
+      if (!this.data.editingItemData) {
         return;
       }
 
-      this.setInData(['computeEditView', 'placementZones'], placementZonesData.items);
+      if (placementZonesData.items !== constants.LOADING) {
+        this.setInData(['editingItemData', 'placementZones'], placementZonesData.items);
+      }
 
       if (isContextPanelActive.call(this, constants.CONTEXT_PANEL.PLACEMENT_ZONES)) {
-        this.setInData(['computeEditView', 'contextView', 'activeItem', 'data'],
+        this.setInData(['editingItemData', 'contextView', 'activeItem', 'data'],
           placementZonesData);
 
         var itemToSelect = placementZonesData.newItem || placementZonesData.updatedItem;
-        if (itemToSelect && this.data.computeEditView.contextView.shouldSelectAndComplete) {
+        if (itemToSelect && this.data.editingItemData.contextView.shouldSelectAndComplete) {
           clearTimeout(this.itemSelectTimeout);
           this.itemSelectTimeout = setTimeout(() => {
-            this.setInData(['computeEditView', 'placementZone'], itemToSelect);
+            this.setInData(['editingItemData', 'placementZone'], itemToSelect);
             this.onCloseToolbar();
           }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
         }
       }
-
       this.emitChange();
     });
   },
-
   listenables: [actions.ComputeActions, actions.ComputeContextToolbarActions],
-
-  onOpenCompute: function(queryOptions, forceReload) {
+  onOpenCompute(queryOptions, forceReload) {
     var items = utils.getIn(this.data, ['listView', 'items']);
     if (!forceReload && items) {
       return;
     }
 
-    this.setInData(['computeEditView'], null);
+    this.setInData(['editingItemData'], null);
     this.setInData(['selectedItem'], null);
     this.setInData(['selectedItemDetails'], null);
     this.setInData(['listView', 'queryOptions'], queryOptions);
@@ -174,8 +171,7 @@ let ComputeStore = Reflux.createStore({
 
     this.emitChange();
   },
-
-  onOpenComputeNext: function(queryOptions, nextPageLink) {
+  onOpenComputeNext(queryOptions, nextPageLink) {
     this.setInData(['listView', 'queryOptions'], queryOptions);
 
     var operation = this.requestCancellableOperation(OPERATION.LIST, queryOptions);
@@ -224,17 +220,12 @@ let ComputeStore = Reflux.createStore({
 
     this.emitChange();
   },
-
-  onEditCompute: function(computeId) {
-
-    // load host data from backend
+  onEditCompute(computeId) {
     services.loadHost(computeId).then((document) => {
-      let computeModel = toViewModel(document);
-
+      let model = toViewModel(document);
       actions.PlacementZonesActions.retrievePlacementZones();
 
-      var promises = [];
-
+      let promises = [];
       if (document.resourcePoolLink) {
         promises.push(
             services.loadPlacementZone(document.resourcePoolLink).catch(() => Promise.resolve()));
@@ -251,74 +242,74 @@ let ComputeStore = Reflux.createStore({
 
       Promise.all(promises).then(([config, tags]) => {
         if (document.resourcePoolLink && config) {
-          computeModel.placementZone = config.resourcePoolState;
+          model.placementZone = config.resourcePoolState;
         }
-        computeModel.tags = tags ? Object.values(tags) : [];
+        model.tags = tags ? Object.values(tags) : [];
 
-        this.setInData(['computeEditView'], computeModel);
+        this.setInData(['editingItemData', 'item'], Immutable(model));
         this.emitChange();
       });
 
     }).catch(this.onGenericEditError);
 
-    this.setInData(['computeEditView'], {});
+    this.setInData(['editingItemData', 'item'], {});
     this.emitChange();
   },
-
-  onUpdateCompute: function(computeModel, tags) {
+  onUpdateCompute(model, tags) {
     Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
       return Promise.all(tags.map((tag, i) =>
         result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
     }).then((updatedTags) => {
-      let computeData = $.extend({}, computeModel.dto, {
-        resourcePoolLink: computeModel.resourcePoolLink,
+      let data = $.extend({}, model.dto, {
+        resourcePoolLink: model.resourcePoolLink,
         tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
       });
-      services.updateCompute(computeModel.selfLinkId, computeData).then(() => {
+      services.updateCompute(model.selfLinkId, data).then(() => {
         actions.NavigationActions.openCompute();
-        this.setInData(['computeEditView'], null);
-        this.setInData(['computeEditView', 'isSavingCompute'], false);
+        this.setInData(['editingItemData'], null);
         this.emitChange();
       }).catch(this.onGenericEditError);
     });
-    this.setInData(['computeEditView', 'isSavingCompute'], true);
+
+    this.setInData(['editingItemData', 'item'], model);
+    this.setInData(['editingItemData', 'validationErrors'], null);
+    this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
   },
-
-  onOpenToolbarPlacementZones: function() {
+  onGenericEditError(e) {
+    var validationErrors = utils.getValidationErrors(e);
+    this.setInData(['editingItemData', 'validationErrors'], validationErrors);
+    this.setInData(['editingItemData', 'saving'], false);
+    console.error(e);
+    this.emitChange();
+  },
+  onOpenToolbarPlacementZones() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.PLACEMENT_ZONES,
       PlacementZonesStore.getData(), false);
   },
-
-  onCloseToolbar: function() {
-    if (!this.data.computeEditView) {
-
+  onCloseToolbar() {
+    if (!this.data.editingItemData) {
       this.closeToolbar();
     } else {
-
       var contextViewData = {
         expanded: false,
         activeItem: null
       };
-
-      this.setInData(['computeEditView', 'contextView'], contextViewData);
+      this.setInData(['editingItemData', 'contextView'], contextViewData);
       this.emitChange();
     }
   },
-
-  onCreatePlacementZone: function() {
+  onCreatePlacementZone() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.PLACEMENT_ZONES,
       PlacementZonesStore.getData(), true);
     actions.PlacementZonesActions.editPlacementZone({});
   },
-
-  onManagePlacementZones: function() {
+  onManagePlacementZones() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.PLACEMENT_ZONES,
       PlacementZonesStore.getData(), true);
   },
-
-  getPlacementZones: function(compute) {
-    let placementZones = utils.getIn(this.data, ['listView', 'placementZones']) || {};
+  getPlacementZones(compute) {
+    let placementZones = utils.getIn(this.data, ['listView', 'placementZones']) || [];
     let resourcePoolLinks = [];
     compute.forEach((compute) => {
       compute.epzs.forEach((epz) => resourcePoolLinks.push(epz.epzLink));
@@ -334,9 +325,8 @@ let ComputeStore = Reflux.createStore({
       return utils.getIn(this.data, ['listView', 'placementZones']);
     });
   },
-
-  getDescriptions: function(compute) {
-    let descriptions = utils.getIn(this.data, ['listView', 'descriptions']) || {};
+  getDescriptions(compute) {
+    let descriptions = utils.getIn(this.data, ['listView', 'descriptions']) || [];
     let descriptionLinks = compute.filter((compute) =>
         compute.descriptionLink).map((compute) => compute.descriptionLink);
     let links = [...new Set(descriptionLinks)].filter((link) =>

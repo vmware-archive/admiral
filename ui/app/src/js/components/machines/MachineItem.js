@@ -9,33 +9,33 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import { NavigationActions } from 'actions/Actions';
 import MachineItemVue from 'components/machines/MachineItemVue.html';
 import constants from 'core/constants';
 
-var MachineItem = Vue.extend({
+export default Vue.component('machine-grid-item', {
   template: MachineItemVue,
   props: {
     model: {required: true}
   },
   computed: {
-    powerStateOn: function() {
+    powerStateOn() {
       return this.model.powerState === constants.STATES.ON;
     },
-    hostDisabled: function() {
+    hostDisabled() {
       return this.model.powerState === constants.STATES.SUSPEND;
     },
-    hostName: function() {
+    hostName() {
       return this.model.name;
     }
   },
   attached: function() {
   },
   methods: {
-    stateMessage: function(state) {
+    stateMessage(state) {
       return i18n.t('state.' + state);
     },
-
-    percentageLevel: function(percentage) {
+    percentageLevel(percentage) {
       if (percentage < 50) {
         return 'success';
       } else if (percentage < 80) {
@@ -43,10 +43,10 @@ var MachineItem = Vue.extend({
       } else {
         return 'danger';
       }
+    },
+    editMachine($event) {
+      $event.preventDefault();
+      NavigationActions.editMachine(this.model.selfLinkId);
     }
   }
 });
-
-Vue.component('machine-grid-item', MachineItem);
-
-export default MachineItem;

@@ -238,7 +238,7 @@
         "searchImagesPlaceholder": "Search for images",
         "searchTemplatesPlaceholder": "Search for templates",
         "searchClosuresPlaceholder": "Search for closures",
-        "manageRegistry": "Manage Registry",
+        "manageRegistry": "Manage Registries",
         "provision": "Provision",
         "provisionAdditionalInfo": "Enter additional info",
         "editTemplate": "Edit / View Details",
@@ -412,7 +412,7 @@
         "title": "Environments",
         "titleSearch": "Found environments",
         "searchPlaceholder": "Search for environments",
-        "addButton": "Add Environment",
+        "addButton": "Create Environment",
         "addPropertyButton": "Add Property",
         "nameColumn": "Name",
         "endpointTypeColumn": "Endpoint Type",
@@ -516,7 +516,18 @@
       "list": {
         "title": "Machines",
         "titleSearch": "Found Machines",
-        "searchPlaceholder": "Search for machines"
+        "searchPlaceholder": "Search for machines",
+        "addButton": "Create Machine"
+      },
+      "edit": {
+        "addTitle": "Create Machine",
+        "editTitle": "Edit Machine",
+        "nameLabel": "Name",
+        "save": "Save",
+        "create": "Create",
+        "loadButton": "Load from file",
+        "importTemplateHint": "Composite description containing one or multiple machine descriptions",
+        "importPlaceholder": ""
       }
     },
     "compute": {
@@ -530,7 +541,8 @@
         "type": "Type"
       },
       "edit": {
-        "title": "Edit Compute"
+        "title": "Edit Compute",
+        "nameLabel": "Name"
       }
     },
     "resource": {

@@ -22,7 +22,8 @@ export var HostActions = Reflux.createActions([
 ]);
 
 export var MachineActions = Reflux.createActions([
-  'openMachines', 'openMachinesNext', 'openMachineDetails'
+  'openMachines', 'openMachinesNext', 'openAddMachine', 'createMachine',
+  'editMachine', 'updateMachine'
 ]);
 
 export var ComputeActions = Reflux.createActions([
@@ -89,6 +90,11 @@ export var HostContextToolbarActions = Reflux.createActions([
   'createCredential', 'manageCredentials', 'manageCertificates',
   'createDeploymentPolicy', 'manageDeploymentPolicies',
   'createEndpoint', 'manageEndpoints'
+]);
+
+export var MachinesContextToolbarActions = Reflux.createActions([
+  'openToolbarPlacementZones', 'closeToolbar',
+  'createPlacementZone', 'managePlacementZones'
 ]);
 
 export var ComputeContextToolbarActions = Reflux.createActions([
@@ -177,7 +183,7 @@ export var NavigationActions = Reflux.createActions([
   'openTemplates', 'openEventLog', 'openRegistries', 'openContainerRequest', 'openContainers',
   'openNetworks', 'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
   'openTemplateDetails', 'showContainersPerPlacement', 'openPlacements', 'openEnvironments',
-  'openAddEnvironment', 'editEnvironment', 'openMachines', 'openMachineDetails', 'openCompute',
-  'editCompute', 'openClosures', 'openClosuresSilently', 'openAddClosure', 'openClosureDetails',
-  'openCompositeClosureDetails', 'openEndpoints'
+  'openAddEnvironment', 'editEnvironment', 'openMachines', 'openAddMachine', 'editMachine',
+  'openCompute', 'editCompute', 'openClosures', 'openClosuresSilently', 'openAddClosure',
+  'openClosureDetails', 'openCompositeClosureDetails', 'openEndpoints'
 ]);

@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="compute-edit-view" v-bind:class="{'right-context-expanded': contextExpanded}">
+<div class="machine-edit-view" v-bind:class="{'right-context-expanded': contextExpanded}">
   <div class="main-panel">
     <alert alert-type="danger"
            v-bind:show-alert="validationErrors._generic && (validationErrors._generic != null)"
@@ -20,13 +20,35 @@
 
     <div class="view-title-container">
       <div class="view-title">
-        <div class="title">{{i18n('app.compute.edit.title')}}</div>
+        <div class="title">
+          {{i18n(model.item.documentSelfLink ? 'app.machine.edit.editTitle' : 'app.machine.edit.addTitle')}}
+        </div>
       </div>
     </div>
 
-    <div class="compute-form form-horizontal">
+    <div class="machine-form" v-if="!model.item.documentSelfLink">
+
+      <div class="template-import-option">
+        <a class="btn btn-sm btn-secondary fileUpload" v-on:click="browseFile" v-bind:class="{'disabled': model.isImportingTemplate}">
+          <span>{{i18n("app.machine.edit.loadButton")}}</span>
+        </a>
+        <input type="file" class="upload" v-on:change="onFileChange"></input>
+        <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="right" title="{{i18n('app.machine.edit.importTemplateHint')}}"></i>
+      </div>
+
+      <textarea v-model="templateContent" class="template-input" v-bind:disabled="model.isImportingTemplate" placeholder="{{i18n('app.machine.edit.importPlaceholder')}}"></textarea>
+
+      <div class="templateImport-toolbar">
+        <button type="submit" class="btn btn-primary"
+          v-bind:class="{'disabled': !templateContent, 'loading': model.isImportingTemplate}"
+          v-on:click="importTemplate">{{i18n("app.machine.edit.create")}}<i class="fa fa-spinner fa-spin loader-inline"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="machine-form form-horizontal" v-show="model.item.documentSelfLink">
       <div id="name" class="form-group">
-        <label class="col-sm-3">{{i18n("app.compute.edit.nameLabel")}}</label>
+        <label class="col-sm-3">{{i18n("app.machine.edit.nameLabel")}}</label>
         <div class="col-sm-9">
           <label>{{model.item.name}}</label>
         </div>
@@ -76,13 +98,14 @@
           <div class="pull-right control-btns">
             <button type="submit" class="btn btn-primary"
                     v-bind:class="{'loading': model.item.saving}"
-                    v-on:click="saveCompute">
-              {{i18n("app.host.details.update")}}
+                    v-on:click="saveMachine">
+              {{i18n("app.machine.edit.save")}}
               <i class="fa fa-spinner fa-spin loader-inline"></i></button>
             <span class="help-block"></span>
           </div>
         </div>
       </div>
+
     </div>
 
     <div class="mask" v-bind:class="{'hide': !contextExpanded}"></div>
@@ -91,6 +114,7 @@
   <context-sidepanel class="right-context-panel" v-on:close="closeToolbar()">
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
+        v-if="model.item.documentSelfLink"
         v-bind:active="activeContextItem === 'placementZones'"
         v-bind:icon-class="'fa fa-cubes'"
         v-bind:label="i18n('app.placementZone.contextPanelTooltip')"

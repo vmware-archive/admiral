@@ -36,4 +36,8 @@
            title="{{model.cpuCount}}">{{model.cpuCount}} CPU{{ model.cpuCount > 1 ? 's' : '' }}, {{model.cpuMhzPerCore}} Mhz</div>
     </div>
   </div>
+  <div class="actions">
+    <action-button name="edit" v-bind:label="i18n('app.host.actions.edit')"
+                   icon-name="edit" v-on:click="editMachine($event)"></action-button>
+  </div>
 </div>
