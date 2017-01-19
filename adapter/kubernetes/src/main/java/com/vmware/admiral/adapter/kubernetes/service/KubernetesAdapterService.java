@@ -11,12 +11,12 @@
 
 package com.vmware.admiral.adapter.kubernetes.service;
 
-import java.util.HashMap;
 import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.kubernetes.service.apiobject.Container;
+import com.vmware.admiral.adapter.kubernetes.service.apiobject.ContainerStatus;
 import com.vmware.admiral.adapter.kubernetes.service.apiobject.Pod;
 import com.vmware.admiral.adapter.kubernetes.service.apiobject.PodList;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -68,7 +68,7 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
         } else {
             op.complete();// TODO: can't return the operation if state not persisted.
         }
-        //processContainerRequest(context);
+        processContainerRequest(context);
     }
 
     private void processContainerRequest(RequestContext context) {
@@ -179,29 +179,30 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
                         context.operation,
                         () -> {
                             PodList podList = o.getBody(PodList.class);
-                            Pod interestPod = null;
+                            boolean foundPod = false;
+                            String created = null;
+                            ContainerStatus interestStatus = null;
+                            Container interestContainer = null;
                             if (podList.items == null) {
                                 logWarning("From getPods: got null items");
                                 return;
                             }
                             for (Pod pod: podList.items) {
-                                // This will work only when we assign container ids from pod ids
-                                // Kubernetes containers don't have ids
-                                if (context.containerState.id.startsWith(pod.metadata.uid)) {
-                                    interestPod = pod;
-                                    break;
+                                for (ContainerStatus status: pod.status.containerStatuses) {
+                                    if (status.containerID.equals(context.containerState.id)) {
+                                        foundPod = true;
+                                        interestStatus = status;
+                                        created = pod.metadata.creationTimestamp;
+                                        break;
+                                    }
                                 }
-                            }
-                            if (interestPod == null) {
-                                logWarning("Lookup on pod for container %s with id %s failed: "
-                                        + "Missing", context.containerState.name,
-                                        context.containerState.id);
-                                return;
-                            }
-                            Container interestContainer = null;
-                            for (Container container: interestPod.spec.containers) {
-                                if (container.name.equals(context.containerState.name)) {
-                                    interestContainer = container;
+                                if (foundPod) {
+                                    for (Container container: pod.spec.containers) {
+                                        if (container.name.equals(interestStatus.name)) {
+                                            interestContainer = container;
+                                            break;
+                                        }
+                                    }
                                     break;
                                 }
                             }
@@ -211,14 +212,14 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
                                 return;
                             }
                             patchContainerState(context.request, context.containerState,
-                                    interestContainer, context);
+                                    interestContainer, interestStatus, created, context);
                         });
             }
         });
     }
 
-    private void patchContainerState(AdapterRequest request,
-            ContainerState containerState, Container container, RequestContext context) {
+    private void patchContainerState(AdapterRequest request, ContainerState containerState,
+            Container container, ContainerStatus status, String created, RequestContext context) {
 
         // start with a new ContainerState object because we don't want to overwrite with stale data
         ContainerState newContainerState = new ContainerState();
@@ -226,12 +227,9 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
         newContainerState.documentExpirationTimeMicros = -1; // make sure the expiration is reset.
         newContainerState.adapterManagementReference = containerState.adapterManagementReference;
 
-        newContainerState.attributes = new HashMap<>();
-        newContainerState.attributes.put("Id", context.containerState.id);
-        newContainerState.attributes.put("Name", container.name);
+        KubernetesContainerStateMapper.mapContainer(newContainerState, container, status);
 
-        KubernetesContainerStateMapper.mapContainer(newContainerState, container,
-                context.containerState.id);
+        newContainerState.created = KubernetesContainerStateMapper.parseDate(created);
 
         getHost().log(Level.INFO, "Patching ContainerState: %s %s",
                 containerState.documentSelfLink, request.getRequestTrackingLog());

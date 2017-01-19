@@ -19,7 +19,7 @@ public class ObjectMeta {
     public String uid;
     // public String resourceVersion;
     // public long generation;
-    // public String creationTimestamp;
+    public String creationTimestamp;
     // public String deletionTimestamp;
     // public long deletionGracePeriodSeconds;
 }

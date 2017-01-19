@@ -11,10 +11,13 @@
 
 package com.vmware.admiral.adapter.kubernetes.service.apiobject;
 
-public class Pod {
-    // public String kind;
-    // public String apiVersion;
-    public ObjectMeta metadata;
-    public PodSpec spec;
-    public PodStatus status;
+public class ContainerStatus {
+    public String name;
+    public ContainerState state;
+    // public ContainerState lastState;
+    // public boolean ready;
+    // public int restartCount;
+    public String image;
+    // public String imageID;
+    public String containerID;
 }
