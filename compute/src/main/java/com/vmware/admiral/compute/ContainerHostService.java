@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -382,7 +382,7 @@ public class ContainerHostService extends StatelessService {
 
     private void validateVicHost(ContainerHostSpec hostSpec, Operation op) {
         String computeAddress = hostSpec.hostState.address;
-        validateSslTrust(hostSpec, op, () -> {
+        EndpointCertificateUtil.validateSslTrust(this, hostSpec, op, () -> {
             setSslTrustAliasProperty(hostSpec);
             getHostInfo(hostSpec, op, hostSpec.sslTrust,
                     (computeState) -> {
@@ -430,24 +430,23 @@ public class ContainerHostService extends StatelessService {
         return hostType;
     }
 
-    protected void storeHost(ContainerHostSpec hostSpec, Operation op,
-            boolean triggerDataCollection) {
+    protected void storeHost(ContainerHostSpec hostSpec, Operation op) {
         ContainerHostType hostType = getHostTypeFromSpec(hostSpec);
         switch (hostType) {
         case DOCKER:
             verifyNoSchedulersInPlacementZone(hostSpec, op, () -> {
-                storeDockerHost(hostSpec, op, triggerDataCollection);
+                storeDockerHost(hostSpec, op);
             });
             break;
 
         case VIC:
             verifyPlacementZoneIsEmpty(hostSpec, op, () -> {
-                storeVicHost(hostSpec, op, triggerDataCollection);
+                storeVicHost(hostSpec, op);
             });
             break;
         case KUBERNETES:
             verifyPlacementZoneIsEmpty(hostSpec, op,
-                    () -> storeKubernetesHost(hostSpec, op, triggerDataCollection));
+                    () -> storeKubernetesHost(hostSpec, op));
             break;
 
         default:
@@ -458,8 +457,7 @@ public class ContainerHostService extends StatelessService {
         }
     }
 
-    private void storeVicHost(ContainerHostSpec hostSpec, Operation op,
-            boolean triggerDataCollection) {
+    private void storeVicHost(ContainerHostSpec hostSpec, Operation op) {
         try {
             // Schedulers can be added to placements zones only explicitly, it is not possible to
             // use tags
@@ -470,33 +468,43 @@ public class ContainerHostService extends StatelessService {
             return;
         }
 
-        // VIC verification relies on data gathered by a docker info command
-        getHostInfo(hostSpec, op, hostSpec.sslTrust, (computeState) -> {
-            if (ContainerHostUtil.isVicHost(computeState)) {
-                doStoreHost(hostSpec, op, triggerDataCollection);
-            } else {
-                op.fail(new IllegalArgumentException(CONTAINER_HOST_IS_NOT_VIC_MESSAGE));
-            }
-        });
+        if (hostSpec.acceptHostAddress) {
+            doStoreHost(hostSpec, op);
+        } else {
+            // VIC verification relies on data gathered by a docker info command
+            getHostInfo(hostSpec, op, hostSpec.sslTrust, (computeState) -> {
+                if (ContainerHostUtil.isVicHost(computeState)) {
+                    doStoreHost(hostSpec, op);
+                } else {
+                    op.fail(new IllegalArgumentException(CONTAINER_HOST_IS_NOT_VIC_MESSAGE));
+                }
+            });
+        }
     }
 
-    private void storeDockerHost(ContainerHostSpec hostSpec, Operation op,
-            boolean triggerDataCollection) {
-        // Docker hosts are validated by a ping call.
-        pingHost(hostSpec, op, hostSpec.sslTrust, () -> {
-            doStoreHost(hostSpec, op, triggerDataCollection);
-        });
+    private void storeDockerHost(ContainerHostSpec hostSpec, Operation op) {
+        if (hostSpec.acceptHostAddress) {
+            doStoreHost(hostSpec, op);
+        } else {
+            // Docker hosts are validated by a ping call.
+            pingHost(hostSpec, op, hostSpec.sslTrust, () -> {
+                doStoreHost(hostSpec, op);
+            });
+        }
     }
 
-    private void storeKubernetesHost(ContainerHostSpec hostSpec, Operation op,
-            boolean triggerDataCollection) {
-        // Kubernetes hosts are validated by a ping call.
-        pingHost(hostSpec, op, hostSpec.sslTrust,
-                () -> doStoreHost(hostSpec, op, triggerDataCollection));
+    private void storeKubernetesHost(ContainerHostSpec hostSpec, Operation op) {
+        if (hostSpec.acceptHostAddress) {
+            doStoreHost(hostSpec, op);
+        } else {
+            // Kubernetes hosts are validated by a ping call.
+            pingHost(hostSpec, op, hostSpec.sslTrust, () -> {
+                doStoreHost(hostSpec, op);
+            });
+        }
     }
 
-    private void doStoreHost(ContainerHostSpec hostSpec, Operation op,
-            boolean triggerDataCollection) {
+    private void doStoreHost(ContainerHostSpec hostSpec, Operation op) {
         ComputeState cs = hostSpec.hostState;
 
         ContainerHostType hostType = getHostTypeFromSpec(hostSpec);
@@ -551,10 +559,8 @@ public class ContainerHostService extends StatelessService {
                     op.addResponseHeader(Operation.LOCATION_HEADER, documentSelfLink);
                     createHostPortProfile(storedHost, op);
 
-                    if (triggerDataCollection) {
-                        updateContainerHostInfo(documentSelfLink);
-                        triggerEpzEnumeration();
-                    }
+                    updateContainerHostInfo(documentSelfLink);
+                    triggerEpzEnumeration();
                 }));
     }
 
@@ -795,32 +801,30 @@ public class ContainerHostService extends StatelessService {
         EpzComputeEnumerationTaskService.triggerForAllResourcePools(this);
     }
 
-    private void validateSslTrust(ContainerHostSpec hostSpec, Operation op,
-            Runnable callbackFunction) {
-        EndpointCertificateUtil.validateSslTrust(this, hostSpec, op, callbackFunction);
-    }
-
     private void createHost(ContainerHostSpec hostSpec, Operation op) {
         setSslTrustAliasProperty(hostSpec);
 
-        boolean triggerDataCollection = true;
         if (hostSpec.acceptHostAddress) {
             if (hostSpec.acceptCertificate) {
-                // data collection will be 'manually triggered' after certificate is stored
-                triggerDataCollection = false;
-                op.nestCompletion((o) -> {
-                    EndpointCertificateUtil.validateSslTrust(this, hostSpec, o, () -> {
-                        updateContainerHostInfo(hostSpec.hostState.documentSelfLink);
-                        triggerEpzEnumeration();
-
-                        op.complete();
-                    });
-                });
+                Operation o = Operation.createGet(null)
+                        .setCompletion((completedOp, e) -> {
+                            if (e != null) {
+                                storeHost(hostSpec, op);
+                            } else {
+                                op.setStatusCode(completedOp.getStatusCode());
+                                op.transferResponseHeadersFrom(completedOp);
+                                op.setBodyNoCloning(completedOp.getBodyRaw());
+                                op.complete();
+                            }
+                        });
+                EndpointCertificateUtil
+                        .validateSslTrust(this, hostSpec, o, () -> storeHost(hostSpec, op));
+            } else {
+                storeHost(hostSpec, op);
             }
-
-            storeHost(hostSpec, op, triggerDataCollection);
         } else {
-            validateSslTrust(hostSpec, op, () -> storeHost(hostSpec, op, true));
+            EndpointCertificateUtil
+                    .validateSslTrust(this, hostSpec, op, () -> storeHost(hostSpec, op));
         }
     }
 
@@ -842,7 +846,7 @@ public class ContainerHostService extends StatelessService {
     }
 
     private void validateConnection(ContainerHostSpec hostSpec, Operation op) {
-        validateSslTrust(hostSpec, op, () -> {
+        EndpointCertificateUtil.validateSslTrust(this, hostSpec, op, () -> {
             setSslTrustAliasProperty(hostSpec);
             pingHost(hostSpec, op, hostSpec.sslTrust, () -> completeOperationSuccess(op));
         });
