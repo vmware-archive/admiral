@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -38,6 +38,7 @@ import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.request.RequestBaseTest;
+import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
@@ -719,7 +720,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
     private ComputeState createComputeState() {
         ComputeState computeState = new ComputeState();
         computeState.address = "https://test-server";
-        computeState.resourcePoolLink = "test-resource-pool";
+        computeState.resourcePoolLink = TestRequestStateFactory.RESOURCE_POOL_ID;
         computeState.customProperties = new HashMap<>();
         computeState.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 "authCredentialsLink");
