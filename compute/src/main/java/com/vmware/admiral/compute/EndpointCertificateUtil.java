@@ -64,7 +64,6 @@ public class EndpointCertificateUtil {
                                 hostSpec.uri.toString(), rsp.message);
                         logger.severe(rsp.message);
                         op.setStatusCode(o.getStatusCode());
-                        op.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON);
                         op.fail(e, rsp);
                         return;
                     }
