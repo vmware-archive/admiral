@@ -181,6 +181,10 @@ public class CompositeComponentService extends StatefulService {
                 .filter(link -> link.startsWith(ContainerNetworkService.FACTORY_LINK))
                 .collect(Collectors.toList());
 
+        if (networkLinks.isEmpty()) {
+            return;
+        }
+
         QueryTask networksQuery = QueryUtil.buildQuery(ContainerNetworkState.class, false);
 
         QueryUtil.addListValueClause(networksQuery,
@@ -210,6 +214,10 @@ public class CompositeComponentService extends StatefulService {
         List<String> volumeLinks = composite.componentLinks.stream()
                 .filter(link -> link.startsWith(ContainerVolumeService.FACTORY_LINK))
                 .collect(Collectors.toList());
+
+        if (volumeLinks.isEmpty()) {
+            return;
+        }
 
         QueryTask volumesQuery = QueryUtil.buildQuery(ContainerVolumeState.class, false);
 
