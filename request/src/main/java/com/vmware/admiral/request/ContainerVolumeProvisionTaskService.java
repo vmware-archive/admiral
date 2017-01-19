@@ -276,6 +276,12 @@ public class ContainerVolumeProvisionTaskService
     private void getContextContainerDescriptions(
             Map<String, List<ContainerState>> containersByDescriptionLink,
             Consumer<List<ContainerDescription>> callback) {
+
+        if ((containersByDescriptionLink == null) || (containersByDescriptionLink.isEmpty())) {
+            callback.accept(Collections.emptyList());
+            return;
+        }
+
         QueryTask q = QueryUtil.buildQuery(ContainerDescription.class, true);
 
         QueryUtil.addExpandOption(q);
