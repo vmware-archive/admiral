@@ -32,6 +32,7 @@ import java.util.logging.Level;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ResourceType;
@@ -226,6 +227,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         assertContainerDescription(hostTwo, headers);
     }
 
+    @Ignore("VBV-1018")
     @Test
     public void testProvisioningOfContainerInCluster() throws Throwable {
 
