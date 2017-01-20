@@ -37,6 +37,7 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.SslCertificateResolver;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
+import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
 import com.vmware.admiral.compute.container.HostPortProfileService;
@@ -52,6 +53,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
@@ -67,6 +69,8 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
  */
 public class ContainerHostService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.CONTAINER_HOSTS;
+    public static final String INCORRECT_PLACEMENT_ZONE_TYPE_MESSAGE_FORMAT = "Incorrect placement "
+            + "zone type. Expected '%s' but was '%s'";
     public static final String HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT = "Container host type is not supported: %s";
     public static final String CONTAINER_HOST_ALREADY_EXISTS_MESSAGE = "Container host already exists";
     public static final String CONTAINER_HOST_IS_NOT_VIC_MESSAGE = "Not a VIC host";
@@ -434,19 +438,25 @@ public class ContainerHostService extends StatelessService {
         ContainerHostType hostType = getHostTypeFromSpec(hostSpec);
         switch (hostType) {
         case DOCKER:
-            verifyNoSchedulersInPlacementZone(hostSpec, op, () -> {
-                storeDockerHost(hostSpec, op);
+            verifyPlacementZoneType(hostSpec, op, PlacementZoneType.DOCKER, () -> {
+                verifyNoSchedulersInPlacementZone(hostSpec, op, () -> {
+                    storeDockerHost(hostSpec, op);
+                });
             });
             break;
 
         case VIC:
-            verifyPlacementZoneIsEmpty(hostSpec, op, () -> {
-                storeVicHost(hostSpec, op);
+            verifyPlacementZoneType(hostSpec, op, PlacementZoneType.SCHEDULER, () -> {
+                verifyPlacementZoneIsEmpty(hostSpec, op, () -> {
+                    storeVicHost(hostSpec, op);
+                });
             });
             break;
         case KUBERNETES:
-            verifyPlacementZoneIsEmpty(hostSpec, op,
-                    () -> storeKubernetesHost(hostSpec, op));
+            verifyPlacementZoneType(hostSpec, op, PlacementZoneType.SCHEDULER, () -> {
+                verifyPlacementZoneIsEmpty(hostSpec, op,
+                        () -> storeKubernetesHost(hostSpec, op));
+            });
             break;
 
         default:
@@ -564,6 +574,40 @@ public class ContainerHostService extends StatelessService {
                 }));
     }
 
+    private void verifyPlacementZoneType(ContainerHostSpec hostSpec, Operation op,
+            PlacementZoneType expectedType, Runnable successCallaback) {
+
+        if (hostSpec.hostState.resourcePoolLink == null) {
+            successCallaback.run();
+            return;
+        }
+
+        Operation.createGet(getHost(), hostSpec.hostState.resourcePoolLink)
+                .setReferer(getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        op.fail(e);
+                        return;
+                    }
+
+                    ResourcePoolState placementZone = o.getBody(ResourcePoolState.class);
+                    try {
+                        PlacementZoneType zoneType = PlacementZoneUtil
+                                .getPlacementZoneType(placementZone);
+                        if (zoneType == expectedType) {
+                            successCallaback.run();
+                        } else {
+                            String error = String.format(
+                                    INCORRECT_PLACEMENT_ZONE_TYPE_MESSAGE_FORMAT,
+                                    expectedType.toString(), zoneType.toString());
+                            op.fail(new IllegalArgumentException(error));
+                        }
+                    } catch (IllegalArgumentException ex) {
+                        op.fail(ex);
+                    }
+                }).sendWith(getHost());
+    }
+
     private void verifyPlacementZoneIsEmpty(ContainerHostSpec hostSpec, Operation op,
             Runnable successCallback) {
         String placementZoneLink = hostSpec.hostState.resourcePoolLink;
@@ -624,6 +668,7 @@ public class ContainerHostService extends StatelessService {
     }
 
     private boolean isScheduler(ComputeState computeState) {
+     // TODO check for kubernetes as well
         return ContainerHostUtil.isVicHost(computeState);
     }
 

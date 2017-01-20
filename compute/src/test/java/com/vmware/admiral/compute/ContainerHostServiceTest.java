@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -38,6 +38,7 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
+import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -63,6 +64,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
 
     private MockDockerHostAdapterService dockerAdapterService;
 
+    private ResourcePoolState placementZone;
     private List<String> tenantLinks;
     private List<String> forDeletion;
 
@@ -70,11 +72,14 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
     public void setUp() throws Throwable {
         waitForServiceAvailability(ContainerHostService.SELF_LINK);
         waitForServiceAvailability(ComputeService.FACTORY_LINK);
+        waitForServiceAvailability(ResourcePoolService.FACTORY_LINK);
 
         dockerAdapterService = new MockDockerHostAdapterService();
         host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerHostAdapterService.class)), dockerAdapterService);
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
+
+        placementZone = createPlacementZone();
 
         tenantLinks = Arrays.asList(
                 FIRST_TENANT_ID,
@@ -89,6 +94,8 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
         for (String selfLink : forDeletion) {
             delete(selfLink);
         }
+
+        delete(placementZone.documentSelfLink);
 
         stopService(dockerAdapterService);
     }
@@ -308,6 +315,16 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
         assertComputeStateExists(hostSpec);
     }
 
+    static ResourcePoolState createResourcePoolState() {
+
+        ResourcePoolState resourcePoolState = new ResourcePoolState();
+        resourcePoolState.id = RESOURCE_POOL_ID;
+        resourcePoolState.name = resourcePoolState.id;
+        resourcePoolState.documentSelfLink = UriUtils.buildUriPath(ResourcePoolService.FACTORY_LINK,
+                resourcePoolState.id);
+        return resourcePoolState;
+    }
+
     static ComputeState createComputeHost(List<String> tenantLinks, String computeDescriptionId)
             throws Throwable {
         ComputeState cs = new ComputeState();
@@ -357,6 +374,10 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
         host.testStart(1);
         host.send(getCompositeDesc);
         host.testWait();
+    }
+
+    private ResourcePoolState createPlacementZone() throws Throwable {
+        return doPost(createResourcePoolState(), ResourcePoolService.FACTORY_LINK);
     }
 
     private void assertComputeStateExists(ContainerHostSpec hostSpec) {
