@@ -98,8 +98,8 @@ public class ContainerService extends StatefulService {
 
         /** The list of names of a given container host. */
         @Documentation(description = "The list of names of a given container host.")
-        @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
-                PropertyUsageOption.OPTIONAL })
+        @PropertyOptions(indexing = { PropertyIndexingOption.CASE_INSENSITIVE, PropertyIndexingOption.EXPAND },
+                usage = PropertyUsageOption.OPTIONAL)
         public List<String> names;
 
         /** Defines the description of the container */
@@ -114,6 +114,7 @@ public class ContainerService extends StatefulService {
         /** Defines the address of the container */
         @Documentation(description = "Defines the address of the container")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @PropertyOptions(indexing = PropertyIndexingOption.CASE_INSENSITIVE)
         public String address;
 
         /** Defines which adapter which serve the provision request */
@@ -142,11 +143,13 @@ public class ContainerService extends StatefulService {
 
         /** (Required) The docker image */
         @Documentation(description = "The docker image.")
+        @PropertyOptions(indexing = PropertyIndexingOption.CASE_INSENSITIVE)
         public String image;
 
         /** Commands to run. */
         @Documentation(description = "Commands to run.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @PropertyOptions(indexing = PropertyIndexingOption.CASE_INSENSITIVE)
         public String[] command;
 
         /** Volumes from the specified container(s) of the format <container name>[:<ro|rw>] */
@@ -197,6 +200,7 @@ public class ContainerService extends StatefulService {
         /** Status of the container */
         @Documentation(description = "Status of the container")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @PropertyOptions(indexing = PropertyIndexingOption.CASE_INSENSITIVE)
         public String status;
 
         /** Container created time in milliseconds */
