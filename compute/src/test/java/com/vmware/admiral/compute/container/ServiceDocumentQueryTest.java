@@ -13,6 +13,7 @@ package com.vmware.admiral.compute.container;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import java.util.function.Consumer;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceDocumentQuery.ServiceDocumentQueryElementResult;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -29,6 +31,10 @@ import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class ServiceDocumentQueryTest extends ComputeBaseTest {
     ServiceDocumentQuery<ContainerDescription> query;
@@ -226,6 +232,49 @@ public class ServiceDocumentQueryTest extends ComputeBaseTest {
         descs = queryUpdatedSince(startTime);
         assertEquals(1, descs.size()); // expectation is to still have only one
         assertEquals(image1, sslTrustCert.image);
+    }
+
+    @Test
+    public void testQueryResultLimit() throws Throwable {
+        final String queryTaskDocumentSelfLink = UriUtils
+                .buildUri(host, ServiceUriPaths.CORE_QUERY_TASKS + "/testQueryTaskResultLimit").getPath();
+        QuerySpecification qs = new QuerySpecification();
+        qs.query = Query.Builder.create().addKindFieldClause(ContainerDescription.class).build();
+        QueryTask qt = QueryTask.create(qs);
+        qt.documentSelfLink = queryTaskDocumentSelfLink + 1;
+
+        host.testStart(1);
+        new ServiceDocumentQuery<>(
+                host, ContainerDescription.class).query(qt, handler(true));
+        host.testWait();
+        qt = getDocument(QueryTask.class, qt.documentSelfLink);
+        assertEquals(ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT,
+                qt.querySpec.resultLimit);
+
+        Integer resourceLimit = 1000;
+        qs = new QuerySpecification();
+        qs.query = Query.Builder.create().addKindFieldClause(ContainerDescription.class).build();
+        qt = QueryTask.create(qs);
+        qt.querySpec.resultLimit = resourceLimit;
+        qt.documentSelfLink = queryTaskDocumentSelfLink + 2;
+        host.testStart(1);
+        new ServiceDocumentQuery<>(
+                host, ContainerDescription.class).query(qt, handler(true));
+        host.testWait();
+        qt = getDocument(QueryTask.class, qt.documentSelfLink);
+        assertEquals(resourceLimit, qt.querySpec.resultLimit);
+
+        qs = new QuerySpecification();
+        qs.query = Query.Builder.create().addKindFieldClause(ContainerDescription.class).build();
+        qt = QueryTask.create(qs);
+        QueryUtil.addCountOption(qt);
+        qt.documentSelfLink = queryTaskDocumentSelfLink + 3;
+        host.testStart(1);
+        new ServiceDocumentQuery<>(
+                host, ContainerDescription.class).query(qt, handler(true));
+        host.testWait();
+        qt = getDocument(QueryTask.class, qt.documentSelfLink);
+        assertNull(qt.querySpec.resultLimit);
     }
 
     private List<ContainerDescription> queryDocument(String documentSelfLink) throws Throwable {

@@ -393,11 +393,14 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                                 host.failIteration(r.getException());
                             } else if (r.hasResult()) {
                                 computeStates.add(r.getDocumentSelfLink());
-                                host.completeIteration();
                             } else {
-                                host.log("No compute state with description link {}",
-                                        hostSpec.hostState.descriptionLink);
-                                host.failIteration(r.getException());
+                                if (computeStates.isEmpty()) {
+                                    host.log("No compute state with description link {}",
+                                            hostSpec.hostState.descriptionLink);
+                                    host.failIteration(r.getException());
+                                } else {
+                                    host.completeIteration();
+                                }
                             }
                         });
         host.testWait();
