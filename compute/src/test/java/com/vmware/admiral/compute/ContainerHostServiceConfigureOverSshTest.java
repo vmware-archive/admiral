@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -37,6 +37,8 @@ import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskService;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ResourcePoolService;
+import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -47,12 +49,14 @@ import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
+
 public class ContainerHostServiceConfigureOverSshTest extends ComputeBaseTest {
 
     private MockDockerHostAdapterService dockerAdapterService;
     private MockConfigureHostOverSshTaskService configureHostOverSshTaskService;
 
     private AuthCredentialsService authCredentialsService;
+    private ResourcePoolState placementZone;
 
     @Override
     @Before
@@ -73,6 +77,8 @@ public class ContainerHostServiceConfigureOverSshTest extends ComputeBaseTest {
         host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerHostAdapterService.class)), dockerAdapterService);
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
+
+        placementZone = createPlacementZone();
     }
 
     @Test
@@ -119,9 +125,16 @@ public class ContainerHostServiceConfigureOverSshTest extends ComputeBaseTest {
 
     @After
     public void tearDown() throws Throwable {
+        delete(placementZone.documentSelfLink);
+
         stopService(dockerAdapterService);
         stopService(configureHostOverSshTaskService);
         stopService(authCredentialsService);
+    }
+
+    private ResourcePoolState createPlacementZone() throws Throwable {
+        return doPost(ContainerHostServiceTest.createResourcePoolState(),
+                ResourcePoolService.FACTORY_LINK);
     }
 
     private ConfigureHostOverSshTaskServiceState createContainerHostSpecOverSsh(

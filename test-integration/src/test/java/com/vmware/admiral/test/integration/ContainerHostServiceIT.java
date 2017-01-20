@@ -20,6 +20,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.Before;
@@ -36,6 +37,8 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
+import com.vmware.admiral.compute.PlacementZoneConstants;
+import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
 import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
@@ -46,11 +49,15 @@ import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ResourcePoolService;
+import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class ContainerHostServiceIT extends RequestBaseTest {
+    private static final String SCHEDULER_PLACEMENT_ZONE_ID = "test-scheduler-placement-zone";
+
     private static final String VALID_DOCKER_HOST_NODE1_ADDRESS = String.format("%s:%s",
             getSystemOrTestProp("docker.host.cluster.node1.address"),
             getSystemOrTestProp("docker.host.port.API"));
@@ -58,6 +65,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
             getSystemOrTestProp("docker.host.cluster.node2.address"),
             getSystemOrTestProp("docker.host.port.API"));
 
+    private ResourcePoolState schedulerPlacementZone;
     private ComputeState computeState;
     private ComputeState vicHostState;
     private ContainerHostSpec containerHostSpec;
@@ -74,6 +82,8 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         waitForServiceAvailability(HostPortProfileService.FACTORY_LINK);
         waitForServiceAvailability(SslTrustCertificateService.FACTORY_LINK);
         ServerX509TrustManager.init(host);
+
+        schedulerPlacementZone = createSchedulerPlacementZone();
 
         computeState = createDockerHostState();
         containerHostSpec = new ContainerHostSpec();
@@ -475,6 +485,8 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         containerHostSpec.acceptCertificate = true;
         computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
         markHostForVicValidation(computeState);
+        // use a scheduler placement zone
+        computeState.resourcePoolLink = schedulerPlacementZone.documentSelfLink;
 
         addHost(containerHostSpec, ContainerHostService.CONTAINER_HOST_IS_NOT_VIC_MESSAGE);
     }
@@ -498,10 +510,11 @@ public class ContainerHostServiceIT extends RequestBaseTest {
     @Test
     public void testAddDockerHostToPlacementZoneWithVicHostShouldFail() throws Throwable {
         // First add a VIC host
-        vicHostSpec.acceptCertificate = true;
         vicHostState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
         markHostForVicValidation(vicHostState);
-        addHost(vicHostSpec);
+        // force add this docker host to a scheduler placement zone for the purpose of the test
+        vicHostState.resourcePoolLink = computeState.resourcePoolLink;
+        directAddHost(vicHostState);
         // data collection is needed to patch the host state with the data that marks it as VIC
         dataCollectHost(vicHostState);
 
@@ -539,7 +552,11 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         // First add the docker host
         containerHostSpec.acceptCertificate = true;
         computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
-        addHost(containerHostSpec);
+        // force add this vic host to a docker placement zone for the purpose of the test
+        computeState.resourcePoolLink = vicHostState.resourcePoolLink;
+        directAddHost(computeState);
+        // data collection is needed to patch the host state with the data that marks it as VIC
+        dataCollectHost(computeState);
 
         // Adding a VIC host should now fail because the placement zone is not empty
         ComputeState vicHostState = createVicHostState();
@@ -579,6 +596,31 @@ public class ContainerHostServiceIT extends RequestBaseTest {
 
         addHost(vicHostSpec,
                 String.format(AssertUtil.PROPERTY_MUST_BE_EMPTY_MESSAGE_FORMAT, "tagLinks"));
+    }
+
+    @Test
+    public void testAddDockerHostToSchedulerPlacementZoneShouldFail() {
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
+        computeState.resourcePoolLink = schedulerPlacementZone.documentSelfLink;
+        containerHostSpec.acceptCertificate = true;
+
+        addHost(containerHostSpec,
+                String.format(ContainerHostService.INCORRECT_PLACEMENT_ZONE_TYPE_MESSAGE_FORMAT,
+                        PlacementZoneType.DOCKER.toString(),
+                        PlacementZoneType.SCHEDULER.toString()));
+    }
+
+    @Test
+    public void testAddVicHostToDockerPlacementZoneShouldFail() {
+        vicHostState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
+        vicHostState.resourcePoolLink = resourcePool.documentSelfLink;
+        vicHostSpec.acceptCertificate = true;
+        markHostForVicValidation(vicHostState);
+
+        addHost(vicHostSpec,
+                String.format(ContainerHostService.INCORRECT_PLACEMENT_ZONE_TYPE_MESSAGE_FORMAT,
+                        PlacementZoneType.SCHEDULER.toString(),
+                        PlacementZoneType.DOCKER.toString()));
     }
 
     private URI getContainerHostValidateUri() {
@@ -655,6 +697,31 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         host.testWait();
     }
 
+    // skip verification and certificates and just add the compute state
+    private void directAddHost(ComputeState cs) {
+        cs.id = UUID.randomUUID().toString();
+        cs.descriptionLink = "no-description-link";
+        Operation post = Operation.createPost(host, ComputeService.FACTORY_LINK)
+                .setBody(cs)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.failIteration(e);
+                    } else {
+                        try {
+                            verifyStatusCode(o.getStatusCode(), Operation.STATUS_CODE_OK);
+                            cs.documentSelfLink = o.getBody(ComputeState.class).documentSelfLink;
+                            host.completeIteration();
+                        } catch (IllegalStateException ex) {
+                            host.failIteration(ex);
+                        }
+                    }
+                });
+
+        host.testStart(1);
+        host.send(post);
+        host.testWait();
+    }
+
     private void verifyStatusCode(int statusCode, int expectedStatusCode) {
         if (statusCode != expectedStatusCode) {
             String errorMessage = String.format("Expected status code %d but was %d",
@@ -705,6 +772,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
 
     private ComputeState createDockerHostState() {
         ComputeState state = createComputeState();
+        state.resourcePoolLink = resourcePool.documentSelfLink;
         state.customProperties.put(MockDockerHostAdapterService.CONTAINER_HOST_TYPE_PROP_NAME,
                 ContainerHostType.DOCKER.toString());
         return state;
@@ -712,6 +780,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
 
     private ComputeState createVicHostState() {
         ComputeState state = createComputeState();
+        state.resourcePoolLink = schedulerPlacementZone.documentSelfLink;
         state.customProperties.put(MockDockerHostAdapterService.CONTAINER_HOST_TYPE_PROP_NAME,
                 ContainerHostType.VIC.toString());
         return state;
@@ -720,7 +789,6 @@ public class ContainerHostServiceIT extends RequestBaseTest {
     private ComputeState createComputeState() {
         ComputeState computeState = new ComputeState();
         computeState.address = "https://test-server";
-        computeState.resourcePoolLink = TestRequestStateFactory.RESOURCE_POOL_ID;
         computeState.customProperties = new HashMap<>();
         computeState.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
                 "authCredentialsLink");
@@ -728,5 +796,20 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                 DockerAdapterType.API.name());
 
         return computeState;
+    }
+
+    private ResourcePoolState createSchedulerPlacementZone() throws Throwable {
+
+        ResourcePoolState placementZone = TestRequestStateFactory.createResourcePool();
+        placementZone.id = SCHEDULER_PLACEMENT_ZONE_ID;
+        placementZone.name = placementZone.id;
+        placementZone.documentSelfLink = ResourcePoolService.FACTORY_LINK + "/" + placementZone.id;
+
+        placementZone.customProperties = new HashMap<>();
+        placementZone.customProperties.put(
+                PlacementZoneConstants.PLACEMENT_ZONE_TYPE_CUSTOM_PROP_NAME,
+                PlacementZoneType.SCHEDULER.toString());
+
+        return doPost(placementZone, ResourcePoolService.FACTORY_LINK);
     }
 }
