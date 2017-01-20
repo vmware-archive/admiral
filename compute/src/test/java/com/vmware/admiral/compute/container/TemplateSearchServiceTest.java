@@ -23,7 +23,6 @@ import java.util.function.Consumer;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.OperationUtil;
@@ -40,7 +39,7 @@ import com.vmware.xenon.common.UriUtils;
 public class TemplateSearchServiceTest extends ComputeBaseTest {
     private static final String TEST_COMPOSITE_DESC_NAME = "wordPressWithMySql";
     private static final String TEST_COMPOSITE_DESC_NAME_CLONED = "wordPressWithMySqlCloned";
-    private static final String TEST_CONTAINER_DESC_NAME = "mySql";
+    private static final String TEST_CONTAINER_DESC_NAME = "mysql";
     private static final String TEST_IMAGE_NAME = "library/mysql-5";
 
     // match both the CompositeDesc and the ContainerDesc name
@@ -153,7 +152,6 @@ public class TemplateSearchServiceTest extends ComputeBaseTest {
         });
     }
 
-    @Ignore
     @Test
     public void testContainedContainerDescNameTest() throws Throwable {
         verifyTemplateSearchResult(TEST_CONTAINER_DESC_NAME);
