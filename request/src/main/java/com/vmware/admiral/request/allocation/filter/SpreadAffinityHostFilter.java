@@ -37,7 +37,6 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 
-
 /**
 *
 *  A filter implementing {@link HostSelectionFilter} aimed to provide host selection based on Placement - SPREAD.
@@ -78,6 +77,7 @@ public class SpreadAffinityHostFilter implements
 
         // Nothing to sort here.
         if (hostSelectionMap.size() == 1) {
+            host.log(Level.INFO, "Only one host in selection. Spread filtering will be skipped.");
             callback.complete(hostSelectionMap, null);
             return;
         }

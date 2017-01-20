@@ -119,6 +119,7 @@ public final class AffinityFilters {
 
         // advanced policy filters
         filters.add(new BinpackAffinityHostFilter(host, desc));
+        filters.add(new SpreadAffinityHostFilter(host, desc));
 
     }
 

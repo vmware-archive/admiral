@@ -70,6 +70,33 @@ public class BinpackAffinityHostFilter
         return Collections.emptyMap();
     }
 
+    @Override
+    public void filter(PlacementHostSelectionTaskState state,
+            Map<String, HostSelection> hostSelectionMap,
+            HostSelectionFilterCompletion callback) {
+
+        // Nothing to filter here.
+        if (hostSelectionMap.size() <= 1) {
+            host.log(Level.INFO, "Only one host in selection. BinPack filtering will be skipped.");
+            callback.complete(hostSelectionMap, null);
+            return;
+        }
+
+        String serviceLink = state.serviceTaskCallback != null
+                ? state.serviceTaskCallback.serviceSelfLink
+                : null;
+        // Filter should be ignored on Reservation stage.
+        if (serviceLink != null
+                && serviceLink.startsWith(ReservationTaskFactoryService.SELF_LINK)) {
+            callback.complete(hostSelectionMap, null);
+            return;
+        }
+        String resourcePoolLink = state.resourcePoolLinks.get(0);
+
+        filterBasedOnBinpackPolicy(resourcePoolLink, hostSelectionMap, callback);
+
+    }
+
     private void filterBasedOnBinpackPolicy(String resourcePoolLink,
             Map<String, HostSelection> hostSelectionMap, HostSelectionFilterCompletion callback) {
 
@@ -137,31 +164,4 @@ public class BinpackAffinityHostFilter
         result.put(mostLoadedHost, hostSelectionMap.get(mostLoadedHost));
         callback.complete(result, null);
     }
-
-    @Override
-    public void filter(PlacementHostSelectionTaskState state,
-            Map<String, HostSelection> hostSelectionMap,
-            HostSelectionFilterCompletion callback) {
-
-        // Nothing to filter here.
-        if (hostSelectionMap.size() <= 1) {
-            callback.complete(hostSelectionMap, null);
-            return;
-        }
-
-        String serviceLink = state.serviceTaskCallback != null
-                ? state.serviceTaskCallback.serviceSelfLink
-                : null;
-        // Filter should be ignored on Reservation stage.
-        if (serviceLink != null
-                && serviceLink.startsWith(ReservationTaskFactoryService.SELF_LINK)) {
-            callback.complete(hostSelectionMap, null);
-            return;
-        }
-        String resourcePoolLink = state.resourcePoolLinks.get(0);
-
-        filterBasedOnBinpackPolicy(resourcePoolLink, hostSelectionMap, callback);
-
-    }
-
 }

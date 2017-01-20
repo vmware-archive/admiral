@@ -75,6 +75,7 @@ public class ComputeBinpackAffinityHostFilter implements HostSelectionFilter<Fil
 
         // Nothing to filter here.
         if (hostSelectionMap.size() <= 1) {
+            host.log(Level.INFO, "Only one host in selection. BinPack filtering will be skipped.");
             callback.complete(hostSelectionMap, null);
             return;
         }
