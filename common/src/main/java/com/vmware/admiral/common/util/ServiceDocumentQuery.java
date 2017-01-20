@@ -41,7 +41,7 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
             "dcp.management.query.documents.default.expiration.millis",
             TimeUnit.SECONDS.toMicros(120));
     public static final Integer DEFAULT_QUERY_RESULT_LIMIT = Integer.getInteger(
-            "dcp.management.query.documents.default.resultLimit", 50);
+            "dcp.management.query.documents.default.resultLimit", 10000);
 
     private final Class<T> type;
     private final ServiceHost host;
@@ -177,9 +177,13 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
      *            The completion handler to be called. Either the list of ServiceDocuments will be
      *            passed as parameter or exception in case of errors.
      */
-    public void query(QueryTask q, Consumer<ServiceDocumentQueryElementResult<T>> completionHandler) {
+    public void query(QueryTask q,
+            Consumer<ServiceDocumentQueryElementResult<T>> completionHandler) {
         if (q.documentExpirationTimeMicros == 0) {
             q.documentExpirationTimeMicros = getDefaultQueryExpiration();
+        }
+        if (!(isCountQuery(q)) && q.querySpec.resultLimit == null) {
+            q.querySpec.resultLimit = DEFAULT_QUERY_RESULT_LIMIT;
         }
 
         host.sendRequest(Operation

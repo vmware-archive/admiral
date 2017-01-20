@@ -23,18 +23,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 public class ContainerServiceTest extends ComputeBaseTest {
     private List<String> containersForDeletion;
@@ -96,38 +101,37 @@ public class ContainerServiceTest extends ComputeBaseTest {
         createContainer("/parent/2", "tenant3");
         createContainer("/parent/3", "tenant4");
 
-        queryContainers("", 5);
+        oDataQueryContainers("", 5);
 
-        queryContainers("$filter=parentLink eq '/parent/2'", 3);
+        oDataQueryContainers("$filter=parentLink eq '/parent/2'", 3);
 
-        queryContainers("$filter=tenantLinks.item eq 'tenant2*'", 2);
+        oDataQueryContainers("$filter=tenantLinks.item eq 'tenant2*'", 2);
 
-        queryContainers("$filter=tenantLinks.item eq 'tenant3' and parentLink eq '/parent/2'", 1);
+        oDataQueryContainers("$filter=tenantLinks.item eq 'tenant3' and parentLink eq '/parent/2'", 1);
 
-        queryContainers("$filter=parentLink eq '/parent/1' and parentLink ne '/parent/2'", 1);
+        oDataQueryContainers("$filter=parentLink eq '/parent/1' and parentLink ne '/parent/2'", 1);
 
-        queryContainers("$filter=parentLink ne '/parent/x' and parentLink ne '/parent/y'", 5);
+        oDataQueryContainers("$filter=parentLink ne '/parent/x' and parentLink ne '/parent/y'", 5);
 
-        queryContainers("$filter=parentLink ne '/parent/1' or parentLink ne '/parent/x'", 5);
+        oDataQueryContainers("$filter=parentLink ne '/parent/1' or parentLink ne '/parent/x'", 5);
 
-        queryContainers("$filter=parentLink ne '/parent/1'", 4);
+        oDataQueryContainers("$filter=parentLink ne '/parent/1'", 4);
 
         // wrong query because of https://www.pivotaltracker.com/projects/1471320/stories/118558279
-        queryContainers("$filter=parentLink eq '/parent/1' or parentLink ne '/parent/x'", 1);
+        oDataQueryContainers("$filter=parentLink eq '/parent/1' or parentLink ne '/parent/x'", 1);
 
         // alternative working query, e.g. A and (B and Not C), according to
         // https://github.com/vmware/xenon/wiki/QueryTaskService#odata-filter-for-complex-queries
-        queryContainers(
+        oDataQueryContainers(
                 "$filter=parentLink eq '/parent/1' or (parentLink eq '/parent/*' and parentLink ne '/parent/x')",
                 5);
 
-        queryContainers("$filter=parentLink eq '/parent/1' or parentLink eq '/parent/2'", 4);
+        oDataQueryContainers("$filter=parentLink eq '/parent/1' or parentLink eq '/parent/2'", 4);
 
-        queryContainers("$filter=parentLink ne '/parent/x' and parentLink ne '/parent/1'", 4);
+        oDataQueryContainers("$filter=parentLink ne '/parent/x' and parentLink ne '/parent/1'", 4);
     }
 
     @Test
-    @Ignore
     public void testODataWithManyEntities() throws Throwable {
         int numberOfContainers = 6000;
         for (int i = 0; i <= numberOfContainers; i++) {
@@ -140,7 +144,8 @@ public class ContainerServiceTest extends ComputeBaseTest {
             containerState.customProperties.put("keyTestProp", "valueTestProp");
             doPatch(containerState, containersForDeletion.get(i));
         }
-        queryContainers("", numberOfContainers + 1);
+        queryContainers(numberOfContainers + 1);
+        countQueryContainers(numberOfContainers + 1);
     }
 
     @Test
@@ -165,26 +170,6 @@ public class ContainerServiceTest extends ComputeBaseTest {
         assertEquals(0, updatedContainer.documentExpirationTimeMicros);
     }
 
-    private void getAll(final List<String> list, final URI uri) throws Throwable {
-        host.testStart(1);
-        Operation op = Operation
-                .createGet(uri)
-                .setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                host.failIteration(e);
-                                return;
-                            }
-
-                            ServiceDocumentQueryResult result = o
-                                    .getBody(ServiceDocumentQueryResult.class);
-                            list.addAll(result.documentLinks);
-                            host.completeIteration();
-                        });
-        host.send(op);
-        host.testWait();
-    }
-
     private ContainerState createContainer(String parentLink, String group) throws Throwable {
         ContainerState containerState = new ContainerState();
         containerState.id = UUID.randomUUID().toString();
@@ -206,11 +191,69 @@ public class ContainerServiceTest extends ComputeBaseTest {
         return containerState;
     }
 
-    private void queryContainers(String query, int expectedCount) throws Throwable {
-        List<String> list = new ArrayList<>();
-        URI uri = UriUtils.buildUri(host, ContainerFactoryService.SELF_LINK, query);
-        getAll(list, uri);
-        assertEquals(expectedCount, list.size());
+    private void queryContainers(int expectedCount) throws Throwable {
+        AtomicInteger ac = new AtomicInteger(0);
+        QuerySpecification qs = new QuerySpecification();
+        qs.query = Query.Builder.create().addKindFieldClause(ContainerState.class).build();
+        QueryTask qt = QueryTask.create(qs);
+        host.testStart(1);
+        new ServiceDocumentQuery<>(
+                host, null).query(qt,
+                        (r) -> {
+                            if (r.hasException()) {
+                                host.failIteration(r.getException());
+                                return;
+                            }
+                            if (r.hasResult()) {
+                                ac.incrementAndGet();
+                                return;
+                            }
+                            host.completeIteration();
+                        });
+        host.testWait();
+        assertEquals(expectedCount, ac.get());
     }
 
+    private void countQueryContainers(int expectedCount) throws Throwable {
+        List<Long> list = new ArrayList<>();
+        QuerySpecification qs = new QuerySpecification();
+        qs.query = Query.Builder.create().addKindFieldClause(ContainerState.class).build();
+        QueryTask qt = QueryTask.create(qs);
+        QueryUtil.addCountOption(qt);
+        host.testStart(1);
+        new ServiceDocumentQuery<>(
+                host, null).query(qt,
+                        (r) -> {
+                            if (r.hasException()) {
+                                host.failIteration(r.getException());
+                                return;
+                            }
+                            list.add(r.getCount());
+                            host.completeIteration();
+                        });
+        host.testWait();
+        assertTrue(expectedCount == list.get(0));
+    }
+
+    private void oDataQueryContainers(String query, int expectedCount) throws Throwable {
+        List<String> list = new ArrayList<>();
+        URI uri = UriUtils.buildUri(host, ContainerFactoryService.SELF_LINK, query);
+        host.testStart(1);
+        Operation op = Operation
+                .createGet(uri)
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                host.failIteration(e);
+                                return;
+                            }
+
+                            ServiceDocumentQueryResult result = o
+                                    .getBody(ServiceDocumentQueryResult.class);
+                            list.addAll(result.documentLinks);
+                            host.completeIteration();
+                        });
+        host.send(op);
+        host.testWait();
+    }
 }
