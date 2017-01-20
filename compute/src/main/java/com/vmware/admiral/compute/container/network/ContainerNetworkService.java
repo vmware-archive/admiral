@@ -136,8 +136,8 @@ public class ContainerNetworkService extends StatefulService {
          */
         @Documentation(description = "A map of field-value pairs for a given network. These are used"
                 + "to specify network options that are used by the network drivers.")
-        @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
-                PropertyUsageOption.OPTIONAL, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        @PropertyOptions(indexing = { PropertyIndexingOption.CASE_INSENSITIVE, PropertyIndexingOption.EXPAND },
+                usage = {PropertyUsageOption.OPTIONAL, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Map<String, String> options;
 
     }

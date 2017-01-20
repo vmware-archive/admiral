@@ -161,7 +161,7 @@ var constants = Immutable({
     }
   },
   COMPUTE: {
-    SEARCH_SUGGESTIONS: ['name', 'type'],
+    SEARCH_SUGGESTIONS: ['name'],
     DOCKER_HOST_PORT: 443
   },
   CLOSURES: {

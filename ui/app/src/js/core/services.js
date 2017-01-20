@@ -436,11 +436,11 @@ services.searchTags = function(q) {
     var occurrence = pair[1] ? constants.SEARCH_OCCURRENCE.ALL : constants.SEARCH_OCCURRENCE.ANY;
     params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
       key: [{
-        val: pair[0] + '*',
+        val: pair[0].toLowerCase() + '*',
         op: 'eq'
       }],
       value: [{
-        val: (pair[1] || pair[0] || '') + '*',
+        val: (pair[1] || pair[0] || '').toLowerCase() + '*',
         op: 'eq'
       }],
       [constants.SEARCH_OCCURRENCE.PARAM]: occurrence
@@ -686,7 +686,7 @@ services.loadHostsByLinks = function(documentSelfLinks) {
 
 services.searchHosts = function(query, limit) {
   var qOps = {
-    any: query,
+    any: query.toLowerCase(),
     powerState: 'ON'
   };
 
@@ -710,7 +710,7 @@ services.searchHosts = function(query, limit) {
 
 services.searchCompute = function(resourcePoolLink, query, limit) {
   var qOps = {
-    any: query,
+    any: query.toLowerCase(),
     powerState: 'ON',
     resourcePoolLink
   };
@@ -1079,7 +1079,7 @@ services.updateStorageProfile = function(profile) {
 services.searchEndpoints = function(query, limit) {
   let filter = buildOdataQuery({
     name: [{
-      val: '*' + query + '*',
+      val: '*' + query.toLowerCase() + '*',
       op: 'eq'
     }]
   });
@@ -1633,7 +1633,7 @@ services.createNetworkDescription = function(networkDescription) {
 services.searchNetworks = function(query, limit) {
   var filter = buildOdataQuery({
     name: [{
-      val: '*' + query + '*',
+      val: '*' + query.toLowerCase() + '*',
       op: 'eq'
     }]
   });
@@ -1889,7 +1889,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     if (anyArray) {
       userQueryOps[FILTER_VALUE_ALL_FIELDS] = anyArray.map((any) => {
         return {
-          val: '*' + any + '*',
+          val: '*' + any.toLowerCase() + '*',
           op: 'eq'
         };
       });
@@ -1909,7 +1909,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     if (addressArray) {
       userQueryOps.address = addressArray.map((address) => {
         return {
-          val: '*' + address + '*',
+          val: '*' + address.toLowerCase() + '*',
           op: 'eq'
         };
       });
@@ -1919,7 +1919,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     if (nameArray) {
       userQueryOps.name = nameArray.map((name) => {
         return {
-          val: '*' + name + '*',
+          val: '*' + name.toLowerCase() + '*',
           op: 'eq'
         };
       });
@@ -1954,7 +1954,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
 
     if (queryOptions.powerState) {
       userQueryOps.powerState = [{
-        val: queryOptions.powerState,
+        val: queryOptions.powerState.toUpperCase(),
         op: 'eq'
       }];
     }
@@ -2014,7 +2014,7 @@ var buildContainersSearchQuery = function(queryOptions) {
       newQueryOptions[FILTER_VALUE_ALL_FIELDS] = [];
       for (let i = 0; i < anyArray.length; i++) {
         newQueryOptions[FILTER_VALUE_ALL_FIELDS].push({
-          val: '*' + anyArray[i] + '*',
+          val: '*' + anyArray[i].toLowerCase() + '*',
           op: 'eq'
         });
       }
@@ -2027,7 +2027,7 @@ var buildContainersSearchQuery = function(queryOptions) {
       newQueryOptions[field] = [];
       for (let i = 0; i < nameArray.length; i++) {
         newQueryOptions[field].push({
-          val: '*' + nameArray[i] + '*',
+          val: '*' + nameArray[i].toLowerCase() + '*',
           op: 'eq'
         });
       }
@@ -2080,7 +2080,7 @@ var buildContainersSearchQuery = function(queryOptions) {
       newQueryOptions.image = [];
       for (let i = 0; i < imageArray.length; i++) {
         newQueryOptions.image.push({
-          val: '*' + imageArray + '*',
+          val: '*' + imageArray[i].toLowerCase() + '*',
           op: 'eq'
         });
       }
@@ -2178,7 +2178,7 @@ var buildSearchQuery = function(queryOptions) {
   if (anyArray) {
     userQueryOps[FILTER_VALUE_ALL_FIELDS] = anyArray.map((any) => {
       return {
-        val: '*' + any + '*',
+        val: '*' + any.toLowerCase() + '*',
         op: 'eq'
       };
     });
@@ -2188,7 +2188,7 @@ var buildSearchQuery = function(queryOptions) {
   if (nameArray) {
     userQueryOps.name = nameArray.map((name) => {
       return {
-        val: '*' + name + '*',
+        val: '*' + name.toLowerCase() + '*',
         op: 'eq'
       };
     });

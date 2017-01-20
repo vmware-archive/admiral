@@ -34,6 +34,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeService.Contai
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
@@ -51,6 +52,7 @@ public class CompositeComponentService extends StatefulService {
 
         /** Name of composite description */
         @Documentation(description = "Name of composite description.")
+        @PropertyOptions(indexing = PropertyIndexingOption.CASE_INSENSITIVE)
         public String name;
 
         /** (Optional) CompositeDescription link */
