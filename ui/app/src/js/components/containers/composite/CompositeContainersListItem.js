@@ -11,6 +11,7 @@
 
 import CompositeContainersListItemVue from
   'components/containers/composite/CompositeContainersListItemVue.html';
+import AlertItemMixin from 'components/common/AlertItemMixin';
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
 import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
 import utils from 'core/utils';
@@ -20,19 +21,10 @@ import { ContainerActions, NavigationActions } from 'actions/Actions'; //eslint-
 
 var CompositeContainersListItem = Vue.extend({
   template: CompositeContainersListItemVue,
-  mixins: [DeleteConfirmationSupportMixin],
+  mixins: [AlertItemMixin, DeleteConfirmationSupportMixin],
   props: {
     model: {required: true},
     showAlertManagedByCatalog: {required: true}
-  },
-  data: function() {
-    return {
-      alert: {
-        type: 'warning',
-        show: false,
-        message: ''
-      }
-    };
   },
   computed: {
     showNumbers: function() {
@@ -85,7 +77,7 @@ var CompositeContainersListItem = Vue.extend({
 
     this.unwatchShowAlertManagedByCatalog = this.$watch('showAlertManagedByCatalog', () => {
       if (this.showAlertManagedByCatalog) {
-        this.showManagedByCatalogAlert();
+        this.showAlert('errors.managedByCatalog');
       }
     });
   },
@@ -173,17 +165,6 @@ var CompositeContainersListItem = Vue.extend({
       };
 
       NavigationActions.openNetworks(queryOptions);
-    },
-
-    showManagedByCatalogAlert: function() {
-      this.alert.message =
-        i18n.t('app.resource.list.container.operations.errors.managedByCatalog');
-      this.alert.show = true;
-    },
-
-    alertClosed: function() {
-      this.alert.show = false;
-      this.alert.message = '';
     }
   }
 });

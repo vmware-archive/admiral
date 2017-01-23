@@ -61,6 +61,7 @@ var utils = {
             || viewName === constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name
             || viewName === constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name
             || viewName === constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name
+            || viewName === constants.VIEWS.RESOURCES.VIEWS.VOLUMES.name
             || viewName === constants.VIEWS.RESOURCES.VIEWS.CLOSURES.name;
   },
 
@@ -431,6 +432,14 @@ var utils = {
     // connected to it or if the network is in RETIRED state
     return utils.isRetiredNetwork(network)
       || !network.connectedContainersCount;
+  },
+
+  canRemove: function(entity) {
+    return this.isRetired(entity) || !entity.connectedContainersCount;
+  },
+
+  isRetired: function(entity) {
+    return entity.powerState && entity.powerState === 'RETIRED';
   },
 
   isSystemContainer: function(container) {
@@ -975,6 +984,22 @@ var utils = {
     return result;
   },
 
+  objectToKeyArray: function(object) {
+    if (!object) {
+      return [];
+    }
+
+    var result = [];
+    for (var key in object) {
+      if (object.hasOwnProperty(key)) {
+        result.push(key);
+      }
+    }
+
+    return result;
+  },
+
+
   /** Xenon services return object, where CAFE returns Array, so convert all to object  */
   iterableToObject: function(iterable, transformFn) {
     var result = {};
@@ -991,6 +1016,39 @@ var utils = {
       }
     }
     return result;
+  },
+
+  propertiesToArray: function(properties) {
+    var array = [];
+
+    if (properties) {
+      for (var key in properties) {
+        if (properties.hasOwnProperty(key)) {
+          var value = properties[key];
+          var keyValuePair = {
+            'key': key,
+            'value': value
+          };
+          array.push(keyValuePair);
+        }
+      }
+    }
+
+    return array;
+  },
+
+  arrayToProperties: function(array) {
+    var properties;
+
+    if (array && array.length) {
+      properties = {};
+
+      for (var i = 0; i < array.length; i++) {
+       properties[array[i].key] = array[i].value;
+      }
+    }
+
+    return properties;
   },
 
   getObjectPropertyValue: function(obj, propertyName) {

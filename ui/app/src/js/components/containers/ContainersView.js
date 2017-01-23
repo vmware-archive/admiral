@@ -16,6 +16,7 @@ import ClusterContainersListItem from 'components/containers/cluster/ClusterCont
 import CompositeContainersListItem from 'components/containers/composite/CompositeContainersListItem'; //eslint-disable-line
 import CompositeClosuresListItem from 'components/containers/closure/CompositeClosuresListItem'; //eslint-disable-line
 import NetworksListItem from 'components/networks/NetworksListItem'; //eslint-disable-line
+import VolumesListItem from 'components/volumes/VolumesListItem'; //eslint-disable-line
 import ContainerDetails from 'components/containers/ContainerDetails';//eslint-disable-line
 import ClosureDetails from 'components/containers/ClosureDetails';//eslint-disable-line
 import ClusterContainerDetails from 'components/containers/cluster/ClusterContainerDetails';//eslint-disable-line
@@ -26,6 +27,7 @@ import EventLogList from 'components/eventlog/EventLogList';//eslint-disable-lin
 import ClosureRequestForm from 'components/closures/ClosureRequestForm'; // eslint-disable-line
 import ContainerRequestForm from 'components/containers/ContainerRequestForm'; // eslint-disable-line
 import NetworkRequestForm from 'components/networks/NetworkRequestForm'; // eslint-disable-line
+import VolumeRequestForm from 'components/volumes/VolumeRequestForm'; // eslint-disable-line
 import VueAdapter from 'components/common/VueAdapter';
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
@@ -60,6 +62,8 @@ var ContainersViewVueComponent = Vue.extend({
           return i18n.t('app.resource.list.titleSearch.containers');
         case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
           return i18n.t('app.resource.list.titleSearch.networks');
+        case constants.RESOURCES.SEARCH_CATEGORY.VOLUMES:
+          return i18n.t('app.resource.list.titleSearch.volumes');
         case constants.RESOURCES.SEARCH_CATEGORY.CLOSURES:
           return i18n.t('app.resource.list.titleSearch.closures');
       }
@@ -136,6 +140,10 @@ var ContainersViewVueComponent = Vue.extend({
     creatingNetwork: function() {
       return this.model.creatingResource &&
         this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS;
+    },
+    creatingVolume: function() {
+      return this.model.creatingResource &&
+        this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.VOLUMES;
     },
     searchSuggestions: function() {
       return constants.CONTAINERS.SEARCH_SUGGESTIONS;
@@ -301,6 +309,8 @@ var ContainersViewVueComponent = Vue.extend({
         return true;
       } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS) {
         return operation === constants.RESOURCES.NETWORKS.OPERATION.REMOVE;
+      } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.VOLUMES) {
+        return operation === constants.RESOURCES.VOLUMES.OPERATION.REMOVE;
       }
 
       return false;
@@ -342,12 +352,22 @@ var ContainersViewVueComponent = Vue.extend({
     performDeleteBatchOperation: function() {
       if (this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.CONTAINERS
           || this.selectedCategory === constants.CONTAINERS.SEARCH_CATEGORY.APPLICATIONS) {
-        this.removeManagedByCatalogItemsFromSelection();
+        this.deselectCatalogItems();
+
         this.performBatchOperation('Container.Delete');
+
       } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS) {
-        this.removeManagedByCatalogItemsFromSelection();
-        this.removeNonRemoveableNetworksFromSelection();
+        this.deselectCatalogItems();
+        this.deselectUnsupportedRemoval();
+
         this.performBatchOperation('Network.Delete');
+
+      } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.VOLUMES) {
+        this.deselectCatalogItems();
+        this.deselectUnsupportedRemoval();
+
+        this.performBatchOperation('Volume.Delete');
+
       } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES) {
         this.performBatchOperation('Closure.Delete');
       }
@@ -363,22 +383,21 @@ var ContainersViewVueComponent = Vue.extend({
         && this.containerConnectedAlerts.indexOf(documentId) > -1;
     },
 
-    removeNonRemoveableNetworksFromSelection: function() {
-      // verify delete is possible for all networks, display warnings otherwise
+    deselectUnsupportedRemoval: function() {
+      // deselect and show warnings for the selected items not supporting deletion
 
       this.model.listView.items.forEach((item) => {
 
-        let index = this.selectedItems
-          ? this.selectedItems.indexOf(item.documentId) : -1;
+        let index = this.selectedItems ? this.selectedItems.indexOf(item.documentId) : -1;
 
-        // if this network is selected
+        // if this item is selected
         if (index > -1) {
-          if (!utils.isNetworkRemovalPossible(item)) {
+          if (!utils.canRemove(item)) {
 
             // show alert
             utils.pushNoDuplicates(this.containerConnectedAlerts, item.documentId);
 
-            // remove network from selection
+            // remove item from selection
             this.selectedItems.splice(index, 1);
           }
         }
@@ -386,15 +405,14 @@ var ContainersViewVueComponent = Vue.extend({
 
     },
 
-    removeManagedByCatalogItemsFromSelection: function() {
+    deselectCatalogItems: function() {
       this.model.listView.items.forEach((item) => {
 
-        let index = this.selectedItems
-          ? this.selectedItems.indexOf(item.documentId) : -1;
+        let index = this.selectedItems ? this.selectedItems.indexOf(item.documentId) : -1;
 
         // if this item is selected
         if (index > -1) {
-          // if manage operation is supported, than an alert is displayed
+          // if manage operation is supported, then an alert is displayed
           if (utils.operationSupported(constants.CONTAINERS.OPERATION.MANAGE, item)) {
 
             // show alert
@@ -422,6 +440,9 @@ var ContainersViewVueComponent = Vue.extend({
         } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS) {
 
           ContainerActions.batchOpNetworks(selectedItemIds, operation);
+        } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.VOLUMES) {
+
+          ContainerActions.batchOpVolumes(selectedItemIds, operation);
         } else if (this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES) {
 
           ContainerActions.batchOpClosures(selectedItemIds, operation);
@@ -513,11 +534,11 @@ var ContainersViewVueComponent = Vue.extend({
           // Multi-selection mode
         this.toggleSelectionMode();
       } else if (actionName === 'multiStart') {
-        this.removeManagedByCatalogItemsFromSelection();
+        this.deselectCatalogItems();
         this.performBatchOperation('Container.Start');
 
       } else if (actionName === 'multiStop') {
-        this.removeManagedByCatalogItemsFromSelection();
+        this.deselectCatalogItems();
         this.performBatchOperation('Container.Stop');
 
       } else if (actionName === 'multiRemove') {

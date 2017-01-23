@@ -25,7 +25,7 @@
               </li>
             </ul>
           </div>
-          <div class="multicolumn-input-toolbar">
+          <div v-if="multiSelection" class="multicolumn-input-toolbar">
             <a class="multicolumn-input-remove" tabindex="-1" v-on:click="removeHost(host.viewId)">
               <i class="btn btn-circle fa fa-minus"></i>
             </a>

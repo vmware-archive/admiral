@@ -54,6 +54,11 @@ var HostPicker = Vue.extend({
     viewHosts: {
       required: false,
       type: Object
+    },
+    multiSelection: {
+      required: false,
+      type: Boolean,
+      default: true
     }
   },
   methods: {

@@ -12,19 +12,19 @@
 import utils from 'core/utils';
 import constants from 'core/constants';
 
-import NetworksListItemVue from 'components/networks/NetworksListItemVue.html';
+import VolumesListItemVue from 'components/volumes/VolumesListItemVue.html';
 import AlertItemMixin from 'components/common/AlertItemMixin';
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
 import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
-import { NetworkActions, NavigationActions } from 'actions/Actions';
+import { VolumeActions, NavigationActions } from 'actions/Actions';
 
 const possibleDay2Operations = [
-  constants.RESOURCES.NETWORKS.OPERATION.REMOVE,
-  constants.RESOURCES.NETWORKS.OPERATION.MANAGE
+  constants.RESOURCES.VOLUMES.OPERATION.REMOVE,
+  constants.RESOURCES.VOLUMES.OPERATION.MANAGE
 ];
 
-var NetworksListItem = Vue.extend({
-  template: NetworksListItemVue,
+var VolumesListItem = Vue.extend({
+  template: VolumesListItemVue,
   mixins: [AlertItemMixin, DeleteConfirmationSupportMixin],
   props: {
     model: {required: true},
@@ -58,7 +58,7 @@ var NetworksListItem = Vue.extend({
   attached: function() {
     this.unwatchShowAlertContainersConnected = this.$watch('showAlertContainersConnected', () => {
       if (this.showAlertContainersConnected) {
-        this.showNetworkRemovalContainersConnectedAlert();
+        this.showAlertConnectedContainers();
       }
     });
 
@@ -75,7 +75,7 @@ var NetworksListItem = Vue.extend({
   },
 
   methods: {
-    getNetworkDocumentId: function() {
+    getVolumeDocumentId: function() {
       return this.model.documentId;
     },
 
@@ -84,37 +84,39 @@ var NetworksListItem = Vue.extend({
       $event.preventDefault();
 
       let queryOptions = {
-        network: this.model.name
+        volume: this.model.name
       };
 
+      // TODO
       NavigationActions.openContainers(queryOptions);
     },
 
-    manageNetwork: function($event) {
+    manageVolume: function($event) {
       $event.stopPropagation();
       $event.preventDefault();
-      let networkId = this.getNetworkDocumentId();
-      NetworkActions.openManageNetworks(networkId);
+
+      let documentId = this.getVolumeDocumentId();
+
+      VolumeActions.openManageVolumes(documentId);
     },
 
-    removeNetworkClicked: function($event) {
-      if (utils.isNetworkRemovalPossible(this.model)) {
+    removeVolume: function() {
+      this.confirmRemoval(VolumeActions.removeVolume, [this.getVolumeDocumentId()]);
+    },
+
+    confirmVolumeRemoval: function($event) {
+      if (utils.canRemove(this.model)) {
 
         this.askConfirmation($event);
       } else {
         $event.stopPropagation();
         $event.preventDefault();
 
-        this.showNetworkRemovalContainersConnectedAlert();
+        this.showAlertConnectedContainers();
       }
     },
 
-    doRemoveNetwork: function() {
-      this.confirmRemoval(NetworkActions.removeNetwork,
-                          [this.getNetworkDocumentId()]);
-    },
-
-    showNetworkRemovalContainersConnectedAlert: function() {
+    showAlertConnectedContainers: function() {
       this.showAlert('errors.containersConnected');
     },
 
@@ -129,7 +131,7 @@ var NetworksListItem = Vue.extend({
       let hostIds = this.model.parentLinks.map((parentLink) => utils.getDocumentId(parentLink));
       let queryOptions = {
         $occurrence: constants.SEARCH_OCCURRENCE.ANY,
-        documentId: hostIds
+        any: hostIds
       };
 
       NavigationActions.openHosts(queryOptions);
@@ -140,7 +142,7 @@ var NetworksListItem = Vue.extend({
       $event.stopPropagation();
 
       let appIds = this.model.compositeComponentLinks.map((appLink) =>
-                                                            utils.getDocumentId(appLink));
+        utils.getDocumentId(appLink));
       let queryOptions = {
         $category: constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS,
         $occurrence: constants.SEARCH_OCCURRENCE.ANY,
@@ -150,10 +152,10 @@ var NetworksListItem = Vue.extend({
       NavigationActions.openContainers(queryOptions, true);
     },
 
-    networkStatusDisplay: utils.networkStatusDisplay
+    volumeStatusDisplay: utils.networkStatusDisplay
   }
 });
 
-Vue.component('network-grid-item', NetworksListItem);
+Vue.component('volume-grid-item', VolumesListItem);
 
-export default NetworksListItem;
+export default VolumesListItem;

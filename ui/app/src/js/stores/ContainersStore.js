@@ -117,6 +117,23 @@ function enhanceNetwork(network) {
   return network;
 }
 
+function enhanceVolume(volume) {
+  volume.icon = imageUtils.getImageIconLink(volume.name);
+  volume.documentId = utils.getDocumentId(volume.documentSelfLink);
+  volume.type = constants.RESOURCES.TYPES.VOLUME;
+
+  volume.connectedContainers = [];
+  if (volume.containerStateLinks) {
+    volume.connectedContainers = volume.containerStateLinks.map((documentSelfLink) => {
+      return {
+        documentId: utils.getDocumentId(documentSelfLink)
+      };
+    });
+  }
+
+  return volume;
+}
+
 function enhanceClosure(closure) {
   closure.icon = imageUtils.getImageIconLink(closure.name);
   closure.documentId = utils.getDocumentId(closure.documentSelfLink);
@@ -397,6 +414,7 @@ let ContainersStore = Reflux.createStore({
   listenables: [
     actions.ContainerActions,
     actions.NetworkActions,
+    actions.VolumeActions,
     actions.RegistryActions,
     actions.ContainersContextToolbarActions
   ],
@@ -411,6 +429,7 @@ let ContainersStore = Reflux.createStore({
 
     if (category === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS ||
         category === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS ||
+        category === constants.RESOURCES.SEARCH_CATEGORY.VOLUMES ||
         category === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES) {
 
       let enhanceFunction;
@@ -420,6 +439,9 @@ let ContainersStore = Reflux.createStore({
           break;
         case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
           enhanceFunction = enhanceNetwork;
+          break;
+        case constants.RESOURCES.SEARCH_CATEGORY.VOLUMES:
+          enhanceFunction = enhanceVolume;
           break;
         case constants.RESOURCES.SEARCH_CATEGORY.CLOSURES:
           enhanceFunction = enhanceClosureDesc;
@@ -544,6 +566,10 @@ let ContainersStore = Reflux.createStore({
       switch (queryOptions.$category) {
         case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
           loadResourceFunction = services.loadNetworks;
+          break;
+
+        case constants.RESOURCES.SEARCH_CATEGORY.VOLUMES:
+          loadResourceFunction = services.loadVolumes;
           break;
 
         case constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS:
@@ -717,6 +743,13 @@ let ContainersStore = Reflux.createStore({
     this.emitChange();
   },
 
+  onOpenCreateVolume: function() {
+    this.setInData(['creatingResource'], {});
+    this.setInData(['listView', 'queryOptions', '$category'],
+                      constants.RESOURCES.SEARCH_CATEGORY.VOLUMES);
+    this.emitChange();
+  },
+
   onCreateContainer: function(containerDescription, group) {
     services.createContainer(containerDescription, group).then((request) => {
       this.navigateContainersListViewAndOpenRequests(request);
@@ -735,6 +768,13 @@ let ContainersStore = Reflux.createStore({
     }).catch(this.onGenericCreateError);
   },
 
+  onCreateVolume: function(volumeDescription, hostIds) {
+    services.createVolume(volumeDescription, hostIds).then((request) => {
+      // show volumes view and open requests panel
+      this.navigateContainersListViewAndOpenRequests(request);
+
+    }).catch(this.onGenericCreateError);
+  },
 
   onRefreshContainer: function() {
     var selectedContainerDetails = getSelectedContainerDetailsCursor.call(this).get();
@@ -849,6 +889,16 @@ let ContainersStore = Reflux.createStore({
   onRemoveNetwork: function(networkId) {
 
     services.removeNetwork(networkId)
+      .then((removalRequest) => {
+
+        this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
+        actions.RequestsActions.requestCreated(removalRequest);
+      });
+  },
+
+  onRemoveVolume: function(volumeId) {
+
+    services.removeVolume(volumeId)
       .then((removalRequest) => {
 
         this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
@@ -984,6 +1034,14 @@ let ContainersStore = Reflux.createStore({
 
   onBatchOpNetworks: function(networkLinks, operation) {
     services.batchOpNetworks(networkLinks, operation).then((batchOpRequest) => {
+      this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
+
+      actions.RequestsActions.requestCreated(batchOpRequest);
+    });
+  },
+
+  onBatchOpVolumes: function(volumeLinks, operation) {
+    services.batchOpVolumes(volumeLinks, operation).then((batchOpRequest) => {
       this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
 
       actions.RequestsActions.requestCreated(batchOpRequest);
@@ -1133,6 +1191,9 @@ let ContainersStore = Reflux.createStore({
     } else if (operationType === constants.CONTAINERS.OPERATION.NETWORKCREATE) {
       // Network created
       this.backFromContainerAction(operationType, resourceIds);
+    } else if (operationType === constants.CONTAINERS.OPERATION.CREATE_VOLUME) {
+      // Volume created
+      this.backFromContainerAction(operationType, resourceIds);
     }
   },
 
@@ -1158,6 +1219,18 @@ let ContainersStore = Reflux.createStore({
 
   onNetworkOperationFailed: function(operationType) {
     if (operationType === constants.RESOURCES.NETWORKS.OPERATION.REMOVE) {
+      this.navigateToContainersListView(false);
+    }
+  },
+
+  onVolumeOperationCompleted: function(operationType) {
+    if (operationType === constants.RESOURCES.VOLUMES.OPERATION.REMOVE) {
+      this.navigateToContainersListView(false);
+    }
+  },
+
+  onVolumeOperationFailed: function(operationType) {
+    if (operationType === constants.RESOURCES.VOLUMES.OPERATION.REMOVE) {
       this.navigateToContainersListView(false);
     }
   },
@@ -1297,7 +1370,7 @@ let ContainersStore = Reflux.createStore({
       compositeComponentDetails.listView.items = currentCompositeComponent.listView.items;
       compositeComponentDetails.listView.networks = currentCompositeComponent.listView.networks;
       compositeComponentDetails.listView.networkLinks =
-        currentCompositeComponent.listView.networkLinks;
+                                                  currentCompositeComponent.listView.networkLinks;
     }
 
     parentCursor.setIn(['selectedItem'], compositeComponent);

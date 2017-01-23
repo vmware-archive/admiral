@@ -38,6 +38,9 @@
           <a href="#/networks/new" class="btn btn-primary create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS">
             <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.network.create")}}
           </a>
+          <a href="#/volumes/new" class="btn btn-primary create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.VOLUMES">
+            <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.volume.create")}}
+          </a>
           <a href="#/closures/new" class="btn btn-primary create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES && areClosuresAllowed">
             <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.closure.create")}}
           </a>
@@ -113,6 +116,12 @@
                            v-bind:show-alert-managed-by-catalog="hasManagedByCatalogAlert(item.documentId)"
                            v-on:click="handleItemClick($event, item)">
                 </network-grid-item>
+                <volume-grid-item v-if="item.type === constants.RESOURCES.TYPES.VOLUME"
+                                   v-bind:model="item"
+                                   v-bind:show-alert-containers-connected="hasContainersConnectedAlert(item.documentId)"
+                                   v-bind:show-alert-managed-by-catalog="hasManagedByCatalogAlert(item.documentId)"
+                                   v-on:click="handleItemClick($event, item)">
+                </volume-grid-item>
                 <composite-closure-grid-item v-if="item.type === constants.RESOURCES.TYPES.CLOSURE_DESC"
                                              v-bind:model="item"
                                              v-on:click="handleItemClick($event, item, openClosureDescriptionDetails)">
@@ -206,8 +215,9 @@
                               v-bind:use-resource-action="true"></container-request-form>
     </div>
   </div>
+
   <div class="mask" v-if="creatingNetwork"></div>
-  <div class="create-network closable-view " v-if="creatingNetwork" transition="slide-and-fade">
+  <div class="create-network closable-view" v-if="creatingNetwork" transition="slide-and-fade">
     <alert alert-type="danger" v-bind:show-alert="hasNetworkCreateError"
                              v-bind:alert-message="networkCreateError"></alert>
     <a class="close-button" v-on:click="goBack($event)">
@@ -219,13 +229,27 @@
     </div>
   </div>
 
+  <div class="mask" v-if="creatingVolume"></div>
+  <div class="create-volume closable-view" v-if="creatingVolume" transition="slide-and-fade">
+    <alert alert-type="danger" v-bind:show-alert="hasVolumeCreateError"
+                               v-bind:alert-message="volumeCreateError"></alert>
+    <a class="close-button" v-on:click="goBack($event)">
+      <i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span>
+    </a>
+
+    <div class="content">
+      <volume-request-form v-bind:model="model.creatingResource"></volume-request-form>
+    </div>
+  </div>
+
   <div class="create-closure closable-view " v-if="creatingClosure && areClosuresAllowed" transition="slide-and-fade">
     <a class="close-button" href="#/closures">
       <i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span>
     </a>
 
     <div class="content">
-      <closure-request-form v-bind:model="model.creatingResource" v-bind:use-resource-action="true"></closure-request-form>
+      <closure-request-form v-bind:model="model.creatingResource"
+                            v-bind:use-resource-action="true"></closure-request-form>
     </div>
   </div>
 

@@ -1,0 +1,57 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<form>
+  <div class="form-group volume-name-search" v-show="existingVolume">
+    <label class="required">{{i18n('app.template.details.editVolume.name')}}</label>
+    <div class="form-control search-input">
+      <input/>
+      <i class="fa fa-spinner fa-spin loader-inline form-control-feedback"></i>
+      <i class="fa fa-search search-hint form-control-feedback"></i>
+    </div>
+    <span class="help-block"></span>
+  </div>
+  <div class="form-group volume-name" v-show="!existingVolume">
+    <label class="required">{{i18n('app.template.details.editVolume.name')}}</label>
+    <input class="form-control" />
+    <span class="help-block"></span>
+  </div>
+
+  <div class="form-group" v-show="allowExisting">
+    <label>{{i18n('app.template.details.editVolume.existingVolume')}}</label>
+    <input type="checkbox" class="checkbox-control" v-model="existingVolume" />
+    <span class="help-block"></span>
+  </div>
+
+  <div class="form-group volume-driver" v-show="!existingVolume">
+    <label>{{i18n('app.template.details.editVolume.driver')}}</label>
+    <input class="form-control" v-bind:placeholder="i18n('app.template.details.editVolume.driverPlaceholder')"/>
+    <span class="help-block"></span>
+  </div>
+
+  <div class="form-group" v-show="!existingVolume">
+    <label>{{i18n('advanced')}}</label>
+    <input type="checkbox" class="checkbox-control" v-model="hasAdvancedSettings" />
+    <span class="help-block"></span>
+  </div>
+
+  <div class="form-group driver-options" v-show="showAdvanced">
+    <label>{{i18n('app.template.details.editVolume.driverOptions.label')}}</label>
+    <div class="form-control"></div>
+    <span class="help-block"></span>
+  </div>
+
+  <div class="form-group custom-properties" v-show="showAdvanced">
+    <label>{{i18n('app.template.details.editVolume.customProperties')}}</label>
+    <div class="form-control"></div>
+    <span class="help-block"></span>
+  </div>
+</form>

@@ -2231,3 +2231,9 @@ $alert-text-color: #ffffff;
   border: 1px solid #DDDDDD;
   border-radius: 4px;
 }
+
+.comma-separated-values-line {
+  span:not(:last-child):after {
+    content:', ';
+  }
+}

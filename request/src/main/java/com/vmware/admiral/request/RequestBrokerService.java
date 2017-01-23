@@ -1538,6 +1538,10 @@ public class RequestBrokerService extends
             return NetworkOperationType.DELETE.id.equals(state.operation);
         }
 
+        if (isContainerVolumeType(state)) {
+            return VolumeOperationType.DELETE.id.equals(state.operation);
+        }
+
         if (isClosureType(state)) {
             return ClosureOperationType.DELETE.id.equals(state.operation);
         }
@@ -1704,6 +1708,8 @@ public class RequestBrokerService extends
                     requestStatus.addTrackedTasks(ContainerHostRemovalTaskService.DISPLAY_NAME);
                 } else if (isContainerNetworkType(state)) {
                     requestStatus.addTrackedTasks(ContainerNetworkRemovalTaskService.DISPLAY_NAME);
+                } else if (isContainerVolumeType(state)) {
+                    requestStatus.addTrackedTasks(ContainerVolumeRemovalTaskService.DISPLAY_NAME);
                 } else if (isClosureType(state)) {
                     requestStatus.addTrackedTasks(ClosureRemovalTaskService.DISPLAY_NAME);
                 } else if (isComputeType(state)) {
