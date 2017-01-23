@@ -12,8 +12,10 @@
 package com.vmware.admiral.request.compute.allocation.filter;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -27,10 +29,15 @@ import com.vmware.admiral.request.allocation.filter.AffinityConstraint;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.ServiceStats;
+import com.vmware.xenon.common.ServiceStats.ServiceStat;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+
 
 /**
 *
@@ -50,9 +57,11 @@ public class ComputeBinpackAffinityHostFilter implements HostSelectionFilter<Fil
 
     private static final Long MINIMAL_AVAILABLE_MEMORY_IN_BYTES = 3000000000L; // 3 GB
 
+    private static final String DAILY_MEMORY_USED_BYTES = "daily.memoryUsedBytes";
+
     private final ServiceHost host;
 
-    private Map<String, Long> dockerHostToMemory = new ConcurrentHashMap<>();
+    private Map<String, Double> memoryByCompute = new ConcurrentHashMap<>();
 
     public ComputeBinpackAffinityHostFilter(ServiceHost host, ComputeDescription desc) {
         this.host = host;
@@ -92,7 +101,7 @@ public class ComputeBinpackAffinityHostFilter implements HostSelectionFilter<Fil
         filterBasedOnBinpackPolicy(resourcePoolLink, hostSelectionMap, callback);
     }
 
-    private void filterBasedOnBinpackPolicy(String resourcePoolLink,
+    public void filterBasedOnBinpackPolicy(String resourcePoolLink,
             Map<String, HostSelection> hostSelectionMap, HostSelectionFilterCompletion callback) {
 
         URI uri = UriUtils.buildUri(host, String.format("%s/%s",
@@ -113,11 +122,7 @@ public class ComputeBinpackAffinityHostFilter implements HostSelectionFilter<Fil
                     if (epz != null && epz.epzState != null
                             && epz.epzState.placementPolicy == ElasticPlacementZoneService.PlacementPolicy.BINPACK) {
 
-                        hostSelectionMap.forEach((host, hostSelection) -> {
-                            dockerHostToMemory.put(host, hostSelection.availableMemory);
-                        });
-
-                        returnMaxLoadedHost(hostSelectionMap, callback);
+                        collectStats(resourcePoolLink, hostSelectionMap, callback);
 
                     } else {
                         callback.complete(hostSelectionMap, null);
@@ -126,27 +131,92 @@ public class ComputeBinpackAffinityHostFilter implements HostSelectionFilter<Fil
                 }));
     }
 
+    private void collectStats(String resourcePoolLink,
+            Map<String, HostSelection> hostSelectionMap, HostSelectionFilterCompletion callback) {
+
+        List<Operation> statsOperations = new ArrayList<>();
+
+        for (String computeStateLink : hostSelectionMap.keySet()) {
+            statsOperations.add(createCollectStatsOperation(computeStateLink));
+        }
+
+        OperationJoin hostsStatsOperation = OperationJoin
+                .create(statsOperations);
+
+        hostsStatsOperation.setCompletion((ops, failures) -> {
+            if (failures != null) {
+                host.log(Level.SEVERE, "Failure retrieve statistics: ",
+                        Utils.toString(failures));
+                // Don't return here. If cannot get stats from some of the hosts shouldn't block the
+                // process?
+            }
+
+            // Check if some of the hosts doesn't provide statistics.
+            if (memoryByCompute.size() != hostSelectionMap.size()) {
+                // TODO Decide whether to fail or just log the exception.
+                host.log(Level.SEVERE, "Some of the hosts doesn't provide statistics.");
+            }
+
+            // Get the host with highest memory usage.
+            returnMaxLoadedHost(hostSelectionMap, callback);
+
+        });
+
+        hostsStatsOperation.sendWith(host);
+
+    }
+
+    private Operation createCollectStatsOperation(String computeLink) {
+
+        host.log(Level.INFO, String.format("Start collecting stats from host: %s", computeLink));
+
+        URI computeStatsUri = UriUtils.buildStatsUri(host, computeLink);
+
+        return Operation.createGet(computeStatsUri)
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.WARNING, Utils.toString(ex));
+
+                        return;
+                    }
+
+                    // Get available memory and put it in "memoryByCompute" map.
+                    ServiceStats serviceStats = o.getBody(ServiceStats.class);
+                    Map<String, ServiceStat> stats = serviceStats.entries;
+                    if (stats != null && !stats.isEmpty()) {
+                        ServiceStat serviceStat = stats.get(DAILY_MEMORY_USED_BYTES);
+                        memoryByCompute.put(computeLink, serviceStat.accumulatedValue);
+
+                    } else {
+                        host.log(Level.SEVERE,
+                                String.format("Stats for [%s] are empty!", computeLink));
+                    }
+                });
+
+    }
+
     // Get max loaded in terms of memory host.
     private void returnMaxLoadedHost(Map<String, HostSelection> hostSelectionMap,
             HostSelectionFilterCompletion callback) {
 
         // This should never happen.
-        if (dockerHostToMemory.isEmpty()) {
+        if (memoryByCompute.isEmpty()) {
             callback.complete(hostSelectionMap, null);
             return;
         }
 
         Map<String, HostSelection> result = new LinkedHashMap<>();
-        Map<String, Long> sortedMap = new LinkedHashMap<>();
+        Map<String, Double> sortedMap = new LinkedHashMap<>();
 
         // Sort map ascending based on available memory.
-        dockerHostToMemory.entrySet().stream()
-                .sorted(Map.Entry.<String, Long> comparingByValue())
+        memoryByCompute.entrySet().stream()
+                .sorted(Map.Entry.<String, Double> comparingByValue())
                 .forEachOrdered(x -> sortedMap.put(x.getKey(), x.getValue()));
 
         // Traverse trough sorted hosts to memory map and find first max loaded which has at least 3
         // GB memory available.
-        Optional<Entry<String, Long>> hostToMemoryEntry = sortedMap.entrySet().stream()
+        Optional<Entry<String, Double>> hostToMemoryEntry = sortedMap.entrySet().stream()
                 .filter(obj -> obj.getValue() > MINIMAL_AVAILABLE_MEMORY_IN_BYTES).findFirst();
 
         if (!hostToMemoryEntry.isPresent()) {
@@ -159,5 +229,4 @@ public class ComputeBinpackAffinityHostFilter implements HostSelectionFilter<Fil
         result.put(mostLoadedHost, hostSelectionMap.get(mostLoadedHost));
         callback.complete(result, null);
     }
-
 }
