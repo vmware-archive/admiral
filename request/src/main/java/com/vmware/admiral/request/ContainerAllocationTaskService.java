@@ -787,7 +787,7 @@ public class ContainerAllocationTaskService
         AtomicBoolean proceededToError = new AtomicBoolean(false);
 
         if (this.containerDescription.healthConfig == null) {
-            logFine("Skipping health check.");
+            logInfo("Skipping health check.");
             proceedTo(SubStage.COMPLETED);
 
             return;
@@ -822,6 +822,7 @@ public class ContainerAllocationTaskService
             AtomicInteger expectedSuccessfullHealthCheckCount, AtomicBoolean proceededToError, long startTime) {
 
         if ((System.currentTimeMillis() - startTime) > this.healthCheckTimeout) {
+            logWarning("Health check timeout exceeded.");
             if (this.containerDescription.healthConfig.continueProvisioningOnError) {
                 if (expectedSuccessfullHealthCheckCount.decrementAndGet() == 0) {
                     proceedTo(SubStage.COMPLETED);
@@ -855,6 +856,7 @@ public class ContainerAllocationTaskService
 
                     } else {
                         getHost().schedule(() -> {
+                            logInfo("Scheduling health check for: " + containerState.documentSelfLink);
                             doHealthCheck(state, containerState,
                                     expectedSuccessfullHealthCheckCount, proceededToError, startTime);
                         }, this.healthCheckDelay, TimeUnit.MILLISECONDS);
