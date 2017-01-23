@@ -180,4 +180,37 @@ describe("utils test", function() {
     });
   });
 
+  describe('getVersionNumber', function() {
+    it('should return the extracted version number from the build number', function() {
+      var props = {};
+      utils.initializeConfigurationProperties(props);
+
+      props['__build.number'] = '1';
+      expect(utils.getVersionNumber()).toEqual('1');
+
+      props['__build.number'] = '1.9';
+      expect(utils.getVersionNumber()).toEqual('1.9');
+
+      props['__build.number'] = '1.9.1';
+      expect(utils.getVersionNumber()).toEqual('1.9.1');
+
+      props['__build.number'] = '1.9.10';
+      expect(utils.getVersionNumber()).toEqual('1.9.10');
+
+      props['__build.number'] = '1.9.10 (65)';
+      expect(utils.getVersionNumber()).toEqual('1.9.10');
+
+      props['__build.number'] = '1.9.10-65';
+      expect(utils.getVersionNumber()).toEqual('1.9.10');
+
+      props['__build.number'] = '1.9.10 65';
+      expect(utils.getVersionNumber()).toEqual('1.9.10');
+
+      props['__build.number'] = 'N1.9.10-65';
+      expect(utils.getVersionNumber()).toBeFalsy();
+
+      props['__build.number'] = '';
+      expect(utils.getVersionNumber()).toBeFalsy();
+    });
+  });
 });

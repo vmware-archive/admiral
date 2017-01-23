@@ -21,6 +21,8 @@ const RX_UNIX_ABS_PATH = '/[a-zA-Z0-9_./ -]*';
 const RE_UNIX_ABS_PATH = new RegExp('^' + RX_UNIX_ABS_PATH + '$');
 const RE_UNIX_ABS_PATH_OR_NAME = new RegExp('^((' + RX_NAME + ')|(' + RX_UNIX_ABS_PATH + '))$');
 
+const VERSION_REG_EX = /^(\*|\d+(\.\d+){0,2}(\.\*)?)/g;
+
 var isEmbedded = window.isEmbedded;
 var isSingleView = window.isSingleView;
 
@@ -604,8 +606,23 @@ var utils = {
     return locationSearch.indexOf('compute') !== -1;
   },
 
+  /**
+   * The build number consists of the release version + the number of last
+   * succesful build of this version. For example: 0.9.1 (1423)
+   */
   getBuildNumber: function() {
     return this.getConfigurationProperty('__build.number');
+  },
+
+  /**
+   * Returns the version number, extracted from the build number.
+   * For example if the build number is 0.9.1 (1423), the result of this call
+   * will be 0.9.1
+   */
+  getVersionNumber: function() {
+    var buildNumber = this.getBuildNumber();
+    var match = buildNumber && buildNumber.match(VERSION_REG_EX);
+    return match && match[0];
   },
 
   isContextAwareHelpEnabled: function() {
