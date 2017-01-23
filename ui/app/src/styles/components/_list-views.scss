@@ -774,6 +774,28 @@
       font-size: 22px;
     }
   }
+
+  .create-volume.closable-view {
+    .volume-form {
+      position: absolute;
+      top: 40px;
+      left: 20px;
+      right: 20px;
+      bottom: 20px;
+    }
+    .title {
+      font-size: 22px;
+    }
+  }
+}
+
+.volume-form {
+  overflow: auto;
+}
+
+.volume-form .multicolumn-inputs-list-body-wrapper {
+  overflow: visible;
+  max-height: initial;
 }
 
 .containers-view.left-list-hover, .composite-child-containers-view.left-list-hover {
@@ -1290,7 +1312,7 @@ $elements-side-margin: $elements-margin / 2;
 .template-details .edit-container-definition-view,
 .template-details .edit-existing-container-definition-view,
 .template-details .new-container-definition-view,
-.template-details .edit-network{
+.template-details .edit-network {
   margin-right: $template-details-right;
   overflow: auto;
   z-index: 102;
@@ -1301,7 +1323,8 @@ $elements-side-margin: $elements-margin / 2;
   z-index: 102;
 }
 
-.template-details .edit-network.closable-view .control-btns {
+.template-details .edit-network.closable-view .control-btns,
+.template-details .edit-volume.closable-view .control-btns {
   margin-right: 20px;
 }
 

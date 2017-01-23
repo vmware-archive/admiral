@@ -14,7 +14,7 @@
         v-bind:show-alert="alert.show"
         v-bind:alert-message="alert.message"
         v-bind:alert-timeout="3000"
-        v-on:alert-closed="alertClosed()"></alert>
+        v-on:alert-closed="closeAlert()"></alert>
   <div class="status {{model.powerState}}">
     <i class="fa fa-lock" title="Managed by catalog"
        v-show="operationSupported('MANAGE')"></i>

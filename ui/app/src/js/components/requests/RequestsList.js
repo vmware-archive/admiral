@@ -159,15 +159,23 @@ var RequestsListVueComponent = Vue.extend({
               var link = item.resourceLinks[i];
               if (link) {
                 params.documentId = utils.getDocumentId(link);
+
                 if (link.indexOf(links.COMPOSITE_COMPONENTS) !== -1) {
+                  // Applications
                   params[constants.SEARCH_CATEGORY_PARAM] =
                       constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS;
                 } else if (link.indexOf(links.CONTAINERS) !== -1) {
+                  // Containers
                   params[constants.SEARCH_CATEGORY_PARAM] =
                       constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS;
                 } else if (link.indexOf(links.NETWORKS) !== -1) {
+                  // Networks
                   params[constants.SEARCH_CATEGORY_PARAM] =
                       constants.RESOURCES.SEARCH_CATEGORY.NETWORKS;
+                } else if (link.indexOf(links.VOLUMES) !== -1) {
+                  // Volumes
+                  params[constants.SEARCH_CATEGORY_PARAM] =
+                    constants.RESOURCES.SEARCH_CATEGORY.VOLUMES;
                 }
               }
             }

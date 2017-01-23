@@ -9,8 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import ContainersListItemVue from
-  'components/containers/ContainersListItemVue.html';
+import ContainersListItemVue from 'components/containers/ContainersListItemVue.html';
+import AlertItemMixin from 'components/common/AlertItemMixin'; //eslint-disable-line
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
 import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
 import constants from 'core/constants'; //eslint-disable-line
@@ -19,19 +19,10 @@ import { ContainerActions, NavigationActions } from 'actions/Actions';
 
 var ContainersListItem = Vue.extend({
   template: ContainersListItemVue,
-  mixins: [DeleteConfirmationSupportMixin],
+  mixins: [AlertItemMixin, DeleteConfirmationSupportMixin],
   props: {
     model: {required: true},
     showAlertManagedByCatalog: {required: true}
-  },
-  data: function() {
-    return {
-      alert: {
-        type: 'warning',
-        show: false,
-        message: ''
-      }
-    };
   },
   computed: {
     portsDisplayTexts: function() {
@@ -53,7 +44,7 @@ var ContainersListItem = Vue.extend({
 
     this.unwatchShowAlertManagedByCatalog = this.$watch('showAlertManagedByCatalog', () => {
       if (this.showAlertManagedByCatalog) {
-        this.showManagedByCatalogAlert();
+        this.showAlert('errors.managedByCatalog');
       }
     });
   },
@@ -153,17 +144,6 @@ var ContainersListItem = Vue.extend({
       };
 
       NavigationActions.openNetworks(queryOptions);
-    },
-
-    showManagedByCatalogAlert: function() {
-      this.alert.message =
-        i18n.t('app.resource.list.container.operations.errors.managedByCatalog');
-      this.alert.show = true;
-    },
-
-    alertClosed: function() {
-      this.alert.show = false;
-      this.alert.message = '';
     },
 
     operationSupported: function(op) {

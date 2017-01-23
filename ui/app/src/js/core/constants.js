@@ -50,6 +50,9 @@ var constants = Immutable({
         NETWORKS: {
           name: 'networks'
         },
+        VOLUMES: {
+          name: 'volumes'
+        },
         CLOSURES: {
           name: 'closures'
         },
@@ -84,6 +87,7 @@ var constants = Immutable({
   RESOURCES: {
     TYPES: {
       NETWORK: 'NETWORK',
+      VOLUME: 'VOLUME',
       CLOSURE: 'CLOSURE'
     },
     SEARCH_CATEGORY: {
@@ -91,9 +95,23 @@ var constants = Immutable({
       CONTAINERS: 'containers',
       APPLICATIONS: 'applications',
       NETWORKS: 'networks',
+      VOLUMES: 'volumes',
       CLOSURES: 'closures'
     },
     NETWORKS: {
+      OPERATION: {
+        REMOVE: 'REMOVE',
+        MANAGE: 'MANAGE'
+      },
+      STATES: {
+        PROVISIONING: 'PROVISIONING',
+        CONNECTED: 'CONNECTED',
+        ERROR: 'ERROR',
+        UNKNOWN: 'UNKNOWN',
+        RETIRED: 'RETIRED'
+      }
+    },
+    VOLUMES: {
       OPERATION: {
         REMOVE: 'REMOVE',
         MANAGE: 'MANAGE'
@@ -157,7 +175,8 @@ var constants = Immutable({
       DEFAULT: 'DEFAULT',
       NETWORKCREATE: 'NETWORKCREATE',
       MANAGE: 'MANAGE',
-      CREATE_TEMPLATE: 'CREATE_TEMPLATE'
+      CREATE_TEMPLATE: 'CREATE_TEMPLATE',
+      CREATE_VOLUME: 'CREATE_VOLUME'
     }
   },
   COMPUTE: {

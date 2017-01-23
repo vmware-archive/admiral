@@ -22,6 +22,7 @@
       "containers": "Containers",
       "applications": "Applications",
       "networks": "Networks",
+      "volumes": "Volumes",
       "closures": "Closures",
       "eventlog": "Event Log",
       "placementZones": "Placement Zones",
@@ -304,6 +305,32 @@
           "editTitle": "Edit Closure",
           "name": "Name"
         },
+        "editVolume" :{
+          "newLabel": "Add Volume",
+          "newTitle": "Add Volume",
+          "newDropdownTitle": "Add Volume...",
+          "editTitle": "Edit Volume",
+          "name": "Name",
+          "driver": "Driver",
+          "driverPlaceholder": "local",
+          "driverOptions": {
+            "label": "Driver Options",
+            "keyTitle": "Option",
+            "keyHint": "Example: size",
+            "valueTitle": "Value",
+            "valueHint": "Example: 20GB"
+          },
+          "existingVolume": "Existing",
+          "showingCount": "Showing __count__ out of __totalCount__",
+          "showingInstances": "instances",
+          "noResults": "No volumes found",
+          "mountpoint": "Host Mountpoint",
+          "hosts": "Host",
+          "hostsSearchPlaceholder": "Search for host",
+          "create": "Create",
+          "createTitle": "Create Volume",
+          "customProperties": "Custom properties"
+        },
         "network": {
           "drag": "Drag to attach container to this network",
           "drop": "Drop to attach container to this network"
@@ -565,22 +592,10 @@
             "CONNECTED": "CONNECTED",
             "RETIRED": "RETIRED",
             "ERROR": "ERROR"
-          },
-          "operations": {
-            "errors": {
-              "remove": {
-                "containersConnected": "There are connected containers"
-              }
-            }
           }
         },
         "container": {
-          "create": "Create Container",
-          "operations": {
-            "errors": {
-              "managedByCatalog": "Managed by catalog"
-            }
-          }
+          "create": "Create Container"
         },
         "application": {
           "create": "Create Application"
@@ -588,10 +603,29 @@
         "closure": {
           "create": "Create Closure"
         },
+        "volume": {
+          "create": "Create Volume",
+          "connectedDateLabel": "Connected since",
+          "driverLabel": "Driver",
+          "driverOptionsLabel": "Driver Options",
+          "scope": "Scope",
+          "mountpoint": "Host Mountpoint",
+          "connectedContainers": "Containers",
+          "parentHosts": "Hosts",
+          "external": "External",
+          "state": {
+            "UNKNOWN": "UNKNOWN",
+            "PROVISIONING": "PROVISIONING",
+            "CONNECTED": "CONNECTED",
+            "RETIRED": "RETIRED",
+            "ERROR": "ERROR"
+          }
+        },
         "titleSearch": {
           "containers": "Containers",
           "applications": "Applications",
           "networks": "Networks",
+          "volumes": "Volumes",
           "closures": "Closures"
         },
         "searchPlaceholder": {
@@ -759,6 +793,12 @@
             "volume": "Volume",
             "volumeHint": "Example: datacontainer"
           },
+          "volumeDriver": "Volume Driver",
+          "volumeDriverPlaceholder": "Example: local",
+          "volumeDriverDescription": "The driver to be used for volumes",
+          "volumeName": "Volume Name",
+          "volumeNamePlaceholder": "Example: volumeName",
+          "volumeNameDescription": "The name of the volume when using driver that is not local",
           "workingDirectory": "Working Directory",
           "workingDirectoryDescription": "The working directory for commands to run in",
           "clusterSize": "Cluster Size",
@@ -1053,7 +1093,9 @@
       "volumeDestinationRequired": "Volume destination is required.",
       "invalidInputValue": "Invalid input value",
       "invalidPath": "Value must be an absolute path.",
-      "invalidPathOrName": "Value must be an absolute path or a valid volume name."
+      "invalidPathOrName": "Value must be an absolute path or a valid volume name.",
+      "containersConnected": "There are connected containers.",
+      "managedByCatalog": "Managed by catalog"
     },
     "infoMessages": {
       "created": "Created Successfully!",

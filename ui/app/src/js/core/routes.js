@@ -84,6 +84,14 @@ crossroads.addRoute('/networks:?query:', function(query) {
   actions.ContainerActions.openContainers(query, true);
 });
 
+crossroads.addRoute('/volumes:?query:', function(query) {
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.VOLUMES.name);
+
+  query = query || {};
+  query.$category = 'volumes';
+  actions.ContainerActions.openContainers(query, true);
+});
+
 crossroads.addRoute('/closures', function() {
   actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CLOSURES.name);
   actions.ContainerActions.openContainers({
@@ -160,6 +168,14 @@ crossroads.addRoute('/networks/new', function() {
     '$category': 'networks'
   }, true);
   actions.ContainerActions.openCreateNetwork();
+});
+
+crossroads.addRoute('/volumes/new', function() {
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.VOLUMES.name);
+  actions.ContainerActions.openContainers({
+    '$category': 'volumes'
+  }, true);
+  actions.VolumeActions.openCreateVolume();
 });
 
 crossroads.addRoute('containers/composite/{compositeComponentId*}' +
@@ -328,6 +344,18 @@ actions.NavigationActions.openNetworks.listen(function(queryOptions) {
   }
 
   category = category || constants.CONTAINERS.SEARCH_CATEGORY.NETWORKS;
+  hasher.setHash(getHashWithQuery(category, queryOptions));
+});
+
+actions.NavigationActions.openVolumes.listen(function(queryOptions) {
+  var category;
+  if (queryOptions) {
+    category = queryOptions.$category;
+    queryOptions = $.extend({}, queryOptions);
+    delete queryOptions.$category;
+  }
+
+  category = category || constants.CONTAINERS.SEARCH_CATEGORY.VOLUMES;
   hasher.setHash(getHashWithQuery(category, queryOptions));
 });
 

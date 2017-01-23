@@ -28,6 +28,7 @@ const CONTAINER_TYPE_DOCKER = 'DOCKER_CONTAINER';
 const CONTAINER_HOST = 'CONTAINER_HOST';
 const COMPOSITE_COMPONENT_TYPE = 'COMPOSITE_COMPONENT';
 const NETWORK_TYPE = 'NETWORK';
+const VOLUME_TYPE = 'CONTAINER_VOLUME';
 const CLOSURE_TYPE = 'CLOSURE';
 
 const DOCUMENT_TYPE_PROP_NAME = 'documentType';
@@ -166,6 +167,10 @@ var makeDay2OperationRequestNetwork = function(networkId, op) {
   return makeDay2OperationRequestNetworks([networkId], op);
 };
 
+var makeDay2OperationRequestVolume = function(volumeId, op) {
+  return makeDay2OperationRequestVolumes([volumeId], op);
+};
+
 var makeDay2OperationRequestCluster = function(clusterContainers, op) {
   var request = {};
   request.resourceType = CONTAINER_TYPE_DOCKER;
@@ -219,6 +224,11 @@ var makeDay2OperationRequestClosures = function(closureLinks, op) {
 var makeDay2OperationRequestNetworks = function(networkLinks, op) {
   return batchDay2OperationResource(NETWORK_TYPE,
             ensurePrefixResourceLinks(links.NETWORKS, networkLinks), op);
+};
+
+var makeDay2OperationRequestVolumes = function(volumeLinks, op) {
+  return batchDay2OperationResource(VOLUME_TYPE,
+            ensurePrefixResourceLinks(links.VOLUMES, volumeLinks), op);
 };
 
 var makeDay2OperationRequestComposites = function(compositeComponentLinks, op) {
@@ -1210,6 +1220,16 @@ services.loadNetworks = function(queryOptions) {
   });
 };
 
+services.loadVolumes = function(queryOptions) {
+  var filter = buildContainersSearchQuery(queryOptions);
+
+  var url = buildPaginationUrl(links.VOLUMES, filter, true);
+
+  return get(url).then(function(result) {
+    return result;
+  });
+};
+
 services.loadExposedService = function(link) {
   return get(link);
 };
@@ -1369,6 +1389,19 @@ services.createNetwork = function(networkDescription, hostIds) {
     });
 };
 
+services.createVolume = function(volumeDescription, hostIds) {
+  var customProperties = {};
+  customProperties[CONTAINER_HOST_ID_CUSTOM_PROPERTY] = hostIds.join(',');
+
+  return services.createVolumeDescription(volumeDescription).then(
+    function(createdVolumeDescription) {
+
+      return services.createRequest(createdVolumeDescription.documentSelfLink,
+        createdVolumeDescription.tenantLinks, null, VOLUME_TYPE,
+        customProperties);
+    });
+};
+
 services.startContainer = function(containerId) {
 
   return day2operation(links.REQUESTS,
@@ -1405,6 +1438,16 @@ services.removeNetwork = function(networkId) {
     });
 };
 
+services.removeVolume = function(volumeId) {
+
+  return day2operation(links.REQUESTS,
+    makeDay2OperationRequestVolume(volumeId, 'Volume.Delete'))
+    .then(function(deleteRequest) {
+
+      return deleteRequest;
+    });
+};
+
 services.batchOpContainers = function(containerIds, operation) {
   return day2operation(links.REQUESTS,
     makeDay2OperationRequestContainers(containerIds, operation))
@@ -1425,6 +1468,16 @@ services.batchOpNetworks = function(networkIds, operation) {
   return day2operation(links.REQUESTS,
     makeDay2OperationRequestNetworks(networkIds, operation))
     .then(function(day2OpRequest) {
+      return day2OpRequest;
+    });
+};
+
+services.batchOpVolumes = function(volumeIds, operation) {
+  return day2operation(links.REQUESTS,
+
+    makeDay2OperationRequestVolumes(volumeIds, operation))
+      .then(function(day2OpRequest) {
+
       return day2OpRequest;
     });
 };
@@ -1630,7 +1683,23 @@ services.createNetworkDescription = function(networkDescription) {
   return post(links.CONTAINER_NETWORK_DESCRIPTIONS, networkDescription);
 };
 
+services.createVolumeDescription = function(volumeDescription) {
+  return post(links.CONTAINER_VOLUMES_DESCRIPTIONS, volumeDescription);
+};
+
 services.searchNetworks = function(query, limit) {
+  services.searchEntities(links.NETWORKS, query, limit);
+};
+
+services.searchVolumeDescriptions = function(query, limit) {
+  return services.searchEntities(links.CONTAINER_VOLUMES_DESCRIPTIONS, query, limit);
+};
+
+services.searchVolumes = function(query, limit) {
+  return services.searchEntities(links.VOLUMES, query, limit);
+};
+
+services.searchEntities = function(entityTypeLink, query, limit) {
   var filter = buildOdataQuery({
     name: [{
       val: '*' + query.toLowerCase() + '*',
@@ -1638,10 +1707,11 @@ services.searchNetworks = function(query, limit) {
     }]
   });
 
-  // ideally we would order by name, but there is an issue with Xenon and various
+  // Ideally we would order by name, but there is an issue with Xenon and various
   // services having name field, some of which are not marked as Sortable.
-  let url = buildPaginationUrl(links.NETWORKS, filter, true,
-                               'documentUpdateTimeMicros desc', limit);
+  let url = buildPaginationUrl(entityTypeLink, filter, true,
+                                'documentUpdateTimeMicros desc', limit);
+
   return get(url).then(function(data) {
     var documentLinks = data.documentLinks || [];
 
@@ -2053,6 +2123,9 @@ var buildContainersSearchQuery = function(queryOptions) {
       switch (category) {
         case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
           link = links.NETWORKS;
+          break;
+        case constants.RESOURCES.SEARCH_CATEGORY.VOLUMES:
+          link = links.VOLUMES;
           break;
         case constants.RESOURCES.SEARCH_CATEGORY.CLOSURES:
           link = links.CLOSURES;

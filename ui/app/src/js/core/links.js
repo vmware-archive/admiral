@@ -40,6 +40,7 @@ var links = Immutable({
   CONTAINER_LOGS: RESOURCES + '/container-logs',
   CONTAINER_DESCRIPTIONS: RESOURCES + '/container-descriptions',
   CONTAINER_NETWORK_DESCRIPTIONS: RESOURCES + '/container-network-descriptions',
+  CONTAINER_VOLUMES_DESCRIPTIONS: RESOURCES + '/container-volume-descriptions',
   COMPOSITE_DESCRIPTIONS: RESOURCES + '/composite-descriptions',
   COMPOSITE_DESCRIPTIONS_CLONE: RESOURCES + '/composite-descriptions-clone',
   COMPOSITE_DESCRIPTIONS_CONTENT: RESOURCES + '/composite-templates',
@@ -49,6 +50,7 @@ var links = Immutable({
   DATA_COLLECTION: '/data-collection/types/App.Container',
 
   NETWORKS: RESOURCES + '/container-networks',
+  VOLUMES: RESOURCES + '/container-volumes',
 
   SSL_TRUST_CERTS: CONFIG + '/trust-certs',
   SSL_TRUST_CERTS_IMPORT: CONFIG + '/trust-certs-import',

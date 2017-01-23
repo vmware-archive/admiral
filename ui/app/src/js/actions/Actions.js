@@ -47,7 +47,9 @@ export var TemplateActions = Reflux.createActions([
   'attachDetachNetwork', 'saveNetwork', 'removeNetwork',
   'openAddClosure', 'removeClosure', 'saveClosure', 'runClosure', 'cancelAddClosure',
   'createClosureTemplate', 'resetMonitoredClosure',
-  'openCreateNewTemplate', 'createNewTemplate'
+  'openCreateNewTemplate', 'createNewTemplate',
+  'openEditVolume', 'cancelEditVolume', 'attachVolume', 'detachVolume',
+  'attachDetachVolume', 'saveVolume', 'removeVolume'
 ]);
 
 export var ContainerActions = Reflux.createActions([
@@ -61,7 +63,8 @@ export var ContainerActions = Reflux.createActions([
   'removeContainerDetails', 'removeContainers', 'operationCompleted', 'operationFailed',
   'modifyClusterSize', 'scaleContainer', 'startCluster', 'stopCluster', 'removeCluster',
   'closeContainers', 'openShell', 'closeShell',
-  'batchOpContainers', 'batchOpCompositeContainers', 'batchOpNetworks', 'batchOpClosures',
+  'batchOpContainers', 'batchOpCompositeContainers', 'batchOpNetworks',
+  'batchOpVolumes', 'batchOpClosures',
   'openCreateContainer', 'openCreateNetwork', 'createContainer', 'createNetwork',
   'removeClosureRun', 'openCreateClosure', 'saveClosure', 'runClosure', 'openClosureDetails',
   'openCompositeClosureDetails', 'resetMonitoredClosure'
@@ -70,6 +73,11 @@ export var ContainerActions = Reflux.createActions([
 export var NetworkActions = Reflux.createActions([
   'removeNetwork', 'networkOperationCompleted', 'networkOperationFailed',
   'openManageNetworks'
+]);
+
+export var VolumeActions = Reflux.createActions([
+  'openManageVolumes', 'openCreateVolume', 'createVolume', 'removeVolume',
+  'volumeOperationCompleted', 'volumeOperationFailed'
 ]);
 
 export var EventLogActions = Reflux.createActions([
@@ -185,5 +193,5 @@ export var NavigationActions = Reflux.createActions([
   'openTemplateDetails', 'showContainersPerPlacement', 'openPlacements', 'openEnvironments',
   'openAddEnvironment', 'editEnvironment', 'openMachines', 'openAddMachine', 'editMachine',
   'openCompute', 'editCompute', 'openClosures', 'openClosuresSilently', 'openAddClosure',
-  'openClosureDetails', 'openCompositeClosureDetails', 'openEndpoints'
+  'openClosureDetails', 'openCompositeClosureDetails', 'openEndpoints', 'openVolumes'
 ]);

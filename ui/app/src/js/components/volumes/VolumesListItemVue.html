@@ -10,15 +10,17 @@
   -->
 
 <div class="container-item">
+
   <alert v-bind:alert-type="alert.type"
-          v-bind:show-alert="alert.show"
-          v-bind:alert-message="alert.message"
-          v-bind:alert-timeout="3000"
-          v-on:alert-closed="closeAlert()"></alert>
+         v-bind:show-alert="alert.show"
+         v-bind:alert-message="alert.message"
+         v-bind:alert-timeout="3000"
+         v-on:alert-closed="closeAlert()"></alert>
+
   <div class="status {{model.powerState}}">
     <i class="fa fa-lock" title="Managed by catalog"
        v-show="operationSupported('MANAGE')"></i>
-    <span class="status-state">{{networkStatusDisplay(model.powerState)}}</span>
+    <span class="status-state">{{volumeStatusDisplay(model.powerState)}}</span>
   </div>
   <div class="container-header">
     <img v-bind:src="model.icon"/>
@@ -29,39 +31,23 @@
   </div>
   <hr/>
   <div class="container-content">
-    <div class="network-connected-holder">
-      <span class="container-label">{{i18n("app.resource.list.network.connectedDateLabel")}}</span>
+    <div class="volume-connected-holder">
+      <span class="container-label">{{i18n("app.resource.list.volume.connectedDateLabel")}}</span>
       <span>{{model.connected | timestampToDate}}</span>
     </div>
-    <div class="network-driver-holder">
-      <span class="container-label">{{i18n("app.resource.list.network.networkDriverLabel")}}</span>
+    <div class="volume-driver-holder">
+      <span class="container-label">{{i18n("app.resource.list.volume.driverLabel")}}</span>
       <span>{{model.driver}}</span>
     </div>
-    <div class="network-ipam-driver-holder">
-      <span class="container-label">{{i18n("app.resource.list.network.ipamDriverLabel")}}</span>
-      <span>{{model.ipam.driver}}</span>
+    <div class="volume-scope-holder">
+      <span class="container-label">{{i18n("app.resource.list.volume.scope")}}</span>
+      <span>{{model.scope}}</span>
     </div>
-    <div class="network-subnet-holder">
-      <span class="container-label">{{i18n("app.resource.list.network.subnetLabel")}}</span>
-      <span><template v-for="config in model.ipam.config" track-by="$index">
-          <span>{{config.subnet}}</span>
-        </template></span>
-    </div>
-    <div class="network-gateway-holder">
-      <span class="container-label">{{i18n("app.resource.list.network.gatewayLabel")}}</span>
-      <span><template v-for="config in model.ipam.config" track-by="$index">
-          <span>{{config.gateway}}</span>
-        </template></span>
-    </div>
-    <div class="network-iprange-holder">
-      <span class="container-label">{{i18n("app.resource.list.network.ipRangeLabel")}}</span>
-      <span><template v-for="config in model.ipam.config" track-by="$index">
-          <span>{{config.ipRange}}</span>
-        </template></span>
-    </div>
-    <div class="network-external-flag">
-      <span class="container-label">{{i18n("app.resource.list.network.external")}}</span>
-      <span>{{model.external}}</span>
+    <div class="volume-driver-options-holder">
+      <span class="container-label">{{i18n("app.resource.list.volume.driverOptionsLabel")}}</span>
+      <span class="comma-separated-values-line"><template v-for="option in model.options" track-by="$index">
+        <span>{{$key}}: {{option}}</span>
+      </template></span>
     </div>
   </div>
   <div class="relations-holder">
@@ -87,14 +73,14 @@
     <action-button name="remove" icon-name="trash"
                    v-bind:label="i18n('app.container.actions.remove')"
                    v-bind:supported="operationSupported('REMOVE')"
-                   v-on:click="removeNetworkClicked($event)"></action-button>
+                   v-on:click="confirmVolumeRemoval($event)"></action-button>
     <action-button name="manage" icon-name="external-link"
                    v-bind:label="i18n('app.container.actions.manage')"
                    v-bind:supported="operationSupported('MANAGE')"
-                   v-on:click="manageNetwork($event)"></action-button>
+                   v-on:click="manageVolume($event)"></action-button>
   </div>
   <delete-confirmation v-bind:class="{'hide': !showDeleteConfirmation}"
                        v-bind:show="showDeleteConfirmation"
-                       v-on:confirm-delete="doRemoveNetwork()"
+                       v-on:confirm-delete="removeVolume()"
                        v-on:cancel-delete="cancelRemoval($event)"></delete-confirmation>
 </div>

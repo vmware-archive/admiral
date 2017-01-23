@@ -255,8 +255,11 @@ let RequestsStore = Reflux.createStore({
 
         } else if (req.requestProgressByComponent.hasOwnProperty('Container Network Removal')) {
           // Network Removed
-          this.networkOperationSuccess(
-            constants.RESOURCES.NETWORKS.OPERATION.REMOVE);
+          this.networkOperationSuccess(constants.RESOURCES.NETWORKS.OPERATION.REMOVE);
+
+        } else if (req.requestProgressByComponent.hasOwnProperty('Container Volume Removal')) {
+          // Volume Removed
+          this.volumeOperationSuccess(constants.RESOURCES.VOLUMES.OPERATION.REMOVE);
 
         } else if (req.requestProgressByComponent.hasOwnProperty('Container Operation')) {
 
@@ -279,6 +282,10 @@ let RequestsStore = Reflux.createStore({
           // Network created
           this.containerOperationSuccess(constants.CONTAINERS.OPERATION.NETWORKCREATE,
                                           resourceLinks);
+        } else if (req.requestProgressByComponent.hasOwnProperty('Container Volume Allocation')) {
+          // Volume created
+          this.containerOperationSuccess(constants.CONTAINERS.OPERATION.CREATE_VOLUME,
+                                          resourceLinks);
         }
       } else if (req && utils.isRequestFailed(req)) {
 
@@ -289,8 +296,11 @@ let RequestsStore = Reflux.createStore({
           this.containerOperationFail(constants.CONTAINERS.OPERATION.REMOVE, resourceLinks);
 
         } else if (req.requestProgressByComponent.hasOwnProperty('Container Network Removal')) {
-          // Container Removed
+          // Network Removal
           this.networkOperationFail(constants.RESOURCES.NETWORKS.OPERATION.REMOVE);
+        } else if (req.requestProgressByComponent.hasOwnProperty('Container Volume Removal')) {
+          // Volume Removal
+          this.volumeOperationFail(constants.RESOURCES.VOLUMES.OPERATION.REMOVE);
 
         } else if (req.requestProgressByComponent.hasOwnProperty('Container Operation')) {
 
@@ -321,6 +331,11 @@ let RequestsStore = Reflux.createStore({
     actions.NetworkActions.networkOperationCompleted(operationType);
   },
 
+  volumeOperationSuccess: function(operationType) {
+
+    actions.VolumeActions.volumeOperationCompleted(operationType);
+  },
+
   containerOperationFail: function(operationType, resourceLinks) {
 
     actions.ContainerActions.operationFailed(operationType, this.getResourceIds(resourceLinks));
@@ -329,6 +344,11 @@ let RequestsStore = Reflux.createStore({
   networkOperationFail: function(operationType) {
 
     actions.NetworkActions.networkOperationFailed(operationType);
+  },
+
+  volumeOperationFail: function(operationType) {
+
+    actions.VolumeActions.volumeOperationFailed(operationType);
   },
 
   getResourceIds: function(resourceLinks) {
