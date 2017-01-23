@@ -12,8 +12,13 @@
 package com.vmware.admiral.compute.content.kubernetes;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
-import static com.vmware.admiral.compute.container.PortBinding.fromPodContainerPort;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.isNullOrEmpty;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.DEPLOYMENT;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_API_VERSION_V1;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_API_VERSION_V1_BETA1;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_APP;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_TIER;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.SERVICE;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,6 +29,8 @@ import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.HttpVersion;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestProtocol;
 import com.vmware.admiral.compute.container.PortBinding;
+import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
+import com.vmware.admiral.compute.content.kubernetes.deployments.DeploymentSpec;
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainer;
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerEnvVar;
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerPort;
@@ -34,11 +41,23 @@ import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeTCPSo
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerResources;
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerSecurityContext;
 import com.vmware.admiral.compute.content.kubernetes.pods.PodSpec;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodTemplateSpec;
+import com.vmware.admiral.compute.content.kubernetes.services.Service;
+import com.vmware.admiral.compute.content.kubernetes.services.ServicePort;
+import com.vmware.admiral.compute.content.kubernetes.services.ServiceSpec;
 import com.vmware.xenon.common.Service.Action;
 
-public class ContainerDescriptionToPodContainerConverter {
+public class KubernetesConverter {
+
+    public static enum KubernetesProtocol {
+        TCP, UDP
+    }
 
     public static final String RESOURCES_LIMITS = "limits";
+
+    public static final String KUBERNETES_RESTART_POLICY_NEVER = "Never";
+    public static final String KUBERNETES_RESTART_POLICY_ON_FAILURE = "OnFailure";
+    public static final String KUBERNETES_RESTART_POLICY_ALWAYS = "Always";
 
     //From PodContainer to ContainerDescription
     public static ContainerDescription fromPodContainerToContainerDescription(PodContainer
@@ -97,9 +116,19 @@ public class ContainerDescriptionToPodContainerConverter {
         }
         PortBinding[] portBindings = new PortBinding[ports.length];
         for (int i = 0; i < ports.length; i++) {
-            portBindings[i] = fromPodContainerPort(ports[i]);
+            portBindings[i] = fromPodContainerPortToPortBinding(ports[i]);
         }
         return portBindings;
+    }
+
+    public static PortBinding fromPodContainerPortToPortBinding(PodContainerPort podContainerPort) {
+        PortBinding portBinding = new PortBinding();
+        portBinding.protocol = podContainerPort.protocol;
+        portBinding.containerPort = String.valueOf(podContainerPort.containerPort);
+        portBinding.hostIp = podContainerPort.hostIp;
+        portBinding.hostPort = String.valueOf(podContainerPort.hostPort);
+
+        return portBinding;
     }
 
     public static String[] fromPodContainerEnvVarToContainerDescriptionEnv(
@@ -173,7 +202,7 @@ public class ContainerDescriptionToPodContainerConverter {
         } catch (NumberFormatException nfe) {
             for (PodContainerPort port : podContainer.ports) {
                 if (probePort.equals(port.name)) {
-                    result = Integer.parseInt(port.containerPort);
+                    result = port.containerPort;
                 }
             }
         }
@@ -318,10 +347,8 @@ public class ContainerDescriptionToPodContainerConverter {
         PodContainerPort[] podPorts = new PodContainerPort[ports.length];
         for (int i = 0; i < ports.length; i++) {
             PodContainerPort podPort = new PodContainerPort();
-            podPort.containerPort = ports[i].containerPort;
-            podPort.hostPort = ports[i].hostPort;
-            podPort.protocol = ports[i].protocol;
-            podPort.hostIp = ports[i].protocol;
+            podPort.containerPort = Integer.parseInt(ports[i].containerPort);
+            podPort.protocol = fromCompositeProtocolToKubernetesProtocol(ports[i].protocol);
             podPorts[i] = podPort;
         }
         return podPorts;
@@ -336,7 +363,7 @@ public class ContainerDescriptionToPodContainerConverter {
         switch (healthConfig.protocol) {
         case COMMAND:
             probe.exec = new PodContainerProbeExecAction();
-            probe.exec.command = healthConfig.command.split("\\w+");
+            probe.exec.command = healthConfig.command.split("\\s+");
             break;
         case HTTP:
             probe.httpGet = new PodContainerProbeHTTPGetAction();
@@ -350,7 +377,9 @@ public class ContainerDescriptionToPodContainerConverter {
         default:
             return null;
         }
-        probe.timeoutSeconds = TimeUnit.MILLISECONDS.toSeconds(healthConfig.timeoutMillis);
+        if (healthConfig.timeoutMillis != null) {
+            probe.timeoutSeconds = TimeUnit.MILLISECONDS.toSeconds(healthConfig.timeoutMillis);
+        }
         probe.failureThreshold = healthConfig.unhealthyThreshold;
         probe.successThreshold = healthConfig.healthyThreshold;
         return probe;
@@ -369,4 +398,95 @@ public class ContainerDescriptionToPodContainerConverter {
         podContainer.resources.get(RESOURCES_LIMITS).cpu = String.valueOf(description.cpuShares);
     }
 
+    public static Deployment fromContainerDescriptionToDeployment(
+            ContainerDescription description, String templateName) {
+        if (description == null) {
+            return null;
+        }
+
+        Deployment deployment = new Deployment();
+        deployment.apiVersion = KUBERNETES_API_VERSION_V1_BETA1;
+        deployment.kind = DEPLOYMENT;
+        deployment.metadata = new ObjectMeta();
+        deployment.metadata.name = description.name;
+        deployment.metadata.labels = new HashMap<>();
+        deployment.metadata.labels.put(KUBERNETES_LABEL_APP, templateName);
+        deployment.spec = new DeploymentSpec();
+        deployment.spec.replicas = (description._cluster == null) ? Integer.valueOf(1) : description
+                ._cluster;
+        deployment.spec.template = new PodTemplateSpec();
+        deployment.spec.template.metadata = new ObjectMeta();
+        deployment.spec.template.metadata.labels = new HashMap<>();
+        deployment.spec.template.metadata.labels.put(KUBERNETES_LABEL_APP, templateName);
+        deployment.spec.template.metadata.labels.put(KUBERNETES_LABEL_TIER, description.name);
+        deployment.spec.template.spec = new PodSpec();
+        deployment.spec.template.spec.restartPolicy =
+                fromContainerDescriptionRestartPolicyToPodRestartPolicy(description.restartPolicy);
+        PodContainer podContainer = fromContainerDescriptionToPodContainer(description);
+        deployment.spec.template.spec.containers = new PodContainer[] { podContainer };
+
+        return deployment;
+    }
+
+    public static Service fromContainerDescriptionToService(ContainerDescription description,
+            String templateName) {
+        if (description == null) {
+            return null;
+        }
+
+        Service service = new Service();
+        service.apiVersion = KUBERNETES_API_VERSION_V1;
+        service.kind = SERVICE;
+        service.metadata = new ObjectMeta();
+        service.metadata.name = description.name;
+        service.metadata.labels = new HashMap<>();
+        service.metadata.labels.put(KUBERNETES_LABEL_APP, templateName);
+        service.spec = new ServiceSpec();
+        service.spec.selector = new HashMap<>();
+        service.spec.selector.put(KUBERNETES_LABEL_APP, templateName);
+        service.spec.selector.put(KUBERNETES_LABEL_TIER, description.name);
+        service.spec.ports = fromContainerDescriptionPortsToServicePorts(description);
+        return service;
+    }
+
+    public static ServicePort[] fromContainerDescriptionPortsToServicePorts(ContainerDescription
+            description) {
+        ServicePort[] servicePorts = new ServicePort[description.portBindings.length];
+
+        for (int i = 0; i < description.portBindings.length; i++) {
+            ServicePort port = new ServicePort();
+            port.name = description.portBindings[i].hostPort;
+            port.port = Integer.parseInt(description.portBindings[i].hostPort);
+            port.targetPort = Integer.parseInt(description.portBindings[i].containerPort);
+            port.protocol = fromCompositeProtocolToKubernetesProtocol(description.portBindings[i]
+                    .protocol);
+            servicePorts[i] = port;
+        }
+        return servicePorts;
+    }
+
+    public static String fromContainerDescriptionRestartPolicyToPodRestartPolicy(String
+            descriptionRestartPolicy) {
+        switch (descriptionRestartPolicy) {
+        case "no":
+            return KUBERNETES_RESTART_POLICY_NEVER;
+        case "always":
+            return KUBERNETES_RESTART_POLICY_ALWAYS;
+        case "on-failure":
+            return KUBERNETES_RESTART_POLICY_ON_FAILURE;
+        default:
+            throw new IllegalArgumentException("Invalid restart policy.");
+        }
+    }
+
+    public static String fromCompositeProtocolToKubernetesProtocol(String compositeProtocol) {
+        if (compositeProtocol == null) {
+            return null;
+        }
+        try {
+            return KubernetesProtocol.valueOf(compositeProtocol.toUpperCase()).name();
+        } catch (IllegalArgumentException iae) {
+            throw new IllegalArgumentException("Invalid port protocol");
+        }
+    }
 }

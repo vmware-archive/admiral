@@ -12,41 +12,46 @@
 package com.vmware.admiral.compute.content.kubernetes;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
-import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.filterComponentTemplates;
-import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromDescriptionToComponentTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.isNullOrEmpty;
-import static com.vmware.admiral.compute.content.kubernetes.ContainerDescriptionToPodContainerConverter.fromContainerDescriptionToPodContainer;
-import static com.vmware.admiral.compute.content.kubernetes.ContainerDescriptionToPodContainerConverter.fromPodContainerToContainerDescription;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.fromContainerDescriptionToDeployment;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.fromContainerDescriptionToService;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 
 import com.vmware.admiral.common.util.YamlMapper;
-import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.content.ComponentTemplate;
 import com.vmware.admiral.compute.content.CompositeTemplate;
-import com.vmware.admiral.compute.content.NestedState;
 import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
 import com.vmware.admiral.compute.content.kubernetes.pods.Pod;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainer;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodSpec;
-import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.admiral.compute.content.kubernetes.services.Service;
 
 public class KubernetesUtil {
+
+    private static final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory().enable(
+            YAMLGenerator.Feature.MINIMIZE_QUOTES));
 
     public static final String POD = "Pod";
     public static final String POD_TEMPLATE = "PodTemplate";
     public static final String REPLICATION_CONTROLLER = "ReplicationController";
     public static final String DEPLOYMENT = "Deployment";
+    public static final String SERVICE = "Service";
+
+    public static final String KUBERNETES_API_VERSION_V1 = "v1";
+    public static final String KUBERNETES_API_VERSION_V1_BETA1 = "extensions/v1beta1";
+
+    public static final String KUBERNETES_LABEL_APP = "app";
+    public static final String KUBERNETES_LABEL_TIER = "tier";
 
     public static CommonKubernetesEntity deserializeKubernetesEntity(String yaml)
             throws IOException {
@@ -62,6 +67,8 @@ public class KubernetesUtil {
                 throw new IllegalArgumentException("Not implemented.");
             } else if (DEPLOYMENT.equals(entity.kind)) {
                 entity = YamlMapper.objectMapper().readValue(yaml.trim(), Deployment.class);
+            } else if (SERVICE.equals(entity.kind)) {
+                entity = YamlMapper.objectMapper().readValue(yaml.trim(), Service.class);
             } else {
                 throw new IllegalArgumentException("Invalid kubernetes kind.");
             }
@@ -75,108 +82,53 @@ public class KubernetesUtil {
 
     public static String serializeKubernetesEntity(CommonKubernetesEntity kubernetesEntity)
             throws IOException {
+
         return YamlMapper.objectMapper().setSerializationInclusion(Include.NON_NULL)
-                .writeValueAsString
-                        (kubernetesEntity).trim();
+                .writeValueAsString(kubernetesEntity).trim();
     }
 
-    public static CompositeTemplate fromPodToCompositeTemplate(Pod pod) {
-        assertNotNull(pod, "pod");
-        CompositeTemplate template = new CompositeTemplate();
-        template.name = pod.metadata.name;
+    public static String serializeKubernetesTemplate(KubernetesTemplate template)
+            throws IOException {
+        StringBuilder builder = new StringBuilder();
 
-        //Containers mapping
-        if (!isNullOrEmpty(pod.spec.containers)) {
-            template.components = new LinkedHashMap<>();
-            for (PodContainer podContainer : pod.spec.containers) {
-                ComponentTemplate<ResourceState> component = fromPodContainerToCompositeComponent
-                        (podContainer, pod.spec);
-                component.data.name = podContainer.name;
-                template.components.put(podContainer.name, component);
-            }
+        for (Service service : template.services.values()) {
+            builder.append(serializeKubernetesEntity(service));
+            builder.append("\n");
         }
-        return template;
+
+        for (Deployment deployment : template.deployments.values()) {
+            builder.append(serializeKubernetesEntity(deployment));
+            builder.append("\n");
+        }
+
+        return builder.toString().trim();
     }
 
-    public static ComponentTemplate<ResourceState> fromPodContainerToCompositeComponent(PodContainer
-            podContainer, PodSpec podSpec) {
+    public static KubernetesTemplate fromCompositeTemplateToKubernetesTemplate(
+            CompositeTemplate template) {
+        if (template == null) {
+            return null;
+        }
 
-        ContainerDescription description = fromPodContainerToContainerDescription(podContainer,
-                podSpec);
-
-        NestedState nestedState = new NestedState();
-        nestedState.object = description;
-
-        return fromDescriptionToComponentTemplate(nestedState, ResourceType.CONTAINER_TYPE
-                .getName());
-
-    }
-
-    public static ComponentTemplate<ResourceState> fromPodContainerToCompositeComponent(PodContainer
-            podContainer, PodSpec podSpec, Deployment deployment) {
-
-        ContainerDescription description = fromPodContainerToContainerDescription(podContainer,
-                podSpec);
-
-        description._cluster = deployment.spec.replicas;
-
-        NestedState nestedState = new NestedState();
-        nestedState.object = description;
-
-        return fromDescriptionToComponentTemplate(nestedState, ResourceType.CONTAINER_TYPE
-                .getName());
-    }
-
-    public static Pod fromCompositeTemplateToPod(CompositeTemplate template) {
-        Pod pod = new Pod();
-        pod.metadata = new ObjectMeta();
-        pod.spec = new PodSpec();
-        pod.kind = "Pod";
-        pod.apiVersion = "v1";
-        pod.metadata.name = template.name;
-
+        KubernetesTemplate kubernetesTemplate = new KubernetesTemplate();
         if (!isNullOrEmpty(template.components)) {
-            Map<String, ComponentTemplate<ContainerDescription>> compositeContainers =
+            kubernetesTemplate.deployments = new LinkedHashMap<>();
+            kubernetesTemplate.services = new LinkedHashMap<>();
+            Map<String, ComponentTemplate<ContainerDescription>> containerComponents =
                     filterComponentTemplates(template.components, ContainerDescription.class);
-            pod.spec.containers = fromCompositeComponentsToPodContainers(compositeContainers);
-        }
 
-        return pod;
-    }
-
-    public static PodContainer[] fromCompositeComponentsToPodContainers(Map<String,
-            ComponentTemplate<ContainerDescription>> components) {
-
-        List<PodContainer> podContainers = new ArrayList<>();
-        for (Entry<String, ComponentTemplate<ContainerDescription>> entry : components.entrySet()) {
-            PodContainer podContainer = fromContainerDescriptionToPodContainer(entry.getValue()
-                    .data);
-            podContainers.add(podContainer);
-        }
-
-        return podContainers.toArray(new PodContainer[podContainers.size()]);
-    }
-
-    public static CompositeTemplate fromDeploymentToCompositeTemplate(Deployment deployment) {
-        assertNotNull(deployment, "deployment");
-        assertNotNull(deployment.spec, "spec");
-        assertNotNull(deployment.spec.template, "template");
-        assertNotNull(deployment.spec.template.spec, "podtemplate spec");
-
-        CompositeTemplate template = new CompositeTemplate();
-        template.name = deployment.metadata.name;
-
-        if (!isNullOrEmpty(deployment.spec.template.spec.containers)) {
-            template.components = new LinkedHashMap<>();
-            for (PodContainer podContainer : deployment.spec.template.spec.containers) {
-                ComponentTemplate<ResourceState> component = fromPodContainerToCompositeComponent
-                        (podContainer, deployment.spec.template.spec, deployment);
-                component.data.name = podContainer.name;
-
-                template.components.put(podContainer.name, component);
+            for (Entry<String, ComponentTemplate<ContainerDescription>> container :
+                    containerComponents.entrySet()) {
+                Deployment deployment = fromContainerDescriptionToDeployment(
+                        container.getValue().data, template.name);
+                kubernetesTemplate.deployments.put(deployment.metadata.name, deployment);
+                if (!isNullOrEmpty(container.getValue().data.portBindings)) {
+                    Service service = fromContainerDescriptionToService(container.getValue().data,
+                            template.name);
+                    kubernetesTemplate.services.put(service.metadata.name, service);
+                }
             }
         }
-        return template;
+        return kubernetesTemplate;
     }
-
 }

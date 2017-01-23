@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,13 +9,14 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.content.kubernetes;
+package com.vmware.admiral.compute.content.kubernetes.services;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.Map;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class CommonKubernetesEntity {
-    public String apiVersion;
-    public String kind;
-    public ObjectMeta metadata;
+public class ServiceSpec {
+
+    public String type;
+    public ServicePort[] ports;
+    public Map<String, String> selector;
+
 }

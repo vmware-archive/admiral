@@ -17,14 +17,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PodContainer {
-    public String name;
     public String image;
+    public String name;
     public String[] command;
     public String[] args;
     public String workingDir;
-    public PodContainerPort[] ports;
-    public PodContainerEnvVar[] env;
     public PodContainerSecurityContext securityContext;
     public PodContainerProbe livenessProbe;
     public Map<String, PodContainerResources> resources;
+    public PodContainerEnvVar[] env;
+    public PodContainerPort[] ports;
 }

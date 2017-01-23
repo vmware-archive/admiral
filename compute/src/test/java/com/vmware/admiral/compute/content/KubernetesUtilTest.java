@@ -13,143 +13,93 @@ package com.vmware.admiral.compute.content;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
-import static com.vmware.admiral.compute.content.CompositeTemplateUtil.assertContainersComponentsOnly;
+import static com.vmware.admiral.common.util.FileUtil.switchToUnixLineEnds;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deserializeCompositeTemplate;
-import static com.vmware.admiral.compute.content.CompositeTemplateUtil.filterComponentTemplates;
-import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeCompositeTemplate;
-import static com.vmware.admiral.compute.content.CompositeTemplateUtilTest.assertContainersComponents;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtilTest.getContent;
-import static com.vmware.admiral.compute.content.kubernetes.ContainerDescriptionToPodContainerConverter.RESOURCES_LIMITS;
-import static com.vmware.admiral.compute.content.kubernetes.ContainerDescriptionToPodContainerConverter.fromPodContainerProbeToContainerDescriptionHealthConfig;
-import static com.vmware.admiral.compute.content.kubernetes.ContainerDescriptionToPodContainerConverter.parsePodContainerCpuShares;
-import static com.vmware.admiral.compute.content.kubernetes.ContainerDescriptionToPodContainerConverter.parsePodContainerMemoryLimit;
-import static com.vmware.admiral.compute.content.kubernetes.ContainerDescriptionToPodContainerConverter.setContainerDescriptionResourcesToPodContainerResources;
-import static com.vmware.admiral.compute.content.kubernetes.ContainerDescriptionToPodContainerConverter.setPodContainerResourcesToContainerDescriptionResources;
-import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.deserializeKubernetesEntity;
-import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromCompositeTemplateToPod;
-import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromDeploymentToCompositeTemplate;
-import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromPodToCompositeTemplate;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.RESOURCES_LIMITS;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.fromCompositeProtocolToKubernetesProtocol;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.fromContainerDescriptionHealthConfigToPodContainerProbe;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.fromPodContainerCommandToContainerDescriptionCommand;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.fromPodContainerProbeToContainerDescriptionHealthConfig;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.parsePodContainerCpuShares;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.parsePodContainerMemoryLimit;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.setContainerDescriptionResourcesToPodContainerResources;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.setPodContainerResourcesToContainerDescriptionResources;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromCompositeTemplateToKubernetesTemplate;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.serializeKubernetesEntity;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.serializeKubernetesTemplate;
 
 import java.io.IOException;
 import java.util.HashMap;
 
 import org.junit.Test;
 
-import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.HttpVersion;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestProtocol;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesTemplate;
 import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
-import com.vmware.admiral.compute.content.kubernetes.pods.Pod;
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainer;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerEnvVar;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerPort;
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbe;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeExecAction;
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeHTTPGetAction;
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeTCPSocketAction;
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerResources;
+import com.vmware.admiral.compute.content.kubernetes.services.Service;
 import com.vmware.xenon.common.Service.Action;
 
 public class KubernetesUtilTest extends ComputeBaseTest {
 
     @Test
-    public void testConvertKubernetesDeploymentToCompositeTemplate() throws IOException {
-        CompositeTemplate expectedTemplate = deserializeCompositeTemplate(
-                getContent("composite.nginx-mysql.yaml"));
-
-        Deployment deployment = (Deployment) deserializeKubernetesEntity(getContent(
-                "kubernetes.deployment.nginx-mysql.yaml"));
-
-        CompositeTemplate actualTemplate = fromDeploymentToCompositeTemplate(deployment);
-
-        assertContainersComponentsOnly(actualTemplate.components);
-
-        assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 2,
-                actualTemplate.components);
-        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 0,
-                actualTemplate.components);
-        assertContainersComponents(ResourceType.CONTAINER_VOLUME_TYPE.getContentType(), 0,
-                actualTemplate.components);
-
-        for (ComponentTemplate<ContainerDescription> component :
-                filterComponentTemplates(actualTemplate.components, ContainerDescription.class)
-                        .values()) {
-            assertEquals(deployment.spec.replicas, component.data._cluster);
-        }
-
-    }
-
-    @Test
-    public void testConvertKubernetesPodToCompositeTemplate() throws IOException {
-        CompositeTemplate expectedTemplate = deserializeCompositeTemplate(
-                getContent("composite.nginx-mysql.yaml"));
-
-        String expectedTemplateYaml = serializeCompositeTemplate(expectedTemplate);
-
-        Pod pod = (Pod) deserializeKubernetesEntity(getContent("kubernetes.pod.nginx-mysql.yaml"));
-        CompositeTemplate actualTemplate = fromPodToCompositeTemplate(pod);
-
-        assertContainersComponentsOnly(actualTemplate.components);
-
-        assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 2,
-                actualTemplate.components);
-        assertContainersComponents(ResourceType.CONTAINER_NETWORK_TYPE.getContentType(), 0,
-                actualTemplate.components);
-        assertContainersComponents(ResourceType.CONTAINER_VOLUME_TYPE.getContentType(), 0,
-                actualTemplate.components);
-
-        String actualTemplateYaml = serializeCompositeTemplate(actualTemplate);
-
-        assertEquals(expectedTemplateYaml, actualTemplateYaml);
-    }
-
-    @Test
-    public void testConvertCompositeTemplateToKubernetesPod() throws IOException {
-        Pod expectedPod = (Pod) deserializeKubernetesEntity(
-                getContent("kubernetes.pod.nginx-mysql.yaml"));
-        String expectedPodYaml = serializeKubernetesEntity(expectedPod);
-
+    public void testConvertCompositeTemplateToKubernetesTemplate() throws IOException {
         CompositeTemplate template = deserializeCompositeTemplate(
-                getContent("composite.nginx-mysql.yaml"));
+                getContent("composite.wordpress.kubernetes.yaml"));
 
-        Pod actualPod = fromCompositeTemplateToPod(template);
-        String actualPodYaml = serializeKubernetesEntity(actualPod);
+        KubernetesTemplate kubernetesTemplate = fromCompositeTemplateToKubernetesTemplate(template);
 
-        assertEquals(expectedPod.kind, actualPod.kind);
-        assertEquals(expectedPod.apiVersion, actualPod.apiVersion);
-        assertEquals(expectedPod.metadata.name, actualPod.metadata.name);
-        assertEquals(expectedPod.spec.containers.length, actualPod.spec.containers.length);
+        assertEquals(2, kubernetesTemplate.deployments.size());
+        assertEquals(2, kubernetesTemplate.services.size());
 
-        for (int i = 0; i < expectedPod.spec.containers.length; i++) {
-            PodContainer expectedContainer = expectedPod.spec.containers[i];
-            PodContainer actualContainer = actualPod.spec.containers[i];
+        Service wordpressService = kubernetesTemplate.services.get("wordpress");
+        Service mysqlService = kubernetesTemplate.services.get("db");
+        Deployment wordpressDeployment = kubernetesTemplate.deployments.get("wordpress");
+        Deployment mysqlDeployment = kubernetesTemplate.deployments.get("db");
 
-            assertEquals(expectedContainer.name, actualContainer.name);
-            assertEquals(expectedContainer.image, actualContainer.image);
-            assertEquals(expectedContainer.workingDir, actualContainer.workingDir);
+        String wordpressDeploymentSerialized = serializeKubernetesEntity(wordpressDeployment);
+        String mysqlDeploymentSerialized = serializeKubernetesEntity(mysqlDeployment);
+        String wordpressServiceSerialized = serializeKubernetesEntity(wordpressService);
+        String mysqlServiceSerialized = serializeKubernetesEntity(mysqlService);
 
-            for (int j = 0; j < expectedContainer.ports.length; j++) {
-                PodContainerPort expectedPort = expectedContainer.ports[j];
-                PodContainerPort actualPort = actualContainer.ports[j];
+        String expectedWordpressDeployment = getContent("kubernetes.wordpress.deployment.yaml");
+        String expectedWordpressService = getContent("kubernetes.wordpress.service.yaml");
+        String expectedMysqlDeployment = getContent("kubernetes.mysql.deployment.yaml");
+        String expectedMySqlService = getContent("kubernetes.mysql.service.yaml");
 
-                assertEquals(expectedPort.containerPort, actualPort.containerPort);
-                assertEquals(expectedPort.hostPort, actualPort.hostPort);
-            }
+        assertEquals(switchToUnixLineEnds(expectedMysqlDeployment).trim(),
+                mysqlDeploymentSerialized);
+        assertEquals(switchToUnixLineEnds(expectedWordpressService).trim(),
+                wordpressServiceSerialized);
+        assertEquals(switchToUnixLineEnds(expectedWordpressDeployment).trim(),
+                wordpressDeploymentSerialized);
+        assertEquals(switchToUnixLineEnds(expectedMySqlService).trim(),
+                mysqlServiceSerialized);
 
-            for (int j = 0; j < expectedContainer.env.length; j++) {
-                PodContainerEnvVar expectedEnv = expectedContainer.env[j];
-                PodContainerEnvVar actualEnv = actualContainer.env[j];
+        StringBuilder builder = new StringBuilder();
+        builder.append(expectedWordpressService);
+        builder.append("\n");
+        builder.append(expectedMySqlService);
+        builder.append("\n");
+        builder.append(expectedWordpressDeployment);
+        builder.append("\n");
+        builder.append(expectedMysqlDeployment);
+        builder.append("\n");
 
-                assertEquals(expectedEnv.name, actualEnv.name);
-                assertEquals(expectedEnv.value, actualEnv.value);
-            }
-        }
-
-        assertEquals(expectedPodYaml, actualPodYaml);
+        String kubernetesTemplateSerialized = serializeKubernetesTemplate(kubernetesTemplate);
+        assertEquals(switchToUnixLineEnds(builder.toString()).trim(), kubernetesTemplateSerialized);
     }
 
     @Test
@@ -277,5 +227,113 @@ public class KubernetesUtilTest extends ComputeBaseTest {
 
         assertEquals(expectedPodContainerMemoryLimit, actualPodContainerMemoryLimit);
         assertEquals(expectedPodContainerCpuShares, actualPodContainerCpuShares);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testFromCompositeProtocolToKubernetesProtocol() {
+        String expectedProtocol = "TCP";
+        String actualProtocol = fromCompositeProtocolToKubernetesProtocol("tcp");
+        assertEquals(expectedProtocol, actualProtocol);
+
+        expectedProtocol = "UDP";
+        actualProtocol = fromCompositeProtocolToKubernetesProtocol("udp");
+        assertEquals(expectedProtocol, actualProtocol);
+
+        expectedProtocol = null;
+        actualProtocol = fromCompositeProtocolToKubernetesProtocol(null);
+        assertEquals(expectedProtocol, actualProtocol);
+
+        fromCompositeProtocolToKubernetesProtocol("invalid");
+    }
+
+    @Test
+    public void testFromContainerDescriptionHealthConfigToPodContainerProbe() {
+        PodContainerProbe expectedProbe1 = new PodContainerProbe();
+        expectedProbe1.exec = new PodContainerProbeExecAction();
+        expectedProbe1.exec.command = new String[] { "test", "command" };
+        expectedProbe1.timeoutSeconds = 1L;
+        expectedProbe1.failureThreshold = 3;
+        expectedProbe1.successThreshold = 1;
+
+        PodContainerProbe expectedProbe2 = new PodContainerProbe();
+        expectedProbe2.httpGet = new PodContainerProbeHTTPGetAction();
+        expectedProbe2.httpGet.path = "/test";
+        expectedProbe2.httpGet.port = "32000";
+
+        PodContainerProbe expectedProbe3 = new PodContainerProbe();
+        expectedProbe3.tcpSocket = new PodContainerProbeTCPSocketAction();
+        expectedProbe3.tcpSocket.port = "32000";
+
+        HealthConfig healthConfig1 = new HealthConfig();
+        healthConfig1.protocol = RequestProtocol.COMMAND;
+        healthConfig1.command = "test command";
+        healthConfig1.timeoutMillis = 1000;
+        healthConfig1.unhealthyThreshold = 3;
+        healthConfig1.healthyThreshold = 1;
+
+        HealthConfig healthConfig2 = new HealthConfig();
+        healthConfig2.protocol = RequestProtocol.HTTP;
+        healthConfig2.urlPath = "/test";
+        healthConfig2.port = 32000;
+
+        HealthConfig healthConfig3 = new HealthConfig();
+        healthConfig3.protocol = RequestProtocol.TCP;
+        healthConfig3.port = 32000;
+
+        PodContainerProbe actualProbe1 = fromContainerDescriptionHealthConfigToPodContainerProbe
+                (healthConfig1);
+
+        PodContainerProbe actualProbe2 = fromContainerDescriptionHealthConfigToPodContainerProbe
+                (healthConfig2);
+
+        PodContainerProbe actualProbe3 = fromContainerDescriptionHealthConfigToPodContainerProbe
+                (healthConfig3);
+
+        assertNotNull(actualProbe1.exec);
+        for (int i = 0; i < expectedProbe1.exec.command.length; i++) {
+            assertEquals(expectedProbe1.exec.command[i], actualProbe1.exec.command[i]);
+        }
+        assertEquals(expectedProbe1.timeoutSeconds, actualProbe1.timeoutSeconds);
+        assertEquals(expectedProbe1.failureThreshold, actualProbe1.failureThreshold);
+        assertEquals(expectedProbe1.successThreshold, actualProbe1.successThreshold);
+
+        assertNotNull(actualProbe2.httpGet);
+        assertEquals(expectedProbe2.httpGet.path, actualProbe2.httpGet.path);
+        assertEquals(expectedProbe2.httpGet.port, actualProbe2.httpGet.port);
+
+        assertNotNull(actualProbe3.tcpSocket);
+        assertEquals(expectedProbe3.tcpSocket.port, actualProbe3.tcpSocket.port);
+    }
+
+    @Test
+    public void testFromPodContainerCommandToContainerDescriptionCommand() {
+        assertNull(fromPodContainerCommandToContainerDescriptionCommand(null, null));
+
+        assertNull(fromPodContainerCommandToContainerDescriptionCommand(new String[] {}, new
+                String[] { "ps" }));
+
+        String[] podCommand = new String[] { "admiral", "rm" };
+        String[] podCommandArgs = new String[] { "container1", "container2", "container3" };
+
+        String[] expectedContainerDescriptionCmd = new String[] { "admiral", "rm", "container1",
+                "container2", "container3" };
+        String[] actualContainerDescriptionCmd =
+                fromPodContainerCommandToContainerDescriptionCommand(podCommand, podCommandArgs);
+
+        for (int i = 0; i < expectedContainerDescriptionCmd.length; i++) {
+            assertEquals(expectedContainerDescriptionCmd[i], actualContainerDescriptionCmd[i]);
+        }
+
+        String[] podCommand1 = new String[] { "admiral", "login" };
+        String[] expectedContainerDescriptionCmd1 = new String[] { "admiral", "login" };
+        String[] actualContainerDescriptionCmd1 =
+                fromPodContainerCommandToContainerDescriptionCommand(podCommand1, null);
+
+        assertEquals(expectedContainerDescriptionCmd1.length,
+                actualContainerDescriptionCmd1.length);
+
+        for (int i = 0; i < expectedContainerDescriptionCmd1.length; i++) {
+            assertEquals(expectedContainerDescriptionCmd1[i], actualContainerDescriptionCmd1[i]);
+        }
     }
 }

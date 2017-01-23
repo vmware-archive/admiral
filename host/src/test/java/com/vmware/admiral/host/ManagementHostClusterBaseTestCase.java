@@ -18,6 +18,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.common.util.FileUtil.switchToUnixLineEnds;
 import static com.vmware.admiral.host.HostInitDockerAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doGet;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doRestrictedOperation;
@@ -337,10 +338,6 @@ public abstract class ManagementHostClusterBaseTestCase extends ManagementHostBa
         public List<String> getDocumentLinks() {
             return documentLinks;
         }
-    }
-
-    private static String switchToUnixLineEnds(String s) {
-        return s == null ? null : s.replaceAll("\r\n", "\n");
     }
 
     protected static String getResourceFilePath(String file) {
