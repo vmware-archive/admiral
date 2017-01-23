@@ -1176,6 +1176,7 @@ public class HostContainerListDataCollection extends StatefulService {
                 systemContainerName, Service.getId(containerHostLink));
         ServiceDocumentQuery<ContainerState> query = new ServiceDocumentQuery<>(getHost(),
                 ContainerState.class);
+
         query.queryDocument(
                 containerStateLink,
                 (r) -> {
@@ -1184,42 +1185,47 @@ public class HostContainerListDataCollection extends StatefulService {
                                 + (r.getException() instanceof CancellationException ? r
                                         .getException().getMessage() : Utils.toString(r
                                                 .getException())));
-                    } else if (r.hasResult()) {
+                        return;
+                    }
+                    final ContainerState containerState = new ContainerState();
+                    containerState.documentSelfLink = containerStateLink;
+                    containerState.names = new ArrayList<>();
+                    containerState.names.add(systemContainerName);
+                    containerState.descriptionLink = containerDesc.documentSelfLink;
+                    containerState.parentLink = containerHostLink;
+                    containerState.powerState = ContainerState.PowerState.PROVISIONING;
+                    containerState.adapterManagementReference = containerDesc.instanceAdapterReference;
+                    containerState.image = containerDesc.image;
+                    containerState.command = containerDesc.command;
+                    containerState.groupResourcePlacementLink = GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
+                    containerState.system = Boolean.TRUE;
+                    containerState.volumes = containerDesc.volumes;
+
+                    Operation op;
+                    if (r.hasResult()) {
                         logInfo("Already created system container state: %s",
                                 r.getResult().documentSelfLink);
-                        createSystemContainerInstanceRequest(r.getResult(), null);
+                        op = Operation.createPut(this, containerStateLink);
                     } else {
-                        final ContainerState containerState = new ContainerState();
-                        containerState.documentSelfLink = containerStateLink;
-                        containerState.names = new ArrayList<>();
-                        containerState.names.add(systemContainerName);
-                        containerState.descriptionLink = containerDesc.documentSelfLink;
-                        containerState.parentLink = containerHostLink;
-                        containerState.powerState = ContainerState.PowerState.PROVISIONING;
-                        containerState.adapterManagementReference = containerDesc.instanceAdapterReference;
-                        containerState.image = containerDesc.image;
-                        containerState.command = containerDesc.command;
-                        containerState.groupResourcePlacementLink = GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
-                        containerState.system = Boolean.TRUE;
-                        containerState.volumes = containerDesc.volumes;
-
-                        sendRequest(OperationUtil
-                                .createForcedPost(this, ContainerFactoryService.SELF_LINK)
-                                .setBody(containerState)
-                                .setCompletion(
-                                        (o, e) -> {
-                                            if (e != null) {
-                                                logWarning("Failure creating system container: "
-                                                        + Utils.toString(e));
-                                                return;
-                                            }
-                                            ContainerState body = o.getBody(ContainerState.class);
-                                            logInfo("Created system ContainerState: %s ",
-                                                    body.documentSelfLink);
-                                            createSystemContainerInstanceRequest(body, null);
-                                            updateNumberOfContainers(containerHostLink);
-                                        }));
+                        op = OperationUtil.createForcedPost(this,
+                                ContainerFactoryService.SELF_LINK);
                     }
+
+                    sendRequest(op
+                            .setBody(containerState)
+                            .setCompletion(
+                                    (o, e) -> {
+                                        if (e != null) {
+                                            logWarning("Failure creating system container: "
+                                                    + Utils.toString(e));
+                                            return;
+                                        }
+                                        ContainerState body = o.getBody(ContainerState.class);
+                                        logInfo("Created system ContainerState: %s ",
+                                                body.documentSelfLink);
+                                        createSystemContainerInstanceRequest(body, null);
+                                        updateNumberOfContainers(containerHostLink);
+                                    }));
                 });
     }
 
