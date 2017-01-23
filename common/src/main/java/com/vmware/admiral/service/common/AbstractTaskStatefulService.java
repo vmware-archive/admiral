@@ -45,17 +45,19 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     private static final Level DEFAULT_LOG_LEVEL = Level.parse(System.getProperty(
             "com.vmware.admiral.service.tasks.log.level", Level.INFO.getName()));
 
-    protected Class<E> subStageType;
+    protected volatile Class<E> subStageType;
 
     private final String displayName;
 
     // whether the task should self-delete itself upon completion
-    private boolean selfDelete;
+    private volatile boolean selfDelete;
 
     private Level logLevel = DEFAULT_LOG_LEVEL;
 
     /** SubStages that are indicating a transient state and order of patching can't be guaranteed */
     protected Set<E> transientSubStages = Collections.emptySet();
+
+    private volatile String locale;
 
     public static class TaskStatusState extends MultiTenantDocument {
         public static final String FIELD_NAME_EVENT_LOG_LINK = "eventLogLink";
@@ -155,6 +157,11 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                         state.serviceTaskCallback.serviceSelfLink);
             }
         }
+
+        if (startPost.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER) != null) {
+            locale = startPost.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER);
+        }
+
         startPost.setBody(state);
         startPost.complete();
 
@@ -623,7 +630,11 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         body.taskInfo.stage = TaskStage.FAILED;
         body.taskSubStage = DefaultSubStage.ERROR;
         if (t != null) {
-            body.taskInfo.failure = Utils.toServiceErrorResponse(t);
+            Operation operation = null;
+            if (locale != null) {
+                operation = (new Operation().addRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER, locale));
+            }
+            body.taskInfo.failure = Utils.toServiceErrorResponse(t, operation);
         } else {
             ServiceErrorResponse rsp = new ServiceErrorResponse();
             rsp.message = errMsg;
