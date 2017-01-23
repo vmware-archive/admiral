@@ -219,7 +219,7 @@ public class ContainerVolumeAllocationTaskService extends
         }
 
         proceedTo(SubStage.CONTEXT_PREPARED, s -> {
-            // merge request/allocation properties over the network description properties
+            // merge request/allocation properties over the volume description properties
             s.customProperties = mergeCustomProperties(volumeDescription.customProperties,
                     state.customProperties);
 

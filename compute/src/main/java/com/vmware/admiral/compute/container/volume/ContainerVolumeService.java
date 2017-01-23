@@ -44,6 +44,7 @@ public class ContainerVolumeService extends StatefulService {
 
         public static final String FIELD_NAME_NAME = "name";
         public static final String FIELD_NAME_DESCRIPTION_LINK = "descriptionLink";
+        public static final String FIELD_NAME_POWER_STATE = "powerState";
         public static final String FIELD_NAME_DRIVER = "driver";
         public static final String FIELD_NAME_PARENT_LINKS = "parentLinks";
         public static final String FIELD_NAME_ORIGINATING_HOST_LINK = "originatingHostLink";
@@ -280,12 +281,6 @@ public class ContainerVolumeService extends StatefulService {
             // Skip this step on updates (null = no update)
             Utils.validateState(getStateDescription(), state);
         }
-
-        if (state.adapterManagementReference == null) {
-            state.adapterManagementReference = UriUtils.buildUri(getHost(),
-                    ManagementUriParts.ADAPTER_DOCKER_VOLUME);
-        }
-
     }
 
     @Override

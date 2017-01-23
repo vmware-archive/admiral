@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.request;
 
+import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 
 import java.net.URI;
@@ -23,8 +24,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -38,6 +37,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.admiral.compute.container.volume.VolumeBinding;
 import com.vmware.admiral.compute.container.volume.VolumeUtil;
 import com.vmware.admiral.request.ContainerVolumeProvisionTaskService.ContainerVolumeProvisionTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
@@ -155,59 +155,90 @@ public class ContainerVolumeProvisionTaskService
 
         logInfo("Provision request for %s volumes", state.resourceCount);
 
-        createTaskCallbackAndGetVolumeDescription(state, (taskCallback, volumeDescription) -> {
-            state.instanceAdapterReference = volumeDescription.instanceAdapterReference;
-            selectHosts(state, volumeDescription, (hosts) -> {
+        getContainerVolumeDescription(state, (volumeDescription) -> {
+            if (Boolean.TRUE.equals(volumeDescription.external)) {
+                getVolumeByName(state, volumeDescription.name, (volumeState) -> {
+                    updateContainerVolumeState(state, volumeState, () -> {
+                        proceedTo(SubStage.COMPLETED, s -> {
+                            // Small workaround to get the actual self link for discovered volumes...
+                            s.customProperties = new HashMap<>();
+                            s.customProperties.put("__externalVolumeSelfLink",
+                                    volumeState.documentSelfLink);
+                        });
+                    });
+                });
+            } else {
+                createTaskCallback(state, (taskCallback) -> {
+                    state.instanceAdapterReference = volumeDescription.instanceAdapterReference;
+                    selectHosts(state, volumeDescription, (hosts) -> {
 
-                if (hosts.size() == 1
-                        || state.resourceLinks.size() == hosts.size()) {
-                    Iterator<ComputeState> hostIt = hosts.iterator();
-                    ComputeState host = hostIt.next();
-                    for (String volumeLink : state.resourceLinks) {
-                        provisionVolume(state, volumeLink, host, taskCallback);
+                        if (hosts.size() == 1
+                                || state.resourceLinks.size() == hosts.size()) {
+                            Iterator<ComputeState> hostIt = hosts.iterator();
+                            ComputeState host = hostIt.next();
+                            for (String volumeLink : state.resourceLinks) {
+                                provisionVolume(state, volumeLink, host, taskCallback);
 
-                        if (hostIt.hasNext()) {
-                            host = hostIt.next();
+                                if (hostIt.hasNext()) {
+                                    host = hostIt.next();
+                                }
+                            }
+                        } else {
+                            String err = String.format(
+                                    "Unexpected size of resource links and hosts, hosts should be one or equal to resource links! Actual resources - [%s], hosts - [%s]",
+                                    state.resourceLinks.size(), hosts.size());
+                            failTask(err, null);
                         }
-                    }
-                } else {
-                    String err = String.format(
-                            "Unexpected size of resource links and hosts, hosts should be one or equal to resource links! Actual resources - [%s], hosts - [%s]",
-                            state.resourceLinks.size(), hosts.size());
-                    failTask(err, null);
-                }
-            });
+                    });
+                });
+            }
         });
 
         proceedTo(SubStage.PROVISIONING);
     }
 
-    private void createTaskCallbackAndGetVolumeDescription(
-            ContainerVolumeProvisionTaskState state,
-            BiConsumer<ServiceTaskCallback, ContainerVolumeDescription> callbackFunction) {
-        AtomicReference<ServiceTaskCallback> taskCallback = new AtomicReference<>();
-        AtomicReference<ContainerVolumeDescription> volumeDescription = new AtomicReference<>();
+    private void getVolumeByName(ContainerVolumeProvisionTaskState state, String volumeName,
+            Consumer<ContainerVolumeState> callback) {
 
+        selectHost(state, (host) -> {
+
+            List<ContainerVolumeState> volumeStates = new ArrayList<ContainerVolumeState>();
+
+            QueryTask queryTask = VolumeUtil
+                    .getVolumeByHostAndNameQueryTask(host.documentSelfLink, volumeName);
+
+            new ServiceDocumentQuery<ContainerVolumeState>(getHost(), ContainerVolumeState.class)
+                    .query(queryTask,
+                            (r) -> {
+                                if (r.hasException()) {
+                                    failTask("Failed to query for active volume by name '"
+                                            + volumeName + "' in host '" + host.documentSelfLink
+                                            + "'!", r.getException());
+                                } else if (r.hasResult()) {
+                                    volumeStates.add(r.getResult());
+                                } else {
+                                    if (volumeStates.size() == 1) {
+                                        callback.accept(volumeStates.get(0));
+                                        return;
+                                    }
+                                    failTask(volumeStates.size()
+                                            + " active volume(s) found by name '" + volumeName
+                                            + "' in host '" + host.documentSelfLink + "'!", null);
+                                }
+                            });
+        });
+    }
+
+    private void createTaskCallback(ContainerVolumeProvisionTaskState state,
+            Consumer<ServiceTaskCallback> callbackFunction) {
         createCounterSubTaskCallback(
                 state,
                 state.resourceCount,
                 false,
                 SubStage.COMPLETED,
                 (callback) -> {
-                    taskCallback.set(callback);
-                    ContainerVolumeDescription nd = volumeDescription.get();
-                    if (nd != null) {
-                        callbackFunction.accept(callback, nd);
-                    }
+                    callbackFunction.accept(callback);
                 });
-
-        getContainerVolumeDescription(state, (nd) -> {
-            volumeDescription.set(nd);
-            ServiceTaskCallback callback = taskCallback.get();
-            if (callback != null) {
-                callbackFunction.accept(callback, nd);
-            }
-        });
     }
 
     private void getContainerVolumeDescription(ContainerVolumeProvisionTaskState state,
@@ -254,7 +285,6 @@ public class ContainerVolumeProvisionTaskService
                                                 + contextId + "]",
                                         r.getException());
                             } else if (r.hasResult()) {
-
                                 ContainerState result = r.getResult();
 
                                 List<ContainerState> containers = containersByDescriptionLink
@@ -313,10 +343,9 @@ public class ContainerVolumeProvisionTaskService
         List<ContainerState> result = new ArrayList<>();
         for (ContainerDescription cd : containerDescriptions) {
             if (cd.volumes != null && cd.volumes.length > 0) {
-                Arrays.asList(cd.volumes).forEach((vn) -> {
-                    if (VolumeUtil.parseVolumeHostDirectory(vn)
-                            .equalsIgnoreCase(
-                                    VolumeUtil.parseVolumeHostDirectory(volumeDescription.name))) {
+                Arrays.asList(cd.volumes).forEach((v) -> {
+                    String volumeName = VolumeBinding.fromString(v).getHostPart();
+                    if (volumeDescription.name.equalsIgnoreCase(volumeName)) {
                         result.addAll(containersByDescriptionLink.get(cd.documentSelfLink));
                     }
                 });
@@ -354,16 +383,56 @@ public class ContainerVolumeProvisionTaskService
                         }));
     }
 
+    private void updateContainerVolumeState(ContainerVolumeProvisionTaskState state,
+            ContainerVolumeState currentVolumeState, Runnable callbackFunction) {
+
+        ContainerVolumeState patch = new ContainerVolumeState();
+
+        String contextId;
+        if (state.customProperties != null && (contextId = state.customProperties
+                .get(FIELD_NAME_CONTEXT_ID_KEY)) != null) {
+            patch.compositeComponentLinks = currentVolumeState.compositeComponentLinks;
+            if (patch.compositeComponentLinks == null) {
+                patch.compositeComponentLinks = new ArrayList<>();
+            }
+            patch.compositeComponentLinks.add(UriUtils.buildUriPath(
+                    CompositeComponentFactoryService.SELF_LINK, contextId));
+        } else {
+            callbackFunction.run();
+            return;
+        }
+
+        sendRequest(Operation
+                .createPatch(this, currentVolumeState.documentSelfLink)
+                .setBody(patch)
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                String errMsg = String.format("Error while updating volume: %s",
+                                        currentVolumeState.documentSelfLink);
+                                logWarning(errMsg);
+                                failTask(errMsg, e);
+                            } else {
+                                callbackFunction.run();
+                            }
+                        }));
+    }
+
     private void createAndSendContainerVolumeRequest(ContainerVolumeProvisionTaskState state,
             ServiceTaskCallback taskCallback, String volumeSelfLink) {
 
         AdapterRequest volumeRequest = new AdapterRequest();
         volumeRequest.resourceReference = UriUtils.buildUri(getHost(), volumeSelfLink);
         volumeRequest.serviceTaskCallback = taskCallback;
-        volumeRequest.operationTypeId = VolumeOperationType.CREATE.id;
+        if (Boolean.TRUE.equals(volumeDescription.external)) {
+            // The volume is defined as external, just validate that it exists actually.
+            volumeRequest.operationTypeId = VolumeOperationType.INSPECT.id;
+        } else {
+            volumeRequest.operationTypeId = VolumeOperationType.CREATE.id;
+        }
         volumeRequest.customProperties = state.customProperties;
 
-        sendRequest(Operation.createPatch(state.instanceAdapterReference)
+        sendRequest(Operation.createPatch(getHost(), state.instanceAdapterReference.toString())
                 .setBody(volumeRequest)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
@@ -410,15 +479,15 @@ public class ContainerVolumeProvisionTaskService
             Consumer<ComputeState> callback) {
         getContextContainerStates(state, (states) -> {
             getContextContainerDescriptions(states, (descriptions) -> {
-                List<ContainerState> containerStatesForNetwork = getDependantContainerStates(
+                List<ContainerState> containerStatesForVolume = getDependantContainerStates(
                         descriptions, states, volumeDescription);
-                if (containerStatesForNetwork.isEmpty()) {
+                if (containerStatesForVolume.isEmpty()) {
                     String err = String.format(
-                            "No container states depending on network description [%s] found.",
+                            "No container states depending on volume description [%s] found.",
                             volumeDescription.name);
                     failTask(err, null);
                 } else {
-                    String hostLink = containerStatesForNetwork.get(0).parentLink;
+                    String hostLink = containerStatesForVolume.get(0).parentLink;
                     getHost(hostLink, (host) -> {
                         callback.accept(host);
                     });

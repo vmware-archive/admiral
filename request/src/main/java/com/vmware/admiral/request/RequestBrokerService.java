@@ -689,6 +689,10 @@ public class RequestBrokerService extends
             removalState.requestTrackerLink = state.requestTrackerLink;
         }
 
+        removalState.externalInspectOnly = (state.customProperties != null
+                && "true".equalsIgnoreCase(state.customProperties
+                        .get(ContainerVolumeRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
+
         sendRequest(Operation.createPost(this, ContainerVolumeRemovalTaskService.FACTORY_LINK)
                 .setBody(removalState)
                 .setContextId(getSelfId())
