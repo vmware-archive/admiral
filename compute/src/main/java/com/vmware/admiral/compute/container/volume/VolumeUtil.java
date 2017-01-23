@@ -26,12 +26,18 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState.PowerState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 /**
  * Utility class for docker volume related operations.
@@ -178,6 +184,43 @@ public class VolumeUtil {
 
     public static String buildVolumeId(String resourceName) {
         return resourceName.replaceAll(" ", "-");
+    }
+
+    public static QueryTask getVolumeByHostAndNameQueryTask(String hostLink, String volumeName) {
+
+        QueryTask queryTask = QueryUtil.buildQuery(ContainerVolumeState.class, true);
+
+        String parentLinksItemField = QueryTask.QuerySpecification
+                .buildCollectionItemName(ContainerVolumeState.FIELD_NAME_PARENT_LINKS);
+        QueryTask.Query parentsClause = new QueryTask.Query()
+                .setTermPropertyName(parentLinksItemField)
+                .setTermMatchValue(hostLink)
+                .setTermMatchType(MatchType.TERM)
+                .setOccurance(Occurance.MUST_OCCUR);
+
+        QueryTask.Query nameClause = new QueryTask.Query()
+                .setTermPropertyName(ContainerVolumeState.FIELD_NAME_NAME)
+                .setTermMatchValue(volumeName)
+                .setTermMatchType(MatchType.TERM)
+                .setOccurance(Occurance.MUST_OCCUR);
+
+        QueryTask.Query stateClause = new QueryTask.Query()
+                .setTermPropertyName(ContainerVolumeState.FIELD_NAME_POWER_STATE)
+                .setTermMatchValue(PowerState.CONNECTED.toString())
+                .setTermMatchType(MatchType.TERM)
+                .setOccurance(Occurance.MUST_OCCUR);
+
+        Query intermediate = new QueryTask.Query().setOccurance(Occurance.MUST_OCCUR);
+        intermediate.addBooleanClause(parentsClause);
+        intermediate.addBooleanClause(nameClause);
+        intermediate.addBooleanClause(stateClause);
+
+        queryTask.querySpec.query.addBooleanClause(intermediate);
+
+        QueryUtil.addExpandOption(queryTask);
+        QueryUtil.addBroadcastOption(queryTask);
+
+        return queryTask;
     }
 
     private static void addAffinity(String affinityTo, ContainerDescription cd) {

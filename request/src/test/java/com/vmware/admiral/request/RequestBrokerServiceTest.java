@@ -58,6 +58,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.admiral.compute.container.volume.VolumeUtil;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
@@ -70,6 +71,7 @@ import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
+import com.vmware.admiral.service.test.MockDockerVolumeAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -1306,6 +1308,139 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(cc.documentSelfLink, cont2.compositeComponentLink);
         assertTrue(volume.compositeComponentLinks.size() == 1
                 && volume.compositeComponentLinks.contains(cc.documentSelfLink));
+    }
+
+    @Test
+    public void testCompositeComponentWithContainerExternalVolumeRequestLifeCycle()
+            throws Throwable {
+        host.log(
+                "########  Start of testCompositeComponentWithContainerExternalVolumeRequestLifeCycle ######## ");
+
+        // setup Composite description with 2 containers and 1 external volume
+
+        String volumeName = "external-vol";
+
+        // create external volume (same as HostVolumeListDataCollection discovers external
+        // volumes)
+        ContainerVolumeState volumeState = new ContainerVolumeState();
+        volumeState.id = UUID.randomUUID().toString();
+        volumeState.name = volumeName;
+        volumeState.documentSelfLink = VolumeUtil.buildVolumeLink(volumeState.id);
+        volumeState.external = true;
+
+        volumeState.tenantLinks = groupPlacementState.tenantLinks;
+        volumeState.descriptionLink = String.format("%s-%s",
+                ContainerVolumeDescriptionService.DISCOVERED_DESCRIPTION_LINK,
+                UUID.randomUUID().toString());
+        volumeState.originatingHostLink = computeHost.documentSelfLink;
+        volumeState.parentLinks = new ArrayList<>(
+                Arrays.asList(computeHost.documentSelfLink));
+        volumeState.adapterManagementReference = UriUtils
+                .buildUri(ManagementUriParts.ADAPTER_DOCKER_VOLUME);
+
+        volumeState.powerState = ContainerVolumeState.PowerState.CONNECTED;
+        volumeState.driver = "local";
+        volumeState.options = new HashMap<>();
+        volumeState = doPost(volumeState, ContainerVolumeService.FACTORY_LINK);
+        addForDeletion(volumeState);
+        MockDockerVolumeAdapterService.addVolumeName(extractId(computeHost.documentSelfLink),
+                volumeName);
+
+        ContainerVolumeDescription volumeDesc = VolumeUtil
+                .createContainerVolumeDescription(volumeState);
+        volumeDesc.external = volumeState.external;
+
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
+        container1Desc.documentSelfLink = UUID.randomUUID().toString();
+        container1Desc.name = "container1";
+        container1Desc._cluster = 2;
+        container1Desc.volumes = new String[] { volumeName + ":/tmp" };
+
+        // create composite description, do not override the documentSelfLinks for the descriptions
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, volumeDesc,
+                container1Desc);
+        assertNotNull(compositeDesc);
+
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
+
+        // 1. Request a composite container:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+
+        // Verify request status
+        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+
+        assertEquals(Integer.valueOf(100), rs.progress);
+        assertEquals(1, request.resourceLinks.size());
+
+        String compositeComponentLink = request.resourceLinks.iterator().next();
+        CompositeComponent cc = searchForDocument(CompositeComponent.class, compositeComponentLink);
+
+        String volumeLink = null;
+        String containerLink1 = null;
+        String containerLink2 = null;
+
+        Iterator<String> iterator = cc.componentLinks.iterator();
+        while (iterator.hasNext()) {
+            String link = iterator.next();
+            if (link.startsWith(ContainerVolumeService.FACTORY_LINK)) {
+                volumeLink = link;
+            } else if (containerLink1 == null) {
+                containerLink1 = link;
+            } else {
+                containerLink2 = link;
+            }
+        }
+
+        // Delete container 2
+        request = TestRequestStateFactory.createRequestState();
+        request.operation = ContainerOperationType.DELETE.id;
+        request.resourceLinks = new HashSet<>();
+        request.resourceLinks.add(containerLink2);
+        request = startRequest(request);
+
+        request = waitForRequestToComplete(request);
+
+        // Verify the container is removed
+        ContainerState cont2 = searchForDocument(ContainerState.class, containerLink2);
+        assertNull(cont2);
+
+        // Verify the composite component is not removed (there is still 1 container)
+        cc = searchForDocument(CompositeComponent.class, compositeComponentLink);
+        assertNotNull(cc);
+
+        // Delete container 1
+        request = TestRequestStateFactory.createRequestState();
+        request.operation = ContainerOperationType.DELETE.id;
+        request.resourceLinks = new HashSet<>();
+        request.resourceLinks.add(containerLink1);
+        request = startRequest(request);
+
+        request = waitForRequestToComplete(request);
+
+        // Verify the container is removed
+        ContainerState cont1 = searchForDocument(ContainerState.class, containerLink2);
+        assertNull(cont1);
+
+        // Verify the composite component is removed (only a external volume in the application)
+        waitFor(() -> {
+            CompositeComponent compositeComponent = searchForDocument(CompositeComponent.class,
+                    compositeComponentLink);
+            return compositeComponent == null;
+        });
+
+        // Verify the external volume is not removed
+        ContainerVolumeState volume = searchForDocument(ContainerVolumeState.class, volumeLink);
+        assertNotNull(volume);
     }
 
     @Test

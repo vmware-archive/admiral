@@ -51,6 +51,7 @@ import com.vmware.admiral.request.ContainerNetworkProvisionTaskService.Container
 import com.vmware.admiral.request.ContainerNetworkRemovalTaskService;
 import com.vmware.admiral.request.ContainerVolumeProvisionTaskService;
 import com.vmware.admiral.request.ContainerVolumeProvisionTaskService.ContainerVolumeProvisionTaskState;
+import com.vmware.admiral.request.ContainerVolumeRemovalTaskService;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService.CompositionSubTaskState.SubStage;
@@ -581,6 +582,17 @@ public class CompositionSubTaskService
             }
             requestBrokerState.customProperties.put(
                     ContainerNetworkRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY,
+                    "true");
+        }
+
+        if (RequestBrokerState.REMOVE_RESOURCE_OPERATION.equals(requestBrokerState.operation)
+                && ResourceType.CONTAINER_VOLUME_TYPE.getName()
+                .equals(requestBrokerState.resourceType)) {
+            if (requestBrokerState.customProperties == null) {
+                requestBrokerState.customProperties = new HashMap<>();
+            }
+            requestBrokerState.customProperties.put(
+                    ContainerVolumeRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY,
                     "true");
         }
 

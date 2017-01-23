@@ -207,8 +207,8 @@ public class ContainerVolumeDescriptionService extends StatefulService {
         }
 
         if (state.instanceAdapterReference == null) {
-            state.instanceAdapterReference = UriUtils.buildUri(getHost(),
-                    ManagementUriParts.ADAPTER_DOCKER_VOLUME);
+            state.instanceAdapterReference = UriUtils
+                    .buildUri(ManagementUriParts.ADAPTER_DOCKER_VOLUME);
         }
 
     }

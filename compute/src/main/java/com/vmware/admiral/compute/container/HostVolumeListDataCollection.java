@@ -14,6 +14,7 @@ package com.vmware.admiral.compute.container;
 import static com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState.FIELD_NAME_ORIGINATING_HOST_LINK;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -289,6 +290,9 @@ public class HostVolumeListDataCollection extends StatefulService {
                                         UUID.randomUUID().toString());
 
                                 volumeState.originatingHostLink = callback.containerHostLink;
+
+                                volumeState.parentLinks = new ArrayList<>(
+                                        Arrays.asList(callback.containerHostLink));
 
                                 volumeState.adapterManagementReference = UriUtils
                                         .buildUri(ManagementUriParts.ADAPTER_DOCKER_VOLUME);

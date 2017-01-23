@@ -52,11 +52,18 @@ public class ContainerVolumeRemovalTaskService extends
 
     public static final String DISPLAY_NAME = "Container Volume Removal";
 
+    public static final String EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY = "__externalInspectOnly";
+
     public static class ContainerVolumeRemovalTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ContainerVolumeRemovalTaskState.SubStage> {
 
         public static enum SubStage {
-            CREATED, INSTANCES_REMOVING, INSTANCES_REMOVED, REMOVING_RESOURCE_STATES, COMPLETED, ERROR;
+            CREATED,
+            INSTANCES_REMOVING,
+            INSTANCES_REMOVED,
+            REMOVING_RESOURCE_STATES,
+            COMPLETED,
+            ERROR;
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(INSTANCES_REMOVING, REMOVING_RESOURCE_STATES));
@@ -71,6 +78,13 @@ public class ContainerVolumeRemovalTaskService extends
          * the ContainerVolumeState
          */
         public boolean removeOnly;
+
+        /**
+         * whether to actually remove the container volume or just inspect (and refresh) the
+         * ContainerVolumeState (i.e. external volumes can't be removed when removing an
+         * application that uses them)
+         */
+        public boolean externalInspectOnly;
     }
 
     public ContainerVolumeRemovalTaskService() {
@@ -186,7 +200,7 @@ public class ContainerVolumeRemovalTaskService extends
                                                 volumeState.documentSelfLink);
                                         completeSubTasksCounter(subTaskLink, null);
                                     } else {
-                                        sendContainerVolumeDeleteRequest(volumeState, subTaskLink);
+                                        sendContainerVolumeDeleteRequest(state, volumeState, subTaskLink);
                                     }
                                 }));
             }
@@ -231,15 +245,18 @@ public class ContainerVolumeRemovalTaskService extends
                 (subTaskLink) -> deleteResourceInstances(state, resourceLinks, subTaskLink));
     }
 
-    private void sendContainerVolumeDeleteRequest(ContainerVolumeState state,
-            String subTaskLink) {
+    private void sendContainerVolumeDeleteRequest(ContainerVolumeRemovalTaskState state,
+            ContainerVolumeState volumeState, String subTaskLink) {
+
         AdapterRequest adapterRequest = new AdapterRequest();
-        String selfLink = state.documentSelfLink;
+        String selfLink = volumeState.documentSelfLink;
         adapterRequest.resourceReference = UriUtils.buildUri(getHost(), selfLink);
         adapterRequest.serviceTaskCallback = ServiceTaskCallback.create(UriUtils.buildUri(
                 getHost(), subTaskLink).toString());
-        adapterRequest.operationTypeId = VolumeOperationType.DELETE.id;
-        sendRequest(Operation.createPatch(state.adapterManagementReference)
+        adapterRequest.operationTypeId = (Boolean.TRUE.equals(volumeState.external)
+                && state.externalInspectOnly) ? VolumeOperationType.INSPECT.id
+                        : VolumeOperationType.DELETE.id;
+        sendRequest(Operation.createPatch(getHost(), volumeState.adapterManagementReference.toString())
                 .setBody(adapterRequest)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
@@ -262,18 +279,24 @@ public class ContainerVolumeRemovalTaskService extends
             for (String resourceLink : state.resourceLinks) {
                 sendRequest(Operation
                         .createGet(this, resourceLink)
-                        .setCompletion(
-                                (o, e) -> {
-                                    if (e != null) {
-                                        failTask("Failed retrieving Container Volume State: "
-                                                + resourceLink, e);
-                                        return;
-                                    }
+                        .setCompletion((o, e) -> {
+                            if (e != null) {
+                                failTask("Failed retrieving Container Volume State: "
+                                        + resourceLink, e);
+                                return;
+                            }
 
-                                    ContainerVolumeState cns = o
-                                            .getBody(ContainerVolumeState.class);
-                                    doDeleteResource(state, subTaskLink, cns);
-                                }));
+                            ContainerVolumeState cvs = o.getBody(ContainerVolumeState.class);
+
+                            if (Boolean.TRUE.equals(cvs.external) && state.externalInspectOnly) {
+                                logFine("Skipping actual Container Volume State removal since the "
+                                        + "inspectOnly flag was set: %s", state.documentSelfLink);
+                                completeSubTasksCounter(subTaskLink, null);
+                                return;
+                            }
+
+                            doDeleteResource(state, subTaskLink, cvs);
+                        }));
             }
             proceedTo(SubStage.REMOVING_RESOURCE_STATES);
         } catch (Throwable e) {
