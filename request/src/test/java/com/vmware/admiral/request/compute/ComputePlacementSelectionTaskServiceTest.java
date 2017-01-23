@@ -14,6 +14,8 @@ package com.vmware.admiral.request.compute;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.net.URI;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
@@ -27,13 +29,18 @@ import com.vmware.admiral.compute.ElasticPlacementZoneService;
 import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
+import com.vmware.photon.controller.model.constants.PhotonModelConstants;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.ServiceStats;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.test.TestContext;
 
 /**
  * Tests for the {@link ComputePlacementSelectionTaskService} service.
@@ -92,19 +99,52 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
                 ComputeDescriptionService.FACTORY_LINK);
 
         // Create two more Compute hosts.
-        ComputeState computeHost2 = createVmComputeWithRandomComputeDescription(true, ComputeType.VM_HOST);
-        ComputeState computeHost3 = createVmComputeWithRandomComputeDescription(true, ComputeType.VM_HOST);
+        ComputeState computeHost2 = createVmComputeWithRandomComputeDescription(true,
+                ComputeType.VM_HOST);
+        ComputeState computeHost3 = createVmComputeWithRandomComputeDescription(true,
+                ComputeType.VM_HOST);
 
-        // Update descriptions with memory.
-        ComputeDescription computeDesc1 = getDocument(ComputeDescription.class,
-                computeHost2.descriptionLink);
-        computeDesc1.totalMemoryBytes = 9000000000L;
-        doPatch(computeDesc1, computeDesc1.documentSelfLink);
+        // Propagate stats to compute/stats URI
+        ServiceStats.ServiceStat compute2Stats = new ServiceStats.ServiceStat();
+        compute2Stats.name = "daily.memoryUsedBytes";
+        compute2Stats.latestValue = Utils.getNowMicrosUtc();
+        compute2Stats.sourceTimeMicrosUtc = Utils.getNowMicrosUtc();
+        compute2Stats.unit = PhotonModelConstants.UNIT_MICROSECONDS;
+        compute2Stats.accumulatedValue = 5000000000L;
 
-        ComputeDescription computeDesc3 = getDocument(ComputeDescription.class,
-                computeHost3.descriptionLink);
-        computeDesc3.totalMemoryBytes = 5000000000L;
-        doPatch(computeDesc3, computeDesc3.documentSelfLink);
+        URI inMemoryStatsUri = UriUtils.buildStatsUri(host, computeHost2.documentSelfLink);
+
+        TestContext waitCompute1Stats = new TestContext(1, Duration.ofSeconds(30));
+        Operation.createPost(inMemoryStatsUri).setBody(compute2Stats)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        waitCompute1Stats.fail(e);
+                    }
+                    waitCompute1Stats.complete();
+                }).sendWith(host);
+        ;
+        waitCompute1Stats.await();
+
+        ServiceStats.ServiceStat compute3Stats = new ServiceStats.ServiceStat();
+        compute3Stats.name = "daily.memoryUsedBytes";
+        compute3Stats.latestValue = Utils.getNowMicrosUtc();
+        compute3Stats.sourceTimeMicrosUtc = Utils.getNowMicrosUtc();
+        compute3Stats.unit = PhotonModelConstants.UNIT_MICROSECONDS;
+        compute3Stats.accumulatedValue = 9000000000L;
+
+        inMemoryStatsUri = UriUtils.buildStatsUri(host, computeHost3.documentSelfLink);
+        TestContext waitCompute3Stats = new TestContext(1, Duration.ofSeconds(30));
+        Operation.createPost(inMemoryStatsUri).setBody(compute3Stats)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        waitCompute3Stats.fail(e);
+                    }
+                    waitCompute3Stats.complete();
+                }).sendWith(host);
+
+        waitCompute3Stats.await();
 
         ComputePlacementSelectionTaskState taskRequestState = new ComputePlacementSelectionTaskState();
         taskRequestState.computeDescriptionLink = computeDescription.documentSelfLink;
@@ -120,10 +160,10 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
                 ComputePlacementSelectionTaskState.class);
 
         assertNotNull(taskState.selectedComputePlacementHosts);
-        assertEquals(taskState.selectedComputePlacementHosts.size(), 1);
+        assertEquals(1, taskState.selectedComputePlacementHosts.size());
 
-        // Verify that placement has happened on most loaded host - computeHost3.
-        assertEquals(computeHost3.documentSelfLink,
+        // Verify that placement has happened on most loaded host - computeHost2.
+        assertEquals(computeHost2.documentSelfLink,
                 taskState.selectedComputePlacementHosts.stream().findFirst().get().hostLink);
     }
 
