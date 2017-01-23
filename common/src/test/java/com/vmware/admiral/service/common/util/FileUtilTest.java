@@ -16,6 +16,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import static com.vmware.admiral.common.util.FileUtil.switchToUnixLineEnds;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
@@ -60,5 +62,16 @@ public class FileUtilTest {
         path = Paths.get(TEST_BACK_SLASHES_PATH_STRING);
         pathString = FileUtil.getForwardSlashesPathString(path);
         assertEquals(TEST_FORWARD_SLASHES_PATH_STRING, pathString);
+    }
+
+    @Test
+    public void testSwitchToUnixLineEnds() {
+        String expectedOutput = "test\n";
+        String actualOutput = switchToUnixLineEnds("test\r\n");
+
+        assertEquals(expectedOutput, actualOutput);
+
+        actualOutput = switchToUnixLineEnds(null);
+        assertNull(actualOutput);
     }
 }

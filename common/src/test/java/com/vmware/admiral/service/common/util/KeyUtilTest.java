@@ -15,6 +15,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.common.util.FileUtil.switchToUnixLineEnds;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyPair;
@@ -99,10 +101,6 @@ public class KeyUtilTest {
         assertEquals("SHA256withRSA", certificate.getSigAlgName());
         assertEquals("X.509", certificate.getType());
 
-    }
-
-    private static String switchToUnixLineEnds(String s) {
-        return s == null ? null : s.replaceAll("\r\n", "\n");
     }
 
 }

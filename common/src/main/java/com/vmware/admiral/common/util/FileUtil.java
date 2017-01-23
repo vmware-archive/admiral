@@ -85,4 +85,8 @@ public class FileUtil {
         }
         return inputStream;
     }
+
+    public static String switchToUnixLineEnds(String s) {
+        return s == null ? null : s.replaceAll("\r\n", "\n");
+    }
 }

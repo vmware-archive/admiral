@@ -19,6 +19,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.common.util.FileUtil.switchToUnixLineEnds;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyPair;
@@ -280,10 +282,6 @@ public class CertificateUtilTest {
         } catch (Exception e) {
             return false;
         }
-    }
-
-    private static String switchToUnixLineEnds(String s) {
-        return s == null ? null : s.replaceAll("\r\n", "\n");
     }
 
 }

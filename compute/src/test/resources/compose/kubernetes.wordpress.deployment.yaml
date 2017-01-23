@@ -1,0 +1,27 @@
+---
+apiVersion: "extensions/v1beta1"
+kind: "Deployment"
+metadata:
+  name: "wordpress"
+  labels:
+    app: "Docker Compose 2016-06-06 09.20.46.085 GMT"
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: "Docker Compose 2016-06-06 09.20.46.085 GMT"
+        tier: "wordpress"
+    spec:
+      containers:
+      - image: "wordpress:latest"
+        name: "wordpress"
+        env:
+        - name: "WORDPRESS_DB_HOST"
+          value: "db:3306"
+        - name: "WORDPRESS_DB_PASSWORD"
+          value: "wordpress"
+        ports:
+        - containerPort: 80
+          protocol: "TCP"
+      restartPolicy: "Always"
