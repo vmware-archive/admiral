@@ -170,28 +170,13 @@ type NetworkOperation struct {
 }
 
 func (no *NetworkOperation) SetHosts(hostsIds []string) {
-	no.CustomProperties = make(map[string]string, 0)
 	fullHostIds, err := selflink.GetFullIds(hostsIds, new(hosts.HostsList), utils.HOST)
 	utils.CheckBlockingError(err)
-	if len(hostsIds) < 1 {
+	if len(fullHostIds) < 1 {
 		return
 	}
-	hostAddresses := make([]string, 0)
-	for _, hostId := range fullHostIds {
-		host, err := hosts.GetHost(hostId)
-		if err != nil {
-			continue
-		}
-		schemeRegex, _ := regexp.Compile("^https?:\\/\\/")
-		address := schemeRegex.ReplaceAllString(host.Address, "")
-		if strings.TrimSpace(address) == "" {
-			continue
-		}
-		hostAddresses = append(hostAddresses, address)
-	}
-	if len(hostAddresses) > 0 {
-		no.CustomProperties["__containerHostId"] = strings.Join(hostAddresses, ",")
-	}
+	no.CustomProperties = make(map[string]string)
+	no.CustomProperties["__containerHostId"] = strings.Join(fullHostIds, ",")
 }
 
 func (nl *NetworkList) FetchNetworks() (int, error) {
