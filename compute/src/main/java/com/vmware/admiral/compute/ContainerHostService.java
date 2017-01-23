@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -71,7 +70,6 @@ public class ContainerHostService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.CONTAINER_HOSTS;
     public static final String INCORRECT_PLACEMENT_ZONE_TYPE_MESSAGE_FORMAT = "Incorrect placement "
             + "zone type. Expected '%s' but was '%s'";
-    public static final String HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT = "Container host type is not supported: %s";
     public static final String CONTAINER_HOST_ALREADY_EXISTS_MESSAGE = "Container host already exists";
     public static final String CONTAINER_HOST_IS_NOT_VIC_MESSAGE = "Not a VIC host";
     public static final String PLACEMENT_ZONE_NOT_EMPTY_MESSAGE = "Placement zone is not empty";
@@ -359,7 +357,7 @@ public class ContainerHostService extends StatelessService {
     private void validateHostTypeAndConnection(ContainerHostSpec hostSpec, Operation op) {
         ContainerHostType hostType;
         try {
-            hostType = getHostTypeFromSpec(hostSpec);
+            hostType = ContainerHostUtil.getDeclaredContainerHostType(hostSpec.hostState);
         } catch (IllegalArgumentException ex) {
             logWarning(ex.getMessage());
             op.fail(ex);
@@ -377,7 +375,8 @@ public class ContainerHostService extends StatelessService {
             break;
 
         default:
-            String error = String.format(HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT,
+            String error = String.format(
+                    ContainerHostUtil.CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT,
                     hostType.toString());
             op.fail(new IllegalArgumentException(error));
             break;
@@ -403,39 +402,9 @@ public class ContainerHostService extends StatelessService {
 
     }
 
-    /**
-     * @return the {@link ContainerHostType} of the host. The result is based on the custom property
-     *         {@value #CONTAINER_HOST_TYPE_PROP_NAME}. If this property was not set, the default
-     *         host type will be returned
-     * @see ContainerHostType#getDefaultHostType()
-     */
-    private ContainerHostType getHostTypeFromSpec(ContainerHostSpec hostSpec) {
-        return getHostTypeFromState(hostSpec.hostState);
-    }
-
-    private ContainerHostType getHostTypeFromState(ComputeState hostState) {
-        Map<String, String> customProperties = hostState.customProperties;
-        String hostTypeProperty = customProperties.get(CONTAINER_HOST_TYPE_PROP_NAME);
-
-        // Retrieve host type from custom properties. If none is set, use the default type
-        ContainerHostType hostType;
-        if (hostTypeProperty == null) {
-            hostType = ContainerHostType.getDefaultHostType();
-        } else {
-            try {
-                hostType = ContainerHostType.valueOf(hostTypeProperty);
-            } catch (IllegalArgumentException ex) {
-                String error = String.format(HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT,
-                        hostTypeProperty);
-                throw new IllegalArgumentException(error, ex);
-            }
-        }
-
-        return hostType;
-    }
-
     protected void storeHost(ContainerHostSpec hostSpec, Operation op) {
-        ContainerHostType hostType = getHostTypeFromSpec(hostSpec);
+        ContainerHostType hostType = ContainerHostUtil
+                .getDeclaredContainerHostType(hostSpec.hostState);
         switch (hostType) {
         case DOCKER:
             verifyPlacementZoneType(hostSpec, op, PlacementZoneType.DOCKER, () -> {
@@ -460,7 +429,8 @@ public class ContainerHostService extends StatelessService {
             break;
 
         default:
-            String error = String.format(HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT,
+            String error = String.format(
+                    ContainerHostUtil.CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT,
                     hostType.toString());
             op.fail(new IllegalArgumentException(error));
             break;
@@ -517,7 +487,8 @@ public class ContainerHostService extends StatelessService {
     private void doStoreHost(ContainerHostSpec hostSpec, Operation op) {
         ComputeState cs = hostSpec.hostState;
 
-        ContainerHostType hostType = getHostTypeFromSpec(hostSpec);
+        ContainerHostType hostType = ContainerHostUtil
+                .getDeclaredContainerHostType(hostSpec.hostState);
 
         if (cs.descriptionLink == null) {
             cs.descriptionLink = getDescriptionForType(hostType);
@@ -549,8 +520,7 @@ public class ContainerHostService extends StatelessService {
         cs.customProperties.put(ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
         cs.customProperties.put(ComputeConstants.COMPUTE_HOST_PROP_NAME, "true");
         cs.customProperties.put(ComputeConstants.DOCKER_URI_PROP_NAME, hostSpec.uri.toString());
-        cs.customProperties.put(CONTAINER_HOST_TYPE_PROP_NAME,
-                getHostTypeFromSpec(hostSpec).toString());
+        cs.customProperties.put(CONTAINER_HOST_TYPE_PROP_NAME, hostType.toString());
 
         sendRequest(store
                 .setBody(cs)
@@ -654,7 +624,7 @@ public class ContainerHostService extends StatelessService {
                     if (r.hasException()) {
                         op.fail(r.getException());
                     } else if (r.hasResult()) {
-                        if (isScheduler(r.getResult())) {
+                        if (ContainerHostUtil.isTreatedLikeSchedulerHost(r.getResult())) {
                             schedulerFound.set(true);
                             op.fail(new IllegalArgumentException(
                                     PLACEMENT_ZONE_CONTAINS_SCHEDULERS_MESSAGE));
@@ -665,11 +635,6 @@ public class ContainerHostService extends StatelessService {
                         }
                     }
                 });
-    }
-
-    private boolean isScheduler(ComputeState computeState) {
-     // TODO check for kubernetes as well
-        return ContainerHostUtil.isVicHost(computeState);
     }
 
     private void checkForDefaultHostDescription(String descriptionLink, String descriptionId) {
@@ -744,7 +709,7 @@ public class ContainerHostService extends StatelessService {
             Consumer<T> callbackFunction, Class<T> callbackResultClass) {
 
         URI adapterManagementReference = getAdapterManagementReferenceForType(
-                getHostTypeFromState(cs));
+                ContainerHostUtil.getDeclaredContainerHostType(cs));
 
         sendRequest(Operation
                 .createPatch(adapterManagementReference)

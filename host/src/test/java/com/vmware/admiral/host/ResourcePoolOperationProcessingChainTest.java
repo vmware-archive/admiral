@@ -23,6 +23,8 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.PlacementZoneConstants;
 import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
 import com.vmware.admiral.host.ResourcePoolOperationProcessingChain;
@@ -183,7 +185,7 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
                 "docker-placement-zone-with-tags", false);
         assertNotNull(createdPlacementZone);
 
-        // Now create a PATCH with tags. This should pass
+        // Now create a PATCH with tags. This should fail
         ResourcePoolState patchState = new ResourcePoolState();
         markSchedulerPlacementZone(patchState);
         addTags(patchState);
@@ -192,6 +194,108 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
             Assert.fail("PATCH should fail to set tags for scheduler placement zone");
         } catch (IllegalArgumentException ex) {
             verifyExceptionMessage(ex.getMessage(), TAG_LINKS_MUST_BE_EMPTY_MESSAGE);
+        }
+    }
+
+    @Test
+    public void testUpdateEmptyDockerPZToSchedulerPZShouldPass() throws Throwable {
+        // First create a docker placement zone.
+        ResourcePoolState createdPlacementZone = createPlacementZone("docker-placement-zone", false);
+        assertNotNull(createdPlacementZone);
+
+        // Now create a PATCH that updates its type to scheduler. This should pass
+        ResourcePoolState patchState = new ResourcePoolState();
+        markSchedulerPlacementZone(patchState);
+        ResourcePoolState patchedState = doPatch(patchState, createdPlacementZone.documentSelfLink);
+        assertNotNull(patchedState);
+    }
+
+    @Test
+    public void testUpdateEmptySchedulerPZToDockerPZShouldPass() throws Throwable {
+        // First create a docker placement zone.
+        ResourcePoolState createdPlacementZone = createPlacementZone("scheduler-placement-zone", true);
+        assertNotNull(createdPlacementZone);
+
+        // Now create a PATCH that updates its type to docker. This should pass
+        ResourcePoolState patchState = new ResourcePoolState();
+        markDockerPlacementZone(patchState);
+        ResourcePoolState patchedState = doPatch(patchState, createdPlacementZone.documentSelfLink);
+        assertNotNull(patchedState);
+    }
+
+    @Test
+    public void testUpdateDockerPZInUseToSchedulerPZShouldFail() throws Throwable {
+        // First create a docker placement zone.
+        ResourcePoolState createdPlacementZone = createPlacementZone("docker-placement-zone",
+                false);
+        assertNotNull(createdPlacementZone);
+
+        // Now create a compute state that uses this placement zone
+        createComputeState(createdPlacementZone);
+
+        // Now create a PATCH that updates the type of the zone to scheduler. This should fail
+        ResourcePoolState patchState = new ResourcePoolState();
+        markSchedulerPlacementZone(patchState);
+        try {
+            doPatch(patchState, createdPlacementZone.documentSelfLink);
+            Assert.fail(
+                    "PATCH should fail to update the type of a used "
+                    + "docker placement zone to a scheduler zone");
+        } catch (IllegalStateException ex) {
+            verifyExceptionMessage(ex.getMessage(),
+                    ResourcePoolOperationProcessingChain.NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE);
+        }
+    }
+
+    @Test
+    public void testUpdateSchedulerPZInUseToDockerPZShouldFail() throws Throwable {
+        // First create a docker placement zone.
+        ResourcePoolState createdPlacementZone = createPlacementZone("scheduler-placement-zone",
+                true);
+        assertNotNull(createdPlacementZone);
+
+        // Now create a compute state that uses this placement zone
+        createComputeState(createdPlacementZone, true);
+
+        // Now create a PATCH that updates the type of the zone to docker. This should fail
+        ResourcePoolState patchState = new ResourcePoolState();
+        markDockerPlacementZone(patchState);
+        try {
+            doPatch(patchState, createdPlacementZone.documentSelfLink);
+            Assert.fail(
+                    "PATCH should fail to update the type of a used "
+                    + "scheduler placement zone to a docker zone");
+        } catch (IllegalStateException ex) {
+            verifyExceptionMessage(ex.getMessage(),
+                    ResourcePoolOperationProcessingChain.SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
+        }
+    }
+
+    @Test
+    public void testUpdateDockerPZInUseByMultipleVicHostsToSchedulerPZShouldPass() throws Throwable {
+        // First create a docker placement zone.
+        ResourcePoolState createdPlacementZone = createPlacementZone("docker-placement-zone",
+                false);
+        assertNotNull(createdPlacementZone);
+
+        // Now create 2 VIC hosts that use this placement zone. This can be achieved if the VIC
+        // hosts were initially declared as docker but were later on marked as VIC
+        createComputeState(createdPlacementZone);
+        createComputeState(createdPlacementZone);
+
+        // Now create a PATCH that updates the type of the zone to scheduler. This should fail
+        // because there will be multiple container in the placement zone (even if they are all
+        // schedulers)
+        ResourcePoolState patchState = new ResourcePoolState();
+        markSchedulerPlacementZone(patchState);
+        try {
+            doPatch(patchState, createdPlacementZone.documentSelfLink);
+            Assert.fail(
+                    "PATCH should fail to update the type of a docker placement "
+                    + "zone to a scheduler zone when the placement zone is in use by multiple scheduler hosts");
+        } catch (IllegalStateException ex) {
+            verifyExceptionMessage(ex.getMessage(),
+                    ResourcePoolOperationProcessingChain.MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
         }
     }
 
@@ -257,6 +361,11 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
     }
 
     private ComputeState createComputeState(ResourcePoolState placementZone) throws Throwable {
+        return createComputeState(placementZone, false);
+    }
+
+    private ComputeState createComputeState(ResourcePoolState placementZone, boolean isScheduler)
+            throws Throwable {
         ComputeState computeState = new ComputeState();
         computeState.address = "no-address";
         computeState.descriptionLink = "no-description-link";
@@ -264,6 +373,14 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
             computeState.resourcePoolLink = placementZone.documentSelfLink;
         } else {
             computeState.resourcePoolLink = defaultPlacementZone.documentSelfLink;
+        }
+        computeState.customProperties = new HashMap<>();
+        if (isScheduler) {
+            computeState.customProperties.put(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME,
+                    ContainerHostType.VIC.toString());
+        } else {
+            computeState.customProperties.put(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME,
+                    ContainerHostType.DOCKER.toString());
         }
 
         return doPost(computeState, ComputeService.FACTORY_LINK);
