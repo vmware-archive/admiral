@@ -13,15 +13,65 @@ package com.vmware.admiral.compute;
 
 import java.net.URI;
 
+import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.UriUtils;
 
 public class ContainerHostUtil {
 
+    public static final String CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT = "Container "
+            + "host type '%s' is not supported";
+
     private static final String PROPERTY_NAME_DRIVER = "__Driver";
     private static final String VMWARE_VIC_DRIVER1 = "vmware";
     private static final String VMWARE_VIC_DRIVER2 = "vsphere";
+
+    /**
+     * Check if this host is a scheduler host (e.g. VIC, Kubernetes)
+     *
+     * @param computeState
+     * @return boolean value
+     */
+    public static boolean isSchedulerHost(ComputeState computeState) {
+        // TODO check for kubernetes as well
+        return ContainerHostUtil.isVicHost(computeState);
+    }
+
+    /**
+     * Check if this host should be treated as scheduler host. Note that a host may be a scheduler
+     * (e.g. VIC, Kubernetes) but it may be declared as plain docker host and in this case the host
+     * should be treated as a plain docker host
+     *
+     * @param computeState
+     * @return boolean value
+     */
+    public static boolean isTreatedLikeSchedulerHost(ComputeState computeState) {
+        return getDeclaredContainerHostType(computeState) != ContainerHostType.DOCKER;
+    }
+
+    public static ContainerHostType getDeclaredContainerHostType(ComputeState computeState) {
+        AssertUtil.assertNotNull(computeState, "computeState");
+
+        if (computeState.customProperties == null) {
+            return ContainerHostType.getDefaultHostType();
+        }
+
+        String hostTypeRaw = computeState.customProperties
+                .get(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME);
+        if (hostTypeRaw == null) {
+            return ContainerHostType.getDefaultHostType();
+        }
+
+        try {
+            return ContainerHostType.valueOf(hostTypeRaw);
+        } catch (IllegalArgumentException ex) {
+            String error = String.format(CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT,
+                    hostTypeRaw);
+            throw new IllegalArgumentException(error, ex);
+        }
+    }
 
     /**
      * Check if docker is running on VMware Integrated Container host.

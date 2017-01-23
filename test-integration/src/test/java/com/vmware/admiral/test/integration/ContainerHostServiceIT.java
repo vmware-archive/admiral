@@ -217,7 +217,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
     }
 
     @Test
-    public void testValidateShouldFailWhenDockerHostClaimsToBeVic() throws Throwable {
+    public void testValidateDockerHostDeclaredAsVicShouldFail() throws Throwable {
         containerHostSpec.acceptCertificate = true;
         computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
         markHostForVicValidation(computeState);
@@ -621,6 +621,34 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                 String.format(ContainerHostService.INCORRECT_PLACEMENT_ZONE_TYPE_MESSAGE_FORMAT,
                         PlacementZoneType.SCHEDULER.toString(),
                         PlacementZoneType.DOCKER.toString()));
+    }
+
+    @Test
+    public void testAddVicHostDeclaredAsDockerShouldPass() {
+        vicHostState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
+        vicHostState.resourcePoolLink = resourcePool.documentSelfLink;
+        vicHostSpec.acceptCertificate = true;
+        // since the host is not marked for VIC validation, it will be treated as docker host
+
+        addHost(vicHostSpec);
+    }
+
+    @Test
+    public void testAddVicHostDeclaredAsDockerToPlacementZoneWithDockerHostShouldPass() {
+        // First add a docker host
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
+        computeState.resourcePoolLink = resourcePool.documentSelfLink;
+        containerHostSpec.acceptCertificate = true;
+
+        addHost(containerHostSpec);
+
+        // Then try to add a VIC host that is declared as docker. It should pass
+        vicHostState.address = VALID_DOCKER_HOST_NODE2_ADDRESS;
+        vicHostState.resourcePoolLink = resourcePool.documentSelfLink;
+        vicHostSpec.acceptCertificate = true;
+        // since the host is not marked for VIC validation, it will be treated as docker host
+
+        addHost(vicHostSpec);
     }
 
     private URI getContainerHostValidateUri() {

@@ -13,9 +13,13 @@ package com.vmware.admiral.host;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.PlacementZoneUtil;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
@@ -38,6 +42,12 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
 public class ResourcePoolOperationProcessingChain extends OperationProcessingChain {
 
     public static final String PLACEMENT_ZONE_IN_USE_MESSAGE = "Placement zone is in use";
+    public static final String MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE = "Cannot conver to "
+            + "scheduler placement zone: placement zone contains more than one host";
+    public static final String NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE = "Cannot conver to "
+            + "docker scheduler zone: placement zone contains a non-scheduler host";
+    public static final String SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE = "Cannot conver to "
+            + "docker placement zone: placement zone contains scheduler host(s)";
 
     public ResourcePoolOperationProcessingChain(FactoryService service) {
         super(service);
@@ -147,14 +157,19 @@ public class ResourcePoolOperationProcessingChain extends OperationProcessingCha
                 // Now check whether the unified state is a scheduler
                 if (PlacementZoneUtil.isSchedulerPlacementZone(unifiedState)) {
                     try {
-                        // If there are no tags release the request
+                        // shcedulers can have no tags
                         AssertUtil.assertEmpty(unifiedState.tagLinks, "tagLinks");
-                        resumeProcessingRequest(op, invokingFilter);
                     } catch (IllegalArgumentException ex) {
                         op.fail(ex);
+                        return;
                     }
+                    // schedulers can have a single scheduler host at most
+                    verifyZoneContainsSingleSchedulerOrNoHost(currentState.documentSelfLink, op,
+                            service, () -> resumeProcessingRequest(op, invokingFilter));
                 } else {
-                    resumeProcessingRequest(op, invokingFilter);
+                    // docker placement zones can have only docker hosts
+                    verifyZoneContainsNoSchedulers(currentState.documentSelfLink, op,
+                            service, () -> resumeProcessingRequest(op, invokingFilter));
                 }
             }
         }).sendWith(service);
@@ -162,4 +177,66 @@ public class ResourcePoolOperationProcessingChain extends OperationProcessingCha
         return false;
     }
 
+    private void verifyZoneContainsSingleSchedulerOrNoHost(String resourcePoolLink, Operation op,
+            ResourcePoolService service, Runnable successCallback) {
+
+        QueryTask queryTask = QueryUtil.buildPropertyQuery(ComputeState.class,
+                ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, resourcePoolLink);
+        QueryUtil.addExpandOption(queryTask);
+
+        AtomicBoolean opFailed = new AtomicBoolean(false);
+        new ServiceDocumentQuery<ComputeState>(service.getHost(), ComputeState.class)
+                .query(queryTask, (r) -> {
+                    if (!opFailed.get()) {
+
+                        if (r.hasException()) {
+                            op.fail(r.getException());
+                        } else if (r.getCount() > 1) {
+                            op.fail(new IllegalStateException(
+                                    MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE));
+                            opFailed.set(true);
+                        } else if (r.hasResult()) {
+                            if (!ContainerHostUtil.isTreatedLikeSchedulerHost(r.getResult())) {
+                                op.fail(new IllegalStateException(
+                                        NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE));
+                                opFailed.set(true);
+                            } else {
+                                // one host is found, but it is a scheduler
+                                successCallback.run();
+                            }
+                        } else {
+                            // no hosts in placement zone = no problem
+                            successCallback.run();
+                        }
+
+                    }
+                });
+    }
+
+    private void verifyZoneContainsNoSchedulers(String resourcePoolLink, Operation op,
+            ResourcePoolService service, Runnable successCallback) {
+
+        QueryTask queryTask = QueryUtil.buildPropertyQuery(ComputeState.class,
+                ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, resourcePoolLink);
+        QueryUtil.addExpandOption(queryTask);
+
+        AtomicBoolean schedulerFound = new AtomicBoolean(false);
+        new ServiceDocumentQuery<ComputeState>(service.getHost(), ComputeState.class)
+                .query(queryTask, (r) -> {
+                    if (r.hasException()) {
+                        op.fail(r.getException());
+                    } else if (r.hasResult()) {
+                        if (ContainerHostUtil.isTreatedLikeSchedulerHost(r.getResult())) {
+                            schedulerFound.set(true);
+                        }
+                    } else {
+                        if (schedulerFound.get()) {
+                            op.fail(new IllegalStateException(
+                                    SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE));
+                        } else {
+                            successCallback.run();
+                        }
+                    }
+                });
+    }
 }
