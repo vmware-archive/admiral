@@ -152,6 +152,7 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
         assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
     }
 
+    @Ignore("VBV-984")
     @Test
     public void testRestrictedOperationWithNodesStoppedAndStarted() throws Throwable {
 
