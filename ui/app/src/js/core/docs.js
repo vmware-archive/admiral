@@ -18,6 +18,7 @@ var clientToken;
 
 const ENSEMBLE_URL = 'https://ensemble.vmware.com';
 const PRODUCT_NAME = 'Admiral';
+const PRODUCT_VERSION = utils.getVersionNumber() || 'n/a';
 
 const DOCS_TOKENS_SEPARATOR = '__Admiral__';
 
@@ -139,6 +140,7 @@ docs.update = function(id) {
   if (updateUrl) {
     var data = {
       productName: PRODUCT_NAME,
+      productVersion: PRODUCT_VERSION,
       functionalityId: id
     };
     ajax('POST', updateUrl, JSON.stringify(data));
