@@ -9,12 +9,17 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.kubernetes.service.apiobject;
+package com.vmware.admiral.adapter.kubernetes.mock;
 
-public class Pod {
-    // public String kind;
-    // public String apiVersion;
-    public ObjectMeta metadata;
-    public PodSpec spec;
-    public PodStatus status;
+import com.vmware.admiral.adapter.kubernetes.service.KubernetesRemoteApiClient;
+
+/**
+ * Constants for mock docker host and services
+ */
+public interface MockKubernetesPathConstants {
+    String BASE_PATH = "/mock/kubernetes";
+    String PING = KubernetesRemoteApiClient.pingPath;
+    String API = "/api/v1";
+    String NAMESPACES = API + "/namespaces";
+    String PODS = "/pods";
 }

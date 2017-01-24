@@ -13,7 +13,6 @@ package com.vmware.admiral.adapter.kubernetes.service;
 
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import javax.net.ssl.TrustManager;
@@ -22,6 +21,7 @@ import javax.net.ssl.X509ExtendedKeyManager;
 import com.vmware.admiral.adapter.kubernetes.service.AbstractKubernetesAdapterService.KubernetesContext;
 import com.vmware.admiral.adapter.kubernetes.service.apiobject.Namespace;
 import com.vmware.admiral.adapter.kubernetes.service.apiobject.NamespaceList;
+import com.vmware.admiral.adapter.kubernetes.service.apiobject.ObjectMeta;
 import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.DelegatingX509KeyManager;
@@ -44,7 +44,7 @@ public class KubernetesRemoteApiClient {
      * https://github.com/kubernetes/kubernetes/issues/1362
      */
     static final String apiPrefix = "/api/v1";
-    private static final String pingPath = "/healthz";
+    public static final String pingPath = "/healthz";
 
     private static final Logger logger = Logger
             .getLogger(KubernetesRemoteApiClient.class.getName());
@@ -160,7 +160,7 @@ public class KubernetesRemoteApiClient {
     public void doInfo(KubernetesContext context, CompletionHandler completionHandler) {
         createOrUpdateTargetSsl(context);
 
-        // TODO: should be changed
+        // TODO: This should be changed to an URL with host information
         URI uri = UriUtils.buildUri(ApiUtil.namespacePrefix(context) + "/pods");
         /*
         sendRequest(Service.Action.GET, uri, null, (op, ex) -> {
@@ -181,36 +181,36 @@ public class KubernetesRemoteApiClient {
         sendRequest(Action.GET, uri, null, completionHandler);
     }
 
-    public void createNamespaceIfMissing(KubernetesContext context, Consumer<Throwable> consumer) {
+    public void createNamespaceIfMissing(KubernetesContext context, CompletionHandler completionHandler) {
         createOrUpdateTargetSsl(context);
 
         URI uri = UriUtils.buildUri(ApiUtil.apiPrefix(context) + "/namespaces");
-        String target = context.host.customProperties.get(KubernetesHostConstants
-                .KUBERNETES_HOST_NAMESPACE_PROP_NAME);
+        String target = context.host.customProperties.get(
+                KubernetesHostConstants.KUBERNETES_HOST_NAMESPACE_PROP_NAME);
 
         //getNamespaces(context, (operation, throwable) -> {
-        sendRequest(Action.GET, uri, null, (operation, throwable) -> {
-            if (throwable != null) {
-                consumer.accept(throwable);
+        sendRequest(Action.GET, uri, null, (o, ex) -> {
+            if (ex != null) {
+                completionHandler.handle(o, ex);
                 return;
             }
-            NamespaceList namespaceList = operation.getBody(NamespaceList.class);
+            NamespaceList namespaceList = o.getBody(NamespaceList.class);
             if (namespaceList == null) {
-                consumer.accept(new IllegalStateException("Null body"));
+                completionHandler.handle(o, new IllegalStateException("Null body"));
                 return;
             }
             for (Namespace namespace : namespaceList.items) {
-                // Probably can skip null checks
                 if (namespace.metadata != null &&
                         namespace.metadata.name != null &&
                         namespace.metadata.name.equals(target)) {
-                    consumer.accept(null);
+                    completionHandler.handle(o, null);
                     return;
                 }
             }
             Namespace namespace = new Namespace();
+            namespace.metadata = new ObjectMeta();
             namespace.metadata.name = target;
-            sendRequest(Action.POST, uri, Utils.toJson(namespace), (op, ex) -> consumer.accept(ex));
+            sendRequest(Action.POST, uri, Utils.toJson(namespace), completionHandler);
         });
     }
 

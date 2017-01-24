@@ -13,6 +13,7 @@ package com.vmware.admiral.adapter.kubernetes.service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -26,6 +27,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
+import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
@@ -40,6 +42,8 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
     private static final String HIDDEN_CUSTOM_PROPERTY_PREFIX = "__";
 
     private static final String NOT_FOUND_EXCEPTION_MESSAGE = "returned error 404";
+    private static final String REQUIRED_PROPERTY_MISSING_MESSAGE =
+            "Required request property '%s' is missing.";
 
     @Override
     public void handlePatch(Operation op) {
@@ -50,7 +54,10 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
 
         if (request.operationTypeId.equals(ContainerHostOperationType.PING.id)
                 && ComputeService.FACTORY_LINK.equals(request.resourceReference.getPath())) {
-            pingHost(request, op);
+            directPing(request, op);
+        } else if (request.operationTypeId.equals(ContainerHostOperationType.INFO.id)
+                && ComputeService.FACTORY_LINK.equals(request.resourceReference.getPath())) {
+            directInfo(request, op);
         } else if (request.operationTypeId.equals(ContainerHostOperationType.LIST_CONTAINERS.id)
                 && request.serviceTaskCallback.isEmpty()) {
             getContainerHost(request, op, request.resourceReference,
@@ -83,11 +90,23 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
         }
     }
 
+    private KubernetesContext getDefaultContext(AdapterRequest request) {
+        KubernetesContext context = new KubernetesContext();
+        context.customProperties = request.customProperties;
+        context.customProperties.putIfAbsent(
+                KubernetesHostConstants.KUBERNETES_HOST_NAMESPACE_PROP_NAME,
+                KubernetesHostConstants.KUBERNETES_HOST_DEFAULT_NAMESPACE);
+        return context;
+    }
+
     private CompletionHandler getHostPatchCompletionHandler(AdapterRequest request) {
         return (o, ex) -> {
             if (ex != null) {
                 fail(request, o, ex);
             } else {
+                // TODO: Find out what properties can be get from the kubernetes host and patch with
+                // TODO: them. The returned operation body must be changed to pass them.
+                // TODO: Now it doesn't add anything to the host properties.
                 // @SuppressWarnings("unchecked")
                 // Map<String, Object> properties = o.getBody(Map.class);
                 patchHostState(request, null,
@@ -124,26 +143,13 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
                 .setCompletion(callback));
     }
 
-    private void pingHost(AdapterRequest request, Operation op) {
+    private void directPing(AdapterRequest request, Operation op) {
         // URI link to the stored credentials
-        String credentialsLink = request.customProperties.get(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME);
-        if (credentialsLink == null || credentialsLink.isEmpty()) {
-            KubernetesContext context = new KubernetesContext();
+        KubernetesContext context = getDefaultContext(request);
+        directWithCredentials(request, op, (credentials) -> {
+            context.credentials = credentials;
             directPing(request, context, op);
-            return;
-        }
-
-        sendRequest(Operation.createGet(this, credentialsLink).setCompletion(
-                (o, ex) -> {
-                    if (ex != null) {
-                        op.fail(ex);
-                    } else {
-                        AuthCredentialsServiceState authCredentialsState = o.getBody(AuthCredentialsServiceState.class);
-                        KubernetesContext context = new KubernetesContext();
-                        context.credentials = authCredentialsState;
-                        directPing(request, context, op);
-                    }
-                }));
+        });
     }
 
     private void directPing(AdapterRequest request, KubernetesContext context, Operation op) {
@@ -170,15 +176,68 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
         });
     }
 
-    private void doInfo(AdapterRequest request, KubernetesContext context) {
+    private void directInfo(AdapterRequest request, Operation op) {
+        KubernetesContext context = getDefaultContext(request);
+        directWithCredentials(request, op, (credentials) -> {
+            context.credentials = credentials;
+            directInfo(request, context, op);
+        });
+    }
+
+    private void directInfo(AdapterRequest request, KubernetesContext context, Operation op) {
+        updateContext(request, context);
+
         KubernetesRemoteApiClient c = getApiClient();
-        c.createNamespaceIfMissing(context, (ex) -> {
+        c.createNamespaceIfMissing(context, (o, ex) -> {
             if (ex != null) {
-                logSevere(ex);
+                op.fail(ex);
+            } else {
+                c.doInfo(context, (op1, ex1) -> {
+                    if (ex1 != null) {
+                        op.fail(ex1);
+                    } else {
+                        // TODO: Add properties to the compute state
+                        ComputeState computeState = new ComputeState();
+                        computeState.customProperties = new HashMap<>();
+                        op.setBody(computeState);
+                        op.complete();
+                    }
+                });
+            }
+        });
+    }
+
+    private void doInfo(AdapterRequest request, KubernetesContext context) {
+        updateContext(request, context);
+
+        KubernetesRemoteApiClient c = getApiClient();
+        c.createNamespaceIfMissing(context, (o, ex) -> {
+            if (ex != null) {
+                fail(request, ex);
             } else {
                 c.doInfo(context, getHostPatchCompletionHandler(request));
             }
         });
+    }
+
+    private void directWithCredentials (AdapterRequest request, Operation op,
+            Consumer<AuthCredentialsServiceState> callback) {
+        String credentialsLink = request.customProperties.get(
+                ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME);
+        if (credentialsLink == null) {
+            callback.accept(null);
+        } else {
+            sendRequest(Operation
+                    .createGet(this, credentialsLink)
+                    .setCompletion((o, ex) -> {
+                        if (ex != null) {
+                            op.fail(ex);
+                        } else {
+                            callback.accept(o.getBody(AuthCredentialsServiceState.class));
+                        }
+                    })
+            );
+        }
     }
 
     private void directListContainers(AdapterRequest request, KubernetesContext context,
@@ -249,13 +308,16 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
     }
 
     private void updateContext(AdapterRequest request, KubernetesContext context) {
-        if (context.host == null) {
-            context.host = new ComputeState();
-        }
         if (request.customProperties != null) {
             context.SSLTrustCertificate = request.customProperties.get(ContainerHostService.SSL_TRUST_CERT_PROP_NAME);
             context.SSLTrustAlias = request.customProperties.get(ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME);
             context.host.address = request.customProperties.get(ComputeConstants.HOST_URI_PROP_NAME);
+            if (context.host.customProperties == null) {
+                context.host.customProperties = request.customProperties;
+            }
+            if (context.host.address == null || context.host.address.isEmpty()) {
+                logWarning(REQUIRED_PROPERTY_MISSING_MESSAGE, ComputeConstants.HOST_URI_PROP_NAME);
+            }
         }
     }
 }

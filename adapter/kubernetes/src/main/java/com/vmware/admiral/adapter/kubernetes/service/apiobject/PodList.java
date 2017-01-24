@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,9 +11,11 @@
 
 package com.vmware.admiral.adapter.kubernetes.service.apiobject;
 
+import java.util.List;
+
 public class PodList {
     // public String kind;
     // public String apiVersion;
     // public ListMeta metadata;
-    public Pod[] items;
+    public List<Pod> items;
 }

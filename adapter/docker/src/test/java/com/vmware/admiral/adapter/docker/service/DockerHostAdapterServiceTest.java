@@ -122,13 +122,13 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
 
     @Test
     public void testHostPingWithResourceReference() throws Throwable {
-        dockerHostState = requestDockerHostOperaton(MockDockerPathConstants._PING,
+        dockerHostState = requestDockerHostOperation(MockDockerPathConstants._PING,
                 ContainerHostOperationType.PING);
     }
 
     @Test
     public void testHostVersion() throws Throwable {
-        dockerHostState = requestDockerHostOperaton(MockDockerPathConstants.VERSION,
+        dockerHostState = requestDockerHostOperation(MockDockerPathConstants.VERSION,
                 ContainerHostOperationType.VERSION);
         assertEquals(MockDockerPathConstants.API_VERSION,
                 dockerHostState.customProperties.get("__ApiVersion"));
@@ -162,7 +162,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
             dockerHostState = retrieveDockerHostState();
             return PowerState.SUSPEND.equals(dockerHostState.powerState);
         });
-        dockerHostState = requestDockerHostOperaton(MockDockerPathConstants.INFO,
+        dockerHostState = requestDockerHostOperation(MockDockerPathConstants.INFO,
                 ContainerHostOperationType.INFO);
 
         // If the container host is in state suspended it should not be changed after the info
@@ -182,7 +182,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
 
     @Test
     public void testHostInfo() throws Throwable {
-        dockerHostState = requestDockerHostOperaton(MockDockerPathConstants.INFO,
+        dockerHostState = requestDockerHostOperation(MockDockerPathConstants.INFO,
                 ContainerHostOperationType.INFO);
 
         String numberOfContainersValue = dockerHostState.customProperties
@@ -347,7 +347,7 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
         host.testWait();
     }
 
-    private ComputeState requestDockerHostOperaton(String mockDockerPath,
+    private ComputeState requestDockerHostOperation(String mockDockerPath,
             ContainerHostOperationType operationType) throws Throwable {
         mockDockerHost.waitForServiceAvailable(MockDockerHostService.SELF_LINK + mockDockerPath);
 

@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.adapter.kubernetes.service.apiobject;
 
+import java.util.List;
+
 public class NamespaceSpec {
-    public String[] finalizers;
+    public List<String> finalizers;
 }

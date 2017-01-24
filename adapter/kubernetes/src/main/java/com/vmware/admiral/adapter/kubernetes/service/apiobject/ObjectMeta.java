@@ -16,7 +16,7 @@ public class ObjectMeta {
     // public String generateName;
     // public String namespace;
     // public String selfLink;
-    public String uid;
+    // public String uid;
     // public String resourceVersion;
     // public long generation;
     public String creationTimestamp;
