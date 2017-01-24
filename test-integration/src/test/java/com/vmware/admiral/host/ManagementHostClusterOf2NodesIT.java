@@ -97,6 +97,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         assertEquals(HttpURLConnection.HTTP_FORBIDDEN, doRestrictedOperation(hostTwo, null));
     }
 
+    @Ignore("VBV-984")
     @Test
     public void testRestrictedOperationWithNodesRestarted() throws Throwable {
 
@@ -272,6 +273,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
 
     }
 
+    @Ignore("VBV-984")
     @Test
     public void testProvisioningOfApplicationInCluster() throws Throwable {
 
