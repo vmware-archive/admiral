@@ -33,17 +33,15 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
-import com.vmware.xenon.common.ServiceClient;
 
 public class ContainerMultiNetworkingIT extends BaseProvisioningOnCoreOsIT {
     private static final String TEMPLATE_FILE = "MySQL_with_multiple_networks.yaml";
     private static final String MYSQL_NAME = "mysql";
+    private static final int NUMBER_OF_NETWORKS = 3;
 
     private static final int CONTAINER_SIZE = 1;
     private static final int NETWORK_SIZE = 3;
     private static final int ALL_RESOURCES_SIZE = CONTAINER_SIZE + NETWORK_SIZE;
-
-    private static ServiceClient serviceClient;
 
     private String compositeDescriptionLink;
 
@@ -65,7 +63,7 @@ public class ContainerMultiNetworkingIT extends BaseProvisioningOnCoreOsIT {
     @Test
     @Ignore("VBV-941")
     public void testProvision() throws Exception {
-        doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
+        doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API, false, NUMBER_OF_NETWORKS);
     }
 
     @Override

@@ -33,7 +33,6 @@ import com.vmware.admiral.compute.container.CompositeComponentService.CompositeC
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.request.RequestBrokerService;
 import com.vmware.admiral.request.RequestStatusService;
-import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 
 public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
@@ -43,8 +42,6 @@ public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
 
     private static final String INPUT_NAME = "input_a";
     private static final String INPUT_VALUE = "value_a";
-
-    private static ServiceClient serviceClient;
 
     private String compositeDescriptionLink;
 

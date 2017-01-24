@@ -50,7 +50,6 @@ import com.vmware.admiral.closures.util.ClosureUtils;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -66,8 +65,6 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
             + DriverConstants.RUNTIME_NODEJS_4_3_0;
 
     private static String RUNTIME_NODEJS = "nodejs_4.3.0";
-
-    private static ServiceClient serviceClient;
 
     private static String dockerBuildImageLink;
     private static String dockerBuildBaseImageLink;

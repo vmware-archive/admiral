@@ -34,7 +34,6 @@ import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.xenon.common.Service;
-import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -51,8 +50,6 @@ public class ContainerNetworkingWithAgentRestartIT extends BaseProvisioningOnCor
     private static final int ALL_RESOURCER_SIZE = CLIENT_CLUSTER_SIZE + SERVER_CLUSTER_SIZE;
     private static final String SERVICE_RESPONSE_PREFIX = "Hello from ";
     private static final String LAST_LOG_ENTRY = "Done with curl loop";
-
-    private static ServiceClient serviceClient;
 
     private String compositeDescriptionLink;
 
