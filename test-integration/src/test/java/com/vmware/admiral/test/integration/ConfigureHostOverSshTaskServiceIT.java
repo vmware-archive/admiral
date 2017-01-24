@@ -24,6 +24,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -274,6 +275,12 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         Assert.assertEquals("Connection refused", consumer.result.getMessage());
     }
 
+    @After
+    public void cleanUp() throws NoSuchFieldException, SecurityException, Exception {
+        setFinalStatic(ConfigureHostOverSshTaskService.class.getDeclaredField("sshServiceUtil"), null);
+        setFinalStatic(MockConfigureHostOverSshTaskService.class.getDeclaredField("sshServiceUtil"), null);
+    }
+
     private class ValidateConsumer implements Consumer<Throwable> {
 
         boolean done = false;
@@ -326,7 +333,7 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         QueryTask qt = QueryTask.create(qs);
         QuerySpecification.addExpandOption(qt);
 
-        new ServiceDocumentQuery<ComputeState>(
+        new ServiceDocumentQuery<>(
                 host, ComputeState.class).query(qt, (r) -> {
                     if (r.hasException()) {
                         ctx.fail(r.getException());
