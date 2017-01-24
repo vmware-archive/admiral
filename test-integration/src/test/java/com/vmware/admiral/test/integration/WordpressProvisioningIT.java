@@ -70,8 +70,8 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
     private static final int MYSQL_START_WAIT_RETRY_COUNT = 20;
     private static final int MYSQL_START_WAIT_PRERIOD_MILLIS = 5000;
     private static final int STATUS_CODE_WAIT_POLLING_RETRY_COUNT = 30;
+    private static final int NUMBER_OF_NETWORKS_PER_APPLICATION = 1;
 
-    private static ServiceClient serviceClient;
 
     private String compositeDescriptionLink;
     private ContainerNetworkState externalNetwork;
@@ -123,6 +123,7 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
     public void testProvision() throws Exception {
         boolean setupOnCluster = useOverlayNetwork();
         setupCoreOsHost(DockerAdapterType.API, setupOnCluster);
+        checkNumberOfNetworks(serviceClient, NUMBER_OF_NETWORKS_PER_APPLICATION);
 
         if (useExternalNetwork()) {
             setupExternalNetwork();

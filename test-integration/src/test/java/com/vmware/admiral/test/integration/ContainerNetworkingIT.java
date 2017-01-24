@@ -34,7 +34,6 @@ import com.vmware.admiral.compute.container.ContainerLogService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.service.common.LogService;
-import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -65,8 +64,6 @@ public class ContainerNetworkingIT extends BaseProvisioningOnCoreOsIT {
     private static final String SERVICE_RESPONSE_PREFIX = "Hello from ";
     private static final String LAST_LOG_ENTRY = "Done with curl loop";
     private static final int EXPECTED_NUMBER_OF_RESPONSE_LOG_ENTRIES = 10;
-
-    private static ServiceClient serviceClient;
 
     private String compositeDescriptionLink;
 

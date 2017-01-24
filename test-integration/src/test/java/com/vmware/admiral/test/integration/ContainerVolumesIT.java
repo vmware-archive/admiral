@@ -33,7 +33,6 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeService.Contai
 import com.vmware.admiral.compute.container.volume.VolumeUtil;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.xenon.common.ServiceClient;
 
 public class ContainerVolumesIT extends BaseProvisioningOnCoreOsIT {
 
@@ -41,8 +40,6 @@ public class ContainerVolumesIT extends BaseProvisioningOnCoreOsIT {
     private static final String WORDPRESS_CONTAINER_NAME = "wordpress";
     private static final String WORDPRESS_VOLUME_NAME = "/tmp";
     private static final String MYSQL_VOLUME_NAME = "/var";
-
-    private static ServiceClient serviceClient;
 
     private String compositeDescriptionLink;
 

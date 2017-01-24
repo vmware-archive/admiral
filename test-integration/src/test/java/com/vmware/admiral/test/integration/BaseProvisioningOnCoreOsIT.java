@@ -22,6 +22,7 @@ import static com.vmware.admiral.test.integration.data.IntegratonTestStateFactor
 
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -57,6 +58,7 @@ import com.vmware.admiral.compute.container.CompositeComponentRegistry.Component
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.image.service.ContainerImageService;
@@ -73,6 +75,7 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
@@ -83,12 +86,16 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
  */
 public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportIT {
     protected static final List<String> TENANT = Collections.singletonList("docker-test");
+    protected static ServiceClient serviceClient;
+
     private static final List<String> TENANT_LINKS = Collections
             .singletonList("/tenants/docker-test");
     private static final List<String> OTHER_TENANT_LINKS = Collections
             .singletonList("/tenants/other-docker-test");
     private static final String TEST_REGISTRY_NAME = "test-registry";
     private static final long DEFAULT_OPERATION_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(30);
+    private static final int DOCKER_MAX_BRIDGE_NETWORKS_COUNT = 29;
+    private static final String BRIDGE_NETWORK_TYPE_QUERY = "?$filter=driver eq 'bridge'";
 
     protected ComputeState dockerHostCompute;
     protected List<ComputeState> dockerHostsInCluster;
@@ -165,7 +172,15 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
 
     protected void doProvisionDockerContainerOnCoreOS(boolean downloadImage,
             DockerAdapterType adapterType, boolean setupOnCluster) throws Exception {
+        doProvisionDockerContainerOnCoreOS(downloadImage, adapterType, setupOnCluster, 0);
+    }
+
+    protected void doProvisionDockerContainerOnCoreOS(boolean downloadImage,
+            DockerAdapterType adapterType, boolean setupOnCluster, int networksCount) throws Exception {
         setupCoreOsHost(adapterType, setupOnCluster);
+        if (networksCount > 0) {
+            checkNumberOfNetworks(serviceClient, networksCount);
+        }
 
         logger.info("---------- 5. Create test docker image container description. --------");
         requestContainerAndDelete(getResourceDescriptionLink(downloadImage,
@@ -595,6 +610,22 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
             throws InterruptedException, ExecutionException,
             TimeoutException {
         return sendRequest(serviceClient, op, DEFAULT_OPERATION_TIMEOUT_MILLIS);
+    }
+
+    // https://github.com/docker/libnetwork/issues/1101
+    protected void checkNumberOfNetworks(ServiceClient serviceClient, int networkToCreate) throws Exception {
+        // get only bridge networks
+        String encodedQuery = URLEncoder.encode(BRIDGE_NETWORK_TYPE_QUERY, "UTF-8");
+        String requestLink = getBaseUrl() + buildServiceUri(ContainerNetworkService.FACTORY_LINK, encodedQuery);
+        URI uri = URI.create(requestLink);
+
+        Operation op = sendRequest(serviceClient, Operation.createGet(uri));
+        ServiceDocumentQueryResult doc = op.getBody(ServiceDocumentQueryResult.class);
+
+        if (doc != null &&
+                doc.documentCount + networkToCreate > DOCKER_MAX_BRIDGE_NETWORKS_COUNT) {
+            throw new Exception("Max number of networks exceeded.");
+        }
     }
 
     private Operation sendRequest(ServiceClient serviceClient, Operation op, long timeoutMilis)
