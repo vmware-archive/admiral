@@ -12,5 +12,5 @@
 package com.vmware.admiral.adapter.kubernetes.service.apiobject;
 
 public class NamespaceStatus {
-    public String phase;
+    // public String phase;
 }

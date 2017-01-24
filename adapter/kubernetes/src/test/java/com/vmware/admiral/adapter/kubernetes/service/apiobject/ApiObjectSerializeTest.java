@@ -73,18 +73,13 @@ public class ApiObjectSerializeTest {
     @Test
     public void TestNamespaceCorrectSerialize() {
         Namespace namespace = new Namespace();
-        /*namespace.kind = "kind";
-        namespace.apiVersion = "api/v1";*/
+        namespace.metadata = new ObjectMeta();
 
         String json = Utils.toJson(namespace);
         Namespace result = Utils.fromJson(json, Namespace.class);
 
         assertNotNull(result);
-        /*assertEquals(namespace.kind, result.kind);
-        assertEquals(namespace.apiVersion, result.apiVersion);*/
         assertNotNull(result.metadata);
-        /*assertNull(result.spec);
-        assertNull(result.status);*/
     }
 
     @Test
@@ -132,7 +127,9 @@ public class ApiObjectSerializeTest {
         assertNotNull(list.metadata.selfLink);
         assertNotNull(list.metadata.resourceVersion);*/
         assertNotNull(list.items);
-        assertEquals(1, list.items.length);
+        assertEquals(1, list.items.size());
+        assertNotNull(list.items.get(0).metadata);
+        assertEquals("string", list.items.get(0).metadata.name);
     }
 
     @Test
@@ -220,6 +217,6 @@ public class ApiObjectSerializeTest {
 
         NamespaceSpec spec = Utils.fromJson(data, NamespaceSpec.class);
         assertNotNull(spec);
-        assertEquals(0, spec.finalizers.length);
+        assertEquals(0, spec.finalizers.size());
     }
 }

@@ -16,7 +16,7 @@ import static com.vmware.admiral.adapter.kubernetes.service.KubernetesRemoteApiC
 import com.vmware.admiral.adapter.kubernetes.service.AbstractKubernetesAdapterService.KubernetesContext;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 
-class ApiUtil {
+public class ApiUtil {
     static String apiPrefix(KubernetesContext context) {
         assert (context.host != null);
         assert (context.host.customProperties != null);

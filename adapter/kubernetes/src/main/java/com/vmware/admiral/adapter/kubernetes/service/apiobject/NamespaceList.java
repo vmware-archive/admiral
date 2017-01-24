@@ -11,9 +11,11 @@
 
 package com.vmware.admiral.adapter.kubernetes.service.apiobject;
 
+import java.util.List;
+
 public class NamespaceList {
     /*public String kind;
     public String apiVersion;
     public ListMeta metadata;*/
-    public Namespace[] items;
+    public List<Namespace> items;
 }

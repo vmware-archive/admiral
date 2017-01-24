@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -25,13 +25,13 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState.Powe
 import com.vmware.admiral.compute.container.PortBinding;
 
 public class KubernetesContainerStateMapper {
-    private static String makeEnv(EnvVar env) {
+    public static String makeEnv(EnvVar env) {
         return env.name + "=" + env.value;
     }
 
     /**
      * Change kubernetes container id
-     * @param id The kubernetes container id is in the form 'docker://<container_id>'
+     * @param id The kubernetes container id is in the form 'docker://<container-id>'
      * @return
      */
     public static String getId(String id) {
@@ -41,7 +41,7 @@ public class KubernetesContainerStateMapper {
         return id;
     }
 
-    private static PortBinding makePort(ContainerPort port) {
+    public static PortBinding makePort(ContainerPort port) {
         PortBinding result = new PortBinding();
 
         result.containerPort = Integer.toString(port.containerPort);
@@ -54,49 +54,55 @@ public class KubernetesContainerStateMapper {
 
     public static void mapContainer(ContainerState outContainerState, Container inContainer,
             ContainerStatus status) {
+        if (outContainerState == null || inContainer == null || status == null) {
+            return;
+        }
         outContainerState.id = getId(status.containerID);
         outContainerState.name = inContainer.name;
         outContainerState.names = Arrays.asList(inContainer.name);
         outContainerState.image = inContainer.image;
-        outContainerState.command = inContainer.command;
+        if (inContainer.command != null) {
+            outContainerState.command = inContainer.command.toArray(
+                    new String[inContainer.command.size()]);
+        }
 
         if (inContainer.env != null) {
-            outContainerState.env = new String[inContainer.env.length];
-            for (int i = 0; i < inContainer.env.length; ++i) {
-                outContainerState.env[i] = makeEnv(inContainer.env[i]);
+            outContainerState.env = new String[inContainer.env.size()];
+            for (int i = 0; i < outContainerState.env.length; ++i) {
+                outContainerState.env[i] = makeEnv(inContainer.env.get(i));
             }
         }
         if (inContainer.ports != null) {
-            outContainerState.ports = new ArrayList<>(inContainer.ports.length);
-            for (int i = 0; i < inContainer.ports.length; ++i) {
-                outContainerState.ports.add(makePort(inContainer.ports[i]));
+            outContainerState.ports = new ArrayList<>(inContainer.ports.size());
+            for (int i = 0; i < inContainer.ports.size(); ++i) {
+                outContainerState.ports.add(makePort(inContainer.ports.get(i)));
             }
         }
 
-        getPowerState(outContainerState, status);
+        outContainerState.powerState = getPowerState(status);
     }
 
-    public static void getPowerState(ContainerState outContainerState, ContainerStatus status) {
+    public static PowerState getPowerState(ContainerStatus status) {
+        if (status == null || status.state == null) {
+            return PowerState.UNKNOWN;
+        }
         // NOTE: this power state will not be changeable by the user
         if (status.state.running != null) {
-            outContainerState.powerState = PowerState.RUNNING;
+            return PowerState.RUNNING;
         } else if (status.state.waiting != null) {
-            outContainerState.powerState = PowerState.PAUSED;
+            return PowerState.PAUSED;
         } else if (status.state.terminated != null) {
-            outContainerState.powerState = PowerState.STOPPED;
+            return PowerState.STOPPED;
         } else {
-            outContainerState.powerState = PowerState.UNKNOWN;
+            return PowerState.UNKNOWN;
         }
     }
 
-    public static Long parseDate(String value) {
-        if (value == null) {
-            return null;
-        }
+    public static long parseDate(String value) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         try {
             return sdf.parse(value).getTime();
-        } catch (ParseException e) {
+        } catch (ParseException | NullPointerException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
     }

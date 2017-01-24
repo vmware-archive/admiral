@@ -18,10 +18,4 @@ public class Namespace {
     public ObjectMeta metadata;
     /*public NamespaceSpec spec;
     public NamespaceStatus status;*/
-
-    public Namespace() {
-        this.metadata = new ObjectMeta();
-        /*this.spec = new NamespaceSpec();
-        this.status = new NamespaceStatus();*/
-    }
 }
