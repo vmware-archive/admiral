@@ -101,7 +101,7 @@ export var HostContextToolbarActions = Reflux.createActions([
 ]);
 
 export var MachinesContextToolbarActions = Reflux.createActions([
-  'openToolbarPlacementZones', 'closeToolbar',
+  'openToolbarRequests', 'openToolbarEventLogs', 'openToolbarPlacementZones', 'closeToolbar',
   'createPlacementZone', 'managePlacementZones'
 ]);
 
