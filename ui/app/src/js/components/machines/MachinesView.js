@@ -12,14 +12,22 @@
 import MachinesViewVue from 'components/machines/MachinesViewVue.html';
 import MachineItem from 'components/machines/MachineItem'; //eslint-disable-line
 import MachineEditView from 'components/machines/MachineEditView'; //eslint-disable-line
+import RequestsList from 'components/requests/RequestsList'; //eslint-disable-line
+import EventLogList from 'components/eventlog/EventLogList'; //eslint-disable-line
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
-import { MachineActions, NavigationActions } from 'actions/Actions';
+import { MachineActions, MachinesContextToolbarActions, NavigationActions,
+    RequestsActions, NotificationsActions } from 'actions/Actions';
 
 export default Vue.component('machines-view', {
   template: MachinesViewVue,
   props: {
     model: {
+      default: () => {
+        return {
+          contextView: {}
+        };
+      },
       required: true,
       type: Object
     }
@@ -33,7 +41,9 @@ export default Vue.component('machines-view', {
   },
   mixins: [GridHolderMixin],
   attached() {
-    var $mainPanel = $(this.$el).find('.list-holder > .main-panel');
+
+    var $mainPanel = $(this.$el).children('.list-holder').children('.main-panel');
+
     $mainPanel.on('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd',
       (e) => {
         if (e.target === $mainPanel[0]) {
@@ -41,12 +51,56 @@ export default Vue.component('machines-view', {
         }
       }
     );
+
+    this.unwatchExpanded = this.$watch('contextExpanded', () => {
+      Vue.nextTick(() => {
+        this.setPreTransitionGridTargetWidth($mainPanel);
+      });
+    });
+
+    this.refreshRequestsInterval = setInterval(() => {
+      if (this.activeContextItem === constants.CONTEXT_PANEL.REQUESTS) {
+        RequestsActions.refreshRequests();
+      }
+    }, constants.REQUESTS.REFRESH_INTERVAL);
+
+    this.notificationsInterval = setInterval(() => {
+      if (!this.contextExpanded) {
+        NotificationsActions.retrieveNotifications();
+      }
+    }, constants.NOTIFICATIONS.REFRESH_INTERVAL);
   },
   detached() {
-    var $mainPanel = $(this.$el).find('.list-holder > .main-panel');
+    this.unwatchExpanded();
+
+    var $mainPanel = $(this.$el).children('.list-holder').children('.main-panel');
     $mainPanel.off('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd');
+
+    clearInterval(this.refreshRequestsInterval);
+    clearInterval(this.notificationsInterval);
   },
   computed: {
+    activeContextItem: function() {
+      return this.model.contextView && this.model.contextView.activeItem &&
+        this.model.contextView.activeItem.name;
+    },
+    contextExpanded: function() {
+      return this.model.contextView && this.model.contextView.expanded;
+    },
+    requestsCount: function() {
+      var contextView = this.model.contextView;
+      if (contextView && contextView.notifications) {
+        return contextView.notifications.requests;
+      }
+      return 0;
+    },
+    eventLogsCount: function() {
+      var contextView = this.model.contextView;
+      if (contextView && contextView.notifications) {
+        return contextView.notifications.eventlogs;
+      }
+      return 0;
+    },
     searchSuggestions() {
       return constants.MACHINES.SEARCH_SUGGESTIONS;
     }
@@ -69,6 +123,9 @@ export default Vue.component('machines-view', {
     },
     addMachine() {
       NavigationActions.openAddMachine();
-    }
+    },
+    openToolbarRequests: MachinesContextToolbarActions.openToolbarRequests,
+    openToolbarEventLogs: MachinesContextToolbarActions.openToolbarEventLogs,
+    closeToolbar: MachinesContextToolbarActions.closeToolbar
   }
 });

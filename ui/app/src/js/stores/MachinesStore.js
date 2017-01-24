@@ -15,6 +15,9 @@ import services from 'core/services';
 import utils from 'core/utils';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
+import NotificationsStore from 'stores/NotificationsStore';
+import RequestsStore from 'stores/RequestsStore';
+import EventLogStore from 'stores/EventLogStore';
 import PlacementZonesStore from 'stores/PlacementZonesStore';
 
 const OPERATION = {
@@ -75,6 +78,43 @@ let MachinesStore = Reflux.createStore({
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
 
   init() {
+
+    NotificationsStore.listen((notifications) => {
+      if (this.data.hostAddView) {
+        return;
+      }
+
+      this.setInData(['contextView', 'notifications', constants.CONTEXT_PANEL.REQUESTS],
+        notifications.runningRequestItemsCount);
+
+      this.setInData(['contextView', 'notifications', constants.CONTEXT_PANEL.EVENTLOGS],
+        notifications.latestEventLogItemsCount);
+
+      this.emitChange();
+    });
+
+    RequestsStore.listen((requestsData) => {
+      if (this.data.hostAddView) {
+        return;
+      }
+
+      if (this.isContextPanelActive(constants.CONTEXT_PANEL.REQUESTS)) {
+        this.setActiveItemData(requestsData);
+        this.emitChange();
+      }
+    });
+
+    EventLogStore.listen((eventlogsData) => {
+      if (this.data.hostAddView) {
+        return;
+      }
+
+      if (this.isContextPanelActive(constants.CONTEXT_PANEL.EVENTLOGS)) {
+        this.setActiveItemData(eventlogsData);
+        this.emitChange();
+      }
+    });
+
     PlacementZonesStore.listen((placementZonesData) => {
       if (!this.data.editingItemData) {
         return;
@@ -100,7 +140,9 @@ let MachinesStore = Reflux.createStore({
       this.emitChange();
     });
   },
+
   listenables: [actions.MachineActions, actions.MachinesContextToolbarActions],
+
   onOpenMachines(queryOptions, forceReload) {
     var items = utils.getIn(this.data, ['listView', 'items']);
     if (!forceReload && items) {
@@ -283,6 +325,15 @@ let MachinesStore = Reflux.createStore({
     this.setInData(['editingItemData', 'saving'], false);
     console.error(e);
     this.emitChange();
+  },
+  onOpenToolbarRequests() {
+    actions.RequestsActions.openRequests();
+    this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
+
+  },
+  onOpenToolbarEventLogs(highlightedItemLink) {
+    actions.EventLogActions.openEventLog(highlightedItemLink);
+    this.openToolbarItem(constants.CONTEXT_PANEL.EVENTLOGS, EventLogStore.getData());
   },
   onOpenToolbarPlacementZones() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.PLACEMENT_ZONES,

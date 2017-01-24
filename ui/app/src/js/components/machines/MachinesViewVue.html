@@ -10,7 +10,7 @@
   -->
 
 <div class="machines-view">
-  <div class="machines-list-holder">
+  <div class="list-holder" v-bind:class="{'right-context-expanded':  contextExpanded}">
     <div class="main-panel">
       <div class="list-view machines-list scroll-view"
            v-bind:class="{'context-selected': model.selectedItem}"
@@ -67,13 +67,41 @@
         </div>
       </div>
     </div>
+
+    <context-sidepanel class="right-context-panel" v-on:close="closeToolbar()">
+
+      <div slot="toolbar" class="toolbar">
+        <context-sidepanel-toolbar-item
+          v-bind:active="activeContextItem === 'requests'"
+          v-bind:icon-class="'fa fa-tasks'"
+          v-bind:label="i18n('app.request.contextPanelTooltip')"
+          v-bind:notifications="requestsCount"
+          v-on:open="openToolbarRequests()" v-on:close="closeToolbar()">
+        </context-sidepanel-toolbar-item>
+
+        <context-sidepanel-toolbar-item
+          v-bind:active="activeContextItem === 'eventlogs'"
+          v-bind:icon-class="'fa fa-binoculars'"
+          v-bind:label="i18n('app.eventlog.contextPanelTooltip')"
+          v-bind:notifications="eventLogsCount"
+          v-on:open="openToolbarEventLogs()" v-on:close="closeToolbar()">
+        </context-sidepanel-toolbar-item>
+      </div>
+
+      <div slot="content" class="content">
+        <requests-list v-if="activeContextItem === 'requests'"
+          v-bind:model="model.contextView.activeItem.data"></requests-list>
+        <eventlog-list v-if="activeContextItem === 'eventlogs'"
+          v-bind:model="model.contextView.activeItem.data"></eventlog-list>
+      </div>
+
+    </context-sidepanel>
+
+    <div v-if="model.editingItemData" transition="slide-and-fade" class="closable-view">
+      <a class="close-button" v-on:click="goBack($event)"><i
+        class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
+      <machine-edit-view v-bind:model="model.editingItemData" class="content"></machine-edit-view>
+    </div>
+
   </div>
-
-  <div v-if="model.editingItemData" transition="slide-and-fade" class="closable-view">
-    <a class="close-button" v-on:click="goBack($event)"><i
-      class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
-
-    <machine-edit-view v-bind:model="model.editingItemData" class="content"></machine-edit-view>
-  </div>
-
 </div>
