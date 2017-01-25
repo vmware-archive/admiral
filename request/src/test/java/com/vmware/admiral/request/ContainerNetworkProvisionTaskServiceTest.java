@@ -27,7 +27,6 @@ import java.util.UUID;
 
 import org.junit.Test;
 
-import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
@@ -127,9 +126,11 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
 
         ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
         ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
+        assertNotNull(cont1);
+        assertNotNull(cont2);
 
-        AssertUtil.assertTrue(!cont1.parentLink.equals(cont2.parentLink),
-                "Containers should be on different hosts.");
+        assertTrue("Containers should be on different hosts.",
+                !cont1.parentLink.equals(cont2.parentLink));
 
         ContainerNetworkState network = getDocument(ContainerNetworkState.class, networkLink);
 
@@ -223,9 +224,11 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
 
         ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
         ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
+        assertNotNull(cont1);
+        assertNotNull(cont2);
 
-        AssertUtil.assertTrue(!cont1.parentLink.equals(cont2.parentLink),
-                "Containers should be on different hosts.");
+        assertTrue("Containers should be on different hosts.",
+                !cont1.parentLink.equals(cont2.parentLink));
 
         ContainerNetworkState network = getDocument(ContainerNetworkState.class, networkLink);
         assertThat(network.name, startsWith(networkName));

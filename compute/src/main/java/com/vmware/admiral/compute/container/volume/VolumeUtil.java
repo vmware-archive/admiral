@@ -186,7 +186,7 @@ public class VolumeUtil {
             if (!alreadyIn) {
                 int newSize = cd.affinity.length + 1;
                 cd.affinity = Arrays.copyOf(cd.affinity, newSize);
-                cd.affinity[newSize] = affinityTo;
+                cd.affinity[newSize - 1] = affinityTo;
             }
         } else {
             cd.affinity = new String[] { affinityTo };
