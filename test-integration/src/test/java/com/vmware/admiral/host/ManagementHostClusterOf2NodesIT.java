@@ -51,6 +51,7 @@ import com.vmware.xenon.common.Utils;
  * Similar to {@link ManagementHostAuthUsersIT} but this test includes 2 nodes, only SSL enabled and
  * the users' passwords are encrypted.
  */
+@Ignore("VBV-984")
 public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT {
 
     private ManagementHost hostOne;
@@ -97,7 +98,6 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         assertEquals(HttpURLConnection.HTTP_FORBIDDEN, doRestrictedOperation(hostTwo, null));
     }
 
-    @Ignore("VBV-984")
     @Test
     public void testRestrictedOperationWithNodesRestarted() throws Throwable {
 
@@ -235,17 +235,21 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         Map<String, String> headers = getAuthenticationHeaders(hostOne);
 
         // 1. Request a container instance:
-        RequestBrokerState request = TestRequestStateFactory.createRequestState(ResourceType.CONTAINER_TYPE.getName(), "test-container-desc");
-        request.resourceDescriptionLink = ContainerDescriptionService.FACTORY_LINK + "/test-container-desc";
+        RequestBrokerState request = TestRequestStateFactory
+                .createRequestState(ResourceType.CONTAINER_TYPE.getName(), "test-container-desc");
+        request.resourceDescriptionLink = ContainerDescriptionService.FACTORY_LINK
+                + "/test-container-desc";
         request.tenantLinks = groupResourcePlacementState.tenantLinks;
         request.documentSelfLink = "test-request";
         hostOne.log(Level.INFO, "########  Start of request ######## ");
         startRequest(headers, hostOne, request);
 
-        URI uri = UriUtils.buildUri(hostOne, RequestBrokerFactoryService.SELF_LINK + "/" + request.documentSelfLink);
+        URI uri = UriUtils.buildUri(hostOne,
+                RequestBrokerFactoryService.SELF_LINK + "/" + request.documentSelfLink);
 
         // 2. Wait for provisioning request to finish
-        RequestJSONResponseMapper response = waitTaskToCompleteAndGetResponse(headers, hostOne, uri);
+        RequestJSONResponseMapper response = waitTaskToCompleteAndGetResponse(headers, hostOne,
+                uri);
 
         hostOne.log(Level.INFO, "########  Request finished. ######## ");
 
@@ -261,19 +265,21 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
             try {
                 containerAsJson = getResource(hostTwo, headers, containersUri);
             } catch (Exception e) {
-                throw new RuntimeException(String.format("Exception appears while trying to get a container %s ", containersUri));
+                throw new RuntimeException(String.format(
+                        "Exception appears while trying to get a container %s ", containersUri));
             }
             assertNotNull(containerAsJson);
-            ContainerJSONResponseMapper container = Utils.fromJson(containerAsJson, ContainerJSONResponseMapper.class);
+            ContainerJSONResponseMapper container = Utils.fromJson(containerAsJson,
+                    ContainerJSONResponseMapper.class);
             assertNotNull(container);
-            assertEquals(ContainerDescriptionService.FACTORY_LINK + "/test-container-desc", container.descriptionLink);
+            assertEquals(ContainerDescriptionService.FACTORY_LINK + "/test-container-desc",
+                    container.descriptionLink);
             assertEquals(PowerState.RUNNING.toString(), container.powerState);
 
         });
 
     }
 
-    @Ignore("VBV-984")
     @Test
     public void testProvisioningOfApplicationInCluster() throws Throwable {
 
@@ -289,7 +295,8 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         container2Desc.name = "container2";
         container2Desc.portBindings = null;
 
-        CompositeDescription compositeDesc = createCompositeDesc(headers, hostOne, container1Desc, container2Desc);
+        CompositeDescription compositeDesc = createCompositeDesc(headers, hostOne, container1Desc,
+                container2Desc);
 
         // 1. Request a composite container:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
@@ -298,10 +305,12 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         request.tenantLinks = groupResourcePlacementState.tenantLinks;
         startRequest(headers, hostOne, request);
 
-        URI uri = UriUtils.buildUri(hostOne, RequestBrokerFactoryService.SELF_LINK + "/" + request.documentSelfLink);
+        URI uri = UriUtils.buildUri(hostOne,
+                RequestBrokerFactoryService.SELF_LINK + "/" + request.documentSelfLink);
 
         // 2. Wait for provisioning request to finish
-        RequestJSONResponseMapper response = waitTaskToCompleteAndGetResponse(headers, hostOne, uri);
+        RequestJSONResponseMapper response = waitTaskToCompleteAndGetResponse(headers, hostOne,
+                uri);
 
         hostOne.log(Level.INFO, "########  Request finished. ######## ");
 
@@ -315,7 +324,8 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         URI compositeComponentURI = UriUtils.buildUri(hostTwo, response.resourceLinks.get(0));
 
         String compositeComponentAsJSON = getResource(hostTwo, headers, compositeComponentURI);
-        CompositeComponentJSONResponseMapper compositeComponent = Utils.fromJson(compositeComponentAsJSON, CompositeComponentJSONResponseMapper.class);
+        CompositeComponentJSONResponseMapper compositeComponent = Utils
+                .fromJson(compositeComponentAsJSON, CompositeComponentJSONResponseMapper.class);
         assertNotNull(compositeComponent);
 
         assertEquals(compositeDesc.documentSelfLink, compositeComponent.compositeDescriptionLink);
