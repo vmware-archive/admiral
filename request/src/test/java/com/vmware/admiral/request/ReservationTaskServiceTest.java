@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -46,6 +47,7 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 
 public class ReservationTaskServiceTest extends RequestBaseTest {
@@ -98,7 +100,8 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
         groupPlacementState.customProperties = new HashMap<>();
         groupPlacementState.customProperties.put("key1", "placement-value1");
         groupPlacementState.customProperties.put("key2", "placement-value2");
-        groupPlacementState = doPost(groupPlacementState, GroupResourcePlacementService.FACTORY_LINK);
+        groupPlacementState = doPost(groupPlacementState,
+                GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(groupPlacementState);
 
         GroupResourcePlacementState notEnougInstancesPlacement = TestRequestStateFactory
@@ -289,6 +292,14 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
         groupPlacementState = getDocument(GroupResourcePlacementState.class,
                 groupPlacementState.documentSelfLink);
 
+        if (!groupPlacementState.documentSelfLink.equals(task.groupResourcePlacementLink)) {
+            GroupResourcePlacementState actual = getDocument(GroupResourcePlacementState.class,
+                    task.groupResourcePlacementLink);
+            host.log(Level.WARNING,
+                    "ReservationTask picked wrong placement!\n Expected: %s\n Actual: %s",
+                    Utils.toJsonHtml(groupPlacementState), Utils.toJsonHtml(actual));
+
+        }
         assertEquals(groupPlacementState.documentSelfLink, task.groupResourcePlacementLink);
 
         assertEquals(groupPlacementState.allocatedInstancesCount, task.resourceCount);
@@ -475,7 +486,7 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
 
         List<String> expectedHostsList = new ArrayList<ComputeState>(
                 Arrays.asList(host3, host4)).stream()
-                .map((e) -> e.documentSelfLink).collect(Collectors.toList());
+                        .map((e) -> e.documentSelfLink).collect(Collectors.toList());
         assertTrue(expectedHostsList.containsAll(
                 task.hostSelections.stream().map(h -> h.hostLink)
                         .collect(Collectors.toList())));
@@ -508,7 +519,8 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
     // the ReservationTaskState contains tenant links in format "/tenants/{tenant-name}"
     // expected to return all placements for the tenant
     @Test
-    public void testReservationTaskLifeCycleWithRequestComingFromTheContainerTab() throws Throwable {
+    public void testReservationTaskLifeCycleWithRequestComingFromTheContainerTab()
+            throws Throwable {
 
         // create placement without a group
         GroupResourcePlacementState placement = TestRequestStateFactory
@@ -576,8 +588,7 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
         placement.tenantLinks = TestRequestStateFactory.createTenantLinks(
                 TestRequestStateFactory.TENANT_NAME,
                 TestRequestStateFactory.GROUP_NAME_FINANCE,
-                TestRequestStateFactory.USER_NAME
-                );
+                TestRequestStateFactory.USER_NAME);
         placement = doPost(placement,
                 GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(placement);
@@ -642,7 +653,8 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
                 TestRequestStateFactory.TENANT_NAME,
                 TestRequestStateFactory.GROUP_NAME_DEVELOPMENT,
                 TestRequestStateFactory.USER_NAME);
-        placementDevelopment = doPost(placementDevelopment, GroupResourcePlacementService.FACTORY_LINK);
+        placementDevelopment = doPost(placementDevelopment,
+                GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(placementDevelopment);
 
         // create a reservation
@@ -712,7 +724,8 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
 
         assertEquals(groupPlacementStateEnoughMemory.maxNumberInstances - task.resourceCount,
                 groupPlacementStateEnoughMemory.availableInstancesCount);
-        assertEquals(groupPlacementStateEnoughMemory.documentSelfLink, task.groupResourcePlacementLink);
+        assertEquals(groupPlacementStateEnoughMemory.documentSelfLink,
+                task.groupResourcePlacementLink);
         assertEquals(1, groupPlacementStateEnoughMemory.resourceQuotaPerResourceDesc.size());
         Long countPerDesc = groupPlacementStateEnoughMemory.resourceQuotaPerResourceDesc
                 .get(task.resourceDescriptionLink);
