@@ -25,6 +25,7 @@ import java.util.Random;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
@@ -265,6 +266,7 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
         assertEquals(placementState.documentSelfLink, task.groupResourcePlacementLink);
     }
 
+    @Ignore("VBV-1035")
     @Test
     public void testReservationTaskLifeCycleWithNoGroup() throws Throwable {
         GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
