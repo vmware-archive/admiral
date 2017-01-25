@@ -22,10 +22,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
@@ -48,7 +46,6 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 
 public class ReservationTaskServiceTest extends RequestBaseTest {
@@ -266,49 +263,54 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
         assertEquals(placementState.documentSelfLink, task.groupResourcePlacementLink);
     }
 
-    @Ignore("VBV-1035")
     @Test
     public void testReservationTaskLifeCycleWithNoGroup() throws Throwable {
         GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
                 .createGroupResourcePlacementState();
         groupPlacementState.tenantLinks = null;
+        groupPlacementState.maxNumberInstances = 100;
         groupPlacementState = doPost(groupPlacementState,
                 GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(groupPlacementState);
+
+        GroupResourcePlacementState defaultPlacementState = TestRequestStateFactory
+                .createGroupResourcePlacementState();
+        defaultPlacementState.maxNumberInstances = 100;
+        defaultPlacementState = doPost(defaultPlacementState,
+                GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(defaultPlacementState);
 
         // create another suitable group placement but with a group that should not be selected
         doPost(TestRequestStateFactory.createGroupResourcePlacementState(),
                 GroupResourcePlacementService.FACTORY_LINK);
 
-        ReservationTaskState task = new ReservationTaskState();
-        task.tenantLinks = null;
-        task.resourceDescriptionLink = containerDesc.documentSelfLink;
-        task.resourceCount = 5;
-        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        ReservationTaskState taskTemplate = new ReservationTaskState();
+        taskTemplate.tenantLinks = null;
+        taskTemplate.resourceDescriptionLink = containerDesc.documentSelfLink;
+        taskTemplate.resourceCount = 5;
+        taskTemplate.serviceTaskCallback = ServiceTaskCallback.createEmpty();
 
-        task = doPost(task, ReservationTaskFactoryService.SELF_LINK);
-        assertNotNull(task);
+        int totalAllocatedResources = 0;
+        int maxRequests = 5;
 
-        task = waitForTaskSuccess(task.documentSelfLink, ReservationTaskState.class);
+        for (int i = 0; i < maxRequests; i++) {
+            ReservationTaskState task = doPost(taskTemplate,
+                    ReservationTaskFactoryService.SELF_LINK);
+            assertNotNull(task);
 
-        groupPlacementState = getDocument(GroupResourcePlacementState.class,
-                groupPlacementState.documentSelfLink);
+            task = waitForTaskSuccess(task.documentSelfLink, ReservationTaskState.class);
+            totalAllocatedResources += task.resourceCount;
 
-        if (!groupPlacementState.documentSelfLink.equals(task.groupResourcePlacementLink)) {
-            GroupResourcePlacementState actual = getDocument(GroupResourcePlacementState.class,
-                    task.groupResourcePlacementLink);
-            host.log(Level.WARNING,
-                    "ReservationTask picked wrong placement!\n Expected: %s\n Actual: %s",
-                    Utils.toJsonHtml(groupPlacementState), Utils.toJsonHtml(actual));
+            groupPlacementState = getDocument(GroupResourcePlacementState.class,
+                    groupPlacementState.documentSelfLink);
 
+            assertEquals(groupPlacementState.documentSelfLink, task.groupResourcePlacementLink);
+            assertEquals(totalAllocatedResources, groupPlacementState.allocatedInstancesCount);
+            assertEquals(1, groupPlacementState.resourceQuotaPerResourceDesc.size());
+            Long countPerDesc = groupPlacementState.resourceQuotaPerResourceDesc
+                    .get(task.resourceDescriptionLink);
+            assertEquals(totalAllocatedResources, countPerDesc.longValue());
         }
-        assertEquals(groupPlacementState.documentSelfLink, task.groupResourcePlacementLink);
-
-        assertEquals(groupPlacementState.allocatedInstancesCount, task.resourceCount);
-        assertEquals(1, groupPlacementState.resourceQuotaPerResourceDesc.size());
-        Long countPerDesc = groupPlacementState.resourceQuotaPerResourceDesc
-                .get(task.resourceDescriptionLink);
-        assertEquals(task.resourceCount, countPerDesc.longValue());
     }
 
     @Test
@@ -325,6 +327,7 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
         GroupResourcePlacementState globalGroupState = TestRequestStateFactory
                 .createGroupResourcePlacementState();
         globalGroupState.tenantLinks = null;
+        globalGroupState.maxNumberInstances = 100;
         globalGroupState = doPost(globalGroupState,
                 GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(globalGroupState);
@@ -333,29 +336,38 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
         GroupResourcePlacementState differentGroup = TestRequestStateFactory
                 .createGroupResourcePlacementState();
         differentGroup.tenantLinks = Collections.singletonList("different-group");
+        differentGroup.maxNumberInstances = 100;
         differentGroup = doPost(differentGroup, GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(differentGroup);
 
-        ReservationTaskState task = new ReservationTaskState();
-        task.tenantLinks = groupPlacementState.tenantLinks;
-        task.resourceDescriptionLink = containerDesc.documentSelfLink;
-        task.resourceCount = groupPlacementState.maxNumberInstances + 1;
-        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        ReservationTaskState taskTemplate = new ReservationTaskState();
+        taskTemplate.tenantLinks = groupPlacementState.tenantLinks;
+        taskTemplate.resourceDescriptionLink = containerDesc.documentSelfLink;
+        taskTemplate.resourceCount = groupPlacementState.maxNumberInstances + 1;
+        taskTemplate.serviceTaskCallback = ServiceTaskCallback.createEmpty();
 
-        task = doPost(task, ReservationTaskFactoryService.SELF_LINK);
-        assertNotNull(task);
+        int totalAllocatedResources = 0;
+        int maxRequests = 5;
 
-        task = waitForTaskSuccess(task.documentSelfLink, ReservationTaskState.class);
+        for (int i = 0; i < maxRequests; i++) {
+            ReservationTaskState task = doPost(taskTemplate,
+                    ReservationTaskFactoryService.SELF_LINK);
+            assertNotNull(task);
 
-        globalGroupState = getDocument(GroupResourcePlacementState.class,
-                globalGroupState.documentSelfLink);
+            task = waitForTaskSuccess(task.documentSelfLink, ReservationTaskState.class);
 
-        assertEquals(globalGroupState.allocatedInstancesCount, task.resourceCount);
-        assertEquals(globalGroupState.documentSelfLink, task.groupResourcePlacementLink);
-        assertEquals(1, globalGroupState.resourceQuotaPerResourceDesc.size());
-        Long countPerDesc = globalGroupState.resourceQuotaPerResourceDesc
-                .get(task.resourceDescriptionLink);
-        assertEquals(task.resourceCount, countPerDesc.longValue());
+            totalAllocatedResources += task.resourceCount;
+
+            globalGroupState = getDocument(GroupResourcePlacementState.class,
+                    globalGroupState.documentSelfLink);
+
+            assertEquals(totalAllocatedResources, globalGroupState.allocatedInstancesCount);
+            assertEquals(globalGroupState.documentSelfLink, task.groupResourcePlacementLink);
+            assertEquals(1, globalGroupState.resourceQuotaPerResourceDesc.size());
+            Long countPerDesc = globalGroupState.resourceQuotaPerResourceDesc
+                    .get(task.resourceDescriptionLink);
+            assertEquals(totalAllocatedResources, countPerDesc.longValue());
+        }
     }
 
     @Test

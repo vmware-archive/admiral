@@ -103,8 +103,7 @@ public class ReservationTaskService
 
         // Service fields:
         /** (Internal) Set by task. The link to the selected group placement. */
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL },
-                indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String groupResourcePlacementLink;
 
         /**
@@ -273,20 +272,13 @@ public class ReservationTaskService
                         state.resourceType)
                 .build());
 
-        if (state.tenantLinks == null || state.tenantLinks.isEmpty()) {
+        if (isGlobal(state)) {
+            logInfo("Quering for global placements for resource description: [%s] and resource count: [%s]...",
+                    state.resourceDescriptionLink, state.resourceCount);
 
-            if (isGlobal(state)) {
-                logInfo("Quering for global placements for resource description: [%s] and resource count: [%s]...",
-                        state.resourceDescriptionLink, state.resourceCount);
-
-                Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(null);
-                q.querySpec.query.addBooleanClause(tenantLinksQuery);
-            } else {
-                logInfo("Quering for all placements for resource description: [%s] and resource count: [%s]...",
-                        state.resourceDescriptionLink, state.resourceCount);
-            }
+            Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(null);
+            q.querySpec.query.addBooleanClause(tenantLinksQuery);
         } else {
-
             logInfo("Quering for group [%s] placements for resource description: [%s] and resource count: [%s]...",
                     state.tenantLinks, state.resourceDescriptionLink, state.resourceCount);
 
@@ -481,7 +473,8 @@ public class ReservationTaskService
     }
 
     private void makeReservation(ReservationTaskState state,
-            String placementLink, LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks) {
+            String placementLink,
+            LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks) {
 
         // TODO: implement more sophisticated algorithm to pick the right group placement based on
         // availability and current allocation of resources.
