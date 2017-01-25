@@ -213,7 +213,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
                             NETWORK_CREATE_RETRIES_COUNT - retryCount.get());
                     processCreateNetwork(context, retryCount.get());
                 } else {
-                    fail(context.request, ex);
+                    fail(context.request, op, ex);
                 }
             } else {
                 @SuppressWarnings("unchecked")

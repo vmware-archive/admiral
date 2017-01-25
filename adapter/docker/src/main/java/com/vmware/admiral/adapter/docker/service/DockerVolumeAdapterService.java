@@ -162,7 +162,7 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
 
         context.executor.createVolume(createCommandInput, (op, ex) -> {
             if (ex != null) {
-                fail(context.request, ex);
+                fail(context.request, op, ex);
             } else {
                 patchTaskStage(context.request, TaskStage.FINISHED, null);
             }
@@ -176,7 +176,7 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
 
         context.executor.removeVolume(deleteCommandInput, (op, ex) -> {
             if (ex != null) {
-                fail(context.request, ex);
+                fail(context.request, op, ex);
             } else {
                 patchTaskStage(context.request, TaskStage.FINISHED, null);
             }

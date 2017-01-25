@@ -155,7 +155,7 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
                                         "Unable to inspect image %s on the remote host: %s",
                                         commandInput.getProperties().get(
                                                 DOCKER_BUILD_IMAGE_INSPECT_NAME_PROP_NAME), ex);
-                                fail(request, ex);
+                                fail(request, o, ex);
                             } else {
                                 logInfo("Completed inspect image request on remote machine: %s ",
                                         computeState.documentSelfLink);
@@ -196,7 +196,7 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
                     if (ex != null) {
                         logWarning("Unable to delete image %s on the remote host: %s", imageName,
                                 ex);
-                        fail(request, ex);
+                        fail(request, operation, ex);
                     } else {
                         logInfo("Image deleted %s on remote machine: %s ", imageName,
                                 computeState.documentSelfLink);
@@ -235,7 +235,7 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
                             DOCKER_BUILD_IMAGE_TAG_PROP_NAME);
                     if (ex != null) {
                         logSevere("Unable to build image %s on the remote host! ", imageName);
-                        fail(request, ex);
+                        fail(request, operation, ex);
                     } else {
                         logInfo("Image created: %s on remote machine: %s", imageName,
                                 computeState.documentSelfLink);
