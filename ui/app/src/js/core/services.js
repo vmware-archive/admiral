@@ -1616,6 +1616,8 @@ services.createRequest = function(resourceDescriptionLink, tenantLinks, group, r
     } else {
       request.tenantLinks = [group];
     }
+  } else {
+    request.tenantLinks = tenantLinks;
   }
 
   return post(links.REQUESTS, request).then(function(createdRequest) {
@@ -1623,18 +1625,14 @@ services.createRequest = function(resourceDescriptionLink, tenantLinks, group, r
   });
 };
 
-services.createComputeRequest = function(resourceDescription) {
-  var request = {};
-  request.resourceCount = 1;
-  request.resourceType = COMPOSITE_COMPONENT_TYPE;
-  request.resourceDescriptionLink = resourceDescription.documentSelfLink;
-  request.tenantLinks = resourceDescription.tenantLinks;
-  request.customProperties = {
+services.createMachine = function(resourceDescription) {
+  var resourceDescriptionLink = resourceDescription.documentSelfLink;
+  var tenantLinks = resourceDescription.tenantLinks;
+  var customProperties = {
     __allocation_request: true
   };
-  return post(links.REQUESTS, request).then(function(createdRequest) {
-    return createdRequest;
-  });
+  return services.createRequest(resourceDescriptionLink, tenantLinks, null,
+      COMPOSITE_COMPONENT_TYPE, customProperties);
 };
 
 services.loadContainerTemplates = function() {
