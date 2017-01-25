@@ -33,6 +33,7 @@ There are three ways you can start Admiral:
 docker run -d -p 8282:8282 --name admiral vmware/admiral
 ```
 Open `http://<docker-host-IP>:8282` in browser...[Configure Docker Host](https://github.com/vmware/admiral/wiki/User-guide#configure-existing-container-docker-host)
+
 **Note** Due to the significant amount of logs generated it is advisable to include docker log parameters:
 ```shell
 --log-driver=json-file --log-opt max-size=1g --log-opt max-file=10
