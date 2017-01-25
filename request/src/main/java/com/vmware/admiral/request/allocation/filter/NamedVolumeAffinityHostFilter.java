@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -50,10 +52,12 @@ public class NamedVolumeAffinityHostFilter
 
     private final ServiceHost host;
     private List<String> volumeNames;
+    private List<String> tenantLinks;
 
     public NamedVolumeAffinityHostFilter(ServiceHost host, ContainerDescription desc) {
         this.host = host;
         this.volumeNames = extractVolumeNames(desc.volumes);
+        this.tenantLinks = desc.tenantLinks;
     }
 
     @Override
@@ -65,7 +69,9 @@ public class NamedVolumeAffinityHostFilter
             return;
         }
 
-        findVolumeDescriptions(state, hostSelectionMap, callback);
+        prefilterByExternalVolumesLocation(state, hostSelectionMap,
+                () -> findVolumeDescriptions(state, hostSelectionMap, callback),
+                (e) -> callback.complete(null, e));
     }
 
     @Override
@@ -80,8 +86,104 @@ public class NamedVolumeAffinityHostFilter
                 : Collections.emptyMap();
     }
 
+    private void prefilterByExternalVolumesLocation(PlacementHostSelectionTaskState state,
+            Map<String, HostSelection> hostSelectionMap,
+            Runnable successCallback,
+            Consumer<Throwable> failureCallback) {
+
+        // query for external volumes that match the required volume names and drivers by the
+        // currently processed container. Choose one volume state for each external volume and
+        // filter the host map leaving only those hosts that belong to the selected volumes
+
+        // Note: this approach assumes that the external volumes are already created with the
+        // required plug-ins and there is no naming conflicts between volumes created with different
+        // plug-ins. The more complex approach of querying the actual volume descriptions associated
+        // with the current container cannot be applied because vRA does not provide a composite
+        // description for application provisioning.
+
+        final QueryTask volumeQuery = QueryUtil.buildQuery(ContainerVolumeState.class, false);
+
+        QueryUtil.addListValueClause(volumeQuery, ContainerVolumeState.FIELD_NAME_NAME,
+                volumeNames);
+
+        if (tenantLinks != null && !tenantLinks.isEmpty()) {
+            volumeQuery.querySpec.query
+                    .addBooleanClause(QueryUtil.addTenantGroupAndUserClause(tenantLinks));
+        }
+
+        QueryUtil.addExpandOption(volumeQuery);
+
+        Map<String, List<ContainerVolumeState>> externalVolumesByName = new HashMap<>();
+        new ServiceDocumentQuery<>(host, ContainerVolumeState.class)
+                .query(volumeQuery, (r) -> {
+                    if (r.hasException()) {
+                        host.log(Level.WARNING,
+                                "Exception while querying for volume states. Error: [%s]",
+                                r.getException().getMessage());
+                        failureCallback.accept(r.getException());
+                    } else if (r.hasResult()) {
+                        ContainerVolumeState volume = r.getResult();
+                        if (volume.external != null && volume.external) {
+                            externalVolumesByName
+                                    .computeIfAbsent(volume.name, v -> new ArrayList<>())
+                                    .add(volume);
+                        }
+                    } else {
+                        if (externalVolumesByName.isEmpty()) {
+                            // assume the container is not associated with any external volume
+                            successCallback.run();
+                            return;
+                        }
+
+                        // remove the existing volumes from the list of required ones
+                        volumeNames.removeAll(externalVolumesByName.keySet());
+
+                        selectExternalVolumes(state, externalVolumesByName, hostSelectionMap,
+                                successCallback);
+                    }
+                });
+    }
+
+    private void selectExternalVolumes(PlacementHostSelectionTaskState state,
+            Map<String, List<ContainerVolumeState>> externalVolumesByName,
+            Map<String, HostSelection> hostSelectionMap,
+            Runnable callback) {
+
+        // choose an existing volume state for each external volume that is attached to the current
+        // container. Use the volume parentLinks to filter the hosts that don't belong to the chosen
+        // external volumes
+
+        Set<String> hostLinks = new HashSet<>();
+
+        for (List<ContainerVolumeState> volumes: externalVolumesByName.values()) {
+            ContainerVolumeState selectedVolume = pickOnePerContext(state, volumes);
+            hostLinks.addAll(selectedVolume.parentLinks);
+        }
+
+        hostSelectionMap.entrySet().removeIf(e -> !hostLinks.contains(e.getKey()));
+        callback.run();
+    }
+
+    private ContainerVolumeState pickOnePerContext(PlacementHostSelectionTaskState state,
+            List<ContainerVolumeState> volumes) {
+
+        // In case there are multiple volumes with the same name but on different hosts and another
+        // container must be attached to the current external volume, make sure the same single
+        // external volume is chosen for each such container
+
+        int idx = Math
+                .abs(state.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY).hashCode()
+                        % volumes.size());
+        return volumes.get(idx);
+    }
+
     private void findVolumeDescriptions(PlacementHostSelectionTaskState state,
             Map<String, HostSelection> hostSelectionMap, HostSelectionFilterCompletion callback) {
+
+        if (volumeNames.isEmpty()) {
+            callback.complete(hostSelectionMap, null);
+            return;
+        }
 
         final QueryTask q = QueryUtil.buildQuery(ContainerVolumeDescription.class, false);
 
