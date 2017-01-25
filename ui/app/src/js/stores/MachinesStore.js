@@ -252,7 +252,7 @@ let MachinesStore = Reflux.createStore({
       let documentId = utils.getDocumentId(templateSelfLink);
       return services.loadContainerTemplate(documentId);
     }).then((template) => {
-      return services.createComputeRequest(template);
+      return services.createMachine(template);
     }).then(() => {
       actions.NavigationActions.openMachines();
       this.setInData(['editingItemData'], null);
