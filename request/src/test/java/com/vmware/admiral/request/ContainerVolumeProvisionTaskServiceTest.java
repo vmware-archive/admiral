@@ -25,7 +25,6 @@ import java.util.UUID;
 
 import org.junit.Test;
 
-import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
@@ -118,9 +117,11 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
 
         ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
         ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
+        assertNotNull(cont1);
+        assertNotNull(cont2);
 
-        AssertUtil.assertTrue(!cont1.parentLink.equals(cont2.parentLink),
-                "Containers should be on different hosts.");
+        assertTrue("Containers should be on different hosts.",
+                !cont1.parentLink.equals(cont2.parentLink));
 
         ContainerVolumeState volume = getDocument(ContainerVolumeState.class, volumeLink);
         String volumeDescProp = volume.customProperties.get("volume propKey string");
@@ -129,21 +130,117 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
 
         // Volume must be provisioned on same host where ContainerDesc with volume is.
         if (cont1.descriptionLink.equals(container1DescLink)) {
-            AssertUtil.assertTrue(
-                    volume.originatingHostLink.equals(cont1.parentLink),
-                    "Volume is provisioned on wrong host.");
+            assertTrue("Volume is provisioned on wrong host.",
+                    volume.originatingHostLink.equals(cont1.parentLink));
 
             assertEquals(cont1.volumes.length, 1);
-            AssertUtil.assertTrue(cont1.volumes[0].contains(volume.name), "Host volume name is different than Container volume name.");
-
+            assertTrue("Host volume name is different than Container volume name.",
+                    cont1.volumes[0].contains(volume.name));
         } else {
-            AssertUtil.assertTrue(
-                    volume.originatingHostLink.equals(cont2.parentLink),
-                    "Volume is provisioned on wrong host.");
+            assertTrue("Volume is provisioned on wrong host.",
+                    volume.originatingHostLink.equals(cont2.parentLink));
             assertEquals(cont2.volumes.length, 1);
-            AssertUtil.assertTrue(cont2.volumes[0].contains(volume.name), "Host volume name is different than Container volume name.");
+            assertTrue("Host volume name is different than Container volume name.",
+                    cont2.volumes[0].contains(volume.name));
+        }
+    }
+
+    @Test
+    public void testVolumeProvisioningTaskWithSoftAntiaffinity() throws Throwable {
+
+        ContainerVolumeDescription volumeDesc = TestRequestStateFactory
+                .createContainerVolumeDescription("postgres");
+        volumeDesc.documentSelfLink = UUID.randomUUID().toString();
+
+        // Create ContainerDescription with above volume.
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
+        container1Desc.name = "container1";
+        container1Desc.volumes = new String[] { "postgres:/etc/pgdata/postgres" };
+
+
+        // Create another ContainerDescription with same local volume and try to place it in
+        // different host (soft antiaffinity).
+        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
+        container2Desc.name = "container2";
+        container2Desc.affinity = new String[] { "!container1:soft" };
+        container2Desc.volumes = new String[] { "postgres:/etc/pgdata/postgres" };
+
+        // Setup 2 Docker hosts and resource pool.
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+
+        ComputeState dockerHost1 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost1);
+
+        ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost2);
+
+        CompositeDescription compositeDesc = createCompositeDesc(volumeDesc, container1Desc,
+                container2Desc);
+        assertNotNull(compositeDesc);
+        assertEquals(3, compositeDesc.descriptionLinks.size());
+
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+
+        // 1. Request a composite container:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
+
+        assertNotNull(cc.componentLinks);
+        assertEquals(cc.componentLinks.size(), 3);
+
+        String volumeLink = null;
+        String containerLink1 = null;
+        String containerLink2 = null;
+
+        Iterator<String> iterator = cc.componentLinks.iterator();
+
+        while (iterator.hasNext()) {
+            String link = iterator.next();
+            if (link.startsWith(ContainerVolumeService.FACTORY_LINK)) {
+                volumeLink = link;
+            } else if (containerLink1 == null) {
+                containerLink1 = link;
+            } else {
+                containerLink2 = link;
+            }
         }
 
+        ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
+        ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
+        assertNotNull(cont1);
+        assertNotNull(cont2);
+
+        assertTrue("Containers should be on the same host.",
+                cont1.parentLink.equals(cont2.parentLink));
+
+        ContainerVolumeState volume = getDocument(ContainerVolumeState.class, volumeLink);
+        String volumeDescProp = volume.customProperties.get("volume propKey string");
+        assertNotNull(volumeDescProp);
+        assertEquals("volume customPropertyValue string", volumeDescProp);
+
+        // Volume must be provisioned on same host where both ContainerDesc with volume are.
+        assertTrue("Volume is provisioned on wrong host.",
+                volume.originatingHostLink.equals(cont1.parentLink));
+        assertEquals(cont1.volumes.length, 1);
+        assertTrue("Host volume name is different than Container volume name.",
+                cont1.volumes[0].contains(volume.name));
+
+        assertTrue("Volume is provisioned on wrong host.",
+                volume.originatingHostLink.equals(cont2.parentLink));
+        assertEquals(cont2.volumes.length, 1);
+        assertTrue("Host volume name is different than Container volume name.",
+                cont2.volumes[0].contains(volume.name));
     }
 
     @Test
@@ -192,7 +289,7 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
         List<String> hostLinks = Arrays.asList(dockerHost1.documentSelfLink,
                 dockerHost2.documentSelfLink);
 
-        // Networks are provisioned on the provided hosts
+        // Volumes are provisioned on the provided hosts
         assertTrue(hostLinks.contains(vol1.originatingHostLink));
         assertTrue(hostLinks.contains(vol2.originatingHostLink));
         assertFalse(vol1.originatingHostLink.equals(vol2.originatingHostLink));

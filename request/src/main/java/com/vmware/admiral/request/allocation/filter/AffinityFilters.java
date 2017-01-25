@@ -107,6 +107,7 @@ public final class AffinityFilters {
         // all containers of an application are deployed where they can talk to each other, e.g.
         // same host or same (KV-store) cluster.
         filters.add(new ContainerToNetworkAffinityHostFilter(host, desc));
+        filters.add(new NamedVolumeAffinityHostFilter(host, desc));
 
         // host anti-affinity filters:
         filters.add(new ExposedPortsHostFilter(host, desc));
@@ -115,7 +116,6 @@ public final class AffinityFilters {
 
         // non host related dependency only
         filters.add(new DependsOnAffinityHostFilter(desc));
-        filters.add(new NamedVolumeAffinityHostFilter(host, desc));
 
         // advanced policy filters
         filters.add(new BinpackAffinityHostFilter(host, desc));
