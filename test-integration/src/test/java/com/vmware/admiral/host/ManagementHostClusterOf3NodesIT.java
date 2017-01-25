@@ -33,6 +33,7 @@ import org.junit.Test;
  * Similar to {@link ManagementHostClusterOf2NodesIT} but this test includes 3 nodes, only SSL
  * enabled and the users' passwords are encrypted.
  */
+@Ignore("VBV-984")
 public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT {
 
     private ManagementHost hostOne;
@@ -85,7 +86,6 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
         assertEquals(HttpURLConnection.HTTP_FORBIDDEN, doRestrictedOperation(hostThree, null));
     }
 
-    @Ignore("VBV-984")
     @Test
     public void testRestrictedOperationWithOneNodeRestarted() throws Throwable {
 
@@ -152,7 +152,6 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
         assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
     }
 
-    @Ignore("VBV-984")
     @Test
     public void testRestrictedOperationWithNodesStoppedAndStarted() throws Throwable {
 
