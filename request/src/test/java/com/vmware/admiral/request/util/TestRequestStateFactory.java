@@ -437,8 +437,10 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
     public static ContainerState createContainer() {
         ContainerState cont = new ContainerState();
         cont.parentLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, DOCKER_COMPUTE_ID);
+        cont.descriptionLink = UUID.randomUUID().toString();
         cont.address = COMPUTE_ADDRESS;
         cont.powerState = com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState.RUNNING;
+        cont.customProperties = new HashMap<>();
 
         return cont;
     }
