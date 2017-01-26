@@ -40,6 +40,22 @@ public class ClosureProps {
     public static final int DOCKER_IMAGE_REQUEST_TIMEOUT_SECONDS = Integer.getInteger(
             "adapter.docker.api.client.image_request_timeout_seconds", 60 * 10);
 
+    public static final Integer MAX_EXEC_TIMEOUT_SECONDS_PROP =
+            Integer.getInteger("closure.service.max-exec-timeout-seconds",
+                    600);
+
+    public static final Integer MIN_MEMORY_MB_RES_CONSTRAINT = 50;
+    public static final Integer MAX_MEMORY_MB_RES_CONSTRAINT = 1536;
+
+    public static final Integer MIN_EXEC_TIMEOUT_SECONDS = 1;
+    public static final Integer MAX_EXEC_TIMEOUT_SECONDS = MAX_EXEC_TIMEOUT_SECONDS_PROP;
+
+    public static final Integer MIN_CPU_SHARES = 50;
+    public static final Integer DEFAULT_CPU_SHARES = 1024;
+
+    public static final Integer DEFAULT_EXEC_TIMEOUT_SECONDS = 180;
+    public static final Integer DEFAULT_MEMORY_MB_RES_CONSTRAINT = MIN_MEMORY_MB_RES_CONSTRAINT;
+
     private ClosureProps() {
     }
 

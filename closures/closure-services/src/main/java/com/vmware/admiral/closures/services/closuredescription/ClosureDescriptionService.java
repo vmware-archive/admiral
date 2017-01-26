@@ -20,7 +20,9 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
 import com.vmware.admiral.closures.drivers.DriverConstants;
+import com.vmware.admiral.closures.util.ClosureProps;
 import com.vmware.admiral.closures.util.ClosureUtils;
+import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatefulService;
 
@@ -47,7 +49,8 @@ public class ClosureDescriptionService extends StatefulService {
         }
 
         ClosureDescription body = post.getBody(ClosureDescription.class);
-        logInfo("Closure source: %s, Closure source URL: %s, language: %s", body.source, body.sourceURL,
+        logInfo("Closure source: %s, Closure source URL: %s, language: %s", body.source,
+                body.sourceURL,
                 body.runtime);
 
         if (!isValid(post, body)) {
@@ -79,25 +82,33 @@ public class ClosureDescriptionService extends StatefulService {
     }
 
     @Override
-    public void handlePatch(Operation put) {
-        if (isBodyEmpty(put)) {
+    public void handlePatch(Operation patch) {
+        if (isBodyEmpty(patch)) {
             return;
         }
 
-        ClosureDescription body = put.getBody(ClosureDescription.class);
-        logInfo("Closure source: %s Closure source URL: %s, language: %s", body.source, body.sourceURL,
-                body.runtime);
+        ClosureDescription currentState = getState(patch);
+        ClosureDescription patchedState = patch.getBody(ClosureDescription.class);
+        logInfo("Closure source: %s Closure source URL: %s, language: %s", patchedState.source,
+                patchedState.sourceURL, patchedState.runtime);
 
-        if (!isValid(put, body)) {
+        if (patchedState.logConfiguration != null && !patchedState.logConfiguration.entrySet()
+                .isEmpty()) {
+            currentState.logConfiguration = patchedState.logConfiguration;
+        }
+
+        patchedState.logConfiguration = null;
+        PropertyUtils.mergeServiceDocuments(currentState, patchedState);
+
+        if (!isValid(patch, currentState)) {
             return;
         }
 
-        verifyResourceConstraints(body);
+        verifyResourceConstraints(currentState);
 
-        formatDependencies(body);
+        formatDependencies(currentState);
 
-        this.setState(put, body);
-        put.setBody(body).complete();
+        patch.setBody(currentState).complete();
     }
 
     @Override
@@ -116,30 +127,42 @@ public class ClosureDescriptionService extends StatefulService {
             body.resources = createDefaultConstraints(body);
         } else {
             // Validate Memory & CPU resource constraints
-            if (body.resources.ramMB < ResourcesConstants.MIN_MEMORY_MB_RES_CONSTRAINT) {
-                logWarning("Closure definition memory is below allowed min: %s. Setting to min allowed: %s", body
-                        .resources.ramMB, ResourcesConstants.MIN_MEMORY_MB_RES_CONSTRAINT);
-                body.resources.ramMB = ResourcesConstants.MIN_MEMORY_MB_RES_CONSTRAINT;
-            } else if (body.resources.ramMB > ResourcesConstants.MAX_MEMORY_MB_RES_CONSTRAINT) {
-                logWarning("Closure definition memory is above allowed max: %s. Setting to max allowed: %s", body
-                        .resources.ramMB, ResourcesConstants.MAX_MEMORY_MB_RES_CONSTRAINT);
-                body.resources.ramMB = ResourcesConstants.MAX_MEMORY_MB_RES_CONSTRAINT;
+            if (body.resources.ramMB < ClosureProps.MIN_MEMORY_MB_RES_CONSTRAINT) {
+                logWarning(
+                        "Closure definition memory is below allowed min: %s. Setting to min allowed: %s",
+                        body
+                                .resources.ramMB, ClosureProps.MIN_MEMORY_MB_RES_CONSTRAINT);
+                body.resources.ramMB = ClosureProps.MIN_MEMORY_MB_RES_CONSTRAINT;
+            } else if (body.resources.ramMB > ClosureProps.MAX_MEMORY_MB_RES_CONSTRAINT) {
+                logWarning(
+                        "Closure definition memory is above allowed max: %s. Setting to max allowed: %s",
+                        body
+                                .resources.ramMB, ClosureProps.MAX_MEMORY_MB_RES_CONSTRAINT);
+                body.resources.ramMB = ClosureProps.MAX_MEMORY_MB_RES_CONSTRAINT;
             }
 
             // Calculate CPU shares based on memory
             body.resources.cpuShares = calculateCpuShares(body.resources.ramMB);
-            logInfo("Calculated CPU shares: %s for memory used: %s", body.resources.ramMB, body.resources
-                    .cpuShares);
+            logInfo("Calculated CPU shares: %s for memory used: %s", body.resources.ramMB,
+                    body.resources
+                            .cpuShares);
 
             // Validate execution Timeout
-            if (body.resources.timeoutSeconds < ResourcesConstants.MIN_EXEC_TIMEOUT_SECONDS) {
-                logWarning("Closure definition timeout is below allowed min: %s. Setting to min allowed: %s", body
-                        .resources.timeoutSeconds, ResourcesConstants.MIN_EXEC_TIMEOUT_SECONDS);
-                body.resources.timeoutSeconds = ResourcesConstants.MIN_EXEC_TIMEOUT_SECONDS;
-            } else if (body.resources.timeoutSeconds > ResourcesConstants.MAX_EXEC_TIMEOUT_SECONDS) {
-                logWarning("Closure definition timeout is above the allowed max: %s. Setting to max allowed: %s", body
-                        .resources.timeoutSeconds, ResourcesConstants.MAX_EXEC_TIMEOUT_SECONDS);
-                body.resources.timeoutSeconds = ResourcesConstants.MAX_EXEC_TIMEOUT_SECONDS;
+            if (body.resources.timeoutSeconds < ClosureProps.MIN_EXEC_TIMEOUT_SECONDS) {
+                logWarning(
+                        "Closure definition timeout is below allowed min: %s. Setting to min allowed: %s",
+                        body
+                                .resources.timeoutSeconds,
+                        ClosureProps.MIN_EXEC_TIMEOUT_SECONDS);
+                body.resources.timeoutSeconds = ClosureProps.MIN_EXEC_TIMEOUT_SECONDS;
+            } else if (body.resources.timeoutSeconds
+                    > ClosureProps.MAX_EXEC_TIMEOUT_SECONDS) {
+                logWarning(
+                        "Closure definition timeout is above the allowed max: %s. Setting to max allowed: %s",
+                        body
+                                .resources.timeoutSeconds,
+                        ClosureProps.MAX_EXEC_TIMEOUT_SECONDS);
+                body.resources.timeoutSeconds = ClosureProps.MAX_EXEC_TIMEOUT_SECONDS;
             }
         }
 
@@ -149,12 +172,12 @@ public class ClosureDescriptionService extends StatefulService {
      * Calculate CPU shares proportionally based on memory reservation.
      */
     private Integer calculateCpuShares(Integer ramMB) {
-        double memPercent = (float) ramMB / ResourcesConstants.MAX_MEMORY_MB_RES_CONSTRAINT;
+        double memPercent = (float) ramMB / ClosureProps.MAX_MEMORY_MB_RES_CONSTRAINT;
 
-        int calculatedShares = (int) Math.round(memPercent * ResourcesConstants.DEFAULT_CPU_SHARES);
+        int calculatedShares = (int) Math.round(memPercent * ClosureProps.DEFAULT_CPU_SHARES);
 
-        if (calculatedShares < ResourcesConstants.MIN_CPU_SHARES) {
-            calculatedShares = ResourcesConstants.MIN_CPU_SHARES;
+        if (calculatedShares < ClosureProps.MIN_CPU_SHARES) {
+            calculatedShares = ClosureProps.MIN_CPU_SHARES;
         }
 
         return calculatedShares;

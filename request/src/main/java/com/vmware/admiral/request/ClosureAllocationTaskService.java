@@ -208,6 +208,7 @@ public class ClosureAllocationTaskService extends
         closureState.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
         closureState.customProperties.put(ComputeConstants.FIELD_NAME_COMPOSITE_COMPONENT_LINK_KEY,
                 UriUtils.buildUriPath(CompositeComponentFactoryService.SELF_LINK, contextId));
+        closureState.tenantLinks = state.tenantLinks;
 
         sendRequest(Operation.createPost(this, ClosureFactoryService.FACTORY_LINK)
                 .setBody(closureState)

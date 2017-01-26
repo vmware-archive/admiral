@@ -121,12 +121,12 @@ public class ClosureDescription extends ResourceState {
     public String dependencies;
 
     /**
-     * Id of the resource pool to use. Optional parameter.
+     * Id of the placement zone to use. Optional parameter.
      *
      */
-    @Documentation(description = "Id of the resource pool to use.")
+    @Documentation(description = "Id of the placement zone to use.")
     @UsageOption(option = PropertyUsageOption.OPTIONAL)
-    public String resourcePoolId;
+    public String placementZoneId;
 
     /**
      * Notification URL that can be used as Webhook. Optional parameter.

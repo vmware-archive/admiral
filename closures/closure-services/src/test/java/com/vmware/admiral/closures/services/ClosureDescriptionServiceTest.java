@@ -31,7 +31,7 @@ import com.vmware.admiral.closures.drivers.DriverConstants;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ResourceConstraints;
-import com.vmware.admiral.closures.services.closuredescription.ResourcesConstants;
+import com.vmware.admiral.closures.util.ClosureProps;
 import com.vmware.xenon.common.BasicReusableHostTestCase;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
@@ -188,9 +188,9 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
                     assertEquals(initialState.runtime, responses[0].runtime);
                     assertEquals(initialState.entrypoint, responses[0].entrypoint);
                     assertNotNull(responses[0].resources);
-                    assertEquals(ResourcesConstants.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);
-                    assertEquals(ResourcesConstants.DEFAULT_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
-                    assertEquals(ResourcesConstants.DEFAULT_EXEC_TIMEOUT_SECONDS, responses[0].resources
+                    assertEquals(ClosureProps.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);
+                    assertEquals(ClosureProps.DEFAULT_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
+                    assertEquals(ClosureProps.DEFAULT_EXEC_TIMEOUT_SECONDS, responses[0].resources
                             .timeoutSeconds);
                 }));
 
@@ -231,9 +231,9 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
                     assertNotNull(initialState.inputs);
                     assertEquals(10, initialState.inputs.get("a").getAsInt());
                     assertNotNull(responses[0].resources);
-                    assertEquals(ResourcesConstants.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);
-                    assertEquals(ResourcesConstants.DEFAULT_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
-                    assertEquals(ResourcesConstants.DEFAULT_EXEC_TIMEOUT_SECONDS, responses[0].resources
+                    assertEquals(ClosureProps.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);
+                    assertEquals(ClosureProps.DEFAULT_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
+                    assertEquals(ClosureProps.DEFAULT_EXEC_TIMEOUT_SECONDS, responses[0].resources
                             .timeoutSeconds);
                 }));
 
@@ -273,9 +273,9 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
                     assertNotNull(initialState.inputs);
                     assertEquals(10, initialState.inputs.get("a").getAsInt());
                     assertNotNull(responses[0].resources);
-                    assertEquals(ResourcesConstants.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);
-                    assertEquals(ResourcesConstants.DEFAULT_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
-                    assertEquals(ResourcesConstants.DEFAULT_EXEC_TIMEOUT_SECONDS, responses[0].resources
+                    assertEquals(ClosureProps.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);
+                    assertEquals(ClosureProps.DEFAULT_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
+                    assertEquals(ClosureProps.DEFAULT_EXEC_TIMEOUT_SECONDS, responses[0].resources
                             .timeoutSeconds);
                 }));
 
@@ -307,9 +307,9 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
                     assertNotNull(newState.inputs);
                     assertEquals(20, newState.inputs.get("a").getAsInt());
                     assertNotNull(responses[0].resources);
-                    assertEquals(ResourcesConstants.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);
-                    assertEquals(ResourcesConstants.DEFAULT_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
-                    assertEquals(ResourcesConstants.DEFAULT_EXEC_TIMEOUT_SECONDS, responses[0].resources
+                    assertEquals(ClosureProps.MIN_CPU_SHARES, responses[0].resources.cpuShares);
+                    assertEquals(ClosureProps.DEFAULT_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
+                    assertEquals(ClosureProps.DEFAULT_EXEC_TIMEOUT_SECONDS, responses[0].resources
                             .timeoutSeconds);
                 }));
 
@@ -349,9 +349,9 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
                     assertNotNull(initialState.inputs);
                     assertEquals(10, initialState.inputs.get("a").getAsInt());
                     assertNotNull(responses[0].resources);
-                    assertEquals(ResourcesConstants.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);
-                    assertEquals(ResourcesConstants.DEFAULT_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
-                    assertEquals(ResourcesConstants.DEFAULT_EXEC_TIMEOUT_SECONDS, responses[0].resources
+                    assertEquals(ClosureProps.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);
+                    assertEquals(ClosureProps.DEFAULT_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
+                    assertEquals(ClosureProps.DEFAULT_EXEC_TIMEOUT_SECONDS, responses[0].resources
                             .timeoutSeconds);
                 }));
 
@@ -417,9 +417,9 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
                             initialState.logConfiguration.get("config").getAsJsonObject().get("max-size").getAsString(),
                             "200k");
                     assertNotNull(responses[0].resources);
-                    assertEquals(ResourcesConstants.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);
-                    assertEquals(ResourcesConstants.DEFAULT_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
-                    assertEquals(ResourcesConstants.DEFAULT_EXEC_TIMEOUT_SECONDS, responses[0].resources
+                    assertEquals(ClosureProps.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);
+                    assertEquals(ClosureProps.DEFAULT_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
+                    assertEquals(ClosureProps.DEFAULT_EXEC_TIMEOUT_SECONDS, responses[0].resources
                             .timeoutSeconds);
                 }));
 
@@ -439,7 +439,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         initialState.source = "var a = 1; print(\"Hello \" + a);";
         initialState.runtime = "nashorn";
         ResourceConstraints resources = new ResourceConstraints();
-        resources.ramMB = ResourcesConstants.MAX_MEMORY_MB_RES_CONSTRAINT;
+        resources.ramMB = ClosureProps.MAX_MEMORY_MB_RES_CONSTRAINT;
         resources.timeoutSeconds = 10;
         initialState.resources = resources;
         initialState.documentSelfLink = UUID.randomUUID().toString();
@@ -456,8 +456,8 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
                     assertEquals(initialState.source, responses[0].source);
                     assertEquals(initialState.runtime, responses[0].runtime);
                     assertNotNull(responses[0].resources);
-                    assertEquals(ResourcesConstants.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);
-                    assertEquals(ResourcesConstants.MAX_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
+                    assertEquals(ClosureProps.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);
+                    assertEquals(ClosureProps.MAX_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
                     assertEquals(initialState.resources.timeoutSeconds, responses[0].resources.timeoutSeconds);
                 }));
 
@@ -494,9 +494,9 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
                     assertEquals(initialState.source, responses[0].source);
                     assertEquals(initialState.runtime, responses[0].runtime);
                     assertNotNull(responses[0].resources);
-                    assertEquals(ResourcesConstants.MIN_CPU_SHARES, responses[0].resources.cpuShares);
-                    assertEquals(ResourcesConstants.MIN_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
-                    assertEquals(ResourcesConstants.MIN_EXEC_TIMEOUT_SECONDS, responses[0].resources.timeoutSeconds);
+                    assertEquals(ClosureProps.MIN_CPU_SHARES, responses[0].resources.cpuShares);
+                    assertEquals(ClosureProps.MIN_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
+                    assertEquals(ClosureProps.MIN_EXEC_TIMEOUT_SECONDS, responses[0].resources.timeoutSeconds);
                 }));
 
         this.host.send(post);
@@ -532,9 +532,10 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
                     assertEquals(initialState.source, responses[0].source);
                     assertEquals(initialState.runtime, responses[0].runtime);
                     assertNotNull(responses[0].resources);
-                    assertEquals(ResourcesConstants.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);
-                    assertEquals(ResourcesConstants.MAX_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
-                    assertEquals(ResourcesConstants.MAX_EXEC_TIMEOUT_SECONDS, responses[0].resources.timeoutSeconds);
+                    assertEquals(ClosureProps.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);
+                    assertEquals(ClosureProps.MAX_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
+                    assertEquals(ClosureProps.MAX_EXEC_TIMEOUT_SECONDS, responses[0].resources
+                            .timeoutSeconds);
                 }));
 
         this.host.send(post);
@@ -571,7 +572,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
                     assertEquals(initialState.runtime, responses[0].runtime);
                     assertEquals(initialState.runtime, responses[0].runtime);
                     assertNotNull(responses[0].resources);
-                    assertEquals(ResourcesConstants.DEFAULT_CPU_SHARES / 2, (int) responses[0].resources
+                    assertEquals(ClosureProps.DEFAULT_CPU_SHARES / 2, (int) responses[0].resources
                             .cpuShares);
                     assertEquals(resources.ramMB, responses[0].resources.ramMB);
                     assertEquals(resources.timeoutSeconds, responses[0].resources.timeoutSeconds);
@@ -610,8 +611,8 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
                     assertEquals(initialState.source, responses[0].source);
                     assertEquals(initialState.runtime, responses[0].runtime);
                     assertNotNull(responses[0].resources);
-                    assertEquals(ResourcesConstants.MIN_CPU_SHARES, responses[0].resources.cpuShares);
-                    assertEquals(ResourcesConstants.MIN_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
+                    assertEquals(ClosureProps.MIN_CPU_SHARES, responses[0].resources.cpuShares);
+                    assertEquals(ClosureProps.MIN_MEMORY_MB_RES_CONSTRAINT, responses[0].resources.ramMB);
                     assertEquals(resources.timeoutSeconds, responses[0].resources.timeoutSeconds);
                 }));
 
