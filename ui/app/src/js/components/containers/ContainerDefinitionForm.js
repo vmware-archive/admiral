@@ -551,12 +551,13 @@ class ContainerDefinitionForm extends Component {
         healthConfig.httpMethod = this.$el.find('.container-health-path-input select')[0].value;
         healthConfig.httpVersion = this.$el.find('.container-health-path-input select')[1].value;
       }
-      healthConfig.timeoutMillis = this.$el.find('.container-health-timeout-input input').val();
-      healthConfig.port = this.$el.find('.container-health-port-input input').val();
+      healthConfig.timeoutMillis =
+        this.$el.find('.container-health-timeout-input input')[0].valueAsNumber;
+      healthConfig.port = this.$el.find('.container-health-port-input input')[0].valueAsNumber;
       healthConfig.healthyThreshold =
-        this.$el.find('.container-healthy-threshold-input input').val();
+        this.$el.find('.container-healthy-threshold-input input')[0].valueAsNumber;
       healthConfig.unhealthyThreshold =
-        this.$el.find('.container-unhealthy-threshold-input input').val();
+        this.$el.find('.container-unhealthy-threshold-input input')[0].valueAsNumber;
     } else {
       healthConfig = {};
     }
