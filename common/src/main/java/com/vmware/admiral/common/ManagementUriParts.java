@@ -75,6 +75,7 @@ public interface ManagementUriParts {
 
     String CONTAINER_HOSTS = RESOURCES + "/hosts";
     String CONTAINER_HOST_DATA_COLLECTION = RESOURCES + "/hosts-data-collections";
+    String CONTAINER_CONTROL_LOOP = RESOURCES + "/container-control-loop";
     String HOST_CONTAINER_LIST_DATA_COLLECTION = RESOURCES + "/host-container-list-data-collection";
     String HOST_NETWORK_LIST_DATA_COLLECTION = RESOURCES + "/host-network-list-data-collection";
     String HOST_VOLUME_LIST_DATA_COLLECTION = RESOURCES + "/host-volume-list-data-collection";
@@ -106,6 +107,7 @@ public interface ManagementUriParts {
     String REQUEST_RESOURCE_OPERATIONS = REQUEST + "/resource-operations";
     String REQUEST_REMOVAL_OPERATIONS = REQUEST + "/resource-removal-operations";
     String REQUEST_ALLOCATION_TASKS = REQUEST + "/allocation-tasks";
+    String REQUEST_CONTAINER_REDEPLOYMENT_TASKS = REQUEST + "/container-redeployment-tasks";
     String REQUEST_COMPUTE_ALLOCATION_TASKS = REQUEST + "/compute-allocation-tasks";
     String REQUEST_COMPUTE_NETWORK_ALLOCATION_TASKS = REQUEST
             + "/compute-network-allocation-tasks";

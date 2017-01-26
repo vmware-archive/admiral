@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,6 +63,7 @@ import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitDockerAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.host.HostInitRequestServicesConfig;
+import com.vmware.admiral.host.RequestInitialBootService;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.composition.CompositionSubTaskFactoryService;
@@ -112,6 +114,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected ComputeDescription vmGuestComputeDescription;
     protected ComputeState vmGuestComputeState;
     protected ContainerDescription containerDesc;
+    protected ContainerState containerState;
     protected HostPortProfileService.HostPortProfileState hostPortProfileState;
     protected ContainerNetworkDescription containerNetworkDesc;
     protected ContainerVolumeDescription containerVolumeDesc;
@@ -171,6 +174,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         services.addAll(Arrays.asList(
                 RequestBrokerFactoryService.SELF_LINK,
                 ContainerAllocationTaskFactoryService.SELF_LINK,
+                ContainerRedeploymentTaskService.FACTORY_LINK,
                 ContainerNetworkAllocationTaskService.FACTORY_LINK,
                 ContainerVolumeAllocationTaskService.FACTORY_LINK,
                 ContainerNetworkProvisionTaskService.FACTORY_LINK,
@@ -194,7 +198,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 EventLogService.FACTORY_LINK,
                 CounterSubTaskService.FACTORY_LINK,
                 ReservationAllocationTaskService.FACTORY_LINK,
-                HostPortProfileService.FACTORY_LINK));
+                HostPortProfileService.FACTORY_LINK,
+                ContainerControlLoopService.FACTORY_LINK));
 
         // admiral states:
         services.addAll(Arrays.asList(
@@ -227,9 +232,11 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK);
         waitForServiceAvailability(h,
                 HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
+        waitForServiceAvailability(h, ContainerControlLoopService.CONTROL_LOOP_INFO_LINK);
         waitForServiceAvailability(ManagementUriParts.AUTH_CREDENTIALS_CA_LINK);
 
         waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
+        waitForInitialBootServiceToBeSelfStopped(RequestInitialBootService.SELF_LINK);
     }
 
     protected void addForDeletion(ServiceDocument doc) {
@@ -283,13 +290,22 @@ public abstract class RequestBaseTest extends BaseTestCase {
     }
 
     protected ContainerDescription createContainerDescription() throws Throwable {
+        return createContainerDescription(true);
+    }
+
+    protected ContainerDescription createContainerDescription(boolean singleton) throws Throwable {
         synchronized (initializationLock) {
-            if (containerDesc == null) {
+            if (singleton && containerDesc == null) {
                 ContainerDescription desc = TestRequestStateFactory.createContainerDescription();
                 desc.documentSelfLink = UUID.randomUUID().toString();
                 containerDesc = doPost(desc, ContainerDescriptionService.FACTORY_LINK);
                 assertNotNull(containerDesc);
+            } else if (!singleton) {
+                ContainerDescription desc = TestRequestStateFactory.createContainerDescription();
+                desc.documentSelfLink = UUID.randomUUID().toString();
+                return doPost(desc, ContainerDescriptionService.FACTORY_LINK);
             }
+
             return containerDesc;
         }
     }
@@ -335,6 +351,22 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 assertNotNull(hostDesc);
             }
             return hostDesc;
+        }
+    }
+
+    protected ContainerState createContainerState(String descriptionLink) throws Throwable {
+        synchronized (initializationLock) {
+            if (containerState == null) {
+                ContainerState cs = TestRequestStateFactory.createContainer();
+                if (descriptionLink != null) {
+                    cs.descriptionLink = descriptionLink;
+                }
+
+                containerState = doPost(cs, ContainerFactoryService.SELF_LINK);
+                assertNotNull(containerState);
+            }
+
+            return containerState;
         }
     }
 
@@ -742,5 +774,22 @@ public abstract class RequestBaseTest extends BaseTestCase {
         assertEquals(ContainerAllocationTaskService.HEALTH_CHECK_DELAY_PARAM_NAME,
                 healthCheckDelay.key);
         assertEquals(delayInMs, healthCheckDelay.value);
+    }
+
+    protected ContainerState provisionContainer(String descriptionLink) throws Throwable {
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(ResourceType.CONTAINER_TYPE.getName(), descriptionLink);
+        request = startRequest(request);
+        request = waitForRequestToComplete(request);
+
+        Iterator<String> iterator = request.resourceLinks.iterator();
+
+        ContainerState containerState = null;
+
+        while (iterator.hasNext()) {
+            containerState = searchForDocument(ContainerState.class, iterator.next());
+            assertNotNull(containerState);
+        }
+
+        return containerState;
     }
 }

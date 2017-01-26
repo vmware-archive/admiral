@@ -17,12 +17,14 @@ import com.vmware.admiral.request.ClosureProvisionTaskService;
 import com.vmware.admiral.request.ClosureRemovalTaskFactoryService;
 import com.vmware.admiral.request.ClusteringTaskService;
 import com.vmware.admiral.request.ContainerAllocationTaskFactoryService;
+import com.vmware.admiral.request.ContainerControlLoopService;
 import com.vmware.admiral.request.ContainerHostRemovalTaskFactoryService;
 import com.vmware.admiral.request.ContainerNetworkAllocationTaskService;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService;
 import com.vmware.admiral.request.ContainerNetworkRemovalTaskService;
 import com.vmware.admiral.request.ContainerOperationTaskFactoryService;
 import com.vmware.admiral.request.ContainerPortsAllocationTaskService;
+import com.vmware.admiral.request.ContainerRedeploymentTaskService;
 import com.vmware.admiral.request.ContainerRemovalTaskFactoryService;
 import com.vmware.admiral.request.ContainerVolumeAllocationTaskService;
 import com.vmware.admiral.request.ContainerVolumeProvisionTaskService;
@@ -50,7 +52,10 @@ import com.vmware.admiral.request.compute.ComputeRemovalWatchService;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService;
 import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService;
 import com.vmware.admiral.request.notification.NotificationsService;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.UriUtils;
 
 public class HostInitRequestServicesConfig extends HostInitServiceHelper {
 
@@ -68,12 +73,14 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 CompositionTaskFactoryService.class,
                 RequestStatusFactoryService.class,
                 NotificationsService.class,
-                ComputeRemovalWatchService.class);
+                ComputeRemovalWatchService.class,
+                RequestInitialBootService.class);
 
         startServiceFactories(host,
                 ProvisionContainerHostsTaskService.class,
                 ClosureAllocationTaskService.class,
                 ClosureProvisionTaskService.class,
+                ContainerRedeploymentTaskService.class,
                 ContainerNetworkAllocationTaskService.class,
                 ContainerNetworkProvisionTaskService.class,
                 ComputeNetworkAllocationTaskService.class,
@@ -95,6 +102,13 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 ReservationAllocationTaskService.class,
                 CompositeComponentRemovalTaskService.class,
                 ServiceDocumentDeleteTaskService.class,
-                ContainerPortsAllocationTaskService.class);
+                ContainerPortsAllocationTaskService.class,
+                ContainerControlLoopService.class);
+
+        // start initialization of system documents
+        host.sendRequest(Operation.createPost(
+                UriUtils.buildUri(host, RequestInitialBootService.class))
+                .setReferer(host.getUri())
+                .setBody(new ServiceDocument()));
     }
 }
