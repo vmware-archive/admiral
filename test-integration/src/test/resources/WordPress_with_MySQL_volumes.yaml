@@ -36,7 +36,7 @@ components:
       - container_port: 3306
       volumes:
       - myvolume:/var
-  volumes:
+  myvolume:
     type: App.Volume
     data:
       name: myvolume

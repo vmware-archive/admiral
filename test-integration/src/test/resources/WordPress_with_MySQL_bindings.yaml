@@ -1,8 +1,8 @@
 # Wordpress blueprint that relies only on bindings and no links. Not really a blueprint that will be
 # used in practice, but it's good enough to test the binding capabilities
 ---
-id: wordPressWithMySql2
-name: wordPressWithMySql2
+id: wordPressWithMySqlBindings
+name: wordPressWithMySqlBindings
 status: PUBLISHED
 properties:
   _leaseDays: 3
