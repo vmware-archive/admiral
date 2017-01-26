@@ -429,7 +429,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
                 .singletonList(expectedPortMapping);
 
         verifyContainerProperty("HostConfig.PortBindings.8080/tcp", expectedPortMappings);
-        // verifyContainerProperty("NetworkSettings.Ports.8080/tcp", expectedPortMappings);
+        verifyContainerProperty("NetworkSettings.Ports.8080/tcp", expectedPortMappings);
         verifyContainerProperty("Config.Env", Arrays.asList(TEST_ENV));
         verifyContainerProperty("HostConfig.RestartPolicy.Name", TEST_RESTART_POLICY_NAME);
         verifyContainerProperty("HostConfig.RestartPolicy.MaximumRetryCount",
@@ -494,7 +494,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
                 .singletonList(expectedPortMapping);
 
         verifyContainerProperty("HostConfig.PortBindings.8080/tcp", expectedPortMappings);
-        // verifyContainerProperty("NetworkSettings.Ports.8080/tcp", expectedPortMappings);
+        verifyContainerProperty("NetworkSettings.Ports.8080/tcp", expectedPortMappings);
         verifyContainerProperty("Config.Env", Arrays.asList(TEST_ENV));
         verifyContainerProperty("HostConfig.RestartPolicy.Name", TEST_RESTART_POLICY_NAME);
         verifyContainerProperty("HostConfig.RestartPolicy.MaximumRetryCount",
@@ -593,7 +593,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
     public void testCreatedContainerShouldBeInspectedOnNetworkOperationFailure() throws Throwable {
         // delete provisioned containers
         removeContainer();
-//        create a new state that has never been data collected
+        // create a new state that has never been data collected
         createContainerState();
 
         // update the container state with a network that does not exist
@@ -836,8 +836,8 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
                         /* this is the expected result - the container is not found */
                         host.completeIteration();
                     } else if (ex != null) {
-                            /* some other unexpected exception */
-                            host.failIteration(ex);
+                        /* some other unexpected exception */
+                        host.failIteration(ex);
                     } else {
                         host.failIteration(new AssertionError(
                                 "Expected container not to be found, but it was: " + containerId));

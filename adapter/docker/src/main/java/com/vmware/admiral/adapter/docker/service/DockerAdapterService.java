@@ -449,8 +449,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         DockerImage image = DockerImage.fromImageName(context.containerDescription.image);
 
         if (image.getHost() == null) {
-            //if there is no registry host we assume the host is docker hub, so no authentication
-            //needed
+            // if there is no registry host we assume the host is docker hub, so no authentication
+            // needed
             callback.run();
             return;
         }
@@ -1061,11 +1061,11 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         hostConfig.put(DOCKER_CONTAINER_PORT_BINDINGS_PROP_NAME, portBindingsMap);
 
         for (PortBinding portBinding : portBindings) {
-            exposedPortsMap.put(portBinding.containerPort, Collections.emptyMap());
-
             DockerPortMapping mapping = DockerPortMapping.fromString(portBinding.toString());
             Map<String, List<Map<String, String>>> portDetails = mapping.toMap();
             portBindingsMap.putAll(portDetails);
+
+            exposedPortsMap.put(mapping.getContainerPortAndProtocol(), Collections.emptyMap());
         }
     }
 
@@ -1236,7 +1236,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         patchTaskStage(request, TaskStage.FINISHED, ex);
                     }
                     if (newContainerState.powerState == PowerState.RUNNING) {
-                        //request fetch stats
+                        // request fetch stats
 
                         ContainerInstanceRequest containerRequest = new ContainerInstanceRequest();
                         containerRequest.operationTypeId = ContainerOperationType.STATS.id;
@@ -1368,7 +1368,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     private List<String> filterVolumeBindings(String[] volumes) {
         List<String> volumeBindings = new ArrayList<>();
         if (volumes != null) {
-            for (String volume: volumes) {
+            for (String volume : volumes) {
                 VolumeBinding binding = VolumeBinding.fromString(volume);
                 if (binding.getHostPart() != null) {
                     volumeBindings.add(volume);
