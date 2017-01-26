@@ -634,7 +634,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             if (locale != null) {
                 operation = (new Operation().addRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER, locale));
             }
-            body.taskInfo.failure = Utils.toServiceErrorResponse(t, operation);
+            body.taskInfo.failure = Utils.toValidationErrorResponse(t, operation);
         } else {
             ServiceErrorResponse rsp = new ServiceErrorResponse();
             rsp.message = errMsg;
