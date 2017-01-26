@@ -87,10 +87,6 @@ function DropdownSearchMenu($el, componentOptions) {
     var option = $target.data('spec');
 
     this.setSelectedOption(option);
-
-    if (this.optionSelectCallback) {
-      this.optionSelectCallback(option);
-    }
   });
 
   $el.find('.dropdown').on('click', '.dropdown-manage li', (e) => {

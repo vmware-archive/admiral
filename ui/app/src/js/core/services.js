@@ -1895,6 +1895,12 @@ services.loadAdapters = function() {
   return list(links.ADAPTERS, true);
 };
 
+services.loadScript = function(src) {
+  return new Promise((resolve, reject) => {
+    $.getScript(src).done(resolve).fail(reject);
+  });
+};
+
 var toArrayIfDefined = function(obj) {
   if ($.isArray(obj)) {
     return obj;
