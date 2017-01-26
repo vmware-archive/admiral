@@ -834,7 +834,8 @@ let TemplatesStore = Reflux.createStore({
 
     if (closureDescription.placementZoneId) {
       Promise.all([
-          services.loadPlacementZone(closureDescription.placementZoneId)
+          services.loadPlacementZone(links.PLACEMENT_ZONES + '/'
+           + closureDescription.placementZoneId)
         ])
         .then(function([placementZone]) {
 

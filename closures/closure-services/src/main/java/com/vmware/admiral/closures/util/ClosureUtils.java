@@ -28,6 +28,7 @@ import java.util.zip.ZipFile;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
@@ -67,13 +68,15 @@ public final class ClosureUtils {
             }
             return sb.toString();
         } catch (Exception ex) {
-            String errMsg = "Unable to calculate execution env. checksum! Reason: " + ex.getMessage();
+            String errMsg =
+                    "Unable to calculate execution env. checksum! Reason: " + ex.getMessage();
             logError(errMsg);
             throw new RuntimeException(errMsg);
         }
     }
 
-    public static byte[] loadDockerImageData(String dockerImageName, String folderFilter, Class<?> resourceClass) {
+    public static byte[] loadDockerImageData(String dockerImageName, String folderFilter,
+            Class<?> resourceClass) {
         ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
         try {
             URL dirURL = resourceClass.getResource("/" + folderFilter);
@@ -115,54 +118,58 @@ public final class ClosureUtils {
         JsonObject jsObject = new JsonObject();
 
         Iterator<String> fieldsIterator = node.fieldNames();
-
         if (!fieldsIterator.hasNext()) {
-            com.google.gson.JsonParser parser = new com.google.gson.JsonParser();
-            return parser.parse(node.asText());
+            if (node.isObject()) {
+                return jsObject;
+            }
+            return getPrimitiveJsonElement(node);
         }
 
         while (fieldsIterator.hasNext()) {
             String field = fieldsIterator.next();
             JsonNode childNode = node.get(field);
-
-            JsonElement convertedValue = null;
-            if (childNode.isObject()) {
-                convertedValue = toJsonElement(childNode);
-                jsObject.add(field, convertedValue);
-            } else if (childNode.isArray()) {
-                convertedValue = toJsonElementArray(childNode);
-                jsObject.add(field, convertedValue);
-            } else {
-                String val = childNode.textValue();
-                jsObject.add(field, new JsonPrimitive(val));
-            }
+            JsonElement convertedValue = getJsonObjElement(childNode);
+            jsObject.add(field, convertedValue);
         }
 
         return jsObject;
     }
 
-    private static JsonElement toJsonElementArray(JsonNode childNode) {
+    private static JsonElement toJsonElementArray(JsonNode node) {
         JsonArray jsObjArray = new JsonArray();
-        Iterator<JsonNode> iterator = childNode.iterator();
+        Iterator<JsonNode> iterator = node.iterator();
         while (iterator.hasNext()) {
-            JsonElement convertedValue = null;
-            JsonNode node = iterator.next();
-            if (node.isObject()) {
-                convertedValue = toJsonElement(node);
-                jsObjArray.add(convertedValue);
-            } else if (node.isArray()) {
-                convertedValue = toJsonElementArray(node);
-                jsObjArray.add(convertedValue);
-            } else {
-                String val = node.textValue();
-                jsObjArray.add(new JsonPrimitive(val));
-            }
+            JsonNode childNode = iterator.next();
+            JsonElement convertedValue = getJsonObjElement(childNode);
+            jsObjArray.add(convertedValue);
         }
 
         return jsObjArray;
     }
 
-    private static void buildTarData(URL dirURL, String folderNameFilter, OutputStream outputStream) throws
+    private static JsonElement getJsonObjElement(JsonNode node) {
+        if (node.isObject()) {
+            return toJsonElement(node);
+        } else if (node.isArray()) {
+            return toJsonElementArray(node);
+        }
+
+        return getPrimitiveJsonElement(node);
+    }
+
+    private static JsonElement getPrimitiveJsonElement(JsonNode node) {
+        if (node.isNull()) {
+            return JsonNull.INSTANCE;
+        } else if (node.isNumber()) {
+            return new JsonPrimitive(node.numberValue());
+        }
+
+        com.google.gson.JsonParser parser = new com.google.gson.JsonParser();
+        return parser.parse(node.asText());
+    }
+
+    private static void buildTarData(URL dirURL, String folderNameFilter, OutputStream outputStream)
+            throws
             IOException {
         final JarURLConnection jarConnection = (JarURLConnection) dirURL.openConnection();
         final ZipFile jar = jarConnection.getJarFile();
@@ -176,7 +183,8 @@ public final class ClosureUtils {
                     // entry in wrong subdir -- don't copy
                     continue;
                 }
-                TarArchiveEntry tarEntry = new TarArchiveEntry(entry.getName().replaceAll(folderNameFilter, ""));
+                TarArchiveEntry tarEntry = new TarArchiveEntry(
+                        entry.getName().replaceAll(folderNameFilter, ""));
                 try (InputStream is = jar.getInputStream(entry)) {
                     putTarEntry(tarArchiveOutputStream, tarEntry, is, entry.getSize());
                 }
@@ -187,7 +195,8 @@ public final class ClosureUtils {
         }
     }
 
-    private static void putTarEntry(TarArchiveOutputStream tarOutputStream, TarArchiveEntry tarEntry,
+    private static void putTarEntry(TarArchiveOutputStream tarOutputStream,
+            TarArchiveEntry tarEntry,
             InputStream inStream, long size)
             throws IOException {
         tarEntry.setSize(size);
@@ -216,16 +225,19 @@ public final class ClosureUtils {
         OutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
         bufferedOutputStream = new GzipCompressorOutputStream(bufferedOutputStream);
 
-        TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(bufferedOutputStream);
+        TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(
+                bufferedOutputStream);
         tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
         return tarArchiveOutputStream;
     }
 
     private static void logInfo(String message, Object... values) {
-        Utils.log(ClosureUtils.class, ClosureUtils.class.getSimpleName(), Level.INFO, message, values);
+        Utils.log(ClosureUtils.class, ClosureUtils.class.getSimpleName(), Level.INFO, message,
+                values);
     }
 
     private static void logError(String message, Object... values) {
-        Utils.log(ClosureUtils.class, ClosureUtils.class.getSimpleName(), Level.SEVERE, message, values);
+        Utils.log(ClosureUtils.class, ClosureUtils.class.getSimpleName(), Level.SEVERE, message,
+                values);
     }
 }

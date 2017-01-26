@@ -141,7 +141,7 @@ var ClosureRequestForm = Vue.extend({
 
       this.unwatchPlacementZone = this.$watch('model.placementZone', () => {
         if (this.model.placementZone) {
-          this.placementZoneInput.setSelectedOption(this.model.placementZone);
+          this.placementZoneInput.setSelectedOption(this.model.placementZone.resourcePoolState);
         }
       }, {immediate: true});
 
@@ -156,7 +156,8 @@ var ClosureRequestForm = Vue.extend({
 
     this.unwatchModel = this.$watch('model', (data) => {
       if (data.tasks && data.tasks.editingItemData && data.tasks.editingItemData.placementZone) {
-        this.placementZoneInput.setSelectedOption(data.tasks.editingItemData.placementZone);
+        this.placementZoneInput.setSelectedOption(
+          data.tasks.editingItemData.placementZone.resourcePoolState);
         this.placementZone = this.placementZoneInput.getSelectedOption();
         // this.disableInput('placementZone', data.tasks.editingItemData.placementZone.name);
       }

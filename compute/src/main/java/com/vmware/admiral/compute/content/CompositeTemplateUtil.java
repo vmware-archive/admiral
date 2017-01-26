@@ -229,7 +229,7 @@ public class CompositeTemplateUtil {
             if (newData.inputs != null) {
                 newData.serializedInputs = new HashMap<>();
                 newData.inputs.entrySet().forEach((e -> {
-                    newData.serializedInputs.put(e.getKey(), e.getValue().getAsString());
+                    newData.serializedInputs.put(e.getKey(), e.getValue().toString());
                 }));
 
                 newData.inputs = null;
@@ -264,7 +264,7 @@ public class CompositeTemplateUtil {
                 value = toMap((JsonObject) value);
                 map.put(key, value);
             } else {
-                map.put(key, ((JsonElement) value).getAsString());
+                map.put(key, ((JsonElement) value).toString());
             }
 
         }
@@ -281,7 +281,7 @@ public class CompositeTemplateUtil {
                 obj = toMap((JsonObject) obj);
                 list.add(obj);
             } else {
-                list.add(((JsonElement) obj).getAsString());
+                list.add(((JsonElement) obj).toString());
             }
 
         }

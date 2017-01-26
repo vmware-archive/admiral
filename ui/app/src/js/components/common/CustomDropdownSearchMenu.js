@@ -1,28 +1,53 @@
+/*
+ * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
 import CustomDropdownSearchMenuTemplate from
  'components/common/CustomDropdownSearchMenuTemplate.html';
 import constants from 'core/constants';
 
-function createItem(itemSpec) {
-  var anchor = $('<a>', {
-    role: 'menuitem',
-    href: '#'
-  });
-  anchor.attr('data-name', itemSpec.name);
+function DEFAULT_RENDERER(itemSpec) {
+  var result = '';
   if (itemSpec.icon) {
-    anchor.append($('<span>', {
-      class: 'fa fa-' + itemSpec.icon
-    }));
+    result += `<span class="fa fa-${itemSpec.icon}"></span>`;
   }
   if (itemSpec.iconSrc) {
-    anchor.append($('<img >', {
-      src: itemSpec.iconSrc
-    }));
+    result += `<img src="${itemSpec.iconSrc}">`;
   }
 
-  anchor.append($('<span>').html(itemSpec.name));
+  if (itemSpec.isBusy) {
+    result += `<span class="spinner spinner-inline"></span>`;
+  }
+
+  result += `<span>${itemSpec.name}</span>`;
+
+  return result;
+}
+
+function createItem(itemSpec, renderer) {
+  var anchor = $('<a>', {
+    role: 'menuitem',
+    href: '#',
+    disabled: !!itemSpec.isBusy
+  });
+  anchor.attr('data-name', itemSpec.name);
+
+  if (renderer) {
+    anchor.html(renderer(itemSpec));
+  } else {
+     anchor.html(DEFAULT_RENDERER(itemSpec));
+  }
 
   var item = $('<li>', {
-    role: 'presentation'
+    role: 'presentation',
+    disabled: !!itemSpec.isBusy
   }).append(anchor);
   item.data('spec', itemSpec);
 
@@ -30,51 +55,63 @@ function createItem(itemSpec) {
 }
 
 function CustomDropdownSearchMenu($el, componentOptions) {
-  var _this = this;
-
   this.$el = $el;
   this.componentOptions = componentOptions;
 
   $el.html(CustomDropdownSearchMenuTemplate(componentOptions));
 
-  $el.find('input').click(function(event) {
-    event.preventDefault();
+  $el.find('input').click(function(e) {
+    e.stopImmediatePropagation();
+    e.preventDefault();
     return false;
   });
 
   if (!componentOptions.searchDisabled) {
     var searchInput = $el.find('.dropdown-search input');
 
-    searchInput.bind('input change', function() {
-      _this.setFilter(searchInput.val());
+    searchInput.bind('input change', (e) => {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+
+      this.setFilter(searchInput.val());
     });
   }
 
-  $el.find('.dropdown').on('click', '.dropdown-options li', function(e) {
+  $el.find('.dropdown').on('click', '.dropdown-options li', (e) => {
     e.preventDefault();
 
-    var option = $(e.currentTarget).data('spec');
-    _this.setSelectedOption(option);
+    var $target = $(e.currentTarget);
+    if ($target.attr('disabled')) {
+      return;
+    }
 
-    if (_this.optionSelectCallback) {
-      _this.optionSelectCallback(option);
+    var option = $target.data('spec');
+
+    this.setSelectedOption(option);
+
+    if (this.optionSelectCallback) {
+      this.optionSelectCallback(option);
     }
   });
 
-  $el.find('.dropdown').on('click', '.dropdown-manage li', function(e) {
+  $el.find('.dropdown').on('click', '.dropdown-manage li', (e) => {
     e.preventDefault();
 
     var option = $(e.currentTarget).data('spec');
-    _this.setSelectedOption(null);
+    this.setSelectedOption(null);
 
     let isClearSelection = option.id === '_clear';
 
-    if (_this.manageOptionSelectCallback && !isClearSelection) {
-      _this.manageOptionSelectCallback(option);
+    if (!isClearSelection) {
+      if (option.action) {
+        option.action();
+      } else if (this.manageOptionSelectCallback) {
+        this.manageOptionSelectCallback(option);
+      }
     }
 
-    if (isClearSelection && _this.clearOptionSelectCallback) {
-      _this.clearOptionSelectCallback();
+    if (isClearSelection && this.clearOptionSelectCallback) {
+      this.clearOptionSelectCallback();
     }
   });
 
@@ -90,7 +127,8 @@ CustomDropdownSearchMenu.prototype.setFilterCallback = function(callback) {
 /** Provides static options, useful for client side filtering */
 CustomDropdownSearchMenu.prototype.setOptions = function(options) {
   this.options = options;
-  updateFilteredOptions(this.$el, this.options, this.filter, this.selectedOption);
+  updateFilteredOptions(this.$el, this.options, this.filter, this.selectedOption,
+    this.optionsRenderer);
 };
 
 CustomDropdownSearchMenu.prototype.setManageOptions = function(manageOptions) {
@@ -106,9 +144,9 @@ CustomDropdownSearchMenu.prototype.setManageOptions = function(manageOptions) {
   }
 
   newElements = newElements.add(createItem({
-    id: '_clear',
-    name: i18n.t('dropdownSearchMenu.clear'),
-    icon: 'close'
+      id: '_clear',
+      name: i18n.t('dropdownSearchMenu.clear'),
+      icon: 'close'
   }));
 
   $dropDownManage.append(newElements);
@@ -175,15 +213,14 @@ CustomDropdownSearchMenu.prototype.setSelectedOption = function(option) {
     });
 
     // Since this is not a typical input but a custom one, standard focus() and :focus don't work.
-    var _this = this;
     this.$el.addClass('focus');
 
-    setTimeout(function() {
-      _this.$el.removeClass('focus');
+    setTimeout(() => {
+      this.$el.removeClass('focus');
     }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
 
-    if (_this.optionSelectCallback) {
-      _this.optionSelectCallback(option);
+    if (this.optionSelectCallback) {
+      this.optionSelectCallback(option);
     }
 
     $dropDownManage.children().last().show();
@@ -222,8 +259,13 @@ CustomDropdownSearchMenu.prototype.setClearOptionSelectCallback = function(
   this.clearOptionSelectCallback = clearOptionSelectCallback;
 };
 
-function updateFilteredOptions($el, options, filter, selectedOption) {
-  $el.find('.dropdown-options').empty();
+CustomDropdownSearchMenu.prototype.setOptionsRenderer = function(optionsRenderer) {
+  this.optionsRenderer = optionsRenderer;
+};
+
+function updateFilteredOptions($el, options, filter, selectedOption, optionsRenderer) {
+  var $options = $el.find('.dropdown-options');
+  $options.empty();
 
   var newElements = $();
   if (options) {
@@ -231,7 +273,7 @@ function updateFilteredOptions($el, options, filter, selectedOption) {
       var option = options[i];
 
       if (!filter || matchesFilter(option, filter)) {
-        var newElement = createItem(option);
+        var newElement = createItem(option, optionsRenderer);
         if (selectedOption === option) {
           newElement.addClass('active');
         }
@@ -241,18 +283,20 @@ function updateFilteredOptions($el, options, filter, selectedOption) {
     }
   }
 
-  $el.find('.dropdown-options').append(newElements);
+  $options.append(newElements);
 }
 
-function applyExternallyFilteredOptions($el, options, filter, selectedOption) {
-  $el.find('.dropdown-options').empty();
+function applyExternallyFilteredOptions($el, result, filter, selectedOption, optionsRenderer) {
+  var $options = $el.find('.dropdown-options');
+  $options.empty();
 
-  if (options && options.length > 0) {
+  var options = result.items || [];
+  if (options.length > 0) {
     var newElements = $();
 
     for (var i = 0; i < options.length; i++) {
       var option = options[i];
-      var newElement = createItem(option);
+      var newElement = createItem(option, optionsRenderer);
       if (selectedOption === option) {
         newElement.addClass('active');
       }
@@ -260,9 +304,16 @@ function applyExternallyFilteredOptions($el, options, filter, selectedOption) {
       newElements = newElements.add(newElement);
     }
 
-    $el.find('.dropdown-options').append(newElements);
-  } else if (filter) {
-    $el.find('.dropdown-options').append($('<div>').addClass('dropdown-options-hint')
+    $options.append(newElements);
+
+    var i18nOption = {
+      count: options.length,
+      totalCount: result.totalCount
+    };
+    $options.append($('<div>').addClass('dropdown-options-hint')
+      .text(i18n.t('dropdownSearchMenu.showingCount', i18nOption)));
+  } else {
+    $options.append($('<div>').addClass('dropdown-options-hint')
       .text(i18n.t('dropdownSearchMenu.noResults')));
   }
 }
@@ -275,21 +326,17 @@ function invokeFilterCallback(filter) {
   var $search = this.$el.find('.search-input');
 
   clearTimeout(this.timeout);
-  if (!filter) {
-    applyExternallyFilteredOptions(this.$el, [], this.filter, this.selectedOption);
-    $search.removeClass('loading');
-    return;
-  }
 
   $search.addClass('loading');
   this.timeout = setTimeout(() => {
-    this.filterCallback(filter, (options) => {
+    this.filterCallback(filter, (result) => {
       if (this.filter !== filter) {
         // Filter is already different, no need to apply options
         return;
       }
       $search.removeClass('loading');
-      applyExternallyFilteredOptions(this.$el, options, this.filter, this.selectedOption);
+      applyExternallyFilteredOptions(this.$el, result, this.filter, this.selectedOption,
+        this.optionsRenderer);
     });
   }, 300);
 }

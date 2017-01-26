@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.closures.services.closuredescription;
 
+import com.vmware.admiral.closures.util.ClosureProps;
+
 /**
  * Resource constraints to apply on code snippet execution.
  */
@@ -19,16 +21,16 @@ public class ResourceConstraints {
     /**
      * Required runtime CPU constraints.
      */
-    public Integer cpuShares = ResourcesConstants.DEFAULT_CPU_SHARES;
+    public Integer cpuShares = ClosureProps.DEFAULT_CPU_SHARES;
 
     /**
      * Required runtime RAM constraints in megabytes.
      */
-    public Integer ramMB = ResourcesConstants.DEFAULT_MEMORY_MB_RES_CONSTRAINT;
+    public Integer ramMB = ClosureProps.DEFAULT_MEMORY_MB_RES_CONSTRAINT;
 
     /**
      * Timeout in seconds for code snippet execution.
      */
-    public Integer timeoutSeconds = ResourcesConstants.DEFAULT_EXEC_TIMEOUT_SECONDS;
+    public Integer timeoutSeconds = ClosureProps.DEFAULT_EXEC_TIMEOUT_SECONDS;
 
 }

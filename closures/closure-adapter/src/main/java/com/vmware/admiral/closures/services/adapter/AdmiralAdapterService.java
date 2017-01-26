@@ -968,42 +968,42 @@ public class AdmiralAdapterService extends
             return;
         }
 
-        proceedWithResourcePolicy(state, containerDescription);
+        proceedWithGroupPlacement(state, containerDescription);
     }
 
-    private void proceedWithResourcePolicy(AdmiralAdapterTaskState state,
+    private void proceedWithGroupPlacement(AdmiralAdapterTaskState state,
             ContainerDescription containerDesc) {
-        String resourcePoolId = computeResourcePoolId(state.configuration);
-        fetchResourcePolicy((result) -> {
+        String placementZoneId = computeResourcePoolId(state.configuration);
+        fetchGroupPlacement((result) -> {
                     if (result.hasException()) {
                         failTask("Unable to fetch resource pool policy!", result.getException());
                         return;
                     }
                     GroupResourcePlacementState placement = result.getResult();
                     if (placement != null) {
-                        String resourcePoolLink = UriUtils
-                                .buildUriPath(ResourcePoolService.FACTORY_LINK, resourcePoolId);
-                        if (!resourcePoolLink.equalsIgnoreCase(placement.resourcePoolLink)) {
-                            logInfo("Updating resource pool link of policy: {} with resource pool: {}",
-                                    placement.name,
-                                    resourcePoolLink);
-                            updateResourcePoolOfUsedPolicy(placement, resourcePoolLink);
+                        String placementZoneLink = UriUtils
+                                .buildUriPath(ResourcePoolService.FACTORY_LINK, placementZoneId);
+                        if (!placementZoneLink.equalsIgnoreCase(placement.resourcePoolLink)) {
+                            logInfo("Updating placement zone link of closure placement: %s "
+                                            + "with placement zone: %s", placement.name,
+                                    placementZoneLink);
+                            updatePlacementZoneOfGroupPlacement(placement, placementZoneLink);
                         }
 
                         proceedTo(AdmiralAdapterTaskState.SubStage.RESOURCE_POOL_RESERVED, (s) -> {
-                            s.resourcePoolLink = resourcePoolLink;
+                            s.resourcePoolLink = placementZoneLink;
                             s.resourcePolicyLink = placement.documentSelfLink;
                         });
 
                     } else {
-                        // create policy
-                        createResourcePolicy(state, resourcePoolId, containerDesc);
+                        // create closure placement
+                        createGroupPlacement(state, placementZoneId, containerDesc);
                     }
                 }
         );
     }
 
-    private void createResourcePolicy(AdmiralAdapterTaskState state, String resourcePoolId,
+    private void createGroupPlacement(AdmiralAdapterTaskState state, String resourcePoolId,
             ContainerDescription
                     containerDesc) {
         GroupResourcePlacementState placementState = new GroupResourcePlacementState();
@@ -1019,43 +1019,44 @@ public class AdmiralAdapterService extends
         placementState.availableMemory = 0;
 
         URI uri = UriUtils.buildUri(getHost(), GroupResourcePlacementService.FACTORY_LINK);
-        logInfo("Creating resource policy: {} ", uri);
+        logInfo("Creating closure group placement: %s", uri);
         getHost().sendRequest(OperationUtil.createForcedPost(uri)
                 .setBody(placementState)
                 .setReferer(getHost().getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere("Exception while creating resource policy: ", e);
+                        logSevere("Exception while creating closure group placement: ", e);
                         return;
                     }
 
-                    logInfo("Resource policy created successfully.");
-                    proceedWithResourcePolicy(state, containerDesc);
+                    logInfo("Closure group placement created successfully.");
+                    proceedWithGroupPlacement(state, containerDesc);
                 }));
     }
 
-    private void updateResourcePoolOfUsedPolicy(GroupResourcePlacementState policy,
+    private void updatePlacementZoneOfGroupPlacement(GroupResourcePlacementState placement,
             String resourcePoolLink) {
-        policy.resourcePoolLink = resourcePoolLink;
-        getHost().sendRequest(Operation.createPatch(getHost(), policy.documentSelfLink)
-                .setBody(policy)
+        placement.resourcePoolLink = resourcePoolLink;
+        getHost().sendRequest(Operation.createPatch(getHost(), placement.documentSelfLink)
+                .setBody(placement)
                 .setReferer(getHost().getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning("Unable to update policy '" + policy.documentSelfLink
-                                + "''  with new configured resource pool: " + resourcePoolLink, e);
+                        logWarning("Unable to update placement '" + placement.documentSelfLink
+                                + "''  with new configured placement zone: " + resourcePoolLink, e);
                         return;
                     }
 
-                    logInfo("Resource policy updated with resource pool: {}", resourcePoolLink);
+                    logInfo("Resource placement updated with placement zone: %s",
+                            resourcePoolLink);
                 }));
 
     }
 
-    private void fetchResourcePolicy(
+    private void fetchGroupPlacement(
             Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<GroupResourcePlacementService
                     .GroupResourcePlacementState>> callbackFunction) {
-        logInfo("Fetching resource policy: {}", CLOSURE_PLACEMENT_NAME);
+        logInfo("Fetching group placement: %s", CLOSURE_PLACEMENT_NAME);
         try {
             QueryTask q = QueryUtil.buildPropertyQuery(GroupResourcePlacementState.class,
                     GroupResourcePlacementState
@@ -1100,11 +1101,11 @@ public class AdmiralAdapterService extends
     }
 
     private String computeResourcePoolId(ContainerConfiguration configuration) {
-        if (ClosureUtils.isEmpty(configuration.resourcePoolId)) {
+        if (ClosureUtils.isEmpty(configuration.placementZoneId)) {
             return GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_ID;
         }
 
-        return configuration.resourcePoolId;
+        return configuration.placementZoneId;
     }
 
     private void fetchContainerDescription(AdmiralAdapterTaskState state,
