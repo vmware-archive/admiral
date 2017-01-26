@@ -17,7 +17,7 @@ export default Vue.component('vsphere-endpoint-editor', {
   template: `
     <div>
       <text-input
-        :disabled="model.documentSelfLink"
+        :disabled="!!model.documentSelfLink"
         :label="i18n('app.endpoint.edit.vsphere.hostNameLabel')"
         :required="true"
         :value="hostName"
@@ -36,7 +36,7 @@ export default Vue.component('vsphere-endpoint-editor', {
         @change="onPrivateKeyChange">
       </password-input>
       <dropdown-search-input
-        :disabled="model.documentSelfLink || !(regionIdLoading || regionIdValues.length)"
+        :disabled="!!model.documentSelfLink || !(regionIdLoading || regionIdValues.length)"
         :entity="i18n('app.endpoint.datacenterEntity')"
         :label="i18n('app.endpoint.edit.vsphere.regionIdLabel')"
         :loading="regionIdLoading"

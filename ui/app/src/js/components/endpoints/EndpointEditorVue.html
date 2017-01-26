@@ -24,40 +24,21 @@
         @change="onNameChange">
       </text-input>
       <dropdown-input
-        :disabled="model.item.documentSelfLink"
+        :disabled="!!model.item.documentSelfLink"
         :entity="i18n('app.endpoint.typeEntity')"
         :label="i18n('app.endpoint.edit.typeLabel')"
-        :options="supportedEndpointTypes"
+        :options="supportedTypes"
         :required="true"
         :value="convertToObject(model.item.endpointType)"
         @change="onEndpointTypeChange">
       </dropdown-input>
-      <aws-endpoint-editor
-        v-bind:model="model.item"
-        v-if="endpointType === 'aws'"
+      <div
+        v-for="(index, editor) in supportedEditors"
+        v-if="endpointType === supportedTypes[index].id"
+        :is="editor"
+        :model="model.item"
         v-on:change="onPropertiesChange">
-      </aws-endpoint-editor>
-      <azure-endpoint-editor
-        v-bind:model="model.item"
-        v-if="endpointType === 'azure'"
-        v-on:change="onPropertiesChange">
-      </azure-endpoint-editor>
-      <nimbus-endpoint-editor
-        v-bind:model="model.item"
-        v-if="endpointType === 'nimbus'"
-        v-on:change="onPropertiesChange">
-      </nimbus-endpoint-editor>
-      <openstack-endpoint-editor
-        v-bind:model="model.item"
-        v-if="endpointType === 'openstack'"
-        v-on:change="onPropertiesChange">
-      </openstack-endpoint-editor>
-      <vsphere-endpoint-editor
-        v-bind:model="model.item"
-        v-if="endpointType === 'vsphere'"
-        v-on:change="onPropertiesChange"
-        v-on:error="onPropertiesError">
-      </vsphere-endpoint-editor>
+      </div>
     </section>
   </form>
   <div class="inline-edit-toolbar">
