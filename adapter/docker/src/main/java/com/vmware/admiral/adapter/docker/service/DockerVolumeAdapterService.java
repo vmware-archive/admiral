@@ -164,7 +164,7 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
             if (ex != null) {
                 fail(context.request, op, ex);
             } else {
-                patchTaskStage(context.request, TaskStage.FINISHED, null);
+                inspectAndUpdateVolume(context);
             }
         });
     }

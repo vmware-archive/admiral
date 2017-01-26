@@ -30,6 +30,7 @@ import com.vmware.admiral.compute.container.CompositeComponentService.CompositeC
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState.PowerState;
 import com.vmware.admiral.compute.container.volume.VolumeUtil;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -120,6 +121,8 @@ public class ContainerVolumesIT extends BaseProvisioningOnCoreOsIT {
         if (containers == null || containers.isEmpty()) {
             throw new IllegalArgumentException("No provisioned containers found!");
         }
+
+        assertEquals(PowerState.CONNECTED, volume.powerState);
 
         Iterator<ContainerState> iterator = containers.iterator();
 
