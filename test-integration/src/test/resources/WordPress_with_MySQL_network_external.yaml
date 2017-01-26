@@ -1,6 +1,6 @@
 ---
-id: wordPressWithMySqlNetwork
-name: wordPressWithMySqlNetwork
+id: wordPressWithMySqlExtNetwork
+name: wordPressWithMySqlExtNetwork
 status: PUBLISHED
 properties:
   _leaseDays: 3
