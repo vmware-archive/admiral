@@ -85,6 +85,12 @@ public class ContainerVolumeRemovalTaskService extends
          * application that uses them)
          */
         public boolean externalInspectOnly;
+
+        /**
+         * If this is a cleanup removal task, it will try to delete the volume state even if it
+         * fails to delete an actual volume on a host
+         */
+        public boolean cleanupRemoval;
     }
 
     public ContainerVolumeRemovalTaskService() {
@@ -100,7 +106,7 @@ public class ContainerVolumeRemovalTaskService extends
     protected void handleStartedStagePatch(ContainerVolumeRemovalTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            queryContainerResources(state);
+            queryContainerVolumeResources(state);
             break;
         case INSTANCES_REMOVING:
             break;// just patch with the links
@@ -131,7 +137,7 @@ public class ContainerVolumeRemovalTaskService extends
         return statusTask;
     }
 
-    private void queryContainerResources(ContainerVolumeRemovalTaskState state) {
+    private void queryContainerVolumeResources(ContainerVolumeRemovalTaskState state) {
         QueryTask volumeQuery = createResourcesQuery(ContainerVolumeState.class,
                 state.resourceLinks);
         ServiceDocumentQuery<ContainerVolumeState> query = new ServiceDocumentQuery<>(getHost(),
@@ -239,7 +245,8 @@ public class ContainerVolumeRemovalTaskService extends
         subTaskInitState.serviceTaskCallback = ServiceTaskCallback.create(
                 state.documentSelfLink,
                 TaskStage.STARTED, SubStage.INSTANCES_REMOVED,
-                TaskStage.STARTED, SubStage.ERROR);
+                TaskStage.STARTED,
+                state.cleanupRemoval ? SubStage.INSTANCES_REMOVED : SubStage.ERROR);
 
         CounterSubTaskService.createSubTask(this, subTaskInitState,
                 (subTaskLink) -> deleteResourceInstances(state, resourceLinks, subTaskLink));

@@ -1537,6 +1537,48 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
     }
 
     @Test
+    public void testVolumeRequestLifeCycleWithVolumeFailureShouldCleanVolumes()
+            throws Throwable {
+        host.log(
+                "########  Start of testVolumeRequestLifeCycleWithVolumeFailureShouldCleanVolumes ######## ");
+
+        // setup 1 volume
+
+        String volumeName = "myvol";
+
+        ContainerVolumeDescription volumeDesc = TestRequestStateFactory
+                .createContainerVolumeDescription(volumeName);
+        volumeDesc.documentSelfLink = UUID.randomUUID().toString();
+        // e.g. Docker host was not available!
+        volumeDesc.customProperties.put(MockDockerAdapterService.FAILURE_EXPECTED,
+                Boolean.TRUE.toString());
+
+        volumeDesc = doPost(volumeDesc, ContainerVolumeDescriptionService.FACTORY_LINK);
+        addForDeletion(volumeDesc);
+
+        // 1. Request a volume with expected failure:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.CONTAINER_VOLUME_TYPE.getName(), volumeDesc.documentSelfLink);
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // 2. Wait for reservation removed substage
+        request = waitForRequestToFail(request);
+
+        // Verify request status
+        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+
+        assertEquals(TaskStage.FAILED, rs.taskInfo.stage);
+        assertEquals(SubStage.ERROR.name(), rs.subStage);
+
+        // and there must be no container volume state left
+        ServiceDocumentQueryResult volumeStates = getDocument(ServiceDocumentQueryResult.class,
+                ContainerVolumeService.FACTORY_LINK);
+        assertEquals(0L, volumeStates.documentCount.longValue());
+    }
+
+    @Test
     public void testRequestLifeCycleFailureShouldCleanReservations() throws Throwable {
         // setup Docker Host:
         ResourcePoolState resourcePool = createResourcePool();
