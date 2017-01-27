@@ -83,10 +83,6 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
                     } else {
                         handleExceptions(context.request, context.operation, () -> {
                             context.containerState = o.getBody(ContainerState.class);
-                            if (context.containerState.name == null && context.containerState
-                                    .names.size() != 0) {
-                                context.containerState.name = context.containerState.names.get(0);
-                            }
                             processContainerState(context);
                         });
                     }
@@ -101,7 +97,7 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
 
     private void processContainerState(RequestContext context) {
         if (context.containerState.parentLink == null) {
-            fail(context.request, new IllegalArgumentException("parentLink"));
+            fail(context.request, new IllegalArgumentException("parentLink missing"));
             return;
         }
 
@@ -183,13 +179,21 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
                             String created = null;
                             ContainerStatus interestStatus = null;
                             Container interestContainer = null;
-                            if (podList.items == null) {
-                                logWarning("From getPods: got null items");
+                            if (podList == null || podList.items == null) {
+                                patchTaskStage(context.request, TaskStage.FAILED,
+                                        new IllegalStateException("No pods exists on the host"));
                                 return;
                             }
                             for (Pod pod: podList.items) {
+                                if (pod == null || pod.status == null || pod.spec == null ||
+                                        pod.status.containerStatuses == null ||
+                                        pod.spec.containers == null) {
+                                    continue;
+                                }
                                 for (ContainerStatus status: pod.status.containerStatuses) {
-                                    if (status.containerID.equals(context.containerState.id)) {
+                                    if (status.containerID.equals(context.containerState.id) ||
+                                            KubernetesContainerStateMapper.getId(status.containerID)
+                                                    .equals(context.containerState.id)) {
                                         foundPod = true;
                                         interestStatus = status;
                                         created = pod.metadata.creationTimestamp;
@@ -207,8 +211,13 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
                                 }
                             }
                             if (interestContainer == null) {
-                                logWarning("Lookup on container %s failed: Missing", context
-                                        .containerState.name);
+                                String container = context.containerState.name == null ?
+                                        context.containerState.id : context.containerState.name;
+                                patchTaskStage(context.request, TaskStage.FAILED,
+                                        new IllegalStateException(
+                                                String.format(
+                                                        "Lookup on container '%s' failed: Missing",
+                                                        container)));
                                 return;
                             }
                             patchContainerState(context.request, context.containerState,

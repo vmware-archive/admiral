@@ -32,12 +32,21 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.VerificationHost;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
-public class BaseMockKubernetes extends BaseTestCase {
+public class BaseKubernetesMockTest extends BaseTestCase {
     protected static VerificationHost mockKubernetesHost;
 
     protected static URI kubernetesUri;
+    protected static URI kubernetesFailingUri;
     protected static AuthCredentialsServiceState kubernetesCredentials;
     protected static SslTrustCertificateState kubernetesTrust;
+
+    protected class OperationResult {
+        public Operation op;
+        public Throwable ex;
+
+        public OperationResult() {
+        }
+    }
 
     @Before
     public void setUpMockKubernetesHost() throws Throwable {
@@ -76,6 +85,10 @@ public class BaseMockKubernetes extends BaseTestCase {
                 .toMicros(MAINTENANCE_INTERVAL_MILLIS));
         kubernetesUri = UriUtils.buildUri(mockKubernetesHost,
                 MockKubernetesPathConstants.BASE_PATH);
+
+        kubernetesFailingUri = UriUtils.buildUri(mockKubernetesHost,
+                MockKubernetesPathConstants.BASE_FAILING_PATH);
+
         kubernetesCredentials = new AuthCredentialsServiceState();
 
         /*mockKubernetesHost.startService(Operation.createPost(UriUtils.buildUri(

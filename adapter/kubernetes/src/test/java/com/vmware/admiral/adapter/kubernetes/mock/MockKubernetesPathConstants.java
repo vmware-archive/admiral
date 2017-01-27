@@ -18,6 +18,7 @@ import com.vmware.admiral.adapter.kubernetes.service.KubernetesRemoteApiClient;
  */
 public interface MockKubernetesPathConstants {
     String BASE_PATH = "/mock/kubernetes";
+    String BASE_FAILING_PATH = "/mock/failing-kubernetes";
     String PING = KubernetesRemoteApiClient.pingPath;
     String API = "/api/v1";
     String NAMESPACES = API + "/namespaces";
