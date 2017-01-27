@@ -467,6 +467,10 @@ public class KubernetesConverter {
 
     public static String fromContainerDescriptionRestartPolicyToPodRestartPolicy(String
             descriptionRestartPolicy) {
+        if (descriptionRestartPolicy == null) {
+            return null;
+        }
+
         switch (descriptionRestartPolicy) {
         case "no":
             return KUBERNETES_RESTART_POLICY_NEVER;

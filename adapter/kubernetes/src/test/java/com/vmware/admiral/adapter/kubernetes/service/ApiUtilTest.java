@@ -37,14 +37,16 @@ public class ApiUtilTest {
 
     @Test
     public void TestCorrectApiPrefix() {
-        String prefix = ApiUtil.apiPrefix(context);
-        Assert.assertEquals(context.host.address + KubernetesRemoteApiClient.apiPrefix, prefix);
+        String expectedPrefix = context.host.address + ApiUtil.API_PREFIX_V1;
+        String actualPrefix = ApiUtil.apiPrefix(context, ApiUtil.API_PREFIX_V1);
+        Assert.assertEquals(expectedPrefix, actualPrefix);
     }
 
     @Test
     public void TestCorrectNamespacedPrefix() {
-        String prefix = ApiUtil.namespacePrefix(context);
-        Assert.assertEquals(context.host.address + KubernetesRemoteApiClient.apiPrefix
-                + "/namespaces/" + KubernetesHostConstants.KUBERNETES_HOST_DEFAULT_NAMESPACE, prefix);
+        String expectedPrefix = context.host.address + ApiUtil.API_PREFIX_V1
+                + "/namespaces/" + KubernetesHostConstants.KUBERNETES_HOST_DEFAULT_NAMESPACE;
+        String actualPrefix = ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_V1);
+        Assert.assertEquals(expectedPrefix, actualPrefix);
     }
 }

@@ -11,27 +11,29 @@
 
 package com.vmware.admiral.adapter.kubernetes.service;
 
-import static com.vmware.admiral.adapter.kubernetes.service.KubernetesRemoteApiClient.apiPrefix;
-
 import com.vmware.admiral.adapter.kubernetes.service.AbstractKubernetesAdapterService.KubernetesContext;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 
 public class ApiUtil {
-    static String apiPrefix(KubernetesContext context) {
+    public static final String API_PREFIX_V1 = "/api/v1";
+    public static final String API_PREFIX_EXTENSIONS_V1BETA = "/apis/extensions/v1beta1";
+
+
+    static String apiPrefix(KubernetesContext context, String apiVersion) {
         assert (context.host != null);
         assert (context.host.customProperties != null);
         String namespace = context.host.customProperties.get(
                 KubernetesHostConstants.KUBERNETES_HOST_NAMESPACE_PROP_NAME);
         assert (namespace != null && !namespace.isEmpty());
-        return context.host.address + apiPrefix;
+        return context.host.address + apiVersion;
     }
 
-    static String namespacePrefix(KubernetesContext context) {
+    static String namespacePrefix(KubernetesContext context, String apiVersion) {
         assert (context.host != null);
         assert (context.host.customProperties != null);
         String namespace = context.host.customProperties.get(
                 KubernetesHostConstants.KUBERNETES_HOST_NAMESPACE_PROP_NAME);
         assert (namespace != null && !namespace.isEmpty());
-        return apiPrefix(context) + "/namespaces/" + namespace;
+        return apiPrefix(context, apiVersion) + "/namespaces/" + namespace;
     }
 }
