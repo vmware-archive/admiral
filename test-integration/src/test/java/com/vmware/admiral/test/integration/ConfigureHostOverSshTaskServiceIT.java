@@ -106,6 +106,10 @@ public class ConfigureHostOverSshTaskServiceIT extends BaseTestCase {
         waitForServiceAvailability(MockConfigureHostOverSshTaskService.FACTORY_LINK);
     }
 
+    @Override protected boolean getPeerSynchronizationEnabled() {
+        return true;
+    }
+
     @Test
     public void testWithPassword() throws Throwable {
         test(getPasswordCredentials());

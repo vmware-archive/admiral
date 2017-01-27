@@ -91,6 +91,11 @@ public class KubernetesHostAdapterServiceTest extends BaseMockKubernetes {
                 new MockKubernetesHostService());*/
     }
 
+    @Override
+    protected boolean getPeerSynchronizationEnabled() {
+        return true;
+    }
+
     @After
     public void tearDown() throws Throwable {
         deleteHostShellContainer();

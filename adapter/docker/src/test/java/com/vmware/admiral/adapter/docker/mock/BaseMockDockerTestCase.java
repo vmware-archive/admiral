@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -14,7 +14,6 @@ package com.vmware.admiral.adapter.docker.mock;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import org.junit.AfterClass;
@@ -117,14 +116,19 @@ public class BaseMockDockerTestCase extends BaseTestCase {
         }
     }
 
-    private static void startMockDockerHost() throws Throwable {
+    @Override
+    protected boolean getPeerSynchronizationEnabled() {
+        return true;
+    }
+
+    private void startMockDockerHost() throws Throwable {
         ServiceHost.Arguments args = new ServiceHost.Arguments();
         args.sandbox = null;
         args.port = 0;
         mockDockerHost = VerificationHost.create(args);
+        mockDockerHost.setPeerSynchronizationEnabled(this.getPeerSynchronizationEnabled());
+        mockDockerHost.setMaintenanceIntervalMicros(this.getMaintenanceIntervalMillis());
         mockDockerHost.start();
-        mockDockerHost.setMaintenanceIntervalMicros(TimeUnit.MILLISECONDS
-                .toMicros(MAINTENANCE_INTERVAL_MILLIS));
 
         mockDockerHost.startService(Operation.createPost(UriUtils.buildUri(
                 mockDockerHost, MockDockerCreateContainerService.class)),

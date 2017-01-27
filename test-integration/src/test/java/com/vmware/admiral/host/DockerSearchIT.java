@@ -71,6 +71,11 @@ public class DockerSearchIT extends BaseTestCase {
         waitForServiceAvailability(RegistryService.DEFAULT_INSTANCE_LINK);
     }
 
+    @Override
+    protected boolean getPeerSynchronizationEnabled() {
+        return true;
+    }
+
     @Test
     public void testCheckTrustedCertificates() throws Exception {
 

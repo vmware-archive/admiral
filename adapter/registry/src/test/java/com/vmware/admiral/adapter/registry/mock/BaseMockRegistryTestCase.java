@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -12,7 +12,6 @@
 package com.vmware.admiral.adapter.registry.mock;
 
 import java.net.URI;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -58,14 +57,14 @@ public class BaseMockRegistryTestCase extends BaseTestCase {
         }
     }
 
-    private static void startMockRegistryHost() throws Throwable {
+    private void startMockRegistryHost() throws Throwable {
         ServiceHost.Arguments args = new ServiceHost.Arguments();
         args.sandbox = null;
         args.port = 0;
         mockRegistryHost = VerificationHost.create(args);
+        mockRegistryHost.setPeerSynchronizationEnabled(this.getPeerSynchronizationEnabled());
+        mockRegistryHost.setMaintenanceIntervalMicros(this.getMaintenanceIntervalMillis());
         mockRegistryHost.start();
-        mockRegistryHost.setMaintenanceIntervalMicros(TimeUnit.MILLISECONDS
-                .toMicros(MAINTENANCE_INTERVAL_MILLIS));
 
         mockRegistryHost.startService(Operation.createPost(UriUtils.buildUri(
                 mockRegistryHost, MockRegistryPingService.class)),

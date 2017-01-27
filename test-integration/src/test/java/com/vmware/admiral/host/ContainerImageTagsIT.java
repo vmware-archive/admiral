@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -83,6 +83,11 @@ public class ContainerImageTagsIT extends BaseTestCase {
         waitForServiceAvailability(ContainerImageService.SELF_LINK);
         waitForServiceAvailability(RegistryService.DEFAULT_INSTANCE_LINK);
         waitForServiceAvailability(ContainerImageTagsService.SELF_LINK);
+    }
+
+    @Override
+    protected boolean getPeerSynchronizationEnabled() {
+        return true;
     }
 
     @Test

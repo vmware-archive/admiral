@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -23,6 +23,11 @@ import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 
 public class RegistryServiceTest extends BaseRegistryStateQueryTest {
+
+    @Override
+    protected boolean getPeerSynchronizationEnabled() {
+        return true;
+    }
 
     @Test
     public void testDeleteDefaultRegistryOnStartup() throws Throwable {
