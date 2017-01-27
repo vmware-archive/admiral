@@ -127,6 +127,12 @@ public class NetworkUtils {
             + REGEXP_IPV4_CIDR_NOTATION + ")|("
             + REGEXP_IPV6_CIDR_NOTATION + ")";
 
+    /**
+     * Same regex that docker uses to do validation
+     */
+    public static final String REGEXP_NAME = "^[\\w]+[\\w. -]*[\\w]+$";
+    public static final String BAD_NETWORK_NAME = "Network name should not contain any special characters other than underscores, hyphens and spaces";
+
     public static void validateIpCidrNotation(String subnet) {
         if (!StringUtil.isNullOrEmpty(subnet) && !subnet.matches(REGEXP_CIDR_NOTATION)) {
             String error = String.format(
@@ -148,9 +154,12 @@ public class NetworkUtils {
         if (name == null || name.trim().isEmpty()) {
             throw new LocalizableValidationException(ERROR_NETWORK_NAME_IS_REQUIRED, "compute.network.validate.name");
         }
-        // currently, it looks like there are no restrictions on the network name from docker side.
-        // Numbers-only names and even space-delimited words are supported. We can add some
-        // restrictions here.
+
+        //Docker now validates the network name based on the REGEXP_NAME regex
+        if (!name.matches(REGEXP_NAME)) {
+            throw new LocalizableValidationException(BAD_NETWORK_NAME,
+                    "compute.network.validate.bad.name");
+        }
     }
 
     public static ContainerNetworkDescription createContainerNetworkDescription(
