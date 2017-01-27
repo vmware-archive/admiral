@@ -27,6 +27,7 @@ import org.junit.Test;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.xenon.common.FactoryService;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -164,6 +165,14 @@ public class ContainerNetworkServiceTest extends ComputeBaseTest {
                 updatedNetwork.options.get(DRIVER_OPTIONS_KEY_2));
         assertEquals(DRIVER_OPTIONS_VALUE_2,
                 updatedNetwork.options.get(DRIVER_OPTIONS_KEY_1));
+    }
+
+    @Test(expected = LocalizableValidationException.class)
+    public void testNameValidationOnCreate() throws Throwable {
+        ContainerNetworkState cns = new ContainerNetworkState();
+        cns.name = "你好";
+
+        doPost(cns, ContainerNetworkService.FACTORY_LINK);
     }
 
     @Test

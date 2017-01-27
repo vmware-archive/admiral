@@ -139,7 +139,6 @@ public class NetworkUtilsTest {
             // Null or empty names are not allowed
             new TestEntry(null, true),
             new TestEntry("", true),
-            new TestEntry(" ", true),
 
             new TestEntry("valid-name", false),
             new TestEntry("valid name", false),
@@ -219,7 +218,9 @@ public class NetworkUtilsTest {
             } catch (LocalizableValidationException e) {
                 String errorMessage = e.getMessage();
                 String expectedError = NetworkUtils.ERROR_NETWORK_NAME_IS_REQUIRED;
-                if (!errorMessage.equals(expectedError)) {
+                String expectedErrorBadNetworkName = NetworkUtils.BAD_NETWORK_NAME;
+                if (!errorMessage.equals(expectedError) && !errorMessage
+                        .equals(expectedErrorBadNetworkName)) {
                     throw e;
                 } else {
                     if (!entry.shouldFail) {
